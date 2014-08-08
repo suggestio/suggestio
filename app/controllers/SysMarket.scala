@@ -227,9 +227,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "floor"     -> floorOptM,
     "section"   -> sectionOptM,
     "siteUrl"   -> urlStrOptM,
-    "color"     -> colorOptM
+    "color"     -> colorOptM,
+    "location"  -> latLng2geopointOptM
   )
-  {(name, descr, town, address, phone, floor, section, siteUrl, color) =>
+  {(name, descr, town, address, phone, floor, section, siteUrl, color, locationOpt) =>
     AdnMMetadata(
       name    = name,
       description = descr,
@@ -239,12 +240,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       floor   = floor,
       section = section,
       siteUrl = siteUrl,
-      color   = color
+      color   = color,
+      location = locationOpt
     )
   }
   {meta =>
     import meta._
-    Some((name, description, town, address, phone, floor, section, siteUrl, color))
+    Some((name, description, town, address, phone, floor, section, siteUrl, color, location))
   }
 
   private val adnRightsM: Mapping[Set[AdnRight]] = {
@@ -519,7 +521,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         floor   = adnNode2.meta.floor,
         section = adnNode2.meta.section,
         siteUrl = adnNode2.meta.siteUrl,
-        color   = adnNode2.meta.color
+        color   = adnNode2.meta.color,
+        location = adnNode2.meta.location
       ),
       adn = adnNode.adn.copy(
         memberType  = adnNode2.adn.memberType,

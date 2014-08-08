@@ -151,4 +151,8 @@ package object models {
   type AdnShownType         = AdnShownTypes.AdnShownType
 
   type Imgs_t               = EMImg.Imgs_t
+
+  type GeoPoint             = io.suggest.ym.model.common.GeoPoint
+  val  GeoPoint             = io.suggest.ym.model.common.GeoPoint
+
 }

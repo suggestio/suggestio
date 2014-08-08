@@ -17,7 +17,6 @@ import java.io._
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import scala.collection.GenTraversableOnce
-import scala.Some
 import java.util.Currency
 
 /**
@@ -258,14 +257,22 @@ object FormUtil {
 
   // Маппер домена с конвертором в dkey.
   val domain2dkeyMapper = domainMapper
-    .transform(UrlUtil.normalizeHostname, {dkey:String => IDNA.toUnicode(dkey)})
+    .transform [String] (UrlUtil.normalizeHostname, IDNA.toUnicode)
 
   // Маппер для float-значений.
-  val floatRe = "[0-9]{0,8}([,.][0-9]{0,4})?".r
+  val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,4})?".r
   val floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
-    .transform(_.toFloat, {f: Float => f.toString})
+    .transform[Float](_.toFloat, _.toString)
 
+  // Маппер для полноценных double значений для floating point чисел в различных представлениях.
+  val doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
+  val doubleM = nonEmptyText(maxLength = 32)
+    .verifying("float.invalid", doubleRe.pattern.matcher(_).matches())
+    .transform[Double](
+      { _.replace(',', '.').toDouble},
+      { _.toString }
+    )
 
   // Даты
   val localDate = text(maxLength = 32)
@@ -468,6 +475,22 @@ object FormUtil {
   }
   val currencyCodeOrDfltM: Mapping[String] = {
     default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+  }
+
+
+  /** Маппер для lat-lon координат, заданных в двух полях формы. */
+  val latLng2geopointM: Mapping[GeoPoint] = {
+    mapping(
+      "lat" -> doubleM,
+      "lon" -> doubleM
+    )
+    { GeoPoint.apply }
+    { GeoPoint.unapply }
+  }
+
+  /** Опциональный маппер для lat-lon координат. */
+  val latLng2geopointOptM: Mapping[Option[GeoPoint]] = {
+    optional(latLng2geopointM)
   }
 
 }
