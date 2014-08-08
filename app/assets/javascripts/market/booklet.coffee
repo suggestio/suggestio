@@ -31,5 +31,6 @@ $ document
 
     skrollr.init(
       smoothScrolling: false,
+      forceHeight: true,
       mobileDeceleration: 0.004
     )

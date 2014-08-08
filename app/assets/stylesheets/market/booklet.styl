@@ -14,6 +14,8 @@ screen768 = 'screen and (max-width: 767px)'
 screen1024 = 'screen and (max-width: 1024px)'
 screenGorizontalIpad = 'screen and (max-width: 1024px) and (orientation : landscape)'
 screenVerticallIpad = 'screen and (max-width: 1024px) and (orientation : portrait)'
+screenIphone4 = 'screen and (max-width: 767px) and (device-aspect-ratio: 2/3)'
+screenIphone5 = 'screen and (max-width: 767px) and (device-aspect-ratio: 40/71)'
 screen1200 = 'screen and (max-width: 1200px)'
 
 body
@@ -177,7 +179,7 @@ body
   transition(all 0.4s linear 0s)
 
   &.__js-dark
-    background-color  rgba(175,175,173,0.9)
+    background-color  rgba(250,250,250,0.9)
     border-bottom     1px solid #cdcdcd
 
     .top-menu_i
@@ -712,7 +714,7 @@ body
     text-align  center
 
 /********************************************************************************************************************/
-/* Устройстка с разрешением меньше 1200px */
+/* Устройства с разрешением меньше 1200px */
 /********************************************************************************************************************/
 @media screen1200
 
@@ -738,7 +740,7 @@ body
     title(45px)
 
 /********************************************************************************************************************/
-/* Устройстка с разрешением меньше 1024px */
+/* Устройства с разрешением меньше 1024px */
 /********************************************************************************************************************/
 @media screen1024
 
@@ -797,6 +799,9 @@ body
 
     &_bg-paralax
       display none
+
+  .section-equipment_title
+    title(35px)
 
 /********************************************************************************************************************/
 /* Горизонтальный Ipad */
@@ -974,12 +979,18 @@ body
       margin-top 50px
 
 /********************************************************************************************************************/
-/* Устройстка с разрешением меньше 768px */
+/* Устройства с разрешением меньше 768px */
 /********************************************************************************************************************/
 @media screen768
 
+  .ipad-visible
+    display none
+
   .phone-visible
     display block
+
+  .phone-hidden
+    display none
 
   .start-work-btn
 
@@ -1066,9 +1077,6 @@ body
     &_cnt
       padding-top 35px
 
-    &_bg-paralax
-      display none
-
     &_icon
       float           none
       width           300px
@@ -1081,45 +1089,52 @@ body
 
   /* Section I can */
   .section-i-can
+    height 100%
 
     &_cnt
-      padding-top     20px
-      padding-bottom  50px
+      padding-top     10px
 
     &_descr
       float none
       width auto
 
     &_title
+      padding-bottom 15px
       title(20px)
 
     &_icon
       float           none
-      width           300px
+      width           260px
       margin          0 auto
       background-size 100% auto
 
   /* Section You notice */
   .section-you-notice
-    height auto
+    height 100%
+
+    &_cnt
+      padding-top 0
 
     &_icon
       float           none
-      width           300px
+      width           260px
+      height          190px
       margin          0 auto
       background-size 100% auto
 
     &_descr
       float       none
       width       auto
-      margin-top  40px
+      margin-top  10px
 
     &_title
-      padding-bottom 20px
+      font-size      26px
+      padding-bottom 10px
       title(5px)
 
   /* Section So easy */
   .section-so-easy
+    height 100%
 
     &_cnt
       padding-top     15px
@@ -1131,19 +1146,21 @@ body
 
     &_icon
       float           none
-      width           300px
-      margin          40px auto 0
+      height          150px
+      margin          20px auto 0
       background-size auto 100%
 
     &_title
-      padding-bottom 10px
-      title(10px)
+      padding-top     0
+      padding-bottom  10px
+      title(5px)
 
     &_btn
       margin-top 30px
 
   /* Section How it works */
   .section-how-it-works
+    height 100%
 
     &_cnt
       padding-bottom 20px
@@ -1164,6 +1181,7 @@ body
 
   /* Section Only you */
   .section-only-you
+    height 250%
 
     &_cnt
       padding-top 10px
@@ -1190,15 +1208,21 @@ body
 
   /* Section Advantages */
   .section-advantages
+    height 200%
 
     &_cnt
-      padding 25px 0
+      padding-top 10px
 
     &_title
-      title(2px)
+      font-size 20px
+      title(5px)
+
+    &_block
+      margin-top 20px
 
   /* Section Equipment */
   .section-equipment
+    height 100%
 
     &_btn-w
       padding-top 20px
@@ -1220,6 +1244,7 @@ body
 
   /* Section Partnership */
   .section-partnership
+    height 100%
 
     &_cnt
       padding 35px 0
@@ -1229,3 +1254,81 @@ body
 
     &_text
       margin-top 20px
+
+
+
+/********************************************************************************************************************/
+/* Iphone 5 */
+/********************************************************************************************************************/
+@media screenIphone5
+
+  /* Section About */
+  .section-about
+    height 200%
+
+  /* Section Advantages */
+  .section-advantages
+
+    &_cnt
+      padding-top 40px
+
+    &_plus
+      margin-top 40px
+
+    &_block
+      margin-top 50px
+
+    &_btn
+      margin-top 20px
+
+/********************************************************************************************************************/
+/* Iphone 4 */
+/********************************************************************************************************************/
+@media screenIphone4
+
+  /* Section About */
+  .section-about
+
+    .start-work-btn-w
+      display none
+
+    &_bottom-title
+      display none
+
+  /* Section So easy */
+  .section-so-easy
+
+    &_cnt
+      padding-top     10px
+
+    &_icon
+      margin-top 10px
+
+    &_btn
+      margin-top 10px
+
+  /* Section How it works */
+  .section-how-it-works_icon
+    margin-top      0
+    width           53px
+    height          53px
+    background-size 100% auto
+
+  .only-you-block
+
+    &_text
+      margin-top 5px
+
+    &_icon
+      width           45px
+      height          60px
+      background-size 45px auto
+
+    &_icon.__block-2
+      background-position 0 -60px
+
+    &_icon.__block-3
+      background-position 0 -140px
+
+    &_icon.__block-4
+      background-position 0 -195px
