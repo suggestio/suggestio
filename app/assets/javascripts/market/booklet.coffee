@@ -1,5 +1,5 @@
 $ document
-.scroll ()->
+.scroll () ->
 
   $document = $ document
   $header = $ '#header'
@@ -10,10 +10,26 @@ $ document
   else
     $header.removeClass '__js-dark'
 
+
+
 $ document
-.on 'click', '.js-slide-btn', (e)->
+.on 'click', '.js-slide-btn', (e) ->
   $this = $ this
   slideSelector = $this.attr 'data-slide'
   $slideElement = $ slideSelector
 
   $slideElement.slideToggle()
+
+
+$ document
+.ready () ->
+
+  $window = $ window
+  winWidth = $window.width()
+
+  if winWidth <= 1024
+
+    skrollr.init(
+      smoothScrolling: false,
+      mobileDeceleration: 0.004
+    )

@@ -10,12 +10,14 @@ darkColor = black
 lightColor = white
 attentionColor = #ec1c23
 
-screen768 = 'screen and (max-width: 768px)'
+screenIphoneVertical = 'screen and (max-width: 320px)'
+screenGorizontalIpad = 'screen and (max-width: 1024px) and (orientation : landscape)'
 screen1200 = 'screen and (max-width: 1200px)'
 
 body
   font-family   'Open Sans'
   font-size     14px
+  height        100% !important
 
 /********************************************************************************************************************/
 /* Common elements */
@@ -86,6 +88,7 @@ body
   position  absolute
   top       0
   left      0
+  z-index   100
   width     100%
   height    100%
 
@@ -129,6 +132,10 @@ body
   font-weight     800
   text-transform  uppercase
 
+.phone-visible,
+.ipad-visible
+  display none
+
 /********************************************************************************************************************/
 /* Paralax styles */
 /********************************************************************************************************************/
@@ -146,6 +153,7 @@ body
 
 .bg-paralax
   background-attachment fixed
+  background-size       cover
   background-clip       border-box
   background-repeat     repeat-y
   height                100%
@@ -167,7 +175,14 @@ body
   transition(all 0.4s linear 0s)
 
   &.__js-dark
-    background-color  rgba(65,65,65,0.9)
+    background-color  rgba(175,175,173,0.9)
+    border-bottom     1px solid #cdcdcd
+
+    .top-menu_i
+      color #878787
+
+      &:hover
+        color #d5d5d5
 
   &_cnt
     position  relative
@@ -180,7 +195,6 @@ body
     left        10px
 
     font-size   18px
-    font-weight 800
 
   &_nav
     position  absolute
@@ -212,7 +226,6 @@ body
   min-height        700px
   max-height        1081px /* высота изображения бэкграунда */
   background-image  url('/assets/images/market/booklet/section-sio-market_bg.jpg')
-  background-size   cover
 
   &_cnt
     position    relative
@@ -220,8 +233,8 @@ body
     padding-top 200px
 
   &_title
-    font-size       36px
-    title(50px)
+    font-size       28px
+    title(40px)
 
   &_logo
     margin-top    50px
@@ -593,6 +606,9 @@ body
     margin-top  70px
     text-align  center
 
+  &_btn
+    margin-top 50px
+
   &_block
     max-width     450px
     margin-left   auto
@@ -608,7 +624,8 @@ body
 .section-equipment
 
   &_btn-w
-    padding 45px 0
+    padding-top     40px
+    padding-bottom  20px
 
   &_btn
     display     block
@@ -673,21 +690,450 @@ body
     text-align  center
 
 /********************************************************************************************************************/
-/* Устройстка с разрешением от 768px */
+/* Section Partnership */
+/********************************************************************************************************************/
+.section-partnership
+
+  &_cnt
+    padding 70px 0
+
+  &_title
+    title(50px)
+
+  &_text
+    margin      40px auto 0
+    max-width   500px
+    padding     0 10px
+
+    color       #c0c0c0
+    font-size   12px
+    text-align  center
+
+/********************************************************************************************************************/
+/* Устройстка с разрешением меньше 1200px */
 /********************************************************************************************************************/
 @media screen1200
+
 
   .section-about_title
     title(30px)
 
-  .section-i-can_descr
-    width 45%
+  .section-i-can
 
-  .section-i-can_icon
-    width 55%
+    &_descr
+      width 45%
+
+    &_icon
+      width 55%
 
   .section-how-it-works_title
     title(25px)
 
   .section-advantages_title
     title(35px)
+
+  .section-partnership_title
+    title(45px)
+
+/********************************************************************************************************************/
+/* Горизонтальный Ipad */
+/********************************************************************************************************************/
+@media screenGorizontalIpad
+
+  .ipad-visible
+    display block
+
+  .start-work-btn.__section-only-you
+    display none
+
+  .w.__margin-L
+    margin 10px 0
+
+  /* Section SioMarket */
+  .section-sio-market
+    background  none
+    min-height  100%
+    max-height  100%
+
+    &_cnt
+      padding-top 150px
+
+    &_go-bottom-btn
+      bottom 50px
+
+    .bg-mask
+      display none
+
+  /* Section About */
+  .section-about
+    height 100%
+
+    &_cnt
+      padding-top 60px
+
+    &_wifi-title
+      margin-top 40px
+
+    &_wifi-text
+      margin-top  5px
+
+    &_icons-title
+      margin-top 40px
+
+    &_offers
+      margin-top    10px
+      margin-bottom 45px
+
+    &_bottom-title
+      margin-top    25px
+      margin-bottom auto
+
+  /* Section Start */
+  .section-start
+    height 50%
+
+    &_bg-paralax
+      display none
+
+    .bg-mask
+      display none
+
+    &_cnt
+      padding-top 40px
+
+  /* Section I can */
+  .section-i-can
+    height 50%
+
+    &_cnt
+      padding-top     80px
+      padding-bottom  none
+
+   /* Section You notice */
+  .section-you-notice
+    height 50%
+
+    &_cnt
+      padding-top     40px
+      padding-bottom  none
+
+  /* Section So easy */
+  .section-so-easy
+    height 50%
+
+    &_cnt
+      padding-top    10px
+      padding-bottom 0
+
+    &_title
+      padding-top     35px
+      padding-bottom  15px
+
+    &_btn
+      margin-top 10px
+
+   /* Section How it works */
+  .section-how-it-works
+    height 100%
+
+    &_bg-paralax
+      display none
+
+    &_title
+      padding-top 100px
+
+    &_icon
+      margin-top 60px
+
+    &_text
+      margin-top 20px
+
+    &_place-icon
+      margin-bottom 50px
+
+  /* Section Only you */
+  .section-only-you
+    height      100%
+
+    &_cnt
+      padding-top 15px
+
+    &_text
+      margin-top    30px
+      margin-bottom 10px
+
+  /* Section Advantages */
+  .section-advantages
+    height 100%
+
+    &_bg-paralax
+      display none
+
+    &_cnt
+      padding-top 50px
+
+    &_plus
+      margin-top 30px
+
+    &_btn
+      margin-top 0
+
+    &_block
+      margin-top 30px
+
+/********************************************************************************************************************/
+/* Устройстка с разрешением меньше 768px */
+/********************************************************************************************************************/
+@media screenIphoneVertical
+
+  .phone-visible
+    display block
+
+  .start-work-btn
+
+    &.__section-sio-market
+      margin-top 10px
+
+    &.__section-only-you
+      margin-top 10px
+
+  .w
+
+    &.__margin-L
+      margin 10px 0
+
+  .header
+    display none
+
+  /* Section SioMarket */
+  .section-sio-market
+    background  none
+    min-height  100%
+    max-height  100%
+
+    &_cnt
+      padding-top 10px
+
+    &_title
+      title(25px)
+
+    &_logo
+      margin-top 10px
+
+    &_text
+      padding-top   25px
+      padding-left  10px
+      padding-right 10px
+
+    &_go-bottom-btn
+      display none
+
+  /* Section About */
+  .section-about
+    height 200%
+
+    &_cnt
+      padding-top 10px
+
+    &_title
+      font-size 30px
+      title(0)
+
+    &_wifi-title
+      font-size  16px
+      margin-top 10px
+
+    &_wifi-text
+      padding     0 10px
+      margin-top  5px
+
+    &_icons-title
+      margin-top 15px
+
+    &_offers
+      margin-top    10px
+      margin-bottom 20px
+
+    &_bottom-title
+      margin-top    25px
+      margin-bottom 15px
+      title(5px)
+
+  .section-about-offer
+    float         none
+    width         auto
+    margin-bottom 10px
+
+    &_text
+      margin-top  5px
+
+  /* Section Start */
+  .section-start
+    height 100%
+
+    &_cnt
+      padding-top 35px
+
+    &_bg-paralax
+      display none
+
+    &_icon
+      float           none
+      width           300px
+      height          150px
+      margin          0 auto
+      background-size auto 100%
+
+    &_title
+      padding-bottom 15px
+
+  /* Section I can */
+  .section-i-can
+
+    &_cnt
+      padding-top     20px
+      padding-bottom  50px
+
+    &_descr
+      float none
+      width auto
+
+    &_title
+      title(20px)
+
+    &_icon
+      float           none
+      width           300px
+      margin          0 auto
+      background-size 100% auto
+
+  /* Section You notice */
+  .section-you-notice
+    height auto
+
+    &_icon
+      float           none
+      width           300px
+      margin          0 auto
+      background-size 100% auto
+
+    &_descr
+      float       none
+      width       auto
+      margin-top  40px
+
+    &_title
+      padding-bottom 20px
+      title(5px)
+
+  /* Section So easy */
+  .section-so-easy
+
+    &_cnt
+      padding-top     15px
+      padding-bottom  30px
+
+    &_descr
+      float none
+      width auto
+
+    &_icon
+      float           none
+      width           300px
+      margin          40px auto 0
+      background-size auto 100%
+
+    &_title
+      padding-bottom 10px
+      title(10px)
+
+    &_btn
+      margin-top 30px
+
+  /* Section How it works */
+  .section-how-it-works
+
+    &_cnt
+      padding-bottom 20px
+
+    &_title
+      padding-top 10px
+      title(0)
+
+    &_icon
+      margin-top 20px
+
+    &_text
+      margin-top 20px
+
+    &_place-icon
+      margin-top    10px
+      margin-bottom 20px
+
+  /* Section Only you */
+  .section-only-you
+
+    &_cnt
+      padding-top 10px
+      padding-bottom 10px
+
+    &_text
+      margin-top    0
+      margin-bottom 50px
+      padding       0 10px
+
+    &_title-w
+      margin-bottom 20px
+
+    &_title
+      title(10px)
+
+    &_title-border
+      margin 0 40px
+
+  .only-you-block
+    float         none
+    width         auto
+    margin-bottom 20px
+
+  /* Section Advantages */
+  .section-advantages
+
+    &_cnt
+      padding 25px 0
+
+    &_title
+      title(2px)
+
+  /* Section Equipment */
+  .section-equipment
+
+    &_btn-w
+      padding-top 20px
+
+    &_title
+      margin-bottom 30px
+      title(5px)
+
+    &_cnt
+      padding-bottom 10px
+
+  .equipment-block
+    float         none
+    width         auto
+    margin-bottom 30px
+
+    &_text
+      margin-top 10px
+
+  /* Section Partnership */
+  .section-partnership
+
+    &_cnt
+      padding 35px 0
+
+    &_title
+      title(5px)
+
+    &_text
+      margin-top 20px

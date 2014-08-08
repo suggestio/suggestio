@@ -17,8 +17,154 @@
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,700,700italic&subset=latin,cyrillic-ext' rel='stylesheet' type='text/css'>
     <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
+    <style>
+      .parallax-image-wrapper {
+        position:fixed;
+        left:0;
+        width:100%;
+        overflow:hidden;
+      }
+
+      .parallax-image-wrapper-50 {
+        height:50%;
+        top:-50%;
+      }
+
+      .parallax-image-wrapper-100 {
+        height:100%;
+        top: -100%;
+      }
+
+      .parallax-image {
+        position:absolute;
+        bottom:0;
+        left:0;
+        width:100%;
+        background-repeat:no-repeat;
+        background-position:center;
+        background-size:cover;
+      }
+
+      .parallax-image-50 {
+        height:200%;
+        top:-50%;
+      }
+
+      .parallax-image-100 {
+        height:100%;
+        top:0;
+      }
+
+      .parallax-image.skrollable-between {
+        display:block;
+      }
+
+      .no-skrollr .parallax-image-wrapper {
+        display:none !important;
+      }
+
+      #skrollr-body {
+        height: 100%;
+        position: relative;
+      }
+
+
+    </style>
+
   </head>
   <body>
+
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible ipad-visible"
+      data-anchor-target="#sio-market"
+      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-100"
+        style="background-image:url('/assets/images/market/booklet/section-sio-market_bg.jpg')"
+        data-anchor-target="#sio-market"
+        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
+        ></div>
+    </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible"
+      data-anchor-target="#start"
+      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-100"
+        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
+        data-anchor-target="#start"
+        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
+        ></div>
+    </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-50 phone-visible ipad-visible"
+      data-anchor-target="#start"
+      data-bottom-top="transform:translate3d(0px, 300%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-50"
+        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
+        data-anchor-target="#start"
+        data-bottom-top="transform: translate3d(0px, -70%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 70%, 0px);"
+        ></div>
+    </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-50 phone-visible ipad-visible"
+      data-anchor-target="#you-notice"
+      data-bottom-top="transform:translate3d(0px, 300%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-50"
+        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
+        data-anchor-target="#you-notice"
+        data-bottom-top="transform: translate3d(0px, -70%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 70%, 0px);"
+        ></div>
+    </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible ipad-visible"
+      data-anchor-target="#how-it-works"
+      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-100"
+        style="background-image:url('/assets/images/market/booklet/section-how-it-works_bg.jpg')"
+        data-anchor-target="#how-it-works"
+        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
+        ></div>
+    </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible ipad-visible"
+      data-anchor-target="#advantages"
+      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+      <div
+        class="parallax-image parallax-image-100"
+        style="background-image:url('/assets/images/market/booklet/section-advantages_bg.jpg')"
+        data-anchor-target="#advantages"
+        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
+        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
+        ></div>
+    </div>
+
 
     <header class="header" id="header">
       <div class="header_cnt">
@@ -35,374 +181,394 @@
         </nav>
       </div>
     </header><!-- header end -->
+    <div id="skrollr-body">
+      <section class="section-sio-market paralax" id="sio-market" >
 
-    <section class="section-sio-market paralax">
-      <div class="bg-mask __dark-strong"></div>
+        <div class="section-sio-market_cnt section-cnt">
+          <h2 class="section-sio-market_title title">
+            <span class="color-attention">Sio</span>
+            <span class="color-light">Market</span>
+          </h2>
 
-      <div class="section-sio-market_cnt section-cnt">
-        <h2 class="section-sio-market_title title">
-          <span class="color-attention">Sio</span>
-          <span class="color-light">Market</span>
-        </h2>
+          <img class="section-sio-market_logo" src='@routes.Assets.at("images/market/booklet/section-sio-market_logo.png")' width="50"/>
 
-        <img class="section-sio-market_logo" src="@routes.Assets.at("images/market/booklet/section-sio-market_logo.png")" />
-
-        <div class="section-sio-market_text">
-          <p class="ft-S">
-            Это автоматизированая платформа для управления рекламой Sio/M.
-          </p>
-          <p class="w __margin-L ft-S">
-            Мы предлагаем лучшее на сегодняшний день программное решение для монетизации<br/>
-            трафика  пользователей сетей<br/>
-            <span class="section-sio-market_wifi">WiFi Free</span>
-          </p>
-          <a class="start-work-btn __section-sio-market link def-transition">
-            <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
-          </a>
-        </div>
-
-      </div>
-
-      <a class="section-sio-market_go-bottom-btn"></a>
-
-    </section><!-- section-sio-market end -->
-
-    <section class="section-about">
-      <div class="section-about_cnt section-cnt">
-        <h2 class="section-about_title title">
-          <span class="color-attention">О</span> приложении
-        </h2>
-
-        <div class="section-about_wifi-title">
-          <span class="color-attention">WiFi Free</span> - современный тренд.
-        </div>
-        <div class="section-about_wifi-text">
-          Бесплатный доступ в Интернет сегодня есть едва ли не в каждом публичном месте,<br/>
-          владельцы которого заинтересованы в привлечении посетителей.
-        </div>
-
-        <div class="section-about_icons-title title">Мы предлагаем</div>
-        <div class="section-about_offers">
-
-          <div class="section-about-offer __offer-1">
-            <div class="section-about-offer_icon __icon-1"></div>
-            <div class="section-about-offer_text">
-              Лучшее на сегодняшний день программное решение<br/>
-              для монетизации трафика пользователей<br/>
-              сетей WiFi Free
-            </div>
-          </div>
-
-          <div class="section-about-offer __offer-2">
-            <div class="section-about-offer_icon __icon-2"></div>
-            <div class="section-about-offer_text">
-              Это автоматизированая платформа<br/>
-              для управления рекламой Sio/M.
-
-            </div>
-          </div>
-
-          <div class="section-about-offer __offer-3">
-            <div class="section-about-offer_icon __icon-3"></div>
-            <div class="section-about-offer_text">
-              Ни одно из них не соответствует тем возможностям,<br/>
-              которые уже сегодня воплощены в Sio/M.
-            </div>
-          </div>
-
-        </div>
-
-        <div class="start-work-btn-w">
-          <a class="start-work-btn __attention link def-transition">
-            <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
-          </a>
-        </div>
-
-        <div class="section-about_bottom-title title">
-          <span class="color-attention">Как</span> <span class="color-dark">выглядит?</span>
-        </div>
-      </div>
-    </section><!-- section-about end -->
-
-    <section class="section-start paralax">
-      <div class="bg-paralax section-start_bg-paralax"></div>
-      <div class="bg-mask __dark"></div>
-
-      <div class="section-start_cnt section-cnt">
-        <div class="section-start_icon"></div>
-
-        <div class="section-start_descr">
-          <div class="section-start_title title">Start</div>
-          <div class="section-start_text">
-            Запускается при подключении мобильного коммуникатора посетителя
-            к сетям WiFi Free в публичных местах:
-            <p class="w __margin-L">
-              торговых комплексах, ресторанах, банках и т.д.
+          <div class="section-sio-market_text">
+            <p class="ft-S">
+              Это автоматизированая платформа для управления рекламой Sio/M.
             </p>
-          </div>
-        </div>
-
-      </div>
-
-    </section><!-- section-start end -->
-
-    <section class="section-i-can">
-      <div class="section-i-can_cnt section-cnt">
-
-        <div class="section-i-can_descr">
-          <div class="section-i-can_title title">Я МОГУ!</div>
-          <div class="section-i-can_text">
-            Выдаёт информацию о товарах, скидках, акциях, предложениях хитах продаж.
-            <p class="w __margin-L">
-              В рекламную выдачу может включаться как собственная информация ресторана
-              или торгового комплекса, так и реклама арендаторов
-              или сторонних рекламодателей.
+            <p class="w __margin-L ft-S">
+              Мы предлагаем лучшее на сегодняшний день программное решение для монетизации<br/>
+              трафика  пользователей сетей<br/>
+              <span class="section-sio-market_wifi">WiFi Free</span>
             </p>
+            <a class="start-work-btn __section-sio-market link def-transition">
+              <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
+            </a>
           </div>
+
         </div>
-        <div class="section-i-can_icon"></div>
 
-      </div>
-    </section><!-- section-i-can end -->
+        <a class="section-sio-market_go-bottom-btn"></a>
 
-    <section class="section-you-notice paralax">
-      <div class="bg-paralax section-you-notice_bg-paralax"></div>
-      <div class="bg-mask __dark"></div>
+      </section><!-- section-sio-market end -->
 
-      <div class="section-you-notice_cnt section-cnt">
-        <div class="section-you-notice_icon"></div>
+      <section class="section-about" id="about">
+        <div class="section-about_cnt section-cnt">
+          <h2 class="section-about_title title">
+            <span class="color-attention">О</span> приложении
+          </h2>
 
-        <div class="section-you-notice_descr">
-          <div class="section-you-notice_title title">
-            Вас заметят
+          <div class="section-about_wifi-title">
+            <span class="color-attention">WiFi Free</span> - современный тренд.
           </div>
-          <div class="section-you-notice_text">
-            Несколько уровней размещения рекламы:
-            первый экран, каталог, собственный раздел рекламодателя
-            со всеми товарными предложениями.
-            <p class="w __margin-L">
-              Возможность быстрого поиска информации через поисковую строку.
-            </p>
+          <div class="section-about_wifi-text">
+            Бесплатный доступ в Интернет сегодня есть едва ли не в каждом публичном месте,
+            владельцы которого заинтересованы в привлечении посетителей.
           </div>
-        </div>
-      </div>
-    </section><!-- section-you-notice end -->
 
-    <section class="section-so-easy">
+          <div class="section-about_icons-title title">Мы предлагаем</div>
+          <div class="section-about_offers">
 
-      <div class="section-so-easy_cnt section-cnt">
-        <div class="section-so-easy_descr">
-          <div class="section-so-easy_title title">Так просто</div>
-          <div class="section-so-easy_text">
-            Пользователь может свернуть окно выдачи рекламы и начать пользоваться интернетом,
-            значок системы будет отображаться в левом верхнем углу браузера.
-          </div>
-        </div>
-        <div class="section-so-easy_icon"></div>
-
-        <div class="start-work-btn-w section-so-easy_btn">
-          <a class="start-work-btn __attention link def-transition">
-            <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
-          </a>
-        </div>
-      </div>
-
-    </section><!-- section-so-easy end -->
-
-    <section class="section-how-it-works paralax">
-      <div class="bg-paralax section-how-it-works_bg-paralax"></div>
-      <div class="bg-mask __dark"></div>
-
-      <div class="section-how-it-works_title title">
-        <span class="color-attention">Как</span>&nbsp;<span class="color-light">это работает?</span>
-      </div>
-
-      <div class="section-how-it-works_cnt section-cnt">
-
-        <div class="section-how-it-works_icon"></div>
-
-        <div class="section-how-it-works_text">
-          <p class="color-light">
-            Размещение своей рекламы в своих сетях Wi-Fi производится бесплатно.
-          </p>
-          <p class="w __margin-L">
-            Управление всей рекламой сетевых компаний, объединяющих множество точек продаж/обслуживания и сетей Wi-Fi
-            может производиться одним менеджером из одного личного кабинета.
-          </p>
-        </div>
-
-        <div class="section-how-it-works_place-icon"></div>
-
-        <div class="start-work-btn-w">
-          <a class="start-work-btn link def-transition">
-            <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
-          </a>
-        </div>
-      </div>
-
-    </section><!-- section-how-it-work end -->
-
-    <section class="section-only-you paralax">
-      <div class="section-only-you_cnt">
-
-        <div class="ovh">
-          <div class="only-you-block">
-            <div class="only-you-block_icon __block-1"></div>
-            <p class="only-you-block_text">
-              Пользователь системы (ресторан, торговый центр или др.) может на платной основе размещать
-              свою рекламу в сетях Wi-Fi других пользователей.
-            </p>
-          </div>
-          <div class="only-you-block">
-            <div class="only-you-block_icon __block-2"></div>
-            <p class="only-you-block_text">
-              Личный кабинет содержит мощный графический редактор. Удобный интерфейс позволяет
-              создавать яркую, современную рекламу любому сотруднику офиса
-              без привлечения профессионального дизайнера.
-            </p>
-          </div>
-        </div>
-
-        <div class="section-only-you_text">
-          <div class="section-only-you_title-w">
-            <div class="section-only-you_title title">
-              <span class="color-dark">Только</span>&nbsp;<span class="color-attention">вы</span>
-            </div>
-            <div class="section-only-you_title-border"></div>
-          </div>
-          <p class="ft-L">
-            Владелец сети Wi-Fi
-          </p>
-          <p class="w __margin-L">
-            (ресторана, торгового центра или др.)<br/>
-            может запрещать показы сторонней рекламы в своей сети.
-          </p>
-        </div>
-
-        <div class="ovh">
-          <div class="only-you-block">
-            <div class="only-you-block_icon __block-3"></div>
-            <p class="only-you-block_text">
-              Рекламодатель самостоятельно выбирает места (рестораны, торговые центра или др.) для размещения
-              своей рекламы, а также даты начала и окончания показов рекламы. Справочная информация содержит сведения
-              о выбранных местах показов рекламы: посещаемость, характеристика аудитории,
-              фотографии фасадов и интерьеров и др.
-            </p>
-          </div>
-          <div class="only-you-block">
-            <div class="only-you-block_icon __block-4"></div>
-            <p class="only-you-block_text">
-              Все расчеты за размещение рекламы абсолютно прозрачны.
-              Стоимость рекламы объективно связана с проходимостью и престижностью места показов рекламы.
-              Состояние расчетов постоянно отображаются в личном кабинете.
-            </p>
-          </div>
-        </div>
-
-        <div class="start-work-btn-w">
-          <a class="start-work-btn __attention __section-only-you link def-transition">
-            <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
-          </a>
-        </div>
-
-      </div>
-    </section><!-- section-only-you end -->
-
-    <section class="section-advantages paralax">
-      <div class="bg-paralax section-advantages_bg-paralax"></div>
-      <div class="bg-mask __attention"></div>
-
-      <div class="section-advantages_cnt section-cnt">
-        <div class="title section-advantages_title">ПРЕИМУЩЕСТВА</div>
-
-        <div class="section-advantages_plus">+</div>
-
-        <div class="section-advantages_block">
-          <span class="ft-L color-light">Эффективная реклама в месте продаж</span>
-          <p class="w __margin-L">
-            в местах с высоким потоком посетителей которую, в отличие от лайтбокса,
-            рекламного буклета или др. рекламных носителей можно менять как угодно часто.
-          </p>
-        </div>
-
-        <div class="section-advantages_block">
-          <span class="ft-L color-light">Навигационно-поисковая система</span>
-          <p class="w __margin-L">
-            дополняющая логистику крупных Торговых комплексов
-            и облегчающая поиск товара. Реклама арендаторов работает именно
-            на тех покупателей, которые находятся в поиске товара.
-          </p>
-        </div>
-
-        <div class="section-advantages_block">
-          <span class="ft-L color-light">Расширяются возможности системы. </span>
-          <p class="w __margin-L">
-            Над развитием Sio/M работает команда квалифицированных специалистов.
-            Отрабатываются новые технологии рекламных визуализации.
-            На очереди – введение возможности трансляции рекламных баннеров
-            и видео-рекламы на экранах, подключаемых к Sio/M.
-          </p>
-        </div>
-
-        <div class="section-advantages_block">
-          <a class="start-work-btn __section-sio-market link def-transition">
-            <span class="color-light default-transition __with-attention-bg">Начать работу с Sio</span>
-          </a>
-        </div>
-
-      </div>
-    </section><!-- section-advantages end -->
-
-    <section class="section-equipment">
-
-      <div class="section-equipment_btn-w">
-        <a class="section-equipment_btn js-slide-btn" data-slide="#equipment"></a>
-      </div>
-
-      <div class="section-equipment_slide hidden" id="equipment">
-        <div class="section-equipment_angle"></div>
-        <div class="section-equipment_cnt-w">
-
-
-          <div class="section-equipment_cnt">
-            <div class="title section-equipment_title">Оборудование</div>
-
-            <div class="ovh">
-              <div class="equipment-block">
-                <div class="equipment-block_icon">1</div>
-                <div class="equipment-block_text">
-                  Главное требование к оборудованию - наличие поддержки функции
-                  HotSpot и сервер проксирования трафика.
-                </div>
+            <div class="section-about-offer __offer-1">
+              <div class="section-about-offer_icon __icon-1"></div>
+              <div class="section-about-offer_text">
+                Лучшее на сегодняшний день программное решение
+                для монетизации трафика пользователей
+                сетей WiFi Free
               </div>
+            </div>
 
-              <div class="equipment-block">
-                <div class="equipment-block_icon">2</div>
-                <div class="equipment-block_text">
-                  При необходимости весь цикл монтажно-подготовительных работ
-                  (подключение к интернету, установка и настройка оборудования WiFi и др.)
-                  может быть выполнен сотрудниками компании CBCA.
-                  <p class="w __margin-L">
-                     Стоимость подготовительных работ определяется соответствующими сметами.
-                  </p>
-                </div>
+            <div class="section-about-offer __offer-2">
+              <div class="section-about-offer_icon __icon-2"></div>
+              <div class="section-about-offer_text">
+                Это автоматизированая платформа
+                для управления рекламой Sio/M.
+
               </div>
+            </div>
 
-              <div class="equipment-block">
-                <div class="equipment-block_icon">3</div>
-                <div class="equipment-block_text">
-                  При развертывании S-Market мы отдаем предпочтение
-                  оборудованию компании Mikrotik, которое считаем
-                  наиболее удачным компромиссом между ценой и качеством.
-                </div>
+            <div class="section-about-offer __offer-3">
+              <div class="section-about-offer_icon __icon-3"></div>
+              <div class="section-about-offer_text">
+                Ни одно из них не соответствует тем возможностям,
+                которые уже сегодня воплощены в Sio/M.
               </div>
             </div>
 
           </div>
-        </div>
-      </div>
-    </section><!-- section-equipment end -->
 
+          <div class="start-work-btn-w">
+            <a class="start-work-btn __attention link def-transition">
+              <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
+            </a>
+          </div>
+
+          <div class="section-about_bottom-title title">
+            <span class="color-attention">Как</span> <span class="color-dark">выглядит?</span>
+          </div>
+        </div>
+      </section><!-- section-about end -->
+
+      <section class="section-start paralax" id="start">
+        <div class="bg-paralax section-start_bg-paralax"></div>
+        <div class="bg-mask __dark"></div>
+
+        <div class="section-start_cnt section-cnt">
+          <div class="section-start_icon"></div>
+
+          <div class="section-start_descr">
+            <div class="section-start_title title">Start</div>
+            <div class="section-start_text">
+              Запускается при подключении мобильного коммуникатора посетителя
+              к сетям WiFi Free в публичных местах:
+              <p class="w __margin-L">
+                торговых комплексах, ресторанах, банках и т.д.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </section><!-- section-start end -->
+
+      <section class="section-i-can">
+        <div class="section-i-can_cnt section-cnt">
+
+          <div class="section-i-can_descr">
+            <div class="section-i-can_title title">Я МОГУ!</div>
+            <div class="section-i-can_text">
+              Выдаёт информацию о товарах, скидках, акциях, предложениях хитах продаж.
+              <p class="w __margin-L">
+                В рекламную выдачу может включаться как собственная информация ресторана
+                или торгового комплекса, так и реклама арендаторов
+                или сторонних рекламодателей.
+              </p>
+            </div>
+          </div>
+          <div class="section-i-can_icon"></div>
+
+        </div>
+      </section><!-- section-i-can end -->
+
+      <section class="section-you-notice paralax" id="you-notice">
+        <div class="bg-paralax section-you-notice_bg-paralax"></div>
+
+        <div class="section-you-notice_cnt section-cnt">
+          <div class="section-you-notice_icon"></div>
+
+          <div class="section-you-notice_descr">
+            <div class="section-you-notice_title title">
+              Вас заметят
+            </div>
+            <div class="section-you-notice_text">
+              Несколько уровней размещения рекламы:
+              первый экран, каталог, собственный раздел рекламодателя
+              со всеми товарными предложениями.
+              <p class="w __margin-L">
+                Возможность быстрого поиска информации через поисковую строку.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section><!-- section-you-notice end -->
+
+      <section class="section-so-easy">
+
+        <div class="section-so-easy_cnt section-cnt">
+          <div class="section-so-easy_descr">
+            <div class="section-so-easy_title title">Так просто</div>
+            <div class="section-so-easy_text">
+              Пользователь может свернуть окно выдачи рекламы и начать пользоваться интернетом,
+              значок системы будет отображаться в левом верхнем углу браузера.
+            </div>
+          </div>
+          <div class="section-so-easy_icon"></div>
+
+          <div class="start-work-btn-w section-so-easy_btn">
+            <a class="start-work-btn __attention link def-transition">
+              <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
+            </a>
+          </div>
+        </div>
+
+      </section><!-- section-so-easy end -->
+
+      <section class="section-how-it-works paralax" id="how-it-works">
+        <div class="bg-paralax section-how-it-works_bg-paralax"></div>
+
+        <div class="section-how-it-works_title title">
+          <span class="color-attention">Как</span>&nbsp;<span class="color-light">это работает?</span>
+        </div>
+
+        <div class="section-how-it-works_cnt section-cnt">
+
+          <div class="section-how-it-works_icon"></div>
+
+          <div class="section-how-it-works_text">
+            <p class="color-light">
+              Размещение своей рекламы в своих сетях Wi-Fi производится бесплатно.
+            </p>
+            <p class="w __margin-L">
+              Управление всей рекламой сетевых компаний, объединяющих множество точек продаж/обслуживания и сетей Wi-Fi
+              может производиться одним менеджером из одного личного кабинета.
+            </p>
+          </div>
+
+          <div class="section-how-it-works_place-icon"></div>
+
+          <div class="start-work-btn-w">
+            <a class="start-work-btn link def-transition">
+              <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
+            </a>
+          </div>
+        </div>
+
+      </section><!-- section-how-it-works end -->
+
+      <section class="section-only-you">
+        <div class="section-only-you_cnt">
+
+          <div class="ovh">
+            <div class="only-you-block">
+              <div class="only-you-block_icon __block-1"></div>
+              <p class="only-you-block_text">
+                Пользователь системы (ресторан, торговый центр или др.) может на платной основе размещать
+                свою рекламу в сетях Wi-Fi других пользователей.
+              </p>
+            </div>
+            <div class="only-you-block">
+              <div class="only-you-block_icon __block-2"></div>
+              <p class="only-you-block_text">
+                Личный кабинет содержит мощный графический редактор. Удобный интерфейс позволяет
+                создавать яркую, современную рекламу любому сотруднику офиса
+                без привлечения профессионального дизайнера.
+              </p>
+            </div>
+          </div>
+
+          <div class="section-only-you_text">
+            <div class="section-only-you_title-w">
+              <div class="section-only-you_title title">
+                <span class="color-dark">Только</span>&nbsp;<span class="color-attention">вы</span>
+              </div>
+              <div class="section-only-you_title-border"></div>
+            </div>
+            <p class="ft-L">
+              Владелец сети Wi-Fi
+            </p>
+            <p class="w __margin-L">
+              (ресторана, торгового центра или др.)<br/>
+              может запрещать показы сторонней рекламы в своей сети.
+            </p>
+          </div>
+
+          <div class="ovh">
+            <div class="only-you-block">
+              <div class="only-you-block_icon __block-3"></div>
+              <p class="only-you-block_text">
+                Рекламодатель самостоятельно выбирает места (рестораны, торговые центра или др.) для размещения
+                своей рекламы, а также даты начала и окончания показов рекламы. Справочная информация содержит сведения
+                о выбранных местах показов рекламы: посещаемость, характеристика аудитории,
+                фотографии фасадов и интерьеров и др.
+              </p>
+            </div>
+            <div class="only-you-block">
+              <div class="only-you-block_icon __block-4"></div>
+              <p class="only-you-block_text">
+                Все расчеты за размещение рекламы абсолютно прозрачны.
+                Стоимость рекламы объективно связана с проходимостью и престижностью места показов рекламы.
+                Состояние расчетов постоянно отображаются в личном кабинете.
+              </p>
+            </div>
+          </div>
+
+          <div class="start-work-btn-w">
+            <a class="start-work-btn __attention __section-only-you link def-transition">
+              <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
+            </a>
+          </div>
+
+        </div>
+      </section><!-- section-only-you end -->
+
+      <section class="section-advantages paralax" id="advantages">
+        <div class="bg-paralax section-advantages_bg-paralax"></div>
+
+        <div class="section-advantages_cnt section-cnt">
+          <div class="title section-advantages_title">ПРЕИМУЩЕСТВА</div>
+
+          <div class="section-advantages_plus">+</div>
+
+          <div class="section-advantages_block">
+            <span class="ft-L color-light">Эффективная реклама в месте продаж</span>
+            <p class="w __margin-L">
+              в местах с высоким потоком посетителей которую, в отличие от лайтбокса,
+              рекламного буклета или др. рекламных носителей можно менять как угодно часто.
+            </p>
+          </div>
+
+          <div class="section-advantages_block">
+            <span class="ft-L color-light">Навигационно-поисковая система</span>
+            <p class="w __margin-L">
+              дополняющая логистику крупных Торговых комплексов
+              и облегчающая поиск товара. Реклама арендаторов работает именно
+              на тех покупателей, которые находятся в поиске товара.
+            </p>
+          </div>
+
+          <div class="section-advantages_block">
+            <span class="ft-L color-light">Расширяются возможности системы. </span>
+            <p class="w __margin-L">
+              Над развитием Sio/M работает команда квалифицированных специалистов.
+              Отрабатываются новые технологии рекламных визуализации.
+              На очереди – введение возможности трансляции рекламных баннеров
+              и видео-рекламы на экранах, подключаемых к Sio/M.
+            </p>
+          </div>
+
+          <div class="section-advantages_block">
+            <a class="start-work-btn section-advantages_btn link def-transition">
+              <span class="color-light default-transition __with-attention-bg">Начать работу с Sio</span>
+            </a>
+          </div>
+
+        </div>
+      </section><!-- section-advantages end -->
+
+      <section class="section-equipment">
+
+        <div class="section-equipment_btn-w">
+          <a class="section-equipment_btn js-slide-btn" data-slide="#equipment"></a>
+        </div>
+
+        <div class="section-equipment_slide hidden" id="equipment">
+          <div class="section-equipment_angle"></div>
+          <div class="section-equipment_cnt-w">
+
+
+            <div class="section-equipment_cnt">
+              <div class="title section-equipment_title">Оборудование</div>
+
+              <div class="ovh">
+                <div class="equipment-block">
+                  <div class="equipment-block_icon">1</div>
+                  <div class="equipment-block_text">
+                    Главное требование к оборудованию - наличие поддержки функции
+                    HotSpot и сервер проксирования трафика.
+                  </div>
+                </div>
+
+                <div class="equipment-block">
+                  <div class="equipment-block_icon">2</div>
+                  <div class="equipment-block_text">
+                    При необходимости весь цикл монтажно-подготовительных работ
+                    (подключение к интернету, установка и настройка оборудования WiFi и др.)
+                    может быть выполнен сотрудниками компании CBCA.
+                    <p class="w __margin-L">
+                       Стоимость подготовительных работ определяется соответствующими сметами.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="equipment-block">
+                  <div class="equipment-block_icon">3</div>
+                  <div class="equipment-block_text">
+                    При развертывании S-Market мы отдаем предпочтение
+                    оборудованию компании Mikrotik, которое считаем
+                    наиболее удачным компромиссом между ценой и качеством.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section><!-- section-equipment end -->
+
+      <section class="section-partnership" id="partnership">
+
+        <div class="section-partnership_cnt section-cnt">
+          <div class="section-partnership_title title">Партнерство</div>
+
+          <div class="section-partnership_text">
+            Мы работаем как непосредственно с рекламодателями и/или владельцами сетей WiFi Free,
+            так и с рекламными агентствами, представляющими рекламодателей.
+          </div>
+          <div class="section-partnership_text">
+            Доход наших партнеров – 70% от сборов за размещение рекламы.
+          </div>
+          <div class="section-partnership_text">
+            В абсолютном выражении этот доход растет вместе в развитием системы,
+            с подключением дополнительных сетей Wi-Fi Free и дополнительных
+            возможностей для показов рекламы.﻿
+          </div>
+        </div>
+
+      </section><!-- section-partnership end -->
+    </div>
+
+
+    <script src="@routes.Assets.at("javascripts/lib/skrollr/dist/skrollr.min.js")"></script>
     <script src="@routes.Assets.at("javascripts/market/booklet.js")"></script>
 
   </body>
