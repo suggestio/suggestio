@@ -10,8 +10,10 @@ darkColor = black
 lightColor = white
 attentionColor = #ec1c23
 
-screenIphoneVertical = 'screen and (max-width: 320px)'
+screen768 = 'screen and (max-width: 767px)'
+screen1024 = 'screen and (max-width: 1024px)'
 screenGorizontalIpad = 'screen and (max-width: 1024px) and (orientation : landscape)'
+screenVerticallIpad = 'screen and (max-width: 1024px) and (orientation : portrait)'
 screen1200 = 'screen and (max-width: 1200px)'
 
 body
@@ -736,9 +738,9 @@ body
     title(45px)
 
 /********************************************************************************************************************/
-/* Горизонтальный Ipad */
+/* Устройстка с разрешением меньше 1024px */
 /********************************************************************************************************************/
-@media screenGorizontalIpad
+@media screen1024
 
   .ipad-visible
     display block
@@ -755,18 +757,64 @@ body
     min-height  100%
     max-height  100%
 
+  /* Section About */
+  .section-about
+    height 100%
+
+  /* Section Start */
+  .section-start
+    height 50%
+
+    &_bg-paralax
+      display none
+
+  /* Section I can */
+  .section-i-can
+    height 50%
+
+   /* Section You notice */
+  .section-you-notice
+    height 50%
+
+  /* Section So easy */
+  .section-so-easy
+    height 50%
+
+   /* Section How it works */
+  .section-how-it-works
+    height 100%
+
+    &_bg-paralax
+      display none
+
+  /* Section Only you */
+  .section-only-you
+    height      100%
+
+  /* Section Advantages */
+  .section-advantages
+    height 100%
+
+    &_bg-paralax
+      display none
+
+/********************************************************************************************************************/
+/* Горизонтальный Ipad */
+/********************************************************************************************************************/
+@media screenGorizontalIpad
+
+
+  /* Section SioMarket */
+  .section-sio-market
+
     &_cnt
       padding-top 150px
 
     &_go-bottom-btn
       bottom 50px
 
-    .bg-mask
-      display none
-
   /* Section About */
   .section-about
-    height 100%
 
     &_cnt
       padding-top 60px
@@ -790,20 +838,12 @@ body
 
   /* Section Start */
   .section-start
-    height 50%
-
-    &_bg-paralax
-      display none
-
-    .bg-mask
-      display none
 
     &_cnt
       padding-top 40px
 
   /* Section I can */
   .section-i-can
-    height 50%
 
     &_cnt
       padding-top     80px
@@ -811,7 +851,6 @@ body
 
    /* Section You notice */
   .section-you-notice
-    height 50%
 
     &_cnt
       padding-top     40px
@@ -819,7 +858,6 @@ body
 
   /* Section So easy */
   .section-so-easy
-    height 50%
 
     &_cnt
       padding-top    10px
@@ -834,10 +872,6 @@ body
 
    /* Section How it works */
   .section-how-it-works
-    height 100%
-
-    &_bg-paralax
-      display none
 
     &_title
       padding-top 100px
@@ -853,7 +887,6 @@ body
 
   /* Section Only you */
   .section-only-you
-    height      100%
 
     &_cnt
       padding-top 15px
@@ -864,10 +897,6 @@ body
 
   /* Section Advantages */
   .section-advantages
-    height 100%
-
-    &_bg-paralax
-      display none
 
     &_cnt
       padding-top 50px
@@ -882,9 +911,72 @@ body
       margin-top 30px
 
 /********************************************************************************************************************/
+/* Вертикальный Ipad */
+/********************************************************************************************************************/
+@media screenVerticallIpad
+
+  /* Section About */
+  .section-about
+
+    &_cnt
+      padding-top 60px
+
+    &_bottom-title
+      margin-top 100px
+
+  /* Section I can */
+  .section-i-can
+
+    &_cnt
+      padding-top     100px
+      padding-bottom  0
+
+    &_title
+      title(20px)
+
+  /* Section You notice */
+  .section-you-notice
+
+    &_title
+      title(10px)
+
+  /* Section So easy */
+  .section-so-easy
+
+    &_cnt
+      padding-bottom  0
+      padding-top     40px
+
+    &_btn
+      margin-top 70px
+
+    &_title
+      padding-top 35px
+      title(10px)
+
+  /* Section How it works */
+  .section-how-it-works
+
+    &_title
+      padding-top 150px
+
+    &_icon
+      margin-top 60px
+
+  /* Section Advantages */
+  .section-advantages
+
+    &_cnt
+      padding-top 60px
+
+    &_plus,
+    &_block
+      margin-top 50px
+
+/********************************************************************************************************************/
 /* Устройстка с разрешением меньше 768px */
 /********************************************************************************************************************/
-@media screenIphoneVertical
+@media screen768
 
   .phone-visible
     display block
