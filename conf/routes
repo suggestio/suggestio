@@ -163,7 +163,6 @@ POST /img/crop                          controllers.Img.imgCropSubmit
 
 # Витрины market'а.
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
 GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId)
 GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adnId)
