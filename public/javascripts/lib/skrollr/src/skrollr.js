@@ -632,6 +632,10 @@
 		return _maxKeyFrame;
 	};
 
+  Skrollr.prototype.setMaxScrollTop = function(value) {
+    _maxKeyFrame = value;
+  };
+
 	Skrollr.prototype.on = function(name, fn) {
 		_listeners[name] = fn;
 

@@ -77,6 +77,7 @@
       #skrollr-body {
         height: 100%;
         position: relative;
+        -webkit-overflow-scrolling: touch;
       }
 
 
@@ -206,6 +207,15 @@
         data-top-bottom="transform: translate3d(0px, 80%, 0px);"
         ></div>
     </div>
+
+    <div
+      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible"
+      data-anchor-target="#equipment"
+      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
+      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
+
+    </div>
+
 
 
     <header class="header" id="header">
@@ -536,13 +546,13 @@
         </div>
       </section><!-- section-advantages end -->
 
-      <section class="section-equipment">
+      <section class="section-equipment" id="equipment">
 
         <div class="section-equipment_btn-w">
-          <a class="section-equipment_btn js-slide-btn" data-slide="#equipment"></a>
+          <a class="section-equipment_btn js-slide-btn" data-slide="#equipment_slide-cnt"></a>
         </div>
 
-        <div class="section-equipment_slide hidden" id="equipment">
+        <div class="section-equipment_slide" id="equipment_slide-cnt">
           <div class="section-equipment_angle"></div>
           <div class="section-equipment_cnt-w">
 
@@ -566,7 +576,7 @@
                     (подключение к интернету, установка и настройка оборудования WiFi и др.)
                     может быть выполнен сотрудниками компании CBCA.
                     <p class="w __margin-L">
-                       Стоимость подготовительных работ определяется соответствующими сметами.
+                      Стоимость подготовительных работ определяется соответствующими сметами.
                     </p>
                   </div>
                 </div>
@@ -609,7 +619,9 @@
     </div>
 
 
-    <script src="@routes.Assets.at("javascripts/lib/skrollr/dist/skrollr.min.js")"></script>
+
+
+    <script src="@routes.Assets.at("javascripts/lib/skrollr/src/skrollr.js")"></script>
     <script src="@routes.Assets.at("javascripts/market/booklet.js")"></script>
 
   </body>

@@ -1,3 +1,7 @@
+bookletScrollr = ''
+initMaxScroll = 0
+afterHideMaxScroll = 0
+
 $ document
 .scroll () ->
 
@@ -18,8 +22,16 @@ $ document
   slideSelector = $this.attr 'data-slide'
   $slideElement = $ slideSelector
 
-  $slideElement.slideToggle()
+  $slideElement.slideToggle(
+    600
+    () ->
+      if $slideElement.is ':visible'
+        bookletScrollr.setMaxScrollTop initMaxScroll
+      else
+        bookletScrollr.setMaxScrollTop afterHideMaxScroll
+  )
 
+  console.log bookletScrollr.getMaxScrollTop()
 
 $ document
 .ready () ->
@@ -31,6 +43,17 @@ $ document
 
     skrollr.init(
       smoothScrolling: false,
-      forceHeight: true,
       mobileDeceleration: 0.004
     )
+
+    bookletScrollr = skrollr.get()
+    initMaxScroll = bookletScrollr.getMaxScrollTop()
+    console.log bookletScrollr.getMaxScrollTop()
+
+
+    $ '#equipment_slide-cnt'
+    .hide()
+
+    afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
+    console.log bookletScrollr.getMaxScrollTop()
+
