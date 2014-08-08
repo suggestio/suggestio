@@ -16,8 +16,6 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import java.{util => ju}
 
-import scala.util.Success
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -154,6 +152,7 @@ object AdnMMetadata {
   val WELCOME_AD_ID           = "welcomeAdId"
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
+  val LOCATION_ESFN           = "location"
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
@@ -198,7 +197,8 @@ object AdnMMetadata {
         humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
         info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get COLOR_ESFN) map stringParser,
-        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser
+        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
+        location    = Option(jmap get LOCATION_ESFN) flatMap GeoPoint.deserializeOpt
       )
   }
 }
@@ -232,6 +232,7 @@ case class AdnMMetadata(
   audienceDescr : Option[String] = None,
   humanTrafficAvg: Option[Int]   = None,
   info          : Option[String] = None,
+  location      : Option[GeoPoint] = None,
   // перемещено из visual
   color         : Option[String] = None,
   welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
@@ -271,6 +272,8 @@ case class AdnMMetadata(
       acc0 ::= COLOR_ESFN -> JsString(color.get)
     if (welcomeAdId.isDefined)
       acc0 ::= WELCOME_AD_ID -> JsString(welcomeAdId.get)
+    if (location.isDefined)
+      acc0 ::= LOCATION_ESFN -> location.get.toPlayGeoJson
     JsObject(acc0)
   }
 

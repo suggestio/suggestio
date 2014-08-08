@@ -14,6 +14,9 @@ import io.suggest.model.MVirtualIndex
 import org.elasticsearch.node.{NodeBuilder, Node}
 import org.elasticsearch.cluster.ClusterName
 
+// TODO Как показала практика, XContentBuilder слегка взрывоопасен и слишком изменяем. Следует тут задействовать
+//      статически-типизированный play.json для генерации json-маппингов.
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -469,7 +472,7 @@ case class IndexSettings(
   cache_field_type : String = "soft"
 ) extends JsonObject {
 
-  def id = null
+  override def id = null
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     // Рендерим настройки всякие
@@ -496,7 +499,7 @@ case class IndexSettings(
    * @return
    */
   protected def maybeRenderListOf(list:Seq[Renderable], name:String)(implicit b:XContentBuilder) {
-    if (!list.isEmpty) {
+    if (list.nonEmpty) {
       b.startObject(name)
         list map { _.builder }
       b.endObject()
@@ -510,7 +513,7 @@ case class IndexSettings(
 trait JsonObject extends Renderable {
   def id: String
   
-  def builder(implicit b: XContentBuilder): XContentBuilder = {
+  override def builder(implicit b: XContentBuilder): XContentBuilder = {
     if (id != null) {
       b.startObject(id)
     }
@@ -547,15 +550,15 @@ case class AnalyzerCustom(
   filters : Seq[String]
 ) extends Analyzer {
   
-  def typ = "custom"
+  override def typ = "custom"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (!charFilters.isEmpty)
+    if (charFilters.nonEmpty)
       b.array("char_filter", charFilters : _*)
     if (tokenizer != null)
       b.field("tokenizer", tokenizer)
-    if (!filters.isEmpty)
+    if (filters.nonEmpty)
      b.array("filter", filters : _*)
   }
 }
@@ -573,7 +576,7 @@ case class TokenizerStandard(
   max_token_length : Int = 255
 ) extends Tokenizer {
   
-  def typ = "standard"
+  override def typ = "standard"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -594,7 +597,7 @@ case class FilterStopwords(
   stopwords : String    // = english, russian, etc
 ) extends Filter {
 
-  def typ = "stop"
+  override def typ = "stop"
 
   override def fieldsBuilder(implicit b:XContentBuilder) {
     super.fieldsBuilder
@@ -610,7 +613,7 @@ case class FilterWordDelimiter(
   preserve_original : Boolean = false
 ) extends Filter {
 
-  def typ = "word_delimiter"
+  override def typ = "word_delimiter"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -627,7 +630,7 @@ case class FilterStemmer(
   language : String
 ) extends Filter {
 
-  def typ = "stemmer"
+  override def typ = "stemmer"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -638,12 +641,12 @@ case class FilterStemmer(
 
 /** Фильтр lowercase. */
 case class FilterLowercase(id : String) extends Filter{
-  def typ = "lowercase"
+  override def typ = "lowercase"
 }
 
 /** Фильтр standard. */
 case class FilterStandard(id: String) extends Filter {
-  def typ = "standard"
+  override def typ = "standard"
 }
 
 /** Фильтр edge-ngram. */
@@ -654,7 +657,7 @@ case class FilterEdgeNgram(
   side : String = "front"
 ) extends Filter {
 
-  def typ = "edgeNGram"
+  override def typ = "edgeNGram"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -754,7 +757,6 @@ with FieldIncludeInAll
 with FieldBoostable
 with FieldNullable
 
-
 /** Поле строки. */
 case class FieldString(
   id : String,
@@ -777,7 +779,7 @@ case class FieldString(
 
 ) extends DocFieldIndexable with TextField {
 
-  def fieldType = DocFieldTypes.string
+  override def fieldType = DocFieldTypes.string
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -837,7 +839,7 @@ case class FieldDate(
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None
 ) extends FieldApprox {
-  def fieldType = DocFieldTypes.date
+  override def fieldType = DocFieldTypes.date
 }
 
 
@@ -851,7 +853,7 @@ case class FieldBoolean(
   boost : Option[Float] = None,
   null_value : String = null
 ) extends DocFieldIndexable {
-  def fieldType = DocFieldTypes.boolean
+  override def fieldType = DocFieldTypes.boolean
 }
 
 
@@ -860,7 +862,7 @@ case class FieldBinary(
   id : String,
   index_name : String = null
 ) extends DocField with FieldInxName {
-  def fieldType = DocFieldTypes.binary
+  override def fieldType = DocFieldTypes.binary
 }
 
 
@@ -900,7 +902,7 @@ case class FieldTtl(
   store: Boolean = true,
   index: FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
 ) extends FieldEnableable with FieldStoreable with FieldIndexable {
-  def id: String = FIELD_TTL
+  override def id: String = FIELD_TTL
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -918,7 +920,7 @@ case class FieldAll(
   index_analyzer : String = null,
   search_analyzer : String = null
 ) extends FieldEnableable with TextField with FieldStoreable {
-  def id = FIELD_ALL
+  override def id = FIELD_ALL
 }
 
 
@@ -927,18 +929,18 @@ case class FieldId(
   store: Boolean = false,
   path: String = null
 ) extends FieldStoreable with FieldIndexable with FieldWithPath {
-  def id = FIELD_ID
+  override def id = FIELD_ID
 }
 
 
 /** Поле _source */
 case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
-  def id = FIELD_SOURCE
+  override def id = FIELD_SOURCE
 }
 
 /** static-поле для активации parent-child отношений. Автоматически включает принудительное поле _routing. */
 case class FieldParent(typ: String) extends Field with TypedJsonObject {
-  def id = "_parent"
+  override def id = "_parent"
 }
 
 trait FieldWithPath extends Field {
@@ -958,7 +960,7 @@ case class FieldRouting(
   index : FieldIndexingVariant = null,
   path  : String = null
 ) extends FieldStoreable with FieldIndexable with FieldWithPath {
-  def id = FIELD_ROUTING
+  override def id = FIELD_ROUTING
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -971,12 +973,11 @@ case class FieldRouting(
 /** Мультиполе multi_field. */
 case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends DocField {
   
-  def fieldType = DocFieldTypes.multi_field
+  override def fieldType = DocFieldTypes.multi_field
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-
-    if (!fields.isEmpty) {
+    if (fields.nonEmpty) {
       b.startObject("fields")
         fields map { _.builder }
       b.endObject()
@@ -989,7 +990,7 @@ trait FieldWithProperties extends Field {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (!properties.isEmpty) {
+    if (properties.nonEmpty) {
       b.startObject("properties")
         properties foreach { _.builder }
       b.endObject()
@@ -1016,12 +1017,12 @@ extends JsonObject {
 
 /** Генератор маппинга индекса со всеми полями и блекджеком. */
 case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
-  def id = typ
+  override def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     staticFields map { _.builder }
     super.fieldsBuilder(b)
-    if (!dynTemplates.isEmpty) {
+    if (dynTemplates.nonEmpty) {
       b.startArray("dynamic_templates")
       dynTemplates.foreach { _.builder }
       b.endArray()
@@ -1037,7 +1038,7 @@ case class FieldObject(
   properties  : Seq[DocField],
   enabled     : Boolean = true
 ) extends DocField with FieldWithProperties with FieldEnableable {
-  def fieldType = DocFieldTypes.`object`
+  override def fieldType = DocFieldTypes.`object`
 }
 
 /** Nested-объекты описаны тут. Nested хранятся как отдельные документы. */
@@ -1048,7 +1049,7 @@ case class FieldNestedObject(
   includeInParent: Boolean = false,
   includeInRoot: Boolean = false
 ) extends DocField with FieldWithProperties with FieldEnableable {
-  def fieldType = DocFieldTypes.nested
+  override def fieldType = DocFieldTypes.nested
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -1056,6 +1057,112 @@ case class FieldNestedObject(
      .field("include_in_root", includeInRoot)
   }
 }
+
+
+/** lat_lon флаг позволяет управлять отдельной индексацией широты и долготы.
+  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_indexed_fields]] */
+trait LatLon extends Field {
+  def latLon: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("lat_lon", latLon)
+  }
+}
+
+/** geohash -- система кодирования координат в географические регионы.
+  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_geohashes]]
+ */
+trait Geohash extends Field {
+  def geohash: Boolean
+  def geohashPrecision: String    // "12" | "20m"
+  def geohashPrefix: Boolean      // Note: This option implicitly enables geohash
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (geohash)
+      b.field("geohash", geohash)
+    if (geohashPrecision != null && !geohashPrecision.isEmpty)
+      b.field("geohash_precision", geohashPrecision)
+    if (geohashPrefix)
+      b.field("geohash_prefix", geohashPrefix)
+  }
+}
+
+/** Поле с флагом для валидации. */
+trait Validate extends Field {
+  def validate: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("validate", validate)
+  }
+}
+
+trait ValidateLatLon extends Field {
+  def validateLat: Boolean
+  def validateLon: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("validate_lat", validateLat)
+     .field("validate_lon", validateLon)
+  }
+}
+
+trait Normalize extends Field {
+  def normalize: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("normalize", normalize)
+  }
+}
+
+trait NormalizeLatLon extends Field {
+  def normalizeLat: Boolean
+  def normalizeLon: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (normalizeLat)
+      b.field("normalize_lat", normalizeLat)
+    if (normalizeLon)
+      b.field("normalize_lon", normalizeLon)
+  }
+}
+
+trait PrecisionStep extends Field {
+  def precisionStep: Int
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (precisionStep > 0)
+      b.field("precision_step", precisionStep)
+  }
+}
+
+
+/** Маппинг для географической точки на земле. Точка выражается через координаты либо геохеш оных.
+  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]] */
+case class FieldGeoPoint(
+  id            : String,
+  latLon        : Boolean = false,
+  geohash       : Boolean = false,
+  geohashPrecision: String = null,      // "12" | "20m"
+  geohashPrefix : Boolean = false,      // Note: This option implicitly enables geohash
+  validate      : Boolean = false,
+  validateLat   : Boolean = false,
+  validateLon   : Boolean = false,
+  normalize     : Boolean = true,
+  normalizeLat  : Boolean = false,
+  normalizeLon  : Boolean = false,
+  precisionStep : Int = -1
+) extends DocField with LatLon with Geohash with Validate with ValidateLatLon with Normalize with NormalizeLatLon with PrecisionStep {
+  override def fieldType = DocFieldTypes.geo_point
+}
+
+
 
 // END: DSL полей документа --------------------------------------------------------------------------------------------
 
@@ -1094,7 +1201,7 @@ trait SioEsClient {
       .clusterName(getEsClusterName)
     // На продакшене бывает полезно задать адреса узла/узлов кластера по юникасту.
     val uh = unicastHosts
-    if (!uh.isEmpty) {
+    if (uh.nonEmpty) {
       println("ES-client: using unicast cluster discovery: " + uh.mkString(", "))
       nb.getSettings
         .put("discovery.zen.ping.multicast.enabled", false)
@@ -1133,11 +1240,11 @@ trait SioEsClient {
  * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
  */
 class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
-  def onResponse(response: T) {
+  override def onResponse(response: T) {
     promise success response
   }
 
-  def onFailure(ex: Throwable) {
+  override def onFailure(ex: Throwable) {
     promise failure ex
   }
 }

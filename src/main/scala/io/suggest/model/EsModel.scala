@@ -196,6 +196,12 @@ object EsModel extends MacroLogsImpl {
       floatParser(fs.head.asInstanceOf[AnyRef])
     case f: jl.Number => f.floatValue()
   }
+  val doubleParser: PartialFunction[Any, Double] = {
+    case null               => ???
+    case fs: jl.Iterable[_] =>
+      doubleParser(fs.head.asInstanceOf[AnyRef])
+    case f: jl.Number => f.doubleValue()
+  }
   val stringParser: PartialFunction[Any, String] = {
     case null => null
     case strings: jl.Iterable[_] =>
