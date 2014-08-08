@@ -27,8 +27,11 @@ object EMAdnMMetadataStatic {
 
   val META_ESFN         = "meta"
 
-  def META_FLOOR_ESFN           = META_ESFN + "." + AdnMMetadata.FLOOR_ESFN
-  def META_WELCOME_AD_ID_ESFN   = META_ESFN + "." + AdnMMetadata.WELCOME_AD_ID
+  private def fullFN(fn: String) = META_ESFN + "." + fn
+
+  def META_FLOOR_ESFN           = fullFN( AdnMMetadata.FLOOR_ESFN )
+  def META_WELCOME_AD_ID_ESFN   = fullFN( AdnMMetadata.WELCOME_AD_ID )
+  def META_LOCATION_ESFN        = fullFN( AdnMMetadata.LOCATION_ESFN )
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -152,7 +155,7 @@ object AdnMMetadata {
   val WELCOME_AD_ID           = "welcomeAdId"
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
-  val LOCATION_ESFN           = "location"
+  val LOCATION_ESFN           = "loc"
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
@@ -176,7 +179,12 @@ object AdnMMetadata {
     FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // Перемещено из visual - TODO Перенести в conf.
     FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false)
+    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false),
+    // location. Снижаем точность хешей до необходимых в целях.
+    FieldGeoPoint(LOCATION_ESFN, latLon = true,
+      geohash = true, geohashPrefix = true,  geohashPrecision = "8",
+      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "1m")
+    )
   )
 
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */

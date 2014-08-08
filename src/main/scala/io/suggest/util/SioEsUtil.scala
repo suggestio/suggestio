@@ -1082,8 +1082,14 @@ trait Geohash extends Field {
     super.fieldsBuilder
     if (geohash)
       b.field("geohash", geohash)
-    if (geohashPrecision != null && !geohashPrecision.isEmpty)
-      b.field("geohash_precision", geohashPrecision)
+    if (geohashPrecision != null && !geohashPrecision.isEmpty) {
+      val ghFn = "geohash_precision"
+      if (geohashPrecision matches "\\d+") {
+        b.field(ghFn, geohashPrecision.toInt)
+      } else {
+        b.field(ghFn, geohashPrecision)
+      }
+    }
     if (geohashPrefix)
       b.field("geohash_prefix", geohashPrefix)
   }
@@ -1143,6 +1149,31 @@ trait PrecisionStep extends Field {
 }
 
 
+object GeoPointFieldDataFormats extends Enumeration {
+  type GeoPointFieldDataFormat = Value
+  val compressed, array = Value
+}
+
+import GeoPointFieldDataFormats._
+
+case class GeoPointFieldData(format: GeoPointFieldDataFormat, precision: String = null)
+trait GeoPointFieldDataField extends Field {
+  def fieldData: GeoPointFieldData
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    val fd = fieldData
+    if (fd != null) {
+      b.startObject("fielddata")
+        .field("format", fd.format.toString)
+      if (fd.precision != null)
+        b.field("precision", fd.precision)
+      b.endObject()
+    }
+  }
+}
+
+
 /** Маппинг для географической точки на земле. Точка выражается через координаты либо геохеш оных.
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]] */
 case class FieldGeoPoint(
@@ -1157,8 +1188,10 @@ case class FieldGeoPoint(
   normalize     : Boolean = true,
   normalizeLat  : Boolean = false,
   normalizeLon  : Boolean = false,
-  precisionStep : Int = -1
-) extends DocField with LatLon with Geohash with Validate with ValidateLatLon with Normalize with NormalizeLatLon with PrecisionStep {
+  precisionStep : Int = -1,
+  fieldData     : GeoPointFieldData = null
+) extends DocField with LatLon with Geohash with Validate with ValidateLatLon with Normalize with NormalizeLatLon
+  with PrecisionStep with GeoPointFieldDataField {
   override def fieldType = DocFieldTypes.geo_point
 }
 

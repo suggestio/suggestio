@@ -1,15 +1,12 @@
 package io.suggest.model.common
 
 import io.suggest.model._
-import org.elasticsearch.common.xcontent.XContentBuilder
-import EsModel._
+import io.suggest.model.EsModel.{FieldsJsonAcc, asJsonStrArray}
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.libs.json.{JsString, JsValue, JsArray}
-import EsModel.asJsonStrArray
 
 /**
  * Suggest.io
@@ -19,6 +16,8 @@ import EsModel.asJsonStrArray
  */
 
 object EMPersonIds {
+  val PERSON_ID_ESFN = "personId"
+
   def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
 }
 
@@ -62,7 +61,7 @@ trait EMPersonIdsStatic extends EsModelStaticT {
   }
 
   def countByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    count(personIdQuery(personId))
+    countByQuery(personIdQuery(personId))
   }
 }
 

@@ -9,7 +9,7 @@ import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.model.EsModelMinimalStaticT
-import io.suggest.ym.model.common.EMReceivers
+import io.suggest.ym.model.common.{DynSearchArgs, EsDynSearchStatic, EMReceivers}
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -167,7 +167,7 @@ object AdsSearch {
 
 
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
-trait AdsSearchArgsT {
+trait AdsSearchArgsT extends DynSearchArgs {
   // Ниже Seq брать нельзя, т.к. используется vararhs конструкция вида (x : _*), которая требует Seq[T].
 
   /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
@@ -185,12 +185,6 @@ trait AdsSearchArgsT {
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]
 
-  /** Макс.кол-во результатов. */
-  def maxResults: Int
-
-  /** Абсолютный сдвиг в результатах (постраничный вывод). */
-  def offset: Int
-
   /** Форсировать указанные id в начало списка (через мощный скоринг). */
   def forceFirstIds: Seq[String]
 
@@ -199,7 +193,10 @@ trait AdsSearchArgsT {
 
   /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
   def generation: Option[Long]
+
+  override def toEsQuery = AdsSearch.prepareEsQuery(this)
 }
+
 
 /** Трейт враппера над экземпляром [[AdsSearchArgsT]]. */
 trait AdsSearchArgsWrapperT extends AdsSearchArgsT {
@@ -218,21 +215,12 @@ trait AdsSearchArgsWrapperT extends AdsSearchArgsT {
 
 
 /** Если нужно добавить в рекламную модель поиск по рекламным карточкам, то следует задействовать вот этот трейт. */
-trait AdsSimpleSearchT extends EsModelMinimalStaticT {
-
-  def searchAdsReqBuilder(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client) = {
-    val query = AdsSearch.prepareEsQuery(adSearch)
-    // Запускаем собранный запрос.
-    prepareSearch
-      .setQuery(query)
-      .setSize(Math.min(200, Math.max(1, adSearch.maxResults)))
-      .setFrom(Math.max(0, adSearch.offset))
-  }
+trait AdsSimpleSearchT extends EsDynSearchStatic[AdsSearchArgsT] {
 
   /** Постпроцессинг результатов поиска рекламных карточек. */
-  private def postprocessSearchResults(adSearch: AdsSearchArgsT, resultFut: Future[Seq[T]])(implicit ec: ExecutionContext): Future[Seq[T]] = {
+  private def postprocessSearchResults(args: AdsSearchArgsT, resultFut: Future[Seq[T]])(implicit ec: ExecutionContext): Future[Seq[T]] = {
     // TODO Надо бы сделать так, что Seq могла быть и List
-    if (adSearch.qOpt.isEmpty) {
+    if (args.qOpt.isEmpty) {
       resultFut.map { rnd.shuffle(_) }
     } else {
       resultFut
@@ -243,10 +231,8 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
    * Поиск карточек в ТЦ по критериям.
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def searchAds(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    val resultFut = searchAdsReqBuilder(adSearch)
-      .execute()
-      .map { searchResp2list }
+  override def dynSearch(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+    val resultFut = super.dynSearch(adSearch)
     postprocessSearchResults(adSearch, resultFut)
   }
 
@@ -255,22 +241,18 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
    * @param adSearch Экземпляр, описывающий поисковый запрос.
    * @return Фьючерс с кол-вом совпадений.
    */
-  def countAds(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+  override def dynCount(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
     // Необходимо выкинуть из запроса ненужные части.
     val adSearch2 = new AdsSearchArgsWrapperT {
       override def underlying = adSearch
       override def generation = None
       override def forceFirstIds = Nil
     }
-    val query = AdsSearch.prepareEsQuery(adSearch2)
-    count(query)
+    super.dynCount(adSearch2)
   }
 
-  def searchAdsRt(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val resultFut = searchAdsReqBuilder(adSearch)
-      .setNoFields()
-      .execute()
-      .flatMap { searchResp2RtMultiget(_) }
+  override def dynSearchRt(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val resultFut = super.dynSearchRt(adSearch)
     postprocessSearchResults(adSearch, resultFut)
   }
 

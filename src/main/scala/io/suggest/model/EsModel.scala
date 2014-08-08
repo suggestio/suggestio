@@ -90,31 +90,19 @@ object EsModel extends MacroLogsImpl {
 
 
   // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
-  val COMPANY_ID_ESFN   = "companyId"
   val MART_ID_ESFN      = "martId"
   val NAME_ESFN         = "name"
-  val DATE_CREATED_ESFN = "dateCreated"
   val DESCRIPTION_ESFN  = "description"
   val SHOP_ID_ESFN      = "shopId"
   val AUTH_INFO_ESFN    = "authInfo"
   val URL_ESFN          = "url"
-  val ADDRESS_ESFN      = "address"
-  val SITE_URL_ESFN     = "siteUrl"
   val PARENT_ID_ESFN    = "parentId"
   val PERSON_ID_ESFN    = "personId"
   val KEY_ESFN          = "key"
   val VALUE_ESFN        = "value"
   val IS_VERIFIED_ESFN  = "isVerified"
-  val TOWN_ESFN         = "town"
-  val COUNTRY_ESFN      = "country"
-  val CATEGORY_ESFN     = "cat"
-  val CATEGORY_ID_ESFN  = "catId"
-  val PRIO_ESFN         = "prio"
-  val PHONE_ESFN        = "phone"
-  val LOGO_IMG_ESFN     = "logoImg"
   val LOGO_IMG_ID_ESFN  = "logoImgId"
   /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
-  val SETTINGS_ESFN     = "settings"
   val META_ESFN         = "meta"
 
   val MAX_RESULTS_DFLT = 100
@@ -480,7 +468,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
-  def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+  def countByQuery(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
     prepareCount
       .setQuery(query)
       .execute()
@@ -492,7 +480,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @return Неотрицательное целое.
    */
   def countAll(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    count(QueryBuilders.matchAllQuery())
+    countByQuery(QueryBuilders.matchAllQuery())
   }
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.

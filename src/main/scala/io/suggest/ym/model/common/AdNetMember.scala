@@ -56,16 +56,14 @@ object AdNetMember {
 
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
-  // Абсолютные (плоские) имена полей. Используются при поиске.
-  val ADN_MI_SUPERVISOR_ID_ESFN = fullFN(SUPERVISOR_ID_ESFN)
-  val ADN_MI_MEMBER_TYPE_ESFN   = fullFN(MEMBER_TYPE_ESFN)
-  val ADN_MI_PRODUCER_IDS_ESFN  = fullFN(PRODUCER_IDS_ESFN)
-  val ADN_MI_ADV_DELEGATE_ESFN  = fullFN(ADV_DELEGATE_ESFN)
-
-  // Полные (flat) имена используемых полей. Используются при составлении поисковых запросов.
-  val PS_IS_ENABLED_ESFN = fullFN(IS_ENABLED_ESFN)
-  val PS_LEVELS_MAP_ESFN = fullFN(SHOW_LEVELS_ESFN)
-  val PS_DISABLE_REASON_ESFN = fullFN(DISABLE_REASON_ESFN)
+  // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
+  def ADN_SUPERVISOR_ID_ESFN  = fullFN(SUPERVISOR_ID_ESFN)
+  def ADN_MEMBER_TYPE_ESFN    = fullFN(MEMBER_TYPE_ESFN)
+  def ADN_PRODUCER_IDS_ESFN   = fullFN(PRODUCER_IDS_ESFN)
+  def ADN_ADV_DELEGATE_ESFN   = fullFN(ADV_DELEGATE_ESFN)
+  def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
+  def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
+  def ADN_IS_ENABLED_ESFN     = fullFN(IS_ENABLED_ESFN)
 
 
   /** Генератор es-query для указанного member type.
@@ -73,16 +71,16 @@ object AdNetMember {
     * @return QueryBuilder.
     */
   def adnMemberTypeQuery(memberType: AdNetMemberType) = {
-    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString())
+    QueryBuilders.termQuery(ADN_MEMBER_TYPE_ESFN, memberType.toString())
   }
 
   /** Сгенерить запрос для поиска по внешним продьюсерам. */
   def incomingProducerIdQuery(producerId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
+    QueryBuilders.termQuery(ADN_PRODUCER_IDS_ESFN, producerId)
   }
 
   def supIdQuery(supId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_MI_SUPERVISOR_ID_ESFN, supId)
+    QueryBuilders.termQuery(ADN_SUPERVISOR_ID_ESFN, supId)
   }
 
   /**
@@ -91,7 +89,7 @@ object AdNetMember {
    * @return QueryBuilder.
    */
   def advDelegatesQuery(adnId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_MI_ADV_DELEGATE_ESFN, adnId)
+    QueryBuilders.termQuery(ADN_ADV_DELEGATE_ESFN, adnId)
   }
 
 
@@ -102,7 +100,7 @@ object AdNetMember {
    */
   def adnRightsAllQuery(rights: Seq[AdnRight]): QueryBuilder = {
     QueryBuilders
-      .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
+      .termsQuery(ADN_RIGHTS_ESFN, rights.map(_.toString()) : _*)
       .minimumMatch(rights.size)
   }
 
@@ -110,8 +108,7 @@ object AdNetMember {
   def filterOutTestNodes(qb0: QueryBuilder): QueryBuilder = {
     // Фильтруем инвертированно (tn != true), т.к. изначально у узлов не было флагов TEST_NODE.
     val filter = FilterBuilders.notFilter(
-      FilterBuilders.termFilter(TEST_NODE_ESFN, true)
-    )
+      FilterBuilders.termFilter(ADN_TEST_NODE_ESFN, true))
     QueryBuilders.filteredQuery(qb0, filter)
   }
 
@@ -202,11 +199,11 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   def getSupIdOf(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
     prepareGet(id)
       .setFetchSource(false)
-      .setFields(ADN_MI_SUPERVISOR_ID_ESFN)
+      .setFields(ADN_SUPERVISOR_ID_ESFN)
       .execute()
       .map { getResp =>
         // Если not found, то getFields() возвращает пустую карту.
-        Option(getResp.getFields.get(ADN_MI_SUPERVISOR_ID_ESFN))
+        Option(getResp.getFields.get(ADN_SUPERVISOR_ID_ESFN))
           .flatMap { field =>
             Option(stringParser(field.getValue))
           }
@@ -228,11 +225,11 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
                  (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     var query: QueryBuilder = supIdQuery(supId)
     if (onlyEnabled) {
-      val isEnabledFilter = FilterBuilders.termFilter(PS_IS_ENABLED_ESFN, true)
+      val isEnabledFilter = FilterBuilders.termFilter(ADN_IS_ENABLED_ESFN, true)
       query = QueryBuilders.filteredQuery(query, isEnabledFilter)
     }
     if (companyId.isDefined) {
-      val ciFilter = FilterBuilders.termFilter(COMPANY_ID_ESFN, companyId)
+      val ciFilter = FilterBuilders.termFilter(EMCompanyId.COMPANY_ID_ESFN, companyId)
       query = QueryBuilders.filteredQuery(query, ciFilter)
     }
     val req = prepareSearch

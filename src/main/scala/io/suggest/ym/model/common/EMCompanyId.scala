@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModel, EsModelT}
-import EsModel._
+import EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -16,6 +16,14 @@ import play.api.libs.json.JsString
  * Description: Аддон для ES-моделей, содержащий поле companyId.
  */
 
+object EMCompanyId {
+  val COMPANY_ID_ESFN = "companyId"
+}
+
+
+import EMCompanyId._
+
+
 trait EMCompanyIdStatic extends EsModelStaticT {
   override type T <: EMCompanyId
 
@@ -26,7 +34,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (COMPANY_ID_ESFN, value)    => acc.companyId = companyIdParser(value)
+      case (COMPANY_ID_ESFN, value)    => acc.companyId = stringParser(value)
     }
   }
 
@@ -54,7 +62,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
     * @return Long.
     */
   def countByCompanyId(companyId: String)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
-    count( companyIdQuery(companyId) )
+    countByQuery( companyIdQuery(companyId) )
   }
 
 }

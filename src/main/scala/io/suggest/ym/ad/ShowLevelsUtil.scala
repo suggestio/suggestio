@@ -98,7 +98,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
         )
         val maxOnLevel = lvlMap(lvl)
         val queryFinal = QueryBuilders.filteredQuery(queryL, noIdFilter)
-        MAd.count(queryFinal) map {
+        MAd.countByQuery(queryFinal) map {
           countOnLevel =>
             lvl -> (countOnLevel.toInt < maxOnLevel)
         }

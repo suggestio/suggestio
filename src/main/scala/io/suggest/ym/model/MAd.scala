@@ -241,7 +241,7 @@ case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn:
       override def generation = None
       override def withoutIds = Nil
     }
-    MAd.searchAds(searchArgs).map {
+    MAd.dynSearch(searchArgs).map {
       _.map(_.toJsonPretty)
         .mkString("\n,\n")
     }

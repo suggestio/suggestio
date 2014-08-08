@@ -32,6 +32,7 @@ object MAdnNode
   with EMImgGalleryStatic
   with EsModelStaticIgnore
   with MacroLogsImpl
+  with AdnNodesSearch
 {
   override val ES_TYPE_NAME = "adnNode"
 
