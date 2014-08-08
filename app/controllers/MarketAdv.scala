@@ -2,6 +2,7 @@ package controllers
 
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.twirl.api.HtmlFormat
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
@@ -11,10 +12,9 @@ import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
-import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
-import util.billing.MmpDailyBilling, MmpDailyBilling.assertAdvsReqRowsDeleted
+import util.billing.MmpDailyBilling
 import java.util.Currency
 import play.api.data._, Forms._
 

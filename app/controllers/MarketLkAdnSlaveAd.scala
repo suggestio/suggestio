@@ -121,7 +121,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
       receiverIds = request.supNode.id.get :: listAdnId,
       producerIds = listAdnId
     )
-    MAd.searchAdsRt(req) map { mads =>
+    MAd.dynSearchRt(req) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,
         mads = mads

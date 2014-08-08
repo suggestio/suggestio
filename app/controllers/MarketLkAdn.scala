@@ -363,7 +363,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       receiverIds = List(request.supNode.id.get),
       producerIds = List(adnId)
     )
-    MAd.searchAdsRt(req) map { mads =>
+    MAd.dynSearchRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
     }
   }

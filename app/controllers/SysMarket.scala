@@ -722,7 +722,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   def showAdnNodeAds(a: AdSearch) = IsSuperuser.async { implicit request =>
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
-    val madsFut = MAd.searchAds(a)
+    val madsFut = MAd.dynSearch(a)
     // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
     val adnNodeIdOpt = a.producerIds.headOption orElse a.receiverIds.headOption
     val adFreqsFut = adnNodeIdOpt

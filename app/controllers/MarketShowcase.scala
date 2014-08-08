@@ -43,19 +43,22 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
 
   /** Экшн, который рендерит скрипт с икнокой */
   def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(nodeIconJsTpl( request.adnNode )).as("text/javascript")
+    Ok( nodeIconJsTpl(request.adnNode) ) as "text/javascript"
   }
 
   /** Экшн, который выдает базовую инфу о ноде */
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
     val node = request.adnNode
-    Ok( Jsonp(JSONP_CB_FUN, Json.obj(
-        "action" -> "setData",
-        "color" -> node.meta.color,
-        "logo_src" -> node.logoImgOpt.map( logo_src => {
-          JsString(routes.Img.getImg(logo_src.filename).toString())
-        })
-      ) ))
+    val logoSrcOpt = node.logoImgOpt map { logo_src =>
+      val call = routes.Img.getImg(logo_src.filename)
+      JsString(call.url)
+    }
+    val json = JsObject(Seq(
+      "action"   -> JsString("setData"),
+      "color"    -> node.meta.color.fold [JsValue] (JsNull) (JsString.apply),
+      "logo_src" -> (logoSrcOpt getOrElse JsNull)
+    ))
+    Ok( Jsonp(JSONP_CB_FUN, json) )
   }
 
   /** Рендер интерфейса выдачи для указанного продьюсера. */
@@ -109,7 +112,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       levels        = List(AdShowLevels.LVL_MEMBERS_CATALOG)
     )
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
+    val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
       .map { _.toMap }
     // Текущие категории узла
     val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
@@ -154,7 +157,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       }
       "findAds" -> adsearch3
     }
-    val madsFut: Future[Seq[MAd]] = MAd.searchAds(adSearch2)
+    val madsFut: Future[Seq[MAd]] = MAd.dynSearch(adSearch2)
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
     val madsRenderedFut = madsFut flatMap { mads0 =>
       val mads1 = groupNarrowAds(mads0)
@@ -185,9 +188,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       } else {
         adSearch.copy(forceFirstIds = Nil, withoutIds = adSearch.forceFirstIds)
       }
-      MAd.searchAds(adSearch2)
+      MAd.dynSearch(adSearch2)
     }
-    val madsCountFut = MAd.countAds(adSearch)  // В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется.
+    val madsCountFut = MAd.dynCount(adSearch)  // В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется.
     val producersFut = MAdnNodeCache.multiGet(adSearch.producerIds)
     // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
     val mads2Fut: Future[Seq[MAd]] = if (adSearch.forceFirstIds.nonEmpty) {
