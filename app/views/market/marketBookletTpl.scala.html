@@ -220,16 +220,16 @@
 
     <header class="header" id="header">
       <div class="header_cnt">
-        <a class="header_logo link">
+        <a class="header_logo link" href="@routes.MarketLk.lkIndex">
           <span class="color-attention def-transition">Sio</span><span class="color-light default-transition">Market</span>
         </a>
 
         <nav class="header_nav top-menu">
-          <a class="top-menu_i link def-transition">О приложении</a>
-          <a class="top-menu_i link def-transition">Как выглядит?</a>
-          <a class="top-menu_i link def-transition">Как работает?</a>
-          <a class="top-menu_i link def-transition">Преимущества</a>
-          <a class="top-menu_i link def-transition">Партнерство</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#about">О приложении</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-looks">Как выглядит?</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-works">Как работает?</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#advantages">Преимущества</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#partnership">Партнерство</a>
         </nav>
       </div>
     </header><!-- header end -->
@@ -242,7 +242,8 @@
             <span class="color-light">Market</span>
           </h2>
 
-          <img class="section-sio-market_logo" src='@routes.Assets.at("images/market/booklet/section-sio-market_logo.png")' width="50"/>
+          <img class="section-sio-market_logo not-retina" src='@routes.Assets.at("images/market/booklet/section-sio-market_logo.png")' width="50"/>
+          <img class="section-sio-market_logo retina" src='@routes.Assets.at("images/market/booklet/retina/section-sio-market_logo.png")' width="50"/>
 
           <div class="section-sio-market_text">
             <p class="ft-S">
@@ -253,14 +254,14 @@
               трафика  пользователей сетей<br/>
               <span class="section-sio-market_wifi">WiFi Free</span>
             </p>
-            <a class="start-work-btn __section-sio-market link def-transition">
+            <a class="start-work-btn __section-sio-market link def-transition js-slide-to" href="#partnership">
               <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
             </a>
           </div>
 
         </div>
 
-        <a class="section-sio-market_go-bottom-btn"></a>
+        <a class="section-sio-market_go-bottom-btn js-slide-to" href="#about"></a>
 
       </section><!-- section-sio-market end -->
 
@@ -309,8 +310,8 @@
 
           </div>
 
-          <div class="start-work-btn-w">
-            <a class="start-work-btn __attention link def-transition">
+          <div class="start-work-btn-w" id="how-it-looks">
+            <a class="start-work-btn __attention link def-transition js-slide-to" href="#partnership">
               <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
             </a>
           </div>
@@ -396,7 +397,7 @@
           <div class="section-so-easy_icon"></div>
 
           <div class="start-work-btn-w section-so-easy_btn">
-            <a class="start-work-btn __attention link def-transition">
+            <a class="start-work-btn __attention link def-transition js-slide-to" href="#partnership">
               <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
             </a>
           </div>
@@ -428,7 +429,7 @@
           <div class="section-how-it-works_place-icon"></div>
 
           <div class="start-work-btn-w">
-            <a class="start-work-btn link def-transition">
+            <a class="start-work-btn link def-transition js-slide-to" href="#partnership">
               <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
             </a>
           </div>
@@ -494,7 +495,7 @@
           </div>
 
           <div class="start-work-btn-w">
-            <a class="start-work-btn __attention __section-only-you link def-transition">
+            <a class="start-work-btn __attention __section-only-you link def-transition js-slide-to" href="#partnership">
               <span class="color-light __strong default-transition">Начать работу с</span><span class="color-attention __strong def-transition"> Sio</span>
             </a>
           </div>
@@ -538,7 +539,7 @@
           </div>
 
           <div class="section-advantages_block">
-            <a class="start-work-btn section-advantages_btn link def-transition">
+            <a class="start-work-btn section-advantages_btn link def-transition js-slide-to" href="#partnership">
               <span class="color-light default-transition __with-attention-bg">Начать работу с Sio</span>
             </a>
           </div>
@@ -552,7 +553,7 @@
           <a class="section-equipment_btn js-slide-btn" data-slide="#equipment_slide-cnt"></a>
         </div>
 
-        <div class="section-equipment_slide" id="equipment_slide-cnt">
+        <div class="section-equipment_slide hidden" id="equipment_slide-cnt">
           <div class="section-equipment_angle"></div>
           <div class="section-equipment_cnt-w">
 
@@ -612,6 +613,14 @@
             В абсолютном выражении этот доход растет вместе в развитием системы,
             с подключением дополнительных сетей Wi-Fi Free и дополнительных
             возможностей для показов рекламы.﻿
+          </div>
+          <div class="section-partnership_btns">
+            <a class="section-partnership_phone" href="tel:88126407646">
+              8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
+            </a>
+            <a class="section-partnership_mail">
+              Запросить инвайт
+            </a>
           </div>
         </div>
 

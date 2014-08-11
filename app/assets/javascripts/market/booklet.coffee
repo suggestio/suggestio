@@ -9,7 +9,7 @@ $ document
   $header = $ '#header'
   scrollTop = $document.scrollTop()
 
-  if scrollTop > 500
+  if scrollTop > 50
     $header.addClass '__js-dark'
   else
     $header.removeClass '__js-dark'
@@ -25,35 +25,63 @@ $ document
   $slideElement.slideToggle(
     600
     () ->
-      if $slideElement.is ':visible'
-        bookletScrollr.setMaxScrollTop initMaxScroll
-      else
-        bookletScrollr.setMaxScrollTop afterHideMaxScroll
+      if bookletScrollr
+        bookletScrollr.refresh()
   )
 
-  console.log bookletScrollr.getMaxScrollTop()
+
 
 $ document
-.ready () ->
+.on 'click', '.js-slide-to', (e) ->
+  e.preventDefault()
+  $this = $ this
+  targetSelector = $this.attr 'href'
+  $target = $ targetSelector
+  targetScrollTop = $target.offset().top
+
+  if bookletScrollr
+    currentScrollTop = bookletScrollr.getScrollTop()
+    targetScrollTop = targetScrollTop + currentScrollTop
+    bookletScrollr.animateTo targetScrollTop
+  else
+    $ 'body, html'
+    .animate(
+      scrollTop: targetScrollTop,
+      800
+    )
+
+
+initScrollr = () ->
 
   $window = $ window
   winWidth = $window.width()
 
   if winWidth <= 1024
 
-    skrollr.init(
-      smoothScrolling: false,
-      mobileDeceleration: 0.004
-    )
+    if bookletScrollr
 
-    bookletScrollr = skrollr.get()
-    initMaxScroll = bookletScrollr.getMaxScrollTop()
-    console.log bookletScrollr.getMaxScrollTop()
+      bookletScrollr.refresh()
+
+    else
+      skrollr.init(
+        smoothScrolling: false,
+        mobileDeceleration: 0.004,
+        render: (data) ->
+          $header = $ '#header'
+          if data.curTop > 50
+            $header.addClass '__js-dark'
+          else
+            $header.removeClass '__js-dark'
+      )
+
+      bookletScrollr = skrollr.get()
 
 
-    $ '#equipment_slide-cnt'
-    .hide()
+$ document
+.ready () ->
 
-    afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
-    console.log bookletScrollr.getMaxScrollTop()
+  initScrollr()
 
+$ window
+.resize () ->
+  initScrollr()

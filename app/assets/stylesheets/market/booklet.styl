@@ -17,6 +17,8 @@ screenVerticallIpad = 'screen and (max-width: 1024px) and (orientation : portrai
 screenIphone4 = 'screen and (max-width: 767px) and (device-aspect-ratio: 2/3)'
 screenIphone5 = 'screen and (max-width: 767px) and (device-aspect-ratio: 40/71)'
 screen1200 = 'screen and (max-width: 1200px)'
+retina = "only screen and (-Webkit-min-device-pixel-ratio: 1.5), only screen and (-moz-min-device-pixel-ratio: 1.5), only screen and (-o-min-device-pixel-ratio: 3/2), only screen and (min-device-pixel-ratio: 1.5)"
+
 
 body
   font-family   'Open Sans'
@@ -187,6 +189,19 @@ body
 
       &:hover
         color #d5d5d5
+
+    .header_logo
+
+      .color-light
+        color #878787
+
+    .header_logo:hover
+
+      .color-light
+        color attentionColor
+
+      .color-attention
+        color #878787
 
   &_cnt
     position  relative
@@ -713,6 +728,56 @@ body
     font-size   12px
     text-align  center
 
+  &_btns
+    overflow  hidden
+    max-width 430px
+    margin    100px auto 0
+
+  &_phone
+    float               left
+    margin-left         50px
+    width               140px
+    padding-top         100px
+    height              40px
+
+    border              2px solid transparent
+    background-color    #f44040
+    background-image    url('/assets/images/market/booklet/phone-icon.png')
+    background-repeat   no-repeat
+    background-position center 20px
+
+    cursor              pointer
+    color               white
+    text-align          center
+    text-decoration     none
+    border-radius(10px)
+
+  &_mail
+    float               right
+    margin-right        50px
+    width               140px
+    padding-top         100px
+    height              40px
+
+    border              2px solid #f44040
+    background-image    url('/assets/images/market/booklet/mail-icon.png')
+    background-repeat   no-repeat
+    background-position center 35px
+
+    cursor              pointer
+    color               #828282
+    text-align          center
+    border-radius(10px)
+
+    &:hover
+      color               white
+      background-color    #f44040
+      background-image    url('/assets/images/market/booklet/mail-icon_white.png')
+
+
+.retina
+  display none
+
 /********************************************************************************************************************/
 /* Устройства с разрешением меньше 1200px */
 /********************************************************************************************************************/
@@ -977,6 +1042,12 @@ body
     &_plus,
     &_block
       margin-top 50px
+
+  /* Section Equipment */
+  .section-equipment
+
+    &_btn-w
+      padding-top 80px
 
 /********************************************************************************************************************/
 /* Устройства с разрешением меньше 768px */
@@ -1245,14 +1316,31 @@ body
   .section-partnership
 
     &_cnt
-      padding 35px 0
+      padding 10px 0
 
     &_title
       title(5px)
 
     &_text
-      margin-top 20px
+      margin-top 10px
 
+    &_btns
+      margin-top  10px
+      max-width   300px
+
+    &_phone
+      margin-left         10px
+      width               120px
+      height              30px
+      padding-top         90px
+      background-position center 20px
+
+    &_mail
+      margin-right        10px
+      width               120px
+      height              50px
+      padding-top         70px
+      background-position center 20px
 
 
 /********************************************************************************************************************/
@@ -1260,9 +1348,29 @@ body
 /********************************************************************************************************************/
 @media screenIphone5
 
+  /* Section Sio market */
+  .section-sio-market_cnt
+    padding-top 50px
+
   /* Section About */
   .section-about
     height 200%
+
+    &_cnt
+      padding-top 50px
+
+  .section-you-notice_cnt
+    padding-top 60px
+
+  .section-so-easy_cnt
+    padding-top 60px
+
+  .section-i-can_cnt
+    padding-top 60px
+
+  /* Section Start */
+  .section-start_cnt
+    padding-top 70px
 
   /* Section Advantages */
   .section-advantages
@@ -1330,3 +1438,116 @@ body
 
     &_icon.__block-4
       background-position 0 -195px
+
+
+  /* Section Partnership */
+  .section-partnership
+
+    &_btns
+      margin-top  10px
+      max-width   300px
+
+    &_phone
+      margin-left         30px
+      width               80px
+      height              20px
+      padding-top         60px
+      font-size           10px
+      background-position center 10px
+      background-size     auto 40px
+
+    &_mail
+      margin-right        30px
+      width               80px
+      height              35px
+      padding-top         45px
+      font-size           10px
+      background-position center 15px
+      background-size     60px auto
+
+/********************************************************************************************************************/
+/* Retina ready */
+/********************************************************************************************************************/
+@media retina
+
+  .not-retina
+    display none
+
+  .retina
+    display block
+
+  .section-about-offer_icon
+    background-image  url('/assets/images/market/booklet/retina/section-about-icons.png')
+    background-size   103px auto
+
+    &.__icon-1
+      background-position 0 0
+
+    &.__icon-2
+      background-position 0 -128px
+
+    &.__icon-3
+      background-position 0 -256px
+
+  .section-start_icon
+    background-image  url('/assets/images/market/booklet/retina/section-start_icon.png')
+    background-size   auto 150px
+
+  .section-i-can_icon
+    background-image  url('/assets/images/market/booklet/retina/section-i-can_icon.png')
+    background-size   260px auto
+
+  .section-you-notice_icon
+    background-image  url('/assets/images/market/booklet/retina/section-you-notice_icon.png')
+    background-size   260px auto
+
+  .section-so-easy_icon
+    background-image  url('/assets/images/market/booklet/retina/section-so-easy_icon.png')
+    background-size   auto 150px
+
+  .section-how-it-works_icon
+    background-image  url('/assets/images/market/booklet/retina/section-how-it-works_icon.png')
+    background-size   100% auto
+
+  .section-how-it-works_place-icon
+    background-image  url('/assets/images/market/booklet/retina/place-icon.png')
+    background-size   100% auto
+
+  .only-you-block_icon
+    background-image  url('/assets/images/market/booklet/retina/section-only-you_icons.png')
+    background-size   90px 404px
+
+    &.__block-1
+      background-position 0 0
+
+    &.__block-2
+      background-position 0 -108px
+
+    &.__block-3
+      background-position 0 -233px
+
+    &.__block-4
+      background-position 0 -337px
+
+
+  .section-only-you_title-border
+    background-image    url('/assets/images/market/booklet/retina/section-only-you_border.png')
+    background-repeat   repeat-x
+    background-size     35px auto
+    background-position center bottom
+
+  .section-equipment_btn
+    background-image  url('/assets/images/market/booklet/retina/section-equipment_btn.png')
+    background-size   74px auto
+
+  .section-partnership_phone
+    background-image  url('/assets/images/market/booklet/retina/phone-icon.png')
+    background-size   35px auto
+
+  .section-partnership_mail
+    background-image  url('/assets/images/market/booklet/retina/mail-icon.png')
+    background-size   102px auto
+
+    &:hover
+      background-image url('/assets/images/market/booklet/retina/mail-icon_white.png')
+      background-size  102px auto
