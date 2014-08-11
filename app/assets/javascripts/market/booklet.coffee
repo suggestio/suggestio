@@ -85,6 +85,9 @@ initScrollr = () ->
     $equipmentSlideCnt.hide()
     afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
 
+  else
+    $equipmentSlideCnt.hide()
+
 
 $ document
 .ready () ->
