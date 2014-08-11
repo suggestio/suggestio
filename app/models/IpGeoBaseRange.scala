@@ -16,7 +16,9 @@ import util.AnormInetAddress._
 
 // TODO Хотелось бы CIDR-таблицу с подсетями, а не диапазоны. Это будет работать быстрее и есть меньше ресурсов.
 
-object IpGeoBaseRange {
+object IpGeoBaseRange extends Truncate {
+
+  override type T = IpGeoBaseRange
 
   val TABLE_NAME = "ipgeobase_range"
 
@@ -34,11 +36,6 @@ object IpGeoBaseRange {
       .as(rowParser *)
   }
 
-
-  def truncateTable(implicit c: Connection): Int = {
-    SQL("TRUNCATE TABLE " + TABLE_NAME)
-      .executeUpdate()
-  }
 }
 
 
@@ -50,7 +47,7 @@ case class IpGeoBaseRange(
   end         : InetAddress,
   countryIso2 : String,
   cityId      : Option[Int]
-) extends SqlModelSave[IpGeoBaseRange] {
+) extends SqlModelSave[IpGeoBaseRange] with IpGeoBaseCityIdOpt {
 
   override def hasId = false
 

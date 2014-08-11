@@ -183,3 +183,12 @@ trait FromJson {
   type T
   def fromJson: PartialFunction[AnyRef, T]
 }
+
+
+/** Аддон для Static-модели, добавляющий метод быстрой для очистки всей таблицы. */
+trait Truncate extends SqlModelStaticMinimal {
+  def truncateTable(implicit c: Connection): Int = {
+    SQL("TRUNCATE TABLE " + TABLE_NAME)
+      .executeUpdate()
+  }
+}

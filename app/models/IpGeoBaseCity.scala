@@ -17,26 +17,46 @@ object IpGeoBaseCity extends SqlModelStatic {
   override type T = IpGeoBaseCity
   override val rowParser: RowParser[T] = {
     import SqlParser._
-    
+    get[Int]("id") ~ get[String]("city_name") ~ get[String]("region") ~ get[Double]("lat") ~ get[Double]("lon") map {
+      case id ~ cityName ~ region ~ lat ~ lon =>
+        IpGeoBaseCity(id = id, cityName = cityName, region = region, lat = lat, lon = lon)
+    }
   }
+
 }
 
 import IpGeoBaseCity._
 
 case class IpGeoBaseCity(
-  id        : Option[Int],
+  id        : Int,
   cityName  : String,
   region    : String,
   lat       : Double,
   lon       : Double
-) extends SqlModelSave[IpGeoBaseCity] with SqlModelDelete {
+) extends SqlModelSave[IpGeoBaseCity] {
 
-  override def hasId = id.isDefined
+  override def hasId = true
 
   override def saveInsert(implicit c: Connection): IpGeoBaseCity = {
-    SQL()
+    SQL(s"INSERT INTO $TABLE_NAME(id, city_name, region, lat, lon) VALUES({id}, {cityName}, {region}, {lat}, {lon})")
+      .on('id -> id, 'cityName -> cityName, 'region -> region, 'lat -> lat, 'lon -> lon)
+      .executeInsert(rowParser single)
   }
 
-  override def saveUpdate(implicit c: Connection): Int = ???
+  override def saveUpdate(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET city_name = {cityName}, region = {region}, lat = {lat}, lon = {lon} WHERE id = {id}")
+      .on('id -> id, 'cityName -> cityName, 'region -> region, 'lat -> lat, 'lon -> lon)
+      .executeUpdate()
+  }
 }
 
+
+/** Примесь к экземпляру другой модели, которая имеет необязательное поле со значением city_id. */
+trait IpGeoBaseCityIdOpt {
+  def cityId: Option[Int]
+  def cityOpt(implicit c: Connection): Option[IpGeoBaseCity] = {
+    cityId flatMap { _cityId =>
+      IpGeoBaseCity.getById(_cityId)
+    }
+  }
+}
