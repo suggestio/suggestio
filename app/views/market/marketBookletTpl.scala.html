@@ -1,5 +1,8 @@
 @()(implicit ctx: Context)
 
+@import play.api.Play.current
+
+
 @* Страница с вертикальной презенташкой sio market. *@
 
 <!DOCTYPE html>
@@ -14,7 +17,7 @@
 
     <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
 
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,700,700italic&subset=latin,cyrillic-ext' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,600italic,400italic,600,300italic,300,700,700italic,800,800italic&subset=latin,cyrillic-ext' rel='stylesheet' type='text/css'>
     <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
     <style>
@@ -254,11 +257,14 @@
               трафика  пользователей сетей<br/>
               <span class="section-sio-market_wifi">WiFi Free</span>
             </p>
-            <a class="start-work-btn __section-sio-market link def-transition js-slide-to" href="#partnership">
-              <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
-            </a>
           </div>
 
+        </div>
+
+        <div class="start-work-btn-w section-sio-market_btn">
+          <a class="start-work-btn link def-transition js-slide-to" href="#partnership">
+            <span class="color-light default-transition">Начать работу с</span><span class="color-attention def-transition"> Sio</span>
+          </a>
         </div>
 
         <a class="section-sio-market_go-bottom-btn js-slide-to" href="#about"></a>
@@ -279,7 +285,7 @@
             владельцы которого заинтересованы в привлечении посетителей.
           </div>
 
-          <div class="section-about_icons-title title">Мы предлагаем</div>
+          <div class="section-about_icons-title">Мы предлагаем</div>
           <div class="section-about_offers">
 
             <div class="section-about-offer __offer-1">
@@ -317,7 +323,8 @@
           </div>
 
           <div class="section-about_bottom-title title">
-            <span class="color-attention">Как</span> <span class="color-dark">выглядит?</span>
+            <span class="color-attention">Как</span>
+            <span class="color-dark">выглядит?</span>
           </div>
         </div>
       </section><!-- section-about end -->
@@ -336,6 +343,13 @@
               <p class="w __margin-L">
                 торговых комплексах, ресторанах, банках и т.д.
               </p>
+            </div>
+            <div class="start-work-btn-w section-start_btn">
+              @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+                <a class="start-work-btn link def-transition" href="@routes.MarketShowcase.demoWebSite(demoAdnId)">
+                  <span class="color-light default-transition">Демо</span>
+                </a>
+              }
             </div>
           </div>
 
@@ -452,8 +466,7 @@
               <div class="only-you-block_icon __block-2"></div>
               <p class="only-you-block_text">
                 Личный кабинет содержит мощный графический редактор. Удобный интерфейс позволяет
-                создавать яркую, современную рекламу любому сотруднику офиса
-                без привлечения профессионального дизайнера.
+                создавать яркую, современную рекламу.
               </p>
             </div>
           </div>
@@ -553,7 +566,7 @@
           <a class="section-equipment_btn js-slide-btn" data-slide="#equipment_slide-cnt"></a>
         </div>
 
-        <div class="section-equipment_slide hidden" id="equipment_slide-cnt">
+        <div class="section-equipment_slide" id="equipment_slide-cnt">
           <div class="section-equipment_angle"></div>
           <div class="section-equipment_cnt-w">
 
@@ -618,7 +631,7 @@
             <a class="section-partnership_phone" href="tel:88126407646">
               8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
             </a>
-            <a class="section-partnership_mail">
+            <a class="section-partnership_mail" href="mailto:support@suggest.io">
               Запросить инвайт
             </a>
           </div>

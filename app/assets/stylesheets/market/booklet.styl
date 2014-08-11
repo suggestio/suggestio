@@ -5,6 +5,8 @@ title( v )
   letter-spacing v
   padding-left   v
   text-align     center
+  font-size      30px
+  font-weight    700
 
 darkColor = black
 lightColor = white
@@ -33,10 +35,12 @@ body
   display none
 
 .ft-S
-  font-size 12px
+  font-size   16px
+  font-weight 300
 
 .ft-L
-  font-size 18px
+  font-size   18px
+  font-weight 300
 
 .color-dark
   color darkColor
@@ -181,27 +185,14 @@ body
   transition(all 0.4s linear 0s)
 
   &.__js-dark
-    background-color  rgba(250,250,250,0.9)
-    border-bottom     1px solid #cdcdcd
+    background-color  rgba(88,88,88,0.9)
+    border-bottom     1px solid #777777
 
     .top-menu_i
-      color #878787
+      color       white
 
       &:hover
         color #d5d5d5
-
-    .header_logo
-
-      .color-light
-        color #878787
-
-    .header_logo:hover
-
-      .color-light
-        color attentionColor
-
-      .color-attention
-        color #878787
 
   &_cnt
     position  relative
@@ -229,6 +220,7 @@ body
     width       120px
     text-align  center
     color       #7a857d
+    font-weight 300
 
     &:hover
       color #d5d5d5
@@ -245,6 +237,7 @@ body
   min-height        700px
   max-height        1081px /* высота изображения бэкграунда */
   background-image  url('/assets/images/market/booklet/section-sio-market_bg.jpg')
+  background-size   cover
 
   &_cnt
     position    relative
@@ -252,7 +245,6 @@ body
     padding-top 200px
 
   &_title
-    font-size       28px
     title(40px)
 
   &_logo
@@ -268,7 +260,13 @@ body
 
   &_wifi
     color     #e3e3e3
-    font-size 24px
+    font-size 24p
+
+  &_btn
+    position  absolute
+    bottom    150px
+    left      0
+    width     100%
 
   &_go-bottom-btn
     position    absolute
@@ -291,8 +289,7 @@ body
     padding-top 150px
 
   &_title
-    color           #acaaaa
-    font-size       36px
+    color           #666
     title(40px)
 
 
@@ -300,13 +297,14 @@ body
     text-align  center
     margin-top  80px
     font-size   20px
-    color       #5e5e5e
+    color       #4c4c4c
 
   &_wifi-text
     text-align  center
     margin-top  15px
-    font-size   12px
-    color       #cac9c9
+    font-size   16px
+    font-weight 300
+    color       #666
 
   &_icons-title
     text-align  center
@@ -316,12 +314,12 @@ body
 
   &_offers
     overflow      hidden /* внутри элементы со свойством float */
-    margin-top    45px
+    margin-top    90px
     margin-bottom 90px
     text-align    center
 
   &_bottom-title
-    margin-top      200px
+    margin-top      150px
     margin-bottom   50px
     title(40px)
 
@@ -348,9 +346,10 @@ body
   &_text
     margin-top  15px
     padding     0 10px
-    color       #cac9c9
+    color       #666
     text-align  center
-    font-size   12px
+    font-size   14px
+    font-weight 300
 
 /********************************************************************************************************************/
 /* Section Start */
@@ -379,13 +378,19 @@ body
     font-size   12px
 
   &_title
-    padding-top     30px
-    padding-bottom  50px
+    padding-top     10px
+    padding-bottom  20px
     color           attentionColor
     title(40px)
 
   &_text
+    font-size   16px
+    font-weight 300
+    color       white
     padding 0 10px
+
+  &_btn
+    margin-top 30px
 
 /********************************************************************************************************************/
 /* Section I can */
@@ -402,8 +407,9 @@ body
     float       left
     width       50%
 
-    color       #9b9b9b
-    font-size   12px
+    color       #666
+    font-size   16px
+    font-weight 300
     text-align  center
 
   &_title
@@ -444,8 +450,9 @@ body
     overflow    hidden
     width       50%
 
-    color       #9b9b9b
-    font-size   12px
+    color       white
+    font-size   16px
+    font-weight 300
     text-align  center
 
   &_title
@@ -470,8 +477,9 @@ body
     float       left
     width       50%
 
-    color       #9b9b9b
-    font-size   12px
+    color       #666
+    font-size   16px
+    font-weight 300
     text-align  center
 
   &_title
@@ -521,7 +529,8 @@ body
   &_text
     max-width   650px
     margin      70px auto 0
-    font-size   12px
+    font-size   16px
+    font-weight 300
     color       #9b9b9b
     text-align  center
 
@@ -549,8 +558,9 @@ body
   &_text
     margin-top    70px
     margin-bottom 50px
-    color         #9b9b9b
-    font-size     12px
+    color         #666
+    font-size     16px
+    font-weight   300
     text-align    center
 
   &_title-w
@@ -593,9 +603,10 @@ body
   &_text
     margin-top  15px
     padding     0 15px
-    color       #9b9b9b
+    color       #666
     text-align  center
-    font-size   12px
+    font-size   14px
+    font-weight 300
 
 /********************************************************************************************************************/
 /* Section Advantages */
@@ -635,7 +646,8 @@ body
     margin-top    70px
     color         #e7e7e7
     text-align    center
-    font-size     12px
+    font-size     14px
+    font-weight   300
 
 /********************************************************************************************************************/
 /* Section Equipment */
@@ -704,8 +716,9 @@ body
     margin-top  30px
     padding     0 10px
 
-    color       #8b8b8b
-    font-size   12px
+    color       #666
+    font-size   14px
+    font-weight 300
     text-align  center
 
 /********************************************************************************************************************/
@@ -724,8 +737,9 @@ body
     max-width   500px
     padding     0 10px
 
-    color       #c0c0c0
-    font-size   12px
+    color       #666
+    font-size   16px
+    font-weight 300
     text-align  center
 
   &_btns
@@ -828,6 +842,9 @@ body
   .section-about
     height 100%
 
+    &_bottom-title
+      title(30px)
+
   /* Section Start */
   .section-start
     height 50%
@@ -890,7 +907,7 @@ body
       padding-top 60px
 
     &_wifi-title
-      margin-top 40px
+      margin-top 15px
 
     &_wifi-text
       margin-top  5px
@@ -969,16 +986,24 @@ body
   .section-advantages
 
     &_cnt
-      padding-top 50px
+      padding-top 60px
 
     &_plus
-      margin-top 30px
+      margin-top 20px
 
     &_btn
       margin-top 0
 
     &_block
-      margin-top 30px
+      margin-top 20px
+
+  /* Section Partnership */
+  .section-partnership
+
+    &_btns
+      margin-top 50px
+
+
 
 /********************************************************************************************************************/
 /* Вертикальный Ipad */
@@ -1049,6 +1074,100 @@ body
     &_btn-w
       padding-top 80px
 
+
+
+/********************************************************************************************************************/
+/* Retina ready */
+/********************************************************************************************************************/
+@media retina
+
+  .not-retina
+    display none
+
+  .retina
+    display block
+
+  .section-sio-market_go-bottom-btn
+    background-image  url('/assets/images/market/booklet/retina/go-bottom-icon.png')
+    background-size   27px auto
+
+  .section-about-offer_icon
+    background-image  url('/assets/images/market/booklet/retina/section-about-icons.png')
+    background-size   103px auto
+
+    &.__icon-1
+      background-position 0 0
+
+    &.__icon-2
+      background-position 0 -128px
+
+    &.__icon-3
+      background-position 0 -256px
+
+  .section-start_icon
+    background-image  url('/assets/images/market/booklet/retina/section-start_icon.png')
+    background-size   auto 100%
+
+  .section-i-can_icon
+    background-image  url('/assets/images/market/booklet/retina/section-i-can_icon.png')
+    background-size   335px auto
+
+  .section-you-notice_icon
+    background-image  url('/assets/images/market/booklet/retina/section-you-notice_icon.png')
+    background-size   321px auto
+
+  .section-so-easy_icon
+    background-image  url('/assets/images/market/booklet/retina/section-so-easy_icon.png')
+    background-size   auto 100%
+
+  .section-how-it-works_icon
+    background-image  url('/assets/images/market/booklet/retina/section-how-it-works_icon.png')
+    background-size   100% auto
+
+  .section-how-it-works_place-icon
+    background-image  url('/assets/images/market/booklet/retina/place-icon.png')
+    background-size   100% auto
+
+  .only-you-block_icon
+    background-image  url('/assets/images/market/booklet/retina/section-only-you_icons.png')
+    background-size   90px 404px
+
+    &.__block-1
+      background-position 0 0
+
+    &.__block-2
+      background-position 0 -108px
+
+    &.__block-3
+      background-position 0 -233px
+
+    &.__block-4
+      background-position 0 -337px
+
+
+  .section-only-you_title-border
+    background-image    url('/assets/images/market/booklet/retina/section-only-you_border.png')
+    background-repeat   repeat-x
+    background-size     35px auto
+    background-position center bottom
+
+  .section-equipment_btn
+    background-image  url('/assets/images/market/booklet/retina/section-equipment_btn.png')
+    background-size   74px auto
+
+  .section-partnership_phone
+    background-image  url('/assets/images/market/booklet/retina/phone-icon.png')
+    background-size   35px auto
+
+  .section-partnership_mail
+    background-image  url('/assets/images/market/booklet/retina/mail-icon.png')
+    background-size   102px auto
+
+    &:hover
+      background-image url('/assets/images/market/booklet/retina/mail-icon_white.png')
+      background-size  102px auto
+
+
 /********************************************************************************************************************/
 /* Устройства с разрешением меньше 768px */
 /********************************************************************************************************************/
@@ -1069,7 +1188,7 @@ body
       margin-top 10px
 
     &.__section-only-you
-      margin-top 10px
+      margin-top 0
 
   .w
 
@@ -1090,6 +1209,9 @@ body
 
     &_title
       title(25px)
+
+    &_btn
+      bottom 10px
 
     &_logo
       margin-top 10px
@@ -1131,7 +1253,7 @@ body
     &_bottom-title
       margin-top    25px
       margin-bottom 15px
-      title(5px)
+      title(0)
 
   .section-about-offer
     float         none
@@ -1176,6 +1298,7 @@ body
     &_icon
       float           none
       width           260px
+      height          150px
       margin          0 auto
       background-size 100% auto
 
@@ -1237,29 +1360,33 @@ body
       padding-bottom 20px
 
     &_title
-      padding-top 10px
+      padding-top 0
       title(0)
 
     &_icon
-      margin-top 20px
+      margin-top 5px
+      width           53px
+      height          53px
+      background-size 100% auto
 
     &_text
-      margin-top 20px
+      margin-top 10px
+      padding 0 10px
 
     &_place-icon
-      margin-top    10px
-      margin-bottom 20px
+      margin-top    0
+      margin-bottom 5px
 
   /* Section Only you */
   .section-only-you
-    height 250%
+    height 300%
 
     &_cnt
-      padding-top 10px
-      padding-bottom 10px
+      padding-top 30px
+      padding-bottom 0
 
     &_text
-      margin-top    0
+      margin-top    50px
       margin-bottom 50px
       padding       0 10px
 
@@ -1275,18 +1402,21 @@ body
   .only-you-block
     float         none
     width         auto
-    margin-bottom 20px
+    margin-bottom 30px
 
   /* Section Advantages */
   .section-advantages
     height 200%
 
+    &_plus
+      margin-top 20px
+
     &_cnt
       padding-top 10px
 
     &_title
-      font-size 20px
       title(5px)
+      font-size 20px
 
     &_block
       margin-top 20px
@@ -1316,13 +1446,14 @@ body
   .section-partnership
 
     &_cnt
-      padding 10px 0
+      padding 0
 
     &_title
       title(5px)
 
     &_text
-      margin-top 10px
+      margin-top 5px
+      font-size  14px
 
     &_btns
       margin-top  10px
@@ -1342,35 +1473,36 @@ body
       padding-top         70px
       background-position center 20px
 
-
 /********************************************************************************************************************/
 /* Iphone 5 */
 /********************************************************************************************************************/
 @media screenIphone5
 
   /* Section Sio market */
-  .section-sio-market_cnt
-    padding-top 50px
+  .section-sio-market
+
+    &_cnt
+      padding-top 30px
 
   /* Section About */
   .section-about
     height 200%
 
     &_cnt
-      padding-top 50px
+      padding-top 20px
 
   .section-you-notice_cnt
-    padding-top 60px
+    padding-top 20px
 
   .section-so-easy_cnt
-    padding-top 60px
+    padding-top 20px
 
   .section-i-can_cnt
-    padding-top 60px
+    padding-top 20px
 
   /* Section Start */
   .section-start_cnt
-    padding-top 70px
+    padding-top 20px
 
   /* Section Advantages */
   .section-advantages
@@ -1387,13 +1519,44 @@ body
     &_btn
       margin-top 20px
 
+  .section-how-it-works_place-icon
+    margin-bottom 20px
+
+  .section-start_icon
+    background-size   auto 150px
+
+  .section-i-can_icon
+    background-size   260px auto
+
+  .section-you-notice_icon
+    background-size   260px auto
+
+  .section-so-easy_icon
+    background-size   auto 150px
+
 /********************************************************************************************************************/
 /* Iphone 4 */
 /********************************************************************************************************************/
 @media screenIphone4
 
+  /* Section Sio market */
+  .section-sio-market
+
+    &_cnt
+      padding-top 0
+
+    &_logo
+      margin-top 0
+
+    &_text
+      font-size   14px
+      padding-top 10px
+
   /* Section About */
   .section-about
+
+    &_wifi-text
+      font-size 14px
 
     .start-work-btn-w
       display none
@@ -1401,11 +1564,39 @@ body
     &_bottom-title
       display none
 
+  .section-start
+
+    &_cnt
+      padding-top 5px
+
+    &_title
+      padding 0
+
+    &_text
+      font-size 14px
+
+    &_btn
+      margin-top 10px
+
+  .section-i-can_text
+    font-size 14px
+
+  .section-you-notice
+
+    &_title
+      padding-bottom 0
+
+    &_descr
+      font-size 14px
+
   /* Section So easy */
   .section-so-easy
 
     &_cnt
       padding-top     10px
+
+    &_text
+      font-size 14px
 
     &_icon
       margin-top 10px
@@ -1414,11 +1605,13 @@ body
       margin-top 10px
 
   /* Section How it works */
-  .section-how-it-works_icon
-    margin-top      0
-    width           53px
-    height          53px
-    background-size 100% auto
+  .section-how-it-works
+
+    .start-work-btn-w
+      display none
+
+    &_text
+      font-size 14px
 
   .only-you-block
 
@@ -1426,9 +1619,11 @@ body
       margin-top 5px
 
     &_icon
-      width           45px
-      height          60px
-      background-size 45px auto
+      width             45px
+      height            60px
+      background-image  url('/assets/images/market/booklet/section-only-you_icons.png')
+      background-repeat no-repeat
+      background-size   45px auto
 
     &_icon.__block-2
       background-position 0 -60px
@@ -1464,90 +1659,3 @@ body
       font-size           10px
       background-position center 15px
       background-size     60px auto
-
-/********************************************************************************************************************/
-/* Retina ready */
-/********************************************************************************************************************/
-@media retina
-
-  .not-retina
-    display none
-
-  .retina
-    display block
-
-  .section-about-offer_icon
-    background-image  url('/assets/images/market/booklet/retina/section-about-icons.png')
-    background-size   103px auto
-
-    &.__icon-1
-      background-position 0 0
-
-    &.__icon-2
-      background-position 0 -128px
-
-    &.__icon-3
-      background-position 0 -256px
-
-  .section-start_icon
-    background-image  url('/assets/images/market/booklet/retina/section-start_icon.png')
-    background-size   auto 150px
-
-  .section-i-can_icon
-    background-image  url('/assets/images/market/booklet/retina/section-i-can_icon.png')
-    background-size   260px auto
-
-  .section-you-notice_icon
-    background-image  url('/assets/images/market/booklet/retina/section-you-notice_icon.png')
-    background-size   260px auto
-
-  .section-so-easy_icon
-    background-image  url('/assets/images/market/booklet/retina/section-so-easy_icon.png')
-    background-size   auto 150px
-
-  .section-how-it-works_icon
-    background-image  url('/assets/images/market/booklet/retina/section-how-it-works_icon.png')
-    background-size   100% auto
-
-  .section-how-it-works_place-icon
-    background-image  url('/assets/images/market/booklet/retina/place-icon.png')
-    background-size   100% auto
-
-  .only-you-block_icon
-    background-image  url('/assets/images/market/booklet/retina/section-only-you_icons.png')
-    background-size   90px 404px
-
-    &.__block-1
-      background-position 0 0
-
-    &.__block-2
-      background-position 0 -108px
-
-    &.__block-3
-      background-position 0 -233px
-
-    &.__block-4
-      background-position 0 -337px
-
-
-  .section-only-you_title-border
-    background-image    url('/assets/images/market/booklet/retina/section-only-you_border.png')
-    background-repeat   repeat-x
-    background-size     35px auto
-    background-position center bottom
-
-  .section-equipment_btn
-    background-image  url('/assets/images/market/booklet/retina/section-equipment_btn.png')
-    background-size   74px auto
-
-  .section-partnership_phone
-    background-image  url('/assets/images/market/booklet/retina/phone-icon.png')
-    background-size   35px auto
-
-  .section-partnership_mail
-    background-image  url('/assets/images/market/booklet/retina/mail-icon.png')
-    background-size   102px auto
-
-    &:hover
-      background-image url('/assets/images/market/booklet/retina/mail-icon_white.png')
-      background-size  102px auto

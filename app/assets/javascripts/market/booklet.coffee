@@ -26,7 +26,11 @@ $ document
     600
     () ->
       if bookletScrollr
-        bookletScrollr.refresh()
+
+        if $slideElement.is ':visible'
+          bookletScrollr.setMaxScrollTop initMaxScroll
+        else
+          bookletScrollr.setMaxScrollTop afterHideMaxScroll
   )
 
 
@@ -55,13 +59,14 @@ initScrollr = () ->
 
   $window = $ window
   winWidth = $window.width()
+  $equipmentSlideCnt = $ '#equipment_slide-cnt'
 
   if winWidth <= 1024
 
+    $equipmentSlideCnt.show()
     if bookletScrollr
 
       bookletScrollr.refresh()
-
     else
       skrollr.init(
         smoothScrolling: false,
@@ -76,6 +81,10 @@ initScrollr = () ->
 
       bookletScrollr = skrollr.get()
 
+    initMaxScroll = bookletScrollr.getMaxScrollTop()
+    $equipmentSlideCnt.hide()
+    afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
+
 
 $ document
 .ready () ->
@@ -84,4 +93,9 @@ $ document
 
 $ window
 .resize () ->
-  initScrollr()
+
+  window.setTimeout(
+    () ->
+      initScrollr()
+    100
+  )
