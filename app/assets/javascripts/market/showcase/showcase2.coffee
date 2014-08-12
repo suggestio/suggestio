@@ -1414,13 +1414,13 @@ siomart =
 
     close : ( all_except_search ) ->
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
-      console.log sm_cat_screen
-      if sm_cat_screen != null
-        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-        siomart.utils.ge('smShopListScreen').style.display = 'none'
 
-        if all_except_search != true
-          siomart.utils.ge('smSearchBar').style.display = 'none'
+      if sm_cat_screen != null
+        if all_except_search == true
+          siomart.utils.ge('smCategoriesBodyWrap').style.display = 'none'
+          siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__compact'
+        else
+          siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
 
     back : () ->
