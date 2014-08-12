@@ -1,9 +1,19 @@
 package models
 
-import play.api.mvc.QueryStringBindable
+import java.net.InetAddress
+
+import io.suggest.ym.model.common.{Distance, GeoDistanceQuery}
+import org.elasticsearch.common.unit.DistanceUnit
+import play.api.cache.Cache
+import play.api.db.DB
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.{RequestHeader, QueryStringBindable}
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
+import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
+import scala.concurrent.{Future, future}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -42,6 +52,7 @@ object AdSearch {
           maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
           maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
           maybeGen       <- longOptBinder.bind(key + ".gen", params)
+          maybeGeo       <- strOptBinder.bind(key + ".geo", params)
 
         } yield {
           Right(
@@ -58,7 +69,8 @@ object AdSearch {
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
               },
               forceFirstIds = maybeFirstId,
-              generation  = maybeGen
+              generation  = maybeGen,
+              geo         = AdsGeoMode(maybeGeo)
             )
           )
         }
@@ -74,7 +86,8 @@ object AdSearch {
           intOptBinder.unbind(key + ".size", value.maxResultsOpt),
           intOptBinder.unbind(key + ".offset", value.offsetOpt),
           strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
-          longOptBinder.unbind(key + ".gen", value.generation)
+          longOptBinder.unbind(key + ".gen", value.generation),
+          strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt)
         ) .filter(!_.isEmpty)
           .mkString("&")
       }
@@ -93,7 +106,8 @@ case class AdSearch(
   offsetOpt: Option[Int] = None,
   forceFirstIds: List[String] = Nil,
   generation  : Option[Long] = None,
-  withoutIds  : List[String] = Nil
+  withoutIds  : List[String] = Nil,
+  geo         : AdsGeoMode = AdsGeoNone
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
@@ -102,3 +116,90 @@ case class AdSearch(
   /** Макс.кол-во результатов. */
   def maxResults: Int = maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
 }
+
+
+// Режимы геолокации и утиль для них.
+/** Статичекая утиль для поддержки параметра геолокации. */
+object AdsGeoMode {
+
+  /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
+  val LAT_LON_RE = """-?\d{1,3}\.\d{0,8},-?\d{1,3}\.\d{0,8}""".r
+
+  /** Распарсить опциональное сырое значение qs-параметра a.geo=. */
+  def apply(raw: Option[String]): AdsGeoMode = {
+    raw.fold [AdsGeoMode] (AdsGeoNone) {
+      case "ip"  => AdsGeoIp
+      case LAT_LON_RE(latStr, lonStr) =>
+        AdsGeoLocation(latStr.toDouble, lonStr.toDouble)
+      case other => AdsGeoNone
+    }
+  }
+}
+
+/** Интерфейс для режимов геопоиска. */
+sealed trait AdsGeoMode {
+  /** Запрошен ли географический поиск? */
+  def isWithGeo: Boolean
+
+  /** Сериализовать назад в строку qs. */
+  def toQsStringOpt: Option[String]
+
+  /** Подготовить геоданные для поиска в ES. */
+  def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]]
+}
+
+/** Геолокация НЕ включена. */
+case object AdsGeoNone extends AdsGeoMode {
+  override def isWithGeo = false
+  override def toQsStringOpt = None
+  override def geoSearchInfo(implicit request: RequestHeader) = Future successful None
+}
+
+/** Геолокация по ip. */
+case object AdsGeoIp extends AdsGeoMode {
+
+  val CACHE_TTL_SECONDS = configuration.getInt("ads.search.geo.ip.cache.ttl.seconds") getOrElse 240
+
+  override def isWithGeo = true
+  override def toQsStringOpt = Some("ip")
+  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
+    val ra = request.remoteAddress
+    if (ra startsWith "127.") {
+      Future successful None
+    } else {
+      future {
+        val ck = ra + ".gipq"
+        Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
+          DB.withConnection { implicit c =>
+            IpGeoBaseRange.findForIp(InetAddress getByName ra)
+              .headOption
+              .flatMap { _.cityOpt }
+              .map { city =>
+                GeoDistanceQuery(
+                  center = city.geoPoint,
+                  distanceMin = None,
+                  distanceMax = Distance(50, DistanceUnit.KILOMETERS)
+                )
+              }
+          } // DB
+        }   // Cache
+      }     // future()
+    }       // if localhost
+  }         // def geoSearchInfo()
+
+}
+
+/** Геолокация с указанием географических координат. */
+case class AdsGeoLocation(lat: Double, lon: Double) extends AdsGeoMode {
+  override def isWithGeo = true
+  override def toQsStringOpt = Some(s"$lat,$lon")
+  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
+    val result = GeoDistanceQuery(
+      center      = GeoPoint(lat = lat, lon = lon),
+      distanceMin = None,
+      distanceMax = Distance(5, DistanceUnit.KILOMETERS)
+    )
+    Future successful Some(result)
+  }
+}
+
