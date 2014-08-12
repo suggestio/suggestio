@@ -5,29 +5,28 @@
 @import helper._
 @import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
-@import util.FC.divFc
+@import util.FC.radialFc
 
 
-<div class="popup __join" id="recoverPwForm">
+<div class="popup __index" id="recoverPwForm">
 
-  <div class="popup_header">
+  <div class="popup_header __index">
     <a href="#emailPwLoginForm" class="popup__back-btn f-left js-popup-back"></a>
     <a class="close f-right js-close-popup" href="#">&nbsp;</a>
   </div>
 
-  <div class="popup_cnt">
 
-    <div class="popup_t">
-      ВОССТАНОВИТЬ ПАРОЛЬ
-    </div>
+  @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
+    <div class="popup_cnt __index">
 
+      <div class="popup_t __index">
+        Восстановить пароль
+      </div>
 
-    @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
       @inputText(
         rf("email"),
         '_label -> "Электронная почта, указанная при регистрации:"
       )
-
 
       @* Капча *@
       <table class="captcha-table">
@@ -53,18 +52,14 @@
         </tr>
       </table>
 
+    </div>
 
-      <div class="submit-w __size-L">
-
-        <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
-          Отправить
-        </a>
-
-
+    <div class="popup_footer __index">
+      <div class="btn-w __size-M">
+        <input class="siom-new-btn __size-XS __fill-1" type="submit" value='Отправить'/>
       </div>
+    </div>
 
-    }
-
-  </div>
+  }
 
 </div>

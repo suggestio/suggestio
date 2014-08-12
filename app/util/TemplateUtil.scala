@@ -165,5 +165,7 @@ object FC {
 
   implicit val checkboxFc = FieldConstructor(checkboxFcTpl.f)
 
+  implicit val radialFc = FieldConstructor(radialFcTpl.f)
+
 }
 

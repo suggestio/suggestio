@@ -842,7 +842,15 @@ li
   text-align: center
 
 .login-popup__recover-password
-  padding-left: 20px
+  display         block
+  margin-top      30px
+  color           #f44040
+  text-align      center
+  text-decoration none
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color           #dc3a36
 
 .popup-title
   padding-bottom: 25px
@@ -1514,8 +1522,6 @@ th.__bg-head
   height: 100%
   overflow-y: scroll
 
-  background-color: rgba(0,0,0,0.5)
-
   text-align: center
 
 .overlay
@@ -1549,14 +1555,26 @@ th.__bg-head
   display: inline-block
   background: #e1e1e1
 
-  &.__join
-    width: 500px
+  &.__index
+    background-color  white
+    border-radius(10px)
 
   &_header
     background: #efefef
     border-bottom: 1px solid #9a9b9b
     overflow: hidden
     padding: 10px
+
+  &_header.__index
+    background-color  white
+    border-radius(10px 10px 0 0)
+
+  &_footer
+    border-top  1px solid #9a9b9b
+
+  &._footer.__index
+    background-color  white
+    border-radius(10px 10px 0 0)
 
   &_cnt
     padding: 25px
@@ -1576,12 +1594,21 @@ th.__bg-head
   &_cnt.__text-center
     text-align: center
 
+  &_cnt.__index
+    min-width 250px
+
   &_t
     padding-bottom: 25px
     color: #676666
     ft(30px)
     font-family: 'PFDinTextCompPro-Medium'
     text-align: center
+
+  &_t.__index
+    color           #494949
+    font-family     'opensans-light'
+    font-size       16px
+    text-transform  uppercase
 
   &_t.__inner
     padding-top: 25px
@@ -1621,6 +1648,7 @@ th.__bg-head
 
 .f-right
   float: right
+
 
 .categories-select
   position: relative
@@ -1696,10 +1724,14 @@ th.__bg-head
 /* Страница входа */
 /********************************************************************************************************************/
 .index-page
-  background-image  url('/assets/images/market/index/bg_retina.jpg')
-  background-repeat no-repeat
-  background-size   cover
-  text-align        center
+  font-size   14px
+  font-family 'opensans-light'
+
+  &_cnt
+    background-image  url('/assets/images/market/index/bg_retina.jpg')
+    background-repeat no-repeat
+    background-size   cover
+    text-align        center
 
   &_color-1
     color #f44040
@@ -1734,7 +1766,8 @@ th.__bg-head
     margin-top  50px
 
   &_how-it-works-btn
-    margin-top  70px
+    margin-top    70px
+    margin-bottom 20px
 
 .wifi-points
 

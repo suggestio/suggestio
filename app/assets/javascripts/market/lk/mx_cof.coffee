@@ -499,6 +499,8 @@ CbcaPopup =
     popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
 
+    console.log popupSelector
+
     this.hideOverlay()
     $popup.hide()
 
@@ -524,6 +526,9 @@ CbcaPopup =
 
     $ document
     .on 'click', '#overlay', ()->
+
+      console.log 'overlayClick'
+
       cbca.popup.hidePopup()
 
     ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить

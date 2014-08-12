@@ -24,7 +24,7 @@
 </head>
 
 
-<body class="lk login-page">
+<body class="index-page">
 
   @content
 
@@ -33,24 +33,16 @@
     @* Попап с формой логина *@
     @if(!ctx.isAuth) {
 
-      <div class="popup __join js-hidden" id="emailPwLoginForm">
+      <div class="popup __index js-hidden" id="emailPwLoginForm">
 
-        <div class="popup_header">
+        <div class="popup_header __index">
           <a class="close f-right js-close-popup" href="#">&nbsp;</a>
         </div>
 
-        <div class="popup_cnt">
-
-          <div class="popup_t">
-            ВХОД
-          </div>
-
-          @ident._emailPwLoginFormTpl(
-            lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-            submitCall = routes.MarketLk.emailPwLoginFormSubmit()
-          )
-
-        </div>
+        @ident._emailPwLoginFormTpl(
+          lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+          submitCall = routes.MarketLk.emailPwLoginFormSubmit()
+        )
 
       </div>
     }
