@@ -4,36 +4,43 @@
 @import ctx._
 @import helper._
 
-@import util.FC.divFc
+@import util.FC.radialFc
 
 
 @form(submitCall) {
 
-  @lf.globalError.map { ge =>
-    <p class="lk-error">Ошибка: @Messages(ge.message)</p>
-  }
+  <div class="popup_cnt __index">
+
+    <h2 class="popup_t __index">
+      Вход в личный кабинет
+    </h2>
+
+    @lf.globalError.map { ge =>
+      <p class="lk-error">Ошибка: @Messages(ge.message)</p>
+    }
 
 
-  @inputText(
-    lf("email"),
-    '_label -> "E-mail:"
-  )
+    @inputText(
+      lf("email"),
+      '_label -> "E-mail:",
+      'placeholder -> "E-mail"
+    )
 
 
-  @inputPassword(
-    lf("password"),
-    '_label -> "Пароль:"
-  )
+    @inputPassword(
+      lf("password"),
+      '_label -> "Пароль:"
+    )
 
-  <div class="login-popup__recover-password">
-    <a class="blue-link f-left js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль</a>
+    <a class="login-popup__recover-password js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль</a>
+
   </div>
 
-  <div class="submit-w __size-XXL">
+  <div class="popup_footer __index">
 
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
-      Войти
-    </a>
+    <div class="btn-w __size-M">
+      <input class="siom-new-btn __size-XS __fill-1" type="submit" value="Войти"/>
+    </div>
 
   </div>
 
