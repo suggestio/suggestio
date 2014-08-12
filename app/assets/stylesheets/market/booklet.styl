@@ -7,6 +7,17 @@ title( v )
   text-align     center
   font-size      30px
   font-weight    700
+  font-family    'opensans-bold'
+
+font-face( name )
+  @font-face
+    font-family: name
+    src: url('/assets/fonts/market/' + name + '.eot')
+    src: url('/assets/fonts/market/' + name + '.eot?#iefix') format('embedded-opentype'),
+         url('/assets/fonts/market/' + name + '.woff') format('woff'),
+         url('/assets/fonts/market/' + name + '.ttf') format('truetype')
+    font-weight: normal
+    font-style: normal
 
 darkColor = black
 lightColor = white
@@ -22,8 +33,13 @@ screen1200 = 'screen and (max-width: 1200px)'
 retina = "only screen and (-Webkit-min-device-pixel-ratio: 1.5), only screen and (-moz-min-device-pixel-ratio: 1.5), only screen and (-o-min-device-pixel-ratio: 3/2), only screen and (min-device-pixel-ratio: 1.5)"
 
 
+
+
+font-face( 'opensans-light' )
+font-face( 'opensans-bold' )
+
 body
-  font-family   'Open Sans'
+  font-family   'opensans-light'
   font-size     14px
   height        100% !important
 
@@ -1208,7 +1224,7 @@ body
       padding-top 10px
 
     &_title
-      title(25px)
+      title(5px)
 
     &_btn
       bottom 10px
