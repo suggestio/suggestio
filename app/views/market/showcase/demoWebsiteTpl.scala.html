@@ -1,17 +1,17 @@
-@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
+@(args: SMDemoSiteArgs)(implicit ctx: util.Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
 
 <html>
 <head>
-  <title>@adnNode.meta.name | Sio.Market</title>
+  <title>@args.title | Sio.Market</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui">
 
-  <link type="text/css" rel="stylesheet" media="screen" href="/assets/stylesheets/market/showcase.css"/>
+  <link type="text/css" rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/market/showcase.css")"/>
   <style type="text/css">
     html,
     body
@@ -36,11 +36,11 @@
 
 </head>
 
-<body style="background-color: #@adnNode.meta.color">
+<body style="background-color: #@args.bgColor">
 
 <script type="text/javascript">
-   @market.lk.adn._node._installScriptTpl( adnNode , withIndexCall);
-   window.siomart_index = '@routes.MarketShowcase.showcase( adnNode.id.get )';
+   @market.lk.adn._node._installScriptTpl( args.adnId );
+   window.siomart_index = '@args.showcaseCall';
 </script>
 
 <!-- a.gen = @ctx.PRNG.nextLong   a.size=20   a.offset=0 (20, 40, 60, 80, ...)  -->

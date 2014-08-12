@@ -1,7 +1,7 @@
-@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
+@(adnNodeId: Option[String])(implicit ctx: util.Context)
 
 (function(){
-  window.siomart_id='@adnNode.id.get';
+  window.siomart_id='@adnNodeId';
   window.siomart_host='@ctx.myAudienceUrl';
   var _siom=document.createElement("script");
   _siom.type="text/javascript";

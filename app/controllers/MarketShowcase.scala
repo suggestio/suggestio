@@ -14,7 +14,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Result, AnyContent}
+import play.api.mvc.{Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
 
 /**
@@ -35,10 +35,22 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
+  /** Дефолтовый цвет оформления. */
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "#cccccc"
+
+  private def adnNodeDemoWebsite(showcaseCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
+    val args = SMDemoSiteArgs(
+      showcaseCall  = showcaseCall,
+      bgColor       = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
+      title         = request.adnNode.meta.name,
+      adnId         = request.adnNode.id
+    )
+    Ok(demoWebsiteTpl(args))
+  }
 
   /** Экшн, который рендерит страничку с выдачей */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(demoWebsiteTpl(request.adnNode))
+    adnNodeDemoWebsite( routes.MarketShowcase.showcase( adnId ) )
   }
 
   /** Экшн, который рендерит скрипт с икнокой */
@@ -63,15 +75,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
 
   /** Рендер интерфейса выдачи для указанного продьюсера. */
   def myAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    Ok(demoWebsiteTpl(
-      request.adnNode,
-      withIndexCall = Some(routes.MarketShowcase.myAdsShowcase(adnId))
-    ))
+    adnNodeDemoWebsite( routes.MarketShowcase.myAdsShowcase(adnId) )
   }
 
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.adnNode)) as "text/javascript"
+    Ok(_installScriptTpl( request.adnNode.id )) as "text/javascript"
   }
 
 

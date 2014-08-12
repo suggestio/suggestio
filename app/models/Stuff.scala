@@ -3,6 +3,7 @@ package models
 import java.util.Currency
 import play.api.i18n.Messages
 import play.api.data.Form
+import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
 import scala.collection.JavaConversions._
 /**
@@ -127,4 +128,19 @@ case class MLkSupportRequest(
   replyEmail  : String,
   msg         : String,
   phoneOpt    : Option[String] = None
+)
+
+
+/**
+ * Набор аргументов для передачи в demoWebSiteTpl.
+ * @param bgColor Цвет оформления.
+ * @param showcaseCall Адрес для showcase
+ * @param title Заголовок.
+ * @param adnId id узла, в рамках которого орудуем.
+ */
+case class SMDemoSiteArgs(
+  bgColor: String,
+  showcaseCall: Call,
+  title: String,
+  adnId: Option[String]
 )
