@@ -109,7 +109,7 @@ PersonalCabinet =
       random = Math.random()
 
       $captchaImage.remove()
-      $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
+      $parent.prepend '<img class="captcha_img" id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
 
     $newPasswordForm = $ '#newPasswordForm'
     if $newPasswordForm.size()

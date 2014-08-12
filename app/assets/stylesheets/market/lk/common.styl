@@ -1321,11 +1321,32 @@ li
   display: block
 
 .captcha
-  overflow: hidden
+  margin    15px 0
+  overflow  hidden
 
-  .captcha-reload-btn
-    margin-top: 13px
+  &_img
+    display block
+    float   left
+    width   200px
+    height  50px
 
+  &_reload-btn
+    float               left
+    margin-left         15px
+    width               29px
+    height              50px
+    cursor              pointer
+
+    background-image    url('/assets/images/market/new-design/refresh-captcha_retina.png')
+    background-repeat   no-repeat
+    background-size     29px auto
+    background-position 0 9px
+
+    &:hover
+      background-position 0 -47px
+
+    &:active
+      background-position 0 -46px
 
 .lk-field_error-text
   display: none
@@ -1559,6 +1580,22 @@ th.__bg-head
     background-color  white
     border-radius(10px)
 
+  &_close
+    opacity             0.6
+    width               9px
+    height              9px
+    background          url('/assets/images/market/new-design/close_retina.png') no-repeat
+    background-size     9px auto
+    background-position 0 0
+    text-decoration     none
+    transition(all 0.2s ease-in-out 0s)
+
+    &:hover
+      opacity 1
+
+    &:active
+      background-position 0 1px
+
   &_header
     background: #efefef
     border-bottom: 1px solid #9a9b9b
@@ -1571,6 +1608,7 @@ th.__bg-head
 
   &_footer
     border-top  1px solid #9a9b9b
+    padding     0 25px
 
   &._footer.__index
     background-color  white
