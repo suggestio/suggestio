@@ -1683,7 +1683,6 @@ siomart =
   init : () ->
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
-    siomart.config.index_action = '/market/index/' + siomart.config.mart_id
 
     this.utils.set_vendor_prefix()
 

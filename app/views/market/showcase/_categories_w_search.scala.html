@@ -8,17 +8,20 @@
 
   @_search_bar(mmart)
 
-  <div class="sm-categories-screen_body-wrap" id="smCategoriesBodyWrap" style="@mmart.meta.color.map { headerColor =>
-    background-color: rgba(@{colorHex2rgb(headerColor).mkString(",")}, 1);
-  }">
-    <div class="sm-categories-body">
+  <div class="sm-categories-screen_body-wrap" id="smCategoriesBodyWrap" style="background-color: #@mmart.meta.color;">
+    <div class="sm-categories-screen_body">
 
       <div class="sm-categories-list">
-        @mmcats.map { mmcat =>
-          <span class="sm-single-categorie js-cat-link @mmcat.cssClass @if(!(catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
-            <div class="icon"></div>
-            <div class="name">@mmcat.name</div>
+        @mmcats.zipWithIndex.map { case (mmcat, index) =>
+          <span class="sm-single-categorie js-cat-link __@mmcat.cssClass @if(!(catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
+            <div class="sm-single-categorie_icon"></div>
+            <div class="sm-single-categorie_name">@mmcat.name</div>
           </span>
+
+          @if( ( index + 1 ) % 4 == 0 ){
+            <div class="sm-clear"></div>
+          }
+
         }
       </div>
 

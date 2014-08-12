@@ -3,7 +3,6 @@
 @* Начальная страница для sio-market. *@
 
 @import util.img.WelcomeUtil.WELCOME_IMG_KEY
-@import util.TplDataFormatUtil._
 
 @* Картинка-приветствие для первого экрана *@
 @welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
@@ -20,11 +19,6 @@
 
 @_screen_nav_button("close", "smCloseButton")
 
-
-@*<div class="sio-mart-home-button" id="sioMartHomeButton">
-  <span></span>
-</div>*@
-
 @if( !catsStats.isEmpty ){
 @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
 <div class="sm-header-round-btn sm-header-search-btn" id="smCategoriesButton">
@@ -36,11 +30,9 @@
 @_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 }
 
-<div class="sio-mart__producer-header" style="@mmart.meta.color.map { headerColor =>
-  background-color: rgba(@{colorHex2rgb(headerColor).mkString(",")}, 0.9);
-  }">
+<div class="sio-mart__producer-header" style="@_bgcolor( mmart.meta.color )">
   @mmart.logoImgOpt.map { logoImg =>
-  <img id="rootNodeLogo" class="sm-offer-logo" height="39" style="height: 39px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+  <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
 </div>
 

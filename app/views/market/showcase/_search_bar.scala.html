@@ -2,9 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-search-bar" id="smSearchBar" style="@mmart.meta.color.map { headerColor =>
-    background-color: rgba(@{colorHex2rgb(headerColor).mkString(",")}, 0.9);
-}">
+<div class="sm-search-bar" id="smSearchBar" style="@_bgcolor( mmart.meta.color );">
 
   <div class="sm-search-bar__field">
     <div class="sm-search-bar__container">

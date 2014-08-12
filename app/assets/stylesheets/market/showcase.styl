@@ -1,5 +1,5 @@
 @import 'fonts.styl'
-@import 'categories.styl'
+
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
 spritesize = 400px 100px
@@ -30,6 +30,10 @@ box-shadow( param )
 .sm-hidden-body
   background: yellow
 
+.sm-centered-block
+  margin: 0px auto
+  position: relative
+
 code
   display: none
 
@@ -45,7 +49,7 @@ code
 
 .sm-overflow-scrolling
   -webkit-overflow-scrolling: touch
-  overflow: scroll
+  overflow-y: scroll
 
 .sm-preload
   width: 1px
@@ -158,6 +162,7 @@ code
   z-index: 99999
   opacity: 1
   background: url('/assets/images/showcase-bg-pattern.png')
+  background-size: 2px 2px
 
   &.__relative
     position: relative
@@ -169,6 +174,7 @@ code
     -webkit-transition: -webkit-transform 0.5s ease
     -moz-transition: -moz-transform 0.5s ease
     transition: transform 0.5s ease
+    border: 1px #ccc solid
 
   .sm-b-spacer
     position: absolute
@@ -230,8 +236,8 @@ code
   /*************************/
   .sm-header-round-btn
     position: absolute
-    left: 0px
-    top: 4px
+    left: 14px
+    top: 0px
     z-index: 1002
     overflow: hidden
     width: 50px
@@ -260,7 +266,7 @@ code
 
   .sm-header-search-btn
     left: auto
-    right: 0px
+    right: 14px
 
   img
     margin: 0px
@@ -272,7 +278,7 @@ code
     left: 0px
     top: 0px
     width: 100%
-    height: 39px
+    height: 30px
     padding: 10px 0px
     text-align: center
     z-index: 10
@@ -436,8 +442,8 @@ code
 
   .sm-search-bar__field
     height: 43px
-    margin-left: 10px
-    margin-right: 10px
+    margin-left: 21px
+    margin-right: 20px
     padding-top: 7px
 
   .sm-search-bar__container
@@ -451,10 +457,10 @@ code
     color: #bcc2c6
     width: 100%
     padding-left: 15px
-    padding-top: 3px
     outline: none
     font-family : 'PFDinTextCompPro-Medium'
     font-size: 15px
+    line-height: 42px
 
   .sm-search-bar__icon
     position: absolute
@@ -530,25 +536,50 @@ code
     height: 100%
     z-index: 1003
     overflow: hidden
+    display: none
 
     &.__compact
       height: auto
 
     &_header
-      height: 59px
+      height: 50px
 
     &_body-wrap
       height: 100%
 
-    .sm-categories-list
-      .sm-single-categorie
-        color: #fff
-        font-family : 'PFDinTextCompPro-Medium'
-        font-size: 18px
+    &_body
+      max-width: 440px
+      margin: 0px auto
+      padding-top: 30px
 
-      .sm-single-categorie.disabled
-        opacity: 0.4
-        cursor: default
+  .sm-single-categorie
+    font-family   'PFDinTextCompPro-Medium'
+    font-size     18px
+    float         left
+    margin        20px
+    &_icon
+      border-radius( 100px )
+      border  2px #fff solid
+      display block
+      width   66px
+      height  66px
+      background: url('/assets/images/showcase-icons-sprite.png') no-repeat -8px -4px
+      background-size: 325px 290px
+
+    &_name
+      text-align: center
+      color         #8b8b8b
+      padding       20px 0px
+      max-width     66px
+      font-size     14px
+      line-height: 16px
+      font-weight   normal
+      font-family   'opensans-regular-webfont'
+
+
+  .sm-single-categorie.disabled
+    opacity: 0.4
+    cursor: default
 
   /******************************/
   /* Экран со списком магазинов */
