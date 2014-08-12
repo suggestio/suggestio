@@ -1,13 +1,13 @@
 package util.geo
 
-import java.net.{Inet4Address, InetAddress}
+import java.net.InetAddress
 import java.util.Comparator
-import models.IpGeoBaseRange
-import org.jboss.netty.handler.ipfilter.{CIDR4, CIDR}
+import models.{IpGeoBaseCity, IpGeoBaseRange}
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -17,47 +17,32 @@ import scala.util.parsing.combinator.JavaTokenParsers
  */
 object IpGeoBase {
 
-  // TODO Надо придумать, как впиливать несколько CIDR для диапазона.
-
-  /** Подобрать cidr для заданного диапазона ip-адресов. Стартовый адрес используется как base address.
-    * @param ipStart стартовый ip-адрес
-    * @param ipEnd финальный ip-адрес.
-    * @param comparator Инстанс компаратора ip-адресов. При массовом сравнении можно выносить многоразовый компаратор
-    *                   за пределы цикла сравнения.
-    * @return Экземпляр CIDR или exception, если что-то не так. IllegalArgumentException если не удаётся подобрать CIDR.
-    */
-  def range2cidr(ipStart: InetAddress, ipEnd: InetAddress, comparator: Comparator[InetAddress] = new InetAddressComparator): CIDR = {
-    range2cidrTry(ipStart, ipEnd, 32, comparator)
-  }
-
-  @tailrec final def range2cidrTry(base: InetAddress, end: InetAddress, netmask: Int, comparator: Comparator[InetAddress]): CIDR = {
-    val cidr = CIDR.newCIDR(base, netmask)
-    val cmpResult = comparator.compare(cidr.getEndAddress, end)
-    if (cmpResult == 0)
-      cidr
-    else if (cmpResult < 0)
-      range2cidrTry(base, end, netmask - 1, comparator)
-    else
-      throw new IllegalArgumentException(s"Unable to convert $base - $end into CIDR.")
-  }
+  /** Ссылка для скачивания текущей базы. */
+  def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.zip.url") getOrElse "http://ipgeobase.ru/files/db/Main/geo_files.zip"
 
 }
 
 
+/** Общая утиль для парсеров, которые описаны в этом файле. */
+sealed trait CityIdParser extends JavaTokenParsers {
+  def cityIdP: Parser[Int] = """\d{1,5}""".r ^^ { _.toInt }
+}
+
+
 /** Парсинг файла cidr_optim.txt, содержащего диапазоны ip-адресов и их принадлежность. */
-object IpGeoBaseCidrParsers extends JavaTokenParsers {
+object IpGeoBaseCidrParsers extends CityIdParser {
 
   def inetIntP: Parser[_] = """\d+""".r
 
-  def ip4P: Parser[InetAddress] = "(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})".r ^^ {
-    InetAddress.getByName
+  def ip4P: Parser[InetAddress] = {
+    "(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})".r ^^ { InetAddress.getByName }
   }
 
   def countryIso2P: Parser[String] = "[A-Z]{2}".r
 
-  def cityIdP: Parser[Int] = """\d{1,5}""".r ^^ { _.toInt }
   def cityIdOptP: Parser[Option[Int]] = ("-" ^^^ None) | (cityIdP ^^ Some.apply)
 
+  /** Парсер одной строки файла. */
   def cidrLineP: Parser[IpGeoBaseRange] = {
     // Защищаемся от дубликации инстансов парсеров для колонок с одинаковыми типами.
     val iip = inetIntP
@@ -68,16 +53,30 @@ object IpGeoBaseCidrParsers extends JavaTokenParsers {
     }
   }
 
-
 }
 
-object IpGeoBaseCityParsers extends JavaTokenParsers {
 
+/** Утиль для парсинга cities.txt. Таблица в этом файле содержит просто географию городов. */
+object IpGeoBaseCityParsers extends CityIdParser {
+
+  /** Колонки таблицы разделяются одиночными табами. */
   override protected val whiteSpace: Regex = "\\t".r
 
   def floatP: Parser[Double] = "-?\\d+\\.\\d+".r ^^ { _.toDouble }
 
   def nameP: Parser[String] = "(?U)[\\w ]+".r
+
+  /** Парсер одной строки в файле (парсинг одного города). */
+  def cityLineP: Parser[IpGeoBaseCity] = {
+    // Оптимизация: используем единые инстансы для повторяющихся парсеров
+    val floatp = floatP
+    val namep = nameP
+    // Собираем парсер и маппер строки.
+    cityIdP ~ namep ~ namep ~ namep ~ floatp ~ floatp ^^ {
+      case cityId ~ cityName ~ region ~ fedDistrict ~ lat ~ lon =>
+        IpGeoBaseCity(id = cityId, cityName = cityName, region = region, lat = lat, lon = lon)
+    }
+  }
 
 }
 
@@ -117,5 +116,6 @@ class InetAddressComparator extends Comparator[InetAddress] {
   def unsignedByteToInt(b: Byte): Int = {
     b & 0xFF
   }
+
 }
 

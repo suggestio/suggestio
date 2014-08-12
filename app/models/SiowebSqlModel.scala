@@ -18,15 +18,19 @@ object SqlModelStatic {
 }
 
 
-trait SqlModelStaticMinimal {
+trait SqlTableName {
+
+  /** Название таблицы. Используется при сборке sql-запросов. */
+  val TABLE_NAME: String
+}
+
+
+trait SqlModelStaticMinimal extends SqlTableName {
 
   type T
 
   /** Парсер одного ряда. */
   val rowParser: RowParser[T]
-
-  /** Название таблицы. Используется при сборке sql-запросов. */
-  val TABLE_NAME: String
 
 
   /** Прочитать всю таблицу. */
@@ -186,9 +190,30 @@ trait FromJson {
 
 
 /** Аддон для Static-модели, добавляющий метод быстрой для очистки всей таблицы. */
-trait Truncate extends SqlModelStaticMinimal {
+trait SqlTruncate extends SqlTableName {
   def truncateTable(implicit c: Connection): Int = {
     SQL("TRUNCATE TABLE " + TABLE_NAME)
       .executeUpdate()
   }
 }
+
+
+/** Добавить метод analyze() для статической модели. */
+trait SqlAnalyze extends SqlTableName {
+  def analyze(implicit c: Connection) {
+    SQL("ANALYZE " + TABLE_NAME)
+      .execute()
+  }
+}
+
+
+trait SqlIndexName extends SqlTableName {
+
+  /** Подготовить имя индекса для указанной колонки.
+    * @param colName Имя колонки.
+    * @return Имя индекса, которое постоено также, как это делает postgres/pgadmin.
+    */
+  def indexName(colName: String) = s"${TABLE_NAME}_${colName}_idx"
+
+}
+

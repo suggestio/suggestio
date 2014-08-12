@@ -11,7 +11,7 @@ import util.SqlModelSave
  * Created: 11.08.14 18:35
  * Description: База городов для базы ip из ipgeobase.ru.
  */
-object IpGeoBaseCity extends SqlModelStatic {
+object IpGeoBaseCity extends SqlModelStatic with SqlAnalyze with SqlTruncate {
 
   override val TABLE_NAME = "ipgeobase_city"
   override type T = IpGeoBaseCity
