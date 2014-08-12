@@ -23,6 +23,8 @@ object IpGeoBaseCity extends SqlModelStatic with SqlAnalyze with SqlTruncate {
     }
   }
 
+  def copyCmd(delim: String) = s"COPY $TABLE_NAME FROM STDIN WITH DELIMITER '$delim'"
+
 }
 
 import IpGeoBaseCity._
@@ -48,6 +50,23 @@ case class IpGeoBaseCity(
       .on('id -> id, 'cityName -> cityName, 'region -> region, 'lat -> lat, 'lon -> lon)
       .executeUpdate()
   }
+
+
+  /**
+   * Выдать строку данных для отправки на вход в pg COPY IN.
+   * @param delim Разделитель полей.
+   * @return Строка, пригодная для отправки в качестве одной строки COPY.
+   */
+  def exportForPgCopy(delim: String): String = {
+    new StringBuilder(64)
+      .append(id).append(delim)
+      .append(cityName).append(delim)
+      .append(region).append(delim)
+      .append(lat).append(delim)
+      .append(lon)
+      .toString()
+  }
+
 }
 
 

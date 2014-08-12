@@ -206,6 +206,12 @@ trait SqlAnalyze extends SqlTableName {
   }
 }
 
+trait SqlVacuumAnalyze extends SqlTableName {
+  def vacuumAnalyze(implicit c: Connection): Unit = {
+    SQL("VACUUM ANALYZE " + TABLE_NAME)
+      .execute()
+  }
+}
 
 trait SqlIndexName extends SqlTableName {
 
