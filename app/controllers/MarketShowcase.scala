@@ -140,24 +140,39 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
+  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
+    * @param adSearch Поисковый запрос.
+    * @return JSONP с рекламными карточками для рендера в выдаче.
+    */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
-      "searchAds" -> adSearch
+    val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
+      "searchAds" -> Future.successful(adSearch)
     } else {
       // При поиске по категориям надо искать только если есть указанный show level.
-      val adsearch3 = if (adSearch.catIds.nonEmpty) {
-        adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
+      val adsearch3: Future[AdSearch] = if (adSearch.catIds.nonEmpty) {
+        val result = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
+        Future successful result
       } else if (adSearch.receiverIds.nonEmpty) {
-        adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
+        val result = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
+        Future successful result
+      } else if (adSearch.geo.isWithGeo) {
+        adSearch.geo.geoSearchInfo.flatMap {
+          case None =>
+            Future successful adSearch
+          case gdqOpt @ Some(gdq) =>
+            val nodeSearchArgs = MAdnNodeSearch(geoDistance = gdqOpt)
+            MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
+              adSearch.copy(receiverIds = nodeIds.toList, geo = AdsGeoNone)
+            }
+        }
       } else {
         // Херота какая видимо.
         warn("findAds(): strange search request: " + adSearch)
-        adSearch
+        Future successful adSearch
       }
       "findAds" -> adsearch3
     }
-    val madsFut: Future[Seq[MAd]] = MAd.dynSearch(adSearch2)
+    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { MAd.dynSearch }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
     val madsRenderedFut = madsFut flatMap { mads0 =>
       val mads1 = groupNarrowAds(mads0)
@@ -176,7 +191,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     * @param adSearch Поисковый запрос.
     * @param h true означает, что нужна начальная страница с html.
     *          false - возвращать только json-массив с отрендеренными блоками, без html-страницы с первой карточкой.
-    * @return
+    * @return JSONP с отрендеренными карточками.
     */
   def focusedAds(adSearch: AdSearch, h: Boolean) = MaybeAuth.async { implicit request =>
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size

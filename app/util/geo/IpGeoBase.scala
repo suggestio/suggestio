@@ -25,7 +25,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 11.08.14 14:03
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
-object IpGeoBase extends PlayMacroLogsImpl {
+object IpGeoBaseImport extends PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -34,6 +34,9 @@ object IpGeoBase extends PlayMacroLogsImpl {
 
   /** Поверхностная проверка скачанного архива на профпригодность. */
   def ARCHIVE_MAGIC_NUMBER = configuration.getInt("ipgeobase.archive.magic") getOrElse 0x504b0304
+
+  /** Минимально допустимая длина архива с данными. */
+  def ARCHIVE_MIN_LENGTH = configuration.getInt("ipgeobase.archive.size.min") getOrElse 1900000
 
   /** Имя файл, содержащего диапазоны.*/
   def IP_RANGES_FILENAME = configuration.getString("ipgeobase.cidr_optim.filename") getOrElse "cidr_optim.txt"
@@ -54,17 +57,16 @@ object IpGeoBase extends PlayMacroLogsImpl {
   def download(): Future[File] = {
     val dlUrlStr = ARCHIVE_DOWNLOAD_URL
     // TODO Нужно проверять ETag и Last-Modified. Выставлять If-Modified-Since и If-None-Match. Это улучшит работу.
-    val svc = url(dlUrlStr)
     val urlFile = new URL(dlUrlStr).getFile
     val fileBasename = FilenameUtils.getBaseName(urlFile)
     val filenameExt = FilenameUtils.getExtension(urlFile)
     val archiveFile = File.createTempFile(fileBasename,  "." + filenameExt)
     // TODO Нужно ограничивать max-size для возвращаемых данных. 5 метров макс. будет достаточно.
-    val resultFut = Http(svc > as.File(archiveFile))
+    val resultFut = Http( url(dlUrlStr) > as.File(archiveFile) )
       // Метод `>` не проверяет 200 OK. Нужно вручную проверить, что скачался именно архив.
       .filter { _ =>
         // Тестируем архив по методике http://www.java2s.com/Code/Java/File-Input-Output/DeterminewhetherafileisaZIPFile.htm
-        !archiveFile.isDirectory && archiveFile.canRead && archiveFile.length() > 10000 && {
+        !archiveFile.isDirectory  &&  archiveFile.canRead  &&  archiveFile.length() > ARCHIVE_MIN_LENGTH  && {
           val in = new DataInputStream(new BufferedInputStream(new FileInputStream(archiveFile)))
           val magic = try {
             in.readInt()

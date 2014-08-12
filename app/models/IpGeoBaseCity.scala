@@ -67,6 +67,8 @@ case class IpGeoBaseCity(
       .toString()
   }
 
+  def geoPoint = GeoPoint(lat = lat, lon = lon)
+
 }
 
 

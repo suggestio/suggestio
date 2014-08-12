@@ -4,7 +4,7 @@ import play.api.Play.current
 import akka.actor.{Scheduler, Cancellable}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.concurrent.Akka
-import util.geo.IpGeoBase
+import util.geo.IpGeoBaseImport
 import scala.concurrent.duration._
 import models.MPictureTmp
 import play.api.Logger
@@ -84,7 +84,7 @@ object Crontab extends PlayMacroLogsImpl {
       // TODO Нужно обновлять не 1-2 раз в день, а не после каждого запуска
       schedule(20 seconds, 1 day) {
         try {
-          IpGeoBase.updateIpBase()
+          IpGeoBaseImport.updateIpBase()
         } catch {
           case ex: Throwable => error("Cron: IpGeoBase.updateIpBase() failed", ex)
         }
