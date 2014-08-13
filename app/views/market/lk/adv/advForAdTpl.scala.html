@@ -7,7 +7,7 @@
 @market.lk.lkBaseLayout(
   title = "Управление рекламой",
   adnIdOpt = Some(mad.producerId),
-  backHref = Some(routes.MarketLkAdn.showAdnNode(mad.producerId))
+  backHref = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url)
 ) {
 
   @market.lk.lkBlock("Информация") {

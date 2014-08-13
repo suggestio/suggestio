@@ -3,13 +3,14 @@
 @import util.TplDataFormatUtil._
 @import common._
 @import svg._
-@import util.blocks.BlocksConf.Block12
+@import util.blocks.BlocksConf.{Block12 => bc}
 
-@defining( mad.colors.getOrElse(Block12.fillColorBf.name, Block12.fillColorBf.anyDefaultValue) ) { fillColor =>
-
-  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12" style="background: #@fillColor; @mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => border-color: #@saleColor;}" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
-    <div class="color-bg"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
+@defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
+@defining( mad.colors.get(bc.saleMaskColorBf.name) ) { saleColorOpt =>
+@blockBase(isStandalone, mad, bc,
+  style = Some(s"background: #$fillColor; ${saleColorOpt.map(sc => "border-color: #@sc;")}")
+) {
+    <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
     <!--<div class="sale-mask abs"></div>-->
 
     @_mask2(
@@ -19,24 +20,24 @@
 
     @mad.offers.headOption.map { offer =>
 
-      <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block12.discountBf, "icon")} >
+      <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, bc.discountBf, "icon")} >
         @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
       </div>
 
       <div class="info">
       @offer.text1.map { text1 =>
-        <div @_aovfStyleTpl(text1, Block12.titleBf, "title")>
+        <div @_aovfStyleTpl(text1, bc.titleBf, "title")>
           @Html(text1.value)
         </div>
       }
       @offer.text2.map { text2 =>
-        <div @_aovfStyleTpl(text2, Block12.descrBf, "slogan")>
+        <div @_aovfStyleTpl(text2, bc.descrBf, "slogan")>
           @Html(text2.value)
         </div>
       }
       </div>
     }
 
-  </div>
-
+}
+}
 }

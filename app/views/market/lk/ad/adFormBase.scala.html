@@ -6,14 +6,16 @@
 
 }
 
-@market.lk.lkBase(title = title,  headAfter = Some(headAfter1)) {
+@market.lk.lkBase(
+  title = title,
+  headAfter = Some(headAfter1),
+  adnIdOpt = Some(adnId)
+) {
 
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnId)" title="Вернуться назад в магазин">&nbsp;</a>
-      <div class="title-inner">
-        @title.toUpperCase
-      </div>
+  <div class="page-title">
+    <div class="page-title_cnt">
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnId)" title="Вернуться назад"></a>
+      @title.toUpperCase
     </div>
   </div>
 

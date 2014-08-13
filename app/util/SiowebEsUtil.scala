@@ -262,7 +262,7 @@ object SiowebEsUtil extends SioEsClient {
       hit.getFields.foreach {
         case (FIELD_IMAGE_ID, field) =>
           val imageId = field.getValue[String]
-          resultMap(FIELD_THUMB_REL_URL) = routes.Img.getThumb(hitDkey, imageId).toString()
+          resultMap(FIELD_THUMB_REL_URL) = routes.Img.getThumb(imageId).toString()
 
         case (FIELD_PAGE_TAGS, fieldValue) =>
           val pageTags = fieldValue.getValue[java.util.List[String]]

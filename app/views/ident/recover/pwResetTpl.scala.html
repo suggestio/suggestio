@@ -8,19 +8,20 @@
 
 @popupContent = {
 
-  <div class="popup" id="newPasswordForm">
+  <div class="popup __index" id="newPasswordForm">
 
-    <div class="hat">
-      <a class="close" href="#">&nbsp;</a>
+    <div class="popup_header __index">
+      <a class="close f-right js-close-popup" href="#">&nbsp;</a>
     </div>
 
-    <div class="content recover-popup__content">
+    @form(routes.Ident.pwResetSubmit(eAct.id.get), 'id -> "pwResetPasswordForm") {
+      <div class="popup_cnt __index">
 
-      <div class="popup-title popup-title_without_padding">
-        НОВЫЙ ПАРОЛЬ
-      </div>
+        <div class="popup_t __index">
+          Новый пароль
+        </div>
 
-      @form(routes.Ident.pwResetSubmit(eAct.id.get), 'id -> "pwResetPasswordForm") {
+
 
         @inputPassword(
           prf("pw1"),
@@ -31,19 +32,16 @@
           '_label -> Messages("Confirm.new.password")
         )
 
+      </div>
 
-        <div class="login-popup__submit-wrap">
+      <div class="popup_footer __index">
 
-          <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
-            @Messages("Save")
-          </a>
-
+        <div class="btn-w __size-M">
+          <input class="siom-new-btn __size-XS __fill-1" type="submit" value='@Messages("Save")'/>
         </div>
-      }
 
-    </div>
-
-  </div>
+      </div>
+    }
 
 }
 

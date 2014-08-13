@@ -6,11 +6,13 @@
 
 @mdrBase("Модерация", hPathAfter = Some(hPathAfter)) {
 
-  <h2>Модерация бесплатного размещения рекламных карточек</h2>
-  <p>
-    <a href="@routes.SysMdr.freeAdvs()">Очередь на модерацию</a> /
-    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true)))">Одобренные</a> /
-    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false)))">Отклонённые</a>
-  </p>
+  <div class="sys_t">
+    Модерация бесплатного размещения рекламных карточек
+  </div
+  <div class="submit-w __size-M">
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs()">Очередь на модерацию</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true)))">Одобренные</a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false)))">Отклонённые</a>
+  </div>
 
 }

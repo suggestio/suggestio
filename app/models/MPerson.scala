@@ -65,7 +65,9 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
     case (LANG_ESFN, value)     => acc.lang = stringParser(value)
   }
 
-  override protected def dummy(id: String, version: Long) = MPerson(id = Some(id), lang = null)
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
+    MPerson(id = id, lang = null)
+  }
 
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */

@@ -12,7 +12,7 @@
   @* Главная картинка товара. *@
   @defining(pictures.headOption) { maybePicture =>
     @maybePicture.map { pictureId =>
-      <img src="@routes.Img.getThumb("TODO", pictureId)" alt="@name"/>
+      <img src="@routes.Img.getThumb(pictureId)" alt="@name"/>
     }
   }
 

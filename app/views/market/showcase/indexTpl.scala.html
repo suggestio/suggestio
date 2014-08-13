@@ -1,8 +1,8 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long])(implicit ctx: Context)
+@(mmart: MAdnNode, shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long], spsr: AdSearch)(implicit ctx: Context)
 
 @* Начальная страница для sio-market. *@
 
-@import controllers.MarketLkAdnEdit.WELCOME_IMG_KEY
+@import util.img.WelcomeUtil.WELCOME_IMG_KEY
 
 @* Картинка-приветствие для первого экрана *@
 @welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
@@ -19,45 +19,49 @@
 
 @_screen_nav_button("close", "smCloseButton")
 
-
-<div class="sio-mart-home-button" id="sioMartHomeButton">
-  <span></span>
-</div>
-
 @if( !catsStats.isEmpty ){
-  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-  <div class="categories-button" id="smCategoriesButton">
-    <span></span>
+@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+<div class="sm-header-round-btn sm-header-search-btn" id="smCategoriesButton">
+  <div class="sm-header-round-btn_inner">
+    <div class="sm-header-round-btn_icon __search"></div>
   </div>
-  @* Окно с выбором категорий *@
-  @_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
+</div>
+@* Окно с выбором категорий *@
+@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 }
 
-<div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
+<div class="sio-mart__producer-header" style="@_bgcolor( mmart.meta.color )">
   @mmart.logoImgOpt.map { logoImg =>
-    <img id="rootNodeLogo" class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+  <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
 </div>
 
 <div class="sm-flex sm-overflow-scrolling">
-<div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
-  <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px" id="sioMartIndexGridLayout">
+  <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
+    <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px;" id="sioMartIndexGridLayout">
 
-    <div id="sioMartIndexGrid" style="position: relative; height: 3000px; width: 100%;">
-      @_block_offers_list(ads, true)
+      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(spsr)" style="position: relative; width: 100%;">
+      </div>
+
+      <div class="grid-loader" style="height: 50px;" id="gridAdsLoader">
+        <div style="position: relative; height: 1px; width: 100%;">
+          <div style="padding: 5px; position: absolute; left: 50%; top: 50%; margin-left: -15px; margin-top: -16px;">
+            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl/assets/images/market/grid-ads-loader-fast.gif?v=2"/>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 60px;"></div>
+
     </div>
-    <div style="height: 30px"></div>
-
   </div>
-</div>
 </div>
 
 <div class="sm-notification" id="smNotification">
   <div class="data" id="smNotificationData"></div>
 </div>
 
-<div class="sm-loading" id="smLoading">
-</div>
+<div class="sm-loading" id="smLoading"></div>
 
 <div class="sm-preload">
   <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">

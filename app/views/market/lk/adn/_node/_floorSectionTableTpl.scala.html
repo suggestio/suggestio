@@ -2,21 +2,25 @@
 
 @* Рендер плашки с номером этажа и секции. *@
 
-<table class="block">
+<table class="siom-table __size-M">
   <tr>
-    <td class="left">
-      <div class="shop-floor" style="padding-left: 30px;">
-        @node.meta.floor.map { floor =>
-          @floor&nbsp;этаж
-        }
+    <td class="siom-table-cell __vertical-cnt">
+      <div class="table-cell-cnt __size-S">
+        <strong class="__with-place-icon color-strong" style="padding-left: 30px;">
+          @node.meta.floor.map { floor =>
+            @floor&nbsp;этаж
+          }
+        </strong>
       </div>
     </td>
 
-    <td class="right">
-      <div class="shop-section">
-        <span class="name">Секция:</span>
-        <span class="value">@node.meta.section</span>
+    <td class="siom-table-cell __vertical-cnt">
+      <div class="border-line __vertical f-left js-vertical-line"></div>
+      <div class="table-cell-cnt __size-S">
+        <span class="ft-XS color-light-strong">Секция:</span>
+        <strong class="ft-XS color-strong">@node.meta.section</strong>
       </div>
+
     </td>
   </tr>
 </table>

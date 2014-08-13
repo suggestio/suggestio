@@ -3,27 +3,59 @@
 @* Список пользовательских категорий (в частости ТЦ-категорий). *@
 @import org.apache.commons.lang3.StringUtils.leftPad
 @import helper._
+@import controllers.MarketCategory.CAN_INSTALL_MART_CATS
 
 @userCatBase("Категории", adnId = ownerId) {
-  <h2>Управление деревом</h2>
-  <a href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
 
-  <h2>Категории</h2>
 
-  @treeCats.map { case (level, cat) =>
-    <p>
-        @leftPad("", level, "=")
-        <a href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@cat.name</a>
-        <a href="@routes.MarketCategory.addUserCatForm(None, parentId = Some(cat.id.get))" title="Добавить подкатегорию">[+]</a>
-        <a href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@Messages("Edit")">[~]</a>
+  <div class="sys_t">
+    Управление деревом
+  </div>
+
+  <div class="paragraph __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
+  </div>
+
+  @market.lk.lkBlock("Категории") {
+
+    <table class="siom-table __size-XL">
+      @treeCats.map { case (level, cat) =>
+        <tr>
+            <td>
+              <div class="siom-cell-cnt __size-M ovh">
+                <a style="margin-left: @((level - 1)*35)px" class="siom-ac-btn __color-3 __size-M __ft-XM f-left" href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@cat.name</a>
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td>
+              <div class="siom-cell-cnt __size-M ovh">
+                <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.MarketCategory.addUserCatForm(None, parentId = Some(cat.id.get))" title="Добавить подкатегорию">Добавить подкатегорию</a>
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td>
+              <div class="siom-cell-cnt __size-M ovh">
+                <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left" href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@Messages("Edit")">@Messages("Edit")</a>
+              </div>
+              <div class="border-line"></div>
+            </td>
+        </tr>
+      }
+    </table>
+
+    <p class="paragraph __size-M">
+      <strong class="color-strong">JSON API</strong>
+
+      <a class="blue-link" href="@routes.MarketCategory.topCatsOf(ownerId)">topCatsOf()</a>
     </p>
-  }
 
-  <h2>JSON API</h2>
-  <p><a href="@routes.MarketCategory.topCatsOf(ownerId)">topCatsOf()</a></p>
 
-  <h2>Управление</h2>
-  @form(routes.MarketCategory.installMartCategories(ownerId)) {
-    <input type="submit" value="Доустановить категории ТЦ"/>
+    @if(CAN_INSTALL_MART_CATS) {
+      <h2>Управление</h2>
+      @form(routes.MarketCategory.installMartCategories(ownerId)) {
+        <input type="submit" value="Доустановить категории ТЦ"/>
+      }
+    }
+
   }
 }

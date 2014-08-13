@@ -2,10 +2,37 @@
 
 @* Страница, отображающая информацию по торговому центру. *@
 @import ctx._
-@import datetime._
 @import helper._
 @import controllers.adn.AdnShowTypes._
 @import util.qsb._
+
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+  <div class="i __btn">
+
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
+      @btnText
+    </a>
+
+    @afterBtn
+  </div>
+}
+
+@tableRow(title: String)(value: Html) = {
+
+  <tr>
+    <td class="siom-cell __size-S __inner-S">
+      @title
+    </td>
+    <td class="siom-cell __inner-S">
+      @value
+    </td>
+  </tr>
+
+}
+
+
 
 @hPathAfter = {
   @* Исходного заголовка достаточно для рендера. *@
@@ -13,119 +40,125 @@
 
 @adnBase(adnNode.meta.name, Some(hPathAfter), Some(adnNode)) {
 
-  <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
-  <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
+  <div class="sys_t">
+    @Messages("amt.of.type." + adnNode.adn.memberType)
 
-  <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
+    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
+  </div>
 
-  @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
-    <p><a href="@siteCall"><b>-&gt; demoWebSite</b></a>
-      (<a href="http://10.0.0.101:9001@siteCall" target="_blank">osm01-vpn</a>)
-    </p>
-  }
+  <div class="i-list">
 
-  <a href="@routes.SysMarketBilling.billingFor(adnNode.id.get)">Billing</a>
+    @btn(routes.MarketLkAdn.showAdnNode(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }{ }
 
+    @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
+      @btn(siteCall, 40) { demo<br/>WebSite } {
 
-  @company.map { mc =>
-    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
-  }
+        <a href="http://10.0.0.101:9001@siteCall" class="siom-ac-btn __color-2 __size-XL __ft-XM __sys-market-index">
+          osm01-vpn
+        </a>
+      }
+    }
 
+    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { BILLING }{ }
 
-  <h3>Метаданные</h3>
-  <div>
-    @Messages("Name"): @adnNode.meta.name<br/>
-    @adnNode.meta.description.map { descr =>
-      Описание: @Html(descr)<br/>
-    }
-    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated, withSpan = true)<br/>
-    @adnNode.meta.town.map { town =>
-      Город: @town<br/>
-    }
-    @adnNode.meta.address.map { address =>
-      @Messages("Address"): @address<br/>
-    }
-    @adnNode.meta.phone.map { phone =>
-      Телефон: @phone<br/>
-    }
-    @adnNode.meta.floor.map { floor =>
-      Этаж: @floor<br/>
-    }
-    @adnNode.meta.section.map { section =>
-      Секция: @section<br/>
-    }
-    @adnNode.meta.siteUrl.map { siteUrl =>
-      URL сайта: <a href="@siteUrl">@siteUrl</a><br/>
-    }
-    @adnNode.meta.color.map { color =>
-      Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
-    }
-    @adnNode.meta.welcomeAdId.map { wad =>
-      Приветствие: Есть (@wad)
-    }
   </div>
 
 
-  <br/>
-  <h3>Подчинённые узлы (@slaves.size)</h3>
-  <a class="add" href="@routes.SysMarket.createAdnNode(adnNode.id)">Добавить подузел...</a><br/>
-  @if(slaves.isEmpty) {
-    <p>Нет подчинённых узлов.</p>
-  } else {
-    <br/>
-    @_adnNodesListTpl(slaves, withDelims = false)
+  @company.map { mc =>
+    <p class="paragraph __size-M color-light-strong">
+      @Messages("Company")-@Messages("Owner"): <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
+    </p>
   }
 
+  @market.lk.lkBlock("Метаданные") {
+    @_nodeMetaTpl(adnNode.meta)
+  }
 
-  <br/>
-  <h3>Участие в рекламной сети</h3>
-  Права: @adnNode.adn.rights.map(_.longName).mkString(", ")<br/>
-  @if(!adnNode.adn.producerIds.isEmpty) {
-    producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
-      <a href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+  @market.lk.lkBlock("Подчинённые узлы(" +slaves.size +")") {
+
+    @if(slaves.isEmpty) {
+      <p class="color-light-strong">Нет подчинённых узлов.</p>
+    } else {
+      @_adnNodesListTpl(slaves, withDelims = false)
     }
-    <br/>
+
+    <div class="btn-w __size-M">
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode(adnNode.id)">+Добавить подузел</a>
+    </div>
+
   }
-  @* TODO Надо бы отображать как-то showLevelsInfo. *@
-  isEnabled = @adnNode.adn.isEnabled<br/>
-  @adnNode.adn.disableReason.map { dr =>
-    disableReason = @dr<br/>
+
+  @market.lk.lkBlock("Участие в рекламной сети") {
+
+    <table class="color-light-strong">
+      @tableRow("Права:") {
+
+        <strong class="color-strong">
+          @adnNode.adn.rights.map(_.longName).mkString(", ")
+
+          @if(!adnNode.adn.producerIds.isEmpty) {
+
+            producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
+              <a class="blue-link" href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+            }
+            <br/>
+          }
+        </strong>
+
+      }
+
+      @* TODO Надо бы отображать как-то showLevelsInfo. *@
+      @tableRow("isEnabled:") {
+        <strong class="color-strong">@adnNode.adn.isEnabled</strong>
+      }
+
+      @adnNode.adn.disableReason.map { dr =>
+        @tableRow("disableReason:") {
+          <strong class="color-strong">@dr</strong>
+        }
+
+      }
+    </table>
+
+  }
+
+  @market.lk.lkBlock("Управление") {
+
+    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList)), 28) { Собственные<br/>рекламные<br/>карточки }{ }
+    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList)), 28) { Рекламные<br/>карточки<br/>в выдаче }{ }
+    @btn(routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get), 28) { Инвайты на<br/>управление<br/> узлом }{ }
+
   }
 
 
-  <br/>
-  <h3>Управление</h3>
-  Список рекламных карточек узла:
-    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList))">собственных</a>,
-    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList))">в выдаче</a>.
-  <br/>
 
   @* Категории в рамках узла возможны, но отключены до лучших времён. *@
   @*<a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>*@
 
-  <a href="@routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get)">Инвайты на управление узлом</a><br/>
 
   @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
   @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
     <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@
 
 
-  <br/>
-  <p>
-      Модерация бесплатного размещения:
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a> /
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a> /
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
-  </p>
+
+  @market.lk.lkBlock("Модерация бесплатного размещения") {
+
+      <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
+
+  }
 
 
-  <br/>
-  <h3>Отладка</h3>
-  @if(adnNode.adn.memberType == AdNetMemberTypes.SHOP) {
-    Отобразить email-письмо активации:
-      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=true)">HTML</a>
-      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=false)">TXT</a>
-    <br/>
+  @market.lk.lkBlock("Отладка") {
+
+    <p class="color-light-strong">
+      Отобразить email-письмо инвайта:
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=true)">HTML</a>,
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=false)">TXT</a>
+    </p>
+
   }
 
 }

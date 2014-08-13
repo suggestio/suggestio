@@ -27,7 +27,7 @@
         @ad2advMap.get(mad.id.get).fold {
           <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
         } { adv =>
-          <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id.toOption, r = Some(request.path))">
+          <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))">
             @adv match {
               case advReq: MAdvReq => {
                 Находится<br/>на рассмотрении<br/>администратора

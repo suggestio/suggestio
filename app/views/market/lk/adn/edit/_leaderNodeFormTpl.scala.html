@@ -1,60 +1,58 @@
-@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
+@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT], nodeInfo: AdNetMemberInfo)(implicit ctx: util.Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
 @import util.FC.tdFc
+@import util.img.GalleryUtil.GALLERY_LEN_MAX
 
 @form(submitCall) {
 
-  <div class="fields">
-
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       <tr>
 
-        <td class="left">
-          <label>Логотип</label>
+        <td class="input-w_left">
+          <label class="input-w_prop-name" for="logoImgInput">Логотип</label>
         </td>
 
-        <td class="right">
-          <div class="select-file-wrap" id="logoImgInput">
-            @defining(mf("logoImgId").value) { logoImgIdOpt =>
-            <div class="preview">
-              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59" />
-            </div>
-            <div class="selectbox">
-              <div class="select-file">
-                @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), relatedFieldId="logoImgInput")
-                <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-                <div class="bg">Выбрать файл для загрузки</div>
+        <td>
+
+          @defining(mf("logoImgId").value) { logoImgIdOpt =>
+
+            @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
+              <div class="add-file-w __preview">
+                <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+                <img class="add-file-w_image js-image-preview" src="@routes.Img.getImg(imgId)" />
+                <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
               </div>
-              <div class="descr">
-                Файл должен быть на прозрачном
-                фоне и иметь формат .png
-              </div>
-            </div>
             }
-          </div>
-          <a href="#" class="close">&nbsp;</a>
+
+            <div class="add-file-w __size-S"  @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
+              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
+              <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+            </div>
+
+          }
+
         </td>
 
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.name"),
-        '_label -> "Название ТЦ:"
+        '_label -> "Название:"
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.town"),
         '_label -> "Город:"
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
       @textarea(
         mf("meta.address"),
         '_label -> "Адрес:"
@@ -62,46 +60,111 @@
     </table>
 
 
-    <table class="input-wrap big" cellspacing="0" cellpadding="0">
-      <td class="left">
-        <label for="meta_color">Основной цвет:</label>
+    <table class="input-w __size-L" cellspacing="0" cellpadding="0">
+
+      <td class="input-w_left">
+        <label class="input-w_prop-name" for="meta_color">Основной цвет:</label>
       </td>
-      <td class="right">
+      <td class="input-w_right">
         <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@mf("meta.color").value;">
           <div></div>
           <input id="meta_color" type="hidden" name="meta.color" value="@mf("meta.color").value"/>
         </div>
       </td>
+
     </table>
 
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.siteUrl"),
-        '_label -> "Сайт ТЦ:"
+        '_label -> "Сайт:"
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @if(nodeInfo.isReceiver) {
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
+        @textarea(
+          mf("meta.audienceDescr"),
+          '_label -> "Описание \n аудитории:"
+        )
+      </table>
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+        @inputText(
+          mf("meta.humanTrafficAvg"),
+          '_label -> "Суточный трафик:"
+        )
+      </table>
+    } else {
+      @if(nodeInfo.isProducer) {
+        <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
+          @textarea(
+            mf("meta.info"),
+            '_label -> "Информация о товарах или услугах:"
+          )
+        </table>
+      }
+    }
 
-      <tbody>
+    @if(nodeInfo.isReceiver) {
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+
+        <tbody>
+          <tr>
+            <td class="input-w_left">
+              <label class="input-w_prop-name">Картинка приветствия:</label>
+            </td>
+            <td>
+              @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+
+
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+
         <tr>
-          <td class="left">
-            <label>Картинка приветствия:</label>
+          <td class="input-w_left">
+            <label class="input-w_prop-name" for="logoImgInput">Фотографии<br/>объекта:</label>
           </td>
-          <td class="right">
-            @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+
+          <td>
+
+            @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
+            @defining( mf("gallery") ) { gf =>
+              @gf.indexes.map { gfi =>
+                @defining( s"gallery[$gfi]" ) { gfn =>
+                  @mf(gfn).value.map { imgId =>
+                    <div class="add-file-w __preview">
+                      <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                      <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)" />
+                      <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
+                    </div>
+                  }
+                }
+              }
+
+              <div class="add-file-w __size-S" >
+                @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+              </div>
+
+            }
+
           </td>
         </tr>
-      </tbody>
 
-    </table>
+      </table>
+    }
 
-  </div>
+
   <div class="border-line"></div>
 
   <div class="submit-w __size-M">
-    <a class="siom-ac-btn __size-M __color-2 __ft-M js-submit-btn f-right">@btnText</a>
+    <a class="siom-ac-btn __size-M __color-2 __ft-XM js-submit-btn f-right">@btnText</a>
   </div>
 
 }

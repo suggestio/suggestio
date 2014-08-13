@@ -6,35 +6,101 @@
 
 @billingBase("Весь биллинг") {
 
-  <h1>Общий биллинг</h1>
+  <div class="sys_t">
+    Общий биллинг
+  </div>
 
-  <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
+  <p class="paragraph __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.SysMarketBilling.incomingPaymentForm">
+      Провести платёж...
+    </a>
+  </p>
 
-  <h2>Последние платежи</h2>
-  @if(lastPays.isEmpty) {
-    Пока не было ни одного платежа.
-  } else {
-    <table>
-      <tr>
-        <th>Когда</th>
-        <th>Сумма</th>
-        <th>Договор</th>
-        <th>Плательщик</th>
-      </tr>
-      @lastPays.map { txn =>
+  @market.lk.lkBlock("Последние платежи") {
+
+    @if(lastPays.isEmpty) {
+      <p class="color-light-strong">
+        Пока не было ни одного платежа.
+      </p>
+    } else {
+      <table class="siom-table __size-XL color-strong">
         <tr>
-          <td>@_prettyDate(txn.dateProcessed, withSpan = true)</td>
-          <td>@txn.amount @txn.currencyCodeOpt</td>
-          @defining(contracts.get(txn.contractId)) { mbcOpt =>
-            <td>@mbcOpt.map { mbc =>
-              <span title="Договор от @mbc.printContractDate">@mbc.legalContractId</span>
-            }</td>
-            <td>@mbcOpt.map(_.adnId).flatMap(adns.get).map { adnNode =>
-              <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
-            }</td>
-          }
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S">
+              Когда
+            </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S">
+              Сумма
+            </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S">
+              Договор
+            </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head ">
+            <div class="siom-cell-cnt __size-S">
+              Плательщик
+            </div>
+            <div class="border-line"></div>
+          </th>
         </tr>
-      }
-    </table>
+        @lastPays.map { txn =>
+          <tr>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                @_prettyDate(txn.dateProcessed, withSpan = true)
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                <strong class="@if(txn.amount < 0) {color-error} else {color-success}">
+                  @txn.amount @txn.currencyCodeOpt
+                </strong>
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            @defining(contracts.get(txn.contractId)) { mbcOpt =>
+              <td class="siom-table_vertical-cnt">
+                <div class="siom-cell-cnt __size-L">
+                  @mbcOpt.map { mbc =>
+                    <span title="Договор от @mbc.printContractDate">@mbc.legalContractId</span>
+                  }
+                </div>
+                <div class="border-line"></div>
+              </td>
+              <td class="siom-table_vertical-cnt">
+                <div class="border-line __vertical js-vertical-line"></div>
+              </td>
+              <td class="siom-table_vertical-cnt">
+                <div class="siom-cell-cnt __size-L">
+                  @mbcOpt.map(_.adnId).flatMap(adns.get).map { adnNode =>
+                    <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
+                  }
+                </div>
+                <div class="border-line"></div>
+              </td>
+            }
+          </tr>
+        }
+      </table>
+    }
+
   }
+
 }

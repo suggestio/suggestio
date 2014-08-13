@@ -1,4 +1,4 @@
-@(adnNodes: Seq[MAdnNode], companies: Option[Map[CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
+@(adnNodes: Seq[MAdnNode], companies: Option[Map[String, MCompany]] = None)(implicit ctx: util.Context)
 
 @* Страница со списком торговых центров. *@
 
@@ -15,6 +15,8 @@
   } else {
     @_adnNodesListTpl(adnNodes, companies)
   }
-  <br/>
-  <p><a class="add" href="@routes.SysMarket.createAdnNode()">Добавить ADN-узел верхнего уровня</a></p>
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode()">Добавить ADN-узел верхнего уровня</a>
+  </div>
 }

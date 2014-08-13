@@ -1,5 +1,6 @@
 import io.suggest.ym
 import io.suggest.ym.model.common
+import io.suggest.ym.model.common.EMImg
 
 /**
  * Suggest.io
@@ -12,8 +13,10 @@ package object models {
 
   type MCompany             = ym.model.MCompany
   val  MCompany             = ym.model.MCompany
-  type CompanyId_t          = MCompany.CompanyId_t
-  
+
+  type MCompanyMeta         = ym.model.common.MCompanyMeta
+  val  MCompanyMeta         = ym.model.common.MCompanyMeta
+
   val  MAdnNode             = ym.model.MAdnNode
   type MAdnNode             = ym.model.MAdnNode
 
@@ -144,4 +147,12 @@ package object models {
   type MAdvMode             = MAdvModes.MAdvMode
   type AudienceSize         = AudienceSizes.AudienceSize
   type InviteReqType        = InviteReqTypes.InviteReqType
+
+  type AdnShownType         = AdnShownTypes.AdnShownType
+
+  type Imgs_t               = EMImg.Imgs_t
+
+  type GeoPoint             = io.suggest.ym.model.common.GeoPoint
+  val  GeoPoint             = io.suggest.ym.model.common.GeoPoint
+
 }

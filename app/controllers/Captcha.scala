@@ -4,14 +4,13 @@ import java.io.ByteArrayOutputStream
 import java.util.Properties
 import javax.imageio.ImageIO
 import com.google.code.kaptcha.util.Config
-import com.typesafe.scalalogging.slf4j
 import io.suggest.util.TextUtil
 import play.api.Play.{current, configuration}
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CipherUtil
 
 /**
@@ -35,9 +34,7 @@ object Captcha extends KaptchaGenerator with PlayMacroLogsImpl {
 
 
 /** Абстрактный кусок контроллера для генерации капч с помощью какой-то неопределённой библиотеки. */
-trait CaptchaGeneratorBase extends Controller {
-
-  def LOGGER : slf4j.Logger
+trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
 
   val CAPTCHA_FMT_LC = "png"
 
@@ -108,8 +105,7 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 
 
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
-trait CaptchaValidator {
-  def LOGGER : slf4j.Logger
+trait CaptchaValidator extends PlayMacroLogsI {
 
   val CAPTCHA_ID_FN     = "captchaId"
   val CAPTCHA_TYPED_FN  = "captchaTyped"

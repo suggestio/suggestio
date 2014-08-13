@@ -1,5 +1,6 @@
 package util
 
+import org.apache.commons.lang3.StringEscapeUtils
 import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
@@ -16,7 +17,6 @@ import java.io._
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import scala.collection.GenTraversableOnce
-import scala.Some
 import java.util.Currency
 
 /**
@@ -43,6 +43,11 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
+  val strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }
+
+  /** sanitizer вызывает html escape для амперсандов, ковычек и т.д. Если это не нужно, то следует вызывать unescape ещё. */
+  val strTrimSanitizeUnescapeF = strTrimSanitizeF andThen strUnescapeF
+
   private val crLfRe = "\r\n".r
   private val lfCrRe = "\n\r".r
   private val lfRe = "\n".r
@@ -66,9 +71,10 @@ object FormUtil {
 
   def isValidUrl(urlStr: String): Boolean = {
     try {
-      new URL(urlStr)
-      true
-
+      !urlStr.isEmpty && {
+        new URL(urlStr)
+        true
+      }
     } catch {
       case ex: Exception => false
     }
@@ -80,13 +86,13 @@ object FormUtil {
 
   /** Маппинг для номера этажа в ТЦ. */
   val floorM = nonEmptyText(maxLength = 4)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val floorOptM = optional(floorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Маппинг для секции в ТЦ. */
   val sectionM = nonEmptyText(maxLength = 6)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val sectionOptM = optional(sectionM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
@@ -113,9 +119,33 @@ object FormUtil {
   )
 
 
+  val adnShownTypeOptM: Mapping[Option[AdnShownType]] = {
+    nonEmptyText(maxLength = 10)
+      .transform[Option[AdnShownType]]( AdnShownTypes.maybeWithName, _.fold("")(_.toString) )
+  }
+  val adnShownTypeM: Mapping[AdnShownType] = {
+    adnShownTypeOptM
+      .verifying("error.required", _.isDefined)
+      .transform[AdnShownType](_.get, Some.apply)
+  }
+  val adnShownTypeIdM: Mapping[String] = {
+    adnShownTypeM
+      .transform[String](_.toString, AdnShownTypes.withName)
+  }
+  val adnShownTypeIdOptM: Mapping[Option[String]] = {
+    adnShownTypeOptM
+      .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
+  }
+
+
   def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
   def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
     x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
+  }
+  def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeUnescapeF): Mapping[Option[String]] = {
+    x.transform[String](trimmer, strIdentityF)
+     .verifying("error.required", !_.isEmpty)
+     .transform[Option[String]](Some.apply, strOptGetOrElseEmpty)
   }
 
 
@@ -124,9 +154,7 @@ object FormUtil {
 
 
   val nameM = nonEmptyText(maxLength = 64)
-    .transform(strTrimSanitizeF, strIdentityF)
-  def shopNameM = nameM
-  def martNameM = nameM
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def companyNameM = nameM
 
 
@@ -136,6 +164,7 @@ object FormUtil {
     .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
   val colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val colorSomeM = toSomeStrM(colorM)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
@@ -143,14 +172,17 @@ object FormUtil {
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val townM = nonEmptyText(maxLength = 32)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val townOptM = optional(townM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val townSomeM = toSomeStrM(townM)
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val addressSomeM = toSomeStrM(addressM)
+
 
   /** id категории. */
   def userCatIdM = esIdM
@@ -160,19 +192,31 @@ object FormUtil {
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val phoneSomeM = toSomeStrM(phoneM)
 
-  def martAddressM = addressM
+  /** Маппер для человеческого траффика, заданного числом. */
+  val humanTrafficAvgM = number(min = 10)
+
+  val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
+  def audienceDescrM = text2048M
 
   // Трансформеры для optional-списков.
   def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
+  val urlNormalizeSafeF = {s: String =>
+    try {
+      UrlUtil.normalize(s)
+    } catch {
+      case ex: Exception => ""
+    }
+  }
   val urlStrM = nonEmptyText(minLength = 8)
-    .transform(strTrimF, strIdentityF)
+    .transform[String](strTrimF andThen urlNormalizeSafeF, UrlUtil.humanizeUrl)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   val urlStrOptM = optional(urlStrM)
 
@@ -194,7 +238,7 @@ object FormUtil {
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
   val urlMapper = urlStrM
-    .transform(new URL(_), {url:URL => url.toExternalForm})
+    .transform[URL](new URL(_), _.toExternalForm)
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
   val urlAllowedMapper = urlMapper
@@ -213,14 +257,22 @@ object FormUtil {
 
   // Маппер домена с конвертором в dkey.
   val domain2dkeyMapper = domainMapper
-    .transform(UrlUtil.normalizeHostname, {dkey:String => IDNA.toUnicode(dkey)})
+    .transform [String] (UrlUtil.normalizeHostname, IDNA.toUnicode)
 
   // Маппер для float-значений.
-  val floatRe = "[0-9]{0,8}([,.][0-9]{0,4})?".r
+  val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,4})?".r
   val floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
-    .transform(_.toFloat, {f: Float => f.toString})
+    .transform[Float](_.toFloat, _.toString)
 
+  // Маппер для полноценных double значений для floating point чисел в различных представлениях.
+  val doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
+  val doubleM = nonEmptyText(maxLength = 32)
+    .verifying("float.invalid", doubleRe.pattern.matcher(_).matches())
+    .transform[Double](
+      { _.replace(',', '.').toDouble},
+      { _.toString }
+    )
 
   // Даты
   val localDate = text(maxLength = 32)
@@ -391,7 +443,7 @@ object FormUtil {
 
   /** Маппинг для задания причины при сокрытии сущности. */
   val hideEntityReasonM = nonEmptyText(maxLength = 512)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
 
 
   /** Маппер типа adn-узла. */
@@ -423,6 +475,22 @@ object FormUtil {
   }
   val currencyCodeOrDfltM: Mapping[String] = {
     default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+  }
+
+
+  /** Маппер для lat-lon координат, заданных в двух полях формы. */
+  val latLng2geopointM: Mapping[GeoPoint] = {
+    mapping(
+      "lat" -> doubleM,
+      "lon" -> doubleM
+    )
+    { GeoPoint.apply }
+    { GeoPoint.unapply }
+  }
+
+  /** Опциональный маппер для lat-lon координат. */
+  val latLng2geopointOptM: Mapping[Option[GeoPoint]] = {
+    optional(latLng2geopointM)
   }
 
 }

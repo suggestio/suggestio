@@ -15,8 +15,10 @@ import org.postgresql.util.PGInterval
  * Description: Тарифы для повременной оплаты.
  */
 
-object MBillTariffFee extends FindByContract[MBillTariffFee] with TariffsAllEnabled[MBillTariffFee] with UpdateDebitCount {
+object MBillTariffFee extends FindByContract with TariffsAllEnabled with UpdateDebitCount {
   import SqlParser._
+
+  override type T = MBillTariffFee
 
   override val TABLE_NAME: String = "bill_tariff_fee"
 
@@ -66,7 +68,7 @@ object MBillTariffFee extends FindByContract[MBillTariffFee] with TariffsAllEnab
 
 
 case class MBillTariffFee(
-  id              : Pk[Int] = NotAssigned,
+  id              : Option[Int] = None,
   contractId      : Int,
   var name        : String,
   ttype           : BTariffType = BTariffTypes.Fee,

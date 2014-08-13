@@ -1,0 +1,17 @@
+@(mir: MInviteRequest, company: MCompany, cf:Form[_])(implicit ctx: Context)
+
+@* Рендер страницы с формой редактирования компании. *@
+@import ctx._
+@import sys1.market.company._
+
+@hPathAfter1 = {
+  / Компания / @Messages("Edit")
+}
+
+@irBase(Messages("Edit"), hPathAfter=Some(hPathAfter1), mirOpt = Some(mir)) {
+  @_companyFormTpl(
+    title = Messages("Save"),
+    cf = cf,
+    call = routes.SysMarketInvReq.companyEditFormSubmit(mir.id.get)
+  )
+}

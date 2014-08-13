@@ -1,19 +1,30 @@
 @(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
 
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+@import util.FormUtil.replaceEOLwithBR
 
-<div id="dailyMmpsWindow" class="popup billing-page daily-mmps-window">
+<div id="dailyMmpsWindow" class="popup js-hidden">
 
-  <div class="hat">
-    <a class="close" href="#"> </a>
+  <div class="popup_header">
+    <a class="close f-right js-close-popup" href="#"></a>
   </div>
 
-  <div class="content">
-    <div class="popup_title">
+  <div class="popup_cnt">
+    <div class="popup_t">
       Ставка тарифных планов @adnNode.meta.name / @adnNode.meta.town
     </div>
 
-    @_dailyMmpTariffPlansTpl(mbmds, adnNode)
+
+    <div class="siom-block_cnt-w">
+      <div class="siom-block_cnt">
+        @_dailyMmpTariffPlansTpl(mbmds, adnNode)
+      </div>
+    </div>
+
+
+
   </div>
 
 </div>

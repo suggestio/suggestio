@@ -1,366 +1,13 @@
-.gray-but-wrap
-  position: relative
-  border: 1px solid #9a9b9b
-  border-radius(6px)
-  display: inline-block
-  padding: 1px 0
-
-  .white-border-top
-    border-radius(6px)
-    box-shadow(0 -1px 0 0 white)
-    overflow: hidden
-
-    .btn
-      background: none
-      border: none
-      display: inline-block
-      padding: 7px 15px 3px
-      color: #676666
-      cursor: pointer
-      font-size: 30px
-      text-decoration: none
-      text-align: center
-      font-family: 'PFDinTextCompPro-Medium'
-      box-shadow(0 1px 0 0 #B5B6B6)
-      text-shadow(1px 1px 1px #F8F8F8)
-.gray-but-wrap:hover
-  border: 1px solid #4f88a9
-  .btn
-    color: #4f88a9
-.gray-but-wrap:active
-  border: 1px solid #9a9b9b
-  box-shadow(inset 0 0 40px 0 #9a9b9b)
-
-  .white-border-top
-    box-shadow: none
-
-    .btn
-      color: #676666
-
-
-.green-but-small
-  outline: 0
-  display: inline-block
-  float: right
-  width: 100px
-  padding: 13px 0
-  color: white
-  cursor: pointer
-  text-align: center
-  font-size: 14px
-  line-height: 14px
-  font-family: 'Arial'
-  background: url('/assets/images/market/lk/green-but.small.png') no-repeat
-  background-position: 0 -180px
-.green-but-small:hover
-  background-position: 0 -90px
-.green-but-small:active
-  color: #dcea8
-  background-position: 0 0
-
-
-.green-btn
-  cursor: pointer
-  margin-top: 7px
-  margin-right: 20px
-  display: inline-block
-  border: 1px solid #646464
-  border-radius(8px)
-  font-size: 14px
-  font-family: 'Arial'
-
-  .white-border-top
-    border-top: 1px solid #E1E1E1
-    border-radius(8px)
-    background: #48ab38
-    padding: 10px 15px
-    min-height: 14px
-
-    .btn
-      display: block
-      height: 0
-      color: white
-      text-decoration: none
-
-    input
-      display: block
-      height: 16px
-      margin-top: -2px
-      cursor: pointer
-      background: none
-      color: white
-
-.green-btn:hover
-  .white-border-top
-
-    a
-      box-shadow(0 7px 20px 3px #FFFFFF)
-
-.green-btn:active
-  .white-border-top
-    border-color: #318124
-    background: #318124
-
-.red-btn
-  cursor: pointer
-  margin-top: 7px
-  margin-right: 20px
-  display: inline-block
-  border: 1px solid #646464
-  border-radius(8px)
-  font-size: 14px
-  font-family: 'Arial'
-
-  .white-border-top
-    border-top: 1px solid #E1E1E1
-    border-radius(8px)
-    background: #e24a4a
-    padding: 10px 15px
-    min-height: 14px
-
-    .btn
-      display: block
-      height: 0
-      color: white
-      text-decoration: none
-
-    input
-      display: block
-      height: 16px
-      margin-top: -2px
-      cursor: pointer
-      background: none
-      color: white
-
-.red-btn:hover
-  .white-border-top
-
-    a
-      box-shadow(0 7px 20px 3px #FFFFFF)
-
-.red-btn:active
-  .white-border-top
-    border-color: #be3737
-    background: #be3737
-
-
-.gray-btn
-  cursor: pointer
-  margin-top: 7px
-  margin-right: 20px
-  display: inline-block
-  border: 1px solid #646464
-  border-radius(8px)
-  font-size: 14px
-  font-family: 'Arial'
-
-  .white-border-top
-    border-top: 1px solid #E1E1E1
-    border-radius(8px)
-    background: #9a9d9e
-    padding: 10px 15px
-    min-height: 14px
-
-    .btn
-      display: block
-      height: 0
-      color: white
-      text-decoration: none
-
-    input
-      display: block
-      height: 16px
-      margin-top: -2px
-      cursor: pointer
-      background: none
-      color: white
-
-.gray-btn:hover
-  .white-border-top
-
-    a
-      box-shadow(0 7px 20px 3px #FFFFFF)
-
-.gray-btn:active
-  .white-border-top
-    border-color: #808385
-    background: #808385
-
-
-
-.blue-but-small
-  outline: 0
-  display: inline-block
-  width: 122px
-  color: white !important
-  cursor: pointer
-  font-size: 14px
-  line-height: 14px
-  text-align: center
-  text-decoration: none
-  padding: 13px 0
-  font-family: 'Arial'
-  background: url('/assets/images/market/lk/blue-but.small.png') no-repeat
-  background-position: 0 -180px
-.blue-but-small:hover
-  background-position: 0 -90px
-.blue-but-small:active
-  color: #a8bdc9
-  background-position: 0 0
-
-.red-but-small
-  outline: 0
-  display: inline-block
-  width: 107px
-  height: 14px
-  padding: 13px 0
-  color: white
-  cursor: pointer
-  font-size: 14px
-  line-height: 14px
-  text-align: center
-  text-decoration: none
-  font-family: 'Arial'
-  background: url('/assets/images/market/lk/red-but.small.png') no-repeat
-  background-position: 0 -180px
-.red-but-small:hover
-  background-position: 0 -90px
-.red-but-small:active
-  color: #dcea8
-  background-position: 0 0
-input.red-but-small
-  height: 40px
-  padding: 0
-
-
-
-.billing-but
-  margin-top: 7px
-  margin-right: 20px
-  display: inline-block
-  border: 1px solid #646464
-  border-radius(5px)
-  font-size: 24px
-  font-family: 'PT_Sans-Narrow','sans-serif'
-
-  .white-border-top
-    border-top: 1px solid #97b9cc
-    border-radius(3px)
-    background: #4f88a9
-    padding: 10px 15px
-    min-height: 14px
-
-    a
-      display: block
-      height: 0
-      color: white
-      text-decoration: none
-
-      span
-        font-size: 12px
-        font-family: 'Arial'
-
-.billing-but:hover
-  .white-border-top
-
-    a
-      box-shadow(0 7px 20px 3px #FFFFFF)
-
-.billing-but:active
-  .white-border-top
-    border-color: #3e718f
-    background: #3e718f
-
-
-
-.logout-but
-  float: right
-  display: inline-block
-  width: 49px
-  height: 49px
-  cursor: pointer
-  background: url('/assets/images/market/lk/logout-but.png') no-repeat
-  background-position: 0 -198px
-.logout-but:hover
-  background-position: 0 -99px
-.logout-but:active
-  background-position: 0 0
-
-
-
-.gray-but-small
-    outline: 0
-    display: inline-block
-    width: 121px
-    height: 14px
-    padding: 13px 0
-    color: white
-    cursor: pointer
-    font-size: 14px
-    line-height: 14px
-    text-align: center
-    text-decoration: none
-    font-family: 'Arial'
-    background: url('/assets/images/market/lk/gray-but.small.png') no-repeat
-    background-position: 0 -180px
-  .gray-but-small:hover
-    background-position: 0 0
-  .gray-but-small:active
-    color: #dcea8
-    background-position: 0 -90px
-input.gray-but-small
-  height: 40px
-  padding: 0
-
-.gray-but
-  display: inline-block
-  border: 1px solid #646464
-  border-radius(6px)
-
-  .white-border-top
-    border-radius(6px)
-    border-top: 1px solid #e5e6e6
-    overflow: hidden
-    padding: 10px 25px
-    background: #9a9d9e
-
-    a
-      display: inline-block
-      text-decoration: none
-      color: white
-      text-shadow(1px 1px 1px #435f6e)
-      height: 0
-      font-family: 'Arial'
-      font-size: 14px
-.gray-but:hover
-
-  .white-border-top
-
-    a
-      box-shadow(0 7px 20px 3px #FFFFFF)
-.gray-but:active
-
-  .white-border-top
-    border-top: 1px solid #7f8283
-    background: #7f8283
-
-    a
-      box-shadow(none)
-      opacity: 0.6
-
-
 .gray-but-smallest
   margin-left: 1px
   display: inline-block
   overflow: hidden
   border: 1px solid #b2b2b2
-  border-radius(10px)
   box-shadow(1px 1px 0 0 #676767)
 
   .white-border-top
     display: inline-block
     border-top: 1px solid #fbfbfb
-    border-radius(10px)
     padding: 4px 15px
     color: #959595
     text-decoration: none
@@ -413,45 +60,6 @@ input.gray-but-small
   background-position: 0 1px
 
 
-.transparent-btn
-  cursor: pointer
-  border-width: 1px
-  border-style: solid
-  display: block
-  position: relative
-  text-align: center
-  text-decoration: none
-
-.transparent-btn__white-top
-  box-shadow(0 1px 0 0 white inset)
-  overflow: hidden
-
-.transparent-btn_gray
-  border-color: #9a9b9b
-
-.transparent-btn_gray__text
-  color: #676666
-  font-family: 'PFDinTextCompPro-Medium'
-  text-shadow(1px 1px 1px #F8F8F8)
-
-.transparent-btn_gray:hover
-  border-color: #4f88a9
-
-  .transparent-btn_gray__text
-    color: #4f88a9
-
-.transparent-btn_gray:active
-  border-color: #9a9b9b
-  background: #cbcbcb
-
-  .transparent-btn__white-top
-    border-color: #cbcbcb
-    box-shadow: none
-
-  .transparent-btn_gray__text
-    color: #676666
-
-
 .captcha-reload-btn
   cursor: pointer
   display: inline-block
@@ -470,35 +78,22 @@ input.gray-but-small
 
 
 
-.back-but
-  display: block
-  margin-left: 11px
-  margin-right: 15px
-  width: 35px
-  height: 35px
-  float: left
-  text-decoration: none
-  background: url('/assets/images/market/lk/back-btn_retina.png') no-repeat
-  background-size: 35px 95px
-  background-position: 0 0
-
-.back-but:hover
-  background-position: 0 -60px
-
-.back-but:active
-  background-position: 0 -59px
-
-.back-but_centered
-  position: relative
-  float: none
-  margin: 0 auto
-  top: 10px
-
-
 /********************************************************************************************************************/
 /* refactoring to MCSS */
 /********************************************************************************************************************/
 
+.btn-w
+  overflow   hidden /* внутри лежат элементы со свойством float */
+  text-align center
+
+  &.__size-M
+    padding 25px 0
+
+  &.__size-S
+    padding  25px 20%
+
+  &.__align-by-inputs
+    padding-left 120px
 
 .create-ad
 
@@ -537,104 +132,125 @@ siomAcBtnColor5 = #b6c2c5 /* серо-синий */
 
 .siom-ac-btn
   display: inline-block
+
+  border: none
+  outline: none
   cursor: pointer
+
   text-decoration: none
   text-align: center
   text-shadow(1px 1px 1px #363636)
 
-.siom-ac-btn.__color-1
-  color: white
-  background: siomAcBtnColor1
+  &.__list
+    margin-right: 25px
 
-.siom-ac-btn.__color-1:hover
-  siomAcBtnHoverGradient(#67CE52, siomAcBtnColor1)
+  &.__list-vertical
+    margin: 5px 0
 
-.siom-ac-btn.__color-1:active
-  background: siomAcBtnColor1
-  box-shadow(0 0 30px 0 #2e7921 inset)
-  color: #a4c59e
+  &.__color-1
+    color: white
+    background: siomAcBtnColor1
 
-.siom-ac-btn.__color-2
-  color: white
-  background: siomAcBtnColor2
+    &:hover
+      siomAcBtnHoverGradient(#67CE52, siomAcBtnColor1)
 
-.siom-ac-btn.__color-2:hover
-  siomAcBtnHoverGradient(#62AAD1, siomAcBtnColor2)
+    &:active
+      background: siomAcBtnColor1
+      box-shadow(0 0 30px 0 #2e7921 inset)
+      color: #a4c59e
 
-.siom-ac-btn.__color-2:active
-  background: siomAcBtnColor2
-  box-shadow(0 0 30px 0 #30607c inset)
-  color: #a9beca
+  &.__color-2
+    color: white
+    background: siomAcBtnColor2
 
-.siom-ac-btn.__color-3
-  color: white
-  background: siomAcBtnColor3
+    &:hover
+      siomAcBtnHoverGradient(#62AAD1, siomAcBtnColor2)
 
-.siom-ac-btn.__color-3:hover
-  siomAcBtnHoverGradient(#A9ACAD, siomAcBtnColor3)
+    &:active
+      background: siomAcBtnColor2
+      box-shadow(0 0 30px 0 #30607c inset)
+      color: #a9beca
 
-.siom-ac-btn.__color-3:active
-  background: siomAcBtnColor3
-  box-shadow(0 0 30px 0 #76797a inset)
-  color: #d2d1d1
+  &.__color-3
+    color: white
+    background: siomAcBtnColor3
 
-.siom-ac-btn.__color-4
-  color: white
-  background: siomAcBtnColor4
+    &:hover
+      siomAcBtnHoverGradient(#A9ACAD, siomAcBtnColor3)
 
-.siom-ac-btn.__color-4:hover
-  siomAcBtnHoverGradient(#FC5353, siomAcBtnColor4)
+    &:active
+      background: siomAcBtnColor3
+      box-shadow(0 0 30px 0 #76797a inset)
+      color: #d2d1d1
 
-.siom-ac-btn.__color-4:active
-  background: siomAcBtnColor4
-  box-shadow(0 0 30px 0 #b43232 inset)
-  color: #ffa1a1
+  &.__color-4
+    color: white
+    background: siomAcBtnColor4
 
-.siom-ac-btn.__color-5
-  color: white
-  background: siomAcBtnColor5
+    &:hover
+      siomAcBtnHoverGradient(#FC5353, siomAcBtnColor4)
 
-.siom-ac-btn.__color-5:hover
-  siomAcBtnHoverGradient(#C9D5D8, siomAcBtnColor5)
+    &:active
+      background: siomAcBtnColor4
+      box-shadow(0 0 30px 0 #b43232 inset)
+      color: #ffa1a1
 
-.siom-ac-btn.__color-5:active
-  background: siomAcBtnColor5
-  box-shadow(0 0 30px 0 #9EA9AA inset)
-  color: #d2d1d1
+  &.__color-5
+    color: white
+    background: siomAcBtnColor5
 
-.siom-ac-btn.__size-M
-  padding: 10px 25px
+    &:hover
+      siomAcBtnHoverGradient(#C9D5D8, siomAcBtnColor5)
 
-.siom-ac-btn.__size-M:active
-  padding: 11px 25px 9px
+    &:active
+      background: siomAcBtnColor5
+      box-shadow(0 0 30px 0 #9EA9AA inset)
+      color: #d2d1d1
 
-.siom-ac-btn.__size-XL
-  display: block
-  padding: 10px 0
+  &.__size-S
+    padding: 5px 25px
 
-.siom-ac-btn.__size-XL:active
-  padding: 11px 0 9px
+    &:active
+      padding: 6px 25px 4px
 
-.siom-ac-btn.__ft-M
-  font-family: 'Arial'
-  font-size: 14px
-  line-height: 14px
+  &.__size-M
+    padding: 10px 25px
 
-.siom-ac-btn.__ft-XM
-  font-family: 'heliosthin'
-  font-size: 16px
-  line-height: 16px
+    &:active
+      padding: 11px 25px 9px
 
-.siom-ac-btn.__ft-L
-  font-family: 'heliosthin'
-  font-size: 20px
-  line-height: 20px
+  &.__size-XL
+    display: block
+    padding: 10px 0
 
-.siom-ac-btn.__ft-XL
-  font-family: 'PT_Sans-Narrow'
-  font-size: 24px
-  line-height: 24px
+    &:active
+      padding: 11px 0 9px
 
+  &.__ft-M
+    font-family: 'Arial'
+    ft(14px)
+
+  &.__ft-XM
+    font-family: 'heliosthin'
+    ft(16px)
+
+  &.__ft-L
+    font-family: 'heliosthin'
+    ft(20px)
+
+  &.__ft-XL
+    font-family: 'PT_Sans-Narrow'
+    ft(24px)
+
+  &.__billing
+    float: right
+    margin-right: 12px
+    margin-top: 10px
+    text-shadow(none)
+
+  &_ft-S
+    font-family: 'Arial'
+    font-size: 12px
 
 /********************************************************************************************************************/
 /* SioMarket default link button */
@@ -644,108 +260,325 @@ siomLinkBtnColor1 = #6b7e85
 siomLinkBtnColor2 = #b6c2c5
 siomLinkBtnColor3 = #4f88a9
 siomLinkBtnColor4 = #48ab38
+siomLinkBtnColor5 = #9a9b9b
 
 .siom-link-btn
   display: inline-block
-
   cursor: pointer
-
   text-align: center
   text-decoration: none
+  transition(color 0.2s ease-in-out 0s)
 
-.siom-link-btn.__size-XS
-  width: 24px
-  padding: 7px
+  &.__list-vertical
+    margin: 5px 0
 
-.siom-link-btn.__size-XS:active
-  padding: 8px 7px 6px
+  &.__size-XS
+    width: 24px
+    padding: 7px
 
-.siom-link-btn.__size-M
-  padding: 10px 20px
+    &:active
+      padding: 8px 7px 6px
 
-.siom-link-btn.__size-M:active
-  padding: 11px 20px 9px
+  &.__size-M
+    padding: 10px 20px
 
-.siom-link-btn.__size-XL
+    &:active
+      padding: 11px 20px 9px
+
+  &.__size-XL
+    display: block
+    padding: 10px 0
+
+    &:active
+      padding: 11px 0 9px
+
+  &.__ft-M
+    font-family: 'Arial'
+    ft(14px)
+
+  &.__ft-XM
+    font-family: 'PT_Sans-Narrow'
+    ft(24px)
+
+
+  &.__ft-L
+    padding-top: 12px /* особенности шрифта */
+    padding-bottom: 8px /* особенности шрифта */
+
+    font-family: 'PFDinTextCompPro-Medium'
+    ft(30px)
+    text-shadow( 1px 1px 1px #fff )
+
+    &:active
+      padding-top: 13px /* особенности шрифта */
+      padding-bottom: 7px /* особенности шрифта */
+
+  &.__color-1
+    border: 1px solid siomLinkBtnColor1
+    color: siomLinkBtnColor1
+
+    &:hover
+      color: #4c4c4c
+      border-color: #4c4c4c
+
+    &:active
+      background: #b6c2c5
+
+  &.__color-2
+    border: 1px solid siomLinkBtnColor2
+    color: siomLinkBtnColor2
+
+    &:hover
+      color: #4c4c4c
+      border-color: #4c4c4c
+
+    &:active
+      background: #b6c2c5
+
+  &.__color-3
+    border: 1px solid siomLinkBtnColor3
+    color: siomLinkBtnColor3
+
+    &:hover
+      border: 1px solid siomLinkBtnColor3
+      background: siomLinkBtnColor3
+      color: white
+
+    &:active
+      background: siomLinkBtnColor3
+      border: 1px solid #2f5d79
+      box-shadow(0 0 30px 0 #2f5d79 inset)
+      color: #98b2c1
+
+  &.__color-4
+    border: 1px solid siomLinkBtnColor4
+    color: siomLinkBtnColor4
+
+    &:hover
+      border: 1px solid siomLinkBtnColor4
+      background: siomLinkBtnColor4
+      color: white
+
+    &:active
+      background: siomLinkBtnColor4
+      border: 1px solid #2c751f
+      box-shadow(0 0 30px 0 #2c751f inset)
+      color: #92bb8b
+
+  &.__color-5
+    box-shadow(0 1px 0 0 white inset)
+    border: 1px solid siomLinkBtnColor5
+    color: #676666
+    font-family: 'PFDinTextCompPro-Medium'
+    text-shadow(1px 1px 1px #F8F8F8)
+
+    &:hover
+      border-color: #4f88a9
+      color: #4f88a9
+
+    &:active
+      box-shadow(none)
+      border-color: #9a9b9b
+      background: #cbcbcb
+      color: #676666
+
+  &.__radial
+    border-radius(50%)
+
+  &.__list-element
+    margin: 0 15px
+
+/********************************************************************************************************************/
+/* SioMarket add/remove/zoom images buttons */
+/********************************************************************************************************************/
+
+.siom-add-image-btn
+  display: inline-block
+  width: 45px
+  height: 45px
+
+  cursor: pointer
+  background-image: url('/assets/images/market/lk/add-file-icon_retina.png')
+  background-size: 45px 115px
+  background-repeat: no-repeat
+  background-position: 0 0
+
+  &.__hover
+    background-position: 0 -70px
+
+  &.__active
+    background-position: 0 -69px
+
+.siom-remove-image-btn
   display: block
-  padding: 10px 0
+  width: 100%
+  height: 100%
 
-.siom-link-btn.__size-XL:active
-  padding: 11px 0 9px
+  &.__hover
+    border: 1px solid white
 
-.siom-link-btn.__ft-M
-  font-family: 'Arial'
-  font-size: 14px
-  line-height: 14px
+    background-color: rgba(219,98,98,0.9)
+    background-image: url('/assets/images/market/lk/basket-icon_retina.png')
+    background-size: 18px 20px
+    background-repeat: no-repeat
+    background-position: center center
 
-.siom-link-btn.__ft-XM
-  font-family: 'PT_Sans-Narrow'
-  font-size: 24px
-  line-height: 24px
+  &.__active
+    background-position: center 13px
 
-.siom-link-btn.__ft-L
-  font-family: 'PFDinTextCompPro-Medium'
-  font-size: 30px
-  line-height: 30px
-  padding-top: 12px /* особенности шрифта */
-  padding-bottom: 8px /* особенности шрифта */
-  text-shadow( 1px 1px 1px #fff )
 
-.siom-link-btn.__ft-L:active
-  padding-top: 13px /* особенности шрифта */
-  padding-bottom: 7px /* особенности шрифта */
+.siom-zoom-image-btn
+  display: block
+  width: 100%
+  height: 100%
 
-.siom-link-btn.__color-1
-  border: 1px solid siomLinkBtnColor1
-  color: siomLinkBtnColor1
+  &.__hover
+    background-color: rgba(239,239,239,0.9)
+    background-image: url('/assets/images/market/lk/zoom-icon_retina.png')
+    background-size: 45px 45px
+    background-repeat: no-repeat
+    background-position: 0 0
 
-.siom-link-btn.__color-1:hover
-  color: #4c4c4c
-  border-color: #4c4c4c
+  &.__active
+    background-position: 0 1px
 
-.siom-link-btn.__color-1:active
-  background: #b6c2c5
+/********************************************************************************************************************/
+/* Edit btn */
+/********************************************************************************************************************/
 
-.siom-link-btn.__color-2
-  border: 1px solid siomLinkBtnColor2
-  color: siomLinkBtnColor2
+.edit-btn
+  background: url('/assets/images/market/lk/edit-but.png') no-repeat
+  background-position: 0 -64px
+  padding-left: 15px
+  padding-top: 5px
+  text-decoration: none
 
-.siom-link-btn.__color-2:hover
-  color: #4c4c4c
-  border-color: #4c4c4c
+  &:hover
+    background-position: 0 0
 
-.siom-link-btn.__color-2:active
-  background: #b6c2c5
+  &.__ft-XS
+    font-family: 'Arial'
+    ft(10px)
 
-.siom-link-btn.__color-3
-  border: 1px solid siomLinkBtnColor3
-  color: siomLinkBtnColor3
+  &.__color-1
+    color: #959595
 
-.siom-link-btn.__color-3:hover
-  border: 1px solid siomLinkBtnColor3
-  background: siomLinkBtnColor3
-  color: white
+    &:hover
+      color: #5088aa
 
-.siom-link-btn.__color-3:active
-  background: siomLinkBtnColor3
-  border: 1px solid #2f5d79
-  box-shadow(0 0 30px 0 #2f5d79 inset)
-  color: #98b2c1
+/********************************************************************************************************************/
+/* Back btn */
+/********************************************************************************************************************/
 
-.siom-link-btn.__color-4
-  border: 1px solid siomLinkBtnColor4
-  color: siomLinkBtnColor4
+.back-btn
+  display: block
+  margin-left: 11px
+  margin-right: 15px
+  width: 35px
+  height: 35px
+  float: left
+  text-decoration: none
+  background: url('/assets/images/market/lk/back-btn_retina.png') no-repeat
+  background-size: 35px 95px
+  background-position: 0 0
 
-.siom-link-btn.__color-4:hover
-  border: 1px solid siomLinkBtnColor4
-  background: siomLinkBtnColor4
-  color: white
+  &:hover
+    background-position: 0 -60px
 
-.siom-link-btn.__color-4:active
-  background: siomLinkBtnColor4
-  border: 1px solid #2c751f
-  box-shadow(0 0 30px 0 #2c751f inset)
-  color: #92bb8b
+  &:active
+    background-position: 0 -59px
 
-.siom-link-btn.__radial
-  border-radius(50%)
+  &.__hidden
+    visibility: hidden
+
+  &.__centered
+    position: relative
+    float: none
+    margin: 0 auto
+    top: 10px
+
+/********************************************************************************************************************/
+/* Logout btn */
+/********************************************************************************************************************/
+
+.logout-btn
+  float: right
+  margin-top: 5px
+
+  display: inline-block
+  width: 49px
+  height: 49px
+
+  cursor: pointer
+  background: url('/assets/images/market/lk/logout-btn_retina.png') no-repeat
+  background-size: 47px 191px
+  background-position: 0 0
+
+  &:hover
+    background-position: 0 -144px
+
+  &:active
+    background-position: 0 -72px
+
+/********************************************************************************************************************/
+/* Siom btns new design */
+/********************************************************************************************************************/
+.siom-new-btn
+  display         inline-block
+
+  border          1px solid
+  outline         none
+  cursor          pointer
+
+  text-decoration none
+  text-align      center
+  font-size       16px
+  font-family     'opensans-light'
+  color           white
+
+  border-radius(10px)
+
+  &:hover
+    background-color  #dc3a36
+
+  &.__size-XS
+    padding 10px 40px
+
+    &:active
+      padding 11px 40px 9px
+
+  &.__size-S
+    padding 16px 20px
+
+    &:active
+      padding 17px 20px 15px
+
+  &.__size-M
+    padding 16px 40px
+
+    &:active
+      padding 17px 40px 15px
+
+  &.__size-L
+    display block
+    padding 16px 0
+
+    &:active
+      padding 17px 0 15px
+
+  &.__fill-1
+    background-color  #f44040
+    border-color      transparent
+
+    &:hover
+      background-color  #dc3a36
+
+  &.__list
+    margin-left 20px
+
+  &.__color-2
+    border-color  #c2c2c2
+    color         #7a7a7a
+
+    &:hover
+      color white

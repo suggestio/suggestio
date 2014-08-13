@@ -2,16 +2,18 @@
 
 @import util.TplDataFormatUtil._
 @import common._
-@import util.blocks.BlocksConf.Block7
+@import util.blocks.BlocksConf.{Block7 => bc}
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7 sm-block@mad.id" @mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc,
+  style = mad.colors.get(bc.saleMaskColorBf.name).map(bgc => s"border-color: #$bgc;")
+) {
 
-  <div class="color-bg"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
-  <div class="sale-mask abs"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
+  <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
+  <div class="sale-mask abs"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
 
   @mad.offers.headOption.map { offer =>
 
-    <div @offer.discount.map { discount => @_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
+    <div @offer.discount.map { discount => @_aovfStyleTpl(discount, bc.discountBf, "sale-icon")}>
       @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
     </div>
 
@@ -22,7 +24,7 @@
           @Html(text1.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block7.titleBf, "title", left = 18, top = 24  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 24  )
       }
       @offer.price.map { price =>
         <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
@@ -30,10 +32,10 @@
           @formatPrice(price.value, price.currency)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, price, Block7.priceBf, "price", left = 18, top = 54  )
+        @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 18, top = 54  )
       }
     </div>
 
   }
 
-</div>
+}

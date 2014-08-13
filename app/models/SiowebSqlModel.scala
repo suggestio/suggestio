@@ -18,13 +18,19 @@ object SqlModelStatic {
 }
 
 
-trait SqlModelStaticMinimal[T] {
-
-  /** Парсер ряда. */
-  val rowParser: RowParser[T]
+trait SqlTableName {
 
   /** Название таблицы. Используется при сборке sql-запросов. */
   val TABLE_NAME: String
+}
+
+
+trait SqlModelStaticMinimal extends SqlTableName {
+
+  type T
+
+  /** Парсер одного ряда. */
+  val rowParser: RowParser[T]
 
 
   /** Прочитать всю таблицу. */
@@ -57,7 +63,7 @@ trait SqlModelStaticMinimal[T] {
 }
 
 
-trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
+trait SqlModelStatic extends SqlModelStaticMinimal {
 
   /**
    * Прочитать ряд по ключу ряда.
@@ -121,8 +127,8 @@ trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
 
 
 trait SqlModelDelete {
-  def id: Pk[Int]
-  def companion: SqlModelStatic[_]
+  def id: Option[Int]
+  def companion: SqlModelStatic
 
   def delete(implicit c: Connection) = {
     if (id.isDefined) {
@@ -176,3 +182,44 @@ object PgTransaction {
   }
 
 }
+
+trait FromJson {
+  type T
+  def fromJson: PartialFunction[AnyRef, T]
+}
+
+
+/** Аддон для Static-модели, добавляющий метод быстрой для очистки всей таблицы. */
+trait SqlTruncate extends SqlTableName {
+  def truncateTable(implicit c: Connection): Int = {
+    SQL("TRUNCATE TABLE " + TABLE_NAME)
+      .executeUpdate()
+  }
+}
+
+
+/** Добавить метод analyze() для статической модели. */
+trait SqlAnalyze extends SqlTableName {
+  def analyze(implicit c: Connection) {
+    SQL("ANALYZE " + TABLE_NAME)
+      .execute()
+  }
+}
+
+trait SqlVacuumAnalyze extends SqlTableName {
+  def vacuumAnalyze(implicit c: Connection): Unit = {
+    SQL("VACUUM ANALYZE " + TABLE_NAME)
+      .execute()
+  }
+}
+
+trait SqlIndexName extends SqlTableName {
+
+  /** Подготовить имя индекса для указанной колонки.
+    * @param colName Имя колонки.
+    * @return Имя индекса, которое постоено также, как это делает postgres/pgadmin.
+    */
+  def indexName(colName: String) = s"${TABLE_NAME}_${colName}_idx"
+
+}
+

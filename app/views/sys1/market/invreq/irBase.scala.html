@@ -1,9 +1,14 @@
-@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, hPathAfter: Option[Html] = None, mirOpt: Option[MInviteRequest] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для sys-страниц invreq. *@
+@import util.TplDataFormatUtil._
+@import ctx._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarketInvReq.index">IR</a>
+  / <a class="blue-link" href="@routes.SysMarketInvReq.index">IR</a>
+  @mirOpt.map { mir =>
+    / <a class="blue-link" href="@routes.SysMarketInvReq.showIR(mir.id.get)">@strLimitLen(mir.name, 12)</a>
+  }
   @hPathAfter.getOrElse { / @title }
 }
 

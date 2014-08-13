@@ -8,7 +8,6 @@ import play.api.mvc._
 import util.SiowebEsUtil.client
 import controllers.routes
 import play.api.mvc.Result
-import scala.Some
 
 /**
  * Suggest.io

@@ -16,8 +16,10 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:04
  * Description: Список запросов на размещение рекламы.
  */
-object MAdvReq extends MAdvStatic[MAdvReq] {
+object MAdvReq extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvReq
 
   val TABLE_NAME = "adv_req"
 
@@ -74,8 +76,8 @@ case class MAdvReq(
   dateEnd       : DateTime,
   showLevels    : Set[AdShowLevel],
   dateCreated   : DateTime = DateTime.now(),
-  id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvReq] with CurrencyCode with SqlModelDelete with MAdvI {
+  id            : Option[Int] = None
+) extends SqlModelSave[MAdvReq] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined

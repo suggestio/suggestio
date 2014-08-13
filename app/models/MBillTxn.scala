@@ -12,12 +12,14 @@ import java.sql.Connection
  * Created: 18.04.14 11:43
  * Description: Журнал транзакций по биллингу.
  */
-object MBillTxn extends SqlModelStatic[MBillTxn] {
+object MBillTxn extends SqlModelStatic {
   import SqlParser._
+
+  override type T = MBillTxn
 
   val TABLE_NAME: String = "bill_txn"
 
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("amount") ~
+  val rowParser = get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("amount") ~
                   get[Option[String]]("currency") ~ get[DateTime]("date_paid") ~ get[DateTime]("date_processed") ~
                   get[String]("payment_comment") ~ get[String]("txn_uid") ~ get[Option[String]]("ad_id") ~
                   get[Option[Float]]("comission_pc") map {
@@ -34,9 +36,9 @@ object MBillTxn extends SqlModelStatic[MBillTxn] {
    * @param contractId id контракта.
    * @return Список транзакций, новые сверху.
    */
-  def findForContract(contractId: Int)(implicit c: Connection): List[MBillTxn] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC")
-      .on('contractId -> contractId)
+  def findForContract(contractId: Int, limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
+      .on('contractId -> contractId, 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
   }
 
@@ -45,9 +47,9 @@ object MBillTxn extends SqlModelStatic[MBillTxn] {
    * @param contractIds Список номеров договоров.
    * @return Список транзакций в порядке их появления.
    */
-  def findForContracts(contractIds: Seq[Int])(implicit c: Connection): List[MBillTxn] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = ANY({ids}) ORDER BY id ASC")
-      .on('ids -> seqInt2pgArray(contractIds))
+  def findForContracts(contractIds: Traversable[Int], limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = ANY({ids}) ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
+      .on('ids -> seqInt2pgArray(contractIds), 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
   }
 
@@ -77,7 +79,7 @@ case class MBillTxn(
   paymentComment  : String,
   adId            : Option[String] = None,
   comissionPc     : Option[Float] = None,
-  id              : Pk[Int] = NotAssigned
+  id              : Option[Int] = None
 ) extends CurrencyCodeOpt {
 
   /**

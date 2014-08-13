@@ -1,20 +1,20 @@
 package controllers
 
+import play.api.mvc.Action
 import util.img._
-import ImgFormUtil.imgInfo2imgKey
+import util.img.ImgFormUtil.{LogoOpt_t, imgInfo2imgKey}
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import scala.concurrent.Future
 import views.html.market.lk.adn._
 import io.suggest.ym.model.MAdnNode
-import play.api.data.Form
+import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
-import scala.util.Success
-import play.api.mvc.Result
+import GalleryUtil._
+import WelcomeUtil._
 
 /**
  * Suggest.io
@@ -24,144 +24,215 @@ import play.api.mvc.Result
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
 
   import LOGGER._
 
   /** Маркер картинки для использования в качестве логотипа. */
-  val LEADER_TMP_LOGO_MARKER = "leadLogo"
+  private val TMP_LOGO_MARKER = "leadLogo"
 
-  val WELCOME_IMG_KEY = "wlcm"
+  // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
+  private val nameKM        = "name"    -> nameM
+  val townKM                = "town"    -> townSomeM
+  private val addressKM     = "address" -> addressSomeM
+  val colorKM               = "color"   -> colorSomeM
+  private val siteUrlKM     = "siteUrl" -> urlStrOptM
+  private val phoneKM       = "phone"   -> phoneOptM
+
+  private val audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
+  private val humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
+
+  private val infoKM        = "info" -> toSomeStrM(text2048M)
+
+  /** Маппер подформы метаданных для узла-ресивера. */
+  private val rcvrMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt,
+        audienceDescr = audDescr,
+        humanTrafficAvg = humanTrafficAvg
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone, audienceDescr, humanTrafficAvg))
+    }
+  }
+
+  /** Маппер подформы метаданных для узла-продьюсера. */
+  private val prodMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, infoKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt, info) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt,
+        info    = info
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone, info))
+    }
+  }
+
+  /** Маппер для метаданных какого-то узла, для которого не подходят две предыдущие формы.
+    * Сделан в виде метода, т.к. такой случай почти невероятен. */
+  private def nodeMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone))
+    }
+  }
+
+  val logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
+
+  /** Маппинг для формы добавления/редактирования торгового центра. */
+  private def nodeFormM(nodeInfo: AdNetMemberInfo): Form[FormMapResult] = {
+    val metaM = if (nodeInfo.isReceiver) {
+      rcvrMetaM
+    } else if (nodeInfo.isProducer) {
+      prodMetaM
+    } else {
+      nodeMetaM
+    }
+    val metaKM = "meta" -> metaM
+    // У ресивера есть поля для картинки приветствия и галерея для демонстрации.
+    val m: Mapping[FormMapResult] = if (nodeInfo.isReceiver) {
+      mapping(metaKM, logoKM, welcomeImgIdKM, galleryKM)
+        { FormMapResult.apply }
+        { FormMapResult.unapply }
+    } else {
+      mapping(metaKM, logoKM)
+        { FormMapResult(_, _) }
+        { fmr => Some((fmr.meta, fmr.logoOpt)) }
+    }
+    Form(m)
+  }
+
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    getWelcomeAdOpt(adnNode) map { welcomeAdOpt =>
-      val martLogoOpt = adnNode.logoImgOpt.map { img =>
-        ImgInfo4Save(imgInfo2imgKey(img))
-      }
-      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
-      val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
+    val waOptFut = getWelcomeAdOpt(adnNode)
+    val martLogoOpt = adnNode.logoImgOpt.map { img =>
+      ImgInfo4Save(imgInfo2imgKey(img))
+    }
+    val gallerryIks = gallery2iiks( adnNode.gallery )
+    val formNotFilled = nodeFormM(adnNode.adn)
+    waOptFut map { welcomeAdOpt =>
+      val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
+      val fmr = FormMapResult(adnNode.meta, martLogoOpt, welcomeImgKey, gallerryIks)
+      val formFilled = formNotFilled fill fmr
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
-
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    martFormM.bindFromRequest().fold(
+    nodeFormM(adnNode.adn).bindFromRequest().fold(
       {formWithErrors =>
         val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
         debug(s"martEditFormSubmit(${adnNode.id.get}): Failed to bind form: ${formatFormErrors(formWithErrors)}")
         welcomeAdOptFut map { welcomeAdOpt =>
           NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
-            .flashing("error" -> "Ошибка заполнения формы.")
         }
       },
-      {case (adnMeta, welcomeImgOpt, logoImgIdOpt) =>
+      {fmr =>
+        trace(s"editAdnNodeSubmit($adnId): newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
         // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = adnNode.logoImgOpt)
+        val savedLogoFut = ImgFormUtil.updateOrigImg(
+          needImgs = fmr.logoOpt.toSeq,
+          oldImgs  = adnNode.logoImgOpt.toIterable
+        )
+        // Запускаем апдейт галереи.
+        val galleryUpdFut = ImgFormUtil.updateOrigImgId(
+          needImgs = gallery4s(fmr.gallery),
+          oldImgIds = adnNode.gallery
+        )
         // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
-          ImgFormUtil.updateOrigImg(
-            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
-          ) flatMap {
-              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-              case None =>
-                val deleteOldAdFut = adnNode.meta.welcomeAdId
-                  .fold [Future[_]] {Future successful ()} { MAd.deleteById }
-                adnNode.meta.welcomeAdId = None
-                deleteOldAdFut
-
-              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case newImgInfoOpt @ Some(newImgInfo) =>
-                val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
-                val welcomeAd = welcomeAdOpt.fold
-                  { MWelcomeAd(producerId = adnNode.id.get, imgs = imgs) }
-                  {welcomeAd =>
-                    welcomeAd.imgs = imgs
-                    welcomeAd
-                  }
-                welcomeAd.save andThen {
-                  case Success(welcomeAdId) =>
-                    adnNode.meta.welcomeAdId = Some(welcomeAdId)
-                }
-          }
-        }
-        adnNode.meta = adnMeta
-        savedLogoFut.flatMap { savedLogo =>
-          adnNode.logoImgOpt = savedLogo
-          savedWelcomeImgsFut flatMap { _ =>
-            adnNode.save.map { _ =>
-              Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
+        val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
+        for {
+          savedLogo <- savedLogoFut
+          waIdOpt   <- savedWelcomeImgsFut
+          gallery   <- galleryUpdFut
+          _adnId    <- applyNodeChanges(adnNode, fmr.meta, waIdOpt, savedLogo, gallery).save
+        } yield {
+          // Собираем новый экземпляр узла
+          Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
+            .flashing("success" -> "Изменения сохранены.")
         }
       }
     )
   }
 
 
+  /** Накатить изменения на инстанс узла, породив новый инстанс.
+    * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
+  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: AdnMMetadata, waIdOpt: Option[String],
+                               newLogo: Option[MImgInfoT], newImgGallery: List[MImgInfoT]): MAdnNode = {
+    adnNode.copy(
+      meta = adnNode.meta.copy(
+        // сохраняем метаданные
+        name    = adnMeta2.name,
+        town    = adnMeta2.town,
+        address = adnMeta2.address,
+        color   = adnMeta2.color,
+        siteUrl = adnMeta2.siteUrl,
+        phone   = adnMeta2.phone,
+        // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения.
+        audienceDescr = adnMeta2.audienceDescr,
+        humanTrafficAvg = adnMeta2.humanTrafficAvg,
+        info = adnMeta2.info,
+        // сохраняем welcome ad id
+        welcomeAdId = waIdOpt
+      ),
+      // сохраняем логотип
+      logoImgOpt = newLogo,
+      gallery = gallery2filenames(newImgGallery)
+    )
+  }
+
+
   /**
-   * Загрузка картинки для логотипа магазина.
+   * Экшен загрузки картинки для логотипа магазина.
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo(adnId: String) = IsAdnNodeAdmin(adnId)(parse.multipartFormData) { implicit request =>
-    import AdNetMemberTypes._
-    request.adnNode.adn.memberType match {
-      // TODO Может пора выпилить это разделение на сущности?
-      case MART | RESTAURANT_SUP | RESTAURANT =>
-        _handleTempImg(MartLogoImageUtil, Some(LEADER_TMP_LOGO_MARKER))
-      case SHOP =>
-        _handleTempImg(AdnLogoImageUtil, Some(MarketShopLk.SHOP_TMP_LOGO_MARKER))
+  def handleTempLogo = Action.async(parse.multipartFormData) { implicit request =>
+    bruteForceProtected {
+      _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
     }
   }
 
 
-  /** Маппер для метаданных. */
-  private val leaderMetaM = mapping(
-    "name"      -> nameM,
-    "town"      -> toStrOptM(townM),
-    "address"   -> toStrOptM(martAddressM),
-    "color"     -> toStrOptM(colorM),
-    "siteUrl"   -> urlStrOptM,
-    "phone"     -> phoneOptM
+  sealed case class FormMapResult(
+    meta: AdnMMetadata,
+    logoOpt: LogoOpt_t,
+    waImgIdOpt: Option[ImgIdKey] = None,
+    gallery: List[ImgIdKey] = Nil
   )
-  {(name, town, address, color, siteUrlOpt, phoneOpt) =>
-    AdnMMetadata(
-      name    = name,
-      town    = town,
-      address = address,
-      color = color,
-      siteUrl = siteUrlOpt,
-      phone   = phoneOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, town, address, color, siteUrl, phone)) }
-
-
-  /** Маппер для необязательного логотипа магазина. */
-  private val rcvrLogoImgIdOptKM = ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=LEADER_TMP_LOGO_MARKER)
-
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  private val martFormM = Form(tuple(
-    "meta" -> leaderMetaM,
-    "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
-    rcvrLogoImgIdOptKM
-  ))
-
-
-  /** Асинхронно получить welcome-ad-карточку. */
-  private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
-    mmart.meta.welcomeAdId
-      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
-  }
-
 }
+

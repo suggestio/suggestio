@@ -5,6 +5,8 @@
 @import helper._
 @import ctx._
 @import AdStatActionsTpl._
+@import util.FC.tdFc
+
 
 @form(submitCall) {
 
@@ -12,17 +14,28 @@
     <p><b>Серьёзная проблема</b>: @Messages(ge.message, ge.args : _*)</p>
   }
 
-  @inputText(stf("name"), '_label -> "Название")
-  <br/>
+  <table class="input-w __size-L">
+    @inputText(stf("name"), '_label -> "Название")
+  </table>
 
-  @checkbox(stf("enabled"), '_label -> "Активен?")
-  <br/>
+  <table class="input-w __size-L">
+    @checkbox(stf("enabled"), '_label -> "Активен?", '_class -> "sys-checkbox")
+  </table>
 
-  @inputText(stf("dateFirst"), '_label -> "Активен с (dd.MM.yyyy HH:mm)")
+  <table class="input-w __size-L">
+    @inputText(stf("dateFirst"), '_label -> "Активен с (dd.MM.yyyy HH:mm)")
+  </table>
 
-  @select(stf("debitFor"), options = adStatActionsSeqStr, '_label -> "За что списываем деньги?")
+  <table class="input-w __size-L">
+    @select(stf("debitFor"), options = adStatActionsSeqStr, '_label -> "За что списываем деньги?", '_class -> "sys-checkbox")
+  </table>
 
-  @inputText(stf("price"), '_label -> "Размер одного списания", 'placeholder -> "1,15 руб")
+  <table class="input-w __size-L">
+    @inputText(stf("price"), '_label -> "Размер одного списания", 'placeholder -> "1,15 руб")
+  </table>
 
-  <input type="submit" value="@btnText"/>
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right">@btnText</a>
+  </div>
+
 }

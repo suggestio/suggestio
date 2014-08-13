@@ -11,13 +11,15 @@ import util.SqlModelSave
  * Created: 27.06.14 10:16
  * Description: Роялти, т.е. отчисления узла другим узлам.
  */
-object MBillRoyalty extends FindByContract[MBillRoyalty] {
+object MBillRoyalty extends FindByContract {
   import SqlParser._
+
+  override type T = MBillRoyalty
 
   override val TABLE_NAME = "bill_royalty"
 
   override val rowParser: RowParser[MBillRoyalty] = {
-    get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("royalty") ~ get[Boolean]("is_internal") ~ get[String]("to_adn_id") map {
+    get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("royalty") ~ get[Boolean]("is_internal") ~ get[String]("to_adn_id") map {
       case id ~ contractId ~ royalty ~ isInternal ~ toAdnId =>
         MBillRoyalty(
           id = id,
@@ -40,7 +42,7 @@ case class MBillRoyalty(
   royalty: Float,
   isInternal: Boolean,
   toAdnId: String,
-  id: Pk[Int] = NotAssigned
+  id: Option[Int] = None
 ) extends SqlModelSave[MBillRoyalty] with MBillContractSel {
 
   override def hasId = id.isDefined

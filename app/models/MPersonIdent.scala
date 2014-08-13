@@ -73,7 +73,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
             .find(_.companion.ES_TYPE_NAME == hit.getType)
             .map {
              _.companion
-              .deserializeOne(hit.getId, hit.getSource, hit.getVersion)
+              .deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion))
             }
           result1Opt match {
             case Some(result1) =>
@@ -130,9 +130,9 @@ object MPersonIdent extends PlayMacroLogsImpl {
         searchResp.getHits.getHits.map { hit =>
           hit.getType match {
             case MozillaPersonaIdent.ES_TYPE_NAME =>
-              MozillaPersonaIdent.deserializeOne(hit.getId, hit.getSource, hit.getVersion).email
+              MozillaPersonaIdent.deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion)).email
             case EmailPwIdent.ES_TYPE_NAME =>
-              EmailPwIdent.deserializeOne(hit.getId, hit.getSource, hit.getVersion).email
+              EmailPwIdent.deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion)).email
           }
         }
       }
@@ -253,7 +253,9 @@ object MozillaPersonaIdent extends MPersonIdentSubmodelStatic with PlayMacroLogs
     case (PERSON_ID_ESFN, value)  => acc.personId = stringParser(value)
   }
 
-  override protected def dummy(id: String, version: Long) = MozillaPersonaIdent(email=null, personId=null)
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
+    MozillaPersonaIdent(email = id.orNull, personId = null)
+  }
 
 }
 
@@ -294,7 +296,9 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
     case (PERSON_ID_ESFN, value)    => acc.personId = stringParser(value)
   }
 
-  override protected def dummy(id: String, version: Long) = EmailPwIdent(email=id, personId=null, pwHash=null)
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
+    EmailPwIdent(email=id.orNull, personId=null, pwHash=null)
+  }
 
   /** По дефолту email'ы считать проверенными или нет? */
   def IS_VERIFIED_DFLT = false
@@ -381,7 +385,9 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
     */
   def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
 
-  override protected def dummy(id: String, version: Long) = EmailActivation(id = Option(id), email = null, key = null)
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
+    EmailActivation(id = id, email = null, key = null)
+  }
 
   override def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
 

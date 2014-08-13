@@ -5,7 +5,7 @@
 @* Input для id выбранной категории. *@
 <input id="catId" data-curr-cat="cat" type="hidden" name="ad.catId" value="@af("ad.catId").value" />
 
-  <div class="categories" id="cat-select">
+  <div class="categories-select" id="cat-select">
     @mmcats.map { case (selectedIdOpt, mmcats1) =>
       <span class="cbca-select">
         <div class="selectbox">

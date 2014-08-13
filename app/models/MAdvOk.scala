@@ -15,8 +15,10 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:35
  * Description: Одобренные заявки на размещение рекламы, т.е. проведённые сделки.
  */
-object MAdvOk extends MAdvStatic[MAdvOk] {
+object MAdvOk extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvOk
 
   val TABLE_NAME = "adv_ok"
 
@@ -118,6 +120,14 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
      .as(MAdv.PROD_ADN_ID_PARSER *)
   }
 
+  def findByAdIdsAndProducersOnline(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+                              policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+    )
+  }
+
 }
 
 
@@ -141,8 +151,8 @@ case class MAdvOk(
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
   isPartner     : Boolean = false,
-  id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvOk] with CurrencyCode with SqlModelDelete with MAdvI {
+  id            : Option[Int] = None
+) extends SqlModelSave[MAdvOk] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.OK
   override def hasId: Boolean = id.isDefined

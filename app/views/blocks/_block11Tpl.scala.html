@@ -1,30 +1,32 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
-@import util.blocks.BlocksConf.Block11
+@import util.blocks.BlocksConf.{Block11 => bc}
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl11"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
-  <div class="color-bg"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
+@blockBase(isStandalone, mad, bc,
+  style = mad.colors.get(bc.saleMaskColorBf.name).map(saleColor => s"border-color: #$saleColor;")
+) {
+  <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
   <div class="sale-mask abs"></div>
 
-
-  <img class="photo" src="@ctx.myAudienceUrl@mad.imgs.get(Block11.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl11-bg.jpg"))" />
-
+  @bgImgTpl(mad, bc,
+    dfltImg = Some("images/market/blocks/tpl11-bg.jpg"),
+    cssClass = Some("photo")
+  )
 
   @mad.offers.headOption.map { offer =>
     <div class="info">
       @offer.text1.map { text1 =>
-        <div @_aovfStyleTpl(text1, Block11.titleBf, "title")>
+        <div @_aovfStyleTpl(text1, bc.titleBf, "title")>
           @Html(text1.value)
         </div>
       }
       @offer.text2.map { text2 =>
-        <div @_aovfStyleTpl(text2, Block11.descrBf, "slogan")>
+        <div @_aovfStyleTpl(text2, bc.descrBf, "slogan")>
           @Html(text2.value)
         </div>
       }
     </div>
   }
 
-</div>
+}

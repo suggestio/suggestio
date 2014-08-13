@@ -22,6 +22,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
+//object Global extends GlobalSettings {
 object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
   // Логгеры тут работают через вызов Logger.*
@@ -148,7 +149,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
 
   /** Запрещаем бородатому scrypt'у грузить в jvm нативную amd64-либу, ибо она взрывоопасна без перекомпиляции
-    * под свежие libcrypto (пакет openssl):
+    * под свежие libcrypto.so (пакет openssl):
     *
     * Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
     * C  [libcrypto.so.1.0.0+0x6c1d7]  SHA256_Update+0x157

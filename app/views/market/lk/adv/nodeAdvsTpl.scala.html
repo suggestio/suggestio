@@ -9,35 +9,14 @@
 @lkBaseLayout(
   title = "Рекламодатели",
   adnIdOpt = adnNode.id,
-  backHref = adnNode.id.map(routes.MarketLkAdn.showAdnNode(_))
+  backHref = adnNode.id.map(adnId => routes.MarketLkAdn.showAdnNode(adnId).url)
 ) {
 
-  @adnNode.adn.memberType.inviteSubNodeCall(adnNode.id.get).map { inviteCall =>
-    @market.lk.lkBlock("Управление") {
-      <table class="advertising-management">
-        <tr>
-          <td class="advertising-management_td" style="width: 200px; padding-left: 0;">
-            <span class="gray font-12">Выдавайте личный кабинет, это бесплатно и для вас и для рекламодателей.</span>
-          </td>
-          <td>
-            <div class="border-line-vertical"></div>
-          </td>
-          <td class="advertising-management_td">
-            <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@inviteCall">Выдать личный кабинет</a>
-          </td>
-        </tr>
-      </table>
-    }
-  }
-
-  @market.lk.lkBlock(
-    blockTitle ="На рассмотрении",
-    titleSubClass = if (!advsWithAds.isEmpty) "attention" else ""
-  ) {
+  @market.lk.lkBlock("На рассмотрении") {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">
-        <p class="gray font-12">В этом разделе
+        <p class="color-light-strong ft-XS">В этом разделе
           появляются запросы
           на размещение
           рекламных карточек.
@@ -45,11 +24,12 @@
           прописаны в договоре
           с компанией cbca.
         </p>
-        <p class="gray font-12">
+        <p class="color-light-strong ft-XS">
           Нажмите на карточку
           для детального просмотра
           и утверждения, либо
-          отклонения.</p>
+          отклонения.
+        </p>
       </div>
 
       <div class="advertising-requests_items">
@@ -61,8 +41,8 @@
                 @_single_offer(mad)
                 </div>
               <div class="ads-list-block__zigzag-mask"></div>
-              <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id.toOption, r = Some(request.path))"
-                 class="ads-list-block__link js-advertising-requests-item_get-info">
+              <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = Some(request.path))"
+                 class="ads-list-block__link js-btn">
                 Нажмите для<br/>
                 просмотра<br/>
                 информации

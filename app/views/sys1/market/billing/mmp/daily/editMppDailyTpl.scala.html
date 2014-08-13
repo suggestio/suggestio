@@ -3,9 +3,10 @@
 @* Страница с формой редактирования посуточного mmp-тарификатора. *@
 @import ctx._
 
+
 @mmpBase("Создание посуточного mmp-тарификатора", mbc = mbc, nodeOpt = nodeOpt) {
 
-  <p>Редактирование тарифного плана #@mbmd.id.get</p>
+  <div class="sys_t">Редактирование тарифного плана #@mbmd.id.get</div>
 
   @_mmpDailyFormTpl(
     mdf = mdf,

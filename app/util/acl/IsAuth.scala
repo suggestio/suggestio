@@ -16,6 +16,9 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
 
+  /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
+  def obeyReturnPath: Boolean
+
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -31,13 +34,19 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMa
     }
   }
 
+  def onUnauthBase(request: RequestHeader): Result = {
+    val r = if (obeyReturnPath) Some(request.path) else None
+    Results.Redirect(routes.Ident.emailPwLoginForm(r = r))
+  }
+
   /** Что делать, когда юзер не авторизован? */
   def onUnauth(request: RequestHeader): Future[Result] = {
-    Future.successful(
-      Results.Redirect(routes.Ident.emailPwLoginForm(r = Some(request.path)))
-    )
+    Future successful onUnauthBase(request)
   }
 }
 
+case class IsAuthC(obeyReturnPath: Boolean)
+  extends IsAuthAbstract
+  with ExpireSession[AbstractRequestWithPwOpt]
 
-object IsAuth extends IsAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
+object IsAuth extends IsAuthC(true)

@@ -1,4 +1,4 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
@@ -15,47 +15,44 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/lightbox/css/lightbox.css")'/>
 
   <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
   @headAfter
 </head>
 
 <body class="lk">
-  <div class="header-wrap">
+  <div class="header">
 
-    <div class="center">
-      <a class="logo" href="@routes.MarketLk.lkIndex">
-        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+    <div class="header_cnt">
+      <a class="siom-logo-def" href="@routes.MarketLk.lkIndex">
+        <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+        <img class="test-version-icon" src='@routes.Assets.at("images/market/lk/test-version_retina.png")' alt="test version"/>
       </a>
-      @ctx.usernameOpt.map { username =>
-        <div class="auth">
+      @* ctx.usernameOpt.map { username => } *@
+      @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
+      <a class="logout-btn" href="@routes.Ident.logout"></a>
 
-          @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
-          <a class="logout-but" href="@routes.Ident.logout"></a>
-
-          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-          @adnIdOpt.map { adnId =>
-            @billing._billBallanceWidgetTpl(adnId)
-          }
-
-        </div>
+      @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+      @adnIdOpt.map { adnId =>
+        @billing._billBallanceWidgetTpl(adnId)
       }
     </div>
 
   </div><!-- header-wrap end -->
 
-  <div class="body-wrap">
+  <div class="body">
 
     @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
     @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <div style="display: none;" class="status-bar @if(flashStatus == "success") {good} else {bad}">
-        <p>@flashMsg</p>
+      <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+        <div class="status-bar_cnt">
+          @flashMsg
+        </div>
       </div>
     }
 
@@ -65,14 +62,17 @@
 
   <div class="popups-container" id="popupsContainer">
     <div class="overlay" id="overlay"></div>
+
+    @popupContent
   </div>
 
-  <div class="footer-wrap">
-    <div class="footer">
+  <div class="footer">
+    <div class="footer_cnt">
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        @*&nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+        &nbsp;|&nbsp;<a class="footer_link" href="@routes.MarketLkSupport.supportForm(adnIdOpt, r = Some(request.path))">Служба поддержки</a>
+        @*&nbsp;|&nbsp;<a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
       <!--<div class="socials">
@@ -90,6 +90,7 @@
   <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@routes.Assets.at("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
   <script src='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 

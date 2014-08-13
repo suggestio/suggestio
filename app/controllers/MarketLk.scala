@@ -19,7 +19,7 @@ import controllers.Ident.EmailPwLoginForm_t
 object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl {
 
   /** Список личных кабинетов юзера. */
-  def lkList = IsAuth.async { implicit request =>
+  def lkList = IsAuthC(obeyReturnPath = false).async { implicit request =>
     val personId = request.pwOpt.get.personId
     val adnmsFut = MAdnNode.findByPersonId(personId)
     val allMartsMapFut = MAdnNode.getAll()

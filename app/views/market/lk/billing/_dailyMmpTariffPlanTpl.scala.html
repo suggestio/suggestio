@@ -4,32 +4,32 @@
 @import util.TplDataFormatUtil._
 
 
-<span class="gray font-12 inline-block" style="padding: 10px 0;">
-  Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.memberType) @adnNode.meta.name
+<p class="paragraph __size-M color-light-strong ft-XS">
+  Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.shownTypeId) @adnNode.meta.name
   определены тарифные планы на @ctx.now.getYear год.
-</span>
+</p>
 <div class="border-line"></div>
 <table>
   <tr>
     <td>&nbsp;</td>
-    <td>
-      <div class="ovh gray font-12">
+    <td class="siom-table_vertical-cnt">
+      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
         Будние дни: пн-чт
       </div>
     </td>
-    <td>
-      <div class="border-line-vertical"></div>
+    <td class="siom-table_vertical-cnt">
+      <div class="border-line __vertical js-vertical-line"></div>
     </td>
-    <td>
-      <div class="ovh gray font-12">
+    <td class="siom-table_vertical-cnt">
+      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
         Выходние дни: пт-вс
       </div>
     </td>
-    <td>
-      <div class="border-line-vertical"></div>
+    <td class="siom-table_vertical-cnt">
+        <div class="border-line __vertical js-vertical-line"></div>
     </td>
-    <td>
-      <div class="ovh gray font-12">
+    <td class="siom-table_vertical-cnt">
+      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
         Праздники/праймтайм
       </div>
     </td>
@@ -40,39 +40,41 @@
     </td>
   </tr>
   <tr>
-    <td>
-      <div class="ovh gray font-12" style="padding-left: 0;">
+    <td class="siom-table_vertical-cnt">
+      <div class="table-cell-cnt __size-M color-light-strong ft-XS" style="padding-left: 0;">
         Минимальный модуль
         (на схеме слева)
       </div>
     </td>
     @defining( mbmd.currency ) { currency =>
-      <td>
-        <div class="ovh value">
+
+      <td class="siom-table_vertical-cnt">
+        <div class="table-cell-cnt __size-M color-strong">
           @formatPrice(mbmd.mmpWeekday, currency)/сутки
         </div>
       </td>
-      <td>
-        <div class="border-line-vertical"></div>
+      <td class="siom-table_vertical-cnt">
+        <div class="border-line __vertical js-vertical-line"></div>
       </td>
-      <td>
-        <div class="ovh value">
+      <td class="siom-table_vertical-cnt">
+        <div class="table-cell-cnt __size-M color-strong">
           @formatPrice(mbmd.mmpWeekend, currency)/сутки
         </div>
       </td>
-      <td>
-        <div class="border-line-vertical"></div>
+      <td class="siom-table_vertical-cnt">
+        <div class="border-line __vertical js-vertical-line"></div>
       </td>
-      <td>
-        <div class="ovh value">
+      <td class="siom-table_vertical-cnt">
+        <div class="table-cell-cnt __size-M color-strong">
           @formatPrice(mbmd.mmpPrimetime, currency)/сутки
         </div>
       </td>
+
     }
   </tr>
 </table>
 
 <div class="border-line"></div>
-<span class="gray font-12 inline-block f-right" style="padding: 10px 0;">
-  Остальные модули кратны минимальному и их цена высчитыватся <strong>х2, x3 ...</strong>
+<span class="color-light-strong ft-XS inline-block f-right" style="padding: 10px 0;">
+  Остальные модули кратны минимальному и их цена высчитыватся <strong class="color-strong">х2, x3 ...</strong>
 </span>

@@ -25,7 +25,7 @@ object MAdv {
   val AD_ID_PARSER = get[String]("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
-  val ADV_ROW_PARSER_1 = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+  val ADV_ROW_PARSER_1 = get[Option[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
@@ -68,13 +68,12 @@ object MAdv {
 
 
 /** Интерфейс всех экземпляров MAdv* моделей. */
-trait MAdvI { madvi =>
+trait MAdvI extends CurrencyCode { madvi =>
   def adId          : String
   def amount        : Float
-  def currencyCode  : String
   def comission     : Option[Float]
   def dateCreated   : DateTime
-  def id            : Pk[Int]
+  def id            : Option[Int]
   def mode          : MAdvMode
   def dateStatus    : DateTime
   def dateStart     : DateTime
@@ -83,8 +82,6 @@ trait MAdvI { madvi =>
   def rcvrAdnId     : String
   def showLevels    : Set[AdShowLevel]
 
-  //def onStartPage = showLevels contains AdShowLevels.LVL_START_PAGE
-
   def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
   def comissionAmount: Float =  comission.fold(amount)(amount * _)
   def advTerms = new AdvTerms {
@@ -92,6 +89,25 @@ trait MAdvI { madvi =>
     override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
     override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
   }
+
+  def maybeOk = this match {
+    case madvOk: MAdvOk => Some(madvOk)
+    case _ => None
+  }
+
+  def maybeRefused = this match {
+    case madvRef: MAdvRefuse => Some(madvRef)
+    case _ => None
+  }
+
+  def maybeReq = this match {
+    case madvReq: MAdvReq => Some(madvReq)
+    case _ => None
+  }
+
+  def isOk      = mode == MAdvModes.OK
+  def isReq     = mode == MAdvModes.REQ
+  def isRefused = mode == MAdvModes.REFUSED
 }
 
 
@@ -105,7 +121,9 @@ object MAdvModes extends Enumeration {
 }
 
 
-trait MAdvStatic[T] extends SqlModelStatic[T] {
+trait MAdvStatic extends SqlModelStatic {
+
+  override type T <: MAdvI
 
   def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
     getByIdBase(id, policy, Some("AND date_end >= now()"))
@@ -159,6 +177,10 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
       .as(SqlModelStatic.boolColumnParser single)
   }
 
+  def findNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end", policy, 'adId -> adId, 'rcvrId -> rcvrId)
+  }
+
   /**
    * Найти ряды по карточке и адресату запроса размещения.
    * @param adId id карточки.
@@ -189,11 +211,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     )
   }
 
-  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String],
                               policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(
-      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
-      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds})", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds)
     )
   }
 

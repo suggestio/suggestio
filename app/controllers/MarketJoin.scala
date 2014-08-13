@@ -1,6 +1,9 @@
 package controllers
 
+import org.joda.time.DateTime
 import play.api.i18n.Messages
+import util.billing.MmpDailyBilling
+import util.img._
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -12,6 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
+import MarketLkAdnEdit.{logoKM, colorKM, townKM}
 
 /**
  * Suggest.io
@@ -21,6 +25,8 @@ import play.api.mvc.RequestHeader
  */
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
+
+  private val companyKM = "company" -> companyNameM
 
   /** Маппинг формы анкеты с галочками про wi-fi. */
   private val wifiJoinQuestionsFormM: Form[SMJoinAnswers] = {
@@ -64,33 +70,169 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     )
   }
 
-  private val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
-  private val wifiJoinFormM: Form[MirMeta] = {
+  private val wifiJoinFormM = {
     Form(
       mapping(
-        "company"       -> companyNameM,
-        "audienceDescr" -> toStrOptM(text2048M),
-        "humanTraffic"  -> toStrOptM(text(maxLength = 1024).transform(strTrimSanitizeF, strIdentityF)),
-        "address"       -> addressM,
-        "siteUrl"       -> urlStrOptM,
-        "phone"         -> phoneM,
-        "payReqs"       -> optional(text(maxLength = 2048)),
-        "email"         -> email,
-        CAPTCHA_ID_FN   -> Captcha.captchaIdM,
-        CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
+        companyKM,
+        townKM,
+        "audienceDescr"   -> audienceDescrM,
+        "humanTrafficAvg" -> humanTrafficAvgM,
+        "address"         -> addressM,
+        "siteUrl"         -> urlStrOptM,
+        "phone"           -> phoneM,
+        "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
+        "email"           -> email,
+        colorKM,
+        GalleryUtil.galleryKM,
+        logoKM,
+        WelcomeUtil.welcomeImgIdKM,
+        CAPTCHA_ID_FN     -> Captcha.captchaIdM,
+        CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs, email1, _, _) =>
-        MirMeta(
-          company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
-          address = address, siteUrl = siteUrl, officePhone = phone, email = email1
-        )
+      {(companyName, town, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, _, _) =>
+        val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
+          humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
+          payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true, town = town,
+          reqType = InviteReqTypes.Wifi, color = color)
+        (mir, galleryIks, logoOpt, welcomeImgId)
       }
-      {mirMeta =>
-        import mirMeta._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, mirMeta.email, "", ""))
+      {case (mir, galleryIks, logoOpt, welcomeImgId) =>
+        // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
+        val companyName = unapplyCompanyName(mir)
+        val town = unapplyTown(mir)
+        val audienceDescr = unapplyAudDescr(mir)
+        val humanTraffic = unapplyHumanTraffic(mir)
+        val address = unapplyAddress(mir)
+        val siteUrl = unapplySiteUrl(mir)
+        val officePhone = unapplyOfficePhone(mir)
+        val payReqs = unapplyPayReqs(mir)
+        val email1 = unapplyEmail(mir)
+        val color = unapplyColor(mir)
+        Some((companyName, town, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, "", ""))
       }
+    )
+  }
+
+  private def unapplyCompanyName(mir: MInviteRequest): String = {
+    mir.company
+      .left.map(_.meta.name)
+      .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
+  }
+  private def unapplyTown(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.town)
+      .left.getOrElse(None)
+  }
+  private def unapplyAudDescr(mir: MInviteRequest): String = {
+    mir.adnNode
+      .left.map(_.meta.audienceDescr)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplyHumanTraffic(mir: MInviteRequest): Int = {
+    mir.adnNode
+      .left.map(_.meta.humanTrafficAvg)
+      .left.getOrElse(None)
+      .getOrElse(0)
+  }
+  private def unapplyAddress(mir: MInviteRequest): String = {
+    mir.adnNode
+      .left.map(_.meta.address)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplySiteUrl(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.siteUrl)
+      .left.getOrElse(None)
+  }
+  private def unapplyOfficePhone(mir: MInviteRequest): String = {
+    mir.company
+      .left.map(_.meta.officePhones.headOption)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplyPayReqs(mir: MInviteRequest): Option[String] = {
+    mir.payReqs
+      .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
+  }
+  private def unapplyEmail(mir: MInviteRequest): String = {
+    mir.emailAct
+      .left.map(_.email)
+      .left.getOrElse("")
+  }
+  private def unapplyInfo(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.info)
+      .left.getOrElse(None)
+  }
+  private def unapplyColor(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.color)
+      .left.getOrElse(None)
+  }
+
+
+  /** Накатывание результатов маппинга формы на новый экземпляр MInviteRequest. */
+  private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
+    address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String, town: Option[String],
+    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None, color: Option[String]): MInviteRequest = {
+    val company = MCompany(
+      meta = MCompanyMeta(name = companyName, officePhones = List(phone))
+    )
+    val node = MAdnNode(
+      companyId = "",
+      meta = AdnMMetadata(
+        name            = companyName,
+        address         = Option(address),
+        siteUrl         = siteUrl,
+        humanTrafficAvg = humanTrafficAvg,
+        audienceDescr   = audienceDescr,
+        info            = info,
+        color           = color,
+        town            = town
+      ),
+      personIds = Set.empty,
+      adn = anmt.getAdnInfoDflt
+    )
+    val eact = EmailActivation(email1)
+    val mbc = MBillContract(
+      adnId = "",
+      contractDate = DateTime.now,
+      suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT),
+      isActive = true
+    )
+    val mbb = MBillBalance(adnId = "", amount = 0F)
+    val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
+      // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
+      // TODO Использовать конфиг для хранения дефолтовых значений.
+      val mmp = MBillMmpDaily(
+        contractId = -1,
+        mmpWeekday = 10F,
+        mmpWeekend = 15F,
+        mmpPrimetime = 20F,
+        onRcvrCat = 2.0F,
+        onStartPage = 4.0F,
+        weekendCalId = "", // TODO
+        primeCalId = "" // TODO
+      )
+      Some(Left(mmp))
+    } else {
+      None
+    }
+    MInviteRequest(
+      name      = companyName + " от " + email1,
+      reqType   = reqType,
+      company   = Left(company),
+      adnNode   = Left(node),
+      contract  = Left(mbc),
+      mmp       = mmp,
+      balance   = Left(mbb),
+      emailAct  = Left(eact),
+      payReqs   = None, // TODO Нужно сохранить сюда распарсенные платёжные атрибуты
+      payReqsRaw = payReqs
     )
   }
 
@@ -108,11 +250,34 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {mirMeta =>
-        val mir = MInviteRequest(reqType = InviteReqTypes.Wifi, meta = mirMeta, joinAnswers = Some(smja))
-        mir.save.map { irId =>
-          sendEmailNewIR(irId, mir)
-          rmCaptcha(formBinded, mirSavedRdr(irId))
+      {case (mir, galleryIiks, logoOpt, welcomeImgId) =>
+        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        // Схоронить логотип
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs  = Nil)
+        // Схоронить картинку приветствия
+        val savedWaImgOptFut = WelcomeUtil.updateWaImg(None, welcomeImgId)
+        // Схоронить картинки галлереи.
+        ImgFormUtil.updateOrigImgFull(GalleryUtil.gallery4s(galleryIiks), oldImgs = Nil) flatMap { savedImgs =>
+          savedLogoFut flatMap { savedLogoOpt =>
+            savedWaImgOptFut flatMap { savedWaOpt =>
+              val waOpt = WelcomeUtil.updateWaOptAdHoc(None, savedWaOpt, newProducerId = "")
+              // Картинки сохранены. Обновить рекламный узел.
+              val mir2 = mir.copy(
+                joinAnswers = Some(smja),
+                waOpt   = waOpt.map(Left.apply),
+                adnNode = mir.adnNode.left.map { adnNode0 =>
+                  adnNode0.copy(
+                    gallery = GalleryUtil.gallery2filenames(savedImgs),
+                    logoImgOpt = savedLogoOpt
+                  )
+                }
+              )
+              mir2.save.map { irId =>
+                sendEmailNewIR(irId, mir2)
+                rmCaptcha(formBinded, mirSavedRdr(irId))
+              }
+            }
+          }
         }
       }
     )
@@ -130,29 +295,39 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   }
 
 
-  private val advJoinFormM: Form[MirMeta] = {
+  /** Подключение в качестве рекламного агента, источника рекламы. */
+  private val advJoinFormM = {
     Form(
       mapping(
-        "company"   -> companyNameM,
-        //"info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
+        companyKM,
+        townKM,
+        "info"      -> text2048M
+          .transform[Option[String]]({str => emptyStrOptToNone(Option(str))}, strOptGetOrElseEmpty),
         "address"   -> addressM,
-        "floor"     -> floorOptM,
-        "section"   -> sectionOptM,
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
         "email"     -> email,
+        colorKM,
+        logoKM,
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(company, address, floor, section, siteUrl, phone, email1, _, _) =>
-        MirMeta(
-          company = company, address = address, floor = floor, section = section,
-          siteUrl = siteUrl, officePhone = phone, email = email1
-        )
+      {(companyName, town, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
+        val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl, town = town,
+          phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
+          reqType = InviteReqTypes.Adv, info = info, color = color)
+        (mir, logoOpt)
       }
-      {mirMeta =>
-        import mirMeta._
-        Some((company, address, floor, section, siteUrl, officePhone, mirMeta.email, "", ""))
+      {case (mir, logoOpt) =>
+        val companyName = unapplyCompanyName(mir)
+        val town = unapplyTown(mir)
+        val info = unapplyInfo(mir)
+        val address = unapplyAddress(mir)
+        val siteUrl = unapplySiteUrl(mir)
+        val officePhone = unapplyOfficePhone(mir)
+        val email1 = unapplyEmail(mir)
+        val color = unapplyColor(mir)
+        Some((companyName, town, info, address, siteUrl, officePhone, email1, color, logoOpt, "", ""))
       }
     )
   }
@@ -175,11 +350,21 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(joinAdvTpl(formWithErrors))
       },
-      {mirMeta =>
-        val mir = MInviteRequest(reqType = InviteReqTypes.Adv, meta = mirMeta)
-        mir.save.map { irId =>
-          sendEmailNewIR(irId, mir)
-          rmCaptcha(formBinded, mirSavedRdr(irId))
+      {case (mir, logoOpt) =>
+        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs = Nil)
+        savedLogoFut flatMap { savedLogoOpt =>
+          val mir2 = mir.copy(
+            adnNode = mir.adnNode.left.map { adnNode0 =>
+              adnNode0.copy(
+                logoImgOpt = savedLogoOpt
+              )
+            }
+          )
+          mir2.save.map { irId =>
+            sendEmailNewIR(irId, mir2)
+            rmCaptcha(formBinded, mirSavedRdr(irId))
+          }
         }
       }
     )
@@ -191,7 +376,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     val suEmailsConfKey = "market.join.request.notify.superusers.emails"
     val emails: Seq[String] = configuration.getStringSeq(suEmailsConfKey).getOrElse {
       // Нет ключа, уведомить разработчика, чтобы он настроил конфиг.
-      error("""I don't know, whom to notify about new invite request. Add setting into your application.conf:\n  " + suEmailsConfKey + " = ["support@sugest.io"]""")
+      warn(s"""I don't know, whom to notify about new invite request. Add following setting into your application.conf:\n  $suEmailsConfKey = ["support@sugest.io"]""")
       Seq("support@suggest.io")
     }
     val mailMsg = use[MailerPlugin].email

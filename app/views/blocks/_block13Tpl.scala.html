@@ -1,14 +1,13 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import svg._
-@import util.blocks.BlocksConf.Block13
+@import util.blocks.BlocksConf.{Block13 => bc}
 @import util.TplDataFormatUtil._
 @import common._
 
+@blockBase(isStandalone, mad, bc) {
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
-  @defining(Block13.discoBorderColorBf) { smcbf =>
+  @defining(bc.discoBorderColorBf) { smcbf =>
   @_block6_left_border(
     cssClass = "left-border abs",
     fillColor = "ffffff",
@@ -23,11 +22,13 @@
   }
 
   <div class="photo" style="overflow:hidden;">
-    <img src="@ctx.myAudienceUrl@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
+    @bgImgTpl(mad, bc,
+      dfltImg = Some("images/market/blocks/tpl13-bg.jpg")
+    )
   </div>
 
 
-  @defining(mad.colors.getOrElse(Block13.discoIconColorBf.name, Block13.discoIconColorBf.anyDefaultValue)) { discoIconColor =>
+  @defining(mad.colors.getOrElse(bc.discoIconColorBf.name, bc.discoIconColorBf.anyDefaultValue)) { discoIconColor =>
 
 
     <div class="left-line" style="background: #@discoIconColor"></div>
@@ -47,7 +48,7 @@
         fillColor = discoIconColor
       )
 
-      @defining(Block13.discoBorderColorBf) { smcbf =>
+      @defining(bc.discoBorderColorBf) { smcbf =>
         @_saleIconMask13Tpl(
           cssClass = "svg-mask",
           fillColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
@@ -60,7 +61,7 @@
           @Html(text1.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block13.descrBf, "title", left = 12, top = 210 )
+        @_blockStyleTpl( mad.id, text1, bc.descrBf, "title", left = 12, top = 210 )
 
       }
 
@@ -70,10 +71,10 @@
           @Html(text2.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text2, Block13.descrBf, "info", left = 12, top = 250 )
+        @_blockStyleTpl( mad.id, text2, bc.descrBf, "info", left = 12, top = 250 )
       }
     }
 
   }
 
-</div>
+}

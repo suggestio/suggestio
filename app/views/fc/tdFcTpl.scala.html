@@ -6,14 +6,46 @@
 @import views.html.helper._
 
 
-<td class="left">
-  <label for="@elements.id">@elements.label(elements.lang)</label>
-</td>
+@defining( elements.args.get('_class) ) { inputClass =>
 
-<td class="right">
-    <div class="input clearfix @elements.args.get('_class) @if(elements.hasErrors) {error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
-      <div class="input-shadow">
+  @inputClass match {
+
+    case Some("sys-checkbox") => {
+
+      <td class="input-w_left">
+        <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)</label>
+      </td>
+
+      <td>
+
         @elements.input
-      </div>
-    </div>
-</td>
+
+      </td>
+
+    }
+
+    case _ => {
+
+      <td class="input-w_left">
+        <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)
+          @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+          <span class="required-icon">*</span>
+          }
+        </label>
+      </td>
+
+      <td>
+        <div class="input clearfix @inputClass @if(elements.hasErrors){__error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+        <div class="input_shadow js-input-w">
+          @elements.input
+        </div>
+        </div>
+      </td>
+
+    }
+
+  }
+
+}
+
+

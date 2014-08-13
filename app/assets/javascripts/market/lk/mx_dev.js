@@ -5,17 +5,6 @@ var cbca = {};
   cbca.selectCat = new CbcaSelect('cat-select');
   ChooseCategory();
 
-  $(document).on('click', '.block .toggle',
-  function(e) {
-    e.preventDefault();
-
-    var $this = $(this),
-    slideContentId = $this.attr('data-content');
-
-    $this.toggleClass('open').text( $this.text()=="Свернуть"?"Развернуть":"Свернуть");
-    $('#'+slideContentId).slideToggle();
-  });
-
 });
 
 function CbcaSelect(containerId) {

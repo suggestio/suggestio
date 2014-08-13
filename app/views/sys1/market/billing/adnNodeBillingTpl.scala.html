@@ -11,159 +11,237 @@
 @billingBase("Биллинг", Some(adnNode)) {
 
   @balanceOpt.map { balance =>
-    <p>Текущий баланс: @balance.amount @balance.currencyCode</p>
+    <p class="paragraph __size-M color-light-strong">
+      Текущий баланс: <strong class="color-strong">@balance.amount @balance.currencyCode</strong>
+    </p>
   }
 
-  <h2>Контракты (@contracts.size)</h2>
-  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
-  @if(contracts.isEmpty) {
-    <p>Пока нет заключенных договоров.</p>
-  } else {
-    @contracts.map { contract =>
-      <h3>Договор № @contract.legalContractId</h3>
-      <a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a>
-      <br/>Дата заключения договора:
-          @contract.printContractDate
-          (@_prettyDate(contract.contractDate, withSpan = true))
-      <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
-      @if(!contract.isActive) {
-        <br/><b>Не активен</b>.
-      }
-      @contract.hiddenInfo.map { hiddenInfo =>
-        <br/>Служебная информация:
-        <pre>@hiddenInfo</pre>
-      }
+  @market.lk.lkBlock("Контракты("+contracts.size+")") {
+
+    @if(contracts.isEmpty) {
+      <p>Пока нет заключенных договоров.</p>
+    } else {
+      @contracts.map { contract =>
+
+        <div class="paragraph __size-M">
+          <p>
+            Договор № <strong class="ft-M color-strong">@contract.legalContractId</strong>
+          </p>
+          <a class="blue-link" href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a>
+          <br/>Дата заключения договора:
+              @contract.printContractDate
+              (@_prettyDate(contract.contractDate, withSpan = true))
+          <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
+          @if(!contract.isActive) {
+            <br/><b>Не активен</b>.
+          }
+          @contract.hiddenInfo.map { hiddenInfo =>
+            <br/>Служебная информация:
+            <pre>@hiddenInfo</pre>
+          }
 
 
-      @* Рендер посуточных mmp-тарификаторов *@
-      <div>
-      @defining(dailyMmpsMap.get(contract.id.get) getOrElse Nil) { dmmps =>
-        @if(!dmmps.isEmpty) {
-          <h4>Тарифные планы размещения рекламы посуточные (@dmmps.size)</h4>
-          <table>
-            <tr>
-              <th>#</th>
-              <th>Валюта</th>
-              <th>Будни</th>
-              <th>Выходные</th>
-              <th>Прайм</th>
-              <th>Действия</th>
-            </tr>
-            @dmmps.map { dmmp =>
-              <tr>
-                <td>@dmmp.id.get</td>
-                <td>@dmmp.currencyCode</td>
-                <td>@dmmp.mmpWeekday</td>
-                <td>@dmmp.mmpWeekend</td>
-                <td>@dmmp.mmpPrimetime</td>
-                <td><a href="@routes.SysMarketBillingMmp.editMmpDaily(dmmp.id.get)">Редактировать</a></td>
-              </tr>
-            }
-          </table>
-        }
-        <a href="@routes.SysMarketBillingMmp.createMmpDaily(contract.id.get)">Создать посуточный mmp-тарифный план...</a>
-      }
-      </div>
-
-
-      @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
-        @if( !tariffs.isEmpty ) {
-          <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">
-            Абон.плата по договору @contract.legalContractId (@tariffs.size)
-          </h4>
-          <table>
-            <tr>
-              <th>#</th>
-              <th>Активен?</th>
-              <th>Имя</th>
-              <th>Интервал</th>
-              <th>Абон.плата</th>
-              <th>Старт</th>
-              <th>Действия</th>
-            </tr>
-            @tariffs.map { tariff =>
-              @defining(contract.isActive && tariff.isEnabled) { te =>
-              <tr>
-                <td>@tariff.id</td>
-                <td>@tariff.isEnabled</td>
-                <td>@tariff.name</td>
-                <td>@_maybeTagged("strike", !te) {@tariff.tintervalPretty}</td>
-                <td>@tariff.fee @tariff.feeCC</td>
-                <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
-                <td>
-                  <a href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
-                </td>
-              </tr>
-              }
-            }
-          </table>
-        }
-      } @* defining tariffs *@
-      <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
-
-      @defining( statTariffsMap.getOrElse(contract.id.get, Nil) ) { tariffs =>
-        @if( !tariffs.isEmpty ) {
-          <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в ~реальном времени.">
-            Тарификация просмотров/переходов по договору @contract.legalContractId (@tariffs.size)
-          </h4>
-          <table>
-            <tr>
-              <th>#</th>
-              <th>Активен?</th>
-              <th>Имя</th>
-              <th>Старт</th>
-              <th>Стоимость</th>
-              <th>Списано</th>
-              <th>Действия</th>
-            </tr>
-            @tariffs.map { tariff =>
-              @defining(contract.isActive && tariff.isEnabled) { te =>
+          @* Рендер посуточных mmp-тарификаторов *@
+          <div>
+          @defining(dailyMmpsMap.get(contract.id.get) getOrElse Nil) { dmmps =>
+            @if(!dmmps.isEmpty) {
+              <h4>Тарифные планы размещения рекламы посуточные (@dmmps.size)</h4>
+              <table>
                 <tr>
-                  <td>@tariff.id</td>
-                  <td>@tariff.isEnabled</td>
-                  <td>@tariff.name</td>
-                  <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
-                  <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(adStatActionI18N(tariff.debitFor))}</td>
-                  <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
-                  <td>
-                    <a href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>
-                  </td>
+                  <th>#</th>
+                  <th>Валюта</th>
+                  <th>Будни</th>
+                  <th>Выходные</th>
+                  <th>Прайм</th>
+                  <th>Действия</th>
                 </tr>
-              }
+                @dmmps.map { dmmp =>
+                  <tr>
+                    <td>@dmmp.id.get</td>
+                    <td>@dmmp.currencyCode</td>
+                    <td>@dmmp.mmpWeekday</td>
+                    <td>@dmmp.mmpWeekend</td>
+                    <td>@dmmp.mmpPrimetime</td>
+                    <td><a class="blue-link" href="@routes.SysMarketBillingMmp.editMmpDaily(dmmp.id.get)">Редактировать</a></td>
+                  </tr>
+                }
+              </table>
             }
-          </table>
-        }
-      }
-      <a href="@routes.SysMarketBillingTariff.addStatTariff(contract.id.get)">Добавить тарификацию за просмотры/переходы...</a>
 
-    } @* contract *@
+            <a class="blue-link" href="@routes.SysMarketBillingMmp.createMmpDaily(contract.id.get)">Создать посуточный mmp-тарифный план...</a>
+          }
+          </div>
+
+
+          @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
+            @if( !tariffs.isEmpty ) {
+              <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">
+                Абон.плата по договору @contract.legalContractId (@tariffs.size)
+              </h4>
+              <table>
+                <tr>
+                  <th>#</th>
+                  <th>Активен?</th>
+                  <th>Имя</th>
+                  <th>Интервал</th>
+                  <th>Абон.плата</th>
+                  <th>Старт</th>
+                  <th>Действия</th>
+                </tr>
+                @tariffs.map { tariff =>
+                  @defining(contract.isActive && tariff.isEnabled) { te =>
+                  <tr>
+                    <td>@tariff.id</td>
+                    <td>@tariff.isEnabled</td>
+                    <td>@tariff.name</td>
+                    <td>@_maybeTagged("strike", !te) {@tariff.tintervalPretty}</td>
+                    <td>@tariff.fee @tariff.feeCC</td>
+                    <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
+                    <td>
+                      <a class="blue-link" href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
+                    </td>
+                  </tr>
+                  }
+                }
+              </table>
+            }
+          } @* defining tariffs *@
+
+          <a class="blue-link" href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
+
+          @defining( statTariffsMap.getOrElse(contract.id.get, Nil) ) { tariffs =>
+            @if( !tariffs.isEmpty ) {
+              <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в ~реальном времени.">
+                Тарификация просмотров/переходов по договору @contract.legalContractId (@tariffs.size)
+              </h4>
+              <table>
+                <tr>
+                  <th>#</th>
+                  <th>Активен?</th>
+                  <th>Имя</th>
+                  <th>Старт</th>
+                  <th>Стоимость</th>
+                  <th>Списано</th>
+                  <th>Действия</th>
+                </tr>
+                @tariffs.map { tariff =>
+                  @defining(contract.isActive && tariff.isEnabled) { te =>
+                    <tr>
+                      <td>@tariff.id</td>
+                      <td>@tariff.isEnabled</td>
+                      <td>@tariff.name</td>
+                      <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
+                      <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(adStatActionI18N(tariff.debitFor))}</td>
+                      <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
+                      <td>
+                        <a class="blue-link" href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>
+                      </td>
+                    </tr>
+                  }
+                }
+              </table>
+            }
+          }
+
+          <a class="blue-link" href="@routes.SysMarketBillingTariff.addStatTariff(contract.id.get)">Добавить тарификацию за просмотры/переходы...</a>
+
+        </div>
+
+      } @* contract *@
+
+    }
 
   }
 
-  <br/><br/>
-  <h2>Транзакции (@txns.size)</h2>
-  @if(!txns.isEmpty) {
-    <table>
-      <tr>
-        <th>id</th>
-        <th>Оплачен</th>
-        <th>Обработан</th>
-        <th>Сумма</th>
-        <th>Комментарий</th>
-      </tr>
-      @txns.map { txn =>
+  <div class="btn-w __between-blocks">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
+  </div>
+
+  @market.lk.lkBlock("Транзакции("+txns.size+")") {
+
+    @if(!txns.isEmpty) {
+      <table class="siom-table __size-XL">
         <tr>
-          <td>@txn.txnUid</td>
-          <td>@_prettyDate(txn.datePaid, withSpan = true)</td>
-          <td>@_prettyDate(txn.dateProcessed, withSpan = true)</td>
-          <td>@txn.amount @txn.currencyCode</td>
-          <td>@txn.paymentComment</td>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S"> id </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S"> Оплачен </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S"> Обработан </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S"> Сумма </div>
+            <div class="border-line"></div>
+          </th>
+          <th></th>
+          <th class="siom-cell-head __bg-head">
+            <div class="siom-cell-cnt __size-S"> Комментарий </div>
+            <div class="border-line"></div>
+          </th>
         </tr>
-      }
-    </table>
-  } else {
-    Нет транзакций.
+        @txns.map { txn =>
+          <tr>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                @txn.txnUid
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                @_prettyDate(txn.datePaid, withSpan = true)
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                @_prettyDate(txn.dateProcessed, withSpan = true)
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                <strong class="@if(txn.amount < 0) {color-error} else {color-success}">
+                  @txn.amount @txn.currencyCode
+                </strong>
+              </div>
+              <div class="border-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="border-line __vertical js-vertical-line"></div>
+            </td>
+            <td class="siom-table_vertical-cnt">
+              <div class="siom-cell-cnt __size-L">
+                @txn.paymentComment
+              </div>
+              <div class="border-line"></div>
+            </td>
+          </tr>
+        }
+      </table>
+    } else {
+      Нет транзакций.
+    }
+
   }
-  <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
+
+  <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a>
 
 }

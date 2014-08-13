@@ -1,6 +1,7 @@
 package controllers
 
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import util.blocks.BlocksUtil.BlockImgMap
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -17,7 +18,7 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
-import util.img.{ImgInfo4Save, OrigImgIdKey}
+import util.img.{MainColorDetector, ImgInfo4Save, OrigImgIdKey}
 import io.suggest.ym.model.common.Texts4Search
 
 /**
@@ -160,15 +161,19 @@ object MarketAd extends SioController with TempImgSupport {
           {case (mad, bim) =>
             val t4s2Fut = newTexts4search(mad)
             // Асинхронно обрабатываем логотип.
+            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc)
             bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height) flatMap { savedImgs =>
               mad.producerId = adnId
               mad.imgs = savedImgs
               t4s2Fut flatMap { t4s2 =>
                 mad.texts4search = t4s2
-                // Сохранить изменения в базу
-                mad.save.map { adId =>
-                  Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
-                    .flashing("success" -> "Рекламная карточка создана.")
+                ibgcUpdFut flatMap { ibgsUpd =>
+                  mad.colors = ibgsUpd.updateColors(mad.colors)
+                  // Сохранить изменения в базу
+                  mad.save.map { adId =>
+                    Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
+                      .flashing("success" -> "Рекламная карточка создана.")
+                  }
                 }
               }
             }
@@ -282,6 +287,7 @@ object MarketAd extends SioController with TempImgSupport {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2)
+            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mad.colors)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас проблема: что при ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = mad.imgs, blockHeight = mad.blockMeta.height)
@@ -299,19 +305,22 @@ object MarketAd extends SioController with TempImgSupport {
                   mad0.moderation = mad0.moderation.copy(
                     freeAdv = mad0.moderation.freeAdv.filter { _.isAllowed != true }
                   )
-                  // Попытаться сохранить модифицированную карточку
-                  mad0.save.recoverWith {
-                    case ex: VersionConflictEngineException =>
-                      if (counter < SAVE_AD_RETRIES_MAX) {
-                        val remadOptFut = MAd.getById(adId)
-                        val counter1 = counter + 1
-                        trace(s"editAdSubmit($adId): ES said: Version conflict. Retrying... ($counter1/$SAVE_AD_RETRIES_MAX)")
-                        remadOptFut flatMap { remadOpt =>
-                          tryUpdate(remadOpt.get, counter1)
+                  ibgcUpdFut.flatMap { ibgcUpd =>
+                    mad0.colors = ibgcUpd.updateColors(mad0.colors)
+                    // Попытаться сохранить модифицированную карточку
+                    mad0.save.recoverWith {
+                      case ex: VersionConflictEngineException =>
+                        if (counter < SAVE_AD_RETRIES_MAX) {
+                          val remadOptFut = MAd.getById(adId)
+                          val counter1 = counter + 1
+                          trace(s"editAdSubmit($adId): ES said: Version conflict. Retrying... ($counter1/$SAVE_AD_RETRIES_MAX)")
+                          remadOptFut flatMap { remadOpt =>
+                            tryUpdate(remadOpt.get, counter1)
+                          }
+                        } else {
+                          Future failed new RuntimeException(s"Cannot save ad $adId, too many vsn conflicts: $counter, lastVsn = ${mad0.versionOpt}, vsn0 = ${mad.versionOpt}", ex)
                         }
-                      } else {
-                        Future failed new RuntimeException(s"Cannot save ad $adId, too many vsn conflicts: $counter, lastVsn = ${mad0.versionOpt}, vsn0 = ${mad.versionOpt}", ex)
-                      }
+                    }
                   }
                 }
               }

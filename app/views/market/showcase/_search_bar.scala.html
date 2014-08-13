@@ -1,16 +1,13 @@
 @(mmart:MAdnNode)(implicit ctx:util.Context)
 
-@* Поле ввода поиска *@
-<div class="sm-search-bar" id="smSearchBar">
+@import util.TplDataFormatUtil._
 
-  @_screen_nav_button("back-mask", "smNavigationLayerBackButton", "#" + mmart.meta.color.head)
+<div class="sm-search-bar" id="smSearchBar" style="@_bgcolor( mmart.meta.color );">
 
   <div class="sm-search-bar__field">
     <div class="sm-search-bar__container">
-      <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="БЫСТРЫЙ ПОИСК ПО ПРЕДЛОЖЕНИЯМ"/>
+      <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="БЫСТРЫЙ ПОИСК ПО ПРЕДЛОЖЕНИЯМ" style="background: #@mmart.meta.color"/>
     </div>
   </div>
-
-  <div id="smSearchIcon" class="sm-search-bar__icon" style="background-color: #@mmart.meta.color;"></div>
 
 </div>

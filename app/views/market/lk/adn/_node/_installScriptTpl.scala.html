@@ -1,17 +1,12 @@
-@(mmart: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
+@(adnNodeId: Option[String])(implicit ctx: util.Context)
 
-(function() {
-  var _siom = document.createElement("script");
-  _siom.type = "text/javascript";
-  _siom.async = true;
-  _siom.src = "@ctx.myAudienceUrl@routes.Assets.at("javascripts/market/showcase/showcase2.js")";
-  window.siomart_host = '@ctx.myAudienceUrl';
-  var _sh = document.getElementsByTagName("head")[0];
-  @mmart.logoImgOpt.map { logoImg =>
-    window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
-  }
-  window.siomart_node_color = '@mmart.meta.color';
-  window.siomart_index = '@withIndexCall.getOrElse(routes.Market.martIndex(mmart.id.get))';
-  window.siomart_id = '@mmart.id';
+(function(){
+  window.siomart_id='@adnNodeId';
+  window.siomart_host='@ctx.myAudienceUrl';
+  var _siom=document.createElement("script");
+  _siom.type="text/javascript";
+  _siom.async=true;
+  _siom.src=window.siomart_host + "@routes.Assets.at("javascripts/market/showcase/showcase2.js?v=1")";
+  var _sh=document.getElementsByTagName("head")[0];
   _sh.appendChild(_siom);
 })();

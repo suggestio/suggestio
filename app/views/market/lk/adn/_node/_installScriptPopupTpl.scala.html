@@ -1,23 +1,28 @@
 @(node: MAdnNode)(implicit ctx: util.Context)
 
 
-<div class="popup" id="installScriptPopup" style="display: none;">
-  <div class="hat">
-    <a href="#" class="close">&nbsp;</a>
+<div class="popup js-hidden" id="installScriptPopup">
+
+  <div class="popup_header">
+    <a href="#" class="close f-right js-close-popup"></a>
   </div>
-  <div class="content">
+  <div class="popup_cnt">
 
-    <div class="popup_title">СКРИПТ ДЛЯ УСТАНОВКИ НА САЙТ</div>
-
-    <div class="textarea">
-      <textarea>
-        @_installScriptTpl(node)
-      </textarea>
+    <div class="popup_t">
+      СКРИПТ ДЛЯ УСТАНОВКИ НА САЙТ
     </div>
 
-    <div class="note">
-      Скопируйте код из поля выше и вставьте его на все страницы вашего сайта перед закрывающим тегом <span class="blue">&lt;/body&gt;</span>
+    <div class="input">
+      <div class="input_shadow ft-XS install-script js-input-w">
+        <textarea>
+          @_installScriptTpl(node.id)
+        </textarea>
+      </div>
     </div>
+
+    <p class="paragraph __size-M __text-1 color-strong">
+      Скопируйте код из поля выше и вставьте его на все страницы<br/>вашего сайта перед закрывающим тегом <span class="color-link">&lt;/body&gt;</span>
+    </p>
 
   </div>
 </div>

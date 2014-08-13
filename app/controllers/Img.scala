@@ -28,7 +28,7 @@ import io.suggest.ym.model.common.MImgInfoMeta
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
 
   import LOGGER._
 
@@ -56,18 +56,17 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   /**
    * Выдать картинку из HDFS. Используется для визуализации выдачи.
    * Валидность параметров проверяется в роутере регэкспами.
-   * @param dkey Ключ домена. Возможно содержит www и иной мусор.
    * @param imageId Хеш-ключ картинки в хранилище домена.
    * @return
    */
-  def getThumb(dkey:String, imageId:String) = Action.async { implicit request =>
-    suppressQsFlood(routes.Img.getThumb(dkey, imageId)) {
+  def getThumb(imageId: String) = Action.async { implicit request =>
+    suppressQsFlood(routes.Img.getThumb(imageId)) {
       MImgThumb.getThumbById(imageId) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
 
         case None =>
-          info(s"getThumb($dkey, $imageId): 404 Not found")
+          info(s"getThumb($imageId): 404 Not found")
           imgNotFound
       }
     }
@@ -127,8 +126,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
-  def handleTempImg = IsAuth(parse.multipartFormData) { implicit request =>
-    _handleTempImg(OrigImageUtil, marker = None)
+  def handleTempImg = Action.async(parse.multipartFormData) { implicit request =>
+    bruteForceProtected {
+      _handleTempImg(OrigImageUtil, marker = None)
+    }
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */

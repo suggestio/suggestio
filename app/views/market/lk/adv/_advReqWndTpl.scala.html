@@ -5,27 +5,33 @@
 @import ctx._
 @import util.TplDataFormatUtil._
 @import helper._
-@import util.FC.tdFc
+@import util.FC.divFc
 @import util.DateTimePrettyPrinter._
 
 @_advWndFullTpl(mad, adProducer) {
 
-  <p style="margin-top: 0;">
-    <strong>Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></strong>
-    <br/>
+  <p class="paragraph __size-M color-light-strong ft-S">
+    <strong class="color-strong">
+      Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
+    </strong>
+  </p>
 
-    <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
+  <p class="paragraph __size-M color-light-strong ft-XS">
+    С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)<br/>
     @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
-      <span>+ Размещение в категориях товаров и услуг</span><br/>
+      + Размещение в категориях товаров и услуг<br/>
     }
     @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
-      <span>+ Размещение на главном экране</span>
+      + Размещение на главном экране
     }
 
   </p>
 
-  <p class="gray font-12">
-    <strong class="adv-req-wind_price">@formatPrice(advReq.amount, advReq.currency)</strong>
+  <p class="paragraph __size-M color-light-strong ft-XS">
+    <strong class="ft-L adv-req-wind_price">
+      @formatPrice(advReq.amount, advReq.currency)
+    </strong>
+
     @advReq.comission.map { c =>
       (комиссия @formatPercent(c))
     }
@@ -34,17 +40,18 @@
   @* Отменить размещение рекламы с указанием причины. *@
   @form(
     routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo),
-    'id -> "advReqRefuse"
+    'id -> "advReqRefuse",
+    'class -> "js-hidden"
   ) {
     @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
 
     <div class="submit-w __size-S">
 
-      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left" id="advReqAcceptShow">
+      <a class="siom-ac-btn __color-3 __size-M __ft-XM f-left js-adv-req-forms" >
         Отменить
       </a>
 
-      <a class="siom-ac-btn __color-3 __size-M __ft-XM f-right js-submit-btn">
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-right js-submit-btn">
         Отправить отказ
       </a>
 
@@ -59,7 +66,7 @@
   ) {
     <div class="submit-w __size-S">
 
-      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left" id="advReqRefuseShow">
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left js-adv-req-forms">
         Отменить размещение
       </a>
 

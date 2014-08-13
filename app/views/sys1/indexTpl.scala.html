@@ -1,9 +1,37 @@
 @()(implicit ctx:util.Context)
 
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+  <div class="i __btn">
+
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
+      @btnText
+    </a>
+
+    @afterBtn
+  </div>
+}
+
+
 @sysBase("index") {
-  <p><a href="@routes.Sys.dkeysListAll">Обзор сайтов</a></p>
-  <p><a href="@routes.Sys.addSiteForm">Добавить сайт</a></p>
-  <p><a href="@routes.Sys.siobixIndex">Кравлер</a></p>
-  <p><a href="@routes.Sys.indicesIndex">Индексы</a></p>
-  <p><a href="@routes.SysMarket.index">Маркет</a></p>
+
+  <div class="page-cnt">
+
+    <div class="i-list">
+
+      @btn(routes.Sys.dkeysListAll, 40) { ОБЗОР<br/>САЙТОВ }{
+        <a href="@routes.Sys.addSiteForm" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
+          +добавить<br/>сайт
+        </a>
+      }
+
+      @btn(routes.Sys.siobixIndex, 52) { КРАВЛЕР }{ }
+      @btn(routes.Sys.indicesIndex, 52) { ИНДЕКСЫ }{ }
+      @btn(routes.SysMarket.index, 52) { МАРКЕТ }{ }
+
+    </div>
+
+  </div>
+
 }

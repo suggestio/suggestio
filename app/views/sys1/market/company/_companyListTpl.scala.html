@@ -3,21 +3,45 @@
 @* Рендер списка компаний. *@
 @import ctx._
 
-<table>
+<table class="siom-table __size-XL color-strong">
   <tr>
-    <th>
-      <strong class="sys-strong">@Messages("Name")</strong>
+    <th class="siom-cell-head __text-align-1">
+      <div class="siom-cell-cnt __size-M">
+        <strong>@Messages("Name")</strong>
+      </div>
+      <div class="border-line"></div>
     </th>
-    <th>
-      <strong>@if(withDateCreated) {Создана}</strong>
+    <th class="siom-cell-head __text-align-1">
+      <div class="siom-cell-cnt __size-M">&nbsp;
+        @if(withDateCreated) {
+          <strong>Создана</strong>
+        }
+      </div>
+      <div class="border-line"></div>
     </th>
   </tr>
+
   @companies.map { company =>
     <tr>
-      <td><a href="@routes.SysMarket.companyShow(company.id.get)">@company.name</a></td>
-      @if(withDateCreated) {
-        <td>@datetime._prettyDate(company.dateCreated)</td>
-      }
+
+      <td>
+        <div class="siom-cell-cnt __size-M">
+          <strong>
+            <a class="blue-link" href="@routes.SysMarket.companyShow(company.id.get)">@company.meta.name</a>
+          </strong>
+        </div>
+        <div class="border-line"></div>
+      </td>
+
+      <td>
+        <div class="siom-cell-cnt __size-M">&nbsp; <!-- неразрывный пробел, чтобы верстка не ехала, если нет даты создания -->
+          @if(withDateCreated) {
+              <span>@datetime._prettyDate(company.meta.dateCreated)</span>
+          }
+        </div>
+        <div class="border-line"></div>
+      </td>
+
     </tr>
   }
 </table>

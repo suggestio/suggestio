@@ -5,11 +5,13 @@
 
 @adnBase("Создать новый ADN-узел") {
 
-  @supOpt.fold {
-    Будет создан узел вернего уровня.
-  } { sup =>
-    Родительский узел: <a href="@routes.SysMarket.showAdnNode(sup.id.get)">@sup.meta.name / @sup.meta.town</a>
-  }
+  <div class="sys_t">
+    @supOpt.fold {
+      Будет создан узел вернего уровня.
+    } { sup =>
+      Родительский узел: <a class="blue-link" href="@routes.SysMarket.showAdnNode(sup.id.get)">@sup.meta.name / @sup.meta.town</a>
+    }
+  </div>
 
   @_adnNodeFormTpl(
     af = af,

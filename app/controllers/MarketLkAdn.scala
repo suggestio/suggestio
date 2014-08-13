@@ -1,7 +1,6 @@
 package controllers
 
 import util.billing.Billing
-import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -31,6 +30,8 @@ import play.api.mvc.Security.username
 object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect {
 
   import LOGGER._
+
+  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
@@ -362,7 +363,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       receiverIds = List(request.supNode.id.get),
       producerIds = List(adnId)
     )
-    MAd.searchAdsRt(req) map { mads =>
+    MAd.dynSearchRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
     }
   }
@@ -371,7 +372,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
   private val nodeOwnerInviteAcceptM = Form(tuple(
-    Market.MARKET_CONTRACT_AGREE_FN -> boolean
+    MARKET_CONTRACT_AGREE_FN -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
   ))
@@ -429,29 +430,46 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     )
   }
 
-  private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: (EmailActivation, MAdnNode) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
+  type F = (EmailActivation, MAdnNode) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]
+
+  private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: F) = {
     MaybeAuth.async { implicit request =>
-      bruteForceProtect flatMap { _ =>
+      bruteForceProtected {
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == adnId =>
-            MAdnNodeCache.getById(adnId) flatMap {
-              case Some(mmart) =>
-                f(eAct, mmart)(request)
-              case None =>
-                // should never occur
-                error(s"nodeOwnerInviteAcceptCommon($adnId, eaId=$eaId): Mart not found, but code for mart exist. This should never occur.")
-                NotFound(invite.inviteInvalidTpl("mart.not.found"))
-            }
+            nodeOwnerInviteAcceptGo(adnId, eAct, f)
 
           case other =>
             // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
             debug(s"nodeOwnerInviteAcceptCommon($adnId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
-            // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
+            // TODO Надо проверить, есть ли у юзера права на узел, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
             // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
             warn(s"TODO I need to handle already activated requests!!!")
             NotFound(invite.inviteInvalidTpl("mart.activation.expired.or.invalid.code"))
         }
       }
+    }
+  }
+
+  /** Код одной из ветвей nodeOwnerInvitAcceptCommon. */
+  private def nodeOwnerInviteAcceptGo(adnId: String, eAct: EmailActivation, f: F)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    MAdnNodeCache.getById(adnId) flatMap {
+      case Some(adnNode) =>
+        EmailPwIdent.getByEmail(eAct.email) flatMap {
+          // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
+          case Some(epwIdent) if epwIdent.isVerified && !request.pwOpt.exists(_.personId == epwIdent.personId) =>
+            debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${request.pwOpt.map(_.personId)} :: Rdr user to login...")
+            val result = IsAuth.onUnauthBase(request)
+            if (request.isAuth) result.withNewSession else result
+
+          // Юзер анонимус и такие email неизвестны системе, либо тут у нас текущий необходимый юзер.
+          case _ =>
+            f(eAct, adnNode)(request)
+        }
+      case None =>
+        // should never occur
+        error(s"nodeOwnerInviteAcceptCommon($adnId, eaId=${eAct.id.get}): ADN node not found, but act.code for node exist. This should never occur.")
+        NotFound(invite.inviteInvalidTpl("adn.node.not.found"))
     }
   }
 

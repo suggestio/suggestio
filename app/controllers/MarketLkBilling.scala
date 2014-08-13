@@ -5,11 +5,11 @@ import util.acl._
 import models._
 import views.html.market.lk.billing._
 import play.api.db.DB
-import play.api.Play.current
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import play.api.mvc.{RequestHeader, Result}
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -20,6 +20,9 @@ import play.api.mvc.{RequestHeader, Result}
 object MarketLkBilling extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  val TXNS_PER_PAGE: Int = configuration.getInt("market.billing.txns.page.size") getOrElse 10
+
 
   /** Отобразить какую-то страницу с реквизитами для платежа. */
   def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
@@ -54,7 +57,6 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
         .headOption
         .map { mbc =>
           val contractId = mbc.id.get
-          val txns = MBillTxn.findForContract(contractId)
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
           val myMbmds = if (request.adnNode.adn.isReceiver) {
             MBillMmpDaily.findByContractId(contractId)
@@ -66,21 +68,33 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
           } else {
             Nil
           }
-          (mbc, txns, myMbmds, allRcvrAdnIds)
+          (mbc, myMbmds, allRcvrAdnIds)
         }
     }
     billInfoOpt match {
-      case Some((mbc, txns, mbmds, allRcvrAdnIds)) =>
+      case Some((mbc, mbmds, allRcvrAdnIds)) =>
         val allRcvrAdnIdsSet = allRcvrAdnIds.toSet
         otherRcvrsFut.map { otherRcvrs =>
           val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
-          Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, txns, mbc, otherRcvrs1))
+          Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, mbc, otherRcvrs1))
         }
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
         http404AdHoc
     }
+  }
+
+
+  /** Подгрузка страницы из списка транзакций. */
+  def _txnsList(adnId: String, page: Int) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+    val offset = page * TXNS_PER_PAGE
+    val txns = DB.withConnection { implicit c =>
+      val mbcs = MBillContract.findForAdn(adnId, isActive = None)
+      val mbcIds = mbcs.flatMap(_.id).toSet
+      MBillTxn.findForContracts(mbcIds, limit = TXNS_PER_PAGE, offset = offset)
+    }
+    Ok(_txnsPageTpl(request.adnNode, txns, page))
   }
 
 

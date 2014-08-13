@@ -4,25 +4,26 @@
 @import ctx._
 @import edit._
 
-@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.memberType), adnIdOpt = adnNode.id) {
+@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId), adnIdOpt = adnNode.id) {
 
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
-      <div class="title-inner">
-        @Messages("editing.of.amt.profile." + adnNode.adn.memberType).toUpperCase
-      </div>
+  <div class="page-title">
+    <div class="page-title_cnt">
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
+      @Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId).toUpperCase
     </div>
   </div>
 
-  <div class="body">
+  <div class="body_cnt">
+
     @_leaderNodeFormTpl(
       adnId = adnNode.id.get,
       btnText = Messages("Save"),
       mf = mf,
       submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(adnNode.id.get),
-      welcomeAdOpt = welcomeAdOpt
+      welcomeAdOpt = welcomeAdOpt,
+      nodeInfo = adnNode.adn
     )
+
   </div>
 
 }

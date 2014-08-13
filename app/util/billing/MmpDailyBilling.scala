@@ -361,12 +361,32 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         advReq,
         comission1  = Some(rcvrContract.sioComission),
         dateStatus1 = now,
-        prodTxnId   = prodTxn.id.toOption,
-        rcvrTxnId   = rcvrTxn.id.toOption,
+        prodTxnId   = prodTxn.id,
+        rcvrTxnId   = rcvrTxn.id,
         isOnline    = false,
         isPartner   = false,
         isAuto      = isAuto
       ).save
+    }
+  }
+
+
+  /**
+   * Процессинг отказа в запросе размещения рекламной карточки.
+   * @param advReq Запрос размещения.
+   * @param reason Причина отказа.
+   * @return Экземпляр сохранённого MAdvRefuse.
+   */
+  def refuseAdvReq(advReq: MAdvReq, reason: String): MAdvRefuse = {
+    val advRefused = MAdvRefuse(advReq, reason, DateTime.now)
+    DB.withTransaction { implicit c =>
+      val rowsDeleted = advReq.delete
+      assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
+      val advr = advRefused.save
+      // Разблокировать средства на счёте.
+      MBillBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
+      // Вернуть сохранённый refused
+      advr
     }
   }
 

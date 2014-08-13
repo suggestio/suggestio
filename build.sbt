@@ -25,15 +25,15 @@ libraryDependencies ++= Seq(
   ws,
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.+",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.3",  // https://github.com/mohiva/play-html-compressor
+  "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.3.0-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.3.3-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "2.3.1-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.3.2-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -60,8 +60,10 @@ libraryDependencies ++= Seq(
   "de.jollyday" % "jollyday" % "0.4.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
-  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
+  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
   // webjars
+  // test
+  "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
 play.Play.projectSettings
@@ -95,6 +97,7 @@ resolvers ++= Seq(
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
+  //"sonatype-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 )
 
 

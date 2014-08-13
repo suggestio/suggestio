@@ -16,9 +16,7 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
 
   <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
@@ -26,7 +24,7 @@
 </head>
 
 
-<body class="lk login-page">
+<body class="index-page">
 
   @content
 
@@ -35,24 +33,16 @@
     @* Попап с формой логина *@
     @if(!ctx.isAuth) {
 
-      <div class="popup login-popup" id="emailPwLoginForm">
+      <div class="popup __index js-hidden" id="emailPwLoginForm">
 
-        <div class="hat">
-          <a class="close" href="#">&nbsp;</a>
+        <div class="popup_header __index">
+          <a class="popup_close f-left js-close-popup" href="#"></a>
         </div>
 
-        <div class="content">
-
-          <div class="popup-title popup-title_without_padding">
-            ВХОД
-          </div>
-
-          @ident._emailPwLoginFormTpl(
-            lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-            submitCall = routes.MarketLk.emailPwLoginFormSubmit()
-          )
-
-        </div>
+        @ident._emailPwLoginFormTpl(
+          lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+          submitCall = routes.MarketLk.emailPwLoginFormSubmit()
+        )
 
       </div>
     }
@@ -62,12 +52,16 @@
     @popupContent
   </div>
 
-  <div class="footer-wrap footer-wrap_responsive-mode">
-    <div class="footer footer_responsive-mode">
+  <div class="footer __responsive __fill-1">
+    <div class="footer_cnt __responsive">
 
-      <span class="copyright-block">
+      <div class="f-right footer_wifi">
+        Эффективная реклама в сетях WiFi Free
+      </div>
+
+      <span class="copyright-block __color-1">
         @_copyrightTextTpl(withLink = false)
-        @*&nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+        @*&nbsp;|&nbsp;<a class="copyright-link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
       <!--<div class="socials">

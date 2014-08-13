@@ -7,15 +7,11 @@
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
-  <div class="lk-file-input">
-    <div class="lk-file-input__div">
-      <div class="lk-file-input__div-inner">
-        Загрузить изображение
-      </div>
-    </div>
-    <input type="file" class="lk-file-input__input w-async-image-upload" data-w-block-preview="true" data-related-field-id="blockImage@bf.name" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+  <div class="add-file-w __size-S"  >
+    <input type="file" class="add-file-w_input __size-S js-file-upload" data-related-field-id="blockImage@bf.name" data-w-block-preview="true" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+    <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
   </div>
-
+  <div class="clear"></div>
   <div id="blockImage@bf.name">
     <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
 

@@ -1,12 +1,11 @@
 package util.blocks
 
 import util.img._
-import io.suggest.ym.model.common.EMImg.Imgs_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
-import models.MImgInfoMeta
+import models.{MImgInfoMeta, Imgs_t}
 import play.api.Play.{current, configuration}
 
 /**
@@ -21,6 +20,8 @@ trait ISaveImgs {
   def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     Future successful Map.empty
   }
+
+  def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
 }
 
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
@@ -36,7 +37,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
+      val saveBgImgFut = ImgFormUtil.updateOrigImg(
+        needImgs = needImgsThis.toSeq,
+        oldImgs  = oldImgsThis.toIterable
+      )
       for {
         savedBgImg <- saveBgImgFut
         supSavedMap <- supImgsFut
@@ -72,6 +76,10 @@ object BgImg {
 trait SaveBgImgI extends ISaveImgs {
   def BG_IMG_FN: String
   def bgImgBf: BfImage
+
+  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]]  = {
+    bim.get(BG_IMG_FN)
+  }
 }
 trait BgImg extends ValT with SaveBgImgI {
   // Константы можно легко переопределить т.к. trait и early initializers.

@@ -124,7 +124,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        ImgFormUtil.updateOrigImgFull(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
+        ImgFormUtil.updateOrigImgFull(needImgs = List(imgInfo), oldImgs = Nil) flatMap { imgsIdsSaved =>
           // Выставить сохраненные картинки в датум и сохранить его.
           mpo.datum.pictures = imgsIdsSaved.map(_.filename)
           mpo.save.map { mpoSavedId =>
@@ -185,7 +185,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
         }
       },
       {case (mpo, imgInfo) =>
-        ImgFormUtil.updateOrigImgId(Some(imgInfo), offer.datum.pictures.headOption) flatMap { updatedImgIds =>
+        ImgFormUtil.updateOrigImgId(List(imgInfo), offer.datum.pictures) flatMap { updatedImgIds =>
           mpo.datum.offerType = offer.datum.offerType
           mpo.datum.shopId = offer.datum.shopId
           mpo.id = offer.id

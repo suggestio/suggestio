@@ -2,7 +2,7 @@ package controllers
 
 import play.api.data._
 import play.api.data.Forms._
-import util.acl.IsSuperuser
+import util.acl._
 import util.FormUtil._
 import views.html.sys1._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -35,7 +35,7 @@ object Sys extends SioController with PlayMacroLogsImpl {
 
 
   /** indexTpl.scala.html для системной панели. */
-  def index = IsSuperuser { implicit request =>
+  def index = IsSuperuserOr404 { implicit request =>
     Ok(indexTpl())
   }
 

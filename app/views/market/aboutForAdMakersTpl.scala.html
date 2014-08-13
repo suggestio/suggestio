@@ -4,19 +4,19 @@
 
 @marketBase("Как это работает"){
 
-<div class="header-wrap wave-pattern header-wrap_responsive-mode">
+  <div class="header __responsive wave-pattern">
 
-  <div class="center header_responsive-mode">
+    <div class="header_cnt __responsive">
 
-    <a class="back-but back-but_centered" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+      <a class="back-btn __centered" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+
+    </div>
 
   </div>
 
-</div>
+<div class="body __responsive blue-pattern">
 
-<div class="body-wrap blue-pattern body-wrap_responsive-mode">
-
-  <div class="body body_responsive-mode body_padding-top-80">
+  <div class="body_cnt __responsive __top-S">
 
     <div class="about-page">
 
@@ -37,65 +37,65 @@
         </div>
       </div>
 
-      <p class="paragraph-13 font-XL">
+      <p class="paragraph __size-M ft-XL">
         Как это работает?
       </p>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         Заполняете форму, получаете инвайт<br/>
         к личному кабинету в системе.
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         В личном кабинете создаёте рекламную карточку или группу карточек.<br/>
         Выбираете сети WiFi Free для размещения вашей рекламы.
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         Выбираете даты начала и окончания рекламной кампании.
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         Выбираете рекламные места в системе<br/>
         (Первый экран, рубрикатор, или самый экономичный<br/>
         вариант «Все предложения»).
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         Система сформирует цену вашей рекламной кампании.
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         <div class="dot about-page__dot"></div>
         Нажимаете «Отправить запрос» на рекламу.<br/>
         В течении суток ваша реклама будет рассмотрена владельцами сетей WiFi.<br/>
         Реклама будет одобрена или вам придёт отказ с объяснением причины отказа.
       </div>
 
-      <div class="paragraph-13 about-page__under-btn">
+      <div class="paragraph __size-M about-page__under-btn">
         <div class="dot about-page__dot"></div>
         Как выглядит рекламная выдача?
         <div class="bot-arrow about-page__bot-arrow"></div>
       </div>
 
-      <div class="paragraph-13">
+      <div class="paragraph __size-M">
         @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
-        <a class="siom-ac-btn __color-1 __size-M __ft-L" href="@routes.Market.demoWebSite(demoAdnId)" target="_blank">
+        <a class="siom-ac-btn __color-1 __size-M __ft-L" href="@routes.MarketShowcase.demoWebSite(demoAdnId)" target="_blank">
           ДЕМО
         </a>
         }
       </div>
 
-      <p class="paragraph-13 ft-S">
+      <p class="paragraph __size-M ft-S">
         Если возникли вопросы <a class="blue-link" href="mailto:support&#64;suggest.io">свяжитесь с нами</a>
       </p>
 
-      <p class="paragraph-13 ft-M">
+      <p class="paragraph __size-M ft-M">
         8&nbsp;(812)&nbsp;640-76-46
       </p>
 

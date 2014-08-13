@@ -5,66 +5,54 @@
 @import helper._
 @import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
-@import util.FC.divFc
+@import util.FC.radialFc
 
 
-<div class="popup recover-popup" id="recoverPwForm">
+<div class="popup __index" id="recoverPwForm">
 
-  <div class="hat">
-    <a href="#emailPwLoginForm" class="popup__back-btn f-left js-popup-back"></a>
-    <a class="close" href="#">&nbsp;</a>
+  <div class="popup_header __index">
+    @*<a href="#emailPwLoginForm" class="popup__back-btn f-left js-popup-back"></a>*@
+    <a class="popup_close f-left js-close-popup" href="#"></a>
   </div>
 
-  <div class="content recover-popup__content">
 
-    <div class="popup-title ">
-      ВОССТАНОВИТЬ ПАРОЛЬ
-    </div>
+  @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
+    <div class="popup_cnt __index">
 
-
-    @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
-      @inputText(
-        rf("email"),
-        '_label -> "Электронная почта, указанная при регистрации:"
-      )
-
-
-      @* Капча *@
-      <table class="captcha-table">
-        <tr>
-
-          <td class="captcha-table_left">
-            @inputText(
-            rf(CAPTCHA_TYPED_FN),
-            '_label -> Messages("Input.text.from.picture")
-            )
-          </td>
-
-          <td class="captcha-table_right">
-            @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-              <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-              <div class="captcha">
-                <img class="captcha-table_image" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-                <a id="captchaReload" class="captcha-reload-btn" href=""></a>
-              </div>
-            }
-          </td>
-
-        </tr>
-      </table>
-
-
-      <div class="submit-w __size-L">
-
-        <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
-          Отправить
-        </a>
-
-
+      <div class="popup_t __index">
+        Восстановить пароль
       </div>
 
-    }
+      @inputText(
+        rf("email"),
+        '_label -> "Электронная почта, указанная при регистрации:",
+        'placeholder -> "Электронная почта, указанная при регистрации"
+      )
 
-  </div>
+      @* Капча *@
+      <div class="captcha">
+        @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+        <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+        <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+        <a id="captchaReload" class="captcha_reload-btn" href=""></a>
+        }
+      </div>
+
+      @inputText(
+        rf(CAPTCHA_TYPED_FN),
+        '_label -> Messages("Input.text.from.picture"),
+        'placeholder -> "Введите текст с картинки"
+      )
+
+    </div>
+
+    <div class="popup_footer __index">
+      <div class="btn-w __size-M">
+        <a class="siom-new-btn __size-XS __color-2 f-left js-popup-back" href="#emailPwLoginForm">Отмена</a>
+        <input class="siom-new-btn __size-XS __fill-1 __list f-left" type="submit" value='Отправить'/>
+      </div>
+    </div>
+
+  }
 
 </div>

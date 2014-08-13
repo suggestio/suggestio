@@ -1,17 +1,21 @@
 @(mmcats: Seq[MMartCategory], mmart:MAdnNode, catsStats: Map[String, Long], withSubnodesBtn: Boolean)(implicit ctx: Context)
 
-@_search_bar(mmart)
+@import util.TplDataFormatUtil._
 
-<div class="sm-categories-screen" style="background-color: #@mmart.meta.color" id="smCategoriesScreen">
+<div class="sm-categories-screen" id="smCategoriesScreen">
 
-  <div class="sm-categories-body-wrap">
-    <div class="sm-categories-body">
+  <div class="sm-categories-screen_header"></div>
+
+  @_search_bar(mmart)
+
+  <div class="sm-categories-screen_body-wrap" id="smCategoriesBodyWrap" style="background-color: #@mmart.meta.color;">
+    <div class="sm-categories-screen_body">
 
       <div class="sm-categories-list">
-        @mmcats.map { mmcat =>
-          <span class="sm-single-categorie js-cat-link @mmcat.cssClass @if(!(catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
-            <div class="icon"></div>
-            <div class="name">@mmcat.name</div>
+        @mmcats.zipWithIndex.map { case (mmcat, index) =>
+          <span class="sm-single-categorie js-cat-link @if(!(catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
+            <div class="sm-single-categorie_icon __@mmcat.cssClass"></div>
+            <div class="sm-single-categorie_name">@mmcat.name</div>
           </span>
         }
       </div>
@@ -19,7 +23,7 @@
     </div>
   </div>
 
-  @if(withSubnodesBtn) {
+  @*if(withSubnodesBtn) {
     <div class="sm-categories-footer">
 
       <div class="or-title" style="margin-top: 18px;">
@@ -34,5 +38,6 @@
 
     </div>
   }
+  *@
 
 </div>

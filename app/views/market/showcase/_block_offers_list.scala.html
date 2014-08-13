@@ -1,15 +1,15 @@
 @(ads: Seq[MAdT], isIndex: Boolean = false)(implicit ctx: util.Context)
 
 @if(!ads.isEmpty) {
-  @ads.map { mad =>
-    @_single_offer(
-      mad = mad,
-      isWithAction = isIndex
-    )
-  }
-  @*<a href="http://suggest.io/m"><div class="sm-b-spacer sm-b-spacer-@i" data-width="140" data-height="140"></div></a>*@
-  @for(i <- 1 to 30) {
-    <div class="sm-b-spacer sm-b-spacer-@i" data-width="140" data-height="140"></div>
-  }
+@ads.map { mad =>
+@_single_offer(
+mad = mad,
+isWithAction = isIndex
+)
+}
+@*<a href="http://suggest.io/m"><div class="sm-b-spacer sm-b-spacer-@i" data-width="140" data-height="140"></div></a>*@
+@for(i <- 1 to 30) {
+<div class="sm-b-spacer sm-b-spacer-@i" data-width="140" data-height="140"></div>
+}
 
 }

@@ -1,22 +1,8 @@
-border-radius(v)
-  -webkit-border-radius:v
-  border-radius:v
-
-box-shadow(v)
-  -webkit-box-shadow: v
-  -moz-box-shadow:    v
-  box-shadow:         v
-
-text-shadow(v)
-  -webkit-text-shadow: v
-  -moz-text-shadow:    v
-  text-shadow:         v
-
 @import "market/reset.styl"
+@import "market/mixins.styl"
 @import "market/fonts.styl"
 @import "market/lk/base.styl"
 @import "market/lk/buttons.styl"
-@import "market/lk/text-styles.styl"
 
 .object
     padding: 5px 20px
@@ -24,9 +10,6 @@ text-shadow(v)
 
 .data-row
     padding: 20px 0px
-
-.clear
-    clear: both
 
 body
     background: #152d3b
@@ -56,32 +39,87 @@ body
 .db-search-result img
     margin: 10px 10px 10px 0px
     float: left
-p
-  font-size: 12px
-  padding: 10px 0px
 
 a.add
   color: green
 
-table
-  th,
-  td
-    text-align: left
-    padding: 10px 20px 10px 0px
 
 
-/* NEW SYS */
+/********************************************************************************************************************/
+/* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
+/********************************************************************************************************************/
+
+.color-error
+  color: #e12d2d !important
+
+.color-success
+  color: #48ab38 !important
+
+.color-strong
+  color: #676666
+
+.color-light-strong
+  color: #959595
 
 .sys
   font-size: 14px
   font-family: 'Arial'
-
-.sys-strong
   color: #676666
+
+  &_t
+    margin: 25px 0
+    font-family: 'PT_Sans-Narrow'
+    ft(24px)
+    color: #676666
+
+.close
+  width: 17px
+  height: 17px
+  cursor: pointer
+  background: url('/assets/images/market/lk/close-icon.png') no-repeat
+  background-position: 0 -67px
+  text-decoration: none
+
+  &:hover
+    background-position: 0 0
+
+  &:active
+    background-position: 0 1px
+
+strong
   font-weight: bold
+
+siomBlueColor = #07a1ca
+
+.blue-link
+  color: siomBlueColor
+  text-decoration: none
+  border-bottom: 1px solid rgba(7, 161, 202, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #276e98
+    border-color: #c6c6c6
+
+
+.paragraph
+  display: block
+
+  &.__size-M
+    margin: 13px 0
+
+  &.__size-L
+    margin: 20px 0
+
+  &.__text-1
+    text-align: center
+
 
 .ovh
   overflow: hidden
+
+.clear
+  clear: both
 
 .abs
   position: absolute
@@ -98,62 +136,296 @@ table
   overflow: hidden
   width: 100%
   border-top: 1px solid #cbcbcb
-  border-bottom: 1px solid #f8f8f8
+  border-bottom: 1px solid #eeeeee
 
-.border-line-vertical
-  margin-top: 5px
-  border-left: 1px solid #cbcbcb
-  border-right: 1px solid #f8f8f8
-
-
-.sys-market-index__items
-  overflow: hidden
-  margin-top: 60px
-
-.sys-market-index__item
-  overflow: hidden
-  float: left
-  width: 130px
-  margin-right: 35px
-  margin-bottom: 35px
-
-.sys-market-index__btn
-  margin-top: 15px
-
-.free-ad__link
-  display: block
-  margin: 5px 0
+  &.__vertical
+    width: 0
+    border-left: 1px solid #cbcbcb
+    border-right: 1px solid #eeeeee
 
 
 .info-label
   overflow: hidden
 
-.info-label._market-index
-  margin-left: -30px
-  margin-top: 20px
+  &.__outer
+    margin-left: -30px
 
-.info-label__icon
-  float: left
+  &_icon
+    float: left
+    width: 7px /* Ширина и высота по размеру изображения */
+    height: 38px
+    background: url('/assets/images/market/lk/info-label-icon.png') no-repeat left center
 
-  width: 7px /* Ширина и высота по размеру изображения */
-  height: 38px
+  &_t
+    padding-left: 25px
+    float: left
 
-  background: url('/assets/images/market/lk/info-label-icon.png') no-repeat left center
+    font-family: 'Arial'
+    font-size: 12px
+    font-weight: bold
+    color: #959595
 
-.info-label__title
-  padding-left: 25px
-  float: left
 
-  font-family: 'Arial'
-  font-size: 12px
-  font-weight: bold
+.btn-w
+  overflow: hidden /* внутри лежат элементы со свойством float */
+  text-align: center
+
+  &.__size-M
+    padding: 25px 0
+
+  &.__size-S
+    padding: 25px 20%
+
+  &.__between-blocks
+     padding-bottom: 10px
+
+.page-cnt
+  padding-top: 20px
+
+.siom-ac-btn.__sys-market-index
+  margin-top: 15px
+
+
+.i-list
+  overflow: hidden
+
+  &.__market-index
+    margin-top: 60px
+
+.i
+  overflow: hidden
+
+  &.__btn
+    float: left
+    width: 130px
+    margin-right: 35px
+
+/********************************************************************************************************************/
+/* tables */
+/********************************************************************************************************************/
+.siom-table
+
+  &.__size-XL
+    width: 100%
+
+.siom-cell
+
+  &.__size-S
+    width: 120px
+
+  &.__inner-S
+    padding: 5px
+
+.siom-table_vertical-cnt
+  vertical-align: middle
+
+.siom-cell-cnt
+
+  &.__size-L
+    padding: 10px 20px
+
+  &.__size-M
+    padding: 10px 0
+
+  &.__size-S
+    padding: 5px 20px
+
+.siom-cell-head
+  ft(12px)
   color: #959595
-  text-shadow(1px 1px 1px white)
+
+  &.__text-align-1
+    text-align: left
+
+  &.__bg-head
+    background-color: #dad9d9
+
+/********************************************************************************************************************/
+/* inputs */
+/********************************************************************************************************************/
+.input-w
+  margin-top: 10px
+  margin-bottom: 10px
+
+  &.__focus
+
+    .input
+      border: 1px solid #07a1ca !important
+
+    input
+      color: #07a1ca
+
+    textarea
+      color: #07a1ca
+
+  &.__textarea
+
+    .input-w_left
+      vertical-align: top
+      padding-top: 18px
+
+  &.__size-L
+    width: 100%
+
+  &_left
+    width: 120px
+    vertical-align: middle
+
+  .input-w_left.__text-top
+    vertical-align: top
+
+  &_prop-name
+    float: left
+
+    color: #959595
+    font-family: 'Arial'
+    font-size: 12px
+    text-shadow(1px 1px 1px #f8f8f8)
+
+.required-icon
+  color: #e23131
+
+.input
+  background: none repeat scroll 0 0 #FFFFFF
+  border: 1px solid #B4B3B3
+  padding: 1px
+
+  .input_shadow
+    overflow: hidden
+    border-left: 1px solid #FBFBFB
+    border-right: 1px solid #FBFBFB
+    border-top: 1px solid #D2D3D3
+    border-radius(4px)
+
+  input
+    outline: none
+    padding: 0 10px
+    width: 100%
+    height: 35px
+    font-size: 16px
+    color: #959595
+    font-family: 'Arial'
+
+  textarea
+    outline: none
+    width: 100%
+    height: 60px
+    padding: 10px
+    resize: none
+    font-size: 16px
+    color: #959595
+    font-family: 'Arial'
+
+  &.__error
+    border: 1px solid #e23131
+
+    input
+      background: #F3B0B0
+      color: white
+
+    textarea
+      background: #F3B0B0
+      color: white
+
+/* конец куска для рефакторинга */
 
 
-.sys__t
-  margin: 25px 0
+/********************************************************************************************************************/
+/* Стандартный блок SioMarket */
+/********************************************************************************************************************/
+.siom-block
+  margin-bottom: 10px
 
-  font-family: 'PT_Sans-Narrow'
-  ft(24px)
-  color: #676666
+  &_title
+    background: #dad9d9
+    padding: 7px 11px
+
+  &_cnt-w
+    background: #efefef
+    box-shadow(0px 1px 0px 0px #acadad)
+
+
+  &_cnt
+    padding: 10px 22px
+    overflow: hidden
+
+/********************************************************************************************************************/
+/* Кнопка Свернуть/Развернуть */
+/********************************************************************************************************************/
+.slide-btn
+  display: inline-block
+  cursor: pointer
+  padding-right: 20px
+
+  background: url('/assets/images/market/lk/angle.png') no-repeat
+  background-position: right -115px
+
+  text-decoration: none
+  font-size: 12px
+  line-height: 14px
+  font-family: 'Arial'
+  color: #959595
+
+  &:hover
+    color: #5088aa
+    background-position: right 3px
+
+  &.__open
+    background-position: right -176px
+
+    &:hover
+      background-position: right -58px
+
+
+/********************************************************************************************************************/
+/* Всплывающие окна SIoMarket */
+/********************************************************************************************************************/
+.popups-container
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 40
+
+  display: none
+  width: 100%
+  height: 100%
+  overflow-y: scroll
+
+  background-color: rgba(0,0,0,0.5)
+
+  text-align: center
+
+.overlay
+  position: absolute
+  top: 0
+  left: 0
+  z-index: 5
+
+  display: none
+  width: 100%
+
+  background-color: black
+  opacity: 0.5
+
+.popup
+  position: relative
+  top: 25px
+  z-index: 20000
+  display: inline-block
+  background: #e1e1e1
+
+  &_header
+    background: #efefef
+    border-bottom: 1px solid #9a9b9b
+    overflow: hidden
+    padding: 10px
+
+  &_cnt
+    padding: 25px
+
+  &_t
+    padding-bottom: 25px
+    color: #676666
+    ft(30px)
+    font-family: 'PFDinTextCompPro-Medium'
+    text-align: center

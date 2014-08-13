@@ -126,36 +126,46 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[MImgInfoT]] = {
-    updateOrigImgFull(needImg, oldImgId.map(MImgInfo(_)))
+  def updateOrigImgId(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgIds: Iterable[String]): Future[List[MImgInfoT]] = {
+    updateOrigImgFull(needImgs, oldImgIds.map(MImgInfo(_)))
   }
 
   /** Комбо из updateOrigImgFull() и miiPreferFirstCropped(). */
-  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfoT]): Future[Option[MImgInfoT]] = {
+  def updateOrigImg(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[Option[MImgInfoT]] = {
     updateOrigImgFull(needImgs, oldImgs)
       .map { miiPreferFirstCropped }
   }
 
   /**
-   * Замена иллюстрации к некоей сущности.
+   * Замена иллюстраций к некоей сущности.
    * @param needImgs Необходимые в результате набор картинок. Тут могут быть как уже сохранённыя картинка,
    *                 так и новая из tmp. Если Nil, то старые картинки будут удалены.
-   * @param oldImgs Уже сохранённые ранее картинки, если есть.  // TODO Надо перейти на MImgInfoT или OrigImgIdKey.
-   * @return Список id новых и уже сохранённых картинок.        // TODO Надо перейти на MImgInfoT или OrigImgIdKey.
+   * @param oldImgs Уже сохранённые ранее картинки, если есть.
+   * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImgFull(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfoT]): Future[List[MImgInfoT]] = {
-    // TODO Эту фунцию можно быстро переделать с Option[] на Seq[]. Изначально она и работала через Seq. Но они не совместимы. Надо как-то это устаканить.
+  def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
+    // Защита от какой-либо деятельности в случае полного отсутствия входных данных.
+    if (needImgs.isEmpty && oldImgs.isEmpty) {
+      Future successful Nil
+    } else {
+      updateOrigImgFullDo(needImgs, oldImgs = oldImgs)
+    }
+  }
+  private def updateOrigImgFullDo(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
     val oldImgsSet = oldImgs.toSet
-    val newTmpImgs = needImgs.iterator
+    // newTmpImgs - это одноразовый итератор, содержит исходные индексы и списки картинок для сохранения.
+    val newTmpImgs = needImgs
+      .iterator
+      .zipWithIndex
       // В новых (произведённых) картинках есть только добавленные картинки.
-      .filter { _.iik.isInstanceOf[TmpImgIdKey] }
-      .map { _.asInstanceOf[ImgInfo4Save[TmpImgIdKey]] }
+      .filter { case (ii4s, i)  =>  ii4s.iik.isInstanceOf[TmpImgIdKey] }
       // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
-      .flatMap { ti4s =>
+      .map { case (ii4sRaw, i) =>
+        val ti4s = ii4sRaw.asInstanceOf[ImgInfo4Save[TmpImgIdKey]]
         val id = MPict.randomId
         val idStr = MPict.idBin2Str(id)
         val idOpt = Some(idStr)
-        if (ti4s.iik.isCropped) {
+        val results = if (ti4s.iik.isCropped) {
           // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
           List(
             ti4s.copy(withId = idOpt),
@@ -176,44 +186,62 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             List(ti4s)
           }
         }
+        results -> i
       }
-      .toList
-    val needOrigImgs0 = needImgs.iterator
-      .filter { _.iik.isInstanceOf[OrigImgIdKey] }
-      .map { _.asInstanceOf[ImgInfo4Save[OrigImgIdKey]] }
-    val needOrigImgs = oldImgsSet
-      .filter { oii => needOrigImgs0.exists(_.iik == oii) } // Отбросить orig-картинки, которых не было среди старых оригиналов.
-      .toList
-    val delOldImgs = oldImgsSet -- needOrigImgs  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
-    // Запускаем в фоне удаление старых картинок. TODO Возможно, надо этот фьючерс подвязывать к фьючерсу сохранения?
-    Future.traverse(delOldImgs) { oldOiik =>
-      val fut = MPict.deleteFully(oldOiik.data.rowKey)
-      fut onComplete {
-        case Success(_)  => trace("Old img deleted: " + oldOiik)
-        case Failure(ex) => error("Failed to delete old img " + oldOiik, ex)
-      }
-      fut
-    }
-    Future.traverse(newTmpImgs) { tii =>
-      val fut = handleTmpImageForStoring(tii)
-      fut onComplete { case tryResult =>
-        tii.iik.mptmp.file.delete()
-        tmpMetaCacheInvalidate(tii.iik)
-      }
-      fut onFailure {
-        case ex =>  error(s"Failed to store picture " + tii, ex)
-      }
-      fut recover {
-        case ex: Exception => null
+    // Запустить сохранение tmp-картинок.
+    val savedTmpImgsFut = Future.traverse(newTmpImgs) { case (tiis, i) =>
+      Future.traverse(tiis) { tii =>
+        val fut = handleTmpImageForStoring(tii)
+          .map { sti => Some(sti -> i) }
+        fut onComplete { case tryResult =>
+          tii.iik.mptmp.file.delete()
+          tmpMetaCacheInvalidate(tii.iik)
+        }
+        fut recover {
+          case ex: Exception =>
+            error(s"Failed to store picture " + tii, ex)
+            None
+        }
       }
     } map { savedTmpImgsOrNull =>
-      val newSavedIds = savedTmpImgsOrNull
-        .filter { _ != null }
-        .map { _.toMImgInfo }
-      // TODO Нужно восстанавливать исходный порядок! Сейчас пока плевать на это, но надо это как-то исправлять.
-      // Как вариант: можно уйти от порядка и от работы со списками картинок. А работать только с максимум одной картинкой через Option[] вместо Seq[].
-      newSavedIds ++ needOrigImgs
+      // Строим результат сохранения новых tmp-картинок.
+      savedTmpImgsOrNull
+        .flatten // Разворачиваем list'ы сохранённых tmp-картинок в разных размерах
+        .flatten // Развернуть Option'ы, которые подавляют ошибки сохранения.
+        .map { case (savedImg, i) => savedImg.toMImgInfo -> i}
+        .toList
     }
+    // Какие картинки надо оставить с прошлого раза и отфорвардить в результаты
+    val needOrigImgs = needImgs
+      .iterator
+      .zipWithIndex
+      .filter { case (ii4s, i) => ii4s.iik.isInstanceOf[OrigImgIdKey] }
+      // Из старых картинок выбрать подходящую уже сохранённую, если она там есть.
+      .flatMap { case (ti4s, i) => oldImgs.find { oii => ti4s.iik == oii }.map { _ -> i } }
+      .toList
+    // Восстановить исходный порядок needImgs на основе исходных индексов, собрать финальный результат метода.
+    val resultFut = savedTmpImgsFut map { newSavedImgs =>
+      (newSavedImgs ++ needOrigImgs)
+        .sortBy(_._2)
+        .map(_._1)
+    }
+    // Если сохранение удалось, то надо запустить в фоне удаление старых картинок.
+    resultFut onSuccess { case result =>
+      val delOldImgs = oldImgsSet -- needOrigImgs.map(_._1)
+      Future.traverse(delOldImgs)(eraseOiik)
+    }
+    // Вернуть результат.
+    resultFut
+  }
+
+
+  private def eraseOiik(oiik: MImgInfoT): Future[_] = {
+    val fut = MPict.deleteFully(oiik.data.rowKey)
+    fut onComplete {
+      case Success(_)  => trace("Old img deleted: " + oiik)
+      case Failure(ex) => error("Failed to delete old img " + oiik, ex)
+    }
+    fut
   }
 
   /**
@@ -652,12 +680,12 @@ object OrigImgIdKey {
   private def getOrigImageWH(rowKey: String): Future[Option[MImgInfoMeta]] = {
     MUserImgMetadata.getById(rowKey)
       .map { imetaOpt =>
-        imetaOpt.flatMap { imeta =>
-          imeta.md.get(IMETA_WIDTH).flatMap { widthStr =>
-            imeta.md.get(IMETA_HEIGHT).map { heightStr =>
-              MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-            }
-          }
+        for {
+          imeta     <- imetaOpt
+          widthStr  <- imeta.md.get(IMETA_WIDTH)
+          heightStr <- imeta.md.get(IMETA_HEIGHT)
+        } yield {
+          MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
         }
       }
       // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.

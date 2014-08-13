@@ -1,11 +1,14 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
-@import util.blocks.BlocksConf.Block20
+@import util.blocks.BlocksConf.{Block20 => bc}
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl20 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
-  <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block20.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
+  @bgImgTpl(mad, bc,
+    cssClass = Some("bg"),
+    dfltImg = Some("images/market/blocks/tpl20-bg.jpg")
+  )
 
   @mad.offers.map { offer =>
 
@@ -16,7 +19,7 @@
             @Html(text1.value)
           </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block20.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
       }
 
       @offer.text2.map { text2 =>
@@ -25,9 +28,9 @@
             @Html(text2.value)
           </div>
         </div>
-        @_blockStyleTpl( mad.id, text2, Block20.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
+        @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
       }
     </div>
   }
 
-</div>
+}

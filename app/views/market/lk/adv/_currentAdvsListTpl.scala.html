@@ -10,37 +10,37 @@
 @_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
   <div class="advs-statuses__status advs-statuses__@statusClass">
     <div class="advs-statuses__status-icon advs-statuses__status-icon_@statusClass"></div>
-    @Messages("amt.of.type." + node.adn.memberType) <strong>@node.meta.name / @node.meta.town</strong>
+    @Messages("amt.of.type." + node.adn.shownTypeId) <strong>@node.meta.name / @node.meta.town</strong>
     @content
   </div>
 }
 
 <div class="advs-statuses">
 
-@advs.map { adv =>
-  @adv2adn.get(adv.id.get).map { node =>
+  @advs.map { adv =>
+    @adv2adn.get(adv.id.get).map { node =>
 
-    @adv match {
-      case advOk: MAdvOk => {
-        @_single_status( "approved", node ) {
-          @if(advOk.isOnline){<a href="@routes.Market.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a>}.
-          @_prettyDate(advOk.dateStatus)
+      @adv match {
+        case advOk: MAdvOk => {
+          @_single_status( "approved", node ) {
+            @if(advOk.isOnline){ <a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a> }
+            @_prettyDate(advOk.dateStatus)
+          }
+          @* dateStatus - одобрение, dateStart - начало размещения. *@
         }
-        @* dateStatus - одобрение, dateStart - начало размещения. *@
-      }
-      case advReq: MAdvReq => {
-        @_single_status( "pending", node ) {
-          рассматривает размещение.
+        case advReq: MAdvReq => {
+          @_single_status( "pending", node ) {
+            рассматривает размещение.
+          }
+        }
+        case advRefused: MAdvRefuse => {
+          @_single_status( "declined", node ) {
+            отменил размещение. @advRefused.reason
+          }
         }
       }
-      case advRefused: MAdvRefuse => {
-        @_single_status( "declined", node ) {
-          отменил размещение. @advRefused.reason
-        }
-      }
+
     }
 
   }
-
-}
 </div>

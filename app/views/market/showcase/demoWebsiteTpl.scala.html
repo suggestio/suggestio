@@ -1,22 +1,24 @@
-@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
+@(args: SMDemoSiteArgs)(implicit ctx: util.Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
 
 <html>
 <head>
-  <title>Sio.Market Demo Website</title>
+  <title>@args.title | Sio.Market</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui">
 
+  <link type="text/css" rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/market/showcase.css")"/>
   <style type="text/css">
-
     html,
     body
     {
     width: 100%;
     height: 100%;
     }
-
     html,
     body,
     iframe {
@@ -34,18 +36,15 @@
 
 </head>
 
-<body style="background-color: #@adnNode.meta.color">
-  <div class="sm-wifi-info" style="display: none" id="smWifiInfo">
-    <div class="sm-wifi-info__data">
-      Вы можете продолжать пользоваться интернетом. Для быстрого доступа к SioMarket — нажмите на логотип в левом верхнем углу.
-      <a href="http://ya.ru/" target="_blank"><div class="sm-wifi-info__logo"></div></a>
-    </div>
-  </div>
+<body style="background-color: #@args.bgColor">
 
-  <script type="text/javascript">
-    @market.lk.adn._node._installScriptTpl( adnNode , withIndexCall)
-  </script>
-  <!-- a.gen = @ctx.PRNG.nextLong   a.size=20   a.offset=0 (20, 40, 60, 80, ...)  -->
+<script type="text/javascript">
+   @market.lk.adn._node._installScriptTpl( args.adnId );
+   window.siomart_index = '@args.showcaseCall';
+   window.with_geo = @args.withGeo;
+</script>
+
+<!-- a.gen = @ctx.PRNG.nextLong   a.size=20   a.offset=0 (20, 40, 60, 80, ...)  -->
 </body>
 
 </html>

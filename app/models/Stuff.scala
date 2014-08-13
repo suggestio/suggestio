@@ -3,6 +3,7 @@ package models
 import java.util.Currency
 import play.api.i18n.Messages
 import play.api.data.Form
+import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
 import scala.collection.JavaConversions._
 /**
@@ -119,3 +120,30 @@ case class MAdvPricing(
   prices: Iterable[(Currency, Float)],
   hasEnoughtMoney: Boolean
 )
+
+
+/** Экземпляр запроса помощи через обратную связь в ЛК. */
+case class MLkSupportRequest(
+  name        : Option[String],
+  replyEmail  : String,
+  msg         : String,
+  phoneOpt    : Option[String] = None
+)
+
+
+/**
+ * Набор аргументов для передачи в demoWebSiteTpl.
+ * @param bgColor Цвет оформления.
+ * @param showcaseCall Адрес для showcase
+ * @param title Заголовок.
+ * @param adnId id узла, в рамках которого орудуем.
+ */
+case class SMDemoSiteArgs(
+  bgColor: String,
+  showcaseCall: Call,
+  title: String,
+  adnId: Option[String]
+) {
+  // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
+  def withGeo = adnId.isEmpty
+}

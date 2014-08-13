@@ -16,8 +16,10 @@ import AdShowLevels.sls2strings
  * Description: Модель для хранения записей об отказах в размещении рекламы. Т.е. некий антипод [[MAdvOk]].
  */
 
-object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
+object MAdvRefuse extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvRefuse
 
   override val TABLE_NAME = "adv_refuse"
 
@@ -81,8 +83,8 @@ case class MAdvRefuse(
   showLevels    : Set[AdShowLevel],
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
-  id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvRefuse] with CurrencyCode with SqlModelDelete with MAdvI {
+  id            : Option[Int] = None
+) extends SqlModelSave[MAdvRefuse] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REFUSED
   override def hasId: Boolean = id.isDefined

@@ -1,9 +1,9 @@
-@(call: Call, btnClass: Option[String] = None)(implicit ctx: util.Context)
+@(call: Call, btnClass: Option[String] = None, formClass: String = "")(implicit ctx: util.Context)
 
 @* Форма-кнопка удаления чего-либо. *@
 @import helper._
 @import ctx._
 
-@form(call) {
+@form(call, 'class -> formClass) {
   <a class="siom-ac-btn __color-4 js-submit-btn @btnClass">@Messages("Delete")</a>
 }

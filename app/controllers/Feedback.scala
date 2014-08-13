@@ -23,6 +23,10 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
 
   import LOGGER._
 
+  val FEEDBACK_RCVR_EMAILS = configuration.getStringSeq("feedback.send.to.emails") getOrElse Seq("support@suggest.io")
+
+  val REPLY_TO_HDR = "Reply-To"
+
   /** Форма написания сообщения. */
   val feedbackSubmitFormM = Form(tuple(
     "email"   -> email,
@@ -69,10 +73,9 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
           case None     => "посетителя сайта"
         }
         mail.setSubject("Сообщение от " + subjectEnd)
-        val rcvrs = configuration.getStringSeq("feedback.html.send.to.emails") getOrElse Seq("support@suggest.io")
         mail.setFrom(email1)
-        mail.addHeader("Reply-To", email1)
-        mail.setRecipient(rcvrs : _*)
+        mail.addHeader(REPLY_TO_HDR, email1)
+        mail.setRecipient(FEEDBACK_RCVR_EMAILS : _*)
         val ctx = getContext2
         mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
         // Отредиректить юзера куда-нибудь, стерев капчу из кукисов.

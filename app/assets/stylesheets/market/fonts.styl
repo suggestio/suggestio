@@ -8,10 +8,6 @@ font-face( name )
     font-weight: normal
     font-style: normal
 
-ft(v)
-  font-size: v
-  line-height: v
-
 font-face( 'favoritlightcondcregular' )
 font-face( 'favoritcondcregular' )
 font-face( 'heliosthin' )
@@ -33,19 +29,27 @@ font-face( 'bodonconc-webfont' )
 font-face( 'confic-webfont' )
 font-face( 'PT_Sans-Narrow' )
 font-face( 'aa_higherup-webfont' )
+font-face( 'opensans-regular-webfont' )
+font-face( 'opensans-light' )
+font-face( 'opensans-bold' )
 
 .ft-XS
-  font-size: 12px
-  line-height: 12px
+  ft(12px)
 
 .ft-S
-  font-size: 14px
-  line-height: 14px
+  ft(14px)
+
+.ft-XM
+  ft(16px)
 
 .ft-M
-  font-size: 18px
-  line-height: 18px
+  ft(18px)
 
-.font-XL
-  font-size: 36px
-  line-height: 36px
+.ft-L
+  ft(24px)
+
+.ft-XL
+  ft(36px)
+
+strong
+  font-weight: bold

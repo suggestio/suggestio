@@ -2,6 +2,7 @@ package controllers
 
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.twirl.api.HtmlFormat
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
@@ -11,10 +12,9 @@ import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
-import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
-import util.billing.MmpDailyBilling, MmpDailyBilling.assertAdvsReqRowsDeleted
+import util.billing.MmpDailyBilling
 import java.util.Currency
 import play.api.data._, Forms._
 
@@ -494,16 +494,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
-        val advRefused = MAdvRefuse(request.advReq, reason, DateTime.now)
-        DB.withTransaction { implicit c =>
-          val rowsDeleted = request.advReq.delete
-          assertAdvsReqRowsDeleted(rowsDeleted, 1, advReqId)
-          val advr = advRefused.save
-          // Разблокировать средства на счёте.
-          MBillBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
-          // Вернуть сохранённый refused
-          advr
-        }
+        MmpDailyBilling.refuseAdvReq(request.advReq, reason)
         RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
           .flashing("success" -> "Размещение рекламы отменено.")
       }

@@ -3,6 +3,8 @@
 @* Форма создания/редактирования тарифа. *@
 @import helper._
 @import ctx._
+@import util.FC.tdFc
+
 
 @form(submitCall) {
 
@@ -10,25 +12,36 @@
     <p><b>Серьёзная проблема</b>: @Messages(ge.message, ge.args : _*)</p>
   }
 
-  @inputText(tf("name"), '_label -> "Название")
-  <br/>
+  <table class="input-w __size-L">
+    @inputText(tf("name"), '_label -> "Название")
+  </table>
 
-  @checkbox(tf("enabled"), '_label -> "Активен?")
-  <br/>
+  <table class="input-w __size-L">
+    @checkbox(tf("enabled"), '_label -> "Активен?", '_class -> "sys-checkbox")
+  </table>
 
   @* Дата первого списания. *@
-  @inputText(tf("dateFirst"), '_label -> "Дата первого списания")
+  <table class="input-w __size-L">
+    @inputText(tf("dateFirst"), '_label -> "Дата первого списания")
+  </table>
 
 
-  @inputText(tf("tinterval"), '_label -> "Интервал списания")
+  <table class="input-w __size-L">
+    @inputText(tf("tinterval"), '_label -> "Интервал списания")
+  </table>
   Интервал задаётся латиницей согласно ISO8601:
   <br/><b>P1M</b> - 1 месяц, <b>P30D</b> - 30 дней, <b>P1M1D</b> - 1 месяц 1 день.
   <br/><br/>
 
   @* Дебет списания (цена периода). *@
-  @inputText(tf("price"), '_label -> "Цена периода (дебет)")
+  <table class="input-w __size-L">
+    @inputText(tf("price"), '_label -> "Цена периода (дебет)")
+  </table>
   Например: "100" или "100 руб".
   <br/>
 
-  <input type="submit" value="@btnText">
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right">@btnText</a>
+  </div>
+
 }

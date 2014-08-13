@@ -2,8 +2,9 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
-import org.joda.time.DateTime
+import org.joda.time.{ReadableInstant, ReadablePartial, DateTime}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import play.twirl.api.{HtmlFormat, Html}
 import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
@@ -18,6 +19,8 @@ object TplDataFormatUtil {
   // Надо укорачивать валюту до минимума
   private val CURRENCY_FIXER_RUB = "руб\\.".r
   private val CURRENCY_FIXER_USD = "USD".r
+
+  val ELLIPSIS = "…"
 
   /** Сконвертить "ffffff" в List(255,255,255). */
   final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
@@ -46,12 +49,17 @@ object TplDataFormatUtil {
     val currencySymbol = formatCurrency(currency)
     dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
-    if (price <= 9999)
-      currFmt.setGroupingUsed(false)
+    currFmt.setGroupingUsed(price >= 10000)
     val formatted = currFmt.format(price)
     pricePostprocess(formatted)
   }
 
+  /** Рендер целого числа. */
+  def formatInt(number: Int)(implicit ctx: Context): String = {
+    val fmt = NumberFormat.getNumberInstance
+    fmt.setGroupingUsed(number >= 10000)
+    fmt.format(number)
+  }
 
   // Пока локали не поддерживаются, используется один форматтер на всех.
   def formatPriceDigits(price: Float)(implicit ctx: Context): String = {
@@ -106,11 +114,45 @@ object TplDataFormatUtil {
   }
 
 
+  /** Лимитирование длины строки слева. Если строка длинее указанного порога,
+    * то она будет урезана и в конце появится многоточие. */
+  def strLimitLen(str: String, maxLen: Int): String = {
+    if (str.length <= maxLen) {
+      str
+    } else {
+      str.substring(0, maxLen) + ELLIPSIS
+    }
+  }
 
-  private val numericDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
+  def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
+  def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
 
-  def numericDate(dt: DateTime) = numericDateFormat.print(dt)
+  private val numericDtFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  // TODO Нужно прикрутить поддержку timezone, используя context
+  def numericDt(dt: ReadableInstant)(implicit ctx: Context) = numericDtFormat.print(dt)
 
+  private val numericTimeFormat = DateTimeFormat.forPattern("HH:mm:ss")
+  def numericTime(dt: ReadableInstant)(implicit ctx: Context) = numericTimeFormat.print(dt)
+
+
+  val firstWordRe = "(?iU)^(\\w+)\\s?(.*)$".r
+
+  /**
+   * Выделить первое слово с помощью тега. Весь текст проэкранировать.
+   * @param str Исходная строка.
+   * @param tag Тег. Например "strong".
+   * @return Html-строка.
+   */
+  def highlightFirstWordEsc(str: String, start: String, end: String): Html = {
+    val htmlStr = str match {
+      case firstWordRe(head, tail) =>
+        s"$start${HtmlFormat.escape(head)}$end ${HtmlFormat.escape(tail)}"
+      case _ =>
+        str
+    }
+    Html(htmlStr)
+  }
 }
 
 
@@ -122,6 +164,8 @@ object FC {
   implicit val divFc = FieldConstructor(divFcTpl.f)
 
   implicit val checkboxFc = FieldConstructor(checkboxFcTpl.f)
+
+  implicit val radialFc = FieldConstructor(radialFcTpl.f)
 
 }
 

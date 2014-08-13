@@ -7,6 +7,7 @@ import io.suggest.util.JacksonWrapper
 import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream, ByteArrayInputStream}
 import java.sql.Connection
 import anorm.Pk
+import play.api.libs.json.JsObject
 
 /**
  * Suggest.io

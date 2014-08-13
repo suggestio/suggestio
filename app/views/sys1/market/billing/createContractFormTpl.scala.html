@@ -4,8 +4,8 @@
 @import ctx._
 
 @billingBase("Новый контракт") {
-  <h1>Создание нового контракта</h1>
-  <p>Сторона контракта: @_contractSideTpl(adnNode, supOpt)</p>
+  <div class="sys_t">Создание нового контракта</div>
+  <p class="paragraph __size-M">Сторона контракта: <strong>@_contractSideTpl(adnNode, supOpt)</strong></p>
 
   @_contractFormTpl(
     adnId = adnNode.id.get,

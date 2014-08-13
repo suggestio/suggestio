@@ -22,6 +22,10 @@ Section.number=Номер секции
 Close=Закрыть
 Your=Ваш
 Preview=Предпросмотр
+Install=Установить
+Uninstall=Деинсталлировать
+Town=Город
+Phone=Телефон
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -56,20 +60,27 @@ amt.of.type.s=Магазин
 amt.of.type.m=Торговый центр
 amt.of.type.r=Ресторан
 amt.of.type.R=Супервайзер сети ресторанов
+amt.of.type.a=Транспорт
+amt.of.type.b=Станция метро
 
 amts.of.type.s=Магазины
 amts.of.type.m=Торговые центры
 amts.of.type.r=Рестораны
 amts.of.type.R=Сети ресторанов
-
-Input.text.from.picture=Введите текст, изображенный на картинке
-error.captcha=Неверный код проверки.
+amts.of.type.a=Транспорт
+amts.of.type.b=Станции метро
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ
 editing.of.amt.profile.r=Редактирование профайла ресторана
 editing.of.amt.profile.R=Редактирование профайла супервайзера
+editing.of.amt.profile.a=Редактирование профайла транспортного узла
+editing.of.amt.profile.b=Редактирование профайла станции метро
 
+
+
+Input.text.from.picture=Введите текст, изображенный на картинке
+error.captcha=Неверный код проверки.
 
 blocks.field.price=Цена
 blocks.field.oldPrice=Старая цена
@@ -127,6 +138,7 @@ nth.floor={0}-й этаж
 
 username.unknown=Кто здесь?
 
+error.gallery.too.large=Слишком много картинок в галлерее.
 error.no.money=Недостаточно средств
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты
@@ -205,6 +217,7 @@ stat_year=За последний год пройдено страниц
 email_us_at=Напишите нам на адрес
 or_fill_the_form=или заполните форму ниже
 
+your_name=Ваше имя
 your_email=Ваш email
 your_message=Ваше сообщение
 about_step_one=Мы — Suggest.io. Мы делаем лучший пользовательский поиск.

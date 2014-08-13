@@ -2,14 +2,17 @@
 
 @import util.TplDataFormatUtil._
 @import common._
-@import util.blocks.BlocksConf.Block8
+@import util.blocks.BlocksConf.{Block8 => bc}
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl8 sm-block@mad.id" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   <div class="left-border abs"></div>
   <div class="right-border abs"></div>
 
-  <img class="bg abs" src="@ctx.myAudienceUrl@mad.imgs.get(Block8.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl6-bg.jpg"))" />
+  @bgImgTpl(mad, bc,
+    dfltImg = Some("images/market/blocks/tpl6-bg.jpg"),
+    cssClass = Some("bg abs")
+  )
 
 
   <div class="info">
@@ -20,7 +23,7 @@
           @Html(text1.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block8.titleBf, "title", left = 18, top = 160  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 160  )
       }
       @offer.price.map { price =>
         <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
@@ -28,10 +31,10 @@
           @formatPrice(price.value, price.currency)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, price, Block8.priceBf, "price", left = 18, top = 210  )
+        @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 18, top = 210  )
       }
     }
 
   </div>
 
-</div>
+}

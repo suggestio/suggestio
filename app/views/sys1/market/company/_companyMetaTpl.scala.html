@@ -1,0 +1,32 @@
+@(mcm: MCompanyMeta)(implicit ctx: Context)
+
+@* Рендер содержимого MCompanyMeta в виде таблица ключ-значение. *@
+
+@import ctx._
+@import sys1.stuff.proptable._
+@import datetime._
+
+
+@_ptableTpl() {
+
+  @_ptableRowTpl(Messages("Name") + ":") {
+    @mcm.name
+  }
+
+  @_ptableRowTpl(Messages("Created") + ":") {
+    @_prettyDate(mcm.dateCreated, withSpan = true)
+  }
+
+  @_ptableRowTpl("Офисные телефоны") {
+    @if(mcm.officePhones.isEmpty) {
+      Нет.
+    } else {
+      @* Пустой строки в конце можно не избегать, т.к. список обычно из одного телефона, а ячейка слева имеет две строки. *@
+      @mcm.officePhones.map { oph =>
+        @oph
+        <br/>
+      }
+    }
+  }
+
+}

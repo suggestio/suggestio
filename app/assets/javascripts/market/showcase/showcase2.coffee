@@ -1,52 +1,507 @@
+cbca_grid =
+  cell_size : 140
+  cell_padding : 20
+  top_offset : 20
+  bottom_offset : 20
+  max_allowed_cell_width : 4
+
+  blocks : []
+  spacers : []
+
+  set_window_size : () ->
+    ww = wh = 0
+    if typeof window.innerWidth == 'number'
+      ww = window.innerWidth
+      wh = window.innerHeight
+    else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
+      ww = document.documentElement.clientWidth
+      wh = document.documentElement.clientHeight
+    else if document.body && ( document.body.clientWidth || document.body.clientHeight )
+      ww = document.body.clientWidthb
+      wh = document.body.clientHeight
+
+    this.ww = ww
+    this.wh = wh
+
+  set_container_size : () ->
+    this.set_window_size()
+
+    no_of_cells = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+
+    if no_of_cells < 2
+      no_of_cells = 2
+
+    if no_of_cells > 8
+      no_of_cells = 8
+
+    if no_of_cells == 3
+      no_of_cells = 3
+
+    if no_of_cells == 5
+      no_of_cells = 4
+
+    if no_of_cells == 7
+      no_of_cells = 6
+
+    cw = no_of_cells * ( this.cell_size + this.cell_padding) - this.cell_padding
+
+    this.max_allowed_cell_width = no_of_cells
+
+    if typeof this.layout_dom != 'undefined'
+      this.layout_dom.style.width = cw + 'px'
+      this.layout_dom.style.height = cbca_grid.wh + 'px'
+      this.layout_dom.style.opacity = 1
+
+  ##############
+  ## Fetch block
+  ##############
+  fetch_block : (block_max_w, tmp_block, i) ->
+
+    # если элементов в grid.blocks нет – возвращаем null
+    if this.blocks.length == 0
+      return null
+
+    if typeof( tmp_block ) == "undefined"
+      tmp_block = this.blocks
+      i = 0
+
+    b = tmp_block[i]
+
+    if typeof b == "undefined"
+      return null
+
+    w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+    w_cell_width_opened = Math.floor ( b.opened_width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+
+    if w_cell_width <= block_max_w
+      if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
+        tmp_block.splice i,1
+
+        _elt = siomart.utils.ge 'elt' + b.id
+
+        _elt.style.opacity = 0
+
+        for p in [vendor_prefix.css + 'transform', 'transform']
+          _elt.style[p] = 'translate3d(-1000px, 0px,0)'
+
+        return this.fetch_block(block_max_w, tmp_block, i+1 )
+      else
+        tmp_block.splice(i,1)
+        this.blocks = tmp_block
+
+        return b
+    else
+      if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
+
+        _elt = siomart.utils.ge 'elt' + b.id
+
+        _elt.style.opacity = 0
+        for p in [vendor_prefix.css + 'transform', 'transform']
+          _elt.style[p] = 'translate3d(-1000px, 0px,0)'
+        tmp_block.splice(i,1)
+
+      return this.fetch_block(block_max_w, tmp_block, i+1 )
+
+  fetch_spacer : (block_max_w, tmp_block, i) ->
+
+    if this.spacers.length == 0
+      return null
+
+    if typeof( tmp_spacer ) == "undefined"
+      tmp_spacers = this.spacers
+      i = 0
+
+    b = tmp_spacers[i]
+    tmp_spacers.splice(i,1)
+    this.spacers = tmp_spacers
+    b.block.style.display = 'block'
+    return b
+
+  ######################
+  ## Get Max block width
+  ######################
+  get_max_block_width : ( columns_used_space, cline, cur_column, columns ) ->
+
+    m_w = 1
+
+    for i in [cur_column..columns]
+
+      if typeof( columns_used_space[i] ) != 'undefined'
+        if columns_used_space[i].used_height == cline
+          m_w++
+        else
+          m_w--
+          return m_w
+      else
+        m_w--
+        return m_w
+
+  get_max_block_width : ( columns_used_space, cline, cur_column, columns ) ->
+    m_w = 1
+
+    for i in [cur_column..columns]
+
+      if typeof( columns_used_space[i] ) != 'undefined'
+        if columns_used_space[i].used_height == cline
+          m_w++
+        else
+          m_w--
+          return m_w
+      else
+        m_w--
+        return m_w
+
+  init_single_block : ( block_id ) ->
+
+    _elt = siomart.utils.ge 'elt' + block_id
+
+    siomart.utils.addClass _elt, 'animated-block'
+    _elt.style.opacity = 1
+
+  deactivate_block : ( block_id, target_opacity ) ->
+
+    block = siomart.utils.ge block_id
+
+    block.style.opacity = target_opacity
+
+    if siomart.utils.is_array block.className.match /active-block/g
+      siomart.utils.removeClass block, 'active-block'
+      block_js_class = block.getAttribute 'data-js-class'
+
+      bs = siomart.utils.ge_class block, '.block-source'
+      cb2 = () ->
+        bs.style['visibility'] = 'hidden'
+        siomart.utils.removeClass block, 'no-bg'
+        siomart.utils.removeClass block, 'hover'
+
+      cbca['block_desource' + block_id] = setTimeout cb2, 300
+
+      if typeof block_js_class != 'undefined'
+        close_action = window[block_js_class].close_action
+
+        if typeof close_action != 'undefined'
+          close_action()
+
+  is_only_spacers : () ->
+    for b in this.blocks
+      if b.class != 'sm-b-spacer'
+        return false
+
+    return true
+
+  max_used_height : ( columns_used_space ) ->
+    max_h = 0
+
+    for c, v of columns_used_space
+      if v.used_height > max_h
+        max_h = v.used_height
+
+    return max_h
+
+  ################################
+  ## Найти новые блоки на странице
+  ################################
+  load_blocks : ( is_add ) ->
+
+    is_add = is_add || false
+
+    cbca_grid.blocks = []
+    cbca_grid.spacers = []
+    cbca_grid.m_spacers = []
+
+    if is_add == true
+      i = cbca_grid.blocks_index
+    else
+      cbca_grid.all_blocks = []
+      i = 0
+
+    console.log 'cbca_grid.all_blocks'
+    console.log cbca_grid.all_blocks
+
+    ## TODO : make selector configurable
+
+    for elt in siomart.utils.ge_class document, 'sm-block'
+
+      if elt.id == ''
+        _this = elt
+
+        _this.setAttribute 'id', 'elt' + i
+
+        height = parseInt _this.getAttribute 'data-height'
+        width = parseInt _this.getAttribute 'data-width'
+
+        opened_height = parseInt _this.getAttribute 'data-opened-height'
+        opened_width = parseInt _this.getAttribute 'data-opened-width'
+
+        _class = _this.className
+        _search_string = _this.getAttribute 'data-search-string'
+        _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
+
+        block =
+          'id' : i
+          'width' : width
+          'height' : height
+          'opened_width' : opened_width
+          'opened_height' : opened_height
+          'class' : _class
+          'block' : _this
+          '_is_moveable' : _is_moveable
+
+        i++
+        cbca_grid.blocks.push block
+        cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
+        cbca_grid.all_blocks.push block
+
+    ## Загрузить спейсеры
+    #for i in siomart.utils.ge_class document, 'sm-b-spacer'
+    for k in [1..30]
+
+      _spacer_attributes =
+        'class' : 'sm-b-spacer sm-b-spacer-' + k
+        'data-width' : 140
+        'data-height' : 140
+
+      _spacer = siomart.utils.ce 'div', _spacer_attributes
+      _this = _spacer
+
+      siomart.utils.ge('sioMartIndexGrid').appendChild _spacer
+
+      _this.setAttribute 'id', 'elt' + i
+
+      height = 140
+      width = 140
+
+      opened_height = 140
+      opened_width = 140
+
+      _class = _this.className
+      _search_string = _this.getAttribute 'data-search-string'
+      _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
+
+      block =
+        'id' : i
+        'width' : width
+        'height' : height
+        'opened_width' : opened_width
+        'opened_height' : opened_height
+        'class' : _class
+        'block' : _this
+        '_is_moveable' : _is_moveable
+
+      i++
+      cbca_grid.spacers.push block
+      cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
+
+    cbca_grid.blocks_index = i
+
+  init : ( is_add ) ->
+
+    this.blocks_container = document.getElementById 'sioMartIndexGrid'
+    this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
+
+    this.set_container_size()
+    this.load_blocks( is_add )
+
+    this.build( is_add )
+
+  resize : () ->
+
+    this.set_container_size()
+
+    if typeof cbca_grid.blocks == 'undefined'
+      return false
+
+    cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+    cbca_grid.blocks = cbca_grid.m_blocks
+
+    this.build()
+
+  build : ( is_add ) ->
+
+    is_add = is_add || false
+
+    for elt in siomart.utils.ge_class document, 'blocks-container'
+      elt.style.display = 'block'
+
+    if is_add == false
+      for elt in siomart.utils.ge_class document, 'sm-b-spacer'
+        elt.style.display = 'none'
+
+    blocks_length = cbca_grid.blocks.length
+
+    # setting up left and top
+    left_pointer = left_pointer_base = 0
+    top_pointer = 0
+
+    # Определяем ширину окна
+    window_width = this.ww
+
+    # Определеяем сколько колонок влезет в экран колонок
+    columns = Math.floor( ( window_width - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+
+    if columns < 2
+      columns = 2
+
+    if columns > 8
+      columns = 8
+
+    if columns == 3
+      columns = 3
+
+    if columns == 5
+      columns = 4
+
+    if columns == 7
+      columns = 6
+
+    # Ставим указатели строки и колонки
+    cline = 0
+    pline = 0
+    cur_column = 0
+
+    if is_add == false
+      # Генерим объект с инфой об использованном месте
+      columns_used_space = {}
+      for c in [0..columns-1]
+        columns_used_space[c] =
+          used_height : 0
+    else
+      columns_used_space = cbca_grid.columns_used_space
+
+    is_break = false
+
+    ## Генерим поле
+    for i in [0..1000]
+
+      pline = cline
+
+      if cur_column >= Math.floor columns
+        cur_column = 0
+        cline++
+        left_pointer = left_pointer_base
+
+      top = top_pointer + cline * ( this.cell_size + this.cell_padding ) + this.top_offset
+      left = left_pointer
+
+      if this.is_only_spacers() == true
+        is_break = true
+        break
+
+      if cline > pline && this.is_only_spacers() == true && cline == this.max_used_height columns_used_space
+        is_break = true
+        break
+
+      if is_break == false
+        if columns_used_space[cur_column].used_height == cline
+
+          # есть место хотя бы для одного блока с минимальной шириной
+          # высяним блок с какой шириной может влезть
+          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
+
+          b = this.fetch_block block_max_w
+
+          if b == null
+            if this.blocks.length > 0
+              b = this.fetch_spacer block_max_w
+            else
+              break
+
+          w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+          w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+
+          for ci in [cur_column..cur_column+w_cell_width-1]
+            if typeof( columns_used_space[cur_column] ) != 'undefined'
+              columns_used_space[cur_column].used_height += w_cell_height
+              cur_column++
+
+          id = b.id
+
+          _pelt = document.getElementById('elt' + id)
+
+          ## temp
+          _pelt.style.opacity = 1
+          _pelt.style.display = 'block'
+
+          if _pelt != null
+
+            for p in [vendor_prefix.css + 'transform', 'transform']
+              style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
+              _pelt.style[p] = style_string
+
+          left_pointer += b.width + this.cell_padding
+          pline = cline
+
+        else
+          cur_column++
+          left_pointer += this.cell_size + this.cell_padding
+
+    for b in this.blocks
+      bid = b.id
+      b_elt = siomart.utils.ge('elt' + bid )
+
+      if b_elt != null
+        b_elt.style.opacity = 0
+
+    cbca_grid.columns_used_space = columns_used_space
+
+    ## Вычислим максимальную высоту внутри колонки
+    max_h = this.max_used_height columns_used_space
+
+    real_h = ( this.cell_size + this.cell_padding) * max_h + this.bottom_offset
+
+    this.blocks_container.style.height = parseInt( real_h + this.top_offset ) + 'px'
+
+window.cbca_grid = cbca_grid
+
 ###############################
 ## Showcase с поддержкой blocks
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.css?v=35'
+
+    whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
+    ads_per_load : 30
+    producer_ads_per_load : 5
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
-  ## Загрузить js- и css- засимости
-  load_deps : () ->
 
-    ## js : cbca_grid
-    grid_js_attrs =
-      type : 'text/javascript'
-      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.js'
-    gid_js = this.utils.ce "script", grid_js_attrs
+  getDeviceScale : () ->
+    deviceWidth = landscape = Math.abs(window.orientation) == 90
 
-    ## css : showcase.css
-    stylesheet_attrs =
-      type : 'text/css'
-      rel : 'stylesheet'
-      href : siomart.config.host + this.config.css
-
-    stylesheet = this.utils.ce "link", stylesheet_attrs
-
-    ## Созданные элементы добавляем в head
-    _head = this.utils.ge_tag("head")[0]
-
-    _head.appendChild gid_js
-    _head.appendChild stylesheet
+    if landscape
+      deviceWidth = Math.max(480, screen.height)
+    else
+      deviceWidth = screen.width
+    return window.innerWidth / deviceWidth
 
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
+      console.log 'resize'
+      siomart.welcome_ad.fit siomart.welcome_ad.img_dom
       window.scrollTo(0,0)
       if typeof siomart.window_resize_timer != 'undefined'
         clearTimeout siomart.window_resize_timer
 
       grid_resize = () ->
+
+        document.getElementById('sioMartIndexOffers').scrollTop = '0';
+
+        cb = () ->
+          siomart.utils.ge('sioMartIndexGrid').style.height = parseInt( siomart.utils.ge('sioMartIndexGrid').style.height) + 10 + 'px'
+
+        setTimeout cb, 70
+
         cbca_grid.resize()
         siomart.set_window_class()
 
-        siomart.node_offers_popup.fit()
-        siomart.node_offers_popup.show_block_by_index siomart.node_offers_popup.active_block_index
+        siomart.focused_ads.fit()
+        siomart.focused_ads.show_block_by_index siomart.focused_ads.active_block_index
 
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
@@ -57,7 +512,7 @@ siomart =
     style_dom : null
 
     init : () ->
-      console.log 'initialized styles'
+
       style_tags = siomart.utils.ge_tag('code')
       css = ''
 
@@ -74,91 +529,6 @@ siomart =
       
       this.style_dom.appendChild(document.createTextNode(css))
 
-  #######################
-  ## Cross Domain Storage
-  #######################
-  storage :
-    origin : ''
-    path : '/xd_server'
-    _iframe : null
-    _iframeReady : false
-    _queue : []
-    _requests : {}
-    _id : 0
-
-    init : () ->
-      _this = this
-
-      _this.origin = siomart.config.host
-
-      if !_this._iframe
-        if window.postMessage && window.JSON && window.sessionStorage
-
-          _iframe_attrs =
-            id : 'smStorageIframe'
-            src : siomart.config.host + '/xd_server?t=' + Math.round(Math.random()*1000000)
-          _this._iframe = siomart.utils.ce 'iframe', _iframe_attrs
-          _this._iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;'
-          siomart.utils.ge_tag('body')[0].appendChild _this._iframe
-
-          siomart.utils.add_single_listener _this._iframe, 'load', () ->
-            _this._iframeLoaded()
-
-          siomart.utils.add_single_listener window, 'message', (event) ->
-            _this._handleMessage event
-
-          _this.is_supported = true
-        else
-          _this.is_supported = false
-
-    setValue : ( key, value ) ->
-      this.requestValue(key, '', value)
-
-    requestValue: (key, callback, value) ->
-      _t = this
-      request =
-        key: key
-        id: ++_t._id
-
-      if value
-        request.value = value
-
-      data =
-        request: request
-        callback: callback
-
-      if _t._iframeReady
-        _t._sendRequest data
-      else
-        _t._queue.push data
-
-      if !_t._iframe
-        _t.init()
-
-    _sendRequest: (data) ->
-      _t = this
-
-      console.log data
-
-      _t._requests[data.request.id] = data
-      _t._iframe.contentWindow.postMessage(JSON.stringify(data.request), _t.origin)
-
-    _iframeLoaded: () ->
-      _t = this
-      _t._iframeReady = true
-
-      if _t._queue.length
-        for _i in _t._queue
-          _t._sendRequest _i
-        _t._queue = []
-
-    _handleMessage: (event) ->
-      _t = this
-      #if (event.origin == _t.origin){
-      data = JSON.parse(event.data)
-      _t._requests[data.id].callback(data.key, data.value)
-      delete _t._requests[data.id]
-
   #########################
   ## History Api navigation
   #########################
@@ -171,13 +541,15 @@ siomart =
       console.log 'navigate to :'
       console.log state
 
-      if typeof siomart.node_offers_popup.requested_ad_id != 'undefined'
-        siomart.close_node_offers_popup()
+      if typeof siomart.focused_ads.requested_ad_id != 'undefined'
+        siomart.close_focused_ads()
         return false
 
       if state == null
+        if siomart.utils.ge('sioMartIndexGrid').innerHTML == ''
+          return false
         siomart.navigation_layer.back()
-        siomart.load_index_ads()
+        siomart.grid_ads.load_index_ads()
         return false
 
       if state.action == 'load_for_shop_id'
@@ -208,6 +580,19 @@ siomart =
   ########
   ## Утиль
   ########
+
+  log : ( message ) ->
+    this.write_log('log', message)
+
+  warn : ( message ) ->
+    this.write_log('warn', message)
+
+  error : ( message ) ->
+    this.write_log('error', message)
+
+  write_log : ( fun, message ) ->
+    console[fun](message)
+
   utils :
     elts_cache : {}
     is_firefox : () ->
@@ -399,7 +784,7 @@ siomart =
 
   events :
 
-    touchmove_lock_delta : 2
+    touchmove_lock_delta : 0
     is_touch_locked : false
 
     document_touchmove : ( event ) ->
@@ -407,15 +792,17 @@ siomart =
       cx = event.touches[0].pageX
       cy = event.touches[0].pageY
 
+      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
+      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
+
+      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta || typeof siomart.events.document_touch_x == 'undefined'
+        siomart.events.is_touch_locked = true
+
       if typeof siomart.events.document_touch_x == 'undefined'
         siomart.events.document_touch_x = cx
         siomart.events.document_touch_y = cy
 
-      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
-      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
 
-      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta
-        siomart.events.is_touch_locked = true
 
     document_touchend : ( event ) ->
 
@@ -438,14 +825,14 @@ siomart =
 
       ## Exc button
       if event.keyCode == 27
-        siomart.close_node_offers_popup()
+        siomart.close_focused_ads()
         siomart.navigation_layer.back()
 
       if event.keyCode == 39
-        siomart.node_offers_popup.next_block()
+        siomart.focused_ads.next_block()
 
       if event.keyCode == 37
-        siomart.node_offers_popup.prev_block()
+        siomart.focused_ads.prev_block()
 
 
   notifications :
@@ -475,7 +862,7 @@ siomart =
   search :
 
     request_delay : 600
-    
+
     perform : ( request ) ->
       url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.request.perform url
@@ -491,22 +878,70 @@ siomart =
       siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
 
   ## Карточки ноды верхнего уровня
-  load_index_ads : () ->
-    url = '/market/ads?a.rcvr=' + siomart.config.mart_id
-    siomart.request.perform url
+  grid_ads :
+    is_fully_loaded : false
+    is_load_more_requested : false
+    c_url : null
+
+    load_more : () ->
+
+      if this.is_load_more_requested == true || this.is_fully_loaded == true
+        return false
+      console.log 'load more'
+      console.log 'loaded : ' + this.loaded
+
+      this.is_load_more_requested = true
+
+      console.log this.c_url
+
+      siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
+
+    load_index_ads : () ->
+      grd_c = siomart.utils.ge('sioMartIndexGrid')
+      url = grd_c.getAttribute 'data-index-offers-action'
+
+      siomart.grid_ads.is_fully_loaded = false
+      siomart.grid_ads.is_load_more_requested = false
+      siomart.utils.ge('gridAdsLoader').style.opacity = 1
+
+      siomart.grid_ads.loaded = 0
+
+      if typeof siomart.grid_ads.multiplier == 'undefined'
+        siomart.grid_ads.multiplier = 100000000000
+      else
+        siomart.grid_ads.multiplier = siomart.grid_ads.multiplier / 10
+
+      siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) )
+
+      console.log siomart.grid_ads.c_url
+
+      siomart.request.perform siomart.grid_ads.c_url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
-  draw_layout : () ->
-    ## Иконка для быстрого вызова маркета
+
+  draw_trigger : () ->
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
-      style : 'background-color: #' + window.siomart_node_color
+      style : 'opacity: 0; background-color: #' + siomart.config.node_color
 
-    logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\' width=80/>' else ''
-    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
+    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper"><img src=\'' + siomart.config.host + siomart.config.logo_src + '\'/>' + '</span>'
+
+    _body = this.utils.ge_tag('body')[0]
+    _body.appendChild sm_trigger
+
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    this.utils.add_single_listener sm_trigger, _event, () ->
+      showcase_url = siomart.config.host + '/market/site/' + siomart.config.mart_id
+
+      newwindow = window.open showcase_url, 'Sio.Market'
+      newwindow.focus()
+
+
+  draw_layout : () ->
+
 
     ## Интерфейс маркета
     sm_layout_attrs =
@@ -516,19 +951,7 @@ siomart =
     sm_layout.style.display = 'none'
 
     _body = this.utils.ge_tag('body')[0]
-    _body.appendChild sm_trigger
     _body.appendChild sm_layout
-
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
-
-  set_meta : () ->
-    _head = this.utils.ge_tag('head')[0]
-    meta_viewport_attrs =
-      name : 'viewport'
-      content : 'width=320,initial-scale=1,user-scalable=no,minimal-ui'
-    meta_viewport = this.utils.ce "meta", meta_viewport_attrs
-    _head.appendChild meta_viewport
 
   ###################################
   ## Осуществить запрос к серверу sio
@@ -570,21 +993,49 @@ siomart =
   receive_response : ( data ) ->
 
     console.log 'receive_response : received data'
+    console.warn data
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
 
-    ## Пришла пустота — уведомить горемыку юзера
+    ## Пришла пустота — уведомить юзера
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       if siomart.utils.ge('smLoading') != null
         siomart.utils.ge('smLoading').style.display = 'none'
       return false
 
+    ## Асинхронное получение доп. данных о ноде. Если этот экшн пришел — значит нужно инициализировать триггер
+    if data.action == "setData"
+      siomart.config.node_color = data.color
+      siomart.config.logo_src = data.logo_src
+
+      ## Нарисовать разметку
+      this.draw_trigger()
+
+      trigger_cb = () ->
+        siomart.utils.ge('sioMartTrigger').style.opacity = '1'
+      setTimeout trigger_cb, 100
+
     ## Инициализация глагне
-    if data.action == 'martIndex'
-      siomart.utils.ge('sioMartRoot').style.display = 'block'
+    if data.action == 'showcaseIndex'
+      siomart.log 'showcaseIndex'
+
       cbca_grid.set_window_size()
+
+      ## Нарисовать разметку
+      this.draw_layout()
+
+      ## Забиндить оконные события
+      this.bind_window_events()
+
+      ## Инициализировать history api
+      ## this.history.init()
+
+      window.scrollTo 0,0
+
+      siomart.utils.ge('sioMartRoot').style.display = 'block'
+
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
@@ -608,51 +1059,81 @@ siomart =
           siomart.utils.ge('smWifiInfo').style.display = 'block'
 
         siomart.init_navigation()
-        cbca_grid.init()
+        siomart.grid_ads.load_index_ads()
         siomart.styles.init()
 
       setTimeout grid_init_cb, grid_init_timoeut
       siomart.set_window_class()
+      this.is_market_loaded = true
+
 
     if data.action == 'producerAds'
 
-      console.log 'producerAds : processing dom'
-      screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
-      console.log 'producerAds : got sioMartNodeOffersRoot'
+      if siomart.focused_ads.load_more_ads_requested == true
+        siomart.focused_ads.render_more data.blocks
+      else
+        screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
+        screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
 
-      screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
-      console.log 'producerAds : processed dom'
-      siomart.styles.init()
-      console.log 'producerAds : processed styles'
+        cb = () ->
+          siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
 
-      cb = () ->
-        siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
+        setTimeout cb, 30
 
-      setTimeout cb, 10
-
-      #siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-
-      siomart.node_offers_popup.init()
-      siomart.navigation_layer.close()
-      console.log 'producerAds : ready'
+        siomart.focused_ads.blocks = data.blocks
+        siomart.focused_ads.init()
+        siomart.navigation_layer.close()
+        console.log 'producerAds : ready'
 
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
 
-      grid_container_dom.innerHTML = data.html
-      document.getElementById('sioMartIndexOffers').scrollTop = '0';
-      cbca_grid.init()
-      siomart.styles.init()
-      siomart.init_shop_links()
+      if typeof data.blocks == 'undefined'
+        siomart.grid_ads.is_fully_loaded = true
+        siomart.utils.ge('smLoading').style.display = 'none'
+        return false
 
-      if data.action == 'searchAds'
-        siomart.navigation_layer.close true
-      else
-        siomart.navigation_layer.close()
+      if data.blocks.length < siomart.config.ads_per_load
+        siomart.utils.ge('gridAdsLoader').style.opacity = 0
 
-    siomart.utils.ge('smLoading').style.display = 'none'
+      html = ''
 
-  close_node_offers_popup : ( event ) ->
+      for index, elt of data.blocks
+        if typeof elt == 'string'
+          html += elt
+
+      if typeof data.blocks != 'undefined'
+        siomart.grid_ads.loaded += data.blocks.length
+
+        if siomart.grid_ads.is_load_more_requested == false
+          grid_container_dom.innerHTML = html
+          document.getElementById('sioMartIndexOffers').scrollTop = '0';
+          cbca_grid.init()
+        else
+          grid_container_dom.innerHTML += html
+          cbca_grid.init(is_add = true)
+
+        this.utils.add_single_listener this.utils.ge('sioMartIndexOffers'), 'scroll', () ->
+          scrollTop = siomart.utils.ge('sioMartIndexOffers').scrollTop
+          height = siomart.utils.ge('sioMartIndexOffers').offsetHeight
+
+          if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
+            siomart.grid_ads.load_more()
+
+        siomart.styles.init()
+        siomart.init_shop_links()
+
+        if data.action == 'searchAds'
+          siomart.navigation_layer.close true
+        else
+          siomart.navigation_layer.close()
+
+      siomart.grid_ads.is_load_more_requested = false
+
+    if siomart.utils.ge('smLoading') != null
+      siomart.utils.ge('smLoading').style.display = 'none'
+
+  close_focused_ads : ( event ) ->
     siomart.utils.removeClass siomart.utils.ge('sioMartNodeOffersRoot'), 'sio-mart__node-offers-root_in'
 
     cb = () ->
@@ -663,28 +1144,39 @@ siomart =
 
     setTimeout cb, 200
 
-    delete siomart.node_offers_popup.requested_ad_id
-    delete siomart.node_offers_popup.active_block_index
+    delete siomart.focused_ads.requested_ad_id
+    delete siomart.focused_ads.active_block_index
 
     if event
       event.preventDefault()
 
-  node_offers_popup :
+  focused_ads :
 
-    nav_pointer_size : 14
+    load_more_ads_requested : false
+
+    load_more_ads : () ->
+      siomart.request.perform this.curl + '&h=' + false + '&a.offset=' + this.blocks.length
+      this.load_more_ads_requested = true
+
     scroll_or_move : undefined
 
     show_block_by_index : ( block_index, direction ) ->
+
+      if typeof this.blocks == 'undefined'
+        return false
+
+      if block_index == parseInt( this.blocks.length - 1 )
+        this.load_more_ads()
 
       if typeof this.sm_blocks == 'undefined'
         return false
 
       if vendor_prefix.js == 'Webkit'
-        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
       else
-        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
-      siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
+      siomart.focused_ads._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
       if block_index == this.active_block_index
         return false
@@ -692,16 +1184,20 @@ siomart =
       this.active_block_index = block_index
 
       if direction == '+'
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 1 ) ).style.visibility = 'visible';
+        ad_c_el = siomart.utils.ge('ad_c_' + ( block_index + 1 ) )
+        if ad_c_el != null
+          ad_c_el.style.visibility = 'visible';
 
         if block_index >= 2
-          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 2 ) ).style.visibility = 'hidden';
+          siomart.utils.ge('ad_c_' + ( block_index - 2 ) ).style.visibility = 'hidden';
 
       if direction == '-'
         if block_index >= 1
-          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 1 ) ).style.visibility = 'visible';
+          siomart.utils.ge('ad_c_' + ( block_index - 1 ) ).style.visibility = 'visible';
 
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 2 ) ).style.visibility = 'hidden';
+        fel = siomart.utils.ge('ad_c_' + ( block_index + 2 ) )
+        if fel != null
+          fel.style.visibility = 'hidden';
 
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
@@ -723,7 +1219,7 @@ siomart =
         prev_index = 0
 
       this.show_block_by_index prev_index, '-'
-
+      
     fit : () ->
 
       if typeof this.sm_blocks == 'undefined'
@@ -748,10 +1244,6 @@ siomart =
 
       this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
 
-    ###############################
-    ## События для обработки свайпа
-    ###############################
-
     touchstart_event : ( event ) ->
       ex = event.touches[0].pageX
       ey = event.touches[0].pageY
@@ -770,26 +1262,26 @@ siomart =
       delta_x = this.tstart_x - ex
       delta_y = this.tstart_y - ey
 
-      if typeof siomart.node_offers_popup.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
+      if typeof siomart.focused_ads.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
         if Math.abs( delta_y ) > Math.abs( delta_x )
-          siomart.node_offers_popup.scroll_or_move = 'scroll'
+          siomart.focused_ads.scroll_or_move = 'scroll'
         else
-          siomart.node_offers_popup.scroll_or_move = 'move'
+          siomart.focused_ads.scroll_or_move = 'move'
 
-      console.log siomart.node_offers_popup.scroll_or_move
+      console.log siomart.focused_ads.scroll_or_move
 
-      if siomart.node_offers_popup.scroll_or_move == 'scroll'
+      if siomart.focused_ads.scroll_or_move == 'scroll'
         return false
       else
         event.preventDefault()
 
-      c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
+      c_x_offset = siomart.focused_ads._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
       if vendor_prefix.js == 'Webkit'
-        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
       else
-        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
 
       this.x_delta_direction = this.last_x - ex
 
@@ -799,31 +1291,65 @@ siomart =
       console.log 'touchend'
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
-      delete siomart.node_offers_popup.tstart_x
-      delete siomart.node_offers_popup.tstart_y
+      delete siomart.focused_ads.tstart_x
+      delete siomart.focused_ads.tstart_y
 
       if this.x_delta_direction > 0
         cb = () ->
-          siomart.node_offers_popup.next_block()
+          siomart.focused_ads.next_block()
       else
         cb = () ->
-          siomart.node_offers_popup.prev_block()
+          siomart.focused_ads.prev_block()
 
       if this.scroll_or_move == 'move'
         setTimeout cb, 1
 
-      delete siomart.node_offers_popup.scroll_or_move
+      delete siomart.focused_ads.scroll_or_move
 
     touchcancel_event : ( event ) ->
 
-      delete siomart.node_offers_popup.tstart_x
-      delete siomart.node_offers_popup.tstart_y
-      delete siomart.node_offers_popup.scroll_or_move
+      delete siomart.focused_ads.tstart_x
+      delete siomart.focused_ads.tstart_y
+      delete siomart.focused_ads.scroll_or_move
 
+    render_ad : ( ad ) ->
+
+      console.log this.ads_rendered
+
+      siomart.utils.ge('ad_c_' + this.ads_rendered).innerHTML = ad
+      this.ads_rendered++
+
+    render_more : ( more_blocks ) ->
+      this.load_more_ads_requested = false
+      if typeof more_blocks == 'undefined'
+        return false
+
+      for i, v of more_blocks
+        this.render_ad more_blocks[i], i
+        this.blocks.push more_blocks[i]
+
+      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      this.fit()
+      siomart.styles.init()
 
     init : () ->
-      this.root
+
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+      this.bcInnerHTML = this._block_container.innerHTML
+      
+      this.ads_count = this._block_container.getAttribute 'data-ads-count'
+
+      this.ads_rendered = 1
+
+      ads_cs = this.bcInnerHTML
+      for i in [1..this.ads_count]
+        ads_cs += '<div id="ad_c_' + i + '"></div>'
+
+      this._block_container.innerHTML = ads_cs
+
+      for i, v of this.blocks
+        this.render_ad this.blocks[i]
+
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
@@ -832,35 +1358,36 @@ siomart =
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
       ## Кнопка возврата на главный экран
-      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
+      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_focused_ads
 
-      siomart.utils.add_single_listener siomart.utils.ge('sioMartHomeButton'), _e, siomart.close_node_offers_popup
+      siomart.utils.add_single_listener siomart.utils.ge('sioMartHomeButton'), _e, siomart.close_focused_ads
 
       ## События для свайпа
       siomart.utils.add_single_listener this._block_container, 'touchstart', ( event ) ->
-        siomart.node_offers_popup.touchstart_event event
+        siomart.focused_ads.touchstart_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
-        siomart.node_offers_popup.touchmove_event event
+        siomart.focused_ads.touchmove_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchcancel', ( event ) ->
-        siomart.node_offers_popup.touchcancel_event event
+        siomart.focused_ads.touchcancel_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
-        siomart.node_offers_popup.touchend_event event
+        siomart.focused_ads.touchend_event event
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
       i = 0
       this.active_block_index = 0
 
-
+  load_mart_data : () ->
+    this.request.perform '/market/node_data/' + window.siomart_id
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
-  load_mart_index_page : () ->
-    this.set_meta()
+  load_mart : () ->
+    this.define_per_load_values()
     this.request.perform siomart.config.index_action
 
   ##################################################
@@ -887,13 +1414,13 @@ siomart =
 
     close : ( all_except_search ) ->
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
-      console.log sm_cat_screen
-      if sm_cat_screen != null
-        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-        siomart.utils.ge('smShopListScreen').style.display = 'none'
 
-        if all_except_search != true
-          siomart.utils.ge('smSearchBar').style.display = 'none'
+      if sm_cat_screen != null
+        if all_except_search == true
+          siomart.utils.ge('smCategoriesBodyWrap').style.display = 'none'
+          siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__compact'
+        else
+          siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
 
     back : () ->
@@ -935,23 +1462,17 @@ siomart =
   ## Скрыть / показать sio.market
   ###############################
   close_mart : ( event ) ->
-    siomart.utils.ge('sioMartRoot').style.display = 'none'
-    siomart.utils.ge('smCloseScreen').style.display = 'none'
+    #siomart.utils.ge('sioMartRoot').style.display = 'none'
+    #siomart.utils.ge('smCloseScreen').style.display = 'none'
 
-    siomart.storage.setValue "is_market_closed_by_user", 'true'
-
-    siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
+    #siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
 
     event.preventDefault()
     return false
 
   open_mart : ( event ) ->
-
     if this.is_market_loaded != true
-      siomart.load_mart_index_page()
-
-    siomart.utils.ge('sioMartRoot').style.display = 'block'
-    siomart.storage.setValue "is_market_closed_by_user", 'false'
+      siomart.load_mart()
     event.preventDefault()
     return false
 
@@ -976,7 +1497,9 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id
+
+    siomart.focused_ads.curl = url
 
     if history_push == true
       state_data =
@@ -985,7 +1508,7 @@ siomart =
         ad_id : ad_id
       siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
 
-    siomart.node_offers_popup.requested_ad_id = ad_id
+    siomart.focused_ads.requested_ad_id = ad_id
     siomart.request.perform url
 
   ## Загрузить все офферы для магазина
@@ -1038,8 +1561,13 @@ siomart =
       setTimeout dn_cb, siomart.welcome_ad.fadeout_transition_time
 
     init : () ->
+
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
       if this.img_dom == null
+        return false
+
+      if siomart.is_market_loaded == true
+        this.img_dom.style.display = 'none'
         return false
 
       this.fit this.img_dom
@@ -1063,7 +1591,6 @@ siomart =
 
     siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
 
-    this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
     this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
@@ -1078,8 +1605,8 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
 
     ## Возврат на индекс выдачи
-    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
-    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.load_index_ads
+    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.grid_ads.load_index_ads
+    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.grid_ads.load_index_ads
 
     this.utils.add_single_listener this.utils.ge('smSearchIcon'), _event, () ->
       siomart.utils.ge('smSearchField').focus()
@@ -1125,6 +1652,31 @@ siomart =
 
     siomart.utils.ge('sioMartLayout').className = _window_class
 
+  define_per_load_values : () ->
+
+    ww = wh = 0
+    if typeof window.innerWidth == 'number'
+      ww = window.innerWidth
+      wh = window.innerHeight
+    else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
+      ww = document.documentElement.clientWidth
+      wh = document.documentElement.clientHeight
+    else if document.body && ( document.body.clientWidth || document.body.clientHeight )
+      ww = document.body.clientWidthb
+      wh = document.body.clientHeight
+
+    if ww <= 980
+      siomart.config.ads_per_load = 20
+
+    if ww <= 800
+      siomart.config.ads_per_load = 10
+
+    if ww <= 660
+      siomart.config.ads_per_load = 5
+
+    console.log ww
+    console.log siomart.config.ads_per_load
+
   ###########################
   ## Инициализация Sio.Market
   ###########################
@@ -1132,36 +1684,9 @@ siomart =
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
-    siomart.storage.init()
-
-    ## загрузка cbca_grid
-    this.load_deps()
     this.utils.set_vendor_prefix()
 
-    ## Нарисовать разметку
-    this.draw_layout()
-
-    ## Забиндить оконные события
-    this.bind_window_events()
-
-    ## Инициализировать history api
-    this.history.init()
-
-    this.is_market_loaded = false
-    ## Далее идет асинхронное считывание значения is_market_closed_by_user
-
-    window.scrollTo 0,0
-
-    console.log 'check startup options and start'
-    this.storage.requestValue "is_market_closed_by_user", (key, value) ->
-      console.log key + ' : ' + value
-
-      if value == null || value == false || value == 'false' || siomart.utils.is_sio_host() == true
-        console.log 'open mart on startup'
-        this.is_market_loaded = false
-        siomart.utils.ge('sioMartRoot').style.display = 'block'
-        siomart.load_mart_index_page()
-
+    siomart.load_mart()
 
 window.siomart = siomart
 siomart.init()

@@ -11,7 +11,7 @@
 @if( !advs.isEmpty ){
 <div class="advs-info-block">
 
-  <div class="advs-info-block__section advs-info-block__section_left">
+  <div class="advs-info-block__section advs-info-block__section_left js-equal-height">
 
     @* Информация о статусе карточки — нужно уточнить, что именно тут будет выводиться *@
     <div class="g-sm-strong">Рекламная карточка находится на рассмотрении администратора.</div>
@@ -19,10 +19,10 @@
 
   </div>
 
-  <div class="advs-info-block__section advs-info-block__section_center">
+  <div class="advs-info-block__section advs-info-block__section_center js-equal-height">
     @_currentAdvsListTpl(advs, adv2adn)
   </div>
-  <div class="advs-info-block__section advs-info-block__section_right">
+  <div class="advs-info-block__section advs-info-block__section_right js-equal-height">
 
     Под данную рекламу заблокировано:
 

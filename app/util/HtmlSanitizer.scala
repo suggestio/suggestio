@@ -14,12 +14,10 @@ object HtmlSanitizer {
   val stripAllPolicy = new HtmlPolicyBuilder()
     .toFactory
 
-
   /** Удалить все HTML-теги кроме переноса строк. */
   val brOnlyPolicy = new HtmlPolicyBuilder()
     .allowElements("br")
     .toFactory
-
 
   /** Из писем юзеров нужно стрипать всё кроме текста, переносов строк и ссылок. */
   val supportMsgPolicy = new HtmlPolicyBuilder()
@@ -30,11 +28,12 @@ object HtmlSanitizer {
   /** Из оформления стрипать html, оставляя только базовое форматирование. */
   val textFmtPolicy =  new HtmlPolicyBuilder()
     .allowCommonBlockElements()
-    .allowAttributes("href", "target").onElements("a")
     .allowAttributes("style").onElements("span", "p", "div")
     .requireRelNofollowOnLinks()
     .allowUrlProtocols("http", "https")
     .allowCommonInlineFormattingElements()
+    .allowElements("a")
+    .allowAttributes("href", "target").onElements("a")
     .toFactory
 
 }

@@ -5,14 +5,26 @@
 @import ctx._
 @import AdNetMemberTypes._
 
-@companyBase(title = mc.name) {
-  @* Отображаем данные по компании. *@
-  <h2>@mc.name</h2>
+@companyBase(title = mc.meta.name) {
 
-  <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">@Messages("Edit")</a></p>
-  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get))
+  @* Отображаем данные по компании. *@
+
+  <div class="sys_t">
+
+    @_companyMetaTpl(mc.meta)
+
+    <a class="edit-btn __ft-XS __color-1" href="@routes.SysMarket.companyEditForm(mc.id.get)">
+      @Messages("Edit")
+    </a>
+
+    @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get), btnClass = Option("__size-M __ft-XM"), formClass = "f-right")
+  </div>
+
 
   @_adnNodesListTpl(nodes)
 
-  <a href="@routes.SysMarket.createAdnNode()">+добавить узел верхнего уровня</a>
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode()">+добавить узел верхнего уровня</a>
+  </div>
 }

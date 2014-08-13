@@ -1,882 +1,578 @@
-
 $(document).ready ->
-  cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
-  cbca.popup = new CbcaPopup()
+  cbca.pc = PersonalCabinet
+  cbca.pc.init()
+
+  cbca.popup = CbcaPopup
   cbca.popup.init()
-  cbca.search = new CbcaSearch()
-
-  cbca.statusBar = StatusBar
-  cbca.statusBar.init()
-
-  cbca.shop = CbcaShop
 
 
-  cbca.editAdPage = EditAdPage
-  cbca.editAdPage.init()
+PersonalCabinet =
 
-  cbca.common = new CbcaCommon()
-  cbca.shop.init()
-  cbca.editAdPage.updatePreview()
+  ###################################################################################################################
+  ## Уведомления в шапке сайта ##
+  ###################################################################################################################
+  statusBar:
 
-##СКРЫТЬ ВЫБРАННОЕ ФОТО##
-$(document).on 'click', '.input-wrap .close', (event)->
-  event.preventDefault()
+    close: ($bar) ->
+      if $bar.data 'open'
+        $bar.data 'open', false
+        $bar.slideUp()
 
-  $this =$(this)
-  $wrap = $this.closest('.input-wrap')
-  $wrap.find('.image-key').val('')
-  $wrap.find('.image-preview').attr('src', cbca.emptyPhoto)
-  cbca.editAdPage.updatePreview()
+    show: ($bar) ->
+      if !$bar.data 'open'
+        $bar.data 'open', true
+        $bar.slideDown()
 
-##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
-$(document).on 'click', '.device', ->
-  $this = $(this)
+    init: ()->
 
-  if(!$this.hasClass('selected'))
-    $('.device.selected').removeClass('selected')
-    $this.addClass('selected')
+      $ '.status-bar'
+      .each ()->
+        $this = $ this
 
-    $('#previewContainer')
-    .width($this.attr('data-width'))
-    .height($this.attr('data-height'))
-    .closest('table').attr('class', 'ad-preview ' + $this.attr('data-class'))
+        cbca.pc.statusBar.show $this
+        close_cb = () ->
+          cbca.pc.statusBar.close $this
 
-    market.resize_preview_photos()
+        setTimeout close_cb, 5000
 
+      $ document
+      .on 'click', '.status-bar', ()->
+        $this = $ this
+        cbca.pc.statusBar.close $this
 
-##ФОТО ТОВАРА##
-$(document).on 'change', '#product-photo', ->
-  value = $(this).val()
-  console.log(value)
-  $('#upload-product-photo').find('input[type = "file"]').val(value)
-  ##$('#upload-product-photo').find('form').trigger('submit')##
+  ##################################################################################################################
+  ## Форма опроса при запросе инвайта для владельца WiFi сети ##
+  ##################################################################################################################
+  wifi: () ->
 
+    $ '.js-quiz__checkbox'
+    .removeAttr 'disabled'
+    .removeAttr 'checked'
 
-#######################################################################################################################
-## Всплывающие окна ##
-#######################################################################################################################
+    $ document
+    .on 'submit', '#wifiJoinForm', (e)->
+      $form = $ this
 
-CbcaPopup = () ->
+      $form
+      .find '.js-quiz__checkbox'
+      .removeAttr 'disabled'
 
-  showOverlay: ->
-    $('#popupsContainer, #overlay').show()
+      return true
 
-  hideOverlay: ->
-    $('#popupsContainer, #overlay').hide()
+    $ document
+    .on 'click', '.js-quiz__checkbox', (e)->
+      $this = $ this
+      nextSelector = $this.attr 'data-next'
+      quizElement = $this.closest '.js-quiz__element'
+      thisIndex = quizElement.attr 'data-index'
 
-  setOverlayHeight: (popupHeight)->
-    if(!popupHeight)
-      popupHeight = 0
+      $ '.js-quiz__element:visible'
+      .not this
+      .each () ->
+        $element = $ this
 
-      $('.popup').each () ->
-        $this = $(this)
-        thisHeight = $this.height()
+        if $element.attr('data-index') > thisIndex
+          $element
+          .hide()
+          .find 'input'
+          .removeAttr 'disabled'
+          .removeAttr 'checked'
 
-        if(thisHeight > popupHeight)
-          popupHeight = thisHeight
+        if $element.attr('data-index') == thisIndex
+          $element
+          .find 'input'
+          .removeAttr 'disabled'
 
-    popupsContainerHeight = $('#popupsContainer').height()
+      $this.attr 'disabled', 'disabled'
+      $ '.js-quiz__result'
+      .hide()
 
-    if(popupHeight > popupsContainerHeight)
-      $('#overlay').height(popupHeight + 50)
-    else
-      $('#overlay').height(popupsContainerHeight)
+      ## вместе с описательным текстом показать кнопку Написать ##
+      if nextSelector == '#text0' || nextSelector == '#text1'
+        nextSelector += ',#text3'
 
-  showPopup: (popup) ->
-    this.showOverlay()
-    $popup = $(popup)
-    $popup.show()
-    popupHeight = $popup.height()
+      $ nextSelector
+      .show()
 
+  login: () ->
 
-    $('body').addClass('ovh')
-    this.setOverlayHeight(popupHeight)
-
-    $popup.find('.border-line-vertical').each () ->
-      $this = $(this)
-      $parent = $this.parent()
-
-      $this.height($parent.height() - 10)
-
-  hidePopup: (popup) ->
-    popup = '.popup' || popup
-    this.hideOverlay()
-    $(popup).hide()
-    $('#overlay, #overlayData').hide()
-    $('body').removeClass 'ovh'
-
-  init: () ->
-
-    $(document).on 'click', '.popup .js-close-popup', (event)->
-      event.preventDefault()
-      $this = $(this)
-      $popup = $this.closest('.popup')
-      popupId = $popup.attr('id')
-
-      cbca.popup.hidePopup(popupId)
-
-
-    $(document).on 'click', '.popup-but', ->
-      $this = $(this)
-
-      cbca.popup.showPopup($this.attr('href'))
-
-
-    $(document).on 'click', '.popup .close', (event)->
-      event.preventDefault()
-      cbca.popup.hidePopup()
-
-
-    $(document).on 'click', '#overlay', ->
-        cbca.popup.hidePopup()
-
-#######################################################################################################################
-## Работа с поисковой строкой ##
-#######################################################################################################################
-CbcaSearch = () ->
-
-  self = this
-
-  self.search = (martId, searchString) ->
-    jsRoutes.controllers.MarketLkAdn.searchSlaves(martId).ajax(
-      type: "POST",
-      data:
-        'q': searchString
-      success: (data) ->
-        if(data.trim().length)
-          $('#search-results').html(data.trim())
-        else
-          $('#search-results').html('')
-      error: (error) ->
-        console.log(error)
-    )
-
-
-  self.init = () ->
-    $(document).on 'keyup', '#searchShop', ->
-      $this = $(this)
-      if($this.val().trim())
-        $('#shop-list').hide()
-        self.search($this.attr('data-mart-id'), $this.val())
-      else
-        $('#search-results').html('')
-        $('#shop-list').show()
-
-  self.init()
-
-##Общее оформление##
-CbcaCommon = () ->
-
-  self = this
-
-  ################################
-  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
-  ################################
-
-  self.setEqualHeightBlocks = () ->
-    $blocks = $('.js-equal-height')
-    height = 0
-
-    $blocks.each () ->
-      thisHeight = $(this).height()
-      if(thisHeight > height)
-        height = thisHeight
-
-    $blocks.height(height)
-
-  #########################################
-  ## TODO разнести по отдельным функциям ##
-  #########################################
-
-  self.init = () ->
-
-    self.setEqualHeightBlocks()
-
-    $(window).resize () ->
-      cbca.popup.setOverlayHeight()
-
-    #############
+    #################################################################################################################
     ## CAPTCHA ##
-    #############
-
-    $(document).on 'click', '#captchaReload', (e)->
+    #################################################################################################################
+    $ document
+    .on 'click', '#captchaReload', (e)->
       e.preventDefault()
-      $this = $(this)
-      $captchaImage = $('#captchaImage')
-      $parent = $('#captchaImage').parent()
+      $this = $ this
+      $captchaImage = $ '#captchaImage'
+      $parent = $captchaImage.parent()
       random = Math.random()
 
       $captchaImage.remove()
-      $parent.prepend('<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />')
+      $parent.prepend '<img class="captcha_img" id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
 
+    $newPasswordForm = $ '#newPasswordForm'
+    if $newPasswordForm.size()
+      cbca.popup.showPopup '#newPasswordForm'
 
-    #####################
-    ## WIFI FORM start ##
-    #####################
-
-    $('.js-quiz__checkbox').removeAttr('disabled')
-
-    $(document).on 'click', '.js-quiz__checkbox', (e)->
-      $this = $(this)
-      nextSelector = $this.attr('data-next')
-      quizElement = $this.closest('.js-quiz__element')
-      thisIndex = quizElement.attr('data-index')
-
-      $('.js-quiz__element').not(this).each ()->
-        $element = $(this)
-
-        if($element.attr('data-index') > thisIndex)
-          $element.hide().find('input').removeAttr('disabled').removeAttr('checked')
-
-        if($element.attr('data-index') == thisIndex)
-          $element.find('input').removeAttr('disabled')
-
-      $this.attr('disabled', 'disabled')
-      $('.js-quiz__result').hide()
-      if(nextSelector == '#text0' || nextSelector == '#text1')
-        nextSelector += ',#text3'
-      $(nextSelector).show()
-
-    ###################
-    ## WIFI FORM end ##
-    ###################
-
-    if($('#newPasswordForm').length)
-      cbca.popup.showPopup('#newPasswordForm')
-
-    $(document).on 'click', '.js-popup-back', (e)->
-      $this = $(this)
-      targetPopupId = $this.attr('href')
-
-      $this.closest('.popup').hide()
-      $(targetPopupId).show()
-
-    $(document).on 'click', '.js-remove-popup', (e)->
-      $popup = $(this).closest('.popup')
-
-      cbca.popup.hidePopup('#'+$popup.attr('id'))
-      $('#'+$popup.attr('id')).remove()
-
-    $(document).on 'click', '.js-submit-btn', (e)->
+    $ document
+    .on 'submit', '#recoverPwForm form', (e)->
       e.preventDefault()
-      $this = $(this)
-      dataFor = $this.attr('data-for')
-      if(dataFor)
-        $form = $(dataFor)
-      else
-        $form = $this.closest('form')
-
-      $form.trigger('submit')
-
-    $(document).on 'click', '.js-submit-wrap', (e)->
-      $this = $(this)
-
-      $this.closest('form').find('input').removeAttr('disabled')
-      $this.find('input').trigger('click')
-
-    $(document).on 'click', '.js-submit-wrap input', (e)->
-      e.stopPropagation()
-
-      $(this).closest('form').find('input').removeAttr('disabled')
-
-
-    ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
-    $(document).on 'click', '.js-btn', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
-
-      if(!href)
-        return false
-
-      if(href && href.charAt(0) == '#')
-        cbca.popup.showPopup(href)
-      else
-        $.ajax(
-          url: href,
-          success: (data)->
-            $ajaxData = $(data)
-            popupId = $ajaxData.attr('id')
-            cbca.popup.hidePopup()
-            $('#'+popupId).remove()
-            $('#popupsContainer').append(data)
-            cbca.popup.showPopup('#'+popupId)
-        )
-
-    $(document).on 'submit', '.js-form', (e)->
-      e.preventDefault()
-      $form = $(this)
-      action = $form.attr('action')
+      $form = $ this
+      action = $form.attr 'action'
 
       $.ajax(
         type: "POST",
         url: action,
         data: $form.serialize(),
         success: (data)->
-          console.log(data)
-      )
+          $recoverPwForm = $ '#recoverPwForm'
 
-    $(document).on 'submit', '#recoverPwForm form', (e)->
-      e.preventDefault()
-      $form = $(this)
-      action = $form.attr('action')
+          $recoverPwForm
+          .find 'form'
+          .remove()
 
-      $.ajax(
-        type: "POST",
-        url: action,
-        data: $form.serialize(),
-        success: (data)->
-          $('#recoverPwForm').find('form').remove()
-          $('#recoverPwForm').find('.content').append(data)
+          $recoverPwForm
+          .find '.popup_cnt'
+          .append data
+
         error: (error)->
-          $('#recoverPwForm').remove()
-          $('#popupsContainer').append(error.responseText)
-          cbca.popup.showPopup('#recoverPwForm')
+
+          $ '#recoverPwForm'
+          .remove()
+
+          $ '#popupsContainer'
+          .append error.responseText
+
+          cbca.popup.showPopup '#recoverPwForm'
       )
 
-    ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
-    $('.popup .lk-error, .popup .error').each ()->
-      $this = $(this)
-      popupId = $this.closest('.popup').attr('id')
+  billing: () ->
 
-      cbca.popup.showPopup('#'+popupId)
-
-    $(document).on 'click', '#advReqRefuseShow', (e)->
+    $ document
+    .on 'click', '#getTransactions', (e)->
       e.preventDefault()
+      $this = $ this
+      $transactionsHistory = $ '#transactionsHistory'
+      $transactionsList = $ '#transactionsList'
 
-      $('#advReqRefuse').show()
-      $('#advReqAccept').hide()
+      $.ajax(
+        url: $this.attr 'href'
+        success: (data)->
+          if $this.attr 'data-init'
+            $transactionsList
+            .find 'tr'
+            .not ':first'
+            .remove()
+          else
+            $this
+            .closest 'tr'
+            .remove()
 
-    $(document).on 'click', '#advReqAcceptShow', (e)->
+          $transactionsList
+          .append data
+
+          if $this.attr 'data-init'
+            $transactionsHistory
+            .slideDown(
+              600,
+              () ->
+                cbca.pc.common.setBorderLineHeight $transactionsList
+            )
+
+        error: (error)->
+          console.log error
+      )
+
+  advRequest: () ->
+
+    $ document
+    .on 'click', '.js-adv-req-forms', (e)->
       e.preventDefault()
+      $ '#advReqRefuse, #advReqAccept'
+      .toggle()
 
-      $('#advReqRefuse').hide()
-      $('#advReqAccept').show()
+    $ document
+    .on 'submit', '#advReqRefuse', (e)->
+      $this = $ this
+      $textarea = $this.find 'textarea'
 
-    $(document).on 'submit', '#advReqRefuse', (e)->
-      $this = $(this)
-      $textarea = $this.find('textarea')
-
-      if(!$textarea.val())
-        $textarea.closest('.input').addClass('error')
+      if !$textarea.val()
+        $textarea
+        .closest '.input'
+        .addClass '__error'
         return false
       else
         return true
 
-    $(document).on 'click', '.js-advertising-requests-item_get-info', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
+  adsList: () ->
 
-      $.ajax(
-        url: href,
-        success: (data)->
-          console.log(data)
-          $('#advReqWind').remove()
-          $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
+    $ document
+    .on 'click', '.ads-list-block__preview_add-new', ()->
+      $this = $ this
 
-          cbca.popup.showPopup('#advReqWind')
-          $('#advReqRefuse').hide()
-      )
+      $this
+      .parent()
+      .find('.ads-list-block__link')[0]
+      .click()
 
-    $(document).on 'click', '.advs-nodes__node-link_show-popup', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
+  common:
 
-      $.ajax(
-        url: href,
-        success: (data)->
-          $('#dailyMmpsWindow').remove()
-          $('#popupsContainer').append(data)
+    ##################################################################################################################
+    ## Чекбоксы ##
+    ##################################################################################################################
+    checkbox: () ->
 
-          cbca.popup.showPopup('#dailyMmpsWindow')
-      )
+      $ '.lk input[type = "checkbox"]'
+      .each ()->
+        $this = $ this
+        checked = $this.attr 'data-checked'
 
-    $(document).on 'click', '.js-slide-btn', (e)->
-      e.preventDefault()
-      $this = $(this)
-      targetId = $this.attr('href')
+        if checked == 'checked'
+          this.checked = true
+        else
+          $this.removeAttr 'checked'
 
-      $('#'+targetId).slideToggle()
+      ## Набор чекбоксов, где можно выбрать только один вариант
+      $ document
+      .on 'click', '.js-one-checkbox', (e)->
+        e.stopPropagation()
+        $this = $ this
+        dataName = $this.attr 'data-name'
+        dataFor = $this.attr 'data-for'
+        value = $this.attr 'data-value'
 
-    $(document).on 'click', '.lk-edit-form__block_title .js-close-btn', (e)->
+        if this.checked
+          $ '.js-one-checkbox[data-name = "'+dataName+'"]'
+          .filter ':checked'
+          .removeAttr 'checked'
+
+          this.checked = true
+
+          $ '#'+dataFor
+          .val value
+        else
+          $ this
+          .removeAttr 'checked'
+
+    ##################################################################################################################
+    ## Блоки одинаковой высоты ##
+    ##################################################################################################################
+    setEqualHeightBlocks: () ->
+      $blocks = $ '.js-equal-height'
+      height = 0
+
+      $blocks.each () ->
+        $this = $ this
+        thisHeight = $this.height()
+
+        if thisHeight > height
+          height = thisHeight
+
+      $blocks.height height
+
+    ##################################################################################################################
+    ## Скрытые элементы ##
+    ##################################################################################################################
+    hideElements: ($obj) ->
+      $obj = $obj || $ 'html'
+      $elements = $obj.find '.js-hidden'
+
+      $elements.hide()
+
+    ##################################################################################################################
+    ## Высота вертикальных линий ##
+    ##################################################################################################################
+    setBorderLineHeight: ($obj) ->
+      $obj = $obj || $ 'html'
+      $lines = $obj.find '.js-vertical-line'
+
+      $lines
+      .each () ->
+        $this = $ this
+        $parent = $this.parent()
+
+        if $this.attr 'data-inherit-height'
+          lineHeight = $parent.height()
+        else
+          lineHeight = $parent.height() - 10
+
+        $this.height lineHeight
+
+    ##################################################################################################################
+    ## Элементы ввода ##
+    ##################################################################################################################
+    inputs: () ->
+
+      $ document
+      .on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
+        $ this
+        .closest '.input-w'
+        .toggleClass '__focus', true
+
+      $ document
+      .on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
+        $ this
+        .closest '.input-w'
+        .removeClass '__focus'
+
+
+    ##################################################################################################################
+    ## Стандартные обработчики нажатия кнопок ##
+    ##################################################################################################################
+    buttons: () ->
+
+      $ document
+      .on 'click', '.js-btn', (e)->
         e.preventDefault()
-        $this = $(this)
+        $this = $ this
+        href = $this.attr 'href'
 
-        $this.parent().parent().slideUp()
-
-    $(document).on 'click', '.ads-list-block__preview_add-new', ()->
-      $this = $(this)
-
-      $this.parent().find('.ads-list-block__link')[0].click()
-
-
-    $(document).on 'click', '.js-g-slide-toggle', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
-
-      if(href)
-        $.ajax(
-          url: href
-          success: (data) ->
-            $data = $(data).hide()
-            $this.closest('.js-slide-wrap').append($data).find('.js-slide-content:first').slideDown()
-            $this.attr('href', '')
-        )
-      else
-        $this.closest('.js-slide-wrap').find('.js-slide-content:first').slideToggle()
-
-      $this.toggleClass('open')
-      if($this.hasClass('open'))
-        $this.html('Свернуть')
-      else
-        $this.html('Развернуть')
-
-
-
-    $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
-      $(this).closest('.input-wrap').toggleClass('focus', true)
-
-    $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
-      $(this).closest('.input-wrap').removeClass('focus')
-
-
-    $(document).on 'click', '.ads-list .js-tc-edit', (event)->
-      event.preventDefault()
-
-      $this = $(this)
-      $.ajax(
-        url: $this.attr('href')
-        success: (data) ->
-          $('#disable-ad, #anotherNodes').remove()
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#disable-ad')
-        error: (error) ->
-          console.log(error)
-      )
-
-    $(document).on 'click', '#disable-ad .blue-but-small', ()->
-      if($('#disable-ad .hide-content').css('display') == 'none')
-        $('#disable-ad .hide-content').show()
-        return false
-      else
-        $form = $(this).closest('form')
-        if(!$.trim($form.find('textarea').val()))
-          $form.find('.input').addClass('error')
+        if !href
           return false
-        $.ajax(
-          url: $form.attr('action')
-          type: 'POST'
-          data: $form.serialize()
-          success: (data) ->
-            cbca.popup.hidePopup('#disable-ad')
-          error: (error) ->
-            console.log(error)
-        )
 
-    ##########################
-    ## Работа с checkbox`ов ##
-    ##########################
-    $('input[type = "checkbox"]').each ()->
-      $this = $(this)
-      if($this.attr('data-checked') == 'checked')
-        this.checked = true
-      else
-        $this.removeAttr('checked')
+        if href && href.charAt(0) == '#'
+          cbca.popup.showPopup href
+        else
+          $.ajax(
+            url: href,
+            success: (data)->
+              $ajaxData = $ data
+              popupId = $ajaxData.attr 'id'
 
-    $(document).on 'click', '.create-ad .color-list .color', ->
-      $this = $(this)
-      $wrap = $this.closest('.item')
-      $checkbox = $wrap.find('.one-checkbox')
-      dataName = $checkbox.attr('data-name')
-      dataFor = $checkbox.attr('data-for')
-      value = $checkbox.attr('data-value')
-      checkbox = $checkbox.get(0)
+              cbca.popup.hidePopup()
 
-      if(!checkbox.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        checkbox.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $checkbox.removeAttr('checked')
+              $ '#'+popupId
+              .remove()
 
-      cbca.editAdPage.updatePreview()
+              $ '#popupsContainer'
+              .append data
 
-    $(document).on 'click', '.create-ad .mask-list .item', (event)->
-      $this = $(this)
+              cbca.popup.showPopup '#'+popupId
+          )
 
-      $checkbox = $this.find('.one-checkbox')
-      dataName = $checkbox.attr('data-name')
-      dataFor = $checkbox.attr('data-for')
-      value = $checkbox.attr('data-value')
-      checkbox = $checkbox.get(0)
+      $ document
+      .on 'click', '.js-submit-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+        dataFor = $this.attr 'data-for'
 
-      if(!checkbox.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        checkbox.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $checkbox.removeAttr('checked')
+        if dataFor
+          $form = $ dataFor
+        else
+          $form = $this.closest 'form'
 
-      cbca.editAdPage.updatePreview()
+        $form.trigger 'submit'
 
+      $(document).on 'click', '.js-slide-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+        href = $this.attr 'href'
 
-    ########################################
-    ## Набор checkbox`ов, с одним checked ##
-    ########################################
-    $(document).on 'click', '.one-checkbox', (event)->
-      $this = $(this)
-      dataName = $this.attr('data-name')
-      dataFor = $this.attr('data-for')
-      value = $this.attr('data-value')
+        if href
+          if href.charAt(0) == '#'
+            $ href
+            .slideToggle()
+          else
+            $.ajax(
+              url: href
+              success: (data) ->
+                $data = $ data
+                $siomBlock = $this.closest '.js-slide-w'
+                ## :first потому что может быть вложенный siomBlock
+                $siomBLockCnt = $siomBlock.find '.js-slide-cnt:first'
 
+                $siomBLockCnt.append $data
 
-      if(this.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        this.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $(this).removeAttr('checked')
+                $siomBLockCnt
+                .slideDown(
+                  600,
+                  () ->
+                    cbca.pc.common.setBorderLineHeight $siomBLockCnt
+                )
 
-      event.stopPropagation()
+                $this.removeAttr 'href'
+            )
+        else
+          $this
+          .closest '.js-slide-w'
+          .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
+          .slideToggle()
 
-
-    $('.slide-content').each ()->
-      $this = $(this)
-
-      if($this.find('.err-msg').size())
-        $this.slideDown()
-
-
-    $('.nodes .node').each () ->
-      $(this).data('dataLoaded', false)
-
-    $(document).on 'click', '.nodes .node .toggle', (e) ->
-      e.preventDefault()
-      $this = $(this)
-      $node = $this.parent()
-
-      if($node.hasClass('open'))
-        $node.removeClass('open').next().next().slideUp()
-        $this.html('Развернуть')
-      else if($node.data('dataLoaded'))
-        $node.addClass('open').next().next().slideDown()
-        $this.html('Свернуть')
-      else
-        $.ajax(
-          url: $this.attr('href')
-          success: (data) ->
-            $node.addClass('open').data('dataLoaded', true).next().after('<div class="ads-list small">'+data+'</div>')
-            $node.next().next().slideDown('normal', () ->  market.resize_preview_photos())
-            $this.html('Свернуть')
-          error: (error) ->
-            console.log(error)
-        )
-
-
-    $(document).on 'click', '.add-to-another-node', (e) ->
-      e.preventDefault()
-      $this = $(this)
-
-      $.ajax(
-        url:  $this.find('a').attr('href'),
-        success: (data) ->
-          $('#disable-ad, #anotherNodes').remove()
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#anotherNodes')
-        error: (data) ->
-          console.log(data)
-      )
-
-
-    $('.border-line-vertical').each () ->
-      $this = $(this)
-      $parent = $this.parent()
-
-      $this.height($parent.height() - 10)
-
-
-    $(document).on 'click', '.transactions-history .toggle', (e) ->
-      e.preventDefault()
-      $this = $(this)
-      $parent = $this.parent()
-
-      if($parent.hasClass('open'))
-        $parent.removeClass('open').parent().find('.transactions-list').slideUp()
-        $this.html('Развернуть')
-      else
-        $parent.addClass('open').parent().find('.transactions-list').slideDown()
-        $this.html('Свернуть')
-
-
-
-
-  self.init()
-
-#########################################################
-## Страница создания/редактирования рекламной карточки ##
-#########################################################
-EditAdPage =
-
-  updatePreview: () ->
-    return false
+        $this.toggleClass '__open'
+        if !$this.attr 'data-fix-title'
+          if $this.hasClass '__open'
+            $this.html 'Свернуть'
+          else
+            $this.html 'Развернуть'
 
   init: () ->
-    #################
-    ## Старая цена ##
-    #################
-    if($('#ad_offer_oldPrice_value').val())
-      $('#old-price-status').attr('data-checked', 'checked')
-      $('.create-ad .old-price').show()
 
-    $(document).on 'click', '#old-price-status', ->
-      if(!$('#ad_offer_oldPrice_value').val())
-        oldPrice = $('#priceValueInput').val()
-        $('#ad_offer_oldPrice_value').val(oldPrice)
-      $('.create-ad .old-price').toggle()
-      cbca.editAdPage.updatePreview()
+    cbca.pc.common.setEqualHeightBlocks()
+    cbca.pc.common.setBorderLineHeight()
+    cbca.pc.common.hideElements()
+    cbca.pc.common.inputs()
+    cbca.pc.common.checkbox()
+    cbca.pc.common.buttons()
 
-    ############
-    ## Превью ##
-    ############
-    $(document).on 'change', '#promoOfferForm input', ()->
-      cbca.editAdPage.updatePreview()
+    cbca.pc.statusBar.init()
+    cbca.pc.wifi()
+    cbca.pc.login()
+    cbca.pc.billing()
+    cbca.pc.advRequest()
+    cbca.pc.adsList()
 
-    $(document).on 'change', '#promoOfferForm textarea', ()->
-      cbca.editAdPage.updatePreview()
+#######################################################################################################################
+## Всплывающие окна ##
+#######################################################################################################################
+CbcaPopup =
 
-    $(document).on 'keyup', '#promoOfferForm input', ()->
-      clearTimeout(updatePreview)
-      selfUpdatePreview = ()->
-        cbca.editAdPage.updatePreview()
-      updatePreview = setTimeout(selfUpdatePreview, 500)
+  $overlay: $ '#overlay'
+  $container: $ '#popupsContainer'
+  $body: $ 'body'
 
-    ########################################
-    ## Положение элементов на iphone/ipad ##
-    ########################################
-    $(document).on 'click', '.select-iphone .iphone-block', ->
-      $this = $(this)
-      if(!$this.hasClass 'act')
-        $('.iphone-block.act').removeClass 'act'
-        $this.addClass 'act'
-        $('#textAlign-phone').val($this.attr('data-value')).trigger('change')
+  showOverlay: () ->
+    this.$overlay.show()
+    this.$container.show()
+    this.$body.addClass 'ovh'
 
-    $(document).on 'click', '.select-ipad .ipad-block', ->
-        $this = $(this)
-        dataGroup = $this.attr 'data-group'
+  hideOverlay: () ->
+    this.$overlay.hide()
+    this.$container.hide()
+    this.$body.removeClass 'ovh'
 
-        if(!$this.hasClass 'act')
-          $('.ipad-block.act[data-group = "'+dataGroup+'"]').removeClass 'act'
-          $this.addClass 'act'
-          $('#'+dataGroup).val($this.attr('data-value')).trigger('change')
+  setPopupPosition: (popupSelector) ->
+    $popup = $ popupSelector
+    ## независимые цифры, подобраны согласно внешнему виду получаемого результата
+    minTop = 25
 
-    ##########################
-    ## Переключение вкладок ##
-    ##########################
-    $(document).on 'click', '.block .tab', ->
-      $this = $(this)
-      $wrap = $this.closest '.block'
-      index = $wrap.find('.tabs .tab').index(this)
+    if !$popup.size()
+      $popup = $ '.popup:visible'
 
-      if(!$this.hasClass 'act')
-        $wrap.find('.tabs .act').removeClass 'act'
-        $this.addClass 'act'
-        $wrap.find('.tab-content').hide()
-        $wrap.find('.tab-content').eq(index).show()
-        $('#ad-mode').val($this.attr('data-mode'))
-        cbca.editAdPage.updatePreview()
+    popupHeight = $popup.height()
+    containerHeight = this.$container.height()
+    diffHeight = containerHeight - popupHeight
 
-
-#########################
-## Работа с магазинами ##
-#########################
-CbcaShop =
-  disableShop: (shopId) ->
-    jsRoutes.controllers.MarketLkAdn.nodeOnOffForm(shopId).ajax(
-      type: "GET",
-      success:  (data) ->
-        if(data.toString().trim())
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#disable-shop')
-      error: (error) ->
-        console.log(error)
-    )
-
-  enableShop: (shopId) ->
-    jsRoutes.controllers.MarketLkAdn.nodeOnOffSubmit(shopId).ajax(
-      type: 'POST'
-      dataType: 'JSON'
-      data:
-        'isEnabled': true
-      error: (error) ->
-        console.log(error)
-    )
-
-
-  fixActiveAds: (labelSelector, count)->
-    if($(labelSelector).find('input[type = "checkbox"]').filter(':checked').size() >= count)
-      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
-        $(this).removeAttr('checked').attr('disabled', 'disabled').closest('label').addClass('inactive')
+    if diffHeight > minTop*2
+      top = Math.ceil( (containerHeight - popupHeight)/2 )
+      $popup.css 'top', top
     else
-      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
-        $(this).removeAttr('disabled').closest('label').removeClass('inactive')
+      $popup.css 'top', minTop
 
-  checkDisabledAds: ()->
-    $('.ads-list .item').each ()->
-      check = true
-      $this = $(this)
-      if($this.find('label').not('.inactive').find('input[type = "checkbox"]').size())
-        $this.find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
-          if(this.checked)
-            check = false
-        if(check)
-          $this.toggleClass('disabled', true)
+  setOverlayHeight: (popupHeight)->
+    if !popupHeight
+      popupHeight = 0
 
+      $ '.popup'
+      .each () ->
+        $this = $ this
+        thisHeight = $this.height()
+
+        if thisHeight > popupHeight
+          popupHeight = thisHeight
+
+    popupsContainerHeight = CbcaPopup.$container.height()
+
+    if popupHeight > popupsContainerHeight
+      this.$overlay.height popupHeight + 50
+    else
+      this.$overlay.height popupsContainerHeight
+
+  showPopup: (popupSelector) ->
+    this.showOverlay()
+    $popup = $ popupSelector
+    $popup.show()
+
+    $popup
+    .find '.sm-block'
+    .addClass 'double-size'
+
+    popupHeight = $popup.height()
+    this.setOverlayHeight popupHeight
+
+    cbca.pc.common.hideElements $popup
+    cbca.pc.common.setBorderLineHeight
+
+    this.setPopupPosition popupSelector
+
+  hidePopup: (popupSelector) ->
+    popupSelector = popupSelector || '.popup'
+    $popup = $ popupSelector
+
+    console.log popupSelector
+
+    this.hideOverlay()
+    $popup.hide()
+
+    $ '#overlayData'
+    .hide()
 
   init: () ->
 
-    self = this
-    self.martAdsLimit = 0 || parseInt($('#maxMartAds').val(),10)
-    self.shopAdsLimit = 0 || parseInt($('#maxShopAds').val(),10)
+    $ window
+    .resize () ->
+      cbca.popup.setOverlayHeight()
+      cbca.popup.setPopupPosition()
 
-    ##########################################
-    ## Чекбоксы в списке рекламных плакатов ##
-    ##########################################
-    $(document).on 'change', '.ads-list .ads-list-block__controls input[type = "checkbox"]', ->
-      $this = $(this)
-      lvlEnabled = this.checked
+    $ document
+    .on 'click', '.js-close-popup', (e)->
+      e.preventDefault()
+      $this = $ this
+      $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
+      popupSelector = '#'+popupId
 
-      jsRoutes.controllers.MarketAd.updateShowLevelSubmit($this.attr('data-adid')).ajax(
-        type: 'POST'
-        data:
-          'levelId': $this.attr('data-level')
-          'levelEnabled': lvlEnabled
-        success: (data) ->
-          if(lvlEnabled)
-            $this.closest('.item').removeClass('disabled')
+      cbca.popup.hidePopup popupSelector
 
-          cbca.shop.checkDisabledAds()
-        error: (data) ->
-          console.log(data)
-      )
+    $ document
+    .on 'click', '#overlay', ()->
 
-    cbca.shop.checkDisabledAds()
+      console.log 'overlayClick'
 
-    cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
+      cbca.popup.hidePopup()
 
-    $(document).on 'change', '.shop-catalog input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
+    ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
+    $ '.popup .__error'
+    .each ()->
+      $this = $ this
+      $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
+      popupSelector = '#'+popupId
 
+      cbca.popup.showPopup popupSelector
 
-    cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
+    ## Кнопка Назад внутри попапа
+    $ document
+    .on 'click', '.js-popup-back', (e)->
+      $this = $ this
+      targetPopupHref = $this.attr 'href'
+      $targetPopup = $ targetPopupHref
 
-    $(document).on 'change', '.martAd-fix input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
+      $this
+      .closest '.popup'
+      .hide()
 
-    ###################################
-    ## Включение/выключение магазина ##
-    ###################################
-    $(document).on 'click', '.nodes-list .enable-but', ->
-      shopId = $(this).closest('.item').attr('data-shop')
-      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
+      cbca.popup.hidePopup this
+      cbca.popup.showPopup targetPopupHref
 
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        $(this).closest('.item').addClass('enabled')
-        cbca.shop.enableShop($shop.attr('data-shop'))
+    $ document
+    .on 'click', '.js-remove-popup', (e)->
+      $this = $ this
+      $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
+      popupSelector = '#'+popupId
 
+      cbca.popup.hidePopup popupSelector
 
-    $(document).on 'click', '.nodes-list .disable-but', ->
-      shopId = $(this).closest('.item').attr('data-shop')
-      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
+      $ popupSelector
+      .remove()
 
-      if($shop.hasClass('enabled'))
-        cbca.shop.disableShop($shop.attr('data-shop'))
+    ## esc button
+    $ document
+    .bind 'keyup', (e) ->
+      if e.keyCode == 27
+        cbca.popup.hidePopup()
 
-
-    $(document).on 'click', '#shop-control .disable-but', ->
-      $shop = $(this).closest('.big-triger')
-      if($shop.hasClass('enabled'))
-        cbca.shop.disableShop($shop.attr('data-shop'))
-
-    $(document).on 'click', '#shop-control .enable-but', ->
-      $shop = $(this).closest('.big-triger')
-
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        cbca.shop.enableShop($shop.attr('data-shop'))
-
-
-    $(document).on 'submit', '#disable-shop form', (event) ->
-      event.preventDefault()
-      $this = $(this)
-
-      $.ajax(
-        type: 'POST'
-        dataType: 'JSON'
-        url: $this.attr('action')
-        data: $this.serialize()
-        success: (data) ->
-          if(!data.isEnabled)
-            cbca.popup.hidePopup('#disable-shop')
-            $('#disable-shop').remove()
-            $('*[data-shop = "'+data.shopId+'"]').removeClass('enabled')
-      )
-
-    ###################################################
-    ## Включение/выключение первой страницы магазина ##
-    ###################################################
-    $(document).on 'click', '#first-page-triger .enable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
-          type: 'POST'
-          data:
-            'isEnabled': true
-        )
-
-    $(document).on 'click', '#first-page-triger .disable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      if($shop.hasClass('enabled'))
-        $shop.removeClass('enabled')
-        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
-          type: 'POST'
-          data:
-            'isEnabled': false
-        )
-
-#################
-## Уведомления ##
-#################
-StatusBar =
-
-  close: ($bar) ->
-    if($bar.data('open'))
-      $bar.data('open', false)
-      $bar.slideUp()
-
-  show: ($bar) ->
-    if(!$bar.data('open'))
-      $bar.data('open', true)
-      $bar.slideDown()
-
-  init: ()->
-
-    $('.status-bar').each ()->
-      _this = $(this)
-
-      StatusBar.show _this
-      close_cb = () ->
-        StatusBar.close _this
-
-      setTimeout close_cb, 5000
-
-    $(document).on 'click', '.status-bar', ->
-      StatusBar.close($(this))
 
 ######################
 ## TODO: отрефакторить
@@ -898,7 +594,9 @@ market =
       head[0].appendChild(style_dom)
 
   init_colorpickers : () ->
-    $('.js-custom-color').each () ->
+
+    $ '.js-custom-color'
+    .each () ->
 
       current_value = $(this).attr 'data-current-value'
 
@@ -922,31 +620,27 @@ market =
     init : () ->
       market.init_colorpickers()
 
-      $('#installScriptButton').bind 'click', () ->
-
-        cbca.popup.showPopup('#installScriptPopup')
-
-        return false
-
-
-  ################################
-  ## Класс для работы с картинками
-  ################################
+  ###################################################################################################################
+  ## Класс для работы с картинками ##################################################################################
+  ###################################################################################################################
   img :
 
     init_upload : () ->
-      $('.w-async-image-upload').unbind("change").bind "change", () ->
 
-        relatedFieldId = $(this).attr 'data-related-field-id'
+      $ '.w-async-image-upload'
+      .unbind 'change'
+      .bind 'change', () ->
+        $this = $ this
+        relatedFieldId = $this.attr 'data-related-field-id'
         form_data = new FormData()
 
-        is_w_block_preview = $(this).attr 'data-w-block-preview'
+        is_w_block_preview = $this.attr 'data-w-block-preview'
 
-        if $(this)[0].type == 'file'
-          form_data.append $(this)[0].name, $(this)[0].files[0]
+        if $this[0].type == 'file'
+          form_data.append $this[0].name, $(this)[0].files[0]
 
         request_params =
-          url : $(this).attr "data-action"
+          url : $this.attr "data-action"
           method : 'post'
           data : form_data
           contentType: false
@@ -962,6 +656,112 @@ market =
         $.ajax request_params
 
         return false
+
+      $ document
+      .on 'click', '.js-remove-image', (e)->
+        e.preventDefault()
+        $this = $ this
+        $parent = $this.parent()
+
+        $parent
+        .next '.add-file-w'
+        .show()
+        $parent.remove()
+
+        cbca.editAdPage.updatePreview()
+
+
+      $ document
+      .on 'mouseenter', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .addClass '__hover'
+
+      $ document
+      .on 'mouseleave', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .removeClass '__hover'
+
+      $ document
+      .on 'mousedown', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .addClass '__active'
+
+      $ document
+      .on 'mouseup', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .removeClass '__active'
+
+      $ '.js-file-upload'
+      .unbind "change"
+      .bind "change", (e) ->
+        e.preventDefault()
+        $this = $ this
+        $parent = $this.closest '.add-file-w'
+        form_data = new FormData()
+
+        is_w_block_preview = $this.attr 'data-w-block-preview'
+
+        if $this[0].type == 'file'
+          form_data.append $this[0].name, $this[0].files[0]
+
+        request_params =
+          url : $this.attr "data-action"
+          method : 'post'
+          data : form_data
+          contentType: false
+          processData: false
+          success : ( resp_data ) ->
+
+            if typeof is_w_block_preview != 'undefined'
+              market.ad_form.queue_block_preview_request()
+
+              $('#' + $this.attr('data-related-field-id'))
+              .find '.js-image-key'
+              .val resp_data.image_key
+              .trigger 'change'
+
+            else
+
+              fieldName = $this.attr 'data-name'
+
+              if $this.attr 'multiple'
+                i = $parent
+                    .parent()
+                    .find '.__preview'
+                    .size()
+                fieldName = fieldName + '[' + i + ']'
+
+              html = ['<div class="add-file-w __preview">',
+                      '<input class="js-image-key" type="hidden" name="',
+                      fieldName,
+                      '" value=""/>',
+                      '<img class="add-file-w_image js-image-preview" src="" />',
+                      '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                      '</div>'].join ''
+
+              $parent.before html
+
+              $parent
+              .prev()
+              .find '.js-image-key'
+              .val resp_data.image_key
+              .trigger 'change'
+
+              $parent
+              .prev()
+              .find '.js-image-preview'
+              .show()
+              .attr 'src', resp_data.image_link
+
+              if !$this.attr 'multiple'
+                $parent.hide()
+
+        $.ajax request_params
+
 
     crop :
       init_triggers : () ->
@@ -1373,9 +1173,14 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="ad-full-preview__close-cross" onclick="cbca.popup.hidePopup();"></div><div class="sio-mart-showcase">' + data + '</div></div>'
-            $('#adFullPreview .sm-block').addClass 'double-size'
-            cbca.popup.showPopup 'adFullPreview'
+
+            $ '#adFullPreview'
+            .remove()
+            $ '#popupsContainer'
+            .append '<div class="popup" id="adFullPreview"><div class="popup_header"><a class="close f-right js-close-popup"></a></div><div class="popup_cnt"><div class="sio-mart-showcase">' + data + '</div></div></div>'
+            $ '#adFullPreview .sm-block'
+            .addClass 'double-size'
+            cbca.popup.showPopup '#adFullPreview'
 
             market.styles.init()
 
@@ -1439,12 +1244,9 @@ market =
 
   init: () ->
 
-    $(document).bind 'keyup', ( event ) ->
-      if event.keyCode == 27
-        cbca.popup.hidePopup()
-
     this.ad_form.init()
-    $(document).ready () ->
+    $ document
+    .ready () ->
       market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()

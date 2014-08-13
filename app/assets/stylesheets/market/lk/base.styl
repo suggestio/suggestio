@@ -1,292 +1,152 @@
-.sm-note
-  font-size: 12px
-  padding: 10px 0px
-
-.clear
-  clear: both
-
-.lk
-
-  .header-wrap
-    background: #23313d
-    position: relative
-    margin-bottom: -60px
-    min-width: 1000px
-
-    .center
-      height: 60px
-      width: 1000px
-      margin: 0 auto
-
-      .logo
-        margin-left: 7px
-        margin-top: 5px
-        display: block
-        text-decoration: none
-        float: left
-
-      .auth
-        float: right
-        margin-right: 50px
-        padding-top: 5px
-        line-height: 14px
-
-        .gray
-          font-size: 14px
-          color: #949494
-          font-family: 'Arial'
-
-        .user
-          position: relative
-          color: white
-          font-size: 14px
-          font-family: 'Arial'
-          text-decoration: none
-          .select-but
-            position: absolute
-            right: -20px
-            top: 0
-            padding: 2px 4px 3px
-            height: 8px
-            width: 8px
-            display: block
-            float: right
-            background: url('/assets/images/market/lk/select-but.png') no-repeat
-            background-position: 2px -56px
-            border-top: 1px solid #23313d
-            border-right: 1px solid #23313d
-            border-left: 1px solid #23313d
-            border-radius(2px 2px 0 0)
-          ul
-            display: none
-        .user:hover
-          cursor: default
-          color: #949494
-          .select-but
-            padding: 5px 4px 4px
-            background: url('/assets/images/market/lk/select-but.png') no-repeat 4px 3px #b5b8bb
-            border-top: 1px solid white
-            border-right: 1px solid white
-            border-left: 1px solid white
-            z-index: 1
-          ul
-            position: absolute
-            display: block
-            border-radius(2px 0 2px 2px)
-            border: 1px solid white
-            background: #b5b8bb
-            right: -20px
-            top: 17px
-            li
-              padding: 5px 20px
-              border-top: 1px solid white
-              a
-                text-decoration: none
-                font-size: 12px
-                font-family: 'Arial'
-                color: #676666
-            li:first-child
-              border-top: none
-            li:hover
-              color: #676666
-              text-decoration: underline
-
-  .body-wrap
-    min-width: 1000px
-    min-height: 100%
-    background: #e1e1e1
-
-    .title-wrap
-      height: 60px
-      padding-top: 60px
-      margin-bottom: -120px
-      background: #efefef
-      border-bottom: 1px solid #9a9b9b
-
-      .center
-        position: relative
-        padding-top: 15px
-        max-width: 1000px
-        margin: 0 auto
-
-        .adn-title-buttons
-          position: absolute
-          top: 3px
-          right: 50px
-
-          .gray-but-wrap
-
-            a
-              padding: 7px 15px 3px
-
-        .title-inner
-          font-size: 30px
-          color: #676666
-          font-family: 'PFDinTextCompPro-Medium'
-          padding-left: 50px
-
-    .status-bar
-      position: absolute
-      z-index: 3
-      width: 100%
-      opacity: 0.8
-      top: 60px
-      left: 0
-      color: white
-      font-size: 24px
-      font-family: 'PT Sans Narrow', 'sans-serif'
-      text-align: center
-      p
-        margin: 14px 0
-    .status-bar.bad
-      background: #e23131
-    .status-bar.good
-      background: #48ab38
-
-    .body
-      max-width: 878px
-      margin: 0 auto
-      padding-bottom: 60px
-      padding-top: 130px
-
-    .body_width-auto
-      width: auto
-
-  .footer-wrap
-    min-width: 1000px
-    height: 60px
-    position: relative
-    margin-top: -60px
-    background: #23313d
-
-    .footer
-      width: 1000px
-      margin: 0 auto
-      padding-top: 25px
-
-      .copyright-block
-        padding-right: 5px
-        padding-left: 62px
-        color: #a8c3cb
-        font-size: 12px
-        font-family: 'Arial'
-
-        a
-          color: #a8c3cb
-          text-decoration: none
-
-        a:hover
-          text-decoration: underline
-
-      .socials
-        margin-right: 50px
-        float: right
-        a
-          display: inline-block
-          line-height: 16px
-          color: #a8c3cb
-          font-size: 12px
-          font-family: 'Arial'
-          padding-left: 20px
-          margin-left: 10px
-          text-decoration: none
-          background: url('/assets/images/market/lk/soc-footer.png') no-repeat
-        a:hover
-          text-decoration: underline
-        .fb
-          background-position: 0 0
-        .tw
-          background-position: 0 -65px
-
-
-/* BASE REFACTORING */
-
-
-/*****************/
-/* HEADER start */
-/***************/
+/********************************************************************************************************************/
+/* Header */
+/********************************************************************************************************************/
 .header
-  position: relative
-  margin-bottom: -60px /* равно высоте header'a */
-  min-width: 1000px
+  position        relative
+  margin-bottom   -60px /* равно высоте header'a */
+  min-width       1000px
+  background      #23313d
 
-  background: #23313d
+  &.__responsive
+    min-width 320px
 
-.header__cnt
-  height: 60px
-  width: 1000px
-  margin: 0 auto
+  &.__without-background
+    background none
+
+.header_cnt
+  height  60px
+  width   1000px
+  margin  0 auto
+
+  &.__responsive
+    width     auto
+    max-width 1000px
 
 .siom-logo-def
-  float: left
+  float           left
+  margin-top      5px
+  display         block
+  text-decoration none
 
-  margin-left: 7px
-  margin-top: 5px
-  display: block
+/********************************************************************************************************************/
+/* Body */
+/********************************************************************************************************************/
 
-  text-decoration: none
+.body
+  min-width   1000px
+  min-height  100%
+  background  #e1e1e1
 
-/***************/
-/* BODY start */
-/*************/
+  &.__responsive
+    min-width 320px
 
-/* TODO пока только в .sys потом сделать первого уровня и поменять dom во всём лк */
-.sys
+.body_cnt
+  max-width       878px
+  margin          0 auto
+  padding-bottom  60px /* равно высоте footer'a */
+  padding-top     130px /* равно высоте header'a + title'a + 10px */
 
-  .body
-    min-width: 1000px
-    min-height: 100%
-    background: #e1e1e1
+  &.__responsive
+    padding-left  10px
+    padding-right 10px
 
-  .body__cnt
-    width: 878px
-    margin: 0 auto
-    padding-bottom: 60px /* равно высоте footer'a */
-    padding-top: 130px /* равно высоте header'a + title'a + 10px */
+  &.__top-S
+    padding-top   80px
 
-  .body__cnt._responsible
-    width: auto
+.page-title
+  min-height    60px
+  padding-top   60px
+  margin-bottom -120px
+  background    #efefef
+  border-bottom 1px solid #9a9b9b
 
-  .title
-    height: 60px
-    padding-top: 60px
-    margin-bottom: -120px
-    background: #efefef
-    border-bottom: 1px solid #9a9b9b
+.page-title_cnt
+  position    relative
+  max-width   1000px
+  margin      0 auto
+  padding-top 15px
 
-  .title-cnt
-    position: relative
-
-    width: 950px
-    margin: 0 auto
-    padding-top: 15px
-    padding-left: 50px
-
-    font-size: 30px
-    color: #676666
-    font-family: 'PFDinTextCompPro-Medium'
+  font-size   30px
+  color       #676666
+  font-family 'PFDinTextCompPro-Medium'
 
 
-.body-wrap_responsive-mode
-  min-width: 320px !important
+/********************************************************************************************************************/
+/* Footer */
+/********************************************************************************************************************/
 
-.body_responsive-mode
-  padding-left: 10px
-  padding-right: 10px
+.footer
+  position    relative
+  margin-top  -60px
+  min-width   1000px
+  height      60px
+  background  #23313d
 
-.body_padding-top-80
-  padding-top: 80px !important
+  &.__responsive
+    min-width 320px
 
-.header-wrap_responsive-mode
-  min-width: 320px !important
+  &.__fill-1
+    color             #d0d0d0
+    background-color  #497a86
 
-.header_responsive-mode
-  width: auto !important
-  max-width: 1000px
+  &_wifi
+    margin-top          -10px
+    width               300px
 
-.footer-wrap_responsive-mode
-  min-width: 320px !important
+    background          url('/assets/images/market/lk/wifi-icon.png') no-repeat
+    background-size     50px 35px
+    background-position right center
 
-.footer_responsive-mode
-  width: auto !important
-  max-width: 1000px
+    line-height         35px
+    font-size           12px
+    color               #d0d0d0
+
+.footer_cnt
+  margin      0 auto
+  width       1000px
+  padding-top 25px
+
+  &.__responsive
+    width     auto !important
+    max-width 1000px
+
+.copyright-block
+  padding-right 5px
+  padding-left  62px
+  color         #a8c3cb
+  font-size     12px
+
+  &.__color-1
+    color #d0d0d0
+
+.footer_link
+  color           #a8c3cb
+  text-decoration none
+
+  &:hover
+    text-decoration underline
+
+/********************************************************************************************************************/
+/* Всплывающие полосы в шапке */
+/********************************************************************************************************************/
+.status-bar
+  position    absolute
+  z-index     3
+  opacity     0.8
+  top         60px
+  left        0
+
+  width       100%
+
+  color       white
+  font-family 'PT Sans Narrow', 'sans-serif'
+  text-align  center
+
+  &.__bad
+    background  #e23131
+
+  &.__good
+    background  #48ab38
+
+  &_cnt
+    margin  18px  /* Используется дополнительный контейнер, для корректного отображения эффектов SlideDown&SlideUp */

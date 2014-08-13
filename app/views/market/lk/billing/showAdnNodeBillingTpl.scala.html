@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], txns: Seq[MBillTxn], mbc: MBillContract, otherRcvrs: Seq[MAdnNode])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], mbc: MBillContract, otherRcvrs: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -7,219 +7,153 @@
 
 @market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
 
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
-      <div class="title-inner">НАСТРОЙКИ</div>
+  <div class="page-title">
+    <div class="page-title_cnt">
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
+      НАСТРОЙКИ
     </div>
   </div>
 
-  <div class="body billing-page">
+  <div class="body_cnt">
 
-    <div class="lk-edit-form__block js-slide-wrap" style="margin-bottom: 0;">
+    @market.lk.lkBlock("Биллинг") {
 
-      <div class="lk-edit-form__block_title">
-        <div class="border-line"></div>
-        <span class="lk-edit-form__block_title_span">
-        Биллинг
+      @* Верхняя информация: баланс, тарификация *@
+      <table class="siom-table __size-XL">
+
+        @ctx.billBalanceOpt.map { mbb =>
+        <tr>
+          <td class="siom-table_top-cnt">
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
+
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>
+            </div>
+            <div class="clear"></div>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
+
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</strong>
+            </div>
+            <div class="clear"></div>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Заблокировано<br/>средств:</span>
+
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.blocked, mbb.currency)</strong>
+            </div>
+          </td>
+
+          <td class="siom-table_top-cnt">
+            <div class="border-line __vertical js-vertical-line f-left"></div>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Списание средств:</span>
+
+              <strong class="color-strong f-left">18.05.2014</strong>
+            </div>
+          </td>
+          <td class="siom-table_top-cnt">
+            <div class="border-line __vertical js-vertical-line f-right"></div>
+            <div class="table-cell-cnt __size-XS">
+
+              <span class="gray-but-smallest inline f-left">
+                <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
+              </span>
+
+            </div>
+          </td>
+
+          <td class="siom-table_top-cnt">
+            <div class="table-cell-cnt __size-XS">
+              <a class="siom-link-btn __size-M __ft-L __color-5 js-slide-btn" data-fix-title="true"  href="#requisites">РЕКВИЗИТЫ</a>
+            </div>
+          </td>
+
+        }
+      </table>
+
+    }<!-- Верхняя информация end -->
+
+    <div class="siom-block-child" id="requisites">
+      @market.lk.lkBlock("Реквизиты платежа:") {
+
+        @* Реквизиты платежа *@
+        @_billPaymentBankTpl(mbc)
+        <span class="gray-but-smallest" style="margin-top: 25px;">
+          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
         </span>
-        <a class="js-g-slide-toggle open l-right">Свернуть</a>
-        <div class="border-line"></div>
-      </div>
 
-      <div class="lk-edit-form__block_body js-slide-content">
-        <div class="lk-edit-form__block_body_inner">
-
-          @* Верхняя информация: баланс, тарификация *@
-          <table>
-
-            @ctx.billBalanceOpt.map { mbb =>
-            <tr>
-              <td>
-                <div class="ovh" style="padding-left: 0;">
-                  <span class="prop-title">Доступные средства:</span>
-                </div>
-
-                <div class="ovh">
-                  <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
-                </div>
-
-                <br/>
-
-                <div class="ovh" style="padding-left: 0;">
-                  <span class="prop-title">Всего денег:</span>
-                </div>
-
-                <div class="ovh">
-                  <span class="value big">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</span>
-                </div>
-
-                <br/>
-
-                <div class="ovh" style="padding-left: 0;">
-                  <span class="prop-title">Заблокиро-<br/>вано:</span>
-                </div>
-
-                <div class="ovh">
-                  <span class="value big">@formatPrice(mbb.blocked, mbb.currency)</span>
-                </div>
-              </td>
-
-              <td>
-                <div class="border-line-vertical f-left"></div>
-                <div class="ovh">
-                  <span class="prop-title">Списание средств:</span>
-                </div>
-              </td>
-              <td>
-                <div class="border-line-vertical f-right"></div>
-                <div class="ovh">
-                  @if(!txns.isEmpty) {
-                    <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
-
-                    <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
-                      <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
-                    </span>
-                  } else {
-
-                    Не происходило
-                  }
-
-                </div>
-              </td>
-
-              <td style="vertical-align: top; padding-top: 10px;">
-                <div class="ovh" style="padding-top: 0; padding-bottom: 0;">
-                  <div class="gray-but-wrap">
-                    <div class="white-border-top">
-                      <a style="padding: 7px 15px 3px;" href="requisitesContent" class="btn js-slide-btn">Реквизиты</a>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-            }
-          </table>
-
-        </div>
-      </div>
-    </div><!-- Биллинг end -->
-
-    <div class="lk-edit-form__block js-slide-wrap" id="requisitesContent" style="display: none; margin-bottom: 0;">
-
-      <div class="lk-edit-form__block_title">
-        <span class="lk-edit-form__block_title_span">
-        Реквизиты платежа:
-        </span>
-        <a class="js-close-btn f-right"></a>
-        <div class="border-line"></div>
-      </div>
-
-      <div class="lk-edit-form__block_body js-slide-content">
-        <div class="lk-edit-form__block_body_inner">
-
-          @* Реквизиты платежа *@
-          @_billPaymentBankTpl(mbc)
-          <span class="gray-but-smallest" style="margin-top: 25px;">
-            <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
-          </span>
-
-        </div>
-      </div>
+      }
     </div>
 
 
-    @if(!txns.isEmpty) {
-      <div class="lk-edit-form__block js-slide-wrap" id="transactionsHistory" style="display: none; margin-bottom: 0;">
+    <div class="siom-block-child" id="transactionsHistory">
+      @market.lk.lkBlock("История операций") {
 
-        <div class="lk-edit-form__block_title">
-          <span class="lk-edit-form__block_title_span">
-          История операций
-          </span>
-          <a class="js-close-btn f-right"></a>
-          <div class="border-line"></div>
-        </div>
-
-        <div class="lk-edit-form__block_body js-slide-content">
-          <div class="lk-edit-form__block_body_inner transactions-list">
-
-            @* История транзакций *@
-            @txns.zipWithIndex.map { case (txn , i) =>
-              <div class="item">
-                <div class="f-left">
-                  <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
-                </div>
-                <div class="ovh">
-                  Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
-                </div>
+        <table class="siom-table __size-XL" id="transactionsList">
+          <tr>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                №
               </div>
+              <div class="border-line"></div>
+            </th>
+            <th></th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                Основание:
+              </div>
+              <div class="border-line"></div>
+            </th>
+            <th></th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                Дата операции:
+              </div>
+              <div class="border-line"></div>
+            </th>
+            <th></th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S ">
+                Сумма:
+              </div>
+              <div class="border-line"></div>
+            </th>
+          </tr>
+        </table>
 
-              @if(i != txns.size - 1) {
-                <div class="border-line"></div>
-              }
+      }
+    </div><!-- История операции end -->
 
-            }
-
-          </div>
-        </div>
-      </div>
-    }
 
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
     @if(!mmpDailyTariffs.isEmpty) {
-      <div class="lk-edit-form__block js-slide-wrap" style="margin-top: 10px;">
 
-        <div class="lk-edit-form__block_title">
-          <div class="border-line"></div>
-          <span class="lk-edit-form__block_title_span">
-          Ставка тарифных планов
-          </span>
-          <a class="js-g-slide-toggle open l-right">Свернуть</a>
-          <div class="border-line"></div>
-        </div>
+      @market.lk.lkBlock("Ваша ставка тарифных планов") {
 
-        @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
+          @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
 
-      </div>
+      }
+
     }
+
 
     @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
        Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
     @if(!otherRcvrs.isEmpty) {
 
-      <div class="lk-edit-form__block js-slide-wrap">
+      @market.lk.lkBlock("Ставка тарифных планов рекламного размещения") {
 
-        <div class="lk-edit-form__block_title">
-          <div class="border-line"></div>
-          <span class="lk-edit-form__block_title_span">Ставка тарифных планов рекламного размещения</span>
-          <a class="js-g-slide-toggle open l-right">Свернуть</a>
-          <div class="border-line"></div>
-        </div>
+        @* Пока без вкладок, просто сплошным списком. *@
+        @otherRcvrs.map { rcvr =>
 
-        <div class="lk-edit-form__block_body js-slide-content">
-          <div class="lk-edit-form__block_body_inner">
-            @* Пока без вкладок, просто сплошным списком. *@
-            @otherRcvrs.map { rcvr =>
+          @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
+          @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
 
-              @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-              <div class="lk-edit-form__block js-slide-wrap">
 
-                <div class="lk-edit-form__block_title">
-                  <div class="border-line"></div>
-                  <span class="lk-edit-form__block_title_span">
-                   @rcvr.meta.name / @rcvr.meta.town
-                  </span>
-                  <a class="js-g-slide-toggle l-right" href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
-                  <div class="border-line"></div>
-                </div>
+        }
 
-              </div>
-
-            }
-          </div>
-        </div>
-      </div>
+      }
 
     }
 

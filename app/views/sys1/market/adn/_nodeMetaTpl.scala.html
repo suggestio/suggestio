@@ -1,0 +1,94 @@
+@(meta: AdnMMetadata)(implicit ctx: Context)
+
+@* Блок верстки, отображающий поля метаданных узла. *@
+@import ctx._
+@import datetime._
+@import util.TplDataFormatUtil._
+@import io.suggest.util.UrlUtil._
+@import sys1.stuff.proptable._
+
+
+@_ptableTpl() {
+
+  @_ptableRowTpl(Messages("Name") + ":") {
+    @meta.name
+  }
+
+  @meta.description.map { descr =>
+    @_ptableRowTpl( "Описание:" ) {
+      @descr
+    }
+  }
+
+  @_ptableRowTpl( Messages("Created")+":") {
+    @_prettyDate(meta.dateCreated, withSpan = true)
+  }
+
+  @meta.town.map { town =>
+    @_ptableRowTpl( "Город:") {
+      @town
+    }
+  }
+
+  @meta.audienceDescr.map { audDescr =>
+    @_ptableRowTpl( "Описание аудитории:") {
+      @audDescr
+    }
+  }
+
+  @meta.humanTrafficAvg.map { htAvg =>
+    @_ptableRowTpl( "Человеческий трафик:") {
+      @formatInt(htAvg) чел. в день
+    }
+  }
+
+  @meta.info.map { info =>
+    @_ptableRowTpl( "Информация о товарах/услугах:") {
+      @info
+    }
+  }
+
+  @meta.address.map { address =>
+    @_ptableRowTpl( Messages("Address") + ":") {
+      @address
+    }
+  }
+
+  @meta.phone.map { phone =>
+    @_ptableRowTpl( Messages("Phone") + ":") {
+      @phone
+    }
+  }
+
+  @meta.floor.map { floor =>
+    @_ptableRowTpl( Messages("Floor") + ":") {
+      @floor
+    }
+  }
+
+  @meta.section.map { section =>
+    @_ptableRowTpl( Messages("Section") + ":") {
+      @section
+    }
+  }
+
+  @meta.siteUrl.map { siteUrl =>
+    @_ptableRowTpl( "Сайт:") {
+      <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a>
+    }
+  }
+
+  @meta.color.map { color =>
+    @_ptableRowTpl("Цвет:") {
+      #@color
+      <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    }
+  }
+
+  @meta.welcomeAdId.map { wad =>
+    @_ptableRowTpl("Приветствие:") {
+      Есть(@wad)
+    }
+  }
+
+}

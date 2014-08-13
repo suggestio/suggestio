@@ -1,46 +1,27 @@
-@(mir: MInviteRequest)(implicit ctx: Context)
+@(mir: MInviteRequest, mcOpt: Option[MCompany], nodeOpt: Option[MAdnNode], eactOpt: Option[EmailActivation])(implicit ctx: Context)
 
 @* Отображение одного реквеста. *@
 @import ctx._
-@import stuff._
+@import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
+@import helper._
+@import sys1.market.adn._
+@import sys1.market.company._
 
-@yn(b: Boolean) = {
-  @(if(b) Messages("Yes") else Messages("No"))
+@btn(btnText: String, to: Call) = {
+  @form(to) {
+    <input type="submit" value="@btnText"/>
+  }
 }
 
-@irBase(title = mir.meta.company) {
+@irBase(title = mir.name) {
 
+  @form( routes.SysMarketInvReq.deleteIR(mir.id.get) ) {
+    <input type="submit" value="Удалить этот запрос"/>
+  }
+
+  <br/><br/>
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
-  @* Рендерим раздел метаданных. *@
-  <p>Компания: @mir.meta.company</p>
-  <p>Адрес:</p>
-  <pre>@mir.meta.address</pre>
-  <p>Офисный телефон: @mir.meta.officePhone</p>
-  <p>Email: <a href="mailto:@mir.meta.email">@mir.meta.email</a></p>
-  @mir.meta.audienceDescr.map { aud =>
-    <p>Описание аудитории: @aud</p>
-  }
-  @mir.meta.humanTraffic.map { ht =>
-    <p>Людской траффик: @ht</p>
-  }
-  @mir.meta.siteUrl.map { siteUrl =>
-    <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
-  }
-  @mir.meta.info.map { info =>
-    <p>Информация: </p>
-    <pre>@info</pre>
-  }
-  @mir.meta.floor.map { floor =>
-    <p>Этаж: @floor</p>
-  }
-  @mir.meta.section.map { section =>
-    <p>Секция: @section</p>
-  }
-  @mir.meta.payReqs.map { payReqs =>
-    <p>Реквизиты платежа:</p>
-    <pre>@payReqs</pre>
-  }
 
   @* Ответы на вопросы по поводу wi-fi, если есть. *@
   @mir.joinAnswers.map { ja =>
@@ -70,17 +51,91 @@
     }
   }
 
-  @mir.progress.map { p =>
-    <h3>Исполнение запроса</h3>
+  @defining( mir.company.isRight ) { mcInstalled =>
+  @defining( mir.adnNode.isRight ) { nodeInstalled =>
 
-    @* TODO Раскомментить, когда при создании кампании будет происходить обновление экземпляра MInviteRequest. *@
-    @*p.companyIdOpt.fold {
-      <a href="@routes.SysMarket.companyAddForm( Some(MCompany(name = mir.meta.company)) )">Создать новую компанию...</a>
-    } { companyId =>
-      <a href="@routes.SysMarket.companyShow(companyId)">Перейти к компании</a>
-      TODO Надо добавить сюда обработку adn_id
-    }*@
+    @* Блок компании. *@
+    <br/><br/>
+    <div>
+      @mcOpt.fold {
+        <p>Ошибка доступа к данным компании.</p>
+        TODO Нужна кнопка восстановления в шаблон.
+      } { mc =>
+        <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
+        @_companyMetaTpl(mc.meta)
+        @if(mcInstalled) {
+          Эта компания сейчас <a href="@routes.SysMarket.companyShow(mc.id.get)">существует</a> в системе.
+        }
+        <a href="@if(mcInstalled) {@routes.SysMarket.companyEditForm(mc.id.get)} else {@routes.SysMarketInvReq.companyEdit(mir.id.get)}">@Messages("Edit")</a>
+        @if(mcInstalled) {
+          @btn("Деинсталлировать компанию назад в заготовку", routes.SysMarketInvReq.companyUninstallSubmit(mir.id.get))
+        } else {
+          @if(!nodeInstalled) {
+            @btn("Установить компанию в систему", routes.SysMarketInvReq.companyInstallSubmit(mir.id.get))
+          }
+        }
+        @* TODO Нужна замена компании на существующую. *@
+      }
+    </div>
+
+
+    @* Блок рекламного узла. *@
+    <br/><br/>
+    <div>
+      @nodeOpt.fold {
+        <p>Ошибка доступа к данным узла.</p>
+        TODO Нужна ссылка для синтеза нового узла.
+      } { node =>
+        <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
+        @_nodeMetaTpl(node.meta)
+        @if(nodeInstalled) {
+          Этот узел сейчас <a href="@routes.SysMarket.showAdnNode(node.id.get)">существует</a> в системе.
+        }
+        <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(node.id.get)} else {@routes.SysMarketInvReq.nodeEdit(mir.id.get)}">@Messages("Edit")</a>
+        @if(mcInstalled) {
+          @if(nodeInstalled) {
+            @btn("Деинсталировать узла назад в заготовку", routes.SysMarketInvReq.nodeUninstallSubmit(mir.id.get))
+          } else {
+            @btn("Установить узел в систему", routes.SysMarketInvReq.nodeInstallSubmit(mir.id.get))
+          }
+        }
+      }
+    </div>
+
+
+    @* Блок инвайта на управление узлом. *@
+    <br/><br/>
+    <div>
+      @eactOpt.fold {
+        <p>Кажется, инвайт уже использован или был удалён.</p>
+        @mir.adnNode.right.map { adnId =>
+          <a href="@routes.SysMarket.nodeOwnerInviteForm(adnId)">Инвайты на управление узлом</a>
+        }.right.getOrElse {}
+      } { eact =>
+        <h3>Инвайт на управление узлом</h3>
+        Указанный email: <a href="mailto:@eact.email">@eact.email</a>
+        @if(nodeInstalled) {
+          @if(mir.emailAct.isLeft) {
+            @btn("Выслать инвайт", routes.SysMarketInvReq.eactInstallSubmit(mir.id.get))
+          } else {
+            @* TODO Кнопка деинсталляция запроса на активацию. *@
+          }
+          <a href="@routes.SysMarket.nodeOwnerInviteForm(mir.adnNode.right.get)">Смотреть инвайты на управление узлом...</a>
+        }
+      }
+    </div>
+
+  }
   }
 
-  @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
+
+  @* Нарисовать на экране заданные в инвайте платёжные реквизиты. *@
+  @mir.payReqsRaw.map { prr =>
+    <br/><br/>
+    <div>
+      <h3>Указаны платёжные реквизиты:</h3>
+      <pre>@prr</pre>
+    </div>
+  }
+
 }
