@@ -343,10 +343,15 @@
             </div>
             <div class="start-work-btn-w section-start_btn">
               @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
-                <a class="start-work-btn link def-transition" href="@routes.MarketShowcase.demoWebSite(demoAdnId)">
-                  <span class="color-light default-transition">Демо</span>
+                <a class="start-work-btn __fill link def-transition" href="@routes.MarketShowcase.demoWebSite(demoAdnId)">
+                  ДЕМО
                 </a>
               }
+            </div>
+            <div class="browsers phone-hidden">
+              <div class="browsers_i __icon-1"></div>
+              <div class="browsers_i __icon-2 __list"></div>
+              <div class="browsers_i __icon-3 __list"></div>
             </div>
           </div>
 
