@@ -10,6 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{RequestHeader, QueryStringBindable}
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
+import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
 import scala.concurrent.{Future, future}
 
@@ -163,39 +164,63 @@ case object AdsGeoNone extends AdsGeoMode {
   override def geoSearchInfo(implicit request: RequestHeader) = Future successful None
 }
 
+
 /** Геолокация по ip. */
-case object AdsGeoIp extends AdsGeoMode {
+case object AdsGeoIp extends AdsGeoMode with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   val CACHE_TTL_SECONDS = configuration.getInt("ads.search.geo.ip.cache.ttl.seconds") getOrElse 240
+
+  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt") getOrElse 50.0
+
+  val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
   override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
-    val ra = request.remoteAddress
-    if (ra startsWith "127.") {
-      Future successful None
+    val ra0 = request.remoteAddress
+    lazy val logPrefix = s"geoSearchInfo($ra0): "
+    // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
+    val inetAddr = InetAddress.getByName(ra0)
+    val ra = if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
+      val ra1 = REPLACE_LOCALHOST_IP_WITH
+      debug(logPrefix + "Local ip detected. Rewriting ip with " + ra1)
+      ra1
     } else {
-      // Запускаем небыстрый синхронный поиск в отдельном потоке.
-      future {
-        // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
-        val ck = ra + ".gipq"
-        Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
-          DB.withConnection { implicit c =>
-            IpGeoBaseRange.findForIp(InetAddress getByName ra)
-              .headOption
-              .flatMap { _.cityOpt }
-              .map { city =>
-                GeoDistanceQuery(
-                  center = city.geoPoint,
-                  distanceMin = None,
-                  distanceMax = Distance(50, DistanceUnit.KILOMETERS)
-                )
-              }
-          } // DB
-        }   // Cache
-      }     // future()
-    }       // if localhost
-  }         // def geoSearchInfo()
+      ra0
+    }
+    // Запускаем небыстрый синхронный поиск в отдельном потоке.
+    future {
+      // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
+      val ck = ra + ".gipq"
+      Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
+        val result = DB.withConnection { implicit c =>
+          IpGeoBaseRange.findForIp(InetAddress getByName ra)
+            .headOption
+            .flatMap { _.cityOpt }
+            .map { city =>
+              trace(logPrefix + "Candidate city: " + city)
+              GeoDistanceQuery(
+                center = city.geoPoint,
+                distanceMin = None,
+                distanceMax = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
+              )
+            }
+        } // DB
+        if (result.isEmpty)
+          warn(logPrefix + "IP not found in ipgeobase.")
+        result
+      }   // Cache
+    }     // future()
+  }
+
+}
+
+
+object AdsGeoLocation {
+
+  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.location.distance.km.dflt") getOrElse 4.0
 
 }
 
@@ -207,7 +232,7 @@ case class AdsGeoLocation(lat: Double, lon: Double) extends AdsGeoMode {
     val result = GeoDistanceQuery(
       center      = GeoPoint(lat = lat, lon = lon),
       distanceMin = None,
-      distanceMax = Distance(5, DistanceUnit.KILOMETERS)
+      distanceMax = Distance(AdsGeoLocation.DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
     )
     Future successful Some(result)
   }

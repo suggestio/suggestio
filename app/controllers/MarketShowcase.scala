@@ -292,9 +292,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         adSearch.geo.geoSearchInfo.flatMap {
           case None =>
             Future successful adSearch
-          case gdqOpt @ Some(gdq) =>
-            val nodeSearchArgs = MAdnNodeSearch(geoDistance = gdqOpt)
+          case gdqSome =>
+            val nodeSearchArgs = MAdnNodeSearch(geoDistance = gdqSome)
             MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
+              trace(s"findAds(${request.path}): geo: nodeIds = ${nodeIds.mkString(", ")}")
               adSearch.copy(receiverIds = nodeIds.toList, geo = AdsGeoNone)
             }
         } recover {
