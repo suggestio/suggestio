@@ -1590,6 +1590,8 @@ th.__bg-head
     opacity             0.6
     width               9px
     height              9px
+
+    cursor              pointer
     background          url('/assets/images/market/new-design/close_retina.png') no-repeat
     background-size     9px auto
     background-position 0 0
@@ -1603,6 +1605,9 @@ th.__bg-head
       background-position 0 1px
 
   &_success-icon
+    margin-bottom 25px
+
+  &_error-icon
     margin-bottom 25px
 
   &_header
@@ -1773,7 +1778,15 @@ th.__bg-head
 .success-icon
   display             block
   height              32px
-  background-image    url('/assets/images/market/new-design/success.png')
+  background-image    url('/assets/images/market/new-design/success_retina.png')
+  background-repeat   no-repeat
+  background-size     32px 32px
+  background-position center center
+
+.error-icon
+  display             block
+  height              32px
+  background-image    url('/assets/images/market/new-design/error_retina.png')
   background-repeat   no-repeat
   background-size     32px 32px
   background-position center center
