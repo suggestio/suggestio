@@ -143,4 +143,7 @@ case class SMDemoSiteArgs(
   showcaseCall: Call,
   title: String,
   adnId: Option[String]
-)
+) {
+  // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
+  def withGeo = adnId.isEmpty
+}
