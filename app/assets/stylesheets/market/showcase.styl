@@ -258,6 +258,10 @@ code
     height: 50px
     transform( translate3d(0px, 0px, 0px) )
 
+    &.__right-aligned
+      left: auto
+      right: 14px
+
     &_inner
       width: 33px
       height: 33px
@@ -277,13 +281,11 @@ code
         background-position: -42px 0px
       &.__search
         background-position: -20px 0px
+      &.__back-right
+        background-position: -60px 0px
 
   .sm-header-round-btn.__active
     border-color: #f44040
-
-  .sm-header-search-btn
-    left: auto
-    right: 14px
 
   img
     margin: 0px
@@ -687,10 +689,12 @@ code
       position: absolute
       left: 9px
       top: 9px
-      width: 9px
-      height: 9px
-      background: url("/assets/images/market/new-design/close_retina.png") no-repeat
-      background-size: 9px 9px
+      width: 29px
+      height: 29px
+      border: 2px #c5c5c5 solid
+      border-radius( 50px )
+      background: url("/assets/images/market-gray-cross.png") no-repeat 9px 9px
+      background-size: 11px 11px
     &_text
       padding: 70px 20px 55px 20px
       border-bottom: 1px #d7d7d7 solid

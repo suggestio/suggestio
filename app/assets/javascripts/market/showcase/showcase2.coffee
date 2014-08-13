@@ -1401,6 +1401,9 @@ siomart =
 
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
 
+      siomart.utils.ge('smCloseButton').style.display = 'none'
+      siomart.utils.ge('smCategoriesButton').style.display = 'none'
+
       if sm_cat_screen != null
         sm_cat_screen.style.display = 'block'
         siomart.utils.ge('smSearchBar').style.display = 'block'
@@ -1420,7 +1423,11 @@ siomart =
           siomart.utils.ge('smCategoriesBodyWrap').style.display = 'none'
           siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__compact'
         else
+          siomart.utils.ge('smCategoriesBodyWrap').style.display = 'block'
+          siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__compact'
           siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+          siomart.utils.ge('smCloseButton').style.display = 'block'
+          siomart.utils.ge('smCategoriesButton').style.display = 'block'
 
 
     back : () ->
