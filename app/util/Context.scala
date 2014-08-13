@@ -29,6 +29,8 @@ object Context {
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
 
   val isIpadRe = "iPad".r.unanchored
+
+  val MY_AUDIENCE_URL = controllers.Ident.AUDIENCE_URL
 }
 
 
@@ -62,7 +64,7 @@ trait Context {
   def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
 
   def myProto = Context.SIO_PROTO_DFLT
-  def myAudienceUrl = controllers.Ident.AUDIENCE_URL
+  def myAudienceUrl = Context.MY_AUDIENCE_URL
 
   implicit lazy val now : DateTime = DateTime.now
 

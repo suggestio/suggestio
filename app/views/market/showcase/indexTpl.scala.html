@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long], spsr: AdSearch)(implicit ctx: Context)
+@(mmart: MAdnNode, shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long], spsr: AdSearch, oncloseHref: String)(implicit ctx: Context)
 
 @* Начальная страница для sio-market. *@
 
@@ -68,7 +68,7 @@
 </div>
 
 @* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen()
+@_exit_screen(oncloseHref)
 
 @* Окно с выбором магазина *@
 @_shop_list(shops, mmart)

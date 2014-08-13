@@ -1,6 +1,7 @@
-@()(implicit ctx:util.Context)
+@(oncloseHref: String)(implicit ctx:util.Context)
 
 <div class="sm-close-screen" id="smCloseScreen">
+
   <div class="sm-close-screen_cnt">
 
     <a class="sm-close-screen_close" id="smExitCloseScreenButton" href=""></a>
@@ -8,7 +9,7 @@
     <div class="sm-close-screen_text">Вы покидаете SIO.Market,<br/> но всегда сможете вернуться</div>
 
     <div class="sm-close-screen_buttons">
-      <a class="sm-btn __color-1 __rounded" href="http://yandex.ru/">ВЫЙТИ</a>
+      <a class="sm-btn __color-1 __rounded" href="@oncloseHref">ВЫЙТИ</a>
     </div>
 
   </div>
