@@ -153,6 +153,20 @@ code
   font-size: 12px
   font-family: Arial
 
+.sm-btn
+  display: block
+  text-decoration: none
+  font-size: 12px
+  font-family: 'opensans-regular-webfont'
+  width: 40px
+  margin: 0px auto
+  padding: 15px 50px
+  &.__color-1
+    background: #f44040
+    color: #fff
+  &.__rounded
+    border-radius( 10px )
+
 .sio-mart-showcase 
   position: fixed
   width: 100%
@@ -654,50 +668,38 @@ code
     height: 100%
     left: 0px
     top: 0px
-    background: rgba(0,0,0,0.85)
+    background: rgba(0,0,0,0.65)
     z-index: 10004
     font-family : 'heliosthin'
     font-size: 30px
     text-align: center
 
-    p
-      padding: 0px
-      margin: 20px 0px
-
-    .es-text
-      padding: 50px 0px
-      font-size: 28px
-      line-height: 28px
-
-    .es-container
+    &_cnt
+      width: 300px
+      margin-left: -150px
+      margin-top: -125px
       position: absolute
-      width: 603px
       left: 50%
       top: 50%
-      margin-left: -301px
-      margin-top: -150px
-      color : #fff
+      border-radius( 5px )
+      background: #fff
+    &_close
+      position: absolute
+      left: 9px
+      top: 9px
+      width: 9px
+      height: 9px
+      background: url("/assets/images/market/new-design/close_retina.png") no-repeat
+      background-size: 9px 9px
+    &_text
+      padding: 70px 20px 55px 20px
+      border-bottom: 1px #d7d7d7 solid
+      font-family: 'opensans-light'
+      font-size: 14px
+      color: #737373
 
-    strong
-      display: block
-      font-size: 72px
-
-    .buttons
-      width: 492px
-      margin: 0px auto
-
-    .sm-button
-      float: left 
-      width: 210px
-      font-size: 36px
-      line-height: 36px
-      border-width: 2px
-      font-family : 'PharmadinCondensedLight'
-
-    .sm-button.sm-close-button
-      margin-right: 23px
-      color: #ec7676
-      border-color: #ec7676
+    &_buttons
+      padding: 25px 0px
 
 .sio-mart-trigger
   cursor: pointer
