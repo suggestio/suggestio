@@ -478,8 +478,11 @@ CbcaPopup =
 
   showPopup: (popupSelector) ->
     this.showOverlay()
+    popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
     $popup.show()
+
+    console.log popupSelector
 
     $popup
     .find '.sm-block'
@@ -496,8 +499,6 @@ CbcaPopup =
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
-
-    console.log popupSelector
 
     this.hideOverlay()
     $popup.hide()
@@ -524,8 +525,6 @@ CbcaPopup =
 
     $ document
     .on 'click', '#overlay', ()->
-
-      console.log 'overlayClick'
 
       cbca.popup.hidePopup()
 
