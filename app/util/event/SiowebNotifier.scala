@@ -44,7 +44,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     MAdnNodeCache,
     IndicesUtil,
     deleteAdsOnAdnNodeDeleteSNSC,
-    cleanupAdnProducerIdsOnDeleteAdnNode
+    cleanupAdnProducerIdsOnDeleteAdnNode,
+    controllers.MarketShowcase
   )
 
   /** SiowebSup собирается запустить сие. */

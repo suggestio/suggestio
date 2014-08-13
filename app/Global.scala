@@ -4,6 +4,7 @@ import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
 import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.captcha.CipherUtil
+import util.event.SiowebNotifier
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl

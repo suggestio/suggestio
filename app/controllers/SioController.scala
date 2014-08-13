@@ -1,8 +1,10 @@
 package controllers
 
-import java.util.regex.Pattern
+import java.io.File
+import java.net.JarURLConnection
 
 import models.Context
+import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc._
 import play.twirl.api.{TxtFormat, HtmlFormat}
@@ -29,6 +31,56 @@ import util.SiowebEsUtil.client
  * Created: 11.10.13 11:43
  * Description: Базис для контроллеров s.io.
  */
+
+object SioControllerUtil extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
+
+  /** Дата последней модификации кода проекта. Берется на основе текущего кода. */
+  val PROJECT_CODE_LAST_MODIFIED: DateTime = {
+    Option(getClass.getProtectionDomain)
+      .flatMap { pd => Option(pd.getCodeSource) }
+      .flatMap[Long] { cs =>
+        val csUrl = cs.getLocation
+        csUrl.getProtocol match {
+          case "file" =>
+            try {
+              val f = new File(csUrl.getFile)
+              val lm = f.lastModified()
+              Some(lm)
+            } catch {
+              case ex: Exception =>
+                error("Cannot infer last-modifed from file " + csUrl, ex)
+                None
+            }
+          case "jar" =>
+            try {
+              val connOpt = Option(csUrl.openConnection)
+              try {
+                connOpt map {
+                  case jaUrlConn: JarURLConnection =>
+                    jaUrlConn.getJarEntry.getTime
+                }
+              } finally {
+                connOpt foreach {
+                  _.getInputStream.close()
+                }
+              }
+            } catch {
+              case ex: Exception =>
+                warn("Cannot get jar entry time last-modified for " + csUrl, ex)
+                None
+            }
+          case other =>
+            error("Cannot detect last-modified for class source " + csUrl + " :: Unsupported protocol: " + other)
+            None
+        }
+      }
+      .fold(DateTime.now) { new DateTime(_) }
+  }
+
+}
+
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
 trait SioController extends Controller with ContextT {

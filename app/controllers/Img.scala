@@ -103,11 +103,9 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
     val ims = its.timestamp % 1000L
     val ts0 = new Instant(its.timestamp - ims) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
-    val isCached = request.headers.get(IF_MODIFIED_SINCE) flatMap {
-        DateTimeUtil.parseRfcDate
-      } exists { dt =>
-        !(ts0 isAfter dt)
-      }
+    val isCached = request.headers.get(IF_MODIFIED_SINCE)
+      .flatMap { DateTimeUtil.parseRfcDate }
+      .exists { dt => !(ts0 isAfter dt) }
     if (isCached) {
       //trace("serveImg(): 304 Not Modified")
       NotModified
@@ -116,8 +114,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
       val magicMatch = Magic.getMagicMatch(its.img)
       Ok(its.img)
-        .as(magicMatch.getMimeType)
         .withHeaders(
+          CONTENT_TYPE  -> magicMatch.getMimeType,
           LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
           CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
         )
