@@ -4,14 +4,14 @@
 @import ctx._
 @import helper._
 @import market._
-@import util.FC.divFc
+@import util.FC.radialFc
 
 @popupContent = {
 
-  <div class="popup __index" id="newPasswordForm">
+  <div class="popup js-popup __index" id="newPasswordForm">
 
     <div class="popup_header __index">
-      <a class="close f-right js-close-popup" href="#">&nbsp;</a>
+      <a class="popup_close f-left js-close-popup"></a>
     </div>
 
     @form(routes.Ident.pwResetSubmit(eAct.id.get), 'id -> "pwResetPasswordForm") {
@@ -21,15 +21,15 @@
           Новый пароль
         </div>
 
-
-
         @inputPassword(
           prf("pw1"),
-          '_label -> Messages("Type.new.password")
+          '_label -> Messages("Type.new.password"),
+          'placeholder -> Messages("Type.new.password")
         )
         @inputPassword(
           prf("pw2"),
-          '_label -> Messages("Confirm.new.password")
+          '_label -> Messages("Confirm.new.password"),
+          'placeholder -> Messages("Confirm.new.password")
         )
 
       </div>
@@ -42,6 +42,7 @@
 
       </div>
     }
+  </div>
 
 }
 

@@ -33,7 +33,7 @@
     @* Попап с формой логина *@
     @if(!ctx.isAuth) {
 
-      <div class="popup __index js-hidden" id="emailPwLoginForm">
+      <div class="popup __index js-hidden js-popup" id="emailPwLoginForm">
 
         <div class="popup_header __index">
           <a class="popup_close f-left js-close-popup" href="#"></a>
@@ -47,9 +47,10 @@
       </div>
     }
 
+    @popupContent
+
     <div class="overlay" id="overlay"></div>
 
-    @popupContent
   </div>
 
   <div class="footer __responsive __fill-1">

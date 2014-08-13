@@ -1237,6 +1237,12 @@ li
     color: #276e98
     border-color: #c6c6c6
 
+.link
+  color #f44040
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color #dc3a36
 
 .submit-w
   overflow: hidden /* т.к. все внутренние блоки со свойством float */
@@ -1596,6 +1602,9 @@ th.__bg-head
     &:active
       background-position 0 1px
 
+  &_success-icon
+    margin-bottom 25px
+
   &_header
     background: #efefef
     border-bottom: 1px solid #9a9b9b
@@ -1634,6 +1643,9 @@ th.__bg-head
 
   &_cnt.__index
     min-width 250px
+
+  &_cnt.__index-fix
+    width 250px
 
   &_t
     padding-bottom: 25px
@@ -1758,10 +1770,31 @@ th.__bg-head
   width           50px
   height          35px
 
+.success-icon
+  display             block
+  height              32px
+  background-image    url('/assets/images/market/new-design/success.png')
+  background-repeat   no-repeat
+  background-size     32px 32px
+  background-position center center
+
+.block
+  display block
+
+  &.__margin-M
+    margin  13px 0
+
+  &.__margin-L
+    margin  25px 0
+
+  &.__text-C
+    text-align center
+
 /********************************************************************************************************************/
 /* Страница входа */
 /********************************************************************************************************************/
 .index-page
+  color       #aaaaaa
   font-size   14px
   font-family 'opensans-light'
 

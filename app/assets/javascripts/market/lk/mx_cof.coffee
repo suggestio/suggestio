@@ -1,11 +1,10 @@
 $(document).ready ->
 
-  cbca.pc = PersonalCabinet
-  cbca.pc.init()
-
   cbca.popup = CbcaPopup
-  cbca.popup.init()
+  cbca.pc = PersonalCabinet
 
+  cbca.pc.init()
+  cbca.popup.init()
 
 PersonalCabinet =
 
@@ -133,7 +132,6 @@ PersonalCabinet =
           .remove()
 
           $recoverPwForm
-          .find '.popup_cnt'
           .append data
 
         error: (error)->
@@ -532,7 +530,7 @@ CbcaPopup =
       cbca.popup.hidePopup()
 
     ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
-    $ '.popup .__error'
+    $ '.popup .__error, .js-popup .__error'
     .each ()->
       $this = $ this
       $popup = $this.closest '.popup'

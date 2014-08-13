@@ -6,38 +6,41 @@
 
 @popupContent = {
 
-<div class="popup __index" id="newPasswordForm">
+  <div class="popup js-popup __index" id="newPasswordForm">
 
-  <div class="popup_header __index">
-    <a class="close f-right js-close-popup" href="#">&nbsp;</a>
-  </div>
-
-  <div class="popup_cnt __with-label __index">
-
-    <div class="popup_t">
-      НОВЫЙ ПАРОЛЬ
+    <div class="popup_header __index">
+      <a class="popup_close f-left js-close-popup"></a>
     </div>
 
-    <div class="error-label __position-def">
-      <div class="error-label_icon"></div>
-      <div class="error-label_title">Ошибка</div>
+    <div class="popup_cnt __with-label __index-fix">
+
+      <div class="popup_t __index">
+        Новый пароль
+      </div>
+
+      <div class="error-label __position-def">
+        <div class="error-label_icon"></div>
+        <div class="error-label_title">Ошибка</div>
+      </div>
+
+      <p class="block __margin-M">
+        Ключ восстановления истёк или уже использован. Невозможно продолжить восстановление пароля.
+      </p>
+
+      <p class="block __margin-M">
+        <a class="js-btn link" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+      </p>
+
     </div>
 
-    <p class="paragraph __size-M">
-      Ключ восстановления истёк или уже использован. Невозможно продолжить восстановление пароля.
-    </p>
-
-    <p class="paragraph __size-M">
-      <a class="js-btn blue-link" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
-    </p>
-
   </div>
-
-</div>
 
 }
 
 @marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
+
+  @_indexTpl()
+
 }
 
 
