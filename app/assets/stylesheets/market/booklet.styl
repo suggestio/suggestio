@@ -135,10 +135,18 @@ body
 
 .start-work-btn
   display     inline-block
-  padding     10px 50px
+  padding     10px 40px
   border      3px solid white
-  font-size   12px
+  font-size   16px
   border-radius(36px)
+
+  &.__fill
+    background-color  #ec1c23
+    border            none
+    color             white
+
+    &:hover
+      text-decoration underline
 
   &.__section-sio-market
     margin-top 50px
@@ -371,7 +379,6 @@ body
 /* Section Start */
 /********************************************************************************************************************/
 .section-start
-  height              400px
 
   &_bg-paralax
     background-image    url('/assets/images/market/booklet/section-2-4_bg.jpg')
@@ -407,6 +414,33 @@ body
 
   &_btn
     margin-top 30px
+
+.browsers
+  overflow      hidden
+  margin-top    50px
+  margin-bottom 20px
+  text-align    center
+
+  &_i
+    display           inline-block
+    width             50px
+    height            50px
+    background-image  url('/assets/images/market/booklet/retina/browser-icons.png')
+    background-repeat no-repeat
+    background-size   46px auto
+
+  &_i.__icon-1
+    background-position 0 0
+
+  &_i.__icon-2
+    background-position 0 -70px
+
+  &_i.__icon-3
+    background-position 0 -138px
+
+  &_i.__list
+    margin-left 70px
+
 
 /********************************************************************************************************************/
 /* Section I can */
@@ -868,6 +902,9 @@ body
     &_bg-paralax
       display none
 
+  .browsers
+    margin-top 25px
+
   /* Section I can */
   .section-i-can
     height 50%
@@ -1199,6 +1236,8 @@ body
     display none
 
   .start-work-btn
+    font-size 12px
+    padding   10px 50px
 
     &.__section-sio-market
       margin-top 10px
