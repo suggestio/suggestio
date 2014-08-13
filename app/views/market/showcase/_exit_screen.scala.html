@@ -1,10 +1,10 @@
-@()(implicit ctx:util.Context)
+@(oncloseHref: String)(implicit ctx:util.Context)
 
 <div class="sm-close-screen" id="smCloseScreen">
   <div class="es-container">
     <div class="es-text">Вы покидаете SIO.Market,<br/> но всегда сможете вернуться</div>
     <div class="buttons">
-      <a class="sm-button sm-close-button" href="http://yandex.ru/">ВЫЙТИ</a>
+      <a class="sm-button sm-close-button" href="@oncloseHref">ВЫЙТИ</a>
       <a id="smExitCloseScreenButton" class="sm-button" href="">ОТМЕНА</a>
     </div>
   </div>

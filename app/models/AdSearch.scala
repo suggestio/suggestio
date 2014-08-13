@@ -10,7 +10,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{RequestHeader, QueryStringBindable}
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
-import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
 import scala.concurrent.{Future, future}
 
@@ -39,7 +38,10 @@ object AdSearch {
     }
   }
 
-  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]], longOptBinder: QueryStringBindable[Option[Long]]) = {
+  /** QSB для экземпляра сабжа. Неявно дергается из routes. */
+  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
+                                 intOptBinder: QueryStringBindable[Option[Int]],
+                                 longOptBinder: QueryStringBindable[Option[Long]] ) = {
     new QueryStringBindable[AdSearch] {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         for {
@@ -96,6 +98,7 @@ object AdSearch {
 
 }
 
+
 case class AdSearch(
   receiverIds : List[String] = Nil,
   producerIds : List[String] = Nil,
@@ -118,6 +121,7 @@ case class AdSearch(
 }
 
 
+
 // Режимы геолокации и утиль для них.
 /** Статичекая утиль для поддержки параметра геолокации. */
 object AdsGeoMode {
@@ -138,13 +142,17 @@ object AdsGeoMode {
 
 /** Интерфейс для режимов геопоиска. */
 sealed trait AdsGeoMode {
-  /** Запрошен ли географический поиск? */
+  /** Запрошена ли геолокация вообще? */
   def isWithGeo: Boolean
 
-  /** Сериализовать назад в строку qs. */
+  /** Конвертация значения геолокации обратно в выхлоп QueryStringBindable[Option[String]. */
   def toQsStringOpt: Option[String]
 
-  /** Подготовить геоданные для поиска в ES. */
+  /**
+   * Запуск определения местоположения клиента.
+   * @param request Текущий реквест.
+   * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
+   */
   def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]]
 }
 
@@ -167,7 +175,9 @@ case object AdsGeoIp extends AdsGeoMode {
     if (ra startsWith "127.") {
       Future successful None
     } else {
+      // Запускаем небыстрый синхронный поиск в отдельном потоке.
       future {
+        // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
         val ck = ra + ".gipq"
         Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
           DB.withConnection { implicit c =>
