@@ -45,10 +45,10 @@ object GeoPoint extends MacroLogsImpl {
 
   /** Десериализатор гео-точки из представления ES, распарсенного через Jackson. */
   val deserializeOpt: PartialFunction[Any, Option[GeoPoint]] = {
-    // Массив GeoJson в формате [12.53245, -44.43553] -- http://geojson.org/
+    // Массив GeoJson в формате [LON, lat]: [12.53245, -44.43553] -- http://geojson.org/
     case l: jl.Iterable[_] =>
-      l.headOption.flatMap { latRaw =>
-        l.tail.headOption.flatMap { lonRaw =>
+      l.headOption.flatMap { lonRaw =>
+        l.tail.headOption.flatMap { latRaw =>
           try {
             val lat = doubleParser(latRaw)
             val lon = doubleParser(lonRaw)
@@ -60,7 +60,7 @@ object GeoPoint extends MacroLogsImpl {
           }
         }
       }
-    // Строковое представление вида "41.12,-71.34"
+    // Строковое представление вида "41.12,-71.34" ("lat,lon")
     case s: String =>
       try {
         Some(GeoPoint(s))
@@ -113,7 +113,7 @@ case class GeoPoint(lat: Double, lon: Double) {
    */
   def toPlayGeoJson = {
     JsArray(Seq(
-      JsNumber(lat), JsNumber(lon)
+      JsNumber(lon), JsNumber(lat)
     ))
   }
 

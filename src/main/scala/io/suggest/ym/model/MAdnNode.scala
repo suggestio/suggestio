@@ -44,7 +44,8 @@ object MAdnNode
       personIds = Set.empty,
       adn = null,
       meta = null,
-      id = id
+      id = id,
+      versionOpt = version
     )
   }
 
@@ -77,7 +78,8 @@ case class MAdnNode(
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf = NodeConf.DEFAULT,
   var gallery       : List[String] = Nil,
-  var id            : Option[String] = None
+  var id            : Option[String] = None,
+  versionOpt        : Option[Long] = None
 )
   extends EsModelEmpty
   with EMCompanyId
@@ -92,9 +94,6 @@ case class MAdnNode(
 
   @JsonIgnore
   override def companion = MAdnNode
-
-  // TODO Надо бы включить версионизацию, т.к. save() вызывается из ~5-7 разных контроллеров.
-  override def versionOpt = None
 
   /** Перед сохранением можно проверять состояние экземпляра (полей экземпляра). */
   @JsonIgnore

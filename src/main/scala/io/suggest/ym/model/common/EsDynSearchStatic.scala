@@ -40,6 +40,18 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelMinimalStaticT {
   }
 
   /**
+   * Аналог dynSearch, но возвращаются только id документов.
+   * @param dsa Поисковый запрос.
+   * @return Список id, подходящих под запрос, в неопределённом порядке.
+   */
+  def dynSearchIds(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    dynSearchReqBuilder(dsa)
+      .setNoFields()
+      .execute()
+      .map { searchResp2idsList }
+  }
+
+  /**
    * Посчитать кол-во рекламных карточек, подходящих под запрос.
    * @param dsa Экземпляр, описывающий критерии поискового запроса.
    * @return Фьючерс с кол-вом совпадений.

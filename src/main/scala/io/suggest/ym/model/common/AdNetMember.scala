@@ -711,10 +711,15 @@ object CleanupAdnProducerIdsOnAdnNodeDelete {
           .foreach { ands =>
             ands.foreach { adnNode =>
               if (adnNode.adn.producerIds contains ande.adnId) {
-                adnNode.adn.producerIds -= ande.adnId
-                adnNode.save
-              }
-            }
+                MAdnNode.tryUpdate(adnNode) { adnNode0 =>
+                  adnNode0.copy(
+                    adn = adnNode0.adn.copy(
+                      producerIds = adnNode0.adn.producerIds - ande.adnId
+                    )
+                  )
+                } // tryUpdate()
+              }   // if contains
+            }     // ands.foreach
           }
     }
     val subs = Seq(sub)

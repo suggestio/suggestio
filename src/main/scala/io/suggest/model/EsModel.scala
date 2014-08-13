@@ -1,6 +1,7 @@
 package io.suggest.model
 
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.index.engine.VersionConflictEngineException
 
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
@@ -75,6 +76,8 @@ object EsModel extends MacroLogsImpl {
       _.reduceLeft { _ && _ }
     }
   }
+
+  val UPDATE_RETRIES_MAX_DFLT = 5
 
   /** Сконвертить флаг reversed-сортировки в параметр для ES типа SortOrder. */
   val isReversed2sortOrder: PartialFunction[Boolean, SortOrder] = {
@@ -718,6 +721,37 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     client.admin().indices()
       .prepareRefresh(ES_INDEX_NAME)
       .execute()
+  }
+
+
+  def UPDATE_RETRIES_MAX: Int = EsModel.UPDATE_RETRIES_MAX_DFLT
+
+  /**
+   * Попытаться обновить экземпляр модели с помощью указанной функции.
+   * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+   * @param retry Попытка
+   * @param updateF Функция для апдейта.
+   * @return Фьючерс для синхронизации.
+   */
+  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    updateF(inst0)
+      .save
+      .recoverWith {
+        case ex: VersionConflictEngineException =>
+          lazy val logPrefix = s"tryUpdate(${inst0.id}, try=$retry): "
+          if (retry < UPDATE_RETRIES_MAX) {
+            val n1 = retry + 1
+            LOGGER.warn(s"${logPrefix}Version conflict while trying to save. Retrying ($n1/$UPDATE_RETRIES_MAX)...")
+            getById(inst0.id.get) flatMap {
+              case Some(inst) =>
+                tryUpdate(inst, n1)(updateF)
+              case None =>
+                throw new IllegalStateException(s"${logPrefix}Looks like instance has been deleted during update. last try was $retry", ex)
+            }
+          } else {
+            throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + retry, ex)
+          }
+      }
   }
 
 }
