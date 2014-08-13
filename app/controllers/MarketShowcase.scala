@@ -42,7 +42,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
   /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "#cccccc"
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "cccccc"
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30

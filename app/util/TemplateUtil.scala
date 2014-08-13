@@ -24,7 +24,9 @@ object TplDataFormatUtil {
 
   /** Сконвертить "ffffff" в List(255,255,255). */
   final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
-    if (start > hex.length - 1) {
+    if (hex startsWith "#") {
+      colorHex2rgb(hex.tail)
+    } else if (start > hex.length - 1) {
       acc.reverse
     } else {
       val untilPos = start + 2
@@ -141,7 +143,8 @@ object TplDataFormatUtil {
   /**
    * Выделить первое слово с помощью тега. Весь текст проэкранировать.
    * @param str Исходная строка.
-   * @param tag Тег. Например "strong".
+   * @param start Открывающий тег.
+   * @param end Закрывающий тег.
    * @return Html-строка.
    */
   def highlightFirstWordEsc(str: String, start: String, end: String): Html = {
