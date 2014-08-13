@@ -22,7 +22,7 @@ import org.jcoffeescript
  */
 object CoffeeScriptTemplate {
 
-  val compiler = new jcoffeescript.JCoffeeScriptCompiler()
+  def compiler = new jcoffeescript.JCoffeeScriptCompiler()
 
   def coffee(source: Html): String = {
     val t = source.body
