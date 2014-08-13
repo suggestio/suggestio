@@ -491,12 +491,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           { supId => MAdnNodeCache.getById(supId).map(_.isDefined) }
         supExistsFut flatMap {
           case true =>
-            // Собираем новый объект MAdnNode, считая его не изменяемым. Так и будет в будущем.
-            val adnNode3 = updateAdnNode(adnNode, adnNode2)
-            adnNode3.save.map { _ =>
-              Redirect(routes.SysMarket.showAdnNode(adnId))
-                .flashing("success" -> "Изменения сохранены")
-            }
+            MAdnNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
+              .map { _ =>
+                Redirect(routes.SysMarket.showAdnNode(adnId))
+                  .flashing("success" -> "Изменения сохранены")
+              }
 
           case false =>
             val formWithErrors = formBinded.withError("adn.supId", "error.invalid")

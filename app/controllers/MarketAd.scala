@@ -293,6 +293,7 @@ object MarketAd extends SioController with TempImgSupport {
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = mad.imgs, blockHeight = mad.blockMeta.height)
             // Для подавления конфликтов версий при сохранении используем рекурсивную функцию обновления,
             // которая повторяет получение рекламной карточки и её обновление при конфликте версий.
+            // TODO Использовать MAd.tryUpdate() вместо этого велосипеда.
             def tryUpdate(mad0: MAd, counter: Int = 0): Future[_] = {
               saveImgsFut flatMap { imgsSaved =>
                 mad0.imgs = imgsSaved

@@ -46,7 +46,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
-  val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE = configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse 600
+  val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = {
+    if (play.api.Play.isProd) {
+      configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse 60
+    } else {
+      6
+    }
+  }
 
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
@@ -98,23 +104,37 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
+  /** Кеш-ключ для nodeIconJs. */
   private def nodeIconJsCacheKey(adnId: String) = adnId + ".nodeIconJs"
 
   /** Экшн, который рендерит скрипт с иконкой. Используется кеширование на клиенте и на сервере. */
   def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    val isCached = request.headers.get(IF_MODIFIED_SINCE)
-      .flatMap { DateTimeUtil.parseRfcDate }
-      .exists { dt => !(PROJECT_CODE_LAST_MODIFIED isAfter dt) }
+    // Проверяем ETag
+    val isCachedEtag = request.adnNode.versionOpt
+      .flatMap { vsn =>
+        request.headers.get(IF_NONE_MATCH)
+          .filter { etag  =>  vsn.toString == etag }
+      }
+      .nonEmpty
+    // Проверяем Last-Modified, если ETag верен.
+    val isCached = isCachedEtag && {
+      request.headers.get(IF_MODIFIED_SINCE)
+        .flatMap { DateTimeUtil.parseRfcDate }
+        .exists { dt => !(PROJECT_CODE_LAST_MODIFIED isAfter dt)}
+    }
     if (isCached) {
       NotModified
     } else {
       val ck = nodeIconJsCacheKey(adnId)
       Cache.getOrElse(ck, expiration = NODE_ICON_JS_CACHE_TTL_SECONDS) {
-        val cacheHeaders = List(
+        var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.df.print(PROJECT_CODE_LAST_MODIFIED),
           CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
         )
+        if (request.adnNode.versionOpt.isDefined) {
+          cacheHeaders  ::=  ETAG -> request.adnNode.versionOpt.get.toString
+        }
         // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
         // TODO Добавить поддержку gzip надо бы.
         Ok(nodeIconJsTpl(request.adnNode))
@@ -225,7 +245,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** indexTpl для выдачи, отвязанной от конкретного узла. */
   def geoShowcase = MaybeAuth.async { implicit request =>
-
     ???
   }
 

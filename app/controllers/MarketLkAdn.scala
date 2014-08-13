@@ -339,12 +339,21 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         NotAcceptable("Cannot parse req body.")
       },
       {isTopEnabled =>
-        import request.slaveNode
-        if (isTopEnabled)
-          slaveNode.adn.showLevelsInfo.out += AdShowLevels.LVL_START_PAGE -> 1
-        else
-          slaveNode.adn.showLevelsInfo.out -= AdShowLevels.LVL_START_PAGE
-        slaveNode.save map { _ =>
+        MAdnNode.tryUpdate(request.slaveNode) { slaveNode =>
+          val out0 = slaveNode.adn.showLevelsInfo.out
+          val out1 = if (isTopEnabled) {
+            out0 + (AdShowLevels.LVL_START_PAGE -> 1)
+          } else {
+            out0 - AdShowLevels.LVL_START_PAGE
+          }
+          slaveNode.copy(
+            adn = slaveNode.adn.copy(
+              showLevelsInfo = slaveNode.adn.showLevelsInfo.copy(
+                out = out1
+              )
+            )
+          )
+        } map { _ =>
           Ok("updated ok")
         }
       }
@@ -378,19 +387,20 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   ))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
-    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
+  def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) {
+    (eAct, adnNode) => implicit request =>
+      Ok(invite.inviteAcceptFormTpl(adnNode, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptFormSubmit(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = nodeOwnerInviteAcceptCommon(adnId, eActId) { (eAct, adnNode) => implicit request =>
     // Если юзер залогинен, то форму биндить не надо
     val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
-    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($martId, act=$eActId): "
+    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors, withOfferText = false))
+        NotAcceptable(invite.inviteAcceptFormTpl(adnNode, eAct, formWithErrors, withOfferText = false))
       },
       {case (contractAgreed, passwordOpt) =>
         if (passwordOpt.isEmpty && !request.isAuth) {
@@ -398,7 +408,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           val form1 = formBinded
             .withError("password.pw1", "error.required")
             .withError("password.pw2", "error.required")
-          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1, withOfferText = false))
+          NotAcceptable(invite.inviteAcceptFormTpl(adnNode, eAct, form1, withOfferText = false))
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eAct.delete.flatMap { isDeleted =>
@@ -414,12 +424,18 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
             // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
             newPersonIdOptFut flatMap { personIdOpt =>
               val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
-              if (!(mmart.personIds contains personId)) {
-                mmart.personIds += personId
+              val nodeUpdateFut: Future[_] = if ( !(adnNode.personIds contains personId) ) {
+                MAdnNode.tryUpdate(adnNode) { adnNode0 =>
+                  adnNode0.copy(
+                    personIds = adnNode0.personIds + personId
+                  )
+                }
+              } else {
+                Future successful Unit
               }
-              mmart.save.map { _adnId =>
-                Billing.maybeInitializeNodeBilling(_adnId)
-                Redirect(routes.MarketLkAdn.showAdnNode(martId))
+              nodeUpdateFut.map { _adnId =>
+                Billing.maybeInitializeNodeBilling(adnId)
+                Redirect(routes.MarketLkAdn.showAdnNode(adnId))
                   .flashing("success" -> "Регистрация завершена.")
                   .withSession(username -> personId)
               }

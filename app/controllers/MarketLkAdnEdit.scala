@@ -178,10 +178,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
           gallery   <- galleryUpdFut
-          _adnId    <- applyNodeChanges(adnNode, fmr.meta, waIdOpt, savedLogo, gallery).save
+          _         <- MAdnNode.tryUpdate(adnNode) { applyNodeChanges(_, fmr.meta, waIdOpt, savedLogo, gallery) }
         } yield {
           // Собираем новый экземпляр узла
-          Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
+          Redirect(routes.MarketLkAdn.showAdnNode(adnId))
             .flashing("success" -> "Изменения сохранены.")
         }
       }

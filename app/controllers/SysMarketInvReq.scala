@@ -80,13 +80,13 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         NotAcceptable(companyEditTpl(mir, mc, formWithErrors))
       },
       {mc2 =>
-        tryUpdateMir(mir) { mir0 =>
+        MInviteRequest.tryUpdate(mir) { mir0 =>
           val mc3 = SysMarket.updateCompany(mc, mc2)
           mir0.copy(
             company = Left(mc3)
           )
-        } map { _mirId =>
-          rdrToIr(_mirId, "Шаблон будущей компании успешно обновлён.")
+        } map { _ =>
+          rdrToIr(mirId, "Шаблон будущей компании успешно обновлён.")
         }
       }
     )
@@ -100,7 +100,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     previoslyExistedFut.flatMap { previoslyExisted =>
       mc0.save.flatMap { savedMcId =>
         // Компания сохранена. Пора попробовать обновить текущий MIR
-        val updateFut = tryUpdateMir(mir) { mir0 =>
+        val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
           mir0.copy(
             company = Right(savedMcId)
           )
@@ -111,8 +111,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             MCompany.deleteById(savedMcId)
           }
         }
-        updateFut map { _mirId =>
-          rdrToIr(_mirId, s"Создана компания '${mc0.meta.name}'")
+        updateFut map { _ =>
+          rdrToIr(mirId, s"Создана компания '${mc0.meta.name}'")
         }
       }
     }
@@ -129,7 +129,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         mc.delete flatMap {
           case true =>
             debug(logPrefix + "Company uninstalled: " + mcId)
-            val updFut = tryUpdateMir(mir) { mir0 =>
+            val updFut = MInviteRequest.tryUpdate(mir) { mir0 =>
               mir0.copy(
                 company = Left(mc)
               )
@@ -138,8 +138,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               warn(s"${logPrefix}Rollbacking deletion of $mc due to exception during MIR update", ex)
               mc.save
             }
-            updFut map { _mirId =>
-              rdrToIr(_mirId, "Компания деинсталлирована назад в шаблон компании.")
+            updFut map { _ =>
+              rdrToIr(mirId, "Компания деинсталлирована назад в шаблон компании.")
             }
 
           case false =>
@@ -209,14 +209,14 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         nodeEditBody(mir)(NotAcceptable(_))
       },
       {adnNode2 =>
-        tryUpdateMir(mir) { mir0 =>
+        MInviteRequest.tryUpdate(mir) { mir0 =>
           val adnNode = mir0.adnNode.left.get
           val adnNode3 = SysMarket.updateAdnNode(adnNode, adnNode2)
           mir0.copy(
             adnNode = Left(adnNode3)
           )
-        } map { _mirId =>
-          rdrToIr(_mirId, "Шаблон узла сохранён.")
+        } map { _ =>
+          rdrToIr(mirId, "Шаблон узла сохранён.")
         }
       }
     )
@@ -249,7 +249,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         // Запуск сохранения узла.
         val resultFut = adnNode.save flatMap { adnId =>
           // Узел сохранён. Пора обновить экземпляр MIR
-          val updateFut = tryUpdateMir(mir) { mir0 =>
+          val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
             mir0.copy(
               adnNode = Right(adnId),
               waOpt = waSavedIdOpt.map(Right.apply)
@@ -261,8 +261,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               MAdnNode.deleteById(adnId)
             }
           }
-          updateFut map { _mirId =>
-            rdrToIr(_mirId, "Рекламный узел добавлен в систему.")
+          updateFut map { _ =>
+            rdrToIr(mirId, "Рекламный узел добавлен в систему.")
           }
         }
         // При ошибке стереть свежесохранённый инстанс welcomeAdOpt
@@ -286,7 +286,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         adnNode.delete flatMap {
           case true =>
             // Узел удалён. Пора залить его в состояние MIR
-            val updateFut = tryUpdateMir(mir) { mir0 =>
+            val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
               mir0.copy(
                 adnNode = Left(adnNode)
               )
@@ -295,8 +295,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               adnNode.save
               warn(s"nodeUnistallSubmit($mirId): rollbacking node[$adnId] deinstallation due to exception.", ex)
             }
-            updateFut map { _mirId =>
-              rdrToIr(_mirId, "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
+            updateFut map { _ =>
+              rdrToIr(mirId, "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
             }
           case false =>
             ExpectationFailed(s"Cannot delete node[$adnId], proposed for installation.")
@@ -329,7 +329,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             }
             val updFut = sendEmailFut flatMap { _ =>
               // Пора переключить состояние mir
-              tryUpdateMir(mir) { mir0 =>
+              MInviteRequest.tryUpdate(mir) { mir0 =>
                 mir0.copy(
                   emailAct = Right(eaId)
                 )
@@ -341,8 +341,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
                 warn(s"eactInstallSubmit($mirId): Rollbacking save of eact[$eaId] due to exception.", ex)
               }
             }
-            updFut map { _mirId =>
-              rdrToIr(_mirId, s"Сохранён запрос на активацию. Письмо отправлено на ${ea1.email}.")
+            updFut map { _ =>
+              rdrToIr(mirId, s"Сохранён запрос на активацию. Письмо отправлено на ${ea1.email}.")
             }
           }
 
@@ -358,33 +358,6 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
       .flashing(flashCode -> flashMsg)
   }
 
-
-  /** Обновления инстанса [[models.MInviteRequest]] с аккуратным подавлением конфликтов версий.
-    * @param mir0 Начальный инстанс MIR. Будет опробован только при нулевой попытке.
-    * @param n Необязательный номер попытки, который не превышает максимум UPDATE_RETRIES_MAX.
-    * @param updateF Фунцкия патчинга, которая должа накатывать изменения на переданный интанс MInviteRequest.
-    * @return Фьючерс с сохранённым id, т.е. результат EsModelT.save().
-    */
-  private def tryUpdateMir(mir0: MInviteRequest, n: Int = 0)(updateF: MInviteRequest => MInviteRequest): Future[String] = {
-    updateF(mir0)
-      .save
-      .recoverWith {
-        case ex: VersionConflictEngineException =>
-          lazy val logPrefix = s"tryUpdateMir(${mir0.id.get}): "
-          if (n < UPDATE_RETRIES_MAX) {
-            val n1 = n + 1
-            warn(s"${logPrefix}Version conflict while trying to save MIR. Retrying ($n1/$UPDATE_RETRIES_MAX)...")
-            MInviteRequest.getById(mir0.id.get) flatMap {
-              case Some(mir00) =>
-                tryUpdateMir(mir00, n1)(updateF)
-              case None =>
-                throw new IllegalStateException(s"${logPrefix}Looks like MIR instance has been deleted during update. last try was $n", ex)
-            }
-          } else {
-            throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + n, ex)
-          }
-      }
-  }
 
   private def isCompanyLeft(mirId: String) = new IsSuperuserMir(mirId) {
     override def mirStateInvalidMsg: String = {
