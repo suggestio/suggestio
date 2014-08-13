@@ -1,17 +1,17 @@
-@(mmart: MAdnNode, shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long], spsr: AdSearch, oncloseHref: String)(implicit ctx: Context)
+@(args: SMShowcaseIndexArgs)(implicit ctx: Context)
 
-@* Начальная страница для sio-market. *@
+@* Начальная страница для sio-market. Многочисленные аргументы передаются в контейнере для удобства передачи оных в подшаблоны. *@
 
 @import util.img.WelcomeUtil.WELCOME_IMG_KEY
 
 @* Картинка-приветствие для первого экрана *@
-@welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
-<div class="sm-welcome-ad">
-  <img style="background-color: #@mmart.meta.color;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
-       data-width="@welcomeAdImg.meta.map(_.width)"
-       data-height="@welcomeAdImg.meta.map(_.height)"
-       src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
-</div>
+@args.welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
+  <div class="sm-welcome-ad">
+    <img style="background-color: #@args.bgColor;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
+         data-width="@welcomeAdImg.meta.map(_.width)"
+         data-height="@welcomeAdImg.meta.map(_.height)"
+         src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+  </div>
 }
 
 @* Основной контейнер, шапка + карточки *@
@@ -19,20 +19,20 @@
 
 @_screen_nav_button("close", "smCloseButton")
 
-@if( !catsStats.isEmpty ){
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-<div class="sm-header-round-btn sm-header-search-btn" id="smCategoriesButton">
-  <div class="sm-header-round-btn_inner">
-    <div class="sm-header-round-btn_icon __search"></div>
+@if( args.catsStats.nonEmpty ){
+  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+  <div class="sm-header-round-btn sm-header-search-btn" id="smCategoriesButton">
+    <div class="sm-header-round-btn_inner">
+      <div class="sm-header-round-btn_icon __search"></div>
+    </div>
   </div>
-</div>
-@* Окно с выбором категорий *@
-@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
+  @* Окно с выбором категорий *@
+  @_categories_w_search(args)
 }
 
-<div class="sio-mart__producer-header" style="@_bgcolor( mmart.meta.color )">
-  @mmart.logoImgOpt.map { logoImg =>
-  <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+<div class="sio-mart__producer-header" style="@_bgcolor( args.bgColor )">
+  @args.logoImgOpt.map { logoImg =>
+    <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
 </div>
 
@@ -40,13 +40,13 @@
   <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
     <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px;" id="sioMartIndexGridLayout">
 
-      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(spsr)" style="position: relative; width: 100%;">
+      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)" style="position: relative; width: 100%;">
       </div>
 
       <div class="grid-loader" style="height: 50px;" id="gridAdsLoader">
         <div style="position: relative; height: 1px; width: 100%;">
           <div style="padding: 5px; position: absolute; left: 50%; top: 50%; margin-left: -15px; margin-top: -16px;">
-            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl/assets/images/market/grid-ads-loader-fast.gif?v=2"/>
+            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl@routes.Assets.at("images/market/grid-ads-loader-fast.gif")?v=2"/>
           </div>
         </div>
       </div>
@@ -64,11 +64,11 @@
 <div class="sm-loading" id="smLoading"></div>
 
 <div class="sm-preload">
-  <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
+  <img src="@ctx.myAudienceUrl@routes.Assets.at("images/market/categories/icons.png")">
 </div>
 
 @* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(oncloseHref)
+@_exit_screen(args.oncloseHref)
 
 @* Окно с выбором магазина *@
-@_shop_list(shops, mmart)
+@_shop_list(args.shops)

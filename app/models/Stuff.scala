@@ -1,6 +1,7 @@
 package models
 
 import java.util.Currency
+import io.suggest.ym.model.common.LogoImgOptI
 import play.api.i18n.Messages
 import play.api.data.Form
 import play.api.mvc.Call
@@ -147,3 +148,28 @@ case class SMDemoSiteArgs(
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def withGeo = adnId.isEmpty
 }
+
+
+/**
+ * Аргументы для рендера market/showcase/indexTpl.
+ * Экстендим LogoImgOptI чтобы компилятор был в курсе изменений API полей логотипов в sioutil.
+ * @param bgColor Используемый цвет выдачи.
+ * @param mmcats Категории для отображения.
+ * @param catsStats Статистика по категориям.
+ * @param spsr Поисковый запрос.
+ * @param oncloseHref Абсолютный URL перехода при закрытии выдачи.
+ * @param logoImgOpt Логотип, если есть.
+ * @param shops Список магазинов в торговом центре.
+ * @param welcomeAdOpt Приветствие, если есть.
+ */
+case class SMShowcaseIndexArgs(
+  bgColor: String,
+  mmcats: Seq[MMartCategory],
+  catsStats: Map[String, Long],
+  spsr: AdSearch,
+  oncloseHref: String,
+  logoImgOpt: Option[MImgInfoT] = None,
+  shops: Map[String, MAdnNode] = Map.empty,
+  welcomeAdOpt: Option[MWelcomeAd] = None
+) extends LogoImgOptI
+

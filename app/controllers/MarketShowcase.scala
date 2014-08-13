@@ -1,6 +1,7 @@
 package controllers
 
 import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.i18n.Messages
 import play.twirl.api.HtmlFormat
 import util.ShowcaseUtil._
 import util._
@@ -73,6 +74,17 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     adnNodeDemoWebsite( routes.MarketShowcase.myAdsShowcase(adnId) )
   }
 
+  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
+  def geoSite = MaybeAuth { implicit request =>
+    val args = SMDemoSiteArgs(
+      showcaseCall = routes.MarketShowcase.geoShowcase(),
+      bgColor = SITE_BGCOLOR_DFLT,
+      title = Messages("showcase.site.geo.title"),
+      adnId = None
+    )
+    Ok(demoWebsiteTpl(args))
+  }
+
 
   /** Экшн, который рендерит скрипт с икнокой */
   def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
@@ -109,7 +121,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     val oncloseHref: String = request.adnNode.meta.siteUrl
       .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
       .getOrElse { ONCLOSE_HREF_DFLT }
-    commonShowcase(adnId, spsr, oncloseHref)
+    nodeShowcase(adnId, spsr, oncloseHref)
   }
 
   /** Выдача для продьюсера, который сейчас админят. */
@@ -119,11 +131,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     )
     // При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет.
     val oncloseHref = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
-    commonShowcase(adnId, spsr, oncloseHref)
+    nodeShowcase(adnId, spsr, oncloseHref)
   }
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def commonShowcase(adnId: String, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Result] = {
+  private def nodeShowcase(adnId: String, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Result] = {
     val adnNode = request.adnNode
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
@@ -164,9 +176,24 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       shops     <- shopsWithAdsFut
       mmcats    <- mmcatsFut
     } yield {
-      val html = indexTpl(adnNode, shops, mmcats, waOpt, catsStats, spsr, oncloseHref)
+      val args = SMShowcaseIndexArgs(
+        bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
+        mmcats      = mmcats,
+        catsStats   = catsStats,
+        spsr        = spsr,
+        oncloseHref = oncloseHref,
+        logoImgOpt  = adnNode.logoImgOpt,
+        shops       = shops,
+        welcomeAdOpt = waOpt
+      )
+      val html = indexTpl(args)
       jsonOk("showcaseIndex", Some(html))
     }
+  }
+
+  /** indexTpl для выдачи, отвязанной от конкретного узла. */
+  def geoShowcase = MaybeAuth.async { implicit request =>
+    ???
   }
 
 
@@ -283,7 +310,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
           val htmlOpt = if (h) {
             val firstMads = mads.headOption.toList
-            val html = _focusedAdsTpl(firstMads, adSearch, producer,  adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
+            val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
+            val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor,  adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
             Some(JsString(html))
           } else {
             None

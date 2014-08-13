@@ -161,17 +161,26 @@ GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
 
-# Витрины market'а.
+
+# Витрина market'а и её экшены
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
-GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId)
+
 GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adnId)
 GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase(adnId)
+
+GET  /market/geo/site                   controllers.MarketShowcase.geoSite
+GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase
+
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
+GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
+GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
+
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
+
 GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
+
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)

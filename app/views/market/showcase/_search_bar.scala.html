@@ -1,12 +1,12 @@
-@(mmart:MAdnNode)(implicit ctx:util.Context)
+@(bgColor: String)(implicit ctx:util.Context)
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-search-bar" id="smSearchBar" style="@_bgcolor( mmart.meta.color );">
+<div class="sm-search-bar" id="smSearchBar" style="@_bgcolor( bgColor );">
 
   <div class="sm-search-bar__field">
     <div class="sm-search-bar__container">
-      <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="БЫСТРЫЙ ПОИСК ПО ПРЕДЛОЖЕНИЯМ" style="background: #@mmart.meta.color"/>
+      <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="БЫСТРЫЙ ПОИСК ПО ПРЕДЛОЖЕНИЯМ" style="background: #@bgColor"/>
     </div>
   </div>
 
