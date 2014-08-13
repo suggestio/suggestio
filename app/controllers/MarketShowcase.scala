@@ -46,6 +46,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     * Если false, то будет использоваться дефолтовый адрес для редиректа. */
   val ONCLOSE_HREF_USE_NODE_SITE = configuration.getBoolean("market.showcase.onclose.href.use.node.siteurl") getOrElse true
 
+  /** Цвет для выдачи, которая вне узла. */
+  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
@@ -78,7 +81,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   def geoSite = MaybeAuth { implicit request =>
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
-      bgColor = SITE_BGCOLOR_DFLT,
+      bgColor = SITE_BGCOLOR_GEO,
       title = Messages("showcase.site.geo.title"),
       adnId = None
     )
@@ -193,6 +196,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
 
   /** indexTpl для выдачи, отвязанной от конкретного узла. */
   def geoShowcase = MaybeAuth.async { implicit request =>
+
     ???
   }
 
