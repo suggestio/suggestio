@@ -19,6 +19,13 @@
 
 @_screen_nav_button("close", "smCloseButton")
 
+@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+<div class="sm-header-round-btn" id="smCategoriesBackButton" style="display: none">
+  <div class="sm-header-round-btn_inner">
+    <div class="sm-header-round-btn_icon __back"></div>
+  </div>
+</div>
+
 @if( args.catsStats.nonEmpty ){
   @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
   <div class="sm-header-round-btn __right-aligned" id="smCategoriesButton">

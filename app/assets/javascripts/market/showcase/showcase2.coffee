@@ -469,6 +469,18 @@ siomart =
     producer_ads_per_load : 5
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
+  geo :
+    position_callback : ( gp_obj ) ->
+      siomart.geo.geo_position_obj = gp_obj
+
+    get_current_position : () ->
+      navigator.geolocation.getCurrentPosition siomart.geo.position_callback
+
+    request_query_param : () ->
+      if typeof siomart.geo.geo_position_obj == 'undefined'
+        "geo=ip"
+      else
+        "geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
   getDeviceScale : () ->
     deviceWidth = landscape = Math.abs(window.orientation) == 90
@@ -864,7 +876,7 @@ siomart =
     request_delay : 600
 
     perform : ( request ) ->
-      url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
+      url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id + '&' + siomart.geo.request_query_param()
       siomart.request.perform url
 
     queue_request : ( request ) ->
@@ -911,7 +923,7 @@ siomart =
       else
         siomart.grid_ads.multiplier = siomart.grid_ads.multiplier / 10
 
-      siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) )
+      siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + siomart.geo.request_query_param()
 
       console.log siomart.grid_ads.c_url
 
@@ -1396,11 +1408,14 @@ siomart =
   navigation_layer :
     open : ( history_push ) ->
 
+      delete siomart.global_cat_id
+
       if typeof history_push != 'boolean'
         history_push = true
 
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
 
+      siomart.utils.ge('smCategoriesBackButton').style.display = 'none'
       siomart.utils.ge('smCloseButton').style.display = 'none'
       siomart.utils.ge('smCategoriesButton').style.display = 'none'
 
@@ -1426,8 +1441,10 @@ siomart =
           siomart.utils.ge('smCategoriesBodyWrap').style.display = 'block'
           siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__compact'
           siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-          siomart.utils.ge('smCloseButton').style.display = 'block'
           siomart.utils.ge('smCategoriesButton').style.display = 'block'
+
+          if typeof siomart.global_cat_id == 'undefined'
+            siomart.utils.ge('smCloseButton').style.display = 'block'
 
 
     back : () ->
@@ -1504,7 +1521,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id + '&' + siomart.geo.request_query_param()
 
     siomart.focused_ads.curl = url
 
@@ -1520,6 +1537,11 @@ siomart =
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id, history_push ) ->
+
+    siomart.utils.ge('smCategoriesBackButton').style.display = 'block'
+    siomart.utils.ge('smCloseButton').style.display = 'none'
+    siomart.global_cat_id = cat_id
+
     if typeof history_push != 'boolean'
       history_push = true
 
@@ -1532,7 +1554,7 @@ siomart =
         cat_id : cat_id
       siomart.history.push state_data, 'SioMarket', '/n/cat/' + cat_id
 
-    url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id  + '&' + siomart.geo.request_query_param()
     siomart.request.perform url
 
   ########################################
@@ -1609,6 +1631,7 @@ siomart =
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
+    this.utils.add_single_listener this.utils.ge('smCategoriesBackButton'), _event, siomart.navigation_layer.open
     this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
 
     ## Возврат на индекс выдачи
@@ -1692,6 +1715,7 @@ siomart =
     siomart.config.host = window.siomart_host
 
     this.utils.set_vendor_prefix()
+    siomart.geo.get_current_position()
 
     siomart.load_mart()
 
