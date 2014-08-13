@@ -200,24 +200,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     } yield {
       allProds.filterKeys( prodsStats contains )
     }
-    val catAdsSearch = AdSearch(
-      receiverIds   = List(adnId),
-      maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_MEMBERS_CATALOG)
-    )
-    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
-      .map { _.toMap }
-    // Текущие категории узла
-    val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
-      MMartCategory.findTopForOwner(getCatOwner(adnId))
-    } else {
-      // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
-      catsStatsFut flatMap { catsStats =>
-        MMartCategory.multiGet(catsStats.keysIterator)
-          .map { _.sortBy(MMartCategory.sortByMmcat) }
-      }
-    }
+    val (catsStatsFut, mmcatsFut) = getCats(request.adnNode.id)
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
       case Some(waId) => MWelcomeAd.getById(waId)
       case None => Future successful None
@@ -245,7 +228,48 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** indexTpl для выдачи, отвязанной от конкретного узла. */
   def geoShowcase = MaybeAuth.async { implicit request =>
-    ???
+    val (catsStatsFut, mmcatsFut) = getCats(None)
+    for {
+      mmcats    <- mmcatsFut
+      catsStats <- catsStatsFut
+    } yield {
+      val args = SMShowcaseIndexArgs(
+        bgColor = SITE_BGCOLOR_GEO,
+        mmcats  = mmcats,
+        catsStats = catsStats,
+        spsr = AdSearch(
+          levels = List(AdShowLevels.LVL_START_PAGE),
+          geo    = AdsGeoIp
+        ),
+        oncloseHref = ONCLOSE_HREF_DFLT
+      )
+      val html = indexTpl(args)
+      jsonOk("showcaseIndex", Some(html))
+    }
+  }
+
+
+  private def getCats(adnIdOpt: Option[String]) = {
+    val catAdsSearch = AdSearch(
+      receiverIds   = adnIdOpt.toList,
+      maxResultsOpt = Some(100),
+      levels        = List(AdShowLevels.LVL_MEMBERS_CATALOG)
+    )
+    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
+    val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
+      .map { _.toMap }
+    // Текущие категории узла
+    val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
+      val catOwnerId = adnIdOpt.fold(MMartCategory.DEFAULT_OWNER_ID) { getCatOwner }
+      MMartCategory.findTopForOwner(catOwnerId)
+    } else {
+      // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
+      catsStatsFut flatMap { catsStats =>
+        MMartCategory.multiGet(catsStats.keysIterator)
+          .map { _.sortBy(MMartCategory.sortByMmcat) }
+      }
+    }
+    (catsStatsFut, mmcatsFut)
   }
 
 
