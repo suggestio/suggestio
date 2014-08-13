@@ -2,6 +2,7 @@ package controllers
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.i18n.Messages
+import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
 import util.ShowcaseUtil._
 import util._
@@ -36,8 +37,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
-  /** Дефолтовый цвет оформления. */
   val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "#cccccc"
+  /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
+
+  val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 60
 
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
@@ -88,7 +91,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
 
   /** Экшн, который рендерит скрипт с икнокой */
   def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok( nodeIconJsTpl(request.adnNode) ) as "text/javascript"
+    Cache.getOrElse(adnId + ".nodeIconJs", expiration = NODE_ICON_JS_CACHE_TTL_SECONDS) {
+      // TODO Добавить минификацию кода. Это снизит нагрузку на кеш (на RAM).
+      Ok(nodeIconJsTpl(request.adnNode)) as "text/javascript"
+    }
   }
 
   /** Экшн, который выдает базовую инфу о ноде */
