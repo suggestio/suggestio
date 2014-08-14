@@ -440,9 +440,9 @@ CbcaPopup =
     this.$body.removeClass 'ovh'
 
   setPopupPosition: (popupSelector) ->
-    $popup = $ popupSelector
+    $popup    = $ popupSelector
     ## независимые цифры, подобраны согласно внешнему виду получаемого результата
-    minTop = 25
+    minTop  = 25
 
     if !$popup.size()
       $popup = $ '.popup:visible'
@@ -494,7 +494,9 @@ CbcaPopup =
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
 
-    this.setPopupPosition popupSelector
+    $popup.find 'img'
+    .on 'load', () ->
+      cbca.popup.setPopupPosition popupSelector
 
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'

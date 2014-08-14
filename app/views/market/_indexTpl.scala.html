@@ -60,7 +60,6 @@
               <a class="wifi-points_i js-btn" href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
                 @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
                 <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
-                <span class="wifi-points_i-hover"></span>
               </a>
             </div>
           }
