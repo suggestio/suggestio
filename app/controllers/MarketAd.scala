@@ -1,6 +1,7 @@
 package controllers
 
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import util.PlayMacroLogsImpl
 import util.blocks.BlocksUtil.BlockImgMap
 import views.html.market.lk.ad._
 import models._
@@ -27,7 +28,7 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with TempImgSupport {
+object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl {
 
   import LOGGER._
 

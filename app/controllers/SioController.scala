@@ -203,9 +203,7 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsImpl {
-
-  import LOGGER._
+trait TempImgSupport extends SioController with PlayMacroLogsI {
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
   protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
@@ -225,7 +223,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsImpl {
           Ok(Img.jsonTempOk(mptmp.filename))
         } catch {
           case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
             val reply = Img.jsonImgError("Unsupported picture format.")
             BadRequest(reply)
         } finally {
