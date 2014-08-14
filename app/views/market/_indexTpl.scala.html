@@ -1,4 +1,4 @@
-@()(implicit ctx: util.Context)
+@(nodes: Seq[MAdnNode] = Nil)(implicit ctx: util.Context)
 
 @import ctx._
 @import play.api.Play.current
@@ -21,7 +21,7 @@
       <span class="index-page_color-1">Sio</span>&nbsp;Market
     </h1>
 
-    <a class="index-page_logo-link" href="@routes.MarketLk.lkIndex" >
+    <a class="index-page_logo-link" href="@routes.Market.lkIndex" >
       <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
     </a>
 
@@ -48,16 +48,21 @@
       }
     </div>
 
-    <div class="index-page_wifi-points">
-      <h2 class="wifi-points_title">Места для вашей рекламы</h2>
+    @if(nodes.nonEmpty) {
+      <div class="index-page_wifi-points">
+        <h2 class="wifi-points_title">Места для вашей рекламы</h2>
 
-      <div class="wifi-points_lst">
-        <a class="wifi-points_i js-btn" href="#morvokzal">
-          <img src='@routes.Assets.at("images/market/index/wifi-points_morvokzal.jpg")' />
-          <span class="wifi-points_i-hover"></span>
-        </a>
+        <div class="wifi-points_lst">
+          @nodes.map { node =>
+            <a class="wifi-points_i js-btn" href="@routes.Market.adnNodePopup(node.id.get)">
+              @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
+              <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
+              <span class="wifi-points_i-hover"></span>
+            </a>
+          }
+        </div>
       </div>
-    </div>
+    }
 
     <div class="index-page_how-it-works-btn">
       <a class="siom-new-btn __size-S" href="@routes.Market.marketBooklet" >

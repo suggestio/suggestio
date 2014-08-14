@@ -44,6 +44,7 @@ object AdSearch {
                                  intOptBinder: QueryStringBindable[Option[Int]],
                                  longOptBinder: QueryStringBindable[Option[Long]] ) = {
     new QueryStringBindable[AdSearch] {
+
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         for {
           maybeProdIdOpt <- strOptBinder.bind(key + ".shopId", params)
