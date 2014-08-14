@@ -117,18 +117,20 @@
 
   input,
   textarea
-    outline       none
-    width         100%
-    padding       10px 15px
+    outline             none
+    width               100%
+    padding             10px 15px
 
-    color         #aaaaaa
-    font-family   'opensans-light'
-    font-size     14px
-    text-overflow ellipsis
+    color               #aaaaaa
+    font-family         'opensans-light'
+    font-size           14px
+    text-overflow       ellipsis
 
-    border        1px solid #c2c2c2
+    border              1px solid #c2c2c2
+    box-sizing          border-box
+    -webkit-appearance  none
+    -moz-appearance     none
     border-radius(6px)
-    box-sizing    border-box
 
     &:focus
       color         #494949
@@ -144,3 +146,9 @@
     textarea
       border-color  #f44040
       color         #f44040
+
+@media screen768
+
+  .input-radial-w
+
+    input

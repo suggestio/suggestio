@@ -2,6 +2,8 @@
 
 @import ctx._
 @import controllers.MarketShowcase.DEMO_ADN_ID_OPT
+@import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
+
 
 <div class="header __responsive __without-background ">
 
@@ -54,11 +56,13 @@
 
         <div class="wifi-points_lst">
           @nodes.map { node =>
-            <a class="wifi-points_i js-btn" href="@routes.Market.adnNodePopup(node.id.get)">
-              @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
-              <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
-              <span class="wifi-points_i-hover"></span>
-            </a>
+            <div class="wifi-points_i-w">
+              <a class="wifi-points_i js-btn" href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
+                @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
+                <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
+                <span class="wifi-points_i-hover"></span>
+              </a>
+            </div>
           }
         </div>
       </div>

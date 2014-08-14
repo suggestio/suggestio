@@ -1,6 +1,7 @@
 @(adnNode: MAdnNode)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
+@import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
 
 <div class="popup __index card js-hidden js-popup" id="popup@adnNode.id">
@@ -12,9 +13,11 @@
     @adnNode.gallery.headOption.map { filename =>
       <img class="card_photo" src='@routes.Img.getImg(filename)' alt="@Messages("Photo")"/>
     }
-    <a class="card_logo">
-      <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
-    </a>
+    <div class="card_logo-w">
+      <a class="card_logo" style="background-color: #@adnNode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
+        <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
+      </a>
+    </div>
   </div>
 
   <h2 class="popup_t __index">@adnNode.meta.name</h2>

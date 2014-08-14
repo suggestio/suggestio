@@ -83,7 +83,7 @@ li
   display: none
 
 .sm-note__link
-  color: #5088aa 
+  color: #5088aa
 
 .sm-light-text
   color: #959595
@@ -1806,17 +1806,21 @@ th.__bg-head
   &_lst
     margin-top 40px
 
+  &_i-w
+    display inline-block
+    margin  0 20px
+
   &_i
     position        relative
-    display         inline-block
+    display         table-cell
+    vertical-align  middle
     overflow        hidden
     width           60px
     height          60px
-    margin          0 20px
 
     cursor          pointer
     text-decoration none
-    border          1px solid transparent
+    border          2px solid transparent
     border-radius(50%)
 
     img
@@ -1847,6 +1851,7 @@ th.__bg-head
         background-position center 52%
 
 .card
+  width 300px
 
   &_photo-w
     width 300px
@@ -1854,13 +1859,17 @@ th.__bg-head
   &_photo
     width 100%
 
+  &_logo-w
+    display inline-block
+    margin  -40px 20px 0
+
   &_logo
     position        relative
-    display         inline-block
+    display         table-cell
+    vertical-align  middle
     overflow        hidden
     width           60px
     height          60px
-    margin          -40px 20px 0
 
     text-decoration none
     border-radius(50%)
@@ -1880,13 +1889,16 @@ th.__bg-head
     border-bottom 1px solid #d7d7d7
 
   &_prop-name
+    display       block
+    overflow      hidden
     float         left
     width         150px
-    padding-right 10px
+    margin-right  10px
     font-size     14px
 
   &_prop-value
-    float     left
+    display   block
+    overflow  hidden
     font-size 16px
 
 @media screen768
@@ -1906,3 +1918,24 @@ th.__bg-head
 
   .footer_wifi
     display none
+
+  .popups-container
+    overflow hidden
+
+  .popup
+    position    fixed
+    bottom      0
+    top         0 !important
+    left        0
+    right       0
+    overflow-y  auto
+    -webkit-overflow-scrolling touch
+
+    &.__index
+      border-radius(0)
+
+    &_header
+      border-radius(0)
+
+    &_footer
+      border-radius(0)
