@@ -1,22 +1,29 @@
 @(adnNode: MAdnNode)(implicit ctx: Context)
 
+@import util.TplDataFormatUtil._
+@import ctx._
+
 <div class="popup __index card js-hidden js-popup" id="popup@adnNode.id">
   <div class="popup_header __index">
     <a class="popup_close f-left js-close-popup"></a>
   </div>
 
   <div class="card_photo-w">
-    <img class="card_photo" src='@routes.Assets.at("images/market/index/obj-photo_retina.jpg")' />
+    @adnNode.gallery.headOption.map { filename =>
+      <img class="card_photo" src='@routes.Img.getImg(filename)' alt="@Messages("Photo")"/>
+    }
     <a class="card_logo">
-      <img src='@routes.Assets.at("images/market/index/wifi-points_morvokzal.jpg")' />
+      <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
     </a>
   </div>
 
   <h2 class="popup_t __index">@adnNode.meta.name</h2>
 
   <div class="card_prop">
-    <span class="card_prop-name">Посетителей в день</span>
-    <span class="card_prop-value">1&nbsp;200&nbsp;+</span>
+    @adnNode.meta.humanTrafficAvg.map { hta =>
+      <span class="card_prop-name">Посетителей в день</span>
+      <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
+    }
   </div>
 
   <div class="card_prop __last">

@@ -26,6 +26,8 @@ Install=Install
 Uninstall=Uninstall
 Town=Town
 Phone=Phone
+Photo=Photo
+Logo=Logo
 
 requisites=Payment details for withdrawal
 

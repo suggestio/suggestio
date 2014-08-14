@@ -63,6 +63,10 @@ object TplDataFormatUtil {
     fmt.format(number)
   }
 
+  def formatIntHtml(number: Int)(implicit ctx: Context): Html = {
+    Html(formatInt(number).replaceAll(" ", "&nbsp;"))
+  }
+
   // Пока локали не поддерживаются, используется один форматтер на всех.
   def formatPriceDigits(price: Float)(implicit ctx: Context): String = {
     val formatPriceDigitsDF = {
