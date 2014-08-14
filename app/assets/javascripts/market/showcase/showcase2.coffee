@@ -478,9 +478,9 @@ siomart =
 
     request_query_param : () ->
       if typeof siomart.geo.geo_position_obj == 'undefined'
-        "geo=ip"
+        "a.geo=ip"
       else
-        "geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
+        "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
   getDeviceScale : () ->
     deviceWidth = landscape = Math.abs(window.orientation) == 90
