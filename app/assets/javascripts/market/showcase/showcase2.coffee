@@ -477,6 +477,10 @@ siomart =
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
 
     request_query_param : () ->
+
+      if window.with_geo == false
+        return ""
+
       if typeof siomart.geo.geo_position_obj == 'undefined'
         "a.geo=ip"
       else
@@ -1715,7 +1719,9 @@ siomart =
     siomart.config.host = window.siomart_host
 
     this.utils.set_vendor_prefix()
-    siomart.geo.get_current_position()
+
+    if window.with_geo == true
+      siomart.geo.get_current_position()
 
     siomart.load_mart()
 
