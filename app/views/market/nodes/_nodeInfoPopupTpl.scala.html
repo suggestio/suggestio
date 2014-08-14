@@ -23,6 +23,13 @@
   <h2 class="popup_t __index">@adnNode.meta.name</h2>
 
   <div class="card_prop">
+    @adnNode.meta.town.map { town =>
+      <span class="card_prop-name">Город</span>
+      <span class="card_prop-value">@town</span>
+    }
+  </div>
+
+  <div class="card_prop">
     @adnNode.meta.humanTrafficAvg.map { hta =>
       <span class="card_prop-name">Посетителей в день</span>
       <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
