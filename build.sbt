@@ -59,18 +59,31 @@ libraryDependencies ++= {
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
-    "org.apache.hadoop" % "hadoop-main" % hadoopVsn,
-    "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
+    "org.apache.hadoop" % "hadoop-main" % hadoopVsn
+      exclude("commons-beanutils", "commons-beanutils")
+    ,
+    "org.apache.hadoop" % "hadoop-client" % hadoopVsn
+      exclude("commons-beanutils", "commons-beanutils")
+    ,
     // hbase
     "org.apache.hbase" % "hbase" % hbaseVsn,
-    "org.apache.hbase" % "hbase-server" % hbaseVsn,
+    "org.apache.hbase" % "hbase-server" % hbaseVsn
+      exclude("org.mortbay.jetty", "jetty")
+      exclude("org.mortbay.jetty", "jetty-util")
+      exclude("org.mortbay.jetty", "jetty-sslengine")
+      exclude("org.mortbay.jetty", "jsp-2.1")
+      exclude("org.mortbay.jetty", "jsp-api-2.1")
+      exclude("org.mortbay.jetty", "servlet-api-2.5")
+    ,
     "org.apache.hbase" % "hbase-common" % hbaseVsn,
     "org.hbase" % "asynchbase" % "1.5.0A-SNAPSHOT",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     //"cascading" % "cascading-hadoop" % cascadingVsn,      // hadoop <= 1.x
     "cascading" % "cascading-hadoop2-mr1" % cascadingVsn,   // hadoop >= 2.x
-    "com.scaleunlimited" % "cascading-utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
+    "com.scaleunlimited" % "cascading-utils" % "2.2sio-SNAPSHOT"   // нужно для HadoopUtils.
+      exclude("cascading", "cascading-hadoop")
+    ,
     // Морфология
     "org.apache.lucene.morphology" % "russian" % morphVsn,
     "org.apache.lucene.morphology" % "english" % morphVsn,

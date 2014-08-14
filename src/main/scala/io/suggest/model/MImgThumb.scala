@@ -77,7 +77,7 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
         it.thumb = thumbResp.img
         it.timestamp = thumbResp.timestamp
         // Заливаем image url
-        if (!mdResp.isEmpty) {
+        if (mdResp.isDefined) {
           it.imageUrl = mdResp.get
         }
         // Вернуть результат

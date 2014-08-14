@@ -85,60 +85,6 @@ object MDomain {
   }
 
 
-  /** Backend для хранения данных модели в DFS. */
-  class DfsBackend extends Backend {
-    val filename = "m_domain"
-
-    private def dkeyPath(dkey: String): Path = {
-      val dkeyDir = SiobixFs.dkeyPathConf(dkey)
-      new Path(dkeyDir, filename)
-    }
-
-    def getForDkey(dkey: String): Future[Option[MDomain]] = future {
-      val filePath = dkeyPath(dkey)
-      fs.exists(filePath) match {
-        // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
-        case true =>
-          val person = JsonDfsBackend.getAs[MDomain](filePath, fs).get
-          Some(person)
-
-        case false => None
-      }
-    }
-
-    def save(d: MDomain): Future[MDomain] = future {
-      val filePath = dkeyPath(d.dkey)
-      JsonDfsBackend.writeToPath(filePath, overwrite=true, value=d)
-      d
-    }
-
-    def getAll: Future[List[MDomain]] = future {
-      val globPath = dkeyPath("*")
-      fs.globStatus(globPath).foldLeft[List[MDomain]] (Nil) { (acc, fstatus) =>
-        if (!fstatus.isDirectory) {
-          JsonDfsBackend.getAs[MDomain](fstatus.getPath, fs) match {
-            case Some(mdomain) => mdomain :: acc
-            case None => acc
-          }
-        } else {
-          acc
-        }
-      }
-    }
-
-    def delete(dkey: String): Future[Any] = future {
-      val filePath = dkeyPath(dkey)
-      fs.delete(filePath, true)
-    }
-
-    // Тут примитивная фунцкия, ибо DfsBackend не для продакшена и эффективность работы не требуется вообще.
-    def getSeveral(dkeys: Seq[String]): Future[List[MDomain]] = {
-      getAll.map(_.filter(dkeys contains _))
-    }
-
-  }
-
-
   /** Backend для хранения данных модели в HBase. Используются reversed-ключи. */
   class HBaseBackend extends Backend {
     import SioHBaseAsyncClient._
