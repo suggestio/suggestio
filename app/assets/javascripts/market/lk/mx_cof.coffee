@@ -494,8 +494,12 @@ CbcaPopup =
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
 
-    $popup.find 'img'
-    .on 'load', () ->
+    $images = $popup.find 'img'
+
+    if $images.size()
+      $images.on 'load', () ->
+        cbca.popup.setPopupPosition popupSelector
+    else
       cbca.popup.setPopupPosition popupSelector
 
   hidePopup: (popupSelector) ->
