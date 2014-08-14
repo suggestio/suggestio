@@ -22,6 +22,19 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+
+  /** Юзер заходит в /market (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
+    * Если юзер уже залогинен и у него есть магазины/тц, то его надо переправить в ЛК. */
+  def lkIndex = MaybeAuth { implicit request =>
+    Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
+  }
+
+  /** Рендер верстки popup'а для отображения инфы по узлу. */
+  // TODO Следует проверять права на узлы, чтобы не сканить.
+  def adnNodePopup(adnId: String) = AdnNodePubMaybeAuth(adnId).apply { implicit request =>
+    Ok(nodes._nodeInfoPopupTpl(request.adnNode))
+  }
+
   // статистка
 
   /** Кем-то просмотрена одна рекламная карточка. */

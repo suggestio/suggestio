@@ -79,9 +79,15 @@ POST /admin/apply_ds/:domain            controllers.Admin.applyDomainSettings(do
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
+# Главная страница маркета
+GET  /m                                 controllers.Market.lkIndex
+# Разные заманушные статические странички.
+GET  /market/about                      controllers.Market.aboutMarket
+GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
+GET  /market/booklet                    controllers.Market.marketBooklet
+GET  /market/adn/:adnId/popup           controllers.Market.adnNodePopup(adnId)
 
 # Входы в личные кабинеты
-GET  /m                                 controllers.MarketLk.lkIndex
 POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
@@ -193,11 +199,6 @@ POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmi
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
 GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
-
-# Разные заманушные статические странички.
-GET  /market/about                      controllers.Market.aboutMarket
-GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
-GET  /market/booklet                    controllers.Market.marketBooklet
 
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)

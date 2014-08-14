@@ -2,6 +2,7 @@ package util.acl
 
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.PlayLazyMacroLogsImpl
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -20,7 +21,7 @@ object IsAdnNodeAdmin {
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauth(req: RequestHeader): Future[Result] = {
     Future.successful(
-      Results.Redirect(routes.MarketLk.lkIndex())
+      Results.Redirect(routes.Market.lkIndex())
     )
   }
 
@@ -77,7 +78,7 @@ object IsAdnNodeAdmin {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится администрируемый узел, если всё ок. */
-trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
+sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -110,7 +111,7 @@ case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request
 
 
 /** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
-trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
+sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
   def adnId: String
   def povAdnIdOpt: Option[String]
   override def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
@@ -181,30 +182,70 @@ case class SimpleRequestForAdnNode[A](adnNode: MAdnNode, request: Request[A], pw
   override lazy val isMyNode = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
 }
 
-/** Гибрид [[MaybeAuth]] и читалки MAdnNode из кеша. Права на узел не проверяются. */
-trait AdnNodeMaybeAuthBase extends ActionBuilder[SimpleRequestForAdnNode] {
+
+/** Общий код проверок типа AdnNodeMaybeAuth. */
+sealed trait AdnNodeMaybeAuthAbstract
+  extends ActionBuilder[SimpleRequestForAdnNode]
+  with PlayLazyMacroLogsImpl
+{
+  import LOGGER._
+
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
-        srmFut flatMap { srm =>
-          val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)
-          block(req1)
+        if (isNodeValid(adnNode)) {
+          srmFut flatMap { srm =>
+            val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)
+            block(req1)
+          }
+        } else {
+          accessProhibited(adnNode, request)
         }
 
       case None =>
-        IsAdnNodeAdmin.nodeNotFound(adnId)(request)
+        nodeNotFound(request)
     }
+  }
+
+  def isNodeValid(adnNode: MAdnNode): Boolean
+
+  def accessProhibited[A](adnNode: MAdnNode, request: Request[A]): Future[Result] = {
+    warn(s"Failed access to acl-prohibited node: ${adnNode.id.get} (${adnNode.meta.name}) :: Returning 404 to ${request.remoteAddress}")
+    IsAdnNodeAdmin.nodeNotFound(adnId)(request)
+  }
+
+  def nodeNotFound[A](request: Request[A]): Future[Result] = {
+    warn(s"Node $adnId not found, requested by ${request.remoteAddress}")
+    IsAdnNodeAdmin.nodeNotFound(adnId)(request)
   }
 }
 
-/**
- * Реализация [[AdnNodeMaybeAuthBase]] с поддержкой таймаута сессии.
- * @param adnId id искомого узла.
- */
-case class AdnNodeMaybeAuth(adnId: String)
-  extends AdnNodeMaybeAuthBase
+/** Промежуточный трейт из-за использования в ExpireSession модификатора abstract override. */
+sealed trait AdnNodeMaybeAuthAbstractEs
+  extends AdnNodeMaybeAuthAbstract
   with ExpireSession[SimpleRequestForAdnNode]
+
+
+/**
+ * Реализация [[AdnNodeMaybeAuthAbstract]] с поддержкой таймаута сессии.
+ * @param adnId id узла.
+ */
+case class AdnNodeMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
+  override def isNodeValid(adnNode: MAdnNode): Boolean = true
+}
+
+
+/**
+ * Является ли этот узел публичным, т.е. отображаемым для анонимных юзеров?
+ * Да, если не тестовый и если ресивер.
+ * @param adnId id узла.
+ */
+case class AdnNodePubMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
+  override def isNodeValid(adnNode: MAdnNode): Boolean = {
+    adnNode.adn.isReceiver && !adnNode.adn.testNode
+  }
+}
 
