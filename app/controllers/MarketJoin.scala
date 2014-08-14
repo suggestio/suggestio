@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import MarketLkAdnEdit.{logoKM, colorKM, townKM}
+import MarketLkAdnEdit.{logoKM, townKM}
 
 /**
  * Suggest.io
@@ -26,6 +26,7 @@ import MarketLkAdnEdit.{logoKM, colorKM, townKM}
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
 
+  private val colorOptKM = "color"  -> colorOptM
   private val companyKM = "company" -> companyNameM
 
   /** Маппинг формы анкеты с галочками про wi-fi. */
@@ -84,7 +85,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "phone"           -> phoneM,
         "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
-        colorKM,
+        colorOptKM,
         GalleryUtil.galleryKM,
         logoKM,
         WelcomeUtil.welcomeImgIdKM,
@@ -307,7 +308,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
         "email"     -> email,
-        colorKM,
+        colorOptKM,
         logoKM,
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
