@@ -16,6 +16,12 @@ import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilde
  */
 object AdnNodesSearch {
 
+  /** Скрипт для фильтрации по наличию значения в поле logo. */
+  val LOGO_EXIST_MVEL = {
+    val fn = EMLogoImg.LOGO_IMG_ESFN
+    s"""_source.containsKey("$fn");"""
+  }
+
   /**
    * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
    * @param args Критерии поиска.
@@ -138,6 +144,15 @@ object AdnNodesSearch {
       qb2 = QueryBuilders.filteredQuery(qb2, idsf)
     }
 
+    // Добавить фильтр по наличию логотипа. Т.к. поле не индексируется, то используется
+    if (args.hasLogo.nonEmpty) {
+      var ef: FilterBuilder = FilterBuilders.scriptFilter(LOGO_EXIST_MVEL)
+      if (!args.hasLogo.get) {
+        ef = FilterBuilders.notFilter(ef)
+      }
+      qb2 = QueryBuilders.filteredQuery(qb2, ef)
+    }
+
     // Добавляем geo-фильтр по дистанции до точки, если необходимо.
     if (args.geoDistance.isDefined) {
       val gd = args.geoDistance.get
@@ -193,6 +208,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
 
   /** Фильтровать по дистанции относительно какой-то точки. */
   def geoDistance: Option[GeoDistanceQuery]
+
+  /** Фильтровать по наличию/отсутсвию логотипа. */
+  def hasLogo: Option[Boolean]
 
   override def toEsQuery = AdnNodesSearch.mkEsQuery(this)
 }
