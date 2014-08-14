@@ -4,7 +4,7 @@
 siomBlueColor = #07a1ca
 
 screen1024 = 'screen and (max-width: 1024px)'
-screen768 = 'screen and (max-width: 768px)'
+screen768 = 'screen and (max-width: 767px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .colorpicker
@@ -83,7 +83,7 @@ li
   display: none
 
 .sm-note__link
-  color: #5088aa
+  color: #5088aa 
 
 .sm-light-text
   color: #959595
@@ -1145,66 +1145,6 @@ li
   .copyright-block
     padding-left: 10px !important
 
-@media screen768
-
-  .popup
-    width: 100% !important
-    margin-left: 0 !important
-    left: 0 !important
-
-    &_cnt
-      padding: 20px 10px !important
-
-  .title-wrap
-    height: auto !important
-
-    .center
-      padding: 15px 0 10px !important
-
-  .wifi-page__left-column
-    width: 100%
-
-  .quiz__checkbox-wrap
-    padding: 10px
-
-  .wifi-page__right-column
-    margin-left: 0
-    margin-bottom: 25px
-    width: 100%
-
-  .input-w
-
-    tr
-      display: block
-
-    td
-      display: block
-      overflow: hidden
-      width: 100% !important
-
-  .captcha-table
-
-    tr
-      display: block
-
-    .captcha-table_left
-      display: block
-      width: 100%
-
-
-  .login-page__join-adv,
-  .login-page__join-wifi
-    position: relative
-    padding-bottom: 50px
-    padding-right: 0
-
-  .index_help-btn
-    position: absolute
-    top: 50px
-    left: 50%
-    margin-left: -18px
-    margin-right: 0
-
 
 
 
@@ -1901,25 +1841,10 @@ th.__bg-head
         background-size     24px auto
         background-position center
 
-  &_i.__icon-morvokzal
-    background      url('/assets/images/market/index/wifi-points_morvokzal.png') no-repeat
-    background-size 60px 60px
+    &:active
 
-  &_i.__icon-stokmann
-    background      url('/assets/images/market/index/wifi-points_stokmann.png') no-repeat
-    background-size 60px 60px
-
-  &_i.__icon-mega
-    background      url('/assets/images/market/index/wifi-points_mega.png') no-repeat
-    background-size 60px 60px
-
-  &_i.__icon-ikea
-    background      url('/assets/images/market/index/wifi-points_ikea.png') no-repeat
-    background-size 60px 60px
-
-  &_i.__icon-gallery
-    background      url('/assets/images/market/index/wifi-points_gallery.png') no-repeat
-    background-size 60px 60px
+      .wifi-points_i-hover
+        background-position center 52%
 
 .card
 
@@ -1963,3 +1888,21 @@ th.__bg-head
   &_prop-value
     float     left
     font-size 16px
+
+@media screen768
+
+  .body_cnt
+    padding-top  0
+
+  .index-page_title
+    letter-spacing  10px
+    padding-left    10px
+
+  .index-page_logo-image
+    margin-top  35px
+
+  .index-page_adv-btn
+    margin-top  35px
+
+  .footer_wifi
+    display none

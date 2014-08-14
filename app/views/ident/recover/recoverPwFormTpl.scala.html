@@ -34,7 +34,7 @@
         @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
         <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-        <a id="captchaReload" class="captcha_reload-btn" href=""></a>
+        <a class="captcha_reload-btn" id="captchaReload" href=""></a>
         }
       </div>
 
@@ -48,7 +48,7 @@
 
     <div class="popup_footer __index">
       <div class="btn-w __size-M">
-        <a class="siom-new-btn __size-XS __color-2 f-left js-popup-back" href="#emailPwLoginForm">Отмена</a>
+        <a class="siom-new-btn __size-XS __color-2 f-left js-popup-back" href="#emailPwLoginForm">Назад</a>
         <input class="siom-new-btn __size-XS __fill-1 __list f-left" type="submit" value='Отправить'/>
       </div>
     </div>

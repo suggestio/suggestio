@@ -2,166 +2,67 @@
 
 @import ctx._
 @import helper._
-@import util.FC.tdFc
+@import util.FC.radialFc
 @import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 
 @form(submitCall) {
 
-  <table  class="input-w __size-L">
-    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
-  </table>
+  @inputText(
+    jf("company"),
+    '_label -> (Messages("Company") + ":"),
+    'placeholder -> Messages("Company")
+  )
 
-  <table class="input-w __size-L">
-    <tr>
+  @inputText(
+    jf("town"),
+    '_label -> (Messages("Town") + ":"),
+    'placeholder -> Messages("Town")
+  )
 
-      <td class="input-w_left">
-        <label class="input-w_prop-name">Логотип:</label>
-        <span class="required-icon">*</span>
-      </td>
+  @textarea(
+    jf("address"),
+    '_label -> (Messages("Address") + ":"),
+    'placeholder -> Messages("Address")
+  )
 
-      <td>
+  @inputText(
+    jf("siteUrl"),
+    '_label -> (Messages("Site") + ":"),
+    'placeholder -> Messages("Site")
+  )
 
-        <div class="add-file-w __size-S"  >
-          @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "util.img.ImgFormUtil.LOGO_IMG_ID_K")
-          <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
-        </div>
+  @inputText(
+    jf("email"),
+    '_label -> (Messages("constraint.email") + ":"),
+    'placeholder -> Messages("constraint.email")
+  )
 
-      </td>
+  @inputText(
+    jf("phone"),
+    '_label -> (Messages("Office.phone.number") + ":"),
+    'placeholder -> Messages("Office.phone.number")
+  )
 
-    </tr>
-  </table>
+  @textarea(
+    jf("info"),
+    '_label -> "Описание товаров или услуг:",
+    'placeholder -> "Описание товаров или услуг"
+  )
 
-  @if( isWifi ) {
-    <table  class="input-w __size-L">
-      @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
-    </table>
+  <div class="captcha">
+    @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+      <a class="captcha_reload-btn" id="captchaReload" href=""></a>
+    }
+  </div>
 
-    <table  class="input-w __size-L">
-      @inputText(jf("humanTrafficAvg"), '_label -> (Messages("Daily.people.traffic") + ":"))
-    </table>
-  }
-
-  <table  class="input-w __size-L">
-    @inputText(jf("town"), '_label -> (Messages("Town") + ":"))
-  </table>
-
-  <table  class="input-w __size-L">
-    @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
-  </table>
-
-
-  <table  class="input-w __size-L">
-    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
-  </table>
-
-  <table  class="input-w __size-L">
-    @inputText(jf("email"), '_label -> (Messages("constraint.email") + ":"))
-  </table>
-
-  <table  class="input-w __size-L">
-    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
-  </table>
-
-  @if( isWifi ) {
-    <table class="input-w __size-L">
-      <tr>
-
-        <td class="input-w_left">
-          <label class="input-w_prop-name">Картинка<br/>приветствия:</label>
-          <span class="required-icon">*</span>
-        </td>
-
-        <td>
-
-          <div class="add-file-w __size-S"  >
-            @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "welcomeImgId")
-            <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
-          </div>
-
-        </td>
-
-      </tr>
-    </table>
-
-    <table  class="input-w __size-L">
-
-      <tr>
-        <td class="input-w_left">
-          <label class="input-w_prop-name" for="logoImgInput">Фотографии<br/>объекта:</label>
-        </td>
-
-        <td>
-
-          <div class="add-file-w __size-S" >
-            @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
-            <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
-          </div>
-
-        </td>
-      </tr>
-
-    </table>
-  } else {
-    <table  class="input-w __size-L">
-      @textarea(jf("info"), '_label -> "Описание товаров или услуг:")
-    </table>
-  }
-
-  <table class="input-w __size-L">
-    <td class="input-w_left">
-      <label class="input-w_prop-name" for="meta_color">Основной цвет:</label>
-      <span class="required-icon">*</span>
-    </td>
-    <td>
-      <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@jf("color").value;">
-      <div></div>
-      <input id="meta_color" type="hidden" name="color" value="@jf("color").value"/>
-      </div>
-    </td>
-  </table>
-
-
-  @if( isWifi ) {
-
-    <div class="border-line"></div>
-
-    <table  class="input-w __size-L textarea">
-      @textarea(jf("payReqs"), '_label -> (Messages("requisites") + ":"))
-    </table>
-
-  }
-
-
-  <div class="border-line"></div>
-
-
-  @* Капча *@
-  <table  class="input-w">
-    <tr>
-      <td class="input-w_left"></td>
-      <td style="height: 55px;">
-        @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-          <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-          <img id="captchaImage" class="captcha_image" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-          <a id="captchaReload" class="captcha-reload-btn" href=""></a>
-        }
-      </td>
-    </tr>
-  </table>
-
-
-  <table  class="input-w">
-    @inputText(
-      jf(CAPTCHA_TYPED_FN),
-      '_label -> Messages("Input.text.from.picture")
-    )
-  </table>
-
-
-
-  <div class="border-line"></div>
-
+  @inputText(
+    jf(CAPTCHA_TYPED_FN),
+    '_label -> Messages("Input.text.from.picture"),
+    'placeholder -> "Введите текст с картинки"
+  )
 
   <div class="submit-w __size-M">
 

@@ -1,3 +1,5 @@
+screenForTransitions = 'screen and (min-width: 1024px)'
+
 .gray-but-smallest
   margin-left: 1px
   display: inline-block
@@ -536,10 +538,13 @@ siomLinkBtnColor5 = #9a9b9b
   font-family     'opensans-light'
   color           white
 
-  border-radius(10px)
+  -webkit-appearance none
+  border-radius(6px)
 
   &:hover
-    background-color  #dc3a36
+    background-color  white
+    border-color      white
+    color             #f44040
 
   &.__size-XS
     padding 10px 40px
@@ -568,10 +573,12 @@ siomLinkBtnColor5 = #9a9b9b
 
   &.__fill-1
     background-color  #f44040
-    border-color      transparent
+    border-color      #f44040
 
     &:hover
       background-color  #dc3a36
+      border-color      #dc3a36
+      color             white
 
   &.__list
     margin-left 20px
@@ -581,4 +588,19 @@ siomLinkBtnColor5 = #9a9b9b
     color         #7a7a7a
 
     &:hover
-      color white
+      background-color  #c2c2c2
+      border-color      #c2c2c2
+      color             white
+
+@media screenForTransitions
+
+  .siom-new-btn
+    transition(background 0.2s ease-in-out 0s)
+
+@media screen768
+
+  .siom-new-btn.__size-XS
+    padding 10px 20px
+
+    &:active
+      padding 11px 20px 9px
