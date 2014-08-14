@@ -431,13 +431,13 @@ CbcaPopup =
 
   showOverlay: () ->
     this.$overlay.show()
-    this.$container.show()
     this.$body.addClass 'ovh'
+    cbca.popup.$container.css 'visibility', 'visible'
 
   hideOverlay: () ->
     this.$overlay.hide()
-    this.$container.hide()
     this.$body.removeClass 'ovh'
+    cbca.popup.$container.css 'visibility', 'hidden'
 
   setPopupPosition: (popupSelector) ->
     $popup    = $ popupSelector
@@ -477,12 +477,9 @@ CbcaPopup =
       this.$overlay.height popupsContainerHeight
 
   showPopup: (popupSelector) ->
-    this.showOverlay()
     popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
     $popup.show()
-
-    console.log popupSelector
 
     $popup
     .find '.sm-block'
@@ -499,8 +496,11 @@ CbcaPopup =
     if $images.size()
       $images.on 'load', () ->
         cbca.popup.setPopupPosition popupSelector
+        cbca.popup.showOverlay()
+
     else
       cbca.popup.setPopupPosition popupSelector
+      cbca.popup.showOverlay()
 
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'
