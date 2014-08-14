@@ -26,7 +26,7 @@ libraryDependencies ++= {
   val jacksonVsn    = "2.4.+"
   val tikaVsn       = "1.5"
   val cascadingVsn  = "2.6.+"
-  val playVsn       = "2.3.2"
+  val playVsn       = "2.3.3"
   val morphVsn      = "1.2-SNAPSHOT"
   val bcVsn         = "1.46"
   Seq(
