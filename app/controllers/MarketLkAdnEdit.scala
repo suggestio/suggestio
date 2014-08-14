@@ -152,16 +152,17 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     * тот или иной хелпер. */
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
+    lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(adnNode.adn).bindFromRequest().fold(
       {formWithErrors =>
         val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
-        debug(s"martEditFormSubmit(${adnNode.id.get}): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
         welcomeAdOptFut map { welcomeAdOpt =>
           NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
         }
       },
       {fmr =>
-        trace(s"editAdnNodeSubmit($adnId): newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
+        trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImg(
           needImgs = fmr.logoOpt.toSeq,
