@@ -208,12 +208,18 @@ trait TempImgSupport extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String])(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
         val srcFile = fileRef.file
-        val mptmp = MPictureTmp.getForTempFile(fileRef.file, OutImgFmts.JPEG, marker)
+        val outFmt = if (preserveFmt) {
+          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+          OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        } else {
+          OutImgFmts.JPEG
+        }
+        val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
         try {
           imageUtil.convert(srcFile, mptmp.file)
           Ok(Img.jsonTempOk(mptmp.filename))

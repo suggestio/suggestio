@@ -129,7 +129,7 @@ trait BgImg extends ValT with SaveBgImgI {
 
 object LogoImg {
   val LOGO_IMG_FN = "logo"
-  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil)  // Запилить отдельный конвертор для логотипов на карточках?
+  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
 }
 /** Функционал для сохранения вторичного логотипа рекламной карточки. */
 trait LogoImg extends ValT with ISaveImgs {

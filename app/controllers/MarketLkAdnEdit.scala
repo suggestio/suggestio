@@ -224,7 +224,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
    */
   def handleTempLogo = Action.async(parse.multipartFormData) { implicit request =>
     bruteForceProtected {
-      _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
+      _handleTempImg(LogoImageUtil, Some(TMP_LOGO_MARKER), preserveFmt = true)
     }
   }
 
