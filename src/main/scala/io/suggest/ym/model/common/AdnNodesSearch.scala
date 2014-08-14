@@ -124,11 +124,16 @@ object AdnNodesSearch {
     // Отрабатываем флаг testNode.
     }.map[QueryBuilder] { qb =>
       args.testNode.fold(qb) { tnFlag =>
-        val tnf = FilterBuilders.termFilter(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+        var tnf: FilterBuilder = FilterBuilders.termFilter(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+        if (!tnFlag) {
+          val tmf = FilterBuilders.missingFilter(AdNetMember.ADN_TEST_NODE_ESFN)
+          tnf = FilterBuilders.orFilter(tnf, tmf)
+        }
         QueryBuilders.filteredQuery(qb, tnf)
       }
     }.orElse[QueryBuilder] {
       args.testNode.map { tnFlag =>
+        // TODO Нужно добавить аналог missing filter для query и как-то объеденить через OR. Или пока так и пересохранять узлы с tn=false.
         QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
       }
 

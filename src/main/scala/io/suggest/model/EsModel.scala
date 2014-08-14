@@ -1,5 +1,7 @@
 package io.suggest.model
 
+import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse
+import org.elasticsearch.cluster.metadata.IndexMetaData
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
 
@@ -259,6 +261,18 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
+  protected def getIndexClusterState(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[IndexMetaData] = {
+    client.admin().cluster()
+      .prepareState()
+      .setIndices(indexName)
+      .execute()
+      .map {
+         _.getState
+          .getMetaData
+          .index(indexName)
+      }
+  }
+
   /**
    * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
    * внутри общего индекса.
@@ -266,18 +280,19 @@ object EsModel extends MacroLogsImpl {
    * @return Да/нет.
    */
   def isMappingExists(indexName: String, typeName: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    client.admin().cluster()
-      .prepareState()
-      .setIndices(indexName)
-      .execute()
-      .map { cmd =>
-        val imd = cmd.getState
-          .getMetaData
-          .index(indexName)
-          .mapping(typeName)
-        trace("mapping exists resp: " + imd)
-        imd != null
-      }
+    getIndexClusterState(indexName) map { imd =>
+      val mmd = imd.mapping(typeName)
+      trace("mapping exists resp: " + imd)
+      imd != null
+    }
+  }
+
+  /** Прочитать текст маппинга из хранилища. */
+  def getCurrentMapping(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[String] = {
+    getIndexClusterState(indexName) map { imd =>
+      val mmd = imd.mapping(typeName)
+      mmd.source().string()
+    }
   }
 
   /** Сериализация набора строк. */
@@ -435,6 +450,8 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def runSearch(srb: SearchRequestBuilder)(implicit ec: ExecutionContext): Future[Seq[T]] = {
     srb.execute().map { searchResp2list }
   }
+
+  def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = EsModel.getCurrentMapping(ES_INDEX_NAME, ES_TYPE_NAME)
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -963,6 +980,9 @@ trait EsModelJMXMBeanCommon {
   @ManagedOperation(impact=ACTION)
   def deleteMapping()
 
+  def generateMapping(): String
+  def getCurrentMapping(): String
+
   /** Запросить routingKey у модели.
     * @param idOrNull исходный id
     * @return Будет распечатана строка вида "Some(..)" или "None".
@@ -1045,6 +1065,15 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
 
   override def deleteMapping() {
     companion.deleteMapping
+  }
+
+  override def generateMapping(): String = {
+    val mappingText = companion.generateMapping.string()
+    JacksonWrapper.prettify(mappingText)
+  }
+
+  override def getCurrentMapping(): String = {
+    companion.getCurrentMapping
   }
 
   override def getRoutingKey(idOrNull: String): String = {
