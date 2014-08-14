@@ -16,25 +16,11 @@
 
   </div>
 
-<<<<<<< local
   <div class="body __responsive index-page_cnt">
-=======
-  <div class="body __responsive wave-pattern">
 
-    <div class="page-title wave-pattern">
+    <div class="body_cnt __responsive adv-req-page">
 
-      <div class="page-title_cnt">
-        <a class="back-btn" href="@routes.Market.index()">&nbsp;</a>
-        РАЗМЕСТИТЬ РЕКЛАМУ
-      </div>
-
-    </div>
-
->>>>>>> other
-
-    <div class="body_cnt __responsive">
-
-      <div class="ovh">
+      <div class="adv-req-page_right">
 
         @_joinReqFormTpl(
           jf = jf,
@@ -42,6 +28,31 @@
           submitCall = routes.MarketJoin.joinAdvRequestSubmit,
           isWifi = false
         )
+
+      </div>
+
+      <div class="adv-req-page_left">
+
+        <h1 class="adv-req-page_title">
+          <span class="index-page_color-1">Sio </span>Market
+        </h1>
+
+        <a class="index-page_logo-link" href="@routes.Market.index" >
+          <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+        </a>
+
+
+        <h2 class="adv-req-page_welcome">Добро пожаловать</h2>
+
+        <p class="adv-req-page_text">
+          Мы рады что вы с нами<br/>
+          с сио вы получите эффективную рекламу<br/>
+          в сетях Wi-Fi Free
+        </p>
+
+        <a href="tel:88126407646" class="phone-btn adv-req-page_phone">
+          8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
+        </a>
 
       </div>
 

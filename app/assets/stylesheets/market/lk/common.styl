@@ -27,7 +27,7 @@ li
   list-style: disc
 
 .ovh
-  overflow: hidden
+  overflow                    hidden
 
 .lk
   font-size: 14px
@@ -1546,7 +1546,7 @@ th.__bg-head
       opacity 1
 
     &:active
-      background-position 0 1px
+      background-position center 1px
 
   &_success-icon
     margin-bottom 25px
@@ -1747,8 +1747,26 @@ th.__bg-head
   &.__text-C
     text-align center
 
+.phone-btn
+  display             block
+  width               140px
+  padding-top         100px
+  height              40px
+
+  border              2px solid transparent
+  background-color    #f44040
+  background-image    url('/assets/images/market/booklet/phone-icon.png')
+  background-repeat   no-repeat
+  background-position center 20px
+
+  cursor              pointer
+  color               white
+  text-align          center
+  text-decoration     none
+  border-radius(10px)
+
 /********************************************************************************************************************/
-/* Страница входа */
+/* Главная страница */
 /********************************************************************************************************************/
 .index-page
   color       #aaaaaa
@@ -1898,6 +1916,7 @@ th.__bg-head
     overflow  hidden
     font-size 16px
 
+
 @media screen768
 
   .body_cnt
@@ -1917,23 +1936,77 @@ th.__bg-head
     display none
 
   .popups-container
-    overflow hidden
+    position                    absolute
+    top                         0
+    height                      auto
+    bottom                      -60px
+    -webkit-overflow-scrolling  touch
 
-  .popup
-    position    fixed
-    bottom      0
-    top         0 !important
-    left        0
-    right       0
-    width       auto
-    overflow-y  auto
-    -webkit-overflow-scrolling touch
 
-    &.__index
-      border-radius(0)
+/********************************************************************************************************************/
+/* Страница регистрации */
+/********************************************************************************************************************/
+.adv-req-page
+  overflow        hidden
+  padding-top     20px
+  padding-bottom  80px
 
-    &_header
-      border-radius(0)
+  &_left
+    color       white
+    overflow    hidden
+    text-align  center
 
-    &_footer
-      border-radius(0)
+  &_title
+    margin-top      80px
+    font-family     'opensans-bold'
+    padding-left    20px
+    font-size       20px
+    letter-spacing  20px
+    text-transform  uppercase
+
+  &_welcome
+    margin-top      50px
+    font-size       16px
+    text-transform  uppercase
+
+  &_text
+    margin-top  25px
+
+  &_phone
+    margin 50px auto 0
+
+  &_right
+    float             right
+    width             480px
+    overflow          hidden
+    background-color  white
+    border-radius(10px)
+
+.adv-req-form
+
+  &_fields
+    padding 20px 80px
+
+  &_title
+    color           #494949
+    font-family     'opensans-light'
+    font-size       16px
+    text-transform  uppercase
+
+@media screen768
+
+  .adv-req-page
+
+    &_left
+      display none
+
+    &_right
+      float none
+      width 100%
+
+  .adv-req-form
+
+    &_fields
+      padding 20px
+
+

@@ -8,68 +8,83 @@
 
 @form(submitCall) {
 
-  @inputText(
-    jf("company"),
-    '_label -> (Messages("Company") + ":"),
-    'placeholder -> Messages("Company")
-  )
-
-  @inputText(
-    jf("town"),
-    '_label -> (Messages("Town") + ":"),
-    'placeholder -> Messages("Town")
-  )
-
-  @textarea(
-    jf("address"),
-    '_label -> (Messages("Address") + ":"),
-    'placeholder -> Messages("Address")
-  )
-
-  @inputText(
-    jf("siteUrl"),
-    '_label -> (Messages("Site") + ":"),
-    'placeholder -> Messages("Site")
-  )
-
-  @inputText(
-    jf("email"),
-    '_label -> (Messages("constraint.email") + ":"),
-    'placeholder -> Messages("constraint.email")
-  )
-
-  @inputText(
-    jf("phone"),
-    '_label -> (Messages("Office.phone.number") + ":"),
-    'placeholder -> Messages("Office.phone.number")
-  )
-
-  @textarea(
-    jf("info"),
-    '_label -> "Описание товаров или услуг:",
-    'placeholder -> "Описание товаров или услуг"
-  )
-
-  <div class="captcha">
-    @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-      <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-      <a class="captcha_reload-btn" id="captchaReload" href=""></a>
-    }
+  <div class="popup_header __index">
+    <a class="popup_close f-left" href="@routes.Market.index"></a>
   </div>
 
-  @inputText(
-    jf(CAPTCHA_TYPED_FN),
-    '_label -> Messages("Input.text.from.picture"),
-    'placeholder -> "Введите текст с картинки"
-  )
+  <div class="adv-req-form_fields">
 
-  <div class="submit-w __size-M">
+    <h2 class="adv-req-form_title">
+      Регистрация
+    </h2>
 
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM f-right js-submit-btn">
-      @Messages("Request.invite")
-    </a>
+    @inputText(
+      jf("company"),
+      '_label -> (Messages("Company") + ":"),
+      'placeholder -> Messages("Company")
+    )
+
+    @inputText(
+      jf("town"),
+      '_label -> (Messages("Town") + ":"),
+      'placeholder -> Messages("Town")
+    )
+
+    @textarea(
+      jf("address"),
+      '_label -> (Messages("Address") + ":"),
+      'placeholder -> Messages("Address")
+    )
+
+    @inputText(
+      jf("siteUrl"),
+      '_label -> (Messages("Site") + ":"),
+      'placeholder -> Messages("Site")
+    )
+
+    @inputText(
+      jf("email"),
+      '_label -> (Messages("constraint.email") + ":"),
+      'placeholder -> Messages("constraint.email")
+    )
+
+    @inputText(
+      jf("phone"),
+      '_label -> (Messages("Office.phone.number") + ":"),
+      'placeholder -> Messages("Office.phone.number")
+    )
+
+    @textarea(
+      jf("info"),
+      '_label -> "Описание товаров или услуг:",
+      'placeholder -> "Описание товаров или услуг"
+    )
+
+    <div class="captcha">
+      @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+        <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+        <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+        <a class="captcha_reload-btn" id="captchaReload" href=""></a>
+      }
+    </div>
+
+    @inputText(
+      jf(CAPTCHA_TYPED_FN),
+      '_label -> Messages("Input.text.from.picture"),
+      'placeholder -> "Введите текст с картинки"
+    )
 
   </div>
+
+  <div class="popup_footer">
+
+    <div class="btn-w __size-M">
+
+      <input class="siom-new-btn __fill-1 __size-XS __list" type="submit" value="@Messages("Request.invite")" />
+
+    </div>
+
+  </div>
+
 
 }

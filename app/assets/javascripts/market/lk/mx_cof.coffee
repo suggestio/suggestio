@@ -541,6 +541,7 @@ CbcaPopup =
     ## Кнопка Назад внутри попапа
     $ document
     .on 'click', '.js-popup-back', (e)->
+      e.preventDefault()
       $this = $ this
       targetPopupHref = $this.attr 'href'
       $targetPopup = $ targetPopupHref
