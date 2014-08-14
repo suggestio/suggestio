@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "2.3.2-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.3.3-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")

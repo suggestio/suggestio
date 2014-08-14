@@ -29,7 +29,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.2")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.3")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0")
 
