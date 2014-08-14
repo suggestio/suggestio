@@ -1532,15 +1532,15 @@ th.__bg-head
 
   &_close
     opacity             0.6
-    width               9px
-    height              9px
+    width               37px
+    height              36px
 
     cursor              pointer
     background          url('/assets/images/market/new-design/close_retina.png') no-repeat
-    background-size     9px auto
-    background-position 0 0
+    background-size     auto 100%
+    background-position center center
     text-decoration     none
-    transition(all 0.2s ease-in-out 0s)
+    transition(opacity 0.2s ease-in-out 0s)
 
     &:hover
       opacity 1
@@ -1808,7 +1808,7 @@ th.__bg-head
 
   &_i-w
     display inline-block
-    margin  0 20px
+    margin  0 10px
 
   &_i
     position        relative
@@ -1852,9 +1852,6 @@ th.__bg-head
 
 .card
   width 300px
-
-  &_photo-w
-    width 300px
 
   &_photo
     width 100%
@@ -1928,6 +1925,7 @@ th.__bg-head
     top         0 !important
     left        0
     right       0
+    width       auto
     overflow-y  auto
     -webkit-overflow-scrolling touch
 
