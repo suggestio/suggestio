@@ -1,9 +1,9 @@
-@(lf: Option[Form[_]] = None)(implicit ctx: util.Context)
+@(lf: Option[Form[_]], nodes: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @import ctx._
 
 @marketBase("Добро пожаловать", lf){
 
-  @_indexTpl()
+  @_indexTpl(nodes)
 
 }

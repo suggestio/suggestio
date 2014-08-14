@@ -158,9 +158,11 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
    * @param eActId id ключа активации.
    */
   case class CanRecoverPw(eActId: String) extends ActionBuilder[RecoverPwRequest] with PlayMacroLogsImpl {
-    def keyNotFound(implicit request: RequestHeader) = {
-      implicit val ctx = new ContextImpl
-      NotFound(pwRecoverFailedTpl())
+    protected def keyNotFound(implicit request: RequestHeader): Future[Result] = {
+      MarketIndexAccess.getNodes.map { nodes =>
+        implicit val ctx = new ContextImpl
+        NotFound(pwRecoverFailedTpl(nodes))
+      }
     }
     override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
@@ -207,8 +209,10 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   private val pwResetFormM = Form(passwordWithConfirmM)
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = CanRecoverPw(eActId).apply { implicit request =>
-    Ok(pwResetTpl(request.eAct, pwResetFormM))
+  def recoverPwReturn(eActId: String) = CanRecoverPw(eActId).async { implicit request =>
+    MarketIndexAccess.getNodes map { nodes =>
+      Ok(pwResetTpl(request.eAct, pwResetFormM, nodes))
+    }
   }
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
@@ -216,8 +220,11 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   def pwResetSubmit(eActId: String) = CanRecoverPw(eActId).async { implicit request =>
     pwResetFormM.bindFromRequest().fold(
       {formWithErrors =>
+        val nodesFut = MarketIndexAccess.getNodes
         debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(pwResetTpl(request.eAct, formWithErrors))
+        nodesFut map { nodes =>
+          NotAcceptable(pwResetTpl(request.eAct, formWithErrors, nodes))
+        }
       },
       {newPw =>
         val pwHash2 = MPersonIdent.mkHash(newPw)

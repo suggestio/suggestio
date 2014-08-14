@@ -1,4 +1,4 @@
-@(eAct: EmailActivation, prf: Form[_])(implicit ctx: Context)
+@(eAct: EmailActivation, prf: Form[_], adnNodes: Seq[MAdnNode])(implicit ctx: Context)
 
 @* Страница с формой сброса пароля. Содержит форму для задания и подтверждения пароля. *@
 @import ctx._
@@ -48,7 +48,7 @@
 
 @marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
 
-  @_indexTpl()
+  @_indexTpl(adnNodes)
 
 }
 

@@ -9,6 +9,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -18,15 +19,20 @@ import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
  * не доросли до отдельных контроллеров.
  */
 
-object Market extends SioController with PlayMacroLogsImpl {
+object Market extends SioController {
 
-  import LOGGER._
+  /** Кол-во выводимых узлов размещения рекламы на главной. */
+  val INDEX_NODES_LIST_LEN = configuration.getInt("market.index.nodes.list.len") getOrElse 5
 
-
-  /** Юзер заходит в /market (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
+  /** Юзер заходит в /m (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
     * Если юзер уже залогинен и у него есть магазины/тц, то его надо переправить в ЛК. */
-  def lkIndex = MaybeAuth { implicit request =>
-    Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
+  def index = MarketIndexAccess { implicit request =>
+    // Надо найти узлы, которые стоит отобразить на странице как точки для размещения рекламы.
+    // Это должны быть не-тестовые ресиверы, имеющие логотипы.
+    Ok(indexTpl(
+      lf    = Some(Ident.emailPwLoginFormM),
+      nodes = request.displayNodes
+    ))
   }
 
   /** Рендер верстки popup'а для отображения инфы по узлу. */
@@ -34,6 +40,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   def adnNodePopup(adnId: String) = AdnNodePubMaybeAuth(adnId).apply { implicit request =>
     Ok(nodes._nodeInfoPopupTpl(request.adnNode))
   }
+
 
   // статистка
 

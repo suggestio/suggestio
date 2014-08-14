@@ -1,4 +1,4 @@
-@()(implicit ctx: Context)
+@(adnNodes: Seq[MAdnNode])(implicit ctx: Context)
 
 @import market._
 
@@ -36,7 +36,7 @@
 
 @marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
 
-  @_indexTpl()
+  @_indexTpl(adnNodes)
 
 }
 

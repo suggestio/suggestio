@@ -1,16 +1,14 @@
 @()(implicit ctx: util.Context)
 
-@import play.api.Play.current
+@import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 
 @marketBase("Как это работает"){
-
-
 
   <div class="header __responsive wave-pattern">
 
     <div class="header_cnt __responsive">
 
-      <a class="back-btn __centered" href="@routes.Market.lkIndex">&nbsp;</a>
+      <a class="back-btn __centered" href="@routes.Market.index()">&nbsp;</a>
 
     </div>
 
@@ -70,10 +68,10 @@
         </div>
 
         <div class="paragraph __size-M">
-          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
-          <a href="@routes.MarketShowcase.demoWebSite(demoAdnId)" target="_blank" class="siom-ac-btn __color-1 __size-M __ft-L">
-            ДЕМО
-          </a>
+          @DEMO_ADN_ID_OPT.map { demoAdnId =>
+            <a href="@routes.MarketShowcase.demoWebSite(demoAdnId)" target="_blank" class="siom-ac-btn __color-1 __size-M __ft-L">
+              ДЕМО
+            </a>
           }
         </div>
 

@@ -1,6 +1,6 @@
 @()(implicit ctx: Context)
 
-@import play.api.Play.current
+@import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 
 @* Статическая success-страничка, которая сообщает юзеру, что его запрос принят к рассмотрению. *@
 
@@ -23,7 +23,7 @@
     <div class="page-title wave-pattern">
 
       <div class="page-title_cnt">
-        <a class="back-btn" href="@routes.Market.lkIndex">&nbsp;</a>
+        <a class="back-btn" href="@routes.Market.index()">&nbsp;</a>
         СТАТЬ УЧАСТНИКОМ СЕТИ
       </div>
 
@@ -47,7 +47,7 @@
         <p class="gray-text pargraph_join-success">
           Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бета версия.
           <br/>
-          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+          @DEMO_ADN_ID_OPT.map { demoAdnId =>
             <a class="blue-link" target="_blank" href="@routes.MarketShowcase.demoWebSite(demoAdnId)">Смотреть →</a>
           }
         </p>

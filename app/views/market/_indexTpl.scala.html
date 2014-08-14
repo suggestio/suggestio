@@ -1,7 +1,7 @@
-@(nodes: Seq[MAdnNode] = Nil)(implicit ctx: util.Context)
+@(nodes: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @import ctx._
-@import play.api.Play.current
+@import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 
 <div class="header __responsive __without-background ">
 
@@ -21,7 +21,7 @@
       <span class="index-page_color-1">Sio</span>&nbsp;Market
     </h1>
 
-    <a class="index-page_logo-link" href="@routes.Market.lkIndex" >
+    <a class="index-page_logo-link" href="@routes.Market.index" >
       <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
     </a>
 
@@ -81,7 +81,7 @@
     </div>*@
 
     @*<div class="login-page__demo-btn">
-      @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+      @DEMO_ADN_ID_OPT.map { demoAdnId =>
         <a class="siom-ac-btn __color-5 __ft-XM __size-M" href="@routes.MarketShowcase.demoWebSite(demoAdnId)" target="_blank">
           ДЕМО
         </a>

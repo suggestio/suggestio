@@ -21,7 +21,7 @@ object IsAdnNodeAdmin {
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauth(req: RequestHeader): Future[Result] = {
     Future.successful(
-      Results.Redirect(routes.Market.lkIndex())
+      Results.Redirect(routes.Market.index())
     )
   }
 

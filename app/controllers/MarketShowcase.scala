@@ -54,6 +54,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
+
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
 
@@ -63,6 +64,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Цвет для выдачи, которая вне узла. */
   val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+
+  val DEMO_ADN_ID_OPT = configuration.getString("market.demo.adn.id")
 
 
   /**
@@ -464,6 +467,20 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Cache.remove(ck)
     }
     Seq(classifier -> Seq(subscriber))
+  }
+
+
+  /**
+   * Постоянная ссылка на demo-выдачу, если она есть.
+   * @return Редирект, если есть adn_id. 404 Если нет демо выдачи.
+   */
+  def demoShowcase = MaybeAuth { implicit request =>
+    DEMO_ADN_ID_OPT match {
+      case Some(adnId) =>
+        Redirect(routes.MarketShowcase.demoWebSite(adnId))
+      case None =>
+        http404AdHoc
+    }
   }
 
 }
