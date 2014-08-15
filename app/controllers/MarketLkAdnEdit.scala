@@ -36,6 +36,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   val townKM                = "town"    -> townSomeM
   private val addressKM     = "address" -> addressSomeM
   private val colorKM       = "color"   -> colorSomeM
+  private val fgColorKM     = "fgColor" -> colorOptM
   private val siteUrlKM     = "siteUrl" -> urlStrOptM
   private val phoneKM       = "phone"   -> phoneOptM
 
@@ -46,13 +47,14 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Маппер подформы метаданных для узла-ресивера. */
   private val rcvrMetaM = {
-    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
-    {(name, town, address, color, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
+    mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
+    {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
       AdnMMetadata(
         name    = name,
         town    = town,
         address = address,
         color   = color,
+        fgColor = fgColorOpt,
         siteUrl = siteUrlOpt,
         phone   = phoneOpt,
         audienceDescr = audDescr,
@@ -61,19 +63,20 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     }
     {meta =>
       import meta._
-      Some((name, town, address, color, siteUrl, phone, audienceDescr, humanTrafficAvg))
+      Some((name, town, address, color, fgColor, siteUrl, phone, audienceDescr, humanTrafficAvg))
     }
   }
 
   /** Маппер подформы метаданных для узла-продьюсера. */
   private val prodMetaM = {
-    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, infoKM)
-    {(name, town, address, color, siteUrlOpt, phoneOpt, info) =>
+    mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, infoKM)
+    {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt, info) =>
       AdnMMetadata(
         name    = name,
         town    = town,
         address = address,
         color   = color,
+        fgColor = fgColor,
         siteUrl = siteUrlOpt,
         phone   = phoneOpt,
         info    = info
@@ -81,27 +84,28 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     }
     {meta =>
       import meta._
-      Some((name, town, address, color, siteUrl, phone, info))
+      Some((name, town, address, color, fgColor, siteUrl, phone, info))
     }
   }
 
   /** Маппер для метаданных какого-то узла, для которого не подходят две предыдущие формы.
     * Сделан в виде метода, т.к. такой случай почти невероятен. */
   private def nodeMetaM = {
-    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM)
-    {(name, town, address, color, siteUrlOpt, phoneOpt) =>
+    mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM)
+    {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt) =>
       AdnMMetadata(
         name    = name,
         town    = town,
         address = address,
         color   = color,
+        fgColor = fgColor,
         siteUrl = siteUrlOpt,
         phone   = phoneOpt
       )
     }
     {meta =>
       import meta._
-      Some((name, town, address, color, siteUrl, phone))
+      Some((name, town, address, color, fgColor, siteUrl, phone))
     }
   }
 
@@ -201,9 +205,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         town    = adnMeta2.town,
         address = adnMeta2.address,
         color   = adnMeta2.color,
+        fgColor = adnMeta2.fgColor,
         siteUrl = adnMeta2.siteUrl,
         phone   = adnMeta2.phone,
-        // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения.
+        // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения (зависят от типа узла).
         audienceDescr = adnMeta2.audienceDescr,
         humanTrafficAvg = adnMeta2.humanTrafficAvg,
         info = adnMeta2.info,

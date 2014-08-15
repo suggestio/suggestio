@@ -164,6 +164,7 @@ case class SMDemoSiteArgs(
  */
 case class SMShowcaseIndexArgs(
   bgColor: String,
+  fgColor: String,
   mmcats: Seq[MMartCategory],
   catsStats: Map[String, Long],
   spsr: AdSearch,
