@@ -544,7 +544,7 @@ sealed case class DownsizeImageUtil(iim: MImgInfoMeta) extends SioImageUtilT wit
 
 
 /** Конвертор картинок в логотипы ТЦ. */
-object MartLogoImageUtil extends SqLogoImageUtil
+object LogoImageUtil extends SqLogoImageUtil
 
 /** Конвертор картинок во вторичные логотипы на рекламных карточках. */
 object AdLogoImageUtil extends SqLogoImageUtil

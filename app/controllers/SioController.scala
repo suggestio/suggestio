@@ -203,26 +203,27 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsImpl {
+trait TempImgSupport extends SioController with PlayMacroLogsI {
 
-  import LOGGER._
-
-  /** Обработчик полученного логотипа в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String])(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+  /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
+  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
         val srcFile = fileRef.file
-        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
-        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        val outFmt = if (preserveFmt) {
+          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+          OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        } else {
+          OutImgFmts.JPEG
+        }
         val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
         try {
           imageUtil.convert(srcFile, mptmp.file)
           Ok(Img.jsonTempOk(mptmp.filename))
         } catch {
           case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
             val reply = Img.jsonImgError("Unsupported picture format.")
             BadRequest(reply)
         } finally {

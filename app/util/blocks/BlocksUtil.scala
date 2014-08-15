@@ -363,6 +363,7 @@ case class BfImage(
   field: BefImage = Image,
   defaultValue: Option[BlockImgMap] = None,
   offerNopt: Option[Int] = None,
+  preserveFmt: Boolean = false,
   saveWithThumb: Boolean = false
 ) extends BlockFieldT {
   override type T = BlockImgMap
