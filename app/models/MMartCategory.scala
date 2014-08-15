@@ -11,13 +11,6 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
 import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
-import io.suggest.util.SioEsUtil.FieldString
-import scala.Some
-import io.suggest.util.SioEsUtil.FieldObject
-import io.suggest.util.SioEsUtil.FieldAll
-import io.suggest.util.SioEsUtil.FieldBoolean
-import io.suggest.util.SioEsUtil.FieldNumber
-import io.suggest.util.SioEsUtil.FieldSource
 import io.suggest.model.common.{EMParentIdOpt, EMName}
 import play.api.libs.json._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -219,7 +212,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       .execute()
       .flatMap { getResp =>
         if (getResp.isExists) {
-          val mmc = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, Option(getResp.getVersion))
+          val mmc = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
           val acc1 = f(acc0, mmc)
           mmc.parentId match {
             case Some(parentId) => foldUpChain(parentId, acc1)(f)

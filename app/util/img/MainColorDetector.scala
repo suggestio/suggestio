@@ -228,7 +228,7 @@ object HistogramParsers extends JavaTokenParsers {
 
   def FREQ_P = wholeNumber ^^ { _.toLong }
 
-  def BYTE_NUMBER_P = """(2[0-4]\d|25[0-5]|1?\d{2})""".r ^^ { _.toInt }
+  def BYTE_NUMBER_P = """(2[0-4]\d|25[0-5]|1?\d{1,2})""".r ^^ { _.toInt }
 
   def COMMA_SP_SEP: Parser[_] = """,\s*""".r
   def RGB_TUPLE_P = "(" ~> (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ BYTE_NUMBER_P <~ ")"

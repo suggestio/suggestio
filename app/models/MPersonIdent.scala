@@ -12,7 +12,6 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
-import scala.collection.Map
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
@@ -73,7 +72,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
             .find(_.companion.ES_TYPE_NAME == hit.getType)
             .map {
              _.companion
-              .deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion))
+              .deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
             }
           result1Opt match {
             case Some(result1) =>
@@ -130,9 +129,9 @@ object MPersonIdent extends PlayMacroLogsImpl {
         searchResp.getHits.getHits.map { hit =>
           hit.getType match {
             case MozillaPersonaIdent.ES_TYPE_NAME =>
-              MozillaPersonaIdent.deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion)).email
+              MozillaPersonaIdent.deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion)).email
             case EmailPwIdent.ES_TYPE_NAME =>
-              EmailPwIdent.deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion)).email
+              EmailPwIdent.deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion)).email
           }
         }
       }
