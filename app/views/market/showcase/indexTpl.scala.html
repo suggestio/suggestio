@@ -40,9 +40,11 @@
 }
 
 <div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
-  @args.logoImgOpt.map { logoImg =>
-  <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-  }
+  <div class="sm-button abs" id="smExitButton">
+    <div style="width: 10px; height: 10px; background: red;"></div>
+  </div>
+  <img  height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
+  <div class="sm-button abs" style="left: auto; right: 0px"></div>
 </div>
 
 @_gridAdsTpl(args)
@@ -73,4 +75,4 @@
 <div class="sm-loading" id="smLoading"></div>
 
 @* Окно с предупреждением о выходе из Sio.Market *@
-@*@_exit_screen(args.oncloseHref)*@
+@_exit_screen(args.oncloseHref)

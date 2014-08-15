@@ -1,7 +1,7 @@
 cbca_grid =
   cell_size : 140
   cell_padding : 20
-  top_offset : 20
+  top_offset : 70
   bottom_offset : 20
   max_allowed_cell_width : 4
 
@@ -49,7 +49,6 @@ cbca_grid =
 
     if typeof this.layout_dom != 'undefined'
       this.layout_dom.style.width = cw + 'px'
-      this.layout_dom.style.height = cbca_grid.wh + 'px'
       this.layout_dom.style.opacity = 1
 
   ##############
@@ -264,7 +263,7 @@ cbca_grid =
       _spacer = siomart.utils.ce 'div', _spacer_attributes
       _this = _spacer
 
-      siomart.utils.ge('sioMartIndexGrid').appendChild _spacer
+      siomart.utils.ge('smGridAdsContainer').appendChild _spacer
 
       _this.setAttribute 'id', 'elt' + i
 
@@ -296,8 +295,8 @@ cbca_grid =
 
   init : ( is_add ) ->
 
-    this.blocks_container = document.getElementById 'sioMartIndexGrid'
-    this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
+    this.blocks_container = document.getElementById 'smGridAdsContainer'
+    this.layout_dom = document.getElementById 'smGridAdsContainer'
 
     this.set_container_size()
     this.load_blocks( is_add )
@@ -545,7 +544,7 @@ siomart =
         this.style_dom = style_dom
       else
         this.style_dom.innerHTML = ''
-      
+
       this.style_dom.appendChild(document.createTextNode(css))
 
   #########################
@@ -801,7 +800,30 @@ siomart =
 
       window.vendor_prefix = obj
 
+  ###########################
+  ## Единая обработка событий
+  ###########################
   events :
+
+    target_lookup : ( target, lookup_method, lookup_criteria ) ->
+
+      if target == null
+        return null
+
+      if lookup_method == 'id'
+        if target.id == lookup_criteria
+          return target
+
+      if lookup_method == 'className'
+
+        if typeof target.className != 'undefined'
+          regexp = new RegExp( lookup_criteria ,"g")
+
+          for cn in target.classList
+            if cn == lookup_criteria
+              return target
+
+      return siomart.events.target_lookup target.parentNode, lookup_method, lookup_criteria
 
     touchmove_lock_delta : 0
     is_touch_locked : false
@@ -821,8 +843,6 @@ siomart =
         siomart.events.document_touch_x = cx
         siomart.events.document_touch_y = cy
 
-
-
     document_touchend : ( event ) ->
 
       cb = () ->
@@ -836,6 +856,28 @@ siomart =
       siomart.events.is_touch_locked = false
       delete siomart.events.document_touch_x
       delete siomart.events.document_touch_y
+
+    #############################
+    ## Обработка click / touchend
+    #############################
+    document_click : ( event ) ->
+
+      if siomart.events.is_touch_locked
+        return false
+
+      exitButtonTarget = siomart.events.target_lookup event.target, 'id', 'smExitButton'
+
+      if exitButtonTarget != null
+        siomart.utils.ge('smCloseScreen').style.display = 'block'
+        return false
+
+      shopLinkTarget = siomart.events.target_lookup event.target, 'className', 'js-shop-link'
+
+      if shopLinkTarget != null
+        console.log 'shop link'
+
+
+
 
     document_keyup_event : ( event ) ->
 
@@ -1118,7 +1160,7 @@ siomart =
         return false
 
       if data.blocks.length < siomart.config.ads_per_load
-        siomart.utils.ge('gridAdsLoader').style.opacity = 0
+        siomart.utils.ge('smGridAdsLoader').style.opacity = 0
 
       html = ''
 
@@ -1131,21 +1173,21 @@ siomart =
 
         if siomart.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
-          document.getElementById('sioMartIndexOffers').scrollTop = '0';
+
           cbca_grid.init()
         else
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        this.utils.add_single_listener this.utils.ge('sioMartIndexOffers'), 'scroll', () ->
-          scrollTop = siomart.utils.ge('sioMartIndexOffers').scrollTop
-          height = siomart.utils.ge('sioMartIndexOffers').offsetHeight
-
-          if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
-            siomart.grid_ads.load_more()
+        #this.utils.add_single_listener this.utils.ge('sioMartIndexOffers'), 'scroll', () ->
+        #  scrollTop = siomart.utils.ge('sioMartIndexOffers').scrollTop
+        #  height = siomart.utils.ge('sioMartIndexOffers').offsetHeight
+        #
+        #  if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
+        #    siomart.grid_ads.load_more()
 
         siomart.styles.init()
-        siomart.init_shop_links()
+        #siomart.init_shop_links()
 
         if data.action == 'searchAds'
           siomart.navigation_layer.close true
@@ -1240,7 +1282,7 @@ siomart =
         prev_index = 0
 
       this.show_block_by_index prev_index, '-'
-      
+
     fit : () ->
 
       if typeof this.sm_blocks == 'undefined'
@@ -1357,7 +1399,7 @@ siomart =
 
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this.bcInnerHTML = this._block_container.innerHTML
-      
+
       this.ads_count = this._block_container.getAttribute 'data-ads-count'
 
       this.ads_rendered = 1
@@ -1611,39 +1653,15 @@ siomart =
     siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
     siomart.utils.add_single_listener window, 'touchend', siomart.events.document_touchend
     siomart.utils.add_single_listener window, 'touchcancel', siomart.events.document_touchcancel
-    
-    ## Кнопка выхода
-    siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
 
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
-    siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
-
-    this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
-
-    this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
-
-    ## поле ввода поискового запроса
-    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', () ->
-      this.value = this.value.toUpperCase()
-      siomart.search.queue_request this.value
-
-    ## Кнопка вызова окна с категориями
-    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
-    this.utils.add_single_listener this.utils.ge('smCategoriesBackButton'), _event, siomart.navigation_layer.open
-    this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
-
-    ## Возврат на индекс выдачи
-    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.grid_ads.load_index_ads
-    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.grid_ads.load_index_ads
-
-    this.utils.add_single_listener this.utils.ge('smSearchIcon'), _event, () ->
-      siomart.utils.ge('smSearchField').focus()
-
-    this.init_shop_links()
-    this.init_categories_links()
+    siomart.utils.add_single_listener document, _event, siomart.events.document_click
 
   init_shop_links : () ->
+
+    return false
+
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
     for _b in blocks_w_actions
