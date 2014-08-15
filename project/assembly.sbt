@@ -1,1 +1,1 @@
-/home/shahid/projects/sio/2/bixo/project/assembly.sbt
+../bixo/project/assembly.sbt
