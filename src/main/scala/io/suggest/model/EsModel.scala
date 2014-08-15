@@ -11,7 +11,7 @@ import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchResponse}
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.xcontent.{XContentHelper, ToXContent, XContentFactory, XContentBuilder}
+import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory, XContentBuilder}
 import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
@@ -30,6 +30,7 @@ import io.suggest.util.SioEsUtil.IndexMapping
 import io.suggest.ym.model.UsernamePw
 import com.typesafe.scalalogging.slf4j.Logger
 import java.{util => ju, lang => jl}
+import SioConstants._
 
 /**
  * Suggest.io
@@ -133,6 +134,23 @@ object EsModel extends MacroLogsImpl {
       val Array(username, pw) = s.split("::", 2)
       Some(UsernamePw(username, pw))
   }
+
+  /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
+  def toEsJsonDoc(e: EsModelMinimalT): String = {
+     var kvs = List[String] (s""" "$FIELD_SOURCE": ${e.toJson}""")
+    if (e.versionOpt.isDefined)
+      kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
+    if (e.id.isDefined)
+      kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
+    kvs.mkString("{",  ",",  "}")
+  }
+
+  /** Отрендерить экземпляры моделей в JSON. */
+  def toEsJsonDocs(e: Traversable[EsModelMinimalT]): String = {
+    e.map { toEsJsonDoc }
+      .mkString("[",  ",\n",  "]")
+  }
+
 
   /**
    * Сортировка последовательности экземпляров ES-модели с учетом древовидности через parent-child связи.
@@ -258,6 +276,11 @@ object EsModel extends MacroLogsImpl {
       case (inxName, (shards, replicas)) =>
         ensureIndex(inxName, shards=shards, replicas=replicas)
     }
+  }
+
+  /** Сконвертить выхлоп getVersion() в Option[Long]. */
+  def rawVersion2versionOpt(version: Long): Option[Long] = {
+    if (version < 0L)  None  else  Some(version)
   }
 
   /**
@@ -558,7 +581,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       .execute()
       .map { getResp =>
         if (getResp.isExists) {
-          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, Option(getResp.getVersion))
+          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
           Some(result)
         } else {
           None
@@ -606,7 +629,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
-      deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion))
+      deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
     }
   }
 
@@ -665,7 +688,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         acc
       } else {
         val resp = mgetItem.getResponse
-        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, Option(resp.getVersion)) :: acc
+        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, rawVersion2versionOpt(resp.getVersion)) :: acc
       }
     }
   }
@@ -684,15 +707,20 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
+   * @param maxResults Макс. размер выдачи.
+   * @param offset Абсолютный сдвиг в выдаче.
+   * @param withVsn Возвращать ли версии?
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     val req = prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(maxResults)
       .setFrom(offset)
+      .setVersion(withVsn)
     runSearch(req)
   }
+
 
   /**
    * Генератор delete-реквеста. Используется при bulk-request'ах.
@@ -724,9 +752,9 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @return
    */
   def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
-    getAll(maxResults).flatMap { results =>
+    getAll(maxResults, withVsn = true).flatMap { results =>
       Future.traverse(results) { el =>
-        el.save
+        tryUpdate(el)(identity)
       }
     }
   }
@@ -738,18 +766,25 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param maxResults Макс. число результатов для прочтения из хранилища модели.
    * @return
    */
-  def remapMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+  def remapMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Int] = {
     val logPrefix = s"remapMany($maxResults): "
     LOGGER.warn(logPrefix + "Starting model data remapping...")
     val startedAt = System.currentTimeMillis()
-    for {
-      results <- getAll(maxResults)
-      _ <- deleteMapping
-      _ <- putMapping(ignoreConflicts = false)
-      _ <- Future.traverse(results) { _.save }
-      _ <- refreshIndex
-    } yield {
-      LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
+    // [withVsn = false] из-за проблем с версионизацией на стёртых маппингах VersionConflictEngineException version conflict, current [-1], provided [3]
+    getAll(maxResults, withVsn = false) flatMap { results =>
+      val resultFut = for {
+        _ <- deleteMapping
+        _ <- putMapping(ignoreConflicts = false)
+        _ <- Future.traverse(results) { e => tryUpdate(e)(identity) }
+        _ <- refreshIndex
+      } yield {
+        LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
+        results.size
+      }
+      resultFut onFailure { case ex =>
+        LOGGER.error(logPrefix + "Failed to make remap. Lost data is:\n" + toEsJsonDocs(results))
+      }
+      resultFut
     }
   }
 
@@ -768,9 +803,9 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
    * @param retry Попытка
    * @param updateF Функция для апдейта.
-   * @return Фьючерс для синхронизации.
+   * @return Тоже самое, что и save().
    */
-  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     updateF(inst0)
       .save
       .recoverWith {
@@ -1066,7 +1101,6 @@ trait EsModelJMXMBeanCommon {
   def countAll(): Long
 }
 
-import SioConstants._
 
 trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsImplLazy {
 
@@ -1086,11 +1120,11 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     val resavedIds = companion.resaveMany(maxResults).toSeq
     s"Total: ${resavedIds.size}\n---------\n" + resavedIds.mkString("\n")
   }
-  
+
   override def remapMany(maxResults: Int): String = {
     warn(s"remapMany(maxResults = $maxResults)")
     companion.remapMany(maxResults)
-      .map { _ => "Remapped ok." }
+      .map { total => s"Remapped ok $total items." }
       .recover { case ex: Throwable => _formatEx(s"remapMany($maxResults)", "...", ex) }
   }
 
@@ -1153,17 +1187,7 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
 
   override def getAll(maxResults: Int): String = {
     trace(s"getAll(maxResults = $maxResults)")
-    val resultNonPretty = companion.getAll(maxResults)
-      .toSeq
-      .map { m =>
-        var kvs = List[String] (s""" "$FIELD_SOURCE": ${m.toJson}""")
-        if (m.versionOpt.isDefined)
-          kvs ::= s""" "$FIELD_VERSION": ${m.versionOpt.get}"""
-        if (m.id.isDefined)
-          kvs ::= s""" "$FIELD_ID": "${m.id.get}" """
-        kvs.mkString("{",  ",",  "}")
-      }
-      .mkString("[",  ",",  "]")
+    val resultNonPretty = toEsJsonDocs( companion.getAll(maxResults, withVsn = true) )
     JacksonWrapper.prettify(resultNonPretty)
   }
 
