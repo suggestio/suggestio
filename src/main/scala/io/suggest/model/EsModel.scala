@@ -393,7 +393,7 @@ import EsModel._
 
 /** Трейт содержит статические хелперы для работы с маппингами.
   * Однажды был вынесен из [[EsModelStaticT]]. */
-trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI {
 
   def ES_INDEX_NAME = DFLT_INDEX
   def ES_TYPE_NAME: String
@@ -407,6 +407,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
   /** Отправить маппинг в elasticsearch. */
   def putMapping(ignoreConflicts: Boolean = mappingIgnoreConflicts)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+    LOGGER.debug(s"putMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
@@ -418,6 +419,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
   /** Удалить маппинг из elasticsearch. */
   def deleteMapping(implicit client: Client): Future[_] = {
+    LOGGER.warn(s"deleteMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
     client.admin().indices()
       .prepareDeleteMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
@@ -528,7 +530,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def getRoutingKey(idOrNull: String): Option[String] = None
 
   /** Пересоздать маппинг удаляется и создаётся заново. */
-  def resetMapping(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  def resetMapping(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     deleteMapping flatMap { _ => putMapping() }
   }
 
@@ -975,9 +977,9 @@ import Impact._
 trait EsModelJMXMBeanCommon {
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
   @ManagedOperation(impact=ACTION)
-  def resaveMany(maxResults: Int)
+  def resaveMany(maxResults: Int): String
   
-  def remapMany(maxResults: Int)
+  def remapMany(maxResults: Int): String
 
   /**
    * Существует ли указанный маппинг сейчас?
@@ -988,7 +990,7 @@ trait EsModelJMXMBeanCommon {
 
   /** Асинхронно сбросить маппинг. */
   @ManagedOperation(impact=ACTION)
-  def resetMapping()
+  def resetMapping(): String
 
   /** Асинхронно отправить маппинг в ES. */
   @ManagedOperation(impact=ACTION)
@@ -996,7 +998,7 @@ trait EsModelJMXMBeanCommon {
 
   /** Асинхронно удалить маппинг вместе со всеми данными. */
   @ManagedOperation(impact=ACTION)
-  def deleteMapping()
+  def deleteMapping(): String
 
   def generateMapping(): String
   def readCurrentMapping(): String
@@ -1059,6 +1061,9 @@ trait EsModelJMXMBeanCommon {
     * @param all Выхлоп getAll().
     */
   def putAll(all: String): String
+
+  /** Подсчитать кол-во элементов. */
+  def countAll(): Long
 }
 
 import SioConstants._
@@ -1076,14 +1081,17 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
   implicit def client: Client
   implicit def sn: SioNotifierStaticClientI
 
-  override def resaveMany(maxResults: Int) {
+  override def resaveMany(maxResults: Int): String = {
     warn(s"resaveMany(maxResults = $maxResults)")
-    companion.resaveMany(maxResults)
+    val resavedIds = companion.resaveMany(maxResults).toSeq
+    s"Total: ${resavedIds.size}\n---------\n" + resavedIds.mkString("\n")
   }
   
-  override def remapMany(maxResults: Int) {
+  override def remapMany(maxResults: Int): String = {
     warn(s"remapMany(maxResults = $maxResults)")
     companion.remapMany(maxResults)
+      .map { _ => "Remapped ok." }
+      .recover { case ex: Throwable => _formatEx(s"remapMany($maxResults)", "...", ex) }
   }
 
   override def isMappingExists: Boolean = {
@@ -1091,21 +1099,24 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     companion.isMappingExists
   }
 
-  override def resetMapping() {
+  override def resetMapping(): String = {
     warn("resetMapping()")
     companion.resetMapping
+      .map { _.toString }
+      .recover { case ex: Throwable =>  _formatEx("resetMapping()", "", ex) }
   }
 
-  override def putMapping() = {
+  override def putMapping(): String = {
     warn("putMapping()")
     companion.putMapping()
       .map(_.toString)
-      .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
+      .recover { case ex: Throwable => _formatEx("putMapping()", "", ex) }
   }
 
-  override def deleteMapping() {
+  override def deleteMapping(): String = {
     warn("deleteMapping()")
     companion.deleteMapping
+      .map { _ => "Deleted." }
   }
 
   override def generateMapping(): String = {
@@ -1201,6 +1212,10 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
       case ex: Throwable =>
         _formatEx(s"putAll(${all.size}): ", all, ex)
     }
+  }
+
+  override def countAll(): Long = {
+    companion.countAll
   }
 
   /** Ругнутся в логи и вернуть строку для возврата клиенту. */
