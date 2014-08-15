@@ -10,8 +10,9 @@
 <head>
   <title>@title | market | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
   <meta name="format-detection" content="telephone=no">
+
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
@@ -28,32 +29,34 @@
 
   @content
 
-  <div class="popups-container" id="popupsContainer">
+  <div class="popups-container" id="popups">
+    <div class="flex overflow-scrolling">
+      <div class="flex overflow-scrolling" id="popupsContainer">
+          @* Попап с формой логина *@
+          @if(!ctx.isAuth) {
 
-    @* Попап с формой логина *@
-    @if(!ctx.isAuth) {
+            <div class="popup __index js-hidden js-popup" id="emailPwLoginForm">
 
-      <div class="popup __index js-hidden js-popup" id="emailPwLoginForm">
+              <div class="popup_header __index">
+                <a class="popup_close f-left js-close-popup" href="#"></a>
+              </div>
 
-        <div class="popup_header __index">
-          <a class="popup_close f-left js-close-popup" href="#"></a>
-        </div>
+              @ident._emailPwLoginFormTpl(
+                lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+                submitCall = routes.MarketLk.emailPwLoginFormSubmit()
+              )
 
-        @ident._emailPwLoginFormTpl(
-          lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-          submitCall = routes.MarketLk.emailPwLoginFormSubmit()
-        )
+            </div>
+          }
 
+          @popupContent
+
+
+          <!--<svg height="52" width="30">
+            <polyline points="30,0 2,26 30,52" style="fill:none; stroke:white; stroke-width:3" />
+          </svg>-->
       </div>
-    }
-
-    @popupContent
-
-
-    <svg height="52" width="30">
-      <polyline points="30,0 2,26 30,52" style="fill:none; stroke:white; stroke-width:3" />
-    </svg>
-
+    </div>
   </div>
 
   <div class="footer __responsive __fill-1">

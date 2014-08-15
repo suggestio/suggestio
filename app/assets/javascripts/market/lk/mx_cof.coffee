@@ -445,16 +445,24 @@ PersonalCabinet =
 #######################################################################################################################
 CbcaPopup =
 
-  $container: $ '#popupsContainer'
+  $container: $ '#popups'
   $body: $ 'body'
 
   showOverlay: () ->
     this.$body.addClass 'ovh'
     cbca.popup.$container.css 'visibility', 'visible'
 
+    $window = $ window
+    if $window.width() < 768
+      cbca.popup.$container.show()
+
   hideOverlay: () ->
     this.$body.removeClass 'ovh'
     cbca.popup.$container.css 'visibility', 'hidden'
+
+    $window = $ window
+    if $window.width() < 768
+      cbca.popup.$container.hide()
 
   setPopupPosition: (popupSelector) ->
     $popup    = $ popupSelector
@@ -496,6 +504,29 @@ CbcaPopup =
     else
       cbca.popup.setPopupPosition popupSelector
       cbca.popup.showOverlay()
+
+
+    $window = $ window
+    if $window.width() < 768
+
+      $window.scrollTop(-100)
+      setTimeout(
+        ()->
+          popupHeight = $popup.height()
+          windowHeight = $window.height()
+          docHeight = $(document).height()
+          bodyHeight = $('body').height()
+
+          if docHeight > popupHeight
+            wrapHeight = docHeight+100
+          else
+            wrapHeight = popupHeight-1
+          $ '.overflow-scrolling'
+          .height wrapHeight
+          $ '#popups'
+          .height windowHeight
+        100
+      )
 
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'

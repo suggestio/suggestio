@@ -1924,8 +1924,8 @@ th.__bg-head
   .popups-container
     position                    absolute
     top                         0
-    height                      auto
     bottom                      -30px
+    height                      auto
     -webkit-overflow-scrolling  touch
 
   .overlay
@@ -1933,6 +1933,17 @@ th.__bg-head
 
   .popup
     top 20px !important
+
+  sm-flex
+    -webkit-box-orient: vertical
+    -webkit-box-align: stretch
+    -webkit-box-flex:1
+    display: -webkit-flex
+
+  .overflow-scrolling
+    -webkit-overflow-scrolling: touch
+    overflow-y: scroll
+    margin-bottom: -1px
 
 
 /********************************************************************************************************************/
