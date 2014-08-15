@@ -152,6 +152,7 @@ object AdnMMetadata {
   val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
   val INFO_ESFN               = "info"
   val COLOR_ESFN              = "color"
+  val FG_COLOR_ESFN           = "fgColor"
   val WELCOME_AD_ID           = "welcomeAdId"
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
@@ -179,6 +180,7 @@ object AdnMMetadata {
     FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // Перемещено из visual - TODO Перенести в conf.
     FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(FG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false),
     // location. Снижаем точность хешей до необходимых в целях.
     FieldGeoPoint(LOCATION_ESFN, latLon = true,
@@ -205,6 +207,7 @@ object AdnMMetadata {
         humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
         info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get COLOR_ESFN) map stringParser,
+        fgColor     = Option(jmap get FG_COLOR_ESFN) map stringParser,
         welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
         location    = Option(jmap get LOCATION_ESFN) flatMap GeoPoint.deserializeOpt
       )
@@ -222,7 +225,8 @@ object AdnMMetadata {
  * @param floor Этаж.
  * @param section Номер секции/павильона/кабинета/помещения и т.д.
  * @param siteUrl Ссылка на сайт.@param dateCreated
- * @param color Предпочтительный цвет оформления.
+ * @param color Цвет оформления.
+ * @param fgColor Цвет элементов переднего плана. Должен контрастировать с цветом оформления.
  * @param welcomeAdId id карточки приветствия в [[io.suggest.ym.model.MWelcomeAd]].
  */
 case class AdnMMetadata(
@@ -242,7 +246,9 @@ case class AdnMMetadata(
   info          : Option[String] = None,
   location      : Option[GeoPoint] = None,
   // перемещено из visual
+  // TODO Нужно цвета объеденить в карту цветов.
   color         : Option[String] = None,
+  fgColor       : Option[String] = None,
   welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
 ) {
   import AdnMMetadata._
@@ -278,6 +284,8 @@ case class AdnMMetadata(
     // TODO Надобно переместить это в conf отсюда:
     if (color.isDefined)
       acc0 ::= COLOR_ESFN -> JsString(color.get)
+    if (fgColor.isDefined)
+      acc0 ::= FG_COLOR_ESFN -> JsString(fgColor.get)
     if (welcomeAdId.isDefined)
       acc0 ::= WELCOME_AD_ID -> JsString(welcomeAdId.get)
     if (location.isDefined)
