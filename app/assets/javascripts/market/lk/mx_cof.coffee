@@ -253,7 +253,7 @@ PersonalCabinet =
           $ this
           .removeAttr 'checked'
 
-      ## Набор чекбоксов, где можно выбрать только один вариант
+      ## Отображение рекламных карточек
       $ document
       .on 'change', '.ads-list-block__controls input[type = "checkbox"]', (e)->
         $this = $ this
@@ -445,17 +445,14 @@ PersonalCabinet =
 #######################################################################################################################
 CbcaPopup =
 
-  $overlay: $ '#overlay'
   $container: $ '#popupsContainer'
   $body: $ 'body'
 
   showOverlay: () ->
-    this.$overlay.show()
     this.$body.addClass 'ovh'
     cbca.popup.$container.css 'visibility', 'visible'
 
   hideOverlay: () ->
-    this.$overlay.hide()
     this.$body.removeClass 'ovh'
     cbca.popup.$container.css 'visibility', 'hidden'
 
@@ -477,25 +474,6 @@ CbcaPopup =
     else
       $popup.css 'top', minTop
 
-  setOverlayHeight: (popupHeight)->
-    if !popupHeight
-      popupHeight = 0
-
-      $ '.popup'
-      .each () ->
-        $this = $ this
-        thisHeight = $this.height()
-
-        if thisHeight > popupHeight
-          popupHeight = thisHeight
-
-    popupsContainerHeight = CbcaPopup.$container.height()
-
-    if popupHeight > popupsContainerHeight
-      this.$overlay.height popupHeight + 50
-    else
-      this.$overlay.height popupsContainerHeight
-
   showPopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
@@ -504,9 +482,6 @@ CbcaPopup =
     $popup
     .find '.sm-block'
     .addClass 'double-size'
-
-    popupHeight = $popup.height()
-    this.setOverlayHeight popupHeight
 
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
@@ -536,7 +511,6 @@ CbcaPopup =
 
     $ window
     .resize () ->
-      cbca.popup.setOverlayHeight()
       cbca.popup.setPopupPosition()
 
     $ document
@@ -550,9 +524,12 @@ CbcaPopup =
       cbca.popup.hidePopup popupSelector
 
     $ document
-    .on 'click', '#overlay', ()->
-
+    .on 'click', '#popupsContainer', (e)->
       cbca.popup.hidePopup()
+
+    $ document
+    .on 'click', '.popup, .js-popup', (e)->
+      e.stopPropagation()
 
     ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
     $ '.popup .__error, .js-popup .__error'
