@@ -42,7 +42,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
   /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "cccccc"
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
+
+  /** Дефолтовый цвет элементов переднего плана. */
+  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
@@ -64,6 +67,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Цвет для выдачи, которая вне узла. */
   val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
 
   val DEMO_ADN_ID_OPT = configuration.getString("market.demo.adn.id")
 
@@ -216,6 +220,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     } yield {
       val args = SMShowcaseIndexArgs(
         bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
+        fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
         mmcats      = mmcats,
         catsStats   = catsStats,
         spsr        = spsr,
@@ -238,6 +243,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     } yield {
       val args = SMShowcaseIndexArgs(
         bgColor = SITE_BGCOLOR_GEO,
+        fgColor = SITE_FGCOLOR_GEO,
         mmcats  = mmcats,
         catsStats = catsStats,
         spsr = AdSearch(
