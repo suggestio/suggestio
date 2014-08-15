@@ -22,18 +22,20 @@
 
   <h2 class="card_title">@adnNode.meta.name</h2>
 
-  <div class="card_town">
-    @adnNode.meta.town.map { town =>
+  @adnNode.meta.town.map { town =>
+    <div class="card_town">
       @town
-    }
-  </div>
+    </div>
+  }
 
-  <div class="card_prop">
-    @adnNode.meta.humanTrafficAvg.map { hta =>
+
+  @adnNode.meta.humanTrafficAvg.map { hta =>
+    <div class="card_prop">
       <span class="card_prop-name">Посетителей в день</span>
       <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
-    }
-  </div>
+    </div>
+  }
+
 
   <div class="card_prop __last">
     <span class="card_prop-name">Сфера услуг</span>

@@ -253,6 +253,26 @@ PersonalCabinet =
           $ this
           .removeAttr 'checked'
 
+      ## Набор чекбоксов, где можно выбрать только один вариант
+      $ document
+      .on 'change', '.ads-list-block__controls input[type = "checkbox"]', (e)->
+        $this = $ this
+        lvl = $this.attr 'data-level'
+        adId = $this.attr 'data-adid'
+        value = $this.is ':checked'
+
+
+        jsRoutes.controllers.MarketAd.updateShowLevelSubmit(adId).ajax
+          type: 'post'
+          data:
+            levelId: lvl
+            levelEnabled: value
+          success: (data)->
+            console.log data
+          error: (error)->
+            console.log error
+
+
     ##################################################################################################################
     ## Блоки одинаковой высоты ##
     ##################################################################################################################

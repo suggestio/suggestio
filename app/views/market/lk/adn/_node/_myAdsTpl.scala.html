@@ -53,7 +53,7 @@
               @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
                 @defining(node.adn.canOutAtLevel(sl)) { hl =>
                   <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
-                    <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
+                    <input class="@if(slMax == 1){js-one-}checkbox" type="checkbox"
                            data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
                            @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
                            />&nbsp;@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
