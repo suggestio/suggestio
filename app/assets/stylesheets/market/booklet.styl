@@ -138,15 +138,20 @@ body
   padding     10px 40px
   border      3px solid white
   font-size   16px
+  color       lightColor
   border-radius(36px)
+
+  &:hover
+    background-color  lightColor
+    color             attentionColor
+
+  &:active
+    padding 11px 40px 9px
 
   &.__fill
     background-color  #ec1c23
     border            none
     color             white
-
-    &:hover
-      text-decoration underline
 
   &.__section-sio-market
     margin-top 50px
@@ -155,7 +160,31 @@ body
     margin-top  100px
 
   &.__attention
+    color        attentionColor
     border-color attentionColor
+
+    &:hover
+      background-color  attentionColor
+      color             lightColor
+
+.demo-btn
+  display           inline-block
+  padding           10px 40px
+
+  border            3px solid white
+  background-color  attentionColor
+  border            none
+
+  font-size         16px
+  color             white
+  border-radius(36px)
+
+  &:hover
+    background-color  lightColor
+    color             attentionColor
+
+  &:active
+    padding 11px 40px 9px
 
 .section-cnt
   margin    0 auto
@@ -709,12 +738,24 @@ body
     padding-bottom  20px
 
   &_btn
-    display     block
-    width       74px
-    height      74px
-    margin      0 auto
-    cursor      pointer
-    background  url('/assets/images/market/booklet/section-equipment_btn.png') no-repeat
+    display             block
+    width               74px
+    height              74px
+    margin              0 auto
+    border              2px solid attentionColor
+
+    cursor              pointer
+    background          url('/assets/images/market/booklet/retina/wifi-icon.png') no-repeat
+    background-size     34px auto
+    background-position center 18px
+    border-radius(50%)
+
+    &:hover
+      background-color    attentionColor
+      background-position center -47px
+
+    &:active
+      background-position center -46px
 
   &_slide
     overflow    hidden
@@ -830,6 +871,7 @@ body
 
     cursor              pointer
     color               #828282
+    text-decoration     none
     text-align          center
     border-radius(10px)
 
