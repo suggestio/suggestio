@@ -36,6 +36,10 @@ class HistogramParsersSpec extends PlaySpec {
       pr = parse(LINE_PARSER, "    16272: (249,232,199) #F9E8C7 srgb(249,232,199)")
       pr.toString must include (parsedSubstr)
       pr.get mustBe HistogramEntry(16272, "F9E8C7", RGB(249, 232, 199))
+
+      pr = parse(LINE_PARSER, "      1136: ( 17, 24,  9) #111809 srgb(17,24,9)")
+      pr.toString must include (parsedSubstr)
+      pr.get mustBe HistogramEntry(1136, "111809", RGB(17, 24, 9))
     }
   }
 
