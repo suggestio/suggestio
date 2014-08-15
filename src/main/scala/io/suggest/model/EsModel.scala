@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse
-import org.elasticsearch.cluster.metadata.IndexMetaData
+import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
 
@@ -261,16 +261,36 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
-  protected def getIndexClusterState(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[IndexMetaData] = {
+  /**
+   * Узнать метаданные индекса.
+   * @param indexName Название индекса.
+   * @return Фьючерс с опциональными метаданными индекса.
+   */
+  def getIndexMeta(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[IndexMetaData]] = {
     client.admin().cluster()
       .prepareState()
       .setIndices(indexName)
       .execute()
-      .map {
-         _.getState
+      .map { cs =>
+        val maybeResult = cs.getState
           .getMetaData
           .index(indexName)
+        Option(maybeResult)
       }
+  }
+
+  /**
+   * Прочитать метаданные маппинга.
+   * @param indexName Название индекса.
+   * @param typeName Название типа.
+   * @return Фьючерс с опциональными метаданными маппинга.
+   */
+  def getIndexTypeMeta(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[MappingMetaData]] = {
+    getIndexMeta(indexName) map { imdOpt =>
+      imdOpt.flatMap { imd =>
+        Option(imd.mapping(typeName))
+      }
+    }
   }
 
   /**
@@ -280,18 +300,14 @@ object EsModel extends MacroLogsImpl {
    * @return Да/нет.
    */
   def isMappingExists(indexName: String, typeName: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    getIndexClusterState(indexName) map { imd =>
-      val mmd = imd.mapping(typeName)
-      trace("mapping exists resp: " + imd)
-      imd != null
-    }
+    getIndexTypeMeta(indexName, typeName = typeName)
+      .map { _.isDefined }
   }
 
   /** Прочитать текст маппинга из хранилища. */
-  def getCurrentMapping(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[String] = {
-    getIndexClusterState(indexName) map { imd =>
-      val mmd = imd.mapping(typeName)
-      mmd.source().string()
+  def getCurrentMapping(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+    getIndexTypeMeta(indexName, typeName = typeName) map {
+      _.map { _.source().string() }
     }
   }
 
@@ -451,7 +467,10 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     srb.execute().map { searchResp2list }
   }
 
-  def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = EsModel.getCurrentMapping(ES_INDEX_NAME, ES_TYPE_NAME)
+  /** Прочитать маппинг текущей ES-модели из ES. */
+  def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
+    EsModel.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
+  }
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -981,7 +1000,7 @@ trait EsModelJMXMBeanCommon {
   def deleteMapping()
 
   def generateMapping(): String
-  def getCurrentMapping(): String
+  def readCurrentMapping(): String
 
   /** Запросить routingKey у модели.
     * @param idOrNull исходный id
@@ -1072,8 +1091,8 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
     JacksonWrapper.prettify(mappingText)
   }
 
-  override def getCurrentMapping(): String = {
-    companion.getCurrentMapping
+  override def readCurrentMapping(): String = {
+    companion.getCurrentMapping.fold("Mapping not found.") { JacksonWrapper.prettify }
   }
 
   override def getRoutingKey(idOrNull: String): String = {
