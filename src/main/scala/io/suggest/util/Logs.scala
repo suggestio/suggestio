@@ -134,12 +134,18 @@ object MacroLogsImpl extends Serializable {
 
 import MacroLogsImpl._
 
+
+/** Интерфейс поля логгера. */
+trait MacroLogsI {
+  def LOGGER: MacroLogger
+}
+
 /** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
   * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
-trait MacroLogsImpl {
+trait MacroLogsImpl extends MacroLogsI {
   @transient val LOGGER = getMacroLogger(getClass)
 }
-trait MacroLogsImplLazy {
+trait MacroLogsImplLazy extends MacroLogsI {
   @transient lazy val LOGGER = getMacroLogger(getClass)
 }
 

@@ -1,10 +1,9 @@
 package io.suggest.model
 
-import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse
 import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
-
+import org.elasticsearch.search.lookup.SourceLookup
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
 import SioEsUtil._
@@ -12,7 +11,7 @@ import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchResponse}
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory, XContentBuilder}
+import org.elasticsearch.common.xcontent.{XContentHelper, ToXContent, XContentFactory, XContentBuilder}
 import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
@@ -993,7 +992,7 @@ trait EsModelJMXMBeanCommon {
 
   /** Асинхронно отправить маппинг в ES. */
   @ManagedOperation(impact=ACTION)
-  def putMapping: String
+  def putMapping(): String
 
   /** Асинхронно удалить маппинг вместе со всеми данными. */
   @ManagedOperation(impact=ACTION)
@@ -1033,6 +1032,7 @@ trait EsModelJMXMBeanCommon {
    * @return Текст, в каждой строчке новый id.
    */
   def getAllIds(maxResults: Int): String
+  def getAll(maxResults: Int): String
 
   /**
    * Выдать документ "в сырую".
@@ -1047,9 +1047,25 @@ trait EsModelJMXMBeanCommon {
    * @return Сырая строка json pretty.
    */
   def getRawContentById(id: String): String
+
+  /**
+   * Отправить в хранилище один экземпляр модели, представленный в виде JSON.
+   * @param data Сериализованный в JSON экземпляр модели.
+   * @return id сохраненного документа.
+   */
+  def putOne(id: String, data: String): String
+
+  /** Выхлоп getAll() отправить на сохранение в хранилище.
+    * @param all Выхлоп getAll().
+    */
+  def putAll(all: String): String
 }
 
-trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
+import SioConstants._
+
+trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsImplLazy {
+
+  import LOGGER._
 
   def companion: EsModelMinimalStaticT
 
@@ -1061,69 +1077,145 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
   implicit def sn: SioNotifierStaticClientI
 
   override def resaveMany(maxResults: Int) {
+    warn(s"resaveMany(maxResults = $maxResults)")
     companion.resaveMany(maxResults)
   }
   
   override def remapMany(maxResults: Int) {
+    warn(s"remapMany(maxResults = $maxResults)")
     companion.remapMany(maxResults)
   }
 
   override def isMappingExists: Boolean = {
+    trace(s"isMappingExists()")
     companion.isMappingExists
   }
 
   override def resetMapping() {
+    warn("resetMapping()")
     companion.resetMapping
   }
 
-  override def putMapping = {
+  override def putMapping() = {
+    warn("putMapping()")
     companion.putMapping()
       .map(_.toString)
       .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
   }
 
   override def deleteMapping() {
+    warn("deleteMapping()")
     companion.deleteMapping
   }
 
   override def generateMapping(): String = {
+    trace("generateMapping()")
     val mappingText = companion.generateMapping.string()
     JacksonWrapper.prettify(mappingText)
   }
 
   override def readCurrentMapping(): String = {
+    trace("readCurrentMapping()")
     companion.getCurrentMapping.fold("Mapping not found.") { JacksonWrapper.prettify }
   }
 
   override def getRoutingKey(idOrNull: String): String = {
+    trace(s"getRoutingKey($idOrNull)")
     companion.getRoutingKey(idOrNull).toString
   }
 
   override def deleteById(id: String): Boolean = {
+    warn(s"deleteById($id)")
     companion.deleteById(id)
   }
 
   override def getById(id: String): String = {
+    trace(s"getById($id)")
     companion.getById(id)
       .fold("not found")(_.toJsonPretty)
   }
 
   override def getAllIds(maxResults: Int): String = {
+    trace(s"getAllIds(maxResults = $maxResults)")
     companion.getAllIds(maxResults).sorted.mkString("\n")
   }
 
+  override def getAll(maxResults: Int): String = {
+    trace(s"getAll(maxResults = $maxResults)")
+    val resultNonPretty = companion.getAll(maxResults)
+      .toSeq
+      .map { m =>
+        var kvs = List[String] (s""" "$FIELD_SOURCE": ${m.toJson}""")
+        if (m.versionOpt.isDefined)
+          kvs ::= s""" "$FIELD_VERSION": ${m.versionOpt.get}"""
+        if (m.id.isDefined)
+          kvs ::= s""" "$FIELD_ID": "${m.id.get}" """
+        kvs.mkString("{",  ",",  "}")
+      }
+      .mkString("[",  ",",  "]")
+    JacksonWrapper.prettify(resultNonPretty)
+  }
+
   override def getRawById(id: String): String = {
+    trace(s"getRawById($id)")
     companion.getRawById(id)
       .map { _.fold("not found")(JacksonWrapper.prettify) }
   }
 
   override def getRawContentById(id: String): String = {
+    trace(s"getRawContentById($id)")
     companion.getRawContentById(id)
       .map { _.fold("not found")(JacksonWrapper.prettify) }
   }
 
   override def esTypeName: String = companion.ES_TYPE_NAME
   override def esIndexName: String = companion.ES_INDEX_NAME
+
+  override def putOne(id: String, data: String): String = {
+    info(s"putOne(id=$id): $data")
+    val idOpt = Option(id.trim).filter(!_.isEmpty)
+    val b = data.getBytes
+    try {
+      val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
+      _saveOne(idOpt, dataMap)
+    } catch {
+      case ex: Throwable =>
+        _formatEx(s"putOne($id): ", data, ex)
+    }
+  }
+
+  override def putAll(all: String): String = {
+    info("putAll(): " + all)
+    try {
+      val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
+      val ids = Future.traverse(raws) { tmap =>
+        val idOpt = tmap.get(FIELD_ID).map(_.toString.trim)
+        val sourceStr = JacksonWrapper.serialize(tmap get FIELD_SOURCE)
+        val b = sourceStr.getBytes
+        val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
+        _saveOne(idOpt, dataMap)
+      }
+      (("Total saved: " + ids.size) :: "----" :: ids)
+        .mkString("\n")
+    } catch {
+      case ex: Throwable =>
+        _formatEx(s"putAll(${all.size}): ", all, ex)
+    }
+  }
+
+  /** Ругнутся в логи и вернуть строку для возврата клиенту. */
+  private def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
+    error(s"${logPrefix}Failed to make JMX Action:\n$data", ex)
+    ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTraceString
+  }
+
+  /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
+  private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
+    companion
+      .deserializeOne(idOpt, dataMap, version = None)
+      .save
+  }
+
 }
 
 

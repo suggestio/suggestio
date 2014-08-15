@@ -32,6 +32,7 @@ object SioConstants {
   def FIELD_BOOST         = BoostFieldMapper.NAME
   def FIELD_ID            = IdFieldMapper.NAME
   def FIELD_TTL           = TTLFieldMapper.NAME
+  def FIELD_VERSION       = VersionFieldMapper.NAME
 
   val CURRENCY_CODE_DFLT  = "RUB"
 
