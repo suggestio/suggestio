@@ -35,7 +35,9 @@ object SMShowcaseReqArgs {
 
 case class SMShowcaseReqArgs(
   geo: GeoMode = GeoNone
-)
+) {
+  override def toString: String = s"${geo.toQsStringOpt.map { "geo=" + _ }}"
+}
 
 
 

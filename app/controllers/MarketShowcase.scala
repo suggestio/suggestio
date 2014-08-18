@@ -242,7 +242,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
-  /** indexTpl для выдачи, отвязанной от конкретного узла. */
+  /**
+   * indexTpl для выдачи, отвязанной от конкретного узла.
+   * Этот экшен на основе параметров думает на тему того, что нужно отрендерить. Может отрендерится showcase узла,
+   * либо geoShowcase на дефолтовых параметрах.
+   * @param args Аргументы.
+   */
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
     args.geo.exactGeodata match {
       // Есть координаты текущие точные. Нужно поискать ближайший рекламный узел в рамках города.
