@@ -1157,9 +1157,9 @@ siomart =
       ## нет смысла тянуть с дальнейшей инициализацией
 
       if siomart.welcome_ad.init() == false
-        grid_init_timoeut = 1
+        grid_init_timeout = 1
       else
-        grid_init_timoeut = siomart.welcome_ad.hide_timeout - 100
+        grid_init_timeout = siomart.welcome_ad.hide_timeout - 100
 
       grid_init_cb = () ->
         document.body.style.backgroundColor = '#ffffff'
@@ -1173,7 +1173,7 @@ siomart =
         siomart.grid_ads.load_index_ads()
 
 
-      setTimeout grid_init_cb, grid_init_timoeut
+      setTimeout grid_init_cb, grid_init_timeout
       siomart.set_window_class()
       siomart.is_market_loaded = true
 
@@ -1181,20 +1181,16 @@ siomart =
     ## Отобразить рекламные карточки для указанного продьюсера
     ##########################################################
     producer_ads : ( data ) ->
+
       if siomart.focused_ads.load_more_ads_requested == true
         siomart.focused_ads.render_more data.blocks
       else
-        screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
+        screensContainer = siomart.utils.ge 'smFocusedAds'
         screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
-
-        cb = () ->
-          siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
-
-        setTimeout cb, 30
 
         siomart.focused_ads.blocks = data.blocks
         siomart.focused_ads.init()
-        siomart.navigation_layer.close()
+
         console.log 'producerAds : ready'
 
     ##############################
@@ -1257,6 +1253,9 @@ siomart =
     if event
       event.preventDefault()
 
+  ############################################
+  ## Объект для работы с карточками продьюсера
+  ############################################
   focused_ads :
 
     load_more_ads_requested : false
@@ -1420,9 +1419,6 @@ siomart =
       delete siomart.focused_ads.scroll_or_move
 
     render_ad : ( ad ) ->
-
-      console.log this.ads_rendered
-
       siomart.utils.ge('ad_c_' + this.ads_rendered).innerHTML = ad
       this.ads_rendered++
 
@@ -1439,7 +1435,10 @@ siomart =
       this.fit()
       siomart.styles.init()
 
+    ## Инициализация focused_ads
     init : () ->
+
+      return false
 
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this.bcInnerHTML = this._block_container.innerHTML
@@ -1449,6 +1448,7 @@ siomart =
       this.ads_rendered = 1
 
       ads_cs = this.bcInnerHTML
+
       for i in [1..this.ads_count]
         ads_cs += '<div id="ad_c_' + i + '"></div>'
 
