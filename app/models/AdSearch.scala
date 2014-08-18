@@ -1,18 +1,10 @@
 package models
 
-import java.net.InetAddress
 
-import io.suggest.ym.model.common.{Distance, GeoDistanceQuery}
-import org.elasticsearch.common.unit.DistanceUnit
-import play.api.cache.Cache
-import play.api.db.DB
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{RequestHeader, QueryStringBindable}
+import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
-import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
-import scala.concurrent.{Future, future}
 
 /**
  * Suggest.io
@@ -74,7 +66,7 @@ object AdSearch {
               },
               forceFirstIds = maybeFirstId,
               generation  = maybeGen,
-              geo         = AdsGeoMode(maybeGeo)
+              geo         = GeoMode(maybeGeo)
             )
           )
         }
@@ -102,17 +94,17 @@ object AdSearch {
 
 
 case class AdSearch(
-  receiverIds : List[String] = Nil,
-  producerIds : List[String] = Nil,
-  catIds      : List[String] = Nil,
-  levels      : List[AdShowLevel] = Nil,
-  qOpt: Option[String] = None,
-  maxResultsOpt: Option[Int] = None,
-  offsetOpt: Option[Int] = None,
-  forceFirstIds: List[String] = Nil,
-  generation  : Option[Long] = None,
-  withoutIds  : List[String] = Nil,
-  geo         : AdsGeoMode = AdsGeoNone
+  receiverIds   : List[String] = Nil,
+  producerIds   : List[String] = Nil,
+  catIds        : List[String] = Nil,
+  levels        : List[AdShowLevel] = Nil,
+  qOpt          : Option[String] = None,
+  maxResultsOpt : Option[Int] = None,
+  offsetOpt     : Option[Int] = None,
+  forceFirstIds : List[String] = Nil,
+  generation    : Option[Long] = None,
+  withoutIds    : List[String] = Nil,
+  geo           : GeoMode = GeoNone
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
@@ -120,122 +112,6 @@ case class AdSearch(
 
   /** Макс.кол-во результатов. */
   def maxResults: Int = maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
-}
 
-
-
-// Режимы геолокации и утиль для них.
-/** Статичекая утиль для поддержки параметра геолокации. */
-object AdsGeoMode {
-
-  /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
-  val LAT_LON_RE = """-?\d{1,3}\.\d{0,8},-?\d{1,3}\.\d{0,8}""".r
-
-  /** Распарсить опциональное сырое значение qs-параметра a.geo=. */
-  def apply(raw: Option[String]): AdsGeoMode = {
-    raw.fold [AdsGeoMode] (AdsGeoNone) {
-      case "ip"  => AdsGeoIp
-      case LAT_LON_RE(latStr, lonStr) =>
-        AdsGeoLocation(latStr.toDouble, lonStr.toDouble)
-      case other => AdsGeoNone
-    }
-  }
-}
-
-/** Интерфейс для режимов геопоиска. */
-sealed trait AdsGeoMode {
-  /** Запрошена ли геолокация вообще? */
-  def isWithGeo: Boolean
-
-  /** Конвертация значения геолокации обратно в выхлоп QueryStringBindable[Option[String]. */
-  def toQsStringOpt: Option[String]
-
-  /**
-   * Запуск определения местоположения клиента.
-   * @param request Текущий реквест.
-   * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
-   */
-  def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]]
-}
-
-/** Геолокация НЕ включена. */
-case object AdsGeoNone extends AdsGeoMode {
-  override def isWithGeo = false
-  override def toQsStringOpt = None
-  override def geoSearchInfo(implicit request: RequestHeader) = Future successful None
-}
-
-
-/** Геолокация по ip. */
-case object AdsGeoIp extends AdsGeoMode with PlayMacroLogsImpl {
-
-  import LOGGER._
-
-  val CACHE_TTL_SECONDS = configuration.getInt("ads.search.geo.ip.cache.ttl.seconds") getOrElse 240
-
-  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt") getOrElse 50.0
-
-  val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
-
-  override def isWithGeo = true
-  override def toQsStringOpt = Some("ip")
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
-    val ra0 = request.remoteAddress
-    lazy val logPrefix = s"geoSearchInfo($ra0): "
-    // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
-    val inetAddr = InetAddress.getByName(ra0)
-    val ra = if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
-      val ra1 = REPLACE_LOCALHOST_IP_WITH
-      debug(logPrefix + "Local ip detected. Rewriting ip with " + ra1)
-      ra1
-    } else {
-      ra0
-    }
-    // Запускаем небыстрый синхронный поиск в отдельном потоке.
-    future {
-      // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
-      val ck = ra + ".gipq"
-      Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
-        val result = DB.withConnection { implicit c =>
-          IpGeoBaseRange.findForIp(InetAddress getByName ra)
-            .headOption
-            .flatMap { _.cityOpt }
-            .map { city =>
-              trace(logPrefix + "Candidate city: " + city)
-              GeoDistanceQuery(
-                center = city.geoPoint,
-                distanceMin = None,
-                distanceMax = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
-              )
-            }
-        } // DB
-        if (result.isEmpty)
-          warn(logPrefix + "IP not found in ipgeobase.")
-        result
-      }   // Cache
-    }     // future()
-  }
-
-}
-
-
-object AdsGeoLocation {
-
-  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.location.distance.km.dflt") getOrElse 4.0
-
-}
-
-/** Геолокация с указанием географических координат. */
-case class AdsGeoLocation(lat: Double, lon: Double) extends AdsGeoMode {
-  override def isWithGeo = true
-  override def toQsStringOpt = Some(s"$lat,$lon")
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
-    val result = GeoDistanceQuery(
-      center      = GeoPoint(lat = lat, lon = lon),
-      distanceMin = None,
-      distanceMax = Distance(AdsGeoLocation.DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
-    )
-    Future successful Some(result)
-  }
 }
 

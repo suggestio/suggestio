@@ -19,9 +19,7 @@ case class MAdnNodeSearch(
   withoutIds  : Seq[String] = Nil,
   geoDistance : Option[GeoDistanceQuery] = None,
   hasLogo     : Option[Boolean] = None,
+  withGeoDistanceSort: Option[GeoPoint] = None,
   maxResults  : Int = 10,
   offset      : Int = 0
-) extends AdnNodesSearchArgsT {
-  /** Фильтровать по наличию/отсутсвию логотипа. */
-
-}
+) extends AdnNodesSearchArgsT
