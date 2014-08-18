@@ -177,7 +177,7 @@ GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adn
 GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   controllers.MarketShowcase.geoSite
-GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase
+GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs())
 
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
