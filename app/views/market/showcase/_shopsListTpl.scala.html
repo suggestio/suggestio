@@ -1,4 +1,4 @@
-@(args: SMShowcaseIndexArgs)(implicit ctx:util.Context)
+@(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
 
 @stuff.scrollableContainerTpl( "sm-shops", "smShops" ){
   @args.shops.values.groupBy(_.meta.name.head.toUpper).mapValues(_.toSeq.sortBy(_.meta.name)).toIndexedSeq.sortBy(_._1).zipWithIndex.map { case ((letter, mshops), i) =>
