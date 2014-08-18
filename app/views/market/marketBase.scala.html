@@ -31,12 +31,12 @@
 
   <div class="popups-container" id="popups">
     <div class="flex overflow-scrolling">
-      <div class="flex overflow-scrolling" >
+      <div class="flex @if(ctx.isIpad){ overflow-scrolling }" >
         <div id="popupsContainer">
           @* Попап с формой логина *@
           @if(!ctx.isAuth) {
 
-            <div class="popup __index js-hidden js-popup" id="emailPwLoginForm">
+            <div class="popup __index def-transition js-hidden js-popup" id="emailPwLoginForm">
 
               <div class="popup_header __index">
                 <a class="popup_close f-left js-close-popup" href="#"></a>
@@ -52,20 +52,25 @@
 
           @popupContent
 
+          <div class="slider_window">
+            <div class="slider_cnt" id="indexSlider">
+
+            </div>
+            <div class="slider_controls">
+              <svg height="52" width="30" class="slider_control __left-arrow">
+                <polyline points="30,0 2,26 30,52" style="fill:none; stroke:white; stroke-width:3" />
+              </svg>
+
+              <svg height="52" width="30" class="slider_control __right-arrow">
+                <polyline points="0,0 28,26 0,52" style="fill:none; stroke:white; stroke-width:3" />
+              </svg>
+            </div>
+          </div>
+
         </div>
       </div>
 
     </div>
-  </div>
-
-  <div class="cards-w" id="cards">
-    <svg height="52" width="30">
-      <polyline points="30,0 2,26 30,52" style="fill:none; stroke:white; stroke-width:3" />
-    </svg>
-
-    <svg height="52" width="30">
-      <polyline points="30,0 2,26 30,52" style="fill:none; stroke:white; stroke-width:3" />
-    </svg>
   </div>
 
 

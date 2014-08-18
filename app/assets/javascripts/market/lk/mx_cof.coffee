@@ -1,10 +1,157 @@
 $(document).ready ->
 
+  cbca.slider = Slider
   cbca.popup = CbcaPopup
   cbca.pc = PersonalCabinet
 
   cbca.pc.init()
   cbca.popup.init()
+  cbca.slider.init()
+
+Slider =
+
+  $currPoint : false
+  prevLink   : false
+  nextLink   : false
+  process    : false
+
+
+  open: ()->
+    $ '.slider_window'
+    .show()
+
+  close: ()->
+    $ '.slider_window'
+    .hide()
+    $ '.slider_cnt'
+    .css 'transform', ''
+
+
+  setLinks: ()->
+    $nextPoint = cbca.slider.$currPoint.parent().next().find '.js-card-btn'
+    $prevPoint = cbca.slider.$currPoint.parent().prev().find '.js-card-btn'
+
+    cbca.slider.nextLink = $nextPoint.attr 'href'
+    cbca.slider.prevLink = $prevPoint.attr 'href'
+
+    $rightArrow = $ '.slider_control.__right-arrow'
+    $leftArrow = $ '.slider_control.__left-arrow'
+
+    console.log cbca.slider.$currPoint
+    console.log cbca.slider.nextLink
+    console.log cbca.slider.prevLink
+
+    if typeof cbca.slider.nextLink == 'undefined'
+      $rightArrow.hide()
+    else
+      $rightArrow.show()
+
+    if typeof cbca.slider.prevLink == 'undefined'
+      $leftArrow.hide()
+    else
+      $leftArrow.show()
+
+  setCurrPoint: (pointId)->
+    console.log pointId
+    cbca.slider.$currPoint = $ '.js-card-btn[data-id = '+pointId+']'
+
+  init: ()->
+
+    $ document
+    .on 'click', '.slider_controls', (e)->
+      e.preventDefault()
+      e.stopPropagation()
+
+      if cbca.slider.process
+        return false
+
+      $target = $ e.target
+      targetClass = $target.attr 'class'
+
+
+      if targetClass == "slider_control __right-arrow"
+        left = 500
+        cbca.slider.process = true
+        url = cbca.slider.nextLink
+
+      if targetClass == "slider_control __left-arrow"
+        left = -500
+        cbca.slider.process = true
+        url = cbca.slider.prevLink
+
+      if cbca.slider.process
+        $popup = $ '.slider_window .popup'
+        popupHeight = $popup.height()
+
+        $popup
+        .height popupHeight
+        .html ''
+        .attr 'class', 'slider_preloader'
+        .attr 'id', 'sliderPreloader'
+
+        cbca.popup.setPopupPosition '#sliderPreloader'
+        $ '#sliderPreloader'
+        .addClass 'def-transition'
+
+        $.ajax(
+          url: url,
+          success: (data)->
+            $data = $ data
+            id = $data.attr 'id'
+
+            $ '#indexSlider'
+            .append data
+            .find '.popup'
+            .css 'left', -left+'px'
+
+            $card = $ '.card'
+            $card.removeClass 'def-transition'
+            cbca.popup.setPopupPosition '.card'
+
+            cbca.slider.setCurrPoint(id)
+            cbca.slider.setLinks()
+
+            $card.addClass 'def-transition'
+            $ '.slider_cnt'
+            .css 'transform', "translate3d("+left+"px,0,0)"
+
+            setTimeout(
+              ()->
+                cbca.slider.process = false
+                $ '#sliderPreloader'
+                .remove()
+              200
+            )
+        )## ajax end
+
+    $ document
+    .on 'click', '.js-card-btn', (e)->
+      e.preventDefault()
+      $this = $ this
+      href = $this.attr 'href'
+      cbca.slider.$currPoint = $this
+      popupId = $this.attr 'data-id'
+
+      $.ajax(
+        url: href,
+        success: (data)->
+          cbca.popup.hidePopup()
+
+          $ '#'+popupId
+          .remove()
+
+          $ '#indexSlider'
+          .append data
+
+
+          cbca.slider.open()
+          cbca.slider.setLinks()
+          cbca.popup.showPopup '#'+popupId
+      )
+
+
+
+
 
 PersonalCabinet =
 
@@ -460,6 +607,8 @@ CbcaPopup =
     this.$body.removeClass 'ovh'
     cbca.popup.$container.css 'visibility', 'hidden'
 
+    cbca.slider.close()
+
     $window = $ window
     if $window.width() < 1024
       cbca.popup.$container.hide()
@@ -477,7 +626,7 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > minTop*2 && $window.width() > 1024
+    if diffHeight > minTop*2 && $window.width() > 768
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
@@ -555,7 +704,7 @@ CbcaPopup =
       cbca.popup.hidePopup popupSelector
 
     $ document
-    .on 'click', '#popupsContainer', (e)->
+    .on 'click', '#popups', (e)->
       cbca.popup.hidePopup()
 
     $ document
