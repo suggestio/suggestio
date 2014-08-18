@@ -7,7 +7,7 @@
 <div class="sio-mart__node-offers sio-mart-node-offers-window" id="sioMartNodeOffers">
 
   @_screen_nav_button("back","closeNodeOffersPopupButton")
-  <div class="sio-mart__producer-header" style="@_bgcolor( bgColor ); height: 30px!important;">
+  <div class="sio-mart__producer-header" style="@stuff._bgcolor( bgColor ); height: 30px!important;">
     @producer.logoImgOpt.map { logoImg =>
       <img class="sm-offer-logo" height="30" style="height: 30px!important" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
     }
