@@ -17,6 +17,21 @@
 @* Основной контейнер, шапка + карточки *@
 <div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>
 
+@* Хидер главного экрана *@
+<div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
+  <div class="sm-button abs" id="smExitButton">
+    <div style="width: 10px; height: 10px; background: red;"></div>
+  </div>
+  <img  height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
+  <div class="sm-button abs" style="left: auto; right: 0px"></div>
+</div>
+
+@* Работа с сеткой карточек *@
+@_gridAdsTpl(args)
+
+@* Окно с предупреждением о выходе из Sio.Market *@
+@_exit_screen(args.oncloseHref)
+
 @*_screen_nav_button("close", "smCloseButton")*@
 
 @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
@@ -26,7 +41,6 @@
   </div>
 </div>
 *@
-
 
 @if( args.catsStats.nonEmpty ){
 @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
@@ -38,16 +52,6 @@
 @* Окно с выбором категорий *@
 @*@_categories_w_search(args)*@
 }
-
-<div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
-  <div class="sm-button abs" id="smExitButton">
-    <div style="width: 10px; height: 10px; background: red;"></div>
-  </div>
-  <img  height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
-  <div class="sm-button abs" style="left: auto; right: 0px"></div>
-</div>
-
-@_gridAdsTpl(args)
 
 @*
 <div class="sm-flex sm-overflow-scrolling">
@@ -73,6 +77,3 @@
 *@
 
 <div class="sm-loading" id="smLoading"></div>
-
-@* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(args.oncloseHref)

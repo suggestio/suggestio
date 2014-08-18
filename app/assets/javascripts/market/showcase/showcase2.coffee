@@ -865,18 +865,25 @@ siomart =
       if siomart.events.is_touch_locked
         return false
 
-      exitButtonTarget = siomart.events.target_lookup event.target, 'id', 'smExitButton'
-
-      if exitButtonTarget != null
+      ## Обработка событий для открытия / закрытия экрана выхода
+      if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'block'
         return false
 
-      shopLinkTarget = siomart.events.target_lookup event.target, 'className', 'js-shop-link'
+      if siomart.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
+        siomart.utils.ge('smCloseScreen').style.display = 'none'
+        return false
 
-      if shopLinkTarget != null
+      if siomart.events.target_lookup( event.target, 'id', 'smCloseScreenContainer' ) != null
+        event.preventDefault()
+        return false
+
+      if siomart.events.target_lookup( event.target, 'id', 'smCloseScreen' ) != null
+        siomart.utils.ge('smCloseScreen').style.display = 'none'
+        return false
+
+      if siomart.events.target_lookup( event.target, 'className', 'js-shop-link' ) != null
         console.log 'shop link'
-
-
 
 
     document_keyup_event : ( event ) ->
@@ -940,6 +947,9 @@ siomart =
 
   ## Карточки ноды верхнего уровня
   grid_ads :
+
+    load_more_scroll_delta : 100
+
     is_fully_loaded : false
     is_load_more_requested : false
     c_url : null
@@ -1161,7 +1171,7 @@ siomart =
 
       if data.blocks.length < siomart.config.ads_per_load
         siomart.utils.ge('smGridAdsLoader').style.opacity = 0
-
+        
       html = ''
 
       for index, elt of data.blocks
@@ -1179,15 +1189,17 @@ siomart =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        #this.utils.add_single_listener this.utils.ge('sioMartIndexOffers'), 'scroll', () ->
-        #  scrollTop = siomart.utils.ge('sioMartIndexOffers').scrollTop
-        #  height = siomart.utils.ge('sioMartIndexOffers').offsetHeight
-        #
-        #  if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
-        #    siomart.grid_ads.load_more()
+        siomart.utils.add_single_listener siomart.utils.ge('smGridAdsWrapper'), 'scroll', () ->
+
+          wrapper_scroll_top = siomart.utils.ge('smGridAdsWrapper').scrollTop
+          content_height = siomart.utils.ge('smGridAdsContent').offsetHeight
+
+          scroll_pixels_to_go = ( content_height - cbca_grid.wh ) - wrapper_scroll_top
+
+          if scroll_pixels_to_go < siomart.grid_ads.load_more_scroll_delta
+            siomart.grid_ads.load_more()
 
         siomart.styles.init()
-        #siomart.init_shop_links()
 
         if data.action == 'searchAds'
           siomart.navigation_layer.close true
