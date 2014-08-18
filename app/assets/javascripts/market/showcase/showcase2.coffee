@@ -919,8 +919,6 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
         siomart.navigation_layer.close()
 
-
-
     document_keyup_event : ( event ) ->
 
       if !event
@@ -988,6 +986,23 @@ siomart =
     is_fully_loaded : false
     is_load_more_requested : false
     c_url : null
+
+    loader :
+      show : () ->
+        siomart.utils.ge('smGridAdsLoader').style.display = 'block'
+      hide : () ->
+        siomart.utils.ge('smGridAdsLoader').style.display = 'none'
+
+    attach_events : () ->
+      ## Забиндить событие на скроллинг
+      siomart.utils.add_single_listener siomart.utils.ge('smGridAdsWrapper'), 'scroll', () ->
+        wrapper_scroll_top = siomart.utils.ge('smGridAdsWrapper').scrollTop
+        content_height = siomart.utils.ge('smGridAdsContent').offsetHeight
+
+        scroll_pixels_to_go = ( content_height - cbca_grid.wh ) - wrapper_scroll_top
+
+        if scroll_pixels_to_go < siomart.grid_ads.load_more_scroll_delta
+          siomart.grid_ads.load_more()
 
     adjust_dom : () ->
        grid_ads = siomart.utils.ge('smGridAds')
@@ -1060,18 +1075,9 @@ siomart =
     ## Обработать ошибку
     on_request_error : () ->
       siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
-      _sm_loading_dom = siomart.utils.ge('smLoading')
-
-      if _sm_loading_dom != null
-        _sm_loading_dom.style.display = 'none'
 
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
-
-      _sm_loading_dom = siomart.utils.ge('smLoading')
-
-      if _sm_loading_dom != null
-        _sm_loading_dom.style.display = 'block'
 
       timeout_cb = () ->
         siomart.request.on_request_error()
@@ -1099,8 +1105,6 @@ siomart =
     ## Пришла пустота — уведомить юзера
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
-      if siomart.utils.ge('smLoading') != null
-        siomart.utils.ge('smLoading').style.display = 'none'
       return false
 
     ## Инициализация глагне
@@ -1113,8 +1117,6 @@ siomart =
     if data.action == 'findAds' || data.action == 'searchAds'
       this.response_callbacks.find_ads data
 
-    if siomart.utils.ge('smLoading') != null
-      siomart.utils.ge('smLoading').style.display = 'none'
 
   #############################################
   ## Коллбеки для обработки результатов запроса
@@ -1147,6 +1149,8 @@ siomart =
       siomart.utils.ge_tag('body')[0].style.overflow = 'hidden'
 
       siomart.grid_ads.adjust_dom()
+
+      setTimeout siomart.grid_ads.attach_events, 200
 
       ## Инициализация welcome_ad
       ## если возвращается false — значит картинки нет и
@@ -1198,20 +1202,7 @@ siomart =
     ##############################
     find_ads : ( data ) ->
 
-      console.log 'siomart.grid_ads.is_load_more_requested : ' + siomart.grid_ads.is_load_more_requested
-
       grid_container_dom = siomart.utils.ge 'smGridAdsContainer'
-
-      siomart.utils.ge('smGridAdsLoader').style.opacity = 1
-      siomart.utils.ge('smGridAdsLoader').style.display = 'block'
-
-      if typeof data.blocks == 'undefined'
-        siomart.grid_ads.is_fully_loaded = true
-        siomart.utils.ge('smGridAdsLoader').style.display = 'none'
-        return false
-
-      if data.blocks.length < siomart.config.ads_per_load
-        siomart.utils.ge('smGridAdsLoader').style.opacity = 0
 
       html = ''
 
@@ -1220,6 +1211,13 @@ siomart =
           html += elt
 
       if typeof data.blocks != 'undefined'
+
+        if data.blocks.length < siomart.config.ads_per_load
+          siomart.grid_ads.is_fully_loaded = true
+          siomart.grid_ads.loader.hide()
+        else
+          siomart.grid_ads.loader.show()
+
         siomart.grid_ads.loaded += data.blocks.length
 
         if siomart.grid_ads.is_load_more_requested == false
@@ -1230,22 +1228,15 @@ siomart =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        siomart.utils.add_single_listener siomart.utils.ge('smGridAdsWrapper'), 'scroll', () ->
-
-          wrapper_scroll_top = siomart.utils.ge('smGridAdsWrapper').scrollTop
-          content_height = siomart.utils.ge('smGridAdsContent').offsetHeight
-
-          scroll_pixels_to_go = ( content_height - cbca_grid.wh ) - wrapper_scroll_top
-
-          if scroll_pixels_to_go < siomart.grid_ads.load_more_scroll_delta
-            siomart.grid_ads.load_more()
-
         siomart.styles.init()
 
         if data.action == 'searchAds'
           siomart.navigation_layer.close true
         else
           siomart.navigation_layer.close()
+      else
+        siomart.grid_ads.is_fully_loaded = true
+        siomart.grid_ads.loader.hide()
 
       siomart.grid_ads.is_load_more_requested = false
 
