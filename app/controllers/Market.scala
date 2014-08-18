@@ -53,12 +53,12 @@ object Market extends SioController {
       } foreach { mad =>
         StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
         val adStat = MAdStat(
-          clientAddr = request.remoteAddress,
-          action = action,
-          ua = request.headers.get(USER_AGENT),
-          adId = adId,
-          adOwnerId = mad.producerId,
-          personId = request.pwOpt.map(_.personId)
+          clientAddr  = request.remoteAddress,
+          action      = action,
+          ua          = request.headers.get(USER_AGENT),
+          adId        = adId,
+          onNodeIdOpt = Some(martId),
+          personId    = request.pwOpt.map(_.personId)
         )
         adStat.save
       }

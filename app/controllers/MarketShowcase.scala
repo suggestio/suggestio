@@ -5,7 +5,10 @@ import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.OptStrId
+import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.common.GeoDistanceQuery
+import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
@@ -23,6 +26,8 @@ import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -381,8 +386,64 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         (mad, index)  =>  _single_offer(mad, isWithAction = true)(ctx)
       }
     }
+    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
+    madsFut onSuccess { case mads =>
+      adSearch2Fut onSuccess { case adSearch2 =>
+        saveStats(adSearch2, mads, AdStatActions.View)
+      }
+    }
+    // Асинхронно рендерим результат.
     madsRenderedFut map { madsRendered =>
       jsonOk(jsAction, blocks = madsRendered)
+    }
+  }
+
+  /** Создать и сохранить статистику для указанных карточек. Сохранение идёт в фоне, остальное в текущем потоке.
+    * @param a AdSearch
+    * @param mads Список рекламных карточек.
+    * @param statAction Какую пометку выставлять в поле stat action: клик или просмотр или ...
+    * @param request Инстанс текущего реквеста.
+    * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
+    */
+  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction)(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
+    if (mads.nonEmpty) {
+      val personId = request.pwOpt.map(_.personId)
+      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
+      val onNodeIdOpt = a.receiverIds
+        .headOption
+        .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
+      val ra = request.remoteAddress
+      val now = DateTime.now()
+      val br = client.prepareBulk()
+      mads.foreach { mad =>
+        val adStat = MAdStat(
+          clientAddr  = ra,
+          action      = statAction,
+          adId        = mad.id.get,
+          onNodeIdOpt = onNodeIdOpt,
+          ua          = uaOpt,
+          personId    = personId,
+          timestamp   = now
+        )
+        br.add( adStat.indexRequestBuilder )
+      }
+      val resultFut = laFuture2sFuture( br.execute() )
+      // Вешаем логгирование результатов на запущенный реквест.
+      resultFut onComplete {
+        case Success(result) =>
+          if (result.hasFailures) {
+            warn("saveStats(): Bulk request saved with problems: " + result.buildFailureMessage())
+          } else {
+            trace("saveStats(): Bulk request successfult. Total = " + result.getItems.length)
+          }
+        case Failure(ex) =>
+          error(s"saveStats(): Failed to save statistics for ${br.numberOfActions} bulk actions", ex)
+      }
+      // Возвращаем фьючерс.
+      resultFut
+    } else {
+      Future successful None
     }
   }
 
@@ -433,6 +494,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
       mads1Fut
     }
+    // Когда поступят карточки, нужно сохранить по ним статистику.
+    mads2Fut onSuccess { case mads =>
+      saveStats(adSearch, mads, AdStatActions.Click)
+    }
+    // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>
       val madsCountInt = madsCount.toInt
       producersFut flatMap { producers =>
