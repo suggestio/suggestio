@@ -453,7 +453,7 @@ CbcaPopup =
     cbca.popup.$container.css 'visibility', 'visible'
 
     $window = $ window
-    if $window.width() < 768
+    if $window.width() < 1024
       cbca.popup.$container.show()
 
   hideOverlay: () ->
@@ -461,11 +461,12 @@ CbcaPopup =
     cbca.popup.$container.css 'visibility', 'hidden'
 
     $window = $ window
-    if $window.width() < 768
+    if $window.width() < 1024
       cbca.popup.$container.hide()
 
   setPopupPosition: (popupSelector) ->
-    $popup    = $ popupSelector
+    $window = $ window
+    $popup  = $ popupSelector
     ## независимые цифры, подобраны согласно внешнему виду получаемого результата
     minTop  = 25
 
@@ -476,7 +477,7 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > minTop*2
+    if diffHeight > minTop*2 && $window.width() > 1024
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
@@ -507,26 +508,19 @@ CbcaPopup =
 
 
     $window = $ window
-    if $window.width() < 768
+    if $window.width() < 1024
+      $window.scrollTop(0)
 
-      $window.scrollTop(-100)
-      setTimeout(
-        ()->
-          popupHeight = $popup.height()
-          windowHeight = $window.height()
-          docHeight = $(document).height()
-          bodyHeight = $('body').height()
+  phoneScroll: ()->
+    $window = $ window
 
-          if docHeight > popupHeight
-            wrapHeight = docHeight+100
-          else
-            wrapHeight = popupHeight-1
-          $ '.overflow-scrolling'
-          .height wrapHeight
-          $ '#popups'
-          .height windowHeight
-        100
-      )
+    if $window.width() < 1024
+      windowHeight = $window.height()
+
+      $ '.overflow-scrolling'
+      .height windowHeight
+      $ '#popupsContainer'
+      .css 'min-height', windowHeight+1
 
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'
@@ -540,9 +534,15 @@ CbcaPopup =
 
   init: () ->
 
+    cbca.popup.hideOverlay()
+    cbca.popup.phoneScroll()
+
     $ window
     .resize () ->
       cbca.popup.setPopupPosition()
+      cbca.popup.phoneScroll()
+      $ window
+      .scrollTop(0)
 
     $ document
     .on 'click', '.js-close-popup', (e)->

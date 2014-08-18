@@ -31,7 +31,8 @@
 
   <div class="popups-container" id="popups">
     <div class="flex overflow-scrolling">
-      <div class="flex overflow-scrolling" id="popupsContainer">
+      <div class="flex overflow-scrolling" >
+        <div id="popupsContainer">
           @* Попап с формой логина *@
           @if(!ctx.isAuth) {
 
@@ -51,6 +52,7 @@
 
           @popupContent
 
+        </div>
       </div>
 
     </div>
