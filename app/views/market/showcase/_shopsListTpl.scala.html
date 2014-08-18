@@ -1,0 +1,23 @@
+@(args: SMShowcaseIndexArgs)(implicit ctx:util.Context)
+
+@stuff.scrollableContainerTpl( "sm-shops", "smShops" ){
+  @args.shops.values.groupBy(_.meta.name.head.toUpper).mapValues(_.toSeq.sortBy(_.meta.name)).toIndexedSeq.sortBy(_._1).zipWithIndex.map { case ((letter, mshops), i) =>
+    <div class="item">
+
+      <div class="letter">
+        @letter
+      </div>
+
+      @mshops.map { mshop =>
+      <span class="shop" data-shop-id="@mshop.id">
+        @mshop.meta.name
+      </span>
+      }
+
+    </div>
+
+    @if( ((i+1) % 3) == 0 ){
+    <div class="sm-shops-list__delimiter"></div>
+    }
+  }
+}

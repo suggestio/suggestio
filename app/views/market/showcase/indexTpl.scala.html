@@ -15,17 +15,23 @@
 }
 
 @* Основной контейнер, шапка + карточки *@
-<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>
+<div class="sm-producer-offers" id="sioMartNodeOffersRoot"></div>
 
 @* Хидер главного экрана *@
-<div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
-  <div class="sm-button abs" id="smExitButton">
+<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
+
+  <div class="sm-producer-header_exit-button sm-button abs" id="smExitButton">
     <div style="width: 10px; height: 10px; background: red;"></div>
   </div>
-  <img  height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
+
+  <div class="sm-producer-header_index-button sm-button abs" id="smIndexButton">
+    <div style="width: 10px; height: 10px; background: olive;"></div>
+  </div>
+
+  <img class="sm-producer-header_logo" height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
 
   @if( args.catsStats.nonEmpty ){
-  <div class="sm-button abs" style="left: auto; right: 0px"></div>
+  <div class="sm-button abs"  id="smNavigationLayerButton" style="left: auto; right: 0px"></div>
   }
 
 </div>

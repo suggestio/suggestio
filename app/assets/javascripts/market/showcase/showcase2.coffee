@@ -510,11 +510,6 @@ siomart =
 
         document.getElementById('smGridAdsWrapper').scrollTop = '0';
 
-        #cb = () ->
-        #  siomart.utils.ge('sioMartIndexGrid').style.height = parseInt( siomart.utils.ge('sioMartIndexGrid').style.height) + 10 + 'px'
-
-        #setTimeout cb, 70
-
         cbca_grid.resize()
         siomart.set_window_class()
 
@@ -531,21 +526,14 @@ siomart =
 
     init : () ->
 
-      console.log 'styles '
       style_tags = siomart.utils.ge_tag('code', true)
-
-      console.log style_tags.length
 
       css = ''
 
       for s in style_tags
-        console.log s.getAttribute( 'data-rendered' )
         if s.getAttribute( 'data-rendered' ) == null
           s.setAttribute( 'data-rendered', true )
           css = css.concat( s.innerHTML )
-          console.log 'do render'
-        else
-          console.log 'don NOT render'
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
@@ -763,8 +751,12 @@ siomart =
     addClass : (element, value) ->
       element = this.ge element
 
-      if element==null
-        return 0
+      if element == null
+        return false
+
+      for _i, _c of element.classList
+        if _c == value
+          return false
 
       element.className += ' ' + value
 
@@ -889,8 +881,44 @@ siomart =
         siomart.utils.ge('smCloseScreen').style.display = 'none'
         return false
 
-      if siomart.events.target_lookup( event.target, 'className', 'js-shop-link' ) != null
-        console.log 'shop link'
+      if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
+        siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
+        siomart.grid_ads.load_index_ads()
+        return false
+
+      shop_link_target = siomart.events.target_lookup( event.target, 'className', 'js-shop-link' )
+      if shop_link_target != null
+        producer_id = shop_link_target.getAttribute 'data-producer-id'
+        ad_id = shop_link_target.getAttribute 'data-ad-id'
+
+        siomart.load_for_shop_id producer_id, ad_id
+
+        return false
+
+      cat_link_target = siomart.events.target_lookup( event.target, 'className', 'js-cat-link' )
+      if cat_link_target != null
+        cat_id = cat_link_target.getAttribute 'data-cat-id'
+
+        _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
+        if !siomart.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
+          siomart.load_for_cat_id cat_id
+
+      #######################
+      ## Работа с категориями
+      #######################
+      if siomart.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
+        siomart.navigation_layer.open()
+        return false
+
+      if siomart.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
+        siomart.navigation_layer.show_tab 'smCategories'
+
+      if siomart.events.target_lookup( event.target, 'id', 'smShopsTab' ) != null
+        siomart.navigation_layer.show_tab 'smShops'
+
+      if siomart.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
+        siomart.navigation_layer.close()
+
 
 
     document_keyup_event : ( event ) ->
@@ -989,9 +1017,10 @@ siomart =
       grd_c = siomart.utils.ge('smGridAdsContainer')
       url = grd_c.getAttribute 'data-index-offers-action'
 
+      document.getElementById('smGridAdsWrapper').scrollTop = '0'
+
       siomart.grid_ads.is_fully_loaded = false
       siomart.grid_ads.is_load_more_requested = false
-      siomart.utils.ge('smGridAdsLoader').style.opacity = 1
 
       siomart.grid_ads.loaded = 0
 
@@ -1169,7 +1198,12 @@ siomart =
     ##############################
     find_ads : ( data ) ->
 
+      console.log 'siomart.grid_ads.is_load_more_requested : ' + siomart.grid_ads.is_load_more_requested
+
       grid_container_dom = siomart.utils.ge 'smGridAdsContainer'
+
+      siomart.utils.ge('smGridAdsLoader').style.opacity = 1
+      siomart.utils.ge('smGridAdsLoader').style.display = 'block'
 
       if typeof data.blocks == 'undefined'
         siomart.grid_ads.is_fully_loaded = true
@@ -1466,54 +1500,52 @@ siomart =
   ## Показать / скрыть экран с категориями и поиском
   ##################################################
   navigation_layer :
+
+    tabs : ["smCategories", "smShops"]
+
+    adjust : () ->
+
+      for k, t of this.tabs
+        siomart.utils.ge(t).style.height = cbca_grid.wh - 150
+        siomart.utils.ge(t + 'Wrapper').style.height = cbca_grid.wh - 150
+        siomart.utils.ge(t + 'Content').style.height = cbca_grid.wh - 149
+
     open : ( history_push ) ->
 
-      delete siomart.global_cat_id
+      this.adjust()
 
       if typeof history_push != 'boolean'
         history_push = true
 
-      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
-
-      siomart.utils.ge('smCategoriesBackButton').style.display = 'none'
-      siomart.utils.ge('smCloseButton').style.display = 'none'
-      #siomart.utils.ge('smCategoriesButton').style.display = 'none'
-
-      if sm_cat_screen != null
-        sm_cat_screen.style.display = 'block'
-        siomart.utils.ge('smSearchBar').style.display = 'block'
-
-      console.log history_push
+      siomart.utils.ge('smCategoriesScreen').style.display = 'block'
 
       if history_push == true
         state_data =
           action : 'open_navigation_layer'
         siomart.history.push state_data, 'SioMarket', '/n/categories'
 
-    close : ( all_except_search ) ->
-      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
-
-      if sm_cat_screen != null
-        if all_except_search == true
-          siomart.utils.ge('smCategoriesBodyWrap').style.display = 'none'
-          siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__compact'
+    reset_tabs : () ->
+      for k, t of this.tabs
+        if t == this.tabs[0]
+          siomart.utils.ge(t).style.display = 'block'
         else
-          siomart.utils.ge('smCategoriesBodyWrap').style.display = 'block'
-          siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__compact'
-          #siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-          siomart.utils.ge('smCategoriesButton').style.display = 'block'
+          siomart.utils.ge(t).style.display = 'none'
 
-          if typeof siomart.global_cat_id == 'undefined'
-            siomart.utils.ge('smCloseButton').style.display = 'block'
 
+    show_tab : ( tab ) ->
+      for k, t of this.tabs
+        if tab == t
+          siomart.utils.ge(t).style.display = 'block'
+        else
+          siomart.utils.ge(t).style.display = 'none'
+
+    close : ( all_except_search ) ->
+      console.log 'navigation layer close'
+      this.reset_tabs()
+      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
     back : () ->
-      shop_list_screen_dom = siomart.utils.ge('smShopListScreen')
-
-      if shop_list_screen_dom.style.display == 'block'
-        shop_list_screen_dom.style.display = 'none'
-      else
-        siomart.navigation_layer.close()
+      console.log 'navigation layer back'
 
 
   #########################################
@@ -1598,15 +1630,15 @@ siomart =
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id, history_push ) ->
 
-    siomart.utils.ge('smCategoriesBackButton').style.display = 'block'
-    siomart.utils.ge('smCloseButton').style.display = 'none'
-    siomart.global_cat_id = cat_id
+    siomart.grid_ads.is_load_more_requested = false
+    siomart.grid_ads.is_fully_loaded = false
+
+    document.getElementById('smGridAdsWrapper').scrollTop = '0'
+
+    siomart.utils.addClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
 
     if typeof history_push != 'boolean'
       history_push = true
-
-    if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
-      return false
 
     if history_push == true
       state_data =
@@ -1679,33 +1711,6 @@ siomart =
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
     siomart.utils.add_single_listener document, _event, siomart.events.document_click
-
-  init_shop_links : () ->
-
-    return false
-
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
-    for _b in blocks_w_actions
-      cb = ( b ) ->
-        producer_id = b.getAttribute 'data-producer-id'
-        ad_id = b.getAttribute 'data-ad-id'
-        siomart.utils.add_single_listener b, _event, () ->
-          siomart.load_for_shop_id producer_id, ad_id
-      cb _b
-
-  init_categories_links : () ->
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    blocks_w_actions = siomart.utils.ge_class document, 'js-cat-link'
-    for _b in blocks_w_actions
-      cb = ( b ) ->
-        cat_id = b.getAttribute 'data-cat-id'
-
-        _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
-        if !siomart.utils.is_array( _b.className.match( _cat_class_match_regexp ) )
-          siomart.utils.add_single_listener b, _event, () ->
-            siomart.load_for_cat_id cat_id
-      cb _b
 
   set_window_class : () ->
     _window_class = ''

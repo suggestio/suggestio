@@ -1,6 +1,6 @@
 @(args: SMShowcaseIndexArgs)(implicit ctx: Context)
 
-@stuff.scrollableContainerTpl( "sm-categories-wrapper", "smCategories" ){
+@stuff.scrollableContainerTpl( "sm-categories", "smCategories" ){
   @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
     <span class="sm-single-categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
       <div class="sm-single-categorie_icon __@mmcat.cssClass"></div>
