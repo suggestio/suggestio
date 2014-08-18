@@ -6,30 +6,17 @@
 
   <div class="sm-categories-screen_header">
 
-    <div class="sm-header-round-btn __right-aligned" id="smNavigationLayerBackButton">
-      <div class="sm-header-round-btn_inner">
-        <div class="sm-header-round-btn_icon __back-right"></div>
-      </div>
-    </div>
-
   </div>
 
-  @_search_bar(args.bgColor)
+  @_search_bar( args.bgColor )
 
-  <div class="sm-categories-screen_body-wrap" id="smCategoriesBodyWrap" style="background-color: #@args.bgColor;">
-    <div class="sm-categories-screen_body">
-
-      <div class="sm-categories-list">
-        @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
-          <span class="sm-single-categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
-            <div class="sm-single-categorie_icon __@mmcat.cssClass"></div>
-            <div class="sm-single-categorie_name">@mmcat.name</div>
-          </span>
-        }
-      </div>
-
-    </div>
+  <div class="sm-categories-screen_tabs">
+    <div class="sm-categories-screen_single-tab">Категории</div>
+    <div class="sm-categories-screen_single-tab">Список</div>
+    <div class="clear"></div>
   </div>
+
+  @_categoriesListTpl( args )
 
   @*if( args.shops.nonEmpty ) {
     <div class="sm-categories-footer">

@@ -69,6 +69,7 @@ code
 
 .sm-block
   position: absolute
+  -webkit-transition: -webkit-transform 0.2s linear
 
 /* Кнопки
 ------------------------------------*/
@@ -118,3 +119,38 @@ code
     width: 100%
     height: 100px
     background: red
+
+/*
+------------------------------------*/
+.sm-categories-screen
+  position: absolute
+  left: 0px
+  top: 0px
+  z-index: 11
+  display: block
+  width: 100%
+  height: 100%
+  background: #2e5c69
+
+  &.__compact
+    width: 300px
+    left: 50%
+
+  &_header
+    height: 50px
+    background: olive
+    opacity: .5
+
+  &_tabs
+    height: 50px
+  &_single-tab
+    width: 50%
+    height: 50px
+    float: left
+    background: yellow
+
+/*
+------------------------------------*/
+.sm-search-bar
+  height: 50px
+  background: red

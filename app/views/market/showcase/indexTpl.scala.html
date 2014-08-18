@@ -23,57 +23,22 @@
     <div style="width: 10px; height: 10px; background: red;"></div>
   </div>
   <img  height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg => @routes.Img.getImg(logoImg.filename)}.getOrElse{}"/>
+
+  @if( args.catsStats.nonEmpty ){
   <div class="sm-button abs" style="left: auto; right: 0px"></div>
+  }
+
 </div>
 
 @* Работа с сеткой карточек *@
 @_gridAdsTpl(args)
 
-@* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(args.oncloseHref)
-
-@*_screen_nav_button("close", "smCloseButton")*@
-
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-@*<div class="sm-header-round-btn" id="smCategoriesBackButton" style="display: none">
-  <div class="sm-header-round-btn_inner">
-    <div class="sm-header-round-btn_icon __back"></div>
-  </div>
-</div>
-*@
-
-@if( args.catsStats.nonEmpty ){
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-@*<div class="sm-header-round-btn __right-aligned" id="smCategoriesButton">
-  <div class="sm-header-round-btn_inner">
-    <div class="sm-header-round-btn_icon __search"></div>
-  </div>
-</div>*@
 @* Окно с выбором категорий *@
-@*@_categories_w_search(args)*@
+@if( args.catsStats.nonEmpty ){
+  @_categories_w_search(args)
 }
 
-@*
-<div class="sm-flex sm-overflow-scrolling">
-  <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
-    <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px;" id="sioMartIndexGridLayout">
-
-      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)" style="position: relative; width: 100%;">
-      </div>
-
-      <div class="grid-loader" style="height: 50px;" id="gridAdsLoader">
-        <div style="position: relative; height: 1px; width: 100%;">
-          <div style="padding: 5px; position: absolute; left: 50%; top: 50%; margin-left: -15px; margin-top: -16px;">
-            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl@routes.Assets.at("images/market/grid-ads-loader-fast.gif")?v=2"/>
-          </div>
-        </div>
-      </div>
-
-      <div style="height: 60px;"></div>
-
-    </div>
-  </div>
-</div>
-*@
+@* Окно с предупреждением о выходе из Sio.Market *@
+@_exit_screen(args.oncloseHref)
 
 <div class="sm-loading" id="smLoading"></div>

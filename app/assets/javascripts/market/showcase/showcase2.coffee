@@ -508,12 +508,12 @@ siomart =
 
       grid_resize = () ->
 
-        document.getElementById('sioMartIndexOffers').scrollTop = '0';
+        document.getElementById('smGridAdsWrapper').scrollTop = '0';
 
-        cb = () ->
-          siomart.utils.ge('sioMartIndexGrid').style.height = parseInt( siomart.utils.ge('sioMartIndexGrid').style.height) + 10 + 'px'
+        #cb = () ->
+        #  siomart.utils.ge('sioMartIndexGrid').style.height = parseInt( siomart.utils.ge('sioMartIndexGrid').style.height) + 10 + 'px'
 
-        setTimeout cb, 70
+        #setTimeout cb, 70
 
         cbca_grid.resize()
         siomart.set_window_class()
@@ -531,19 +531,26 @@ siomart =
 
     init : () ->
 
-      style_tags = siomart.utils.ge_tag('code')
+      console.log 'styles '
+      style_tags = siomart.utils.ge_tag('code', true)
+
+      console.log style_tags.length
+
       css = ''
 
       for s in style_tags
-        css = css.concat( s.innerHTML )
+        console.log s.getAttribute( 'data-rendered' )
+        if s.getAttribute( 'data-rendered' ) == null
+          s.setAttribute( 'data-rendered', true )
+          css = css.concat( s.innerHTML )
+          console.log 'do render'
+        else
+          console.log 'don NOT render'
 
-      if this.style_dom == null
-        style_dom = document.createElement('style')
-        style_dom.type = "text/css"
-        siomart.utils.ge_tag('head')[0].appendChild(style_dom)
-        this.style_dom = style_dom
-      else
-        this.style_dom.innerHTML = ''
+      style_dom = document.createElement('style')
+      style_dom.type = "text/css"
+      siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+      this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
 
@@ -1166,12 +1173,12 @@ siomart =
 
       if typeof data.blocks == 'undefined'
         siomart.grid_ads.is_fully_loaded = true
-        siomart.utils.ge('smLoading').style.display = 'none'
+        siomart.utils.ge('smGridAdsLoader').style.display = 'none'
         return false
 
       if data.blocks.length < siomart.config.ads_per_load
         siomart.utils.ge('smGridAdsLoader').style.opacity = 0
-        
+
       html = ''
 
       for index, elt of data.blocks
@@ -1470,7 +1477,7 @@ siomart =
 
       siomart.utils.ge('smCategoriesBackButton').style.display = 'none'
       siomart.utils.ge('smCloseButton').style.display = 'none'
-      siomart.utils.ge('smCategoriesButton').style.display = 'none'
+      #siomart.utils.ge('smCategoriesButton').style.display = 'none'
 
       if sm_cat_screen != null
         sm_cat_screen.style.display = 'block'
@@ -1493,7 +1500,7 @@ siomart =
         else
           siomart.utils.ge('smCategoriesBodyWrap').style.display = 'block'
           siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__compact'
-          siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+          #siomart.utils.ge('smCategoriesScreen').style.display = 'none'
           siomart.utils.ge('smCategoriesButton').style.display = 'block'
 
           if typeof siomart.global_cat_id == 'undefined'
@@ -1618,6 +1625,8 @@ siomart =
     fadeout_transition_time : 700
 
     fit : ( image_dom ) ->
+      if this.img_dom == null
+        return false
       image_w = parseInt image_dom.getAttribute "data-width"
       image_h = parseInt image_dom.getAttribute "data-height"
 
@@ -1634,7 +1643,8 @@ siomart =
       image_dom.style.marginTop = - nh / 2 + 'px'
 
     hide : () ->
-
+      if this.img_dom == null
+        return false
       siomart.utils.addClass siomart.welcome_ad.img_dom, 'sm-welcome-ad__img_fade-out'
 
       dn_cb = () ->
