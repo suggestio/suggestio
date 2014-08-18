@@ -33,12 +33,12 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   override val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
-  val CLIENT_ADDR_ESFN = "clientAddr"
-  val ACTION_ESFN = "action"
-  val UA_ESFN = "ua"
-  val AD_ID_ESFN = "adId"
-  val AD_OWNER_ID_ESFN = "adOwnerId"
-  val TIMESTAMP_ESFN = "timestamp"
+  val CLIENT_ADDR_ESFN  = "clientAddr"
+  val ACTION_ESFN       = "action"
+  val UA_ESFN           = "ua"
+  val AD_ID_ESFN        = "adId"
+  val ON_NODE_ID_ESFN   = "adOwnerId"
+  val TIMESTAMP_ESFN    = "timestamp"
 
   /** Через сколько времени удалять записи статистики. */
   val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 60
@@ -46,7 +46,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   type AdFreqs_t = Map[String, Map[AdStatAction, Long]]
   type DateHistAds_t = Seq[(EsDateTime, Long)]
 
-  def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(AD_OWNER_ID_ESFN, adOwnerId)
+  def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(ON_NODE_ID_ESFN, adOwnerId)
 
   /**
    * Аггрегат, порождающий карту из id реклам и их статистик по action'ам.
@@ -150,7 +150,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       action    = null,
       ua        = null,
       adId      = null,
-      adOwnerId = null,
+      onNodeIdOpt = null,
       timestamp = null,
       personId  = null
     )
@@ -162,7 +162,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     case (ACTION_ESFN, value)      => acc.action = AdStatActions.withName(stringParser(value))
     case (UA_ESFN, value)          => acc.ua = Option(stringParser(value))
     case (AD_ID_ESFN, value)       => acc.adId = stringParser(value)
-    case (AD_OWNER_ID_ESFN, value) => acc.adOwnerId = stringParser(value)
+    case (ON_NODE_ID_ESFN, value)  => acc.onNodeIdOpt = Option(value) map stringParser
     case (TIMESTAMP_ESFN, value)   => acc.timestamp = dateTimeParser(value)
     case (PERSON_ID_ESFN, value)   => acc.personId = Option(stringParser(value))
   }
@@ -181,7 +181,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     FieldString(ACTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(UA_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     FieldString(AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(AD_OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(ON_NODE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = false),
     FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
   )
@@ -190,14 +190,14 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 import MAdStat._
 
 case class MAdStat(
-  var clientAddr: String,
-  var action: AdStatAction,
-  var adId: String,
-  var adOwnerId: String,
-  var ua: Option[String],
-  var personId: Option[String] = None,
-  var timestamp: DateTime = new DateTime,
-  var id: Option[String] = None
+  var clientAddr  : String,
+  var action      : AdStatAction,
+  var adId        : String,
+  var onNodeIdOpt : Option[String],
+  var ua          : Option[String],
+  var personId    : Option[String] = None,
+  var timestamp   : DateTime = new DateTime,
+  var id          : Option[String] = None
 ) extends EsModelT {
 
   override type T = MAdStat
@@ -209,13 +209,14 @@ case class MAdStat(
     var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
       ACTION_ESFN -> JsString(action.toString) ::
       AD_ID_ESFN -> JsString(adId) ::
-      AD_OWNER_ID_ESFN -> JsString(adOwnerId) ::
       TIMESTAMP_ESFN -> date2JsStr(timestamp) ::
       acc
     if (ua.isDefined)
       acc1 ::= UA_ESFN -> JsString(ua.get)
     if (personId.isDefined)
       acc1 ::= PERSON_ID_ESFN -> JsString(personId.get)
+    if (onNodeIdOpt.isDefined)
+      acc1 ::= ON_NODE_ID_ESFN -> JsString(onNodeIdOpt.get)
     acc1
   }
 

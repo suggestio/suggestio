@@ -230,7 +230,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     withGeoDistanceSort.fold(srb1) { geoPoint =>
       val sb = SortBuilders.geoDistanceSort(EMAdnMMetadataStatic.META_LOCATION_ESFN)
         .point(geoPoint.lat, geoPoint.lon)
-        .order(SortOrder.ASC)
+        .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
         .unit(DistanceUnit.KILOMETERS)
       srb1.addSort(sb)
     }
