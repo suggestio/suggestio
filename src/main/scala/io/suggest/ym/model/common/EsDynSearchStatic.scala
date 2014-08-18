@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.EsModelMinimalStaticT
+import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilder
 import io.suggest.util.SioEsUtil.laFuture2sFuture
@@ -16,17 +17,10 @@ import scala.concurrent.{Future, ExecutionContext}
 
 trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelMinimalStaticT {
 
-  /** Лимитировать кол-во результатов на выходе поиска.
-    * Если args.maxResults выше нормы, то будет использован этот лимит. */
-  def DYN_SEARCH_MAX_RESULTS_HARD = 200
-
   /** Билдер поискового запроса. */
-  def dynSearchReqBuilder(dsa: A)(implicit ec:ExecutionContext, client: Client) = {
+  def dynSearchReqBuilder(dsa: A)(implicit client: Client): SearchRequestBuilder = {
     // Запускаем собранный запрос.
-    prepareSearch
-      .setQuery(dsa.toEsQuery)
-      .setSize(Math.min(DYN_SEARCH_MAX_RESULTS_HARD, Math.max(1, dsa.maxResults)))
-      .setFrom(Math.max(0, dsa.offset))
+    dsa.prepareSearchRequest(prepareSearch)
   }
 
   /**
@@ -77,6 +71,10 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelMinimalStaticT {
 /** Базовый интерфейс для аргументов-критериев поиска. */
 trait DynSearchArgs {
 
+  /** Жесткое ограничение сверху по кол-ву результатов поиска. По идее, оно не должно влиять на выдачу никогда.
+    * Нужно для защиты от ddos при недостаточной проверке значения maxResults на верхнем уровне. */
+  def MAX_RESULTS_HARD = 100
+
   /** Макс.кол-во результатов. */
   def maxResults: Int
 
@@ -85,6 +83,19 @@ trait DynSearchArgs {
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных. */
   def toEsQuery: QueryBuilder
+
+  /**
+   * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
+   * кастомную сортировку например.
+   * @param srb Поисковый реквест, пришедший из модели.
+   * @return SearchRequestBuilder, наполненный данными по поисковому запросу.
+   */
+  def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    srb
+      .setQuery(toEsQuery)
+      .setSize(Math.min(MAX_RESULTS_HARD, Math.max(1, maxResults)))
+      .setFrom(Math.max(0, offset))
+  }
 
 }
 

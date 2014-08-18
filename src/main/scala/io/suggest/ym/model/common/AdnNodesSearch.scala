@@ -4,8 +4,10 @@ import io.suggest.model.common.EMPersonIds
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.common.AdnRights.AdnRight
+import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders, QueryBuilder}
+import org.elasticsearch.search.sort.{SortOrder, SortBuilders}
 
 /**
  * Suggest.io
@@ -217,7 +219,23 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Фильтровать по наличию/отсутсвию логотипа. */
   def hasLogo: Option[Boolean]
 
+  /** + сортировка результатов по расстоянию до указанной точки. */
+  def withGeoDistanceSort: Option[GeoPoint]
+
   override def toEsQuery = AdnNodesSearch.mkEsQuery(this)
+
+  override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    val srb1 = super.prepareSearchRequest(srb)
+    // Добавить сортировку по дистанции до указанной точки, если необходимо.
+    withGeoDistanceSort.fold(srb1) { geoPoint =>
+      val sb = SortBuilders.geoDistanceSort(EMAdnMMetadataStatic.META_LOCATION_ESFN)
+        .point(geoPoint.lat, geoPoint.lon)
+        .order(SortOrder.ASC)
+        .unit(DistanceUnit.KILOMETERS)
+      srb1.addSort(sb)
+    }
+  }
+
 }
 
 
