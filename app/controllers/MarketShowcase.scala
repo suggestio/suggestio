@@ -247,7 +247,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     args.geo.exactGeodata match {
       // Есть координаты текущие точные. Нужно поискать ближайший рекламный узел в рамках города.
       case Some(gp) =>
-        val gdq = GeoDistanceQuery(center = gp, distanceMin = None, distanceMax = GeoIp.DISTANCE_DFLT)
+        val distanceMax = GeoIp.DISTANCE_DFLT
+        val gdq = GeoDistanceQuery(center = gp, distanceMin = None, distanceMax = distanceMax)
         val nodeSearchArgs = MAdnNodeSearch(
           geoDistance = Some(gdq),
           maxResults = 1,
@@ -256,6 +257,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         MAdnNode.dynSearch(nodeSearchArgs) flatMap { nodes =>
           if (nodes.isEmpty) {
             // Нету узлов, подходящих под запрос.
+            debug(s"geoShowcase($args): No nodes found nearby $gp in ${distanceMax.distance} ${distanceMax.units}")
             renderGeoShowcase(args)
           } else {
             // Нанооптимизация: начинаем рендер и возможных нарушениях работы ругаться в логи.
