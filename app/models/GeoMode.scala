@@ -47,9 +47,27 @@ sealed trait GeoMode {
    * @param request Текущий реквест.
    * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
    */
-  def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]]
+  def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
 
   def exactGeodata: Option[GeoPoint]
+}
+
+
+trait GeoSearchInfo {
+  /** Географическая точка, заданная координатами и описывающая клиента. */
+  def geoPoint: GeoPoint
+  /** Сборка запроса для геопоиска относительно точки.. */
+  def geoDistanceQuery: GeoDistanceQuery
+  /** Название города. */
+  def cityName: Option[String]
+  /** Двухбуквенный код страны. */
+  def countryIso2: Option[String]
+  /** Точная геолокация клиента, если есть. */
+  def exactGeopoint: Option[GeoPoint]
+  /** Координаты точки, которая набегает */
+  def ipGeopoint: Option[GeoPoint]
+  /** Является ли браузер клиента частью cbca? */
+  def isLocalClient: Boolean
 }
 
 
@@ -57,7 +75,9 @@ sealed trait GeoMode {
 case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
-  override def geoSearchInfo(implicit request: RequestHeader) = Future successful None
+  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+    Future successful None
+  }
   override def exactGeodata = None
 }
 
@@ -77,44 +97,70 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
+  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+    // Запускаем небыстрый синхронный поиск в отдельном потоке.
+    future {
+      val ra = getRemoteAddr
+      ip2rangeCity(ra) map { result =>
+        new GeoSearchInfo {
+          override def geoPoint = result.city.geoPoint
+          override def geoDistanceQuery = {
+            GeoDistanceQuery(
+              center = result.city.geoPoint,
+              distanceMin = None,
+              distanceMax = DISTANCE_DFLT
+            )
+          }
+          override def cityName = Option(result.city.cityName)
+          override def countryIso2 = Option(result.range.countryIso2)
+          override def exactGeopoint = None
+          override def ipGeopoint = Option(geoPoint)
+          override def isLocalClient = ra == REPLACE_LOCALHOST_IP_WITH
+        }
+      }
+    }     // future()
+  }
+
+  case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
+
+  def getRemoteAddr(implicit request: RequestHeader): String = {
     val ra0 = request.remoteAddress
-    lazy val logPrefix = s"geoSearchInfo($ra0): "
     // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
     val inetAddr = InetAddress.getByName(ra0)
-    val ra = if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
+    if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
       val ra1 = REPLACE_LOCALHOST_IP_WITH
-      debug(logPrefix + "Local ip detected. Rewriting ip with " + ra1)
+      debug(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
       ra1
     } else {
       ra0
     }
-    // Запускаем небыстрый синхронный поиск в отдельном потоке.
-    future {
-      // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
-      val ck = ra + ".gipq"
-      Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
-        val result = DB.withConnection { implicit c =>
-          IpGeoBaseRange.findForIp(InetAddress getByName ra)
-            .headOption
-            .flatMap { _.cityOpt }
-            .map { city =>
-              trace(logPrefix + "Candidate city: " + city)
-              GeoDistanceQuery(
-                center = city.geoPoint,
-                distanceMin = None,
-                distanceMax = DISTANCE_DFLT
-              )
-            }
-        } // DB
-        if (result.isEmpty)
-          warn(logPrefix + "IP not found in ipgeobase.")
-        result
-      }   // Cache
-    }     // future()
   }
 
-  override def exactGeodata = None
+  def ip2rangeCity(ip: String): Option[Ip2RangeResult] = {
+    // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
+    val ck = ip + ".gipq"
+    Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
+      val result = DB.withConnection { implicit c =>
+        IpGeoBaseRange.findForIp(InetAddress getByName ip)
+          .headOption
+          .flatMap { ipRange =>
+          ipRange.cityOpt map { city =>
+            Ip2RangeResult(city, ipRange)
+          }
+        }
+
+      } // DB
+      lazy val logPrefix = s"ip2rangeCity($ip): "
+      if (result.isEmpty) {
+        warn(logPrefix + "IP not found in ipgeobase.")
+      } else {
+        trace(logPrefix + "Candidate city: " + result.get.city.cityName)
+      }
+      result
+    }   // Cache
+  }
+
+  override def exactGeodata: Option[GeoPoint] = None
 }
 
 
@@ -128,18 +174,34 @@ object GeoLocation {
 
 
 /** Геолокация с указанием географических координат. */
-case class GeoLocation(lat: Double, lon: Double) extends GeoMode {
-  def geopoint = GeoPoint(lat = lat, lon = lon)
+case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
+  lazy val geopoint = GeoPoint(lat = lat, lon = lon)
 
   override def isWithGeo = true
   override def toQsStringOpt = Some(s"$lat,$lon")
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoDistanceQuery]] = {
-    val result = GeoDistanceQuery(
-      center      = geopoint,
-      distanceMin = None,
-      distanceMax = GeoLocation.DISTANCE_DFLT
-    )
+
+  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+    val result = new GeoSearchInfo {
+      override def geoPoint: GeoPoint = gl.geopoint
+      override def geoDistanceQuery = GeoDistanceQuery(
+        center      = gl.geopoint,
+        distanceMin = None,
+        distanceMax = GeoLocation.DISTANCE_DFLT
+      )
+      override def exactGeopoint = Some(gl.geopoint)
+      lazy val ipGeoloc = {
+        val ra = GeoIp.getRemoteAddr
+        GeoIp.ip2rangeCity(ra)
+      }
+      override def ipGeopoint: Option[GeoPoint] = {
+        ipGeoloc map { _.city.geoPoint }
+      }
+      override def cityName = ipGeoloc.map(_.city.cityName)
+      override def countryIso2 = ipGeoloc.map(_.range.countryIso2)
+      override def isLocalClient: Boolean = false
+    }
     Future successful Some(result)
   }
+
   override def exactGeodata = Some(geopoint)
 }

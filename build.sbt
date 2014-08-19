@@ -62,6 +62,8 @@ libraryDependencies ++= Seq(
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
   // webjars
+  // statistics
+  "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // test
   "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )

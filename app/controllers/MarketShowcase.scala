@@ -6,8 +6,8 @@ import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.OptStrId
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.common.GeoDistanceQuery
+import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.cache.Cache
@@ -338,6 +338,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    lazy val gsiFut = adSearch.geo.geoSearchInfo
     val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> Future.successful(adSearch)
     } else {
@@ -346,17 +347,19 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val result = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
         Future successful result
       } else if (adSearch.receiverIds.nonEmpty) {
-        val result = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
+        // TODO Можно спилить этот костыль?
+        val lvls1 = (AdShowLevels.LVL_START_PAGE :: adSearch.levels).distinct
+        val result = adSearch.copy(levels = lvls1)
         Future successful result
       } else if (adSearch.geo.isWithGeo) {
-        adSearch.geo.geoSearchInfo.flatMap {
+        gsiFut.flatMap {
           case None =>
             Future successful adSearch
-          case gdqSome @ Some(gdq) =>
+          case Some(gsi) =>
             val nodeSearchArgs = MAdnNodeSearch(
-              geoDistance = gdqSome,
+              geoDistance = Option(gsi.geoDistanceQuery),
               maxResults = 1,
-              withGeoDistanceSort = Some(gdq.center)
+              withGeoDistanceSort = Some(gsi.geoPoint)
             )
             // Если узлы слишком далеко, то будет пустой список результатов.
             MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
@@ -377,7 +380,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       }
       "findAds" -> adsearch3
     }
-    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { MAd.dynSearch }
+    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
+      trace("findAds(): Starting ads search using " + adSearch2)
+      MAd.dynSearch(adSearch2)
+    }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
     val madsRenderedFut = madsFut flatMap { mads0 =>
       val mads1 = groupNarrowAds(mads0)
@@ -389,7 +395,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
       adSearch2Fut onSuccess { case adSearch2 =>
-        saveStats(adSearch2, mads, AdStatActions.View)
+        saveStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
       }
     }
     // Асинхронно рендерим результат.
@@ -405,40 +411,64 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     * @param request Инстанс текущего реквеста.
     * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
     */
-  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction)(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction, gsi: Option[Future[Option[GeoSearchInfo]]] = None)
+                       (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     if (mads.nonEmpty) {
-      val personId = request.pwOpt.map(_.personId)
-      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
+      // Запускаем асинхронные задачи:
+      val gsiFut = gsi getOrElse GeoIp.geoSearchInfo
       val onNodeIdOpt = a.receiverIds
         .headOption
         .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
+      val adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
+      // Синхронно парсим юзер-агент, затем заполняем данными новый экземпляр MAdStat.
+      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
+      val agent = uaOpt.flatMap { ua =>
+        // try-catch для самозащиты от возможных багов в православной либе uadetector.
+        try {
+          val uaParser = UADetectorServiceFactory.getResourceModuleParser
+          Some(uaParser.parse(ua))
+        } catch {
+          case ex: Throwable =>
+            warn("saveStats(): Unable to use UADetector for parsing UA: " + ua, ex)
+            None
+        }
+      }
+      val personId = request.pwOpt.map(_.personId)
       val ra = request.remoteAddress
       val now = DateTime.now()
-      val br = client.prepareBulk()
-      mads.foreach { mad =>
-        val adStat = MAdStat(
-          clientAddr  = ra,
-          action      = statAction,
-          adId        = mad.id.get,
-          onNodeIdOpt = onNodeIdOpt,
-          ua          = uaOpt,
-          personId    = personId,
-          timestamp   = now
-        )
-        br.add( adStat.indexRequestBuilder )
+      val adIds = mads.flatMap(_.id)
+      val adsCount = adIds.size
+      val resultFut = gsiFut flatMap { gsiOpt =>
+        adnNodeOptFut flatMap { adnNodeOpt =>
+          val adStat = MAdStat(
+            clientAddr  = ra,
+            action      = statAction,
+            adIds       = adIds,
+            adsRendered = adsCount,
+            onNodeIdOpt = onNodeIdOpt,
+            nodeName    = adnNodeOpt.map(_.meta.name),
+            ua          = uaOpt,
+            personId    = personId,
+            timestamp   = now,
+            clIpGeo     = gsiOpt.flatMap(_.ipGeopoint),
+            clTown      = gsiOpt.flatMap(_.cityName),
+            clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
+            clCountry   = gsiOpt.flatMap(_.countryIso2),
+            isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser,
+            clOSFamily  = agent.map(_.getOperatingSystem.getFamilyName),
+            clAgent     = agent.map(_.getName),
+            clDevice    = agent.map(_.getDeviceCategory.getName)
+          )
+          adStat.save
+        }
       }
-      val resultFut = laFuture2sFuture( br.execute() )
       // Вешаем логгирование результатов на запущенный реквест.
       resultFut onComplete {
-        case Success(result) =>
-          if (result.hasFailures) {
-            warn("saveStats(): Bulk request saved with problems: " + result.buildFailureMessage())
-          } else {
-            trace("saveStats(): Bulk request successfult. Total = " + result.getItems.length)
-          }
+        case Success(adStatId) =>
+          trace(s"saveStats(): Saved successful: id = $adStatId for $adsCount ads.")
         case Failure(ex) =>
-          error(s"saveStats(): Failed to save statistics for ${br.numberOfActions} bulk actions", ex)
+          error(s"saveStats(): Failed to save statistics for $adsCount ads", ex)
       }
       // Возвращаем фьючерс.
       resultFut
