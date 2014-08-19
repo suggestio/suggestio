@@ -766,25 +766,33 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param maxResults Макс. число результатов для прочтения из хранилища модели.
    * @return
    */
-  def remapMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Int] = {
+  def remapMany(maxResults: Int = -1)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Int] = {
     val logPrefix = s"remapMany($maxResults): "
     LOGGER.warn(logPrefix + "Starting model data remapping...")
+    // TODO Надо бы сохранять данные маппинга в файл, считывая их через SCAN и курсоры.
     val startedAt = System.currentTimeMillis()
+    val atMostFut: Future[Int] = if (maxResults <= 0) {
+      countAll.map(_.toInt + 10)
+    } else {
+      Future successful maxResults
+    }
     // [withVsn = false] из-за проблем с версионизацией на стёртых маппингах VersionConflictEngineException version conflict, current [-1], provided [3]
-    getAll(maxResults, withVsn = false) flatMap { results =>
-      val resultFut = for {
-        _ <- deleteMapping
-        _ <- putMapping(ignoreConflicts = false)
-        _ <- Future.traverse(results) { e => tryUpdate(e)(identity) }
-        _ <- refreshIndex
-      } yield {
-        LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
-        results.size
+    atMostFut flatMap { atMost =>
+      getAll(atMost, withVsn = false) flatMap { results =>
+        val resultFut = for {
+          _ <- deleteMapping
+          _ <- putMapping(ignoreConflicts = false)
+          _ <- Future.traverse(results) { e => tryUpdate(e)(identity) }
+          _ <- refreshIndex
+        } yield {
+          LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
+          results.size
+        }
+        resultFut onFailure { case ex =>
+          LOGGER.error(logPrefix + "Failed to make remap. Lost data is:\n" + toEsJsonDocs(results))
+        }
+        resultFut
       }
-      resultFut onFailure { case ex =>
-        LOGGER.error(logPrefix + "Failed to make remap. Lost data is:\n" + toEsJsonDocs(results))
-      }
-      resultFut
     }
   }
 
