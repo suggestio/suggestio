@@ -2070,8 +2070,13 @@ th.__bg-head
   &_control
     position  absolute
     top       0
+    opacity   0.6
+
+    color       white
+    font-size   52px
+    text-align  center
+
     cursor    pointer
-    opacity   0.8
     transition(all 0.2s ease-in-out 0s)
 
     &:hover
@@ -2083,8 +2088,14 @@ th.__bg-head
   &_control.__left-arrow
     left 0
 
+    &:before
+      content ""
+
   &_control.__right-arrow
     right 0
+
+    &:before
+      content ""
 
 @media screen768
 

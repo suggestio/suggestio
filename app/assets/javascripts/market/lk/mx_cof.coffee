@@ -63,12 +63,12 @@ Slider =
       $target = $ e.target
       targetClass = $target.attr 'class'
 
-      if targetClass == "slider_control __right-arrow"
+      if $target.hasClass '__right-arrow'
         left = 500
         cbca.slider.process = true
         url = cbca.slider.nextLink
 
-      if targetClass == "slider_control __left-arrow"
+      if $target.hasClass '__left-arrow'
         left = -500
         cbca.slider.process = true
         url = cbca.slider.prevLink
