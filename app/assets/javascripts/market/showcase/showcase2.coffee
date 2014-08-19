@@ -514,7 +514,7 @@ siomart =
         siomart.set_window_class()
 
         siomart.focused_ads.fit()
-        siomart.focused_ads.show_block_by_index siomart.focused_ads.active_block_index
+        siomart.focused_ads.show_ad_by_index siomart.focused_ads.active_ad_index
 
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
@@ -919,6 +919,14 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
         siomart.navigation_layer.close()
 
+
+
+      ##############
+      ## focused_ads
+      ##############
+      if siomart.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
+        siomart.focused_ads.close()
+
     document_keyup_event : ( event ) ->
 
       if !event
@@ -930,10 +938,10 @@ siomart =
         siomart.navigation_layer.back()
 
       if event.keyCode == 39
-        siomart.focused_ads.next_block()
+        siomart.focused_ads.next_ad()
 
       if event.keyCode == 37
-        siomart.focused_ads.prev_block()
+        siomart.focused_ads.prev_ad()
 
 
   notifications :
@@ -1115,6 +1123,12 @@ siomart =
       this.response_callbacks.producer_ads data
 
     if data.action == 'findAds' || data.action == 'searchAds'
+
+      if data.action == 'searchAds'
+        cbca_grid.top_offset = 120
+      else
+        cbca_grid.top_offset = 70
+
       this.response_callbacks.find_ads data
 
 
@@ -1136,6 +1150,7 @@ siomart =
 
       ## Забиндить оконные события
       siomart.bind_window_events()
+
 
       ## Инициализировать history api
       ## this.history.init()
@@ -1188,7 +1203,7 @@ siomart =
         screensContainer = siomart.utils.ge 'smFocusedAds'
         screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
 
-        siomart.focused_ads.blocks = data.blocks
+        siomart.focused_ads.ads = data.blocks
         siomart.focused_ads.init()
 
         console.log 'producerAds : ready'
@@ -1216,6 +1231,8 @@ siomart =
 
         siomart.grid_ads.loaded += data.blocks.length
 
+        console.warn 'siomart.grid_ads.is_load_more_requested : ' + siomart.grid_ads.is_load_more_requested
+
         if siomart.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
 
@@ -1231,105 +1248,91 @@ siomart =
         else
           siomart.navigation_layer.close()
       else
+
+        if data.action == 'searchAds'
+          alert 'Ничего не найдено!'
+
         siomart.grid_ads.is_fully_loaded = true
         siomart.grid_ads.loader.hide()
 
       siomart.grid_ads.is_load_more_requested = false
 
-  close_focused_ads : ( event ) ->
-    siomart.utils.removeClass siomart.utils.ge('sioMartNodeOffersRoot'), 'sio-mart__node-offers-root_in'
-
-    cb = () ->
-      siomart.utils.re 'sioMartNodeOffers'
-      siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
-
-      delete siomart.shop_load_locked
-
-    setTimeout cb, 200
-
-    delete siomart.focused_ads.requested_ad_id
-    delete siomart.focused_ads.active_block_index
-
-    if event
-      event.preventDefault()
-
   ############################################
   ## Объект для работы с карточками продьюсера
   ############################################
   focused_ads :
-
     load_more_ads_requested : false
-
+    
     load_more_ads : () ->
       if this.is_fully_loaded == true
-        return fasle
-      siomart.request.perform this.curl + '&h=' + false + '&a.offset=' + this.blocks.length
-      this.load_more_ads_requested = true
-
-    scroll_or_move : undefined
-
-    show_block_by_index : ( block_index, direction ) ->
-
-      if typeof this.blocks == 'undefined'
         return false
+      siomart.request.perform this.curl + '&h=' + false + '&a.offset=' + this.ads.length
+      this.load_more_ads_requested = true
+    
+    scroll_or_move : undefined
+    
+    show_ad_by_index : ( ad_index, direction ) ->
 
+      if typeof this.ads == 'undefined'
+        return false
+      
       if typeof this.sm_blocks == 'undefined'
         return false
 
       if vendor_prefix.js == 'Webkit'
-        siomart.focused_ads.ads_container_dom.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+        siomart.focused_ads.ads_container_dom.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*ad_index + 'px, 0px, 0px)'
       else
-        siomart.focused_ads.ads_container_dom.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
-
-      siomart.focused_ads.ads_container_dom.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
-
-      if block_index == this.active_block_index
+        siomart.focused_ads.ads_container_dom.style['transform'] = 'translate3d(-' + cbca_grid.ww*ad_index + 'px, 0px, 0px)'
+      
+      siomart.focused_ads.ads_container_dom.setAttribute 'data-x-offset', -cbca_grid.ww*ad_index
+      
+      if ad_index == this.active_ad_index
         return false
 
-      this.active_block_index = block_index
-
-      console.log 'this.active_block_index : ' + this.active_block_index
-      console.log 'this.blocks.length : ' + this.blocks.length
-
-      if this.active_block_index > this.blocks.length
+      this.active_ad_index = ad_index
+      
+      console.log 'this.active_ad_index : ' + this.active_ad_index
+      console.log 'this.blocks.length : ' + this.ads.length
+      
+      if this.active_ad_index > this.ads.length
         this.load_more_ads()
-
+      
       if direction == '+'
-        ad_c_el = siomart.utils.ge('focusedAd' + ( block_index + 1 ) )
+        ad_c_el = siomart.utils.ge('focusedAd' + ( ad_index + 1 ) )
         if ad_c_el != null
           ad_c_el.style.visibility = 'visible';
 
-        if block_index >= 2
-          siomart.utils.ge('focusedAd' + ( block_index - 2 ) ).style.visibility = 'hidden';
+        if ad_index >= 2
+          siomart.utils.ge('focusedAd' + ( ad_index - 2 ) ).style.visibility = 'hidden';
 
       if direction == '-'
-        if block_index >= 1
-          siomart.utils.ge('focusedAd' + ( block_index - 1 ) ).style.visibility = 'visible';
+        if ad_index >= 1
+          siomart.utils.ge('focusedAd' + ( ad_index - 1 ) ).style.visibility = 'visible';
 
-        fel = siomart.utils.ge('focusedAd' + ( block_index + 2 ) )
+        fel = siomart.utils.ge('focusedAd' + ( ad_index + 2 ) )
         if fel != null
           fel.style.visibility = 'hidden';
 
-    next_block : () ->
-      if typeof this.active_block_index == 'undefined'
+    next_ad : () ->
+      if typeof this.active_ad_index == 'undefined'
         return false
 
-      next_index = this.active_block_index + 1
+      next_index = this.active_ad_index + 1
 
       if next_index == this.sm_blocks.length
         next_index = next_index-1
-      this.show_block_by_index next_index, '+'
+      this.show_ad_by_index next_index, '+'
 
-    prev_block : () ->
+    prev_ad : () ->
 
-      if typeof this.active_block_index == 'undefined'
+      if typeof this.active_ad_index == 'undefined'
         return false
 
-      prev_index = this.active_block_index - 1
+      prev_index = this.active_ad_index - 1
       if prev_index < 0
         prev_index = 0
 
-      this.show_block_by_index prev_index, '-'
+      this.show_ad_by_index prev_index, '-'
 
     ####################
     ## Обработка событий
@@ -1386,10 +1389,10 @@ siomart =
 
       if this.x_delta_direction > 0
         cb = () ->
-          siomart.focused_ads.next_block()
+          siomart.focused_ads.next_ad()
       else
         cb = () ->
-          siomart.focused_ads.prev_block()
+          siomart.focused_ads.prev_ad()
 
       if this.scroll_or_move == 'move'
         setTimeout cb, 1
@@ -1402,19 +1405,19 @@ siomart =
       delete siomart.focused_ads.tstart_y
       delete siomart.focused_ads.scroll_or_move
 
-    render_more : ( more_blocks ) ->
+    render_more : ( more_ads ) ->
 
       this.load_more_ads_requested = false
-      if typeof more_blocks == 'undefined'
+      if typeof more_ads == 'undefined'
         return false
 
       html = ''
-      for i, v of more_blocks
-        html += more_blocks[i]
-        this.blocks.push more_blocks[i]
+      for i, v of more_ads
+        html += more_ads[i]
+        this.ads.push more_ads[i]
 
       siomart.utils.ge('ads' + this.ads_receiver_index).innerHTML = html
-      this.ads_rendered = this.blocks.length + 1
+      this.ads_rendered = this.ads.length + 1
 
       this.check_if_fully_loaded()
       this.render_ads_receiver()
@@ -1479,11 +1482,26 @@ siomart =
       _blocks_receiver_dom.innerHTML = this.loader_dom
       this.ads_container_dom.appendChild _blocks_receiver_dom
 
+
+    ## Закрыть
+    close : () ->
+
+      siomart.utils.removeClass this._container, 'sio-mart__node-offers-root_in'
+
+      this.ads_container_dom.innerHTML = ''
+
+      cb = () ->
+        siomart.utils.ge('smFocusedAds').style.display = 'none'
+
+      setTimeout cb, 200
+
+      delete siomart.focused_ads.active_ad_index
+      delete siomart.shop_load_locked
+
     ############################
     ## Инициализация focused_ads
     ############################
     init : () ->
-
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
@@ -1494,11 +1512,11 @@ siomart =
 
       ## общее число карточек у продьюсера
       this.ads_count = this.ads_container_dom.getAttribute 'data-ads-count'
-      this.ads_rendered = this.blocks.length + 1
+      this.ads_rendered = this.ads.length + 1
 
       html = ''
-      for i, v of this.blocks
-        html += this.blocks[i]
+      for i, v of this.ads
+        html += this.ads[i]
 
       siomart.utils.ge('ads' + this.ads_receiver_index).innerHTML = html
       this.check_if_fully_loaded()
@@ -1524,7 +1542,7 @@ siomart =
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
 
-      this.active_block_index = 0
+      this.active_ad_index = 0
 
   ##################################################
   ## Показать / скрыть экран с категориями и поиском
@@ -1570,9 +1588,12 @@ siomart =
           siomart.utils.ge(t).style.display = 'none'
 
     close : ( all_except_search ) ->
-      console.log 'navigation layer close'
-      this.reset_tabs()
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+      if all_except_search == true
+        siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
+      else
+        siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
+        this.reset_tabs()
+        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
     back : () ->
       console.log 'navigation layer back'
@@ -1741,6 +1762,12 @@ siomart =
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
     siomart.utils.add_single_listener document, _event, siomart.events.document_click
+
+
+    ## Поиск
+    _search_dom = siomart.utils.ge('smSearchField')
+    siomart.utils.add_single_listener _search_dom, 'keyup', ( e ) ->
+      siomart.search.queue_request this.value
 
   set_window_class : () ->
     _window_class = ''

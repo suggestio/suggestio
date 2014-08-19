@@ -5,6 +5,11 @@
 
 @* Список карточек указанного продюссера *@
 <div class="sm-producer-header abs" style="@stuff._bgcolor( bgColor )">
+
+  <div class="sm-producer-header_exit-button sm-button abs" id="closeFocusedAdsButton">
+    <div style="width: 10px; height: 10px; background: red;"></div>
+  </div>
+
   @producer.logoImgOpt.map { logoImg =>
     <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
