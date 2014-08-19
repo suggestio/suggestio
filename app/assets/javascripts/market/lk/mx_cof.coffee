@@ -37,10 +37,6 @@ Slider =
     $rightArrow = $ '.slider_control.__right-arrow'
     $leftArrow = $ '.slider_control.__left-arrow'
 
-    console.log cbca.slider.$currPoint
-    console.log cbca.slider.nextLink
-    console.log cbca.slider.prevLink
-
     if typeof cbca.slider.nextLink == 'undefined'
       $rightArrow.hide()
     else
@@ -52,7 +48,6 @@ Slider =
       $leftArrow.show()
 
   setCurrPoint: (pointId)->
-    console.log pointId
     cbca.slider.$currPoint = $ '.js-card-btn[data-id = '+pointId+']'
 
   init: ()->
@@ -80,7 +75,7 @@ Slider =
         url = cbca.slider.prevLink
 
       if cbca.slider.process
-        $popup = $ '.slider_window .popup'
+        $popup = $ '.slider_window .card'
         popupHeight = $popup.height()
 
         $popup
@@ -101,11 +96,12 @@ Slider =
 
             $ '#indexSlider'
             .append data
-            .find '.popup'
+            $card = $ '.card'
+
+            $card
+            .removeClass 'def-transition'
             .css 'left', -left+'px'
 
-            $card = $ '.card'
-            $card.removeClass 'def-transition'
             cbca.popup.setPopupPosition '.card'
 
             cbca.slider.setCurrPoint(id)
