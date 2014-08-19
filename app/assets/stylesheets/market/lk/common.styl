@@ -2077,7 +2077,7 @@ th.__bg-head
     text-align  center
 
     cursor    pointer
-    transition(all 0.2s ease-in-out 0s)
+    transition(opacity 0.2s ease-in-out 0s)
 
     &:hover
       opacity 1
@@ -2099,6 +2099,11 @@ th.__bg-head
 
 @media screen768
 
-  .slider_window
-    margin    0 auto
-    position  static
+  .slider
+
+    &_window
+      margin    0 auto
+      position  static
+
+    &_controls
+      display none

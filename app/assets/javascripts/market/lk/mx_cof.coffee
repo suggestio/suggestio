@@ -14,6 +14,7 @@ Slider =
   prevLink   : false
   nextLink   : false
   process    : false
+  left       : 0
 
 
   open: ()->
@@ -64,12 +65,12 @@ Slider =
       targetClass = $target.attr 'class'
 
       if $target.hasClass '__right-arrow'
-        left = 500
+        cbca.slider.left += 500
         cbca.slider.process = true
         url = cbca.slider.nextLink
 
       if $target.hasClass '__left-arrow'
-        left = -500
+        cbca.slider.left  += -500
         cbca.slider.process = true
         url = cbca.slider.prevLink
 
@@ -96,7 +97,7 @@ Slider =
             $card = $ '.card'
 
             $card
-            .css 'left', -left+'px'
+            .css 'left', -cbca.slider.left+'px'
 
             cbca.popup.setPopupPosition '.card'
 
@@ -104,7 +105,7 @@ Slider =
             cbca.slider.setLinks()
 
             $ '.slider_cnt'
-            .css 'transform', "translate3d("+left+"px,0,0)"
+            .css 'transform', "translate3d("+cbca.slider.left+"px,0,0)"
 
             setTimeout(
               ()->
