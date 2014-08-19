@@ -1,9 +1,14 @@
 package io.suggest.ym.model.stat
 
+import java.text.SimpleDateFormat
+
+import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.ym.model.common.GeoPoint
-import org.joda.time.DateTime
+import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
+import org.elasticsearch.search.sort.SortOrder
+import org.joda.time.{DateTimeZone, DateTime}
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
@@ -156,6 +161,37 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
       }
   }
 
+  def beforeDtQuery(dt: DateTime) = {
+    QueryBuilders.rangeQuery(TIMESTAMP_ESFN)
+      .from(new DateTime(1970, 1, 1))
+      .to(dt)
+  }
+
+  /** Подсчёт кол-ва вхождений до указанной даты. */
+  def countBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    prepareCount
+      .setQuery( beforeDtQuery(dt) )
+      .execute()
+      .map { _.getCount }
+  }
+
+  /** Найти все вхождения до указанной даты. */
+  def findBefore(dt: DateTime, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    prepareSearch
+      .setQuery( beforeDtQuery(dt) )
+      .setSize(maxResults)
+      .addSort(TIMESTAMP_ESFN, SortOrder.ASC)
+      .execute()
+      .map { searchResp2list }
+  }
+
+  /** Удалить все данные до указанной даты. */
+  def deleteBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[DeleteByQueryResponse] = {
+    prepareDeleteByQuery
+      .setQuery( beforeDtQuery(dt) )
+      .execute()
+  }
+
 
   /**
    * Десериализация одного элементам модели.
@@ -214,7 +250,7 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
     FieldString(CLIENT_TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     FieldGeoPoint(CLIENT_GEO_LOC_ESFN, geohash = true, geohashPrecision = "6", geohashPrefix = true,
       fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "10m")),
-    FieldString(NODE_NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    FieldString(NODE_NAME_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
     FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
     FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(CL_OS_FAMILY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
@@ -296,14 +332,79 @@ object AdStatActions extends Enumeration {
 }
 
 
-
+// JMX Содержит кое-какие дополнительные функции.
 
 /** JMX MBean интерфейс */
-trait MAdStatJmxMBean extends EsModelJMXMBeanCommon
+trait MAdStatJmxMBean extends EsModelJMXMBeanCommon {
+  @ManagedOperation(impact = Impact.ACTION)
+  @Description("Remove all occurencies BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss")
+  def deleteBefore(dt: String): String
+
+  @ManagedOperation(impact = Impact.INFO)
+  @Description("Count all occurencies BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss")
+  def countBefore(dt: String): String
+
+  @ManagedOperation(impact = Impact.INFO)
+  @Description("Find all occurenciec BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss. Second argument sets maxResults returned.")
+  def findBefore(dt: String, maxResults: Int): String
+}
 
 /** JMX MBean реализация. */
 case class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAdStatJmxMBean {
+  import LOGGER._
+
   def companion = MAdStat
+
+  protected def dtParse(dtStr: String): DateTime = {
+    val sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+    val d = sdf.parse(dtStr)
+    new DateTime(d)
+      .withZone(DateTimeZone.forID("Europe/Moscow"))
+  }
+
+  override def deleteBefore(dtStr: String): String = {
+    warn(s"deleteBefore($dtStr)")
+    // Нужно распарсить дату-время из указанных админом.
+    try {
+      val dt = dtParse(dtStr)
+      companion.deleteBefore(dt) map { dbqResp =>
+         "Deleted " + dbqResp.iterator().size + " items."
+      }
+    } catch {
+      case ex: Throwable =>
+        error("Unable to parse user-typed date-time: " + dtStr, ex)
+        "Failure: user-typed timestamp: " + dtStr + " :: " + ex.getClass.getName + ": " + ex.getMessage
+    }
+  }
+
+  override def countBefore(dtStr: String): String = {
+    trace(s"countBefore($dtStr)")
+    try {
+      val dt = dtParse(dtStr)
+      companion.countBefore(dt) map { count =>
+        count + " items before " + dt
+      }
+    } catch {
+      case ex: Throwable =>
+        error("Unable to count items for user-typed dt-str: " + dtStr, ex)
+        "Failure: user-typed timestamp: " + dtStr + " :: " + ex.getClass.getName + ": " + ex.getMessage
+    }
+  }
+
+  override def findBefore(dtStr: String, maxResults: Int): String = {
+    trace(s"findBefore($dtStr, $maxResults)")
+    try {
+      val dt = dtParse(dtStr)
+      companion.findBefore(dt, maxResults) map { results =>
+        // Отрендерить результаты в json
+        EsModel.toEsJsonDocs(results)
+      }
+    } catch {
+      case ex: Throwable =>
+        error(s"Failed to findBefore($dtStr, $maxResults)", ex)
+        s"FAIL: findBefore($dtStr, $maxResults) ${ex.getClass.getSimpleName} : ${ex.getMessage}"
+    }
+  }
 }
 
