@@ -441,7 +441,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       // Вешаем логгирование результатов на запущенный реквест.
       resultFut onComplete {
         case Success(adStatId) =>
-          trace("saveStats(): Saved successful: id = " + adStatId)
+          trace(s"saveStats(): Saved successful: id = $adStatId for ${adIds.size} ads.")
         case Failure(ex) =>
           error(s"saveStats(): Failed to save statistics for ${adIds.size} ads bulk actions", ex)
       }

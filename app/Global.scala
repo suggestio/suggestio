@@ -40,13 +40,14 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    val esClientFut = future {
+      SiowebEsUtil.ensureNode()
+    }
     ensureScryptNoJni()
     // Запускаем супервизора
     SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
-    val fut = future {
-      SiowebEsUtil.ensureNode()
-    } map {
+    val fut = esClientFut map {
       _.client()
     } flatMap { implicit esClient =>
       initializeEsModels map { _ => esClient }
