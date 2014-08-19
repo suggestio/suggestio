@@ -1,0 +1,8 @@
+@(args: SMShowcaseIndexArgs)(implicit ctx: Context)
+
+@stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
+
+  <div class="sm-grid-ads_container" id="smGridAdsContainer" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"></div>
+  <div id="smGridAdsLoader"></div>
+
+}
