@@ -7,6 +7,7 @@ import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.GeoDistanceQuery
+import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.cache.Cache
@@ -414,13 +415,26 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
                        (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     if (mads.nonEmpty) {
+      // Запускаем асинхронные задачи:
       val gsiFut = gsi getOrElse GeoIp.geoSearchInfo
-      val personId = request.pwOpt.map(_.personId)
-      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
       val onNodeIdOpt = a.receiverIds
         .headOption
         .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
       val adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
+      // Синхронно парсим юзер-агент, затем заполняем данными новый экземпляр MAdStat.
+      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
+      val agent = uaOpt.flatMap { ua =>
+        // try-catch для самозащиты от возможных багов в православной либе uadetector.
+        try {
+          val uaParser = UADetectorServiceFactory.getResourceModuleParser
+          Some(uaParser.parse(ua))
+        } catch {
+          case ex: Throwable =>
+            warn("saveStats(): Unable to use UADetector for parsing UA: " + ua, ex)
+            None
+        }
+      }
+      val personId = request.pwOpt.map(_.personId)
       val ra = request.remoteAddress
       val now = DateTime.now()
       val adIds = mads.flatMap(_.id)
@@ -441,7 +455,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             clTown      = gsiOpt.flatMap(_.cityName),
             clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
             clCountry   = gsiOpt.flatMap(_.countryIso2),
-            isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser
+            isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser,
+            clOSFamily  = agent.map(_.getOperatingSystem.getFamilyName),
+            clAgent     = agent.map(_.getName),
+            clDevice    = agent.map(_.getDeviceCategory.getName)
           )
           adStat.save
         }
