@@ -27,31 +27,130 @@ Slider =
     $ '.slider_cnt'
     .css 'transform', ''
 
+  phoneSlide: ()->
+
+    touch     = false
+    delta     = 50 ## допустимая погрешность
+    xStart    = 0
+    yStart    = 0
+    xEnd      = 0
+    yEnd      = 0
+
+    $ document
+    .on 'touchstart', '.card', (e)->
+      xStart = e.originalEvent.touches[0].pageX
+      yStart = e.originalEvent.touches[0].pageY
+
+    $ document
+    .on 'touchend', '.card', (e)->
+      $card = $ this
+
+      xEnd = e.originalEvent.changedTouches[0].pageX
+      yEnd = e.originalEvent.changedTouches[0].pageY
+
+      yDelta = Math.abs(yEnd - yStart)
+      xDelta = xEnd - xStart
+
+      ##console.log 'yDelta = '+yDelta
+      ##console.log 'xDelta = '+xDelta
+
+      if yDelta < delta && Math.abs(xDelta) > 200
+
+        console.log cbca.slider.nextLink
+        console.log cbca.slider.prevLink
+
+        if xDelta < 0 && cbca.slider.nextLink
+          cbca.slider.goToSlide()
+
+        if xDelta > 0 && cbca.slider.prevLink
+          cbca.slider.goToSlide(true)
+
 
   setLinks: ()->
     $nextPoint = cbca.slider.$currPoint.parent().next().find '.js-card-btn'
     $prevPoint = cbca.slider.$currPoint.parent().prev().find '.js-card-btn'
 
-    cbca.slider.nextLink = $nextPoint.attr 'href'
-    cbca.slider.prevLink = $prevPoint.attr 'href'
+    nextLink = $nextPoint.attr 'href'
+    prevLink = $prevPoint.attr 'href'
 
     $rightArrow = $ '.slider_control.__right-arrow'
-    $leftArrow = $ '.slider_control.__left-arrow'
+    $leftArrow  = $ '.slider_control.__left-arrow'
 
-    if typeof cbca.slider.nextLink == 'undefined'
+    if typeof nextLink == 'undefined'
+      cbca.slider.nextLink = false
       $rightArrow.hide()
     else
+      cbca.slider.nextLink = nextLink
       $rightArrow.show()
 
-    if typeof cbca.slider.prevLink == 'undefined'
+    if typeof prevLink == 'undefined'
+      cbca.slider.prevLink = false
       $leftArrow.hide()
     else
       $leftArrow.show()
+      cbca.slider.prevLink = prevLink
 
   setCurrPoint: (pointId)->
     cbca.slider.$currPoint = $ '.js-card-btn[data-id = '+pointId+']'
 
+  goToSlide: (back)->
+    back = back || false
+
+    cbca.slider.process = true
+
+    if back
+      cbca.slider.left  += -500
+      url = cbca.slider.prevLink
+    else
+      cbca.slider.left += 500
+      url = cbca.slider.nextLink
+
+
+    $popup = $ '.slider_window .card'
+    popupHeight = $popup.height()
+
+    $popup
+    .html ''
+    .attr 'class', 'slider_preloader'
+    .attr 'id', 'sliderPreloader'
+    .height popupHeight
+
+    cbca.popup.setPopupPosition '#sliderPreloader'
+
+    $.ajax(
+      url: url,
+      success: (data)->
+        $data = $ data
+        id = $data.attr 'id'
+
+        $ '#indexSlider'
+        .append data
+        $card = $ '.card'
+
+        $card
+        .css 'left', -cbca.slider.left+'px'
+
+        cbca.popup.setPopupPosition '.card'
+
+        cbca.slider.setCurrPoint(id)
+        cbca.slider.setLinks()
+
+        $ '.slider_cnt'
+        .css 'transform', "translate3d("+cbca.slider.left+"px,0,0)"
+
+        setTimeout(
+          ()->
+            cbca.slider.process = false
+            $ '#sliderPreloader'
+            .remove()
+          200
+        )
+    )## ajax end
+
+
   init: ()->
+
+    cbca.slider.phoneSlide()
 
     $ document
     .on 'click', '.slider_controls', (e)->
@@ -65,56 +164,10 @@ Slider =
       targetClass = $target.attr 'class'
 
       if $target.hasClass '__right-arrow'
-        cbca.slider.left += 500
-        cbca.slider.process = true
-        url = cbca.slider.nextLink
+        cbca.slider.goToSlide()
 
       if $target.hasClass '__left-arrow'
-        cbca.slider.left  += -500
-        cbca.slider.process = true
-        url = cbca.slider.prevLink
-
-      if cbca.slider.process
-        $popup = $ '.slider_window .card'
-        popupHeight = $popup.height()
-
-        $popup
-        .height popupHeight
-        .html ''
-        .attr 'class', 'slider_preloader'
-        .attr 'id', 'sliderPreloader'
-
-        cbca.popup.setPopupPosition '#sliderPreloader'
-
-        $.ajax(
-          url: url,
-          success: (data)->
-            $data = $ data
-            id = $data.attr 'id'
-
-            $ '#indexSlider'
-            .append data
-            $card = $ '.card'
-
-            $card
-            .css 'left', -cbca.slider.left+'px'
-
-            cbca.popup.setPopupPosition '.card'
-
-            cbca.slider.setCurrPoint(id)
-            cbca.slider.setLinks()
-
-            $ '.slider_cnt'
-            .css 'transform', "translate3d("+cbca.slider.left+"px,0,0)"
-
-            setTimeout(
-              ()->
-                cbca.slider.process = false
-                $ '#sliderPreloader'
-                .remove()
-              200
-            )
-        )## ajax end
+        cbca.slider.goToSlide(true)
 
     $ document
     .on 'click', '.js-card-btn', (e)->
