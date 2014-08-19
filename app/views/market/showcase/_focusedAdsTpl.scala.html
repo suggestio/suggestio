@@ -11,8 +11,11 @@
 </div>
 
 @* Контейнер с прокручивающимися офферами *@
-<div class="sm-focused-ads_container" id="sioMartNodeOffersBlockContainer" data-ads-count="@adsCount">
+<div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@adsCount">
+  <span id="ads0">
   @mads.zipWithIndex.map { case (mad, index) =>
     @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount)
   }
+  </span>
+  @_focusedAdLoaderTpl()
 </div>

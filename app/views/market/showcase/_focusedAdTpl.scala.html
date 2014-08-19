@@ -1,6 +1,8 @@
 @(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int)(implicit ctx: Context)
 
-@stuff.scrollableContainerTpl( "focusedAd" + index, "focused-ad" ){
+@stuff.scrollableContainerTpl( "focused-ad", "focusedAd" + index ){
+  <div style="margin: 0px auto;">
+  <div class="focused-ad_top-offset"></div>
   @_single_offer_w_description(
     mad = mad,
     isWithAction = false,
@@ -8,4 +10,5 @@
     adIndex = index + 1,
     adsCount = adsCount
   )
+  </div>
 }
