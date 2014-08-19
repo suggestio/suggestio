@@ -759,6 +759,15 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     }
   }
 
+  def resave(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+    getById(id) flatMap {
+      case Some(e) =>
+        e.save map { Some.apply }
+      case None =>
+        Future successful None
+    }
+  }
+
   /**
    * Прочитать в RAM n документов, пересоздать маппинг, отправить документы назад в индекс.
    * Крайне опасно дергать эту функцию в продакшене, т.к. она скорее всего приведёт к потере данных.
@@ -1021,6 +1030,7 @@ trait EsModelJMXMBeanCommon {
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
   @ManagedOperation(impact=ACTION)
   def resaveMany(maxResults: Int): String
+  def resave(id: String): String
   
   def remapMany(maxResults: Int): String
 
@@ -1037,7 +1047,7 @@ trait EsModelJMXMBeanCommon {
 
   /** Асинхронно отправить маппинг в ES. */
   @ManagedOperation(impact=ACTION)
-  def putMapping(): String
+  def putMapping(ignoreConflicts: Boolean): String
 
   /** Асинхронно удалить маппинг вместе со всеми данными. */
   @ManagedOperation(impact=ACTION)
@@ -1129,6 +1139,14 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     s"Total: ${resavedIds.size}\n---------\n" + resavedIds.mkString("\n")
   }
 
+  override def resave(id: String): String = {
+    trace(s"resave($id): jmx")
+    (companion.resave(id) : Option[String]) match {
+      case Some(_id) => "Resaved " + _id
+      case None      => "Not found id: " + id
+    }
+  }
+
   override def remapMany(maxResults: Int): String = {
     warn(s"remapMany(maxResults = $maxResults)")
     companion.remapMany(maxResults)
@@ -1148,11 +1166,11 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
       .recover { case ex: Throwable =>  _formatEx("resetMapping()", "", ex) }
   }
 
-  override def putMapping(): String = {
-    warn("putMapping()")
-    companion.putMapping()
+  override def putMapping(ignoreConflicts: Boolean): String = {
+    warn(s"putMapping($ignoreConflicts)")
+    companion.putMapping(ignoreConflicts = ignoreConflicts)
       .map(_.toString)
-      .recover { case ex: Throwable => _formatEx("putMapping()", "", ex) }
+      .recover { case ex: Throwable => _formatEx(s"putMapping($ignoreConflicts)", "", ex) }
   }
 
   override def deleteMapping(): String = {

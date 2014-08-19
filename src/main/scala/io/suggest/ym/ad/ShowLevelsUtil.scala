@@ -87,7 +87,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     // Смотрим, есть ли мульти-уровни в исходящей карточке.
     // Магазин или иной участник сети может отображать только ограниченное кол-во карточек на указанном уровне отображения.
     // В случае использования этих уровней, надо считать текущее кол-во опубликованных карточек на каждом уровне.
-    val allowedMLevelsFut: Future[Set[AdShowLevel]] = if (!levelsM.isEmpty) {
+    val allowedMLevelsFut: Future[Set[AdShowLevel]] = if (levelsM.nonEmpty) {
       trace(logPrefix + "multi-levels enabled: " + levelsM.mkString(", "))
       val query0 = EMProducerId.producerIdQuery(producerId)
       Future.traverse(levelsM) { lvl =>
@@ -114,7 +114,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     // С singleton-уровнями всё сложнее. Надо находить текущий уровень среди реалтаймовых карточек, затем заменять
     // уровни в обоих карточках. Для простоты и надежности заменяем уровни во всех карточках сразу.
     val levels1Set = levels1.toSet
-    val has1Levels = thisAd.receivers.valuesIterator.exists(!_.slsWant.intersect(levels1Set).isEmpty)
+    val has1Levels = thisAd.receivers.valuesIterator.exists(_.slsWant.intersect(levels1Set).nonEmpty)
     if (has1Levels) {
       // Для переключения singleton-уровня надо прочитать всю рекламу прямо сейчас.
       val allProdAdsFut = MAd.findForProducerRt(producerId)
@@ -178,9 +178,12 @@ object ShowLevelsUtil extends MacroLogsImpl {
     * @return Фьючерс для синхронизации.
     */
   def handleProducerOnOff(producer: MAdnNode)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    lazy val logPrefix = s"handleProducerOnOff(${producer.id.getOrElse("")}): "
     val allowedSls = producer.adn.maybeOutShowLevels.keySet
+    trace(logPrefix + "allowedSls = " + allowedSls)
     MAd.findForProducer(producer.id.get) flatMap { prodAds =>
       // Изменяем pub-уровни согласно карте
+      trace(logPrefix + "Updating show levels for producer's ads: " + prodAds.flatMap(_.id).mkString(", "))
       prodAds.foreach { mad =>
         mad.resetReceiversSlsPub(allowedSls)
       }

@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import io.suggest.event.SioNotifierStaticClientI
-import play.api.libs.json.{JsArray, JsString}
+import play.api.libs.json.{JsBoolean, JsNumber, JsArray, JsString}
 import io.suggest.util.MacroLogsImpl
 import java.{lang => jl}
 
@@ -26,7 +26,7 @@ import java.{lang => jl}
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelStaticT with MacroLogsImpl {
+object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
 
   override type T = MAdStat
 
@@ -39,6 +39,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val ACTION_ESFN               = "action"
   val UA_ESFN                   = "ua"
   val AD_ID_ESFN                = "adId"
+  val ADS_RENDERED_ESFN         = "adsRendered"
   val ON_NODE_ID_ESFN           = "adOwnerId"
   val TIMESTAMP_ESFN            = "timestamp"
 
@@ -47,6 +48,11 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val CLIENT_GEO_LOC_ESFN       = "clLoc"
   val NODE_NAME_ESFN            = "nodeName"
   val COUNTRY_ESFN              = "country"
+  val IS_LOCAL_CLIENT_ESFN      = "isLocalCl"
+
+  val CL_OS_FAMILY_ESFN         = "osFamily"
+  val CL_AGENT_ESFN             = "browser"
+  val CL_DEVICE_ESFN            = "device"
 
 
   /** Через сколько времени удалять записи статистики. */
@@ -151,45 +157,45 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   }
 
 
-  /** Пустой экземпляр класса. */
-  override protected def dummy(id: Option[String], version: Option[Long]) = {
-    MAdStat(
-      id        = id,
-      clientAddr = null,
-      action    = null,
-      ua        = null,
-      adIds      = Nil,
-      onNodeIdOpt = null,
-      timestamp = null,
-      personId  = null
+  /**
+   * Десериализация одного элементам модели.
+   * @param id id документа.
+   * @param m Карта, распарсенное json-тело документа.
+   * @return Экземпляр модели.
+   */
+  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T = {
+    new MAdStat(
+      clientAddr  = m.get(CLIENT_ADDR_ESFN).fold("127.0.0.1")(stringParser),
+      action      = m.get(ACTION_ESFN).fold(AdStatActions.View) { asaRaw => AdStatActions.withName(stringParser(asaRaw)) },
+      adIds       = {
+        m.get(AD_ID_ESFN).fold (Seq.empty[String]) {
+          case adIdsRaw: jl.Iterable[_] => adIdsRaw.toSeq.map(stringParser)
+          case other => Seq(stringParser(other))
+        }
+      },
+      adsRendered = m.get(ADS_RENDERED_ESFN).fold(0)(intParser),
+      isLocalCl   = m.get(IS_LOCAL_CLIENT_ESFN).fold(false)(booleanParser),
+      onNodeIdOpt = m.get(ON_NODE_ID_ESFN).map(stringParser),
+      ua          = m.get(UA_ESFN).map(stringParser),
+      nodeName    = m.get(NODE_NAME_ESFN).map(stringParser),
+      personId    = m.get(PERSON_ID_ESFN).map(stringParser),
+      timestamp   = m.get(TIMESTAMP_ESFN).fold(new DateTime(1970,0,0))(dateTimeParser),
+      clIpGeo     = m.get(CLIENT_IP_GEO_EFSN).flatMap(GeoPoint.deserializeOpt),
+      clTown      = m.get(CLIENT_TOWN_ESFN).map(stringParser),
+      clGeoLoc    = m.get(CLIENT_GEO_LOC_ESFN).flatMap(GeoPoint.deserializeOpt),
+      clCountry   = m.get(COUNTRY_ESFN).map(stringParser),
+      clOSFamily  = m.get(CL_OS_FAMILY_ESFN).map(stringParser),
+      clAgent     = m.get(CL_AGENT_ESFN).map(stringParser),
+      clDevice    = m.get(CL_DEVICE_ESFN).map(stringParser),
+      id          = id
     )
-  }
-
-  /** Десериализация полей из JSON. */
-  override def applyKeyValue(acc: MAdStat): PartialFunction[(String, AnyRef), Unit] = {
-    case (CLIENT_ADDR_ESFN, value)      => acc.clientAddr = stringParser(value)
-    case (ACTION_ESFN, value)           => acc.action = AdStatActions.withName(stringParser(value))
-    case (UA_ESFN, value)               => acc.ua = Option(stringParser(value))
-    case (AD_ID_ESFN, value)            =>
-      acc.adIds = value match {
-        case i: jl.Iterable[_]  => i.toSeq.map(stringParser)
-        case _                  => Seq(stringParser(value))
-      }
-    case (ON_NODE_ID_ESFN, value)       => acc.onNodeIdOpt = Option(value) map stringParser
-    case (TIMESTAMP_ESFN, value)        => acc.timestamp = dateTimeParser(value)
-    case (PERSON_ID_ESFN, value)        => acc.personId = Option(stringParser(value))
-    case (CLIENT_IP_GEO_EFSN, value)    => acc.clIpGeo = GeoPoint.deserializeOpt(value)
-    case (CLIENT_TOWN_ESFN, value)   => acc.clTown = Option(value).map(stringParser)
-    case (CLIENT_GEO_LOC_ESFN, value)   => acc.clGeoLoc = GeoPoint.deserializeOpt(value)
-    case (NODE_NAME_ESFN, value)        => acc.nodeName = Option(value).map(stringParser)
-    case (COUNTRY_ESFN, value)          => acc.clCountry = Option(value).map(stringParser)
   }
 
 
   /** Статические поля для маппиннга. */
   override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false),
+    FieldAll(enabled = true),
     FieldTtl(enabled = true, default = TTL_DAYS_DFLT + "d")
   )
 
@@ -199,6 +205,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     FieldString(ACTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(UA_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     FieldString(AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(ADS_RENDERED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, fieldType = DocFieldTypes.integer),
     FieldString(ON_NODE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = false),
     FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -208,26 +215,35 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     FieldGeoPoint(CLIENT_GEO_LOC_ESFN, geohash = true, geohashPrecision = "6", geohashPrefix = true,
       fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "10m")),
     FieldString(NODE_NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+    FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(CL_OS_FAMILY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldString(CL_AGENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldString(CL_DEVICE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
   )
 }
 
 import MAdStat._
 
 case class MAdStat(
-  var clientAddr  : String,
-  var action      : AdStatAction,
-  var adIds       : Seq[String],
-  var onNodeIdOpt : Option[String],
-  var ua          : Option[String],
-  var nodeName    : Option[String] = None,
-  var personId    : Option[String] = None,
-  var timestamp   : DateTime = new DateTime,
-  var clIpGeo     : Option[GeoPoint] = None,
-  var clTown      : Option[String] = None,
-  var clGeoLoc    : Option[GeoPoint] = None,
-  var clCountry   : Option[String] = None,
-  var id          : Option[String] = None
+  clientAddr  : String,
+  action      : AdStatAction,
+  adIds       : Seq[String],
+  adsRendered : Int,
+  isLocalCl   : Boolean,
+  onNodeIdOpt : Option[String],
+  ua          : Option[String],
+  nodeName    : Option[String] = None,
+  personId    : Option[String] = None,
+  timestamp   : DateTime = new DateTime,
+  clIpGeo     : Option[GeoPoint] = None,
+  clTown      : Option[String] = None,
+  clGeoLoc    : Option[GeoPoint] = None,
+  clCountry   : Option[String] = None,
+  clOSFamily  : Option[String] = None,
+  clAgent     : Option[String] = None,
+  clDevice    : Option[String] = None,
+  id          : Option[String] = None
 ) extends EsModelT {
 
   override type T = MAdStat
@@ -237,9 +253,11 @@ case class MAdStat(
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
-      ACTION_ESFN     -> JsString(action.toString) ::
-      AD_ID_ESFN      -> JsArray(adIds map JsString.apply) ::
-      TIMESTAMP_ESFN  -> date2JsStr(timestamp) ::
+      ACTION_ESFN           -> JsString(action.toString) ::
+      AD_ID_ESFN            -> JsArray(adIds map JsString.apply) ::
+      TIMESTAMP_ESFN        -> date2JsStr(timestamp) ::
+      ADS_RENDERED_ESFN     -> JsNumber(adsRendered) ::
+      IS_LOCAL_CLIENT_ESFN  -> JsBoolean(isLocalCl) ::
       acc
     if (ua.isDefined)
       acc1 ::= UA_ESFN -> JsString(ua.get)
@@ -257,6 +275,12 @@ case class MAdStat(
       acc1 ::= NODE_NAME_ESFN -> JsString(nodeName.get)
     if (clCountry.isDefined)
       acc1 ::= COUNTRY_ESFN -> JsString(clCountry.get)
+    if (clOSFamily.isDefined)
+      acc1 ::= CL_OS_FAMILY_ESFN -> JsString(clOSFamily.get)
+    if (clAgent.isDefined)
+      acc1 ::= CL_AGENT_ESFN -> JsString(clAgent.get)
+    if (clDevice.isDefined)
+      acc1 ::= CL_DEVICE_ESFN -> JsString(clDevice.get)
     acc1
   }
 

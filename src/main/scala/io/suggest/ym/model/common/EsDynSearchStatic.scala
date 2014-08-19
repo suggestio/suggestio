@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.EsModelMinimalStaticT
+import io.suggest.util.MacroLogsI
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilder
@@ -15,12 +16,14 @@ import scala.concurrent.{Future, ExecutionContext}
  * Подразумевается, что Es Query генерятся на основе экземпляра, реализующего [[DynSearchArgs]].
  */
 
-trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelMinimalStaticT {
+trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelMinimalStaticT with MacroLogsI {
 
   /** Билдер поискового запроса. */
   def dynSearchReqBuilder(dsa: A)(implicit client: Client): SearchRequestBuilder = {
     // Запускаем собранный запрос.
-    dsa.prepareSearchRequest(prepareSearch)
+    val result = dsa.prepareSearchRequest(prepareSearch)
+    LOGGER.trace(s"dynSearchReqBuilder($dsa): Compiled request = \n${result.toString}")
+    result
   }
 
   /**
