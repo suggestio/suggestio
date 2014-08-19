@@ -163,7 +163,7 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
 
   def beforeDtQuery(dt: DateTime) = {
     QueryBuilders.rangeQuery(TIMESTAMP_ESFN)
-      .from(new DateTime(1970, 1, 1))
+      .from(new DateTime(1970, 1, 1, 0, 0))
       .to(dt)
   }
 
@@ -369,7 +369,7 @@ case class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val
     try {
       val dt = dtParse(dtStr)
       companion.deleteBefore(dt) map { dbqResp =>
-         "Deleted " + dbqResp.iterator().size + " items."
+         "OK: " + dbqResp
       }
     } catch {
       case ex: Throwable =>
