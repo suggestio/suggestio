@@ -56,9 +56,11 @@ object Market extends SioController {
           clientAddr  = request.remoteAddress,
           action      = action,
           ua          = request.headers.get(USER_AGENT),
-          adId        = adId,
+          adIds       = Seq(adId),
           onNodeIdOpt = Some(martId),
-          personId    = request.pwOpt.map(_.personId)
+          personId    = request.pwOpt.map(_.personId),
+          isLocalCl   = false,
+          adsRendered = 1
         )
         adStat.save
       }
