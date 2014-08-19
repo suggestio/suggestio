@@ -5,6 +5,10 @@ import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.OptStrId
+import io.suggest.util.SioEsUtil.laFuture2sFuture
+import io.suggest.ym.model.common.GeoDistanceQuery
+import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
@@ -22,6 +26,8 @@ import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -69,6 +75,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
   val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
 
+  /** id узла для демо-выдачи. */
   val DEMO_ADN_ID_OPT = configuration.getString("market.demo.adn.id")
 
 
@@ -173,14 +180,19 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val spsr = AdSearch(
+    renderNodeShowcaseSimple(request.adnNode)
+  }
+
+  /** Рендер отображения выдачи узла. */
+  private def renderNodeShowcaseSimple(adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
+     val spsr = AdSearch(
       levels      = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(adnId)
+      receiverIds = List(adnNode.id.get)
     )
-    val oncloseHref: String = request.adnNode.meta.siteUrl
+    val oncloseHref: String = adnNode.meta.siteUrl
       .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
       .getOrElse { ONCLOSE_HREF_DFLT }
-    nodeShowcase(adnId, spsr, oncloseHref)
+    nodeShowcaseRender(adnNode, spsr, oncloseHref)
   }
 
   /** Выдача для продьюсера, который сейчас админят. */
@@ -190,12 +202,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     )
     // При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет.
     val oncloseHref = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
-    nodeShowcase(adnId, spsr, oncloseHref)
+    nodeShowcaseRender(request.adnNode, spsr, oncloseHref)
   }
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def nodeShowcase(adnId: String, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Result] = {
-    val adnNode = request.adnNode
+  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val adnId = adnNode.id.get
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
       .map { _.map { prod => prod.id.get -> prod }.toMap }
@@ -207,7 +219,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     } yield {
       allProds.filterKeys( prodsStats contains )
     }
-    val (catsStatsFut, mmcatsFut) = getCats(request.adnNode.id)
+    val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
       case Some(waId) => MWelcomeAd.getById(waId)
       case None => Future successful None
@@ -218,7 +230,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       shops     <- shopsWithAdsFut
       mmcats    <- mmcatsFut
     } yield {
-      val args = SMShowcaseIndexArgs(
+      val args = SMShowcaseRenderArgs(
         bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
         fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
         mmcats      = mmcats,
@@ -234,21 +246,59 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
-  /** indexTpl для выдачи, отвязанной от конкретного узла. */
-  def geoShowcase = MaybeAuth.async { implicit request =>
+
+  /**
+   * indexTpl для выдачи, отвязанной от конкретного узла.
+   * Этот экшен на основе параметров думает на тему того, что нужно отрендерить. Может отрендерится showcase узла,
+   * либо geoShowcase на дефолтовых параметрах.
+   * @param args Аргументы.
+   */
+  def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
+    args.geo.exactGeodata match {
+      // Есть координаты текущие точные. Нужно поискать ближайший рекламный узел в рамках города.
+      case Some(gp) =>
+        val distanceMax = GeoIp.DISTANCE_DFLT
+        val gdq = GeoDistanceQuery(center = gp, distanceMin = None, distanceMax = distanceMax)
+        val nodeSearchArgs = MAdnNodeSearch(
+          geoDistance = Some(gdq),
+          maxResults = 1,
+          withGeoDistanceSort = Some(gp)
+        )
+        MAdnNode.dynSearch(nodeSearchArgs) flatMap { nodes =>
+          if (nodes.isEmpty) {
+            // Нету узлов, подходящих под запрос.
+            debug(s"geoShowcase($args): No nodes found nearby $gp in ${distanceMax.distance} ${distanceMax.units}")
+            renderGeoShowcase(args)
+          } else {
+            // Нанооптимизация: начинаем рендер и возможных нарушениях работы ругаться в логи.
+            val resultFut = renderNodeShowcaseSimple(nodes.head)
+            val nodesCount = nodes.size
+            if (nodesCount > 1) {
+              // Should never occur:
+              warn(s"geoShowcase($args): Unexpected count of nodes returned by search: $nodesCount, 0 or 1 collection length expected")
+            }
+            resultFut
+          }
+        }
+
+      case None =>
+        renderGeoShowcase(args)
+    }
+  }
+  private def renderGeoShowcase(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val (catsStatsFut, mmcatsFut) = getCats(None)
     for {
       mmcats    <- mmcatsFut
       catsStats <- catsStatsFut
     } yield {
-      val args = SMShowcaseIndexArgs(
+      val args = SMShowcaseRenderArgs(
         bgColor = SITE_BGCOLOR_GEO,
         fgColor = SITE_FGCOLOR_GEO,
         mmcats  = mmcats,
         catsStats = catsStats,
         spsr = AdSearch(
           levels = List(AdShowLevels.LVL_START_PAGE),
-          geo    = AdsGeoIp
+          geo    = GeoIp
         ),
         oncloseHref = ONCLOSE_HREF_DFLT
       )
@@ -256,6 +306,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       jsonOk("showcaseIndex", Some(html))
     }
   }
+
 
 
   private def getCats(adnIdOpt: Option[String]) = {
@@ -301,11 +352,17 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         adSearch.geo.geoSearchInfo.flatMap {
           case None =>
             Future successful adSearch
-          case gdqSome =>
-            val nodeSearchArgs = MAdnNodeSearch(geoDistance = gdqSome)
+          case gdqSome @ Some(gdq) =>
+            val nodeSearchArgs = MAdnNodeSearch(
+              geoDistance = gdqSome,
+              maxResults = 1,
+              withGeoDistanceSort = Some(gdq.center)
+            )
+            // Если узлы слишком далеко, то будет пустой список результатов.
             MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
+              // TODO Если рекламных узлов по указанным координатам нет. То надо откатится на geoip? Или что отображать?
               trace(s"findAds(${request.path}): geo: nodeIds = ${nodeIds.mkString(", ")}")
-              adSearch.copy(receiverIds = nodeIds.toList, geo = AdsGeoNone)
+              adSearch.copy(receiverIds = nodeIds.toList, geo = GeoNone)
             }
         } recover {
           // Допустима работа без геолокации при возникновении внутренней ошибки.
@@ -329,8 +386,64 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         (mad, index)  =>  _single_offer(mad, isWithAction = true)(ctx)
       }
     }
+    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
+    madsFut onSuccess { case mads =>
+      adSearch2Fut onSuccess { case adSearch2 =>
+        saveStats(adSearch2, mads, AdStatActions.View)
+      }
+    }
+    // Асинхронно рендерим результат.
     madsRenderedFut map { madsRendered =>
       jsonOk(jsAction, blocks = madsRendered)
+    }
+  }
+
+  /** Создать и сохранить статистику для указанных карточек. Сохранение идёт в фоне, остальное в текущем потоке.
+    * @param a AdSearch
+    * @param mads Список рекламных карточек.
+    * @param statAction Какую пометку выставлять в поле stat action: клик или просмотр или ...
+    * @param request Инстанс текущего реквеста.
+    * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
+    */
+  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction)(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
+    if (mads.nonEmpty) {
+      val personId = request.pwOpt.map(_.personId)
+      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
+      val onNodeIdOpt = a.receiverIds
+        .headOption
+        .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
+      val ra = request.remoteAddress
+      val now = DateTime.now()
+      val br = client.prepareBulk()
+      mads.foreach { mad =>
+        val adStat = MAdStat(
+          clientAddr  = ra,
+          action      = statAction,
+          adId        = mad.id.get,
+          onNodeIdOpt = onNodeIdOpt,
+          ua          = uaOpt,
+          personId    = personId,
+          timestamp   = now
+        )
+        br.add( adStat.indexRequestBuilder )
+      }
+      val resultFut = laFuture2sFuture( br.execute() )
+      // Вешаем логгирование результатов на запущенный реквест.
+      resultFut onComplete {
+        case Success(result) =>
+          if (result.hasFailures) {
+            warn("saveStats(): Bulk request saved with problems: " + result.buildFailureMessage())
+          } else {
+            trace("saveStats(): Bulk request successfult. Total = " + result.getItems.length)
+          }
+        case Failure(ex) =>
+          error(s"saveStats(): Failed to save statistics for ${br.numberOfActions} bulk actions", ex)
+      }
+      // Возвращаем фьючерс.
+      resultFut
+    } else {
+      Future successful None
     }
   }
 
@@ -381,6 +494,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
       mads1Fut
     }
+    // Когда поступят карточки, нужно сохранить по ним статистику.
+    mads2Fut onSuccess { case mads =>
+      saveStats(adSearch, mads, AdStatActions.Click)
+    }
+    // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>
       val madsCountInt = madsCount.toInt
       producersFut flatMap { producers =>
