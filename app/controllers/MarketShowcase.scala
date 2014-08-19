@@ -424,12 +424,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val ra = request.remoteAddress
       val now = DateTime.now()
       val adIds = mads.flatMap(_.id)
+      val adsCount = adIds.size
       val resultFut = gsiFut flatMap { gsiOpt =>
         adnNodeOptFut flatMap { adnNodeOpt =>
           val adStat = MAdStat(
             clientAddr  = ra,
             action      = statAction,
             adIds       = adIds,
+            adsRendered = adsCount,
             onNodeIdOpt = onNodeIdOpt,
             nodeName    = adnNodeOpt.map(_.meta.name),
             ua          = uaOpt,
@@ -447,9 +449,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       // Вешаем логгирование результатов на запущенный реквест.
       resultFut onComplete {
         case Success(adStatId) =>
-          trace(s"saveStats(): Saved successful: id = $adStatId for ${adIds.size} ads.")
+          trace(s"saveStats(): Saved successful: id = $adStatId for $adsCount ads.")
         case Failure(ex) =>
-          error(s"saveStats(): Failed to save statistics for ${adIds.size} ads bulk actions", ex)
+          error(s"saveStats(): Failed to save statistics for $adsCount ads", ex)
       }
       // Возвращаем фьючерс.
       resultFut

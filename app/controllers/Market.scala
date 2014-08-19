@@ -59,7 +59,8 @@ object Market extends SioController {
           adIds       = Seq(adId),
           onNodeIdOpt = Some(martId),
           personId    = request.pwOpt.map(_.personId),
-          isLocalCl   = false
+          isLocalCl   = false,
+          adsRendered = 1
         )
         adStat.save
       }
