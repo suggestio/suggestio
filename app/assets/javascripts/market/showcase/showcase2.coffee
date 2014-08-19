@@ -1562,6 +1562,9 @@ siomart =
 
       this.adjust()
 
+      ## Скрыть кнопки хидера главного экрана
+      siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
+
       if typeof history_push != 'boolean'
         history_push = true
 
@@ -1594,6 +1597,7 @@ siomart =
         siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
         this.reset_tabs()
         siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
 
     back : () ->
       console.log 'navigation layer back'

@@ -7,6 +7,9 @@ spritesize = 400px 100px
 sprite2url = url('/assets/images/showcase-v2-sprite-retina.png')
 sprite2size = 150px 150px
 
+default_color_w_opacity = rgba( 48, 48, 48, 0.9 )
+default_color = rgba( 48, 48, 48, 1 )
+
 border-radius( param )
   -webkit-border-radius : param
   -moz-border-radius : param
@@ -45,9 +48,6 @@ html
 .sm-clear
   clear: both
 
-.sm-hidden-body
-  background: yellow
-
 .sm-centered-block
   margin: 0px auto
   position: relative
@@ -79,8 +79,7 @@ code
 .sm-button
   width: 40px
   height: 40px
-  background: #fff
-
+  cursor: pointer
 .sm-showcase
   width: 100%
   heigth: 100%
@@ -88,9 +87,21 @@ code
 .sm-producer-header
   height: 50px
   width: 100%
-  background: rgba( 27, 58, 66, 0.9 )
+  background: default_color_w_opacity
   z-index: 10
   text-align: center
+
+  &_btn
+    &.__left-aligned
+      left: 5px
+      top: 5px
+    &.__right-aligned
+      left: auto
+      top: 5px
+      right: 5px
+
+  &_logo
+    padding-top: 10px
 
   &_exit-button
     display: block
@@ -147,7 +158,6 @@ code
   display: none
   width: 100%
   height: 100%
-  background: #2e5c69
 
   &.__compact
     width: 300px
@@ -159,28 +169,53 @@ code
 
   &_header
     height: 50px
-    background: olive
-    opacity: .5
 
   &_tabs
     height: 50px
+    background: #1b3a42
   &_single-tab
     width: 50%
-    height: 50px
+    height: 35px
+    padding-top: 15px
     float: left
-    background: yellow
+    text-align: center
+    font-family: 'opensans-regular-webfont'
+    font-size: 13px
+    cursor: pointer
+
+    &.__active
+      cursor: default
+
+.sm-categories
+  background: default_color
 
 /*
 ------------------------------------*/
 .sm-search-bar
   height: 50px
-  background: red
+  padding: 0px 22px 0px 22px
+  background: default_color_w_opacity
+
+  &_field
+    border: 1px #636363 solid
+    background: default_color_w_opacity
+    width: 100%
+    height: 34px
+
+  &_wrapper
+    padding: 0px 5px
+
+  &_input
+    width: 100%
+    line-height: 34px
+    background: none
+    outline: none
 
 /*
 ------------------------------------*/
 .sm-shops
   display: none
-
+  background: default_color
 
 /*
 ------------------------------------*/
@@ -192,12 +227,11 @@ code
   width: 100%
   height: 100%
   display: none
-  background: red
+  overflow: hidden
 
   &_container
     width: 100%
     height: 100%
-    background: yellow
     &.__animated
       -webkit-transition: all 0.2s linear
 

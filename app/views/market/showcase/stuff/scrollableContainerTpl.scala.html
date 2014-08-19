@@ -1,6 +1,6 @@
-@(className:String = "",id:String = "")(data:Html = Html(""))(implicit ctx: util.Context)
+@(className:String = "", id:String = "", style:String = "")(data:Html = Html(""))(implicit ctx: util.Context)
 
-<div id="@id" class="sm-flex @if( ctx.isIpad || ctx.isIphone ){ sm-overflow-scrolling} @className">
+<div id="@id" class="sm-flex @if( ctx.isIpad || ctx.isIphone ){ sm-overflow-scrolling} @className" style="@style">
   <div id="@{id}Wrapper" class="sm-flex sm-overflow-scrolling">
     <div id="@{id}Content" class="@{className}_content">
       @data
