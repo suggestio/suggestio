@@ -1456,7 +1456,7 @@ siomart =
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        _b.parentNode.parentNode.parentNode.style.width = _block_width + 'px'
+        _b.parentNode.parentNode.parentNode.style.width = _block_width + 22 + 'px'
 
         _b.style.position = 'relative'
 
@@ -1576,19 +1576,18 @@ siomart =
         siomart.history.push state_data, 'SioMarket', '/n/categories'
 
     reset_tabs : () ->
-      for k, t of this.tabs
-        if t == this.tabs[0]
-          siomart.utils.ge(t).style.display = 'block'
-        else
-          siomart.utils.ge(t).style.display = 'none'
-
+      this.show_tab this.tabs[0]
 
     show_tab : ( tab ) ->
       for k, t of this.tabs
+        tab_content_dom = siomart.utils.ge(t)
+        tab_dom = siomart.utils.ge(t + 'Tab')
         if tab == t
-          siomart.utils.ge(t).style.display = 'block'
+          tab_content_dom.style.display = 'block'
+          siomart.utils.addClass tab_dom, '__active'
         else
-          siomart.utils.ge(t).style.display = 'none'
+          tab_content_dom.style.display = 'none'
+          siomart.utils.removeClass tab_dom, '__active'
 
     close : ( all_except_search ) ->
       if all_except_search == true

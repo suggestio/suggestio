@@ -7,6 +7,8 @@ spritesize = 400px 100px
 sprite2url = url('/assets/images/showcase-v2-sprite-retina.png')
 sprite2size = 150px 150px
 
+screenVerticaliPhone = 'only screen and (max-device-width : 568px) and (orientation : portrait)'
+
 default_color_w_opacity = rgba( 48, 48, 48, 0.9 )
 default_color = rgba( 48, 48, 48, 1 )
 
@@ -72,6 +74,7 @@ code
 
 .sm-block
   position: absolute
+  border: 1px #ccc solid
   -webkit-transition: -webkit-transform 0.2s linear
 
 /* Кнопки
@@ -170,21 +173,31 @@ code
   &_header
     height: 50px
 
+
   &_tabs
-    height: 50px
-    background: #1b3a42
+    height: 54px
+    background: default_color_w_opacity
+  &_tabs-wrapper
+    position: relative
+    padding: 0px 22px
   &_single-tab
     width: 50%
-    height: 35px
-    padding-top: 15px
+    height: 41px
     float: left
     text-align: center
     font-family: 'opensans-regular-webfont'
     font-size: 13px
     cursor: pointer
 
-    &.__active
-      cursor: default
+.sm-tab
+  border: 1px transparent solid
+  color: #959595
+  border-radius(5px)
+  padding: 10px 0px
+  text-align: center
+  &.__active
+    border-color: #fff
+    color: #fff
 
 .sm-categories
   background: default_color
@@ -228,6 +241,7 @@ code
   height: 100%
   display: none
   overflow: hidden
+  background: rgba(255,255,255,0.8) url('/assets/images/market-showcase-popup-bg.png')
 
   &_container
     width: 100%
@@ -237,8 +251,55 @@ code
 
 .focused-ad
   float: left
-  &_top-offset
+
+  &_top-offset,
+  &_bottom-offset
     height: 70px
+
   &_offer
     background: #fff
     padding: 11px
+
+  &_location
+    position: relative
+    background: #fff
+    margin: 2px 0px
+    padding: 11px
+
+  &_location-icon
+    width: 19px
+    height: 37px
+    background: url("/assets/images/sio-market-sprite.png") -204px -6px
+    background-size: 400px 100px
+    float: left
+    padding-right: 11px
+
+  &_location-info
+    font-family: 'PFDinTextCompPro-Medium'
+    font-size: 14px
+
+  &_count
+    position: absolute
+    right: 8px
+    top: 16px
+    border-radius: 50px
+    color: #fff
+    padding: 16px 0px
+    width: 50px
+    text-align: center
+    margin-top: -12px
+    background: rgba(0,0,0,0.8)
+    font-family: 'PFDinTextCompPro-Medium'
+    font-size: 15px
+
+/* Media
+------------------------------------*/
+@media screenVerticaliPhone
+  .sm-search-bar
+    padding-left: 11px
+    padding-right: 11px
+
+  .sm-categories-screen
+    &_tabs-wrapper
+      padding-left: 11px
+      padding-right: 11px

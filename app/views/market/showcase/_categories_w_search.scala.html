@@ -15,9 +15,17 @@
   @_search_bar( args.bgColor )
 
   <div class="sm-categories-screen_tabs">
-    <div class="sm-categories-screen_single-tab" id="smCategoriesTab">Категории</div>
-    <div class="sm-categories-screen_single-tab" id="smShopsTab">Список</div>
-    <div class="clear"></div>
+    <div class="sm-categories-screen_tabs-wrapper">
+
+      <div class="sm-categories-screen_single-tab">
+        <div class="sm-tab __active" id="smCategoriesTab">Категории</div>
+      </div>
+
+      <div class="sm-categories-screen_single-tab">
+        <div class="sm-tab" id="smShopsTab">Список</div>
+      </div>
+      <div class="clear"></div>
+    </div>
   </div>
 
   @_categoriesListTpl( args )
