@@ -63,7 +63,6 @@ Slider =
       $target = $ e.target
       targetClass = $target.attr 'class'
 
-
       if targetClass == "slider_control __right-arrow"
         left = 500
         cbca.slider.process = true
@@ -85,8 +84,6 @@ Slider =
         .attr 'id', 'sliderPreloader'
 
         cbca.popup.setPopupPosition '#sliderPreloader'
-        $ '#sliderPreloader'
-        .addClass 'def-transition'
 
         $.ajax(
           url: url,
@@ -99,7 +96,6 @@ Slider =
             $card = $ '.card'
 
             $card
-            .removeClass 'def-transition'
             .css 'left', -left+'px'
 
             cbca.popup.setPopupPosition '.card'
@@ -107,7 +103,6 @@ Slider =
             cbca.slider.setCurrPoint(id)
             cbca.slider.setLinks()
 
-            $card.addClass 'def-transition'
             $ '.slider_cnt'
             .css 'transform', "translate3d("+left+"px,0,0)"
 
