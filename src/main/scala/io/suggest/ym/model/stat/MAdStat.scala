@@ -2,6 +2,7 @@ package io.suggest.ym.model.stat
 
 import io.suggest.model._
 import io.suggest.model.EsModel._
+import io.suggest.ym.model.common.GeoPoint
 import org.joda.time.DateTime
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -15,8 +16,9 @@ import scala.collection.JavaConversions._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import io.suggest.event.SioNotifierStaticClientI
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsArray, JsString}
 import io.suggest.util.MacroLogsImpl
+import java.{lang => jl}
 
 /**
  * Suggest.io
@@ -33,12 +35,19 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   override val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
-  val CLIENT_ADDR_ESFN  = "clientAddr"
-  val ACTION_ESFN       = "action"
-  val UA_ESFN           = "ua"
-  val AD_ID_ESFN        = "adId"
-  val ON_NODE_ID_ESFN   = "adOwnerId"
-  val TIMESTAMP_ESFN    = "timestamp"
+  val CLIENT_ADDR_ESFN          = "clientAddr"
+  val ACTION_ESFN               = "action"
+  val UA_ESFN                   = "ua"
+  val AD_ID_ESFN                = "adId"
+  val ON_NODE_ID_ESFN           = "adOwnerId"
+  val TIMESTAMP_ESFN            = "timestamp"
+
+  val CLIENT_IP_GEO_EFSN        = "clIpGeo"
+  val CLIENT_TOWN_ESFN          = "clIpTown"
+  val CLIENT_GEO_LOC_ESFN       = "clLoc"
+  val NODE_NAME_ESFN            = "nodeName"
+  val COUNTRY_ESFN              = "country"
+
 
   /** Через сколько времени удалять записи статистики. */
   val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 60
@@ -149,7 +158,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       clientAddr = null,
       action    = null,
       ua        = null,
-      adId      = null,
+      adIds      = Nil,
       onNodeIdOpt = null,
       timestamp = null,
       personId  = null
@@ -158,13 +167,22 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /** Десериализация полей из JSON. */
   override def applyKeyValue(acc: MAdStat): PartialFunction[(String, AnyRef), Unit] = {
-    case (CLIENT_ADDR_ESFN, value) => acc.clientAddr = stringParser(value)
-    case (ACTION_ESFN, value)      => acc.action = AdStatActions.withName(stringParser(value))
-    case (UA_ESFN, value)          => acc.ua = Option(stringParser(value))
-    case (AD_ID_ESFN, value)       => acc.adId = stringParser(value)
-    case (ON_NODE_ID_ESFN, value)  => acc.onNodeIdOpt = Option(value) map stringParser
-    case (TIMESTAMP_ESFN, value)   => acc.timestamp = dateTimeParser(value)
-    case (PERSON_ID_ESFN, value)   => acc.personId = Option(stringParser(value))
+    case (CLIENT_ADDR_ESFN, value)      => acc.clientAddr = stringParser(value)
+    case (ACTION_ESFN, value)           => acc.action = AdStatActions.withName(stringParser(value))
+    case (UA_ESFN, value)               => acc.ua = Option(stringParser(value))
+    case (AD_ID_ESFN, value)            =>
+      acc.adIds = value match {
+        case i: jl.Iterable[_]  => i.toSeq.map(stringParser)
+        case _                  => Seq(stringParser(value))
+      }
+    case (ON_NODE_ID_ESFN, value)       => acc.onNodeIdOpt = Option(value) map stringParser
+    case (TIMESTAMP_ESFN, value)        => acc.timestamp = dateTimeParser(value)
+    case (PERSON_ID_ESFN, value)        => acc.personId = Option(stringParser(value))
+    case (CLIENT_IP_GEO_EFSN, value)    => acc.clIpGeo = GeoPoint.deserializeOpt(value)
+    case (CLIENT_TOWN_ESFN, value)   => acc.clTown = Option(value).map(stringParser)
+    case (CLIENT_GEO_LOC_ESFN, value)   => acc.clGeoLoc = GeoPoint.deserializeOpt(value)
+    case (NODE_NAME_ESFN, value)        => acc.nodeName = Option(value).map(stringParser)
+    case (COUNTRY_ESFN, value)          => acc.clCountry = Option(value).map(stringParser)
   }
 
 
@@ -177,13 +195,20 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /** Маппинги для типа этой модели. */
   override def generateMappingProps: List[DocField] = List(
-    FieldString(CLIENT_ADDR_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
+    FieldString(CLIENT_ADDR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     FieldString(ACTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(UA_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
+    FieldString(UA_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     FieldString(AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(ON_NODE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = false),
-    FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldGeoPoint(CLIENT_IP_GEO_EFSN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
+      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "5km")),
+    FieldString(CLIENT_TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    FieldGeoPoint(CLIENT_GEO_LOC_ESFN, geohash = true, geohashPrecision = "6", geohashPrefix = true,
+      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "10m")),
+    FieldString(NODE_NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
   )
 }
 
@@ -192,11 +217,16 @@ import MAdStat._
 case class MAdStat(
   var clientAddr  : String,
   var action      : AdStatAction,
-  var adId        : String,
+  var adIds       : Seq[String],
   var onNodeIdOpt : Option[String],
   var ua          : Option[String],
+  var nodeName    : Option[String] = None,
   var personId    : Option[String] = None,
   var timestamp   : DateTime = new DateTime,
+  var clIpGeo     : Option[GeoPoint] = None,
+  var clTown      : Option[String] = None,
+  var clGeoLoc    : Option[GeoPoint] = None,
+  var clCountry   : Option[String] = None,
   var id          : Option[String] = None
 ) extends EsModelT {
 
@@ -207,9 +237,9 @@ case class MAdStat(
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
-      ACTION_ESFN -> JsString(action.toString) ::
-      AD_ID_ESFN -> JsString(adId) ::
-      TIMESTAMP_ESFN -> date2JsStr(timestamp) ::
+      ACTION_ESFN     -> JsString(action.toString) ::
+      AD_ID_ESFN      -> JsArray(adIds map JsString.apply) ::
+      TIMESTAMP_ESFN  -> date2JsStr(timestamp) ::
       acc
     if (ua.isDefined)
       acc1 ::= UA_ESFN -> JsString(ua.get)
@@ -217,6 +247,16 @@ case class MAdStat(
       acc1 ::= PERSON_ID_ESFN -> JsString(personId.get)
     if (onNodeIdOpt.isDefined)
       acc1 ::= ON_NODE_ID_ESFN -> JsString(onNodeIdOpt.get)
+    if (clIpGeo.isDefined)
+      acc1 ::= CLIENT_IP_GEO_EFSN -> clIpGeo.get.toPlayGeoJson
+    if (clTown.isDefined)
+      acc1 ::= CLIENT_TOWN_ESFN -> JsString(clTown.get)
+    if (clGeoLoc.isDefined)
+      acc1 ::= CLIENT_GEO_LOC_ESFN -> clGeoLoc.get.toPlayGeoJson
+    if (nodeName.isDefined)
+      acc1 ::= NODE_NAME_ESFN -> JsString(nodeName.get)
+    if (clCountry.isDefined)
+      acc1 ::= COUNTRY_ESFN -> JsString(clCountry.get)
     acc1
   }
 
