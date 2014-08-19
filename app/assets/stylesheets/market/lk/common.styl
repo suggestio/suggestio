@@ -1855,7 +1855,12 @@ th.__bg-head
   transition(all 0.2s ease-in-out 0s)
 
 .card
-  width 300px
+  position          static
+  display           block
+  width             300px
+  margin            0 auto
+  background-color  white
+  border-radius(10px)
 
   &_photo
     width 100%
@@ -2035,20 +2040,20 @@ th.__bg-head
   &_window
     display     none
     overflow    hidden
-    position    absolute
+    position    relative
     width       560px
     min-height  100%
-    left        50%
-    margin-left -280px
+    margin      0 auto
 
   &_cnt
-    position    absolute
-    top         0
-    left        50%
-    margin-left -150px
-    width       300px
-    min-height  100%
+    position  relative
     transition(all 0.2s linear 0s)
+
+  &_i
+    float     left
+    position  relative
+    width     100%
+    height    100%
 
   &_preloader
     position            absolute

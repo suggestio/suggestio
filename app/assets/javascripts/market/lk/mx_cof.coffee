@@ -10,6 +10,9 @@ $(document).ready ->
 
 Slider =
 
+  $window    : $ '.slider_window'
+  itemsCount : 0
+
   $currPoint : false
   prevLink   : false
   nextLink   : false
@@ -18,14 +21,41 @@ Slider =
 
 
   open: ()->
-    $ '.slider_window'
-    .show()
+    Slider.$window.show()
+    Slider.setSliderHeight()
 
   close: ()->
-    $ '.slider_window'
-    .hide()
-    $ '.slider_cnt'
+    Slider.$window.hide()
+    $ '#indexSlider'
     .css 'transform', ''
+
+  setSliderHeight: ()->
+    $window       = $ window
+    winHeight     = $window.height()
+    itemMaxHeight = Slider.getMaxHeightOfItems()
+
+    console.log itemMaxHeight
+    console.log winHeight
+
+    itemMaxHeight > winHeight && winHeight = itemMaxHeight
+    Slider.$window.height winHeight
+
+  getMaxHeightOfItems: ()->
+
+    if Slider.itemsCount <= 0
+      return false
+
+    maxHeight = 0
+    Slider.$window
+    .find '.slider_i'
+    .each ()->
+      $item       = $ this
+      itemHeight  = $item.height()
+
+      itemHeight > maxHeight && maxHeight = itemHeight
+
+    return maxHeight
+
 
   phoneSlide: ()->
 
@@ -121,7 +151,7 @@ Slider =
       url: url,
       success: (data)->
         $data = $ data
-        id = $data.attr 'id'
+        id = $data.find('.js-popup').attr 'id'
 
         $ '#indexSlider'
         .append data
@@ -135,12 +165,13 @@ Slider =
         cbca.slider.setCurrPoint(id)
         cbca.slider.setLinks()
 
-        $ '.slider_cnt'
+        $ '#indexSlider'
         .css 'transform', "translate3d("+cbca.slider.left+"px,0,0)"
 
         setTimeout(
           ()->
             cbca.slider.process = false
+            Slider.setSliderHeight()
             $ '#sliderPreloader'
             .remove()
           200
@@ -172,14 +203,23 @@ Slider =
     $ document
     .on 'click', '.js-card-btn', (e)->
       e.preventDefault()
-      $this = $ this
-      href = $this.attr 'href'
-      cbca.slider.$currPoint = $this
-      popupId = $this.attr 'data-id'
+      $this                   = $ this
+      href                    = $this.attr 'href'
+      cbca.slider.$currPoint  = $this
+      popupId                 = $this.attr 'data-id'
+
+      if $this.data 'downdload'
+        return false
 
       $.ajax(
         url: href,
         success: (data)->
+
+          $this.data(
+            'download', true
+          )
+
+          Slider.itemsCount += 1
           cbca.popup.hidePopup()
 
           $ '#'+popupId
@@ -188,10 +228,9 @@ Slider =
           $ '#indexSlider'
           .append data
 
-
+          cbca.popup.showPopup '#'+popupId
           cbca.slider.open()
           cbca.slider.setLinks()
-          cbca.popup.showPopup '#'+popupId
       )
 
 
