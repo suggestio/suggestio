@@ -346,7 +346,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val result = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
         Future successful result
       } else if (adSearch.receiverIds.nonEmpty) {
-        val result = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
+        // TODO Можно спилить этот костыль?
+        val lvls1 = (AdShowLevels.LVL_START_PAGE :: adSearch.levels).distinct
+        val result = adSearch.copy(levels = lvls1)
         Future successful result
       } else if (adSearch.geo.isWithGeo) {
         gsiFut.flatMap {
@@ -377,7 +379,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       }
       "findAds" -> adsearch3
     }
-    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { MAd.dynSearch }
+    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
+      trace("findAds(): Starting ads search using " + adSearch2)
+      MAd.dynSearch(adSearch2)
+    }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
     val madsRenderedFut = madsFut flatMap { mads0 =>
       val mads1 = groupNarrowAds(mads0)
@@ -433,7 +438,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             clIpGeo     = gsiOpt.flatMap(_.ipGeopoint),
             clTown      = gsiOpt.flatMap(_.cityName),
             clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
-            clCountry   = gsiOpt.flatMap(_.countryIso2)
+            clCountry   = gsiOpt.flatMap(_.countryIso2),
+            isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser
           )
           adStat.save
         }

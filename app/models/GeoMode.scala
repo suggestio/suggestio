@@ -54,12 +54,20 @@ sealed trait GeoMode {
 
 
 trait GeoSearchInfo {
+  /** Географическая точка, заданная координатами и описывающая клиента. */
   def geoPoint: GeoPoint
+  /** Сборка запроса для геопоиска относительно точки.. */
   def geoDistanceQuery: GeoDistanceQuery
+  /** Название города. */
   def cityName: Option[String]
+  /** Двухбуквенный код страны. */
   def countryIso2: Option[String]
+  /** Точная геолокация клиента, если есть. */
   def exactGeopoint: Option[GeoPoint]
+  /** Координаты точки, которая набегает */
   def ipGeopoint: Option[GeoPoint]
+  /** Является ли браузер клиента частью cbca? */
+  def isLocalClient: Boolean
 }
 
 
@@ -107,6 +115,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           override def countryIso2 = Option(result.range.countryIso2)
           override def exactGeopoint = None
           override def ipGeopoint = Option(geoPoint)
+          override def isLocalClient = ra == REPLACE_LOCALHOST_IP_WITH
         }
       }
     }     // future()
@@ -189,6 +198,7 @@ case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
       }
       override def cityName = ipGeoloc.map(_.city.cityName)
       override def countryIso2 = ipGeoloc.map(_.range.countryIso2)
+      override def isLocalClient: Boolean = false
     }
     Future successful Some(result)
   }
