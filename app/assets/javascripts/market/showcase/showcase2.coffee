@@ -253,43 +253,44 @@ cbca_grid =
 
     ## Загрузить спейсеры
     #for i in siomart.utils.ge_class document, 'sm-b-spacer'
-    for k in [1..30]
+    if is_add == false
+      for k in [1..30]
 
-      _spacer_attributes =
-        'class' : 'sm-b-spacer sm-b-spacer-' + k
-        'data-width' : 140
-        'data-height' : 140
+        _spacer_attributes =
+          'class' : 'sm-b-spacer sm-b-spacer-' + k
+          'data-width' : 140
+          'data-height' : 140
 
-      _spacer = siomart.utils.ce 'div', _spacer_attributes
-      _this = _spacer
+        _spacer = siomart.utils.ce 'div', _spacer_attributes
+        _this = _spacer
 
-      siomart.utils.ge('smGridAdsContainer').appendChild _spacer
+        siomart.utils.ge('smGridAdsContainer').appendChild _spacer
 
-      _this.setAttribute 'id', 'elt' + i
+        _this.setAttribute 'id', 'elt' + i
 
-      height = 140
-      width = 140
+        height = 140
+        width = 140
 
-      opened_height = 140
-      opened_width = 140
+        opened_height = 140
+        opened_width = 140
 
-      _class = _this.className
-      _search_string = _this.getAttribute 'data-search-string'
-      _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
+        _class = _this.className
+        _search_string = _this.getAttribute 'data-search-string'
+        _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
-      block =
-        'id' : i
-        'width' : width
-        'height' : height
-        'opened_width' : opened_width
-        'opened_height' : opened_height
-        'class' : _class
-        'block' : _this
-        '_is_moveable' : _is_moveable
+        block =
+          'id' : i
+          'width' : width
+          'height' : height
+          'opened_width' : opened_width
+          'opened_height' : opened_height
+          'class' : _class
+          'block' : _this
+          '_is_moveable' : _is_moveable
 
-      i++
-      cbca_grid.spacers.push block
-      cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
+        i++
+        cbca_grid.spacers.push block
+        cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
 
     cbca_grid.blocks_index = i
 
@@ -1598,7 +1599,7 @@ siomart =
 
       animation_cb = () ->
         siomart.utils.addClass siomart.focused_ads._container, 'fs-animated-end transition-animated'
-      setTimeout animation_cb, 10
+      setTimeout animation_cb, 20
 
       ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
