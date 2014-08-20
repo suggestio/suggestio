@@ -37,6 +37,10 @@
 
   <img class="sm-producer-header_logo" height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg =>@routes.Img.getImg(logoImg.filename)}.getOrElse{@routes.Assets.at("images/market/showcase-logo.png")}"/>
 
+  <div class="sm-producer-header_icon">
+    @svg._catHeaderIcon()
+  </div>
+
 </div>
 
 @* Работа с сеткой карточек *@

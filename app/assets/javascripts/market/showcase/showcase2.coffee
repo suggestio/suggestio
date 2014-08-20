@@ -926,6 +926,10 @@ siomart =
 
       if siomart.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
         siomart.navigation_layer.close()
+        siomart.search.exit()
+
+      if siomart.events.target_lookup( event.target, 'id', 'smCloseSearchButton' ) != null
+        siomart.search.exit()
 
 
 
@@ -977,10 +981,18 @@ siomart =
   ########
 
   search :
-
+    found_count : 0
     request_delay : 600
-
+    is_active : false
     perform : ( request ) ->
+
+      if request == ''
+        return false
+
+      if request.length < 3
+        siomart.search.error_message 'короткий запрос, минимум 3 символа'
+        return false
+
       url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id + '&' + siomart.geo.request_query_param()
       siomart.request.perform url
 
@@ -989,10 +1001,49 @@ siomart =
       if typeof siomart.search.search_timer != 'undefined'
         clearTimeout siomart.search.search_timer
 
+      siomart.search.error_message '', true
+
       search_cb = () ->
         siomart.search.perform request.toLowerCase()
 
       siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
+
+    onfocus : () ->
+      this.is_active = true
+      siomart.utils.addClass siomart.utils.ge('smSearch'), '__active'
+
+    onblur : () ->
+      if this.is_active == false
+        return false
+      if siomart.utils.ge('smSearchField').value == ''
+        siomart.search.exit()
+
+    exit : () ->
+      this.error_message '', true
+      this.is_active = false
+      siomart.utils.removeClass siomart.utils.ge('smSearch'), '__active'
+
+      siomart.utils.ge('smSearchField').value = ''
+
+      if siomart.search.found_count > 0
+        siomart.grid_ads.load_index_ads()
+
+    error_message : ( message, is_hide ) ->
+
+      if this.is_active == false
+        return false
+
+      is_hide = is_hide || false
+
+      em_dom = siomart.utils.ge('smSearchEm')
+
+      if is_hide
+        em_dom.style.display = 'none'
+      else
+        em_dom.style.display = 'block'
+
+      em_dom.innerHTML = message
+
 
   ## Карточки ноды верхнего уровня
   grid_ads :
@@ -1234,6 +1285,9 @@ siomart =
 
       if typeof data.blocks != 'undefined'
 
+        if data.action == 'searchAds'
+          siomart.search.found_count++
+
         if data.blocks.length < siomart.config.ads_per_load
           siomart.grid_ads.is_fully_loaded = true
           siomart.grid_ads.loader.hide()
@@ -1261,7 +1315,7 @@ siomart =
       else
 
         if data.action == 'searchAds'
-          alert 'Ничего не найдено!'
+          siomart.search.error_message 'ничего не найдено!'
 
         siomart.grid_ads.is_fully_loaded = true
         siomart.grid_ads.loader.hide()
@@ -1286,7 +1340,7 @@ siomart =
 
       if typeof this.ads == 'undefined'
         return false
-      
+
       if typeof this.sm_blocks == 'undefined'
         return false
 
@@ -1803,11 +1857,16 @@ siomart =
 
     siomart.utils.add_single_listener document, _event, siomart.events.document_click
 
-
     ## Поиск
     _search_dom = siomart.utils.ge('smSearchField')
     siomart.utils.add_single_listener _search_dom, 'keyup', ( e ) ->
       siomart.search.queue_request this.value
+
+    siomart.utils.add_single_listener _search_dom, 'focus', ( e ) ->
+      siomart.search.onfocus()
+
+    siomart.utils.add_single_listener _search_dom, 'blur', ( e ) ->
+      siomart.search.onblur()
 
   set_window_class : () ->
     _window_class = ''
