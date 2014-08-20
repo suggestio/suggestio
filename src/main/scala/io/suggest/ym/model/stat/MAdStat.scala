@@ -62,8 +62,8 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
   val GENERATION_ESFN           = "gen"
 
 
-  /** Через сколько времени удалять записи статистики. */
-  val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 60
+  /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */
+  val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 3650
 
   type AdFreqs_t = Map[String, Map[AdStatAction, Long]]
   type DateHistAds_t = Seq[(EsDateTime, Long)]

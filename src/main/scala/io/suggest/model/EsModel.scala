@@ -71,7 +71,7 @@ object EsModel extends MacroLogsImpl {
           fut
 
         case true =>
-          trace(logPrefix + "Mapping already exists in index. Skipping...")
+          info(logPrefix + "Mapping already exists in index. Skipping...")
           Future successful true
       }
     } map {
