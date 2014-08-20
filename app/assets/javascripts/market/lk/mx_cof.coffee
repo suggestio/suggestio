@@ -1,10 +1,288 @@
 $(document).ready ->
 
+  cbca.slider = Slider
   cbca.popup = CbcaPopup
   cbca.pc = PersonalCabinet
 
   cbca.pc.init()
   cbca.popup.init()
+  cbca.slider.init()
+
+Slider =
+
+  $slider    : $ '#indexSlider'
+  $window    : $ '.slider_window'
+  slideWidth : 560
+  itemsCount : 0
+  currIndex  : 0
+  process    : false
+  cardStatus : new Array() ## загружен ли контент для карточки
+
+  open: (index)->
+    index = index || 0
+
+    CbcaPopup.showOverlay()
+    Slider.$window.show()
+    Slider.setSliderHeight()
+    Slider.goToSlide(index)
+
+    $window = $ window
+    if $window.width() < 1024
+      $window.scrollTop(0)
+
+  close: ()->
+    Slider.$window.hide()
+
+  updateSlideWidth: ()->
+    $window = $ window
+    if $window.width() < 768
+      Slider.slideWidth = 320
+    else
+      Slider.slideWidth = 560
+
+    Slider.$slider
+    .find '.slider_i'
+    .width Slider.slideWidth
+
+  setSliderHeight: ()->
+    $window       = $ window
+    winHeight     = $window.height()
+    itemMaxHeight = Slider.getMaxHeightOfItems()
+
+    itemMaxHeight > winHeight && winHeight = itemMaxHeight
+    Slider.$window.height winHeight
+
+    if $window.width() < 767
+      Slider.$window.height ''
+
+  getMaxHeightOfItems: ()->
+
+    if Slider.itemsCount <= 0
+      return false
+
+    maxHeight = 0
+    Slider.$window
+    .find '.slider_i'
+    .each ()->
+      $item       = $ this
+      itemHeight  = $item.height()
+
+      itemHeight > maxHeight && maxHeight = itemHeight
+
+    return maxHeight
+
+  ## вставляем html вместо прелоадера
+  setData: (html, index)->
+    $card = Slider.$slider
+    .find '.slider_i'
+    .eq index
+
+    $card.html html
+    Slider.cardStatus[index] = true
+    Slider.setSliderHeight()
+    Slider.setCardPosition $card
+
+  setCardPosition: ($card)->
+    $window = $ window
+    minTop  = 25
+    cardHeight = $card.height()
+    containerHeight = $window.height()
+    diffHeight = containerHeight - cardHeight
+
+    if diffHeight > minTop*2 && $window.width() > 767
+      top = Math.ceil( (containerHeight - cardHeight)/2 )
+      $card.css 'margin-top', top
+    else
+      $card.css 'margin-top', minTop
+
+  phoneSlide: ()->
+
+    delta       = 50 ## допустимая погрешность
+    xStart      = 0
+    yStart      = 0
+    xEnd        = 0
+    yEnd        = 0
+    gorizontal  = false
+
+    $ document
+    .on 'touchstart', '.card', (e)->
+      gorizontal = false
+      xStart = e.originalEvent.touches[0].pageX
+      yStart = e.originalEvent.touches[0].pageY
+
+    $ document
+    .on 'touchmove', '.card', (e)->
+      xEnd = e.originalEvent.touches[0].pageX
+      yEnd = e.originalEvent.touches[0].pageY
+
+      yDelta = Math.abs(yEnd - yStart)
+      xDelta = xEnd - xStart
+
+      if Math.abs(xDelta) > delta && yDelta < delta
+        gorizontal = true
+        e.preventDefault()
+        e.stopPropagation()
+
+        if Math.abs(xDelta) > delta
+          animationLength = -Slider.currIndex*Slider.slideWidth + xDelta
+          $ '#indexSlider'
+          .css 'transition-duration', '0s'
+          .css '-webkit-transition-duration', '0s'
+          .css 'transform', "translate3d("+animationLength+"px,0,0)"
+
+    $ document
+    .on 'touchend', '.card', (e)->
+      $card = $ this
+
+      xEnd = e.originalEvent.changedTouches[0].pageX
+      yEnd = e.originalEvent.changedTouches[0].pageY
+
+      yDelta = Math.abs(yEnd - yStart)
+      xDelta = xEnd - xStart
+
+      if gorizontal
+
+        if xDelta < 0
+          cbca.slider.goToNextSlide()
+
+        if xDelta > 0
+          cbca.slider.goToPrevSlide()
+
+        if Math.abs(xDelta) < delta
+          Slider.goToSlide(Slider.currIndex, 0.5)
+
+  ## возвращает url для получения содержимого карточки по её номеру
+  getLink: (index)->
+    $ '#wifiPoints'
+    .find '.js-wifi-point'
+    .eq index
+    .find '.js-card-btn'
+    .attr 'href'
+
+  ## возвращает содержимое карточки по её номеру
+  getData: (index, callback)->
+    url = Slider.getLink(index)
+
+    $.ajax(
+      url: url,
+      success: (data)->
+        callback(data)
+    )
+
+  ## навигация по слайдам
+  goToNextSlide: ()->
+    newIndex = Slider.currIndex + 1
+
+    if newIndex < Slider.itemsCount
+      Slider.goToSlide(newIndex, 0.5)
+    else
+      Slider.goToSlide(Slider.currIndex, 0.5)
+
+  goToPrevSlide: ()->
+    newIndex = Slider.currIndex - 1
+
+    if newIndex >= 0
+      Slider.goToSlide(newIndex, 0.5)
+    else
+      Slider.goToSlide(Slider.currIndex, 0.5)
+
+  goToSlide: (index, duration)->
+    duration = duration || 0
+    cbca.slider.process = true
+
+    animationLength = -index*Slider.slideWidth
+
+    $ '#indexSlider'
+    .css 'transition-duration', duration+'s'
+    .css '-webkit-transition-duration', duration+'s'
+    .css 'transform', "translate3d("+animationLength+"px,0,0)"
+
+    Slider.currIndex = index
+    if !Slider.cardStatus[index]
+      Slider.getData(
+        index
+        (data)->
+          Slider.setData(data, index)
+      )
+
+  ## добавляем прелоадеры по количеству точек
+  setPreloaders: ()->
+    html = ''
+    $wifiPoints = $ '#wifiPoints'
+
+    $wifiPoints.find '.js-wifi-point'
+    .each ()->
+      html += '<div class="slider_i" style="height: 400px;"><div class="slider_preloader"></div></div>'
+      Slider.itemsCount += 1
+      Slider.cardStatus.push false
+
+    Slider.$slider.append html
+
+    $ '.slider_i'
+    .each ()->
+      $this = $ this
+      Slider.setCardPosition $this
+      $this.height ''
+
+  init: ()->
+
+    cbca.slider.phoneSlide()
+    Slider.setPreloaders()
+    Slider.updateSlideWidth()
+
+    $ document
+    .on 'click', '.js-close-slider', (e)->
+      e.preventDefault()
+      Slider.close()
+
+    $ document
+    .on 'click', '.slider_controls', (e)->
+      e.preventDefault()
+      e.stopPropagation()
+
+      $target = $ e.target
+      targetClass = $target.attr 'class'
+
+      if $target.hasClass '__right-arrow'
+        cbca.slider.goToNextSlide()
+
+      if $target.hasClass '__left-arrow'
+        cbca.slider.goToPrevSlide()
+
+    ## кнопки точек на главной
+    $ document
+    .on 'click', '.js-card-btn', (e)->
+      e.preventDefault()
+      $this  = $ this
+      href   = $this.attr 'href'
+      parent = $this.parent()[0]
+      index = $('#wifiPoints').find('.js-wifi-point').index(parent)
+
+      if Slider.cardStatus[index] == true
+        Slider.open(index)
+      else
+        Slider.getData(
+          index,
+          (data)->
+            cbca.popup.hidePopup()
+
+            Slider.open(index)
+            Slider.setData(data, index)
+        )
+
+    $window = $ window
+
+    $window.resize ()->
+      Slider.updateSlideWidth()
+
+      if $window.width() < 1024
+        $window.scrollTop(0)
+
+
+
+
+
+
 
 PersonalCabinet =
 
@@ -445,19 +723,30 @@ PersonalCabinet =
 #######################################################################################################################
 CbcaPopup =
 
-  $container: $ '#popupsContainer'
+  $container: $ '#popups'
   $body: $ 'body'
 
   showOverlay: () ->
     this.$body.addClass 'ovh'
     cbca.popup.$container.css 'visibility', 'visible'
 
+    $window = $ window
+    if $window.width() < 1024
+      cbca.popup.$container.show()
+
   hideOverlay: () ->
     this.$body.removeClass 'ovh'
     cbca.popup.$container.css 'visibility', 'hidden'
 
+    cbca.slider.close()
+
+    $window = $ window
+    if $window.width() < 1024
+      cbca.popup.$container.hide()
+
   setPopupPosition: (popupSelector) ->
-    $popup    = $ popupSelector
+    $window = $ window
+    $popup  = $ popupSelector
     ## независимые цифры, подобраны согласно внешнему виду получаемого результата
     minTop  = 25
 
@@ -468,7 +757,7 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > minTop*2
+    if diffHeight > minTop*2 && $window.width() > 768
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
@@ -497,6 +786,22 @@ CbcaPopup =
       cbca.popup.setPopupPosition popupSelector
       cbca.popup.showOverlay()
 
+
+    $window = $ window
+    if $window.width() < 1024
+      $window.scrollTop(0)
+
+  phoneScroll: ()->
+    $window = $ window
+
+    if $window.width() < 1024
+      windowHeight = $window.height()
+
+      $ '.overflow-scrolling'
+      .height windowHeight
+      $ '#popupsContainer'
+      .css 'min-height', windowHeight+1
+
   hidePopup: (popupSelector) ->
     popupSelector = popupSelector || '.popup'
     $popup = $ popupSelector
@@ -509,9 +814,15 @@ CbcaPopup =
 
   init: () ->
 
+    cbca.popup.hideOverlay()
+    cbca.popup.phoneScroll()
+
     $ window
     .resize () ->
       cbca.popup.setPopupPosition()
+      cbca.popup.phoneScroll()
+      $ window
+      .scrollTop(0)
 
     $ document
     .on 'click', '.js-close-popup', (e)->
@@ -524,7 +835,7 @@ CbcaPopup =
       cbca.popup.hidePopup popupSelector
 
     $ document
-    .on 'click', '#popupsContainer', (e)->
+    .on 'click', '#popups', (e)->
       cbca.popup.hidePopup()
 
     $ document

@@ -10,11 +10,13 @@
 <head>
   <title>@title | market | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
   <meta name="format-detection" content="telephone=no">
+
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("svgfonts/icomoon/style.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
@@ -28,28 +30,48 @@
 
   @content
 
-  <div class="popups-container" id="popupsContainer">
+  <div class="popups-container" id="popups">
+    <div class="flex overflow-scrolling">
+      <div class="flex @if(ctx.isIpad){ overflow-scrolling }" >
+        <div id="popupsContainer">
+          @* Попап с формой логина *@
+          @if(!ctx.isAuth) {
 
-    @* Попап с формой логина *@
-    @if(!ctx.isAuth) {
+            <div class="popup __index def-transition js-hidden js-popup" id="emailPwLoginForm">
 
-      <div class="popup __index js-hidden js-popup" id="emailPwLoginForm">
+              <div class="popup_header __index">
+                <a class="popup_close f-left js-close-popup" href="#"></a>
+              </div>
 
-        <div class="popup_header __index">
-          <a class="popup_close f-left js-close-popup" href="#"></a>
+              @ident._emailPwLoginFormTpl(
+                lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+                submitCall = routes.MarketLk.emailPwLoginFormSubmit()
+              )
+
+            </div>
+          }
+
+          @popupContent
+
+          <div class="slider_window">
+
+            <div class="slider_cnt" id="indexSlider"></div>
+
+            <div class="slider_controls">
+
+              <a class="slider_control __left-arrow icon-icomoon"></a>
+              <a class="slider_control __right-arrow icon-icomoon"></a>
+
+            </div>
+
+          </div>
+
         </div>
-
-        @ident._emailPwLoginFormTpl(
-          lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-          submitCall = routes.MarketLk.emailPwLoginFormSubmit()
-        )
-
       </div>
-    }
 
-    @popupContent
-
+    </div>
   </div>
+
 
   <div class="footer __responsive __fill-1">
     <div class="footer_cnt __responsive">
