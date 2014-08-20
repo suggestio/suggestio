@@ -77,6 +77,11 @@ code
   border: 1px #ccc solid
   -webkit-transition: -webkit-transform 0.2s linear
 
+  &.__rel
+    position: relative
+    margin: 0px auto
+    border: 0px
+
 .sm-b-spacer
   position: absolute
   background: #999
@@ -252,6 +257,47 @@ code
 .sm-categories
   background: default_color
 
+
+.categories-list
+  &_single-cat
+    float: left
+    margin-right: 20px
+    margin-top: 25px
+    margin-bottom: 25px
+
+.categorie
+  position: relative
+  cursor: pointer
+  color: #fff
+  width: 100px
+  font-family: 'opensans-regular-webfont'
+  font-size: 13px
+  display: block
+  text-align: center
+
+  &_icon,
+  &_icon-bg
+    position: absolute
+    left: 50%
+    top: 0px
+    margin-left: -29px
+    display: block
+    width: 58px
+    height: 58px
+    z-index: 10
+    transform( scale3d(2,2,2) )
+    display: none
+  &_icon-bg
+    width: 56px
+    height: 56px
+    top: 1px
+    margin-left: -28px
+    background: #fff
+    z-index: 9
+    border-radius( 100px )
+  &_name
+    margin-top: 58px
+    padding: 0px 0px 10px 0px
 /*
 ------------------------------------*/
 .sm-search-bar
@@ -359,3 +405,7 @@ code
     &_tabs-wrapper
       padding-left: 11px
       padding-right: 11px
+
+  .focused-ad
+    &_offer
+      padding: 0px

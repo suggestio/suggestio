@@ -1,10 +1,19 @@
 @(args: SMShowcaseRenderArgs)(implicit ctx: Context)
 
 @stuff.scrollableContainerTpl( "sm-categories", "smCategories" ){
+  <div class="categories-list">
   @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
-    <span class="sm-single-categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
-      <div class="sm-single-categorie_icon __@mmcat.cssClass"></div>
-      <div class="sm-single-categorie_name">@mmcat.name</div>
+    <span class="categories-list_single-cat categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
+
+      <div class="categorie_icon __@mmcat.cssClass">
+        @svg._catIconTpl()
+      </div>
+
+      <div class="categorie_icon-bg">
+      </div>
+
+      <div class="categorie_name">@mmcat.name</div>
     </span>
   }
+  </div>
 }

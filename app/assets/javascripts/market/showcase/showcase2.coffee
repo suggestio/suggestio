@@ -861,8 +861,8 @@ siomart =
     #############################
     document_click : ( event ) ->
 
-      if siomart.events.is_touch_locked
-        return false
+      #if siomart.events.is_touch_locked
+      #  return false
 
       ## Обработка событий для открытия / закрытия экрана выхода
       if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
@@ -888,6 +888,10 @@ siomart =
 
       shop_link_target = siomart.events.target_lookup( event.target, 'className', 'js-shop-link' )
       if shop_link_target != null
+
+        if siomart.events.is_touch_locked
+          return false
+
         producer_id = shop_link_target.getAttribute 'data-producer-id'
         ad_id = shop_link_target.getAttribute 'data-ad-id'
 
@@ -897,6 +901,10 @@ siomart =
 
       cat_link_target = siomart.events.target_lookup( event.target, 'className', 'js-cat-link' )
       if cat_link_target != null
+
+        if siomart.events.is_touch_locked
+          return false
+
         cat_id = cat_link_target.getAttribute 'data-cat-id'
 
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
@@ -1454,14 +1462,17 @@ siomart =
         if cbca_grid.ww >= 660
           siomart.utils.addClass _b, 'double-size'
           _block_width = _block_width*2
+          padding = 22
         else
           siomart.utils.removeClass _b, 'double-size'
+          padding = 0
+          _block_width = 300
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        _b.parentNode.parentNode.parentNode.style.width = _block_width + 22 + 'px'
+        _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
-        _b.style.position = 'relative'
+        siomart.utils.addClass _b, '__rel'
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
@@ -1565,12 +1576,17 @@ siomart =
 
     adjust : () ->
 
+      if siomart.utils.ge('smNavLayerTabs') == null
+        offset = 100
+      else
+        offset = 150
+
       for k, t of this.tabs
         if siomart.utils.ge(t) == null
           return false
-        siomart.utils.ge(t).style.height = cbca_grid.wh - 150
-        siomart.utils.ge(t + 'Wrapper').style.height = cbca_grid.wh - 150
-        siomart.utils.ge(t + 'Content').style.height = cbca_grid.wh - 149
+        siomart.utils.ge(t).style.height = cbca_grid.wh - offset
+        siomart.utils.ge(t + 'Wrapper').style.height = cbca_grid.wh - offset
+        siomart.utils.ge(t + 'Content').style.height = cbca_grid.wh - ( offset - 1 )
 
     open : ( history_push ) ->
 

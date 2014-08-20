@@ -14,7 +14,8 @@
 
   @_search_bar( args.bgColor )
 
-  <div class="sm-categories-screen_tabs">
+  @if( args.shops.nonEmpty ){
+  <div class="sm-categories-screen_tabs" id="smNavLayerTabs">
     <div class="sm-categories-screen_tabs-wrapper">
 
       <div class="sm-categories-screen_single-tab">
@@ -27,6 +28,7 @@
       <div class="clear"></div>
     </div>
   </div>
+  }
 
   @_categoriesListTpl( args )
 
