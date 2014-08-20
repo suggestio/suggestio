@@ -4,47 +4,45 @@
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
 
-<div class="slider_i">
-  <div class="__index card" id="@adnNode.id">
-    <div class="popup_header __index">
-      <a class="popup_close f-left js-close-slider"></a>
-    </div>
+<div class="__index card" id="@adnNode.id">
+  <div class="popup_header __index">
+    <a class="popup_close f-left js-close-slider"></a>
+  </div>
 
-    <div class="card_photo-w">
-      @adnNode.gallery.headOption.map { filename =>
-        <img class="card_photo" src='@routes.Img.getImg(filename)' alt="@Messages("Photo")"/>
-      }
-      <div class="card_logo-w">
-        <a class="card_logo" style="background-color: #@adnNode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
-          <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
-        </a>
-      </div>
-    </div>
-
-    <h2 class="card_title">@adnNode.meta.name</h2>
-
-    @adnNode.meta.town.map { town =>
-      <div class="card_town">
-        @town
-      </div>
+  <div class="card_photo-w">
+    @adnNode.gallery.headOption.map { filename =>
+      <img class="card_photo" src='@routes.Img.getImg(filename)' alt="@Messages("Photo")"/>
     }
-
-
-    @adnNode.meta.humanTrafficAvg.map { hta =>
-      <div class="card_prop">
-        <span class="card_prop-name">Посетителей в день</span>
-        <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
-      </div>
-    }
-
-
-    <div class="card_prop __last">
-      <span class="card_prop-name">Сфера услуг</span>
-      <span class="card_prop-value">@Messages("amt.of.type." + adnNode.adn.shownTypeId)</span>
+    <div class="card_logo-w">
+      <a class="card_logo" style="background-color: #@adnNode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
+        <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
+      </a>
     </div>
+  </div>
 
-    <div class="btn-w __size-M">
-      <a class="siom-new-btn __size-XS __fill-1" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
+  <h2 class="card_title">@adnNode.meta.name</h2>
+
+  @adnNode.meta.town.map { town =>
+    <div class="card_town">
+      @town
     </div>
+  }
+
+
+  @adnNode.meta.humanTrafficAvg.map { hta =>
+    <div class="card_prop">
+      <span class="card_prop-name">Посетителей в день</span>
+      <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
+    </div>
+  }
+
+
+  <div class="card_prop __last">
+    <span class="card_prop-name">Сфера услуг</span>
+    <span class="card_prop-value">@Messages("amt.of.type." + adnNode.adn.shownTypeId)</span>
+  </div>
+
+  <div class="btn-w __size-M">
+    <a class="siom-new-btn __size-XS __fill-1" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
   </div>
 </div>

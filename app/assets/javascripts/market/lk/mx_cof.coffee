@@ -14,22 +14,16 @@ Slider =
   $window    : $ '.slider_window'
   itemsCount : 0
   currIndex  : 0
-
-  $currPoint : false
-  prevLink   : false
-  nextLink   : false
   process    : false
-  left       : 0
-
+  cardStatus : new Array() ## загружен ли контент для карточки
 
   open: (index)->
     index = index || 0
 
+    CbcaPopup.showOverlay()
     Slider.$window.show()
     Slider.setSliderHeight()
-
-    Slider.currIndex = index
-    Slider.setLinks()
+    Slider.goToSlide(index)
 
   close: ()->
     Slider.$window.hide()
@@ -38,9 +32,6 @@ Slider =
     $window       = $ window
     winHeight     = $window.height()
     itemMaxHeight = Slider.getMaxHeightOfItems()
-
-    console.log itemMaxHeight
-    console.log winHeight
 
     itemMaxHeight > winHeight && winHeight = itemMaxHeight
     Slider.$window.height winHeight
@@ -61,12 +52,29 @@ Slider =
 
     return maxHeight
 
-  ## возвращает index добавленного элемента
-  addItem: (html, index)->
+  ## вставляем html вместо прелоадера
+  setData: (html, index)->
+    $card = Slider.$slider
+    .find '.slider_i'
+    .eq index
 
-    Slider.itemsCount += 1
+    $card.html html
+    Slider.cardStatus[index] = true
+    Slider.setSliderHeight()
+    Slider.setCardPosition $card
 
-    Slider.$slider.append html
+  setCardPosition: ($card)->
+    $window = $ window
+    minTop  = 25
+    cardHeight = $card.height()
+    containerHeight = Slider.$window.height()
+    diffHeight = containerHeight - cardHeight
+
+    if diffHeight > minTop*2 && $window.width() > 768
+      top = Math.ceil( (containerHeight - cardHeight)/2 )
+      $card.css 'margin-top', top
+    else
+      $card.css 'margin-top', minTop
 
   phoneSlide: ()->
 
@@ -106,132 +114,109 @@ Slider =
         if xDelta > 0 && cbca.slider.prevLink
           cbca.slider.goToSlide(true)
 
+  ## возвращает url для получения содержимого карточки по её номеру
+  getLink: (index)->
+    $ '#wifiPoints'
+    .find '.js-wifi-point'
+    .eq index
+    .find '.js-card-btn'
+    .attr 'href'
 
-  setLinks: ()->
-    $nextPoint = cbca.slider.$currPoint.parent().next().find '.js-card-btn'
-    $prevPoint = cbca.slider.$currPoint.parent().prev().find '.js-card-btn'
-
-    nextLink = $nextPoint.attr 'href'
-    prevLink = $prevPoint.attr 'href'
-
-    $rightArrow = $ '.slider_control.__right-arrow'
-    $leftArrow  = $ '.slider_control.__left-arrow'
-
-    if typeof nextLink == 'undefined'
-      cbca.slider.nextLink = false
-      $rightArrow.hide()
-    else
-      cbca.slider.nextLink = nextLink
-      $rightArrow.show()
-
-    if typeof prevLink == 'undefined'
-      cbca.slider.prevLink = false
-      $leftArrow.hide()
-    else
-      $leftArrow.show()
-      cbca.slider.prevLink = prevLink
-
-  setCurrPoint: (pointId)->
-    cbca.slider.$currPoint = $ '.js-card-btn[data-id = '+pointId+']'
-
-  goToSlide: (back)->
-    back = back || false
-
-    cbca.slider.process = true
-
-    if back
-      cbca.slider.left  += -500
-      url = cbca.slider.prevLink
-    else
-      cbca.slider.left += 500
-      url = cbca.slider.nextLink
-
-
-    $popup = $ '.slider_window .card'
-    popupHeight = $popup.height()
-
-    $popup
-    .html ''
-    .attr 'class', 'slider_preloader'
-    .attr 'id', 'sliderPreloader'
-    .height popupHeight
-
-    cbca.popup.setPopupPosition '#sliderPreloader'
+  ## возвращает содержимое карточки по её номер
+  getData: (index, callback)->
+    url = Slider.getLink(index)
 
     $.ajax(
       url: url,
       success: (data)->
-        $data = $ data
-        id = $data.find('.js-popup').attr 'id'
+        callback(data)
+    )
 
-        $ '#indexSlider'
-        .append data
-        $card = $ '.card'
+  ## навигация по слайдам
+  goToNextSlide: ()->
+    newIndex = Slider.currIndex + 1
 
-        $card
-        .css 'left', -cbca.slider.left+'px'
+    if newIndex < Slider.itemsCount
+      Slider.goToSlide(newIndex, 0.2)
 
-        cbca.popup.setPopupPosition '.card'
+  goToPrevSlide: ()->
+    newIndex = Slider.currIndex - 1
 
-        cbca.slider.setCurrPoint(id)
-        cbca.slider.setLinks()
+    if newIndex >= 0
+      Slider.goToSlide(newIndex, 0.2)
 
-        $ '#indexSlider'
-        .css 'transform', "translate3d("+cbca.slider.left+"px,0,0)"
+  goToSlide: (index, duration)->
+    duration = duration || 0
+    cbca.slider.process = true
 
-        setTimeout(
-          ()->
-            cbca.slider.process = false
-            Slider.setSliderHeight()
-            $ '#sliderPreloader'
-            .remove()
-          200
-        )
-    )## ajax end
+    animationLength = -index*560
 
+    $ '#indexSlider'
+    .css 'transition-duration', duration+'s'
+    .css '-webkit-transition-duration', duration+'s'
+    .css 'transform', "translate3d("+animationLength+"px,0,0)"
+
+    Slider.currIndex = index
+    if !Slider.cardStatus[index]
+      Slider.getData(
+        index
+        (data)->
+          Slider.setData(data, index)
+      )
+
+  ## добавляем прелоадеры по количеству точек
+  setPreloaders: ()->
+    html = ''
+    $wifiPoints = $ '#wifiPoints'
+
+    $wifiPoints.find '.js-wifi-point'
+    .each ()->
+      html += '<div class="slider_i"><div class="slider_preloader"></div></div>'
+      Slider.itemsCount += 1
+      Slider.cardStatus.push false
+
+    Slider.$slider.append html
 
   init: ()->
 
-    cbca.slider.phoneSlide()
+    ##cbca.slider.phoneSlide()
+    Slider.setPreloaders()
 
     $ document
     .on 'click', '.slider_controls', (e)->
       e.preventDefault()
       e.stopPropagation()
 
-      if cbca.slider.process
-        return false
-
       $target = $ e.target
       targetClass = $target.attr 'class'
 
       if $target.hasClass '__right-arrow'
-        cbca.slider.goToSlide()
+        cbca.slider.goToNextSlide()
 
       if $target.hasClass '__left-arrow'
-        cbca.slider.goToSlide(true)
+        cbca.slider.goToPrevSlide()
 
+    ## кнопки точек на главной
     $ document
     .on 'click', '.js-card-btn', (e)->
       e.preventDefault()
-      $this                   = $ this
-      href                    = $this.attr 'href'
+      $this  = $ this
+      href   = $this.attr 'href'
+      parent = $this.parent()[0]
+      index = $('#wifiPoints').find('.js-wifi-point').index(parent)
 
-      if $this.data 'load'
-        return false
+      if Slider.cardStatus[index] == true
+        Slider.open(index)
+      else
+        Slider.getData(
+          index,
+          (data)->
+            cbca.popup.hidePopup()
 
-      $.ajax(
-        url: href,
-        success: (data)->
+            Slider.open(index)
+            Slider.setData(data, index)
+        )
 
-          $this.data(
-            'load', true
-          )
-          cbca.popup.hidePopup()
-
-          Slider.addItem(data)
-          Slider.open()
-      )
 
 
 
