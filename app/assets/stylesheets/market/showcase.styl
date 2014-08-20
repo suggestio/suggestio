@@ -83,12 +83,38 @@ code
   width: 140px
   height: 140px
 
+/*
+------------------------------------*/
+.fs-animated-start
+  -webkit-transform: translate3d(100%,0,0)
+
+.fs-animated-end
+  -webkit-transform: translate3d(0,0,0)
+
+.transition-animated
+  -webkit-transition: all 0.2s linear
+
 /* Кнопки
 ------------------------------------*/
 .sm-button
   width: 40px
   height: 40px
   cursor: pointer
+
+.sm-flat-btn
+  display: block
+  text-decoration: none
+  padding: 10px
+  &.__color-1
+    background: #f44040
+    color: #fff
+  &.__centered
+    width: 150px
+    text-align: center
+    margin: 0px auto
+  &.__rounded
+    border-radius( 10px )
+
 .sm-showcase
   width: 100%
   heigth: 100%
@@ -137,24 +163,39 @@ code
   height: 100%
   background: rgba(0,0,0,0.5)
   z-index: 100
+  font-family: 'opensans-light'
+  font-size: 14px
+  color: #737373
 
   &_cnt
     position: absolute
     left: 50%
     top: 50%
     width: 300px
+    padding-bottom: 30px
     margin-left: -150px
+    border-radius(10px)
+    margin-top: -100px
     background: #fff
+
+  &_message
+    text-align: center
+    padding: 50px 50px 30px 50px
+
+  &_dm
+    height: 1px
+    background: #d7d7d7
+    margin: 25px 0px
 
 .sm-grid-ads
   width: 100%
   height: 100%
-  overflow: hidden
   &_content
     position: relative
   &_container
     margin: 0px auto
     position: relative
+    overflow: hidden
   &_loader
     width: 100%
     height: 100px
@@ -251,7 +292,7 @@ code
   display: none
   overflow: hidden
   background: rgba(255,255,255,0.8) url('/assets/images/market-showcase-popup-bg.png')
-
+  box-shadow( 0px 0px 10px #000 )
   &_container
     width: 100%
     height: 100%

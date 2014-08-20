@@ -1489,12 +1489,13 @@ siomart =
     ## Закрыть
     close : () ->
 
-      siomart.utils.removeClass this._container, 'sio-mart__node-offers-root_in'
-
-      this.ads_container_dom.innerHTML = ''
+      animation_cb = () ->
+        siomart.utils.removeClass siomart.focused_ads._container, 'fs-animated-end'
+      setTimeout animation_cb, 3
 
       cb = () ->
         siomart.utils.ge('smFocusedAds').style.display = 'none'
+        siomart.focused_ads.ads_container_dom.innerHTML = ''
 
       setTimeout cb, 200
 
@@ -1524,7 +1525,15 @@ siomart =
       siomart.utils.ge('ads' + this.ads_receiver_index).innerHTML = html
       this.check_if_fully_loaded()
       this.render_ads_receiver()
+
       this._container = siomart.utils.ge('smFocusedAds')
+
+      ## Ввести экран с анимацией
+      siomart.utils.addClass this._container, 'fs-animated-start'
+
+      animation_cb = () ->
+        siomart.utils.addClass siomart.focused_ads._container, 'fs-animated-end transition-animated'
+      setTimeout animation_cb, 10
 
       ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'

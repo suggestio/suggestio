@@ -4,9 +4,16 @@
 
   <div class="sm-close-screen_cnt"  id="smCloseScreenContainer">
 
-    <span class="sm-close-screen_close" id="smExitCloseScreenButton" href="">close</span>
+    <div class="sm-button abs" id="smExitCloseScreenButton">
+      @svg._exitButtonTpl("c5c5c5")
+    </div>
 
-    <a class="sm-btn __color-1 __rounded" href="@oncloseHref">ВЫЙТИ</a>
+    <div class="sm-close-screen_message">
+      Вы покидаете SIO.Market,<br/>
+      но всегда сможете вернуться
+    </div>
 
+    <div class="sm-close-screen_dm"></div>
+    <a class="sm-flat-btn __centered __color-1 __rounded" href="@oncloseHref">ВЫЙТИ</a>
   </div>
 </div>
