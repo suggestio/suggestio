@@ -1203,7 +1203,10 @@ siomart =
         screensContainer = siomart.utils.ge 'smFocusedAds'
         screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
 
-        siomart.focused_ads.ads = data.blocks
+        if typeof data.blocks == 'undefined'
+          siomart.focused_ads.ads = []
+        else
+          siomart.focused_ads.ads = data.blocks
         siomart.focused_ads.init()
 
         console.log 'producerAds : ready'
@@ -1554,6 +1557,8 @@ siomart =
     adjust : () ->
 
       for k, t of this.tabs
+        if siomart.utils.ge(t) == null
+          return false
         siomart.utils.ge(t).style.height = cbca_grid.wh - 150
         siomart.utils.ge(t + 'Wrapper').style.height = cbca_grid.wh - 150
         siomart.utils.ge(t + 'Content').style.height = cbca_grid.wh - 149
@@ -1582,6 +1587,10 @@ siomart =
       for k, t of this.tabs
         tab_content_dom = siomart.utils.ge(t)
         tab_dom = siomart.utils.ge(t + 'Tab')
+
+        if tab_content_dom == null
+          return false
+
         if tab == t
           tab_content_dom.style.display = 'block'
           siomart.utils.addClass tab_dom, '__active'
@@ -1595,7 +1604,10 @@ siomart =
       else
         siomart.utils.removeClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
         this.reset_tabs()
-        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+
+        sm_cat_screen_dom = siomart.utils.ge('smCategoriesScreen')
+        if sm_cat_screen_dom != null
+          sm_cat_screen_dom.style.display = 'none'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
 
     back : () ->
