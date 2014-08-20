@@ -24,18 +24,21 @@
         @ctx.billBalanceOpt.map { mbb =>
         <tr>
           <td class="siom-table_top-cnt">
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
+
+	    <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
 
               <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>
             </div>
             <div class="clear"></div>
+
             <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
 
               <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</strong>
             </div>
             <div class="clear"></div>
+
             <div class="table-cell-cnt __size-XS">
               <span class="f-left ft-XS color-light-strong billing-prop-name">Заблокировано<br/>средств:</span>
 
