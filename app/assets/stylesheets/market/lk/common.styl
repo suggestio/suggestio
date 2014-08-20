@@ -1852,6 +1852,8 @@ th.__bg-head
         background-position center 52%
 
 .def-transition
+  -webkit-backface-visibility   hidden
+  -moz-backface-visibility      hidden
   transition(all 0.2s ease-in-out 0s)
 
 .card
@@ -2052,7 +2054,6 @@ th.__bg-head
   &_i
     float     left
     position  relative
-    width     560px
     height    100%
 
   &_preloader
@@ -2106,9 +2107,7 @@ th.__bg-head
   .slider
 
     &_window
-      width     100%
-      margin    0 auto
-      position  static
+      width     320px
 
     &_controls
       display none

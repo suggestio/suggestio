@@ -12,6 +12,7 @@ Slider =
 
   $slider    : $ '#indexSlider'
   $window    : $ '.slider_window'
+  slideWidth : 560
   itemsCount : 0
   currIndex  : 0
   process    : false
@@ -25,8 +26,23 @@ Slider =
     Slider.setSliderHeight()
     Slider.goToSlide(index)
 
+    $window = $ window
+    if $window.width() < 1024
+      $window.scrollTop(0)
+
   close: ()->
     Slider.$window.hide()
+
+  updateSlideWidth: ()->
+    $window = $ window
+    if $window.width() < 768
+      Slider.slideWidth = 320
+    else
+      Slider.slideWidth = 560
+
+    Slider.$slider
+    .find '.slider_i'
+    .width Slider.slideWidth
 
   setSliderHeight: ()->
     $window       = $ window
@@ -35,6 +51,9 @@ Slider =
 
     itemMaxHeight > winHeight && winHeight = itemMaxHeight
     Slider.$window.height winHeight
+
+    if $window.width() < 767
+      Slider.$window.height ''
 
   getMaxHeightOfItems: ()->
 
@@ -67,10 +86,10 @@ Slider =
     $window = $ window
     minTop  = 25
     cardHeight = $card.height()
-    containerHeight = Slider.$window.height()
+    containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
 
-    if diffHeight > minTop*2 && $window.width() > 768
+    if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - cardHeight)/2 )
       $card.css 'margin-top', top
     else
@@ -78,17 +97,38 @@ Slider =
 
   phoneSlide: ()->
 
-    touch     = false
-    delta     = 50 ## допустимая погрешность
-    xStart    = 0
-    yStart    = 0
-    xEnd      = 0
-    yEnd      = 0
+    delta       = 50 ## допустимая погрешность
+    xStart      = 0
+    yStart      = 0
+    xEnd        = 0
+    yEnd        = 0
+    gorizontal  = false
 
     $ document
     .on 'touchstart', '.card', (e)->
+      gorizontal = false
       xStart = e.originalEvent.touches[0].pageX
       yStart = e.originalEvent.touches[0].pageY
+
+    $ document
+    .on 'touchmove', '.card', (e)->
+      xEnd = e.originalEvent.touches[0].pageX
+      yEnd = e.originalEvent.touches[0].pageY
+
+      yDelta = Math.abs(yEnd - yStart)
+      xDelta = xEnd - xStart
+
+      if Math.abs(xDelta) > delta && yDelta < delta
+        gorizontal = true
+        e.preventDefault()
+        e.stopPropagation()
+
+        if Math.abs(xDelta) > delta
+          animationLength = -Slider.currIndex*Slider.slideWidth + xDelta
+          $ '#indexSlider'
+          .css 'transition-duration', '0s'
+          .css '-webkit-transition-duration', '0s'
+          .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     $ document
     .on 'touchend', '.card', (e)->
@@ -100,19 +140,16 @@ Slider =
       yDelta = Math.abs(yEnd - yStart)
       xDelta = xEnd - xStart
 
-      ##console.log 'yDelta = '+yDelta
-      ##console.log 'xDelta = '+xDelta
+      if gorizontal
 
-      if yDelta < delta && Math.abs(xDelta) > 200
+        if xDelta < 0
+          cbca.slider.goToNextSlide()
 
-        console.log cbca.slider.nextLink
-        console.log cbca.slider.prevLink
+        if xDelta > 0
+          cbca.slider.goToPrevSlide()
 
-        if xDelta < 0 && cbca.slider.nextLink
-          cbca.slider.goToSlide()
-
-        if xDelta > 0 && cbca.slider.prevLink
-          cbca.slider.goToSlide(true)
+        if Math.abs(xDelta) < delta
+          Slider.goToSlide(Slider.currIndex, 0.5)
 
   ## возвращает url для получения содержимого карточки по её номеру
   getLink: (index)->
@@ -122,7 +159,7 @@ Slider =
     .find '.js-card-btn'
     .attr 'href'
 
-  ## возвращает содержимое карточки по её номер
+  ## возвращает содержимое карточки по её номеру
   getData: (index, callback)->
     url = Slider.getLink(index)
 
@@ -137,19 +174,23 @@ Slider =
     newIndex = Slider.currIndex + 1
 
     if newIndex < Slider.itemsCount
-      Slider.goToSlide(newIndex, 0.2)
+      Slider.goToSlide(newIndex, 0.5)
+    else
+      Slider.goToSlide(Slider.currIndex, 0.5)
 
   goToPrevSlide: ()->
     newIndex = Slider.currIndex - 1
 
     if newIndex >= 0
-      Slider.goToSlide(newIndex, 0.2)
+      Slider.goToSlide(newIndex, 0.5)
+    else
+      Slider.goToSlide(Slider.currIndex, 0.5)
 
   goToSlide: (index, duration)->
     duration = duration || 0
     cbca.slider.process = true
 
-    animationLength = -index*560
+    animationLength = -index*Slider.slideWidth
 
     $ '#indexSlider'
     .css 'transition-duration', duration+'s'
@@ -171,16 +212,28 @@ Slider =
 
     $wifiPoints.find '.js-wifi-point'
     .each ()->
-      html += '<div class="slider_i"><div class="slider_preloader"></div></div>'
+      html += '<div class="slider_i" style="height: 400px;"><div class="slider_preloader"></div></div>'
       Slider.itemsCount += 1
       Slider.cardStatus.push false
 
     Slider.$slider.append html
 
+    $ '.slider_i'
+    .each ()->
+      $this = $ this
+      Slider.setCardPosition $this
+      $this.height ''
+
   init: ()->
 
-    ##cbca.slider.phoneSlide()
+    cbca.slider.phoneSlide()
     Slider.setPreloaders()
+    Slider.updateSlideWidth()
+
+    $ document
+    .on 'click', '.js-close-slider', (e)->
+      e.preventDefault()
+      Slider.close()
 
     $ document
     .on 'click', '.slider_controls', (e)->
@@ -216,6 +269,15 @@ Slider =
             Slider.open(index)
             Slider.setData(data, index)
         )
+
+    $window = $ window
+
+    $window.resize ()->
+      Slider.updateSlideWidth()
+
+      if $window.width() < 1024
+        $window.scrollTop(0)
+
 
 
 
