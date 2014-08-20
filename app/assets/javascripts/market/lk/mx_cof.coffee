@@ -96,48 +96,47 @@ Slider =
       $card.css 'margin-top', minTop
 
   phoneSlide: ()->
-
-    delta       = 50 ## допустимая погрешность
     xStart      = 0
     yStart      = 0
     xEnd        = 0
     yEnd        = 0
     gorizontal  = false
+    move        = false
 
     $ document
     .on 'touchstart', '.card', (e)->
       gorizontal = false
+      move = false
       xStart = e.originalEvent.touches[0].pageX
       yStart = e.originalEvent.touches[0].pageY
 
     $ document
     .on 'touchmove', '.card', (e)->
-      xEnd = e.originalEvent.touches[0].pageX
-      yEnd = e.originalEvent.touches[0].pageY
+      x = e.originalEvent.touches[0].pageX
+      y = e.originalEvent.touches[0].pageY
 
-      yDelta = Math.abs(yEnd - yStart)
-      xDelta = xEnd - xStart
+      yDelta = Math.abs(y - yStart)
+      xDelta = x - xStart
 
-      if Math.abs(xDelta) > delta && yDelta < delta
+      console.log 'move = '+move
+      if !move && Math.abs(xDelta) > 5
         gorizontal = true
+
+      move = true
+      console.log 'gorizontal = '+gorizontal
+      if gorizontal
         e.preventDefault()
         e.stopPropagation()
 
-        if Math.abs(xDelta) > delta
-          animationLength = -Slider.currIndex*Slider.slideWidth + xDelta
-          $ '#indexSlider'
-          .css 'transition-duration', '0s'
-          .css '-webkit-transition-duration', '0s'
-          .css 'transform', "translate3d("+animationLength+"px,0,0)"
+        animationLength = -Slider.currIndex*Slider.slideWidth + xDelta
+        $ '#indexSlider'
+        .css 'transition-duration', '0s'
+        .css '-webkit-transition-duration', '0s'
+        .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     $ document
     .on 'touchend', '.card', (e)->
-      $card = $ this
-
       xEnd = e.originalEvent.changedTouches[0].pageX
-      yEnd = e.originalEvent.changedTouches[0].pageY
-
-      yDelta = Math.abs(yEnd - yStart)
       xDelta = xEnd - xStart
 
       if gorizontal
@@ -148,7 +147,7 @@ Slider =
         if xDelta > 0
           cbca.slider.goToPrevSlide()
 
-        if Math.abs(xDelta) < delta
+        if Math.abs(xDelta) < 50
           Slider.goToSlide(Slider.currIndex, 0.5)
 
   ## возвращает url для получения содержимого карточки по её номеру
