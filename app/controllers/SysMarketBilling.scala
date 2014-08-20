@@ -1,5 +1,6 @@
 package controllers
 
+import models.MBillContract.LegalContractId
 import util.PlayMacroLogsImpl
 import util.acl.IsSuperuser
 import models._
@@ -7,7 +8,7 @@ import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import views.html.sys1.market.billing._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -25,6 +26,13 @@ import util.billing.Billing
 object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /** При создании контракта дефолтовое значение суффикса. */
+  lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("sys.billing.contract.suffix.dflt") getOrElse "CEO"
+
+  /** Дефолтовое значение комиссии suggest.io в форме создания контракта. */
+  lazy val SIO_COMISSION_DFLT: Float = configuration.getDouble("sys.billing.contract.share.dflt").fold(0.30F)(_.toFloat)
+
 
   private val bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
@@ -94,7 +102,15 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   def createContractForm(adnId: String) = IsSuperuser.async { implicit request =>
     getNodeAndSupAsync(adnId) map {
       case Some((adnNode, supOpt)) =>
-        Ok(createContractFormTpl(adnNode, supOpt, contractFormM))
+        val mbcStub = MBillContract(
+          adnId = adnId,
+          contractDate = DateTime.now,
+          suffix = Some(CONTRACT_SUFFIX_DFLT),
+          isActive = true,
+          sioComission = SIO_COMISSION_DFLT
+        )
+        val formM = contractFormM fill mbcStub
+        Ok(createContractFormTpl(adnNode, supOpt, formM))
 
       case None => adnNodeNotFound(adnId)
     }
@@ -215,7 +231,23 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     * вставлять куски реквизитов платежа, а система сама разберётся по какому договору проводить
     * платеж. */
   def incomingPaymentForm = IsSuperuser { implicit request =>
-    Ok(createIncomingPaymentFormTpl(paymentFormM))
+    val paymentStub: (LegalContractId, MBillTxn) = {
+      val lci = LegalContractId(0, 0, None, "")
+      val now = DateTime.now
+      val txn = MBillTxn(
+        contractId = -1,
+        amount = 0,
+        datePaid = now,
+        txnUid = "",
+        dateProcessed = now,
+        paymentComment = "",
+        adId = None,
+        comissionPc = Some(SIO_COMISSION_DFLT)
+      )
+      (lci, txn)
+    }
+    val formM = paymentFormM fill paymentStub
+    Ok(createIncomingPaymentFormTpl(formM))
   }
 
   /** Сабмит формы добавления платежной транзакции. */
