@@ -44,11 +44,11 @@ trait SioImageUtilT {
   def MAX_OUT_FILE_SIZE_BYTES: Option[Int]
 
   /** Размывка для сокрытия артифактов. */
-  val GAUSSIAN_BLUG: Option[java.lang.Double] = None
+  def GAUSSIAN_BLUG: Option[java.lang.Double] = None
 
   /** Некое цветовое переплетение.
     * @see [[http://www.imagemagick.org/script/command-line-options.php#interlace]] */
-  val INTERLACING: Option[String] = Some("Plane")
+  def INTERLACING: Option[String] = Some("Plane")
 
   /**
    * Является ли файл картинкой?
