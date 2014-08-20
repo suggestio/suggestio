@@ -1870,6 +1870,9 @@ th.__bg-head
   &_logo-w
     display inline-block
     margin  -40px 20px 0
+    -webkit-backface-visibility   hidden
+    -moz-backface-visibility      hidden
+    -webkit-background-clip       padding-box
 
   &_logo
     position        relative
@@ -1881,6 +1884,9 @@ th.__bg-head
 
     text-decoration none
     border          4px solid white
+    -webkit-background-clip       padding-box
+    -webkit-backface-visibility   hidden
+    -moz-backface-visibility      hidden
     border-radius(50%)
 
     img
@@ -2048,8 +2054,10 @@ th.__bg-head
     margin      0 auto
 
   &_cnt
-    position  relative
-    width     8000px
+    position                      relative
+    width                         8000px
+    -webkit-backface-visibility   hidden
+    -moz-backface-visibility      hidden
 
   &_i
     float     left
