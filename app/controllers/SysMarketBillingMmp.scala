@@ -1,18 +1,18 @@
 package controllers
 
+import play.twirl.api.HtmlFormat
 import util.PlayMacroLogsImpl
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import views.html.sys1.market.billing.mmp.daily._
 import play.api.data._, Forms._
 import util.FormUtil._
 import util.acl._
 import play.api.mvc.AnyContent
-import play.api.templates.HtmlFormat
 import scala.concurrent.Future
 
 /**
@@ -24,6 +24,18 @@ import scala.concurrent.Future
 object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  // Дефолтовые значения для формы создания нового mmp-тарификатора.
+  lazy val MMP_CURRENCY_CODE_DFLT = configuration.getString("sys.mmp.daily.currency.code.dflt")
+    .fold(CurrencyCodeOpt.CURRENCY_CODE_DFLT)(_.toUpperCase)
+  lazy val MMP_WEEKDAY_DFLT     = configuration.getDouble("sys.mmp.daily.weekday.dflt").fold(1.0F)(_.toFloat)
+  lazy val MMP_WEEKEND_DFLT     = configuration.getDouble("sys.mmp.daily.weekend.dflt").fold(1.5F)(_.toFloat)
+  lazy val MMP_PRIME_DFLT       = configuration.getDouble("sys.mmp.daily.prime.dflt").fold(2.0F)(_.toFloat)
+  lazy val MMP_ON_START_PAGE_DFLT = configuration.getDouble("sys.mmp.daily.on.startPage.dflt").fold(4.0F)(_.toFloat)
+  lazy val MMP_ON_RCVR_CAT_DFLT = configuration.getDouble("sys.mmp.daily.on.rcvrCat.dflt").fold(2.0F)(_.toFloat)
+  lazy val MMP_CAL_ID_WEEKEND   = configuration.getString("sys.mmp.daily.calId.weekend") getOrElse ""
+  lazy val MMP_CAL_ID_PRIME     = configuration.getString("sys.mmp.daily.calId.prime") getOrElse MMP_CAL_ID_WEEKEND
+
 
   /** Маппинг формы для daly-тарификатора. */
   val mmpDailyFormM = {
@@ -62,17 +74,29 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     * @param contractId номер договора.
     */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    _createMmpDaily(mmpDailyFormM)
+    val mmpStub = MBillMmpDaily(
+      contractId    = -1,
+      currencyCode  = MMP_CURRENCY_CODE_DFLT,
+      mmpWeekday    = MMP_WEEKDAY_DFLT,
+      mmpWeekend    = MMP_WEEKEND_DFLT,
+      mmpPrimetime  = MMP_PRIME_DFLT,
+      onRcvrCat     = MMP_ON_RCVR_CAT_DFLT,
+      onStartPage   = MMP_ON_START_PAGE_DFLT,
+      weekendCalId  = MMP_CAL_ID_WEEKEND,
+      primeCalId    = MMP_CAL_ID_PRIME
+    )
+    val formM = mmpDailyFormM fill mmpStub
+    _createMmpDaily(formM)
       .map(Ok(_))
   }
 
-  private def _createMmpDaily(form: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
     val mcalsFut = MCalendar.getAll()
     for {
       adnNodeOpt <- MAdnNodeCache.getById(request.contract.adnId)
       mcals      <- mcalsFut
     } yield {
-      createMppDailyTpl(request.contract, mmpDailyFormM, adnNodeOpt, mcals)
+      createMppDailyTpl(request.contract, formM, adnNodeOpt, mcals)
     }
   }
 
@@ -150,6 +174,26 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
           .flashing("success" -> s"Изменения в тарифном плане #$mmpdId сохранены.")
       }
     )
+  }
+
+
+  /** Сабмит удаления mmp-тарификатора. */
+  def deleteMmpDailySubmit(mmpId: Int) = IsSuperuser { implicit request =>
+    // Нужно узнать adnId на который редиректить (из контракта) и удалить mmp-тарификатор.
+    val result = DB.withConnection { implicit c =>
+      val adnIdOpt = MBillMmpDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
+      val rowsDeleted = MBillMmpDaily.deleteById(mmpId)
+      (adnIdOpt, rowsDeleted)
+    }
+    val (adnIdOpt, rowsDeleted) = result
+    val flashInfo: (String, String) = rowsDeleted match {
+      case 1  =>  "success" -> s"Mmp-тарификатор #$mmpId удалён."
+      case 0  =>  "error"   -> s"Mmp-тарификатор #$mmpId НЕ НАЙДЕН."
+      case _  =>  "error"   -> s"Неизвестный результат операции для mmp#$mmpId: $rowsDeleted. Ожидалось 1 или 0."
+    }
+    val rdrCall = adnIdOpt.fold(routes.SysMarket.index()) { routes.SysMarketBilling.billingFor }
+    Redirect(rdrCall)
+      .flashing(flashInfo)
   }
 
 }

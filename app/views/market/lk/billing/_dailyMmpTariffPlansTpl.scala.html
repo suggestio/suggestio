@@ -37,7 +37,7 @@
               </label>
             </td>
             <td>
-              <strong class="color-strong">@audDescr</strong>
+              <strong class="color-strong">@Html(audDescr)</strong>
               <div class="border-line __margin-M"></div>
             </td>
           </tr>
@@ -70,9 +70,9 @@
             </td>
             <td>
               <strong class="color-strong">
-                @replaceEOLwithBR(address)
+                @Html(replaceEOLwithBR(address))
                 @adnNode.meta.phone.map { phone =>
-                тел. @phone
+                  тел. @phone
                 }
               </strong>
               <div class="border-line __margin-M"></div>
