@@ -538,7 +538,7 @@ siomLinkBtnColor5 = #9a9b9b
   color           white
 
   -webkit-appearance none
-  border-radius(10px)
+  border-radius(4px)
 
   &:hover
     background-color  white
@@ -584,7 +584,9 @@ siomLinkBtnColor5 = #9a9b9b
 @media screenForTransitions
 
   .siom-new-btn
-    transition(background 0.2s ease-in-out 0s)
+    -webkit-backface-visibility:  hidden
+    -moz-backface-visibility:     hidden
+    transition(background-color 0.2s ease-in-out 0s)
 
 @media screen768
 

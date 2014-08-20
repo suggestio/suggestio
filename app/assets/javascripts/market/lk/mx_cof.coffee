@@ -10,8 +10,10 @@ $(document).ready ->
 
 Slider =
 
+  $slider    : $ '#indexSlider'
   $window    : $ '.slider_window'
   itemsCount : 0
+  currIndex  : 0
 
   $currPoint : false
   prevLink   : false
@@ -20,14 +22,17 @@ Slider =
   left       : 0
 
 
-  open: ()->
+  open: (index)->
+    index = index || 0
+
     Slider.$window.show()
     Slider.setSliderHeight()
 
+    Slider.currIndex = index
+    Slider.setLinks()
+
   close: ()->
     Slider.$window.hide()
-    $ '#indexSlider'
-    .css 'transform', ''
 
   setSliderHeight: ()->
     $window       = $ window
@@ -56,6 +61,12 @@ Slider =
 
     return maxHeight
 
+  ## возвращает index добавленного элемента
+  addItem: (html, index)->
+
+    Slider.itemsCount += 1
+
+    Slider.$slider.append html
 
   phoneSlide: ()->
 
@@ -205,10 +216,8 @@ Slider =
       e.preventDefault()
       $this                   = $ this
       href                    = $this.attr 'href'
-      cbca.slider.$currPoint  = $this
-      popupId                 = $this.attr 'data-id'
 
-      if $this.data 'downdload'
+      if $this.data 'load'
         return false
 
       $.ajax(
@@ -216,21 +225,12 @@ Slider =
         success: (data)->
 
           $this.data(
-            'download', true
+            'load', true
           )
-
-          Slider.itemsCount += 1
           cbca.popup.hidePopup()
 
-          $ '#'+popupId
-          .remove()
-
-          $ '#indexSlider'
-          .append data
-
-          cbca.popup.showPopup '#'+popupId
-          cbca.slider.open()
-          cbca.slider.setLinks()
+          Slider.addItem(data)
+          Slider.open()
       )
 
 
