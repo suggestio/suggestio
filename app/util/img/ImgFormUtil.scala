@@ -460,7 +460,7 @@ object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   override val DOWNSIZE_HORIZ_PX: Integer  = Integer valueOf (current.configuration.getInt("img.orig.maxsize.h.px") getOrElse 2048)
   override val DOWNSIZE_VERT_PX:  Integer  = current.configuration.getInt("img.orig.maxsize.v.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
 
-  override val GAUSSIAN_BLUG: Option[lang.Double] = None
+  override def GAUSSIAN_BLUG: Option[lang.Double] = None
 }
 
 
