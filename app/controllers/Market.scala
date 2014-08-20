@@ -52,7 +52,7 @@ object Market extends SioController {
         mad.receivers.valuesIterator.exists(_.receiverId == martId)
       } foreach { mad =>
         StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
-        val adStat = MAdStat(
+        val adStat = new MAdStat(
           clientAddr  = request.remoteAddress,
           action      = action,
           ua          = request.headers.get(USER_AGENT),

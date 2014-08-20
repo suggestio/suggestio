@@ -408,10 +408,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     * @param a AdSearch
     * @param mads Список рекламных карточек.
     * @param statAction Какую пометку выставлять в поле stat action: клик или просмотр или ...
+    * @param withHeadAd аналог параметра h у focusedAds(). Его наличие для статистики означает,
+    *                   что в начале списка может быть карточка, по которой кликнули.
     * @param request Инстанс текущего реквеста.
     * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
     */
-  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction, gsi: Option[Future[Option[GeoSearchInfo]]] = None)
+  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction,
+                        gsi: Option[Future[Option[GeoSearchInfo]]] = None, withHeadAd: Boolean = false)
                        (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     if (mads.nonEmpty) {
@@ -439,9 +442,19 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val now = DateTime.now()
       val adIds = mads.flatMap(_.id)
       val adsCount = adIds.size
+      // Определяем карточку по которой кликнули: нужно проверсти онализ withHeadAd, списка карточек и списка id первых карточек.
+      val clickedAdIds = if (withHeadAd && a.forceFirstIds.nonEmpty) {
+        a.forceFirstIds
+          .find { firstAdId =>
+            mads.exists(_.id.exists(_ == firstAdId))
+          }
+          .toSeq
+      } else {
+        Nil
+      }
       val resultFut = gsiFut flatMap { gsiOpt =>
         adnNodeOptFut flatMap { adnNodeOpt =>
-          val adStat = MAdStat(
+          val adStat = new MAdStat(
             clientAddr  = ra,
             action      = statAction,
             adIds       = adIds,
@@ -458,7 +471,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser,
             clOSFamily  = agent.map(_.getOperatingSystem.getFamilyName),
             clAgent     = agent.map(_.getName),
-            clDevice    = agent.map(_.getDeviceCategory.getName)
+            clDevice    = agent.map(_.getDeviceCategory.getName),
+            clickedAdIds = clickedAdIds,
+            generation  = a.generation
           )
           adStat.save
         }
@@ -526,7 +541,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Когда поступят карточки, нужно сохранить по ним статистику.
     mads2Fut onSuccess { case mads =>
-      saveStats(adSearch, mads, AdStatActions.Click)
+      saveStats(adSearch, mads, AdStatActions.Click, withHeadAd = h)
     }
     // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>
