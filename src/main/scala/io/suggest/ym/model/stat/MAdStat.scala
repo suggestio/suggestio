@@ -58,6 +58,8 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
   val CL_OS_FAMILY_ESFN         = "osFamily"
   val CL_AGENT_ESFN             = "browser"
   val CL_DEVICE_ESFN            = "device"
+  val CLICKED_AD_ID_ESFN        = "clickedAdId"
+  val GENERATION_ESFN           = "gen"
 
 
   /** Через сколько времени удалять записи статистики. */
@@ -205,7 +207,7 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
       action      = m.get(ACTION_ESFN).fold(AdStatActions.View) { asaRaw => AdStatActions.withName(stringParser(asaRaw)) },
       adIds       = {
         m.get(AD_ID_ESFN).fold (Seq.empty[String]) {
-          case adIdsRaw: jl.Iterable[_] => adIdsRaw.toSeq.map(stringParser)
+          case adIdsRaw: jl.Iterable[_] => strListParser(adIdsRaw)
           case other => Seq(stringParser(other))
         }
       },
@@ -223,6 +225,8 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
       clOSFamily  = m.get(CL_OS_FAMILY_ESFN).map(stringParser),
       clAgent     = m.get(CL_AGENT_ESFN).map(stringParser),
       clDevice    = m.get(CL_DEVICE_ESFN).map(stringParser),
+      clickedAdIds = m.get(CLICKED_AD_ID_ESFN).fold(Seq.empty[String])(strListParser),
+      generation  = m.get(GENERATION_ESFN).map(longParser),
       id          = id
     )
   }
@@ -255,31 +259,35 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
     FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(CL_OS_FAMILY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
     FieldString(CL_AGENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(CL_DEVICE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+    FieldString(CL_DEVICE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldString(CLICKED_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(GENERATION_ESFN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.analyzed, include_in_all = false)
   )
 }
 
 import MAdStat._
 
-case class MAdStat(
-  clientAddr  : String,
-  action      : AdStatAction,
-  adIds       : Seq[String],
-  adsRendered : Int,
-  isLocalCl   : Boolean,
-  onNodeIdOpt : Option[String],
-  ua          : Option[String],
-  nodeName    : Option[String] = None,
-  personId    : Option[String] = None,
-  timestamp   : DateTime = new DateTime,
-  clIpGeo     : Option[GeoPoint] = None,
-  clTown      : Option[String] = None,
-  clGeoLoc    : Option[GeoPoint] = None,
-  clCountry   : Option[String] = None,
-  clOSFamily  : Option[String] = None,
-  clAgent     : Option[String] = None,
-  clDevice    : Option[String] = None,
-  id          : Option[String] = None
+class MAdStat(
+  val clientAddr  : String,
+  val action      : AdStatAction,
+  val adIds       : Seq[String],
+  val adsRendered : Int,
+  val isLocalCl   : Boolean,
+  val onNodeIdOpt : Option[String],
+  val ua          : Option[String],
+  val nodeName    : Option[String]    = None,
+  val personId    : Option[String]    = None,
+  val timestamp   : DateTime          = new DateTime,
+  val clIpGeo     : Option[GeoPoint]  = None,
+  val clTown      : Option[String]    = None,
+  val clGeoLoc    : Option[GeoPoint]  = None,
+  val clCountry   : Option[String]    = None,
+  val clOSFamily  : Option[String]    = None,
+  val clAgent     : Option[String]    = None,
+  val clDevice    : Option[String]    = None,
+  val clickedAdIds : Seq[String]      = Nil,
+  val generation  : Option[Long]      = None,
+  val id          : Option[String]    = None
 ) extends EsModelT {
 
   override type T = MAdStat
@@ -317,6 +325,10 @@ case class MAdStat(
       acc1 ::= CL_AGENT_ESFN -> JsString(clAgent.get)
     if (clDevice.isDefined)
       acc1 ::= CL_DEVICE_ESFN -> JsString(clDevice.get)
+    if (clickedAdIds.nonEmpty)
+      acc1 ::= CLICKED_AD_ID_ESFN -> JsArray(clickedAdIds.map(JsString.apply))
+    if (generation.isDefined)
+      acc1 ::= GENERATION_ESFN -> JsNumber(generation.get)
     acc1
   }
 
