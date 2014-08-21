@@ -1514,7 +1514,7 @@ siomart =
         if cbca_grid.ww >= 660
           siomart.utils.addClass _b, 'double-size'
           _block_width = _block_width*2
-          padding = 22
+          padding = 0
         else
           siomart.utils.removeClass _b, 'double-size'
           padding = 0
@@ -1915,7 +1915,7 @@ siomart =
 
     this.utils.set_vendor_prefix()
 
-    siomart.geo.init()
+    #siomart.geo.init()
     siomart.load_mart()
 
 window.siomart = siomart
