@@ -169,6 +169,7 @@ object StatUtil extends PlayMacroLogsImpl {
         maxAge = STAT_UID_COOKIE_MAXAGE_SECONDS,
         httpOnly = true
       )
+      trace(s"Adding statuid $statUid cookie for ${request.remoteAddress}")
       result.withCookies(statCookie)
     }
   }
