@@ -106,9 +106,6 @@ Slider =
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
 
-    console.log cardHeight
-    console.log containerHeight
-
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - cardHeight)/2 )
       $card.css 'margin-top', top
@@ -138,7 +135,7 @@ Slider =
       yDelta = Math.abs(y - yStart)
       xDelta = x - xStart
 
-      if !move && Math.abs(xDelta) > 5
+      if !move && Math.abs(xDelta) > yDelta
         gorizontal = true
 
       move = true
