@@ -168,6 +168,21 @@ Slider =
         callback(data)
     )
 
+  updateControls: ()->
+    if Slider.currIndex == 0
+      $ '.__left-arrow'
+      .hide()
+    else
+      $ '.__left-arrow'
+      .show()
+
+    if Slider.currIndex == Slider.itemsCount - 1
+      $ '.__right-arrow'
+      .hide()
+    else
+      $ '.__right-arrow'
+      .show()
+
   ## навигация по слайдам
   goToNextSlide: ()->
     newIndex = Slider.currIndex + 1
@@ -197,6 +212,9 @@ Slider =
     .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     Slider.currIndex = index
+
+    Slider.updateControls()
+
     if !Slider.cardStatus[index]
       Slider.getData(
         index
