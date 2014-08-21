@@ -21,7 +21,8 @@ Slider =
   open: (index)->
     index = index || 0
 
-    CbcaPopup.showOverlay()
+    $ '.slider-w'
+    .show()
     Slider.$window.show()
     Slider.setSliderHeight()
     Slider.goToSlide(index)
@@ -30,19 +31,25 @@ Slider =
     if $window.width() < 1024
       $window.scrollTop(0)
 
+
   close: ()->
+    $ '.slider-w'
+    .hide()
     Slider.$window.hide()
 
   updateSlideWidth: ()->
     $window = $ window
-    if $window.width() < 768
-      Slider.slideWidth = 320
+    if $window.width() <= 1024
+      Slider.slideWidth = $window.width()
     else
       Slider.slideWidth = 560
 
     Slider.$slider
     .find '.slider_i'
     .width Slider.slideWidth
+
+    Slider.setPhoneScrolling()
+    Slider.goToSlide(Slider.currIndex, 0)
 
   setSliderHeight: ()->
     $window       = $ window
@@ -52,7 +59,7 @@ Slider =
     itemMaxHeight > winHeight && winHeight = itemMaxHeight
     Slider.$window.height winHeight
 
-    if $window.width() < 767
+    if $window.width() <= 1024
       Slider.$window.height ''
 
   getMaxHeightOfItems: ()->
@@ -82,9 +89,19 @@ Slider =
     Slider.setSliderHeight()
     Slider.setCardPosition $card
 
+  setPhoneScrolling: ()->
+    $window = $ window
+    windowHeight = $window.height()
+
+    $ '.overflow-scrolling'
+    .height windowHeight
+    $ '.card-w'
+    .css 'min-height', windowHeight+1
+
   setCardPosition: ($card)->
     $window = $ window
     minTop  = 25
+    $card = $card.find '.card'
     cardHeight = $card.height()
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
@@ -104,26 +121,24 @@ Slider =
     move        = false
 
     $ document
-    .on 'touchstart', '.card', (e)->
+    .on 'touchstart', '.slider_i', (e)->
       gorizontal = false
       move = false
       xStart = e.originalEvent.touches[0].pageX
       yStart = e.originalEvent.touches[0].pageY
 
     $ document
-    .on 'touchmove', '.card', (e)->
+    .on 'touchmove', '.slider_i', (e)->
       x = e.originalEvent.touches[0].pageX
       y = e.originalEvent.touches[0].pageY
 
       yDelta = Math.abs(y - yStart)
       xDelta = x - xStart
 
-      console.log 'move = '+move
-      if !move && Math.abs(xDelta) > 5
+      if !move && Math.abs(xDelta) > yDelta
         gorizontal = true
 
       move = true
-      console.log 'gorizontal = '+gorizontal
       if gorizontal
         e.preventDefault()
         e.stopPropagation()
@@ -135,7 +150,7 @@ Slider =
         .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     $ document
-    .on 'touchend', '.card', (e)->
+    .on 'touchend', '.slider_i', (e)->
       xEnd = e.originalEvent.changedTouches[0].pageX
       xDelta = xEnd - xStart
 
@@ -168,6 +183,21 @@ Slider =
         callback(data)
     )
 
+  updateControls: ()->
+    if Slider.currIndex == 0
+      $ '.__left-arrow'
+      .hide()
+    else
+      $ '.__left-arrow'
+      .show()
+
+    if Slider.currIndex == Slider.itemsCount - 1
+      $ '.__right-arrow'
+      .hide()
+    else
+      $ '.__right-arrow'
+      .show()
+
   ## навигация по слайдам
   goToNextSlide: ()->
     newIndex = Slider.currIndex + 1
@@ -197,12 +227,20 @@ Slider =
     .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     Slider.currIndex = index
+
+    Slider.updateControls()
+
     if !Slider.cardStatus[index]
       Slider.getData(
         index
         (data)->
           Slider.setData(data, index)
       )
+    else
+      $card = Slider.$slider
+      .find '.slider_i'
+      .eq index
+      Slider.setCardPosition $card
 
   ## добавляем прелоадеры по количеству точек
   setPreloaders: ()->
@@ -211,7 +249,7 @@ Slider =
 
     $wifiPoints.find '.js-wifi-point'
     .each ()->
-      html += '<div class="slider_i" style="height: 400px;"><div class="slider_preloader"></div></div>'
+      html += '<div class="slider_i flex overflow-scrolling" style="height: 400px;"><div class="slider_preloader"></div></div>'
       Slider.itemsCount += 1
       Slider.cardStatus.push false
 
@@ -228,6 +266,7 @@ Slider =
     cbca.slider.phoneSlide()
     Slider.setPreloaders()
     Slider.updateSlideWidth()
+    Slider.setPhoneScrolling()
 
     $ document
     .on 'click', '.js-close-slider', (e)->
@@ -272,6 +311,7 @@ Slider =
     $window = $ window
 
     $window.resize ()->
+      Slider.setPhoneScrolling()
       Slider.updateSlideWidth()
 
       if $window.width() < 1024
@@ -730,7 +770,7 @@ CbcaPopup =
     cbca.popup.$container.css 'visibility', 'visible'
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       cbca.popup.$container.show()
 
   hideOverlay: () ->
@@ -740,7 +780,7 @@ CbcaPopup =
     cbca.slider.close()
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       cbca.popup.$container.hide()
 
   setPopupPosition: (popupSelector) ->
@@ -756,7 +796,10 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > minTop*2 && $window.width() > 768
+    console.log popupHeight
+    console.log containerHeight
+
+    if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
@@ -778,22 +821,21 @@ CbcaPopup =
 
     if $images.size()
       $images.on 'load', () ->
-        cbca.popup.setPopupPosition popupSelector
         cbca.popup.showOverlay()
-
+        cbca.popup.setPopupPosition popupSelector
     else
-      cbca.popup.setPopupPosition popupSelector
       cbca.popup.showOverlay()
+      cbca.popup.setPopupPosition popupSelector
 
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       $window.scrollTop(0)
 
   phoneScroll: ()->
     $window = $ window
 
-    if $window.width() < 1024
+    if $window.width() <= 1024
       windowHeight = $window.height()
 
       $ '.overflow-scrolling'
@@ -842,7 +884,7 @@ CbcaPopup =
       e.stopPropagation()
 
     ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
-    $ '.popup .__error, .js-popup .__error'
+    $ '.popup .__error, .js-popup .__error, .js-popup .error-msg'
     .each ()->
       $this = $ this
       $popup = $this.closest '.popup'

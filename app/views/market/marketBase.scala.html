@@ -32,7 +32,7 @@
 
   <div class="popups-container" id="popups">
     <div class="flex overflow-scrolling">
-      <div class="flex @if(ctx.isIpad){ overflow-scrolling }" >
+      <div class="flex overflow-scrolling" >
         <div id="popupsContainer">
           @* Попап с формой логина *@
           @if(!ctx.isAuth) {
@@ -53,20 +53,20 @@
 
           @popupContent
 
-          <div class="slider_window">
-
-            <div class="slider_cnt" id="indexSlider"></div>
-
-            <div class="slider_controls">
-
-              <a class="slider_control __left-arrow icon-icomoon"></a>
-              <a class="slider_control __right-arrow icon-icomoon"></a>
-
-            </div>
-
-          </div>
-
         </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div class="slider-w">
+    <div class="slider_window">
+      <div class="slider_cnt" id="indexSlider"></div>
+
+      <div class="slider_controls">
+        <a class="slider_control __left-arrow icon-icomoon"></a>
+        <a class="slider_control __right-arrow icon-icomoon"></a>
       </div>
 
     </div>
