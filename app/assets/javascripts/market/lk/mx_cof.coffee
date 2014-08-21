@@ -860,7 +860,7 @@ CbcaPopup =
       e.stopPropagation()
 
     ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
-    $ '.popup .__error, .js-popup .__error'
+    $ '.popup .__error, .js-popup .__error, .js-popup .error-msg'
     .each ()->
       $this = $ this
       $popup = $this.closest '.popup'
