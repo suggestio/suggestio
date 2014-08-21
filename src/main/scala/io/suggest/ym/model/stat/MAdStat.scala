@@ -60,6 +60,8 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
   val CL_DEVICE_ESFN            = "device"
   val CLICKED_AD_ID_ESFN        = "clickedAdId"
   val GENERATION_ESFN           = "gen"
+  val CL_OS_VERSION_ESFN        = "osVsn"
+  val CL_UID_ESFN               = "clUID"
 
 
   /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */
@@ -227,6 +229,8 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
       clDevice    = m.get(CL_DEVICE_ESFN).map(stringParser),
       clickedAdIds = m.get(CLICKED_AD_ID_ESFN).fold(Seq.empty[String])(strListParser),
       generation  = m.get(GENERATION_ESFN).map(longParser),
+      clOsVsn     = m.get(CL_OS_VERSION_ESFN).map(stringParser),
+      clUid       = m.get(CL_UID_ESFN).map(stringParser),
       id          = id
     )
   }
@@ -240,32 +244,40 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
   )
 
   /** Маппинги для типа этой модели. */
-  override def generateMappingProps: List[DocField] = List(
-    FieldString(CLIENT_ADDR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldString(ACTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(UA_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldString(AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldNumber(ADS_RENDERED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, fieldType = DocFieldTypes.integer),
-    FieldString(ON_NODE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = false),
-    FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldGeoPoint(CLIENT_IP_GEO_EFSN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
-      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "5km")),
-    FieldString(CLIENT_TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldGeoPoint(CLIENT_GEO_LOC_ESFN, geohash = true, geohashPrecision = "6", geohashPrefix = true,
-      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "10m")),
-    FieldString(NODE_NAME_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(CL_OS_FAMILY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(CL_AGENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(CL_DEVICE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(CLICKED_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldNumber(GENERATION_ESFN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.analyzed, include_in_all = false)
-  )
+  override def generateMappingProps: List[DocField] = {
+    import FieldIndexingVariants._, GeoPointFieldDataFormats._, DocFieldTypes._
+    List(
+      FieldString(CLIENT_ADDR_ESFN, index = analyzed, include_in_all = true),
+      FieldString(ACTION_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(UA_ESFN, index = analyzed, include_in_all = true),
+      FieldString(AD_ID_ESFN, index = not_analyzed, include_in_all = false),
+      FieldNumber(ADS_RENDERED_ESFN, index = analyzed, include_in_all = true, fieldType = integer),
+      FieldString(ON_NODE_ID_ESFN, index = not_analyzed, include_in_all = false),
+      FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = false),
+      FieldString(PERSON_ID_ESFN, index = not_analyzed, include_in_all = false),
+      FieldGeoPoint(CLIENT_IP_GEO_EFSN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
+        fieldData = GeoPointFieldData(format = compressed, precision = "5km")),
+      FieldString(CLIENT_TOWN_ESFN, index = analyzed, include_in_all = true),
+      FieldGeoPoint(CLIENT_GEO_LOC_ESFN, geohash = true, geohashPrecision = "6", geohashPrefix = true,
+        fieldData = GeoPointFieldData(format = compressed, precision = "10m")),
+      FieldString(NODE_NAME_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(COUNTRY_ESFN, index = not_analyzed, include_in_all = true),
+      FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(CL_OS_FAMILY_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(CL_AGENT_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(CL_DEVICE_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(CLICKED_AD_ID_ESFN, index = not_analyzed, include_in_all = false),
+      FieldNumber(GENERATION_ESFN, fieldType = long, index = analyzed, include_in_all = false),
+      FieldString(CL_OS_VERSION_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(CL_UID_ESFN, index = not_analyzed, include_in_all = false)
+    )
+  }
+
 }
 
+
 import MAdStat._
+
 
 class MAdStat(
   val clientAddr  : String,
@@ -287,6 +299,8 @@ class MAdStat(
   val clDevice    : Option[String]    = None,
   val clickedAdIds : Seq[String]      = Nil,
   val generation  : Option[Long]      = None,
+  val clOsVsn     : Option[String]    = None,
+  val clUid       : Option[String]    = None,
   val id          : Option[String]    = None
 ) extends EsModelT {
 
@@ -329,6 +343,10 @@ class MAdStat(
       acc1 ::= CLICKED_AD_ID_ESFN -> JsArray(clickedAdIds.map(JsString.apply))
     if (generation.isDefined)
       acc1 ::= GENERATION_ESFN -> JsNumber(generation.get)
+    if (clOsVsn.isDefined)
+      acc1 ::= CL_OS_VERSION_ESFN -> JsString(clOsVsn.get)
+    if (clUid.isDefined)
+      acc1 ::= CL_UID_ESFN -> JsString(clUid.get)
     acc1
   }
 
