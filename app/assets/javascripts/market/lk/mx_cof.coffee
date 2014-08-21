@@ -8,6 +8,15 @@ $(document).ready ->
   cbca.popup.init()
   cbca.slider.init()
 
+isTouchDevice = () ->
+  if document.ontouchstart != null
+    false
+  else
+    if navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+      false
+    else
+      true
+
 Slider =
 
   $slider    : $ '#indexSlider'
@@ -247,9 +256,14 @@ Slider =
     html = ''
     $wifiPoints = $ '#wifiPoints'
 
+    if isTouchDevice()
+      wrapClass = 'slider_i flex overflow-scrolling'
+    else
+      wrapClass = 'slider_i flex'
+
     $wifiPoints.find '.js-wifi-point'
     .each ()->
-      html += '<div class="slider_i flex overflow-scrolling" style="height: 400px;"><div class="slider_preloader"></div></div>'
+      html += '<div class="'+wrapClass+'" style="height: 400px;"><div class="slider_preloader"></div></div>'
       Slider.itemsCount += 1
       Slider.cardStatus.push false
 
@@ -308,8 +322,16 @@ Slider =
             Slider.setData(data, index)
         )
 
-    $window = $ window
+    $ document
+    .on 'click', '.slider-w', (e)->
+      e.preventDefault()
+      Slider.close()
 
+    $ document
+    .on 'click', '.card', (e)->
+      e.stopPropagation()
+
+    $window = $ window
     $window.resize ()->
       Slider.setPhoneScrolling()
       Slider.updateSlideWidth()

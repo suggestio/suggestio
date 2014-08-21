@@ -30,6 +30,8 @@ object Context {
 
   val isIpadRe = "iPad".r.unanchored
 
+  val isIphoneRe = "iPhone".r.unanchored
+
   val MY_AUDIENCE_URL = controllers.Ident.AUDIENCE_URL
 }
 
@@ -84,6 +86,12 @@ trait Context {
   lazy val isIpad: Boolean = {
     userAgent.exists { ua =>
       Context.isIpadRe.pattern.matcher(ua).find()
+    }
+  }
+
+  lazy val isIphone: Boolean = {
+    userAgent.exists { ua =>
+      Context.isIphoneRe.pattern.matcher(ua).find()
     }
   }
 
