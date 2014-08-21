@@ -21,7 +21,8 @@ Slider =
   open: (index)->
     index = index || 0
 
-    CbcaPopup.showOverlay()
+    $ '.slider-w'
+    .show()
     Slider.$window.show()
     Slider.setSliderHeight()
     Slider.goToSlide(index)
@@ -30,7 +31,10 @@ Slider =
     if $window.width() < 1024
       $window.scrollTop(0)
 
+
   close: ()->
+    $ '.slider-w'
+    .hide()
     Slider.$window.hide()
 
   updateSlideWidth: ()->
@@ -85,6 +89,7 @@ Slider =
   setCardPosition: ($card)->
     $window = $ window
     minTop  = 25
+    $card = $card.find '.card'
     cardHeight = $card.height()
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
@@ -94,6 +99,12 @@ Slider =
       $card.css 'margin-top', top
     else
       $card.css 'margin-top', minTop
+
+    windowHeight = $window.height()
+    $ '.overflow-scrolling'
+    .height windowHeight
+    $ '.card-w'
+    .css 'min-height', windowHeight+1
 
   phoneSlide: ()->
     xStart      = 0
@@ -229,7 +240,7 @@ Slider =
 
     $wifiPoints.find '.js-wifi-point'
     .each ()->
-      html += '<div class="slider_i" style="height: 400px;"><div class="slider_preloader"></div></div>'
+      html += '<div class="slider_i flex overflow-scrolling" style="height: 400px;"><div class="slider_preloader"></div></div>'
       Slider.itemsCount += 1
       Slider.cardStatus.push false
 
