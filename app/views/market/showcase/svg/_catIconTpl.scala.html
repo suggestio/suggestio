@@ -1,12 +1,15 @@
-@(color:String = "fff")
+@(cssClass:Option[String],color:String = "fff")
 
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="116px" height="116px" viewBox="0 0 116 116" enable-background="new 0 0 116 116" xml:space="preserve">
-<circle fill="none" stroke="#@color" stroke-width="2" stroke-miterlimit="10" cx="56.86" cy="59.028" r="25.139"/>
-<line fill="none" stroke="#@color" stroke-width="2" stroke-miterlimit="10" x1="16" y1="48" x2="16" y2="92"/>
-<path fill="none" stroke="#@color" stroke-width="2" stroke-miterlimit="10" d="M24,31v10.25c0,3.839-3.137,6.75-6.977,6.75h-1.738
-	C11.446,48,8,45.089,8,41.25V31"/>
-<line fill="none" stroke="#@color" stroke-width="2" stroke-miterlimit="10" x1="99" y1="50" x2="99" y2="92"/>
-<path fill="none" stroke="#@color" stroke-width="2" stroke-miterlimit="10" d="M106,44.047c0,3.84-3.112,6.953-6.952,6.953h-2.096
-	C93.112,51,90,47.887,90,44.047V33.953C90,30.113,93.112,27,96.952,27h2.096c3.84,0,6.952,3.113,6.952,6.953V44.047z"/>
-</svg>
+@cssClass match {
+  case Some("sm-restraunts") => {@_restrauntsIconTpl(color)}
+  case Some("sm-food") =>       {@_foodIconTpl(color)}
+  case Some("sm-cosmetics") =>  {@_cosmeticsIconTpl(color)}
+  case Some("sm-boots") =>      {@_bootsIconTpl(color)}
+  case Some("sm-clothing") =>   {@_clothingIconTpl(color)}
+  case Some("sm-sports") =>     {@_sportsIconTpl(color)}
+  case Some("sm-for-home") =>   {@_forHomeIconTpl(color)}
+  case Some("sm-travel") =>     {@_travelIconTpl(color)}
+  case Some("sm-electronics") =>{@_electronicsIconTpl(color)}
+
+  case Some(name) => {@name}
+}

@@ -2,22 +2,19 @@
 
 @stuff.scrollableContainerTpl( "sm-shops", "smShops" ){
   @args.shops.values.groupBy(_.meta.name.head.toUpper).mapValues(_.toSeq.sortBy(_.meta.name)).toIndexedSeq.sortBy(_._1).zipWithIndex.map { case ((letter, mshops), i) =>
-    <div class="item">
+    <div class="shops-list">
 
-      <div class="letter">
-        @letter
+      <div class="shops-list_row @if(i%2 == 0){__even}">
+        <div class="shops-list_letter">@letter</div>
       </div>
 
-      @mshops.map { mshop =>
-      <span class="shop js-shop-link" data-producer-id="@mshop.id">
+      @mshops.zipWithIndex.map { case (mshop,si) =>
+      <div class="shops-list_row @if((i+si+1)%2 == 0){__even} js-shop-link" data-producer-id="@mshop.id">
         @mshop.meta.name
-      </span>
+      </div>
       }
 
     </div>
 
-    @if( ((i+1) % 3) == 0 ){
-    <div class="sm-shops-list__delimiter"></div>
-    }
   }
 }

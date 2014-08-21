@@ -517,6 +517,8 @@ siomart =
         siomart.focused_ads.fit()
         siomart.focused_ads.show_ad_by_index siomart.focused_ads.active_ad_index
 
+        siomart.grid_ads.adjust_dom()
+
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
     this.utils.add_single_listener window, 'resize', resize_cb
@@ -928,11 +930,6 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
         siomart.navigation_layer.close()
         siomart.search.exit()
-
-      if siomart.events.target_lookup( event.target, 'id', 'smCloseSearchButton' ) != null
-        siomart.search.exit()
-
-
 
       ##############
       ## focused_ads

@@ -298,6 +298,23 @@ code
     z-index: 10
   &_name
     padding: 0px 0px 10px 0px
+
+
+.shops-list
+  font-family: 'opensans-regular-webfont'
+  width: 100%
+  text-align:center
+  color: #b1b0b0
+  &_letter
+    border: 2px #fff solid
+    border-radius( 5px )
+    display: inline-block
+    padding: 5px 10px
+  &_row
+    padding: 10px 0px
+    &.__even
+     background: default_color_w_opacity
+
 /*
 ------------------------------------*/
 .sm-search-bar
@@ -313,10 +330,6 @@ code
     height: 34px
     &.__active
       border-color: red
-
-      .sm-search-bar_close
-        display: block
-
   &_wrapper
     padding: 0px 5px
 
@@ -332,15 +345,6 @@ code
     background: red
     font-family: 'opensans-regular-webfont'
     z-index: 10
-
-  &_close
-    display: none
-    width: 34px
-    height: 34px
-    position: absolute
-    right: 0px
-    top: 0px
-    background: red
 
   &_input
     width: 100%

@@ -6,7 +6,7 @@
     <span class="categories-list_single-cat categorie js-cat-link @if(index%4 == 0){__no-margin} @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
 
       <div class="categorie_icon __@mmcat.cssClass">
-        @svg._catIconTpl()
+        @svg._catIconTpl( mmcat.cssClass )
       </div>
 
       <div class="categorie_name">@mmcat.name</div>
