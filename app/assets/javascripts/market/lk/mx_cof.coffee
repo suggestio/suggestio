@@ -33,7 +33,6 @@ Slider =
     $ '.slider-w'
     .show()
     Slider.$window.show()
-    Slider.setSliderHeight()
     Slider.goToSlide(index)
 
     $window = $ window
@@ -95,8 +94,16 @@ Slider =
 
     $card.html html
     Slider.cardStatus[index] = true
-    Slider.setSliderHeight()
-    Slider.setCardPosition $card
+
+    $images = $card.find 'img'
+
+    if $images.size()
+      $images.on 'load', () ->
+        Slider.setSliderHeight()
+        Slider.setCardPosition $card
+    else
+      Slider.setSliderHeight()
+      Slider.setCardPosition $card
 
   setPhoneScrolling: ()->
     $window = $ window
@@ -112,6 +119,7 @@ Slider =
     minTop  = 25
     $card = $card.find '.card'
     cardHeight = $card.height()
+
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
 
