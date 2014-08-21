@@ -39,14 +39,17 @@ Slider =
 
   updateSlideWidth: ()->
     $window = $ window
-    if $window.width() < 768
-      Slider.slideWidth = 320
+    if $window.width() <= 1024
+      Slider.slideWidth = $window.width()
     else
       Slider.slideWidth = 560
 
     Slider.$slider
     .find '.slider_i'
     .width Slider.slideWidth
+
+    Slider.setPhoneScrolling()
+    Slider.goToSlide(Slider.currIndex, 0)
 
   setSliderHeight: ()->
     $window       = $ window
@@ -56,7 +59,7 @@ Slider =
     itemMaxHeight > winHeight && winHeight = itemMaxHeight
     Slider.$window.height winHeight
 
-    if $window.width() < 767
+    if $window.width() <= 1024
       Slider.$window.height ''
 
   getMaxHeightOfItems: ()->
@@ -86,6 +89,15 @@ Slider =
     Slider.setSliderHeight()
     Slider.setCardPosition $card
 
+  setPhoneScrolling: ()->
+    $window = $ window
+    windowHeight = $window.height()
+
+    $ '.overflow-scrolling'
+    .height windowHeight
+    $ '.card-w'
+    .css 'min-height', windowHeight+1
+
   setCardPosition: ($card)->
     $window = $ window
     minTop  = 25
@@ -94,17 +106,14 @@ Slider =
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
 
+    console.log cardHeight
+    console.log containerHeight
+
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - cardHeight)/2 )
       $card.css 'margin-top', top
     else
       $card.css 'margin-top', minTop
-
-    windowHeight = $window.height()
-    $ '.overflow-scrolling'
-    .height windowHeight
-    $ '.card-w'
-    .css 'min-height', windowHeight+1
 
   phoneSlide: ()->
     xStart      = 0
@@ -115,26 +124,24 @@ Slider =
     move        = false
 
     $ document
-    .on 'touchstart', '.card', (e)->
+    .on 'touchstart', '.slider_i', (e)->
       gorizontal = false
       move = false
       xStart = e.originalEvent.touches[0].pageX
       yStart = e.originalEvent.touches[0].pageY
 
     $ document
-    .on 'touchmove', '.card', (e)->
+    .on 'touchmove', '.slider_i', (e)->
       x = e.originalEvent.touches[0].pageX
       y = e.originalEvent.touches[0].pageY
 
       yDelta = Math.abs(y - yStart)
       xDelta = x - xStart
 
-      console.log 'move = '+move
       if !move && Math.abs(xDelta) > 5
         gorizontal = true
 
       move = true
-      console.log 'gorizontal = '+gorizontal
       if gorizontal
         e.preventDefault()
         e.stopPropagation()
@@ -146,7 +153,7 @@ Slider =
         .css 'transform', "translate3d("+animationLength+"px,0,0)"
 
     $ document
-    .on 'touchend', '.card', (e)->
+    .on 'touchend', '.slider_i', (e)->
       xEnd = e.originalEvent.changedTouches[0].pageX
       xDelta = xEnd - xStart
 
@@ -232,6 +239,11 @@ Slider =
         (data)->
           Slider.setData(data, index)
       )
+    else
+      $card = Slider.$slider
+      .find '.slider_i'
+      .eq index
+      Slider.setCardPosition $card
 
   ## добавляем прелоадеры по количеству точек
   setPreloaders: ()->
@@ -257,6 +269,7 @@ Slider =
     cbca.slider.phoneSlide()
     Slider.setPreloaders()
     Slider.updateSlideWidth()
+    Slider.setPhoneScrolling()
 
     $ document
     .on 'click', '.js-close-slider', (e)->
@@ -301,6 +314,7 @@ Slider =
     $window = $ window
 
     $window.resize ()->
+      Slider.setPhoneScrolling()
       Slider.updateSlideWidth()
 
       if $window.width() < 1024
@@ -759,7 +773,7 @@ CbcaPopup =
     cbca.popup.$container.css 'visibility', 'visible'
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       cbca.popup.$container.show()
 
   hideOverlay: () ->
@@ -769,7 +783,7 @@ CbcaPopup =
     cbca.slider.close()
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       cbca.popup.$container.hide()
 
   setPopupPosition: (popupSelector) ->
@@ -785,7 +799,10 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > minTop*2 && $window.width() > 768
+    console.log popupHeight
+    console.log containerHeight
+
+    if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
@@ -807,22 +824,21 @@ CbcaPopup =
 
     if $images.size()
       $images.on 'load', () ->
-        cbca.popup.setPopupPosition popupSelector
         cbca.popup.showOverlay()
-
+        cbca.popup.setPopupPosition popupSelector
     else
-      cbca.popup.setPopupPosition popupSelector
       cbca.popup.showOverlay()
+      cbca.popup.setPopupPosition popupSelector
 
 
     $window = $ window
-    if $window.width() < 1024
+    if $window.width() <= 1024
       $window.scrollTop(0)
 
   phoneScroll: ()->
     $window = $ window
 
-    if $window.width() < 1024
+    if $window.width() <= 1024
       windowHeight = $window.height()
 
       $ '.overflow-scrolling'

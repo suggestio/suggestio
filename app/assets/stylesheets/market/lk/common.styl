@@ -1942,6 +1942,35 @@ th.__bg-head
     font-size 16px
 
 
+@media screen1024
+
+  .slider-w
+    position                    absolute
+    top                         0
+    bottom                      -30px
+    height                      auto
+    -webkit-overflow-scrolling  touch
+
+  .popups-container
+    position                    absolute
+    top                         0
+    bottom                      -30px
+    height                      auto
+    -webkit-overflow-scrolling  touch
+
+  .flex
+    width                       100%
+    -webkit-box-orient          vertical
+    -webkit-box-align           stretch
+    -webkit-box-flex            1
+    display                     -webkit-flex
+    -webkit-justify-content     center
+
+  .overflow-scrolling
+    -webkit-overflow-scrolling  touch
+    overflow-y                  scroll
+    margin-bottom               -1px
+
 @media screen768
 
   .body_cnt
@@ -1963,32 +1992,6 @@ th.__bg-head
   .card
     width 300px
 
-  .popups-container
-    position                    absolute
-    top                         0
-    bottom                      -30px
-    height                      auto
-    -webkit-overflow-scrolling  touch
-
-  .slider-w
-    position                    absolute
-    top                         0
-    bottom                      -30px
-    height                      auto
-    -webkit-overflow-scrolling  touch
-
-  .flex
-    width                       100%
-    -webkit-box-orient          vertical
-    -webkit-box-align           stretch
-    -webkit-box-flex            1
-    display                     -webkit-flex
-    -webkit-justify-content     center
-
-  .overflow-scrolling
-    -webkit-overflow-scrolling  touch
-    overflow-y                  scroll
-    margin-bottom               -1px
 
 
 /********************************************************************************************************************/
@@ -2120,12 +2123,21 @@ th.__bg-head
     &:before
       content ""
 
+
+@media screen1024
+
+  .slider_window
+    width 100%
+
+  .slider_control.__left-arrow
+     left 10%
+
+  .slider_control.__right-arrow
+     right 10%
+
 @media screen768
 
   .slider
-
-    &_window
-      width     320px
 
     &_controls
       display none
