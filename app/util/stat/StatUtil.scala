@@ -8,7 +8,7 @@ import javax.crypto.spec.SecretKeySpec
 import play.api.Play.{current, configuration}
 
 import org.apache.commons.codec.binary.Base64
-import play.api.mvc.RequestHeader
+import play.api.mvc.{Cookie, Result, RequestHeader}
 import util.PlayMacroLogsImpl
 
 /**
@@ -31,6 +31,9 @@ object StatUtil extends PlayMacroLogsImpl {
 
   /** Названия куки, которое содержит id клиента для сбора статистики. */
   val STAT_UID_COOKIE_NAME = configuration.getString("stat.uid.cookie.name") getOrElse "statid"
+
+  /** maxAge для куки. По умолчанию - до конца сессии. */
+  val STAT_UID_COOKIE_MAXAGE_SECONDS: Option[Int] = configuration.getInt("stat.uid.cookie.maxAge.seconds")
 
   /** Используемый крипто-провайдера. Дефолтовый в частности. */
   private val CRYPTO_PROVIDER_STR = configuration.getString("stat.uid.crypto.provider")
@@ -152,6 +155,22 @@ object StatUtil extends PlayMacroLogsImpl {
   def requestHasAnyCookie(implicit request: RequestHeader): Boolean = {
     request.cookies
       .exists(_.name == STAT_UID_COOKIE_NAME)
+  }
+  
+  /** Добавить stat-куку в результат запроса. */
+  def resultWithStatCookie(result: Result)(implicit request: RequestHeader): Result = {
+    if (StatUtil.requestHasAnyCookie) {
+      result
+    } else {
+      val statUid = mkUidCookieValue()
+      val statCookie = Cookie(
+        name = STAT_UID_COOKIE_NAME,
+        value = statUid,
+        maxAge = STAT_UID_COOKIE_MAXAGE_SECONDS,
+        httpOnly = true
+      )
+      result.withCookies(statCookie)
+    }
   }
 
 }

@@ -305,13 +305,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   private def renderShowcase(args: SMShowcaseRenderArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
     val html = indexTpl(args)
     val result = jsonOk("showcaseIndex", Some(html))
-    if (StatUtil.requestHasAnyCookie) {
-      result
-    } else {
-      val statUid = StatUtil.mkUidCookieValue()
-      val statCookie = Cookie(StatUtil.STAT_UID_COOKIE_NAME, statUid, maxAge = None, httpOnly = true)
-      result.withCookies(statCookie)
-    }
+    StatUtil.resultWithStatCookie(result)
   }
 
 
