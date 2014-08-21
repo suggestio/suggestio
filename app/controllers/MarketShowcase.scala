@@ -1,14 +1,12 @@
 package controllers
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.GeoDistanceQuery
-import net.sf.uadetector.service.UADetectorServiceFactory
-import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
@@ -24,10 +22,8 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Call, Result, AnyContent}
+import play.api.mvc.{Cookie, Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
-
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -62,7 +58,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       6
     }
   }
-
 
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
@@ -241,8 +236,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         shops       = shops,
         welcomeAdOpt = waOpt
       )
-      val html = indexTpl(args)
-      jsonOk("showcaseIndex", Some(html))
+      renderShowcase(args)
     }
   }
 
@@ -302,11 +296,23 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         ),
         oncloseHref = ONCLOSE_HREF_DFLT
       )
-      val html = indexTpl(args)
-      jsonOk("showcaseIndex", Some(html))
+      renderShowcase(args)
     }
   }
 
+
+  /** Готовы данные для рендера showcase indexTpl. Сделать это и прочие сопутствующие операции. */
+  private def renderShowcase(args: SMShowcaseRenderArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
+    val html = indexTpl(args)
+    val result = jsonOk("showcaseIndex", Some(html))
+    if (StatUtil.requestHasAnyCookie) {
+      result
+    } else {
+      val statUid = StatUtil.mkUidCookieValue()
+      val statCookie = Cookie(StatUtil.STAT_UID_COOKIE_NAME, statUid, maxAge = None, httpOnly = true)
+      result.withCookies(statCookie)
+    }
+  }
 
 
   private def getCats(adnIdOpt: Option[String]) = {
@@ -395,7 +401,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
       adSearch2Fut onSuccess { case adSearch2 =>
-        saveStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
+        AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
       }
     }
     // Асинхронно рендерим результат.
@@ -403,95 +409,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       jsonOk(jsAction, blocks = madsRendered)
     }
   }
-
-  /** Создать и сохранить статистику для указанных карточек. Сохранение идёт в фоне, остальное в текущем потоке.
-    * @param a AdSearch
-    * @param mads Список рекламных карточек.
-    * @param statAction Какую пометку выставлять в поле stat action: клик или просмотр или ...
-    * @param withHeadAd аналог параметра h у focusedAds(). Его наличие для статистики означает,
-    *                   что в начале списка может быть карточка, по которой кликнули.
-    * @param request Инстанс текущего реквеста.
-    * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
-    */
-  private def saveStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction,
-                        gsi: Option[Future[Option[GeoSearchInfo]]] = None, withHeadAd: Boolean = false)
-                       (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
-    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
-    if (mads.nonEmpty) {
-      // Запускаем асинхронные задачи:
-      val gsiFut = gsi getOrElse GeoIp.geoSearchInfo
-      val onNodeIdOpt = a.receiverIds
-        .headOption
-        .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
-      val adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
-      // Синхронно парсим юзер-агент, затем заполняем данными новый экземпляр MAdStat.
-      val uaOpt = request.headers.get(USER_AGENT).filter(!_.isEmpty)
-      val agent = uaOpt.flatMap { ua =>
-        // try-catch для самозащиты от возможных багов в православной либе uadetector.
-        try {
-          val uaParser = UADetectorServiceFactory.getResourceModuleParser
-          Some(uaParser.parse(ua))
-        } catch {
-          case ex: Throwable =>
-            warn("saveStats(): Unable to use UADetector for parsing UA: " + ua, ex)
-            None
-        }
-      }
-      val personId = request.pwOpt.map(_.personId)
-      val ra = request.remoteAddress
-      val now = DateTime.now()
-      val adIds = mads.flatMap(_.id)
-      val adsCount = adIds.size
-      // Определяем карточку по которой кликнули: нужно проверсти онализ withHeadAd, списка карточек и списка id первых карточек.
-      val clickedAdIds = if (withHeadAd && a.forceFirstIds.nonEmpty) {
-        a.forceFirstIds
-          .find { firstAdId =>
-            mads.exists(_.id.exists(_ == firstAdId))
-          }
-          .toSeq
-      } else {
-        Nil
-      }
-      val resultFut = gsiFut flatMap { gsiOpt =>
-        adnNodeOptFut flatMap { adnNodeOpt =>
-          val adStat = new MAdStat(
-            clientAddr  = ra,
-            action      = statAction,
-            adIds       = adIds,
-            adsRendered = adsCount,
-            onNodeIdOpt = onNodeIdOpt,
-            nodeName    = adnNodeOpt.map(_.meta.name),
-            ua          = uaOpt,
-            personId    = personId,
-            timestamp   = now,
-            clIpGeo     = gsiOpt.flatMap(_.ipGeopoint),
-            clTown      = gsiOpt.flatMap(_.cityName),
-            clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
-            clCountry   = gsiOpt.flatMap(_.countryIso2),
-            isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser,
-            clOSFamily  = agent.map(_.getOperatingSystem.getFamilyName),
-            clAgent     = agent.map(_.getName),
-            clDevice    = agent.map(_.getDeviceCategory.getName),
-            clickedAdIds = clickedAdIds,
-            generation  = a.generation
-          )
-          adStat.save
-        }
-      }
-      // Вешаем логгирование результатов на запущенный реквест.
-      resultFut onComplete {
-        case Success(adStatId) =>
-          trace(s"saveStats(): Saved successful: id = $adStatId for $adsCount ads.")
-        case Failure(ex) =>
-          error(s"saveStats(): Failed to save statistics for $adsCount ads", ex)
-      }
-      // Возвращаем фьючерс.
-      resultFut
-    } else {
-      Future successful None
-    }
-  }
-
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.
@@ -541,7 +458,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Когда поступят карточки, нужно сохранить по ним статистику.
     mads2Fut onSuccess { case mads =>
-      saveStats(adSearch, mads, AdStatActions.Click, withHeadAd = h)
+      AdStatUtil.saveAdStats(adSearch, mads, AdStatActions.Click, withHeadAd = h)
     }
     // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>

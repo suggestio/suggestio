@@ -16,6 +16,7 @@ lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
 scalaVersion := "2.10.4"
+//scalaVersion := "2.11.1"
 
 libraryDependencies ++= Seq(
   jdbc, 
