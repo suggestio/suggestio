@@ -77,7 +77,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
         .map { StatUtil.uuidToBase64 }
       val resultFut = gsiFut flatMap { gsiOpt =>
         adnNodeOptFut flatMap { adnNodeOpt =>
-          val agentOs = agent.map(_.getOperatingSystem)
+          val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
           val adStat = new MAdStat(
             clientAddr  = ra,
             action      = statAction,
@@ -93,14 +93,20 @@ object AdStatUtil extends PlayMacroLogsImpl {
             clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
             clCountry   = gsiOpt.flatMap(_.countryIso2),
             isLocalCl   = gsiOpt.fold(false)(_.isLocalClient) || request.isSuperuser,
-            clOSFamily  = agentOs.map(_.getFamilyName),
-            clAgent     = agent.map(_.getName),
-            clDevice    = agent.map(_.getDeviceCategory.getName),
+            clOSFamily  = agentOs.flatMap { os => Option(os.getFamilyName) },
+            clAgent     = agent.flatMap { _agent => Option(_agent.getName) },
+            clDevice    = agent
+              .flatMap { _agent => Option(_agent.getDeviceCategory) }
+              .flatMap { dc => Option(dc.getName) },
             clickedAdIds = clickedAdIds,
             generation  = a.generation,
-            clOsVsn     = agentOs.map(_.getVersionNumber.getMajor),
+            clOsVsn     = agentOs
+              .flatMap { os => Option(os.getVersionNumber) }
+              .flatMap { vsn => Option(vsn.getMajor) }
+              .filter(!_.isEmpty),
             clUid       = clUidOpt
           )
+          //trace(s"Saving MAdStat with: clOsVsn=${adStat.clOsVsn} clUid=${adStat.clUid}")
           adStat.save
         }
       }
