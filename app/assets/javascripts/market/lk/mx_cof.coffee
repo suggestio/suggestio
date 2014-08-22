@@ -17,6 +17,34 @@ isTouchDevice = () ->
     else
       true
 
+IndexPage =
+
+  centeredContent: ()->
+    minTop = 60
+    delta = 100
+    $window = $ window
+    $cnt = $ '#centerContent'
+    winHeight = $window.height()
+    cntHeight = $cnt.height()
+    diff = winHeight - cntHeight
+
+    if diff > minTop*2+delta
+      top = Math.ceil(diff/2) - delta
+    else
+      top = minTop
+
+    $cnt.css 'padding-top',top
+
+  init: ()->
+
+    $window = $ window
+    $window.resize ()->
+      if $window.width() >= 768
+        IndexPage.centeredContent()
+
+IndexPage.init()
+
+
 Slider =
 
   $slider    : $ '#indexSlider'
@@ -64,7 +92,7 @@ Slider =
     winHeight     = $window.height()
     itemMaxHeight = Slider.getMaxHeightOfItems()
 
-    itemMaxHeight > winHeight && winHeight = itemMaxHeight
+    itemMaxHeight > winHeight && winHeight = itemMaxHeight+50 ## отсупы от краев
     Slider.$window.height winHeight
 
     if $window.width() <= 1024
@@ -77,7 +105,7 @@ Slider =
 
     maxHeight = 0
     Slider.$window
-    .find '.slider_i'
+    .find '.card'
     .each ()->
       $item       = $ this
       itemHeight  = $item.height()
@@ -125,9 +153,9 @@ Slider =
 
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - cardHeight)/2 )
-      $card.css 'margin-top', top
+      $card.css 'top', top
     else
-      $card.css 'margin-top', minTop
+      $card.css 'top', minTop
 
   phoneSlide: ()->
     xStart      = 0
@@ -347,6 +375,7 @@ Slider =
     $window.resize ()->
       Slider.setPhoneScrolling()
       Slider.updateSlideWidth()
+      Slider.setSliderHeight()
 
       if $window.width() < 1024
         $window.scrollTop(0)
