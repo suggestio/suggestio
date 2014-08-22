@@ -830,6 +830,8 @@ CbcaPopup =
   showOverlay: () ->
     this.$body.addClass 'ovh'
     cbca.popup.$container.css 'visibility', 'visible'
+    $ '#popupsContainer'
+    .css 'visibility', 'visible'
 
     $window = $ window
     if $window.width() <= 1024
@@ -838,6 +840,8 @@ CbcaPopup =
   hideOverlay: () ->
     this.$body.removeClass 'ovh'
     cbca.popup.$container.css 'visibility', 'hidden'
+    $ '#popupsContainer'
+    .css 'visibility', 'hidden'
 
     cbca.slider.close()
 
