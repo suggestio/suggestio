@@ -27,20 +27,18 @@ IndexPage =
     winHeight = $window.height()
     cntHeight = $cnt.height()
     diff = winHeight - cntHeight
+    top = Math.ceil(diff/2) - delta
 
-    if diff > minTop*2+delta
-      top = Math.ceil(diff/2) - delta
-    else
+    if top < minTop
       top = minTop
 
     $cnt.css 'padding-top',top
 
   init: ()->
-
+    IndexPage.centeredContent()
     $window = $ window
     $window.resize ()->
-      if $window.width() >= 768
-        IndexPage.centeredContent()
+      IndexPage.centeredContent()
 
 IndexPage.init()
 
@@ -151,7 +149,7 @@ Slider =
     containerHeight = $window.height()
     diffHeight = containerHeight - cardHeight
 
-    if diffHeight > minTop*2 && $window.width() > 767
+    if diffHeight > minTop*2 && $window.width() > 320
       top = Math.ceil( (containerHeight - cardHeight)/2 )
       $card.css 'top', top
     else
