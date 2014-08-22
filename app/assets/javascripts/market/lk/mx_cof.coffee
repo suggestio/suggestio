@@ -147,13 +147,11 @@ Slider =
     cardHeight = $card.height()
 
     containerHeight = $window.height()
-    diffHeight = containerHeight - cardHeight
+    top = Math.ceil( (containerHeight - cardHeight)/2 )
 
-    if diffHeight > minTop*2 && $window.width() > 320
-      top = Math.ceil( (containerHeight - cardHeight)/2 )
-      $card.css 'top', top
-    else
-      $card.css 'top', minTop
+    if top < minTop || $window.width() <= 320
+      top = minTop
+    $card.css 'top', top
 
   phoneSlide: ()->
     xStart      = 0
@@ -856,9 +854,6 @@ CbcaPopup =
     popupHeight = $popup.height()
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
-
-    console.log popupHeight
-    console.log containerHeight
 
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - popupHeight)/2 )
