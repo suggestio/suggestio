@@ -1678,10 +1678,10 @@ siomart =
 
         if tab == t
           tab_content_dom.style.display = 'block'
-          siomart.utils.addClass tab_dom, '__active'
+          siomart.utils.removeClass tab_dom, '__inactive'
         else
           tab_content_dom.style.display = 'none'
-          siomart.utils.removeClass tab_dom, '__active'
+          siomart.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
 

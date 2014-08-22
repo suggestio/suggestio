@@ -268,9 +268,9 @@ code
   border-radius(5px)
   padding: 10px 0px
   text-align: center
-  &.__active
-    border-color: #fff
-    color: #fff
+  &.__inactive
+    border-color: transparent!important
+    opacity: 0.6!important
 
 .sm-categories
   background: default_color
@@ -453,10 +453,11 @@ code
       padding: 0px
 
   .categories-list
-    width: 300px
+    width: 280px
 
   .categorie
-    width: 90px
+    width: 73px
+    height: 70px
     margin-left: 15px
     &_icon
       width: 58px
