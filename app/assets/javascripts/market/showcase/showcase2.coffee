@@ -870,10 +870,12 @@ siomart =
       ## Обработка событий для открытия / закрытия экрана выхода
       if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'block'
+        siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
+        siomart.utils.ge('smGridAds').style.webkitFilter = ""
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreenContainer' ) != null
@@ -882,6 +884,7 @@ siomart =
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreen' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
+        siomart.utils.ge('smGridAds').style.webkitFilter = ""
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
@@ -1070,15 +1073,20 @@ siomart =
           siomart.grid_ads.load_more()
 
     adjust_dom : () ->
+
        grid_ads = siomart.utils.ge('smGridAds')
        grid_ads_wrapper = siomart.utils.ge('smGridAdsWrapper')
        grid_ads_content = siomart.utils.ge('smGridAdsContent')
 
-       console.log cbca_grid.wh
 
-       grid_ads.style.height = cbca_grid.wh
-       grid_ads_wrapper.style.height = cbca_grid.wh
-       grid_ads_content.style.minHeight = cbca_grid.wh + 1
+       es = siomart.utils.ge('smCloseScreen')
+       es_wrapper = siomart.utils.ge('smCloseScreenWrapper')
+       es_content = siomart.utils.ge('smCloseScreenContent')
+
+
+       grid_ads.style.height = es.style.height = cbca_grid.wh
+       grid_ads_wrapper.style.height = es_wrapper.style.height = cbca_grid.wh
+       grid_ads_content.style.minHeight = es_content.style.minHeight = cbca_grid.wh + 1
 
     load_more : () ->
 
@@ -1676,6 +1684,7 @@ siomart =
           siomart.utils.removeClass tab_dom, '__active'
 
     close : ( all_except_search ) ->
+
       if all_except_search == true
         siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
       else
@@ -1820,7 +1829,7 @@ siomart =
     hide : () ->
       if this.img_dom == null
         return false
-      siomart.utils.addClass siomart.welcome_ad.img_dom, 'sm-welcome-ad__img_fade-out'
+      siomart.utils.addClass siomart.welcome_ad.img_dom, '__fade-out'
 
       dn_cb = () ->
         siomart.welcome_ad.img_dom.style.display = 'none'
@@ -1833,12 +1842,7 @@ siomart =
       if this.img_dom == null
         return false
 
-      if siomart.is_market_loaded == true
-        this.img_dom.style.display = 'none'
-        return false
-
       this.fit this.img_dom
-
       setTimeout siomart.welcome_ad.hide, this.hide_timeout
 
   ##################################################

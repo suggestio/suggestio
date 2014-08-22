@@ -21,16 +21,16 @@
 <div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
   <span id="smRootProducerHeaderButtons">
   <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="smExitButton">
-    @svg._exitButtonTpl()
+    @svg._exitButtonTpl( args.fgColor )
   </div>
 
   <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
-    @svg._indexAdsButtonTpl()
+    @svg._indexAdsButtonTpl( args.fgColor )
   </div>
 
   @if( args.catsStats.nonEmpty ){
   <div class="sm-button sm-producer-header_btn __right-aligned abs"  id="smNavigationLayerButton">
-    @svg._searchButtonTpl()
+    @svg._searchButtonTpl( args.fgColor )
   </div>
   }
   </span>
@@ -38,7 +38,7 @@
   <img class="sm-producer-header_logo" height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg =>@routes.Img.getImg(logoImg.filename)}.getOrElse{@routes.Assets.at("images/market/showcase-logo.png")}"/>
 
   <div class="sm-producer-header_icon">
-    @svg._catHeaderIcon()
+    @svg._catHeaderIcon( args.fgColor )
   </div>
 
 </div>
@@ -52,6 +52,6 @@
 }
 
 @* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(args.oncloseHref)
+@_exit_screen(args)
 
 <div class="sm-loading" id="smLoading"></div>
