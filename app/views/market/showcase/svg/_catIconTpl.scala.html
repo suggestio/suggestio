@@ -10,6 +10,8 @@
   case Some("sm-for-home") =>   {@_forHomeIconTpl(color)}
   case Some("sm-travel") =>     {@_travelIconTpl(color)}
   case Some("sm-electronics") =>{@_electronicsIconTpl(color)}
+  case Some("sm-services") =>   {@_serviceIconTpl(color)}
 
-  case Some(name) => {@name}
+  case Some(_) =>               {@_serviceIconTpl(color)}
+  case None =>                  {@_serviceIconTpl(color)}
 }
