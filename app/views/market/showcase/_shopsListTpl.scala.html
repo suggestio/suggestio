@@ -1,15 +1,15 @@
 @(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
 
-@stuff.scrollableContainerTpl( "sm-shops", "smShops", stuff._bgcolor( args.bgColor ).toString ){
+@stuff.scrollableContainerTpl( "sm-shops", "smShops", stuff._bgcolor( args.bgColor, false ).toString ){
   @args.shops.values.groupBy(_.meta.name.head.toUpper).mapValues(_.toSeq.sortBy(_.meta.name)).toIndexedSeq.sortBy(_._1).zipWithIndex.map { case ((letter, mshops), i) =>
     <div class="shops-list">
 
-      <div class="shops-list_row @if(i%2 == 0){__even}">
+      <div class="shops-list_row @if(i%2 == 0){__even}" style="@stuff._bgcolor( args.bgColor ); opacity: 0.8;">
         <div class="shops-list_letter">@letter</div>
       </div>
 
       @mshops.zipWithIndex.map { case (mshop,si) =>
-      <div class="shops-list_row @if((i+si+1)%2 == 0){__even} js-shop-link" data-producer-id="@mshop.id">
+      <div class="shops-list_row @if((i+si+1)%2 == 0){__even} js-shop-link"  style="@stuff._bgcolor( args.bgColor ); opacity: 0.8;" data-producer-id="@mshop.id">
         @mshop.meta.name
       </div>
       }

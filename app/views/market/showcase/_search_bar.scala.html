@@ -1,10 +1,10 @@
-@(bgColor: String)(implicit ctx:util.Context)
+@(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-search-bar" id="smSearchBar" style="@stuff._bgcolor( bgColor )">
+<div class="sm-search-bar" id="smSearchBar" style="@stuff._bgcolor( args.bgColor )">
 
-  <div class="sm-search-bar_field" id="smSearch" style="@stuff._bgcolor( bgColor, true, 0.5 ); border-color: #@bgColor;">
+  <div class="sm-search-bar_field" id="smSearch" style="@stuff._bgcolor( args.bgColor, true, 0.5 ); border-color: #@args.fgColor;">
     <div class="sm-search-bar_wrapper">
       <input class="sm-search-bar_input" id="smSearchField" type="text" placeholder="Быстрый поиск по предложениям"/>
     </div>
@@ -12,3 +12,38 @@
   </div>
 
 </div>
+
+<style type="text/css">
+
+  .sm-search-bar_input::-webkit-input-placeholder {
+    color:    #@args.fgColor;
+  }
+  .sm-search-bar_input:-moz-placeholder {
+    color:    #@args.fgColor;
+    opacity:  1;
+  }
+  .sm-search-bar_input::-moz-placeholder {
+    color:    #@args.fgColor;
+    opacity:  1;
+  }
+
+  .sm-search-bar_field.__active {
+    background: #@args.fgColor;
+  }
+
+  .sm-search-bar_field.__active .sm-search-bar_input
+  {
+    color:#@args.bgColor;
+  }
+  .sm-search-bar_field.__active .sm-search-bar_input::-webkit-input-placeholder {
+    color:    #@args.bgColor;
+  }
+  .sm-search-bar_field.__active .sm-search-bar_input:-moz-placeholder {
+    color:    #@args.bgColor;
+  }
+  .sm-search-bar_field.__active .sm-search-bar_input::-moz-placeholder {
+    color:    #@args.bgColor;
+  }
+
+
+</style>

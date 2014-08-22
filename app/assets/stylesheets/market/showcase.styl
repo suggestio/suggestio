@@ -206,7 +206,7 @@ code
   &_cnt
     position: absolute
     left: 0px
-    top: 0px
+    top: 50px
     width: 100%
     height: 50%
     min-height: 260px
@@ -214,7 +214,7 @@ code
 
   &_exit
     left: 7px
-    top: 5px
+    top: -45px
 
   &_message
     text-align: center
@@ -264,11 +264,12 @@ code
 
 
   &_tabs
-    height: 54px
+    height: 52px
     background: default_color_w_opacity
   &_tabs-wrapper
+    width: 100%
     position: relative
-    padding: 0px 22px
+    margin: 0px auto
   &_single-tab
     width: 50%
     height: 41px
@@ -279,17 +280,13 @@ code
     cursor: pointer
 
 .sm-tab
-  border: 1px transparent solid
   color: #959595
-  border-radius(5px)
-  padding: 10px 0px
+  padding: 17px 0px
   text-align: center
-  &.__inactive
-    border-color: transparent!important
-    opacity: 0.6!important
-
-.sm-categories
   background: default_color
+  &.__inactive
+    background: none!important
+    opacity: 0.6!important
 
 
 .categories-list
@@ -354,7 +351,10 @@ code
     width: 100%
     height: 34px
     &.__active
-      border-color: red
+      background: #fff!important
+      .sm-search-bar_input
+        background: #fff
+
   &_wrapper
     padding: 0px 5px
 
@@ -380,6 +380,8 @@ code
 
 /*
 ------------------------------------*/
+.sm-categories
+  background: default_color
 .sm-shops
   display: none
   background: default_color
