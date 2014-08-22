@@ -1,3 +1,4 @@
+import io.suggest.model.geo
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
@@ -152,7 +153,7 @@ package object models {
 
   type Imgs_t               = EMImg.Imgs_t
 
-  type GeoPoint             = io.suggest.ym.model.common.GeoPoint
-  val  GeoPoint             = io.suggest.ym.model.common.GeoPoint
+  type GeoPoint             = geo.GeoPoint
+  val  GeoPoint             = geo.GeoPoint
 
 }

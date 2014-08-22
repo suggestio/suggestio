@@ -1,12 +1,13 @@
 package models
 
 import java.net.InetAddress
-import io.suggest.ym.model.common.{Distance, GeoDistanceQuery}
+import io.suggest.model.geo
+import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.cache.Cache
 import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.RequestHeader
+import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import scala.concurrent.{Future, future}
@@ -31,6 +32,30 @@ object GeoMode {
       case other => GeoNone
     }
   }
+
+  /** Биндер для набега на GeoMode, сериализованный в qs. */
+  implicit def geoModeQsb(implicit strOptB: QueryStringBindable[Option[String]]) = {
+    import util.qsb.QsbUtil._
+
+    new QueryStringBindable[GeoMode] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GeoMode]] = {
+        for {
+          maybeGeo <- strOptB.bind(key, params)
+        } yield {
+          Right(GeoMode(maybeGeo))
+        }
+      }
+
+      override def unbind(key: String, value: GeoMode): String = {
+        strOptB.unbind(key, value.toQsStringOpt)
+      }
+    }
+  }
+
+  implicit def eitherGeoMode2gm(e: Either[String, GeoMode]): GeoMode = {
+    e.right getOrElse GeoNone
+  }
+
 }
 
 
@@ -49,13 +74,13 @@ sealed trait GeoMode {
    */
   def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
 
-  def exactGeodata: Option[GeoPoint]
+  def exactGeodata: Option[geo.GeoPoint]
 }
 
 
 trait GeoSearchInfo {
   /** Географическая точка, заданная координатами и описывающая клиента. */
-  def geoPoint: GeoPoint
+  def geoPoint: geo.GeoPoint
   /** Сборка запроса для геопоиска относительно точки.. */
   def geoDistanceQuery: GeoDistanceQuery
   /** Название города. */
@@ -63,9 +88,9 @@ trait GeoSearchInfo {
   /** Двухбуквенный код страны. */
   def countryIso2: Option[String]
   /** Точная геолокация клиента, если есть. */
-  def exactGeopoint: Option[GeoPoint]
+  def exactGeopoint: Option[geo.GeoPoint]
   /** Координаты точки, которая набегает */
-  def ipGeopoint: Option[GeoPoint]
+  def ipGeopoint: Option[geo.GeoPoint]
   /** Является ли браузер клиента частью cbca? */
   def isLocalClient: Boolean
 }
@@ -160,7 +185,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     }   // Cache
   }
 
-  override def exactGeodata: Option[GeoPoint] = None
+  override def exactGeodata: Option[geo.GeoPoint] = None
 }
 
 
@@ -182,7 +207,7 @@ case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
 
   override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     val result = new GeoSearchInfo {
-      override def geoPoint: GeoPoint = gl.geopoint
+      override def geoPoint: geo.GeoPoint = gl.geopoint
       override def geoDistanceQuery = GeoDistanceQuery(
         center      = gl.geopoint,
         distanceMin = None,
@@ -193,7 +218,7 @@ case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
         val ra = GeoIp.getRemoteAddr
         GeoIp.ip2rangeCity(ra)
       }
-      override def ipGeopoint: Option[GeoPoint] = {
+      override def ipGeopoint: Option[geo.GeoPoint] = {
         ipGeoloc map { _.city.geoPoint }
       }
       override def cityName = ipGeoloc.map(_.city.cityName)

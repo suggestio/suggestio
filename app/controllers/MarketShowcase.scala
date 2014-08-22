@@ -1,12 +1,12 @@
 package controllers
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import io.suggest.model.geo.GeoDistanceQuery
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.ym.model.common.GeoDistanceQuery
 import play.api.i18n.Messages
 import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
@@ -505,6 +505,30 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         http404AdHoc
     }
   }
+
+
+  /** Поиск узлов в рекламной выдаче. */
+  def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
+    val tstamp = System.currentTimeMillis()
+    for {
+      sargs <- args.toSearchArgs
+      nodes <- MAdnNode.dynSearch(sargs)
+    } yield {
+      val rendered = nodes map { adnNode =>
+        JsObject(Seq(
+          "name"  -> JsString(adnNode.meta.name),
+          "_id"   -> JsString(adnNode.id.getOrElse(""))
+        ))
+      }
+      val respBody = JsObject(Seq(
+        "status"    -> JsString("ok"),
+        "nodes"     -> JsArray(rendered),
+        "timestamp" -> JsNumber(tstamp)
+      ))
+      Ok(respBody)
+    }
+  }
+
 
 
   /** Параллельный рендер scala-списка блоков на основе списка рекламных карточек.

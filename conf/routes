@@ -187,6 +187,8 @@ GET  /market/ads                        controllers.MarketShowcase.findAds(a: Ad
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 
 GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
+# Поиск по узлам
+GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 
 
 # Сбор статистики.

@@ -63,6 +63,9 @@ libraryDependencies ++= Seq(
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
   // webjars
+  // geo
+  "com.spatial4j" % "spatial4j" % "0.4.+",
+  "com.vividsolutions" % "jts" % "1.13",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // test

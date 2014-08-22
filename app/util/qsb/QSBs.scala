@@ -13,12 +13,11 @@ import models._
 object QsbUtil {
 
   implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
-    e match {
-      case Left(_) => None
-      case Right(b) => b
-    }
+    e.fold({_ => None}, identity)
   }
+
 }
+
 
 object QSBs {
 

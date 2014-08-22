@@ -1,6 +1,8 @@
 package util
 
+import io.suggest.model.geo.{Distance, GeoPoint}
 import org.apache.commons.lang3.StringEscapeUtils
+import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
@@ -135,6 +137,22 @@ object FormUtil {
   val adnShownTypeIdOptM: Mapping[Option[String]] = {
     adnShownTypeOptM
       .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
+  }
+
+  /** Единицы расстояния. */
+  def distanceUnitsM: Mapping[DistanceUnit] = {
+    nonEmptyText(minLength = 1, maxLength = 16)
+      .transform[DistanceUnit] (DistanceUnit.fromString, _.toString)
+  }
+
+  /** Дистанция. */
+  def distanceM: Mapping[Distance] = {
+    mapping(
+      "value" -> doubleM,
+      "units" -> distanceUnitsM
+    )
+    { Distance.apply }
+    { Distance.unapply }
   }
 
 
