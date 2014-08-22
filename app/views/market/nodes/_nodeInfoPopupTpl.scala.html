@@ -9,13 +9,14 @@
     <div class="card-w">
 
       <div class="card" id="@adnNode.id">
-        <div class="popup_header __index">
+        <div class="popup_header __card">
           <a class="popup_close f-right icon-icomoon js-close-slider"></a>
         </div>
 
         <div class="card_photo-w">
           @adnNode.gallery.headOption.map { filename =>
-            <img class="card_photo" src='@routes.Img.getImg(filename)' alt="@Messages("Photo")"/>
+            <div class="card_photo" style="background-image: url(@routes.Img.getImg(filename));"></div>
+
           }
           <div class="card_logo-w">
             <a class="card_logo" style="background-color: #@adnNode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
