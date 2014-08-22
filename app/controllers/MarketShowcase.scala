@@ -507,6 +507,30 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
+  /** Поиск узлов в рекламной выдаче. */
+  def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
+    val tstamp = System.currentTimeMillis()
+    for {
+      sargs <- args.toSearchArgs
+      nodes <- MAdnNode.dynSearch(sargs)
+    } yield {
+      val rendered = nodes map { adnNode =>
+        JsObject(Seq(
+          "name"  -> JsString(adnNode.meta.name),
+          "_id"   -> JsString(adnNode.id.getOrElse(""))
+        ))
+      }
+      val respBody = JsObject(Seq(
+        "status"    -> JsString("ok"),
+        "nodes"     -> JsArray(rendered),
+        "timestamp" -> JsNumber(tstamp)
+      ))
+      Ok(respBody)
+    }
+  }
+
+
+
   /** Параллельный рендер scala-списка блоков на основе списка рекламных карточек.
     * @param mads список рекламных карточек.
     * @param r функция-рендерер, зависимая от контекста.
