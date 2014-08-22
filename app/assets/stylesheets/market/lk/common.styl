@@ -1535,21 +1535,19 @@ th.__bg-head
 
   &_close
     opacity             0.6
-    width               37px
-    height              36px
+    padding             10px
 
+    font-size           20px
+    color               #5c5c5c
     cursor              pointer
-    background          url('/assets/images/market/new-design/close_retina.png') no-repeat
-    background-size     auto 100%
-    background-position center center
     text-decoration     none
     transition(opacity 0.2s ease-in-out 0s)
 
+    &:before
+      content "\e600"
+
     &:hover
       opacity 1
-
-    &:active
-      background-position center 1px
 
   &_success-icon
     margin-bottom 25px
@@ -1564,6 +1562,7 @@ th.__bg-head
     padding: 10px
 
   &_header.__index
+    padding           0
     background-color  white
     border-radius(10px 10px 0 0)
 
@@ -1870,18 +1869,18 @@ th.__bg-head
 
 .card
   position          relative
+  margin            0 auto
   display           block
   width             300px
-  margin            0 auto
   background-color  white
   border-radius(10px)
 
   &_photo
-    width 100%
+    width       100%
 
   &_logo-w
     display inline-block
-    margin  -40px 20px 0
+    margin  -50px 20px 0
     -webkit-backface-visibility   hidden
     -moz-backface-visibility      hidden
 
@@ -1909,36 +1908,45 @@ th.__bg-head
     font-size       16px
     text-transform  uppercase
     text-align      center
-    color           #676666
+    color           #494949
 
   &_town
     font-size     12px
     text-align    center
-    margin-bottom 25px
-    color         #676666
+    margin-bottom 20px
+    color         #7b7b7b
 
   &_prop
     overflow      hidden
     padding       10px 30px
-    color         #494949
     border-top    1px solid #d7d7d7
+    font-size     14px
     text-align    left
 
   &_prop.__last
     border-bottom 1px solid #d7d7d7
 
   &_prop-name
+    float         left
+    margin-right  10px
+
     display       block
     overflow      hidden
-    float         left
     width         150px
-    margin-right  10px
-    font-size     14px
+    color         #7f7f7f
 
   &_prop-value
-    display   block
-    overflow  hidden
-    font-size 16px
+    display       block
+    overflow      hidden
+    color         #494949
+    text-align    right
+    text-overflow ellipsis
+
+  &_type
+    margin-top  10px
+    font-size   14px
+    color       #494949
+    text-align  center
 
 
 @media screen1024
@@ -2119,13 +2127,13 @@ th.__bg-head
     left 0
 
     &:before
-      content ""
+      content "\e602"
 
   &_control.__right-arrow
     right 0
 
     &:before
-      content ""
+      content "\2248"
 
 
 @media screen1024

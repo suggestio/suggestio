@@ -10,7 +10,7 @@
 
       <div class="card" id="@adnNode.id">
         <div class="popup_header __index">
-          <a class="popup_close f-left js-close-slider"></a>
+          <a class="popup_close f-right icon-icomoon js-close-slider"></a>
         </div>
 
         <div class="card_photo-w">
@@ -34,19 +34,18 @@
 
 
         @adnNode.meta.humanTrafficAvg.map { hta =>
-          <div class="card_prop">
+          <div class="card_prop __last">
             <span class="card_prop-name">Посетителей в день</span>
-            <span class="card_prop-value">@formatIntHtml(hta)&nbsp;+</span>
+            <span class="card_prop-value" title="@formatIntHtml(hta)&nbsp;+">@formatIntHtml(hta)&nbsp;+</span>
           </div>
         }
 
 
-        <div class="card_prop __last">
-          <span class="card_prop-name">Сфера услуг</span>
-          <span class="card_prop-value">@Messages("amt.of.type." + adnNode.adn.shownTypeId)</span>
+        <div class="card_type">
+          @Messages("amt.of.type." + adnNode.adn.shownTypeId)
         </div>
 
-        <div class="btn-w __size-M">
+        <div class="btn-w __card">
           <a class="siom-new-btn __size-XS __fill-1" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
         </div>
       </div>

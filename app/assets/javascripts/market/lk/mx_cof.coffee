@@ -38,6 +38,7 @@ IndexPage =
     IndexPage.centeredContent()
     $window = $ window
     $window.resize ()->
+      console.log $window.height()
       IndexPage.centeredContent()
 
 IndexPage.init()
@@ -142,14 +143,14 @@ Slider =
 
   setCardPosition: ($card)->
     $window = $ window
-    minTop  = 25
+    minTop  = 5
     $card = $card.find '.card, .slider_preloader'
     cardHeight = $card.height()
 
     containerHeight = $window.height()
     top = Math.ceil( (containerHeight - cardHeight)/2 )
 
-    if top < minTop || $window.width() <= 320
+    if top < minTop
       top = minTop
     $card.css 'top', top
 
@@ -313,18 +314,20 @@ Slider =
 
   init: ()->
 
+    event = if isTouchDevice() then 'touchend' else 'click'
+
     cbca.slider.phoneSlide()
     Slider.setPreloaders()
     Slider.updateSlideWidth()
     Slider.setPhoneScrolling()
 
     $ document
-    .on 'click', '.js-close-slider', (e)->
+    .on event, '.js-close-slider', (e)->
       e.preventDefault()
       Slider.close()
 
     $ document
-    .on 'click', '.slider_controls', (e)->
+    .on event, '.slider_controls', (e)->
       e.preventDefault()
       e.stopPropagation()
 
@@ -339,7 +342,7 @@ Slider =
 
     ## кнопки точек на главной
     $ document
-    .on 'click', '.js-card-btn', (e)->
+    .on event, '.js-card-btn', (e)->
       e.preventDefault()
       $this  = $ this
       href   = $this.attr 'href'
@@ -905,11 +908,16 @@ CbcaPopup =
 
     this.hideOverlay()
     $popup.hide()
+    ## закрытие клавиатуры на мобильном устройстве
+    $ "input"
+    .blur()
 
     $ '#overlayData'
     .hide()
 
   init: () ->
+
+    event = if isTouchDevice() then 'touchend' else 'click'
 
     cbca.popup.hideOverlay()
     cbca.popup.phoneScroll()
@@ -922,7 +930,7 @@ CbcaPopup =
       .scrollTop(0)
 
     $ document
-    .on 'click', '.js-close-popup', (e)->
+    .on event, '.js-close-popup', (e)->
       e.preventDefault()
       $this = $ this
       $popup = $this.closest '.popup'
@@ -951,7 +959,7 @@ CbcaPopup =
 
     ## Кнопка Назад внутри попапа
     $ document
-    .on 'click', '.js-popup-back', (e)->
+    .on event, '.js-popup-back', (e)->
       e.preventDefault()
       $this = $ this
       targetPopupHref = $this.attr 'href'
@@ -965,7 +973,7 @@ CbcaPopup =
       cbca.popup.showPopup targetPopupHref
 
     $ document
-    .on 'click', '.js-remove-popup', (e)->
+    .on event, '.js-remove-popup', (e)->
       $this = $ this
       $popup = $this.closest '.popup'
       popupId = $popup.attr 'id'
@@ -981,6 +989,19 @@ CbcaPopup =
     .bind 'keyup', (e) ->
       if e.keyCode == 27
         cbca.popup.hidePopup()
+
+    ## фикс отступа, который появляется при скрытии клавиатуры в открытом попапе
+    $ document
+    .on 'blur', '.js-popup input', (e)->
+      setTimeout(
+        ()->
+          $activeInputs = $ 'input:focus'
+          console.log 'size = '+$activeInputs.size()
+          if $activeInputs.size() == 0
+            $ window
+            .scrollTop(0)
+        100
+      )
 
 
 ######################
