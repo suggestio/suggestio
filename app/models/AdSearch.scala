@@ -33,8 +33,9 @@ object AdSearch {
 
   /** QSB для экземпляра сабжа. Неявно дергается из routes. */
   implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
-                                 intOptBinder: QueryStringBindable[Option[Int]],
-                                 longOptBinder: QueryStringBindable[Option[Long]] ) = {
+                                 intOptB: QueryStringBindable[Option[Int]],
+                                 longOptB: QueryStringBindable[Option[Long]],
+                                 geoModeB: QueryStringBindable[GeoMode]) = {
     new QueryStringBindable[AdSearch] {
 
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
@@ -43,12 +44,12 @@ object AdSearch {
           maybeCatIdOpt  <- strOptBinder.bind(key + ".catId", params)
           maybeLevelOpt  <- strOptBinder.bind(key + ".level", params)
           maybeQOpt      <- strOptBinder.bind(key + ".q", params)
-          maybeSizeOpt   <- intOptBinder.bind(key + ".size", params)
-          maybeOffsetOpt <- intOptBinder.bind(key + ".offset", params)
+          maybeSizeOpt   <- intOptB.bind(key + ".size", params)
+          maybeOffsetOpt <- intOptB.bind(key + ".offset", params)
           maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
           maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
-          maybeGen       <- longOptBinder.bind(key + ".gen", params)
-          maybeGeo       <- strOptBinder.bind(key + ".geo", params)
+          maybeGen       <- longOptB.bind(key + ".gen", params)
+          maybeGeo       <- geoModeB.bind(key + ".geo", params)
 
         } yield {
           Right(
@@ -66,7 +67,7 @@ object AdSearch {
               },
               forceFirstIds = maybeFirstId,
               generation  = maybeGen,
-              geo         = GeoMode(maybeGeo)
+              geo         = maybeGeo
             )
           )
         }
@@ -79,10 +80,10 @@ object AdSearch {
           strOptBinder.unbind(key + ".catId", value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
           strOptBinder.unbind(key + ".level", value.levels.headOption.map(_.toString)),
           strOptBinder.unbind(key + ".q", value.qOpt),
-          intOptBinder.unbind(key + ".size", value.maxResultsOpt),
-          intOptBinder.unbind(key + ".offset", value.offsetOpt),
+          intOptB.unbind(key + ".size", value.maxResultsOpt),
+          intOptB.unbind(key + ".offset", value.offsetOpt),
           strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
-          longOptBinder.unbind(key + ".gen", value.generation),
+          longOptB.unbind(key + ".gen", value.generation),
           strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt)
         ) .filter(!_.isEmpty)
           .mkString("&")

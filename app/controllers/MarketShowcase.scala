@@ -1,12 +1,12 @@
 package controllers
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import io.suggest.model.geo.GeoDistanceQuery
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.ym.model.common.GeoDistanceQuery
 import play.api.i18n.Messages
 import play.api.cache.Cache
 import play.twirl.api.HtmlFormat

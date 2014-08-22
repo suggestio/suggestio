@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.model.geo.CircleGs
 import io.suggest.util.MacroLogsImpl
 import org.joda.time.DateTime
 import play.api.db.DB
@@ -228,9 +229,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "section"   -> sectionOptM,
     "siteUrl"   -> urlStrOptM,
     "color"     -> colorOptM,
-    "location"  -> latLng2geopointOptM
+    "location"  -> latLng2geopointOptM,
+    "radius"    -> optional(distanceM)
   )
-  {(name, descr, town, address, phone, floor, section, siteUrl, color, locationOpt) =>
+  {(name, descr, town, address, phone, floor, section, siteUrl, color, locationOpt, radiusOpt) =>
     AdnMMetadata(
       name    = name,
       description = descr,
@@ -241,12 +243,25 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       section = section,
       siteUrl = siteUrl,
       color   = color,
-      location = locationOpt
+      location = locationOpt,
+      geoShape = {
+        radiusOpt.flatMap { radius =>
+          locationOpt.map { loc =>
+            CircleGs(loc, radius)
+          }
+        }
+      }
     )
   }
   {meta =>
     import meta._
-    Some((name, description, town, address, phone, floor, section, siteUrl, color, location))
+    val radius = geoShape.flatMap {
+      case cgs: CircleGs => Option(cgs.radius)
+      case other =>
+        warn(s"Cannot unapply $other into radius distance; CircleGs expected")
+        None
+    }
+    Some((name, description, town, address, phone, floor, section, siteUrl, color, location, radius))
   }
 
   private val adnRightsM: Mapping[Set[AdnRight]] = {
@@ -521,7 +536,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         section = adnNode2.meta.section,
         siteUrl = adnNode2.meta.siteUrl,
         color   = adnNode2.meta.color,
-        location = adnNode2.meta.location
+        location = adnNode2.meta.location,
+        geoShape = adnNode2.meta.geoShape
       ),
       adn = adnNode.adn.copy(
         memberType  = adnNode2.adn.memberType,
