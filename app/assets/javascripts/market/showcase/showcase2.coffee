@@ -406,6 +406,8 @@ cbca_grid =
             else
               break
 
+          console.log b
+
           w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
           w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
 
@@ -958,26 +960,6 @@ siomart =
         siomart.focused_ads.prev_ad()
 
 
-  notifications :
-    show : ( message ) ->
-      n_dom = siomart.utils.ge 'smNotification'
-      n_data_dom = siomart.utils.ge 'smNotificationData'
-
-      n_dom.style.display = 'block'
-      n_data_dom.innerHTML = message
-
-      hide_cb = () ->
-        siomart.notifications.hide()
-
-      setTimeout hide_cb, 1200
-
-    hide : ( message ) ->
-      n_dom = siomart.utils.ge 'smNotification'
-      n_data_dom = siomart.utils.ge 'smNotificationData'
-
-      n_dom.style.display = 'none'
-      n_data_dom.innerHTML = ''
-
   ########
   ## Поиск
   ########
@@ -1148,7 +1130,7 @@ siomart =
 
     ## Обработать ошибку
     on_request_error : () ->
-      siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
+      console.log "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
 
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
@@ -1178,7 +1160,7 @@ siomart =
 
     ## Пришла пустота — уведомить юзера
     if data.html == ''
-      siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
+      siomart.log "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       return false
 
     ## Инициализация глагне
