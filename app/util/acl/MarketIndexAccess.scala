@@ -24,7 +24,7 @@ object MarketIndexAccess extends ActionBuilder[MarketIndexRequest] {
       hasLogo       = Some(true),
       testNode      = Some(false),
       maxResults    = controllers.Market.INDEX_NODES_LIST_LEN,
-      withAdnRighs  = Seq(AdnRights.RECEIVER)
+      withAdnRights  = Seq(AdnRights.RECEIVER)
     )
     MAdnNode.dynSearch(nodeSearchArgs)
   }

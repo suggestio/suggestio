@@ -21,12 +21,13 @@ case class MAdnNodeSearch(
   adnSupIds   : Seq[String] = Nil,
   anyOfPersonIds: Seq[String] = Nil,
   advDelegateAdnIds: Seq[String] = Nil,
-  withAdnRighs: Seq[AdnRight] = Nil,
+  withAdnRights: Seq[AdnRight] = Nil,
   testNode    : Option[Boolean] = None,
   withoutIds  : Seq[String] = Nil,
   geoDistance : Option[GeoDistanceQuery] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
   hasLogo     : Option[Boolean] = None,
   withGeoDistanceSort: Option[GeoPoint] = None,
+  withNameSort: Boolean = false,
   maxResults  : Int = 10,
   offset      : Int = 0
 ) extends AdnNodesSearchArgsT
@@ -40,15 +41,20 @@ case class SimpleNodesSearchArgs(
   geoMode     : GeoMode = GeoNone,
   offset      : Option[Int] = None
 ) {
-  
-  def toSearchArgs(implicit request: RequestHeader): Future[MAdnNodeSearch] = {
+
+  def toSearchArgs(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
     geoMode.geoSearchInfo.map { gsiOpt =>
-      MAdnNodeSearch(
-        qStr = qStr,
-        geoDistance = gsiOpt.map { _.geoDistanceQuery },
+      new MAdnNodeSearch(
+        qStr          = qStr,
+        geoDistance   = gsiOpt.map { _.geoDistanceQuery },
         withGeoDistanceSort = gsiOpt.map { _.geoPoint },
-        offset = offset.getOrElse(0)
-      )
+        offset        = offset.getOrElse(0),
+        withAdnRights = Seq(AdnRights.RECEIVER),
+        testNode      = Some(false),
+        withNameSort  = true
+      ) {
+        override def ftsSearchFN: String = AdnMMetadata.NAME_ESFN
+      }
     }
   }
   
