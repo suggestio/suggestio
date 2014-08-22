@@ -1,0 +1,15 @@
+@(cssClass:Option[String],color:String = "fff")
+
+@cssClass match {
+  case Some("sm-restraunts") => {@_restrauntsIconTpl(color)}
+  case Some("sm-food") =>       {@_foodIconTpl(color)}
+  case Some("sm-cosmetics") =>  {@_cosmeticsIconTpl(color)}
+  case Some("sm-boots") =>      {@_bootsIconTpl(color)}
+  case Some("sm-clothing") =>   {@_clothingIconTpl(color)}
+  case Some("sm-sports") =>     {@_sportsIconTpl(color)}
+  case Some("sm-for-home") =>   {@_forHomeIconTpl(color)}
+  case Some("sm-travel") =>     {@_travelIconTpl(color)}
+  case Some("sm-electronics") =>{@_electronicsIconTpl(color)}
+
+  case Some(name) => {@name}
+}

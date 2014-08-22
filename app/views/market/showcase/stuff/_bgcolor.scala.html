@@ -1,0 +1,4 @@
+@(headerColor: String, withOpacity: Boolean = true, opacity:Double = 0.9)(implicit ctx: Context)
+@import util.TplDataFormatUtil._
+
+background-color: rgba(@{colorHex2rgb(headerColor).mkString(",")}, @if( withOpacity ){@opacity}else{1});

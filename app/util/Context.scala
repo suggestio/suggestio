@@ -29,7 +29,6 @@ object Context {
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
 
   val isIpadRe = "iPad".r.unanchored
-
   val isIphoneRe = "iPhone".r.unanchored
 
   val MY_AUDIENCE_URL = controllers.Ident.AUDIENCE_URL

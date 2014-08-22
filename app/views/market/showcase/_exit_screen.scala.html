@@ -1,16 +1,19 @@
-@(oncloseHref: String)(implicit ctx:util.Context)
+@(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
 
-<div class="sm-close-screen" id="smCloseScreen">
+@stuff.scrollableContainerTpl( "sm-close-screen", "smCloseScreen" ){
 
-  <div class="sm-close-screen_cnt">
+  <div class="sm-close-screen_cnt"  id="smCloseScreenContainer" style="@stuff._bgcolor( args.bgColor )">
 
-    <a class="sm-close-screen_close" id="smExitCloseScreenButton" href=""></a>
-
-    <div class="sm-close-screen_text">Вы покидаете SIO.Market,<br/> но всегда сможете вернуться</div>
-
-    <div class="sm-close-screen_buttons">
-      <a class="sm-btn __color-1 __rounded" href="@oncloseHref">ВЫЙТИ</a>
+    <div class="sm-button sm-close-screen_exit abs" id="smExitCloseScreenButton">
+      @svg._exitButtonTpl( args.fgColor )
     </div>
 
+    <div class="sm-close-screen_message" style="color: #@args.fgColor">
+      Вы покидаете SIO.Market,<br/>
+      но всегда сможете вернуться
+    </div>
+
+    <div class="sm-close-screen_dm"></div>
+    <a class="sm-flat-btn __centered __color-1 __rounded" href="@args.oncloseHref">ВЫЙТИ</a>
   </div>
-</div>
+}

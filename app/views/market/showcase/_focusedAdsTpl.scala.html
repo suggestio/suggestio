@@ -4,22 +4,23 @@
 Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
 @* Список карточек указанного продюссера *@
-<div class="sio-mart__node-offers sio-mart-node-offers-window" id="sioMartNodeOffers">
+<div class="sm-producer-header abs" style="@stuff._bgcolor( bgColor )">
 
-  @_screen_nav_button("back","closeNodeOffersPopupButton")
-  <div class="sio-mart__producer-header" style="@_bgcolor( bgColor ); height: 30px!important;">
-    @producer.logoImgOpt.map { logoImg =>
-      <img class="sm-offer-logo" height="30" style="height: 30px!important" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-    }
+  <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="closeFocusedAdsButton">
+    @svg._exitButtonTpl()
   </div>
 
-  @* Контейнер с прокручивающимися офферами *@
-  <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer" data-ads-count="@adsCount">
-    @mads.zipWithIndex.map { case (mad, index) =>
-    <div id="ad_c_@index">
-      @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount)
-    </div>
-    }
-  </div>
+  @producer.logoImgOpt.map { logoImg =>
+    <img class="sm-producer-header_logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+  }
+</div>
 
+@* Контейнер с прокручивающимися офферами *@
+<div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@adsCount" style="@stuff._bgcolor( bgColor )">
+  <span id="ads0">
+  @mads.zipWithIndex.map { case (mad, index) =>
+    @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount)
+  }
+  </span>
+  @_focusedAdLoaderTpl()
 </div>

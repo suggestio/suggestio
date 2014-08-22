@@ -6,76 +6,52 @@
 
 @* Картинка-приветствие для первого экрана *@
 @args.welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
-  <div class="sm-welcome-ad">
-    <img style="background-color: #@args.bgColor;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
-         data-width="@welcomeAdImg.meta.map(_.width)"
-         data-height="@welcomeAdImg.meta.map(_.height)"
-         src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
-  </div>
+<div class="sm-welcome-ad">
+  <img style="background-color: #@args.bgColor;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
+       data-width="@welcomeAdImg.meta.map(_.width)"
+       data-height="@welcomeAdImg.meta.map(_.height)"
+       src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+</div>
 }
 
 @* Основной контейнер, шапка + карточки *@
-<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>
+<div class="sm-focused-ads" id="smFocusedAds"></div>
 
-@_screen_nav_button("close", "smCloseButton")
-
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-<div class="sm-header-round-btn" id="smCategoriesBackButton" style="display: none">
-  <div class="sm-header-round-btn_inner">
-    <div class="sm-header-round-btn_icon __back"></div>
+@* Хидер главного экрана *@
+<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
+  <span id="smRootProducerHeaderButtons">
+  <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="smExitButton">
+    @svg._exitButtonTpl( args.fgColor )
   </div>
+
+  <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
+    @svg._indexAdsButtonTpl( args.fgColor )
+  </div>
+
+  @if( args.catsStats.nonEmpty ){
+  <div class="sm-button sm-producer-header_btn __right-aligned abs"  id="smNavigationLayerButton">
+    @svg._searchButtonTpl( args.fgColor )
+  </div>
+  }
+  </span>
+
+  <img class="sm-producer-header_logo" height="30" src="@ctx.myAudienceUrl@args.logoImgOpt.map { logoImg =>@routes.Img.getImg(logoImg.filename)}.getOrElse{@routes.Assets.at("images/market/showcase-logo.png")}"/>
+
+  <div class="sm-producer-header_icon">
+    @svg._catHeaderIcon( args.fgColor )
+  </div>
+
 </div>
 
+@* Работа с сеткой карточек *@
+@_gridAdsTpl(args)
+
+@* Окно с выбором категорий *@
 @if( args.catsStats.nonEmpty ){
-  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-  <div class="sm-header-round-btn __right-aligned" id="smCategoriesButton">
-    <div class="sm-header-round-btn_inner">
-      <div class="sm-header-round-btn_icon __search"></div>
-    </div>
-  </div>
-  @* Окно с выбором категорий *@
   @_categories_w_search(args)
 }
 
-<div class="sio-mart__producer-header" style="@_bgcolor( args.bgColor )">
-  @args.logoImgOpt.map { logoImg =>
-    <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-  }
-</div>
-
-<div class="sm-flex sm-overflow-scrolling">
-  <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
-    <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px;" id="sioMartIndexGridLayout">
-
-      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)" style="position: relative; width: 100%;">
-      </div>
-
-      <div class="grid-loader" style="height: 50px;" id="gridAdsLoader">
-        <div style="position: relative; height: 1px; width: 100%;">
-          <div style="padding: 5px; position: absolute; left: 50%; top: 50%; margin-left: -15px; margin-top: -16px;">
-            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl@routes.Assets.at("images/market/grid-ads-loader-fast.gif")?v=2"/>
-          </div>
-        </div>
-      </div>
-
-      <div style="height: 60px;"></div>
-
-    </div>
-  </div>
-</div>
-
-<div class="sm-notification" id="smNotification">
-  <div class="data" id="smNotificationData"></div>
-</div>
+@* Окно с предупреждением о выходе из Sio.Market *@
+@_exit_screen(args)
 
 <div class="sm-loading" id="smLoading"></div>
-
-<div class="sm-preload">
-  <img src="@ctx.myAudienceUrl@routes.Assets.at("images/market/categories/icons.png")">
-</div>
-
-@* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(args.oncloseHref)
-
-@* Окно с выбором магазина *@
-@_shop_list(args.shops)

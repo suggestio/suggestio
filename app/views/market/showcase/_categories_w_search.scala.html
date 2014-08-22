@@ -6,46 +6,30 @@
 
   <div class="sm-categories-screen_header">
 
-    <div class="sm-header-round-btn __right-aligned" id="smNavigationLayerBackButton">
-      <div class="sm-header-round-btn_inner">
-        <div class="sm-header-round-btn_icon __back-right"></div>
-      </div>
+    <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smCategoriesScreenCloseButton">
+      @svg._exitButtonTpl( args.fgColor )
     </div>
 
   </div>
 
-  @_search_bar(args.bgColor)
+  @_search_bar( args.bgColor )
 
-  <div class="sm-categories-screen_body-wrap" id="smCategoriesBodyWrap" style="background-color: #@args.bgColor;">
-    <div class="sm-categories-screen_body">
+  <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor )">
+    <div class="sm-categories-screen_tabs-wrapper">
 
-      <div class="sm-categories-list">
-        @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
-          <span class="sm-single-categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
-            <div class="sm-single-categorie_icon __@mmcat.cssClass"></div>
-            <div class="sm-single-categorie_name">@mmcat.name</div>
-          </span>
-        }
+      <div class="sm-categories-screen_single-tab">
+        <div class="sm-tab" id="smCategoriesTab" style="color: #@args.fgColor; border-color: #@args.fgColor;">Категории</div>
       </div>
 
+      <div class="sm-categories-screen_single-tab">
+        <div class="sm-tab __inactive" id="smShopsTab" style="color: #@args.fgColor; border-color: #@args.fgColor;">Список</div>
+      </div>
+      <div class="clear"></div>
     </div>
   </div>
 
-  @*if( args.shops.nonEmpty ) {
-    <div class="sm-categories-footer">
+  @_categoriesListTpl( args )
 
-      <div class="or-title" style="margin-top: 18px;">
-        <span style="background-color: #@args.bgColor">ИЛИ</span>
-      </div>
-
-      <div style="text-align: center; margin-top: 18px;">
-        <a href="#" class="white-border-btn" id="smShopListButton">
-          ВЫБЕРИТЕ ИЗ СПИСКА
-        </a>
-      </div>
-
-    </div>
-  }
-  *@
+  @_shopsListTpl( args )
 
 </div>
