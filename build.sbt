@@ -16,6 +16,7 @@ lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
 scalaVersion := "2.10.4"
+//scalaVersion := "2.11.1"
 
 libraryDependencies ++= Seq(
   jdbc, 
@@ -23,7 +24,7 @@ libraryDependencies ++= Seq(
   cache,      // play-2.2+
   json,       // play-2.3+
   ws,
-  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.+",
+  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff

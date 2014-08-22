@@ -187,13 +187,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): (Boolean, LocalDate) = {
     val isFree = isFreeAdv( freeAdvFormM.bindFromRequest().fold({_ => None}, identity) )
     val now = DateTime.now
-    val lowerDate: DateTime = if (isFree) {
-      // Для бесплатного размещения: можно размещать хоть сейчас.
-      now
-    } else {
-      // Для обычного размещения: можно отображаеть карточку в выдаче только с завтрашнего дня
-      now.plusDays(1)
-    }
+    // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
+    val lowerDate = now
     val result = isFree -> lowerDate.toLocalDate
     //trace("maybeFreeAdv(): (isFree, lowerDate) = " + result)
     result

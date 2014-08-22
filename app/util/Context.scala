@@ -30,7 +30,7 @@ object Context {
 
   val isIpadRe = "iPad".r.unanchored
   val isIphoneRe = "iPhone".r.unanchored
-
+  
   val MY_AUDIENCE_URL = controllers.Ident.AUDIENCE_URL
 }
 

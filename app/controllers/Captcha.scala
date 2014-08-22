@@ -11,7 +11,7 @@ import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
-import util.captcha.CipherUtil
+import util.captcha.CaptchaUtil
 
 /**
  * Suggest.io
@@ -52,7 +52,7 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
   def getCaptcha(captchaId: String) = Action { implicit request =>
     val ctext = createCaptchaText
     LOGGER.trace(s"getCaptcha($captchaId): ctext -> $ctext")
-    val ctextCrypt = CipherUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
+    val ctextCrypt = CaptchaUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
       .withHeaders(
         CONTENT_TYPE  -> ("image/" + CAPTCHA_FMT_LC),
@@ -122,7 +122,7 @@ trait CaptchaValidator extends PlayMacroLogsI {
           .filter { cookie =>
             try {
               val ivMaterial = Captcha.ivMaterial(captchaId)
-              val ctext = CipherUtil.decryptPrintable(cookie.value, ivMaterial = ivMaterial)
+              val ctext = CaptchaUtil.decryptPrintable(cookie.value, ivMaterial = ivMaterial)
               // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
               // TODO Надо исправлять только буквы
               val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
