@@ -1,11 +1,13 @@
-package io.suggest.ym.model.common
+package io.suggest.model.geo
 
-import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
-import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint, GeoHashUtils}
 import java.{lang => jl, util => ju}
-import scala.collection.JavaConversions._
-import play.api.libs.json._
+
 import io.suggest.model.EsModel.doubleParser
+import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
+import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
+import play.api.libs.json._
+
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -47,6 +49,9 @@ object GeoPoint extends MacroLogsImpl {
   val deserializeOpt: PartialFunction[Any, Option[GeoPoint]] = {
     // Массив GeoJson в формате [LON, lat]: [12.53245, -44.43553] -- http://geojson.org/
     case l: jl.Iterable[_] =>
+      deserializeOpt(l: Traversable[_])
+
+    case l: Traversable[_] =>
       l.headOption.flatMap { lonRaw =>
         l.tail.headOption.flatMap { latRaw =>
           try {

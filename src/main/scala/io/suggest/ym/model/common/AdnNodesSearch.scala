@@ -1,10 +1,12 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.common.EMPersonIds
+import io.suggest.model.geo.{CircleGs, GeoDistanceQuery, Distance, GeoPoint}
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.common.AdnRights.AdnRight
 import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.{SortOrder, SortBuilders}
@@ -24,6 +26,17 @@ object AdnNodesSearch {
     s"""_source.containsKey("$fn");"""
   }
 
+  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которыйх ближе, чем это допустимо. */
+  private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
+    innerCircle.fold(qb2) { inCircle =>
+      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnMMetadataStatic.META_LOCATION_ESFN)
+        .point(inCircle.center.lat, inCircle.center.lon)
+        .distance(inCircle.radius.distance, inCircle.radius.units)
+      val notInner = FilterBuilders.notFilter(innerFilter)
+      QueryBuilders.filteredQuery(qb2, notInner)
+    }
+  }
+
   /**
    * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
    * @param args Критерии поиска.
@@ -34,6 +47,7 @@ object AdnNodesSearch {
       TextQueryV2Util.queryStr2QueryMarket(qStr, s"${SioConstants.FIELD_ALL}")
         .map { _.q }
 
+    // Отрабатываем companyId
     }.map[QueryBuilder] { qb =>
       if (args.companyIds.isEmpty) {
         qb
@@ -51,7 +65,7 @@ object AdnNodesSearch {
         Some(cq)
       }
 
-      // Отрабатываем adnSupIds:
+    // Отрабатываем adnSupIds:
     }.map[QueryBuilder] { qb =>
       if (args.adnSupIds.isEmpty) {
         qb
@@ -100,9 +114,25 @@ object AdnNodesSearch {
       if (args.advDelegateAdnIds.isEmpty) {
         None
       } else {
-        val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, args.advDelegateAdnIds : _*)
+        val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, args.advDelegateAdnIds: _*)
           .minimumMatch(1)
         Some(aq)
+      }
+
+    // Отрабатываем geoDistance через geoShape'ы. Текущий запрос обнаружения описываем как круг.
+    // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
+    }.map[QueryBuilder] { qb =>
+      // Вешаем фильтры GeoShape
+      args.geoDistance.fold(qb) { gd =>
+        val gsfOuter = FilterBuilders.geoShapeFilter(AdnMMetadata.GEO_SHAPE_ESFN, gd.outerCircle.toEsShapeBuilder, ShapeRelation.INTERSECTS)
+        val qb2 = QueryBuilders.filteredQuery(qb, gsfOuter)
+        innerUnshapeFilter(qb2, gd.innerCircleOpt)
+      }
+    }.orElse[QueryBuilder] {
+      args.geoDistance.map { gd =>
+        // Создаём GeoShape query. query по внешнему контуру, и filter по внутреннему.
+        val qb2 = QueryBuilders.geoShapeQuery(AdnMMetadata.GEO_SHAPE_ESFN, gd.outerCircle.toEsShapeBuilder)
+        innerUnshapeFilter(qb2, gd.innerCircleOpt)
       }
 
     // Отрабатываем возможный список прав узла.
@@ -161,7 +191,8 @@ object AdnNodesSearch {
     }
 
     // Добавляем geo-фильтр по дистанции до точки, если необходимо.
-    if (args.geoDistance.isDefined) {
+    // Закоменчено, т.к. часть логики перевешана на GeoShape-контуры.
+    /*if (args.geoDistance.isDefined) {
       val gd = args.geoDistance.get
       // Если задан distanceMin, то нужно использовать фильтр geo range. Иначе geo distance.
       val gdf = gd.distanceMin.fold [FilterBuilder] {
@@ -177,7 +208,7 @@ object AdnNodesSearch {
           .to( gd.distanceMax.toString )
       }
       qb2 = QueryBuilders.filteredQuery(qb2, gdf)
-    }
+    }*/
 
     // Сборка завершена, возвращаем собранную es query.
     qb2
@@ -236,15 +267,6 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     }
   }
 
-}
-
-
-/** Описание того, как надо фильтровать по дистанции относительно какой-то точки на поверхности планеты. */
-case class GeoDistanceQuery(center: GeoPoint, distanceMin: Option[Distance], distanceMax: Distance)
-
-/** Описание дистанции. */
-case class Distance(distance: Double, units: DistanceUnit) {
-  override def toString = units.toString(distance)
 }
 
 

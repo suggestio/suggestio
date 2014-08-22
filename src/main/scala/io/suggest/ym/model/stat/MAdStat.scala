@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.model._
 import io.suggest.model.EsModel._
-import io.suggest.ym.model.common.GeoPoint
+import io.suggest.model.geo.GeoPoint
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTimeZone, DateTime}

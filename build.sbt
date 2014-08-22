@@ -88,6 +88,9 @@ libraryDependencies ++= {
     // Морфология
     "org.apache.lucene.morphology" % "russian" % morphVsn,
     "org.apache.lucene.morphology" % "english" % morphVsn,
+    // geo
+    "com.spatial4j" % "spatial4j" % "0.4.+",
+    "com.vividsolutions" % "jts" % "1.13",
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.+" % "test",
     "org.scalatest" %% "scalatest" % "2.+" % "test"
