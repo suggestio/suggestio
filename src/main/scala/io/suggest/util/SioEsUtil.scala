@@ -1195,6 +1195,30 @@ case class FieldGeoPoint(
   override def fieldType = DocFieldTypes.geo_point
 }
 
+object GeoShapeTrees extends Enumeration {
+  type GeoShapeTree = Value
+  val geohash, quadtree = Value
+}
+
+case class FieldGeoShape(
+  id: String,
+  tree: GeoShapeTrees.GeoShapeTree = GeoShapeTrees.geohash,
+  precision: String = "10m",
+  treeLevels: Int = -1,
+  distanceErrorPct: Float = -1
+) extends DocField {
+  override def fieldType = DocFieldTypes.geo_shape
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    b.field("tree", tree.toString)
+     .field("precision", precision)
+    if (treeLevels > 0)
+      b.field("tree_levels", treeLevels)
+    if (distanceErrorPct > 0)
+      b.field("distance_error_pct", distanceErrorPct)
+  }
+}
 
 
 // END: DSL полей документа --------------------------------------------------------------------------------------------
