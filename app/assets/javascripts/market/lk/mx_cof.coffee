@@ -117,7 +117,7 @@ Slider =
   setCardPosition: ($card)->
     $window = $ window
     minTop  = 25
-    $card = $card.find '.card'
+    $card = $card.find '.card, .slider_preloader'
     cardHeight = $card.height()
 
     containerHeight = $window.height()
@@ -238,13 +238,7 @@ Slider =
 
     animationLength = -index*Slider.slideWidth
 
-    $ '#indexSlider'
-    .css 'transition-duration', duration+'s'
-    .css '-webkit-transition-duration', duration+'s'
-    .css 'transform', "translate3d("+animationLength+"px,0,0)"
-
     Slider.currIndex = index
-
     Slider.updateControls()
 
     if !Slider.cardStatus[index]
@@ -252,8 +246,18 @@ Slider =
         index
         (data)->
           Slider.setData(data, index)
+
+          $ '#indexSlider'
+          .css 'transition-duration', duration+'s'
+          .css '-webkit-transition-duration', duration+'s'
+          .css 'transform', "translate3d("+animationLength+"px,0,0)"
       )
     else
+      $ '#indexSlider'
+      .css 'transition-duration', duration+'s'
+      .css '-webkit-transition-duration', duration+'s'
+      .css 'transform', "translate3d("+animationLength+"px,0,0)"
+
       $card = Slider.$slider
       .find '.slider_i'
       .eq index
