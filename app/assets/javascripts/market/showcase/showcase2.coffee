@@ -912,10 +912,11 @@ siomart =
           return false
 
         cat_id = cat_link_target.getAttribute 'data-cat-id'
+        cat_class = cat_link_target.getAttribute 'data-cat-class'
 
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !siomart.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
-          siomart.load_for_cat_id cat_id
+          siomart.load_for_cat_id cat_id, true, cat_class
 
       #######################
       ## Работа с категориями
@@ -1652,6 +1653,8 @@ siomart =
 
       this.adjust()
 
+      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
+
       ## Скрыть кнопки хидера главного экрана
       siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
 
@@ -1684,6 +1687,8 @@ siomart =
           siomart.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
+
+      siomart.utils.ge('smGridAds').style.webkitFilter = ""
 
       if all_except_search == true
         siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
@@ -1780,14 +1785,14 @@ siomart =
     siomart.request.perform url
 
   ## Загрузить все офферы для магазина
-  load_for_cat_id : ( cat_id, history_push ) ->
+  load_for_cat_id : ( cat_id, history_push, cat_class ) ->
 
     siomart.grid_ads.is_load_more_requested = false
     siomart.grid_ads.is_fully_loaded = false
 
     document.getElementById('smGridAdsWrapper').scrollTop = '0'
 
-    siomart.utils.addClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
+    siomart.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
     if typeof history_push != 'boolean'
       history_push = true

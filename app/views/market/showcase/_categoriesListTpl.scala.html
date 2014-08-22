@@ -3,7 +3,7 @@
 @stuff.scrollableContainerTpl( "sm-categories", "smCategories",  stuff._bgcolor( args.bgColor ).toString ){
   <div class="categories-list">
   @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
-    <span class="categories-list_single-cat categorie js-cat-link @if(index%4 == 0){__no-margin} @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
+    <span class="categories-list_single-cat categorie js-cat-link @if(index%4 == 0){__no-margin} @if(!(args.catsStats contains mmcat.id.get)) {disabled}" data-cat-class="@mmcat.cssClass" data-cat-id="@mmcat.id">
 
       <div class="categorie_icon __@mmcat.cssClass">
         @svg._catIconTpl( mmcat.cssClass, args.fgColor )
