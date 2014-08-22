@@ -135,6 +135,7 @@ object TextQueryV2Util {
    * Взять queryString, вбитую юзером, распилить на куски, проанализировать и сгенерить запрос или комбинацию запросов
    * на её основе. Версия для новых индексов в маркете, которые содержат ngram в _all.
    * @param queryStr Строка, которую набирает в поиске юзер.
+   * @param fn Имена полей
    */
   def queryStr2QueryMarket(queryStr: String, fn: String) : Option[MarketTextQuery] = {
     // Дробим исходный запрос на куски

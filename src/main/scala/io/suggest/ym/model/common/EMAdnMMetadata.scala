@@ -162,15 +162,15 @@ object AdnMMetadata {
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
-    FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
+    FieldString(fn, include_in_all = iia, index = index)
   }
 
   def generateMappingProps: List[DocField] = List(
-    fieldString(NAME_ESFN, iia = true),
+    fieldString(NAME_ESFN, iia = true, index = FieldIndexingVariants.analyzed),
     fieldString(DESCRIPTION_ESFN, iia = true),
     FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal
-    fieldString(TOWN_ESFN, iia = true),
+    fieldString(TOWN_ESFN, iia = true, index = FieldIndexingVariants.analyzed),
     fieldString(ADDRESS_ESFN, iia = true),
     fieldString(PHONE_ESFN, iia = true),
     fieldString(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.

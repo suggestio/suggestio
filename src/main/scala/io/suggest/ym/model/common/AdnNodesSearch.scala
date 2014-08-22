@@ -44,7 +44,7 @@ object AdnNodesSearch {
    */
   def mkEsQuery(args: AdnNodesSearchArgsT): QueryBuilder = {
     var qb2: QueryBuilder = args.qStr.flatMap[QueryBuilder] { qStr =>
-      TextQueryV2Util.queryStr2QueryMarket(qStr, s"${SioConstants.FIELD_ALL}")
+      TextQueryV2Util.queryStr2QueryMarket(qStr, args.ftsSearchFN)
         .map { _.q }
 
     // Отрабатываем companyId
@@ -137,19 +137,19 @@ object AdnNodesSearch {
 
     // Отрабатываем возможный список прав узла.
     }.map[QueryBuilder] { qb =>
-      if (args.withAdnRighs.isEmpty) {
+      if (args.withAdnRights.isEmpty) {
         qb
       } else {
-        val rf = FilterBuilders.termsFilter(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRighs.map(_.name) : _*)
+        val rf = FilterBuilders.termsFilter(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name) : _*)
           .execution("and")
         QueryBuilders.filteredQuery(qb, rf)
       }
     }.orElse[QueryBuilder] {
-      if (args.withAdnRighs.isEmpty) {
+      if (args.withAdnRights.isEmpty) {
         None
       } else {
-        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRighs.map(_.name) : _*)
-          .minimumMatch(args.withAdnRighs.size)
+        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name) : _*)
+          .minimumMatch(args.withAdnRights.size)
         Some(rq)
       }
 
@@ -236,7 +236,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   def advDelegateAdnIds: Seq[String]
 
   /** Права, которые должны быть у узла. */
-  def withAdnRighs: Seq[AdnRight]
+  def withAdnRights: Seq[AdnRight]
 
   /** Искать/фильтровать по значению флага тестового узла. */
   def testNode: Option[Boolean]
@@ -253,18 +253,28 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** + сортировка результатов по расстоянию до указанной точки. */
   def withGeoDistanceSort: Option[GeoPoint]
 
+  /** Сортировать по названиям? */
+  def withNameSort: Boolean
+
+  /** По каким полям будем искать? */
+  def ftsSearchFN: String = SioConstants.FIELD_ALL
+
   override def toEsQuery = AdnNodesSearch.mkEsQuery(this)
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
     // Добавить сортировку по дистанции до указанной точки, если необходимо.
-    withGeoDistanceSort.fold(srb1) { geoPoint =>
+    withGeoDistanceSort.foreach { geoPoint =>
       val sb = SortBuilders.geoDistanceSort(EMAdnMMetadataStatic.META_LOCATION_ESFN)
         .point(geoPoint.lat, geoPoint.lon)
         .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
         .unit(DistanceUnit.KILOMETERS)
       srb1.addSort(sb)
     }
+    if (withNameSort) {
+      srb1.addSort(AdnMMetadata.NAME_ESFN, SortOrder.ASC)
+    }
+    srb1
   }
 
 }
