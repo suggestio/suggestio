@@ -44,7 +44,7 @@ object Search extends SioController with Logs {
     * Или генерить новые маппинги вида:
     * mapping[R, A1, ... A19, A20, ...](a1:A1, ..., a19:A19, ...)
     * или разбивать маппинг на несколько других. */
-  val siteSearchRequestFormM = Form(mapping(
+  lazy val siteSearchRequestFormM = Form(mapping(
     /* Базовые составляющие поискового запроса для сайта */
 
     // Поисковый запрос. Вся суть тут.

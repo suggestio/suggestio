@@ -32,7 +32,7 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Форма с селектом шаблона нового календаря. */
-  private val newCalTplFormM = Form(
+  private def newCalTplFormM = Form(
     "tplId" -> nonEmptyText(minLength = 2, maxLength = 20)
       .transform[Option[HolidayCalendar]] (
         { code =>
@@ -49,7 +49,7 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
   )
 
   /** Форма создания/редактирования спеки календаря. */
-  private val calFormM = Form(mapping(
+  private def calFormM = Form(mapping(
     "name" -> nonEmptyText(minLength = 5, maxLength = 256)
       .transform(strTrimSanitizeF, strIdentityF)
     ,

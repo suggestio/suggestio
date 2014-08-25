@@ -32,24 +32,9 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
     * в шаблон формы и для изоляции области видимости от другого кода. */
   object PreviewFormDefaults {
     /** Дефолтовый id картинки, когда она не задана. */
-    val IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
+    def IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
 
-    val TEXT_COLOR = "000000"
-    val TEXT_FONT  = AOFieldFont(TEXT_COLOR)
-
-    object Product {
-      val PRICE_VALUE = Price(100F)
-      val OLDPRICE_VALUE = Price(200F)
-    }
-
-    object Discount {
-      val TPL_ID    = DISCOUNT_TPL_ID_MIN
-      val DISCOUNT  = 50F
-    }
-
-    object Text {
-      val TEXT = "Пример текста"
-    }
+    def TEXT_COLOR = "000000"
   }
 
 

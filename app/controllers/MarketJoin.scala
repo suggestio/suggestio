@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import MarketLkAdnEdit.{logoKM, townKM}
+import MarketLkAdnEdit.logoKM
 
 /**
  * Suggest.io
@@ -26,11 +26,12 @@ import MarketLkAdnEdit.{logoKM, townKM}
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
 
-  private val colorOptKM = "color"  -> colorOptM
-  private val companyKM = "company" -> companyNameM
+  private def colorOptKM  = "color"   -> colorOptM
+  private def companyKM   = "company" -> companyNameM
+  private def townKM      = "town"    -> townSomeM
 
   /** Маппинг формы анкеты с галочками про wi-fi. */
-  private val wifiJoinQuestionsFormM: Form[SMJoinAnswers] = {
+  private def wifiJoinQuestionsFormM: Form[SMJoinAnswers] = {
     val boolOpt = optional(boolean)
     Form(mapping(
       "haveWifi"        -> boolOpt,
@@ -73,7 +74,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
-  private val wifiJoinFormM = {
+  private def wifiJoinFormM = {
     Form(
       mapping(
         companyKM,
@@ -297,7 +298,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
 
   /** Подключение в качестве рекламного агента, источника рекламы. */
-  private val advJoinFormM = {
+  private def advJoinFormM = {
     Form(
       mapping(
         companyKM,

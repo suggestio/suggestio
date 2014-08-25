@@ -31,22 +31,24 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Маркер картинки для использования в качестве логотипа. */
   private val TMP_LOGO_MARKER = "leadLogo"
 
+  def logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
+
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
-  private val nameKM        = "name"    -> nameM
-  val townKM                = "town"    -> townSomeM
-  private val addressKM     = "address" -> addressSomeM
-  private val colorKM       = "color"   -> colorSomeM
-  private val fgColorKM     = "fgColor" -> colorOptM
-  private val siteUrlKM     = "siteUrl" -> urlStrOptM
-  private val phoneKM       = "phone"   -> phoneOptM
+  private def nameKM        = "name"    -> nameM
+  private def townKM        = "town"    -> townSomeM
+  private def addressKM     = "address" -> addressSomeM
+  private def colorKM       = "color"   -> colorSomeM
+  private def fgColorKM     = "fgColor" -> colorOptM
+  private def siteUrlKM     = "siteUrl" -> urlStrOptM
+  private def phoneKM       = "phone"   -> phoneOptM
 
-  private val audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
-  private val humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
+  private def audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
+  private def humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
 
-  private val infoKM        = "info" -> toSomeStrM(text2048M)
+  private def infoKM        = "info" -> toSomeStrM(text2048M)
 
   /** Маппер подформы метаданных для узла-ресивера. */
-  private val rcvrMetaM = {
+  private def rcvrMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
     {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
       AdnMMetadata(
@@ -68,7 +70,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   }
 
   /** Маппер подформы метаданных для узла-продьюсера. */
-  private val prodMetaM = {
+  private def prodMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, infoKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt, info) =>
       AdnMMetadata(
@@ -108,8 +110,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       Some((name, town, address, color, fgColor, siteUrl, phone))
     }
   }
-
-  val logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private def nodeFormM(nodeInfo: AdNetMemberInfo): Form[FormMapResult] = {

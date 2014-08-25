@@ -233,8 +233,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     }
   }
   
-    /** Поисковая форма. Сейчас в шаблонах она не используется, только в контроллере. */
-  val searchFormM = Form(
+  /** Поисковая форма. Сейчас в шаблонах она не используется, только в контроллере. */
+  private def searchFormM = Form(
     "q" -> nonEmptyText(maxLength = 64)
   )
 
@@ -282,7 +282,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   /** Маппинг формы включения/выключения магазина. */
-  private val nodeOnOffFormM = Form(tuple(
+  private def nodeOnOffFormM = Form(tuple(
     "isEnabled" -> boolean,
     "reason"    -> optional(hideEntityReasonM)
   ))
@@ -327,7 +327,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   
   /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
     * на верхнем уровне ТЦ. */
-  private val nodeTopLevelFormM = Form(
+  private def nodeTopLevelFormM = Form(
     "isEnabled" -> boolean
   )
 
@@ -380,7 +380,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
-  private val nodeOwnerInviteAcceptM = Form(tuple(
+  private def nodeOwnerInviteAcceptM = Form(tuple(
     MARKET_CONTRACT_AGREE_FN -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
