@@ -1219,6 +1219,10 @@ siomart =
       ## если возвращается false — значит картинки нет и
       ## нет смысла тянуть с дальнейшей инициализацией
 
+      if window.with_geo == true
+        siomart.utils.ge('smExitButton').style.display = 'none'
+        siomart.utils.ge('smGeoScreenButton').style.display = 'block'
+
       if siomart.welcome_ad.init() == false
         grid_init_timeout = 1
       else
