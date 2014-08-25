@@ -487,6 +487,10 @@ siomart =
       else
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
+    load_nodes : () ->
+      url = '/market/nodes/search?a.geo=ip'
+      siomart.request.perform url
+
     init : () ->
       if window.with_geo == true
         this.get_current_position()
@@ -889,6 +893,23 @@ siomart =
         siomart.utils.ge('smGridAds').style.webkitFilter = ""
         return false
 
+      ## гео добро
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
+        siomart.geo.load_nodes()
+        siomart.utils.ge('smGeoScreen').style.display = 'block'
+        return false
+
+
+      geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
+      if geo_node_target != null
+
+        node_id = geo_node_target.getAttribute 'data-id'
+        siomart.config.index_action = '/market/index/' + node_id
+
+        siomart.load_mart()
+
+        return false
+
       if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
         siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
         siomart.grid_ads.load_index_ads()
@@ -1061,15 +1082,18 @@ siomart =
        grid_ads_wrapper = siomart.utils.ge('smGridAdsWrapper')
        grid_ads_content = siomart.utils.ge('smGridAdsContent')
 
+       geo_screen = siomart.utils.ge('smGeoScreen')
+       geo_screen_wrapper = siomart.utils.ge('smGeoScreenWrapper')
+       geo_screen_content = siomart.utils.ge('smGeoScreenContent')
 
        es = siomart.utils.ge('smCloseScreen')
        es_wrapper = siomart.utils.ge('smCloseScreenWrapper')
        es_content = siomart.utils.ge('smCloseScreenContent')
 
 
-       grid_ads.style.height = es.style.height = cbca_grid.wh
-       grid_ads_wrapper.style.height = es_wrapper.style.height = cbca_grid.wh
-       grid_ads_content.style.minHeight = es_content.style.minHeight = cbca_grid.wh + 1
+       grid_ads.style.height = es.style.height = geo_screen.style.height = cbca_grid.wh
+       grid_ads_wrapper.style.height = es_wrapper.style.height = geo_screen_wrapper.style.height = cbca_grid.wh
+       grid_ads_content.style.minHeight = es_content.style.minHeight =  geo_screen_content.style.minHeight = cbca_grid.wh + 1
 
     load_more : () ->
 
@@ -1178,6 +1202,9 @@ siomart =
         cbca_grid.top_offset = 70
 
       this.response_callbacks.find_ads data
+
+    if data.action == 'findNodes'
+      this.response_callbacks.find_nodes data
 
 
   #############################################
@@ -1314,6 +1341,14 @@ siomart =
         siomart.grid_ads.loader.hide()
 
       siomart.grid_ads.is_load_more_requested = false
+
+    find_nodes : ( data ) ->
+
+      html = ''
+      for k,n of data.nodes
+        html += '<div class="js-geo-node" data-id="' + n._id + '">' + n.name + '</div>'
+
+      siomart.utils.ge('smGeoScreenContent').innerHTML = html
 
   ############################################
   ## Объект для работы с карточками продьюсера

@@ -523,12 +523,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           "_id"   -> JsString(adnNode.id.getOrElse(""))
         ))
       }
-      val respBody = JsObject(Seq(
+      val json = JsObject(Seq(
+        "action"    -> JsString("findNodes"),
         "status"    -> JsString("ok"),
         "nodes"     -> JsArray(rendered),
         "timestamp" -> JsNumber(tstamp)
       ))
-      Ok(respBody)
+      Ok( Jsonp(JSONP_CB_FUN, json) )
     }
   }
 
