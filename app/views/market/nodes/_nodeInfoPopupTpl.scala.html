@@ -9,8 +9,8 @@
     <div class="card-w">
 
       <div class="card" id="@adnNode.id">
-        <div class="popup_header __card">
-          <a class="popup_close f-right icon-icomoon js-close-slider"></a>
+        <div class="ovh">
+          <a class="close __white f-right icon-icomoon js-close-slider"></a>
         </div>
 
         <div class="card_photo-w">
@@ -44,6 +44,15 @@
 
         <div class="card_type">
           @Messages("amt.of.type." + adnNode.adn.shownTypeId)
+        </div>
+
+        <div class="card_icons">
+          @if(adnNode.adn.hasGeoSink) {
+            <span class="geolocation-icon icon-icomoon"></span>
+          }
+          @if(adnNode.adn.hasWifiSink) {
+            <span class="wifi-icon icon-icomoon"></span>
+          }
         </div>
 
         <div class="btn-w __card">
