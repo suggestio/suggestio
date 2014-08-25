@@ -1542,7 +1542,7 @@ siomart =
 
     ## Закрыть
     close : () ->
-
+      siomart.utils.ge('smGridAds').style.webkitFilter = ""
       animation_cb = () ->
         siomart.utils.removeClass siomart.focused_ads._container, 'fs-animated-end'
       setTimeout animation_cb, 3
@@ -1560,6 +1560,7 @@ siomart =
     ## Инициализация focused_ads
     ############################
     init : () ->
+      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
