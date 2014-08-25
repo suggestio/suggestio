@@ -24,6 +24,14 @@ transform(v)
   -webkit-transform v
   transform         v
 
+backface(v)
+  -webkit-backface-visibility   v
+  -moz-backface-visibility      v
+  backface-visibility      v
+
+ft(v)
+  font-size v
+
 /********************************************************************************************************************/
 /* Reset */
 /********************************************************************************************************************/
@@ -60,36 +68,24 @@ table
 	border-spacing: 0
 
 /********************************************************************************************************************/
-/* Project */
+/* Fonts */
 /********************************************************************************************************************/
-.lk
-  min-width 1366px
 
-.page
-  position          relative
-  min-height        100%
-  min-width         1366px
-  background-color  #efefef
+.ft-XS
+  ft(11px)
 
-.header
-  position          relative
-  z-index           100
-  height            60px
-  margin-bottom     -60px
-  background-color  #303030
+.ft-S
+	ft(13px)
 
-.left-menu
-  position          absolute
-  top               0
-  bottom            0
-  left              0
-  width             60px
-  background-color  #303030
+.ft-M
+  ft(15px)
 
-.right-menu
-  position          absolute
-  top               0
-  bottom            0
-  right             0
-  width             210px
-  background-color  #303030
+.ft-L
+  ft(17px)
+
+/********************************************************************************************************************/
+/* Animations */
+/********************************************************************************************************************/
+.def-transition
+  backface(hidden)
+  transition(all 0.2s ease-in-out 0s)

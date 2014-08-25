@@ -29,16 +29,21 @@
 <body class="lk">
 
   <header class="header">
-    <a class="siom-logo-def" href="@routes.Market.index()">
-      <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+    <a class="header_logo-link" href="@routes.Market.index()">
+      <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
     </a>
-    @* ctx.usernameOpt.map { username => } *@
-    @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
-    <a class="logout-btn" href="@routes.Ident.logout"></a>
+
+    <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
 
     @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
     @adnIdOpt.map { adnId =>
       @billing._billBallanceWidgetTpl(adnId)
+    }
+
+
+    @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
+    @ctx.usernameOpt.map { username =>
+      <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
     }
   </header>
 
