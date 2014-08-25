@@ -289,9 +289,8 @@ code
   &_header
     height: 50px
 
-
   &_tabs
-    height: 52px
+    height: 53px
     background: default_color_w_opacity
   &_tabs-wrapper
     width: 100%
@@ -308,12 +307,20 @@ code
 
 .sm-tab
   color: #959595
+  border: 1px #959595 solid
+  border-bottom-width: 0px
   padding: 17px 0px
   text-align: center
   background: default_color
   &.__inactive
+    border-top-width: 0px
+    border-bottom-width: 1px
     background: none!important
-    opacity: 0.6!important
+    opacity: 0.9!important
+  &.__no-left-border
+    border-left-width: 0px
+  &.__no-right-border
+      border-right-width: 0px
 
 .categories-list
   width: 524px
