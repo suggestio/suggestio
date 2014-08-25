@@ -33,7 +33,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
-  private val freeAdvFormM: Form[Option[Boolean]] = Form(
+  private def freeAdvFormM: Form[Option[Boolean]] = Form(
     "freeAdv" -> optional(boolean)
   )
 

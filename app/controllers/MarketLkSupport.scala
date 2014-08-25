@@ -24,7 +24,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
 
 
   /** Маппинг для формы обращения в саппорт. */
-  private val supportFormM = {
+  private def supportFormM = {
     import play.api.data._, Forms._
     import util.FormUtil._
     Form(

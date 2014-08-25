@@ -27,7 +27,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
   def CAN_INSTALL_MART_CATS = configuration.getBoolean("cats.install.mart.allowed") getOrElse false
 
   /** Маппинг для формы создания/редактирования пользовательской категории. */
-  private val catFormM = Form(mapping(
+  private def catFormM = Form(mapping(
     "name"          -> nameM,
     "ymCatId"       -> nonEmptyText(minLength = 1, maxLength = 10),
     "ymCatInherit"  -> default(boolean, true),
@@ -181,7 +181,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
           .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")
       }
     } else {
-      NotAcceptable("Mart cats install disabled in config.")
+      NotAcceptable("Mart cats installation disabled in config.")
     }
   }
 

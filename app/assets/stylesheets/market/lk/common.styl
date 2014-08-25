@@ -1166,21 +1166,24 @@ li
   color: siomBlueColor
 
 .blue-link
-  color: siomBlueColor
-  text-decoration: none
-  border-bottom: 1px solid rgba(7, 161, 202, 0.3)
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
   transition(all 0.2s ease-in-out 0s)
 
   &:hover
-    color: #276e98
+    color: #007b56
     border-color: #c6c6c6
 
 .link
-  color #f44040
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
   transition(all 0.2s ease-in-out 0s)
 
   &:hover
-    color #dc3a36
+    color: #007b56
+    border-color: #c6c6c6
 
 .submit-w
   overflow: hidden /* т.к. все внутренние блоки со свойством float */
@@ -1773,6 +1776,18 @@ th.__bg-head
   text-decoration     none
   border-radius(10px)
 
+.mail-icon
+  min-width           102px
+  min-height          39px
+  background-image    url('/assets/images/market/new-design/mail-icon_retina.png')
+  background-repeat   no-repeat
+  background-size     102px 103px
+  background-position center 0
+
+  &.__white
+    background-position center -64px
+
+
 /********************************************************************************************************************/
 /* Главная страница */
 /********************************************************************************************************************/
@@ -2050,6 +2065,16 @@ th.__bg-head
     font-family     'opensans-light'
     font-size       16px
     text-transform  uppercase
+
+.join-success
+
+  &_mail
+    margin-top  70px
+    margin-left -15px
+
+  &_text
+    margin-top  45px
+    color       #e0e0e0
 
 @media screen768
 

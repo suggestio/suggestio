@@ -23,9 +23,9 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  private val nameKM = "name" -> nonEmptyText(maxLength = 128)
-  private val enabledKM = "enabled"   -> boolean
-  private val dateFirstKM = "dateFirst" -> jodaDate("dd.MM.yyyy HH:mm")
+  private def nameKM = "name" -> nonEmptyText(maxLength = 128)
+  private def enabledKM = "enabled"   -> boolean
+  private def dateFirstKM = "dateFirst" -> jodaDate("dd.MM.yyyy HH:mm")
 
   /** Генератор форм для различных тарифов абонплаты. */
   private def feeTariffFormM(contractId: Int) = Form(mapping(
