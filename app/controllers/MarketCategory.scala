@@ -181,7 +181,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
           .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")
       }
     } else {
-      NotAcceptable("Mart cats install disabled in config.")
+      NotAcceptable("Mart cats installation disabled in config.")
     }
   }
 

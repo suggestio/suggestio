@@ -450,8 +450,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           NotAcceptable(_)
         }
       },
-      {adnNode =>
-        adnNode.adn.supId = supIdOpt
+      {adnNodeRaw =>
+        // Запиливаем sup id в будущий node.
+        val adnNode = adnNodeRaw.copy(
+          adn = adnNodeRaw.adn.copy(
+            supId = supIdOpt
+          )
+        )
         supOptFut flatMap { supOpt =>
           if (supIdOpt.isDefined) {
             adnNode.handleMeAddedAsChildFor(supOpt.get)
