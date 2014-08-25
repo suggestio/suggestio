@@ -47,7 +47,10 @@ object SioConstants {
   val EDGE_NGRAM_AN_2 = "aEdgeNgram2"
 
   /** Дробит тексты и слова для обычной индексации. */
-  val FTS_RU_AN     = "aFtsRu"
+  val FTS_RU_AN       = "aFtsRu"
+
+  /** deep ngram: дробить на ngram'мы по максимуму. Полезно для списка комбинируемых флагов. */
+  val DEEP_NGRAM_AN   = "deepNgram"
 
 
   //v1: Суффиксы multi-полей

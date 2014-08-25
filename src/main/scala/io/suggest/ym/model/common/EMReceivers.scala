@@ -1,9 +1,11 @@
 package io.suggest.ym.model.common
 
+import io.suggest.util.SioConstants
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
 import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.ym.model.common.SinkShowLevels.SinkShowLevel
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,12 +40,17 @@ object EMReceivers {
   /** Название поля, содержащего уровни отображения, выставленные системой на основе желаемых и разрешенных. */
   val SLS_PUB_ESFN     = "slPub"
 
+  /** Поле, содержащее уровни отображения карточки на всех синках. */
+  val SLS_ESFN         = "sls"
+
+
   // Полные имена полей (используются при составлении поисковых запросов).
   private def fullFN(fn: String) = RECEIVERS_ESFN + "." + fn
 
-  val RCVRS_RECEIVER_ID_ESFN  = fullFN(RECEIVER_ID_ESFN)
-  val RCVRS_SLS_WANT_ESFN     = fullFN(SLS_WANT_ESFN)
-  val RCVRS_SLS_PUB_ESFN      = fullFN(SLS_PUB_ESFN)
+  def RCVRS_RECEIVER_ID_ESFN  = fullFN(RECEIVER_ID_ESFN)
+  def RCVRS_SLS_WANT_ESFN     = fullFN(SLS_WANT_ESFN)
+  def RCVRS_SLS_PUB_ESFN      = fullFN(SLS_PUB_ESFN)
+  def RCVRS_SLS_ESFN          = fullFN(SLS_ESFN)
 
 
   /** Собрать аггрегатор для сбора receivers.receiverId. */
@@ -88,8 +95,8 @@ trait EMReceiversStatic extends EsModelStaticT {
   abstract override def generateMappingProps: List[DocField] = {
     FieldNestedObject(RECEIVERS_ESFN, enabled = true, properties = Seq(
       FieldString(RECEIVER_ID_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(SLS_WANT_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(SLS_PUB_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldString(SLS_ESFN,  index = FieldIndexingVariants.analyzed,  include_in_all = false,
+        index_analyzer = SioConstants.DEEP_NGRAM_AN,  search_analyzer = SioConstants.MINIMAL_AN)
     )) ::
     super.generateMappingProps
   }
@@ -99,17 +106,6 @@ trait EMReceiversStatic extends EsModelStaticT {
       case (RECEIVERS_ESFN, value) =>
         acc.receivers = AdReceiverInfo.deserializeAll(value)
     }
-  }
-
-
-  /**
-   * Реалтаймовый поиск по получателю.
-   * @param receiverId id получателя.
-   * @param maxResults Макс. кол-во результатов.
-   * @return Последовательность MAd.
-   */
-  def findForReceiverRt(receiverId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
-    findQueryRt(receiverIdQuery(receiverId), maxResults)
   }
 
   /**
@@ -138,6 +134,18 @@ trait EMReceiversStatic extends EsModelStaticT {
     QueryBuilders.filteredQuery(query0, nestedLvlFilter)
   }
 
+
+  /** Сохранить все значения ресиверов со всех переданных карточек в хранилище модели.
+    * Другие поля не будут обновляться. Для ускорения и некоторого подобия транзакционности делаем всё через bulk. */
+  def updateAllReceivers(mads: Seq[T])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val bulkRequest = client.prepareBulk()
+    mads.foreach { mad =>
+      val updReq = mad.updateReceiversReqBuilder
+      bulkRequest.add(updReq)
+    }
+    bulkRequest.execute()
+  }
+
 }
 
 
@@ -149,22 +157,20 @@ trait EMReceiversI extends EsModelT {
 
   /** Есть ли хоть один уровень в каком-либо published? */
   def isPublished: Boolean = receivers.exists {
-    case (_, ari)  =>  !ari.slsPub.isEmpty
+    case (_, ari)  =>  ari.sls.nonEmpty
   }
 
-  /** Собрать все уровни отображения со всех ресиверов. */
-  def allPubShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
-    case (acc, (_, ari))  =>  acc union ari.slsPub
+  /** Просуммировать уровни отображения в контексте sink'ов. */
+  def allSinkShowLevels = receivers.foldLeft [Set[SinkShowLevel]] (Set.empty) {
+    case (acc, (_, ari))  =>  acc union ari.sls
   }
 
-  /** Собрать все уровни отображения со всех ресиверов. */
-  def allWantShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
-    case (acc, (_, ari))  =>  acc union ari.slsWant
-  }
+  /** Пришло на смену методам allWantShowLevels() и allPubShowLevels(). */
+  def allShowLevels: Set[AdShowLevel] = allSinkShowLevels map { _.sl }
 
   /** Опубликована ли рекламная карточка у указанного получателя? */
   def isPublishedAt(receiverId: String): Boolean = {
-    receivers.get(receiverId).exists(!_.slsPub.isEmpty)
+    receivers.get(receiverId).exists(_.sls.nonEmpty)
   }
 }
 
@@ -174,7 +180,7 @@ trait EMReceivers extends EMReceiversI {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!receivers.isEmpty)
+    if (receivers.nonEmpty)
       RECEIVERS_ESFN -> writeReceiversPlayJson :: acc0
     else
       acc0
@@ -187,14 +193,6 @@ trait EMReceivers extends EMReceiversI {
     JsArray(arrayElements)
   }
 
-  /** Поле slsPub обычно выставляется на основе want-поля и списка разрешенных уровней. Их пересечение
-    * является новым slsPub значением. Тут короткий враппер, чтобы это всё сделать. */
-  def resetReceiversSlsPub(slsAllowed: Set[AdShowLevel]) {
-    receivers.valuesIterator.foreach { rcvr =>
-      rcvr.slsPub = rcvr.slsWant intersect slsAllowed
-    }
-  }
-
   /** Генерация update-реквеста на обновление только поля receivers. Сам реквест не вызывается. */
   def updateReceiversReqBuilder(implicit client: Client): UpdateRequestBuilder = {
     val json = JsObject(Seq(
@@ -203,30 +201,11 @@ trait EMReceivers extends EMReceiversI {
     prepareUpdate.setDoc(json.toString())
   }
 
-  /** Сохранить новые ресиверы через update. */
-  def saveReceivers(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    updateReceiversReqBuilder.execute()
-  }
-
 }
 
 trait EMReceiversMut extends EMReceivers {
   override type T <: EMReceiversMut
   var receivers: Receivers_t
-
-  def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {
-    // Нужно отфильтровать ресиверов с пустыми slsWant.
-    val rcvrs2 = receivers.valuesIterator.foldLeft[List[(String, AdReceiverInfo)]] (Nil) {
-      (acc, ari) =>
-        ari.slsWant = f(ari.slsWant)
-        if (ari.slsWant.isEmpty)
-          acc
-        else
-          ari.receiverId -> ari  ::  acc
-    }
-    receivers = rcvrs2.toMap
-  }
-
 }
 
 
@@ -238,8 +217,10 @@ object AdReceiverInfo {
     case v: java.util.Map[_,_] =>
       AdReceiverInfo(
         receiverId = v.get(RECEIVER_ID_ESFN).toString,
-        slsWant = EMShowLevels.deserializeShowLevels(v.get(SLS_WANT_ESFN)),
-        slsPub = EMShowLevels.deserializeShowLevels(v.get(SLS_PUB_ESFN))
+        sls = Option(v get SLS_ESFN)
+          .map ( SinkShowLevels.deserializeLevelsSet )
+          .orElse { Option(v get SLS_PUB_ESFN).map { SinkShowLevels.deserializeFromAdSls } }
+          .getOrElse { Set.empty }
       )
   }
 
@@ -270,13 +251,12 @@ import AdReceiverInfo._
 /**
  * Экземляр информации об одном получателе рекламы.
  * @param receiverId id получателя.
- * @param slsWant Желаемые уровни отображения.
- * @param slsPub Выставленные системой уровни отображения на основе желаемых и возможных уровней.
+ * @param sls sink-уровни отображения. Описывают где что отображать.
+ *            Пришли на смену изрядно устаревшим велосипедам slsWant+slsPub.
  */
 case class AdReceiverInfo(
   receiverId: String,
-  var slsWant: Set[AdShowLevel] = Set.empty,
-  var slsPub: Set[AdShowLevel]  = Set.empty
+  sls: Set[SinkShowLevel] = Set.empty
 ) {
   override def equals(obj: scala.Any): Boolean = super.equals(obj) || {
     obj match {
@@ -291,8 +271,12 @@ case class AdReceiverInfo(
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc: FieldsJsonAcc = List(RECEIVER_ID_ESFN -> JsString(receiverId))
-    acc = maybeSerializeLevelsPlayJson(SLS_WANT_ESFN, slsWant, acc)
-    acc = maybeSerializeLevelsPlayJson(SLS_PUB_ESFN, slsPub, acc)
+    if (sls.nonEmpty) {
+      val slsStr = sls.foldLeft(List.empty[JsString]) {
+        (acc, sl)  =>  JsString(sl.name) :: acc
+      }
+      acc ::= SLS_ESFN -> JsArray(slsStr)
+    }
     JsObject(acc)
   }
 

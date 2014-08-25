@@ -9,7 +9,7 @@ import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.model.EsModelMinimalStaticT
-import io.suggest.ym.model.common.{DynSearchArgs, EsDynSearchStatic, EMReceivers}
+import io.suggest.ym.model.common.{SlNameTokenStr, DynSearchArgs, EsDynSearchStatic, EMReceivers}
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -94,7 +94,7 @@ object AdsSearch {
           nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
         }
         if (levels.nonEmpty) {
-          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.name) : _*)
         }
         // Если получилось несколько фильтров, то надо их объеденить.
         val finalNestedSubfilter: FilterBuilder = if (nestedSubfilters.tail.nonEmpty) {
@@ -115,7 +115,7 @@ object AdsSearch {
       } else {
         var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
         if (levels.nonEmpty) {
-          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
+          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.name) : _*)
           nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
         }
         val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
@@ -126,7 +126,7 @@ object AdsSearch {
       if (levels.isEmpty) {
         None
       } else {
-        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_PUB_ESFN, levels.map(_.toString) : _*)
+        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_PUB_ESFN, levels.map(_.name) : _*)
         val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
         Some(qb)
       }
@@ -180,7 +180,7 @@ trait AdsSearchArgsT extends DynSearchArgs {
   def catIds: Seq[String]
 
   /** Какого уровня требуются карточки. */
-  def levels: Seq[AdShowLevel]
+  def levels: Seq[SlNameTokenStr]
 
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]

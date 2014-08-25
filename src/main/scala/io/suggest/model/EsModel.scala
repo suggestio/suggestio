@@ -117,17 +117,7 @@ object EsModel extends MacroLogsImpl {
   /** Тип аккамулятора, который используется во [[EsModelT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
 
-  def companyIdParser = stringParser
-  def martIdParser = stringParser
-  def nameParser = stringParser
-  def dateCreatedParser = dateTimeParser
-  def descriptionParser = stringParser
-  def martFloorParser = intParser
-  def martSectionParser = intParser
-  def shopIdParser = stringParser
   def urlParser = stringParser
-  def addressParser = stringParser
-  def siteUrlParser = stringParser
   def authInfoParser = stringParser andThen {
     case null => None
     case s =>

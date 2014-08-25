@@ -11,11 +11,8 @@ import org.joda.time.DateTime
 import io.suggest.util.{SioConstants, MacroLogsImpl}
 import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
-import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMImg.Imgs_t
-import org.elasticsearch.search.aggregations.AggregationBuilders
 
 /**
  * Suggest.io
@@ -138,6 +135,18 @@ object MAd
       }
   }
 
+  /** Сохранить все значения ресиверов со всех переданных карточек в хранилище модели.
+    * Другие поля не будут обновляться. Для ускорения и некоторого подобия транзакционности делаем всё через bulk. */
+  override def updateAllReceivers(mads: Seq[T])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val resultFut = super.updateAllReceivers(mads)
+    // В добавок к выполненным действиям нужно породить уведомление о сохранении:
+    resultFut onSuccess { case _ =>
+      mads.foreach {
+        _.emitSavedEvent
+      }
+    }
+    resultFut
+  }
 }
 
 
@@ -194,27 +203,9 @@ case class MAd(
     resultFut
   }
 
-  /** Сохранить новые ресиверы через update. */
-  override def saveReceivers(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val resultFut = super.saveReceivers
-    resultFut onSuccess {
-      case _ => emitSavedEvent
-    }
-    resultFut
-  }
-
   /** Отправить в шину SN событие успешного сохранения этого экземпляра. */
   def emitSavedEvent(implicit sn: SioNotifierStaticClientI) = sn publish AdSavedEvent(this)
 
-  /** Подготовить изменения в БД для изменения в отображении.
-    * @param producer Экземпляр продьюсера, который обычно уже доступен при вызове или закеширован.
-    * @return На выходе будет список рекламных карточек, ещё не сохраненных.
-    */
-  def applyOutputConstraintsFor(producer: MAdnNode)(implicit ec: ExecutionContext, client: Client) = {
-    if (producerId != producer.id.get)
-      throw new IllegalArgumentException(s"My producer is $producerId, but producer with id=${producer.id.get} passed.")
-    ShowLevelsUtil.applyOutputConstraints(this, producer)
-  }
 }
 
 
@@ -230,7 +221,9 @@ case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn:
 
   override def searchForReceiverAtPubLevel(receiverId: String, level: String): String = {
     val searchArgs = new AdsSearchArgsT {
-      override def levels = List(level.trim).filter(!_.isEmpty).flatMap(AdShowLevels.maybeWithName)
+      override def levels = List(level.trim)
+        .filter(!_.isEmpty)
+        .flatMap(SinkShowLevels.maybeWithName)
       override def receiverIds = List(receiverId.trim).filter(!_.isEmpty)
       override def maxResults = 100
       override def offset = 0

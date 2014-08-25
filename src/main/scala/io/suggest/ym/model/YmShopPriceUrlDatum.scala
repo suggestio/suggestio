@@ -127,7 +127,7 @@ object MShopPriceList extends EsModelStaticT with MacroLogsImpl {
 
 
   def applyKeyValue(acc: MShopPriceList): PartialFunction[(String, AnyRef), Unit] = {
-    case (SHOP_ID_ESFN, value)      => acc.shopId = shopIdParser(value)
+    case (SHOP_ID_ESFN, value)      => acc.shopId = stringParser(value)
     case (URL_ESFN, value)          => acc.url = urlParser(value)
     case (AUTH_INFO_ESFN, value)    => acc.authInfo = authInfoParser(value)
   }

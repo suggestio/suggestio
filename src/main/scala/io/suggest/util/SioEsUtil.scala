@@ -9,7 +9,6 @@ import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
-import org.elasticsearch.action.admin.indices.close.CloseIndexRequestBuilder
 import io.suggest.model.MVirtualIndex
 import org.elasticsearch.node.{NodeBuilder, Node}
 import org.elasticsearch.cluster.ClusterName
@@ -49,6 +48,7 @@ object SioEsUtil extends MacroLogsImpl {
 
   val STD_TN        = "tStd"
   val DFLT_AN       = "default"
+  val DEEP_NGRAM_TN = "deepNgramTn"
 
   /**
    * Создать параллельно пачку одинаковых индексов.
@@ -125,20 +125,13 @@ object SioEsUtil extends MacroLogsImpl {
    * Закрыть индекс указанный
    * @param indexName имя индекса.
    */
-  def closeIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = "closeIndex(%s): " format indexName
-    trace(logPrefix + "Starting close ...")
-    val adm = client.admin().indices()
-    new CloseIndexRequestBuilder(adm).setIndices(indexName).execute().transform(
-      {resp =>
-        val result = resp.isAcknowledged
-        debug(logPrefix + "Close index result = %s" format result)
-        result
-      },
-      {ex =>
-        warn(logPrefix + "Cannot close index", ex)
-        ex}
-    )
+  def closeIndex(indexName: String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    lazy val logPrefix = s"closeIndex($indexName): "
+    trace(logPrefix + "Starting close index ...")
+    client.admin().indices()
+      .prepareClose(indexName)
+      .execute()
+      .map { _.isAcknowledged }
   }
 
   /**
@@ -152,16 +145,7 @@ object SioEsUtil extends MacroLogsImpl {
     client.admin().indices()
       .prepareOpen(indexName)
       .execute()
-      .transform(
-        {resp =>
-          val result = resp.isAcknowledged
-          debug(logPrefix + "Open index finished: " + result)
-          result
-        },
-        {ex =>
-          error(logPrefix + "Failed to open index: " + indexName, ex)
-          ex}
-      )
+      .map { _.isAcknowledged }
   }
 
 
@@ -254,7 +238,7 @@ object SioEsUtil extends MacroLogsImpl {
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_2, min_gram = 2, max_gram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front")
         ),
 
         analyzers = Seq(
@@ -302,10 +286,13 @@ object SioEsUtil extends MacroLogsImpl {
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_1, min_gram = 1, max_gram = 10, side = "front"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_2, min_gram = 2, max_gram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN_1, minGram = 1, maxGram = 10, side = "front"),
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front")
         ),
-        tokenizers = Seq(new TokenizerStandard(STD_TN)),
+        tokenizers = Seq(
+          new TokenizerStandard(STD_TN),
+          new NGramTokenizer(DEEP_NGRAM_TN, minGram = 1, maxGram = 10, tokenChars = Seq(TokenCharTypes.digit, TokenCharTypes.letter))
+        ),
         analyzers = {
           val chFilters = Seq("html_strip")
           val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
@@ -333,11 +320,47 @@ object SioEsUtil extends MacroLogsImpl {
               id = MINIMAL_AN,
               tokenizer = STD_TN,
               filters = filters0
+            ),
+            AnalyzerCustom(
+              id = DEEP_NGRAM_AN,
+              tokenizer = DEEP_NGRAM_TN,
+              filters = Nil
             )
           )
         }
       )
     }
+  }
+
+  /** 2014.aug.25: Добавить недостающий анализатор для разборки флагов sink show levels. */
+  def getIndexSettingsV2_1 = {
+    jsonGenerator { implicit b =>
+      IndexSettings(
+        tokenizers = Seq(
+          new NGramTokenizer(DEEP_NGRAM_TN, minGram = 1, maxGram = 10, tokenChars = Seq(TokenCharTypes.digit, TokenCharTypes.letter))
+        ),
+        analyzers = Seq(
+          AnalyzerCustom(
+            id = DEEP_NGRAM_AN,
+            tokenizer = DEEP_NGRAM_TN,
+            filters = Nil
+          )
+        )
+      )
+    }
+  }
+
+  /** Запустить добавление новых настроек в индекс. Для этого индекс надо закрыть. */
+  def updateIndexTo2_1(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    closeIndex(indexName)
+      .flatMap { _ =>
+        client.admin().indices()
+          .prepareUpdateSettings(indexName)
+          .setSettings(getIndexSettingsV2_1.string())
+          .execute()
+      } flatMap { _ =>
+        openIndex(indexName)
+      }
   }
 
 
@@ -463,22 +486,25 @@ trait Renderable {
 
 // Объявление настроек верхнего уровня
 case class IndexSettings(
-  charFilters: Seq[CharFilter] = Nil,
-  analyzers : Seq[Analyzer] = Nil,
-  tokenizers :Seq[Tokenizer] = Nil,
-  filters : Seq[Filter] = Nil,
-  number_of_shards : Int = 5,
-  number_of_replicas : Int = 0,
-  cache_field_type : String = "soft"
+  charFilters         : Seq[CharFilter] = Nil,
+  analyzers           : Seq[Analyzer] = Nil,
+  tokenizers          : Seq[Tokenizer] = Nil,
+  filters             : Seq[Filter] = Nil,
+  number_of_shards    : Int = -1,
+  number_of_replicas  : Int = -1,
+  cache_field_type    : String = ""
 ) extends JsonObject {
 
   override def id = null
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    // Рендерим настройки всякие
-    b .field("number_of_shards",   number_of_shards)
-      .field("number_of_replicas", number_of_replicas)
-      .field("cache.field_type",   cache_field_type)
+    // Рендерим настройки всякие. Всякие неизменяемые вещи не должны рендерится, если не задано это.
+    if (number_of_shards > 0)
+      b.field("number_of_shards",   number_of_shards)
+    if (number_of_replicas > 0)
+      b.field("number_of_replicas", number_of_replicas)
+    if (cache_field_type != null & !cache_field_type.isEmpty)
+      b.field("cache.field_type",   cache_field_type)
 
     // Рендерим параметры анализа
     if (analyzers != Nil || tokenizers != Nil || filters != Nil) {
@@ -534,9 +560,9 @@ trait TypedJsonObject extends JsonObject {
   def typ: String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder(b)
     if (typ != null)
       b.field("type", typ)
+    super.fieldsBuilder(b)
   }
 }
 
@@ -584,6 +610,33 @@ case class TokenizerStandard(
       b.field("max_token_length", max_token_length)
   }
 }
+
+
+object TokenCharTypes extends Enumeration {
+  type TokenCharType = Value
+  val letter, digit, whitespace, punctuation, symbol = Value
+}
+
+import TokenCharTypes.TokenCharType
+
+/** Токенайзер, дробящий сорец в клочья на ngram'мы. */
+case class NGramTokenizer(
+  id: String,
+  minGram: Int = 1,
+  maxGram: Int = 2,
+  tokenChars: Seq[TokenCharType] = Seq.empty
+) extends Tokenizer with NgramBase {
+  override def typ = "nGram"
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    if (tokenChars.nonEmpty) {
+      val tcts = tokenChars.map(_.toString)
+      b.array("token_chars", tcts : _*)
+    }
+  }
+}
+
 // END токенизаторы ----------------------------------------------------------------------------------------------------
 
 
@@ -649,25 +702,41 @@ case class FilterStandard(id: String) extends Filter {
   override def typ = "standard"
 }
 
+sealed trait NgramBase extends JsonObject {
+  def minGram: Int
+  def maxGram: Int
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    b.field("min_gram", minGram)
+    b.field("max_gram", maxGram)
+  }
+}
+
 /** Фильтр edge-ngram. */
 case class FilterEdgeNgram(
   id: String,
-  min_gram : Int = 1,
-  max_gram : Int = 2,
+  minGram : Int = 1,
+  maxGram : Int = 2,
   side : String = "front"
-) extends Filter {
+) extends Filter with NgramBase {
 
   override def typ = "edgeNGram"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (min_gram > 1)
-      b.field("min_gram", min_gram)
-    if (max_gram > 2)
-      b.field("max_gram", max_gram)
     if (side != "front")
       b.field("side", side)
   }
+}
+
+
+case class FilterNgram(
+  id: String,
+  minGram: Int = 1,
+  maxGram: Int = 2
+) extends Filter with NgramBase {
+  override def typ = "nGram"
 }
 
 

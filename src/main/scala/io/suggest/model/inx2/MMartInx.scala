@@ -43,7 +43,7 @@ object MMartInx extends EsModelStaticT with MacroLogsImpl {
 
 
   def applyKeyValue(acc: MMartInx): PartialFunction[(String, AnyRef), Unit] = {
-    case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
+    case (MART_ID_ESFN, value)      => acc.martId = stringParser(value)
     case (ES_INX_NAME_ESFN, value)  => acc.targetEsInxName = stringParser(value)
   }
 

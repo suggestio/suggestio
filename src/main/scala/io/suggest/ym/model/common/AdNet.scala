@@ -1,10 +1,10 @@
 package io.suggest.ym.model.common
 
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.MacroLogsImplLazy
 import AdnRights._
 import io.suggest.ym.model.MAdnNode
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
-import io.suggest.ym.ad.ShowLevelsUtil._
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -15,6 +15,7 @@ import io.suggest.ym.ad.ShowLevelsUtil._
 
 /** Типы узлов рекламной сети. */
 object AdNetMemberTypes extends Enumeration {
+
 
   /**
    * Дополняем экземпляры Enumeration.Val дополнительными способностями, специфичными для sio-market.
@@ -45,17 +46,14 @@ object AdNetMemberTypes extends Enumeration {
 
     override def canViewSlaves = true
     // ТЦ при добавлении магазина должен прописывать его в свой producerIds.
-    override def updateParentForChild(parent: MAdnNode, child: MAdnNode): Boolean = {
-      parent.adn.producerIds += child.id.get
-      true
-    }
+    override def updateParentForChild(parent: MAdnNode, child: MAdnNode) = false
   }
 
 
   /** Магазин. Обычно арендатор в ТЦ. */
   val SHOP: AdNetMemberType = new Val("s") with ANMTProducer {
     override def displayAddrOnAds = true
-    override def slDflt = AdShowLevels.LVL_MEMBER
+    override def slDflt = AdShowLevels.LVL_PRODUCER
 
     override def canViewSlaves = false
     // Для магазина нормально быть внутри ТЦ. Для этого ему не требуются изменения в состоянии.
@@ -69,10 +67,7 @@ object AdNetMemberTypes extends Enumeration {
     override def slDflt = AdShowLevels.LVL_START_PAGE
     override def canViewSlaves = false
     // При добавлении ресторана, супервизор ресторанной сети является для ресторана источником рекламных карточек.
-    override def prepareChildForParent(parent: MAdnNode, child: MAdnNode): Boolean = {
-      child.adn.producerIds += parent.id.get
-      true
-    }
+    override def prepareChildForParent(parent: MAdnNode, child: MAdnNode): Boolean = false
   }
 
 
@@ -116,83 +111,6 @@ object AdOfferTypes extends Enumeration {
   }
 }
 
-
-/** Уровни отображения рекламы. Используется как bitmask, но через денормализацию поля. */
-object AdShowLevels extends Enumeration with MacroLogsImpl {
-  import LOGGER._
-  import scala.collection.JavaConversions._
-
-  /**
-   * Надстройка над исходным классом-значением.
-   * @param name Исходный строковой id enum-элемента.
-   * @param visualPrio Визуальный приоритет отображения. Если надо отобразить несколько галочек, то
-   *                   они должны отображаться в неком стабильном порядке.
-   * @param checkboxCssClass При рендере галочки, она должна иметь этот css-класс.
-   */
-  protected case class Val(
-    name: String,
-    visualPrio: Int,
-    checkboxCssClass: String
-  ) extends super.Val(name)
-
-  type AdShowLevel = Val
-
-  implicit def value2val(v: Value) = v.asInstanceOf[AdShowLevel]
-
-  /** Сконвертить множество уровней в множество строковых id этих уровней. */
-  implicit def sls2strings(sls: Set[AdShowLevel]) = sls.map(_.name)
-
-  def withNameTyped(n: String): AdShowLevel = withName(n)
-
-  /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_START_PAGE: AdShowLevel = Val("d", 300, "firstPage-catalog")
-
-  /** Отображать в каталоге продьюсеров. */
-  val LVL_MEMBERS_CATALOG: AdShowLevel = Val("h", 100, "common-catalog")
-
-  /** Отображать эту рекламу внутри каталога продьюсера. */
-  val LVL_MEMBER: AdShowLevel = Val("m", 200, "shop-catalog")
-
-
-  def maybeWithName(n: String): Option[AdShowLevel] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case _: Exception => None
-    }
-  }
-
-  /** Десериализатор значений из самых примитивных типов и коллекций. */
-  val deserializeLevelsFrom: PartialFunction[Any, Set[AdShowLevel]] = {
-    case v: java.lang.Iterable[_] =>
-      v.foldLeft[List[AdShowLevel]] (Nil) { (acc, slRaw) =>
-        AdShowLevels.maybeWithName(slRaw.toString) match {
-          case Some(sl) => sl :: acc
-          case None =>
-            warn(s"Unable to deserialize show level '$slRaw'. Possible levels are: ${AdShowLevels.values.mkString(", ")}")
-            acc
-        }
-      }.toSet
-  }
-
-  /**
-   * Является ли рекламная карточка ТЦ отображаемой где-либо?
-   * @param sls Список уровней отображения рекламной карточки.
-   * @return true, если карточка опубликована где-либо. Иначе false.
-   */
-  def isShownMartAd(sls: Set[AdShowLevel]) = !sls.isEmpty
-
-  /**
-   * Является ли рекламная карточка магазина отображаемой?
-   * @param htl Есть ли у магазина top level access?
-   * @param sls Уровни рекламной карточки.
-   * @return true - если карточка где-либо опубликована. Иначе false.
-   */
-  def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
-    sls.contains(LVL_MEMBER) || sls.contains(LVL_MEMBERS_CATALOG) || (htl && sls.contains(LVL_START_PAGE))
-  }
-
-}
 
 
 sealed trait ANMTValT {
@@ -242,9 +160,25 @@ sealed trait ANMTValT {
 
 object ANMTReceiver {
   import AdShowLevels._
+
+
+  // Дефолтовые лимиты уровней для MART и SHOP
+  /** Дефолтовая общая ширина выдачи карточек внутри магазинов-арендаторов. */
+  private val MART_LVL_IN_MEMBER_DFLT          = CONFIG.getInt("sl.mart.in.lvl_member.dflt") getOrElse 5000
+
+  /** Дефолтовая ширина каталога арендаторов. */
+  private val MART_LVL_IN_MEMBERS_CATALOG_DFLT = CONFIG.getInt("mart.show.levels.in.lvl_member_catalog.dflt") getOrElse 1000
+
+  /** Сколько ТЦ максимум может отображать ЧУЖОЙ рекламы на первой странице. */
+  private val MART_LVL_IN_START_PAGE_DFLT      = CONFIG.getInt("sl.mart.in.lvl_start_page.dflt") getOrElse 500
+
+  /** Дефолтовое кол-во собственных (исходящих) карточек, которое может публиковать ТЦ. */
+  private val MART_LVL_OUT_START_PAGE_DFLT     = CONFIG.getInt("sl.mart.out.lvl_start_page.dflt") getOrElse 2
+
+
   val rcvrSlIn: LvlMap_t = Map(
-    LVL_MEMBER          -> MART_LVL_IN_MEMBER_DFLT,
-    LVL_MEMBERS_CATALOG -> MART_LVL_IN_MEMBERS_CATALOG_DFLT,
+    LVL_PRODUCER          -> MART_LVL_IN_MEMBER_DFLT,
+    LVL_CATS -> MART_LVL_IN_MEMBERS_CATALOG_DFLT,
     LVL_START_PAGE      -> MART_LVL_IN_START_PAGE_DFLT
   )
 

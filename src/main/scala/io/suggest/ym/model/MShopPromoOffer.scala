@@ -69,7 +69,7 @@ object MShopPromoOffer extends EsModelMinimalStaticT with MacroLogsImpl {
       .map { getResp =>
         if (getResp.isExists) {
           val value = getResp.getField(YmOfferDatumFields.SHOP_ID_ESFN).getValue
-          val shopId = EsModel.shopIdParser(value)
+          val shopId = EsModel.stringParser(value)
           Some(shopId)
         } else None
       }

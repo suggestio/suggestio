@@ -54,6 +54,10 @@ object AdNetMember {
   /** id отображаемого типа узла. */
   val SHOWN_TYPE_ID_ESFN = "sti"
 
+  /** Поле с sink-флагами, которые описывают возможности узла по рекламным выдачам. */
+  val SINKS_ESFN = "sink"
+
+
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
   // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
@@ -64,6 +68,7 @@ object AdNetMember {
   def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
   def ADN_IS_ENABLED_ESFN     = fullFN(IS_ENABLED_ESFN)
+  def ADN_SINKS_ESFN          = fullFN(SINKS_ESFN)
 
 
   /** Генератор es-query для указанного member type.
@@ -114,12 +119,44 @@ object AdNetMember {
 
 }
 
+
+/** Выходы узла для отображения рекламных карточек. */
+object AdnSinks extends Enumeration {
+  protected case class Val(name: String) extends super.Val(name) with SlNameTokenStr
+  type AdnSink = Val
+  implicit def value2val(x: Value): AdnSink = x.asInstanceOf[AdnSink]
+
+  val SINK_WIFI: AdnSink = Val("w")
+  val SINK_GEO: AdnSink  = Val("g")
+}
+
+
+
+/** Положение участника сети и его возможности описываются флагами прав доступа. */
+object AdnRights extends Enumeration {
+  protected case class Val(name: String, longName: String) extends super.Val(name)
+  type AdnRight = Val
+  implicit def value2val(x: Value): AdnRight = x.asInstanceOf[AdnRight]
+
+  /** Продьюсер может создавать свою рекламу. */
+  val PRODUCER: AdnRight = Val("p", "producer")
+
+  /** Ресивер может отображать в выдаче и просматривать в ЛК рекламу других участников, которые транслируют свою
+    * рекламу ему через receivers. Ресивер также может приглашать новых участников. */
+  val RECEIVER: AdnRight = Val("r", "receiver")
+
+  /** Супервизор может управлять рекламной сетью и модерировать рекламные карточки. */
+  val SUPERVISOR: AdnRight = Val("s", "supervisor")
+}
+
+
+import AdnRights._
+import AdnSinks._
 import AdNetMember._
 
 
 /** Трейт для статической части модели участника рекламной сети. */
 trait EMAdNetMemberStatic extends EsModelStaticT {
-  import AdnRights.AdnRight
 
   override type T <: EMAdNetMember
 
@@ -136,7 +173,8 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldObject(SHOW_LEVELS_ESFN, enabled = false, properties = Nil)
+      FieldObject(SHOW_LEVELS_ESFN, enabled = false, properties = Nil),
+      FieldString(SINKS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
     )) :: super.generateMappingProps
   }
 
@@ -166,7 +204,12 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
           .fold(AdnMemberShowLevels()) { AdnMemberShowLevels.deserialize(_) },
         isEnabled = Option(vm get IS_ENABLED_ESFN)
           .fold(true)(booleanParser),
-        disableReason = Option(vm get DISABLE_REASON_ESFN) map stringParser
+        disableReason = Option(vm get DISABLE_REASON_ESFN) map stringParser,
+        sinks = Option(vm get SINKS_ESFN).fold(Set.empty[AdnSink]) {
+          case ls: jl.Iterable[_] =>
+            ls.map { sinkIdRaw => AdnSinks.withName(stringParser(sinkIdRaw)) : AdnSink }
+              .toSet
+        }
       )
   }
 
@@ -433,27 +476,6 @@ trait EMAdNetMember extends EsModelT {
 }
 
 
-/** Положение участника сети и его возможности описываются флагами прав доступа. */
-object AdnRights extends Enumeration {
-  protected case class Val(name: String, longName: String) extends super.Val(name)
-  type AdnRight = Val
-  implicit def value2val(x: Value): AdnRight = x.asInstanceOf[AdnRight]
-
-  /** Продьюсер может создавать свою рекламу. */
-  val PRODUCER: AdnRight = Val("p", "producer")
-
-  /** Ресивер может отображать в выдаче и просматривать в ЛК рекламу других участников, которые транслируют свою
-    * рекламу ему через receivers. Ресивер также может приглашать новых участников. */
-  val RECEIVER: AdnRight = Val("r", "receiver")
-
-  /** Супервизор может управлять рекламной сетью и модерировать рекламные карточки. */
-  val SUPERVISOR: AdnRight = Val("s", "supervisor")
-}
-
-
-import AdnRights._
-
-
 /** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект.
   * @param memberType Тип участника. Например, магазин.
   * @param rights Права участника сети.
@@ -469,25 +491,19 @@ import AdnRights._
   * @param disableReason Причина отключения узла, если есть.
   */
 case class AdNetMemberInfo(
-  var memberType: AdNetMemberType,
-  var rights: Set[AdnRight],
-  var shownTypeIdOpt: Option[String] = None,
-  var supId: Option[String] = None,
-  var producerIds: Set[String] = Set.empty,
-  var advDelegate: Option[String] = None,
-  var testNode: Boolean = false,
+  memberType      : AdNetMemberType,
+  rights          : Set[AdnRight],
+  shownTypeIdOpt  : Option[String] = None,
+  supId           : Option[String] = None,
+  producerIds     : Set[String] = Set.empty,
+  advDelegate     : Option[String] = None,
+  testNode        : Boolean = false,
   // перемещено из mpub:
-  var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
-  var isEnabled: Boolean = true,
-  var disableReason: Option[String] = None
+  showLevelsInfo  : AdnMemberShowLevels = AdnMemberShowLevels(),
+  isEnabled       : Boolean = true,
+  disableReason   : Option[String] = None,
+  sinks           : Set[AdnSink] = Set.empty
 ) {
-
-  def updateRights(flag: AdnRight, isEnabled: Boolean) {
-    if (isEnabled)
-      rights += flag
-    else
-      rights -= flag
-  }
 
   /** Отображаемый для юзера id типа узла. */
   def shownTypeId: String = shownTypeIdOpt getOrElse memberType.name
@@ -495,14 +511,22 @@ case class AdNetMemberInfo(
   // Быстрый доступ к каталогу adn-прав
   @JsonIgnore
   def isProducer: Boolean = rights contains PRODUCER
-  def isProducer_=(isProducer: Boolean) = updateRights(PRODUCER, isProducer)
   @JsonIgnore
   def isReceiver: Boolean = rights contains RECEIVER
-  def isReceiver_=(isReceiver: Boolean) = updateRights(RECEIVER, isReceiver)
   @JsonIgnore
   def isSupervisor: Boolean = rights contains SUPERVISOR
-  def isSupervisor_=(isSupervisor: Boolean) = updateRights(SUPERVISOR, isSupervisor)
 
+
+  /** Быстрая и простая проверка на наличие wifi sink во флагах. */
+  @JsonIgnore
+  def hasWifiSink = sinks contains AdnSinks.SINK_WIFI
+
+  /** Быстрая и простая проверка на наличие синка с геолокацией. */
+  @JsonIgnore
+  def hasGeoSink  = sinks contains AdnSinks.SINK_GEO
+
+
+  /** Сериализовать в JSON поля текущего экземпляра класса. */
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = List(
@@ -532,6 +556,12 @@ case class AdNetMemberInfo(
       acc0 ::= SHOW_LEVELS_ESFN -> showLevelsInfo.toPlayJson
     if (disableReason.isDefined)
       acc0 ::= DISABLE_REASON_ESFN -> JsString(disableReason.get)
+    if (sinks.nonEmpty) {
+      val sinkIds = sinks
+        .map { sink => JsString(sink.name) }
+        .toSeq
+      acc0 ::= SINKS_ESFN -> JsArray(sinkIds)
+    }
     JsObject(acc0)
   }
 
@@ -616,7 +646,7 @@ object AdnMemberShowLevels {
 
   /** Опционально отрендерить карту полей в поле в play.json в аккамулятор. */
   private def maybeRenderLevelsMapPlayJson(name: String, levelsMap: LvlMap_t, acc: FieldsJsonAcc): FieldsJsonAcc = {
-    if (!levelsMap.isEmpty) {
+    if (levelsMap.nonEmpty) {
       val mapElements = levelsMap.foldLeft[FieldsJsonAcc] (Nil) {
         case (facc, (sl, max))  =>  sl.toString -> JsNumber(max) :: facc
       }
@@ -682,21 +712,12 @@ case class AdnMemberShowLevels(
 
   def canOutAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, out)
   def maxOutAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, out)
-  def setMaxOutAtLevel(lvl: AdShowLevel, max: Int) = {
-    out = out + (lvl -> max)
-    this
-  }
 
   def canInAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, in)
   def maxInAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, in)
-  def setMaxInAtLevel(lvl: AdShowLevel, max: Int) = {
-    in = in + (lvl -> max)
-    this
-  }
 
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)
-  def in4render  = sls4render(in)
 }
 
 
