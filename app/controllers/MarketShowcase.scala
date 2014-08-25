@@ -561,7 +561,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     Ok( Jsonp(JSONP_CB_FUN, json) )
   }
 
-  /** Карта статической подписки контроллера на некоторые события. */
+  /** Карта статической подписки контроллера на некоторые события:
+    * - Уборка из кеша рендера nodeIconJs. */
   override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
     // Нужно чистить кеш nodeIconJs при обновлении узлов.
     val classifier = AdnNodeSavedEvent.getClassifier(isCreated = Some(false))

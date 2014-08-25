@@ -244,11 +244,4 @@ object Sys extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Суперюзер приказал создать дефолтовый индекс для магазина. */
-  def inx2createDfltMart = IsSuperuser.async { implicit request =>
-    MMartInx(martId = "TODO", targetEsInxName = IndicesUtil.MART_INX_NAME_DFLT).createIndex() map { result =>
-      Ok(s"Create index: ${IndicesUtil.MART_INX_NAME_DFLT} :: result -> $result")
-    }
-  }
-
 }

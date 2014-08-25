@@ -42,7 +42,6 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     DomainManager,
     SiobixClient,
     MAdnNodeCache,
-    IndicesUtil,
     deleteAdsOnAdnNodeDeleteSNSC,
     cleanupAdnProducerIdsOnDeleteAdnNode,
     controllers.MarketShowcase

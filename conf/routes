@@ -228,7 +228,6 @@ GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dke
 GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
-POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
