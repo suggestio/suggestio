@@ -49,7 +49,7 @@
         <div class="wifi-points_lst" id="wifiPoints">
           @nodes.map { node =>
             <div class="wifi-points_i-w js-wifi-point">
-              <a class="wifi-points_i js-card-btn" href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);" title="@node.meta.name / @node.meta.town">
+              <a class="wifi-points_i js-card-btn" data-href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);" title="@node.meta.name / @node.meta.town">
                 @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
                 <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
               </a>
