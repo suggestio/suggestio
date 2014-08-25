@@ -5,13 +5,15 @@
 </div>
 
 @* Информация о магазине *@
-<div class="focused-ad_location">
+<div class="focused-ad_location" style="background-color: #@producer.meta.color;">
 
   <div class="focused-ad_count">
     <div>@adIndex/@adsCount</div>
   </div>
 
-  <div class="focused-ad_location-icon"></div>
+  <div class="focused-ad_location-icon">
+    @svg._fadLocationIconTpl()
+  </div>
   <div class="focused-ad_location-info">
     <span>@producer.meta.address.map { address => @address }</span>
     <div>@producer.meta.name</div>
