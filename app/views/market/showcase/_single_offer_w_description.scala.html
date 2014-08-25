@@ -5,7 +5,7 @@
 </div>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="@stuff._bgcolor( producer.meta.color )">
+<div class="focused-ad_location" style="@if( producer.meta.color ){ stuff._bgcolor( producer.meta.color.toString )}">
 
   <div class="focused-ad_count">
     <div>@adIndex/@adsCount</div>
