@@ -213,7 +213,7 @@ Slider =
     .find '.js-wifi-point'
     .eq index
     .find '.js-card-btn'
-    .attr 'href'
+    .attr 'data-href'
 
   ## возвращает содержимое карточки по её номеру
   getData: (index, callback)->
@@ -345,7 +345,6 @@ Slider =
     .on event, '.js-card-btn', (e)->
       e.preventDefault()
       $this  = $ this
-      href   = $this.attr 'href'
       parent = $this.parent()[0]
       index = $('#wifiPoints').find('.js-wifi-point').index(parent)
 
@@ -719,8 +718,10 @@ PersonalCabinet =
     ##################################################################################################################
     buttons: () ->
 
+      event = if isTouchDevice() then 'touchend' else 'click'
+
       $ document
-      .on 'click', '.js-btn', (e)->
+      .on event, '.js-btn', (e)->
         e.preventDefault()
         $this = $ this
         href = $this.attr 'href'
