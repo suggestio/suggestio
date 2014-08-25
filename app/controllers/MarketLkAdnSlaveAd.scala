@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.ym.model.common.SinkShowLevels
 import util.PlayMacroLogsImpl
 import util.FormUtil._
 import play.api.data._, Forms._
@@ -150,24 +151,22 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
 
   /** Самбмит обновлённого списка узлов, на которых надо опубликовать рекламную карточку. */
   def adPublishDialogSubmit(adId: String) = CanSuperviseSlaveAd(adId).async(parse.urlFormEncoded) { implicit request =>
-    import request.mad
     // Процессим POST без маппингов - так проще в данном случае.
-    val sls = Set(AdShowLevels.LVL_START_PAGE)
-    mad.receivers = request.body("node")
-      .foldLeft [List[(String, AdReceiverInfo)]] (Nil) { (acc, rcvrId) =>
-        val ari0 = mad.receivers.get(rcvrId)
-          .map { rcvr =>
-            AdReceiverInfo(rcvrId,  slsWant = rcvr.slsWant ++ sls,  slsPub = rcvr.slsPub ++ sls)
-          }
-          .getOrElse {
-            AdReceiverInfo(rcvrId, sls, sls)
-          }
-        rcvrId -> ari0 :: acc
-      }
-      .toMap
-    // TODO Вероятно, надо дёргать SLU.applyOutputConstraint(), но он может нарушить исходную задумку супервизора.
-    // TODO Надо отрабатывать VersionConflictEngineException путём повторного getById() + изменить ресиверы + saveReceivers().
-    mad.saveReceivers.map { _ =>
+    val sls = Set(SinkShowLevels.WIFI_CATS_SL)
+    // Обновляем через tryUpdate, хотя раньше использовался saveReceivers(), но он by-design учитывал версию документа.
+    MAd.tryUpdate(request.mad) { mad0 =>
+      mad0.copy(
+        receivers = request
+          .body("node")
+          .foldLeft [List[(String, AdReceiverInfo)]] (Nil) { (acc, rcvrId) =>
+            val ari0 = request.mad.receivers
+              .get(rcvrId)
+              .fold { AdReceiverInfo(rcvrId, sls) }  { rcvr => AdReceiverInfo(rcvrId,  rcvr.sls ++ sls) }
+          rcvrId -> ari0 :: acc
+        }
+        .toMap
+      )
+    } map { _ =>
       val supId = request.supNode.id.get
       Redirect(routes.MarketLkAdn.showAdnNode(supId))
         .flashing("success" -> "Настройки публикации карточки сохранены.")

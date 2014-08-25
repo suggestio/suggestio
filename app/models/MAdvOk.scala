@@ -146,7 +146,7 @@ case class MAdvOk(
   prodAdnId     : String,
   rcvrAdnId     : String,
   isAuto        : Boolean,
-  showLevels    : Set[AdShowLevel],
+  showLevels    : Set[SinkShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,

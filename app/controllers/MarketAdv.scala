@@ -37,6 +37,55 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     "freeAdv" -> optional(boolean)
   )
 
+  /** Маппинг для sink'ов, т.е. для типов рекламных выдач. */
+  private def sinksM: Mapping[Set[AdnSink]] = {
+    tuple(
+      "wifi" -> boolean,
+      "geo"  -> boolean
+    )
+    .verifying("adv.node.at.least.one.sink.must.present", {
+      m => m match {
+        case (wifi, geo)  => wifi || geo
+      }
+    })
+    .transform[Set[AdnSink]](
+      {case (withWifi, withGeo) =>
+        var acc = List.empty[AdnSink]
+        if (withWifi)
+          acc ::= AdnSinks.SINK_WIFI
+        if (withGeo)
+          acc ::= AdnSinks.SINK_GEO
+        acc.toSet
+      },
+      {sinks =>
+        val withWifi = sinks contains AdnSinks.SINK_WIFI
+        val withGeo = sinks contains AdnSinks.SINK_GEO
+        (withWifi, withGeo)
+      }
+    )
+  }
+
+  /** Маппинг для старых уровней отображения. */
+  private def adSlsM: Mapping[Set[AdShowLevel]] = {
+    mapping(
+      "onStartPage" -> boolean,
+      "onRcvrCat"   -> boolean
+    )
+    {(onStartPage, onRcvrCat) =>
+      var acc = List.empty[AdShowLevel]
+      if (onStartPage)
+        acc ::= AdShowLevels.LVL_START_PAGE
+      if (onRcvrCat)
+        acc ::= AdShowLevels.LVL_CATS
+      acc.toSet
+    }
+    {adSls =>
+      val onStartPage = adSls contains AdShowLevels.LVL_START_PAGE
+      val onRcvrCat = adSls contains AdShowLevels.LVL_CATS
+      Some((onStartPage, onRcvrCat))
+    }
+  }
+
   type AdvFormM_t = Form[List[AdvFormEntry]]
 
   /** Маппинг формы размещения рекламы на других узлах. */
@@ -50,8 +99,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           tuple(
             "adnId"         -> esIdM,
             "advertise"     -> boolean,
-            "onStartPage"   -> boolean,
-            "onRcvrCat"     -> boolean,
+            "showLevel"     -> adSlsM,
+            "sink"          -> sinksM,
             "dateStart"     -> dateOptM,
             "dateEnd"       -> dateOptM
           )
@@ -78,16 +127,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .transform[List[AdvFormEntry]](
             {ts =>
               ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, onStartPage, onRcvrCat, Some(dateStart), Some(dateEnd))) =>
-                  var showLevels: List[AdShowLevel] = Nil
-                  if (onStartPage)
-                    showLevels ::= AdShowLevels.LVL_START_PAGE
-                  if (onRcvrCat)
-                    showLevels ::= AdShowLevels.LVL_MEMBERS_CATALOG
+                case (acc, (adnId, isAdv @ true, adSls, sinks, Some(dateStart), Some(dateEnd))) =>
+                  val ssls = for(sl <- adSls; sink <- sinks) yield {
+                    SinkShowLevels.withArgs(sink, sl)
+                  }
                   val result = AdvFormEntry(
                     adnId = adnId,
                     advertise = isAdv,
-                    showLevels = showLevels.toSet,
+                    showLevels = ssls,
                     dateStart = dateStart,
                     dateEnd = dateEnd
                   )
@@ -96,9 +143,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               }
             },
             {_.map { e =>
-              val onStartPage = e.showLevels contains AdShowLevels.LVL_START_PAGE
-              val onRcvrCat = e.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG
-              (e.adnId, e.advertise, onStartPage, onRcvrCat, Option(e.dateStart), Option(e.dateEnd))
+              val adSls = e.showLevels.map(_.sl)
+              val sinks = e.showLevels.map(_.adnSink)
+              (e.adnId, e.advertise, adSls, sinks, Option(e.dateStart), Option(e.dateEnd))
             }}
           )
       }
@@ -520,6 +567,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 }
 
 sealed case class AdvFormEntry(
-  adnId: String, advertise: Boolean, showLevels: Set[AdShowLevel], dateStart: LocalDate, dateEnd: LocalDate
+  adnId: String, advertise: Boolean, showLevels: Set[SinkShowLevel], dateStart: LocalDate, dateEnd: LocalDate
 ) extends AdvTerms
 

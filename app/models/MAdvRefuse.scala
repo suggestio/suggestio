@@ -80,7 +80,7 @@ case class MAdvRefuse(
   rcvrAdnId     : String,
   dateStart     : DateTime,
   dateEnd       : DateTime,
-  showLevels    : Set[AdShowLevel],
+  showLevels    : Set[SinkShowLevel],
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Option[Int] = None

@@ -22,14 +22,28 @@ object MAdv {
   val CURRENCY_CODE_PARSER = get[String]("currency_code")
   val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { Currency.getInstance }
   val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
-  val AD_ID_PARSER = get[String]("ad_id")
+  val AD_ID_PARSER = str("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
   val ADV_ROW_PARSER_1 = get[Option[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
-  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
+  /** Парсер для значений в колонке showLevels. Там массив с уровнями отображения.
+    * Изначально были AdShowLevels, потом стали SinkShowLevels. */
+  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { slsRaw =>
+    slsRaw.map { slRaw =>
+      val result = if (slRaw.length == 1) {
+        // compat: парсим slsPub, попутно конвертя их в sink-версии
+        val sl = AdShowLevels.withName(slRaw)
+        SinkShowLevels.fromAdSl(sl)
+      } else {
+        SinkShowLevels.withName(slRaw)
+      }
+      result : SinkShowLevel
+    }
+  }
+
   def ADV_ROW_PARSER_2 = SHOW_LEVELS_PARSER
 
   val COUNT_PARSER = get[Long]("c")
@@ -80,7 +94,7 @@ trait MAdvI extends CurrencyCode { madvi =>
   def dateEnd       : DateTime
   def prodAdnId     : String
   def rcvrAdnId     : String
-  def showLevels    : Set[AdShowLevel]
+  def showLevels    : Set[SinkShowLevel]
 
   def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
   def comissionAmount: Float =  comission.fold(amount)(amount * _)
@@ -108,6 +122,9 @@ trait MAdvI extends CurrencyCode { madvi =>
   def isOk      = mode == MAdvModes.OK
   def isReq     = mode == MAdvModes.REQ
   def isRefused = mode == MAdvModes.REFUSED
+
+
+  def hasOnAdSl(sl: AdShowLevel): Boolean = showLevels.exists(_.sl == sl)
 }
 
 
@@ -306,7 +323,7 @@ trait MAdvStatic extends SqlModelStatic {
 
 /** Условия размещения с точки зрения юзера. */
 trait AdvTerms {
-  def showLevels: Set[AdShowLevel]
+  def showLevels: Set[SinkShowLevel]
   def dateStart: LocalDate
   def dateEnd: LocalDate
 }

@@ -64,7 +64,7 @@
         }
       }
 
-      @if( nodeOpt.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.slsPub.nonEmpty)} ) {
+      @if( nodeOpt.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.sls.nonEmpty)} ) {
         <p>Саморазмещение</p>
       }
 

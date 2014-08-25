@@ -16,7 +16,7 @@
     @maybeBusyAdv.fold {
       name="node[@mid].@fnSuffix" value="true" checked="checked" data-checked="checked"
     } { busyAdv =>
-      disabled="disabled" @if(busyAdv.showLevels contains sl) {data-checked="checked"}
+      disabled="disabled" @if( busyAdv.hasOnAdSl(sl) ) {data-checked="checked"}
     }
   />
 }
@@ -94,7 +94,7 @@
 
             <div class="advs-nodes__node-options @if(maybeBusyAdv.isEmpty) { advs-nodes__node-options_hidden }">
               <div><input type="checkbox" id="node_@{mid}_inCatalog" name="" data-checked="checked" disabled="disabled" value="true"/> Каталог</div>
-              <div>@slCheckbox(maybeBusyAdv, mid, "onRcvrCat", AdShowLevels.LVL_MEMBERS_CATALOG) Категории товаров и услуг</div>
+              <div>@slCheckbox(maybeBusyAdv, mid, "onRcvrCat", AdShowLevels.LVL_CATS) Категории товаров и услуг</div>
               <div>@slCheckbox(maybeBusyAdv, mid, "onStartPage", AdShowLevels.LVL_START_PAGE) Главный экран</div>
             </div>
 

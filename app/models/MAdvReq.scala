@@ -74,7 +74,7 @@ case class MAdvReq(
   rcvrAdnId     : String,
   dateStart     : DateTime,
   dateEnd       : DateTime,
-  showLevels    : Set[AdShowLevel],
+  showLevels    : Set[SinkShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   id            : Option[Int] = None
 ) extends SqlModelSave[MAdvReq] with SqlModelDelete with MAdvI {

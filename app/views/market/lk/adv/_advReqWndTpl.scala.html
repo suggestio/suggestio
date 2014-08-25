@@ -18,10 +18,10 @@
 
   <p class="paragraph __size-M color-light-strong ft-XS">
     С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)<br/>
-    @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
+    @if( advReq.hasOnAdSl(AdShowLevels.LVL_CATS) ) {
       + Размещение в категориях товаров и услуг<br/>
     }
-    @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
+    @if( advReq.hasOnAdSl(AdShowLevels.LVL_START_PAGE) ) {
       + Размещение на главном экране
     }
 
