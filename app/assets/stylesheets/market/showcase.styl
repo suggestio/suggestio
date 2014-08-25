@@ -176,6 +176,8 @@ code
 .__header-icon
   display: none
   margin: 0px auto
+  height: 40px
+  margin-top: 5px
 
 .__sm-restraunts
   .__header-icon.__sm-restraunts-icon
@@ -187,6 +189,30 @@ code
 
 .__sm-electronics
   .__header-icon.__sm-electronics-icon
+    display: block!important
+
+.__sm-travel
+  .__header-icon.__sm-travel-icon
+    display: block!important
+
+.__sm-for-home
+  .__header-icon.__sm-for-home-icon
+    display: block!important
+
+.__sm-sports
+  .__header-icon.__sm-sports-icon
+    display: block!important
+
+.__sm-cosmetics
+  .__header-icon.__sm-cosmetics-icon
+    display: block!important
+
+.__sm-boots
+  .__header-icon.__sm-boots-icon
+    display: block!important
+
+.__sm-food
+  .__header-icon.__sm-food-icon
     display: block!important
 
 /*
@@ -263,9 +289,8 @@ code
   &_header
     height: 50px
 
-
   &_tabs
-    height: 52px
+    height: 53px
     background: default_color_w_opacity
   &_tabs-wrapper
     width: 100%
@@ -282,18 +307,24 @@ code
 
 .sm-tab
   color: #959595
+  border: 1px #959595 solid
+  border-bottom-width: 0px
   padding: 17px 0px
   text-align: center
   background: default_color
   &.__inactive
+    border-top-width: 0px
+    border-bottom-width: 1px
     background: none!important
-    opacity: 0.6!important
-
+    opacity: 0.9!important
+  &.__no-left-border
+    border-left-width: 0px
+  &.__no-right-border
+      border-right-width: 0px
 
 .categories-list
   width: 524px
   margin: 0px auto
-  height: 100px
   &_single-cat
     float: left
     margin-left: 20px
@@ -304,6 +335,7 @@ code
       margin-left: 0px
 
 .categorie
+  overflow: hidden
   position: relative
   cursor: pointer
   color: #fff
@@ -465,23 +497,20 @@ code
     padding-left: 11px
     padding-right: 11px
 
-  .sm-categories-screen
-    &_tabs-wrapper
-      padding-left: 11px
-      padding-right: 11px
-
   .focused-ad
     &_offer
       padding: 0px
 
   .categories-list
-    width: 280px
+    width: 320px
 
   .categorie
     width: 73px
-    height: 70px
-    margin-left: 10px
-    margin-right: 10px
+    height: 90px
+    margin-left: 15px
+    margin-right: 15px
+    margin-bottom: 15px
+
     &_icon
       width: 58px
       height: 58px

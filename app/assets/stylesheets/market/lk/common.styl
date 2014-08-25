@@ -1691,19 +1691,24 @@ th.__bg-head
   font-family: 'PT_Sans-Narrow'
 
 .close
-  width: 17px
-  height: 17px
+  opacity             0.6
+  padding             10px
 
-  cursor: pointer
-  background: url('/assets/images/market/lk/close-icon.png') no-repeat
-  background-position: 0 -67px
-  text-decoration: none
+  font-size           20px
+  color               #5c5c5c
+  cursor              pointer
+  text-decoration     none
+  transition(opacity 0.2s ease-in-out 0s)
+
+  &:before
+    content "\e600"
 
   &:hover
-    background-position: 0 0
+    opacity 1
 
-  &:active
-    background-position: 0 1px
+  &.__white
+    color white
+
 
 .adn-title-buttons
   position: absolute
@@ -1721,14 +1726,6 @@ th.__bg-head
 
 .feedback_phone-text
   text-align: left
-
-.wifi-icon
-  display         inline-block
-  vertical-align  middle
-  background      url('/assets/images/market/lk/wifi-icon.png') no-repeat
-  background-size 50px 35px
-  width           50px
-  height          35px
 
 .success-icon
   display             block
@@ -1787,6 +1784,15 @@ th.__bg-head
   &.__white
     background-position center -64px
 
+.geolocation-icon
+
+  &:before
+    content "\e604"
+
+.wifi-icon
+
+  &:before
+    content "\e603"
 
 /********************************************************************************************************************/
 /* Главная страница */
@@ -1893,7 +1899,7 @@ th.__bg-head
   margin            0 auto
   display           block
   width             300px
-  background-color  white
+  background-color  #9e9e9e
   border-radius(10px)
 
   &_photo
@@ -1904,7 +1910,7 @@ th.__bg-head
 
   &_logo-w
     display inline-block
-    margin  -50px 20px 0
+    margin  -34px 20px 0
     -webkit-backface-visibility   hidden
     -moz-backface-visibility      hidden
 
@@ -1932,23 +1938,22 @@ th.__bg-head
     font-size       16px
     text-transform  uppercase
     text-align      center
-    color           #494949
+    color           #ffffff
 
   &_town
     font-size     12px
     text-align    center
     margin-bottom 20px
-    color         #7b7b7b
+    color         #3d3d3d
 
   &_prop
     overflow      hidden
     padding       10px 30px
-    border-top    1px solid #d7d7d7
-    font-size     14px
+    border-top    1px solid #aaaaaa
     text-align    left
 
   &_prop.__last
-    border-bottom 1px solid #d7d7d7
+    border-bottom 1px solid #aaaaaa
 
   &_prop-name
     float         left
@@ -1957,20 +1962,29 @@ th.__bg-head
     display       block
     overflow      hidden
     width         150px
-    color         #7f7f7f
+
+    font-size     12px
+    color         #494848
 
   &_prop-value
     display       block
     overflow      hidden
-    color         #494949
+
+    font-size     18px
+    color         #ffffff
     text-align    right
     text-overflow ellipsis
 
   &_type
     margin-top  10px
     font-size   14px
-    color       #494949
+    color       #ffffff
     text-align  center
+
+  &_icons
+    margin-top  10px
+    color       white
+    font-size   20px
 
 
 @media screen1024
@@ -2161,13 +2175,13 @@ th.__bg-head
     left 0
 
     &:before
-      content "\e602"
+      content "\e601"
 
   &_control.__right-arrow
     right 0
 
     &:before
-      content "\2248"
+      content "\e602"
 
 
 @media screen1024

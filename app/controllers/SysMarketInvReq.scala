@@ -170,7 +170,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
 
 
   /** Форма для редактирования узла, но вместо id компании может быть любой мусор. */
-  private val adnNodeFormM = {
+  private def adnNodeFormM = {
     import play.api.data._, Forms._
     SysMarket.getAdnNodeFormM(text(maxLength = 40))
   }

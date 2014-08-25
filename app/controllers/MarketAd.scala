@@ -381,7 +381,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
   // ===================================== ad show levels =============================================
 
   /** Форма для маппинга результатов  */
-  private val adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
+  private def adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
     // id уровня, прописано в чекбоксе
     "levelId" -> nonEmptyText(maxLength = 1)
       .transform [Option[AdShowLevel]] (
@@ -420,19 +420,19 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
           Future successful Map.empty
         }
         additionalReceiversFut flatMap { addRcvrs =>
-          mad.receivers ++= addRcvrs
           // Нужно, чтобы настройки отображения также повлияли на выдачу:
           val slUpdF: Set[AdShowLevel] => Set[AdShowLevel] = if (isLevelEnabled) {
             { asl => asl + levelId }
           } else {
             { asl => asl - levelId }
           }
-          mad.updateAllWantLevels(slUpdF)
-          mad.applyOutputConstraintsFor(request.producer) flatMap { appliedAds =>
-            ShowLevelsUtil.saveAllReceivers(appliedAds)
-          } map { _ =>
-            Ok("Updated ok.")
-          }
+          val mad2 = mad.copy(
+            receivers = mad.receivers ++ addRcvrs
+          )
+          mad2.updateAllWantLevels(slUpdF)
+          mad2.applyOutputConstraintsFor(request.producer)
+            .flatMap { MAd.updateAllReceivers }
+            .map { _ => Ok("Updated ok.") }
         }
       }
     )

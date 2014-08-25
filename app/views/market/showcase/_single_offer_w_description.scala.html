@@ -1,11 +1,13 @@
 @(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0)(implicit ctx: util.Context)
 
+@defining( producer.meta.color.getOrElse("") ) { pBgColor =>
+
 <div class="focused-ad_offer">
   @_single_offer(mad, isWithAction = false)
 </div>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="background-color: #@producer.meta.color;">
+<div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}">
 
   <div class="focused-ad_count">
     <div>@adIndex/@adsCount</div>
@@ -26,4 +28,5 @@
 <div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
   @Html(rd.text)
 </div>
+}
 }

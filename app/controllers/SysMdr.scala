@@ -56,7 +56,7 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
   }
 
 
-  val banFreeAdvFormM = {
+  private def banFreeAdvFormM = {
     import play.api.data._, Forms._
     import util.FormUtil._
     Form(

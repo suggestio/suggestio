@@ -34,7 +34,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   import LOGGER._
 
   /** Маппер для метаданных компании. */
-  private val companyMetaM = {
+  private def companyMetaM = {
     mapping(
       "name" -> companyNameM
     )
@@ -44,7 +44,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Маппинг для формы добавления/редактирования компании. */
-  val companyFormM = {
+  def companyFormM = {
     val m = mapping(
       "meta" -> companyMetaM
     )
@@ -219,7 +219,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
-  private val adnNodeMetaM = mapping(
+  private def adnNodeMetaM = mapping(
     "name"      -> nameM,
     "descr"     -> publishedTextOptM,
     "town"      -> townOptM,
@@ -264,7 +264,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     Some((name, description, town, address, phone, floor, section, siteUrl, color, location, radius))
   }
 
-  private val adnRightsM: Mapping[Set[AdnRight]] = {
+  private def adnRightsM: Mapping[Set[AdnRight]] = {
     import AdnRights._
     mapping(
       PRODUCER.longName -> boolean,
@@ -286,7 +286,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-  private val slsStrM: Mapping[LvlMap_t] = {
+  private def slsStrM: Mapping[LvlMap_t] = {
     text(maxLength = 256)
       .transform[LvlMap_t](
         {raw =>
@@ -309,7 +309,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       )
   }
 
-  private val adnSlInfoM: Mapping[AdnMemberShowLevels] = {
+  private def adnSlInfoM: Mapping[AdnMemberShowLevels] = {
     val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
       "in"  -> slsStrOptM,
@@ -320,7 +320,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Маппинг для adn-полей формы adn-узла. */
-  private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
+  private def adnMemberM: Mapping[AdNetMemberInfo] = mapping(
     "memberType"    -> adnMemberTypeM,
     "isEnabled"     -> boolean,
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
@@ -348,7 +348,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Маппинг для конфига ноды. */
-  private val nodeConfM: Mapping[NodeConf] = {
+  private def nodeConfM: Mapping[NodeConf] = {
     val intSetM = text(maxLength = 1024)
       .transform [Set[Int]] (
         {raw =>
@@ -384,7 +384,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Маппер для поля, содержащего список id юзеров. */
-  private val personIdsM: Mapping[Set[String]] = {
+  private def personIdsM: Mapping[Set[String]] = {
     text(maxLength = 1024)
       .transform[Set[String]](
         {s => s.trim.split("\\s*[,;]\\s*").filter(!_.isEmpty).toSet },
@@ -392,10 +392,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       )
   }
 
-  private val adnKM  = "adn" -> adnMemberM
-  private val metaKM = "meta" -> adnNodeMetaM
-  private val confKM = "conf" -> nodeConfM
-  private val personIdsKM = "personIds" -> personIdsM
+  private def adnKM  = "adn" -> adnMemberM
+  private def metaKM = "meta" -> adnNodeMetaM
+  private def confKM = "conf" -> nodeConfM
+  private def personIdsKM = "personIds" -> personIdsM
 
   /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
   def getAdnNodeFormM(companyM: Mapping[String]): Form[MAdnNode] = {
@@ -416,7 +416,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       Some((companyId, adn, meta, conf, personIds))
     })
   }
-  private val adnNodeFormM = getAdnNodeFormM(esIdM)
+  private def adnNodeFormM = getAdnNodeFormM(esIdM)
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
     supIdOpt match {
@@ -450,8 +450,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           NotAcceptable(_)
         }
       },
-      {adnNode =>
-        adnNode.adn.supId = supIdOpt
+      {adnNodeRaw =>
+        // Запиливаем sup id в будущий node.
+        val adnNode = adnNodeRaw.copy(
+          adn = adnNodeRaw.adn.copy(
+            supId = supIdOpt
+          )
+        )
         supOptFut flatMap { supOpt =>
           if (supIdOpt.isDefined) {
             adnNode.handleMeAddedAsChildFor(supOpt.get)
@@ -562,7 +567,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   // Инвайты на управление ТЦ
 
-  private val nodeOwnerInviteFormM = Form(
+  private def nodeOwnerInviteFormM = Form(
     "email" -> email
   )
 
@@ -626,7 +631,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /* Ссылки на прайс-листы магазинов, а именно их изменение. */
 
   /** Маппинг для формы добавления/редактирования ссылок на прайс-листы. */
-  private val splFormM = Form(mapping(
+  private def splFormM = Form(mapping(
     "url"       -> urlStrM,
     "username"  -> optional(text(maxLength = 64)),
     "password"  -> optional(text(maxLength = 64))

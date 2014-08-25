@@ -31,7 +31,7 @@ object Sys extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Маппинг формы добавления сайта. */
-  val addSiteFormM = Form("domain" -> domain2dkeyMapper)
+  private def addSiteFormM = Form("domain" -> domain2dkeyMapper)
 
 
   /** indexTpl.scala.html для системной панели. */
@@ -196,7 +196,7 @@ object Sys extends SioController with PlayMacroLogsImpl {
   // referrers
 
 
-  val pushRefFormM = Form(tuple(
+  private def pushRefFormM = Form(tuple(
     "refUrl"    -> nonEmptyText,
     "isHiPrio"  -> boolean
   ))

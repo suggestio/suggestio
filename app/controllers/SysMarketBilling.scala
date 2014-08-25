@@ -34,11 +34,11 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   lazy val SIO_COMISSION_DFLT: Float = configuration.getDouble("sys.billing.contract.share.dflt").fold(0.30F)(_.toFloat)
 
 
-  private val bDate = localDate
+  private def bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
 
   /** Маппинг для формы добавления/редактирования контракта. */
-  private val contractFormM = Form(mapping(
+  private def contractFormM = Form(mapping(
     "adnId"         -> esIdM,
     "dateContract"  -> bDate
     ,
@@ -200,7 +200,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
 
   /** Маппинг для формы ввода входящего платежа. */
-  private val paymentFormM = Form(mapping(
+  private def paymentFormM = Form(mapping(
     "txnUid" -> nonEmptyText(minLength = 4, maxLength = 64)
       .transform(strTrimSanitizeLowerF, strIdentityF),
     "amount" -> priceStrictM

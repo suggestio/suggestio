@@ -41,7 +41,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
   import HideShopAdActions.HideShopAdAction
 
   /** Форма сокрытия рекламы подчинённого магазина. */
-  val shopAdHideFormM = Form(tuple(
+  private def shopAdHideFormM = Form(tuple(
     "action" -> nonEmptyText(maxLength = 10)
       .transform(
         strTrimF andThen { _.toUpperCase } andThen HideShopAdActions.maybeWithName,
