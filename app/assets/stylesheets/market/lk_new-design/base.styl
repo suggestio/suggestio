@@ -1,0 +1,31 @@
+screen1024 = 'screen and (max-width: 1024px)'
+phone      = 'screen and (max-width: 767px)'
+
+@import "../reset"
+@import "../mixins"
+@import "../fonts"
+
+headerHeight = 60
+
+body
+  min-width 1366px
+
+.header
+  position          relative
+  height            (headerHeight)px
+  margin-bottom     - (headerHeight)px
+  background-color  #303030
+
+.left-menu
+  float             left
+  width             60px
+  background-color  #303030
+
+.right-menu
+  float             right
+  width             210px
+  background-color  #303030
+
+.viewport
+  overflow          hidden
+  background-color  #e9e9e9
