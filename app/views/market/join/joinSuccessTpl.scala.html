@@ -6,56 +6,36 @@
 
 @joinBase("Запрос на подключение принят") {
 
-  <div class="header __responsive">
 
-    <div class="header_cnt __responsive">
+  <div class="body __responsive index-page_cnt">
 
-      <a class="siom-logo-def" href="/m/lk">
-        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
-      </a>
+    <div class="body_cnt __responsive" id="centerContent">
 
-    </div>
+        <a href="/m" class="index-page_logo-link">
+          <img src="/assets/images/market/index/logo_retina.png" class="index-page_logo-image">
+        </a>
 
-  </div>
 
-  <div class="body __responsive wave-pattern">
+        <div class="mail-icon __white join-success_mail"></div>
 
-    <div class="page-title wave-pattern">
 
-      <div class="page-title_cnt">
-        <a class="back-btn" href="@routes.Market.index()">&nbsp;</a>
-        СТАТЬ УЧАСТНИКОМ СЕТИ
-      </div>
+        <div class="join-success_text">
+          <p class="block __margin-M">
+            После того как администраторы рассмотрят ваш запрос мы<br/> с вами свяжемся.
+          </p>
 
-    </div>
-
-    <div class="body_cnt __responsive">
-
-      <div class="join-success">
-
-        <div class="success-label">
-          <div class="success-label__icon"></div>
-          <div class="success-label__title">
-            Ваш запрос отправлен.
-          </div>
+          <p class="block __margin-M">
+            Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бета версия.
+            <br/>
+            @DEMO_ADN_ID_OPT.map { demoAdnId =>
+              <a class="link" target="_blank" href="@routes.MarketShowcase.demoShowcase()">Смотреть →</a>
+            }
+          </p>
         </div>
 
-        <p class="paragraph-13 black-text pargraph_join-success">
-          После того как администраторы рассмотрят ваш запрос мы<br/> с вами свяжемся.
-        </p>
 
-        <p class="gray-text pargraph_join-success">
-          Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бета версия.
-          <br/>
-          @DEMO_ADN_ID_OPT.map { demoAdnId =>
-            <a class="blue-link" target="_blank" href="@routes.MarketShowcase.demoWebSite(demoAdnId)">Смотреть →</a>
-          }
-        </p>
-
-      </div>
 
     </div>
 
   </div>
-
 }
