@@ -176,6 +176,7 @@ code
 .__header-icon
   display: none
   margin: 0px auto
+  -webkit-transform: scale3d(0.5,0.5,0.5)
 
 .__sm-restraunts
   .__header-icon.__sm-restraunts-icon
@@ -188,6 +189,23 @@ code
 .__sm-electronics
   .__header-icon.__sm-electronics-icon
     display: block!important
+
+.__sm-travel
+  .__header-icon.__sm-travel-icon
+    display: block!important
+
+.__sm-for-home
+  .__header-icon.__sm-for-home-icon
+    display: block!important
+
+.__sm-sports
+  .__header-icon.__sm-sports-icon
+    display: block!important
+
+.__sm-cosmetics
+  .__header-icon.__sm-cosmetics
+    display: block!important
+
 
 /*
 ------------------------------------*/
@@ -289,7 +307,6 @@ code
     background: none!important
     opacity: 0.6!important
 
-
 .categories-list
   width: 524px
   margin: 0px auto
@@ -303,6 +320,7 @@ code
       margin-left: 0px
 
 .categorie
+  overflow: hidden
   position: relative
   cursor: pointer
   color: #fff
@@ -473,7 +491,11 @@ code
 
   .categorie
     width: 73px
-    height: 70px
+    height: 90px
+    margin-left: 15px
+    margin-right: 15px
+    margin-bottom: 15px
+
     &_icon
       width: 58px
       height: 58px
