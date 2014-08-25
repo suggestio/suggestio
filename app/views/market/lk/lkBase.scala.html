@@ -20,68 +20,63 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/lightbox/css/lightbox.css")'/>
 
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk_new-design/lk.css")'/>
+
   <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
   @headAfter
 </head>
 
 <body class="lk">
-  <div class="header">
 
-    <div class="header_cnt">
-      <a class="siom-logo-def" href="@routes.Market.index()">
-        <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
-        <img class="test-version-icon" src='@routes.Assets.at("images/market/lk/test-version_retina.png")' alt="test version"/>
-      </a>
-      @* ctx.usernameOpt.map { username => } *@
-      @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
-      <a class="logout-btn" href="@routes.Ident.logout"></a>
+  <header class="header">
+    <a class="siom-logo-def" href="@routes.Market.index()">
+      <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+    </a>
+    @* ctx.usernameOpt.map { username => } *@
+    @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
+    <a class="logout-btn" href="@routes.Ident.logout"></a>
 
-      @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-      @adnIdOpt.map { adnId =>
-        @billing._billBallanceWidgetTpl(adnId)
-      }
-    </div>
-
-  </div><!-- header-wrap end -->
-
-  <div class="body">
-
-    @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
-    @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
-        <div class="status-bar_cnt">
-          @flashMsg
-        </div>
-      </div>
+    @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+    @adnIdOpt.map { adnId =>
+      @billing._billBallanceWidgetTpl(adnId)
     }
+  </header>
 
-    @content
 
-  </div>
+  <section class="page">
+    <nav class="left-menu"></nav>
+    <nav class="right-menu"></nav>
 
-  <div class="popups-container" id="popupsContainer">
+    <article class="viewport">
+      @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+      @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+        <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+          <div class="status-bar_cnt">
+            @flashMsg
+          </div>
+        </div>
+      }
+      @content
+    </article>
 
+  </section>
+
+
+  <aside class="popups-container" id="popupsContainer">
     @popupContent
-  </div>
+  </aside>
 
-  <div class="footer">
+  @*<div class="footer">
     <div class="footer_cnt">
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
         &nbsp;|&nbsp;<a class="footer_link" href="@routes.MarketLkSupport.supportForm(adnIdOpt, r = Some(request.path))">Служба поддержки</a>
-        @*&nbsp;|&nbsp;<a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+        <a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>
 
-      <!--<div class="socials">
-        <a class="fb" href="#">Facebook</a>
-        <a class="tw" href="#">Twitter</a>
-      </div>-->
-
     </div>
-  </div>
-
-  <div class="lk-overlay-data" id="overlayData"></div>
+  </div>*@
 
 
   <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
