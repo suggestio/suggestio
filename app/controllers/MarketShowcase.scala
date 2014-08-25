@@ -203,16 +203,19 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Рендер страницы-интерфейса поисковой выдачи. */
   private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = adnNode.id.get
-    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
-      .map { _.map { prod => prod.id.get -> prod }.toMap }
+    // TODO Вынести сборку списка prods в отдельный экшен.
+    // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
     val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-    // Нужно отфильтровать магазины без рекламы.
-    val shopsWithAdsFut = for {
-      allProds    <- allProdsFut
-      prodsStats  <- prodsStatsFut
-    } yield {
-      allProds.filterKeys( prodsStats contains )
+    val prodsFut = prodsStatsFut flatMap { prodsStats =>
+      val prodIds = prodsStats
+        .iterator
+        .filter { _._2 > 0 }
+        .map { _._1 }
+      MAdnNodeCache.multiGet(prodIds)
+    } map { prodNodes =>
+      prodNodes
+        .map { adnNode => adnNode.id.get -> adnNode }
+        .toMap
     }
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
@@ -222,7 +225,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     for {
       waOpt     <- welcomeAdOptFut
       catsStats <- catsStatsFut
-      shops     <- shopsWithAdsFut
+      prods     <- prodsFut
       mmcats    <- mmcatsFut
     } yield {
       val args = SMShowcaseRenderArgs(
@@ -233,7 +236,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         spsr        = spsr,
         oncloseHref = oncloseHref,
         logoImgOpt  = adnNode.logoImgOpt,
-        shops       = shops,
+        shops       = prods,
         welcomeAdOpt = waOpt
       )
       renderShowcase(args)
