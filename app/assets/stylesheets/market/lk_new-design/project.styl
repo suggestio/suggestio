@@ -40,9 +40,10 @@ strong
 /********************************************************************************************************************/
 
 projectMinWidth = 1100px
+contentWidth    = 790px
 headerHeight    = 60
 rightMenuWidth  = 210
-leftMenuWidth  = 60
+leftMenuWidth   = 60
 
 .lk
   font-family 'opensans-light'
@@ -58,7 +59,7 @@ leftMenuWidth  = 60
   &_cnt
     position  relative
     margin    0 auto
-    width     790px
+    width     contentWidth
 
   &_title
     color         #464646
@@ -68,9 +69,17 @@ leftMenuWidth  = 60
 .header
   position          relative
   z-index           100
-  height            (headerHeight)px
   margin-bottom     -(headerHeight)
+
+  height            (headerHeight)px
+  padding-left      (leftMenuWidth)px
+  padding-right     (rightMenuWidth)px
   background-color  #303030
+
+  &_cnt
+    position  relative
+    margin    0 auto
+    width     contentWidth
 
   &_logo-link
     position    absolute
@@ -89,12 +98,12 @@ leftMenuWidth  = 60
   &_logo-text
     position  absolute
     top       18px
-    left      360px
+    left      0
 
   &_billing
     position  absolute
     top       20px
-    right     360px
+    right     0
 
   &_billing-t
     padding-right 30px

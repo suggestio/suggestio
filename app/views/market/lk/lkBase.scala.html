@@ -33,12 +33,14 @@
         <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
       </a>
 
-      <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
+      <div class="header_cnt">
+        <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
 
-      @adnIdOpt.map { adnId =>
-        @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-        @billing._billBallanceWidgetTpl(adnId)
-      }
+        @adnIdOpt.map { adnId =>
+          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+          @billing._billBallanceWidgetTpl(adnId)
+        }
+      </div>
 
       @ctx.usernameOpt.map { username =>
         <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
