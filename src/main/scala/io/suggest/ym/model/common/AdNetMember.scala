@@ -122,12 +122,12 @@ object AdNetMember {
 
 /** Выходы узла для отображения рекламных карточек. */
 object AdnSinks extends Enumeration {
-  protected case class Val(name: String) extends super.Val(name) with SlNameTokenStr
+  protected case class Val(name: String, longName: String) extends super.Val(name) with SlNameTokenStr
   type AdnSink = Val
   implicit def value2val(x: Value): AdnSink = x.asInstanceOf[AdnSink]
 
-  val SINK_WIFI: AdnSink = Val("w")
-  val SINK_GEO: AdnSink  = Val("g")
+  val SINK_WIFI: AdnSink = Val("w", "wifi")
+  val SINK_GEO: AdnSink  = Val("g", "geo")
 }
 
 
