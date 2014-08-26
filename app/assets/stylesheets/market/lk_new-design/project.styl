@@ -3,9 +3,9 @@
 /********************************************************************************************************************/
 
 projectMinWidth = 1100px
-headerHeight    = 60px
-rightMenuWidth  = 210px
-leftMenuWidth  = 60px
+headerHeight    = 60
+rightMenuWidth  = 210
+leftMenuWidth  = 60
 
 .lk
   font-size 13px
@@ -20,7 +20,7 @@ leftMenuWidth  = 60px
 .header
   position          relative
   z-index           100
-  height            headerHeight
+  height            (headerHeight)px
   margin-bottom     -(headerHeight)
   background-color  #303030
 
@@ -30,8 +30,8 @@ leftMenuWidth  = 60px
     left        0
 
     display     inline-block
-    line-height headerHeight
-    width       leftMenuWidth
+    line-height (headerHeight)px
+    width       (leftMenuWidth)px
     text-align  center
 
   &_logo-image
@@ -67,24 +67,23 @@ leftMenuWidth  = 60px
   bottom            0
   left              0
 
-  width             leftMenuWidth
-  padding-top       headerHeight
+  width             (leftMenuWidth)px
+  padding-top       (headerHeight)px
   background-color  #464646
 
   &_i
     display       block
     height        60px
     color         #818284
-    border-bottom 1px solid #636363
 
     &:hover
-      cursor      pointer
-      color       white
-      border-left 5px solid #f44040
+      cursor        pointer
+      color         white
+      border-left   5px solid #f44040
 
   &_i.__act
-    color       white
-    border-left 5px solid #f44040
+    color         white
+    border-left   5px solid #f44040
 
 .right-menu
   position          absolute
@@ -92,10 +91,11 @@ leftMenuWidth  = 60px
   bottom            0
   right             0
 
-  padding-top       headerHeight
-  width             rightMenuWidth
+  padding-top       (headerHeight)px
+  width             (rightMenuWidth)px
   background-color  #3e3e3e
 
 .viewport
-  padding-left  leftMenuWidth
-  padding-right rightMenuWidth
+  padding-top   (headerHeight + 40)px
+  padding-left  (leftMenuWidth + 20)px
+  padding-right (rightMenuWidth + 20)px

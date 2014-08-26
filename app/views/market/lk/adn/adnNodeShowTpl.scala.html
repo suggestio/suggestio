@@ -11,23 +11,18 @@
 @import _node._
 
 
-@* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
-@popupContent = {
 
-  @if(isMyNode && node.adn.isReceiver) {
-    @_installScriptPopupTpl(node)
-  }
-
-}
-
-
-@market.lk.lkBase(node.meta.name, adnIdOpt = node.id, popupContent = Some(popupContent)) {
+@market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
 
   @if(isMyNode) {
     @helper.javascriptRouter("jsRoutes")(
       routes.javascript.MarketAd.updateShowLevelSubmit
     )
   }
+
+  <div class="relative">
+    <h1 class="page-title">Ваш профиль</h1>
+  </div>
 
   @* Верхняя строка. *@
   <div class="page-title">
@@ -53,26 +48,22 @@
           @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
             <div class="adn-title-buttons">
 
-              @* Кнопку "рекламодатели" отображать только ресиверу, и только если он не делегировал adv-функции другому узлу. *@
               @if(showAdvsBtn) {
-
-                    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
-                      @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-                      РЕКЛАМОДАТЕЛИ
-                    </a>
-
-              } @* showAdsvBtn? *@
+                <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+                  @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
+                  РЕКЛАМОДАТЕЛИ
+                </a>
+              }
 
               @if(isRcvr) {
-
                 <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
-
-              } @* isRcvr? *@
+              }
 
             </div>
           }
         }
       }
+
     </div>
   </div>
 
@@ -141,16 +132,16 @@
 
 
     @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
-    @if(isMyNode && !advertisers.isEmpty) {
+    @*if(isMyNode && !advertisers.isEmpty) {
       @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
-    }
+    }*@
 
 
     @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
        Если этот узел не может супервайзить, то slaves должен быть пустым. *@
-    @if(isMyNode && !slaves.isEmpty) {
+    @*if(isMyNode && !slaves.isEmpty) {
       @_supShowNodesTpl(node, slaves)
-    }
+    }*@
 
   </div>
 

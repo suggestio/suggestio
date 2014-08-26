@@ -49,9 +49,12 @@
 
     <section class="page">
       <nav class="left-menu">
-        <a class="left-menu_i" href="@routes.MarketLkAdnEdit.editAdnNode(adnId)">User</a>
-        <a class="left-menu_i" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
-        <a class="left-menu_i" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+        <a class="left-menu_i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(adnId)">User</a>
+        <hr class="delimiter"/>
+        <a class="left-menu_i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
+        <hr class="delimiter"/>
+        <a class="left-menu_i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+        <hr class="delimiter"/>
       </nav>
       <nav class="right-menu"></nav>
 
@@ -64,7 +67,10 @@
             </div>
           </div>
         }
-        @content
+
+        <div class="page_cnt">
+          @content
+        </div>
       </article>
 
     </section>
