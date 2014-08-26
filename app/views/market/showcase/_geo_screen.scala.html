@@ -1,0 +1,15 @@
+@(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
+
+<div class="sm-geo-screen" id="smGeoScreen">
+
+  <div class="sm-geo-screen_header"></div>
+
+  @_search_bar( args )
+
+  <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, false );">
+    <div class="sm-geo-screen_current-location-icon">@svg._geoButtonTpl("ffffff")</div> <span id="smGeoLocationLabel">Определить мое местоположение</span>
+  </div>
+  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, false ).toString ){
+  }
+
+</div>
