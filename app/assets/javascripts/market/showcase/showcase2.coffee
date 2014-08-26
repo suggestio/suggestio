@@ -470,6 +470,8 @@ siomart =
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   geo :
+    location_requested : false
+    nodes_loaded : false
     search :
       min_request_length : 2
       search_delay : 500
@@ -491,15 +493,22 @@ siomart =
 
     position_callback : ( gp_obj ) ->
       siomart.geo.geo_position_obj = gp_obj
-      this.load_nodes()
+      siomart.geo.load_nodes( true )
 
     get_current_position : () ->
+      this.location_requested = true
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
 
     init_events : () ->
       _geo_nodes_search_dom = siomart.utils.ge('smGeoNodesSearchInput')
       siomart.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
         console.log siomart.geo.search.queue_request this.value
+
+    load_for_node_id : ( node_id ) ->
+      siomart.config.index_action = '/market/index/' + node_id
+      siomart.config.mart_id = node_id
+
+      siomart.load_mart()
 
     adjust : () ->
       geo_screen = siomart.utils.ge('smGeoNodes')
@@ -521,7 +530,12 @@ siomart =
       else
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
-    load_nodes : () ->
+    load_nodes : ( refresh ) ->
+      refresh = refresh || false
+
+      if refresh == false && siomart.geo.nodes_loaded == true
+        return false
+      console.log 'load nodes'
       url = '/market/nodes/search?' + this.request_query_param()
       siomart.request.perform url
 
@@ -938,12 +952,8 @@ siomart =
 
       geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
-
         node_id = geo_node_target.getAttribute 'data-id'
-        siomart.config.index_action = '/market/index/' + node_id
-        siomart.config.mart_id = node_id
-
-        siomart.load_mart()
+        siomart.geo.load_for_node_id node_id
 
         return false
 
@@ -1376,7 +1386,13 @@ siomart =
 
       siomart.grid_ads.is_load_more_requested = false
 
-    find_nodes : ( data ) ->
+    find_nodes : ( data) ->
+      siomart.geo.nodes_loaded = true
+
+      if siomart.geo.location_requested == true
+        siomart.geo.location_requested = false
+        siomart.utils.ge('smGeoLocationButton').innerHTML = data.first_node.name
+        siomart.geo.load_for_node_id data.first_node._id
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
