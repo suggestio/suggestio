@@ -162,4 +162,6 @@ package object models {
   val  AdnSinks             = ym.model.common.AdnSinks
   type AdnSink              = AdnSinks.AdnSink
 
+  type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
+
 }

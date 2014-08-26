@@ -125,6 +125,8 @@ trait MAdvI extends CurrencyCode { madvi =>
 
 
   def hasOnAdSl(sl: AdShowLevel): Boolean = showLevels.exists(_.sl == sl)
+
+  def hasOnSink(sink: AdnSink): Boolean = showLevels.exists(_.adnSink == sink)
 }
 
 

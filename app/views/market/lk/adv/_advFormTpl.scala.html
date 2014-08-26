@@ -9,16 +9,31 @@
 @import util.FC.tdFc
 @import util.DateTimePrettyPrinter._
 @import args._
+@import controllers.MarketAdv.CUSTOM_PERIOD
 
-@* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
-@slCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sl: AdShowLevel) = {
+@* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
+@sslCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String)(busyAttrs: => Html) = {
   <input type="checkbox" id="node_@{mid}_@fnSuffix"
     @maybeBusyAdv.fold {
       name="node[@mid].@fnSuffix" value="true" checked="checked" data-checked="checked"
     } { busyAdv =>
-      disabled="disabled" @if( busyAdv.hasOnAdSl(sl) ) {data-checked="checked"}
+      disabled="disabled" @busyAttrs
     }
   />
+}
+
+@* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
+@slCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sl: AdShowLevel) = {
+  @sslCheckbox(maybeBusyAdv, mid, fnSuffix) {
+    @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {data-checked="checked"}
+  }
+}
+
+@* Шаблон чекбокса для выбора sink'а вадачи. *@
+@sinkCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sink: AdnSink) = {
+  @sslCheckbox(maybeBusyAdv, mid, fnSuffix) {
+    @if(maybeBusyAdv.exists(_ hasOnSink sink)) {data-checked="checked"}
+  }
 }
 
 <div class="advs-form-block" id="advsFormBlock">
@@ -51,6 +66,7 @@
     <div class="advs-form-block__nodes advs-nodes">
       @defining( now.plusDays(1) ) { tomorrow1 =>
       @defining( tomorrow1.plusDays(1) ) { tomorrow2 =>
+      @defining( (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD)).map(ps => ps -> Messages("adv.period." + ps)) ) { periodOptions =>
       @adnNodesMap.zipWithIndex.map { case ((memberType, adnNodes), i) =>
         <div class="mt-block mt-@memberType-block" @if( i > 0 ){style="display: none;"}>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
@@ -82,28 +98,39 @@
             </div>
             } else {
             <div class="advs-nodes__node-dates advs-nodes__node-dates_hidden advs-node-dates">
-              @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
+                @select(
+                  af(s"node[$mid].period.period"),
+                  options = periodOptions,
+                  '_label -> "Срок размещения:"
+                )
+
               <label class="advs-node-dates__elt">Дата начала</label>
-              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].dateStart" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
+              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].period.date.start" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
               <label class="advs-node-dates__elt"><strong>&mdash;</strong></label>
               <label class="advs-node-dates__elt">Дата конца</label>
-              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].dateEnd" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
+              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].period.date.end" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
               <div class="clear"></div>
             </div>
             }
 
+            @* Перечисление уровней отображения: главный экран, категории и т.д. *@
             <div class="advs-nodes__node-options @if(maybeBusyAdv.isEmpty) { advs-nodes__node-options_hidden }">
               <div><input type="checkbox" id="node_@{mid}_inCatalog" name="" data-checked="checked" disabled="disabled" value="true"/> Каталог</div>
-              <div>@slCheckbox(maybeBusyAdv, mid, "onRcvrCat", AdShowLevels.LVL_CATS) Категории товаров и услуг</div>
-              <div>@slCheckbox(maybeBusyAdv, mid, "onStartPage", AdShowLevels.LVL_START_PAGE) Главный экран</div>
+              <div>@slCheckbox(maybeBusyAdv, mid, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS) Категории товаров и услуг</div>
+              <div>@slCheckbox(maybeBusyAdv, mid, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE) Главный экран</div>
             </div>
 
+            @* Перечисление доступных на узле размещений: geo, wifi, etc *@
+            @node.adn.sinks.map { sink =>
+              @sinkCheckbox(maybeBusyAdv, mid, "sink." + sink.longName, sink)
+            }
           }
           }
           </div>
         }
         </div>
       }
+      } @* periodOptions *@
       }
       }
     </div>

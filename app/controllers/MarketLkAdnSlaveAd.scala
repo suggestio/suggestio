@@ -162,9 +162,9 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
             val ari0 = request.mad.receivers
               .get(rcvrId)
               .fold { AdReceiverInfo(rcvrId, sls) }  { rcvr => AdReceiverInfo(rcvrId,  rcvr.sls ++ sls) }
-          rcvrId -> ari0 :: acc
-        }
-        .toMap
+            rcvrId -> ari0 :: acc
+          }
+          .toMap
       )
     } map { _ =>
       val supId = request.supNode.id.get
