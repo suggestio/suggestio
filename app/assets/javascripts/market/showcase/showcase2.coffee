@@ -505,6 +505,7 @@ siomart =
         console.log siomart.geo.search.queue_request this.value
 
     load_for_node_id : ( node_id ) ->
+
       siomart.config.index_action = '/market/index/' + node_id
       siomart.config.mart_id = node_id
 
@@ -534,6 +535,7 @@ siomart =
       refresh = refresh || false
 
       if refresh == false && siomart.geo.nodes_loaded == true
+        siomart.response_callbacks.find_nodes siomart.geo.nodes_data_cached
         return false
       console.log 'load nodes'
       url = '/market/nodes/search?' + this.request_query_param()
@@ -1386,7 +1388,12 @@ siomart =
 
       siomart.grid_ads.is_load_more_requested = false
 
-    find_nodes : ( data) ->
+    find_nodes : ( data ) ->
+
+      if typeof siomart.geo.nodes_data_cached != 'undefined'
+        siomart.utils.ge('smGeoLocationButton').innerHTML = siomart.geo.nodes_data_cached.first_node.name
+
+      siomart.geo.nodes_data_cached = data
       siomart.geo.nodes_loaded = true
 
       if siomart.geo.location_requested == true
