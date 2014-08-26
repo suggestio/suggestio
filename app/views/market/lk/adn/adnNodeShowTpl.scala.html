@@ -11,11 +11,33 @@
 @import _node._
 
 @rightMenu = {
-  <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+
+  <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
   <hr class="delimiter"/>
-  <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
-  <hr class="delimiter"/>
+  @if(isMyNode) {
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
+    <hr class="delimiter"/>
+
+    @if(isSuperuser) {
+      <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+      <hr class="delimiter"/>
+    }
+  }
+
 }
+
+
+@prop(name: String)(value: Html) = {
+
+  <table class="profile_prop">
+    <td class="profile_prop-name">@name:</td>
+    <td class="profile_prop-value">@value</td>
+  </table>
+
+}
+
 
 @content = {
 
@@ -29,13 +51,10 @@
   @if(showBackBtn) {
     @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
       @backCallOpt.map { backCall =>
-        <a class="back-btn" href="@backCall"></a>
+        <a class="btn __minor __size-M def-transition" href="@backCall">Сменить магазин</a>
       }
     }
-  } else {
-    <a class="back-btn __hidden"></a>
   }
-
 
   @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
   @*if(isMyNode) {
@@ -59,91 +78,63 @@
     }
   }*@
 
+  <div class="profile_logo-bar"></div>
 
-  <div class="body_cnt">
+  <div class="profile_info-bar">
+    <hr class="delimiter __light"/>
 
-      <div class="paragraph __size-M">
-        <span class="ft-L node-name">@node.meta.name</span>
-        @if(isMyNode) {
-          <a class="edit-btn __color-1 __ft-XS" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">
-            @Messages("Edit")
-          </a>
-
-          <span class="sm-note">
-            <span class="sm-note__q-mark">?</span>
-            <span class="sm-note__message">
-              Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
-            </span>
-          </span>
-
-
-          @if(isSuperuser) {
-            <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
-          }
-        }
-      </div>
-
-      <div class="border-line"></div>
-
-      @if(node.meta.town.isDefined) {
-        <div class="paragraph __size-M">
-          @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address}
-        </div>
-        <div class="border-line"></div>
-      }
-
-      @if(node.meta.description.isDefined) {
-        <p class="paragraph __size-M">
-            @_nodeDescrTdTpl(node, style = "border-left: none; padding-left: 0;")
-        </p>
-        <div class="border-line"></div>
-      }
-
-    @* Если указаны этаж/секция, то их напечатать таблицей. *@
-    @if(node.meta.floor.isDefined || node.meta.section.isDefined) {
-      @_floorSectionTableTpl(node)
-      <div class="border-line"></div>
+    @prop("Локация") { @node.meta.name }
+    @if(node.meta.town.isDefined) {
+      @prop("Адрес") { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
+    }
+    @if(node.meta.siteUrl.isDefined) {
+      @prop("Сайт") { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
+    }
+    @if(node.meta.info.isDefined) {
+      @prop("Информация о товарах или услугах") { @node.meta.info }
     }
 
-    @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
-    @if(node.adn.isProducer) {
-      @if(isMyNode) {
-        @_myAdsTpl(node, mads, canAdv, ad2advMap)
-      } else {
-        @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
-      }
-
-      @* Ссылка на demo web site. *@
-      @if(isMyNode) {
-        <div class="sm-note">
-          @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
-            Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
-          }
-        </div>
-      }
-    }
-
-
-    @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
-    @*if(isMyNode && !advertisers.isEmpty) {
-      @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
-    }*@
-
-
-    @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
-       Если этот узел не может супервайзить, то slaves должен быть пустым. *@
-    @*if(isMyNode && !slaves.isEmpty) {
-      @_supShowNodesTpl(node, slaves)
-    }*@
-
+    <hr class="delimiter __light"/>
   </div>
 
-}
+
+  @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
+  @if(node.adn.isProducer) {
+    @if(isMyNode) {
+      @_myAdsTpl(node, mads, canAdv, ad2advMap)
+    } else {
+      @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
+    }
+
+    @* Ссылка на demo web site. *@
+    @if(isMyNode) {
+      <div class="sm-note">
+        @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
+          Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
+        }
+      </div>
+    }
+  }
+
+
+  @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
+  @*if(isMyNode && !advertisers.isEmpty) {
+    @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
+  }*@
+
+
+  @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
+     Если этот узел не может супервайзить, то slaves должен быть пустым. *@
+  @*if(isMyNode && !slaves.isEmpty) {
+    @_supShowNodesTpl(node, slaves)
+  }*@
+
+}@* content end *@
 
 
 
 @market.lk.lkBaseLayout(
-  title     = node.meta.name,
+  title     = "Ваш профиль",
   adnIdOpt  = node.id,
   rightMenu = Some(rightMenu)
 )(content)

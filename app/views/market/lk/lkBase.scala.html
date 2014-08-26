@@ -28,7 +28,6 @@
 
 <body class="lk">
 
-  @adnIdOpt.map { adnId =>
     <header class="header">
       <a class="header_logo-link" href="@routes.Market.index()">
         <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
@@ -36,13 +35,13 @@
 
       <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
 
-      @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-      @billing._billBallanceWidgetTpl(adnId)
+      @adnIdOpt.map { adnId =>
+        @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+        @billing._billBallanceWidgetTpl(adnId)
+      }
 
-
-      @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
       @ctx.usernameOpt.map { username =>
-        <a class="header_logout light-gray-2 dark-link def-transition" href="@routes.Ident.logout">@username</a>
+        <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
       }
     </header>
 
@@ -51,28 +50,30 @@
 
       @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
       @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-        <aside style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+        <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
           <div class="status-bar_cnt">
             @flashMsg
           </div>
-        </aside>
+        </div>
       }
 
       <aside class="left-bar">
-        <nav class="left-bar_menu">
-          <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">User</a>
-          <hr class="delimiter"/>
-          <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
-          <hr class="delimiter"/>
-          <a class="left-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
-          <hr class="delimiter"/>
-        </nav>
+        @adnIdOpt.map { adnId =>
+          <nav class="left-bar_menu">
+            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">User</a>
+            <hr class="delimiter"/>
+            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
+            <hr class="delimiter"/>
+            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+            <hr class="delimiter"/>
+          </nav>
+        }
       </aside>
 
       @content
 
     </section>
-  }
+
 
   <aside class="popups-container" id="popupsContainer">
     @popupContent

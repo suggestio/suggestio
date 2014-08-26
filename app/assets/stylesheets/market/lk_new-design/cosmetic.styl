@@ -1,7 +1,5 @@
-lightGray1 = #efefef
-lightGray2 = #d7d7d7
-darkGray1  = #464646
-darkGray2  = #303030
+lightGray = #7f7f7f
+darkGray  = #464646
 
 pink1 = #feeaea
 pink2 = #ffd7d7
@@ -15,17 +13,21 @@ green = #00b994
 .black
   color black
 
-.light-gray-1
-  color lightGray1
+.light-gray
+  color lightGray
 
-.light-gray-2
-  color lightGray1
+.dark-gray
+  color darkGray
 
-.dark-gray-1
-  color darkGray1
+.link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
+  transition(all 0.2s ease-in-out 0s)
 
-.dark-gray-2
-  color darkGray1
+  &:hover
+    color: #007b56
+    border-color: #c6c6c6
 
 .dark-link
   text-decoration none
@@ -38,3 +40,37 @@ green = #00b994
   height            1px
   background-color  #636363
 
+  &.__light
+    background-color #d7d7d7
+
+/********************************************************************************************************************/
+/* Страница с информацией об узле */
+/********************************************************************************************************************/
+.profile
+
+  &_change-shop-btn
+    position  absolute
+    top       0
+    right     0
+
+  &_logo-bar
+    float       left
+    width       140px
+    min-height  140px
+
+  &_info-bar
+    overflow      hidden
+    padding-left  25px
+
+  &_prop
+    margin  15px 0
+
+  &_prop-name
+    width         125px
+    padding-right 25px
+    font-size     11px
+    color         lightGray
+
+  &_prop-value
+    font-size 13px
+    color     darkGray

@@ -1,104 +1,47 @@
-screen1024 = 'screen and (max-width: 1024px)'
-phone      = 'screen and (max-width: 767px)'
-
-/********************************************************************************************************************/
-/* Mixins */
-/********************************************************************************************************************/
-border-radius(v)
-  -webkit-border-radius v
-  border-radius         v
-
-box-shadow(v)
-  -webkit-box-shadow v
-  box-shadow         v
-
-text-shadow(v)
-  -webkit-text-shadow v
-  text-shadow         v
-
-transition(v)
-  -webkit-transition  v
-  transition          v
-
-transform(v)
-  -webkit-transform v
-  transform         v
-
-backface(v)
-  -webkit-backface-visibility   v
-  -moz-backface-visibility      v
-  backface-visibility      v
-
-ft(v)
-  font-size v
-
 /********************************************************************************************************************/
 /* Reset */
 /********************************************************************************************************************/
 
 *
-	margin: 0
-	padding: 0
-	border: 0
-	font-size: 100%
-	font: inherit
-	vertical-align: baseline
+	margin          0
+	padding         0
+	border          0
+	font-size       100%
+	font            inherit
+	vertical-align  baseline
 
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section
-	display: block
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section
+	display block
 
 html,
 body
-	height: 100%
+	height  100%
 
-ol, ul
-	list-style: none
+ol,
+ul
+	list-style  none
 
-blockquote, q
-	quotes: none
+blockquote,
+q
+	quotes  none
 
-blockquote:before, blockquote:after,
-q:before, q:after
-	content: ''
-	content: none
+blockquote:before,
+blockquote:after,
+q:before,
+q:after
+	content ''
+	content none
 
 table
-	border-collapse: collapse
-	border-spacing: 0
-
-/********************************************************************************************************************/
-/* Fonts */
-/********************************************************************************************************************/
-
-strong
-  font-weight bold
-
-.ft-XS
-  ft(11px)
-
-.ft-S
-	ft(13px)
-
-.ft-M
-  ft(16px)
-
-.ft-L
-  ft(18px)
-
-/********************************************************************************************************************/
-/* Animations */
-/********************************************************************************************************************/
-.def-transition
-  backface(hidden)
-  transition(all 0.2s ease-in-out 0s)
-
-/********************************************************************************************************************/
-/* Common */
-/********************************************************************************************************************/
-
-.abs
-  position  absolute
-
-.relative
-  position  relative
+	border-collapse collapse
+	border-spacing  0

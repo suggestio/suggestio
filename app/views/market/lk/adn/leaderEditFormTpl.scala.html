@@ -4,26 +4,34 @@
 @import ctx._
 @import edit._
 
-@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId), adnIdOpt = adnNode.id) {
 
-  <div class="page-title">
-    <div class="page-title_cnt">
-      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
-      @Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId).toUpperCase
-    </div>
-  </div>
 
-  <div class="body_cnt">
+@rightMenu = {
 
-    @_leaderNodeFormTpl(
-      adnId = adnNode.id.get,
-      btnText = Messages("Save"),
-      mf = mf,
-      submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(adnNode.id.get),
-      welcomeAdOpt = welcomeAdOpt,
-      nodeInfo = adnNode.adn
-    )
-
-  </div>
+  <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">Ваш профиль</a>
+  <hr class="delimiter"/>
+  <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdnEdit.editAdnNode(adnNode.id.get)">Редактировать профиль</a>
+  <hr class="delimiter"/>
+  <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
+  <hr class="delimiter"/>
 
 }
+
+@content = {
+
+  @_leaderNodeFormTpl(
+    adnId = adnNode.id.get,
+    btnText = Messages("Save"),
+    mf = mf,
+    submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(adnNode.id.get),
+    welcomeAdOpt = welcomeAdOpt,
+    nodeInfo = adnNode.adn
+  )
+
+}
+
+@market.lk.lkBaseLayout(
+  title     = Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId),
+  adnIdOpt  = adnNode.id,
+  rightMenu = Some(rightMenu)
+)(content)
