@@ -526,7 +526,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val json = JsObject(Seq(
         "action"    -> JsString("findNodes"),
         "status"    -> JsString("ok"),
-        "nodes"     -> JsArray(rendered),
+        "nodes"     -> _geoNodesListTpl(nodes),
         "timestamp" -> JsNumber(tstamp)
       ))
       Ok( Jsonp(JSONP_CB_FUN, json) )

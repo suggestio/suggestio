@@ -460,7 +460,6 @@ window.cbca_grid = cbca_grid
 ###############################
 siomart =
   config :
-
     whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sm-showcase'
@@ -471,11 +470,46 @@ siomart =
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   geo :
+    search :
+      min_request_length : 2
+      search_delay : 500
+      queue_request : ( request ) ->
+
+        if request.length < this.min_request_length
+          return false
+
+        if typeof this.timer != 'undefined'
+          clearTimeout this.timer
+
+        cb = () ->
+          siomart.geo.search.do request
+
+        this.timer = setTimeout cb, this.search_delay
+
+      do : ( request ) ->
+        console.log 'request : ' + request
+
     position_callback : ( gp_obj ) ->
       siomart.geo.geo_position_obj = gp_obj
+      this.load_nodes()
 
     get_current_position : () ->
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
+
+    init_events : () ->
+      _geo_nodes_search_dom = siomart.utils.ge('smGeoNodesSearchInput')
+      siomart.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
+        console.log siomart.geo.search.queue_request this.value
+
+    adjust : () ->
+      geo_screen = siomart.utils.ge('smGeoNodes')
+      geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
+      geo_screen_content = siomart.utils.ge('smGeoNodesContent')
+
+      geo_screen.style.height = cbca_grid.wh - 100
+      geo_screen_wrapper.style.height = cbca_grid.wh - 100
+      geo_screen_content.style.minHeight = cbca_grid.wh - 100 + 1
+
 
     request_query_param : () ->
 
@@ -488,13 +522,12 @@ siomart =
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
     load_nodes : () ->
-      url = '/market/nodes/search?a.geo=ip'
+      url = '/market/nodes/search?' + this.request_query_param()
       siomart.request.perform url
 
     init : () ->
       if window.with_geo == true
         this.get_current_position()
-
   getDeviceScale : () ->
     deviceWidth = landscape = Math.abs(window.orientation) == 90
 
@@ -899,12 +932,16 @@ siomart =
         siomart.utils.ge('smGeoScreen').style.display = 'block'
         return false
 
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
+        siomart.geo.get_current_position()
+        return false
 
       geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
 
         node_id = geo_node_target.getAttribute 'data-id'
         siomart.config.index_action = '/market/index/' + node_id
+        siomart.config.mart_id = node_id
 
         siomart.load_mart()
 
@@ -1082,18 +1119,13 @@ siomart =
        grid_ads_wrapper = siomart.utils.ge('smGridAdsWrapper')
        grid_ads_content = siomart.utils.ge('smGridAdsContent')
 
-       geo_screen = siomart.utils.ge('smGeoScreen')
-       geo_screen_wrapper = siomart.utils.ge('smGeoScreenWrapper')
-       geo_screen_content = siomart.utils.ge('smGeoScreenContent')
-
        es = siomart.utils.ge('smCloseScreen')
        es_wrapper = siomart.utils.ge('smCloseScreenWrapper')
        es_content = siomart.utils.ge('smCloseScreenContent')
 
-
-       grid_ads.style.height = es.style.height = geo_screen.style.height = cbca_grid.wh
-       grid_ads_wrapper.style.height = es_wrapper.style.height = geo_screen_wrapper.style.height = cbca_grid.wh
-       grid_ads_content.style.minHeight = es_content.style.minHeight =  geo_screen_content.style.minHeight = cbca_grid.wh + 1
+       grid_ads.style.height = es.style.height = cbca_grid.wh
+       grid_ads_wrapper.style.height = es_wrapper.style.height = cbca_grid.wh
+       grid_ads_content.style.minHeight = es_content.style.minHeight = cbca_grid.wh + 1
 
     load_more : () ->
 
@@ -1239,6 +1271,8 @@ siomart =
       siomart.utils.ge_tag('body')[0].style.overflow = 'hidden'
 
       siomart.grid_ads.adjust_dom()
+      siomart.geo.adjust()
+      siomart.geo.init_events()
 
       setTimeout siomart.grid_ads.attach_events, 200
 
@@ -1344,11 +1378,7 @@ siomart =
 
     find_nodes : ( data ) ->
 
-      html = ''
-      for k,n of data.nodes
-        html += '<div class="js-geo-node" data-id="' + n._id + '">' + n.name + '</div>'
-
-      siomart.utils.ge('smGeoScreenContent').innerHTML = html
+      siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
   ############################################
   ## Объект для работы с карточками продьюсера
@@ -1791,8 +1821,9 @@ siomart =
       return false
 
     siomart.shop_load_locked = true
+    a_rcvr = if siomart.config.mart_id == '' then '' else '&a.rcvr=' + siomart.config.mart_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id + '&' + siomart.geo.request_query_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + siomart.geo.request_query_param()
 
     siomart.focused_ads.curl = url
 

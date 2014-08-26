@@ -1,5 +1,20 @@
 @(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
 
-@stuff.scrollableContainerTpl( "sm-geo-screen", "smGeoScreen" ){
-werwer
-}
+<div class="sm-geo-screen" id="smGeoScreen">
+
+  <div class="sm-geo-screen_header"></div>
+  <div class="sm-geo-screen_search">
+
+    <input type="text" id="smGeoNodesSearchInput"/>
+
+  </div>
+  <div class="sm-geo-screen_current-location" id="smGeoLocationButton">
+
+    Определить мое местоположение
+
+  </div>
+
+  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes" ){
+  }
+
+</div>
