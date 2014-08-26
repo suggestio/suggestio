@@ -189,7 +189,7 @@ object AdnMMetadata {
       geohash = true, geohashPrefix = true,  geohashPrecision = "8",
       fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "1m")
     ),
-    FieldGeoShape(GEO_SHAPE_ESFN, precision = "20m")
+    FieldGeoShape(GEO_SHAPE_ESFN, precision = "50m")
   )
 
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */

@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.3.3-SNAPSHOT"
+version := "1.4.0-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 //scalaVersion := "2.11.1"

@@ -128,6 +128,12 @@ object AdnSinks extends Enumeration {
 
   val SINK_WIFI: AdnSink = Val("w", "wifi")
   val SINK_GEO: AdnSink  = Val("g", "geo")
+
+  def ordered: Seq[AdnSink] = {
+    values
+      .foldLeft( List.empty[AdnSink] ) { (acc, e) => e :: acc }
+      .sortBy(_.longName)
+  }
 }
 
 
