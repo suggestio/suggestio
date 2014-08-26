@@ -69,7 +69,7 @@ object FormUtil {
     s.filter(!_.isEmpty)
   }
 
-  private val allowedProtocolRE = "(?i)https?".r
+  private def allowedProtocolRE = "(?i)https?".r
 
   def isValidUrl(urlStr: String): Boolean = {
     try {
@@ -87,24 +87,24 @@ object FormUtil {
     .transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для номера этажа в ТЦ. */
-  val floorM = nonEmptyText(maxLength = 4)
+  def floorM = nonEmptyText(maxLength = 4)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  val floorOptM = optional(floorM)
+  def floorOptM = optional(floorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Маппинг для секции в ТЦ. */
-  val sectionM = nonEmptyText(maxLength = 6)
+  def sectionM = nonEmptyText(maxLength = 6)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  val sectionOptM = optional(sectionM)
+  def sectionOptM = optional(sectionM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Парсим текст, введённый в поле с паролем. */
-  val passwordM = nonEmptyText
+  def passwordM = nonEmptyText
     .verifying("password.too.short", {_.length > 5})
     .verifying("password.too.long", {_.length <= 1024})
 
   /** Два поля: пароль и подтверждение пароля. Используется при регистрации пользователя. */
-  val passwordWithConfirmM = tuple(
+  def passwordWithConfirmM = tuple(
     "pw1" -> passwordM,
     "pw2" -> passwordM
   )
@@ -121,20 +121,20 @@ object FormUtil {
   )
 
 
-  val adnShownTypeOptM: Mapping[Option[AdnShownType]] = {
+  def adnShownTypeOptM: Mapping[Option[AdnShownType]] = {
     nonEmptyText(maxLength = 10)
       .transform[Option[AdnShownType]]( AdnShownTypes.maybeWithName, _.fold("")(_.toString) )
   }
-  val adnShownTypeM: Mapping[AdnShownType] = {
+  def adnShownTypeM: Mapping[AdnShownType] = {
     adnShownTypeOptM
       .verifying("error.required", _.isDefined)
       .transform[AdnShownType](_.get, Some.apply)
   }
-  val adnShownTypeIdM: Mapping[String] = {
+  def adnShownTypeIdM: Mapping[String] = {
     adnShownTypeM
       .transform[String](_.toString, AdnShownTypes.withName)
   }
-  val adnShownTypeIdOptM: Mapping[Option[String]] = {
+  def adnShownTypeIdOptM: Mapping[Option[String]] = {
     adnShownTypeOptM
       .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
   }
@@ -168,7 +168,7 @@ object FormUtil {
 
 
   /** Возвращение проверенного пароля как Some(). */
-  val passwordWithConfirmSomeM = toStrOptM(passwordWithConfirmM)
+  def passwordWithConfirmSomeM = toStrOptM(passwordWithConfirmM)
 
 
   val nameM = nonEmptyText(maxLength = 64)
@@ -182,41 +182,41 @@ object FormUtil {
     .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
   val colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  val colorSomeM = toSomeStrM(colorM)
+  def colorSomeM = toSomeStrM(colorM)
 
-  val publishedTextM = text(maxLength = 2048)
+  def publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
-  val publishedTextOptM = optional(publishedTextM)
+  def publishedTextOptM = optional(publishedTextM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
-  val townM = nonEmptyText(maxLength = 32)
+  def townM = nonEmptyText(maxLength = 32)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  val townOptM = optional(townM)
+  def townOptM = optional(townM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  val townSomeM = toSomeStrM(townM)
+  def townSomeM = toSomeStrM(townM)
 
-  val addressM = nonEmptyText(minLength = 10, maxLength = 128)
+  def addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  val addressOptM = optional(addressM)
+  def addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  val addressSomeM = toSomeStrM(addressM)
+  def addressSomeM = toSomeStrM(addressM)
 
 
   /** id категории. */
   def userCatIdM = esIdM
-  val userCatIdOptM = optional(userCatIdM)
+  def userCatIdOptM = optional(userCatIdM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  val userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
+  def userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
 
   // TODO Нужен нормальный валидатор телефонов.
-  val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
+  def phoneM = nonEmptyText(minLength = 5, maxLength = 50)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  val phoneOptM = optional(phoneM)
+  def phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  val phoneSomeM = toSomeStrM(phoneM)
+  def phoneSomeM = toSomeStrM(phoneM)
 
   /** Маппер для человеческого траффика, заданного числом. */
-  val humanTrafficAvgM = number(min = 10)
+  def humanTrafficAvgM = number(min = 10)
 
   val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
   def audienceDescrM = text2048M
@@ -226,20 +226,20 @@ object FormUtil {
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
-  val urlNormalizeSafeF = {s: String =>
+  def urlNormalizeSafeF = {s: String =>
     try {
       UrlUtil.normalize(s)
     } catch {
       case ex: Exception => ""
     }
   }
-  val urlStrM = nonEmptyText(minLength = 8)
+  def urlStrM = nonEmptyText(minLength = 8)
     .transform[String](strTrimF andThen urlNormalizeSafeF, UrlUtil.humanizeUrl)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
-  val urlStrOptM = optional(urlStrM)
+  def urlStrOptM = optional(urlStrM)
 
   /** Толерантный к проблемам маппинг ссылки. */
-  val urlStrOptTolerantM: Mapping[Option[String]] = optional(text)
+  def urlStrOptTolerantM: Mapping[Option[String]] = optional(text)
     .transform[Option[String]] (
       {sOpt =>
         sOpt.flatMap { s =>
@@ -255,11 +255,11 @@ object FormUtil {
 
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
-  val urlMapper = urlStrM
+  def urlMapper = urlStrM
     .transform[URL](new URL(_), _.toExternalForm)
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
-  val urlAllowedMapper = urlMapper
+  def urlAllowedMapper = urlMapper
     .verifying("mappers.url.only_http_https_allowed", { url =>
       allowedProtocolRE.pattern.matcher(url.getProtocol).matches()
     })
@@ -269,23 +269,23 @@ object FormUtil {
 
 
   // Маппер домена. Формат ввода тут пока не проверяется.
-  val domainMapper = nonEmptyText(minLength = 4, maxLength = 128)
+  def domainMapper = nonEmptyText(minLength = 4, maxLength = 128)
     .transform(strTrimSanitizeLowerF, strIdentityF)
     .verifying("mappers.url.hostname_prohibited", UrlUtil.isHostnameValid(_))
 
   // Маппер домена с конвертором в dkey.
-  val domain2dkeyMapper = domainMapper
+  def domain2dkeyMapper = domainMapper
     .transform [String] (UrlUtil.normalizeHostname, IDNA.toUnicode)
 
   // Маппер для float-значений.
   val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,4})?".r
-  val floatM = nonEmptyText(maxLength = 15)
+  def floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform[Float](_.toFloat, _.toString)
 
   // Маппер для полноценных double значений для floating point чисел в различных представлениях.
-  val doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
-  val doubleM = nonEmptyText(maxLength = 32)
+  def doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
+  def doubleM = nonEmptyText(maxLength = 32)
     .verifying("float.invalid", doubleRe.pattern.matcher(_).matches())
     .transform[Double](
       { _.replace(',', '.').toDouble},
@@ -293,7 +293,7 @@ object FormUtil {
     )
 
   // Даты
-  val localDate = text(maxLength = 32)
+  def localDate = text(maxLength = 32)
     .transform[Option[LocalDate]](
       DateParseUtil.extractDates(_).headOption,
       { ldOpt => ldOpt.map(_.toString) getOrElse "" }
@@ -302,7 +302,7 @@ object FormUtil {
     .transform[LocalDate](_.get, Some.apply)
 
   /** ISO-период в виде стандартной строки P1Y3M... */
-  val isoPeriodM: Mapping[Period] = {
+  def isoPeriodM: Mapping[Period] = {
     import YmParsers.{parse, ISO_PERIOD_PARSER}
     val formatter = ISOPeriodFormat.standard()
     text(minLength = 3, maxLength = 64)
@@ -325,7 +325,7 @@ object FormUtil {
   val PRICE_M_MAX_STRLEN = 40
 
   /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
-  val priceM: Mapping[(String, Option[Price])] = {
+  def priceM: Mapping[(String, Option[Price])] = {
     text
       .transform[(String, Option[Price])](
         {raw =>
@@ -349,7 +349,7 @@ object FormUtil {
   }
 
   /** Маппер типа тарифа. */
-  val bTariffTypeM: Mapping[BTariffType] = {
+  def bTariffTypeM: Mapping[BTariffType] = {
     nonEmptyText(maxLength = 1)
       .transform[Option[BTariffType]](
         { BTariffTypes.maybeWithName },
@@ -362,7 +362,7 @@ object FormUtil {
 
   def pgIntervalPretty(pgi: PGInterval) = pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
 
-  val pgIntervalM: Mapping[PGInterval] = {
+  def pgIntervalM: Mapping[PGInterval] = {
     nonEmptyText(minLength = 3, maxLength = 256)
       .transform[Option[PGInterval]](
         {str =>
@@ -379,7 +379,7 @@ object FormUtil {
       .transform(_.get, Some.apply)
   }
 
-  val pgIntervalStrM: Mapping[String] = {
+  def pgIntervalStrM: Mapping[String] = {
     pgIntervalM.transform[String](
       _.toString,
       {str => new PGInterval(str) }
@@ -389,7 +389,7 @@ object FormUtil {
 
   /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
     * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */
-  val priceStrictM: Mapping[(String, Price)] = {
+  def priceStrictM: Mapping[(String, Price)] = {
     priceM
       .verifying("error.required", _._2.isDefined)
       .transform[(String, Price)](
@@ -401,7 +401,7 @@ object FormUtil {
   }
 
   /** price, но без исходного raw-значения. */
-  val priceStrictNoraw: Mapping[Price] = {
+  def priceStrictNoraw: Mapping[Price] = {
     priceStrictM.transform[Price](
       { case (raw, price) => price },
       { price => "" -> price }
@@ -416,7 +416,7 @@ object FormUtil {
 
   // Процентные значения
   /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
-  val percentM = {
+  def percentM = {
     text.transform[(String, Option[Float])](
       {raw =>
         val raw0 = if (raw.length > PERCENT_M_CHARLEN_MAX)
@@ -460,12 +460,12 @@ object FormUtil {
 
 
   /** Маппинг для задания причины при сокрытии сущности. */
-  val hideEntityReasonM = nonEmptyText(maxLength = 512)
+  def hideEntityReasonM = nonEmptyText(maxLength = 512)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
 
 
   /** Маппер типа adn-узла. */
-  val adnMemberTypeM: Mapping[AdNetMemberType] = nonEmptyText(maxLength = 1)
+  def adnMemberTypeM: Mapping[AdNetMemberType] = nonEmptyText(maxLength = 1)
     .transform [Option[AdNetMemberType]] (
       { AdNetMemberTypes.maybeWithName },
       { _.map(_.name).getOrElse("") }
@@ -474,12 +474,12 @@ object FormUtil {
     .transform [AdNetMemberType] (_.get, Some.apply)
 
 
-  val adStatActionM: Mapping[AdStatAction] = {
+  def adStatActionM: Mapping[AdStatAction] = {
     nonEmptyText(maxLength = 1)
       .transform[AdStatAction](AdStatActions.withName, _.toString)
   }
 
-  val currencyCodeM: Mapping[String] = {
+  def currencyCodeM: Mapping[String] = {
     text(minLength = 3, maxLength = 3)
       .transform[String](_.toUpperCase, identity)
       .verifying("error.currency.code", {cc =>
@@ -491,13 +491,13 @@ object FormUtil {
         }
       })
   }
-  val currencyCodeOrDfltM: Mapping[String] = {
+  def currencyCodeOrDfltM: Mapping[String] = {
     default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
   }
 
 
   /** Маппер для lat-lon координат, заданных в двух полях формы. */
-  val latLng2geopointM: Mapping[GeoPoint] = {
+  def latLng2geopointM: Mapping[GeoPoint] = {
     mapping(
       "lat" -> doubleM,
       "lon" -> doubleM
@@ -507,8 +507,20 @@ object FormUtil {
   }
 
   /** Опциональный маппер для lat-lon координат. */
-  val latLng2geopointOptM: Mapping[Option[GeoPoint]] = {
+  def latLng2geopointOptM: Mapping[Option[GeoPoint]] = {
     optional(latLng2geopointM)
+  }
+
+
+  /** Маппер для поля, содержащего имя AdnSink. */
+  def sinkM: Mapping[AdnSink] = {
+    nonEmptyText(minLength = 1, maxLength = 1)
+      .transform [Option[AdnSink]] (
+        { AdnSinks.maybeWithName },
+        { _.getOrElse(AdnSinks.SINK_WIFI).name }
+      )
+      .verifying("error.required", _.isDefined)
+      .transform [AdnSink] (_.get, Some.apply)
   }
 
 }
@@ -599,4 +611,5 @@ object FormDataSerializer extends PlayLazyMacroLogsImpl {
       }
     }
   }
+
 }

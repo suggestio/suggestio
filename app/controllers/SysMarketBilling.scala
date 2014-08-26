@@ -1,8 +1,9 @@
 package controllers
 
 import models.MBillContract.LegalContractId
+import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
-import util.acl.{IsSuperuserContractNode, IsSuperuserContract, IsSuperuser}
+import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -360,14 +361,116 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   // Доступ к модели MSinkComission.
   import sink._
 
-  private def sinkComFormM: Form[MSinkComission] = ???
+  private def sinkComM: Mapping[MSinkComission] = {
+    mapping(
+      "sink"          -> sinkM,
+      "sioComission"  -> floatM
+    )
+    {(sink, sioComission) =>
+      MSinkComission(contractId = -1, sink = sink, sioComission = sioComission)
+    }
+    {msc =>
+      import msc._
+      Some((sink, sioComission))
+    }
+  }
+  private def sinkComFormM: Form[MSinkComission] = Form(sinkComM)
 
-  def createSinkCom(contractId: Int) = IsSuperuserContractNode(contractId).apply { implicit request =>
-    Ok(createSinkComTpl(sinkComFormM, request.contract, request.adnNode))
+  /** Рендер страницы с формой создания новой [[models.MSinkComission]]. */
+  def createSinkCom(contractId: Int) = IsSuperuser.async { implicit request =>
+    _createSinkCom(contractId)
   }
 
-  def createSinkComSubmit = IsSuperuser.async { implicit request =>
-    ???
+  private def _createSinkCom(contractId: Int)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val contract = DB.withConnection { implicit c =>
+      MBillContract.getById(contractId).get
+    }
+    MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+      Ok(createSinkComTpl(sinkComFormM, contract, adnNodeOpt.get))
+    }
+  }
+
+  /** Сабмит формы создания тарифа sink comission. */
+  def createSinkComSubmit(contractId: Int) = IsSuperuser.async { implicit request =>
+    sinkComFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"createSinkComSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        _createSinkCom(contractId)
+      },
+      {msc0 =>
+        val msc = msc0.copy(contractId = contractId)
+        val adnId = DB.withConnection { implicit c =>
+          msc.save
+          MBillContract.getById(contractId).get.adnId
+        }
+        // Отправить админа назад на биллинг.
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> s"Создан тариф для выдачи ${msc.sink.longName}")
+      }
+    )
+  }
+
+  /** Рендер страницы редактирования sink'а. */
+  def editSinkCom(scId: Int) = IsSuperuser.async { implicit request =>
+    _editSinkCom(scId)
+  }
+
+  private def _editSinkCom(scId: Int)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val syncResult = DB.withConnection { implicit c =>
+      val msc = MSinkComission.getById(scId).get
+      val mbc = MBillContract.getById(msc.contractId).get
+      msc -> mbc
+    }
+    val (msc, mbc) = syncResult
+    val adnNodeOptFut = MAdnNodeCache.getById(mbc.adnId)
+    val form = sinkComFormM fill msc
+    adnNodeOptFut map { adnNodeOpt =>
+      Ok(editSinkComTpl(msc, form, mbc, adnNodeOpt.get))
+    }
+  }
+
+  /** Сабмит формы редактирования экземпляра [[models.MSinkComission]]. */
+  def editSinkComSubmit(scId: Int) = IsSuperuser.async { implicit request =>
+    sinkComFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"editSinkComSubmit($scId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        _editSinkCom(scId)
+      },
+      {msc1 =>
+        val adnId = DB.withTransaction { implicit c =>
+          val msc = MSinkComission.getById(scId, SelectPolicies.UPDATE).get
+          val msc2 = msc.copy(
+            sink = msc1.sink,
+            sioComission = msc1.sioComission
+          )
+          val msc3 = msc2.save
+          // Узнать куда редиректить админа после действа
+          MBillContract.getById(msc3.contractId).get.adnId
+        }
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> "Измения сохранены.")
+      }
+    )
+  }
+
+  /** Админ приказал удалить указанный sink comission. */
+  def sinkComDeleteSubmit(scId: Int) = IsSuperuser { implicit request =>
+    val adnIdOpt = DB.withConnection { implicit c =>
+      val msc = MSinkComission.getById(scId)
+      msc foreach { _.delete }
+      msc
+        .flatMap { msc => MBillContract.getById(msc.contractId) }
+        .map { _.adnId }
+    }
+    adnIdOpt match {
+      case Some(adnId) =>
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> "sink-тариф удалён.")
+
+      case None =>
+        Redirect( routes.SysMarket.index() )
+          .flashing("error" -> "Что-то пошло не так... sink-тариф уже удалён?")
+    }
   }
 
 }

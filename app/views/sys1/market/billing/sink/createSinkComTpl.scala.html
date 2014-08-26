@@ -7,10 +7,9 @@
   <h1>Создать новый sink-тариф</h1>
 
   @_sinkComFormTpl(
-    submitCall = routes.SysMarketBilling.createSinkComSubmit(),
+    submitCall = routes.SysMarketBilling.createSinkComSubmit(mbc.id.get),
     sf = sf,
-    btnText = Messages("Create"),
-    contractId = mbc.id.get
+    btnText = Messages("Create")
   )
 
 }

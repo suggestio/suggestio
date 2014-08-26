@@ -1,4 +1,4 @@
-@(submitCall: Call, sf: Form[_], btnText: String, contractId: Int)(implicit ctx: Context)
+@(submitCall: Call, sf: Form[_], btnText: String)(implicit ctx: Context)
 
 @* Форма для создания/редактирования модели MSinkComission, которая задаёт тарификацию для выхода выдачи. *@
 
@@ -6,8 +6,6 @@
 @import ctx._
 
 @form( submitCall ) {
-
-  <input type="hidden" name="contractId" value="@contractId"/>
 
   @select(
     sf("sink"),
