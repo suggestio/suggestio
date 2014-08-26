@@ -103,6 +103,8 @@ cbca_grid =
 
   fetch_spacer : (block_max_w, tmp_block, i) ->
 
+    console.log 'fetch_spacer of ' + this.spacers.length
+
     if this.spacers.length == 0
       return null
 
@@ -205,13 +207,13 @@ cbca_grid =
     is_add = is_add || false
 
     cbca_grid.blocks = []
-    cbca_grid.spacers = []
-    cbca_grid.m_spacers = []
 
     if is_add == true
       i = cbca_grid.blocks_index
     else
       cbca_grid.all_blocks = []
+      cbca_grid.spacers = []
+      cbca_grid.m_spacers = []
       i = 0
 
     console.log 'cbca_grid.all_blocks'
@@ -254,7 +256,7 @@ cbca_grid =
     ## Загрузить спейсеры
     #for i in siomart.utils.ge_class document, 'sm-b-spacer'
     if is_add == false
-      for k in [1..30]
+      for k in [1..300]
 
         _spacer_attributes =
           'class' : 'sm-b-spacer sm-b-spacer-' + k
@@ -405,8 +407,6 @@ cbca_grid =
               b = this.fetch_spacer block_max_w
             else
               break
-
-          console.log b
 
           w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
           w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
@@ -1391,14 +1391,14 @@ siomart =
     find_nodes : ( data ) ->
 
       if typeof siomart.geo.nodes_data_cached != 'undefined'
-        siomart.utils.ge('smGeoLocationButton').innerHTML = siomart.geo.nodes_data_cached.first_node.name
+        siomart.utils.ge('smGeoLocationLabel').innerHTML = siomart.geo.nodes_data_cached.first_node.name
 
       siomart.geo.nodes_data_cached = data
       siomart.geo.nodes_loaded = true
 
       if siomart.geo.location_requested == true
         siomart.geo.location_requested = false
-        siomart.utils.ge('smGeoLocationButton').innerHTML = data.first_node.name
+        siomart.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
         siomart.geo.load_for_node_id data.first_node._id
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes

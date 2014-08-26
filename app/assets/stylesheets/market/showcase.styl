@@ -382,15 +382,22 @@ code
   width: 100%
   height: 100%
   z-index: 100
-  background: default_color_w_opacity
   &_header
     height: 50px
   &_search
-    height: 50px
+    height: 55px
+  &_search-input
+    border: 1px #fff solid
   &_current-location
+    padding: 10px 0px
+    position: relative
+    text-align: center
     color: #fff
     font-family: 'opensans-regular-webfont'
     font-size: 14px
+    background: default_color_w_opacity
+  &_current-location-icon
+    position: absolute
 
 .sm-geo-nodes
   background: default_color

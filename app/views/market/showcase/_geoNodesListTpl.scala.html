@@ -3,7 +3,7 @@
 <div class="shops-list">
   @nodes.zipWithIndex.map { case (mnode, i) =>
 
-  <div class="shops-list_row @if(i%2 == 0){__even} js-geo-node" data-id="@mnode.id">
+  <div class="shops-list_row @if(i%2 == 0){} js-geo-node" data-id="@mnode.id">
     @mnode.meta.name
   </div>
 

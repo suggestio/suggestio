@@ -3,17 +3,13 @@
 <div class="sm-geo-screen" id="smGeoScreen">
 
   <div class="sm-geo-screen_header"></div>
-  <div class="sm-geo-screen_search">
 
-    <input type="text" id="smGeoNodesSearchInput"/>
+  @_search_bar( args )
 
+  <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, false );">
+    <div class="sm-geo-screen_current-location-icon">@svg._geoButtonTpl("ffffff")</div> <span id="smGeoLocationLabel">Определить мое местоположение</span>
   </div>
-  <div class="sm-geo-screen_current-location" id="smGeoLocationButton">
-
-    @svg._geoButtonTpl("ffffff") <span>Определить мое местоположение</span>
-
-  </div>
-  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes" ){
+  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, false ).toString ){
   }
 
 </div>
