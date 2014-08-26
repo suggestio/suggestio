@@ -10,9 +10,14 @@
 @import controllers.adn.AdnShowTypes._
 @import _node._
 
+@rightMenu = {
+  <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+  <hr class="delimiter"/>
+  <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
+  <hr class="delimiter"/>
+}
 
-
-@market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
+@content = {
 
   @if(isMyNode) {
     @helper.javascriptRouter("jsRoutes")(
@@ -20,52 +25,40 @@
     )
   }
 
-  <div class="relative">
-    <h1 class="page-title">Ваш профиль</h1>
-  </div>
-
-  @* Верхняя строка. *@
-  <div class="page-title">
-    <div class="page-title_cnt">
-
-      @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
-      @if(showBackBtn) {
-        @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
-          @backCallOpt.map { backCall =>
-            <a class="back-btn" href="@backCall"></a>
-          }
-        }
-      } else {
-        <a class="back-btn __hidden"></a>
+  @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
+  @if(showBackBtn) {
+    @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+      @backCallOpt.map { backCall =>
+        <a class="back-btn" href="@backCall"></a>
       }
+    }
+  } else {
+    <a class="back-btn __hidden"></a>
+  }
 
 
-      @if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}
+  @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
+  @*if(isMyNode) {
+    @defining(node.adn.isReceiver) { isRcvr =>
+      @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
+        <div class="adn-title-buttons">
 
-      @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
-      @if(isMyNode) {
-        @defining(node.adn.isReceiver) { isRcvr =>
-          @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
-            <div class="adn-title-buttons">
-
-              @if(showAdvsBtn) {
-                <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
-                  @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-                  РЕКЛАМОДАТЕЛИ
-                </a>
-              }
-
-              @if(isRcvr) {
-                <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
-              }
-
-            </div>
+          @if(showAdvsBtn) {
+            <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+              @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
+              РЕКЛАМОДАТЕЛИ
+            </a>
           }
-        }
-      }
 
-    </div>
-  </div>
+          @if(isRcvr) {
+            <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
+          }
+
+        </div>
+      }
+    }
+  }*@
+
 
   <div class="body_cnt">
 
@@ -145,5 +138,12 @@
 
   </div>
 
-
 }
+
+
+
+@market.lk.lkBaseLayout(
+  title     = node.meta.name,
+  adnIdOpt  = node.id,
+  rightMenu = Some(rightMenu)
+)(content)
