@@ -28,43 +28,47 @@
 
 <body class="lk">
 
-  <header class="header">
-    <a class="header_logo-link" href="@routes.Market.index()">
-      <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
-    </a>
+  @adnIdOpt.map { adnId =>
+    <header class="header">
+      <a class="header_logo-link" href="@routes.Market.index()">
+        <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
+      </a>
 
-    <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
+      <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
 
-    @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-    @adnIdOpt.map { adnId =>
+      @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
       @billing._billBallanceWidgetTpl(adnId)
-    }
 
 
-    @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
-    @ctx.usernameOpt.map { username =>
-      <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
-    }
-  </header>
-
-
-  <section class="page">
-    <nav class="left-menu"></nav>
-    <nav class="right-menu"></nav>
-
-    <article class="viewport">
-      @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
-      @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-        <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
-          <div class="status-bar_cnt">
-            @flashMsg
-          </div>
-        </div>
+      @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
+      @ctx.usernameOpt.map { username =>
+        <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
       }
-      @content
-    </article>
+    </header>
 
-  </section>
+
+    <section class="page">
+      <nav class="left-menu">
+        <a class="left-menu_i" href="@routes.MarketLkAdnEdit.editAdnNode(adnId)">User</a>
+        <a class="left-menu_i" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
+        <a class="left-menu_i" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+      </nav>
+      <nav class="right-menu"></nav>
+
+      <article class="viewport">
+        @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+        @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+          <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+            <div class="status-bar_cnt">
+              @flashMsg
+            </div>
+          </div>
+        }
+        @content
+      </article>
+
+    </section>
+  }
 
 
   <aside class="popups-container" id="popupsContainer">
