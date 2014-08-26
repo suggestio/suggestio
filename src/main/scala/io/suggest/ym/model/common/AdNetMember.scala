@@ -134,6 +134,14 @@ object AdnSinks extends Enumeration {
       .foldLeft( List.empty[AdnSink] ) { (acc, e) => e :: acc }
       .sortBy(_.longName)
   }
+
+  def maybeWithName(n: String): Option[AdnSink] = {
+    try {
+      Some( withName(n) )
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
 }
 
 
