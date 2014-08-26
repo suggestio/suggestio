@@ -1,9 +1,10 @@
-package util
+package util.anorm
 
-import org.postgresql.util.PGInterval
-import anorm.{ToStatement, TypeDoesNotMatch, Column}
 import java.sql.PreparedStatement
+
+import anorm.{Column, ToStatement, TypeDoesNotMatch}
 import org.joda.time.Period
+import org.postgresql.util.PGInterval
 
 /**
  * Suggest.io

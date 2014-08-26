@@ -2,7 +2,8 @@ package models
 
 import anorm._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
+import util.anorm.AnormJodaTime
+import AnormJodaTime._
 import util.SqlModelSave
 import java.sql.Connection
 import java.util.Currency

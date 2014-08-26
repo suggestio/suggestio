@@ -2,8 +2,9 @@ package models
 
 import anorm._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import util.AnormPgInterval._
+import util.anorm.{AnormPgInterval, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgInterval._
 import util.{FormUtil, SqlModelSave}
 import java.sql.Connection
 import java.util.Currency

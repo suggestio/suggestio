@@ -3,6 +3,7 @@ package models
 import anorm._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.ToPlayJsonObj
+import io.suggest.util.MacroLogsImplLazy
 import play.api.libs.json.{JsString, JsNumber, JsObject}
 import util.SqlModelSave
 import java.sql.Connection
@@ -33,16 +34,19 @@ object MBillMmpDaily extends FindByContract with FromJson {
   val PRIME_CAL_ID_FN   = "prime_cal_id"
   val ON_RCVR_CAT_FN    = "on_rcvr_cat"
 
-  val rowParser = get[Option[Int]](ID_FN) ~ get[Int](CONTRACT_ID_FN) ~ get[Float](MMP_WEEKDAY_FN) ~
-    get[Float](MMP_WEEKEND_FN) ~ get[Float](MMP_PRIMETIME_FN) ~ get[String](CURRENCY_CODE_FN) ~
-    get[Float](ON_START_PAGE_FN) ~ get[String](WEEKEND_CAL_ID_FN) ~ get[String](PRIME_CAL_ID_FN) ~
-    get[Float](ON_RCVR_CAT_FN) map {
-    case id ~ contractId ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode ~ onStartPage ~ weekendCalId ~ primeCalId ~ onRcvrCat =>
-      MBillMmpDaily(
-        id = id, contractId = contractId, currencyCode = currencyCode,
-        mmpWeekday = mmpWeekday, mmpWeekend = mmpWeekend, mmpPrimetime = mmpPrimetime,
-        onRcvrCat = onRcvrCat, onStartPage = onStartPage, weekendCalId = weekendCalId, primeCalId = primeCalId
-      )
+  val rowParser = {
+    get[Option[Int]](ID_FN) ~ get[Int](CONTRACT_ID_FN) ~ get[Float](MMP_WEEKDAY_FN) ~
+      get[Float](MMP_WEEKEND_FN) ~ get[Float](MMP_PRIMETIME_FN) ~ get[String](CURRENCY_CODE_FN) ~
+      get[Float](ON_START_PAGE_FN) ~ get[String](WEEKEND_CAL_ID_FN) ~ get[String](PRIME_CAL_ID_FN) ~
+      get[Float](ON_RCVR_CAT_FN) map {
+      case id ~ contractId ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode ~ onStartPage ~
+        weekendCalId ~ primeCalId ~ onRcvrCat =>
+        MBillMmpDaily(
+          id = id, contractId = contractId, currencyCode = currencyCode,
+          mmpWeekday = mmpWeekday, mmpWeekend = mmpWeekend, mmpPrimetime = mmpPrimetime,
+          onRcvrCat = onRcvrCat, onStartPage = onStartPage, weekendCalId = weekendCalId, primeCalId = primeCalId
+        )
+    }
   }
 
   /** Найти все adnId через таблицу контрактов.
@@ -111,7 +115,8 @@ case class MBillMmpDaily(
   override def saveUpdate(implicit c: Connection): Int = {
     SQL(s"UPDATE $TABLE_NAME SET $CURRENCY_CODE_FN = {currencyCode}, $MMP_WEEKDAY_FN = {mmpWeekday}, " +
       s"$MMP_WEEKEND_FN = {mmpWeekend}, $MMP_PRIMETIME_FN = {mmpPrimetime}, $ON_START_PAGE_FN = {onStartPage}, " +
-      s"$ON_RCVR_CAT_FN = {onRcvrCat}, $WEEKEND_CAL_ID_FN = {weekendCalId}, $PRIME_CAL_ID_FN = {primeCalId} WHERE $ID_FN = {id}")
+      s"$ON_RCVR_CAT_FN = {onRcvrCat}, $WEEKEND_CAL_ID_FN = {weekendCalId}, $PRIME_CAL_ID_FN = {primeCalId} " +
+      s"WHERE $ID_FN = {id}")
       .on('id -> id.get, 'currencyCode -> currencyCode, 'mmpWeekday -> mmpWeekday, 'mmpWeekend -> mmpWeekend,
           'onRcvrCat -> onRcvrCat, 'mmpPrimetime -> mmpPrimetime, 'onStartPage -> onStartPage,
           'weekendCalId -> weekendCalId, 'primeCalId -> primeCalId)

@@ -209,17 +209,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     val mbb = MBillBalance(adnId = "", amount = 0F)
     val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
       // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
-      // TODO Использовать конфиг для хранения дефолтовых значений.
-      val mmp = MBillMmpDaily(
-        contractId = -1,
-        mmpWeekday = 10F,
-        mmpWeekend = 15F,
-        mmpPrimetime = 20F,
-        onRcvrCat = 2.0F,
-        onStartPage = 4.0F,
-        weekendCalId = "", // TODO
-        primeCalId = "" // TODO
-      )
+      val mmp = SysMarketBillingMmp.defaultMmpDaily
       Some(Left(mmp))
     } else {
       None

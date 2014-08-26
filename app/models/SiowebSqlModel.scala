@@ -2,7 +2,8 @@ package models
 
 import anorm._
 import java.sql.Connection
-import util.AnormPgArray._
+import util.anorm.AnormPgArray
+import AnormPgArray._
 
 /**
  * Suggest.io

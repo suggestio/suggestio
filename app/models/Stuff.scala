@@ -180,7 +180,7 @@ object QuickAdvPeriods extends Enumeration {
 
   def default = P1W
   
-  val ordered: List[QuickAdvPeriod] = {
+  def ordered: List[QuickAdvPeriod] = {
     values
       .foldLeft( List[QuickAdvPeriod]() ) { (acc, e) => e :: acc }
       .sortBy(_.prio)

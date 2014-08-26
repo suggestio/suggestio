@@ -1,5 +1,6 @@
 package util.billing
 
+import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
@@ -106,12 +107,12 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     // amountN -- amount1 домноженная на кол-во блоков.
     val amountN: Float = blockModulesCount * amount1
     var amountTotal: Float = amountN
-    if (advTerms.showLevels contains AdShowLevels.LVL_CATS) {
+    if (advTerms hasOnAdSl AdShowLevels.LVL_CATS) {
       val incr = rcvrPricing.onRcvrCat * amountN
       amountTotal += incr
       trace(s"$logPrefix +rcvrCat: +x${rcvrPricing.onRcvrCat} == +$incr -> $amountTotal")
     }
-    if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
+    if (advTerms hasOnAdSl AdShowLevels.LVL_START_PAGE) {
       val incr = rcvrPricing.onStartPage * amountN
       amountTotal += incr
       trace(s"$logPrefix +onStartPage: +x${rcvrPricing.onStartPage} == +$incr -> $amountTotal")
@@ -124,12 +125,11 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   /**
    * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
    * другой одноимённый метод.
-   * @param mad Рекламная карточка.
-   * @param rcvrPricing Ценовой план получателя.
-   * @return Стоимость размещения в валюте получателя.
+   * @param mad Рекламная карточка или иная реализация блочного документа.
+   * @return Площадь карточки.
    */
-  def calculateAdvPrice(mad: MAdT, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
-    lazy val logPrefix = s"calculateAdvPrice(${mad.id.getOrElse("?")}): "
+  def getAdModulesCount(mad: EMBlockMetaI): Int = {
+    lazy val logPrefix = s"getAdModulesCount(${mad.id.getOrElse("?")}): "
     val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
     // Мультипликатор по ширине
     val wmul = block.blockWidth match {
@@ -151,7 +151,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     }
     val blockModulesCount: Int = wmul * hmul
     trace(s"${logPrefix}blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}")
-    calculateAdvPrice(blockModulesCount, rcvrPricing, advTerms)
+    blockModulesCount
   }
 
 
@@ -173,11 +173,16 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
           .sortBy(_.id.get)
           .head
-        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-          .sortBy(_.id.get)
-          .head
-        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, adve)
-        advPrice :: acc
+        val contractId = rcvrContract.id.get
+        val rcvrPricing = MBillMmpDaily.getLatestForContractId(contractId).get
+        val bmc = getAdModulesCount(mad)
+        findSinkComms(contractId, adve)
+          .valuesIterator
+          .foldLeft (acc) { (acc1, sinkComm) =>
+            val adve1 = advTermSinkFiltered(sinkComm.sink, adve)
+            val advPrice = MmpDailyBilling.calculateAdvPrice(bmc, rcvrPricing, adve1)
+            advPrice :: acc1
+          }
       }
       val prices2 = prices
         .groupBy { _.currency.getCurrencyCode }
@@ -191,6 +196,26 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         }
       }
       MAdvPricing(prices2, hasEnoughtMoney)
+    }
+  }
+
+
+  /** Найти список тарифов комиссионных для указанного размещения в рамках указанного контракта.
+    * @param rcvrContractId id контракта.
+    * @param advTerms настройки размещения.
+    * @return Карта тарифов комиссионных, подходящая под указанное добро.
+    */
+  private def findSinkComms(rcvrContractId: Int, advTerms: AdvTerms)(implicit c: Connection): Map[AdnSink, MSinkComission] = {
+    MSinkComission.findByContractId(rcvrContractId)
+      .groupBy(_.sink)
+      .filterKeys { advTerms.hasOnSink }    // Выкинуть sink'и, которые рекламодателю не интересны.
+      .mapValues(_.head)                    // Там всегда один элемент из-за особенностей модели.
+  }
+
+  private def advTermSinkFiltered(sink: AdnSink, advt: AdvTerms): AdvTerms = {
+    new AdvTermsWrapper {
+      override def underlying = advt
+      override val showLevels = advt.showLevels.filter(_.adnSink == sink)
     }
   }
 
@@ -210,28 +235,33 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       val prodCurrencyCode = mbb0.currencyCode
       advs.foreach { advEntry =>
         val rcvrContract = getOrCreateContract(advEntry.adnId)
-        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-          .sortBy(_.id.get)
-          .head
-        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, advEntry)
-        val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
-        assert(
-          rcvrCurrencyCode == prodCurrencyCode,
-          s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
-        )
-        MAdvReq(
-          adId        = mad.id.get,
-          amount      = advPrice.price,
-          comission   = Some(mbc.sioComission),
-          prodContractId = mbc.id.get,
-          prodAdnId   = producerId,
-          rcvrAdnId   = advEntry.adnId,
-          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
-          showLevels  = advEntry.showLevels
-        ).save
-        // Нужно заблокировать на счете узла необходимую сумму денег.
-        mbb0.updateBlocked(advPrice.price)
+        val contractId = rcvrContract.id.get
+        val rcvrMmp = MBillMmpDaily.getLatestForContractId(contractId).get
+        val bmc = getAdModulesCount(mad)
+        val sinkComms = findSinkComms(contractId, advEntry)
+        sinkComms.valuesIterator.foreach { sinkComm =>
+          // Фильтруем уровни отображения в рамках sink'а.
+          val advTermsSink = advTermSinkFiltered(sinkComm.sink, advEntry)
+          val advPrice = calculateAdvPrice(bmc, rcvrMmp, advTermsSink)
+          val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+          assert(
+            rcvrCurrencyCode == prodCurrencyCode,
+            s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
+          )
+          MAdvReq(
+            adId        = mad.id.get,
+            amount      = advPrice.price,
+            comission   = Some(sinkComm.sioComission),
+            prodContractId = mbc.id.get,
+            prodAdnId   = producerId,
+            rcvrAdnId   = advEntry.adnId,
+            dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+            dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+            showLevels  = advTermsSink.showLevels
+          ).save
+          // Нужно заблокировать на счете узла необходимую сумму денег.
+          mbb0.updateBlocked(advPrice.price)
+        }
       }
     }
   }
@@ -337,7 +367,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
           ).save
         }
       // Начислять получателю бабки с учётом комиссии sioM.
-      val amount1 = (1.0F - rcvrContract.sioComission) * amount0
+      val amount1 = advReq.comission.fold(amount0) { comission =>  (1.0F - comission) * amount0 }
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
       val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
       assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")
@@ -348,7 +378,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       val rcvrTxn = MBillTxn(
         contractId      = rcvrContract.id.get,
         amount          = amount1,
-        comissionPc     = Some(rcvrContract.sioComission),
+        comissionPc     = advReq.comission,
         datePaid        = advReq.dateCreated,
         txnUid          = s"${rcvrContract.id.get}-$advReqId",
         paymentComment  = "Credit for adverise",
@@ -358,7 +388,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       // Сохранить подтверждённое размещение с инфой о платежах.
       MAdvOk(
         advReq,
-        comission1  = Some(rcvrContract.sioComission),
+        comission1  = advReq.comission,
         dateStatus1 = now,
         prodTxnId   = prodTxn.id,
         rcvrTxnId   = rcvrTxn.id,
@@ -441,7 +471,6 @@ import MmpDailyBilling.prepareShowLevels
 sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
 
   import LOGGER._
-  import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
 
   lazy val logPrefix = ""
 

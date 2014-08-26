@@ -30,9 +30,6 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   /** При создании контракта дефолтовое значение суффикса. */
   lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("sys.billing.contract.suffix.dflt") getOrElse "CEO"
 
-  /** Дефолтовое значение комиссии suggest.io в форме создания контракта. */
-  lazy val SIO_COMISSION_DFLT: Float = configuration.getDouble("sys.billing.contract.share.dflt").fold(0.30F)(_.toFloat)
-
 
   private def bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
@@ -52,24 +49,22 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       .transform[Option[String]](
         {Some(_).filter(!_.isEmpty)},
         {_ getOrElse ""}
-      ),
-    "sioComission"  -> floatM
+      )
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo, sioComission) =>
+  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
     MBillContract(
       adnId = adnId,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
-      isActive = isActive,
-      sioComission = sioComission
+      isActive = isActive
     )
   }
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo, sioComission))
+    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
   })
 
 
@@ -106,8 +101,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           adnId = adnId,
           contractDate = DateTime.now,
           suffix = Some(CONTRACT_SUFFIX_DFLT),
-          isActive = true,
-          sioComission = SIO_COMISSION_DFLT
+          isActive = true
         )
         val formM = contractFormM fill mbcStub
         Ok(createContractFormTpl(adnNode, supOpt, formM))
@@ -186,8 +180,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           contractDate = mbc1.contractDate,
           hiddenInfo   = mbc1.hiddenInfo,
           isActive     = mbc1.isActive,
-          suffix       = mbc1.suffix,
-          sioComission = mbc1.sioComission
+          suffix       = mbc1.suffix
         )
         DB.withConnection { implicit c =>
           mbc3.save
@@ -241,8 +234,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         txnUid = "",
         dateProcessed = now,
         paymentComment = "",
-        adId = None,
-        comissionPc = Some(SIO_COMISSION_DFLT)
+        adId = None
       )
       (lci, txn)
     }

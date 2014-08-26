@@ -1,9 +1,9 @@
-package util
+package util.anorm
 
 import java.net.InetAddress
 import java.sql.PreparedStatement
 
-import anorm.{ToStatement, TypeDoesNotMatch, Column}
+import anorm.{Column, ToStatement, TypeDoesNotMatch}
 import org.postgresql.util.PGobject
 
 /**

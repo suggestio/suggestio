@@ -3,8 +3,10 @@ package models
 import anorm._
 import MAdv._
 import org.joda.time.DateTime
-import util.AnormPgArray._
-import util.AnormJodaTime._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormPgArray._
+import util.anorm.AnormJodaTime
+import AnormJodaTime._
 import util.SqlModelSave
 import java.sql.Connection
 import java.util.Currency
@@ -23,7 +25,7 @@ object MAdvReq extends MAdvStatic {
 
   val TABLE_NAME = "adv_req"
 
-  val rowParser = ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ ADV_ROW_PARSER_2 map {
+  val rowParser = ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ SHOW_LEVELS_PARSER map {
     case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
       rcvrAdnId ~ prodContractId ~ showLevels =>
       MAdvReq(

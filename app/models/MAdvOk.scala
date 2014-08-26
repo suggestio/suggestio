@@ -3,8 +3,9 @@ package models
 import anorm._
 import MAdv._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import util.SqlModelSave
 import java.sql.Connection
 import AdShowLevels.sls2strings
@@ -24,10 +25,10 @@ object MAdvOk extends MAdvStatic {
 
   override val rowParser = {
     ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
-      get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") ~ get[Boolean]("is_auto") ~ ADV_ROW_PARSER_2 ~
-      get[Boolean]("is_partner") map {
+      get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") ~ get[Boolean]("is_auto") ~
+      get[Boolean]("is_partner") ~ SHOW_LEVELS_PARSER map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~
-        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ showLevels ~ isPartner =>
+        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ isPartner ~ showLevels  =>
         MAdvOk(
           id          = id,
           adId        = adId,

@@ -3,8 +3,9 @@ package models
 import anorm._
 import MAdv._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import util.SqlModelSave
 import java.sql.Connection
 import AdShowLevels.sls2strings
@@ -24,7 +25,7 @@ object MAdvRefuse extends MAdvStatic {
   override val TABLE_NAME = "adv_refuse"
 
   override val rowParser = {
-    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ ADV_ROW_PARSER_2 map {
+    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ SHOW_LEVELS_PARSER map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
         rcvrAdnId ~ dateStatus ~ reason ~ showLevels =>
         MAdvRefuse(

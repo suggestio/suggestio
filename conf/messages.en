@@ -84,8 +84,8 @@ adv.period.P3D=Three days
 adv.period.P1W=Week
 adv.period.P1M=Month
 
-adv.sink.wifi=Wi-Fi
-adv.sink.geo=Geolocation
+adn.sink.wifi=Wi-Fi
+adn.sink.geo=Geolocation
 
 
 Input.text.from.picture=Input text from the picture

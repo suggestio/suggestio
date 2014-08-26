@@ -4,8 +4,9 @@ import java.net.InetAddress
 import java.sql.Connection
 
 import anorm._
+import util.anorm.AnormInetAddress
 import util.{PlayLazyMacroLogsImpl, SqlModelSave}
-import util.AnormInetAddress._
+import AnormInetAddress._
 
 /**
  * Suggest.io

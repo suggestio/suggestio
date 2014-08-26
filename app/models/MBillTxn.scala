@@ -1,8 +1,9 @@
 package models
 
 import anorm._
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import org.joda.time.DateTime
 import java.sql.Connection
 
