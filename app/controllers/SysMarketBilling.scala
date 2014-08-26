@@ -2,7 +2,7 @@ package controllers
 
 import models.MBillContract.LegalContractId
 import util.PlayMacroLogsImpl
-import util.acl.IsSuperuser
+import util.acl.{IsSuperuserContractNode, IsSuperuserContract, IsSuperuser}
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -31,6 +31,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("sys.billing.contract.suffix.dflt") getOrElse "CEO"
 
 
+  /** Внутренний маппинг для даты LocalDate. */
   private def bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
 
@@ -352,6 +353,21 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         }
       case None => Future successful None
     }
+  }
+
+
+
+  // Доступ к модели MSinkComission.
+  import sink._
+
+  private def sinkComFormM: Form[MSinkComission] = ???
+
+  def createSinkCom(contractId: Int) = IsSuperuserContractNode(contractId).apply { implicit request =>
+    Ok(createSinkComTpl(sinkComFormM, request.contract, request.adnNode))
+  }
+
+  def createSinkComSubmit = IsSuperuser.async { implicit request =>
+    ???
   }
 
 }

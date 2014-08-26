@@ -1,0 +1,16 @@
+@(sf: Form[_], mbc: MBillContract, adnNode: MAdnNode)(implicit ctx: Context)
+
+@import ctx._
+
+@sinkComBase("Создать sink comm", nodeOpt = Some(adnNode), mbcOpt = Some(mbc) ) {
+
+  <h1>Создать новый sink-тариф</h1>
+
+  @_sinkComFormTpl(
+    submitCall = routes.SysMarketBilling.createSinkComSubmit(),
+    sf = sf,
+    btnText = Messages("Create"),
+    contractId = mbc.id.get
+  )
+
+}

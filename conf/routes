@@ -329,3 +329,7 @@ GET  /sys/mdr/freeAdv/:adId              controllers.SysMdr.freeAdvMdr(adId)
 POST /sys/mdr/freeAdv/:adId/accept       controllers.SysMdr.freeAdvMdrAccept(adId)
 POST /sys/mdr/freeAdv/:adId/ban          controllers.SysMdr.freeAdvMdrBan(adId)
 
+## sys: sink comission
+GET  /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSinkCom(contractId: Int)
+POST /sys/m/b/sink/comm/new              controllers.SysMarketBilling.createSinkComSubmit
+

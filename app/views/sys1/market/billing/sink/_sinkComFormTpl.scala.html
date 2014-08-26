@@ -1,0 +1,26 @@
+@(submitCall: Call, sf: Form[_], btnText: String, contractId: Int)(implicit ctx: Context)
+
+@* Форма для создания/редактирования модели MSinkComission, которая задаёт тарификацию для выхода выдачи. *@
+
+@import helper._
+@import ctx._
+
+@form( submitCall ) {
+
+  <input type="hidden" name="contractId" value="@contractId"/>
+
+  @select(
+    sf("sink"),
+    options = AdnSinks.ordered.map(s => s.name -> Messages("adn.sink." + s.name) ),
+    '_label -> "Выдача"
+  )
+
+  @inputText(
+    sf("sioComission"),
+    '_label -> "Комиссия s.io (доля).",
+    'placeholder -> 0.10
+  )
+
+  <input type="submit" value="@btnText"/>
+
+}

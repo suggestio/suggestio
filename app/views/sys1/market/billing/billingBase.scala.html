@@ -1,8 +1,11 @@
-@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None, mbcOpt: Option[MBillContract] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Подложка страниц с управлением биллингом. *@
 
 @hPathAfter1 = {
+  @mbcOpt.map { mbc =>
+    / mbc.legalContractId
+  }
   @hPathAfter.getOrElse {
     / @title
   }
