@@ -1,0 +1,34 @@
+@(title: String, node: MAdnNode, isMyNode: Boolean, povAdnIdOpt: Option[String] = None, rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+
+@import market.lk.adn._node._
+@import ctx._
+
+
+@rightBar1 = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
+    <hr class="delimiter"/>
+    @if(isMyNode) {
+      <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+      <hr class="delimiter"/>
+      <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">@Messages("Password.change")</a>
+      <hr class="delimiter"/>
+
+      @if(isSuperuser) {
+        <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+        <hr class="delimiter"/>
+      }
+    }
+  </nav>
+
+  @rightBarAfter
+}
+
+
+@market.lk.lkBaseLayout(
+  title     = title,
+  adnIdOpt  = node.id,
+  rightBar  = Some(rightBar1),
+  povAdnId  = povAdnIdOpt
+)(content)

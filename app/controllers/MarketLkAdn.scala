@@ -517,10 +517,11 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+  def userProfileEdit(adnId: String, r: Option[String] = None) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     Ok(userProfileEditTpl(
       adnNode = request.adnNode,
-      pf = Ident.changePasswordFormM
+      pf = Ident.changePasswordFormM,
+      r = r
     ))
   }
 

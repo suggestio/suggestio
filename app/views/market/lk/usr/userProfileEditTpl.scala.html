@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, pf: Form[_])(implicit ctx: Context)
+@(adnNode: MAdnNode, pf: Form[_], r: Option[String] = None)(implicit ctx: Context)
 
 @* Страница редактирования профиля пользователя. *@
 
@@ -8,7 +8,7 @@
 
 @lkBase("Редактирование профиля пользователя", adnIdOpt = adnNode.id) {
 
-  @form( routes.Ident.changePasswordSubmit(r = Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url) ) ) {
+  @form( routes.Ident.changePasswordSubmit(r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url) ) ) {
     @inputPassword(
       pf("old"),
       '_label -> Messages("Type.current.password")

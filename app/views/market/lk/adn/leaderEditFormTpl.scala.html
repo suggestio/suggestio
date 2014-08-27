@@ -5,17 +5,7 @@
 @import edit._
 
 
-
-@rightBar = {
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
-    <hr class="delimiter"/>
-  </nav>
-
+@rightBarAfter = {
   <div class="right-bar_bottom">
     <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">Сохранить</a>
   </div>
@@ -34,8 +24,9 @@
 
 }
 
-@market.lk.lkBaseLayout(
+@nodeBaseTpl(
   title     = "Ваш профиль",
-  adnIdOpt  = node.id,
-  rightBar = Some(rightBar)
+  node      = node,
+  isMyNode  = true,
+  rightBarAfter = Some(rightBarAfter)
 )(content)
