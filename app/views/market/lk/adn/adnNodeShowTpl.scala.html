@@ -6,22 +6,41 @@
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
    Если !isMyNode, то юзер смотрит чужой нередактируемый узел. *@
 
+@import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
 @import controllers.adn.AdnShowTypes._
 @import _node._
 
+@rightMenu = {
 
-@* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
-@popupContent = {
+  <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
+  <hr class="delimiter"/>
+  @if(isMyNode) {
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
+    <hr class="delimiter"/>
 
-  @if(isMyNode && node.adn.isReceiver) {
-    @_installScriptPopupTpl(node)
+    @if(isSuperuser) {
+      <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+      <hr class="delimiter"/>
+    }
   }
 
 }
 
 
-@market.lk.lkBase(node.meta.name, adnIdOpt = node.id, popupContent = Some(popupContent)) {
+@prop(name: String, propClass: String = "")(value: Html) = {
+
+  <table class="prop @propClass">
+    <td class="prop_name">@name:</td>
+    <td class="prop_value">@value</td>
+  </table>
+
+}
+
+
+@content = {
 
   @if(isMyNode) {
     @helper.javascriptRouter("jsRoutes")(
@@ -29,130 +48,130 @@
     )
   }
 
-  @* Верхняя строка. *@
-  <div class="page-title">
-    <div class="page-title_cnt">
-
-      @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
-      @if(showBackBtn) {
-        @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
-          @backCallOpt.map { backCall =>
-            <a class="back-btn" href="@backCall"></a>
-          }
-        }
-      } else {
-        <a class="back-btn __hidden"></a>
+  @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
+  @if(showBackBtn) {
+    @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+      @backCallOpt.map { backCall =>
+        <a class="btn __minor __size-M def-transition" href="@backCall">Сменить магазин</a>
       }
+    }
+  }
 
+  @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
+  @*if(isMyNode) {
+    @defining(node.adn.isReceiver) { isRcvr =>
+      @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
+        <div class="adn-title-buttons">
 
-      @if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}
-
-      @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
-      @if(isMyNode) {
-        @defining(node.adn.isReceiver) { isRcvr =>
-          @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
-            <div class="adn-title-buttons">
-
-              @* Кнопку "рекламодатели" отображать только ресиверу, и только если он не делегировал adv-функции другому узлу. *@
-              @if(showAdvsBtn) {
-
-                    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
-                      @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-                      РЕКЛАМОДАТЕЛИ
-                    </a>
-
-              } @* showAdsvBtn? *@
-
-              @if(isRcvr) {
-
-                <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
-
-              } @* isRcvr? *@
-
-            </div>
+          @if(showAdvsBtn) {
+            <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+              @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
+              РЕКЛАМОДАТЕЛИ
+            </a>
           }
-        }
+
+          @if(isRcvr) {
+            <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
+          }
+
+        </div>
       }
-    </div>
+    }
+  }*@
+
+  <div class="profile_logo-bar">
+    @if(node.meta.color.isDefined) {
+      @node.logoImgOpt.map { img =>
+        <div class="profile_logo-w" style="background-color: #@node.meta.color;">
+          <img class="profile_logo-img" src='@routes.Img.getImg(img.filename)' alt="@node.meta.name"/>
+        </div>
+      }
+    }
   </div>
 
-  <div class="body_cnt">
+  <div class="profile_info-bar">
+    <hr class="delimiter __light"/>
 
-      <div class="paragraph __size-M">
-        <span class="ft-L node-name">@node.meta.name</span>
-        @if(isMyNode) {
-          <a class="edit-btn __color-1 __ft-XS" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">
-            @Messages("Edit")
-          </a>
+    @prop("Локация") { @node.meta.name }
 
-          <span class="sm-note">
-            <span class="sm-note__q-mark">?</span>
-            <span class="sm-note__message">
-              Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
-            </span>
-          </span>
+    @if(node.meta.town.isDefined) {
+      @prop("Адрес") { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
+    }
+
+    @if(node.meta.siteUrl.isDefined) {
+      @prop("Сайт") { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
+    }
+
+    @if(node.meta.info.isDefined) {
+      @prop("Информация о товарах или услугах") { @node.meta.info }
+    }
+
+    <hr class="delimiter __light"/>
+
+    <table class="prop">
+      <td class="prop_name td">
+        Цвет фона шапки где будет распологаться ваш логотип
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Основной<br/>цвет</span>
+      </td>
+      <td class="td __padding-S">
+        <div class="color" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+      </td>
+      <td class="td __padding-S">
+        <div class="delimiter __light __vertical js-vertical-line"></div>
+      </td>
+      <td class="td __padding-S prop_name">
+        Цвет текста и иконок категорий в ленте выдачи
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Цвет<br/>контента</span>
+      </td>
+      <td class="td __padding-S dark-gray">
+        <div class="color" style="background-color: #@node.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+      </td>
+    </table>
+
+  </div>
 
 
-          @if(isSuperuser) {
-            <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
-          }
+  @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
+  @if(node.adn.isProducer) {
+    @if(isMyNode) {
+      @_myAdsTpl(node, mads, canAdv, ad2advMap)
+    } else {
+      @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
+    }
+
+    @* Ссылка на demo web site. *@
+    @if(isMyNode) {
+      <div class="sm-note">
+        @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
+          Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
         }
       </div>
-
-      <div class="border-line"></div>
-
-      @if(node.meta.town.isDefined) {
-        <div class="paragraph __size-M">
-          @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address}
-        </div>
-        <div class="border-line"></div>
-      }
-
-      @if(node.meta.description.isDefined) {
-        <p class="paragraph __size-M">
-            @_nodeDescrTdTpl(node, style = "border-left: none; padding-left: 0;")
-        </p>
-        <div class="border-line"></div>
-      }
-
-    @* Если указаны этаж/секция, то их напечатать таблицей. *@
-    @if(node.meta.floor.isDefined || node.meta.section.isDefined) {
-      @_floorSectionTableTpl(node)
-      <div class="border-line"></div>
     }
-
-    @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
-    @if(node.adn.isProducer) {
-      @if(isMyNode) {
-        @_myAdsTpl(node, mads, canAdv, ad2advMap)
-      } else {
-        @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
-      }
-
-      @* Ссылка на demo web site. *@
-      @if(isMyNode) {
-        <div class="sm-note">
-          @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
-            Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
-          }
-        </div>
-      }
-    }
+  }
 
 
-    @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
-    @if(isMyNode && !advertisers.isEmpty) {
-      @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
-    }
+  @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
+  @*if(isMyNode && !advertisers.isEmpty) {
+    @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
+  }*@
 
 
-    @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
-       Если этот узел не может супервайзить, то slaves должен быть пустым. *@
-    @if(isMyNode && !slaves.isEmpty) {
-      @_supShowNodesTpl(node, slaves)
-    }
+  @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
+     Если этот узел не может супервайзить, то slaves должен быть пустым. *@
+  @*if(isMyNode && !slaves.isEmpty) {
+    @_supShowNodesTpl(node, slaves)
+  }*@
 
-  </div>
+}@* content end *@
 
 
-}
+
+@market.lk.lkBaseLayout(
+  title     = "Ваш профиль",
+  adnIdOpt  = node.id,
+  rightMenu = Some(rightMenu)
+)(content)

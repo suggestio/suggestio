@@ -1,16 +1,22 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None, rightMenu:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
-<div class="page-title">
-  <div class="page-title_cnt">
-    @backHref.map { bh =>
-      <a class="back-btn" href="@bh" title="Вернуться назад">&nbsp;</a>
-    }
-    @title
-  </div>
-</div>
 
-<div class="body_cnt">
-    @content
-</div>
+  <aside class="right-bar">
+    <nav class="right-bar_menu">
+      @rightMenu
+    </nav>
+  </aside>
+
+  <div class="viewport">
+
+    <article class="page_cnt">
+      <h1 class="page_title">
+        @title
+      </h1>
+      @content
+    </article>
+
+  </div>
+
 }
