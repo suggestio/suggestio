@@ -164,5 +164,5 @@ package object models {
 
   type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
   type MNodeAdsMode         = MNodeAdsModes.MNodeAdsMode
-
+  type NodeRightPanelLink   = NodeRightPanelLinks.NodeRightPanelLink
 }
