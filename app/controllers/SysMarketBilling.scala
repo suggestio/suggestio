@@ -3,7 +3,7 @@ package controllers
 import models.MBillContract.LegalContractId
 import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
+import util.acl.{IsSuperuserContractNode, AbstractRequestWithPwOpt, IsSuperuser}
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -84,7 +84,8 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         txns            = MBillTxn.findForContracts(contractIds),
         feeTariffsMap   = MBillTariffFee.getAll.groupBy(mbtsGrouper),
         statTariffsMap  = MBillTariffStat.getAll.groupBy(mbtsGrouper),
-        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper)
+        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
+        sinkComissionMap = contractIds.flatMap(MSinkComission.findByContractId(_)).groupBy(_.contractId)
       )
     }
     adnNodeOptFut map {
@@ -377,17 +378,20 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   private def sinkComFormM: Form[MSinkComission] = Form(sinkComM)
 
   /** Рендер страницы с формой создания новой [[models.MSinkComission]]. */
-  def createSinkCom(contractId: Int) = IsSuperuser.async { implicit request =>
-    _createSinkCom(contractId)
-  }
-
-  private def _createSinkCom(contractId: Int)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
-    val contract = DB.withConnection { implicit c =>
-      MBillContract.getById(contractId).get
+  def createSinkCom(contractId: Int) = IsSuperuserContractNode(contractId).apply { implicit request =>
+    // Определять необходимый sink, фильтруя node.adn.sinks по имеющимся msc.
+    val currentMscs = DB.withConnection { implicit c =>
+      MSinkComission.findByContractId(contractId)
     }
-    MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
-      Ok(createSinkComTpl(sinkComFormM, contract, adnNodeOpt.get))
-    }
+    val needSinks = request.adnNode.adn.sinks -- currentMscs.map(_.sink)
+    val sink = needSinks.headOption getOrElse AdnSinks.default
+    val mscStub = MSinkComission(
+      contractId = contractId,
+      sink = sink,
+      sioComission = sink.sioComissionDflt
+    )
+    val form = sinkComFormM fill mscStub
+    Ok(createSinkComTpl(form, request.contract, request.adnNode))
   }
 
   /** Сабмит формы создания тарифа sink comission. */
@@ -395,7 +399,12 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     sinkComFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"createSinkComSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        _createSinkCom(contractId)
+        val contract = DB.withConnection { implicit c =>
+          MBillContract.getById(contractId).get
+        }
+        MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+          Ok(createSinkComTpl(formWithErrors, contract, adnNodeOpt.get))
+        }
       },
       {msc0 =>
         val msc = msc0.copy(contractId = contractId)
@@ -415,7 +424,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     _editSinkCom(scId)
   }
 
-  private def _editSinkCom(scId: Int)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+  private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val syncResult = DB.withConnection { implicit c =>
       val msc = MSinkComission.getById(scId).get
       val mbc = MBillContract.getById(msc.contractId).get
@@ -423,7 +432,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     }
     val (msc, mbc) = syncResult
     val adnNodeOptFut = MAdnNodeCache.getById(mbc.adnId)
-    val form = sinkComFormM fill msc
+    val form: Form[MSinkComission] = formOpt getOrElse { sinkComFormM fill msc }
     adnNodeOptFut map { adnNodeOpt =>
       Ok(editSinkComTpl(msc, form, mbc, adnNodeOpt.get))
     }
@@ -434,7 +443,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     sinkComFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editSinkComSubmit($scId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        _editSinkCom(scId)
+        _editSinkCom(scId, Some(formWithErrors))
       },
       {msc1 =>
         val adnId = DB.withTransaction { implicit c =>

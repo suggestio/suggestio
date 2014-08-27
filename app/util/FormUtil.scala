@@ -517,7 +517,7 @@ object FormUtil {
     nonEmptyText(minLength = 1, maxLength = 1)
       .transform [Option[AdnSink]] (
         { AdnSinks.maybeWithName },
-        { _.getOrElse(AdnSinks.SINK_WIFI).name }
+        { _.getOrElse(AdnSinks.default).name }
       )
       .verifying("error.required", _.isDefined)
       .transform [AdnSink] (_.get, Some.apply)

@@ -4,7 +4,7 @@
 
 @hPathAfter1 = {
   @mbcOpt.map { mbc =>
-    / mbc.legalContractId
+    / <a href="@routes.SysMarketBilling.billingFor(mbc.adnId)">@mbc.legalContractId</a>
   }
   @hPathAfter.getOrElse {
     / @title

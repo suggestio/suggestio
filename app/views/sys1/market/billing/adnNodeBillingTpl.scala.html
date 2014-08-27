@@ -16,7 +16,7 @@
     </p>
   }
 
-  @market.lk.lkBlock("Контракты("+contracts.size+")") {
+  @market.lk.lkBlock( s"Контракты(${contracts.size})" ) {
 
     @if(contracts.isEmpty) {
       <p>Пока нет заключенных договоров.</p>
@@ -44,7 +44,7 @@
           @* Рендер посуточных mmp-тарификаторов *@
           <div>
           @defining(dailyMmpsMap.get(contract.id.get) getOrElse Nil) { dmmps =>
-            @if(!dmmps.isEmpty) {
+            @if( dmmps.nonEmpty ) {
               <h4>Тарифные планы размещения рекламы посуточные (@dmmps.size)</h4>
               <table>
                 <tr>
@@ -57,12 +57,14 @@
                 </tr>
                 @dmmps.map { dmmp =>
                   <tr>
-                    <td>@dmmp.id.get</td>
+                    <td>@dmmp.id</td>
                     <td>@dmmp.currencyCode</td>
                     <td>@dmmp.mmpWeekday</td>
                     <td>@dmmp.mmpWeekend</td>
                     <td>@dmmp.mmpPrimetime</td>
-                    <td><a class="blue-link" href="@routes.SysMarketBillingMmp.editMmpDaily(dmmp.id.get)">Редактировать</a></td>
+                    <td>
+                        <a class="blue-link" href="@routes.SysMarketBillingMmp.editMmpDaily(dmmp.id.get)">Редактировать</a>
+                    </td>
                   </tr>
                 }
               </table>
@@ -70,6 +72,44 @@
 
             <a class="blue-link" href="@routes.SysMarketBillingMmp.createMmpDaily(contract.id.get)">Создать посуточный mmp-тарифный план...</a>
           }
+          </div>
+
+          @* Рендер тарификаций за используемую выдачу. *@
+          <div>
+            @defining(sinkComissionMap.getOrElse(contract.id.get, Nil)) { mscs =>
+              @* Рендерим плашку, сообщающую о неисправности узла в связи с отсутствием ожидаемого тарифа. *@
+              @if( adnNode.adn.isReceiver ) {
+                @defining( adnNode.adn.sinks -- mscs.map(_.sink) ) { missingSinks =>
+                  @missingSinks.map { sink =>
+                    <p class="error">Необходимо <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">добавить тариф</a> на выдачи: @Messages("adn.sink." + sink.longName)!<p/>
+                  }
+                }
+              }
+              @if( mscs.nonEmpty ) {
+                <h4>Тарифные планы выдач</h4>
+                <table>
+                  <tr>
+                    <th>#</th>
+                    <th>sink</th>
+                    <th>Комиссия s.io</th>
+                    <th>Другое</th>
+                  </tr>
+                  @mscs.map { msc =>
+                    <tr>
+                      <td>@msc.id</td>
+                      <td>@Messages("adn.sink." + msc.sink.longName)</td>
+                      <td>@msc.sioComission</td>
+                      <td>
+                        <a href="@routes.SysMarketBilling.editSinkCom(msc.id.get)">@Messages("Edit")</a>
+                        @if(!(adnNode.adn.sinks contains msc.sink) ) {
+                          Это тариф НЕ используется: узел не имеет доступа к @Messages("adn.sink." + msc.sink.longName).
+                        }
+                      </td>
+                    </tr>
+                  }
+                </table>
+              }
+            }
           </div>
 
 
@@ -110,7 +150,7 @@
           <a class="blue-link" href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
 
           @defining( statTariffsMap.getOrElse(contract.id.get, Nil) ) { tariffs =>
-            @if( !tariffs.isEmpty ) {
+            @if( tariffs.nonEmpty ) {
               <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в ~реальном времени.">
                 Тарификация просмотров/переходов по договору @contract.legalContractId (@tariffs.size)
               </h4>
@@ -142,7 +182,6 @@
               </table>
             }
           }
-
           <a class="blue-link" href="@routes.SysMarketBillingTariff.addStatTariff(contract.id.get)">Добавить тарификацию за просмотры/переходы...</a>
 
         </div>
@@ -159,7 +198,7 @@
 
   @market.lk.lkBlock("Транзакции("+txns.size+")") {
 
-    @if(!txns.isEmpty) {
+    @if( txns.nonEmpty ) {
       <table class="siom-table __size-XL">
         <tr>
           <th class="siom-cell-head __bg-head">

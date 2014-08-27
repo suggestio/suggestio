@@ -37,7 +37,7 @@ case class MSinkComission(
   sink          : AdnSink,
   sioComission  : Float,
   id            : Option[Int] = None
-) extends SqlModelSave[MSinkComission] with SqlModelDelete {
+) extends SqlModelSave[MSinkComission] with SqlModelDelete with MBillContractSel {
 
   override def hasId = id.isDefined
   override def companion = MSinkComission
