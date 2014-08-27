@@ -61,6 +61,18 @@ strong
   font-weight bold
 
 /********************************************************************************************************************/
+/* Блоки */
+/********************************************************************************************************************/
+.block
+  display block
+
+  &.__margin-M
+    margin  13px 0
+
+  &.__margin-L
+    margin  25px 0
+
+/********************************************************************************************************************/
 /* Animations */
 /********************************************************************************************************************/
 .def-transition
@@ -99,9 +111,11 @@ leftMenuWidth   = 60
     margin-bottom 35px
 
 .header
-  position          relative
-  z-index           100
-  margin-bottom     -(headerHeight)
+  position          fixed
+  top               0
+  left              0
+  right             0
+  z-index           1000
 
   height            (headerHeight)px
   padding-left      (leftMenuWidth)px
@@ -151,10 +165,11 @@ leftMenuWidth   = 60
     text-overflow ellipsis
 
 .left-bar
-  position          absolute
+  position          fixed
   top               0
   bottom            0
   left              0
+  z-index           900
 
   width             (leftMenuWidth)px
   background-color  #464646
@@ -179,10 +194,11 @@ leftMenuWidth   = 60
     background-color  #58585a
 
 .right-bar
-  position          absolute
+  position          fixed
   top               0
   bottom            0
   right             0
+  z-index           900
 
   width             (rightMenuWidth)px
   background-color  #3e3e3e
@@ -204,6 +220,12 @@ leftMenuWidth   = 60
   &_menu-i.__act
     color             white
     background-color  #58585a
+
+  &_bottom
+    position    absolute
+    bottom      70px
+    width       100%
+    text-align  center
 
 .viewport
   padding-top   (headerHeight + 40)px

@@ -1,11 +1,9 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None, rightMenu:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None, rightBar:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
 
   <aside class="right-bar">
-    <nav class="right-bar_menu">
-      @rightMenu
-    </nav>
+    @rightBar
   </aside>
 
   <div class="viewport">

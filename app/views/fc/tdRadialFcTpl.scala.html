@@ -1,0 +1,23 @@
+@(elements: views.html.helper.FieldElements)
+
+@* field constructor, использующий блочную div-верстку для инпутов. *@
+
+@import play.api.i18n._
+@import views.html.helper._
+
+<table class="prop">
+  <td class="prop_name">
+    <label for="@elements.id">
+      @elements.label(elements.lang)
+
+      @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+        <span class="required-icon">*</span>
+      }
+    </label>
+  </td>
+  <td class="prop_value">
+    <div class="input @elements.args.get('_class) @if(elements.hasErrors){__error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+      @elements.input
+    </div>
+  </td>
+</table>

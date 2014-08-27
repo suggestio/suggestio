@@ -700,6 +700,13 @@ PersonalCabinet =
     ##################################################################################################################
     inputs: () ->
 
+      ##выставит ьвысоту textarea
+      $ 'textarea'
+      .each ()->
+        $this = $ this
+        scrollHeight = $this.prop 'scrollHeight'
+        $this.height scrollHeight
+
       $ document
       .on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
         $ this

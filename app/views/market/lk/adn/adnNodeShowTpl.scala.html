@@ -11,29 +11,29 @@
 @import controllers.adn.AdnShowTypes._
 @import _node._
 
-@rightMenu = {
-
-  <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
-  <hr class="delimiter"/>
-  @if(isMyNode) {
-    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
     <hr class="delimiter"/>
-    <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
-    <hr class="delimiter"/>
-
-    @if(isSuperuser) {
-      <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+    @if(isMyNode) {
+      <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
       <hr class="delimiter"/>
-    }
-  }
+      <a class="right-bar_menu-i def-transition" href="@routes.Ident.changePassword">@Messages("Password.change")</a>
+      <hr class="delimiter"/>
 
+      @if(isSuperuser) {
+        <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+        <hr class="delimiter"/>
+      }
+    }
+  </nav>
 }
 
 
 @prop(name: String, propClass: String = "")(value: Html) = {
 
   <table class="prop @propClass">
-    <td class="prop_name">@name:</td>
+    <td class="prop_name">@name</td>
     <td class="prop_value">@value</td>
   </table>
 
@@ -92,7 +92,7 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @prop("Локация") { @node.meta.name }
+    @prop("Название") { @node.meta.name }
 
     @if(node.meta.town.isDefined) {
       @prop("Адрес") { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
@@ -173,5 +173,5 @@
 @market.lk.lkBaseLayout(
   title     = "Ваш профиль",
   adnIdOpt  = node.id,
-  rightMenu = Some(rightMenu)
+  rightBar = Some(rightBar)
 )(content)

@@ -8,7 +8,7 @@
 
   text-decoration none
   text-align      center
-  font-size       13px
+  font-size       14px
   font-family     'opensans-light'
   color           white
 
@@ -19,6 +19,12 @@
 
   &.__major
     background-color #00b994
+
+    &:hover
+      background-color  #03a988
+
+    &:active
+      box-shadow(1px 2px 0px 0px #00b994 inset)
 
   &.__minor
     background-color #9d9d9d
@@ -34,3 +40,10 @@
 
     &:active
       padding 11px 14px 9px 16px
+
+  &.__size-L
+    display block
+    padding 10px 1px
+
+    &:active
+      padding 11px 2px 9px 0
