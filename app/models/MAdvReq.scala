@@ -26,7 +26,7 @@ object MAdvReq extends MAdvStatic {
   val TABLE_NAME = "adv_req"
 
   val rowParser = ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ SHOW_LEVELS_PARSER map {
-    case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
+    case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
       rcvrAdnId ~ prodContractId ~ showLevels =>
       MAdvReq(
         id          = id,
@@ -34,7 +34,6 @@ object MAdvReq extends MAdvStatic {
         amount      = amount,
         currencyCode = currencyCode,
         dateCreated = dateCreated,
-        comission   = comission,
         prodContractId = prodContractId,
         prodAdnId   = prodAdnId,
         rcvrAdnId   = rcvrAdnId,
@@ -70,7 +69,6 @@ case class MAdvReq(
   adId          : String,
   amount        : Float,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
-  comission     : Option[Float],
   prodContractId: Int,
   prodAdnId     : String,
   rcvrAdnId     : String,
@@ -88,10 +86,10 @@ case class MAdvReq(
 
   override def saveInsert(implicit c: Connection): MAdvReq = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, show_levels, date_start, date_end, prod_contract_id, prod_adn_id, rcvr_adn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {showLevels}, {dateStart}, {dateEnd}, {prodContractId}, {prodAdnId}, {rcvrAdnId})")
+      "(ad_id, amount, currency_code, date_created, mode, show_levels, date_start, date_end, prod_contract_id, prod_adn_id, rcvr_adn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {showLevels}, {dateStart}, {dateEnd}, {prodContractId}, {prodAdnId}, {rcvrAdnId})")
       .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-          'comission -> comission, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels), 'dateStart -> dateStart,
+          'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels), 'dateStart -> dateStart,
           'dateEnd -> dateEnd, 'prodContractId -> prodContractId, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId)
       .executeInsert(rowParser single)
   }

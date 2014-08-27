@@ -27,7 +27,7 @@ object MAdv {
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
   val ADV_ROW_PARSER_1 = get[Option[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
-    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
+    get[DateTime]("date_created") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ str("rcvr_adn_id")
 
   /** Парсер для значений в колонке showLevels. Там массив с уровнями отображения.
@@ -86,7 +86,6 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
 
   def adId          : String
   def amount        : Float
-  def comission     : Option[Float]
   def dateCreated   : DateTime
   def id            : Option[Int]
   def mode          : MAdvMode
@@ -96,8 +95,10 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
   def prodAdnId     : String
   def rcvrAdnId     : String
 
-  def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
-  def comissionAmount: Float =  comission.fold(amount)(amount * _)
+  // TODO Нужны фунция рассчета комиссии на основе MSinkComission.
+  //def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
+  //def comissionAmount: Float =  comission.fold(amount)(amount * _)
+
   def advTerms: AdvTerms = new AdvTerms {
     override def showLevels = madvi.showLevels
     override def dateEnd    = madvi.dateStart.toLocalDate

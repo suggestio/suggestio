@@ -56,5 +56,25 @@ COMMENT ON COLUMN sio2.adv.show_levels
   IS 'Запрашиваемые уровни отображения.';
 
 
+-- Выпиливаем колонку комиссии из adv-таблиц.
+-- Так можно дедублицировать ряды и отрабатывать комиссию только по факту проведения платежа.
+ALTER TABLE sio2.adv DROP COLUMN comission;
+
+
+-- Из-за расширения вариантов выдачи, rcvr может иметь несколько транзакций, если
+-- произошло размещение по нескольким выдачам с тарифами sio-comission < 100%.
+-- Меняем колонку rcvr_txn_id в int[].
+ALTER TABLE sio2.adv_ok
+   ADD COLUMN rcvr_txn_ids integer[];
+COMMENT ON COLUMN sio2.adv_ok.rcvr_txn_ids
+  IS 'id связанных транзакций на стороне rcvr.';
+
+UPDATE sio2.adv_ok
+  SET rcvr_txn_ids = ('{' || rcvr_txn_id || '}')::int[]
+  WHERE rcvr_txn_id IS NOT NULL;
+
+ALTER TABLE sio2.adv_ok DROP COLUMN rcvr_txn_id;
+
+
 COMMIT;
 

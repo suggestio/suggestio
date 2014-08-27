@@ -176,13 +176,8 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         val contractId = rcvrContract.id.get
         val rcvrPricing = MBillMmpDaily.getLatestForContractId(contractId).get
         val bmc = getAdModulesCount(mad)
-        findSinkComms(contractId, adve)
-          .valuesIterator
-          .foldLeft (acc) { (acc1, sinkComm) =>
-            val adve1 = advTermSinkFiltered(sinkComm.sink, adve)
-            val advPrice = MmpDailyBilling.calculateAdvPrice(bmc, rcvrPricing, adve1)
-            advPrice :: acc1
-          }
+        val advPrice = MmpDailyBilling.calculateAdvPrice(bmc, rcvrPricing, adve)
+        advPrice :: acc
       }
       val prices2 = prices
         .groupBy { _.currency.getCurrencyCode }
@@ -238,30 +233,25 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         val contractId = rcvrContract.id.get
         val rcvrMmp = MBillMmpDaily.getLatestForContractId(contractId).get
         val bmc = getAdModulesCount(mad)
-        val sinkComms = findSinkComms(contractId, advEntry)
-        sinkComms.valuesIterator.foreach { sinkComm =>
-          // Фильтруем уровни отображения в рамках sink'а.
-          val advTermsSink = advTermSinkFiltered(sinkComm.sink, advEntry)
-          val advPrice = calculateAdvPrice(bmc, rcvrMmp, advTermsSink)
-          val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
-          assert(
-            rcvrCurrencyCode == prodCurrencyCode,
-            s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
-          )
-          MAdvReq(
-            adId        = mad.id.get,
-            amount      = advPrice.price,
-            comission   = Some(sinkComm.sioComission),
-            prodContractId = mbc.id.get,
-            prodAdnId   = producerId,
-            rcvrAdnId   = advEntry.adnId,
-            dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-            dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
-            showLevels  = advTermsSink.showLevels
-          ).save
-          // Нужно заблокировать на счете узла необходимую сумму денег.
-          mbb0.updateBlocked(advPrice.price)
-        }
+        // Фильтруем уровни отображения в рамках sink'а.
+        val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
+        val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+        assert(
+          rcvrCurrencyCode == prodCurrencyCode,
+          s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
+        )
+        MAdvReq(
+          adId        = mad.id.get,
+          amount      = advPrice.price,
+          prodContractId = mbc.id.get,
+          prodAdnId   = producerId,
+          rcvrAdnId   = advEntry.adnId,
+          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+          showLevels  = advEntry.showLevels
+        ).save
+        // Нужно заблокировать на счете узла необходимую сумму денег.
+        mbb0.updateBlocked(advPrice.price)
       }
     }
   }
@@ -297,7 +287,6 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         MAdvOk(
           adId        = mad.id.get,
           amount      = 0F,
-          comission   = None,
           prodAdnId   = producerId,
           rcvrAdnId   = advEntry.adnId,
           dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
@@ -343,7 +332,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
 
       val now = DateTime.now
-      // Запилить транзакцию списания для продьюсера
+      // Запилить единственную транзакцию списания для продьюсера
       val prodTxn = MBillTxn(
         contractId      = prodContract.id.get,
         amount          = -amount0,
@@ -366,14 +355,19 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
             dateCreated   = now
           ).save
         }
-      // Начислять получателю бабки с учётом комиссии sioM.
+      // Начислять получателю бабки с учётом комиссии sioM. Нужно прочитать карту текущих комиссий.
+      val mscsMap = MSinkComission.findByContractId(rcvrContract.id.get)
+        .groupBy(_.sink)
+      // Нужно провести транзакции, разделив уровни отображения по используемому sink'у.
+      ???
+
       val amount1 = advReq.comission.fold(amount0) { comission =>  (1.0F - comission) * amount0 }
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
       val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
       assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")
       val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
 
-      // Зачислить деньги на счет получателя
+      // Зачислить деньги на счет получателя. Для списаний с разной комиссией нужны разные транзакции.
       rcvrMbb.updateAmount(amount1)
       val rcvrTxn = MBillTxn(
         contractId      = rcvrContract.id.get,
@@ -391,7 +385,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         comission1  = advReq.comission,
         dateStatus1 = now,
         prodTxnId   = prodTxn.id,
-        rcvrTxnId   = rcvrTxn.id,
+        rcvrTxnIds  = rcvrTxn.id,
         isOnline    = false,
         isPartner   = false,
         isAuto      = isAuto
