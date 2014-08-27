@@ -500,7 +500,7 @@ siomart =
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
 
     init_events : () ->
-      _geo_nodes_search_dom = siomart.utils.ge('smGeoNodesSearchInput')
+      _geo_nodes_search_dom = siomart.utils.ge('smGeoSearchField')
       siomart.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
         console.log siomart.geo.search.queue_request this.value
 

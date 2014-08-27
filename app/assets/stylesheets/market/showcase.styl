@@ -360,7 +360,7 @@ code
   width: 100%
   text-align:center
   color: #b1b0b0
-  padding-top: 50px
+  padding-top: 20px
   &_letter
     border: 1px #fff solid
     border-radius( 5px )
@@ -393,11 +393,18 @@ code
     position: relative
     text-align: center
     color: #fff
-    font-family: 'opensans-regular-webfont'
-    font-size: 14px
+    font-family: 'opensans-light'
+    font-size: 16px
     background: default_color_w_opacity
+  &_current-location-inner
+    display: inline-block
+    position: relative
+
   &_current-location-icon
     position: absolute
+    left: -40px
+    top: -7px
+    -webkit-transform: scale3d( 1.5,1.5,1.5 )
 
 .sm-geo-nodes
   background: default_color
