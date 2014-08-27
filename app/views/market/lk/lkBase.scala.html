@@ -58,6 +58,9 @@
 
     @content
 
+    @adnIdOpt.map { adnId =>
+      <a href="@routes.MarketLkAdn.userProfileEdit(adnId)">Редактировать профиль пользователя</a>
+    }
   </div>
 
   <div class="popups-container" id="popupsContainer">
@@ -92,7 +95,6 @@
   <script src="@routes.Assets.at("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
   <script src='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
-
 
 </body>
 </html>

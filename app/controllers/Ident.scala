@@ -258,7 +258,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
 
-  private val changePasswordFormM = Form(tuple(
+  val changePasswordFormM = Form(tuple(
     "old" -> passwordM,
     "new" -> passwordWithConfirmM
   ))

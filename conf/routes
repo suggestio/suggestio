@@ -103,6 +103,8 @@ POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(
 # Принятие приглашения на управления узлом.
 GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+# Редактирования профиля юзера из личного кабинета узла.
+GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)

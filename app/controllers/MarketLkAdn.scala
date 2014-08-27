@@ -11,6 +11,7 @@ import scala.concurrent.Future
 import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
 import io.suggest.model.EsModel
 import views.html.market.lk.adn._, _node._
+import views.html.market.lk.usr._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
@@ -487,6 +488,15 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         error(s"nodeOwnerInviteAcceptCommon($adnId, eaId=${eAct.id.get}): ADN node not found, but act.code for node exist. This should never occur.")
         NotFound(invite.inviteInvalidTpl("adn.node.not.found"))
     }
+  }
+
+
+  /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
+  def userProfileEdit(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+    Ok(userProfileEditTpl(
+      adnNode = request.adnNode,
+      pf = Ident.changePasswordFormM
+    ))
   }
 
 }
