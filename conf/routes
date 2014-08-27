@@ -33,7 +33,7 @@ GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId
 POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
 # ident: Сменить пароль
 GET  /ident/pw/change                   controllers.Ident.changePassword
-POST /ident/pw/change                   controllers.Ident.changePasswordSubmit
+POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
 GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 
 ## Callback'и инсталляторов и валидаторов сайтов.

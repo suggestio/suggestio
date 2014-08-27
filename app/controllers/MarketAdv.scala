@@ -71,14 +71,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     )
   }
 
-  /** Маппинг для старых уровней отображения. */
+  /** Маппинг для вертикальных уровней отображения. */
   private def adSlsM: Mapping[Set[AdShowLevel]] = {
     mapping(
       "onStartPage" -> boolean,
       "onRcvrCat"   -> boolean
     )
     {(onStartPage, onRcvrCat) =>
-      var acc = List.empty[AdShowLevel]
+      var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
       if (onStartPage)
         acc ::= AdShowLevels.LVL_START_PAGE
       if (onRcvrCat)
