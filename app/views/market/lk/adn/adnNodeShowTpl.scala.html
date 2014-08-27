@@ -78,7 +78,15 @@
     }
   }*@
 
-  <div class="profile_logo-bar"></div>
+  <div class="profile_logo-bar">
+    @if(node.meta.color.isDefined) {
+      @node.logoImgOpt.map { img =>
+        <div class="profile_logo-w" style="background-color: #@node.meta.color;">
+          <img class="profile_logo-img" src='@routes.Img.getImg(img.filename)' alt="@node.meta.name"/>
+        </div>
+      }
+    }
+  </div>
 
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
