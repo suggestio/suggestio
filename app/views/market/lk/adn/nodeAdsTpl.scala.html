@@ -1,0 +1,31 @@
+@(node: MAdnNode, mode: MNodeAdsMode, mads: Seq[MAd], isMyNode: Boolean, povAdnIdOpt: Option[String], canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+
+@* Страница в ЛК, которая отображает карточки узла. *@
+@import ctx._
+@import _node._
+@import controllers.adn.AdnShowTypes._
+
+@market.lk.lkBaseLayout(
+  title     = "Рекламные карточки",
+  adnIdOpt  = node.id,
+  povAdnId  = povAdnIdOpt
+) {
+
+  @if(node.adn.isProducer) {
+    @if(isMyNode) {
+      @_myAdsTpl(node, mads, canAdv, ad2advMap)
+    } else {
+      @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
+    }
+
+    @* Ссылка на demo web site. *@
+    @if(isMyNode) {
+      <div class="sm-note">
+        @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
+          Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
+        }
+      </div>
+    }
+  }
+
+}

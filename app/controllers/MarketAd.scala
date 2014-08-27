@@ -170,7 +170,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
                   mad.colors = ibgsUpd.updateColors(mad.colors)
                   // Сохранить изменения в базу
                   mad.save.map { adId =>
-                    Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
+                    Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
                       .flashing("success" -> "Рекламная карточка создана.")
                   }
                 }

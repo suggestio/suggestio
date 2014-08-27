@@ -1,6 +1,7 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None, rightMenu:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None,
+  rightMenu:Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
 
-@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
+@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter, povAdnId = povAdnId) {
 
   <aside class="right-bar">
     <nav class="right-bar_menu">

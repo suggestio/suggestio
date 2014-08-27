@@ -163,5 +163,6 @@ package object models {
   type AdnSink              = AdnSinks.AdnSink
 
   type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
+  type MNodeAdsMode         = MNodeAdsModes.MNodeAdsMode
 
 }
