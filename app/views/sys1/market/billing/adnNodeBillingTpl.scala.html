@@ -40,6 +40,8 @@
             <pre>@hiddenInfo</pre>
           }
 
+          <br/><br/>
+
 
           @* Рендер посуточных mmp-тарификаторов *@
           <div>
@@ -73,6 +75,9 @@
             <a class="blue-link" href="@routes.SysMarketBillingMmp.createMmpDaily(contract.id.get)">Создать посуточный mmp-тарифный план...</a>
           }
           </div>
+
+          <br/><br/>
+
 
           @* Рендер тарификаций за используемую выдачу. *@
           <div>
@@ -111,6 +116,9 @@
               }
             }
           </div>
+          <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">Создать новый тариф поисковой выдачи...</a>
+
+          <br/><br/>
 
 
           @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
@@ -146,13 +154,15 @@
               </table>
             }
           } @* defining tariffs *@
-
           <a class="blue-link" href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
+
+          <br/><br/>
+
 
           @defining( statTariffsMap.getOrElse(contract.id.get, Nil) ) { tariffs =>
             @if( tariffs.nonEmpty ) {
-              <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в ~реальном времени.">
-                Тарификация просмотров/переходов по договору @contract.legalContractId (@tariffs.size)
+              <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в полуреальном времени.">
+                Тарификация узла за просмотры/переходы по собственным карточкам.
               </h4>
               <table>
                 <tr>
