@@ -1,4 +1,5 @@
-@(title: String, node: MAdnNode, isMyNode: Boolean, povAdnIdOpt: Option[String] = None, rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, node: MAdnNode, isMyNode: Boolean, rightCurrEl: String, povAdnIdOpt: Option[String] = None,
+  rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 
 @import market.lk.adn._node._
@@ -7,12 +8,12 @@
 
 @rightBar1 = {
   <nav class="right-bar_menu">
-    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
+    <a class="right-bar_menu-i def-transition@if(rightCurrEl == "node"){ __act}" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
     <hr class="delimiter"/>
     @if(isMyNode) {
-      <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+      <a class="right-bar_menu-i def-transition@if(rightCurrEl == "nodeEdit"){ __act}" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
       <hr class="delimiter"/>
-      <a class="right-bar_menu-i def-transition" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">@Messages("Password.change")</a>
+      <a class="right-bar_menu-i def-transition@if(rightCurrEl == "userProfile"){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">@Messages("Password.change")</a>
       <hr class="delimiter"/>
 
       @if(isSuperuser) {
