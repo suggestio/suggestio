@@ -23,10 +23,12 @@ object MAdvOk extends MAdvStatic {
 
   val TABLE_NAME = "adv_ok"
 
+  val RCVR_TXN_IDS_PARSER = get[Option[Seq[Int]]]("rcvr_txn_ids") map { _ getOrElse Nil }
+
   override val rowParser = {
     ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
       get[Boolean]("online") ~ get[Boolean]("is_auto") ~ get[Boolean]("is_partner") ~
-      SHOW_LEVELS_PARSER ~ get[Seq[Int]]("rcvr_txn_ids")  map {
+      SHOW_LEVELS_PARSER ~ RCVR_TXN_IDS_PARSER  map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~
         prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ isOnline ~ isAuto ~ isPartner ~ showLevels ~ rcvrTxnIds  =>
         MAdvOk(
@@ -159,13 +161,13 @@ case class MAdvOk(
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
       "(ad_id, amount, currency_code, date_created, mode, date_start, date_end, prod_adn_id, rcvr_adn_id," +
-      " date_status, prod_txn_id, rcvr_txn_id, online, is_auto, show_levels, is_partner) " +
+      " date_status, prod_txn_id, rcvr_txn_ids, online, is_auto, show_levels, is_partner) " +
       "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}," +
-      " {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
+      " {dateStatus}, {prodTxnId}, {rcvrTxnIds}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
         'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
-        'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
-        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnIds -> rcvrTxnIds, 'isOnline -> isOnline, 'isAuto -> isAuto,
+        'dateStatus -> dateStatus, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
+        'prodTxnId -> prodTxnId, 'rcvrTxnIds -> seqInt2pgArray(rcvrTxnIds), 'isOnline -> isOnline, 'isAuto -> isAuto,
         'isPartner -> isPartner)
     .executeInsert(rowParser single)
   }

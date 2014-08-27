@@ -95,10 +95,6 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
   def prodAdnId     : String
   def rcvrAdnId     : String
 
-  // TODO Нужны фунция рассчета комиссии на основе MSinkComission.
-  //def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
-  //def comissionAmount: Float =  comission.fold(amount)(amount * _)
-
   def advTerms: AdvTerms = new AdvTerms {
     override def showLevels = madvi.showLevels
     override def dateEnd    = madvi.dateStart.toLocalDate

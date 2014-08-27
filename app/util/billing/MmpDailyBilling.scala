@@ -106,18 +106,18 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     val amount1 = walkDaysAndPrice(dateStart, 0F)
     // amountN -- amount1 домноженная на кол-во блоков.
     val amountN: Float = blockModulesCount * amount1
-    var amountTotal: Float = amountN
-    if (advTerms hasOnAdSl AdShowLevels.LVL_CATS) {
-      val incr = rcvrPricing.onRcvrCat * amountN
-      amountTotal += incr
-      trace(s"$logPrefix +rcvrCat: +x${rcvrPricing.onRcvrCat} == +$incr -> $amountTotal")
+    val amountTotal: Float = advTerms.showLevels.foldLeft(0F) { (amountAcc, ssl) =>
+      import AdShowLevels._
+      val incr = ssl.sl match {
+        case LVL_CATS         => rcvrPricing.onRcvrCat * amountN
+        case LVL_START_PAGE   => rcvrPricing.onStartPage * amountN
+        case LVL_PRODUCER     => amountN
+      }
+      val amountAcc1 = amountAcc + incr
+      trace(s"$logPrefix +${ssl.sl} (sink=${ssl.adnSink.longName}}): +x$incr: $amountAcc => $amountAcc1")
+      amountAcc1
     }
-    if (advTerms hasOnAdSl AdShowLevels.LVL_START_PAGE) {
-      val incr = rcvrPricing.onStartPage * amountN
-      amountTotal += incr
-      trace(s"$logPrefix +onStartPage: +x${rcvrPricing.onStartPage} == +$incr -> $amountTotal")
-    }
-    trace(s"$logPrefix amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
+    trace(s"$logPrefix amount (min/Block/Full) = $amount1 / $amountN / $amountTotal")
     Price(amountTotal, rcvrPricing.currency)
   }
 
@@ -197,21 +197,12 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
 
   /** Найти список тарифов комиссионных для указанного размещения в рамках указанного контракта.
     * @param rcvrContractId id контракта.
-    * @param advTerms настройки размещения.
     * @return Карта тарифов комиссионных, подходящая под указанное добро.
     */
-  private def findSinkComms(rcvrContractId: Int, advTerms: AdvTerms)(implicit c: Connection): Map[AdnSink, MSinkComission] = {
+  private def findSinkComms(rcvrContractId: Int)(implicit c: Connection): Map[AdnSink, MSinkComission] = {
     MSinkComission.findByContractId(rcvrContractId)
       .groupBy(_.sink)
-      .filterKeys { advTerms.hasOnSink }    // Выкинуть sink'и, которые рекламодателю не интересны.
       .mapValues(_.head)                    // Там всегда один элемент из-за особенностей модели.
-  }
-
-  private def advTermSinkFiltered(sink: AdnSink, advt: AdvTerms): AdvTerms = {
-    new AdvTermsWrapper {
-      override def underlying = advt
-      override val showLevels = advt.showLevels.filter(_.adnSink == sink)
-    }
   }
 
 
@@ -294,7 +285,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
           showLevels  = advEntry.showLevels,
           dateStatus  = DateTime.now(),
           prodTxnId   = None,
-          rcvrTxnId   = None,
+          rcvrTxnIds  = Nil,
           isOnline    = false,
           isPartner   = true,
           isAuto      = false
@@ -314,6 +305,8 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     val rcvrAdnId = advReq.rcvrAdnId
     val advReqId = advReq.id.get
+    lazy val logPrefix = s"acceptAdvReq($advReqId): "
+    trace(s"${logPrefix}Starting. isAuto=$isAuto advReq=$advReq")
     DB.withTransaction { implicit c =>
       // Удалить исходный реквест размещения
       val reqsDeleted = advReq.delete
@@ -339,8 +332,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         datePaid        = advReq.dateCreated,
         txnUid          = s"${prodContract.id.get}-$advReqId",
         paymentComment  = "Debit for advertise",
-        dateProcessed   = now
+        dateProcessed   = now,
+        currencyCodeOpt = Option(advReq.currencyCode)
       ).save
+      trace(s"${logPrefix}Debited producer[$prodAdnId] for ${prodTxn.amount} ${prodTxn.currencyCode}. txnId=${prodTxn.id.get} contractId=${prodContract.id.get}")
 
       // Разобраться с кошельком получателя
       val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
@@ -355,37 +350,53 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
             dateCreated   = now
           ).save
         }
+      val rcvrContractId = rcvrContract.id.get
       // Начислять получателю бабки с учётом комиссии sioM. Нужно прочитать карту текущих комиссий.
-      val mscsMap = MSinkComission.findByContractId(rcvrContract.id.get)
-        .groupBy(_.sink)
+      val mscsMap = findSinkComms(rcvrContractId)
       // Нужно провести транзакции, разделив уровни отображения по используемому sink'у.
-      ???
-
-      val amount1 = advReq.comission.fold(amount0) { comission =>  (1.0F - comission) * amount0 }
-      assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
-      val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
-      assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")
-      val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
-
-      // Зачислить деньги на счет получателя. Для списаний с разной комиссией нужны разные транзакции.
-      rcvrMbb.updateAmount(amount1)
-      val rcvrTxn = MBillTxn(
-        contractId      = rcvrContract.id.get,
-        amount          = amount1,
-        comissionPc     = advReq.comission,
-        datePaid        = advReq.dateCreated,
-        txnUid          = s"${rcvrContract.id.get}-$advReqId",
-        paymentComment  = "Credit for adverise",
-        dateProcessed   = now
-      ).save
-
+      val advSsl = advReq.showLevels.groupBy(_.adnSink)
+      // Все sink'и имеют одинаковый тариф. И в рамках одного реквеста одинаковый набор sl для каждого sink'а.
+      // Чтобы не пересчитывать цену, можно просто поделить ей на кол-во используемых sink'ов
+      assert(advSsl.valuesIterator.map(_.map(_.sl)).toSet.size == 1, "Different sls for different sinks not yet implemented.")
+      val advSinkCount = advSsl.size
+      val sinkAmount: Float = amount0 / advSinkCount
+      val rcvrTxns = advSsl
+        .foldLeft( List.empty[MBillTxn] ) { case (acc, (sink, sinkShowLevels)) =>
+          // Считаем комиссированную цену в рамках sink'а. Если sink'а нет, то пусть будет экзепшен и всё.
+          val msc = mscsMap(sink)
+          if (msc.sioComission > 0.998F) {
+            // Если комиссия около 100%, то не проводить транзакцию для ресивера.
+            trace(s"$logPrefix Comission is near 100%. Dropping transaction")
+            acc
+          } else {
+            // Размер комиссии допускает отправку денег ресиверу. Считаем комиссию, обновляем кошелёк, проводим транзакцию для ресивера.
+            // Сначала надо вычистить долю расхода в рамках текущего sink'а.
+            val amount1 = (1.0F - msc.sioComission) * sinkAmount
+            assert(amount1 <= sinkAmount, "Comissioned amount must be less or equal than source amount.")
+            val rcvrMbb = MBillBalance.getByAdnId(rcvrAdnId) getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
+            assert(rcvrMbb.currencyCode == advReq.currencyCode, "Rcvr balance currency does not match to adv request")
+            // Зачислить деньги на счет получателя. Для списаний с разной комиссией нужны разные транзакции.
+            val rcvrMbb2 = rcvrMbb.updateAmount(amount1)
+            val rcvrTxn = MBillTxn(
+              contractId      = rcvrContractId,
+              amount          = amount1,
+              comissionPc     = Some(msc.sioComission),
+              datePaid        = advReq.dateCreated,
+              txnUid          = s"$rcvrContractId-$advReqId-${sink.name}",
+              paymentComment  = "Credit for adverise",
+              dateProcessed   = now,
+              currencyCodeOpt = Option(advReq.currencyCode)
+            ).save
+            trace(s"${logPrefix}Credited receiver[$rcvrAdnId] contract=$rcvrContractId for $amount1 ${advReq.currencyCode}. sink=$sink/${msc.sioComission}; Balance was ${rcvrMbb.amount} become ${rcvrMbb2.amount} ; tnxId=${rcvrTxn.id.get}")
+            rcvrTxn :: acc
+          }
+        }
       // Сохранить подтверждённое размещение с инфой о платежах.
       MAdvOk(
         advReq,
-        comission1  = advReq.comission,
         dateStatus1 = now,
         prodTxnId   = prodTxn.id,
-        rcvrTxnIds  = rcvrTxn.id,
+        rcvrTxnIds  = rcvrTxns.flatMap(_.id),
         isOnline    = false,
         isPartner   = false,
         isAuto      = isAuto

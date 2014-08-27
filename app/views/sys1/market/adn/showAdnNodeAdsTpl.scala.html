@@ -88,9 +88,6 @@
               @if(advOk.isPartner) {по-партнёрски}
             }
             за @formatPrice(adv.amount, adv.currency)
-            @adv.comission.map { c =>
-              с комиссией @formatPercent(c)
-            }
           </p>
         }
       }

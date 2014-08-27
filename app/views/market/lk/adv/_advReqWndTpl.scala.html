@@ -31,10 +31,6 @@
     <strong class="ft-L adv-req-wind_price">
       @formatPrice(advReq.amount, advReq.currency)
     </strong>
-
-    @advReq.comission.map { c =>
-      (комиссия @formatPercent(c))
-    }
   </p>
 
   @* Отменить размещение рекламы с указанием причины. *@
