@@ -1,5 +1,6 @@
 package util.billing
 
+import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
@@ -12,7 +13,6 @@ import io.suggest.ym.parsers.Price
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.SiowebEsUtil.client
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.util.{Success, Failure}
 import util.event.SiowebNotifier.Implicts.sn
 import java.sql.Connection
@@ -106,18 +106,18 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     val amount1 = walkDaysAndPrice(dateStart, 0F)
     // amountN -- amount1 домноженная на кол-во блоков.
     val amountN: Float = blockModulesCount * amount1
-    var amountTotal: Float = amountN
-    if (advTerms.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG) {
-      val incr = rcvrPricing.onRcvrCat * amountN
-      amountTotal += incr
-      trace(s"$logPrefix +rcvrCat: +x${rcvrPricing.onRcvrCat} == +$incr -> $amountTotal")
+    val amountTotal: Float = advTerms.showLevels.foldLeft(0F) { (amountAcc, ssl) =>
+      import AdShowLevels._
+      val incr = ssl.sl match {
+        case LVL_CATS         => rcvrPricing.onRcvrCat * amountN
+        case LVL_START_PAGE   => rcvrPricing.onStartPage * amountN
+        case LVL_PRODUCER     => amountN
+      }
+      val amountAcc1 = amountAcc + incr
+      trace(s"$logPrefix +${ssl.sl} (sink=${ssl.adnSink.longName}}): +x$incr: $amountAcc => $amountAcc1")
+      amountAcc1
     }
-    if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
-      val incr = rcvrPricing.onStartPage * amountN
-      amountTotal += incr
-      trace(s"$logPrefix +onStartPage: +x${rcvrPricing.onStartPage} == +$incr -> $amountTotal")
-    }
-    trace(s"$logPrefix amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
+    trace(s"$logPrefix amount (min/Block/Full) = $amount1 / $amountN / $amountTotal")
     Price(amountTotal, rcvrPricing.currency)
   }
 
@@ -125,12 +125,11 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   /**
    * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
    * другой одноимённый метод.
-   * @param mad Рекламная карточка.
-   * @param rcvrPricing Ценовой план получателя.
-   * @return Стоимость размещения в валюте получателя.
+   * @param mad Рекламная карточка или иная реализация блочного документа.
+   * @return Площадь карточки.
    */
-  def calculateAdvPrice(mad: MAdT, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
-    lazy val logPrefix = s"calculateAdvPrice(${mad.id.getOrElse("?")}): "
+  def getAdModulesCount(mad: EMBlockMetaI): Int = {
+    lazy val logPrefix = s"getAdModulesCount(${mad.id.getOrElse("?")}): "
     val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
     // Мультипликатор по ширине
     val wmul = block.blockWidth match {
@@ -152,7 +151,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     }
     val blockModulesCount: Int = wmul * hmul
     trace(s"${logPrefix}blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}")
-    calculateAdvPrice(blockModulesCount, rcvrPricing, advTerms)
+    blockModulesCount
   }
 
 
@@ -174,10 +173,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
           .sortBy(_.id.get)
           .head
-        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-          .sortBy(_.id.get)
-          .head
-        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, adve)
+        val contractId = rcvrContract.id.get
+        val rcvrPricing = MBillMmpDaily.getLatestForContractId(contractId).get
+        val bmc = getAdModulesCount(mad)
+        val advPrice = MmpDailyBilling.calculateAdvPrice(bmc, rcvrPricing, adve)
         advPrice :: acc
       }
       val prices2 = prices
@@ -196,6 +195,17 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   }
 
 
+  /** Найти список тарифов комиссионных для указанного размещения в рамках указанного контракта.
+    * @param rcvrContractId id контракта.
+    * @return Карта тарифов комиссионных, подходящая под указанное добро.
+    */
+  private def findSinkComms(rcvrContractId: Int)(implicit c: Connection): Map[AdnSink, MSinkComission] = {
+    MSinkComission.findByContractId(rcvrContractId)
+      .groupBy(_.sink)
+      .mapValues(_.head)                    // Там всегда один элемент из-за особенностей модели.
+  }
+
+
   /**
    * Сохранить в БД реквесты размещения рекламных карточек.
    * @param mad рекламная карточка.
@@ -211,10 +221,11 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       val prodCurrencyCode = mbb0.currencyCode
       advs.foreach { advEntry =>
         val rcvrContract = getOrCreateContract(advEntry.adnId)
-        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-          .sortBy(_.id.get)
-          .head
-        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, advEntry)
+        val contractId = rcvrContract.id.get
+        val rcvrMmp = MBillMmpDaily.getLatestForContractId(contractId).get
+        val bmc = getAdModulesCount(mad)
+        // Фильтруем уровни отображения в рамках sink'а.
+        val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
         val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
         assert(
           rcvrCurrencyCode == prodCurrencyCode,
@@ -223,7 +234,6 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         MAdvReq(
           adId        = mad.id.get,
           amount      = advPrice.price,
-          comission   = Some(mbc.sioComission),
           prodContractId = mbc.id.get,
           prodAdnId   = producerId,
           rcvrAdnId   = advEntry.adnId,
@@ -268,7 +278,6 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         MAdvOk(
           adId        = mad.id.get,
           amount      = 0F,
-          comission   = None,
           prodAdnId   = producerId,
           rcvrAdnId   = advEntry.adnId,
           dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
@@ -276,7 +285,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
           showLevels  = advEntry.showLevels,
           dateStatus  = DateTime.now(),
           prodTxnId   = None,
-          rcvrTxnId   = None,
+          rcvrTxnIds  = Nil,
           isOnline    = false,
           isPartner   = true,
           isAuto      = false
@@ -296,6 +305,8 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     val rcvrAdnId = advReq.rcvrAdnId
     val advReqId = advReq.id.get
+    lazy val logPrefix = s"acceptAdvReq($advReqId): "
+    trace(s"${logPrefix}Starting. isAuto=$isAuto advReq=$advReq")
     DB.withTransaction { implicit c =>
       // Удалить исходный реквест размещения
       val reqsDeleted = advReq.delete
@@ -314,15 +325,17 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
 
       val now = DateTime.now
-      // Запилить транзакцию списания для продьюсера
+      // Запилить единственную транзакцию списания для продьюсера
       val prodTxn = MBillTxn(
         contractId      = prodContract.id.get,
         amount          = -amount0,
         datePaid        = advReq.dateCreated,
         txnUid          = s"${prodContract.id.get}-$advReqId",
         paymentComment  = "Debit for advertise",
-        dateProcessed   = now
+        dateProcessed   = now,
+        currencyCodeOpt = Option(advReq.currencyCode)
       ).save
+      trace(s"${logPrefix}Debited producer[$prodAdnId] for ${prodTxn.amount} ${prodTxn.currencyCode}. txnId=${prodTxn.id.get} contractId=${prodContract.id.get}")
 
       // Разобраться с кошельком получателя
       val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
@@ -337,32 +350,53 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
             dateCreated   = now
           ).save
         }
-      // Начислять получателю бабки с учётом комиссии sioM.
-      val amount1 = (1.0F - rcvrContract.sioComission) * amount0
-      assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
-      val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
-      assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")
-      val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
-
-      // Зачислить деньги на счет получателя
-      rcvrMbb.updateAmount(amount1)
-      val rcvrTxn = MBillTxn(
-        contractId      = rcvrContract.id.get,
-        amount          = amount1,
-        comissionPc     = Some(rcvrContract.sioComission),
-        datePaid        = advReq.dateCreated,
-        txnUid          = s"${rcvrContract.id.get}-$advReqId",
-        paymentComment  = "Credit for adverise",
-        dateProcessed   = now
-      ).save
-
+      val rcvrContractId = rcvrContract.id.get
+      // Начислять получателю бабки с учётом комиссии sioM. Нужно прочитать карту текущих комиссий.
+      val mscsMap = findSinkComms(rcvrContractId)
+      // Нужно провести транзакции, разделив уровни отображения по используемому sink'у.
+      val advSsl = advReq.showLevels.groupBy(_.adnSink)
+      // Все sink'и имеют одинаковый тариф. И в рамках одного реквеста одинаковый набор sl для каждого sink'а.
+      // Чтобы не пересчитывать цену, можно просто поделить ей на кол-во используемых sink'ов
+      assert(advSsl.valuesIterator.map(_.map(_.sl)).toSet.size == 1, "Different sls for different sinks not yet implemented.")
+      val advSinkCount = advSsl.size
+      val sinkAmount: Float = amount0 / advSinkCount
+      val rcvrTxns = advSsl
+        .foldLeft( List.empty[MBillTxn] ) { case (acc, (sink, sinkShowLevels)) =>
+          // Считаем комиссированную цену в рамках sink'а. Если sink'а нет, то пусть будет экзепшен и всё.
+          val msc = mscsMap(sink)
+          if (msc.sioComission > 0.998F) {
+            // Если комиссия около 100%, то не проводить транзакцию для ресивера.
+            trace(s"$logPrefix Comission is near 100%. Dropping transaction")
+            acc
+          } else {
+            // Размер комиссии допускает отправку денег ресиверу. Считаем комиссию, обновляем кошелёк, проводим транзакцию для ресивера.
+            // Сначала надо вычистить долю расхода в рамках текущего sink'а.
+            val amount1 = (1.0F - msc.sioComission) * sinkAmount
+            assert(amount1 <= sinkAmount, "Comissioned amount must be less or equal than source amount.")
+            val rcvrMbb = MBillBalance.getByAdnId(rcvrAdnId) getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
+            assert(rcvrMbb.currencyCode == advReq.currencyCode, "Rcvr balance currency does not match to adv request")
+            // Зачислить деньги на счет получателя. Для списаний с разной комиссией нужны разные транзакции.
+            val rcvrMbb2 = rcvrMbb.updateAmount(amount1)
+            val rcvrTxn = MBillTxn(
+              contractId      = rcvrContractId,
+              amount          = amount1,
+              comissionPc     = Some(msc.sioComission),
+              datePaid        = advReq.dateCreated,
+              txnUid          = s"$rcvrContractId-$advReqId-${sink.name}",
+              paymentComment  = "Credit for adverise",
+              dateProcessed   = now,
+              currencyCodeOpt = Option(advReq.currencyCode)
+            ).save
+            trace(s"${logPrefix}Credited receiver[$rcvrAdnId] contract=$rcvrContractId for $amount1 ${advReq.currencyCode}. sink=$sink/${msc.sioComission}; Balance was ${rcvrMbb.amount} become ${rcvrMbb2.amount} ; tnxId=${rcvrTxn.id.get}")
+            rcvrTxn :: acc
+          }
+        }
       // Сохранить подтверждённое размещение с инфой о платежах.
       MAdvOk(
         advReq,
-        comission1  = Some(rcvrContract.sioComission),
         dateStatus1 = now,
         prodTxnId   = prodTxn.id,
-        rcvrTxnId   = rcvrTxn.id,
+        rcvrTxnIds  = rcvrTxns.flatMap(_.id),
         isOnline    = false,
         isPartner   = false,
         isAuto      = isAuto
@@ -415,26 +449,37 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     DepublishExpiredAdvs.run()
   }
 
+
+  /** Логика добавления уровеня отображения */
+  private def ensureProducerLevel(sls: Set[SinkShowLevel], sl: SinkShowLevel): Set[SinkShowLevel] = {
+    if (sls.exists(_.adnSink == sl.adnSink)  &&  !sls.contains(sl)) {
+      sls + sl
+    } else {
+      sls
+    }
+  }
+
+  /** Нужно убеждаться, что есть producer-уровень в наборе уровней. */
+  def prepareShowLevels(sls: Set[SinkShowLevel]): Set[SinkShowLevel] = {
+    // Добавить wifi-producer sl, если есть любой другой уровень wifi-уровень.
+    val sls1 = ensureProducerLevel(sls, SinkShowLevels.WIFI_PRODUCER_SL)
+    // Добавить geo-producer sl, если есть любой другой geo-уровень отображения.
+    ensureProducerLevel(sls1, SinkShowLevels.GEO_PRODUCER_SL)
+  }
+
 }
+
+import MmpDailyBilling.prepareShowLevels
 
 
 /** Код вывода в выдачу и последующего сокрытия рекламных карточек крайне похож, поэтому он вынесен в трейт. */
 sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
 
   import LOGGER._
-  import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
 
   lazy val logPrefix = ""
 
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
-
-  def prepareShowLevels(sls: Set[AdShowLevel]): Set[AdShowLevel] = {
-    if (sls contains AdShowLevels.LVL_MEMBER) {
-      sls
-    } else {
-      sls + AdShowLevels.LVL_MEMBER
-    }
-  }
 
   def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t
 
@@ -452,25 +497,17 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
       advsMap foreach { case (adId, advsOk) =>
         // Определяем неблокирующую функцию получения и обновления рекламной карточки, которую можно многократно вызывать.
         // Повторная попытка получения и обновления карточки поможет разрулить конфликт версий.
-        def tryUpdateRcvrs(counter: Int): Future[_] = {
-          MAd.getById(adId) flatMap {
-            case Some(mad) =>
-              mad.receivers = updateReceivers(mad.receivers, advsOk)
-              // Сохраняем. Нужно отрабатывать ситуацию с изменившейся версией
-              mad.saveReceivers
-                .recoverWith {
-                  case ex: VersionConflictEngineException =>
-                    if (counter < UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX)
-                      tryUpdateRcvrs(counter + 1)
-                    else
-                      Future failed new RuntimeException(s"Too many version conflicts: $counter, lastVsn = ${mad.versionOpt}", ex)
-                }
-
-            case None =>
-              Future failed new RuntimeException(s"MAd not found: $adId, but it should. Cannot continue.")
-          }
+        val madUpdFut = MAd.getById(adId) flatMap {
+          case Some(mad0) =>
+            MAd.tryUpdate(mad0) { mad1 =>
+              mad1.copy(
+                receivers = updateReceivers(mad0.receivers, advsOk)
+              )
+            }
+          case None =>
+            Future failed new RuntimeException(s"MAd not found: $adId, but it should. Cannot continue.")
         }
-        tryUpdateRcvrs(0) onComplete {
+        madUpdFut onComplete {
           case Success(_) =>
             trace(s"${logPrefix}Updating isOnline state for ${advsOk.size} advsOk...")
             val now = DateTime.now
@@ -504,14 +541,13 @@ object AdvertiseOfflineAdvs extends AdvSlsUpdater {
   override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
     rcvrs0 ++ advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
       trace(s"${logPrefix}Advertising ad ${advOk.adId} on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
-      val sls = prepareShowLevels(advOk.showLevels)
-      val slss = sls.toSet
+      val sls2 = prepareShowLevels(advOk.showLevels)
       val rcvrInfo = rcvrs0.get(advOk.rcvrAdnId) match {
         case None =>
-          AdReceiverInfo(advOk.rcvrAdnId, slss, slss)
+          AdReceiverInfo(advOk.rcvrAdnId, sls2)
         case Some(ri) =>
           // Всё уже готово вроде бы.
-          ri.copy(slsWant = ri.slsWant ++ slss, slsPub = ri.slsPub ++ slss)
+          ri.copy(sls = ri.sls ++ sls2)
       }
       advOk.rcvrAdnId -> rcvrInfo :: acc
     }
@@ -549,18 +585,23 @@ object DepublishExpiredAdvs extends AdvSlsUpdater {
           // Работа не касается этого ресивера. Просто пропускаем его на выход.
           case None =>
             e :: acc
+
           // Есть ресивер. Надо подстричь его уровни отображения или всего ресивера целиком.
           case Some(advOk) =>
             trace(s"${logPrefix}Depublishing ad $adId on rcvrNode $rcvrAdnId ;; advOk.id = ${advOk.id}")
-            val slss = prepareShowLevels(advOk.showLevels)
+            // Восстановить уровни отображения, которые были задействованы при добавлении оных в ресиверы.
+            val sls0 = prepareShowLevels(advOk.showLevels)
             // Нужно отфильтровать уровни отображения или целиком этот ресивер спилить.
-            val slsWant1 = rcvrInfo.slsWant -- slss
-            if (slsWant1.isEmpty) {
+            val sls2 = rcvrInfo.sls -- sls0
+            if (sls2.isEmpty) {
+              // Нет уровней отображения для этого ресивера.
+              trace(s"updateReceivers(): Removing rcvr[$rcvrAdnId] from ad[$adId], because no more show levels available.")
               acc
             } else {
+              // Ещё остались уровни для отображения. Запиливаем ресивер в кучу.
+              trace(s"updateReceivers(): KEEPing rcvr[$rcvrAdnId] for ad[$adId], because there are some show levels: ${sls2.mkString(", ")}.")
               val e1 = rcvrInfo.copy(
-                slsWant = slsWant1,
-                slsPub = rcvrInfo.slsPub -- slss
+                sls = sls2
               )
               rcvrAdnId -> e1  ::  acc
             }

@@ -1,4 +1,5 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, popupContent: Option[Html] = None,
+  povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
@@ -62,9 +63,9 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">User</a>
+            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)">User</a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId)">Cards</a>
+            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)">Cards</a>
             <hr class="delimiter"/>
             <a class="left-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
             <hr class="delimiter"/>
@@ -72,6 +73,9 @@
         }
       </aside>
 
+      @adnIdOpt.map { adnId =>
+        <a href="@routes.MarketLkAdn.userProfileEdit(adnId)">Редактировать профиль пользователя</a>
+      }
       @content
 
     </section>
@@ -101,7 +105,6 @@
   <script src="@routes.Assets.at("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
   <script src='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
-
 
 </body>
 </html>

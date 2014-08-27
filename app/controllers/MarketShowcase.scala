@@ -22,7 +22,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Cookie, Call, Result, AnyContent}
+import play.api.mvc.{Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
 
 /**
@@ -316,7 +316,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val catAdsSearch = AdSearch(
       receiverIds   = adnIdOpt.toList,
       maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_MEMBERS_CATALOG)
+      levels        = List(AdShowLevels.LVL_CATS)
     )
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
@@ -347,7 +347,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     } else {
       // При поиске по категориям надо искать только если есть указанный show level.
       val adsearch3: Future[AdSearch] = if (adSearch.catIds.nonEmpty) {
-        val result = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
+        val result = adSearch.copy(levels = AdShowLevels.LVL_CATS :: adSearch.levels)
         Future successful result
       } else if (adSearch.receiverIds.nonEmpty) {
         // TODO Можно спилить этот костыль?

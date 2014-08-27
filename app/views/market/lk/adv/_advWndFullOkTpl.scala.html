@@ -7,6 +7,7 @@
 @import datetime._
 
 @_advWndFullTpl(mad, adProducer, goBackTo) {
-  <p>@formatPrice(advOk.amountMinusComission, advOk.currency)</p>
+  @* Тут раньше была цена за вычетом комиссии. Потом комиссия на уровне adv была выпилена, а ресиверы ушли на второй план. *@
+  <p>@formatPrice(advOk.amount, advOk.currency)</p>
   [x] Предложение одобрено @_prettyDate(advOk.dateStatus).
 }

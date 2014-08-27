@@ -3,8 +3,9 @@ package models
 import anorm._
 import MAdv._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import util.SqlModelSave
 import java.sql.Connection
 import AdShowLevels.sls2strings
@@ -22,24 +23,25 @@ object MAdvOk extends MAdvStatic {
 
   val TABLE_NAME = "adv_ok"
 
+  val RCVR_TXN_IDS_PARSER = get[Option[Seq[Int]]]("rcvr_txn_ids") map { _ getOrElse Nil }
+
   override val rowParser = {
     ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
-      get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") ~ get[Boolean]("is_auto") ~ ADV_ROW_PARSER_2 ~
-      get[Boolean]("is_partner") map {
-      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~
-        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ showLevels ~ isPartner =>
+      get[Boolean]("online") ~ get[Boolean]("is_auto") ~ get[Boolean]("is_partner") ~
+      SHOW_LEVELS_PARSER ~ RCVR_TXN_IDS_PARSER  map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~
+        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ isOnline ~ isAuto ~ isPartner ~ showLevels ~ rcvrTxnIds  =>
         MAdvOk(
           id          = id,
           adId        = adId,
           amount      = amount,
           currencyCode = currencyCode,
           dateCreated = dateCreated,
-          comission   = comission,
           dateStatus  = dateStatus,
           dateStart   = dateStart,
           dateEnd     = dateEnd,
           prodTxnId   = prodTxnId,
-          rcvrTxnId   = rcvrTxnId,
+          rcvrTxnIds  = rcvrTxnIds,
           prodAdnId   = prodAdnId,
           rcvrAdnId   = rcvrAdnId,
           isOnline    = isOnline,
@@ -50,8 +52,8 @@ object MAdvOk extends MAdvStatic {
     }
   }
 
-  def apply(madv: MAdvI, comission1: Option[Float], dateStatus1: DateTime, prodTxnId: Option[Int],
-            rcvrTxnId: Option[Int], isOnline: Boolean, isAuto: Boolean, isPartner: Boolean): MAdvOk = {
+  def apply(madv: MAdvI, dateStatus1: DateTime, prodTxnId: Option[Int],
+            rcvrTxnIds: Seq[Int], isOnline: Boolean, isAuto: Boolean, isPartner: Boolean): MAdvOk = {
     import madv._
     MAdvOk(
       id          = id,
@@ -59,12 +61,11 @@ object MAdvOk extends MAdvStatic {
       amount      = amount,
       currencyCode = currencyCode,
       dateCreated = dateCreated,
-      comission   = comission1,
       dateStatus  = dateStatus1,
       dateStart   = dateStart,
       dateEnd     = dateEnd,
       prodTxnId   = prodTxnId,
-      rcvrTxnId   = rcvrTxnId,
+      rcvrTxnIds  = rcvrTxnIds,
       prodAdnId   = prodAdnId,
       rcvrAdnId   = rcvrAdnId,
       isOnline    = isOnline,
@@ -138,15 +139,14 @@ case class MAdvOk(
   adId          : String,
   amount        : Float,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
-  comission     : Option[Float],
   dateStart     : DateTime,
   dateEnd       : DateTime,
   prodTxnId     : Option[Int],
-  rcvrTxnId     : Option[Int],
+  rcvrTxnIds    : Seq[Int],
   prodAdnId     : String,
   rcvrAdnId     : String,
   isAuto        : Boolean,
-  showLevels    : Set[AdShowLevel],
+  showLevels    : Set[SinkShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
@@ -160,14 +160,14 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, date_start, date_end, prod_adn_id, rcvr_adn_id," +
-      " date_status, prod_txn_id, rcvr_txn_id, online, is_auto, show_levels, is_partner) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}," +
-      " {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
+      "(ad_id, amount, currency_code, date_created, mode, date_start, date_end, prod_adn_id, rcvr_adn_id," +
+      " date_status, prod_txn_id, rcvr_txn_ids, online, is_auto, show_levels, is_partner) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}," +
+      " {dateStatus}, {prodTxnId}, {rcvrTxnIds}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-        'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
-        'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
-        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline, 'isAuto -> isAuto,
+        'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
+        'dateStatus -> dateStatus, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
+        'prodTxnId -> prodTxnId, 'rcvrTxnIds -> seqInt2pgArray(rcvrTxnIds), 'isOnline -> isOnline, 'isAuto -> isAuto,
         'isPartner -> isPartner)
     .executeInsert(rowParser single)
   }
@@ -181,4 +181,5 @@ case class MAdvOk(
       .on('id -> id.get, 'isOnline -> isOnline, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
       .executeUpdate()
   }
+
 }

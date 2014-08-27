@@ -1,0 +1,19 @@
+@(msc: MSinkComission, sf: Form[_], mbc: MBillContract, adnNode: MAdnNode)(implicit ctx: Context)
+
+@import ctx._
+@import stuff._
+
+@sinkComBase("Редактирование sink comm #" + msc.id.get, nodeOpt = Some(adnNode), mbcOpt = Some(mbc) ) {
+
+  <h1>Редактировать sink-тариф #@msc.id.get</h1>
+
+  @* Кнопка удаления. *@
+  @_deleteSmthFormBtnTpl( routes.SysMarketBilling.sinkComDeleteSubmit(msc.id.get) )
+
+  @_sinkComFormTpl(
+    submitCall = routes.SysMarketBilling.editSinkComSubmit(msc.id.get),
+    sf = sf,
+    btnText = Messages("Edit")
+  )
+
+}

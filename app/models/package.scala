@@ -156,4 +156,13 @@ package object models {
   type GeoPoint             = geo.GeoPoint
   val  GeoPoint             = geo.GeoPoint
 
+  val  SinkShowLevels       = ym.model.common.SinkShowLevels
+  type SinkShowLevel        = SinkShowLevels.SinkShowLevel
+
+  val  AdnSinks             = ym.model.common.AdnSinks
+  type AdnSink              = AdnSinks.AdnSink
+
+  type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
+  type MNodeAdsMode         = MNodeAdsModes.MNodeAdsMode
+
 }

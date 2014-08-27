@@ -159,13 +159,18 @@ case class IsSuperuserStatTariffContract(tariffId: Int)
   with ExpireSession[StatTariffRequest]
 
 
+abstract class AbstractContractRequest[A](request: Request[A])
+  extends AbstractRequestWithPwOpt(request) {
+  def contract: MBillContract
+}
+
 
 case class ContractRequest[A](
   contract: MBillContract,
   pwOpt: PwOpt_t,
   request: Request[A],
   sioReqMd: SioReqMd
-) extends AbstractRequestWithPwOpt[A](request)
+) extends AbstractContractRequest[A](request)
 
 trait IsSuperuserContractBase extends ActionBuilder[ContractRequest] {
   def contractId: Int
@@ -189,6 +194,42 @@ case class IsSuperuserContract(contractId: Int)
   extends IsSuperuserContractBase
   with ExpireSession[ContractRequest]
 
+
+
+case class ContractNodeRequest[A](
+  contract: MBillContract,
+  adnNode: MAdnNode,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractContractRequest(request)
+
+trait IsSuperuserContractNodeBase extends ActionBuilder[ContractNodeRequest] {
+  def contractId: Int
+  override def invokeBlock[A](request: Request[A], block: (ContractNodeRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      val contract = DB.withConnection { implicit c =>
+        MBillContract.getById(contractId).get
+      }
+      MAdnNodeCache.getById(contract.adnId) flatMap { adnNodeOpt =>
+        val adnNode = adnNodeOpt.get
+        sioReqMdFut flatMap { srm =>
+          val req1 = ContractNodeRequest(contract, adnNode, pwOpt, request, srm)
+          block(req1)
+        }
+      }
+
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+
+case class IsSuperuserContractNode(contractId: Int)
+  extends IsSuperuserContractNodeBase
+  with ExpireSession[ContractNodeRequest]
 
 
 case class CompanyRequest[A](

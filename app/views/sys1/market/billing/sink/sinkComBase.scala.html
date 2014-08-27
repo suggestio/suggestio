@@ -1,0 +1,20 @@
+@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None, mbcOpt: Option[MBillContract] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для sink commission страниц. *@
+
+@import ctx._
+@import sys1.market.billing._
+
+@hPathAfter1 = {
+  / sink-комиссионные
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@billingBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1),
+  nodeOpt = nodeOpt,
+  mbcOpt = mbcOpt
+)(content)

@@ -258,7 +258,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
 
-  private val changePasswordFormM = Form(tuple(
+  val changePasswordFormM = Form(tuple(
     "old" -> passwordM,
     "new" -> passwordWithConfirmM
   ))
@@ -269,7 +269,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   }
 
   /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */
-  def changePasswordSubmit = IsAuth.async { implicit request =>
+  def changePasswordSubmit(r: Option[String]) = IsAuth.async { implicit request =>
     changePasswordFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("changePasswordSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
@@ -302,7 +302,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
         } flatMap {
           case Some(epw) =>
             epw.save
-              .flatMap { _ => redirectUserSomewhere(personId) }
+              .flatMap { _ => RdrBackOrFut(r)(redirectCallUserSomewhere(personId)) }
               .map { _.flashing("success" -> "Новый пароль сохранён.") }
           case None =>
             val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")

@@ -2,7 +2,6 @@ package controllers
 
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import util.PlayMacroLogsImpl
-import util.blocks.BlocksUtil.BlockImgMap
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -14,7 +13,6 @@ import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.{current, configuration}
 import MMartCategory.CollectMMCatsAcc_t
-import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
@@ -172,7 +170,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
                   mad.colors = ibgsUpd.updateColors(mad.colors)
                   // Сохранить изменения в базу
                   mad.save.map { adId =>
-                    Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
+                    Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
                       .flashing("success" -> "Рекламная карточка создана.")
                   }
                 }
@@ -381,16 +379,16 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
   // ===================================== ad show levels =============================================
 
   /** Форма для маппинга результатов  */
-  private def adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
+  private def adShowLevelFormM: Form[(SinkShowLevel, Boolean)] = Form(tuple(
     // id уровня, прописано в чекбоксе
     "levelId" -> nonEmptyText(maxLength = 1)
-      .transform [Option[AdShowLevel]] (
-        { AdShowLevels.maybeWithName },
-        { case Some(sl) => sl.toString
+      .transform [Option[SinkShowLevel]] (
+        { SinkShowLevels.maybeWithName },
+        { case Some(sl) => sl.toString()
           case None => "" }
       )
       .verifying("ad.show.level.undefined", _.isDefined)
-      .transform[AdShowLevel](_.get, Some.apply)
+      .transform[SinkShowLevel](_.get, Some.apply)
     ,
     "levelEnabled" -> boolean   // Новое состояние чекбокса.
   ))
@@ -407,9 +405,8 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
         NotAcceptable("Request body invalid.")
       },
       {case (levelId, isLevelEnabled) =>
-        import request.mad
         // Бывает, что ресиверы ещё не выставлены. Тогда нужно найти получателя и вписать его сразу.
-        val additionalReceiversFut: Future[Receivers_t] = if (mad.receivers.isEmpty) {
+        val additionalReceiversFut: Future[Receivers_t] = if (request.mad.receivers.isEmpty) {
           val rcvrsFut = detectReceivers(request.producer)
           rcvrsFut onSuccess {
             case result =>
@@ -420,19 +417,19 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
           Future successful Map.empty
         }
         additionalReceiversFut flatMap { addRcvrs =>
-          // Нужно, чтобы настройки отображения также повлияли на выдачу:
-          val slUpdF: Set[AdShowLevel] => Set[AdShowLevel] = if (isLevelEnabled) {
-            { asl => asl + levelId }
-          } else {
-            { asl => asl - levelId }
+          // Нужно, чтобы настройки отображения также повлияли на выдачу. Добавляем выхлоп для producer'а.
+          MAd.tryUpdate(request.mad) { mad =>
+            val rcvrs1 = mad.receivers ++ addRcvrs
+            val rcvrs2 = rcvrs1.get(mad.producerId).fold(rcvrs1) { prodRcvr =>
+              val prodRcvr1 = prodRcvr.copy(sls = prodRcvr.sls + levelId)
+              rcvrs1 + (mad.producerId -> prodRcvr1)
+            }
+            mad.copy(
+              receivers = rcvrs2
+            )
+          } map { _ =>
+            Ok("Updated ok.")
           }
-          val mad2 = mad.copy(
-            receivers = mad.receivers ++ addRcvrs
-          )
-          mad2.updateAllWantLevels(slUpdF)
-          mad2.applyOutputConstraintsFor(request.producer)
-            .flatMap { MAd.updateAllReceivers }
-            .map { _ => Ok("Updated ok.") }
         }
       }
     )

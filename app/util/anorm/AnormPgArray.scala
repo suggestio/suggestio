@@ -1,8 +1,9 @@
-package util
+package util.anorm
+
+import java.sql
+import java.sql.{Connection, PreparedStatement}
 
 import anorm._
-import java.sql.{PreparedStatement, Connection}
-import java.sql
 
 /**
  * Suggest.io

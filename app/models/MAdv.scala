@@ -2,9 +2,10 @@ package models
 
 import anorm._
 import org.joda.time.{Period, LocalDate, DateTime}
-import util.AnormJodaTime._
-import util.AnormPgArray._
-import util.AnormPgInterval._
+import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
+import AnormPgInterval._
 import java.sql.Connection
 import java.util.Currency
 
@@ -17,20 +18,32 @@ import java.util.Currency
 object MAdv {
   import SqlParser._
 
-  val ADV_MODE_PARSER = get[String]("mode").map(MAdvModes.withName)
-  val AMOUNT_PARSER = get[Float]("amount")
-  val CURRENCY_CODE_PARSER = get[String]("currency_code")
-  val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { Currency.getInstance }
-  val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
-  val AD_ID_PARSER = get[String]("ad_id")
+  val ADV_MODE_PARSER       = str("mode").map(MAdvModes.withName)
+  val AMOUNT_PARSER         = float("amount")
+  val CURRENCY_CODE_PARSER  = str("currency_code")
+  val CURRENCY_PARSER       = CURRENCY_CODE_PARSER.map { Currency.getInstance }
+  val PROD_ADN_ID_PARSER    = str("prod_adn_id")
+  val AD_ID_PARSER          = str("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
   val ADV_ROW_PARSER_1 = get[Option[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
-    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
-    get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
+    get[DateTime]("date_created") ~ ADV_MODE_PARSER ~
+    get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ str("rcvr_adn_id")
 
-  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
-  def ADV_ROW_PARSER_2 = SHOW_LEVELS_PARSER
+  /** Парсер для значений в колонке showLevels. Там массив с уровнями отображения.
+    * Изначально были AdShowLevels, потом стали SinkShowLevels. */
+  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { slsRaw =>
+    slsRaw.map { slRaw =>
+      val result = if (slRaw.length == 1) {
+        // compat: парсим slsPub, попутно конвертя их в sink-версии
+        val sl = AdShowLevels.withName(slRaw)
+        SinkShowLevels.fromAdSl(sl)
+      } else {
+        SinkShowLevels.withName(slRaw)
+      }
+      result : SinkShowLevel
+    }
+  }
 
   val COUNT_PARSER = get[Long]("c")
 
@@ -68,10 +81,11 @@ object MAdv {
 
 
 /** Интерфейс всех экземпляров MAdv* моделей. */
-trait MAdvI extends CurrencyCode { madvi =>
+trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
+  madvi =>
+
   def adId          : String
   def amount        : Float
-  def comission     : Option[Float]
   def dateCreated   : DateTime
   def id            : Option[Int]
   def mode          : MAdvMode
@@ -80,14 +94,11 @@ trait MAdvI extends CurrencyCode { madvi =>
   def dateEnd       : DateTime
   def prodAdnId     : String
   def rcvrAdnId     : String
-  def showLevels    : Set[AdShowLevel]
 
-  def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
-  def comissionAmount: Float =  comission.fold(amount)(amount * _)
-  def advTerms = new AdvTerms {
+  def advTerms: AdvTerms = new AdvTerms {
     override def showLevels = madvi.showLevels
-    override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
-    override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
+    override def dateEnd    = madvi.dateStart.toLocalDate
+    override def dateStart  = madvi.dateEnd.toLocalDate
   }
 
   def maybeOk = this match {
@@ -108,6 +119,7 @@ trait MAdvI extends CurrencyCode { madvi =>
   def isOk      = mode == MAdvModes.OK
   def isReq     = mode == MAdvModes.REQ
   def isRefused = mode == MAdvModes.REFUSED
+
 }
 
 
@@ -305,8 +317,28 @@ trait MAdvStatic extends SqlModelStatic {
 
 
 /** Условия размещения с точки зрения юзера. */
-trait AdvTerms {
-  def showLevels: Set[AdShowLevel]
+trait AdvTerms extends SinkShowLevelsFilters {
   def dateStart: LocalDate
   def dateEnd: LocalDate
+}
+
+
+trait AdvTermsWrapper extends AdvTerms {
+  def underlying: AdvTerms
+
+  override def dateStart = underlying.dateStart
+  override def dateEnd = underlying.dateEnd
+  override def showLevels = underlying.showLevels
+}
+
+
+/** Функции фильтрации содержимого поля showLevels. */
+trait SinkShowLevelsFilters {
+  def showLevels: Set[SinkShowLevel]
+
+  /** Встречается ли указанный showLevel в списке sinkShowLevel'ов? */
+  def hasOnAdSl(sl: AdShowLevel): Boolean = showLevels.exists(_.sl == sl)
+
+  /** Встречается ли указанный sink в списке sinkShowLevel'ов? */
+  def hasOnSink(sink: AdnSink): Boolean = showLevels.exists(_.adnSink == sink)
 }

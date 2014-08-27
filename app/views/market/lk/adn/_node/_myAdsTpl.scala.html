@@ -48,7 +48,7 @@
         @mad.moderation.freeAdv.filter(!_.isAllowed).fold {
           @* Бесплатное размещение не запрещено. *@
           <div class="ads-list-block__controls">
-            @defining(mad.allWantShowLevels) { adSls =>
+            @defining(mad.allShowLevels) { adSls =>
               @* Обходим карту уровней, переводя её в список галочек. *@
               @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
                 @defining(node.adn.canOutAtLevel(sl)) { hl =>

@@ -2,9 +2,10 @@ package models
 
 import anorm._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
 import java.sql.Connection
-import util.AnormPgArray._
+import AnormPgArray._
 
 /**
  * Suggest.io

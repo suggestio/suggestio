@@ -1,6 +1,5 @@
-@(node: MAdnNode, mads: Seq[MAd], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
-  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI], showBackBtn: Boolean,
-  showAdvsBtn: Boolean)(implicit ctx: Context)
+@(node: MAdnNode, slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
+  povAdnIdOpt: Option[String], advReqsCount: Long, showBackBtn: Boolean, showAdvsBtn: Boolean)(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -8,7 +7,6 @@
 
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
-@import controllers.adn.AdnShowTypes._
 @import _node._
 
 @rightBar = {
@@ -30,7 +28,7 @@
 }
 
 
-@prop(name: String, propClass: String = "")(value: Html) = {
+@prop(name: String, propClass: Option[String] = None)(value: Html) = {
 
   <table class="prop @propClass">
     <td class="prop_name">@name</td>
@@ -135,25 +133,6 @@
   </div>
 
 
-  @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
-  @if(node.adn.isProducer) {
-    @if(isMyNode) {
-      @_myAdsTpl(node, mads, canAdv, ad2advMap)
-    } else {
-      @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
-    }
-
-    @* Ссылка на demo web site. *@
-    @if(isMyNode) {
-      <div class="sm-note">
-        @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
-          Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
-        }
-      </div>
-    }
-  }
-
-
   @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
   @*if(isMyNode && !advertisers.isEmpty) {
     @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
@@ -173,5 +152,6 @@
 @market.lk.lkBaseLayout(
   title     = "Ваш профиль",
   adnIdOpt  = node.id,
-  rightBar = Some(rightBar)
+  rightBar = Some(rightBar),
+  povAdnId  = povAdnIdOpt
 )(content)

@@ -11,6 +11,7 @@ import scala.concurrent.Future
 import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
 import io.suggest.model.EsModel
 import views.html.market.lk.adn._, _node._
+import views.html.market.lk.usr._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
@@ -36,12 +37,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
    * @param adnId id узла.
-   * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
-   *                   независимо от refresh в индексе. Тут её id.
    * @param povAdnIdOpt С точки зрения какого узла идёт просмотр указанного узла.
    *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
    */
-  def showAdnNode(adnId: String, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
+  def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
     AdnNodeAccess(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
       // Супервайзинг узла приводит к рендеру ещё одного виджета
@@ -123,7 +122,42 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         Future successful true
       }
 
+      // Дождаться всех фьючерсов и отрендерить результат.
+      for {
+        slaves          <- slavesFut
+        (advReqsCount, advs) <- advsForMeFut
+        showAdvsBtn     <- showAdvsBtnFut
+        showBackBtn     <- showBackBtnFut
+      } yield {
+        Ok(adnNodeShowTpl(
+          node          = adnNode,
+          slaves        = slaves,
+          isMyNode      = isMyNode,
+          advertisers   = advs,
+          povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
+          advReqsCount  = advReqsCount,
+          showBackBtn   = showBackBtn,
+          showAdvsBtn   = showAdvsBtn
+        ))
+      }
+    }
+  }
+
+
+  /**
+   * Рендер страницы ЛК с рекламными карточками узла.
+   * @param adnId id узла.
+   * @param mode Режим фильтрации карточек.
+   * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
+   *                   независимо от refresh в индексе. Тут её id.
+   * @param povAdnIdOpt id узла, с точки зрения которого идёт обзор узла.
+   * @return 200 Ok + страница ЛК со списком карточек.
+   */
+  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
+    AdnNodeAccess(adnId, povAdnIdOpt).async { implicit request =>
+      import request.{adnNode, isMyNode}
       // Для узла нужно отобразить его рекламу.
+      // TODO Добавить поддержку агрумента mode
       val madsFut: Future[Seq[MAd]] = if (isMyNode) {
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
         val prodAdsFut = MAd.findForProducerRt(adnId)
@@ -185,26 +219,18 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       }
 
-      // Дождаться всех фьючерсов и отрендерить результат.
+      // Рендер результата, когда все карточки будут собраны.
       for {
-        mads            <- madsFut
-        slaves          <- slavesFut
-        (advReqsCount, advs) <- advsForMeFut
-        showAdvsBtn     <- showAdvsBtnFut
-        showBackBtn     <- showBackBtnFut
+        mads <- madsFut
       } yield {
-        Ok(adnNodeShowTpl(
-          node          = adnNode,
-          mads          = mads,
-          slaves        = slaves,
-          isMyNode      = isMyNode,
-          advertisers   = advs,
-          povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
-          advReqsCount  = advReqsCount,
-          canAdv        = canAdv,
-          ad2advMap     = ad2advMap,
-          showBackBtn   = showBackBtn,
-          showAdvsBtn   = showAdvsBtn
+        Ok(nodeAdsTpl(
+          node = adnNode,
+          mode = mode,
+          mads = mads,
+          isMyNode = isMyNode,
+          povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
+          canAdv = canAdv,
+          ad2advMap = ad2advMap
         ))
       }
     }
@@ -487,6 +513,15 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         error(s"nodeOwnerInviteAcceptCommon($adnId, eaId=${eAct.id.get}): ADN node not found, but act.code for node exist. This should never occur.")
         NotFound(invite.inviteInvalidTpl("adn.node.not.found"))
     }
+  }
+
+
+  /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
+  def userProfileEdit(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+    Ok(userProfileEditTpl(
+      adnNode = request.adnNode,
+      pf = Ident.changePasswordFormM
+    ))
   }
 
 }

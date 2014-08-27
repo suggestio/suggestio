@@ -36,6 +36,19 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   lazy val MMP_CAL_ID_WEEKEND   = configuration.getString("sys.mmp.daily.calId.weekend") getOrElse ""
   lazy val MMP_CAL_ID_PRIME     = configuration.getString("sys.mmp.daily.calId.prime") getOrElse MMP_CAL_ID_WEEKEND
 
+  def defaultMmpDaily = {
+    MBillMmpDaily(
+      contractId    = -1,
+      currencyCode  = MMP_CURRENCY_CODE_DFLT,
+      mmpWeekday    = MMP_WEEKDAY_DFLT,
+      mmpWeekend    = MMP_WEEKEND_DFLT,
+      mmpPrimetime  = MMP_PRIME_DFLT,
+      onRcvrCat     = MMP_ON_RCVR_CAT_DFLT,
+      onStartPage   = MMP_ON_START_PAGE_DFLT,
+      weekendCalId  = MMP_CAL_ID_WEEKEND,
+      primeCalId    = MMP_CAL_ID_PRIME
+    )
+  }
 
   /** Маппинг формы для daly-тарификатора. */
   private def mmpDailyFormM = {
@@ -74,17 +87,7 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     * @param contractId номер договора.
     */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    val mmpStub = MBillMmpDaily(
-      contractId    = -1,
-      currencyCode  = MMP_CURRENCY_CODE_DFLT,
-      mmpWeekday    = MMP_WEEKDAY_DFLT,
-      mmpWeekend    = MMP_WEEKEND_DFLT,
-      mmpPrimetime  = MMP_PRIME_DFLT,
-      onRcvrCat     = MMP_ON_RCVR_CAT_DFLT,
-      onStartPage   = MMP_ON_START_PAGE_DFLT,
-      weekendCalId  = MMP_CAL_ID_WEEKEND,
-      primeCalId    = MMP_CAL_ID_PRIME
-    )
+    val mmpStub = defaultMmpDaily
     val formM = mmpDailyFormM fill mmpStub
     _createMmpDaily(formM)
       .map(Ok(_))

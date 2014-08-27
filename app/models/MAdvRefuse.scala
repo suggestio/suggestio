@@ -3,8 +3,9 @@ package models
 import anorm._
 import MAdv._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import util.SqlModelSave
 import java.sql.Connection
 import AdShowLevels.sls2strings
@@ -24,8 +25,8 @@ object MAdvRefuse extends MAdvStatic {
   override val TABLE_NAME = "adv_refuse"
 
   override val rowParser = {
-    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ ADV_ROW_PARSER_2 map {
-      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
+    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ SHOW_LEVELS_PARSER map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
         rcvrAdnId ~ dateStatus ~ reason ~ showLevels =>
         MAdvRefuse(
           id          = id,
@@ -33,7 +34,6 @@ object MAdvRefuse extends MAdvStatic {
           amount      = amount,
           currencyCode = currencyCode,
           dateCreated = dateCreated,
-          comission   = comission,
           dateStatus  = dateStatus,
           dateStart   = dateStart,
           dateEnd     = dateEnd,
@@ -54,7 +54,6 @@ object MAdvRefuse extends MAdvStatic {
       amount      = amount,
       currencyCode = currencyCode,
       dateCreated = dateCreated,
-      comission   = comission,
       dateStatus  = dateStatus1,
       dateStart   = dateStart,
       dateEnd     = dateEnd,
@@ -74,13 +73,12 @@ case class MAdvRefuse(
   adId          : String,
   amount        : Float,
   currencyCode  : String,
-  comission     : Option[Float],
   reason        : String,
   prodAdnId     : String,
   rcvrAdnId     : String,
   dateStart     : DateTime,
   dateEnd       : DateTime,
-  showLevels    : Set[AdShowLevel],
+  showLevels    : Set[SinkShowLevel],
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Option[Int] = None
@@ -92,10 +90,10 @@ case class MAdvRefuse(
 
   override def saveInsert(implicit c: Connection): MAdvRefuse = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, show_levels, date_status, reason, prod_adn_id, rcvr_adn_id, date_start, date_end) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {showLevels}, {dateStatus}, {reason}, {prodAdnId}, {rcvrAdnId}, {dateStart}, {dateEnd})")
+      "(ad_id, amount, currency_code, date_created, mode, show_levels, date_status, reason, prod_adn_id, rcvr_adn_id, date_start, date_end) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {showLevels}, {dateStatus}, {reason}, {prodAdnId}, {rcvrAdnId}, {dateStart}, {dateEnd})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-        'comission -> comission, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels), 'dateStatus -> dateStatus,
+        'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels), 'dateStatus -> dateStatus,
         'reason -> reason, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
     .executeInsert(rowParser single)
   }
