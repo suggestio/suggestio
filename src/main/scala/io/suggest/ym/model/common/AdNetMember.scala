@@ -122,18 +122,20 @@ object AdNetMember {
 
 /** Выходы узла для отображения рекламных карточек. */
 object AdnSinks extends Enumeration {
-  protected case class Val(name: String, longName: String) extends super.Val(name) with SlNameTokenStr
+  protected case class Val(name: String, longName: String, sioComissionDflt: Float) extends super.Val(name) with SlNameTokenStr
   type AdnSink = Val
   implicit def value2val(x: Value): AdnSink = x.asInstanceOf[AdnSink]
 
-  val SINK_WIFI: AdnSink = Val("w", "wifi")
-  val SINK_GEO: AdnSink  = Val("g", "geo")
+  val SINK_WIFI: AdnSink = Val("w", "wifi", 0.30F)
+  val SINK_GEO: AdnSink  = Val("g", "geo", 0.70F)
 
   def ordered: Seq[AdnSink] = {
     values
       .foldLeft( List.empty[AdnSink] ) { (acc, e) => e :: acc }
       .sortBy(_.longName)
   }
+
+  def default = SINK_WIFI
 
   def maybeWithName(n: String): Option[AdnSink] = {
     try {
