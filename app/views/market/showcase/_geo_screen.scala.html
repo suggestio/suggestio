@@ -2,13 +2,17 @@
 
 <div class="sm-geo-screen" id="smGeoScreen">
 
-  <div class="sm-geo-screen_header"></div>
+  <div class="sm-geo-screen_header">
+    <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smGeoScreenCloseButton">
+      @svg._exitButtonTpl( args.fgColor )
+    </div>
+  </div>
 
   @_search_bar( args, "smGeoSearch", "Быстрый поиск по местам" )
 
   <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, false );">
     <div class="sm-geo-screen_current-location-inner">
-      <div class="sm-geo-screen_current-location-icon">@svg._geoButtonTpl("ffffff")</div><span id="smGeoLocationLabel">Определить местоположение</span>
+      <div class="sm-geo-screen_current-location-icon">@svg._geoButtonLargeTpl("ffffff")</div><span id="smGeoLocationLabel">Определить местоположение</span>
     </div>
   </div>
   @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, false ).toString ){

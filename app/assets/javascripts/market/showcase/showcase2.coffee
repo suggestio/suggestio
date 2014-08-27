@@ -946,11 +946,18 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
         siomart.geo.load_nodes()
         siomart.utils.ge('smGeoScreen').style.display = 'block'
+        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
         siomart.geo.get_current_position()
         return false
+
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
+        siomart.utils.ge('smGeoScreen').style.display = 'none'
+        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
+        return false
+
 
       geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
