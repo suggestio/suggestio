@@ -1052,6 +1052,11 @@ market =
       	    $(colpkr).fadeOut(500)
       	  onChange: (hsb, hex, rgb) ->
       	    market.ad_form.queue_block_preview_request()
+      	    # если нужно раскрасить не только кнопку с выбором цвета,
+      	    # добавляем атрибут data-for, в котором указываем jQuery селектор
+      	    if _this.attr 'data-for'
+      	      $ _this.attr 'data-for'
+      	      .css 'background-color' : '#' + hex
       	    _this.find('input').val(hex).trigger('change')
       	    _this.css
       	      'background-color' : '#' + hex
@@ -1106,7 +1111,7 @@ market =
         $parent = $this.parent()
 
         $parent
-        .next '.add-file-w'
+        .next '.js-image-upload'
         .show()
         $parent.remove()
 
@@ -1142,7 +1147,7 @@ market =
       .bind "change", (e) ->
         e.preventDefault()
         $this = $ this
-        $parent = $this.closest '.add-file-w'
+        $parent = $this.closest '.js-image-upload'
         form_data = new FormData()
 
         is_w_block_preview = $this.attr 'data-w-block-preview'
@@ -1177,12 +1182,12 @@ market =
                     .size()
                 fieldName = fieldName + '[' + i + ']'
 
-              html = ['<div class="add-file-w __preview">',
+              html = ['<div class="image __preview">',
                       '<input class="js-image-key" type="hidden" name="',
                       fieldName,
                       '" value=""/>',
-                      '<img class="add-file-w_image js-image-preview" src="" />',
-                      '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                      '<img class="image_src js-image-preview" src="" />',
+                      '<a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить файл">Удалить</a>',
                       '</div>'].join ''
 
               $parent.before html
