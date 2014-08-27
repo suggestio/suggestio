@@ -28,7 +28,7 @@ import play.api.mvc.Security.username
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect {
+object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect with ChangePwAction {
 
   import LOGGER._
 
@@ -517,12 +517,23 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String] = None) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     Ok(userProfileEditTpl(
       adnNode = request.adnNode,
       pf = Ident.changePasswordFormM,
       r = r
     ))
+  }
+
+  /** Сабмит формы смены пароля. */
+  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    _changePasswordSubmit(r) { formWithErrors =>
+      Ok(userProfileEditTpl(
+        adnNode = request.adnNode,
+        pf = formWithErrors,
+        r = r
+      ))
+    }
   }
 
 }

@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.util.MacroLogsI
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayLazyMacroLogsImpl
@@ -16,7 +17,9 @@ import play.api.mvc.Result
  * Created: 18.04.14 18:35
  * Description: Проверка прав на управление абстрактным узлом рекламной сети.
  */
-object IsAdnNodeAdmin {
+object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauth(req: RequestHeader): Future[Result] = {
@@ -51,6 +54,8 @@ object IsAdnNodeAdmin {
       if (isAllowed) {
         Right(adnNode)
       } else {
+        if (pwOpt.isDefined)
+          warn(s"checkAdnNodeCreds(): User $pwOpt not allowed to access to node ${adnNode.id.get}")
         Left(adnNodeOpt)
       }
     }
@@ -78,7 +83,7 @@ object IsAdnNodeAdmin {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится администрируемый узел, если всё ок. */
-sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
+sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] with MacroLogsI {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -90,13 +95,16 @@ sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode]
           block(req1)
         }
 
-      case _ => onUnauth(request)
+      case _ =>
+        LOGGER.debug(s"User $pwOpt has NO admin access to node $adnId")
+        onUnauth(request)
     }
   }
 }
 case class IsAdnNodeAdmin(adnId: String)
   extends IsAdnNodeAdminBase
   with ExpireSession[AbstractRequestForAdnNode]
+  with PlayLazyMacroLogsImpl
 
 
 

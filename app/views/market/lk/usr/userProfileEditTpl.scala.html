@@ -15,7 +15,13 @@
 
 @content = {
 
-  @form( routes.Ident.changePasswordSubmit(r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url) ), 'id -> "userProfileEdit" ) {
+  @form(
+    routes.MarketLkAdn.changePasswordSubmit(
+      adnId = adnNode.id.get,
+      r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url)
+    ),
+    'id -> "userProfileEdit"
+  ) {
     @inputPassword(
       pf("old"),
       '_label -> Messages("Type.current.password")

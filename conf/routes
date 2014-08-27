@@ -106,6 +106,7 @@ GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Редактирования профиля юзера из личного кабинета узла.
 GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
+POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
