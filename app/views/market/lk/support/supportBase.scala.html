@@ -9,5 +9,6 @@
   title     = title,
   headAfter = headAfter,
   backHref  = r orElse Some(adnIdOpt.fold(routes.Ident.rdrUserSomewhere)(routes.MarketLkAdn.showAdnNode(_)).url),
-  adnIdOpt  = adnIdOpt
+  adnIdOpt  = adnIdOpt,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_SUPPORT)
 )(content)

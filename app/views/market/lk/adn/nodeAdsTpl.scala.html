@@ -6,9 +6,10 @@
 @import controllers.adn.AdnShowTypes._
 
 @market.lk.lkBaseLayout(
-  title     = "Рекламные карточки",
-  adnIdOpt  = node.id,
-  povAdnId  = povAdnIdOpt
+  title    = "Рекламные карточки",
+  adnIdOpt = node.id,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS),
+  povAdnId = povAdnIdOpt
 ) {
 
   @if(node.adn.isProducer) {

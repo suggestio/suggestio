@@ -1,11 +1,12 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, popupContent: Option[Html] = None,
-  povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None,
+  popupContent: Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
 *@
 @import ctx._
 @import stuff._
+@import LkLeftPanelLinks._
 
 <!DOCTYPE html>
 <html>
@@ -63,11 +64,11 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)">User</a>
+            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_NODE}){ __act}" href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)">User</a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)">Cards</a>
+            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)">Cards</a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
             <hr class="delimiter"/>
           </nav>
         }
@@ -90,7 +91,7 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        &nbsp;|&nbsp;<a class="footer_link" href="@routes.MarketLkSupport.supportForm(adnIdOpt, r = Some(request.path))">Служба поддержки</a>
+        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl exists {_ == LPL_SUPPORT}){ __act}" href="@routes.MarketLkSupport.supportForm(adnIdOpt, r = Some(request.path))">Служба поддержки</a>
         <a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>
 

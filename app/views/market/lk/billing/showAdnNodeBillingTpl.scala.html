@@ -5,7 +5,10 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 
-@market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
+@market.lk.lkBase(
+  title = "Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING)
+) {
 
   <div class="page-title">
     <div class="page-title_cnt">
@@ -25,7 +28,7 @@
         <tr>
           <td class="siom-table_top-cnt">
 
-	    <div class="table-cell-cnt __size-XS">
+	        <div class="table-cell-cnt __size-XS">
               <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
 
               <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>

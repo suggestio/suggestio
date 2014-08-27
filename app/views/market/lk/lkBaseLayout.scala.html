@@ -1,7 +1,8 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[String] = None,
-  rightBar: Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None,
+  backHref: Option[String] = None, rightBar: Option[Html] = None, povAdnId: Option[String] = None
+)(content: Html)(implicit ctx: util.Context)
 
-@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter, povAdnId = povAdnId) {
+@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter, povAdnId = povAdnId, leftCurrEl = leftCurrEl) {
 
   <aside class="right-bar">
     @rightBar

@@ -190,9 +190,15 @@ object QuickAdvPeriods extends Enumeration {
 }
 
 
-/** Enum для задания параметра подсветки текущей ссыллки на правой панели личного кабинета узла. */
+/** Enum для задания параметра подсветки текущей ссылки на правой панели личного кабинета узла. */
 object NodeRightPanelLinks extends Enumeration {
   type NodeRightPanelLink = Value
   val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT = Value : NodeRightPanelLink
 }
 
+
+/** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/
+object LkLeftPanelLinks extends Enumeration {
+  type LkLeftPanelLink = Value
+  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
+}

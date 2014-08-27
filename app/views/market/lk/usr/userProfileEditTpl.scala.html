@@ -6,7 +6,11 @@
 @import market.lk._
 @import helper._
 
-@lkBase("Редактирование профиля пользователя", adnIdOpt = adnNode.id) {
+@lkBase(
+  title = "Редактирование профиля пользователя",
+  adnIdOpt = adnNode.id,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_NODE)
+) {
 
   @form( routes.Ident.changePasswordSubmit(r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url) ) ) {
     @inputPassword(
