@@ -1,179 +1,99 @@
 @import "mixins"
 
-.abs
-  position  absolute
-
-.relative
-  position  relative
-
-.clear
-  clear both
-
-strong
-  font-weight bold
-
 /********************************************************************************************************************/
 /* Fonts */
 /********************************************************************************************************************/
 
 .ft-XS
-  font-size(11px)
+  font-size 11px
 
 .ft-S
-	ft(13px)
+	font-size 13px
 
 .ft-M
-  ft(16px)
+  font-size 16px
 
 .ft-L
-  ft(18px)
+  font-size 18px
+
+.white
+  color white
+
+.black
+  color black
+
+.light-gray
+  color lightGray
+
+.dark-gray
+  color darkGray
 
 /********************************************************************************************************************/
-/* Animations */
+/* Ссылки */
 /********************************************************************************************************************/
-.def-transition
-  backface(hidden)
+.link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
   transition(all 0.2s ease-in-out 0s)
 
+  &:hover
+    color: #007b56
+    border-color: #c6c6c6
+
+.dark-link
+  text-decoration none
+
+  &:hover
+    color white
+
 /********************************************************************************************************************/
-/* Основная сетка проекта */
+/* Полосы разделители  */
+/********************************************************************************************************************/
+.delimiter
+  clear             both
+  height            1px
+  background-color  #636363
+
+  &.__light
+    background-color #d7d7d7
+
+  &.__vertical
+    width   1px
+    height  auto
+
+/********************************************************************************************************************/
+/* Вывод полей в формате Имя поля -> значение || input  */
 /********************************************************************************************************************/
 
-projectMinWidth = 1100px
-contentWidth    = 790px
-headerHeight    = 60
-rightMenuWidth  = 210
-leftMenuWidth   = 60
+.prop
+  margin  15px 0
 
-.lk
-  font-family 'opensans-light'
-  font-size   13px
-  min-width   projectMinWidth
+  &_name
+    width         125px
+    padding-right 25px
+    font-size     11px
+    color         lightGray
 
-.page
-  position          relative
-  min-height        100%
-  min-width         projectMinWidth
-  background-color  #efefef
+  &_value
+    font-size 13px
+    color     darkGray
 
-  &_cnt
-    position  relative
-    margin    0 auto
-    width     contentWidth
+/* значение поля цвет */
+.color
+  width   40px
+  height  40px
+  background-color  red
+  border-radius(50%)
 
-  &_title
-    color         #464646
-    font-size     18px
-    margin-bottom 35px
+/********************************************************************************************************************/
+/* Таблицы  */
+/********************************************************************************************************************/
+.td
+  vertical-align  middle
 
-.header
-  position          relative
-  z-index           100
-  margin-bottom     -(headerHeight)
+  &.__padding-S
+    padding 0 10px
 
-  height            (headerHeight)px
-  padding-left      (leftMenuWidth)px
-  padding-right     (rightMenuWidth)px
-  background-color  #303030
-
-  &_cnt
-    position  relative
-    margin    0 auto
-    width     contentWidth
-
-  &_logo-link
-    position    absolute
-    top         0
-    left        0
-
-    display     inline-block
-    line-height (headerHeight)px
-    width       (leftMenuWidth)px
-    text-align  center
-
-  &_logo-image
-    display         inline-block
-    vertical-align  middle
-
-  &_logo-text
-    position  absolute
-    top       18px
-    left      0
-
-  &_billing
-    position  absolute
-    top       20px
-    right     0
-
-  &_billing-t
-    padding-right 30px
-
-  &_logout
-    position      absolute
-    top           20px
-    right         0
-
-    overflow      hidden
-    padding       0 10px
-    width         190px
-    text-overflow ellipsis
-
-.left-bar
-  position          absolute
-  top               0
-  bottom            0
-  left              0
-
-  width             (leftMenuWidth)px
-  background-color  #464646
-
-  &_menu
-    padding-top (headerHeight)px
-
-  &_menu-i
-    display       block
-    height        60px
-    color         #818284
-
-    &:hover
-      cursor            pointer
-      color             white
-      border-left       5px solid #f44040
-      background-color  #58585a
-
-  &_menu-i.__act
-    color             white
-    border-left       5px solid #f44040
-    background-color  #58585a
-
-.right-bar
-  position          absolute
-  top               0
-  bottom            0
-  right             0
-
-  width             (rightMenuWidth)px
-  background-color  #3e3e3e
-
-  &_menu
-    padding-top (headerHeight)px
-
-  &_menu-i
-    display     block
-    height      60px
-    color       #a5a5a5
-    text-align  center
-
-    &:hover
-      cursor            pointer
-      color             white
-      background-color  #58585a
-
-  &_menu-i.__act
-    color             white
-    background-color  #58585a
-
-.viewport
-  padding-top   (headerHeight + 40)px
-  padding-left  (leftMenuWidth + 20)px
-  padding-right (rightMenuWidth + 20)px
+  &.__color-title
+    padding-right 10px

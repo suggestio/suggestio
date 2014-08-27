@@ -6,6 +6,7 @@
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
    Если !isMyNode, то юзер смотрит чужой нередактируемый узел. *@
 
+@import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
 @import controllers.adn.AdnShowTypes._
 @import _node._
@@ -29,11 +30,11 @@
 }
 
 
-@prop(name: String)(value: Html) = {
+@prop(name: String, propClass: String = "")(value: Html) = {
 
-  <table class="profile_prop">
-    <td class="profile_prop-name">@name:</td>
-    <td class="profile_prop-value">@value</td>
+  <table class="prop @propClass">
+    <td class="prop_name">@name:</td>
+    <td class="prop_value">@value</td>
   </table>
 
 }
@@ -92,17 +93,45 @@
     <hr class="delimiter __light"/>
 
     @prop("Локация") { @node.meta.name }
+
     @if(node.meta.town.isDefined) {
       @prop("Адрес") { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
     }
+
     @if(node.meta.siteUrl.isDefined) {
       @prop("Сайт") { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
     }
+
     @if(node.meta.info.isDefined) {
       @prop("Информация о товарах или услугах") { @node.meta.info }
     }
 
     <hr class="delimiter __light"/>
+
+    <table class="prop">
+      <td class="prop_name td">
+        Цвет фона шапки где будет распологаться ваш логотип
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Основной<br/>цвет</span>
+      </td>
+      <td class="td __padding-S">
+        <div class="color" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+      </td>
+      <td class="td __padding-S">
+        <div class="delimiter __light __vertical js-vertical-line"></div>
+      </td>
+      <td class="td __padding-S prop_name">
+        Цвет текста и иконок категорий в ленте выдачи
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Цвет<br/>контента</span>
+      </td>
+      <td class="td __padding-S dark-gray">
+        <div class="color" style="background-color: #@node.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+      </td>
+    </table>
+
   </div>
 
 

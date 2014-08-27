@@ -1,47 +1,4 @@
-lightGray = #7f7f7f
-darkGray  = #464646
-
-pink1 = #feeaea
-pink2 = #ffd7d7
-red   = #f44040
-green = #00b994
-
-
-.white
-  color white
-
-.black
-  color black
-
-.light-gray
-  color lightGray
-
-.dark-gray
-  color darkGray
-
-.link
-  color           #00b994
-  text-decoration none
-  border-bottom   1px solid rgba(0, 185, 148, 0.3)
-  transition(all 0.2s ease-in-out 0s)
-
-  &:hover
-    color: #007b56
-    border-color: #c6c6c6
-
-.dark-link
-  text-decoration none
-
-  &:hover
-    color white
-
-.delimiter
-  clear             both
-  height            1px
-  background-color  #636363
-
-  &.__light
-    background-color #d7d7d7
+@import "mixins"
 
 /********************************************************************************************************************/
 /* Страница с информацией об узле */
@@ -70,16 +27,3 @@ green = #00b994
   &_info-bar
     overflow      hidden
     padding-left  25px
-
-  &_prop
-    margin  15px 0
-
-  &_prop-name
-    width         125px
-    padding-right 25px
-    font-size     11px
-    color         lightGray
-
-  &_prop-value
-    font-size 13px
-    color     darkGray
