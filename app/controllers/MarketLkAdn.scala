@@ -528,7 +528,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   /** Сабмит формы смены пароля. */
   def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
-      Ok(userProfileEditTpl(
+      NotAcceptable(userProfileEditTpl(
         adnNode = request.adnNode,
         pf = formWithErrors,
         r = r
