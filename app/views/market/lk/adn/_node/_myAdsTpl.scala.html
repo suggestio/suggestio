@@ -12,8 +12,6 @@
     <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
   }
 
-
-  <hr class="delimiter __light"/>
   @_adsListOuterTpl {
 
     @helper.javascriptRouter("jsRoutes")(
@@ -21,14 +19,14 @@
     )
 
 
-    <a class="add-adv-btn" href="@routes.MarketAd.createAd(node.id.get)">Создать карточку</a>
+    <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(node.id.get)">Создать карточку</a>
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
 
         <div class="js-equal-height">
         @ad2advMap.get(mad.id.get).fold {
-          <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
+          <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
         } { adv =>
           <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))">
             @adv match {
@@ -72,7 +70,7 @@
         }
         </div><!-- .js-equal-height end -->
           @if(canAdv) {
-              <a class="siom-ac-btn __ft-XM __size-XL __color-2" href="@routes.MarketAdv.advForAd(mad.id.get)">
+              <a class="btn __size-XM __radial-major" href="@routes.MarketAdv.advForAd(mad.id.get)">
                 Управление
               </a>
           }

@@ -583,6 +583,16 @@ PersonalCabinet =
 
   adsList: () ->
 
+    ## удаляем зигзаг там, где он не нужен
+    $ '.adv-item  .sm-block.height-300'
+    .each ()->
+      $this = $ this
+      $advItem = $this.closest '.adv-item'
+      $advItemBorder = $advItem.find '.adv-item_preview-border'
+
+      $advItemBorder.remove()
+
+
     $ document
     .on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $ this
