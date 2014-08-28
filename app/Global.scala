@@ -3,7 +3,7 @@ import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import io.suggest.util.SioEsUtil
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.mapper.{MapperException, MapperParsingException}
+import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.event.SiowebNotifier
 import scala.concurrent.{Await, Future, future}
@@ -31,7 +31,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
   import Logger._
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit private def sioNotifier = util.event.SiowebNotifier
+  implicit private def sioNotifier = SiowebNotifier
 
   private var cronTimers : List[Cancellable] = null
 
