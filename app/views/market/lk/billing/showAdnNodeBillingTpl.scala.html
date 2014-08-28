@@ -25,62 +25,36 @@
   rightBar  = Some(rightBar)
 ) {
 
-    @market.lk.lkBlock("Биллинг") {
+  @ctx.billBalanceOpt.map { mbb =>
 
-      @* Верхняя информация: баланс, тарификация *@
-      <table class="siom-table __size-XL">
+    <hr class="delimiter __light"/>
 
-        @ctx.billBalanceOpt.map { mbb =>
-        <tr>
-          <td class="siom-table_top-cnt">
+    <div class="billing_money-info">
+      <div class="billing_all-money">
+        <span class="light-gray">Всего на счете</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</div>
+      </div>
 
-	        <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
+      <div class="billing_available-money">
+        <span class="light-gray">Доступно для операции</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.amount, mbb.currency)</div>
+      </div>
 
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>
-            </div>
-            <div class="clear"></div>
+      <div class="billing_locked-money">
+        <span class="light-gray">Заблокировано</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.blocked, mbb.currency)</div>
+      </div>
+    </div>
+  }
 
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
-
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</strong>
-            </div>
-            <div class="clear"></div>
-
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Заблокировано<br/>средств:</span>
-
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.blocked, mbb.currency)</strong>
-            </div>
-          </td>
-
-          <td class="siom-table_top-cnt">
-            <div class="border-line __vertical js-vertical-line f-left"></div>
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Списание средств:</span>
-
-              <strong class="color-strong f-left">18.05.2014</strong>
-            </div>
-          </td>
-
-        }
-      </table>
-
-    }<!-- Верхняя информация end -->
-
-
-
-    @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
-    @if(!mmpDailyTariffs.isEmpty) {
-
-      @market.lk.lkBlock("Ваша ставка тарифных планов") {
-
-          @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
-
-      }
-
-    }
+  <h2 class="minor-title">
+    Ставка тарифных планов моего магазина
+  </h2>
+  <hr class="delimiter __light"/>
+  @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
+  @if(!mmpDailyTariffs.isEmpty) {
+    @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
+  }
 
 
     @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
