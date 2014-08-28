@@ -9,8 +9,8 @@
 @import market.showcase._
 
 @mads.zipWithIndex.map { case (mad, i) =>
-  @defining( i + startIndex ) { i2 =>
-    <div class="adv-item @if( i2 % itemsInLine == itemsInLine - 1 ){ __last-in-line }">
+  @defining( i + startIndex ) { itemIndex =>
+    <div class="adv-item @if(itemIndex % itemsInLine == 0){ __first-in-line }">
 
       <div class="adv-item_preview">
         @if(coverDisableReason) {
@@ -26,8 +26,8 @@
 
     </div>
 
-    @if( i2 % itemsInLine == itemsInLine - 1 ){
-      <div class="clear"></div>
+    @if( itemIndex % itemsInLine == itemsInLine - 1 ){
+      <div class="adv-lst_delimiter"></div>
     }
   }
 }

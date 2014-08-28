@@ -7,58 +7,112 @@
 
 @* Страница истории транзакций *@
 
-
-@txns.zipWithIndex.map { case (txn , i) =>
-  <tr>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M">
-        @txn.txnUid
-      </div>
-      <div class="border-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="border-line __vertical js-vertical-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M">
-        @highlightFirstWordEsc(txn.paymentComment, start = """<strong class="color-strong">""", end = "</strong>")
-      </div>
-      <div class="border-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="border-line __vertical js-vertical-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M">
-        <span title="@_prettyDate(txn.datePaid).toString.trim">
-          <strong class="color-strong">@numericDate(txn.datePaid)</strong>
-          @numericTime(txn.datePaid)
-        </span>
-      </div>
-      <div class="border-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="border-line __vertical js-vertical-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M">
-        <strong class="@if(txn.amount < 0) {color-error} else {color-success}">@formatPrice(txn.amount, txn.currency)</strong>
-      </div>
-      <div class="border-line"></div>
-    </td>
-  </tr>
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">Биллинг тарифных планов</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition">Реквизиты</a>
+    <hr class="delimiter"/>
+  </nav>
 }
 
-<tr>
-  <td colspan="7">
-    @if(txns.size >= TXNS_PER_PAGE) {
-      <div class="table-cell-cnt __size-XL __centered">
+@content = {
 
-        <span class="gray-but-smallest" >
-          <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)" class="white-border-top" id="getTransactions">Показать ещё</a>
-        </span>
+  <table class="siom-table __size-XL" id="transactionsList">
+    <tr>
+      <th class="__bg-head">
+        <div class="table-cell-cnt __size-S">
+          №
+        </div>
+        <div class="border-line"></div>
+      </th>
+      <th></th>
+      <th class="__bg-head">
+        <div class="table-cell-cnt __size-S">
+          Основание:
+        </div>
+        <div class="border-line"></div>
+      </th>
+      <th></th>
+      <th class="__bg-head">
+        <div class="table-cell-cnt __size-S">
+          Дата операции:
+        </div>
+        <div class="border-line"></div>
+      </th>
+      <th></th>
+      <th class="__bg-head">
+        <div class="table-cell-cnt __size-S ">
+          Сумма:
+        </div>
+        <div class="border-line"></div>
+      </th>
+    </tr>
 
-      </div>
+    @txns.zipWithIndex.map { case (txn , i) =>
+      <tr>
+        <td class="siom-table_vertical-cnt">
+          <div class="table-cell-cnt __size-M">
+            @txn.txnUid
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="border-line __vertical js-vertical-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="table-cell-cnt __size-M">
+            @highlightFirstWordEsc(txn.paymentComment, start = """<strong class="color-strong">""", end = "</strong>")
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="border-line __vertical js-vertical-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="table-cell-cnt __size-M">
+            <span title="@_prettyDate(txn.datePaid).toString.trim">
+              <strong class="color-strong">@numericDate(txn.datePaid)</strong>
+              @numericTime(txn.datePaid)
+            </span>
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="border-line __vertical js-vertical-line"></div>
+        </td>
+        <td class="siom-table_vertical-cnt">
+          <div class="table-cell-cnt __size-M">
+            <strong class="@if(txn.amount < 0) {color-error} else {color-success}">@formatPrice(txn.amount, txn.currency)</strong>
+          </div>
+          <div class="border-line"></div>
+        </td>
+      </tr>
     }
-  </td>
-</tr>
+
+    <tr>
+      <td colspan="7">
+        @if(txns.size >= TXNS_PER_PAGE) {
+          <div class="table-cell-cnt __size-XL __centered">
+
+            <span class="gray-but-smallest" >
+              <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)" class="white-border-top" id="getTransactions">Показать ещё</a>
+            </span>
+
+          </div>
+        }
+      </td>
+    </tr>
+
+ </table>
+
+}
+
+@market.lk.lkBaseLayout(
+  title    = "История операции",
+  adnIdOpt = adnNode.id,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING),
+  rightBar  = Some(rightBar)
+)(content)

@@ -7,7 +7,7 @@
 
 @rightBar = {
   <nav class="right-bar_menu">
-    <a class="right-bar_menu-i def-transition __act" >Биллинг тарифных планов</a>
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">Биллинг тарифных планов</a>
     <hr class="delimiter"/>
     <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
     <hr class="delimiter"/>
@@ -63,16 +63,6 @@
               <strong class="color-strong f-left">18.05.2014</strong>
             </div>
           </td>
-          <td class="siom-table_top-cnt">
-            <div class="border-line __vertical js-vertical-line f-right"></div>
-            <div class="table-cell-cnt __size-XS">
-
-              <span class="gray-but-smallest inline f-left">
-                <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
-              </span>
-
-            </div>
-          </td>
 
           <td class="siom-table_top-cnt">
             <div class="table-cell-cnt __size-XS">
@@ -96,46 +86,6 @@
 
       }
     </div>
-
-
-    <div class="siom-block-child" id="transactionsHistory">
-      @market.lk.lkBlock("История операций") {
-
-        <table class="siom-table __size-XL" id="transactionsList">
-          <tr>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                №
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Основание:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Дата операции:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S ">
-                Сумма:
-              </div>
-              <div class="border-line"></div>
-            </th>
-          </tr>
-        </table>
-
-      }
-    </div><!-- История операции end -->
-
 
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
