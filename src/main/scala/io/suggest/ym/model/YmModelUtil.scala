@@ -1,6 +1,7 @@
 package io.suggest.ym.model
 
 import org.elasticsearch.action.update.UpdateRequestBuilder
+import org.elasticsearch.script.ScriptService.ScriptType
 
 /**
  * Suggest.io
@@ -30,7 +31,8 @@ object YmModelUtil {
       """sls = ctx._source[fn]; if (sls == null) { ctx.op = "none" } else { sls.values.contains(sl) ? (ctx._source[fn] -= sl) : (ctx.op = "none") }"""
     }
     updReq
-      .setScript(script)
+      .setScript(script, ScriptType.INLINE)
+      .setScriptLang("mvel")
       .addScriptParam("fn", levelFN)
       .addScriptParam("sl", level.toString)
   }

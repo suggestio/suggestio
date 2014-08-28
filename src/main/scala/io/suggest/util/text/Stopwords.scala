@@ -1,5 +1,7 @@
 package io.suggest.util.text
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.lucene.util.IOUtils
 import java.io.{BufferedReader, Reader}
 import collection.mutable
@@ -37,7 +39,7 @@ object Stopwords {
     else ???
     val filePath = FILE_PREFIX + fileSuffix
     val stream = getClass.getClassLoader.getResourceAsStream(filePath)
-    val reader = IOUtils.getDecodingReader(stream, IOUtils.CHARSET_UTF_8)
+    val reader = IOUtils.getDecodingReader(stream, StandardCharsets.UTF_8)
     // Загрузить стоп-слова в множество-аккамулятор
     val stops = mutable.HashSet[String]()
     swParser.loadStopwords(reader, stops)

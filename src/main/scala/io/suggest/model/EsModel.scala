@@ -79,12 +79,16 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
-  val UPDATE_RETRIES_MAX_DFLT = 5
+  /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
+  val UPDATE_RETRIES_MAX_DFLT = MyConfig.CONFIG.getInt("es.model.update.retries.max.dflt") getOrElse 5
 
   /** Сконвертить флаг reversed-сортировки в параметр для ES типа SortOrder. */
-  val isReversed2sortOrder: PartialFunction[Boolean, SortOrder] = {
-    case false => SortOrder.ASC
-    case true  => SortOrder.DESC
+  def isReversed2sortOrder(is: Boolean): SortOrder = {
+    if (is) {
+      SortOrder.DESC
+    } else {
+      SortOrder.ASC
+    }
   }
 
   /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
@@ -233,8 +237,8 @@ object EsModel extends MacroLogsImpl {
   }
   
   
-  val SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 2
-  val REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
+  def SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 5
+  def REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
 
 
   /**

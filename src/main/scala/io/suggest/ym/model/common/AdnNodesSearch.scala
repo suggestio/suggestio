@@ -183,7 +183,7 @@ object AdnNodesSearch {
 
     // Добавить фильтр по наличию логотипа. Т.к. поле не индексируется, то используется
     if (args.hasLogo.nonEmpty) {
-      var ef: FilterBuilder = FilterBuilders.scriptFilter(LOGO_EXIST_MVEL)
+      var ef: FilterBuilder = FilterBuilders.scriptFilter(LOGO_EXIST_MVEL).lang("mvel")
       if (!args.hasLogo.get) {
         ef = FilterBuilders.notFilter(ef)
       }

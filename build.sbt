@@ -20,7 +20,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.7"
-  val esVsn         = "1.1.1"
+  val esVsn         = "1.3.2"
   val hadoopVsn     = "2.4.1"
   val hbaseVsn      = "0.98.5-hadoop2"
   val akkaVsn       = "2.3.3"
@@ -28,7 +28,7 @@ libraryDependencies ++= {
   val tikaVsn       = "1.5"
   val cascadingVsn  = "2.6.+"
   val playVsn       = "2.3.3"
-  val morphVsn      = "1.2-SNAPSHOT"
+  val morphVsn      = "1.3-SNAPSHOT"
   val bcVsn         = "1.46"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,

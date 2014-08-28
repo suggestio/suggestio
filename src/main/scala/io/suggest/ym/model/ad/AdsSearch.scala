@@ -27,7 +27,7 @@ object AdsSearch {
     * @see [[http://stackoverflow.com/a/15539093]]
     */
   // TODO Оно кажется не работает совсем.
-  val IDS_SCORE_MVEL =
+  lazy val IDS_SCORE_MVEL =
     """
       |uid = doc["_uid"].value;
       |dInx = uid.indexOf('#');
@@ -140,14 +140,14 @@ object AdsSearch {
     }
     if (adSearch.generation.isDefined && adSearch.qOpt.isEmpty) {
       // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
-      val scoreFun = ScoreFunctionBuilders.scriptFunction(GENTS_SORTER_MVEL)
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(GENTS_SORTER_MVEL, "mvel")
         .param("generation", java.lang.Long.valueOf( Math.abs(adSearch.generation.get) ))
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
     if (adSearch.forceFirstIds.nonEmpty) {
       // Запрошено, чтобы указанные id были в начале списка результатов.
-      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL)
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL, "mvel")
         .param("ids", new ju.HashSet[String](adSearch.forceFirstIds.size).addAll(adSearch.forceFirstIds) )  // TODO Opt: использовать java.util.HashSet?
         .param("incr", 100)
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
