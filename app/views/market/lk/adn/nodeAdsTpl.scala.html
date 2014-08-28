@@ -5,10 +5,23 @@
 @import _node._
 @import controllers.adn.AdnShowTypes._
 
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition __act" >Все карточки</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition">На рассмотрение</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition">Размещенные</a>
+    <hr class="delimiter"/>
+  </nav>
+}
+
+
 @market.lk.lkBaseLayout(
   title    = "Рекламные карточки",
   adnIdOpt = node.id,
   leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS),
+  rightBar  = Some(rightBar),
   povAdnId = povAdnIdOpt
 ) {
 
