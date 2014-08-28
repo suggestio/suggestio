@@ -11,7 +11,7 @@
     <hr class="delimiter"/>
     <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
     <hr class="delimiter"/>
-    <a class="right-bar_menu-i def-transition">Реквизиты</a>
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Реквизиты</a>
     <hr class="delimiter"/>
   </nav>
 }
@@ -64,28 +64,11 @@
             </div>
           </td>
 
-          <td class="siom-table_top-cnt">
-            <div class="table-cell-cnt __size-XS">
-              <a class="siom-link-btn __size-M __ft-L __color-5 js-slide-btn" data-fix-title="true"  href="#requisites">РЕКВИЗИТЫ</a>
-            </div>
-          </td>
-
         }
       </table>
 
     }<!-- Верхняя информация end -->
 
-    <div class="siom-block-child" id="requisites">
-      @market.lk.lkBlock("Реквизиты платежа:") {
-
-        @* Реквизиты платежа *@
-        @_billPaymentBankTpl(mbc)
-        <span class="gray-but-smallest" style="margin-top: 25px;">
-          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
-        </span>
-
-      }
-    </div>
 
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
