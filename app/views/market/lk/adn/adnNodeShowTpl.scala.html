@@ -18,14 +18,7 @@
 
 }
 
-
 @content = {
-
-  @if(isMyNode) {
-    @helper.javascriptRouter("jsRoutes")(
-      routes.javascript.MarketAd.updateShowLevelSubmit
-    )
-  }
 
   @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
   @if(showBackBtn) {
@@ -35,28 +28,6 @@
       }
     }
   }
-
-  @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
-  @*if(isMyNode) {
-    @defining(node.adn.isReceiver) { isRcvr =>
-      @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
-        <div class="adn-title-buttons">
-
-          @if(showAdvsBtn) {
-            <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
-              @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-              РЕКЛАМОДАТЕЛИ
-            </a>
-          }
-
-          @if(isRcvr) {
-            <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
-          }
-
-        </div>
-      }
-    }
-  }*@
 
   <div class="profile_logo-bar">
     @if(node.meta.color.isDefined) {
@@ -113,6 +84,28 @@
 
   </div>
 
+
+  @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
+  @*if(isMyNode) {
+  @defining(node.adn.isReceiver) { isRcvr =>
+  @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
+  <div class="adn-title-buttons">
+
+    @if(showAdvsBtn) {
+    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+      @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
+      РЕКЛАМОДАТЕЛИ
+    </a>
+    }
+
+    @if(isRcvr) {
+    <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
+    }
+
+  </div>
+  }
+  }
+  }*@
 
   @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
   @*if(isMyNode && !advertisers.isEmpty) {

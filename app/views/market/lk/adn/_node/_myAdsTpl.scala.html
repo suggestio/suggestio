@@ -12,13 +12,16 @@
     <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
   }
 
+
+  <hr class="delimiter __light"/>
   @_adsListOuterTpl {
 
-    <div class="ads-list__block ads-list-block">
-      <a class="ads-list-block__link" href="@routes.MarketAd.createAd(node.id.get)" style="background: none;"></a>
-      <div class="ads-list-block__preview ads-list-block__preview_add-new">
-      </div>
-    </div>
+    @helper.javascriptRouter("jsRoutes")(
+      routes.javascript.MarketAd.updateShowLevelSubmit
+    )
+
+
+    <a class="add-adv-btn" href="@routes.MarketAd.createAd(node.id.get)">Создать карточку</a>
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
@@ -46,6 +49,7 @@
         @* Галочки для управления отображением рекламной карточки магазина.
            Отображаются, если модератор не запретил бесплатное размещение этой карточки. *@
         @mad.moderation.freeAdv.filter(!_.isAllowed).fold {
+
           @* Бесплатное размещение не запрещено. *@
           <div class="ads-list-block__controls">
             @defining(mad.allShowLevels) { adSls =>
