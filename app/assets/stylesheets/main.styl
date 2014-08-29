@@ -386,3 +386,66 @@ body
   .sio-footer-container,
   .login-button
     display: none
+
+/********************************************************************************************************************/
+/* Заглушка */
+/********************************************************************************************************************/
+.suggestio-cap
+  height  100%
+
+  &_bg
+    width               100%
+    height              100%
+    min-height          550px
+
+    background-image    url('/assets/images/suggestio/suggestio-cap_retina.jpg')
+    background-repeat   no-repeat
+    background-size     758px auto
+    background-position center top
+    background-color    white
+
+  &_bg_mobile
+    display             none
+    width               100%
+    height              100%
+    min-height          400px
+
+    background-image    url('/assets/images/suggestio/suggestio-cap_mobile_retina.jpg')
+    background-repeat   no-repeat
+    background-size     320px auto
+    background-position center top
+    background-color    white
+
+  &_footer
+    height      40px
+    margin-top  -40px
+    text-align  center
+
+  &_footer-text
+    display       inline-block
+    height        32px
+    padding-left  40px
+
+    color           #b6b8b9
+    font-family     'Arial'
+    font-size       10px
+    line-height     22px
+    vertical-align  middle
+
+    background-image    url('/assets/images/suggestio/suggestio-cap_footer-logo_retina.png')
+    background-repeat   no-repeat
+    background-size     31px auto
+    background-position left top
+
+  &_link
+    color           #94aad0
+    text-decoration none
+
+@media screen and (max-width: 767px)
+  .suggestio-cap
+
+    &_bg
+      display none
+
+    &_bg_mobile
+      display block
