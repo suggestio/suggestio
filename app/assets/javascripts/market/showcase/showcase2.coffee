@@ -945,6 +945,11 @@ siomart =
       ## гео добро
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
         siomart.geo.load_nodes()
+
+        if cbca_grid.columns > 2
+          siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+          cbca_grid.left_offset = 2
+          cbca_grid.rebuild()
         siomart.utils.ge('smGeoScreen').style.display = 'block'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
         return false
@@ -1147,7 +1152,6 @@ siomart =
        grid_ads_content.style.minHeight = es_content.style.minHeight = cbca_grid.wh + 1
 
     load_more : () ->
-
       if this.is_load_more_requested == true || this.is_fully_loaded == true
         return false
       console.log 'load more'
@@ -1373,7 +1377,6 @@ siomart =
 
         if siomart.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
-
           cbca_grid.init()
         else
           grid_container_dom.innerHTML += html
@@ -1381,10 +1384,10 @@ siomart =
 
         siomart.styles.init()
 
-        if data.action == 'searchAds'
-          siomart.navigation_layer.close true
-        else
-          siomart.navigation_layer.close()
+        #if data.action == 'searchAds'
+        #  siomart.navigation_layer.close true
+        #else
+        #  siomart.navigation_layer.close()
       else
 
         if data.action == 'searchAds'
