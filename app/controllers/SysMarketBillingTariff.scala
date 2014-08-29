@@ -17,7 +17,7 @@ import io.suggest.ym.parsers.Price
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.04.14 21:12
- * Description: Работа с тарифами в биллинге.
+ * Description: Работа с fee- и stat-тарифами в биллинге.
  */
 object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
 
@@ -105,19 +105,19 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
         }
       },
       {tariff1 =>
-        tariff0.name = tariff1.name
-        tariff0.tinterval = tariff1.tinterval
-        tariff0.fee = tariff1.fee
-        tariff0.feeCC = tariff1.feeCC
         val now = DateTime.now
-        tariff0.dateModified = Some(now)
-        if (tariff0.isEnabled != tariff1.isEnabled) {
-          tariff0.dateStatus = now
-          tariff0.isEnabled = tariff1.isEnabled
-        }
-        tariff0.dateFirst = tariff1.dateFirst
+        val tariff2 = tariff0.copy(
+          name = tariff1.name,
+          tinterval = tariff1.tinterval,
+          fee = tariff1.fee,
+          feeCC = tariff1.feeCC,
+          dateModified = Some(now),
+          dateFirst = tariff1.dateFirst,
+          isEnabled = tariff1.isEnabled,
+          dateStatus = if (tariff0.isEnabled != tariff1.isEnabled) now else tariff0.dateStatus
+        )
         val tariffSaved = DB.withConnection { implicit c =>
-          tariff0.save
+          tariff2.save
         }
         val flashMsg = editSaveFlashMsg(tariffSaved, contract)
         rdrFlashing(contract.adnId, flashMsg)
