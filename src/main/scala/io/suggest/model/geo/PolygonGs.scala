@@ -16,20 +16,22 @@ import scala.collection.JavaConversions._
 
 object PolygonGs {
 
-  def parseCoords: PartialFunction[Any, Seq[GeoPoint]] = {
-    case l: jl.Iterable[_] =>
-      l.flatMap { gpRaw => GeoPoint.deserializeOpt(gpRaw) }
-        .toSeq
+  def deserialize(jmap: ju.Map[_,_]): Option[PolygonGs] = {
+    Option(jmap get COORDS_ESFN)
+      .map { deserilizeCoords2polygon }
   }
 
-  def deserialize(jmap: ju.Map[_,_]): Option[PolygonGs] = {
-    Option(jmap get COORDS_ESFN) map {
+  def deserilizeCoords2polygon(coordLines: Any): PolygonGs = {
+    coordLines match {
+      case allCoords: Traversable[_] =>
+        PolygonGs(
+          outer = allCoords.headOption.fold(Seq.empty[GeoPoint])(LineStringGs.parseCoords),
+          holes = allCoords.toList.tail.map(LineStringGs.parseCoords)
+        )
+
       case allCoords: jl.Iterable[_] =>
         val allCoordsSeq: Traversable[_] = allCoords
-        PolygonGs(
-          outer = allCoords.headOption.fold(Seq.empty[GeoPoint])(parseCoords),
-          holes = allCoordsSeq.toList.tail.map(parseCoords)
-        )
+        deserilizeCoords2polygon(allCoordsSeq)
     }
   }
 
@@ -42,12 +44,7 @@ case class PolygonGs(outer: Seq[GeoPoint], holes: List[Seq[GeoPoint]] = Nil) ext
 
   override def _toPlayJsonInternal: FieldsJsonAcc = {
     val coords = outer :: holes
-    val playJson = coords.map { contours =>
-      val contours2 = contours map { gp =>
-        gp.toPlayGeoJson
-      }
-      JsArray(contours2)
-    }
+    val playJson = coords.map { LineStringGs.coords2playJson }
     List(COORDS_ESFN -> JsArray(playJson))
   }
 

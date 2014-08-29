@@ -11,21 +11,14 @@ import java.{util => ju}
  * Created: 22.08.14 15:37
  * Description: Тест для полигонов, которые используются для описания площадей узлов.
  */
-class PolygonGsTest extends FlatSpec with Matchers with CoordRnd {
+class PolygonGsTest extends FlatSpec with Matchers with CoordLineRnd {
 
   protected val testsPerTry = 100
-  
-  protected def rndCoordRow: Seq[GeoPoint] = {
-    val len = rnd.nextInt(200) + 50
-    (0 to len).map { j =>
-      GeoPoint(lat = newLat, lon = newLon)
-    }
-  }
-  
+
   protected def mkTestsNoHoles(f: PolygonGs => Unit): Unit = {
     (0 to testsPerTry) foreach { i =>
       val coords = rndCoordRow
-      PolygonGs(coords)
+      f(PolygonGs(coords))
     }
   }
 
@@ -38,5 +31,5 @@ class PolygonGsTest extends FlatSpec with Matchers with CoordRnd {
       pgs.toEsShapeBuilder  should not be  null
     }
   }
-  
+
 }

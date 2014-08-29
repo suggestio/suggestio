@@ -36,3 +36,18 @@ trait LatLonRnd[T] extends CoordRnd {
 
 }
 
+
+trait CoordLineRnd extends CoordRnd {
+
+  val minCoordLineLen = 50
+  val coordLineLenRnd = 200
+
+  protected def rndCoordRow: Seq[GeoPoint] = {
+    val len = rnd.nextInt(coordLineLenRnd) + minCoordLineLen
+    (0 to len).map { j =>
+      GeoPoint(lat = newLat, lon = newLon)
+    }
+  }
+
+}
+
