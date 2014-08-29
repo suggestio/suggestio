@@ -3,78 +3,55 @@
 @import ctx._
 @import util.TplDataFormatUtil._
 
+<div class="tariff_illustration-w">
+  <div class="tariff_illustration"></div>
+</div>
 
-<p class="paragraph __size-M color-light-strong ft-XS">
-  Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.shownTypeId) @adnNode.meta.name
-  определены тарифные планы на @ctx.now.getYear год.
-</p>
-<div class="border-line"></div>
-<table>
-  <tr>
-    <td>&nbsp;</td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
-        Будние дни: пн-чт
-      </div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="border-line __vertical js-vertical-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
-        Выходние дни: пт-вс
-      </div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-        <div class="border-line __vertical js-vertical-line"></div>
-    </td>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M color-light-strong ft-XS">
+
+<div class="ovh">
+
+  <table class="tariff_info">
+    <tr>
+      <td>&nbsp;</td>
+      <td class="td tariff_info-title">
+        Будние&nbsp;дни:&nbsp;пн-чт
+      </td>
+      <td></td>
+      <td class="td tariff_info-title">
+        Выходние&nbsp;дни:&nbsp;пт-вс
+      </td>
+      <td></td>
+      <td class="td tariff_info-title">
         Праздники/праймтайм
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="6">
-      <div class="border-line"></div>
-    </td>
-  </tr>
-  <tr>
-    <td class="siom-table_vertical-cnt">
-      <div class="table-cell-cnt __size-M color-light-strong ft-XS" style="padding-left: 0;">
-        Минимальный модуль
-        (на схеме слева)
-      </div>
-    </td>
-    @defining( mbmd.currency ) { currency =>
+      </td>
+    </tr>
+    <tr>
+      <td class="td tariff_pink ft-XS dark-gray">
+        Минимальный&nbsp;модуль<br/>
+        (на&nbsp;схеме&nbsp;слева)
+      </td>
+      @defining( mbmd.currency ) { currency =>
 
-      <td class="siom-table_vertical-cnt">
-        <div class="table-cell-cnt __size-M color-strong">
+        <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpWeekday, currency)/сутки
-        </div>
-      </td>
-      <td class="siom-table_vertical-cnt">
-        <div class="border-line __vertical js-vertical-line"></div>
-      </td>
-      <td class="siom-table_vertical-cnt">
-        <div class="table-cell-cnt __size-M color-strong">
+        </td>
+        <td class="td tariff_pink"></td>
+        <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpWeekend, currency)/сутки
-        </div>
-      </td>
-      <td class="siom-table_vertical-cnt">
-        <div class="border-line __vertical js-vertical-line"></div>
-      </td>
-      <td class="siom-table_vertical-cnt">
-        <div class="table-cell-cnt __size-M color-strong">
+        </td>
+        <td class="td tariff_pink"></td>
+        <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpPrimetime, currency)/сутки
-        </div>
+        </td>
+      }
+    </tr>
+    <tr>
+      <td></td>
+      <td class="td light-gray ft-XS" colspan="5">
+        Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.shownTypeId) @adnNode.meta.name
+        определены тарифные планы на @ctx.now.getYear год.
       </td>
+    </tr>
+  </table>
 
-    }
-  </tr>
-</table>
-
-<div class="border-line"></div>
-<span class="color-light-strong ft-XS inline-block f-right" style="padding: 10px 0;">
-  Остальные модули кратны минимальному и их цена высчитыватся <strong class="color-strong">х2, x3 ...</strong>
-</span>
+</div>

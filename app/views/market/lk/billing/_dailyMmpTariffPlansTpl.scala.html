@@ -7,19 +7,9 @@
 @import util.FormUtil.replaceEOLwithBR
 
 
-    <div class="f-left" style="padding-left: 10px; padding-right: 40px">
-      <img src="/assets/images/market/lk/tariff-illustration.png" />
-    </div>
-
-
-
-    <div class="ovh" style="padding-left: 20px; padding-right: 10px;">
-
-      @mbmds.map { mbmd =>
-        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
-      }
-
-    </div>
+    @mbmds.map { mbmd =>
+      @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+    }
 
     <div class="popup_t __inner">
       Информация

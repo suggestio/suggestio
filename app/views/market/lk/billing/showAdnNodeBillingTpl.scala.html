@@ -47,34 +47,48 @@
     </div>
   }
 
-  <h2 class="minor-title">
-    Ставка тарифных планов моего магазина
-  </h2>
-  <hr class="delimiter __light"/>
   @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
   @if(!mmpDailyTariffs.isEmpty) {
-    @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
+
+    <h2 class="minor-title">
+      Ставка тарифных планов моего магазина
+    </h2>
+    <hr class="delimiter __light"/>
+
+    @mmpDailyTariffs.map { mbmd =>
+      <div class="tariff">
+        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+      </div>
+    }
   }
 
 
-    @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
-       Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
-    @if(!otherRcvrs.isEmpty) {
+  @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
+     Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
+  @if(!otherRcvrs.isEmpty) {
 
-      @market.lk.lkBlock("Ставка тарифных планов рекламного размещения") {
+    <h2 class="minor-title">
+      Ставка тарифных планов рекламного размещения
+    </h2>
+    <hr class="delimiter __light"/>
 
-        @* Пока без вкладок, просто сплошным списком. *@
-        @otherRcvrs.map { rcvr =>
+    @* Пока без вкладок, просто сплошным списком. *@
+    @otherRcvrs.map { rcvr =>
+      @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
+      @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
+    }
 
-          @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-          @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
+    @market.lk.lkBlock("Ставка тарифных планов рекламного размещения") {
 
-
-        }
+      @* Пока без вкладок, просто сплошным списком. *@
+      @otherRcvrs.map { rcvr =>
+        @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
+        @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
 
       }
-
     }
+
+  }
 
 
 }
