@@ -32,6 +32,8 @@ cbca_grid =
     cm = 0
     this.max_allowed_cell_width = this.columns
 
+    this.cw = cw
+
     if this.left_offset > 0
       margin = this.left_offset*( this.cell_size + this.cell_padding) - this.cell_padding
       cw = cw - margin
@@ -328,6 +330,12 @@ cbca_grid =
 
     if this.columns > 8
       this.columns = 8
+
+  rebuild : () ->
+    cbca_grid.set_container_size()
+    cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+    cbca_grid.blocks = cbca_grid.m_blocks
+    cbca_grid.build()
 
   build : ( is_add ) ->
 
@@ -1727,12 +1735,9 @@ siomart =
       this.adjust()
 
       if cbca_grid.columns > 2
-        siomart.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.blocks_container.style.width)) / 2)
+        siomart.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
         cbca_grid.right_offset = 2
-        cbca_grid.set_container_size()
-        cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
-        cbca_grid.blocks = cbca_grid.m_blocks
-        cbca_grid.build()
+        cbca_grid.rebuild()
 
       ## Скрыть кнопки хидера главного экрана
       siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
@@ -1766,6 +1771,9 @@ siomart =
           siomart.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
+
+      cbca_grid.right_offset = 0
+      cbca_grid.rebuild()
 
       siomart.utils.ge('smGridAds').style.webkitFilter = ""
 
