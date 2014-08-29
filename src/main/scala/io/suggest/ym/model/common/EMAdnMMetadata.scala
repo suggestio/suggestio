@@ -40,21 +40,15 @@ object EMAdnMMetadataStatic {
    * @param fn Название поля, значение которого собираем в акк.
    * @param acc0 Начальный акк.
    * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
-   * @return Фьчерс с результирующим аккамулятором-множеством.
+   * @return Фьючерс с результирующим аккамулятором-множеством.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
    */
-  def searchScrollResp2strSet(searchResp: SearchResponse, fn: String, firstReq: Boolean, acc0: Set[String] = Set.empty, keepAliveMs: Long = 60000L)
+  def searchScrollResp2strSet(searchResp: SearchResponse, fn: String, firstReq: Boolean, acc0: Set[String] = Set.empty, keepAliveMs: Long = EsModel.SCROLL_KEEPALIVE_MS_DFLT)
                              (implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
-    val hits = searchResp.getHits.getHits
-    if (!firstReq && hits.length == 0) {
-      Future successful acc0
-    } else {
-      // Запустить в фоне получение следующей порции результатов
-      val nextScrollRespFut = client.prepareSearchScroll(searchResp.getScrollId)
-        .setScroll(new TimeValue(keepAliveMs))
-        .execute()
-      // Синхронно залить результаты текущего реквеста в аккамулятор
-      val accNew = hits.foldLeft[List[String]] (Nil) { (acc, hit) =>
+    // TODO Часть кода этого метода была вынесена в EsModel.foldSearchScroll(), но не тестирована после этого.
+    EsModel.foldSearchScroll(searchResp, acc0, keepAliveMs = keepAliveMs, firstReq = firstReq) {
+      (acc0, hits) =>
+        val acc1 = hits.getHits.foldLeft[List[String]] (Nil) { (acc, hit) =>
         hit.field(fn) match {
           case null =>
             acc
@@ -64,11 +58,8 @@ object EMAdnMMetadataStatic {
             }
         }
       }
-      val acc1 = acc0 ++ accNew
-      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
-      nextScrollRespFut flatMap { searchResp2 =>
-        searchScrollResp2strSet(searchResp2, fn, firstReq = false, acc1, keepAliveMs)
-      }
+      val acc2 = acc0 ++ acc1
+      Future successful acc2
     }
   }
 
@@ -105,7 +96,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticT {
       .addField(fn)
       .execute()
       .flatMap { searchResp =>
-        searchScrollResp2strSet(searchResp, fn, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT)
+        searchScrollResp2strSet(searchResp, fn, firstReq = true)
       }
   }
 

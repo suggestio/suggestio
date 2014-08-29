@@ -3,6 +3,7 @@ package io.suggest.model
 import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.lookup.SourceLookup
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
@@ -380,6 +381,44 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
+
+  /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
+    * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
+    * по возможности, включив SCAN.
+    * @param searchResp Результат выполненного поиского запроса с активным scroll'ом.
+    * @param acc0 Исходное значение аккамулятора.
+    * @param firstReq Флаг первого запроса. По умолчанию = true.
+    *                 В первом и последнем запросах не приходит никаких результатов, и их нужно различать.
+    * @param keepAliveMs Значение keep-alive для курсора на стороне ES.
+    * @param f fold-функция, генереящая на основе результатов поиска и старого аккамулятора новый аккамулятор типа A.
+    * @tparam A Тип аккамулятора.
+    * @return
+    */
+  def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                         (f: (A, SearchHits) => Future[A])
+                         (implicit ec: ExecutionContext, client: Client): Future[A] = {
+    if (!firstReq  &&  searchResp.getHits.getHits.length == 0) {
+      Future successful acc0
+    } else {
+      // Запустить в фоне получение следующей порции результатов
+      val scrollId = searchResp.getScrollId
+      // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
+      if (firstReq)
+        assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
+      val nextScrollRespFut = client.prepareSearchScroll(scrollId)
+        .setScroll(new TimeValue(keepAliveMs))
+        .execute()
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val acc1Fut = f(acc0, searchResp.getHits)
+      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+      nextScrollRespFut flatMap { searchResp2 =>
+        acc1Fut flatMap { acc1 =>
+          foldSearchScroll(searchResp2, acc1, firstReq = false, keepAliveMs)(f)
+        }
+      }
+    }
+  }
+
   // Сериализация дат
   val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
 
@@ -452,8 +491,6 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
 /** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
 trait EsModelMinimalStaticT extends EsModelStaticMapping {
-
-  def LOGGER: Logger
 
   type T <: EsModelMinimalT
 
@@ -619,19 +656,26 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         }
       }
   }
+  
+  def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Seq[A] = {
+    searchResp.getHits
+      .iterator()
+      .map(f) 
+      .toSeq
+  }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
-    searchResp.getHits.getHits.toSeq.map { hit =>
-      deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
-    }
+    searchRespMap(searchResp)(deserializeSearchHit)
+  }
+
+  def deserializeSearchHit(hit: SearchHit): T = {
+    deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
   }
 
   /** Список результатов в список id. */
   def searchResp2idsList(searchResp: SearchResponse): Seq[String] = {
-    searchResp.getHits.getHits
-      .toSeq
-      .map { _.getId }
+    searchRespMap(searchResp)(_.getId)
   }
 
   /**
@@ -837,7 +881,59 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       }
   }
 
+
+  /**
+   * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
+   * @param fromClient Откуда брать данные?
+   * @param toClient Куда записывать данные?
+   * @param reqSize Размер реквеста. По умолчанию 50.
+   * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
+   * @return Фьючерс для синхронизации.
+   */
+  def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                 (implicit ec: ExecutionContext): Future[CopyContentResult] = {
+    prepareScroll( new TimeValue(keepAliveMs) )(fromClient)
+      .setSize(reqSize)
+      .execute()
+      .flatMap { searchResp =>
+        val logPrefix = s"copyContent(${searchResp.getScrollId}): "
+        foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs) {
+          (acc0, hits) =>
+            LOGGER.trace(s"${logPrefix}${hits.getHits.length} hits read from source")
+            // Нужно запустить bulk request, который зальёт все хиты в toClient
+            val iter = hits.iterator().toIterator
+            if (iter.nonEmpty) {
+              val bulk = toClient.prepareBulk()
+              iter.foreach { hit =>
+                val model = deserializeSearchHit(hit)
+                bulk.add( model.indexRequestBuilder(toClient) )
+              }
+              bulk.execute().map { bulkResult =>
+                if (bulkResult.hasFailures)
+                  LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
+                val failedCount = bulkResult.iterator().count(_.isFailed)
+                val acc1 = acc0.copy(
+                  success = acc0.success + bulkResult.getItems.length - failedCount,
+                  failed  = acc0.failed + failedCount
+                )
+                LOGGER.trace(s"${logPrefix}bulk write finished. acc.success = ${acc1.success} acc.failed = ${acc1.failed}")
+                acc1
+              }
+            } else {
+              LOGGER.warn(s"${logPrefix}No more hits received.")
+              Future successful acc0
+            }
+        }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов
+      }
+  }
 }
+
+/**
+ * Результаты работы метода Model.copyContent() возвращаются в этом контейнере.
+ * @param success Кол-во успешных документов, т.е. для которых выполнена чтене и запись.
+ * @param failed Кол-во обломов.
+ */
+case class CopyContentResult(success: Long, failed: Long)
 
 
 /** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */

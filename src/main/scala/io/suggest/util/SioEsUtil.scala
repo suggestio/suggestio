@@ -1,5 +1,8 @@
 package io.suggest.util
 
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
@@ -204,6 +207,27 @@ object SioEsUtil extends MacroLogsImpl {
         info(logPrefix + "Ensuring shards for mvi=%s" format mvi)
         mvi.ensureShards(replicasCount) map { _ => mvi }
       }
+  }
+
+
+  /**
+   * Собрать новый transport client для прозрачной связи с внешним es-кластером.
+   * @param addrs Адреса узлов.
+   * @param clusterName Название удалённого кластера. Если None, то клиент будет игнорить проверку имени кластера.
+   * @return TransportClient
+   */
+  def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
+    val settingsBuilder = ImmutableSettings.settingsBuilder()
+      .put("cluster.name", clusterName)
+    clusterName match {
+      case Some(clusterName) =>
+        settingsBuilder.put("cluster.name", clusterName)
+      case None =>
+        settingsBuilder.put("client.transport.ignore_cluster_name", true)
+    }
+    val settings = settingsBuilder.build()
+    new TransportClient(settings)
+      .addTransportAddresses(addrs : _*)
   }
 
 
@@ -1374,5 +1398,4 @@ class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
     promise failure ex
   }
 }
-
 
