@@ -26,7 +26,10 @@ object MultiLineStringGs {
     coordLines match {
       case allCoordLines: TraversableOnce[_] =>
         MultiLineStringGs(
-          coords = allCoordLines.map(LineStringGs.parseCoords).toSeq
+          lines = allCoordLines
+            .map(LineStringGs.parseCoords)
+            .map(LineStringGs.apply)
+            .toSeq
         )
       case allCoordLines: jl.Iterable[_] =>
         fromCoordLines( allCoordLines.toIterator )
@@ -35,14 +38,14 @@ object MultiLineStringGs {
 }
 
 
-case class MultiLineStringGs(coords: Seq[Seq[GeoPoint]]) extends GeoShape {
+case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShape {
 
   /** Используемый тип фигуры. */
   override def shapeType = GsTypes.multilinestring
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   override def _toPlayJsonInternal: FieldsJsonAcc = {
-    val playJson = coords.map { LineStringGs.coords2playJson }
+    val playJson = lines.map { line => LineStringGs.coords2playJson(line.coords) }
     List(COORDS_ESFN -> JsArray(playJson))
   }
 
@@ -50,10 +53,10 @@ case class MultiLineStringGs(coords: Seq[Seq[GeoPoint]]) extends GeoShape {
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder: MultiLineStringBuilder = {
     // Заливаем линии
-    coords.foldLeft(ShapeBuilder.newMultiLinestring) {
+    lines.foldLeft(ShapeBuilder.newMultiLinestring) {
       (acc0, coordLine) =>
         // Заливаем все точки в линию
-        coordLine.foldLeft(acc0.linestring) {
+        coordLine.coords.foldLeft(acc0.linestring) {
           (acc1, e)  =>  acc1.point(e.lon, e.lat)
         }.end()
     }

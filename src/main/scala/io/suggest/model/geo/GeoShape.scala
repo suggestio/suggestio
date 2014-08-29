@@ -25,11 +25,13 @@ object GeoShape {
         .map(EsModel.stringParser)
         .flatMap { GsTypes.maybeWithName }
         .flatMap {
-          case GsTypes.point        => PointGs.deserialize(jmap)
-          case GsTypes.circle       => CircleGs.deserialize(jmap)
-          case GsTypes.polygon      => PolygonGs.deserialize(jmap)
-          case GsTypes.linestring   => LineStringGs.deserialize(jmap)
-          case GsTypes.multipoint   => MultiPoingGs.deserialize(jmap)
+          case GsTypes.point              => PointGs.deserialize(jmap)
+          case GsTypes.circle             => CircleGs.deserialize(jmap)
+          case GsTypes.polygon            => PolygonGs.deserialize(jmap)
+          case GsTypes.linestring         => LineStringGs.deserialize(jmap)
+          case GsTypes.multipoint         => MultiPoingGs.deserialize(jmap)
+          case GsTypes.multilinestring    => MultiLineStringGs.deserialize(jmap)
+          case GsTypes.multipolygon       => MultiPolygonGs.deserialize(jmap)
         }
   }
 }

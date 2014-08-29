@@ -1,7 +1,7 @@
 package io.suggest.model.geo
 
 import io.suggest.model.EsModel.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import GeoShape.COORDS_ESFN
 import java.{util => ju, lang => jl}
@@ -43,15 +43,23 @@ case class PolygonGs(outer: Seq[GeoPoint], holes: List[Seq[GeoPoint]] = Nil) ext
   override def shapeType = GsTypes.polygon
 
   override def _toPlayJsonInternal: FieldsJsonAcc = {
+    List(COORDS_ESFN -> _toPlayJsonCoords)
+  }
+
+  def _toPlayJsonCoords: JsArray = {
     val coords = outer :: holes
     val playJson = coords.map { LineStringGs.coords2playJson }
-    List(COORDS_ESFN -> JsArray(playJson))
+    JsArray(playJson)
   }
 
   override def toEsShapeBuilder = {
     val poly = ShapeBuilder.newPolygon()
     // Рисуем оболочку
-    outer foreach { outerGp =>
+    renderToEsPolyBuilder(poly)
+  }
+
+  def renderToEsPolyBuilder[T <: BasePolygonBuilder[T]](poly: BasePolygonBuilder[T]): BasePolygonBuilder[T] = {
+     outer foreach { outerGp =>
       poly.point(outerGp.lon, outerGp.lat)
     }
     poly.close()

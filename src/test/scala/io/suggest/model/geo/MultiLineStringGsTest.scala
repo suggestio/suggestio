@@ -10,7 +10,7 @@ import java.{util => ju}
  * Created: 29.08.14 18:45
  * Description: Тесты для геошейпа MultiLineStringGs.
  */
-class MultiLineStringGsTest  extends FlatSpec with Matchers with CoordLineRnd {
+class MultiLineStringGsTest extends FlatSpec with Matchers with CoordLineRnd {
 
   protected val testsPerTry = 10
   protected val lineMaxCount = 20
@@ -18,7 +18,7 @@ class MultiLineStringGsTest  extends FlatSpec with Matchers with CoordLineRnd {
   protected def mkTests(f: MultiLineStringGs => Unit): Unit = {
     (0 to testsPerTry) foreach { i =>
       val coords = (0 to (rnd.nextInt(lineMaxCount) + 1)) map { j =>
-        rndCoordRow
+        LineStringGs( rndCoordRow )
       }
       f(MultiLineStringGs(coords))
     }
