@@ -7,14 +7,12 @@ import EsModel._
 import io.suggest.util.SioEsUtil._
 import play.api.Play.current
 import com.lambdaworks.crypto.SCryptUtil
-import io.suggest.util.StringUtil
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
-import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io

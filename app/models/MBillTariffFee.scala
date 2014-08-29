@@ -69,19 +69,19 @@ object MBillTariffFee extends FindByContract with TariffsAllEnabled with UpdateD
 
 
 case class MBillTariffFee(
-  id              : Option[Int] = None,
-  contractId      : Int,
+  id          : Option[Int] = None,
+  contractId  : Int,
   name        : String,
-  ttype           : BTariffType = BTariffTypes.Fee,
+  ttype       : BTariffType = BTariffTypes.Fee,
   isEnabled   : Boolean,
   dateFirst   : DateTime,
-  dateCreated     : DateTime = DateTime.now,
+  dateCreated : DateTime = DateTime.now,
   dateModified: Option[DateTime] = None,
-  dateLast        : Option[DateTime] = None,
+  dateLast    : Option[DateTime] = None,
   tinterval   : PGInterval,
   dateStatus  : DateTime = DateTime.now,
-  generation      : Int = 0,
-  debitCount      : Int = 0,
+  generation  : Int = 0,
+  debitCount  : Int = 0,
   fee         : Float,
   feeCC       : String = "RUB"
 ) extends SqlModelSave[MBillTariffFee] with MBillContractSel with SqlModelDelete with MBillTariff {

@@ -2,7 +2,7 @@ package models
 
 import _root_.util.qsb.QsbUtil
 import io.suggest.model._
-import io.suggest.model.common.{EMNameStatic, EMDateCreatedStatic, EMName, EMDateCreatedMut}
+import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -33,7 +33,7 @@ object MInviteRequest
   extends EsModelStaticEmpty
   with EMInviteRequestStatic
   with EMDateCreatedStatic
-  with EMNameStatic
+  with EMNameStaticMut
   with PlayMacroLogsImpl
 {
 
@@ -147,7 +147,7 @@ case class MInviteRequest(
   extends EsModelEmpty
   with EMInviteRequestMut
   with EMDateCreatedMut
-  with EMName
+  with EMNameMut
 {
   override type T = MInviteRequest
   override def companion = MInviteRequest
