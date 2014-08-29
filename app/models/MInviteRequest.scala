@@ -2,7 +2,7 @@ package models
 
 import _root_.util.qsb.QsbUtil
 import io.suggest.model._
-import io.suggest.model.common.{EMNameStatic, EMDateCreatedStatic, EMName, EMDateCreatedMut}
+import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -33,7 +33,7 @@ object MInviteRequest
   extends EsModelStaticEmpty
   with EMInviteRequestStatic
   with EMDateCreatedStatic
-  with EMNameStatic
+  with EMNameStaticMut
   with PlayMacroLogsImpl
 {
 
@@ -83,7 +83,7 @@ object MInviteRequest
     m.fold[JsObject](_.toPlayJsonWithId, idObjF)
   }
 
-  def deserializeEsModel[X](companion: EsModelStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
+  def deserializeEsModel[X](companion: EsModelMinimalStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
     jmap.get(ID_ESFN) match {
       case null =>
         val docId = Option(jmap get "id") map stringParser
@@ -147,7 +147,7 @@ case class MInviteRequest(
   extends EsModelEmpty
   with EMInviteRequestMut
   with EMDateCreatedMut
-  with EMName
+  with EMNameMut
 {
   override type T = MInviteRequest
   override def companion = MInviteRequest

@@ -175,10 +175,11 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
           .map(NotAcceptable(_))
       },
       {mcal2 =>
-        val mcal1 = request.mcal
-        mcal1.name = mcal2.name
-        mcal1.data = mcal2.data
-        mcal1.save map { _ =>
+        val mcal3 = request.mcal.copy(
+          name = mcal2.name,
+          data = mcal2.data
+        )
+        mcal3.save map { _ =>
           HolidayManager.clearManagerCache()
           Redirect(routes.SysCalendar.showCalendars())
             .flashing("success" -> "Изменения в календаре сохранены.")

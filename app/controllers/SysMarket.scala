@@ -620,8 +620,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       {email1 =>
         val eAct = EmailActivation(email=email1, key = adnId)
         eAct.save.map { eActId =>
-          eAct.id = Some(eActId)
-          sendEmailInvite(eAct, adnNode)
+          val eact2 = eAct.copy(
+            id = Some(eActId)
+          )
+          sendEmailInvite(eact2, adnNode)
           // Письмо отправлено, вернуть админа назад в магазин
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))

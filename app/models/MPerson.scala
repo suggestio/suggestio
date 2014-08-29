@@ -1,10 +1,11 @@
 package models
 
-import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanCommon, EsModelStaticT, EsModelT}
+import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel._
+import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext, future}
 import org.elasticsearch.client.Client
 import play.api.Play.current
@@ -24,7 +25,7 @@ import io.suggest.event.SioNotifierStaticClientI
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
+object MPerson extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -60,15 +61,12 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
     FieldString(LANG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
   )
 
-
-  override def applyKeyValue(acc: MPerson): PartialFunction[(String, AnyRef), Unit] = {
-    case (LANG_ESFN, value)     => acc.lang = stringParser(value)
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+    MPerson(
+      id = id,
+      lang = Option(m get LANG_ESFN).fold("ru")(stringParser)
+    )
   }
-
-  override protected def dummy(id: Option[String], version: Option[Long]) = {
-    MPerson(id = id, lang = null)
-  }
-
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
   def findUsername(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
@@ -108,8 +106,8 @@ import MPerson._
  *             Формат четко неопределён, и соответствует коду выхлопа Controller.lang().
  */
 case class MPerson(
-  var lang  : String,
-  var id    : Option[String] = None
+  lang  : String,
+  id    : Option[String] = None
 ) extends EsModelT with MPersonLinks {
 
   override type T = MPerson

@@ -62,21 +62,26 @@ object SiowebEsModel {
         success = results.iterator.map(_.success).sum,
         failed  = results.iterator.map(_.failed).sum
       )
-      logger.info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total succesd=${result.success} failed=${result.failed}")
+      import result._
+      logger.info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total=${success + failed} success=$success failed=$failed")
       result
     }
   }
 
 }
 
+
+/** Интерфейс для JMX-бина.  */
 trait SiowebEsModelJmxMBean {
   def importModelFromRemote(modelStr: String, remotes: String): String
   def importModelsFromRemote(remotes: String): String
 }
 
+/** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
 class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
   override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
+  /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */
   override def futureTimeout = 5 minutes
 
   override def importModelFromRemote(modelStr: String, remotes: String): String = {

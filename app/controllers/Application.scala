@@ -44,8 +44,11 @@ object Application extends SioController with PlayMacroLogsImpl {
       val langCode = lang1.language
       pw.personOptFut.flatMap {
         case Some(person) =>
-          person.lang = langCode
-          person.save.map {_ => resp0 }
+          val person2 = person.copy(
+            lang = langCode
+          )
+          person2.save
+            .map {_ => resp0 }
 
         case None =>
           // TODO Внезапно неизвесный юзер с правильными кукисами в сессии.

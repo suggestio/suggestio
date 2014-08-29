@@ -4,6 +4,7 @@ import io.suggest.model._
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.JsString
+import scala.collection.Map
 import scala.concurrent.ExecutionContext
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
@@ -14,7 +15,7 @@ import org.elasticsearch.client.Client
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
-object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
+object MCalendar extends EsModelMinimalStaticT with PlayMacroLogsImpl {
   import io.suggest.util.SioEsUtil._
   import LOGGER._
 
@@ -25,18 +26,13 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
   val NAME_ESFN = "name"
   val DATA_ESFN = "data"
 
-  override protected def dummy(id: Option[String], version: Option[Long]): T = {
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id = id,
-      versionOpt = version,
-      name = null,
-      data = null
+      name = Option(m get NAME_ESFN).fold("WTF?")(EsModel.stringParser),
+      data = EsModel.stringParser(m get DATA_ESFN),
+      versionOpt = version
     )
-  }
-
-  override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
-    case (NAME_ESFN, nameRaw) => acc.name = EsModel.stringParser(nameRaw)
-    case (DATA_ESFN, dataRaw) => acc.data = EsModel.stringParser(dataRaw)
   }
 
   override def generateMappingStaticFields: List[Field] = List(
@@ -55,8 +51,8 @@ import MCalendar._
 
 
 case class MCalendar(
-  var name: String,
-  var data: String,
+  name: String,
+  data: String,
   id: Option[String] = None,
   versionOpt: Option[Long] = None
 ) extends EsModelT {
