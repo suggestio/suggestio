@@ -4,7 +4,8 @@ cbca_grid =
   top_offset : 70
   bottom_offset : 20
   max_allowed_cell_width : 4
-
+  left_offset : 0
+  right_offset : 0
   blocks : []
   spacers : []
 
@@ -25,31 +26,28 @@ cbca_grid =
 
   set_container_size : () ->
     this.set_window_size()
+    this.count_columns()
 
-    no_of_cells = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+    cw = this.columns * ( this.cell_size + this.cell_padding) - this.cell_padding
+    cm = 0
+    this.max_allowed_cell_width = this.columns
 
-    if no_of_cells < 2
-      no_of_cells = 2
+    if this.left_offset > 0
+      margin = this.left_offset*( this.cell_size + this.cell_padding) - this.cell_padding
+      cw = cw - margin
+      cm = margin
 
-    if no_of_cells > 8
-      no_of_cells = 8
-
-    if no_of_cells == 3
-      no_of_cells = 3
-
-    if no_of_cells == 5
-      no_of_cells = 4
-
-    if no_of_cells == 7
-      no_of_cells = 6
-
-    cw = no_of_cells * ( this.cell_size + this.cell_padding) - this.cell_padding
-
-    this.max_allowed_cell_width = no_of_cells
+    if this.right_offset > 0
+      margin = this.right_offset*( this.cell_size + this.cell_padding) - this.cell_padding
+      cw = cw - margin
+      cm = -margin
 
     if typeof this.layout_dom != 'undefined'
       this.layout_dom.style.width = cw + 'px'
+      this.layout_dom.style.left = cm/2 + 'px'
       this.layout_dom.style.opacity = 1
+
+    this.columns = this.columns - this.left_offset - this.right_offset
 
   ##############
   ## Fetch block
@@ -318,6 +316,19 @@ cbca_grid =
 
     this.build()
 
+  count_columns : () ->
+    # Определеяем сколько колонок влезет в экран колонок
+    this.columns = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+
+    if this.columns % 2 == 1
+      this.columns--
+
+    if this.columns < 2
+      this.columns = 2
+
+    if this.columns > 8
+      this.columns = 8
+
   build : ( is_add ) ->
 
     is_add = is_add || false
@@ -338,24 +349,6 @@ cbca_grid =
     # Определяем ширину окна
     window_width = this.ww
 
-    # Определеяем сколько колонок влезет в экран колонок
-    columns = Math.floor( ( window_width - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
-
-    if columns < 2
-      columns = 2
-
-    if columns > 8
-      columns = 8
-
-    if columns == 3
-      columns = 3
-
-    if columns == 5
-      columns = 4
-
-    if columns == 7
-      columns = 6
-
     # Ставим указатели строки и колонки
     cline = 0
     pline = 0
@@ -364,7 +357,7 @@ cbca_grid =
     if is_add == false
       # Генерим объект с инфой об использованном месте
       columns_used_space = {}
-      for c in [0..columns-1]
+      for c in [0..this.columns-1]
         columns_used_space[c] =
           used_height : 0
     else
@@ -377,7 +370,7 @@ cbca_grid =
 
       pline = cline
 
-      if cur_column >= Math.floor columns
+      if cur_column >= Math.floor this.columns
         cur_column = 0
         cline++
         left_pointer = left_pointer_base
@@ -398,7 +391,7 @@ cbca_grid =
 
           # есть место хотя бы для одного блока с минимальной шириной
           # высяним блок с какой шириной может влезть
-          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
+          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, this.columns
 
           b = this.fetch_block block_max_w
 
@@ -925,7 +918,6 @@ siomart =
       ## Обработка событий для открытия / закрытия экрана выхода
       if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'block'
-        siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
@@ -1659,7 +1651,6 @@ siomart =
     ## Инициализация focused_ads
     ############################
     init : () ->
-      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
@@ -1735,7 +1726,13 @@ siomart =
 
       this.adjust()
 
-      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
+      if cbca_grid.columns > 2
+        siomart.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.blocks_container.style.width)) / 2)
+        cbca_grid.right_offset = 2
+        cbca_grid.set_container_size()
+        cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+        cbca_grid.blocks = cbca_grid.m_blocks
+        cbca_grid.build()
 
       ## Скрыть кнопки хидера главного экрана
       siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
