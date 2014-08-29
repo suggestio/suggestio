@@ -27,8 +27,8 @@ object MozillaPersonaIdent extends MPersonIdentSubmodelStatic with PlayMacroLogs
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MozillaPersonaIdent(
-      personId = m.get(PERSON_ID_ESFN).map(stringParser).get,
-      email    = m.get(KEY_ESFN).map(stringParser).get
+      personId = stringParser( m(PERSON_ID_ESFN) ),
+      email    = stringParser( m(KEY_ESFN) )
     )
   }
 
