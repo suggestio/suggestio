@@ -29,6 +29,7 @@ object GeoShape {
           case GsTypes.circle       => CircleGs.deserialize(jmap)
           case GsTypes.polygon      => PolygonGs.deserialize(jmap)
           case GsTypes.linestring   => LineStringGs.deserialize(jmap)
+          case GsTypes.multipoint   => MultiPoingGs.deserialize(jmap)
         }
   }
 }

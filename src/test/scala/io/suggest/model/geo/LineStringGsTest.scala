@@ -10,27 +10,41 @@ import java.{util => ju}
  * Created: 29.08.14 17:23
  * Description: Тесты для Linestring GeoShape'ов.
  */
-class LineStringGsTest extends FlatSpec with Matchers with CoordLineRnd {
+class LineStringGsTest extends MultiPoingGeoShapeTest {
+  override type T = LineStringGs
+  override def companion = LineStringGs
+}
+
+
+/** Общий код multipoint-фигур лежит здесь. */
+trait MultiPoingGeoShapeTest extends FlatSpec with Matchers with CoordLineRnd {
 
   protected val testsPerTry = 100
   override val minCoordLineLen = 2
   override val coordLineLenRnd = 40
+  
+  type T <: GeoShape
 
-  protected def mkTests(f: LineStringGs => Unit): Unit = {
+  protected def testName = companion.apply(Nil).getClass.getSimpleName
+  
+  def companion: MultiPointShapeStatic { type Shape_t = T }
+
+  protected def mkTests(f: T => Unit): Unit = {
     (0 to testsPerTry) foreach { i =>
       val coords = rndCoordRow
-      f(LineStringGs(coords))
+      f(companion.apply(coords))
     }
   }
 
 
-  "LineStringGs" should "serialize/deserialize to/from ES JSON" in {
+  testName should "serialize/deserialize to/from ES JSON" in {
     mkTests { lsgs =>
       val jsonStr = Json.stringify( lsgs.toPlayJson )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
-      LineStringGs.deserialize(jacksonJson)  shouldBe  Some(lsgs)
+      companion.deserialize(jacksonJson)  shouldBe  Some(lsgs)
       lsgs.toEsShapeBuilder  should not be  null
     }
   }
 
 }
+
