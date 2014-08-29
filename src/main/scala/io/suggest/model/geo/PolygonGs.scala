@@ -18,10 +18,10 @@ object PolygonGs {
 
   def deserialize(jmap: ju.Map[_,_]): Option[PolygonGs] = {
     Option(jmap get COORDS_ESFN)
-      .map { deserilizeCoords2polygon }
+      .map { fromCoordLines }
   }
 
-  def deserilizeCoords2polygon(coordLines: Any): PolygonGs = {
+  def fromCoordLines(coordLines: Any): PolygonGs = {
     coordLines match {
       case allCoords: Traversable[_] =>
         PolygonGs(
@@ -31,7 +31,7 @@ object PolygonGs {
 
       case allCoords: jl.Iterable[_] =>
         val allCoordsSeq: Traversable[_] = allCoords
-        deserilizeCoords2polygon(allCoordsSeq)
+        fromCoordLines(allCoordsSeq)
     }
   }
 
