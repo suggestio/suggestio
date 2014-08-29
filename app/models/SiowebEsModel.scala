@@ -1,18 +1,17 @@
 package models
 
-import io.suggest.model.{EsModelMinimalT, EsModel, EsModelMinimalStaticT}
-import scala.concurrent.{Future, ExecutionContext}
+import io.suggest.model.{CopyContentResult, EsModel, EsModelMinimalStaticT}
+import io.suggest.util.{JMXBase, SioEsUtil}
+import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
+import util.SiowebEsUtil
+import scala.concurrent.Future
 import org.elasticsearch.client.Client
 import play.api.Play.current
-import io.suggest.event.subscriber.SnClassSubscriber
-import io.suggest.event.SNStaticSubscriber
-import play.api.Play.current
-import play.api.cache.Cache
-import io.suggest.event.SioNotifier.Event
-import akka.actor.ActorContext
-import scala.reflect.ClassTag
-import io.suggest.ym.model.common.EMAdNetMember
 import org.slf4j.LoggerFactory
+import scala.concurrent.duration.FiniteDuration
+import scala.util.{Failure, Success}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -32,159 +31,80 @@ object SiowebEsModel {
     )
   }
 
-  def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(implicit client: Client): Future[Boolean] = {
     val ignoreExist = current.configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
     LoggerFactory.getLogger(getClass).trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModel.putAllMappings(ES_MODELS, ignoreExist)
   }
 
-}
 
-
-/** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
-// TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
-// TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
-
-  type StaticModel_t <: EsModelMinimalStaticT { type T = T1 }
-  def companion: StaticModel_t
-
-  val EXPIRE_SEC: Int
-  val CACHE_KEY_SUFFIX: String
-
-  type GetAs_t
-
-  /**
-   * Генерация ключа кеша.
-   * @param id id исходного документа.
-   * @return Строка, пригодная для использования в качестве ключа кеша.
-   */
-  def cacheKey(id: String): String = id + CACHE_KEY_SUFFIX
-
-  def getByIdFromCache(id: String): Option[T1] = {
-    val ck = cacheKey(id)
-    Cache.getAs[T1](ck)
-  }
-
-  /**
-   * Вернуть закешированный результат либо прочитать его из хранилища.
-   * @param id id исходного документа.
-   * @return Тоже самое, что и исходный getById().
-   */
-  def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
-    val ck = cacheKey(id)
-    // Негативные результаты не кешируются.
-    Cache.getAs[T1](ck) match {
-      case r @ Some(adnn) =>
-        Future successful r
-
-      case None => getByIdAndCache(id, ck)
-    }
-  }
-
-  /**
-   * Аналог getByIdCached, но для multiget().
-   * @param ids id'шники, которые надо бы получить.
-   * @return Результаты в неопределённом порядке.
-   */
-  def multiGet(ids: TraversableOnce[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
-    val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
-      case ((accCached, notCached), id) =>
-        getByIdFromCache(id) match {
-          case Some(adnNode) =>
-            (adnNode :: accCached) -> notCached
-          case None =>
-            accCached -> (id :: notCached)
-        }
-    }
-    val resultFut = companion.multiGet(nonCachedIds, acc0 = cached)
-    // Асинхронно отправить в кеш всё, чего там ещё не было.
-    if (nonCachedIds.nonEmpty) {
-      resultFut onSuccess { case results =>
-        val ncisSet = nonCachedIds.toSet
-        results.foreach { result =>
-          if (ncisSet contains result.idOrNull) {
-            val ck = cacheKey(result.idOrNull)
-            Cache.set(ck, result, EXPIRE_SEC)
-          }
-        }
+  /** Запуск импорта данных ES-моделей из удалённого источника (es-кластера) в текущий.
+    * Для подключения к стороннему кластеру будет использоваться transport client, не подключающийся к кластеру. */
+  def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelMinimalStaticT] = ES_MODELS): Future[CopyContentResult] = {
+    val logger = play.api.Logger(getClass)
+    val logPrefix = "importModelsFromRemote():"
+    val esModelsCount = esModels.size
+    logger.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
+    val fromClient = SioEsUtil.newTransportClient(addrs, clusterName = None)
+    val toClient = SiowebEsUtil.client
+    val resultFut = Future.traverse(esModels) { esModel =>
+      val copyResultFut = esModel.copyContent(fromClient, toClient)
+      copyResultFut onComplete {
+        case Success(result) =>
+          logger.info(s"$logPrefix Copy finished for model ${esModel.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
+        case Failure(ex) =>
+          logger.error(s"$logPrefix Copy failed for model ${esModel.getClass.getSimpleName}", ex)
       }
+      copyResultFut
     }
-    resultFut
-  }
-
-  /**
-   * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.
-   * @param idOpt Опциональный id.
-   * @return Тоже самое, что и [[getById]].
-   */
-  def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
-    idOpt match {
-      case Some(id) => getById(id)
-      case None     => Future successful None
-    }
-  }
-
-  /**
-   * Прочитать из хранилища документ, и если всё нормально, то отправить его в кеш.
-   * @param id id документа.
-   * @param ck0 Ключ в кеше.
-   * @return Тоже самое, что и исходный getById().
-   */
-  def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
-    val ck: String = if (ck0 == null) cacheKey(id) else ck0
-    val resultFut = companion.getById(id)
-    resultFut onSuccess {
-      case Some(adnn) =>
-        Cache.set(ck, adnn, EXPIRE_SEC)
-      case _ => // do nothing
-    }
-    resultFut
-  }
-
-  /**
-   * Фунцкия возвращает строку id, извлеченную из полученного события.
-   * @param event Полученное событие.
-   * @return String либо null, если нет возможности извлечь id из события.
-   */
-  def event2id(event: Event): String
-
-  /**
-   * Передать событие подписчику.
-   * @param event событие.
-   * @param ctx контекст sio-notifier.
-   */
-  def publish(event: Event)(implicit ctx: ActorContext) {
-    val idOrNull = event2id(event)
-    if (idOrNull != null) {
-      val ck = cacheKey(idOrNull)
-      Cache.remove(ck)
+    resultFut map { results =>
+      val result = CopyContentResult(
+        success = results.iterator.map(_.success).sum,
+        failed  = results.iterator.map(_.failed).sum
+      )
+      logger.info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total succesd=${result.success} failed=${result.failed}")
+      result
     }
   }
 
 }
 
-/** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
-abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag] extends EsModelCache[T] {
+trait SiowebEsModelJmxMBean {
+  def importModelFromRemote(modelStr: String, remotes: String): String
+  def importModelsFromRemote(remotes: String): String
+}
 
-  /**
-   * Для AdnNode и других последователей EMAdNetMember.
-   * @param id id элемента.
-   * @param memberType тип участника рекламной сети.
-   * @return Тоже самое, что и все остальные getById().
-   */
-  def getByIdType(id: String, memberType: AdNetMemberType)
-                       (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
-    val ck = cacheKey(id)
-    Cache.getAs[T](ck) match {
-      case r @ Some(adnm) =>
-        val result = if (adnm.adn.memberType == memberType)  r  else  None
-        Future successful result
+class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
+  override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
-      case None =>
-        getByIdAndCache(id, ck)
-          .map { _.filter(_.adn.memberType == memberType) }
-    }
+  override def futureTimeout = 5 minutes
+
+  override def importModelFromRemote(modelStr: String, remotes: String): String = {
+    val modelStr1 = modelStr.trim
+    val model = SiowebEsModel.ES_MODELS
+      .find(_.getClass.getSimpleName equalsIgnoreCase modelStr1)
+      .get
+    _importModelsFromRemote(remotes, Seq(model))
   }
 
+  override def importModelsFromRemote(remotes: String): String = {
+    _importModelsFromRemote(remotes, SiowebEsModel.ES_MODELS)
+  }
+
+  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelMinimalStaticT]) = {
+    val addrs = remotes.split("[\\s,]+")
+      .toIterator
+      .map { hostPortStr =>
+        val Array(host, portStr) = hostPortStr.split(':')
+        val port = portStr.toInt
+        new InetSocketTransportAddress(host, port)
+      }
+      .toSeq
+    SiowebEsModel.importModelsFromRemote(addrs, models)
+      .map { result =>
+        import result._
+        s"Total=${success + failed} success=$success failed=$failed"
+      }
+  }
 }
+

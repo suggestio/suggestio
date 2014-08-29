@@ -277,6 +277,8 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 }
 
 
+/** Контексто-зависимый код экшена, который реализует смену пароля у пользователя.
+  * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
 trait ChangePwAction extends SioController with PlayMacroLogsI {
   import Ident.changePasswordFormM
 
