@@ -64,7 +64,7 @@ object MPerson extends EsModelMinimalStaticT with PlayMacroLogsImpl {
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MPerson(
       id = id,
-      lang = Option(m get LANG_ESFN).fold("ru")(stringParser)
+      lang = m.get(LANG_ESFN).fold("ru")(stringParser)
     )
   }
 

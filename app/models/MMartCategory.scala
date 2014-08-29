@@ -262,12 +262,12 @@ object MMartCategory extends EsModelMinimalStaticT with PlayMacroLogsImpl {
     MMartCategory(
       id        = id,
       name      = EMName.extractName(m),
-      ownerId   = stringParser(m get OWNER_ID_ESFN),
-      ymCatPtr  = JacksonWrapper.convert[MMartYmCatPtr](m get YM_CAT_ESFN),
+      ownerId   = stringParser( m(OWNER_ID_ESFN) ),
+      ymCatPtr  = JacksonWrapper.convert[MMartYmCatPtr]( m(YM_CAT_ESFN) ),
       parentId  = EMParentIdOpt.extractParentIdOpt(m),
-      position  = intParser(m get POSITION_ESFN),
-      cssClass  = Option(m get CSS_CLASS_ESFN).map(stringParser),
-      includeInAll = booleanParser(m get INCLUDE_IN_ALL_ESFN)
+      position  = m.get(POSITION_ESFN).fold(Int.MaxValue)(intParser),
+      cssClass  = m.get(CSS_CLASS_ESFN).map(stringParser),
+      includeInAll = booleanParser( m(INCLUDE_IN_ALL_ESFN) )
     )
   }
 
@@ -294,7 +294,7 @@ case class MMartCategory(
   position      : Int = Int.MaxValue,
   id            : Option[String] = None,
   cssClass      : Option[String] = None,
-  includeInAll: Boolean = true
+  includeInAll  : Boolean = true
 ) extends EsModelEmpty with EMName with EMParentIdOpt with TreeSortable {
 
   override type T = MMartCategory

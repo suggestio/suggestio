@@ -38,8 +38,8 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailActivation(
-      key = stringParser(m get KEY_ESFN),
-      email = stringParser(m get PERSON_ID_ESFN)
+      key = stringParser(m(KEY_ESFN)),
+      email = stringParser(m(PERSON_ID_ESFN))
     )
   }
 

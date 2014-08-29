@@ -25,10 +25,10 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailPwIdent(
-      email       = stringParser(m get KEY_ESFN),
-      pwHash      = stringParser(m get VALUE_ESFN),
-      isVerified  = booleanParser(m get IS_VERIFIED_ESFN),
-      personId    = stringParser(m get PERSON_ID_ESFN)
+      email       = stringParser( m(KEY_ESFN) ),
+      pwHash      = stringParser( m(VALUE_ESFN) ),
+      isVerified  = m.get(IS_VERIFIED_ESFN).fold(false)(booleanParser),
+      personId    = stringParser( m(PERSON_ID_ESFN) )
     )
   }
 

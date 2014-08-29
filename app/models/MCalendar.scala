@@ -29,8 +29,8 @@ object MCalendar extends EsModelMinimalStaticT with PlayMacroLogsImpl {
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id = id,
-      name = Option(m get NAME_ESFN).fold("WTF?")(EsModel.stringParser),
-      data = EsModel.stringParser(m get DATA_ESFN),
+      name = m.get(NAME_ESFN).fold("WTF?")(EsModel.stringParser),
+      data = EsModel.stringParser( m(DATA_ESFN) ),
       versionOpt = version
     )
   }
