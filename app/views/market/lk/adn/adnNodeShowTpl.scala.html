@@ -9,14 +9,6 @@
 @import ctx._
 @import _node._
 
-@prop(name: String, propClass: Option[String] = None)(value: Html) = {
-
-  <table class="prop @propClass">
-    <td class="prop_name">@name</td>
-    <td class="prop_value">@value</td>
-  </table>
-
-}
 
 @content = {
 
@@ -42,18 +34,18 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @prop("Название") { @node.meta.name }
+    @market.lk.lkProp(){ Название } { @node.meta.name }
 
     @if(node.meta.town.isDefined) {
-      @prop("Адрес") { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
+      @market.lk.lkProp(){ Адрес } { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
     }
 
     @if(node.meta.siteUrl.isDefined) {
-      @prop("Сайт") { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
+      @market.lk.lkProp(){ Сайт } { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
     }
 
     @if(node.meta.info.isDefined) {
-      @prop("Информация о товарах или услугах") { @node.meta.info }
+      @market.lk.lkProp(){ Информация о товарах или услугах } { @node.meta.info  }
     }
 
     <hr class="delimiter __light"/>

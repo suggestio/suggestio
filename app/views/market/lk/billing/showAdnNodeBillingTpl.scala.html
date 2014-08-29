@@ -63,6 +63,7 @@
   }
 
 
+
   @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
      Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
   @if(!otherRcvrs.isEmpty) {
@@ -75,20 +76,17 @@
     @* Пока без вкладок, просто сплошным списком. *@
     @otherRcvrs.map { rcvr =>
       @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-      @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
-    }
 
-    @market.lk.lkBlock("Ставка тарифных планов рекламного размещения") {
-
-      @* Пока без вкладок, просто сплошным списком. *@
-      @otherRcvrs.map { rcvr =>
-        @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-        @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
-
+      @{
+        val test = Some("qqqq")
       }
+
+      @market.lk.lkBlockNewDesign(
+        href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) )
+      ) { @rcvr.meta.name&nbsp;/&nbsp;<span class="ft-S light-gray">@rcvr.meta.town</span> } { }
+
     }
 
   }
-
 
 }
