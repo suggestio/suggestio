@@ -64,20 +64,20 @@ object MBillTariffStat extends FindByContract with TariffsAllEnabled {
 case class MBillTariffStat(
   id              : Option[Int] = None,
   contractId      : Int,
-  var name        : String,
-  var debitFor    : AdStatAction,
-  var debitAmount : Float,
+  name        : String,
+  debitFor    : AdStatAction,
+  debitAmount : Float,
   ttype           : BTariffType = BTariffTypes.Stat,
-  var isEnabled   : Boolean,
-  var dateFirst   : DateTime,
+  isEnabled   : Boolean,
+  dateFirst   : DateTime,
   dateCreated     : DateTime = DateTime.now,
-  var dateModified: Option[DateTime] = None,
+  dateModified: Option[DateTime] = None,
   dateLast        : Option[DateTime] = None,
-  var dateStatus  : DateTime = DateTime.now,
+  dateStatus  : DateTime = DateTime.now,
   generation      : Int = 0,
   debitCount      : Int = 0,
   debitedTotal    : Float = 0F,
-  var currencyCode: String = "RUB"
+  currencyCode: String = "RUB"
 ) extends SqlModelSave[MBillTariffStat] with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffStat._
 

@@ -107,14 +107,14 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
       {tariff1 =>
         val now = DateTime.now
         val tariff2 = tariff0.copy(
-          name = tariff1.name,
-          tinterval = tariff1.tinterval,
-          fee = tariff1.fee,
-          feeCC = tariff1.feeCC,
+          name        = tariff1.name,
+          tinterval   = tariff1.tinterval,
+          fee         = tariff1.fee,
+          feeCC       = tariff1.feeCC,
           dateModified = Some(now),
-          dateFirst = tariff1.dateFirst,
-          isEnabled = tariff1.isEnabled,
-          dateStatus = if (tariff0.isEnabled != tariff1.isEnabled) now else tariff0.dateStatus
+          dateFirst   = tariff1.dateFirst,
+          isEnabled   = tariff1.isEnabled,
+          dateStatus  = if (tariff0.isEnabled != tariff1.isEnabled) now else tariff0.dateStatus
         )
         val tariffSaved = DB.withConnection { implicit c =>
           tariff2.save
@@ -227,18 +227,18 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
         }
       },
       {tariff2 =>
-        tariff.debitAmount = tariff2.debitAmount
-        tariff.debitFor = tariff2.debitFor
-        tariff.name = tariff2.name
         val now = DateTime.now
-        tariff.dateModified = Some(now)
-        if (tariff.isEnabled != tariff2.isEnabled) {
-          tariff.dateStatus = now
-          tariff.isEnabled = tariff2.isEnabled
-        }
-        tariff.dateFirst = tariff2.dateFirst
+        val tariff3 = tariff.copy(
+          debitAmount = tariff2.debitAmount,
+          debitFor    = tariff2.debitFor,
+          name        = tariff2.name,
+          dateModified = Some(now),
+          isEnabled   = tariff2.isEnabled,
+          dateStatus  = if (tariff.isEnabled != tariff2.isEnabled) now else tariff.dateStatus,
+          dateFirst   = tariff2.dateFirst
+        )
         DB.withConnection { implicit c =>
-          tariff.save
+          tariff3.save
         }
         val flashMsg = editSaveFlashMsg(tariff, request.contract)
         rdrFlashing(request.contract.adnId, flashMsg)
