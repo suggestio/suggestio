@@ -16,12 +16,13 @@
           <img class="profile_logo-img" src='@routes.Img.getImg(imgId)'/>
           <a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить">Удалить</a>
         </div>
-
-        <div class="image __logo js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
-          @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
-          <a class="image_add-btn js-file-upload-btn" title="Загрузить логотип">Загрузить логотип</a>
-        </div>
       }
+
+      <div class="image __logo js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
+        @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
+        <a class="image_add-btn js-file-upload-btn" title="Загрузить логотип">Загрузить логотип</a>
+      </div>
+
     }
   </div>
 
@@ -60,6 +61,19 @@
     }
 
     <hr class="delimiter __light"/>
+
+    @if(nodeInfo.isReceiver) {
+      @inputText(
+        mf("meta.humanTrafficAvg"),
+        '_label -> "Суточный трафик"
+      )
+
+      @textarea(
+        mf("meta.audienceDescr"),
+        '_label -> "Описание аудитории"
+      )
+      <hr class="delimiter __light"/>
+    }
 
     <table class="prop">
       <td class="prop_name td">
@@ -125,23 +139,7 @@
 
 
 
-
-    @if(nodeInfo.isReceiver) {
-      <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
-        @textarea(
-          mf("meta.audienceDescr"),
-          '_label -> "Описание \n аудитории:"
-        )
-      </table>
-      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
-        @inputText(
-          mf("meta.humanTrafficAvg"),
-          '_label -> "Суточный трафик:"
-        )
-      </table>
-    }
-
-    @if(nodeInfo.isReceiver) {
+    @if(false) {
       <table cellpadding="0" cellspacing="0" class="input-w __size-L">
 
         <tbody>

@@ -48,6 +48,13 @@
       @market.lk.lkProp(){ Информация о товарах или услугах } { @node.meta.info  }
     }
 
+    @if(node.adn.isReceiver) {
+
+      <hr class="delimiter __light"/>
+      @market.lk.lkProp(){ Суточный трафик } { @node.meta.humanTrafficAvg  }
+      @market.lk.lkProp(){ Описание аудитории } { @node.meta.audienceDescr  }
+    }
+
     <hr class="delimiter __light"/>
 
     <table class="prop">
