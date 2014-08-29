@@ -13,18 +13,29 @@ import play.api.libs.json.JsString
  */
 
 object EMName {
+
   val NAME_ESFN = "name"
+
+  def extractName(m: collection.Map[String, AnyRef]): String = {
+    stringParser(m(NAME_ESFN))
+  }
+
 }
+
 
 import EMName._
 
-trait EMNameStatic extends EsModelStaticT {
+trait EMNameStatic extends EsModelMinimalStaticT {
   override type T <: EMName
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(NAME_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false) ::
       super.generateMappingProps
   }
+}
+
+trait EMNameStaticMut extends EsModelStaticT with EMNameStatic {
+  override type T <: EMNameMut
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
@@ -36,11 +47,16 @@ trait EMNameStatic extends EsModelStaticT {
 
 trait EMName extends EsModelT {
   override type T <: EMName
-
-  var name: String
+  def name: String
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     (NAME_ESFN, JsString(name)) :: super.writeJsonFields(acc)
   }
 
+}
+
+
+trait EMNameMut extends EMName {
+  override type T <: EMNameMut
+  var name: String
 }

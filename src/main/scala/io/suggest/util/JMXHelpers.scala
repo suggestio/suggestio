@@ -23,10 +23,12 @@ trait JMXBase {
 
   def jmxName: String
 
+  def futureTimeout: FiniteDuration = 10 seconds
+
   /** Хелпер для быстрой синхронизации фьючерсов. */
   implicit protected def awaitFuture[T](fut: Awaitable[T]) = {
     try {
-      Await.result(fut, 10 seconds)
+      Await.result(fut, futureTimeout)
     } catch {
       case ex: Throwable =>
         val logger = LoggerFactory.getLogger(getClass)

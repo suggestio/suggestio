@@ -392,7 +392,7 @@ object EsModel extends MacroLogsImpl {
     * @param keepAliveMs Значение keep-alive для курсора на стороне ES.
     * @param f fold-функция, генереящая на основе результатов поиска и старого аккамулятора новый аккамулятор типа A.
     * @tparam A Тип аккамулятора.
-    * @return
+    * @return Данные по результатам операции, включающие кол-во удач и ошибок.
     */
   def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                          (f: (A, SearchHits) => Future[A])
@@ -896,7 +896,8 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       .setSize(reqSize)
       .execute()
       .flatMap { searchResp =>
-        val logPrefix = s"copyContent(${searchResp.getScrollId}): "
+        // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
+        val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
         foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs) {
           (acc0, hits) =>
             LOGGER.trace(s"${logPrefix}${hits.getHits.length} hits read from source")
@@ -920,7 +921,6 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
                 acc1
               }
             } else {
-              LOGGER.warn(s"${logPrefix}No more hits received.")
               Future successful acc0
             }
         }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов

@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import io.suggest.model.common.{EMDateCreatedStatic, EMName}
+import io.suggest.model.common.{EMName, EMDateCreatedStatic, EMNameMut}
 import io.suggest.ym.model.common.{EMCompanyMetaMut, MCompanyMeta, EMCompanyMeta, EMCompanyMetaStatic}
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client

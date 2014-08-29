@@ -10,7 +10,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import java.util.concurrent.atomic.AtomicInteger
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import io.suggest.model.common.{EMParentIdOptStatic, EMNameStatic, EMParentIdOpt, EMName}
+import io.suggest.model.common.{EMParentIdOptStaticMut, EMNameStaticMut, EMParentIdOptMut, EMNameMut}
 
 /**
  * Suggest.io
@@ -24,8 +24,8 @@ import io.suggest.model.common.{EMParentIdOptStatic, EMNameStatic, EMParentIdOpt
  */
 object MYmCategory
   extends EsModelStaticEmpty
-  with EMNameStatic
-  with EMParentIdOptStatic
+  with EMNameStaticMut
+  with EMParentIdOptStaticMut
   with MacroLogsImpl
 {
   import LOGGER._
@@ -128,8 +128,8 @@ case class MYmCategory(
   id            : Option[String] = None
 )
   extends EsModelEmpty
-  with EMName
-  with EMParentIdOpt
+  with EMNameMut
+  with EMParentIdOptMut
 {
   override type T = MYmCategory
 
