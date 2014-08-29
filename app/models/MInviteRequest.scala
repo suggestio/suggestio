@@ -83,7 +83,7 @@ object MInviteRequest
     m.fold[JsObject](_.toPlayJsonWithId, idObjF)
   }
 
-  def deserializeEsModel[X](companion: EsModelStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
+  def deserializeEsModel[X](companion: EsModelMinimalStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
     jmap.get(ID_ESFN) match {
       case null =>
         val docId = Option(jmap get "id") map stringParser

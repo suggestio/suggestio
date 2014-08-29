@@ -120,7 +120,9 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                 // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
                 val eact = EmailActivation(email = email1, key = epwIdent.personId)
                 eact.save.map { eaId =>
-                  eact.id = Some(eaId)
+                  val eact2 = eact.copy(
+                    id = Some(eaId)
+                  )
                   // Можно отправлять письмецо на ящик.
                   val mail = use[MailerPlugin].email
                   mail.setFrom("no-reply@suggest.io")
@@ -128,8 +130,8 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                   val ctx = implicitly[Context]
                   mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
                   mail.send(
-                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact)(ctx),
-                    bodyHtml = emailPwRecoverTpl(eact)(ctx)
+                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact2)(ctx),
+                    bodyHtml = emailPwRecoverTpl(eact2)(ctx)
                   )
                 }
               }
