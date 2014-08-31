@@ -33,12 +33,6 @@ object EMReceivers {
 
   val RECEIVERS_ESFN   = "receivers"
   val RECEIVER_ID_ESFN = "receiverId"
-  
-  /** Название поля, содержащего уровни отображения, желаемые продьюсером контента. */ 
-  val SLS_WANT_ESFN    = "slWant"
-  
-  /** Название поля, содержащего уровни отображения, выставленные системой на основе желаемых и разрешенных. */
-  val SLS_PUB_ESFN     = "slPub"
 
   /** Поле, содержащее уровни отображения карточки на всех синках. */
   val SLS_ESFN         = "sls"
@@ -48,8 +42,6 @@ object EMReceivers {
   private def fullFN(fn: String) = RECEIVERS_ESFN + "." + fn
 
   def RCVRS_RECEIVER_ID_ESFN  = fullFN(RECEIVER_ID_ESFN)
-  def RCVRS_SLS_WANT_ESFN     = fullFN(SLS_WANT_ESFN)
-  def RCVRS_SLS_PUB_ESFN      = fullFN(SLS_PUB_ESFN)
   def RCVRS_SLS_ESFN          = fullFN(SLS_ESFN)
 
 
@@ -106,32 +98,6 @@ trait EMReceiversStatic extends EsModelStaticT {
       case (RECEIVERS_ESFN, value) =>
         acc.receivers = AdReceiverInfo.deserializeAll(value)
     }
-  }
-
-  /**
-   * Накатить сверху на запрос дополнительный фильтр для уровней.
-   * @param query0 Исходный поисковый запрос.
-   * @param isPub Если true, то будет поиск по published-уровням. Иначе по want-уровням.
-   * @param withLevels Список допустимых уровней. Если пусто, то будет фильтр, ищущий карточки без уровней вообще.
-   * @param useAnd Использовать "and"-оператор для термов. Если false, то будет "or".
-   * @return QueryBuilder
-   */
-  def withLevelsFilter(query0: QueryBuilder, isPub: Boolean, withLevels: Seq[AdShowLevel], useAnd: Boolean): QueryBuilder = {
-    // Нужен фильтр по уровням.
-    val fn = if (isPub) {
-      RCVRS_SLS_PUB_ESFN
-    } else {
-      RCVRS_SLS_WANT_ESFN
-    }
-    val lvlFilter = if (withLevels.isEmpty) {
-      // нужна реклама без уровней вообще
-      FilterBuilders.missingFilter(fn)
-    } else {
-      FilterBuilders.termsFilter(fn, withLevels : _*)
-        .execution(if (useAnd) "and" else "or")
-    }
-    val nestedLvlFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, lvlFilter)
-    QueryBuilders.filteredQuery(query0, nestedLvlFilter)
   }
 
 
@@ -219,7 +185,7 @@ object AdReceiverInfo {
         receiverId = v.get(RECEIVER_ID_ESFN).toString,
         sls = Option(v get SLS_ESFN)
           .map ( SinkShowLevels.deserializeLevelsSet )
-          .orElse { Option(v get SLS_PUB_ESFN).map { SinkShowLevels.deserializeFromAdSls } }
+          .orElse { Option(v get SLS_ESFN).map { SinkShowLevels.deserializeFromAdSls } }
           .getOrElse { Set.empty }
       )
   }

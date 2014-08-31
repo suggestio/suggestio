@@ -39,7 +39,7 @@ object EMModeration {
       |rcvrs = _source['$RECEIVERS_ESFN'];
       |if (rcvrs != null) {
       |  foreach (rcvr: rcvrs) {
-      |    if (rcvr['$RECEIVER_ID_ESFN'] == prodId && rcvr['$SLS_PUB_ESFN'] != empty)
+      |    if (rcvr['$RECEIVER_ID_ESFN'] == prodId && rcvr['$SLS_ESFN'] != empty)
       |      return true;
       |  }
       |}

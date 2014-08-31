@@ -94,7 +94,7 @@ object AdsSearch {
           nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
         }
         if (levels.nonEmpty) {
-          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.name) : _*)
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
         }
         // Если получилось несколько фильтров, то надо их объеденить.
         val finalNestedSubfilter: FilterBuilder = if (nestedSubfilters.tail.nonEmpty) {
@@ -115,7 +115,7 @@ object AdsSearch {
       } else {
         var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
         if (levels.nonEmpty) {
-          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.name) : _*)
+          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
           nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
         }
         val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
@@ -126,7 +126,7 @@ object AdsSearch {
       if (levels.isEmpty) {
         None
       } else {
-        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_PUB_ESFN, levels.map(_.name) : _*)
+        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_ESFN, levels.map(_.name) : _*)
         val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
         Some(qb)
       }
@@ -134,7 +134,7 @@ object AdsSearch {
       // Сборка реквеста не удалась вообще: все параметры не заданы. Просто возвращаем все объявы в рамках индекса.
       // Нужно фильтровать только отображаемые где-либо.
       val q0 = QueryBuilders.matchAllQuery()
-      val f = FilterBuilders.existsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN)
+      val f = FilterBuilders.existsFilter(EMReceivers.RCVRS_SLS_ESFN)
       val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
       QueryBuilders.filteredQuery(q0, nf)
     }
