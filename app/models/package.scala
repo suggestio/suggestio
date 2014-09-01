@@ -166,5 +166,6 @@ package object models {
   type MNodeAdsMode         = MNodeAdsModes.MNodeAdsMode
   type NodeRightPanelLink   = NodeRightPanelLinks.NodeRightPanelLink
   type LkLeftPanelLink      = LkLeftPanelLinks.LkLeftPanelLink
+  type NodeGeoLevel         = NodeGeoLevels.NodeGeoLevel
 
 }
