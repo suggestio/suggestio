@@ -43,7 +43,7 @@ trait MultiPointShapeStatic {
 
 
 /** Общий код linestring и multipoint здеся. */
-trait MultiPointShape extends GeoShape {
+trait MultiPointShape extends GeoShapeQuerable {
 
   def coords: Seq[GeoPoint]
 

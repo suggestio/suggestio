@@ -38,7 +38,7 @@ object MultiLineStringGs {
 }
 
 
-case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShape {
+case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable {
 
   /** Используемый тип фигуры. */
   override def shapeType = GsTypes.multilinestring

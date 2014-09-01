@@ -23,7 +23,7 @@ trait MultiPoingGeoShapeTest extends FlatSpec with Matchers with CoordLineRnd {
   override val minCoordLineLen = 2
   override val coordLineLenRnd = 40
   
-  type T <: GeoShape
+  type T <: GeoShapeQuerable
 
   protected def testName = companion.apply(Nil).getClass.getSimpleName
   

@@ -35,7 +35,7 @@ object MultiPolygonGs {
 }
 
 
-case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShape {
+case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.multipolygon
 

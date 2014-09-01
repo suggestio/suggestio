@@ -23,7 +23,7 @@ object PointGs {
 }
 
 
-case class PointGs(coord: GeoPoint) extends GeoShape {
+case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.point
 

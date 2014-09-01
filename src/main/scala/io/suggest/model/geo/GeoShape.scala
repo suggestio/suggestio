@@ -32,6 +32,7 @@ object GeoShape {
           case GsTypes.multipoint         => MultiPoingGs.deserialize(jmap)
           case GsTypes.multilinestring    => MultiLineStringGs.deserialize(jmap)
           case GsTypes.multipolygon       => MultiPolygonGs.deserialize(jmap)
+          case GsTypes.geometrycollection => GeometryCollectionGs.deserialize(jmap)
         }
   }
 }
@@ -55,11 +56,20 @@ trait GeoShape {
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   def _toPlayJsonInternal: FieldsJsonAcc
 
-  /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
-    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]] */
+}
+
+
+/** Если элемент можно запрашивать в geo-shape search/filter, то нужен билдер для Shape'а. */
+trait GeoShapeQuerable extends GeoShape {
+
+  /**
+   * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
+   */
   def toEsShapeBuilder: ShapeBuilder
 
 }
+
 
 /** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
 object GsTypes extends Enumeration {

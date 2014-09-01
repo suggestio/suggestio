@@ -39,7 +39,7 @@ object PolygonGs {
 
 
 /** Полигон с необязательными дырками в двумерном пространстве. */
-case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShape {
+case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShapeQuerable {
   override def shapeType = GsTypes.polygon
 
   override def _toPlayJsonInternal: FieldsJsonAcc = {
