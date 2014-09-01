@@ -8,7 +8,7 @@
 
   @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
     @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
-      <div class="image __size-M js-preview">
+      <div class="image __size-M __first-in-line js-preview">
         <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
         <img class="image_src" src="@routes.Img.getImg(imgId)" />
         <a class="image_remove-btn js-remove-image" title="Удалить файл"></a>

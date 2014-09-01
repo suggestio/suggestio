@@ -49,8 +49,8 @@
       @market.lk.lkProp(){ Информация о товарах или услугах } { @node.meta.info  }
     }
 
-    @if(node.adn.isReceiver) {
 
+    @if(node.adn.isReceiver) {
       <hr class="delimiter __light"/>
       @market.lk.lkProp(){ Суточный трафик } { @node.meta.humanTrafficAvg  }
       @market.lk.lkProp(){ Описание аудитории } { @node.meta.audienceDescr  }
@@ -60,8 +60,8 @@
       <hr class="delimiter __light"/>
       <div class="prop">
         <p class="prop_name __block">Фотографии объекта:</p>
-        @node.gallery.map { imgId =>
-          <div class="image __size-M f-left">
+        @node.gallery.zipWithIndex.map { case (imgId, i) =>
+          <div class="image __size-M f-left @if(i % 4 == 0){ __first-in-line }">
             <img class="image_src" src="@routes.Img.getThumb(imgId)" />
             <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="image_remove-btn">Увеличить</a>
           </div>

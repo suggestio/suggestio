@@ -3,23 +3,24 @@
 @* Страница показывает юзеру только реквизиты платежа для пополнения счета.
    !Это версия для печати, поэтому лишней верстки здесь быть не должно. *@
 
-@market.lk.lkBase(
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">Биллинг тарифных планов</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Реквизиты</a>
+    <hr class="delimiter"/>
+  </nav>
+}
+
+@market.lk.lkBaseLayout(
   title = "Безналичный банковский платеж",
   leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING),
+  rightBar  = Some(rightBar),
   adnIdOpt = adnNode.id
 ) {
 
-  <div class="page-title">
-    <div class="page-title_cnt">
-      <a class="back-btn __hidden"></a>
-      РЕКВИЗИТЫ ПЛАТЕЖА
-    </div>
-  </div>
-
-  <div class="body_cnt">
-
-    @_billPaymentBankTpl(mbc)
-
-  </div>
+  @_billPaymentBankTpl(mbc)
 
 }
