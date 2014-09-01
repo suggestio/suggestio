@@ -24,8 +24,8 @@
   <div class="profile_logo-bar">
     @if(node.meta.color.isDefined) {
       @node.logoImgOpt.map { img =>
-        <div class="profile_logo-w" style="background-color: #@node.meta.color;">
-          <img class="profile_logo-img" src='@routes.Img.getImg(img.filename)' alt="@node.meta.name"/>
+        <div class="image __size-L" style="background-color: #@node.meta.color;">
+          <img class="image_src" src='@routes.Img.getImg(img.filename)' alt="@node.meta.name"/>
         </div>
       }
     }

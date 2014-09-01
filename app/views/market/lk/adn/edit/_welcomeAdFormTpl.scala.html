@@ -8,17 +8,22 @@
 
   @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
     @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
-      <div class="add-file-w __preview">
+      <div class="image __size-M js-preview">
         <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
-        <img class="add-file-w_image js-image-preview" src="@routes.Img.getImg(imgId)" />
-        <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
+        <img class="image_src" src="@routes.Img.getImg(imgId)" />
+        <a class="image_remove-btn js-remove-image" title="Удалить файл"></a>
       </div>
     }
   }
 
-  <div class="add-file-w __size-S"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
-    @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "welcomeImgId")
-    <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+  <div class="image __size-M f-left js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
+    @stuff._fileUploadTpl(
+      routes.Img.handleTempImg,
+      fieldName = "welcomeImgId",
+      previewRoot = "#welcomeImage",
+      previewClass = "__size-M f-left"
+    )
+    <a class="image_add-btn js-file-upload-btn" title="Загрузить картинку приветствия">Загрузить картинку приветствия</a>
   </div>
 
 

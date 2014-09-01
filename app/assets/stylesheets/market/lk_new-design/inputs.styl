@@ -67,7 +67,6 @@
 
 .image
   position  relative
-  height    140px
 
   &:hover
 
@@ -77,10 +76,25 @@
     .image_remove-btn
       display inline-block
 
-  &.__logo
+  &.__size-L
     width       140px
     height      140px
+    max-width   140px
+    max-height  140px
     line-height 120px
+
+  &.__size-M
+    width       140px
+    height      85px
+    max-width   140px
+    max-height  85px
+    line-height 120px
+
+  &_src
+    margin      0 auto
+    display     block
+    max-height  inherit
+    max-width   inherit
 
   &_add-btn
     position        absolute
@@ -114,8 +128,3 @@
     background-color  rgba(0,0,0,0.7)
     cursor            pointer
     transition(0.2s all ease-in-out 0s)
-
-  &_src
-    margin:         0 auto
-    max-width       100%
-    max-height      100%

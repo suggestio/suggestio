@@ -524,21 +524,23 @@ PersonalCabinet =
           dataMultiple = $this.attr 'data-multiple'
           dataMultiple && multiple = true
 
-          console.log "multiple=#{multiple}"
+          console.log fieldName
           if multiple
             # если уже есть загруженные фотографии
-            previewCounts = $previewRoot.find '.js-preview'
+            $previews = $previewRoot.find '.js-preview'
+            previewCounts = $previews.length
             fieldName = "#{fieldName}[#{previewCounts}]"
 
+          console.log fieldName
+
           html =  """
-                   <div class="image __preview js-preview #{previewClass}">
+                   <div class="image js-preview #{previewClass}">
                    <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
                    <img class="image_src js-image-preview" src="#{respData.image_link}" />
-                   <a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить файл">Удалить</a>
+                   <a class="image_remove-btn js-remove-image" title="Удалить файл">Удалить</a>
                    </div>
                   """
 
-          console.log html
           $previewRoot.append html
 
           if !multiple

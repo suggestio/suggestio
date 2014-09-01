@@ -10,20 +10,24 @@
   <div class="profile_logo-bar" id="logo">
     @defining(mf("logoImgId").value) { logoImgIdOpt =>
       @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
-
-        <div class="image __logo js-preview" style="background-color: #@mf("meta.color").value;">
+        <style class="custom-color-style" data-for=".__logo">
+          .__logo {
+            background-color: #@mf("meta.color").value;
+          }
+        </style>
+        <div class="image __logo __size-L js-preview">
           <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-          <img class="profile_logo-img" src='@routes.Img.getImg(imgId)'/>
+          <img class="image_src" src='@routes.Img.getImg(imgId)'/>
           <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
         </div>
       }
 
-      <div class="image js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
+      <div class="image __size-L js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
         @stuff._fileUploadTpl(
           routes.MarketLkAdnEdit.handleTempLogo(),
           fieldName = "logoImgId",
-          dataPreviewRoot = "#logo",
-          dataPreviewClass = "__logo"
+          previewRoot = "#logo",
+          previewClass = "__logo __size-L"
         )
         <a class="image_add-btn js-file-upload-btn" title="Загрузить логотип">Загрузить логотип</a>
       </div>
@@ -78,6 +82,47 @@
         '_label -> "Описание аудитории"
       )
       <hr class="delimiter __light"/>
+
+      <div class="prop" id="welcomeImage">
+        <p class="prop_name __block">Картинка приветствия:</p>
+        @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+      </div>
+
+      <hr class="delimiter __light"/>
+
+      <div class="prop" id="profileGallery">
+        <p class="prop_name __block">Фотографии объекта:</p>
+
+        <div class="image __size-M f-left js-image-upload" >
+          @stuff._fileUploadTpl(
+          routes.Img.handleTempImg,
+          fieldName = "gallery",
+          multiple = true,
+          previewRoot = "#profileGallery",
+          previewClass = "__size-M f-left"
+          )
+          <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">Загрузить фотографию</a>
+        </div>
+
+        @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
+        @defining( mf("gallery") ) { gf =>
+          @gf.indexes.map { gfi =>
+            @defining( s"gallery[$gfi]" ) { gfn =>
+              @mf(gfn).value.map { imgId =>
+                <div class="image __size-M f-left js-image-upload">
+                  <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                  <img class="image_src" src="@routes.Img.getThumb(imgId)" />
+                  <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
+                </div>
+              }
+            }
+          }
+
+        }
+      </div><!-- profile gallery end -->
+
+      <hr class="delimiter __light"/>
+
     }
 
     <table class="prop">
