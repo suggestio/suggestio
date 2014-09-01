@@ -1,11 +1,12 @@
-@(mbc: MBillContract)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, mbc: MBillContract)(implicit ctx: util.Context)
 
 @* Страница показывает юзеру только реквизиты платежа для пополнения счета.
    !Это версия для печати, поэтому лишней верстки здесь быть не должно. *@
 
 @market.lk.lkBase(
   title = "Безналичный банковский платеж",
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING)
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING),
+  adnIdOpt = adnNode.id
 ) {
 
   <div class="page-title">
