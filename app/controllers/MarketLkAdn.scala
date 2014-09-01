@@ -122,12 +122,17 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         Future successful true
       }
 
+      // 2014.sep.01 Понадобилось передавать welcomeAd в шаблон лк.
+      val welcomeAdOptFut = adnNode.meta.welcomeAdId
+        .fold(Future successful Option.empty[MWelcomeAd]) { MWelcomeAd.getById }
+
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
         slaves          <- slavesFut
         (advReqsCount, advs) <- advsForMeFut
         showAdvsBtn     <- showAdvsBtnFut
         showBackBtn     <- showBackBtnFut
+        welcomeAdOpt    <- welcomeAdOptFut
       } yield {
         Ok(adnNodeShowTpl(
           node          = adnNode,
@@ -137,7 +142,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
           showBackBtn   = showBackBtn,
-          showAdvsBtn   = showAdvsBtn
+          showAdvsBtn   = showAdvsBtn,
+          welcomeAdOpt  = welcomeAdOpt
         ))
       }
     }

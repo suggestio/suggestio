@@ -1,5 +1,6 @@
 @(node: MAdnNode, slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
-  povAdnIdOpt: Option[String], advReqsCount: Long, showBackBtn: Boolean, showAdvsBtn: Boolean)(implicit ctx: Context)
+  povAdnIdOpt: Option[String], advReqsCount: Long, showBackBtn: Boolean, showAdvsBtn: Boolean,
+  welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
