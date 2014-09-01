@@ -7,19 +7,24 @@
 
 @form(submitCall, 'id -> "profileEdit") {
 
-  <div class="profile_logo-bar" id="logo" style="background-color: #@mf("meta.color").value;">
+  <div class="profile_logo-bar" id="logo">
     @defining(mf("logoImgId").value) { logoImgIdOpt =>
       @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
 
-        <div class="image __logo js-image-upload">
+        <div class="image __logo js-preview" style="background-color: #@mf("meta.color").value;">
           <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
           <img class="profile_logo-img" src='@routes.Img.getImg(imgId)'/>
-          <a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить">Удалить</a>
+          <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
         </div>
       }
 
-      <div class="image __logo js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
-        @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
+      <div class="image js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
+        @stuff._fileUploadTpl(
+          routes.MarketLkAdnEdit.handleTempLogo(),
+          fieldName = "logoImgId",
+          dataPreviewRoot = "#logo",
+          dataPreviewClass = "__logo"
+        )
         <a class="image_add-btn js-file-upload-btn" title="Загрузить логотип">Загрузить логотип</a>
       </div>
 
@@ -83,7 +88,7 @@
         <span class="dark-gray ft-S">Основной<br/>цвет</span>
       </td>
       <td class="td __padding-S">
-        <div class="color __select js-custom-color" data-for="#logo" style="background-color: #@mf("meta.color").value;">
+        <div class="color __select js-custom-color" data-for=".__logo" style="background-color: #@mf("meta.color").value;">
           <input type="hidden" name="meta.color" value="@mf("meta.color").value"/>
         </div>
       </td>
@@ -126,7 +131,10 @@
             }
 
             <div class="add-file-w __size-S"  @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
-              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
+              @stuff._fileUploadTpl(
+                routes.MarketLkAdnEdit.handleTempLogo(),
+                fieldName = "logoImgId",
+              )
               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
             </div>
 
@@ -181,7 +189,11 @@
               }
 
               <div class="add-file-w __size-S" >
-                @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+                @stuff._fileUploadTpl(
+                  routes.Img.handleTempImg,
+                  fieldName   = "gallery",
+                  multiple = true
+                )
                <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
               </div>
 

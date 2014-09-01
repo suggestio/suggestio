@@ -472,6 +472,80 @@ PersonalCabinet =
       $ nextSelector
       .show()
 
+
+  images: ()->
+
+    $ document
+    .on 'click', '.js-remove-image', (e)->
+      e.preventDefault()
+      $this = $ this
+      $preview = $this.closest '.js-preview'
+
+      # находим кнопку для загрузки изображении для этого поля
+      $input = $preview.find '.js-image-key'
+      name = $input.attr 'name'
+
+      $ ".js-file-upload[data-name = #{name}]"
+      .closest '.js-image-upload'
+      .show()
+
+      $preview.remove()
+
+    #################################################################################################################
+    ## Работа с изображениями ##
+    #################################################################################################################
+    $ document
+    .on 'change', '.js-file-upload', (e)->
+      e.preventDefault()
+      $this = $ this
+      formData = new FormData()
+
+      if $this[0].type == 'file'
+        formData.append $this[0].name, $this[0].files[0]
+
+      request =
+        url : $this.attr "data-action"
+        method : 'post'
+        data : formData
+        contentType: false
+        processData: false
+        success : ( respData ) ->
+          multiple = false
+          previewClass = $this.attr 'data-preview-class'
+
+          # dom элемент в который нужно положить превью
+          previewRoot = $this.attr 'data-preview-root'
+          $previewRoot = $ previewRoot
+
+          # имя поля для загрузки фотографии
+          fieldName = $this.attr 'data-name'
+
+          # загрузка одной или нескольких фотографии
+          dataMultiple = $this.attr 'data-multiple'
+          dataMultiple && multiple = true
+
+          console.log "multiple=#{multiple}"
+          if multiple
+            # если уже есть загруженные фотографии
+            previewCounts = $previewRoot.find '.js-preview'
+            fieldName = "#{fieldName}[#{previewCounts}]"
+
+          html =  """
+                   <div class="image __preview js-preview #{previewClass}">
+                   <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
+                   <img class="image_src js-image-preview" src="#{respData.image_link}" />
+                   <a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить файл">Удалить</a>
+                   </div>
+                  """
+
+          console.log html
+          $previewRoot.append html
+
+          if !multiple
+            $this.parent().hide()
+      # загрузка изображения
+      $.ajax request
+
   login: () ->
 
     #################################################################################################################
@@ -836,6 +910,7 @@ PersonalCabinet =
     cbca.pc.billing()
     cbca.pc.advRequest()
     cbca.pc.adsList()
+    cbca.pc.images()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -1065,8 +1140,19 @@ market =
       	    # если нужно раскрасить не только кнопку с выбором цвета,
       	    # добавляем атрибут data-for, в котором указываем jQuery селектор
       	    if _this.attr 'data-for'
-      	      $ _this.attr 'data-for'
-      	      .css 'background-color' : '#' + hex
+      	      selector = _this.attr 'data-for'
+      	      $ ".custom-color-style[data-for = '#{selector}']"
+      	      .remove()
+      	      style = """
+      	                <style class="custom-color-style" data-for="#{selector}">
+      	                  #{selector} {
+      	                    background-color: ##{hex} !important;
+      	                  }
+      	                </style>
+      	              """
+      	      $ 'head'
+      	      .append style
+
       	    _this.find('input').val(hex).trigger('change')
       	    _this.css
       	      'background-color' : '#' + hex
@@ -1114,45 +1200,7 @@ market =
 
         return false
 
-      $ document
-      .on 'click', '.js-remove-image', (e)->
-        e.preventDefault()
-        $this = $ this
-        $parent = $this.parent()
-
-        $parent
-        .next '.js-image-upload'
-        .show()
-        $parent.remove()
-
-        cbca.editAdPage.updatePreview()
-
-
-      $ document
-      .on 'mouseenter', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .addClass '__hover'
-
-      $ document
-      .on 'mouseleave', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .removeClass '__hover'
-
-      $ document
-      .on 'mousedown', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .addClass '__active'
-
-      $ document
-      .on 'mouseup', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .removeClass '__active'
-
-      $ '.js-file-upload'
+      $ '.js-file-upload___DISABLED'
       .unbind "change"
       .bind "change", (e) ->
         e.preventDefault()
