@@ -109,7 +109,7 @@
           @gf.indexes.map { gfi =>
             @defining( s"gallery[$gfi]" ) { gfn =>
               @mf(gfn).value.map { imgId =>
-                <div class="image __size-M f-left js-image-upload">
+                <div class="image __size-M f-left js-preview">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@routes.Img.getThumb(imgId)" />
                   <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>

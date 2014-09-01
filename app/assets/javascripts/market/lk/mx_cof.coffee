@@ -485,11 +485,12 @@ PersonalCabinet =
       $input = $preview.find '.js-image-key'
       name = $input.attr 'name'
 
-      $ ".js-file-upload[data-name = #{name}]"
+      $ ".js-file-upload[data-name = '#{name}']"
       .closest '.js-image-upload'
       .show()
 
       $preview.remove()
+      market.ad_form.queue_block_preview_request()
 
     #################################################################################################################
     ## Работа с изображениями ##
@@ -510,6 +511,15 @@ PersonalCabinet =
         contentType: false
         processData: false
         success : ( respData ) ->
+
+          # TODO зарефакторить загрузку изображении в редакторе карточек
+          is_w_block_preview = $this.attr 'data-w-block-preview'
+          if typeof is_w_block_preview != 'undefined'
+            $('#' + $this.attr('data-related-field-id'))
+            .find '.js-image-key'
+            .val respData.image_key
+            market.ad_form.queue_block_preview_request()
+
           multiple = false
           previewClass = $this.attr 'data-preview-class'
 
@@ -1039,7 +1049,7 @@ CbcaPopup =
       cbca.popup.hidePopup popupSelector
 
     $ document
-    .on 'click', '#popups', (e)->
+    .on 'click', '#popups, #popupsContainer', (e)->
       cbca.popup.hidePopup()
 
     $ document
@@ -1290,8 +1300,8 @@ market =
           $.ajax
             url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker
             success : ( data ) ->
-              $('#overlay, #overlayData').show()
-              $('#overlayData').html data
+              $('#popupsContainer').html data
+              CbcaPopup.showPopup()
 
               market.img.crop.init( img_name )
 
@@ -1362,8 +1372,8 @@ market =
       init : (img_name) ->
         this.img_name = img_name
         this.crop_tool_dom = $('#imgCropTool')
-        this.crop_tool_container_dom = jQuery('.js-crop-container', this.crop_tool_dom)
-        this.crop_tool_container_div_dom = jQuery('div', this.crop_tool_container_dom)
+        this.crop_tool_container_dom = $('.js-crop-container', this.crop_tool_dom)
+        this.crop_tool_container_div_dom = $('div', this.crop_tool_container_dom)
         this.crop_tool_img_dom = jQuery('img', this.crop_tool_dom)
 
         width = parseInt this.crop_tool_dom.attr 'data-width'
