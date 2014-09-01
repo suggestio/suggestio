@@ -25,8 +25,8 @@ object PolygonGs {
     coordLines match {
       case allCoords: Traversable[_] =>
         PolygonGs(
-          outer = allCoords.headOption.fold(Seq.empty[GeoPoint])(LineStringGs.parseCoords),
-          holes = allCoords.toList.tail.map(LineStringGs.parseCoords)
+          outer = LineStringGs( allCoords.headOption.fold(Seq.empty[GeoPoint])(LineStringGs.parseCoords) ),
+          holes = allCoords.toList.tail.map { ptsRaw => LineStringGs(LineStringGs.parseCoords(ptsRaw)) }
         )
 
       case allCoords: jl.Iterable[_] =>
@@ -39,7 +39,7 @@ object PolygonGs {
 
 
 /** Полигон с необязательными дырками в двумерном пространстве. */
-case class PolygonGs(outer: Seq[GeoPoint], holes: List[Seq[GeoPoint]] = Nil) extends GeoShape {
+case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShape {
   override def shapeType = GsTypes.polygon
 
   override def _toPlayJsonInternal: FieldsJsonAcc = {
@@ -48,7 +48,7 @@ case class PolygonGs(outer: Seq[GeoPoint], holes: List[Seq[GeoPoint]] = Nil) ext
 
   def _toPlayJsonCoords: JsArray = {
     val coords = outer :: holes
-    val playJson = coords.map { LineStringGs.coords2playJson }
+    val playJson = coords.map { line => LineStringGs.coords2playJson(line.coords) }
     JsArray(playJson)
   }
 
@@ -59,16 +59,14 @@ case class PolygonGs(outer: Seq[GeoPoint], holes: List[Seq[GeoPoint]] = Nil) ext
   }
 
   def renderToEsPolyBuilder[T <: BasePolygonBuilder[T]](poly: BasePolygonBuilder[T]): BasePolygonBuilder[T] = {
-     outer foreach { outerGp =>
+    outer.coords foreach { outerGp =>
       poly.point(outerGp.lon, outerGp.lat)
     }
     poly.close()
     // Рисуем дырки
     holes.foreach { hole =>
       val holeRing = poly.hole()
-      hole.foreach { holeGp =>
-        holeRing.point(holeGp.lon, holeGp.lat)
-      }
+      hole.renderToShape(holeRing)
     }
     poly
   }

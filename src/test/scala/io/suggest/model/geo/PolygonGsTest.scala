@@ -18,7 +18,7 @@ class PolygonGsTest extends FlatSpec with Matchers with CoordLineRnd {
   protected def mkTestsNoHoles(f: PolygonGs => Unit): Unit = {
     (0 to testsPerTry) foreach { i =>
       val coords = rndCoordRow
-      f(PolygonGs(coords))
+      f(PolygonGs(LineStringGs(coords)))
     }
   }
 

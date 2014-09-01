@@ -59,7 +59,11 @@ trait MultiPointShape extends GeoShape {
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
   override def toEsShapeBuilder: Shape_t = {
-    coords.foldLeft(shapeBuilder) {
+    renderToShape(shapeBuilder)
+  }
+  
+  def renderToShape[R <: PointCollection[R]](shape: R) = {
+    coords.foldLeft(shape) {
       (acc, gp)  =>  acc.point(gp.lon, gp.lat)
     }
   }
