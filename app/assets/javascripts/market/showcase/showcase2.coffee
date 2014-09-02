@@ -1185,9 +1185,10 @@ siomart =
       else
         siomart.grid_ads.multiplier = siomart.grid_ads.multiplier / 10
 
+      url = url.replace '&a.geo=ip', ''
       siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + siomart.geo.request_query_param()
 
-      console.log siomart.grid_ads.c_url
+      console.warn siomart.grid_ads.c_url
 
       siomart.request.perform siomart.grid_ads.c_url + '&a.size=' + siomart.config.ads_per_load
 
