@@ -31,6 +31,9 @@
 .red
   color red
 
+.green
+  color green
+
 .minor-title
   margin-bottom 10px
   color         darkGray
@@ -107,6 +110,11 @@
 /********************************************************************************************************************/
 /* Таблицы  */
 /********************************************************************************************************************/
+.table
+
+  &.__width-XL
+    width  100%
+
 .td
   vertical-align  middle
 
@@ -115,6 +123,26 @@
 
   &.__color-title
     padding-right 10px
+
+  &.__gray
+    background-color  #e5e5e5
+
+  &.__white
+    background-color  white
+
+  &.__radial-first
+    border-radius(4px 0 0 4px)
+
+  &.__radial-last
+    border-radius(0 4px 4px 0)
+
+  &.__size-M
+    box-sizing  border-box
+    height      50px
+    padding     5px 10px
+
+  &.__delimiter
+    height  5px
 
 /********************************************************************************************************************/
 /* Стандартный блок SioMarket */
