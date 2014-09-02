@@ -33,6 +33,7 @@ object SioConstants {
   def FIELD_ID            = IdFieldMapper.NAME
   def FIELD_TTL           = TTLFieldMapper.NAME
   def FIELD_VERSION       = VersionFieldMapper.NAME
+  def FIELD_PARENT        = ParentFieldMapper.NAME
 
   val CURRENCY_CODE_DFLT  = "RUB"
 

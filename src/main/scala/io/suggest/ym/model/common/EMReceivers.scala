@@ -231,6 +231,9 @@ case class AdReceiverInfo(
     }
   }
 
+  def allShowLevels = sls.map(_.sl)
+  def allSinks = sls.map(_.adnSink)
+
   @JsonIgnore
   override def hashCode(): Int = receiverId.hashCode
 

@@ -1033,7 +1033,7 @@ case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
 
 /** static-поле для активации parent-child отношений. Автоматически включает принудительное поле _routing. */
 case class FieldParent(typ: String) extends Field with TypedJsonObject {
-  override def id = "_parent"
+  override def id = FIELD_PARENT
 }
 
 trait FieldWithPath extends Field {

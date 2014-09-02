@@ -678,6 +678,12 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     searchRespMap(searchResp)(_.getId)
   }
 
+  def searchResp2fnList[T](searchResp: SearchResponse, fn: String): Seq[T] = {
+    searchRespMap(searchResp) { hit =>
+      hit.field(fn).getValue[T]
+    }
+  }
+
   /**
    * Прочитать из базы все перечисленные id разом.
    * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
