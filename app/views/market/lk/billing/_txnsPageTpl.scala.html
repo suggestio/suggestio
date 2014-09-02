@@ -20,51 +20,58 @@
 
 @content = {
 
-  <table class="table __width-XL" id="transactionsHistory">
-    <tr>
-      <td class="td __gray __size-M __radial-first">
-        Номер
-      </td>
-      <td class="td __gray __size-M">
-        Основание
-      </td>
-      <td class="td __gray __size-M">
-        Дата
-      </td>
-      <td class="td __gray __size-M __radial-last">
-        Сумма
-      </td>
-    </tr>
+  @if(txns.size > 0) {
+    <table class="table __width-XL" id="transactionsHistory">
+      <tr>
+        <td class="td __gray __size-M __radial-first">
+          Номер
+        </td>
+        <td class="td __gray __size-M">
+          Основание
+        </td>
+        <td class="td __gray __size-M">
+          Дата
+        </td>
+        <td class="td __gray __size-M __radial-last">
+          Сумма
+        </td>
+      </tr>
 
-    @txns.zipWithIndex.map { case (txn , i) =>
-      <tr>
-        <td class="td __delimiter" colspan="4"></td>
-      </tr>
-      <tr>
-        <td class="td __white __size-M __radial-first ft-M dark-gray">
-          <span class="transactions-history_contract" title="@txn.txnUid">@txn.txnUid</span>
-        </td>
-        <td class="td __white __size-M transactions-history_descr">
-          @highlightFirstWordEsc(txn.paymentComment, start = """<span class="ft-M dark-gray">""", end = "</span>")
-        </td>
-        <td class="td __white __size-M">
-            <span title="@_prettyDate(txn.datePaid).toString.trim">
-              <span class="ft-M dark-gray">@numericDate(txn.datePaid)</span><br/>
-              @numericTime(txn.datePaid)
-            </span>
-        </td>
-        <td class="td __white __size-M __radial-last">
-            <span class="ft-M @if(txn.amount < 0) {red} else {green}">@formatPrice(txn.amount, txn.currency)</span>
-        </td>
-      </tr>
+      @txns.zipWithIndex.map { case (txn , i) =>
+        <tr>
+          <td class="td __delimiter" colspan="4"></td>
+        </tr>
+        <tr>
+          <td class="td __white __size-M __radial-first ft-M dark-gray">
+            <span class="transactions-history_contract" title="@txn.txnUid">@txn.txnUid</span>
+          </td>
+          <td class="td __white __size-M transactions-history_descr">
+            @highlightFirstWordEsc(txn.paymentComment, start = """<span class="ft-M dark-gray">""", end = "</span>")
+          </td>
+          <td class="td __white __size-M">
+              <span title="@_prettyDate(txn.datePaid).toString.trim">
+                <span class="ft-M dark-gray">@numericDate(txn.datePaid)</span><br/>
+                @numericTime(txn.datePaid)
+              </span>
+          </td>
+          <td class="td __white __size-M __radial-last">
+              <span class="ft-M @if(txn.amount < 0) {red} else {green}">@formatPrice(txn.amount, txn.currency)</span>
+          </td>
+        </tr>
+      }
+
+    </table>
+
+    @if(txns.size >= TXNS_PER_PAGE) {
+      <div class="btn-w __size-M">
+        <a class="btn __size-S __radial-major" id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Показать ещё</a>
+      </div>
     }
 
-  </table>
+  } else {
 
-  @if(txns.size >= TXNS_PER_PAGE) {
-    <div class="btn-w __size-M">
-      <a class="btn __size-S __radial-major" id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Показать ещё</a>
-    </div>
+    С вашим счётом операции не производилось.
+
   }
 
 }
