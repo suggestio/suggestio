@@ -852,42 +852,41 @@ PersonalCabinet =
         $this = $ this
         href = $this.attr 'href'
 
+        if $this.data 'active'
+          return false
+
+        if href && href.charAt(0) == '#'
+          $slideBlock = $ href
+        else
+          $slideBlockWrap = $this.closest '.js-slide-w'
+          ## :first потому что может быть вложенный siomBlock
+          $slideBlock = $slideBlockWrap.find '.js-slide-cnt:first'
+
+        if $slideBlock.is ':animated'
+          return false
+
         if href
           if href.charAt(0) == '#'
-            $ href
-            .slideToggle()
+            $slideBlock.slideToggle()
           else
+            $this.data
+              'active': true
+
             $.ajax(
               url: href
               success: (data) ->
                 $data = $ data
-                $siomBlock = $this.closest '.js-slide-w'
-                ## :first потому что может быть вложенный siomBlock
-                $siomBLockCnt = $siomBlock.find '.js-slide-cnt:first'
-
-                $siomBLockCnt.append $data
-
-                $siomBLockCnt
-                .slideDown(
-                  600,
-                  () ->
-                    cbca.pc.common.setBorderLineHeight $siomBLockCnt
-                )
+                $slideBlock.append $data
+                $slideBlock.slideDown()
 
                 $this.removeAttr 'href'
+                $this.data
+                  'active': false
             )
         else
-          $this
-          .closest '.js-slide-w'
-          .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
-          .slideToggle()
+          $slideBlock.slideToggle()
 
         $this.toggleClass '__open'
-        if !$this.attr 'data-fix-title'
-          if $this.hasClass '__open'
-            $this.html 'Свернуть'
-          else
-            $this.html 'Развернуть'
 
   init: () ->
 
