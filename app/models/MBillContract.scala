@@ -198,7 +198,7 @@ object MBillContract extends SqlModelStatic with FromJson {
 
 import MBillContract._
 
-case class MBillContract(
+final case class MBillContract(
   adnId         : String,
   contractDate  : DateTime,
   suffix        : Option[String] = None,

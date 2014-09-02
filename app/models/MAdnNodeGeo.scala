@@ -7,7 +7,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import util.PlayMacroLogsImpl
-import io.suggest.model.geo.GeoShape
+import io.suggest.model.geo.{GeoShapeQuerable, GeoShape}
 import io.suggest.model.{EsModel, EsModelT, EsModelMinimalStaticT}
 import play.api.libs.json._
 import java.{util => ju}
@@ -20,8 +20,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 01.09.14 17:56
  * Description: Хранилище географических объектов (GeoShape'ов) для элементов модели MAdnNode.
  * Географические элементы очень жирные, их сериализация-десириализация довольно тяжела, поэтому
- * эти данные хранятся в смежной модели.
- * Элементы имеют parent-поле для доступа хранения рядом с экземпляром MAdnNode соотв.модели.
+ * эти данные хранятся в этой модели.
+ * Элементы имеют parent-поле для хранения рядом с экземпляром MAdnNode.
  */
 object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 
@@ -100,13 +100,28 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
       .map { searchResp2list }
   }
 
+  /**
+   * Быстрый поиск узлов и быстрая десериализация результатов поиска по пересечению с указанной геолокацией.
+   * @param glevel Уровень поиска.
+   * @param shape Фигура, по которой ищем.
+   * @param maxResults Макс.кол-во результатов.
+   * @param offset Сдвиг в результатах.
+   * @return Фьючерс со списком adnId, чьи фигуры пересекают переданную фигуру.
+   */
+  def geosearchAdnIdsOnLevel(glevel: NodeGeoLevel, shape: GeoShapeQuerable, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                            (implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    //prepareSearch
+    //  .setQuery(  )
+    ???
+  }
+
 }
 
 
 import MAdnNodeGeo._
 
 
-case class MAdnNodeGeo(
+final case class MAdnNodeGeo(
   adnId       : String,
   glevel      : NodeGeoLevel,
   shape       : GeoShape,

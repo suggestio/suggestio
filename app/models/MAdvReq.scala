@@ -65,7 +65,7 @@ object MAdvReq extends MAdvStatic {
 import MAdvReq._
 
 
-case class MAdvReq(
+final case class MAdvReq(
   adId          : String,
   amount        : Float,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,

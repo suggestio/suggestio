@@ -234,7 +234,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
  * @param adId id рекламной карточки.
  * @param povAdnId Опциональная точка зрения на карточку.
  */
-case class AdvWndAccess(adId: String, povAdnId: Option[String], needMBB: Boolean)
+final case class AdvWndAccess(adId: String, povAdnId: Option[String], needMBB: Boolean)
   extends AdvWndAccessBase
   with ExpireSession[AdvWndRequest]
 

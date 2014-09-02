@@ -91,7 +91,7 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
  * статической IsDomainAdmin.onUnauthFut().
  * @param hostname Сырое имя хоста.
  */
-case class IsDomainAdmin(hostname: String) extends IsDomainAdminAbstract with ExpireSession[AbstractRequestWithDAuthz] {
+final case class IsDomainAdmin(hostname: String) extends IsDomainAdminAbstract with ExpireSession[AbstractRequestWithDAuthz] {
   def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader) = {
     IsDomainAdmin.onUnauthFut(hostname, pwOpt, request)
   }

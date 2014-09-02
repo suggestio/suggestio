@@ -12,6 +12,7 @@ import io.suggest.util.SioEsUtil.FieldString
 import io.suggest.util.SioEsUtil.FieldSource
 import play.api.libs.json.JsString
 import io.suggest.event.SioNotifierStaticClientI
+import scala.collection.Map
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 
@@ -23,7 +24,7 @@ import org.elasticsearch.client.Client
  * Порт модели blog_record из старого sioweb.
  */
 
-object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
+object MBlog extends EsModelMinimalStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "blog"
 
   override type T = MBlog
@@ -49,38 +50,30 @@ object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
     FieldDate(DATE_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
-
-  override def applyKeyValue(acc: MBlog): PartialFunction[(String, AnyRef), Unit] = {
-    case (TITLE_ESFN, value)          => acc.title = stringParser(value)
-    case (DESCRIPTION_ESFN, value)    => acc.description = stringParser(value)
-    case (BG_IMAGE_ESFN, value)       => acc.bgImage = stringParser(value)
-    case (BG_COLOR_ESFN, value)       => acc.bgColor = stringParser(value)
-    case (TEXT_ESFN, value)           => acc.text = stringParser(value)
-    case (DATE_ESFN, value)           => acc.date = dateTimeParser(value)
-  }
-
-  override protected def dummy(id: Option[String], version: Option[Long]) = {
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MBlog(
+      title = stringParser( m(TITLE_ESFN) ),
+      description = stringParser( m(DESCRIPTION_ESFN) ),
+      bgImage = stringParser( m(BG_IMAGE_ESFN) ),
+      bgColor = stringParser( m(BG_COLOR_ESFN) ),
+      text    = stringParser( m(TEXT_ESFN) ),
       id = id,
-      title = null,
-      description = null,
-      bgImage = null,
-      bgColor = null,
-      text = null
+      date    = m.get(DATE_ESFN).fold(DateTime.now)(dateTimeParser)
     )
   }
+
 }
 
 import MBlog._
 
-case class MBlog(
-  var title     : String,
-  var description : String,
-  var bgImage   : String,
-  var bgColor   : String,
-  var text      : String,
+final case class MBlog(
+  title         : String,
+  description   : String,
+  bgImage       : String,
+  bgColor       : String,
+  text          : String,
   id            : Option[String] = None,
-  var date      : DateTime = null
+  date          : DateTime = DateTime.now()
 ) extends EsModelT {
 
   override type T = MBlog
@@ -89,8 +82,6 @@ case class MBlog(
   override def versionOpt = None
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    if (date == null)
-      date = DateTime.now
     TITLE_ESFN -> JsString(title) ::
       DESCRIPTION_ESFN -> JsString(description) ::
       BG_IMAGE_ESFN -> JsString(bgImage) ::
@@ -104,7 +95,7 @@ case class MBlog(
 
 
 trait MBlogJmxMBean extends EsModelJMXMBeanCommon
-class MBlogJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MBlogJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MBlogJmxMBean
 {

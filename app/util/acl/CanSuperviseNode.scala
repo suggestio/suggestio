@@ -55,7 +55,7 @@ trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
   }
 }
 
-case class CanSuperviseNode(adnId: String)
+final case class CanSuperviseNode(adnId: String)
   extends CanSuperviseNodeBase
   with ExpireSession[RequestForSlave]
 
@@ -96,7 +96,7 @@ trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
     }
   }
 }
-case class CanViewSlave(adnId: String)
+final case class CanViewSlave(adnId: String)
   extends CanViewSlaveBase
   with ExpireSession[RequestForSlave]
 
@@ -133,7 +133,7 @@ trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
     }
   }
 }
-case class CanViewSlaveAd(adId: String)
+final case class CanViewSlaveAd(adId: String)
   extends CanViewSlaveAdBase
   with ExpireSession[RequestForSlaveAd]
 
@@ -180,7 +180,7 @@ trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
   }
 }
 
-case class CanSuperviseSlaveAd(adId: String)
+final case class CanSuperviseSlaveAd(adId: String)
   extends CanSuperviseSlaveAdBase
   with ExpireSession[RequestForSlaveAd]
 

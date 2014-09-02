@@ -70,7 +70,7 @@ object MBillTxn extends SqlModelStatic {
 
 import MBillTxn._
 
-case class MBillTxn(
+final case class MBillTxn(
   contractId      : Int,
   amount          : Float,
   datePaid        : DateTime,

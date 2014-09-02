@@ -41,7 +41,7 @@ trait IsPromoOfferAdminBase extends ActionBuilder[AbstractRequestForPromoOfferAd
     }
   }
 }
-case class IsPromoOfferAdmin(offerId: String)
+final case class IsPromoOfferAdmin(offerId: String)
   extends IsPromoOfferAdminBase
   with ExpireSession[AbstractRequestForPromoOfferAdm]
 
@@ -84,7 +84,7 @@ trait IsPromoOfferAdminFullBase extends ActionBuilder[RequestForPromoOfferAdmFul
     }
   }
 }
-case class IsPromoOfferAdminFull(offerId: String)
+final case class IsPromoOfferAdminFull(offerId: String)
   extends IsPromoOfferAdminFullBase
   with ExpireSession[RequestForPromoOfferAdmFull]
 

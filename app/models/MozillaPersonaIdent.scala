@@ -35,7 +35,7 @@ object MozillaPersonaIdent extends MPersonIdentSubmodelStatic with PlayMacroLogs
 }
 
 
-case class MozillaPersonaIdent(
+final case class MozillaPersonaIdent(
   email     : String,
   personId  : String
 ) extends MPersonIdent with MPersonLinks with MPIWithEmail {
@@ -56,7 +56,7 @@ case class MozillaPersonaIdent(
 
 // JMX
 trait MozillaPersonaIdentJmxMBean extends EsModelJMXMBeanCommon
-class MozillaPersonaIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MozillaPersonaIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MozillaPersonaIdentJmxMBean
 {

@@ -73,7 +73,7 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
  * @param email Почта.
  * @param key Ключ содержит какие-то данные, необходимые для активации. Например, id магазина.
  */
-case class EmailActivation(
+final case class EmailActivation(
   email     : String,
   key       : String = EmailActivation.randomActivationKey,
   id        : Option[String] = None
@@ -92,7 +92,7 @@ case class EmailActivation(
 
 // JMX
 trait EmailActivationJmxMBean extends EsModelJMXMBeanCommon
-class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with EmailActivationJmxMBean
 {

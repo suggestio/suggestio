@@ -61,7 +61,7 @@ object IpGeoBaseRange extends SqlModelStatic with SqlTruncate with SqlAnalyze wi
 import IpGeoBaseRange._
 
 
-case class IpGeoBaseRange(
+final case class IpGeoBaseRange(
   start       : InetAddress,
   end         : InetAddress,
   countryIso2 : String,

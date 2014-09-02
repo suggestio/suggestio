@@ -62,7 +62,7 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
  * @param pwHash Хеш от пароля.
  * @param isVerified false по умолчанию, true если почта выверена.
  */
-case class EmailPwIdent(
+final case class EmailPwIdent(
   email     : String,
   personId  : String,
   pwHash    : String,
@@ -84,7 +84,7 @@ case class EmailPwIdent(
 
 // JMX
 trait EmailPwIdentJmxMBean extends EsModelJMXMBeanCommon
-class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with EmailPwIdentJmxMBean
 {

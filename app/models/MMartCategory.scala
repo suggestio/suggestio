@@ -286,7 +286,7 @@ import MMartCategory._
  * @param includeInAll Индексировать текущую категорию вместе с товаром.
  * @param id Идентификатор категории.
  */
-case class MMartCategory(
+final case class MMartCategory(
   name          : String,
   ymCatPtr      : MMartYmCatPtr,
   parentId      : Option[String],
@@ -332,7 +332,7 @@ case class MMartCategory(
  * @param ycId id категории в дереве ym-категорий.
  * @param inherit Наследовать прямые подкатегории ym-категории при поиске.
  */
-case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
+final case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
   @JsonIgnore
   def renderPlayJson: JsObject = {
     JsObject(Seq(
@@ -349,7 +349,7 @@ trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon {
 }
 
 /** JMX MBean реализация. */
-case class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MMartCategoryJmxMBean {
   def companion = MMartCategory
 

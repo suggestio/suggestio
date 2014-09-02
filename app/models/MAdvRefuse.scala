@@ -69,7 +69,7 @@ object MAdvRefuse extends MAdvStatic {
 import MAdvRefuse._
 
 
-case class MAdvRefuse(
+final case class MAdvRefuse(
   adId          : String,
   amount        : Float,
   currencyCode  : String,

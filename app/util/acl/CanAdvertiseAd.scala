@@ -97,7 +97,7 @@ trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
     }
   }
 }
-case class CanAdvertiseAd(adId: String)
+final case class CanAdvertiseAd(adId: String)
   extends CanAdvertiseAdBase
   with ExpireSession[RequestWithAd]
 

@@ -78,7 +78,7 @@ trait SiowebEsModelJmxMBean {
 }
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
-class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
+final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
   override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */

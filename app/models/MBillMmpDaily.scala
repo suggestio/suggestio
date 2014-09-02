@@ -87,7 +87,7 @@ object MBillMmpDaily extends FindByContract with FromJson {
 import MBillMmpDaily._
 
 
-case class MBillMmpDaily(
+final case class MBillMmpDaily(
   contractId    : Int,
   mmpWeekday    : Float,
   mmpWeekend    : Float,

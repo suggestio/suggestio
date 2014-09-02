@@ -37,7 +37,7 @@ object MBillRoyalty extends FindByContract {
 import MBillRoyalty._
 
 
-case class MBillRoyalty(
+final case class MBillRoyalty(
   contractId: Int,
   royalty: Float,
   isInternal: Boolean,

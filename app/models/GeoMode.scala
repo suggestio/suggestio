@@ -199,7 +199,7 @@ object GeoLocation {
 
 
 /** Геолокация с указанием географических координат. */
-case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
+final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
   lazy val geopoint = GeoPoint(lat = lat, lon = lon)
 
   override def isWithGeo = true

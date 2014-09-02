@@ -32,7 +32,7 @@ object MSinkComission extends SqlModelStatic with FindByContract {
 import MSinkComission._
 
 
-case class MSinkComission(
+final case class MSinkComission(
   contractId    : Int,
   sink          : AdnSink,
   sioComission  : Float,

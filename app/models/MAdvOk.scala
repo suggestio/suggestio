@@ -135,7 +135,7 @@ object MAdvOk extends MAdvStatic {
 import MAdvOk._
 
 
-case class MAdvOk(
+final case class MAdvOk(
   adId          : String,
   amount        : Float,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,

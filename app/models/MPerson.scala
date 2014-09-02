@@ -105,7 +105,7 @@ import MPerson._
  * @param lang Язык интерфейса для указанного пользователя.
  *             Формат четко неопределён, и соответствует коду выхлопа Controller.lang().
  */
-case class MPerson(
+final case class MPerson(
   lang  : String,
   id    : Option[String] = None
 ) extends EsModelT with MPersonLinks {
@@ -136,7 +136,7 @@ trait MPersonLinks {
 
 
 trait MPersonJmxMBean extends EsModelJMXMBeanCommon
-class MPersonJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MPersonJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MPersonJmxMBean
 {

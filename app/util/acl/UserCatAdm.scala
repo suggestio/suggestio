@@ -44,7 +44,7 @@ trait TreeUserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
     }
   }
 }
-case class TreeUserCatAdm(ownerId: String)
+final case class TreeUserCatAdm(ownerId: String)
   extends TreeUserCatAdmBase
   with ExpireSession[RequestUserCatAdm]
 
@@ -71,7 +71,9 @@ trait UserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
     }
   }
 }
-case class UserCatAdm(catId: String) extends UserCatAdmBase with ExpireSession[RequestUserCatAdm]
+final case class UserCatAdm(catId: String)
+  extends UserCatAdmBase
+  with ExpireSession[RequestUserCatAdm]
 
 
 

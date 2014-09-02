@@ -50,7 +50,7 @@ object MCalendar extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 import MCalendar._
 
 
-case class MCalendar(
+final case class MCalendar(
   name: String,
   data: String,
   id: Option[String] = None,
@@ -66,7 +66,7 @@ case class MCalendar(
 }
 
 trait MCalendarJmxMBean extends EsModelJMXMBeanCommon
-class MCalendarJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MCalendarJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MCalendarJmxMBean
 {

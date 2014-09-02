@@ -25,7 +25,7 @@ import io.suggest.util.SioModelUtil
  * Можно было бы использовать кеш, но это вызовет серьезные проблемы при масштабировании узлов с веб-мордами.
  */
 
-case class MDomainQiAuthzTmp(
+final case class MDomainQiAuthzTmp(
   dkey : String,
   id: String,
   dateCreated: DateTime = DateTime.now()

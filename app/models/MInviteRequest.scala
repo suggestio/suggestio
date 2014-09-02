@@ -127,7 +127,7 @@ object MInviteRequest
 
 
 /** Экземпляр модели. */
-case class MInviteRequest(
+final case class MInviteRequest(
   var name      : String,
   var reqType   : InviteReqType,
   var company   : Either[MCompany, String],
@@ -185,7 +185,7 @@ object InviteReqTypes extends Enumeration {
 /** mbean-интерфейс для JMX. */
 trait MInviteRequestJmxMBean extends EsModelJMXMBeanCommon
 /** Реализация mbean'a: */
-class MInviteRequestJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MInviteRequestJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MInviteRequestJmxMBean
 {

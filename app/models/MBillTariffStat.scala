@@ -61,7 +61,7 @@ object MBillTariffStat extends FindByContract with TariffsAllEnabled {
 
 
 
-case class MBillTariffStat(
+final case class MBillTariffStat(
   id              : Option[Int] = None,
   contractId      : Int,
   name        : String,

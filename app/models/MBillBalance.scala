@@ -138,7 +138,7 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
 
 import MBillBalance._
 
-case class MBillBalance(
+final case class MBillBalance(
   adnId: String,
   amount: Float,
   currencyCodeOpt: Option[String] = Some(CurrencyCodeOpt.CURRENCY_CODE_DFLT),

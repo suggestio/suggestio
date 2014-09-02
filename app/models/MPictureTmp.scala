@@ -150,7 +150,7 @@ object MPictureTmp {
 import MPictureTmp._
 
 
-case class MPictureTmp(filename: String, data: MPictureTmpData) {
+final case class MPictureTmp(filename: String, data: MPictureTmpData) {
   def this(filename: String) = this(filename, parseFilename(filename).get)
   def this(data: MPictureTmpData) = this(data.toFilename, data)
 
@@ -166,7 +166,7 @@ case class MPictureTmp(filename: String, data: MPictureTmpData) {
 }
 
 
-case class MPictureTmpData(key: String, markerOpt: Option[String], fmt: OutImgFmt, cropOpt: Option[ImgCrop]) {
+final case class MPictureTmpData(key: String, markerOpt: Option[String], fmt: OutImgFmt, cropOpt: Option[ImgCrop]) {
   /** Сериализовать всё добро в имя файла. */
   def toFilename: String = {
     val sb = new StringBuilder(64, KEY_PREFIX)

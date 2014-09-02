@@ -84,9 +84,9 @@ trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
 }
 /**
  * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
- * @param adnId
+ * @param adnId id рекламного узла, которым интересуется суперпользователь.
  */
-case class IsSuperuserAdnNode(adnId: String)
+final case class IsSuperuserAdnNode(adnId: String)
   extends IsSuperuserAdnNodeBase
   with ExpireSession[AbstractRequestForAdnNode]
 
@@ -120,7 +120,7 @@ trait IsSuperuserFeeTariffContractBase extends ActionBuilder[FeeTariffRequest] {
     }
   }
 }
-case class IsSuperuserFeeTariffContract(tariffId: Int)
+final case class IsSuperuserFeeTariffContract(tariffId: Int)
   extends IsSuperuserFeeTariffContractBase
   with ExpireSession[FeeTariffRequest]
 
@@ -154,7 +154,7 @@ trait IsSuperuserStatTariffContractAbstract extends ActionBuilder[StatTariffRequ
     }
   }
 }
-case class IsSuperuserStatTariffContract(tariffId: Int)
+final case class IsSuperuserStatTariffContract(tariffId: Int)
   extends IsSuperuserStatTariffContractAbstract
   with ExpireSession[StatTariffRequest]
 
@@ -190,7 +190,7 @@ trait IsSuperuserContractBase extends ActionBuilder[ContractRequest] {
     }
   }
 }
-case class IsSuperuserContract(contractId: Int)
+final case class IsSuperuserContract(contractId: Int)
   extends IsSuperuserContractBase
   with ExpireSession[ContractRequest]
 
@@ -227,7 +227,7 @@ trait IsSuperuserContractNodeBase extends ActionBuilder[ContractNodeRequest] {
   }
 }
 
-case class IsSuperuserContractNode(contractId: Int)
+final case class IsSuperuserContractNode(contractId: Int)
   extends IsSuperuserContractNodeBase
   with ExpireSession[ContractNodeRequest]
 
@@ -264,7 +264,7 @@ trait IsSuperuserCompanyBase extends ActionBuilder[CompanyRequest] {
   }
 
 }
-case class IsSuperuserCompany(companyId: String)
+final case class IsSuperuserCompany(companyId: String)
   extends IsSuperuserCompanyBase
   with ExpireSession[CompanyRequest]
 
@@ -310,5 +310,7 @@ trait IsSuperuserMirBase extends ActionBuilder[MirRequest] {
     }
   }
 }
-case class IsSuperuserMir(mirId: String) extends IsSuperuserMirBase with ExpireSession[MirRequest]
+case class IsSuperuserMir(mirId: String)
+  extends IsSuperuserMirBase
+  with ExpireSession[MirRequest]
 

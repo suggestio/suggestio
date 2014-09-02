@@ -37,7 +37,7 @@ trait MDomainAuthzT extends DkeyModelT {
 
 
 // Временная aвторизация для sio-админов. Втыкается там, где её не достаёт, для служебных нужд.
-case class MPersonDomainAuthzSuperuser(
+final case class MPersonDomainAuthzSuperuser(
   person_id: String,
   dkey: String
 ) extends MDomainAuthzT {

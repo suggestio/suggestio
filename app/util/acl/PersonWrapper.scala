@@ -64,7 +64,7 @@ object PersonWrapper extends PlayMacroLogsImpl {
  * PersonWrapper нужен для ленивого доступа к данным. Часто содержимое MPerson не нужно, поэтому зачем его читать сразу?
  * @param personId id юзера
  */
-case class PersonWrapper(personId: String) extends MPersonLinks {
+final case class PersonWrapper(personId: String) extends MPersonLinks {
 
   // TODO Надо будет это оптимизировать. Если .person будет нужен почти везде, то надо запрос фьючерса отделить от Await
   //      в отдельный val класса. На текущий момент этот вызов нигде не используется, поэтому целиком lazy.

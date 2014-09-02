@@ -101,7 +101,7 @@ sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode]
     }
   }
 }
-case class IsAdnNodeAdmin(adnId: String)
+final case class IsAdnNodeAdmin(adnId: String)
   extends IsAdnNodeAdminBase
   with ExpireSession[AbstractRequestForAdnNode]
   with PlayLazyMacroLogsImpl
@@ -170,7 +170,7 @@ sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
  * Доступ к узлу, к которому НЕ обязательно есть права на админство.
  * @param adnId узел.
  */
-case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
+final case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
   extends AdnNodeAccessBase
   with ExpireSession[RequestForAdnNode]
 
@@ -251,7 +251,7 @@ case class AdnNodeMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
  * Да, если не тестовый и если ресивер.
  * @param adnId id узла.
  */
-case class AdnNodePubMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
+final case class AdnNodePubMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
   override def isNodeValid(adnNode: MAdnNode): Boolean = {
     adnNode.adn.isReceiver && !adnNode.adn.testNode
   }
