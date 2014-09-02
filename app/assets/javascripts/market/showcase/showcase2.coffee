@@ -960,7 +960,7 @@ siomart =
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
-        siomart.utils.ge('smGeoScreen').style.display = 'none'
+        siomart.utils.ge('smGeoScreen').styf.display = 'none'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
         return false
 
@@ -1165,6 +1165,10 @@ siomart =
       siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
 
     load_index_ads : () ->
+
+      cbca_grid.left_offset = 0
+      cbca_grid.right_offset = 0
+
       grd_c = siomart.utils.ge('smGridAdsContainer')
       url = grd_c.getAttribute 'data-index-offers-action'
 
