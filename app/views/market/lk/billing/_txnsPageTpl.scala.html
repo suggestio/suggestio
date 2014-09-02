@@ -20,7 +20,7 @@
 
 @content = {
 
-  <table class="table __width-XL">
+  <table class="table __width-XL" id="transactionsHistory">
     <tr>
       <td class="td __gray __size-M __radial-first">
         Номер
@@ -42,14 +42,14 @@
       </tr>
       <tr>
         <td class="td __white __size-M __radial-first ft-M dark-gray">
-          @txn.txnUid
+          <span class="transactions-history_contract" title="@txn.txnUid">@txn.txnUid</span>
         </td>
-        <td class="td __white __size-M">
+        <td class="td __white __size-M transactions-history_descr">
           @highlightFirstWordEsc(txn.paymentComment, start = """<span class="ft-M dark-gray">""", end = "</span>")
         </td>
-        <td class="td __white __size-M  dark-gray">
+        <td class="td __white __size-M">
             <span title="@_prettyDate(txn.datePaid).toString.trim">
-              <span class="ft-M">@numericDate(txn.datePaid)</span><br/>
+              <span class="ft-M dark-gray">@numericDate(txn.datePaid)</span><br/>
               @numericTime(txn.datePaid)
             </span>
         </td>
@@ -59,15 +59,13 @@
       </tr>
     }
 
-    <tr>
-      <td class="td __size-M" colspan="4">
-        @*if(txns.size >= TXNS_PER_PAGE) {*@
-              <a id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Показать ещё</a>
+  </table>
 
-      </td>
-    </tr>
-
- </table>
+  @if(txns.size >= TXNS_PER_PAGE) {
+    <div class="btn-w __size-M">
+      <a class="btn __size-S __radial-major" id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Показать ещё</a>
+    </div>
+  }
 
 }
 

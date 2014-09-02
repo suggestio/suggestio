@@ -616,35 +616,17 @@ PersonalCabinet =
       e.preventDefault()
       $this = $ this
       $transactionsHistory = $ '#transactionsHistory'
-      $transactionsList = $ '#transactionsList'
 
-      $.ajax(
+      request =
         url: $this.attr 'href'
         success: (data)->
-          if $this.attr 'data-init'
-            $transactionsList
-            .find 'tr'
-            .not ':first'
-            .remove()
-          else
-            $this
-            .closest 'tr'
-            .remove()
-
-          $transactionsList
-          .append data
-
-          if $this.attr 'data-init'
-            $transactionsHistory
-            .slideDown(
-              600,
-              () ->
-                cbca.pc.common.setBorderLineHeight $transactionsList
-            )
-
+          $transactionsHistory
+          .find 'tr:last'
+          .after data
         error: (error)->
           console.log error
-      )
+
+      $.ajax request
 
   advRequest: () ->
 
