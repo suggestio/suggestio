@@ -9,7 +9,13 @@
 @import util.acl.CanSuperviseNode._
 @import controllers.adn.AdnShowTypes._
 
-@lkBase(mslave.meta.name) {
+@nodeBaseTpl(
+  title       = mslave.meta.name,
+  node        = mslave,
+  isMyNode    = false,
+  rightCurrEl = NodeRightPanelLinks.RPL_NODE,
+  povAdnIdOpt = msup.id
+) {
 @defining( canSuperviseNode(supNode = msup, slaveNode = mslave) ) { isNodeSup =>
 
   @* Если не супервизор, то нечего тут командовать. *@

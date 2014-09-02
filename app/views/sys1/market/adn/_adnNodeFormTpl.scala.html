@@ -146,6 +146,15 @@
   </table>
 
   <table class="input-w __size-L">
+    @AdnSinks.ordered.map { sink =>
+      @checkbox(
+        af("adn.sink." + sink.longName),
+        '_label -> Messages("adn.sink." + sink.longName)
+      )
+    }
+  </table>
+
+  <table class="input-w __size-L">
     @inputText(af("meta.location.lat"),  '_label -> "Широта")
     @inputText(af("meta.location.lon"),  '_label -> "Долгота")
   </table>

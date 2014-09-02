@@ -1,0 +1,54 @@
+@import "mixins"
+
+.btn
+  display         inline-block
+
+  outline         none
+  cursor          pointer
+
+  text-decoration none
+  text-align      center
+  font-size       14px
+  font-family     'opensans-light'
+  color           white
+
+  appearance(none)
+  border-radius(3px)
+  backface(hidden)
+  transition(background 0.2s ease-in-out 0s)
+
+  &.__major
+    background-color #00b994
+
+    &:hover
+      background-color  #03a988
+
+  &.__minor
+    background-color #9d9d9d
+
+    &:hover
+      background-color  #b5b5b5
+
+  &.__size-S
+    padding 5px 15px
+
+  &.__size-M
+    padding 10px 15px
+
+  &.__size-XM
+    display block
+    padding 5px 0
+
+  &.__size-L
+    display block
+    padding 10px 0
+
+  &.__radial-major
+    color   #707070
+    border  1px solid #cccccc
+    border-radius(20px)
+
+    &:hover
+      color             white
+      background-color  #00b994
+      border-color      #00b994

@@ -4,8 +4,9 @@ import java.net.InetAddress
 import java.sql.Connection
 
 import anorm._
+import util.anorm.AnormInetAddress
 import util.{PlayLazyMacroLogsImpl, SqlModelSave}
-import util.AnormInetAddress._
+import AnormInetAddress._
 
 /**
  * Suggest.io
@@ -60,7 +61,7 @@ object IpGeoBaseRange extends SqlModelStatic with SqlTruncate with SqlAnalyze wi
 import IpGeoBaseRange._
 
 
-case class IpGeoBaseRange(
+final case class IpGeoBaseRange(
   start       : InetAddress,
   end         : InetAddress,
   countryIso2 : String,

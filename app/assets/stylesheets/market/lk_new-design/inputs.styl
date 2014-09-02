@@ -1,0 +1,139 @@
+@import "mixins"
+
+::-webkit-input-placeholder
+  color #aaaaaa
+
+::-moz-placeholder
+  color   #aaaaaa
+  opacity 1
+
+:-ms-input-placeholder
+  color #aaaaaa
+
+.input
+  background  none /* TODO убрать эти стили после отключения common.css */
+  border      none
+  padding     0
+
+  input,
+  textarea
+    outline             none
+    width               100%
+    padding             8px
+
+    color               #7f7f7f
+    font-family         'opensans-light'
+    font-size           13px
+    text-overflow       ellipsis
+
+    border              1px solid #acacac
+    box-sizing          border-box
+    resize              none
+    background-color    transparent
+    appearance(none)
+    border-radius(3px)
+
+    &:hover
+      background rgba(255,255,255,0.3)
+
+
+    &:focus
+      color         #444444
+      background    white
+
+  input:-webkit-autofill,
+  textarea:-webkit-autofill
+    -webkit-box-shadow 0 0 0 1000px white inset
+
+  &.__error
+    border  none /* TODO убрать эти стили после отключения common.css */
+
+    input,
+    textarea
+      background-color  #f3b0b0
+      border-color      #f44040
+      color             #f44040
+
+/********************************************************************************************************************/
+/* Загрузка файлов */
+/********************************************************************************************************************/
+.add-file-input
+  position  absolute
+  top       0
+  left      0
+  opacity   0
+  z-index   2
+
+  cursor    pointer
+  display   block
+  width     100%
+  height    100%
+
+.image
+  position  relative
+
+  &:hover
+
+    .image_add-btn
+      color #00b994
+
+    .image_remove-btn
+      display inline-block
+
+  &.__size-L
+    width       140px
+    height      140px
+    max-width   140px
+    max-height  140px
+    line-height 120px
+
+  &.__size-M
+    overflow    hidden
+    margin-top  10px
+    margin-left 20px
+    width       140px
+    height      85px
+    max-width   140px
+    line-height 120px
+
+  &.__size-M.__first-in-line
+    margin-left 0
+
+  &_src
+    margin      0 auto
+    display     block
+    max-height  inherit
+    max-width   inherit
+
+  &_add-btn
+    position        absolute
+    width           100%
+    height          100%
+    line-height     inherit
+    vertical-align  middle
+    box-sizing      border-box
+
+    color           #a1a1a1
+    text-align      center
+    cursor          pointer
+    border          2px dashed
+    transition(0.2s all ease-in-out 0s)
+
+  &_remove-btn /* TODO доработать кнопку */
+    position          absolute
+    top               0
+    left              0
+
+    display           none
+    width             100%
+    height            100%
+    box-sizing        border-box
+
+    line-height       inherit
+    vertical-align    middle
+    color             white
+    text-align        center
+
+    background-color  rgba(0,0,0,0.7)
+    cursor            pointer
+    transition(0.2s all ease-in-out 0s)

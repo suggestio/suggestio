@@ -3,13 +3,14 @@
 @import ident._
 
 <!DOCTYPE html>
-<html>
+<html class="suggestio-cap">
   <head>
     
     <title>@if(!title.isEmpty) { @title — }Suggest.io</title>
     
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
+    <meta name="format-detection" content="telephone=no">
     
     <link href="@routes.Assets.at("stylesheets/bootstrap.css")" rel="stylesheet" media="screen">
     @* HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries *@
@@ -36,15 +37,23 @@
     
   </head>
 
-  <body>
-    
-    @content
+  <body class="suggestio-cap">
+
+    <div class="suggestio-cap_bg"></div>
+    <div class="suggestio-cap_bg_mobile"></div>
+    <div class="suggestio-cap_footer">
+      <div class="suggestio-cap_footer-text">
+        © 2012-2014 <a class="suggestio-cap_link" href="/">Suggest.io</a>. Все права защищены
+      </div>
+    </div>
+
+    @*content
     
     @_footerTpl()
     
     @if(withAnalytics) {
       @_analyticsTpl()
-    }
+    }*@
 
   </body>
 </html>

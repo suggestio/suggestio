@@ -13,7 +13,12 @@
   routes.javascript.MarketLkAdn.nodeOnOffSubmit
 )
 
-@market.lk.lkBase(mnode.meta.name, adnIdOpt = mnode.id) {
+@nodeBaseTpl(
+  title = mnode.meta.name,
+  node = mnode,
+  isMyNode = true,
+  rightCurrEl = NodeRightPanelLinks.RPL_NODE
+) {
 @defining(Messages("slaves.of." + mnode.adn.shownTypeId)) { title =>
   <div class="page-title">
     <div class="page-title_cnt">

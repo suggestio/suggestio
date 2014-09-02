@@ -1,0 +1,166 @@
+@import "mixins"
+
+/********************************************************************************************************************/
+/* Fonts */
+/********************************************************************************************************************/
+
+.ft-XS
+  font-size 11px
+
+.ft-S
+	font-size 13px
+
+.ft-M
+  font-size 16px
+
+.ft-L
+  font-size 18px
+
+.white
+  color white
+
+.black
+  color black
+
+.light-gray
+  color lightGray
+
+.dark-gray
+  color darkGray
+
+.red
+  color red
+
+.green
+  color green
+
+.minor-title
+  margin-bottom 10px
+  color         darkGray
+  font-size     16px
+
+/********************************************************************************************************************/
+/* Ссылки */
+/********************************************************************************************************************/
+.link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #007b56
+    border-color: #c6c6c6
+
+.dark-link
+  text-decoration none
+
+  &:hover
+    color white
+
+/********************************************************************************************************************/
+/* Полосы разделители  */
+/********************************************************************************************************************/
+.delimiter
+  clear             both
+  height            1px
+  background-color  #636363
+
+  &.__light
+    background-color #d7d7d7
+
+  &.__vertical
+    width   1px
+    height  auto
+
+/********************************************************************************************************************/
+/* Вывод полей в формате Имя поля -> значение || input  */
+/********************************************************************************************************************/
+
+.prop
+  overflow  hidden
+  margin    15px 0
+  width     100%
+
+  &_name
+    width         125px
+    padding-right 25px
+    font-size     12px
+    color         lightGray
+
+  &_name.__block
+    display       block
+    width         auto
+
+  &_value
+    font-size 13px
+    color     darkGray
+
+/* значение поля цвет */
+.color
+  width   40px
+  height  40px
+  background-color  red
+  border-radius(50%)
+
+  &.__select
+    cursor  pointer
+
+
+/********************************************************************************************************************/
+/* Таблицы  */
+/********************************************************************************************************************/
+.table
+
+  &.__width-XL
+    width  100%
+
+.td
+  vertical-align  middle
+
+  &.__padding-S
+    padding 0 10px
+
+  &.__color-title
+    padding-right 10px
+
+  &.__gray
+    background-color  #e5e5e5
+
+  &.__white
+    background-color  white
+
+  &.__radial-first
+    border-radius(4px 0 0 4px)
+
+  &.__radial-last
+    border-radius(0 4px 4px 0)
+
+  &.__size-M
+    box-sizing  border-box
+    height      50px
+    padding     5px 10px
+
+  &.__delimiter
+    height  5px
+
+/********************************************************************************************************************/
+/* Стандартный блок SioMarket */
+/********************************************************************************************************************/
+.slide-block
+  margin 10px 0
+
+  &_title
+    background  #e5e5e5
+    padding     7px 11px
+    font-size   18px
+    color       darkGray
+    border-radius(3px)
+
+  &_cnt
+    padding     0
+    background  white
+    border-radius(0 0 3px 3px)
+
+    .tariff_illustration-w
+      padding-top 35px

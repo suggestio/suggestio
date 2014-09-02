@@ -1,6 +1,7 @@
 package models
 
 import java.util.Currency
+import org.joda.time.Period
 import play.api.i18n.Messages
 import play.api.data.Form
 import play.api.mvc.Call
@@ -48,7 +49,8 @@ case class SysAdnNodeBillingArgs(
   txns: Seq[MBillTxn],
   feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
   statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]],
-  dailyMmpsMap: collection.Map[Int, Seq[MBillMmpDaily]]
+  dailyMmpsMap: collection.Map[Int, Seq[MBillMmpDaily]],
+  sinkComissionMap: collection.Map[Int, Seq[MSinkComission]]
 )
 
 
@@ -148,3 +150,55 @@ case class SMDemoSiteArgs(
   def withGeo = adnId.isEmpty
 }
 
+
+/** Доступные интервалы размещения рекламных карточек. Отображаются в select'е вариантов adv-формы. */
+object QuickAdvPeriods extends Enumeration {
+
+  /**
+   * Класс элемента этого enum'а.
+   * @param isoPeriod Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
+   * @param prio Приоритет при фильтрации.
+   */
+  protected case class Val(isoPeriod: String, prio: Int) extends super.Val(isoPeriod) {
+    def toPeriod = new Period(isoPeriod)
+  }
+
+  type QuickAdvPeriod = Val
+
+  val P3D: QuickAdvPeriod = Val("P3D", 100)
+  val P1W: QuickAdvPeriod = Val("P1W", 200)
+  val P1M: QuickAdvPeriod = Val("P1M", 300)
+
+  implicit def value2val(x: Value): QuickAdvPeriod = x.asInstanceOf[QuickAdvPeriod]
+
+  def maybeWithName(n: String): Option[QuickAdvPeriod] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
+
+  def default = P1W
+  
+  def ordered: List[QuickAdvPeriod] = {
+    values
+      .foldLeft( List[QuickAdvPeriod]() ) { (acc, e) => e :: acc }
+      .sortBy(_.prio)
+  }
+
+}
+
+
+/** Enum для задания параметра подсветки текущей ссылки на правой панели личного кабинета узла. */
+object NodeRightPanelLinks extends Enumeration {
+  type NodeRightPanelLink = Value
+  val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT = Value : NodeRightPanelLink
+}
+
+
+/** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/
+object LkLeftPanelLinks extends Enumeration {
+  type LkLeftPanelLink = Value
+  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
+}

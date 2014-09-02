@@ -6,99 +6,38 @@
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
 
+@if(adnNode.gallery.nonEmpty) {
+  <div class="tariff_photo-lst">
+    @adnNode.gallery.map { imgId =>
+      <img class="tariff_photo-i" src="@routes.Img.getImg(imgId)">
+    }
+  </div>
+}
 
-    <div class="f-left" style="padding-left: 10px; padding-right: 40px">
-      <img src="/assets/images/market/lk/tariff-illustration.png" />
-    </div>
+@mbmds.map { mbmd =>
+  @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+}
+
+<div class="ovh">
 
 
-
-    <div class="ovh" style="padding-left: 20px; padding-right: 10px;">
-
-      @mbmds.map { mbmd =>
-        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+  @adnNode.meta.address.map { address =>
+    @market.lk.lkProp(){ Адрес } {
+      @Html(replaceEOLwithBR(address))
+      @adnNode.meta.phone.map { phone =>
+        тел. @phone
       }
+    }
+    <hr class="delimiter __light"/>
+  }
 
-    </div>
+  @adnNode.meta.humanTrafficAvg.map { htAvg =>
+    @market.lk.lkProp(){ Суточный трафик } { @formatIntHtml(htAvg) человек в сутки. }
+    <hr class="delimiter __light"/>
+  }
 
-    <div class="popup_t __inner">
-      Информация
-    </div>
+  @adnNode.meta.audienceDescr.map { audDescr =>
+    @market.lk.lkProp(){ Описание аудитори } { @Html(audDescr) }
+  }
 
-
-    <div class="siom-block_cnt">
-
-      @adnNode.meta.audienceDescr.map { audDescr =>
-        <table class="input-w __size-L">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Описание<br/>аудитори
-              </label>
-            </td>
-            <td>
-              <strong class="color-strong">@Html(audDescr)</strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
-      }
-
-      @adnNode.meta.humanTrafficAvg.map { htAvg =>
-        <table class="input-w __size-L">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Суточный<br/>трафик:
-              </label>
-            </td>
-            <td>
-              <strong class="color-strong">@formatIntHtml(htAvg) человек в сутки.</strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
-      }
-
-      @adnNode.meta.address.map { address =>
-        <table class="input-w __size-L">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Адрес:
-              </label>
-            </td>
-            <td>
-              <strong class="color-strong">
-                @Html(replaceEOLwithBR(address))
-                @adnNode.meta.phone.map { phone =>
-                  тел. @phone
-                }
-              </strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
-      }
-
-      @if(adnNode.gallery.nonEmpty) {
-        <table class="input-w __size-L">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Фотографии:
-              </label>
-            </td>
-            <td>
-              @adnNode.gallery.map { imgId =>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)">
-                <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="add-file-w_btn siom-zoom-image-btn"></a>
-              </div>
-              }
-            </td>
-          </tr>
-        </table>
-      }
-
-    </div>
+</div>

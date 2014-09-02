@@ -46,7 +46,7 @@ trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
     }
   }
 }
-case class CanReceiveAdvReq(advReqId: Int)
+final case class CanReceiveAdvReq(advReqId: Int)
   extends CanReceiveAdvReqBase
   with ExpireSession[RequestWithAdvReq]
 

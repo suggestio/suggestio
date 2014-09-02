@@ -5,161 +5,88 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 
-@market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i def-transition __act" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">Биллинг тарифных планов</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i def-transition" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Реквизиты</a>
+    <hr class="delimiter"/>
+  </nav>
+}
 
-  <div class="page-title">
-    <div class="page-title_cnt">
-      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
-      НАСТРОЙКИ
+
+
+@market.lk.lkBaseLayout(
+  title    = "Биллинг | " + adnNode.meta.name,
+  adnIdOpt = adnNode.id,
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING),
+  rightBar  = Some(rightBar)
+) {
+
+  @ctx.billBalanceOpt.map { mbb =>
+
+    <hr class="delimiter __light"/>
+
+    <div class="billing_money-info">
+      <div class="billing_all-money">
+        <span class="light-gray">Всего на счете</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</div>
+      </div>
+
+      <div class="billing_available-money">
+        <span class="light-gray">Доступно для операции</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.amount, mbb.currency)</div>
+      </div>
+
+      <div class="billing_locked-money">
+        <span class="light-gray">Заблокировано</span>
+        <div class="dark-gray billing_money-value">@formatPrice(mbb.blocked, mbb.currency)</div>
+      </div>
     </div>
-  </div>
+  }
 
-  <div class="body_cnt">
+  @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
+  @if(!mmpDailyTariffs.isEmpty) {
 
-    @market.lk.lkBlock("Биллинг") {
+    <h2 class="minor-title">
+      Ставка тарифных планов моего магазина
+    </h2>
+    <hr class="delimiter __light"/>
 
-      @* Верхняя информация: баланс, тарификация *@
-      <table class="siom-table __size-XL">
+    @mmpDailyTariffs.map { mbmd =>
+      <div class="tariff">
+        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+      </div>
+    }
+  }
 
-        @ctx.billBalanceOpt.map { mbb =>
-        <tr>
-          <td class="siom-table_top-cnt">
 
-	    <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
 
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>
-            </div>
-            <div class="clear"></div>
+  @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
+     Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
+  @if(!otherRcvrs.isEmpty) {
 
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
+    <h2 class="minor-title">
+      Ставка тарифных планов рекламного размещения
+    </h2>
+    <hr class="delimiter __light"/>
 
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</strong>
-            </div>
-            <div class="clear"></div>
+    @* Пока без вкладок, просто сплошным списком. *@
+    @otherRcvrs.map { rcvr =>
+      @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
 
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Заблокировано<br/>средств:</span>
-
-              <strong class="billing-prop-value ft-L">@formatPrice(mbb.blocked, mbb.currency)</strong>
-            </div>
-          </td>
-
-          <td class="siom-table_top-cnt">
-            <div class="border-line __vertical js-vertical-line f-left"></div>
-            <div class="table-cell-cnt __size-XS">
-              <span class="f-left ft-XS color-light-strong billing-prop-name">Списание средств:</span>
-
-              <strong class="color-strong f-left">18.05.2014</strong>
-            </div>
-          </td>
-          <td class="siom-table_top-cnt">
-            <div class="border-line __vertical js-vertical-line f-right"></div>
-            <div class="table-cell-cnt __size-XS">
-
-              <span class="gray-but-smallest inline f-left">
-                <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
-              </span>
-
-            </div>
-          </td>
-
-          <td class="siom-table_top-cnt">
-            <div class="table-cell-cnt __size-XS">
-              <a class="siom-link-btn __size-M __ft-L __color-5 js-slide-btn" data-fix-title="true"  href="#requisites">РЕКВИЗИТЫ</a>
-            </div>
-          </td>
-
-        }
-      </table>
-
-    }<!-- Верхняя информация end -->
-
-    <div class="siom-block-child" id="requisites">
-      @market.lk.lkBlock("Реквизиты платежа:") {
-
-        @* Реквизиты платежа *@
-        @_billPaymentBankTpl(mbc)
-        <span class="gray-but-smallest" style="margin-top: 25px;">
-          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
-        </span>
-
+      @{
+        val test = Some("qqqq")
       }
-    </div>
 
-
-    <div class="siom-block-child" id="transactionsHistory">
-      @market.lk.lkBlock("История операций") {
-
-        <table class="siom-table __size-XL" id="transactionsList">
-          <tr>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                №
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Основание:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Дата операции:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th></th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S ">
-                Сумма:
-              </div>
-              <div class="border-line"></div>
-            </th>
-          </tr>
-        </table>
-
-      }
-    </div><!-- История операции end -->
-
-
-
-    @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
-    @if(!mmpDailyTariffs.isEmpty) {
-
-      @market.lk.lkBlock("Ваша ставка тарифных планов") {
-
-          @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
-
-      }
+      @market.lk.lkBlockNewDesign(
+        href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) )
+      ) { @rcvr.meta.name&nbsp;/&nbsp;<span class="ft-S light-gray">@rcvr.meta.town</span> } { }
 
     }
 
-
-    @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
-       Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
-    @if(!otherRcvrs.isEmpty) {
-
-      @market.lk.lkBlock("Ставка тарифных планов рекламного размещения") {
-
-        @* Пока без вкладок, просто сплошным списком. *@
-        @otherRcvrs.map { rcvr =>
-
-          @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-          @market.lk.lkBlock( rcvr.meta.name + " / " + rcvr.meta.town.get, slideBtnHref = routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get) ) { }
-
-
-        }
-
-      }
-
-    }
-
-  </div>
+  }
 
 }

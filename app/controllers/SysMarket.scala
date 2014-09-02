@@ -319,6 +319,27 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     { AdnMemberShowLevels.unapply }
   }
 
+  /** Доступная узлу пути рекламной выдачи. */
+  private def adnSinksM: Mapping[Set[AdnSink]] = {
+    mapping(
+      AdnSinks.SINK_WIFI.longName -> boolean,
+      AdnSinks.SINK_GEO.longName  -> boolean
+    )
+    {(isWifi, isGeo) =>
+      var acc = List.empty[AdnSink]
+      if (isWifi)
+        acc ::= AdnSinks.SINK_WIFI
+      if (isGeo)
+        acc ::= AdnSinks.SINK_GEO
+      acc.toSet
+    }
+    {sinks =>
+      val isWifi = sinks contains AdnSinks.SINK_WIFI
+      val isGeo  = sinks contains AdnSinks.SINK_GEO
+      Some((isWifi, isGeo))
+    }
+  }
+
   /** Маппинг для adn-полей формы adn-узла. */
   private def adnMemberM: Mapping[AdNetMemberInfo] = mapping(
     "memberType"    -> adnMemberTypeM,
@@ -328,9 +349,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "sls"           -> adnSlInfoM,
     "supId"         -> optional(esIdM),
     "advDelegate"   -> optional(esIdM),
-    "testNode"      -> boolean
+    "testNode"      -> boolean,
+    "sink"          -> adnSinksM
   )
-  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode) =>
+  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, sinks) =>
     mt.getAdnInfoDflt.copy(
       isEnabled = isEnabled,
       rights    = rights,
@@ -338,12 +360,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       showLevelsInfo = sls,
       supId     = supId,
       advDelegate = advDgOpt,
-      testNode  = isTestNode
+      testNode  = isTestNode,
+      sinks     = sinks
     )
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode))
+    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, sinks))
   }
 
 
@@ -552,7 +575,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         showLevelsInfo = adnNode2.adn.showLevelsInfo,
         supId       = adnNode2.adn.supId,
         advDelegate = adnNode2.adn.advDelegate,
-        testNode    = adnNode2.adn.testNode
+        testNode    = adnNode2.adn.testNode,
+        sinks       = adnNode2.adn.sinks
       ),
       conf = adnNode.conf.copy(
         withBlocks = adnNode2.conf.withBlocks
@@ -596,8 +620,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       {email1 =>
         val eAct = EmailActivation(email=email1, key = adnId)
         eAct.save.map { eActId =>
-          eAct.id = Some(eActId)
-          sendEmailInvite(eAct, adnNode)
+          val eact2 = eAct.copy(
+            id = Some(eActId)
+          )
+          sendEmailInvite(eact2, adnNode)
           // Письмо отправлено, вернуть админа назад в магазин
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))

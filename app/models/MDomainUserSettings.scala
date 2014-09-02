@@ -37,7 +37,7 @@ import io.suggest.util.SioModelUtil
  * @param dkey ключ домена
  * @param data данные
  */
-case class MDomainUserSettings(
+final case class MDomainUserSettings(
   dkey : String,
   data : MDomainUserSettings.DataMap_t
 ) extends DkeyModelT with DUS_Basic {

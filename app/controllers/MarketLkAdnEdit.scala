@@ -49,8 +49,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Маппер подформы метаданных для узла-ресивера. */
   private def rcvrMetaM = {
-    mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
-    {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
+    mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM, infoKM)
+    {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg, info) =>
       AdnMMetadata(
         name    = name,
         town    = town,
@@ -60,12 +60,13 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         siteUrl = siteUrlOpt,
         phone   = phoneOpt,
         audienceDescr = audDescr,
-        humanTrafficAvg = humanTrafficAvg
+        humanTrafficAvg = humanTrafficAvg,
+        info    = info
       )
     }
     {meta =>
       import meta._
-      Some((name, town, address, color, fgColor, siteUrl, phone, audienceDescr, humanTrafficAvg))
+      Some((name, town, address, color, fgColor, siteUrl, phone, audienceDescr, humanTrafficAvg, info))
     }
   }
 

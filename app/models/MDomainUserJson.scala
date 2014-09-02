@@ -22,7 +22,7 @@ import io.suggest.util.SioModelUtil
  * TODO Можно добавить поддержку множества профилей через набор колонок (qualifier).
  */
 
-case class MDomainUserJson(
+final case class MDomainUserJson(
   dkey: String,
   data: String
 ) extends DkeyModelT {

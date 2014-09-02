@@ -75,7 +75,7 @@ object MBillPayReqsRu extends SqlModelStatic with FromJson {
 
 import MBillPayReqsRu._
 
-case class MBillPayReqsRu(
+final case class MBillPayReqsRu(
   contractId  : Int,
   rName       : String,
   rInn        : Long,

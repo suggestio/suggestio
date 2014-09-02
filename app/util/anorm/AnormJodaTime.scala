@@ -1,10 +1,10 @@
-package util
+package util.anorm
 
-import play.api.Play.current
+import anorm.SqlParser._
+import anorm._
 import org.joda.time._
 import org.joda.time.format._
-import anorm._
-import anorm.SqlParser._
+import play.api.Play.current
 import play.api.db.DB
 
 /**
@@ -16,7 +16,7 @@ import play.api.db.DB
  */
 
 object AnormJodaTime {
-  val dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS");
+  private def dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS");
 
   implicit def rowToDateTime: Column[DateTime] = Column.nonNull { (value, meta) =>
     value match {

@@ -3,8 +3,9 @@ package models
 import anorm._
 import io.suggest.model.{ToPlayJsonObj, EsModel}
 import io.suggest.model.EsModel.FieldsJsonAcc
-import util.AnormJodaTime._
-import util.AnormPgArray._
+import util.anorm.{AnormPgArray, AnormJodaTime}
+import AnormJodaTime._
+import AnormPgArray._
 import org.joda.time.DateTime
 import io.suggest.util.SioRandom.rnd
 import java.sql.Connection
@@ -28,29 +29,25 @@ object MBillContract extends SqlModelStatic with FromJson {
 
   override type T = MBillContract
 
-  /** Комиссия s.io за размещение рекламной карточки. Пока что одна для всех. Вероятно, надо вынести это в другое место. */
-  val SIO_COMISSION_SHARE_DFLT = configuration.getDouble("adv.comission.sio").map(_.toFloat) getOrElse 0.300000F
-
   private def idFormatter = new DecimalFormat("000")
 
-  val ID_FN = "id"
-  val ADN_ID_FN = "adn_id"
-  val CRAND_FN  = "crand"
-  val CONTRACT_DATE_FN = "contract_date"
-  val DATE_CREATED_FN = "date_created"
-  val HIDDEN_INFO_FN = "hidden_info"
-  val IS_ACTIVE_FN = "is_active"
-  val SUFFIX_FN = "suffix"
-  val SIO_COMISSION_FN = "sio_comission"
+  val ID_FN             = "id"
+  val ADN_ID_FN         = "adn_id"
+  val CRAND_FN          = "crand"
+  val CONTRACT_DATE_FN  = "contract_date"
+  val DATE_CREATED_FN   = "date_created"
+  val HIDDEN_INFO_FN    = "hidden_info"
+  val IS_ACTIVE_FN      = "is_active"
+  val SUFFIX_FN         = "suffix"
 
-  val TABLE_NAME: String = "bill_contract"
+  val TABLE_NAME = "bill_contract"
 
-  val ADN_ID_PARSER = get[String](ADN_ID_FN)
+  val ADN_ID_PARSER = str(ADN_ID_FN)
 
-  val rowParser = get[Option[Int]](ID_FN) ~ get[Int](CRAND_FN) ~ ADN_ID_PARSER ~ get[DateTime](CONTRACT_DATE_FN) ~
-    get[DateTime](DATE_CREATED_FN) ~ get[Option[String]](HIDDEN_INFO_FN) ~ get[Boolean](IS_ACTIVE_FN) ~
-    get[Option[String]](SUFFIX_FN) ~ get[Float](SIO_COMISSION_FN) map {
-    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ sioComission =>
+  val rowParser = get[Option[Int]](ID_FN) ~ int(CRAND_FN) ~ ADN_ID_PARSER ~ get[DateTime](CONTRACT_DATE_FN) ~
+    get[DateTime](DATE_CREATED_FN) ~ get[Option[String]](HIDDEN_INFO_FN) ~ bool(IS_ACTIVE_FN) ~
+    get[Option[String]](SUFFIX_FN) map {
+    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
         dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
@@ -185,7 +182,7 @@ object MBillContract extends SqlModelStatic with FromJson {
   /** Десериализация из json для нужд [[MInviteRequest]]. */
   val fromJson: PartialFunction[Any, MBillContract] = {
     case jmap: ju.Map[_,_] =>
-      import EsModel.{stringParser, intParser, floatParser, booleanParser, dateTimeParser}
+      import EsModel.{stringParser, intParser, booleanParser, dateTimeParser}
       MBillContract(
         adnId         = stringParser(jmap get ADN_ID_FN),
         contractDate  = dateTimeParser(jmap get CONTRACT_DATE_FN),
@@ -194,7 +191,6 @@ object MBillContract extends SqlModelStatic with FromJson {
         hiddenInfo    = Option(jmap get HIDDEN_INFO_FN) map stringParser,
         isActive      = Option(jmap get IS_ACTIVE_FN).fold(true)(booleanParser),
         crand         = intParser(jmap get CRAND_FN),
-        sioComission  = Option(jmap get SIO_COMISSION_FN).fold(0.30F)(floatParser),
         id            = Option(jmap get ID_FN) map intParser
       )
   }
@@ -202,7 +198,7 @@ object MBillContract extends SqlModelStatic with FromJson {
 
 import MBillContract._
 
-case class MBillContract(
+final case class MBillContract(
   adnId         : String,
   contractDate  : DateTime,
   suffix        : Option[String] = None,
@@ -210,7 +206,6 @@ case class MBillContract(
   hiddenInfo    : Option[String] = None,
   isActive      : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
-  sioComission  : Float = MBillContract.SIO_COMISSION_SHARE_DFLT,
   id            : Option[Int] = None
 ) extends SqlModelSave[MBillContract] with ToPlayJsonObj {
 
@@ -227,10 +222,10 @@ case class MBillContract(
    * @return Новый экземпляр сабжа.
    */
   def saveInsert(implicit c: Connection): MBillContract = {
-    SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $CONTRACT_DATE_FN, $DATE_CREATED_FN, $HIDDEN_INFO_FN, $IS_ACTIVE_FN, $CRAND_FN, $SUFFIX_FN, $SIO_COMISSION_FN)" +
-        " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix}, {sioComission})")
+    SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $CONTRACT_DATE_FN, $DATE_CREATED_FN, $HIDDEN_INFO_FN, $IS_ACTIVE_FN, $CRAND_FN, $SUFFIX_FN)" +
+        " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix})")
       .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated, 'hiddenInfo -> hiddenInfo,
-          'isActive -> isActive, 'crand -> crand, 'suffix -> suffix, 'sioComission -> sioComission)
+          'isActive -> isActive, 'crand -> crand, 'suffix -> suffix)
       .executeInsert(rowParser single)
   }
 
@@ -241,9 +236,9 @@ case class MBillContract(
    */
   def saveUpdate(implicit c: Connection): Int = {
     SQL(s"UPDATE $TABLE_NAME SET $CONTRACT_DATE_FN = {contractDate}, $HIDDEN_INFO_FN = {hiddenInfo}," +
-        s" $IS_ACTIVE_FN = {isActive}, $SUFFIX_FN = {suffix}, $SIO_COMISSION_FN = {sioComission} WHERE $ID_FN = {id}")
+        s" $IS_ACTIVE_FN = {isActive}, $SUFFIX_FN = {suffix} WHERE $ID_FN = {id}")
       .on('id -> id.get, 'contractDate -> contractDate, 'hiddenInfo -> hiddenInfo,
-          'isActive -> isActive, 'suffix -> suffix, 'sioComission -> sioComission)
+          'isActive -> isActive, 'suffix -> suffix)
       .executeUpdate()
   }
 
@@ -254,8 +249,7 @@ case class MBillContract(
       CONTRACT_DATE_FN  -> EsModel.date2JsStr(contractDate),
       DATE_CREATED_FN   -> EsModel.date2JsStr(dateCreated),
       IS_ACTIVE_FN      -> JsBoolean(isActive),
-      CRAND_FN          -> JsNumber(crand),
-      SIO_COMISSION_FN  -> JsNumber(sioComission)
+      CRAND_FN          -> JsNumber(crand)
     )
     if (suffix.isDefined)
       acc ::= SUFFIX_FN -> JsString(suffix.get)
@@ -289,6 +283,19 @@ trait FindByContract extends SqlModelStatic {
   def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE contract_id = {contractId}", policy, 'contractId -> contractId)
   }
+
+  /**
+   * Прочитать один ряд для указанного контракта. Если рядов несколько, то выбрать тот, у которого максимальный id.
+   * @param contractId id контракта.
+   * @return Some(T) или None, если подходящих рядов вообще нет.
+   */
+  def getLatestForContractId(contractId: Int)(implicit c: Connection): Option[T] = {
+    SQL(s"SELECT * FROM $TABLE_NAME WHERE contract_id = {contractId} ORDER BY id DESC LIMIT 1")
+      .on('contractId -> contractId)
+      .as(rowParser *)
+      .headOption
+  }
+
 
   def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE contract_id = ANY({contractIds})", policy, 'contractIds -> seqInt2pgArray(contractIds))

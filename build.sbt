@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.3.3-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.4.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -61,7 +61,7 @@ libraryDependencies ++= Seq(
   "de.jollyday" % "jollyday" % "0.4.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
-  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
+  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   // webjars
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",

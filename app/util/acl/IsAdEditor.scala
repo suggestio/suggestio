@@ -91,7 +91,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
     }
   }
 }
-case class CanEditAd(adId: String)
+final case class CanEditAd(adId: String)
   extends CanEditAdBase
   with ExpireSession[RequestWithAd]
 
@@ -179,7 +179,7 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
 }
 
 /** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
-case class CanUpdateSls(adId: String)
+final case class CanUpdateSls(adId: String)
   extends CanUpdateSlsBase
   with ExpireSession[RequestWithAd]
 

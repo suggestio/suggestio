@@ -1,0 +1,51 @@
+@(adnNode: MAdnNode, pf: Form[_], r: Option[String] = None)(implicit ctx: Context)
+
+@* Страница редактирования профиля пользователя. *@
+
+@import ctx._
+@import market.lk._
+@import helper._
+@import util.FC.tdRadialFc
+
+@rightBarAfter = {
+  <div class="right-bar_bottom">
+    <a class="btn __size-M __major js-submit-btn" data-for="#userProfileEdit">Сохранить</a>
+  </div>
+}
+
+@content = {
+
+  @form(
+    routes.MarketLkAdn.changePasswordSubmit(
+      adnId = adnNode.id.get,
+      r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url)
+    ),
+    'id -> "userProfileEdit"
+  ) {
+    @inputPassword(
+      pf("old"),
+      '_label -> Messages("Type.current.password")
+    )
+
+    @inputPassword(
+      pf("new.pw1"),
+      '_label -> Messages("Type.new.password")
+    )
+
+    @inputPassword(
+      pf("new.pw2"),
+      '_label -> Messages("Confirm.new.password")
+    )
+
+  }
+
+}
+
+
+@adn.nodeBaseTpl(
+  title         = "Редактирование профиля пользователя",
+  node          = adnNode,
+  isMyNode      = true,
+  rightCurrEl   = NodeRightPanelLinks.RPL_USER_EDIT,
+  rightBarAfter = Some(rightBarAfter)
+)(content)

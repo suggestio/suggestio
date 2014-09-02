@@ -22,7 +22,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Cookie, Call, Result, AnyContent}
+import play.api.mvc.{Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
 
 /**
@@ -316,7 +316,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val catAdsSearch = AdSearch(
       receiverIds   = adnIdOpt.toList,
       maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_MEMBERS_CATALOG)
+      levels        = List(AdShowLevels.LVL_CATS)
     )
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
@@ -341,13 +341,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
+    trace(s"$logPrefix ${request.path}")
     lazy val gsiFut = adSearch.geo.geoSearchInfo
     val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> Future.successful(adSearch)
     } else {
       // При поиске по категориям надо искать только если есть указанный show level.
       val adsearch3: Future[AdSearch] = if (adSearch.catIds.nonEmpty) {
-        val result = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
+        val result = adSearch.copy(levels = AdShowLevels.LVL_CATS :: adSearch.levels)
         Future successful result
       } else if (adSearch.receiverIds.nonEmpty) {
         // TODO Можно спилить этот костыль?
@@ -367,24 +369,24 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             // Если узлы слишком далеко, то будет пустой список результатов.
             MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
               // TODO Если рекламных узлов по указанным координатам нет. То надо откатится на geoip? Или что отображать?
-              trace(s"findAds(${request.path}): geo: nodeIds = ${nodeIds.mkString(", ")}")
+              trace(s"$logPrefix geo: nodeIds = ${nodeIds.mkString(", ")}")
               adSearch.copy(receiverIds = nodeIds.toList, geo = GeoNone)
             }
         } recover {
           // Допустима работа без геолокации при возникновении внутренней ошибки.
           case ex: Throwable =>
-            error("findAds(): Failed to get geoip info for " + request.remoteAddress, ex)
+            error(logPrefix + " Failed to get geoip info for " + request.remoteAddress, ex)
             adSearch
         }
       } else {
         // Слегка неожиданные параметры запроса.
-        warn("findAds(): strange search request: " + adSearch)
+        warn(logPrefix + " Strange search request: " + adSearch)
         Future successful adSearch
       }
       "findAds" -> adsearch3
     }
     val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
-      trace("findAds(): Starting ads search using " + adSearch2)
+      trace(logPrefix + " Starting ads search using " + adSearch2)
       MAd.dynSearch(adSearch2)
     }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
@@ -397,6 +399,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
+      trace(s"$logPrefix Found ${mads.size} ads.")
       adSearch2Fut onSuccess { case adSearch2 =>
         AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
       }

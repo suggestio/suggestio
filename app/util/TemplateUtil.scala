@@ -174,5 +174,7 @@ object FC {
 
   implicit val radialFc = FieldConstructor(radialFcTpl.f)
 
+  implicit val tdRadialFc = FieldConstructor(tdRadialFcTpl.f)
+
 }
 

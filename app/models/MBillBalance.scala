@@ -5,7 +5,8 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.ToPlayJsonObj
 import util.SqlModelSave
 import java.sql.Connection
-import util.AnormPgArray._
+import util.anorm.AnormPgArray
+import AnormPgArray._
 import play.api.libs.json._
 import java.{util => ju}
 
@@ -137,7 +138,7 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
 
 import MBillBalance._
 
-case class MBillBalance(
+final case class MBillBalance(
   adnId: String,
   amount: Float,
   currencyCodeOpt: Option[String] = Some(CurrencyCodeOpt.CURRENCY_CODE_DFLT),

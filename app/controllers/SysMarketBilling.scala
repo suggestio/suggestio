@@ -1,8 +1,9 @@
 package controllers
 
 import models.MBillContract.LegalContractId
+import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
-import util.acl.IsSuperuser
+import util.acl.{IsSuperuserContractNode, AbstractRequestWithPwOpt, IsSuperuser}
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -30,10 +31,8 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   /** При создании контракта дефолтовое значение суффикса. */
   lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("sys.billing.contract.suffix.dflt") getOrElse "CEO"
 
-  /** Дефолтовое значение комиссии suggest.io в форме создания контракта. */
-  lazy val SIO_COMISSION_DFLT: Float = configuration.getDouble("sys.billing.contract.share.dflt").fold(0.30F)(_.toFloat)
 
-
+  /** Внутренний маппинг для даты LocalDate. */
   private def bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
 
@@ -52,24 +51,22 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       .transform[Option[String]](
         {Some(_).filter(!_.isEmpty)},
         {_ getOrElse ""}
-      ),
-    "sioComission"  -> floatM
+      )
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo, sioComission) =>
+  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
     MBillContract(
       adnId = adnId,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
-      isActive = isActive,
-      sioComission = sioComission
+      isActive = isActive
     )
   }
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo, sioComission))
+    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
   })
 
 
@@ -87,7 +84,8 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         txns            = MBillTxn.findForContracts(contractIds),
         feeTariffsMap   = MBillTariffFee.getAll.groupBy(mbtsGrouper),
         statTariffsMap  = MBillTariffStat.getAll.groupBy(mbtsGrouper),
-        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper)
+        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
+        sinkComissionMap = contractIds.flatMap(MSinkComission.findByContractId(_)).groupBy(_.contractId)
       )
     }
     adnNodeOptFut map {
@@ -106,8 +104,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           adnId = adnId,
           contractDate = DateTime.now,
           suffix = Some(CONTRACT_SUFFIX_DFLT),
-          isActive = true,
-          sioComission = SIO_COMISSION_DFLT
+          isActive = true
         )
         val formM = contractFormM fill mbcStub
         Ok(createContractFormTpl(adnNode, supOpt, formM))
@@ -186,8 +183,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           contractDate = mbc1.contractDate,
           hiddenInfo   = mbc1.hiddenInfo,
           isActive     = mbc1.isActive,
-          suffix       = mbc1.suffix,
-          sioComission = mbc1.sioComission
+          suffix       = mbc1.suffix
         )
         DB.withConnection { implicit c =>
           mbc3.save
@@ -241,8 +237,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         txnUid = "",
         dateProcessed = now,
         paymentComment = "",
-        adId = None,
-        comissionPc = Some(SIO_COMISSION_DFLT)
+        adId = None
       )
       (lci, txn)
     }
@@ -359,6 +354,131 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           Some(adnNode -> supOpt)
         }
       case None => Future successful None
+    }
+  }
+
+
+
+  // Доступ к модели MSinkComission.
+  import sink._
+
+  private def sinkComM: Mapping[MSinkComission] = {
+    mapping(
+      "sink"          -> sinkM,
+      "sioComission"  -> floatM
+    )
+    {(sink, sioComission) =>
+      MSinkComission(contractId = -1, sink = sink, sioComission = sioComission)
+    }
+    {msc =>
+      import msc._
+      Some((sink, sioComission))
+    }
+  }
+  private def sinkComFormM: Form[MSinkComission] = Form(sinkComM)
+
+  /** Рендер страницы с формой создания новой [[models.MSinkComission]]. */
+  def createSinkCom(contractId: Int) = IsSuperuserContractNode(contractId).apply { implicit request =>
+    // Определять необходимый sink, фильтруя node.adn.sinks по имеющимся msc.
+    val currentMscs = DB.withConnection { implicit c =>
+      MSinkComission.findByContractId(contractId)
+    }
+    val needSinks = request.adnNode.adn.sinks -- currentMscs.map(_.sink)
+    val sink = needSinks.headOption getOrElse AdnSinks.default
+    val mscStub = MSinkComission(
+      contractId = contractId,
+      sink = sink,
+      sioComission = sink.sioComissionDflt
+    )
+    val form = sinkComFormM fill mscStub
+    Ok(createSinkComTpl(form, request.contract, request.adnNode))
+  }
+
+  /** Сабмит формы создания тарифа sink comission. */
+  def createSinkComSubmit(contractId: Int) = IsSuperuser.async { implicit request =>
+    sinkComFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"createSinkComSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        val contract = DB.withConnection { implicit c =>
+          MBillContract.getById(contractId).get
+        }
+        MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+          Ok(createSinkComTpl(formWithErrors, contract, adnNodeOpt.get))
+        }
+      },
+      {msc0 =>
+        val msc = msc0.copy(contractId = contractId)
+        val adnId = DB.withConnection { implicit c =>
+          msc.save
+          MBillContract.getById(contractId).get.adnId
+        }
+        // Отправить админа назад на биллинг.
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> s"Создан тариф для выдачи ${msc.sink.longName}")
+      }
+    )
+  }
+
+  /** Рендер страницы редактирования sink'а. */
+  def editSinkCom(scId: Int) = IsSuperuser.async { implicit request =>
+    _editSinkCom(scId)
+  }
+
+  private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val syncResult = DB.withConnection { implicit c =>
+      val msc = MSinkComission.getById(scId).get
+      val mbc = MBillContract.getById(msc.contractId).get
+      msc -> mbc
+    }
+    val (msc, mbc) = syncResult
+    val adnNodeOptFut = MAdnNodeCache.getById(mbc.adnId)
+    val form: Form[MSinkComission] = formOpt getOrElse { sinkComFormM fill msc }
+    adnNodeOptFut map { adnNodeOpt =>
+      Ok(editSinkComTpl(msc, form, mbc, adnNodeOpt.get))
+    }
+  }
+
+  /** Сабмит формы редактирования экземпляра [[models.MSinkComission]]. */
+  def editSinkComSubmit(scId: Int) = IsSuperuser.async { implicit request =>
+    sinkComFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"editSinkComSubmit($scId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        _editSinkCom(scId, Some(formWithErrors))
+      },
+      {msc1 =>
+        val adnId = DB.withTransaction { implicit c =>
+          val msc = MSinkComission.getById(scId, SelectPolicies.UPDATE).get
+          val msc2 = msc.copy(
+            sink = msc1.sink,
+            sioComission = msc1.sioComission
+          )
+          val msc3 = msc2.save
+          // Узнать куда редиректить админа после действа
+          MBillContract.getById(msc3.contractId).get.adnId
+        }
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> "Измения сохранены.")
+      }
+    )
+  }
+
+  /** Админ приказал удалить указанный sink comission. */
+  def sinkComDeleteSubmit(scId: Int) = IsSuperuser { implicit request =>
+    val adnIdOpt = DB.withConnection { implicit c =>
+      val msc = MSinkComission.getById(scId)
+      msc foreach { _.delete }
+      msc
+        .flatMap { msc => MBillContract.getById(msc.contractId) }
+        .map { _.adnId }
+    }
+    adnIdOpt match {
+      case Some(adnId) =>
+        Redirect( routes.SysMarketBilling.billingFor(adnId) )
+          .flashing("success" -> "sink-тариф удалён.")
+
+      case None =>
+        Redirect( routes.SysMarket.index() )
+          .flashing("error" -> "Что-то пошло не так... sink-тариф уже удалён?")
     }
   }
 

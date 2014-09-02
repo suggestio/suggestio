@@ -40,7 +40,8 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MBlogJmx,
     new MCompanyJmx,
     new MCalendarJmx,
-    new MInviteRequestJmx
+    new MInviteRequestJmx,
+    new SiowebEsModelJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

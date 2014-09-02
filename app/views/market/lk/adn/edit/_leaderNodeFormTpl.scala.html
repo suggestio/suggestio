@@ -2,12 +2,160 @@
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
-@import util.FC.tdFc
+@import util.FC.tdRadialFc
 @import util.img.GalleryUtil.GALLERY_LEN_MAX
 
-@form(submitCall) {
+@form(submitCall, 'id -> "profileEdit") {
 
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <div class="profile_logo-bar" id="logo">
+    @defining(mf("logoImgId").value) { logoImgIdOpt =>
+      @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
+        <style class="custom-color-style" data-for=".__logo">
+          .__logo {
+            background-color: #@mf("meta.color").value;
+          }
+        </style>
+        <div class="image __logo __size-L js-preview">
+          <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+          <img class="image_src" src='@routes.Img.getImg(imgId)'/>
+          <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
+        </div>
+      }
+
+      <div class="image __size-L js-image-upload" @if(!logoImgIdOpt.isEmpty){ style="display: none;" }>
+        @stuff._fileUploadTpl(
+          routes.MarketLkAdnEdit.handleTempLogo(),
+          fieldName = "logoImgId",
+          previewRoot = "#logo",
+          previewClass = "__logo __size-L"
+        )
+        <a class="image_add-btn js-file-upload-btn" title="Загрузить логотип">Загрузить логотип</a>
+      </div>
+
+    }
+  </div>
+
+  <div class="profile_info-bar">
+    <hr class="delimiter __light"/>
+
+    @mf.globalError.map { errors =>
+      <p class="block __margin-M red">Ошибка: @Messages(errors.message)</p>
+    }
+
+    @inputText(
+      mf("meta.name"),
+      '_label -> "Название"
+    )
+
+    @inputText(
+      mf("meta.town"),
+      '_label -> "Город"
+    )
+
+    @textarea(
+      mf("meta.address"),
+      '_label -> "Адрес"
+    )
+
+    @inputText(
+      mf("meta.siteUrl"),
+      '_label -> "Сайт"
+    )
+
+    @if(nodeInfo.isProducer) {
+      @textarea(
+        mf("meta.info"),
+        '_label -> "Информация о товарах или услугах"
+      )
+    }
+
+    <hr class="delimiter __light"/>
+
+    @if(nodeInfo.isReceiver) {
+      @inputText(
+        mf("meta.humanTrafficAvg"),
+        '_label -> "Суточный трафик"
+      )
+
+      @textarea(
+        mf("meta.audienceDescr"),
+        '_label -> "Описание аудитории"
+      )
+      <hr class="delimiter __light"/>
+
+      <div class="prop" id="welcomeImage">
+        <p class="prop_name __block">Картинка приветствия:</p>
+        @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+      </div>
+
+      <hr class="delimiter __light"/>
+
+      <div class="prop" id="profileGallery">
+        <p class="prop_name __block">Фотографии объекта:</p>
+
+        <div class="image __size-M __first-in-line f-left js-image-upload" >
+          @stuff._fileUploadTpl(
+            routes.Img.handleTempImg,
+            fieldName = "gallery",
+            multiple = true,
+            previewRoot = "#profileGallery",
+            previewClass = "__size-M f-left"
+          )
+          <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">Загрузить фотографию</a>
+        </div>
+
+        @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
+        @defining( mf("gallery") ) { gf =>
+          @gf.indexes.map { gfi =>
+            @defining( s"gallery[$gfi]" ) { gfn =>
+              @mf(gfn).value.map { imgId =>
+                <div class="image __size-M f-left js-preview @if(gfi % 4 == 3){ __first-in-line}">
+                  <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                  <img class="image_src" src="@routes.Img.getThumb(imgId)" />
+                  <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
+                </div>
+              }
+            }
+          }
+        }
+      </div><!-- profile gallery end -->
+
+      <hr class="delimiter __light"/>
+
+    }
+
+    <table class="prop">
+      <td class="prop_name td">
+        Цвет фона шапки где будет распологаться ваш логотип
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Основной<br/>цвет</span>
+      </td>
+      <td class="td __padding-S">
+        <div class="color __select js-custom-color" data-for=".__logo" style="background-color: #@mf("meta.color").value;">
+          <input type="hidden" name="meta.color" value="@mf("meta.color").value"/>
+        </div>
+      </td>
+      <td class="td __padding-S">
+        <div class="delimiter __light __vertical js-vertical-line"></div>
+      </td>
+      <td class="td __padding-S prop_name">
+        Цвет текста и иконок категорий в ленте выдачи
+      </td>
+      <td class="td __color-title">
+        <span class="dark-gray ft-S">Цвет<br/>контента</span>
+      </td>
+      <td class="td __padding-S dark-gray">
+        <div class="color __select js-custom-color" style="background-color: #@mf("meta.fgColor").value;">
+          <input id="meta_color" type="hidden" name="meta.fgColor" value="@mf("meta.fgColor").value"/>
+        </div>
+      </td>
+    </table>
+
+  </div>
+
+
+    @*<table cellpadding="0" cellspacing="0" class="input-w __size-L">
       <tr>
 
         <td class="input-w_left">
@@ -27,7 +175,10 @@
             }
 
             <div class="add-file-w __size-S"  @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
-              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
+              @stuff._fileUploadTpl(
+                routes.MarketLkAdnEdit.handleTempLogo(),
+                fieldName = "logoImgId",
+              )
               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
             </div>
 
@@ -36,87 +187,11 @@
         </td>
 
       </tr>
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
-      @inputText(
-        mf("meta.name"),
-        '_label -> "Название:"
-      )
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
-      @inputText(
-        mf("meta.town"),
-        '_label -> "Город:"
-      )
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
-      @textarea(
-        mf("meta.address"),
-        '_label -> "Адрес:"
-      )
-    </table>
+    </table>*@
 
 
-    <table class="input-w __size-L" cellspacing="0" cellpadding="0">
 
-      <td class="input-w_left">
-        <label class="input-w_prop-name" for="meta_color">Основной цвет:</label>
-      </td>
-      <td class="input-w_right">
-        <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@mf("meta.color").value;">
-          <div></div>
-          <input id="meta_color" type="hidden" name="meta.color" value="@mf("meta.color").value"/>
-        </div>
-      </td>
-
-      <td class="input-w_left">
-        <label class="input-w_prop-name" for="meta_color">Цвет текста:</label>
-      </td>
-      <td class="input-w_right">
-        <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@mf("meta.fgColor").value;">
-          <div></div>
-          <input id="meta_color" type="hidden" name="meta.fgColor" value="@mf("meta.fgColor").value"/>
-        </div>
-      </td>
-
-    </table>
-
-
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
-      @inputText(
-        mf("meta.siteUrl"),
-        '_label -> "Сайт:"
-      )
-    </table>
-
-    @if(nodeInfo.isReceiver) {
-      <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
-        @textarea(
-          mf("meta.audienceDescr"),
-          '_label -> "Описание \n аудитории:"
-        )
-      </table>
-      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
-        @inputText(
-          mf("meta.humanTrafficAvg"),
-          '_label -> "Суточный трафик:"
-        )
-      </table>
-    } else {
-      @if(nodeInfo.isProducer) {
-        <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
-          @textarea(
-            mf("meta.info"),
-            '_label -> "Информация о товарах или услугах:"
-          )
-        </table>
-      }
-    }
-
-    @if(nodeInfo.isReceiver) {
+    @if(false) {
       <table cellpadding="0" cellspacing="0" class="input-w __size-L">
 
         <tbody>
@@ -158,7 +233,11 @@
               }
 
               <div class="add-file-w __size-S" >
-                @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+                @stuff._fileUploadTpl(
+                  routes.Img.handleTempImg,
+                  fieldName   = "gallery",
+                  multiple = true
+                )
                <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
               </div>
 
@@ -169,12 +248,5 @@
 
       </table>
     }
-
-
-  <div class="border-line"></div>
-
-  <div class="submit-w __size-M">
-    <a class="siom-ac-btn __size-M __color-2 __ft-XM js-submit-btn f-right">@btnText</a>
-  </div>
 
 }

@@ -31,7 +31,8 @@ import FormUtil.{passwordM, passwordWithConfirmM}
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect with CaptchaValidator {
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect
+  with CaptchaValidator with ChangePwAction {
 
   import LOGGER._
 
@@ -119,7 +120,9 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                 // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
                 val eact = EmailActivation(email = email1, key = epwIdent.personId)
                 eact.save.map { eaId =>
-                  eact.id = Some(eaId)
+                  val eact2 = eact.copy(
+                    id = Some(eaId)
+                  )
                   // Можно отправлять письмецо на ящик.
                   val mail = use[MailerPlugin].email
                   mail.setFrom("no-reply@suggest.io")
@@ -127,8 +130,8 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                   val ctx = implicitly[Context]
                   mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
                   mail.send(
-                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact)(ctx),
-                    bodyHtml = emailPwRecoverTpl(eact)(ctx)
+                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact2)(ctx),
+                    bodyHtml = emailPwRecoverTpl(eact2)(ctx)
                   )
                 }
               }
@@ -258,7 +261,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
 
-  private val changePasswordFormM = Form(tuple(
+  val changePasswordFormM = Form(tuple(
     "old" -> passwordM,
     "new" -> passwordWithConfirmM
   ))
@@ -268,12 +271,31 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     Ok(changePasswordTpl(changePasswordFormM))
   }
 
+  def changePasswordSubmit(r: Option[String]) = IsAuth.async { implicit request =>
+    _changePasswordSubmit(r) { formWithErrors =>
+      NotAcceptable(changePasswordTpl(formWithErrors))
+    }
+  }
+}
+
+
+/** Контексто-зависимый код экшена, который реализует смену пароля у пользователя.
+  * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
+trait ChangePwAction extends SioController with PlayMacroLogsI {
+  import Ident.changePasswordFormM
+
+  /** Если неясно куда надо редиректить юзера, то что делать? */
+  def changePwOkRdrDflt(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Call] = {
+    // TODO Избавится от get, редиректя куда-нить в другое место.
+    Ident.redirectCallUserSomewhere(request.pwOpt.get.personId)
+  }
+
   /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */
-  def changePasswordSubmit = IsAuth.async { implicit request =>
+  def _changePasswordSubmit(r: Option[String])(onError: Form[(String, String)] => Future[Result])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     changePasswordFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug("changePasswordSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(changePasswordTpl(formWithErrors))
+        LOGGER.debug("changePasswordSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        onError(formWithErrors)
       },
       {case (oldPw, newPw) =>
         // Нужно проверить старый пароль, если юзер есть в базе.
@@ -284,7 +306,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
             MozillaPersonaIdent.findByPersonId(personId)
               .map { mps =>
                 if (mps.isEmpty) {
-                  warn("changePasswordSubmit(): Unknown user session: " + personId)
+                  LOGGER.warn("changePasswordSubmit(): Unknown user session: " + personId)
                   None
                 } else {
                   val mp = mps.head
@@ -302,11 +324,11 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
         } flatMap {
           case Some(epw) =>
             epw.save
-              .flatMap { _ => redirectUserSomewhere(personId) }
+              .flatMap { _ => RdrBackOrFut(r)(changePwOkRdrDflt) }
               .map { _.flashing("success" -> "Новый пароль сохранён.") }
           case None =>
             val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")
-            NotAcceptable(changePasswordTpl(formWithErrors))
+            onError(formWithErrors)
         }
       }
     )

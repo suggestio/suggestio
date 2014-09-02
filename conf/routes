@@ -33,7 +33,7 @@ GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId
 POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
 # ident: Сменить пароль
 GET  /ident/pw/change                   controllers.Ident.changePassword
-POST /ident/pw/change                   controllers.Ident.changePasswordSubmit
+POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
 GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 
 ## Callback'и инсталляторов и валидаторов сайтов.
@@ -90,7 +90,8 @@ GET  /market/adn/:adnId/popup           controllers.Market.adnNodePopup(adnId)
 # Входы в личные кабинеты
 POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /m/lk                              controllers.MarketLk.lkList
-GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /m/adn/logo/prepare                controllers.MarketLkAdnEdit.handleTempLogo
@@ -103,6 +104,9 @@ POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(
 # Принятие приглашения на управления узлом.
 GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+# Редактирования профиля юзера из личного кабинета узла.
+GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
+POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
@@ -329,3 +333,9 @@ GET  /sys/mdr/freeAdv/:adId              controllers.SysMdr.freeAdvMdr(adId)
 POST /sys/mdr/freeAdv/:adId/accept       controllers.SysMdr.freeAdvMdrAccept(adId)
 POST /sys/mdr/freeAdv/:adId/ban          controllers.SysMdr.freeAdvMdrBan(adId)
 
+## sys: sink comission
+GET  /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSinkCom(contractId: Int)
+POST /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSinkComSubmit(contractId: Int)
+GET  /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkCom(scId: Int)
+POST /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkComSubmit(scId: Int)
+POST /sys/m/b/sink/comm/del/:scId        controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)

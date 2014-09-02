@@ -9,25 +9,25 @@
 @import market.showcase._
 
 @mads.zipWithIndex.map { case (mad, i) =>
-  @defining( i + startIndex ) { i2 =>
-    <div class="ads-list__block ads-list-block s-@i2 @if( i2 % itemsInLine == itemsInLine - 1 ){ ads-list__block_no-margin }">
+  @defining( i + startIndex ) { itemIndex =>
+    <div class="adv-item @if(itemIndex % itemsInLine == 0){ __first-in-line }">
 
-      <div class="ads-list-block__preview">
+      <div class="adv-item_preview">
         @if(coverDisableReason) {
           @_adDisableReasonCoverTpl(mad.disableReason)
         }
-        <div class="ads-list-block__preview-container">
+        <div class="adv-item_preview-container">
           @_single_offer(mad)
         </div>
-        <div class="ads-list-block__zigzag-mask"></div>
+        <div class="adv-item_preview-border"></div>
       </div>
 
       @postContent(mad)
 
     </div>
 
-    @if( i2 % itemsInLine == itemsInLine - 1 ){
-      <div class="clear"></div>
+    @if( itemIndex % itemsInLine == itemsInLine - 1 ){
+      <div class="adv-lst_delimiter"></div>
     }
   }
 }

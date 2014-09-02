@@ -9,7 +9,8 @@
 @lkBaseLayout(
   title = "Рекламодатели",
   adnIdOpt = adnNode.id,
-  backHref = adnNode.id.map(adnId => routes.MarketLkAdn.showAdnNode(adnId).url)
+  backHref = adnNode.id.map(adnId => routes.MarketLkAdn.showAdnNode(adnId).url),
+  leftCurrEl = Some(LkLeftPanelLinks.LPL_NODE)
 ) {
 
   @market.lk.lkBlock("На рассмотрении") {

@@ -1,12 +1,13 @@
 package controllers
 
+import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.HtmlFormat
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.{Period, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
@@ -30,6 +31,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  private type AdvFormM_t = Form[List[AdvFormEntry]]
+
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
@@ -37,57 +40,154 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     "freeAdv" -> optional(boolean)
   )
 
-  type AdvFormM_t = Form[List[AdvFormEntry]]
+  /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
+  val CUSTOM_PERIOD = "custom"
+
+  /** Маппинг для sink'ов, т.е. для типов рекламных выдач. */
+  private def sinksM: Mapping[Set[AdnSink]] = {
+    tuple(
+      AdnSinks.SINK_WIFI.longName -> boolean,
+      AdnSinks.SINK_GEO.longName  -> boolean
+    )
+    .verifying("adv.node.at.least.one.sink.must.present", {
+      m => m match {
+        case (wifi, geo)  => wifi || geo
+      }
+    })
+    .transform[Set[AdnSink]](
+      {case (withWifi, withGeo) =>
+        var acc = List.empty[AdnSink]
+        if (withWifi)
+          acc ::= AdnSinks.SINK_WIFI
+        if (withGeo)
+          acc ::= AdnSinks.SINK_GEO
+        acc.toSet
+      },
+      {sinks =>
+        val withWifi = sinks contains AdnSinks.SINK_WIFI
+        val withGeo = sinks contains AdnSinks.SINK_GEO
+        (withWifi, withGeo)
+      }
+    )
+  }
+
+  /** Маппинг для вертикальных уровней отображения. */
+  private def adSlsM: Mapping[Set[AdShowLevel]] = {
+    mapping(
+      "onStartPage" -> boolean,
+      "onRcvrCat"   -> boolean
+    )
+    {(onStartPage, onRcvrCat) =>
+      var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
+      if (onStartPage)
+        acc ::= AdShowLevels.LVL_START_PAGE
+      if (onRcvrCat)
+        acc ::= AdShowLevels.LVL_CATS
+      acc.toSet
+    }
+    {adSls =>
+      val onStartPage = adSls contains AdShowLevels.LVL_START_PAGE
+      val onRcvrCat = adSls contains AdShowLevels.LVL_CATS
+      Some((onStartPage, onRcvrCat))
+    }
+  }
+
+  private type DatePeriodOpt_t = Option[(LocalDate, LocalDate)]
+
+  /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
+  private def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
+    // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
+    // TODO Неправильно введённые даты надо заворачивать в None.
+    val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
+    tuple(
+      "start" -> dateOptM
+        .verifying("error.date.start.before.today", {dOpt => dOpt match {
+          case Some(d)  => !d.isBefore(LocalDate.now)
+          case None     => true
+        }}),
+      "end"   -> dateOptM
+    )
+    .verifying("error.date.end.before.start", { m => m match {
+      // TODO Если галочка isAdv убрана, а даты всё-таки выставлены неправильно, то будет ошибка маппинга, которой быть не должно.
+      // Проверяем даты. end должна быть не позднее start.
+      case (Some(dateStart), Some(dateEnd)) =>
+        !(dateStart isAfter dateEnd)
+      // Даты не заданы. Этот true будет подавлен на следующем шаге маппинга в None.
+      case _ => true
+    }})
+    .transform [Option[(LocalDate, LocalDate)]] (
+      {case (Some(dateStart), Some(dateEnd))  =>  Some(dateStart -> dateEnd)
+       case _  =>  None },
+      {case Some((dateStart, dateEnd))  =>  Some(dateStart) -> Some(dateEnd)
+       case None  =>  None -> None }
+    )
+  }
+
+  /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
+  private def advPeriodOptM: Mapping[DatePeriodOpt_t] = {
+    tuple(
+      "period" -> nonEmptyText(minLength = 1, maxLength = 10)
+        .transform [Option[QuickAdvPeriod]] (
+          {case CUSTOM_PERIOD => None
+           case periodRaw => QuickAdvPeriods.maybeWithName(periodRaw) },
+          { _.fold(CUSTOM_PERIOD)(_.isoPeriod) }
+        )
+      ,
+      "date"  -> advDatePeriodOptM
+    )
+    .transform [DatePeriodOpt_t] (
+      // В зависимости от имеющихся значений полей выбираем реальный период.
+      { case (Some(qap), _) =>
+          val now = LocalDate.now()
+          Some(now -> now.plus(qap.toPeriod))
+        case (_, dpo) if dpo.isDefined =>
+          dpo
+        case _ =>
+          None
+      },
+      // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
+      // При неудаче вернуть кастомный период.
+      { case dpo @ Some((dateStart, dateEnd)) =>
+          // Угадываем период либо откатываемся на custom_period
+          val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
+          QuickAdvPeriods.maybeWithName(periodStr) match {
+            case Some(qap)  =>  Some(qap) -> None
+            case None       =>  None -> dpo
+          }
+        // Почему-то нет данных по интервалу размещения.
+        case None =>
+          Some(QuickAdvPeriods.default) -> None
+      }
+    )
+  }
 
   /** Маппинг формы размещения рекламы на других узлах. */
-  private def advFormM(lowerAdvDate: LocalDate): AdvFormM_t = {
+  private def advFormM: AdvFormM_t = {
     import util.FormUtil._
     Form(
       "node" -> {
-        val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
-        // TODO list mapping не умеет unbind в нашем случае. Надо запилить свой map mapping, который будет биндить форму в карту adnId -> AdvFormEntry.
+        // TODO list mapping не умеет удобный для нас unbind(). Нужно изобрести какой-то костыль.
         list(
           tuple(
             "adnId"         -> esIdM,
             "advertise"     -> boolean,
-            "onStartPage"   -> boolean,
-            "onRcvrCat"     -> boolean,
-            "dateStart"     -> dateOptM,
-            "dateEnd"       -> dateOptM
+            "showLevel"     -> adSlsM,
+            "sink"          -> sinksM,
+            // optional, т.к. если галочки нет, то эти проблемы надо игнорировать.
+            "period"        -> advPeriodOptM
           )
-            .verifying("error.date", { m => m match {
-              case (_, isAdv, _, _, dateStartOpt, dateEndOpt) =>
-                // Если стоит галочка, то надо проверить даты.
-                if (isAdv) {
-                  // Проверить даты
-                  val dateTestF = { d: LocalDate => !(d isBefore lowerAdvDate) }
-                  dateStartOpt.exists(dateTestF) && dateEndOpt.exists(dateTestF) && {
-                    dateStartOpt exists { dateStart =>
-                      dateEndOpt.exists { dateEnd =>
-                        !(dateStart isAfter dateEnd)
-                      }
-                    }
-                  }
-                } else {
-                  // Галочки нет, пропускаем мимо. На следующем шаге это дело будет отфильтровано.
-                  true
-                }
-              case _ => false
-            }})
         )
-          .transform[List[AdvFormEntry]](
+          .transform [List[AdvFormEntry]] (
             {ts =>
               ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, onStartPage, onRcvrCat, Some(dateStart), Some(dateEnd))) =>
-                  var showLevels: List[AdShowLevel] = Nil
-                  if (onStartPage)
-                    showLevels ::= AdShowLevels.LVL_START_PAGE
-                  if (onRcvrCat)
-                    showLevels ::= AdShowLevels.LVL_MEMBERS_CATALOG
+                case (acc, (adnId, isAdv @ true, adSls, sinks, Some((dateStart, dateEnd)) ) ) =>
+                  val ssls = for(sl <- adSls; sink <- sinks) yield {
+                    SinkShowLevels.withArgs(sink, sl)
+                  }
                   val result = AdvFormEntry(
                     adnId = adnId,
                     advertise = isAdv,
-                    showLevels = showLevels.toSet,
+                    showLevels = ssls,
                     dateStart = dateStart,
                     dateEnd = dateEnd
                   )
@@ -96,9 +196,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               }
             },
             {_.map { e =>
-              val onStartPage = e.showLevels contains AdShowLevels.LVL_START_PAGE
-              val onRcvrCat = e.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG
-              (e.adnId, e.advertise, onStartPage, onRcvrCat, Option(e.dateStart), Option(e.dateEnd))
+              val adSls = e.showLevels.map(_.sl)
+              val sinks = e.showLevels.map(_.adnSink)
+              (e.adnId, e.advertise, adSls, sinks, Option(e.dateStart -> e.dateEnd))
             }}
           )
       }
@@ -108,13 +208,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    val now = DateTime.now()
-    val lowerAdvDt = if (request.isSuperuser)
-      now
-    else
-      now.plusDays(1)
-    val formM = advFormM(lowerAdvDt.toLocalDate)
-    renderAdvFormFor(adId, formM)
+    renderAdvFormFor(adId, advFormM)
       .map { Ok(_) }
   }
 
@@ -184,14 +278,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }.toMap
   }
 
-  private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): (Boolean, LocalDate) = {
-    val isFree = isFreeAdv( freeAdvFormM.bindFromRequest().fold({_ => None}, identity) )
-    val now = DateTime.now
+  private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
-    val lowerDate = now
-    val result = isFree -> lowerDate.toLocalDate
-    //trace("maybeFreeAdv(): (isFree, lowerDate) = " + result)
-    result
+    val isFree = isFreeAdv( freeAdvFormM.bindFromRequest().fold({_ => None}, identity) )
+    isFree
   }
 
   /**
@@ -200,8 +290,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return Инлайновый рендер отображаемой цены.
    */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    val (isFree, lowerDate) = maybeFreeAdv
-    advFormM(lowerDate).bindFromRequest().fold(
+    advFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot bind form.")
@@ -213,7 +302,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         allRcvrIdsFut.map { allRcvrIds =>
           val adves2 = filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
           // Начинаем рассчитывать ценник.
-          val advPricing: MAdvPricing = if (adves2.isEmpty || isFree) {
+          val advPricing: MAdvPricing = if (adves2.isEmpty || maybeFreeAdv) {
             zeroPricing
           } else {
             MmpDailyBilling.getAdvPrices(request.mad, adves2)
@@ -273,8 +362,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
-    val (isFree, lowerDate) = maybeFreeAdv
-    val formBinded = advFormM(lowerDate).bindFromRequest()
+    val formBinded = advFormM.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
@@ -292,6 +380,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           val advs2 = filterEntiesByPossibleRcvrs(advs1, allRcvrIds)
           // Пора сохранять новые реквесты на размещение в базу.
           if (advs2.nonEmpty) {
+            val isFree = maybeFreeAdv
             try {
               // В зависимости от настроек размещения
               val successMsg: String = if (isFree) {
@@ -520,6 +609,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 }
 
 sealed case class AdvFormEntry(
-  adnId: String, advertise: Boolean, showLevels: Set[AdShowLevel], dateStart: LocalDate, dateEnd: LocalDate
+  adnId: String, advertise: Boolean, showLevels: Set[SinkShowLevel], dateStart: LocalDate, dateEnd: LocalDate
 ) extends AdvTerms
 

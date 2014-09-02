@@ -1,7 +1,9 @@
 import akka.actor.Cancellable
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
+import io.suggest.util.SioEsUtil
 import org.elasticsearch.client.Client
+import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.event.SiowebNotifier
 import scala.concurrent.{Await, Future, future}
@@ -29,7 +31,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
   import Logger._
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit private def sioNotifier = util.event.SiowebNotifier
+  implicit private def sioNotifier = SiowebNotifier
 
   private var cronTimers : List[Cancellable] = null
 
@@ -49,7 +51,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     val fut = esNodeFut map {
       _.client()
     } flatMap { implicit esClient =>
-      initializeEsModels map { _ => esClient }
+      initializeEsModels() map { _ => esClient }
     } flatMap { implicit esClient =>
       resetSuperuserIds map { _ => esClient }
     }
@@ -66,7 +68,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
 
   /** Проинициализировать все ES-модели и основной индекс. */
-  def initializeEsModels(implicit client: Client): Future[_] = {
+  def initializeEsModels(tried21: Boolean = false)(implicit client: Client): Future[_] = {
     val futInx = EsModel.ensureEsModelsIndices
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
@@ -79,6 +81,14 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     futMappings onComplete {
       case Success(_)  => info(logPrefix + "Finishied successfully.")
       case Failure(ex) => error(logPrefix + "Failure", ex)
+    }
+    // TODO 2014.aug.25: Снести этот код потом, когда мастер будет обновлён.
+    futMappings recoverWith {
+      case ex: MapperException if !tried21 =>
+        info("Trying to update main index to v2.1 settings...")
+        SioEsUtil.updateIndexTo2_1(EsModel.DFLT_INDEX) flatMap { _ =>
+          initializeEsModels(tried21 = true)
+        }
     }
     futMappings
   }

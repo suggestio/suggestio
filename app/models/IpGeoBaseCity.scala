@@ -29,7 +29,7 @@ object IpGeoBaseCity extends SqlModelStatic with SqlAnalyze with SqlTruncate {
 
 import IpGeoBaseCity._
 
-case class IpGeoBaseCity(
+final case class IpGeoBaseCity(
   id        : Int,
   cityName  : String,
   region    : String,

@@ -1,29 +1,33 @@
-@(adnNode: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
+@(node: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования узла, имеющего высокий статус, т.е. супервизора или ресивера. *@
 @import ctx._
 @import edit._
 
-@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId), adnIdOpt = adnNode.id) {
 
-  <div class="page-title">
-    <div class="page-title_cnt">
-      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
-      @Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId).toUpperCase
-    </div>
+@rightBarAfter = {
+  <div class="right-bar_bottom">
+    <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">Сохранить</a>
   </div>
+}
 
-  <div class="body_cnt">
+@content = {
 
-    @_leaderNodeFormTpl(
-      adnId = adnNode.id.get,
-      btnText = Messages("Save"),
-      mf = mf,
-      submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(adnNode.id.get),
-      welcomeAdOpt = welcomeAdOpt,
-      nodeInfo = adnNode.adn
-    )
-
-  </div>
+  @_leaderNodeFormTpl(
+    adnId = node.id.get,
+    btnText = Messages("Save"),
+    mf = mf,
+    submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(node.id.get),
+    welcomeAdOpt = welcomeAdOpt,
+    nodeInfo = node.adn
+  )
 
 }
+
+@nodeBaseTpl(
+  title     = "Ваш профиль",
+  node      = node,
+  isMyNode  = true,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
+  rightBarAfter = Some(rightBarAfter)
+)(content)

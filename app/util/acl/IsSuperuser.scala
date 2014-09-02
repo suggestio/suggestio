@@ -84,9 +84,9 @@ trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
 }
 /**
  * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
- * @param adnId
+ * @param adnId id рекламного узла, которым интересуется суперпользователь.
  */
-case class IsSuperuserAdnNode(adnId: String)
+final case class IsSuperuserAdnNode(adnId: String)
   extends IsSuperuserAdnNodeBase
   with ExpireSession[AbstractRequestForAdnNode]
 
@@ -120,7 +120,7 @@ trait IsSuperuserFeeTariffContractBase extends ActionBuilder[FeeTariffRequest] {
     }
   }
 }
-case class IsSuperuserFeeTariffContract(tariffId: Int)
+final case class IsSuperuserFeeTariffContract(tariffId: Int)
   extends IsSuperuserFeeTariffContractBase
   with ExpireSession[FeeTariffRequest]
 
@@ -154,10 +154,15 @@ trait IsSuperuserStatTariffContractAbstract extends ActionBuilder[StatTariffRequ
     }
   }
 }
-case class IsSuperuserStatTariffContract(tariffId: Int)
+final case class IsSuperuserStatTariffContract(tariffId: Int)
   extends IsSuperuserStatTariffContractAbstract
   with ExpireSession[StatTariffRequest]
 
+
+abstract class AbstractContractRequest[A](request: Request[A])
+  extends AbstractRequestWithPwOpt(request) {
+  def contract: MBillContract
+}
 
 
 case class ContractRequest[A](
@@ -165,7 +170,7 @@ case class ContractRequest[A](
   pwOpt: PwOpt_t,
   request: Request[A],
   sioReqMd: SioReqMd
-) extends AbstractRequestWithPwOpt[A](request)
+) extends AbstractContractRequest[A](request)
 
 trait IsSuperuserContractBase extends ActionBuilder[ContractRequest] {
   def contractId: Int
@@ -185,10 +190,46 @@ trait IsSuperuserContractBase extends ActionBuilder[ContractRequest] {
     }
   }
 }
-case class IsSuperuserContract(contractId: Int)
+final case class IsSuperuserContract(contractId: Int)
   extends IsSuperuserContractBase
   with ExpireSession[ContractRequest]
 
+
+
+case class ContractNodeRequest[A](
+  contract: MBillContract,
+  adnNode: MAdnNode,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractContractRequest(request)
+
+trait IsSuperuserContractNodeBase extends ActionBuilder[ContractNodeRequest] {
+  def contractId: Int
+  override def invokeBlock[A](request: Request[A], block: (ContractNodeRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      val contract = DB.withConnection { implicit c =>
+        MBillContract.getById(contractId).get
+      }
+      MAdnNodeCache.getById(contract.adnId) flatMap { adnNodeOpt =>
+        val adnNode = adnNodeOpt.get
+        sioReqMdFut flatMap { srm =>
+          val req1 = ContractNodeRequest(contract, adnNode, pwOpt, request, srm)
+          block(req1)
+        }
+      }
+
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+
+final case class IsSuperuserContractNode(contractId: Int)
+  extends IsSuperuserContractNodeBase
+  with ExpireSession[ContractNodeRequest]
 
 
 case class CompanyRequest[A](
@@ -223,7 +264,7 @@ trait IsSuperuserCompanyBase extends ActionBuilder[CompanyRequest] {
   }
 
 }
-case class IsSuperuserCompany(companyId: String)
+final case class IsSuperuserCompany(companyId: String)
   extends IsSuperuserCompanyBase
   with ExpireSession[CompanyRequest]
 
@@ -269,5 +310,7 @@ trait IsSuperuserMirBase extends ActionBuilder[MirRequest] {
     }
   }
 }
-case class IsSuperuserMir(mirId: String) extends IsSuperuserMirBase with ExpireSession[MirRequest]
+case class IsSuperuserMir(mirId: String)
+  extends IsSuperuserMirBase
+  with ExpireSession[MirRequest]
 

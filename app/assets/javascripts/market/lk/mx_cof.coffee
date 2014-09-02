@@ -472,6 +472,92 @@ PersonalCabinet =
       $ nextSelector
       .show()
 
+
+  images: ()->
+
+    $ document
+    .on 'click', '.js-remove-image', (e)->
+      e.preventDefault()
+      $this = $ this
+      $preview = $this.closest '.js-preview'
+
+      # находим кнопку для загрузки изображении для этого поля
+      $input = $preview.find '.js-image-key'
+      name = $input.attr 'name'
+
+      $ ".js-file-upload[data-name = '#{name}']"
+      .closest '.js-image-upload'
+      .show()
+
+      $preview.remove()
+      market.ad_form.queue_block_preview_request()
+
+    #################################################################################################################
+    ## Работа с изображениями ##
+    #################################################################################################################
+    $ document
+    .on 'change', '.js-file-upload', (e)->
+      e.preventDefault()
+      $this = $ this
+      formData = new FormData()
+
+      if $this[0].type == 'file'
+        formData.append $this[0].name, $this[0].files[0]
+
+      request =
+        url : $this.attr "data-action"
+        method : 'post'
+        data : formData
+        contentType: false
+        processData: false
+        success : ( respData ) ->
+
+          # TODO зарефакторить загрузку изображении в редакторе карточек
+          is_w_block_preview = $this.attr 'data-w-block-preview'
+          if typeof is_w_block_preview != 'undefined'
+            $('#' + $this.attr('data-related-field-id'))
+            .find '.js-image-key'
+            .val respData.image_key
+            market.ad_form.queue_block_preview_request()
+
+          multiple = false
+          previewClass = $this.attr 'data-preview-class'
+
+          # dom элемент в который нужно положить превью
+          previewRoot = $this.attr 'data-preview-root'
+          $previewRoot = $ previewRoot
+
+          # имя поля для загрузки фотографии
+          fieldName = $this.attr 'data-name'
+
+          # загрузка одной или нескольких фотографии
+          dataMultiple = $this.attr 'data-multiple'
+          dataMultiple && multiple = true
+
+          console.log fieldName
+          if multiple
+            # если уже есть загруженные фотографии
+            $previews = $previewRoot.find '.js-preview'
+            previewCounts = $previews.length
+            fieldName = "#{fieldName}[#{previewCounts}]"
+
+          console.log fieldName
+
+          html =  """
+                   <div class="image js-preview #{previewClass}">
+                   <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
+                   <img class="image_src js-image-preview" src="#{respData.image_link}" />
+                   <a class="image_remove-btn js-remove-image" title="Удалить файл">Удалить</a>
+                   </div>
+                  """
+
+          $previewRoot.append html
+
+          if !multiple
+            $this.parent().hide()
+      # загрузка изображения
+      $.ajax request
+
   login: () ->
 
     #################################################################################################################
@@ -530,35 +616,17 @@ PersonalCabinet =
       e.preventDefault()
       $this = $ this
       $transactionsHistory = $ '#transactionsHistory'
-      $transactionsList = $ '#transactionsList'
 
-      $.ajax(
+      request =
         url: $this.attr 'href'
         success: (data)->
-          if $this.attr 'data-init'
-            $transactionsList
-            .find 'tr'
-            .not ':first'
-            .remove()
-          else
-            $this
-            .closest 'tr'
-            .remove()
-
-          $transactionsList
-          .append data
-
-          if $this.attr 'data-init'
-            $transactionsHistory
-            .slideDown(
-              600,
-              () ->
-                cbca.pc.common.setBorderLineHeight $transactionsList
-            )
-
+          $transactionsHistory
+          .find 'tr:last'
+          .after data
         error: (error)->
           console.log error
-      )
+
+      $.ajax request
 
   advRequest: () ->
 
@@ -582,6 +650,16 @@ PersonalCabinet =
         return true
 
   adsList: () ->
+
+    ## удаляем зигзаг там, где он не нужен
+    $ '.adv-item  .sm-block.height-300'
+    .each ()->
+      $this = $ this
+      $advItem = $this.closest '.adv-item'
+      $advItemBorder = $advItem.find '.adv-item_preview-border'
+
+      $advItemBorder.remove()
+
 
     $ document
     .on 'click', '.ads-list-block__preview_add-new', ()->
@@ -699,6 +777,13 @@ PersonalCabinet =
     ## Элементы ввода ##
     ##################################################################################################################
     inputs: () ->
+
+      ##выставит ьвысоту textarea
+      $ 'textarea'
+      .each ()->
+        $this = $ this
+        scrollHeight = $this.prop 'scrollHeight'
+        $this.height scrollHeight
 
       $ document
       .on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
@@ -819,6 +904,7 @@ PersonalCabinet =
     cbca.pc.billing()
     cbca.pc.advRequest()
     cbca.pc.adsList()
+    cbca.pc.images()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -945,7 +1031,7 @@ CbcaPopup =
       cbca.popup.hidePopup popupSelector
 
     $ document
-    .on 'click', '#popups', (e)->
+    .on 'click', '#popups, #popupsContainer', (e)->
       cbca.popup.hidePopup()
 
     $ document
@@ -1045,6 +1131,22 @@ market =
       	    $(colpkr).fadeOut(500)
       	  onChange: (hsb, hex, rgb) ->
       	    market.ad_form.queue_block_preview_request()
+      	    # если нужно раскрасить не только кнопку с выбором цвета,
+      	    # добавляем атрибут data-for, в котором указываем jQuery селектор
+      	    if _this.attr 'data-for'
+      	      selector = _this.attr 'data-for'
+      	      $ ".custom-color-style[data-for = '#{selector}']"
+      	      .remove()
+      	      style = """
+      	                <style class="custom-color-style" data-for="#{selector}">
+      	                  #{selector} {
+      	                    background-color: ##{hex} !important;
+      	                  }
+      	                </style>
+      	              """
+      	      $ 'head'
+      	      .append style
+
       	    _this.find('input').val(hex).trigger('change')
       	    _this.css
       	      'background-color' : '#' + hex
@@ -1092,50 +1194,12 @@ market =
 
         return false
 
-      $ document
-      .on 'click', '.js-remove-image', (e)->
-        e.preventDefault()
-        $this = $ this
-        $parent = $this.parent()
-
-        $parent
-        .next '.add-file-w'
-        .show()
-        $parent.remove()
-
-        cbca.editAdPage.updatePreview()
-
-
-      $ document
-      .on 'mouseenter', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .addClass '__hover'
-
-      $ document
-      .on 'mouseleave', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .removeClass '__hover'
-
-      $ document
-      .on 'mousedown', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .addClass '__active'
-
-      $ document
-      .on 'mouseup', '.add-file-w', () ->
-        $ this
-        .find('.add-file-w_btn')
-        .removeClass '__active'
-
-      $ '.js-file-upload'
+      $ '.js-file-upload___DISABLED'
       .unbind "change"
       .bind "change", (e) ->
         e.preventDefault()
         $this = $ this
-        $parent = $this.closest '.add-file-w'
+        $parent = $this.closest '.js-image-upload'
         form_data = new FormData()
 
         is_w_block_preview = $this.attr 'data-w-block-preview'
@@ -1170,12 +1234,12 @@ market =
                     .size()
                 fieldName = fieldName + '[' + i + ']'
 
-              html = ['<div class="add-file-w __preview">',
+              html = ['<div class="image __preview">',
                       '<input class="js-image-key" type="hidden" name="',
                       fieldName,
                       '" value=""/>',
-                      '<img class="add-file-w_image js-image-preview" src="" />',
-                      '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                      '<img class="image_src js-image-preview" src="" />',
+                      '<a class="image_remove-btn siom-remove-image-btn js-remove-image" title="Удалить файл">Удалить</a>',
                       '</div>'].join ''
 
               $parent.before html
@@ -1218,8 +1282,8 @@ market =
           $.ajax
             url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker
             success : ( data ) ->
-              $('#overlay, #overlayData').show()
-              $('#overlayData').html data
+              $('#popupsContainer').html data
+              CbcaPopup.showPopup()
 
               market.img.crop.init( img_name )
 
@@ -1290,8 +1354,8 @@ market =
       init : (img_name) ->
         this.img_name = img_name
         this.crop_tool_dom = $('#imgCropTool')
-        this.crop_tool_container_dom = jQuery('.js-crop-container', this.crop_tool_dom)
-        this.crop_tool_container_div_dom = jQuery('div', this.crop_tool_container_dom)
+        this.crop_tool_container_dom = $('.js-crop-container', this.crop_tool_dom)
+        this.crop_tool_container_div_dom = $('div', this.crop_tool_container_dom)
         this.crop_tool_img_dom = jQuery('img', this.crop_tool_dom)
 
         width = parseInt this.crop_tool_dom.attr 'data-width'

@@ -31,7 +31,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
     }
     mbcs.headOption match {
       case Some(mbc) =>
-        Ok(billPaymentBankTpl(mbc))
+        Ok(billPaymentBankTpl(request.adnNode, mbc))
 
       case None =>
         // Нет заключенных договоров, оплата невозможна.

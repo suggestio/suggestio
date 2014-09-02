@@ -1,12 +1,14 @@
 package util.billing
 
+import controllers.SysMarketBilling
 import models._
 import play.api.Play.{current, configuration}
 import play.api.db.DB
 import org.joda.time.{Period, DateTime}
+import util.anorm.AnormPgInterval
 import scala.concurrent.duration._
 import util.PlayMacroLogsImpl
-import util.AnormPgInterval._
+import AnormPgInterval._
 
 /**
  * Suggest.io
@@ -17,9 +19,6 @@ import util.AnormPgInterval._
 object Billing extends PlayMacroLogsImpl {
 
   import LOGGER._
-
-  val DEFAULT_CONTRACT_SUFFIX = configuration.getString("billing.contract.autocreate.suffix.default").map(_.trim) getOrElse "CEO"
-  val DEFAULT_SIO_COMISSION   = configuration.getDouble("billing.contract.autocreate.comission.default").map(_.toFloat) getOrElse 0.30F
 
   /** Запускать тарификацию каждые n времени. */
   val TARIFFICATION_EVERY_MINUTES: Int = configuration.getInt("tariff.apply.every.minutes").getOrElse(20)
@@ -36,9 +35,8 @@ object Billing extends PlayMacroLogsImpl {
         val mbc = MBillContract(
           adnId = adnId,
           contractDate = DateTime.now(),
-          suffix = Some(DEFAULT_CONTRACT_SUFFIX),
-          isActive = true,
-          sioComission = DEFAULT_SIO_COMISSION
+          suffix = Some(SysMarketBilling.CONTRACT_SUFFIX_DFLT),
+          isActive = true
         ).save
         Some(mbc)
       } else {

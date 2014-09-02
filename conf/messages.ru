@@ -82,6 +82,15 @@ editing.of.amt.profile.b=Редактирование профайла стан�
 showcase.site.geo.title=Витрина
 
 
+adv.period.custom=Задать вручную
+adv.period.P3D=Три дня
+adv.period.P1W=Неделя
+adv.period.P1M=Месяц
+
+adn.sink.wifi=Wi-Fi
+adn.sink.geo=Геолокация
+
+
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
 

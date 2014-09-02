@@ -14,7 +14,7 @@ import org.joda.time.DateTime
  * Description: Обертка над моделью доменов для веб-интерфейса sio. Веб-интерфейс должен иметь модель, слинкованную с
  * другими моделями sioweb21, и чтобы только read-only.
  */
-case class MDomain(underlying: MDomainRaw) extends DkeyModelT {
+final case class MDomain(underlying: MDomainRaw) extends DkeyModelT {
 
   def this(dkey: String, addedBy: String, addedAt:DateTime = DateTime.now) = {
     this(new MDomainRaw(dkey=dkey, addedBy=addedBy, addedAt=addedAt))

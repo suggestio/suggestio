@@ -4,6 +4,7 @@ import io.suggest.model._
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
+import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
@@ -11,7 +12,7 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
 import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
-import io.suggest.model.common.{EMParentIdOpt, EMName}
+import io.suggest.model.common.{EMParentIdOpt, EMName, EMParentIdOptMut, EMNameMut}
 import play.api.libs.json._
 import com.fasterxml.jackson.annotation.JsonIgnore
 
@@ -22,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * Description: Дерево пользовательских категорий конкретного ТЦ либо магазина (модель не различает владельцев).
  * Хранится в ES.
  */
-object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
+object MMartCategory extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -257,19 +258,19 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
   )
 
 
-  override def applyKeyValue(acc: MMartCategory): PartialFunction[(String, AnyRef), Unit] = {
-    case (NAME_ESFN, value)         => acc.name = stringParser(value)
-    case (OWNER_ID_ESFN, value)     => acc.ownerId = stringParser(value)
-    case (YM_CAT_ESFN, value)       => acc.ymCatPtr = JacksonWrapper.convert[MMartYmCatPtr](value)
-    case (PARENT_ID_ESFN, value)    => acc.parentId = Option(stringParser(value))
-    case (POSITION_ESFN,  value)    => acc.position = intParser(value)
-    case (CSS_CLASS_ESFN, value)    => acc.cssClass = Option(stringParser(value))
-    case (INCLUDE_IN_ALL_ESFN, value) => acc.includeInAll = booleanParser(value)
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+    MMartCategory(
+      id        = id,
+      name      = EMName.extractName(m),
+      ownerId   = stringParser( m(OWNER_ID_ESFN) ),
+      ymCatPtr  = JacksonWrapper.convert[MMartYmCatPtr]( m(YM_CAT_ESFN) ),
+      parentId  = EMParentIdOpt.extractParentIdOpt(m),
+      position  = m.get(POSITION_ESFN).fold(Int.MaxValue)(intParser),
+      cssClass  = m.get(CSS_CLASS_ESFN).map(stringParser),
+      includeInAll = booleanParser( m(INCLUDE_IN_ALL_ESFN) )
+    )
   }
 
-  override protected def dummy(id: Option[String], version: Option[Long]) = {
-    MMartCategory(id = id, name = null, ymCatPtr = null, ownerId = null, parentId = None, position = Int.MaxValue)
-  }
 }
 
 import MMartCategory._
@@ -285,15 +286,15 @@ import MMartCategory._
  * @param includeInAll Индексировать текущую категорию вместе с товаром.
  * @param id Идентификатор категории.
  */
-case class MMartCategory(
-  var name      : String,
-  var ymCatPtr  : MMartYmCatPtr,
-  var parentId  : Option[String],
-  var ownerId   : String = MMartCategory.DEFAULT_OWNER_ID,
-  var position  : Int = Int.MaxValue,
-  var id        : Option[String] = None,
-  var cssClass  : Option[String] = None,
-  var includeInAll: Boolean = true
+final case class MMartCategory(
+  name          : String,
+  ymCatPtr      : MMartYmCatPtr,
+  parentId      : Option[String],
+  ownerId       : String = MMartCategory.DEFAULT_OWNER_ID,
+  position      : Int = Int.MaxValue,
+  id            : Option[String] = None,
+  cssClass      : Option[String] = None,
+  includeInAll  : Boolean = true
 ) extends EsModelEmpty with EMName with EMParentIdOpt with TreeSortable {
 
   override type T = MMartCategory
@@ -331,7 +332,7 @@ case class MMartCategory(
  * @param ycId id категории в дереве ym-категорий.
  * @param inherit Наследовать прямые подкатегории ym-категории при поиске.
  */
-case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
+final case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
   @JsonIgnore
   def renderPlayJson: JsObject = {
     JsObject(Seq(
@@ -348,7 +349,7 @@ trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon {
 }
 
 /** JMX MBean реализация. */
-case class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MMartCategoryJmxMBean {
   def companion = MMartCategory
 

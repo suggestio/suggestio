@@ -26,7 +26,7 @@ import org.elasticsearch.client.Client
  * Модель нужна для хранения данных авторизации юзеров, владеющими различными сайтами.
  */
 
-case class MPersonDomainAuthz(
+final case class MPersonDomainAuthz(
   id                    : String,
   // dkey и personId хранятся в пути к файлу json, а тут дублируются для упрощения работы (сериализации/десериализации).
   dkey                  : String,

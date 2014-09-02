@@ -1,0 +1,208 @@
+@import "mixins"
+
+/********************************************************************************************************************/
+/* Иконки, значки, украшательства */
+/********************************************************************************************************************/
+.required-icon
+  color red
+
+/********************************************************************************************************************/
+/* Страница с информацией об узле */
+/********************************************************************************************************************/
+.profile
+
+  &_change-shop-btn
+    position  absolute
+    top       0
+    right     0
+
+  &_logo-bar
+    float       left
+    width       140px
+    min-height  140px
+
+  &_info-bar
+    overflow      hidden
+    padding-left  25px
+
+/********************************************************************************************************************/
+/* Страница со всеми рекламными карточками узла */
+/********************************************************************************************************************/
+.add-adv-btn
+  display         block
+  width           150px
+  height          150px
+  line-height     130px
+  box-sizing      border-box
+
+  color           #a1a1a1
+  text-align      center
+  text-decoration none
+
+  vertical-align  middle
+  cursor          pointer
+  border          2px dashed
+  transition(0.2s all ease-in-out 0s)
+
+  &:hover
+    color #00b994
+
+.adv-lst
+  margin    15px 0
+  overflow  hidden
+
+  &_delimiter
+    clear        both
+    padding-top  20px
+
+.adv-item
+  float       left
+  position    relative
+  margin-left 63px
+  width       150px
+
+  .sm-block
+    position  relative
+    margin    0 auto
+
+  &.__first-in-line
+    margin-left 0
+
+  &_preview
+    position      relative
+    overflow      hidden
+    height        150px
+    margin-bottom 5px
+
+  &_preview-container
+    width 300px
+    transform( scale3d(0.5,0.5,0.5) )
+    transform-origin( 0 0 0 )
+
+  &_preview-border
+    position  absolute
+    bottom    0
+    left      0
+    z-index   50
+
+    width     100%
+    height    15px
+
+    background-image  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAcCAYAAAD1PDaSAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2hpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpFNTBBQTU4NDRDMjA2ODExODIyQUY4OEQyMTNFMDI4QiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo1RkI5QkRFNjI2QjIxMUU0OEQ5Q0E4RkVGMEU2QjZCNSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo1RkI5QkRFNTI2QjIxMUU0OEQ5Q0E4RkVGMEU2QjZCNSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M2IChNYWNpbnRvc2gpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUIwMkQ3OTMxMzIwNjgxMTgyMkE5ODgyQTdFN0U0NDAiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RTUwQUE1ODQ0QzIwNjgxMTgyMkFGODhEMjEzRTAyOEIiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4U4lTqAAABMUlEQVR42uyW/Q2CMBDFCwvQDXQD2EA3kA1gA91ARmADcALdQDbQEXQC6gR6lxzGED4stAWSvuT9RUl/195r65RlyRQrBqdgD/wEh+B722DOufQErmLgHJwRMGoFLqgQZVIFjct1AUcN3zwqJJkT9JpWc9cz7kg7waeGDqhf/T/HR1Qgnwo6JgBP8j+fCg1MQye1wMmqCmhoCjqn/hwrLPgshIh1QnPa1kjxMZkBeK4DOqDt9JkeRQBegLkq6K1m4EobnAfAg7HQ2G/XEYFjA06WXvAu6JROCNPCBbp1BdRtCRwGY8+mFQY0bfrg1F553FD/yugEPsBrUDStNPbRY2bA36v/92SpoMOBVzIzGNBHFVBsj3iiwA3RC1sFod9sYXLZAmWhLbSFttAWet76CDAAHIlU1KCsGL4AAAAASUVORK5CYII=')
+    background-repeat repeat-x
+    background-size   auto 100%
+
+  &_edit-btn
+    position          absolute
+    left              0
+    top               0
+    z-index           40
+
+    opacity           0
+    padding-top       75px
+    height            75px
+    width             100%
+    background-color  rgba(0,0,0,0.8)
+
+    color             white
+    text-align        center
+    text-decoration   none
+
+    &:hover
+      opacity 1
+
+/********************************************************************************************************************/
+/* Страница биллинга */
+/********************************************************************************************************************/
+.billing
+
+  &_money-info
+    margin-bottom 40px
+    text-align    center
+
+  &_all-money
+    float       left
+    padding-top 5px
+    min-width   150px
+    border-top  5px solid #d7d7d7
+    text-align  left
+
+  &_money-value
+    font-size   24px
+    text-align  right
+
+  &_available-money
+    display     inline-block
+    padding-top 5px
+    min-width   150px
+    border-top  5px solid green
+    text-align  left
+
+  &_locked-money
+    float       right
+    padding-top 5px
+    min-width   150px
+    border-top  5px solid red
+    text-align  left
+
+.tariff
+  overflow      hidden
+  margin-top    15px
+  margin-bottom 35px
+
+  &_illustration-w
+    float         left
+    padding-left  20px
+    padding-right 50px
+
+  &_illustration
+    width             85px
+    height            161px
+    background-image  url('/assets/images/market/new-design/tariff-illustration_retina.png')
+    background-repeat no-repeat
+    background-size   100% auto
+
+  &_info
+    width 100%
+
+    .td
+      padding 10px
+
+  &_info-title
+    color       lightGray
+    font-size   11px
+    text-align  center
+
+  &_info-value
+    color             darkGray
+    font-size         14px
+    text-align        center
+    background-color  #fad3d3
+
+  &_pink
+    background-color  #f7e3e3
+
+  &_red
+    background-color  #fad3d3
+
+  &_photo-lst
+    overflow    hidden
+    width       100%
+    max-height  250px
+
+  &_photo-i
+    display block
+    width   100%
+
+.transactions-history
+
+  &_contract
+    display       inline-block
+    overflow      hidden
+    max-width     200px
+    text-overflow ellipsis
+
+  &_descr
+    overflow  hidden
+    max-width 200px
+
