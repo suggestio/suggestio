@@ -926,11 +926,12 @@ siomart =
       ## Обработка событий для открытия / закрытия экрана выхода
       if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'block'
+        siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
-        siomart.utils.ge('smGridAds').style.webkitFilter = ""
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreenContainer' ) != null
@@ -939,7 +940,7 @@ siomart =
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreen' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
-        siomart.utils.ge('smGridAds').style.webkitFilter = ""
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
         return false
 
       ## гео добро
@@ -1384,10 +1385,11 @@ siomart =
 
         siomart.styles.init()
 
-        #if data.action == 'searchAds'
-        #  siomart.navigation_layer.close true
-        #else
-        #  siomart.navigation_layer.close()
+        if cbca_grid.ww == 320
+          if data.action == 'searchAds'
+            siomart.navigation_layer.close true
+          else
+            siomart.navigation_layer.close()
       else
 
         if data.action == 'searchAds'
@@ -1735,8 +1737,10 @@ siomart =
 
     open : ( history_push ) ->
 
-      this.adjust()
+      if cbca_grid.ww == 320
+        siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
 
+      this.adjust()
       if cbca_grid.columns > 2
         siomart.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
         cbca_grid.right_offset = 2
@@ -1774,6 +1778,9 @@ siomart =
           siomart.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
+
+      if cbca_grid.ww == 320
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
 
       cbca_grid.right_offset = 0
       cbca_grid.rebuild()
@@ -1813,11 +1820,13 @@ siomart =
   ######################################################
   open_close_screen : ( event ) ->
     siomart.utils.ge('smCloseScreen').style.display = 'block'
+    siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
   exit_close_screen : ( event ) ->
     siomart.utils.ge('smCloseScreen').style.display = 'none'
+    siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
