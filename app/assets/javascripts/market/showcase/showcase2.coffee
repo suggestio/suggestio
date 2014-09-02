@@ -960,7 +960,7 @@ siomart =
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
-        siomart.utils.ge('smGeoScreen').styf.display = 'none'
+        siomart.utils.ge('smGeoScreen').style.display = 'none'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
         return false
 
@@ -1650,7 +1650,7 @@ siomart =
 
     ## Закрыть
     close : () ->
-      siomart.utils.ge('smGridAds').style.webkitFilter = ""
+      siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
       animation_cb = () ->
         siomart.utils.removeClass siomart.focused_ads._container, 'fs-animated-end'
       setTimeout animation_cb, 3
@@ -1668,6 +1668,7 @@ siomart =
     ## Инициализация focused_ads
     ############################
     init : () ->
+      siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
@@ -1788,8 +1789,6 @@ siomart =
 
       cbca_grid.right_offset = 0
       cbca_grid.rebuild()
-
-      siomart.utils.ge('smGridAds').style.webkitFilter = ""
 
       if all_except_search == true
         siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
