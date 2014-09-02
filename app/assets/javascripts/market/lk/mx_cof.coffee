@@ -886,7 +886,10 @@ PersonalCabinet =
         else
           $slideBlock.slideToggle()
 
-        $this.toggleClass '__open'
+        $this
+        .toggleClass '__js-open'
+        .parent()
+        .toggleClass '__js-open'
 
   init: () ->
 
