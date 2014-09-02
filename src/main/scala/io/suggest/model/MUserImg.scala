@@ -79,7 +79,7 @@ object MUserImgMetadata extends MPictSubmodel with MUserImgDeleteByIdStatic {
 }
 
 
-case class MUserImgMetadata(idStr: String, md: Map[String, String], q: String) {
+final case class MUserImgMetadata(idStr: String, md: Map[String, String], q: String) {
 
   def id = idStr2Bin(idStr)
 
@@ -122,7 +122,7 @@ object MUserImgOrig extends MPictSubmodel with MUserImgDeleteByIdStatic {
 
 }
 
-case class MUserImgOrig(idStr: String, img: Array[Byte], q: String, timestamp: Long = -1L) extends ImgWithTimestamp {
+final case class MUserImgOrig(idStr: String, img: Array[Byte], q: String, timestamp: Long = -1L) extends ImgWithTimestamp {
 
   def id = idStr2Bin(idStr)
 

@@ -71,7 +71,7 @@ import MCompany._
  * Экземпляр распарсенного ряда БД.
  * @param id id по базе.
  */
-case class MCompany(
+final case class MCompany(
   var meta    : MCompanyMeta,
   id          : Option[String] = None,
   versionOpt  : Option[Long] = None
@@ -92,7 +92,7 @@ trait MCompanySel {
 
 
 trait MCompanyJmxMBean extends EsModelJMXMBeanCommon
-class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MCompanyJmxMBean
 {

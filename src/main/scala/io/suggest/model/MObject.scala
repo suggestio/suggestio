@@ -179,7 +179,7 @@ object MObject extends HTableModel {
 
 trait MObjectJmxMBean extends HBaseModelJMXBeanCommon
 
-class MObjectJmx extends HBaseModelJMXBase with MObjectJmxMBean {
+final class MObjectJmx extends HBaseModelJMXBase with MObjectJmxMBean {
   override def companion = MObject
 }
 

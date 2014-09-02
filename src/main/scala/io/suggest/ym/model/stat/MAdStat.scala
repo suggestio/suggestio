@@ -279,7 +279,7 @@ object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
 import MAdStat._
 
 
-class MAdStat(
+final class MAdStat(
   val clientAddr  : String,
   val action      : AdStatAction,
   val adIds       : Seq[String],
@@ -380,7 +380,7 @@ trait MAdStatJmxMBean extends EsModelJMXMBeanCommon {
 }
 
 /** JMX MBean реализация. */
-case class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAdStatJmxMBean {
   import LOGGER._
 

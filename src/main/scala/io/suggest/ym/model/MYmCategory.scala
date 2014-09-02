@@ -122,7 +122,7 @@ object MYmCategory
 }
 
 
-case class MYmCategory(
+final case class MYmCategory(
   var name      : String,
   var parentId  : Option[String],
   id            : Option[String] = None

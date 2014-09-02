@@ -70,7 +70,7 @@ object MAdnNode
 }
 
 
-case class MAdnNode(
+final case class MAdnNode(
   var companyId     : String,
   var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,
@@ -141,7 +141,7 @@ case class MAdnNode(
 trait MAdnNodeJmxMBean extends EsModelJMXMBeanCommon
 
 /** JMX MBean реализация. */
-case class MAdnNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MAdnNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAdnNodeJmxMBean {
   def companion = MAdnNode
 }

@@ -137,7 +137,7 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
 
 
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
-class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaver {
+final class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaver {
 
   def this(te: TupleEntry) = {
     this()

@@ -107,7 +107,7 @@ case class MMartInx(
 trait MMartInxJmxMBean extends EsModelJMXMBeanCommon
 
 /** JMX MBean реализация. */
-case class MMartInxJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MMartInxJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MMartInxJmxMBean {
   def companion = MMartInx
 }

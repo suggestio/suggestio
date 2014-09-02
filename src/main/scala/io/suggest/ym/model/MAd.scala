@@ -150,7 +150,7 @@ object MAd
 }
 
 
-case class MAd(
+final case class MAd(
   var producerId : String,
   var offers     : List[AOBlock],
   var imgs       : Imgs_t,
@@ -215,7 +215,7 @@ trait MAdJmxMBean extends EsModelJMXMBeanCommon {
 }
 
 /** JMX MBean реализация. */
-case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAdJmxMBean {
   def companion = MAd
 

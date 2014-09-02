@@ -48,7 +48,7 @@ object MWelcomeAd
 }
 
 
-case class MWelcomeAd(
+final case class MWelcomeAd(
   var producerId  : String,
   var imgs        : Imgs_t,
   var dateCreated : DateTime = null,
@@ -85,7 +85,7 @@ trait MWelcomeAdJmxMBean extends EsModelJMXMBeanCommon {
 }
 
 /** JMX MBean реализация. */
-case class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MWelcomeAdJmxMBean {
   def companion = MWelcomeAd
 

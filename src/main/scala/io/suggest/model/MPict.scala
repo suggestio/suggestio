@@ -140,6 +140,6 @@ trait ImgWithTimestamp {
 trait MPictJmxMBean extends HBaseModelJMXBeanCommon
 
 /** JMX MBean реализация. */
-class MPictJmx extends HBaseModelJMXBase with MPictJmxMBean {
+final class MPictJmx extends HBaseModelJMXBase with MPictJmxMBean {
   def companion = MPict
 }
