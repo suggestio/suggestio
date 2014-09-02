@@ -1060,7 +1060,8 @@ siomart =
         siomart.search.error_message 'короткий запрос, минимум 3 символа'
         return false
 
-      url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id + '&' + siomart.geo.request_query_param()
+      a_rcvr = if siomart.config.mart_id == '' then '' else '&a.rcvr=' + siomart.config.mart_id
+      url = '/market/ads?a.q=' + request + a_rcvr + '&' + siomart.geo.request_query_param()
       siomart.request.perform url
 
     queue_request : ( request ) ->
@@ -1906,7 +1907,8 @@ siomart =
         cat_id : cat_id
       siomart.history.push state_data, 'SioMarket', '/n/cat/' + cat_id
 
-    url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id  + '&' + siomart.geo.request_query_param()
+    a_rcvr = if siomart.config.mart_id == '' then '' else '&a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + siomart.geo.request_query_param()
     siomart.request.perform url
 
   ########################################
