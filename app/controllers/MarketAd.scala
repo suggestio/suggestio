@@ -383,7 +383,11 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
     // id уровня, прописано в чекбоксе
     "levelId" -> nonEmptyText(maxLength = 1)
       .transform [Option[SinkShowLevel]] (
-        { SinkShowLevels.maybeWithName },
+        { v =>
+          SinkShowLevels.maybeWithName(v).orElse {
+            AdShowLevels.maybeWithName(v).map(asl => SinkShowLevels.withArgs(AdnSinks.default, asl))
+          }
+        },
         { case Some(sl) => sl.toString()
           case None => "" }
       )

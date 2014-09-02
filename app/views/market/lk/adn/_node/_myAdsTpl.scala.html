@@ -50,7 +50,7 @@
 
           @* Бесплатное размещение не запрещено. *@
           <div class="ads-list-block__controls">
-            @defining(mad.allShowLevels) { adSls =>
+            @defining( mad.receivers.get(node.id.get).map(_.allShowLevels).getOrElse(Set.empty) ) { adSls =>
               @* Обходим карту уровней, переводя её в список галочек. *@
               @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
                 @defining(node.adn.canOutAtLevel(sl)) { hl =>
