@@ -64,11 +64,11 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_NODE}){ __act}" href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)">User</a>
+            <a class="left-bar_menu-i __cards@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)">Cards</a>
+            <a class="left-bar_menu-i __profile@if(leftCurrEl exists {_ == LPL_NODE}){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+            <a class="left-bar_menu-i __billing@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
             <hr class="delimiter"/>
           </nav>
         }
