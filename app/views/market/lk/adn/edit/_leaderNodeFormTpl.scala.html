@@ -18,7 +18,9 @@
         <div class="image __logo __size-L js-preview">
           <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
           <img class="image_src" src='@routes.Img.getImg(imgId)'/>
-          <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
+          <a class="image_remove-btn js-remove-image" title="Удалить">
+            <span></span>
+          </a>
         </div>
       }
 
@@ -101,7 +103,7 @@
             previewRoot = "#profileGallery",
             previewClass = "__size-M f-left"
           )
-          <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">Загрузить фотографию</a>
+          <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">Добавить фотографию</a>
         </div>
 
         @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
@@ -112,7 +114,9 @@
                 <div class="image __size-M f-left js-preview @if(gfi % 4 == 3){ __first-in-line}">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@routes.Img.getThumb(imgId)" />
-                  <a class="image_remove-btn js-remove-image" title="Удалить">Удалить</a>
+                  <a class="image_remove-btn js-remove-image" title="Удалить">
+                    <span></span>
+                  </a>
                 </div>
               }
             }
