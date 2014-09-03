@@ -181,7 +181,7 @@ trait ElementsParserT
   }
 
   trait ElementTagHandler extends TagHandler {
-    def getId = thisTagAttrs.getValue(ATTR_ID).toLong
+    val getId = thisTagAttrs.getValue(ATTR_ID).toLong
   }
 
   sealed case class DummyHandler(thisTagName: String, thisTagAttrs: Attributes) extends TagHandler
@@ -235,7 +235,8 @@ trait ElementsParserT
   class NodeTagHandler(val thisTagAttrs: Attributes) extends ElementTagHandler {
     override def thisTagName = TAG_NODE
 
-    def getNode = {
+    // Вызываем getNode в конструкторе, т.к. аттрибуты будут уже не доступны во время endTag или иных действий.
+    val getNode = {
       OsmNode(
         id = getId,
         gp = GeoPoint(
@@ -251,8 +252,8 @@ trait ElementsParserT
     }
 
     override def endTag(tagName: String): Unit = {
-      super.endTag(tagName)
       addNode(getNode)
+      super.endTag(tagName)
     }
   }
 
@@ -271,14 +272,13 @@ trait ElementsParserT
         case TAG_TAG  => new DummyHandler(tagName, attributes)
       }
       become(nextHandler)
-      ndAcc = Nil
     }
 
     override def endTag(tagName: String): Unit = {
       super.endTag(tagName)
       val way = OsmWayParsed(
         id = getId,
-        nodeRefsOrdered = ndAcc
+        nodeRefsOrdered = ndAcc.reverse
       )
       addWay(way)
     }
@@ -287,7 +287,7 @@ trait ElementsParserT
     class NdTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
       override def thisTagName = TAG_ND
 
-      def getRef = thisTagAttrs.getValue(ATTR_REF).toLong
+      val getRef = thisTagAttrs.getValue(ATTR_REF).toLong
 
       override def startTag(tagName: String, attributes: Attributes): Unit = {
         super.startTag(tagName, attributes)
@@ -295,8 +295,8 @@ trait ElementsParserT
       }
 
       override def endTag(tagName: String): Unit = {
-        super.endTag(tagName)
         ndAcc ::= OsmWayNd(getRef)
+        super.endTag(tagName)
       }
     }
   }
@@ -318,33 +318,33 @@ trait ElementsParserT
     }
 
     override def endTag(tagName: String): Unit = {
-      super.endTag(tagName)
       val rel = OsmRelationParsed(
         id = getId,
-        memberRefs = membersAcc
+        memberRefs = membersAcc.reverse
       )
       addRelation(rel)
-      membersAcc = Nil
+      super.endTag(tagName)
     }
 
     class MemberTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
       override def thisTagName = TAG_MEMBER
+
+      // Собираем результат в конструкторе, пока доступны аттрибуты тега.
+      Option( thisTagAttrs.getValue(ATTR_ROLE) )
+        .flatMap { RelMemberRoles.maybeWithName }
+        .foreach { role =>
+          membersAcc ::= OsmRelMemberParsed(
+            ref = thisTagAttrs.getValue(ATTR_REF).toLong,
+            typ = OsmElemTypes.withName( thisTagAttrs.getValue(ATTR_TYPE).toLowerCase ),
+            role = role
+          )
+        }
 
       override def startTag(tagName: String, attributes: Attributes): Unit = {
         super.startTag(tagName, attributes)
         become( new DummyHandler(tagName, attributes) )
       }
 
-      override def endTag(tagName: String): Unit = {
-        super.endTag(tagName)
-        val member = OsmRelMemberParsed(
-          ref = thisTagAttrs.getValue(ATTR_REF).toLong,
-          typ = OsmElemTypes.withName( thisTagAttrs.getValue(ATTR_TYPE).toUpperCase ),
-          role = Option( thisTagAttrs.getValue(ATTR_ROLE) )
-            .map { roleStr => RelMemberRoles.withName( roleStr.toUpperCase ) }
-        )
-        membersAcc ::= member
-      }
     }
   }
 
