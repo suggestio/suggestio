@@ -704,6 +704,8 @@ PersonalCabinet =
             $btn.removeAttr 'href'
             $slideBlock.data
               'active': false
+
+            cbca.pc.common.photoSlider()
         )
       else
         $slideBlock.slideToggle()
@@ -1014,7 +1016,6 @@ CbcaPopup =
     else
       cbca.popup.showOverlay()
       cbca.popup.setPopupPosition popupSelector
-
 
     $window = $ window
     if $window.width() <= 1024

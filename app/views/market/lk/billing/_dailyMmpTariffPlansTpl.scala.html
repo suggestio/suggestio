@@ -8,9 +8,11 @@
 
 @if(adnNode.gallery.nonEmpty) {
   <div class="tariff_photo-lst">
-    @adnNode.gallery.map { imgId =>
-      <img class="tariff_photo-i" src="@routes.Img.getImg(imgId)">
-    }
+    <div class="js-photo-slider">
+      @adnNode.gallery.map { imgId =>
+        <img class="tariff_photo-i" src="@routes.Img.getImg(imgId)">
+      }
+    </div>
   </div>
 }
 
