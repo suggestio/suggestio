@@ -221,10 +221,20 @@ leftMenuWidth   = 60
     padding-top (headerHeight)px
 
   &_menu-i
-    display     block
-    height      60px
-    color       #a5a5a5
-    text-align  center
+    display       inline-block
+    box-sizing    border-box
+    line-height   60px
+    width         100%
+    padding-left  70px
+
+    color         #a5a5a5
+    font-size     14px
+    transition(background-color 0.2s ease-in-out 0s)
+
+    span
+      display         inline-block
+      line-height     14px
+      vertical-align  middle
 
     &:hover
       cursor            pointer
@@ -244,6 +254,7 @@ leftMenuWidth   = 60
     text-align  center
 
 .viewport
-  padding-top   (headerHeight + 40)px
-  padding-left  (leftMenuWidth + 20)px
-  padding-right (rightMenuWidth + 20)px
+  padding-top     (headerHeight + 40)px
+  padding-left    (leftMenuWidth + 20)px
+  padding-right   (rightMenuWidth + 20)px
+  padding-bottom  60px

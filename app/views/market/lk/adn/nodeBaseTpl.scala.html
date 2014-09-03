@@ -8,16 +8,24 @@
 
 @rightBar1 = {
   <nav class="right-bar_menu">
-    <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_NODE){ __act}" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">Ваш профиль</a>
+    <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_NODE){ __act}" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">
+      <span>Ваш профиль</span>
+    </a>
     <hr class="delimiter"/>
     @if(isMyNode) {
-      <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_NODE_EDIT){ __act}" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">Редактировать профиль</a>
+      <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_NODE_EDIT){ __act}" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">
+        <span>Редактировать профиль</span>
+      </a>
       <hr class="delimiter"/>
-      <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_USER_EDIT){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">@Messages("Password.change")</a>
+      <a class="right-bar_menu-i def-transition@if(rightCurrEl == RPL_USER_EDIT){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">
+        <span>@Messages("Password.change")</span>
+      </a>
       <hr class="delimiter"/>
 
       @if(isSuperuser) {
-        <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">System</a>
+        <a class="right-bar_menu-i def-transition" href="@routes.SysMarket.showAdnNode(node.id.get)">
+          <span>System</span>
+        </a>
         <hr class="delimiter"/>
       }
     }
