@@ -2,33 +2,40 @@
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-categories-screen" id="smCategoriesScreen">
+<div class="sm-categories-screen __initial" id="smCategoriesScreen">
 
   <div class="sm-categories-screen_header">
 
     <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smCategoriesScreenCloseButton">
-      @svg._exitButtonTpl( args.fgColor )
+      @svg._backArrowRight( args.fgColor )
     </div>
 
   </div>
 
-  @_search_bar( args )
+  @_search_bar( args, "smSearch", "Быстрый поиск по предложениям" )
 
-  <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor )">
+  <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor, true );">
     <div class="sm-categories-screen_tabs-wrapper">
 
       <div class="sm-categories-screen_single-tab">
-        <div class="sm-tab __no-left-border" id="smCategoriesTab" style="@stuff._bgcolor( args.bgColor, false ); color: #@args.fgColor; border-color: #@args.fgColor;">Категории</div>
+        <div class="sm-tab __rounded-left" id="smCategoriesTab" style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">Категории</div>
       </div>
 
       <div class="sm-categories-screen_single-tab">
-        <div class="sm-tab __no-left-border __no-right-border __inactive" id="smShopsTab" style="@stuff._bgcolor( args.bgColor, false );  color: #@args.fgColor; border-color: #@args.fgColor;">Список</div>
+        <div class="sm-tab __rounded-right __inactive" id="smShopsTab" style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">Список</div>
       </div>
+
       <div class="clear"></div>
     </div>
   </div>
 
   @_categoriesListTpl( args )
   @_shopsListTpl( args )
+
+  <style type="text/css">
+    .sm-tab.__inactive {
+      color: #@args.fgColor!important;
+    }
+  </style>
 
 </div>

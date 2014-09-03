@@ -520,18 +520,20 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       sargs <- args.toSearchArgs
       nodes <- MAdnNode.dynSearch(sargs)
     } yield {
-      val rendered = nodes map { adnNode =>
+      val firstNodeJson = nodes.headOption.fold [JsValue] (JsNull) { adnNode =>
         JsObject(Seq(
           "name"  -> JsString(adnNode.meta.name),
-          "_id"   -> JsString(adnNode.id.getOrElse(""))
+          "_id"   -> JsString(adnNode.id getOrElse "")
         ))
       }
-      val respBody = JsObject(Seq(
+      val json = JsObject(Seq(
+        "action"    -> JsString("findNodes"),
         "status"    -> JsString("ok"),
-        "nodes"     -> JsArray(rendered),
+        "first_node"-> firstNodeJson,
+        "nodes"     -> _geoNodesListTpl(nodes),
         "timestamp" -> JsNumber(tstamp)
       ))
-      Ok(respBody)
+      Ok( Jsonp(JSONP_CB_FUN, json) )
     }
   }
 

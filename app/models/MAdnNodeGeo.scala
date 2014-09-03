@@ -5,7 +5,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import util.PlayMacroLogsImpl
 import io.suggest.model.geo.{GeoShapeQuerable, GeoShape}
 import io.suggest.model.{EsModel, EsModelT, EsModelMinimalStaticT}
@@ -21,15 +21,20 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Хранилище географических объектов (GeoShape'ов) для элементов модели MAdnNode.
  * Географические элементы очень жирные, их сериализация-десириализация довольно тяжела, поэтому
  * эти данные хранятся в этой модели.
- * Элементы имеют parent-поле для хранения рядом с экземпляром MAdnNode.
+ * Элементы имеют parent-поле для хранения рядом с экземпляром MAdnNode и для has_parent.
+ *
+ * Геообъекты хранятся в поле nested-объекта. Имя поле формируется на основе уровня. Разные поля для разноуровневых
+ * геообъектов необходимо, чтобы гибко управлять точностью и ресурсоёмкостью индекса. И просто чтобы регулировать
+ * приоритет объектов.
  */
 object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 
   override type T = MAdnNodeGeo
 
+  /** Название поля с id узла. */
   val ADN_ID_ESFN = "adnId"
 
-  /** Название поля, хранящего смежное гео-барахло. В модели оно неявное. */
+  /** Название поля, хранящего смежное гео-барахло. В модели оно неявное. Внутри -- nested-object. */
   val GEO_ESFN    = "geo"
 
   override val ES_TYPE_NAME = "ang"   // ang = adn node geo
@@ -55,6 +60,7 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
     )
   }
 
+  /** Десериализация данных, сохранённых в nested гео-контейнере. */
   val deserializeGeoContainer: PartialFunction[Any, (NodeGeoLevel, GeoShape)] = {
     case jmap: ju.Map[_, _] =>
       _deserializeGeoTuple(jmap.head)
@@ -100,6 +106,12 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
       .map { searchResp2list }
   }
 
+  /** Сгенерить запрос для поиска совпадений в гео-полях указанного уровня. */
+  def geoQuery(glevel: NodeGeoLevel, shape: GeoShapeQuerable): QueryBuilder = {
+    val shapeQuery = QueryBuilders.geoShapeQuery(glevel.fullEsfn, shape.toEsShapeBuilder)
+    QueryBuilders.nestedQuery(GEO_ESFN, shapeQuery)
+  }
+
   /**
    * Быстрый поиск узлов и быстрая десериализация результатов поиска по пересечению с указанной геолокацией.
    * @param glevel Уровень поиска.
@@ -108,11 +120,16 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
    * @param offset Сдвиг в результатах.
    * @return Фьючерс со списком adnId, чьи фигуры пересекают переданную фигуру.
    */
-  def geosearchAdnIdsOnLevel(glevel: NodeGeoLevel, shape: GeoShapeQuerable, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                            (implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    //prepareSearch
-    //  .setQuery(  )
-    ???
+  def geoFindAdnIdsOnLevel(glevel: NodeGeoLevel, shape: GeoShapeQuerable, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                          (implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    prepareSearch
+      .setQuery( geoQuery(glevel, shape) )
+      .setSize( maxResults )
+      .setFrom( offset )
+      .setNoFields()
+      .addField(ADN_ID_ESFN)
+      .execute()
+      .map { searchResp2fnList[String](_, ADN_ID_ESFN) }
   }
 
 }
@@ -152,7 +169,9 @@ final case class MAdnNodeGeo(
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
 object NodeGeoLevels extends Enumeration {
 
-  protected case class Val(esfn: String, precision: String) extends super.Val(esfn)
+  protected case class Val(esfn: String, precision: String) extends super.Val(esfn) {
+    def fullEsfn = GEO_ESFN + "." + esfn
+  }
 
   type NodeGeoLevel = Val
 

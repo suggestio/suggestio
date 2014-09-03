@@ -18,6 +18,24 @@ border-radius( param )
   -o-border-radius : param
   border-radius : param
 
+border-radius-left( param )
+  border-top-left-radius            param
+  -moz-border-radius-topleft        param
+  -webkit-border-top-left-radius    param
+
+  border-bottom-left-radius            param
+  -moz-border-radius-bottomleft        param
+  -webkit-border-bottom-left-radius    param
+
+border-radius-right( param )
+  border-top-right-radius            param
+  -moz-border-radius-topright        param
+  -webkit-border-top-right-radius    param
+
+  border-bottom-right-radius            param
+  -moz-border-radius-bottomright        param
+  -webkit-border-bottom-right-radius    param
+
 transform( param )
   -webkit-transform : param
   -moz-transform : param
@@ -164,8 +182,9 @@ code
 
   &.__w-global-cat
     .sm-producer-header_exit-button,
+    .sm-producer-header_geo-button,
     .sm-producer-header_logo
-      display: none
+      display: none!important
 
     .sm-producer-header_index-button
       display: block
@@ -252,6 +271,8 @@ code
 .sm-grid-ads
   width: 100%
   height: 100%
+  &.__blurred
+    -webkit-filter    blur(10px)
   &_content
     position: relative
   &_container
@@ -266,13 +287,13 @@ code
 /*
 ------------------------------------*/
 .sm-categories-screen
-  position: absolute
-  left: 0px
-  top: 0px
-  z-index: 11
-  display: none
-  width: 100%
-  height: 100%
+  display     none
+  position    absolute
+  right       0px
+  top         0px
+  z-index     11
+  width       320px
+  height      100%
 
   &.__compact
     width: 300px
@@ -288,95 +309,143 @@ code
 
   &_header
     height: 50px
-
   &_tabs
-    height: 35px
-    background: default_color_w_opacity
+    width       100%
+    height      50px
+    background  default_color_w_opacity
   &_tabs-wrapper
-    width: 100%
-    position: relative
-    margin: 0px auto
+    width       230px
+    position    relative
+    margin      0px auto
+    background  red
   &_single-tab
-    width: 50%
-    height: 35px
-    float: left
-    text-align: center
-    font-family: 'opensans-regular-webfont'
-    font-size: 13px
-    cursor: pointer
+    width       50%
+    float       left
+    text-align  center
+    font-family 'heliosthin'
+    font-size   14px
+    cursor      pointer
 
 .sm-tab
-  color: #959595
-  border: 1px #959595 solid
-  border-bottom-width: 0px
-  padding: 8px 0px
-  text-align: center
-  background: default_color
+  color         #343434
+  border        1px #c2c2c2 solid
+  text-align    center
+  background    #c2c2c2
+  padding       8px 0px
+
+  &.__rounded-left
+    border-radius-left( 3px )
+
+  &.__rounded-right
+    border-radius-right( 3px )
+
   &.__inactive
-    border-top-width: 0px
-    border-bottom-width: 1px
-    background: none!important
-    opacity: 0.9!important
-  &.__no-left-border
-    border-left-width: 0px
-  &.__no-right-border
-      border-right-width: 0px
+    background  none!important
+    opacity     0.9!important
+    color       #959595
 
 .categories-list
-  width: 524px
-  margin: 0px auto
+  width           320px
+  margin          0px auto
+  padding-bottom  30px
   &_single-cat
-    float: left
-    margin-left: 7px
-    margin-right: 7px
-    margin-top: 25px
-    margin-bottom: 25px
+    float         left
+    margin-left   7px
+    margin-right  7px
+    margin-top    25px
+    margin-bottom 25px
 
     &.__no-margin
-      margin-left: 0px
+      margin-left 0px
 
 .categorie
   overflow: hidden
   position: relative
   cursor: pointer
   color: #fff
-  width: 116px
   font-family: 'opensans-regular-webfont'
   font-size: 13px
   display: block
   text-align: center
+  width: 73px
+  height: 92px
+  margin-left: 15px
+  margin-right: 15px
+  margin-bottom: 15px
 
   &_icon
     margin: 0px auto
     display: block
-    width: 116px
-    height: 116px
+    width: 58px
+    height: 58px
     z-index: 10
+    svg
+      -webkit-transform: scale3d(0.5,0.5,0.5)
+      -webkit-transform-origin: 0px 0px
   &_name
     padding: 0px 0px 10px 0px
 
 .shops-list
-  font-family: 'opensans-regular-webfont'
-  width: 100%
-  text-align:center
-  color: #b1b0b0
-  padding-top: 50px
+  font-family       'opensans-light'
+  width             100%
+  text-align        center
+  color             #b1b0b0
+  padding-top       20px
+  padding-bottom    50px
   &_letter
-    border: 1px #fff solid
-    border-radius( 5px )
-    display: inline-block
-    padding: 7px 10px
+    border          1px #fff solid
+    border-radius   5px
+    display         inline-block
+    padding         7px 10px
   &_row
-    padding: 5px 0px
-    font-size: 12px
+    padding         10px 0px
+    font-size       14px
     &.__even
-     background: default_color_w_opacity
+     background     default_color_w_opacity
 
 /*
 ------------------------------------*/
+.sm-geo-screen
+  display: none
+  position: absolute
+  left: 0px
+  top: 0px
+  width: 320px
+  height: 100%
+  z-index: 100
+  &_header
+    height: 50px
+  &_search
+    height: 55px
+  &_search-input
+    border: 1px #fff solid
+  &_current-location
+    padding: 10px 0px
+    position: relative
+    text-align: center
+    color: #fff
+    font-family: 'opensans-regular-webfont'
+    font-size: 14px
+    background: default_color_w_opacity
+    cursor: pointer
+
+  &_current-location-inner
+    display: inline-block
+    position: relative
+
+  &_current-location-icon
+    position: absolute
+    left: -60px
+    top: -24px
+    -webkit-transform: scale3d(0.5,0.5,0.5)
+
+.sm-geo-nodes
+  background: default_color
+/*
+------------------------------------*/
 .sm-search-bar
-  height: 65px
-  padding: 0px 22px 0px 22px
+  height: 35px
+  padding: 15px 22px 15px 22px
   background: default_color_w_opacity
 
   &_field
@@ -421,6 +490,7 @@ code
 .sm-shops
   display: none
   background: default_color
+
 
 /*
 ------------------------------------*/
@@ -501,20 +571,3 @@ code
   .focused-ad
     &_offer
       padding: 0px
-
-  .categories-list
-    width: 320px
-
-  .categorie
-    width: 73px
-    height: 90px
-    margin-left: 15px
-    margin-right: 15px
-    margin-bottom: 15px
-
-    &_icon
-      width: 58px
-      height: 58px
-      svg
-        -webkit-transform: scale3d(0.5,0.5,0.5)
-        -webkit-transform-origin: 0px 0px

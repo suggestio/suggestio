@@ -4,7 +4,8 @@ cbca_grid =
   top_offset : 70
   bottom_offset : 20
   max_allowed_cell_width : 4
-
+  left_offset : 0
+  right_offset : 0
   blocks : []
   spacers : []
 
@@ -25,31 +26,30 @@ cbca_grid =
 
   set_container_size : () ->
     this.set_window_size()
+    this.count_columns()
 
-    no_of_cells = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+    cw = this.columns * ( this.cell_size + this.cell_padding) - this.cell_padding
+    cm = 0
+    this.max_allowed_cell_width = this.columns
 
-    if no_of_cells < 2
-      no_of_cells = 2
+    this.cw = cw
 
-    if no_of_cells > 8
-      no_of_cells = 8
+    if this.left_offset > 0
+      margin = this.left_offset*( this.cell_size + this.cell_padding) - this.cell_padding
+      cw = cw - margin
+      cm = margin
 
-    if no_of_cells == 3
-      no_of_cells = 3
-
-    if no_of_cells == 5
-      no_of_cells = 4
-
-    if no_of_cells == 7
-      no_of_cells = 6
-
-    cw = no_of_cells * ( this.cell_size + this.cell_padding) - this.cell_padding
-
-    this.max_allowed_cell_width = no_of_cells
+    if this.right_offset > 0
+      margin = this.right_offset*( this.cell_size + this.cell_padding) - this.cell_padding
+      cw = cw - margin
+      cm = -margin
 
     if typeof this.layout_dom != 'undefined'
       this.layout_dom.style.width = cw + 'px'
+      this.layout_dom.style.left = cm/2 + 'px'
       this.layout_dom.style.opacity = 1
+
+    this.columns = this.columns - this.left_offset - this.right_offset
 
   ##############
   ## Fetch block
@@ -102,6 +102,8 @@ cbca_grid =
       return this.fetch_block(block_max_w, tmp_block, i+1 )
 
   fetch_spacer : (block_max_w, tmp_block, i) ->
+
+    console.log 'fetch_spacer of ' + this.spacers.length
 
     if this.spacers.length == 0
       return null
@@ -205,13 +207,13 @@ cbca_grid =
     is_add = is_add || false
 
     cbca_grid.blocks = []
-    cbca_grid.spacers = []
-    cbca_grid.m_spacers = []
 
     if is_add == true
       i = cbca_grid.blocks_index
     else
       cbca_grid.all_blocks = []
+      cbca_grid.spacers = []
+      cbca_grid.m_spacers = []
       i = 0
 
     console.log 'cbca_grid.all_blocks'
@@ -254,7 +256,7 @@ cbca_grid =
     ## Загрузить спейсеры
     #for i in siomart.utils.ge_class document, 'sm-b-spacer'
     if is_add == false
-      for k in [1..30]
+      for k in [1..300]
 
         _spacer_attributes =
           'class' : 'sm-b-spacer sm-b-spacer-' + k
@@ -316,6 +318,25 @@ cbca_grid =
 
     this.build()
 
+  count_columns : () ->
+    # Определеяем сколько колонок влезет в экран колонок
+    this.columns = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
+
+    if this.columns % 2 == 1
+      this.columns--
+
+    if this.columns < 2
+      this.columns = 2
+
+    if this.columns > 8
+      this.columns = 8
+
+  rebuild : () ->
+    cbca_grid.set_container_size()
+    cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+    cbca_grid.blocks = cbca_grid.m_blocks
+    cbca_grid.build()
+
   build : ( is_add ) ->
 
     is_add = is_add || false
@@ -336,24 +357,6 @@ cbca_grid =
     # Определяем ширину окна
     window_width = this.ww
 
-    # Определеяем сколько колонок влезет в экран колонок
-    columns = Math.floor( ( window_width - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
-
-    if columns < 2
-      columns = 2
-
-    if columns > 8
-      columns = 8
-
-    if columns == 3
-      columns = 3
-
-    if columns == 5
-      columns = 4
-
-    if columns == 7
-      columns = 6
-
     # Ставим указатели строки и колонки
     cline = 0
     pline = 0
@@ -362,7 +365,7 @@ cbca_grid =
     if is_add == false
       # Генерим объект с инфой об использованном месте
       columns_used_space = {}
-      for c in [0..columns-1]
+      for c in [0..this.columns-1]
         columns_used_space[c] =
           used_height : 0
     else
@@ -375,7 +378,7 @@ cbca_grid =
 
       pline = cline
 
-      if cur_column >= Math.floor columns
+      if cur_column >= Math.floor this.columns
         cur_column = 0
         cline++
         left_pointer = left_pointer_base
@@ -396,7 +399,7 @@ cbca_grid =
 
           # есть место хотя бы для одного блока с минимальной шириной
           # высяним блок с какой шириной может влезть
-          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
+          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, this.columns
 
           b = this.fetch_block block_max_w
 
@@ -405,8 +408,6 @@ cbca_grid =
               b = this.fetch_spacer block_max_w
             else
               break
-
-          console.log b
 
           w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
           w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
@@ -460,7 +461,6 @@ window.cbca_grid = cbca_grid
 ###############################
 siomart =
   config :
-
     whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sm-showcase'
@@ -471,11 +471,56 @@ siomart =
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   geo :
+    location_requested : false
+    nodes_loaded : false
+    search :
+      min_request_length : 2
+      search_delay : 500
+      queue_request : ( request ) ->
+
+        if request.length < this.min_request_length
+          return false
+
+        if typeof this.timer != 'undefined'
+          clearTimeout this.timer
+
+        cb = () ->
+          siomart.geo.search.do request
+
+        this.timer = setTimeout cb, this.search_delay
+
+      do : ( request ) ->
+        console.log 'request : ' + request
+
     position_callback : ( gp_obj ) ->
       siomart.geo.geo_position_obj = gp_obj
+      siomart.geo.load_nodes( true )
 
     get_current_position : () ->
+      this.location_requested = true
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
+
+    init_events : () ->
+      _geo_nodes_search_dom = siomart.utils.ge('smGeoSearchField')
+      siomart.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
+        console.log siomart.geo.search.queue_request this.value
+
+    load_for_node_id : ( node_id ) ->
+
+      siomart.config.index_action = '/market/index/' + node_id
+      siomart.config.mart_id = node_id
+
+      siomart.load_mart()
+
+    adjust : () ->
+      geo_screen = siomart.utils.ge('smGeoNodes')
+      geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
+      geo_screen_content = siomart.utils.ge('smGeoNodesContent')
+
+      geo_screen.style.height = cbca_grid.wh - 100
+      geo_screen_wrapper.style.height = cbca_grid.wh - 100
+      geo_screen_content.style.minHeight = cbca_grid.wh - 100 + 1
+
 
     request_query_param : () ->
 
@@ -487,10 +532,19 @@ siomart =
       else
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
+    load_nodes : ( refresh ) ->
+      refresh = refresh || false
+
+      if refresh == false && siomart.geo.nodes_loaded == true
+        siomart.response_callbacks.find_nodes siomart.geo.nodes_data_cached
+        return false
+      console.log 'load nodes'
+      url = '/market/nodes/search?' + this.request_query_param()
+      siomart.request.perform url
+
     init : () ->
       if window.with_geo == true
         this.get_current_position()
-
   getDeviceScale : () ->
     deviceWidth = landscape = Math.abs(window.orientation) == 90
 
@@ -872,12 +926,12 @@ siomart =
       ## Обработка событий для открытия / закрытия экрана выхода
       if siomart.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'block'
-        siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
+        siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
-        siomart.utils.ge('smGridAds').style.webkitFilter = ""
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreenContainer' ) != null
@@ -886,7 +940,36 @@ siomart =
 
       if siomart.events.target_lookup( event.target, 'id', 'smCloseScreen' ) != null
         siomart.utils.ge('smCloseScreen').style.display = 'none'
-        siomart.utils.ge('smGridAds').style.webkitFilter = ""
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
+        return false
+
+      ## гео добро
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
+        siomart.geo.load_nodes()
+
+        if cbca_grid.columns > 2
+          siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+          cbca_grid.left_offset = 2
+          cbca_grid.rebuild()
+        siomart.utils.ge('smGeoScreen').style.display = 'block'
+        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
+        return false
+
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
+        siomart.geo.get_current_position()
+        return false
+
+      if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
+        siomart.utils.ge('smGeoScreen').style.display = 'none'
+        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
+        return false
+
+
+      geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
+      if geo_node_target != null
+        node_id = geo_node_target.getAttribute 'data-id'
+        siomart.geo.load_for_node_id node_id
+
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
@@ -1061,18 +1144,15 @@ siomart =
        grid_ads_wrapper = siomart.utils.ge('smGridAdsWrapper')
        grid_ads_content = siomart.utils.ge('smGridAdsContent')
 
-
        es = siomart.utils.ge('smCloseScreen')
        es_wrapper = siomart.utils.ge('smCloseScreenWrapper')
        es_content = siomart.utils.ge('smCloseScreenContent')
-
 
        grid_ads.style.height = es.style.height = cbca_grid.wh
        grid_ads_wrapper.style.height = es_wrapper.style.height = cbca_grid.wh
        grid_ads_content.style.minHeight = es_content.style.minHeight = cbca_grid.wh + 1
 
     load_more : () ->
-
       if this.is_load_more_requested == true || this.is_fully_loaded == true
         return false
       console.log 'load more'
@@ -1085,6 +1165,10 @@ siomart =
       siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
 
     load_index_ads : () ->
+
+      cbca_grid.left_offset = 0
+      cbca_grid.right_offset = 0
+
       grd_c = siomart.utils.ge('smGridAdsContainer')
       url = grd_c.getAttribute 'data-index-offers-action'
 
@@ -1179,6 +1263,9 @@ siomart =
 
       this.response_callbacks.find_ads data
 
+    if data.action == 'findNodes'
+      this.response_callbacks.find_nodes data
+
 
   #############################################
   ## Коллбеки для обработки результатов запроса
@@ -1212,12 +1299,18 @@ siomart =
       siomart.utils.ge_tag('body')[0].style.overflow = 'hidden'
 
       siomart.grid_ads.adjust_dom()
+      siomart.geo.adjust()
+      siomart.geo.init_events()
 
       setTimeout siomart.grid_ads.attach_events, 200
 
       ## Инициализация welcome_ad
       ## если возвращается false — значит картинки нет и
       ## нет смысла тянуть с дальнейшей инициализацией
+
+      if window.with_geo == true
+        siomart.utils.ge('smExitButton').style.display = 'none'
+        siomart.utils.ge('smGeoScreenButton').style.display = 'block'
 
       if siomart.welcome_ad.init() == false
         grid_init_timeout = 1
@@ -1289,7 +1382,6 @@ siomart =
 
         if siomart.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
-
           cbca_grid.init()
         else
           grid_container_dom.innerHTML += html
@@ -1297,10 +1389,11 @@ siomart =
 
         siomart.styles.init()
 
-        if data.action == 'searchAds'
-          siomart.navigation_layer.close true
-        else
-          siomart.navigation_layer.close()
+        if cbca_grid.ww == 320
+          if data.action == 'searchAds'
+            siomart.navigation_layer.close true
+          else
+            siomart.navigation_layer.close()
       else
 
         if data.action == 'searchAds'
@@ -1310,6 +1403,21 @@ siomart =
         siomart.grid_ads.loader.hide()
 
       siomart.grid_ads.is_load_more_requested = false
+
+    find_nodes : ( data ) ->
+
+      if typeof siomart.geo.nodes_data_cached != 'undefined'
+        siomart.utils.ge('smGeoLocationLabel').innerHTML = siomart.geo.nodes_data_cached.first_node.name
+
+      siomart.geo.nodes_data_cached = data
+      siomart.geo.nodes_loaded = true
+
+      if siomart.geo.location_requested == true
+        siomart.geo.location_requested = false
+        siomart.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
+        siomart.geo.load_for_node_id data.first_node._id
+
+      siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
   ############################################
   ## Объект для работы с карточками продьюсера
@@ -1542,7 +1650,7 @@ siomart =
 
     ## Закрыть
     close : () ->
-      siomart.utils.ge('smGridAds').style.webkitFilter = ""
+      siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
       animation_cb = () ->
         siomart.utils.removeClass siomart.focused_ads._container, 'fs-animated-end'
       setTimeout animation_cb, 3
@@ -1560,7 +1668,7 @@ siomart =
     ## Инициализация focused_ads
     ############################
     init : () ->
-      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
+      siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
@@ -1634,9 +1742,14 @@ siomart =
 
     open : ( history_push ) ->
 
-      this.adjust()
+      if cbca_grid.ww == 320
+        siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
 
-      siomart.utils.ge('smGridAds').style.webkitFilter = "blur(5px)"
+      this.adjust()
+      if cbca_grid.columns > 2
+        siomart.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+        cbca_grid.right_offset = 2
+        cbca_grid.rebuild()
 
       ## Скрыть кнопки хидера главного экрана
       siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
@@ -1671,7 +1784,11 @@ siomart =
 
     close : ( all_except_search ) ->
 
-      siomart.utils.ge('smGridAds').style.webkitFilter = ""
+      if cbca_grid.ww == 320
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
+
+      cbca_grid.right_offset = 0
+      cbca_grid.rebuild()
 
       if all_except_search == true
         siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
@@ -1706,11 +1823,13 @@ siomart =
   ######################################################
   open_close_screen : ( event ) ->
     siomart.utils.ge('smCloseScreen').style.display = 'block'
+    siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
   exit_close_screen : ( event ) ->
     siomart.utils.ge('smCloseScreen').style.display = 'none'
+    siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
@@ -1752,8 +1871,9 @@ siomart =
       return false
 
     siomart.shop_load_locked = true
+    a_rcvr = if siomart.config.mart_id == '' then '' else '&a.rcvr=' + siomart.config.mart_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id + '&' + siomart.geo.request_query_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + siomart.geo.request_query_param()
 
     siomart.focused_ads.curl = url
 
