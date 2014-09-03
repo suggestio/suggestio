@@ -2,9 +2,11 @@ package util.geo.osm
 
 import java.io.{FileInputStream, File, InputStream}
 import OsmElemTypes.OsmElemType
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo._
 import org.xml.sax.SAXParseException
 import scala.annotation.tailrec
+import scala.util.matching.Regex
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -92,21 +94,53 @@ object OsmUtil {
 }
 
 
+/** Утиль для разбора ссылок на osm-барахло. */
+trait OsmParsersT extends JavaTokenParsers {
+
+  // browser-ссылки -- это ссылки вида:
+  // http://www.openstreetmap.org/relation/368287#map=11/59.8721/30.4651
+  // http://www.openstreetmap.org/way/31399147#map=18/59.93284/30.25950
+
+  def osmSitePrefixP = "(?i)https?".r ~> "://" ~> opt("(?i)www.".r) ~> "(?i)openstreetmap.org/".r
+
+  def osmTypeP: Parser[OsmElemType] = {
+    ("(?i)way".r | "(?i)node".r | "(?i)relation".r) ^^ { OsmElemTypes.withName }
+  }
+
+  def objIdP: Parser[Long] = "\\d+".r ^^ { _.toLong }
+
+  def osmBrowserUrl2TypeIdP: Parser[(OsmElemType, Long)] = {
+    (osmSitePrefixP ~> osmTypeP ~ ("/" ~> objIdP)) ^^ {
+      case typ ~ id  =>  (typ, id)
+    }
+  }
+
+}
+class OsmParsers extends OsmParsersT
+
+
 trait OsmObject {
   def id: Long
 
   def osmElemType: OsmElemType
 
   def xmlUrl = osmElemType.xmlUrl(id)
+
+  def toGeoShape: GeoShape
+
+  def firstNode: OsmNode
+  def lastNode: OsmNode
 }
 
 case class OsmNode(id: Long, gp: GeoPoint, visible: Boolean = true) extends OsmObject {
   override def osmElemType = OsmElemTypes.NODE
+  override def toGeoShape = PointGs(gp)
+  override def firstNode: OsmNode = this
+  override def lastNode: OsmNode = this
 }
 
 case class OsmWayNd(ref: Long)
-case class OsmWayParsed(id: Long, nodeRefsOrdered: List[OsmWayNd]) extends OsmObject {
-  override def osmElemType = OsmElemTypes.WAY
+case class OsmWayParsed(id: Long, nodeRefsOrdered: List[OsmWayNd]) {
 
   def toWay(nodesMap: collection.Map[Long, OsmNode]): OsmWay = {
     OsmWay(
@@ -114,10 +148,25 @@ case class OsmWayParsed(id: Long, nodeRefsOrdered: List[OsmWayNd]) extends OsmOb
       nodesOrdered = nodeRefsOrdered.map { nd => nodesMap(nd.ref) }
     )
   }
+
 }
 
 case class OsmWay(id: Long, nodesOrdered: List[OsmNode]) extends OsmObject {
   override def osmElemType = OsmElemTypes.WAY
+
+  override def firstNode = nodesOrdered.head
+  override def lastNode = nodesOrdered.last
+
+  override def toGeoShape: GeoShape = {
+    // для замкнутых путей используем полигон, для разомкнутых - просто линию.
+    val line = LineStringGs(nodesOrdered.map(_.gp))
+    if (nodesOrdered.head == nodesOrdered.last && nodesOrdered.tail.nonEmpty) {
+      // Путь замкнут -- заворачиваем в полигон.
+      PolygonGs(line)
+    } else {
+      line
+    }
+  }
 }
 
 
@@ -131,12 +180,21 @@ object RelMemberRoles extends Enumeration {
   val OUTER: RelMemberRole         = Val("outer", true)
   val ADMIN_CENTRE: RelMemberRole  = Val("admin_centre", false)
   val LABEL: RelMemberRole         = Val("label", false)
+  val SUBAREA: RelMemberRole       = Val("subarea", false)
 
   implicit def value2val(x: Value): RelMemberRole = x.asInstanceOf[RelMemberRole]
 
+  def default = OUTER
+
   def maybeWithName(x: String): Option[RelMemberRole] = {
     try {
-      Some(withName(x))
+      val r = x match {
+        case ""         => default
+        case "enclave"  => INNER
+        case "exclave"  => OUTER
+        case other      => withName(other)
+      }
+      Some(r)
     } catch {
       case ex: NoSuchElementException => None
     }
@@ -196,8 +254,99 @@ case class OsmRelMember(typ: OsmElemType, obj: OsmObject, role: RelMemberRole)
 
 case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject {
   override def osmElemType = OsmElemTypes.RELATION
+
+  def filterByRole(role: RelMemberRole) = members.iterator.filter(_.role == role)
   
   def borderMembers = members.iterator.filter(_.role.isRelationBorder)
+
+  def subareas = filterByRole(RelMemberRoles.SUBAREA)
+  def inners = filterByRole(RelMemberRoles.INNER)
+  def outers = filterByRole(RelMemberRoles.OUTER)
+
+  def ways(memberIter: Iterator[OsmRelMember]) = {
+    memberIter.flatMap { mmbr =>
+      if (mmbr.typ == OsmElemTypes.WAY)
+        Seq(mmbr.obj.asInstanceOf[OsmWay])
+      else
+        Seq()
+    }
+  }
+
+  def outerWays = ways(outers)
+  def innerWays = ways(inners)
+
+  /** Сгрупировать inner-пути в дырки, состоящие из путей. */
+  def innerHoles = {
+    innerWays
+      .foldLeft [List[List[OsmWay]]] (List(Nil)) { (acc, e) =>
+        val hole = e :: acc.head
+        val acc1 = hole :: acc.tail
+        if ( acc.head.last.firstNode == e.lastNode ) {
+          // конец текущего пути совпадает с началом подпути
+          Nil :: acc1
+        } else {
+          // Нет замкнутой кривой. Добавляем элемент к текущему набору
+          acc1
+        }
+      }
+      .iterator
+      .filter(_.nonEmpty)
+  }
+
+  def firstOuter: OsmNode = outers.next().obj.firstNode
+  def lastOuter: OsmNode = {
+    outers
+      .reduceLeft[OsmRelMember] { (old, next) => next }
+      .obj
+      .lastNode
+  }
+
+  override def firstNode: OsmNode = firstOuter
+  override def lastNode: OsmNode = lastOuter
+
+  def isOuterClosed = firstOuter == lastOuter
+
+  def hasOuters = outers.hasNext
+  def hasInners = inners.hasNext
+  def hasSubareas = subareas.hasNext
+
+  override def toGeoShape: GeoShape = {
+    // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
+    val acc0: List[GeoShape] = if (hasOuters) {
+      val outerLineNodesIter = outerWays.flatMap(_.nodesOrdered)
+      val line = LineStringGs(outerLineNodesIter.map(_.gp).toSeq)
+      val e = if (isOuterClosed) {
+        val holes = innerHoles
+          .map { wayGroup =>
+            val holePoints = wayGroup
+              .iterator
+              .flatMap { _.nodesOrdered }
+              .map(_.gp)
+              .toSeq
+            LineStringGs( holePoints )
+          }
+          .toList
+        PolygonGs(line, holes)
+      } else {
+        line
+      }
+      List(e)
+    } else {
+      Nil
+    }
+    // Добавляем все subarea в кучу
+    val acc2 = subareas.foldLeft(acc0) { (acc, subarea) =>
+      subarea.obj.toGeoShape :: acc
+    }
+    // Заворачиваем в финальный гео-объект контейнер.
+    if (acc2.tail.isEmpty) {
+      acc2.head
+    } else {
+      // TODO Может быть стоит производить более глубокий анализ?
+      GeometryCollectionGs(acc2)
+    }
+  }
+
 }
 
 

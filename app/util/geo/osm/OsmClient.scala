@@ -29,7 +29,8 @@ object OsmClient {
       .withFollowRedirects(false)
       .getStream()
     respFut.flatMap { case (headers, body) =>
-      assert(headers.status == 200, s"Unexpected http status: ${headers.status}")
+      if (headers.status != 200)
+        throw OsmClientStatusCodeInvalidException(headers.status)
       val f = File.createTempFile(s"$typ.$id.", ".osm.xml")
       val os = new FileOutputStream(f)
       val iteratee = Iteratee.foreach[Array[Byte]] { bytes =>
@@ -49,3 +50,7 @@ object OsmClient {
   }
 
 }
+
+
+case class OsmClientStatusCodeInvalidException(statusCode: Int)
+  extends RuntimeException("Unexpected status code: " + statusCode)

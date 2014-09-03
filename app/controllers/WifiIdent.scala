@@ -24,7 +24,6 @@ object WifiIdent extends SioController with PlayMacroLogsImpl {
     "phone" -> phoneM
   )
 
-
   /** Рендер страницы с формой ввода номера телефона. */
   def idByPhone = MaybeAuth { implicit request =>
     Ok(idByPhoneTpl(idByPhoneFormM))
@@ -74,7 +73,7 @@ object WifiIdent extends SioController with PlayMacroLogsImpl {
           Ok(idByPhoneOkTpl(
             username = phone,
             password = code,
-            submitUrl = "http://" + request.remoteAddress + "/login"
+            submitUrl = "http://192.168.77.1/login"
           ))
 
         } else {

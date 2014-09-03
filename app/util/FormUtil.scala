@@ -315,6 +315,20 @@ object FormUtil {
       .transform[Period](_.get, Some.apply)
   }
 
+
+  // География
+  /** Маппинг для элемента [[models.NodeGeoLevels]]. */
+  def nodeGeoLevelM: Mapping[NodeGeoLevel] = {
+    nonEmptyText(minLength = 1, maxLength = 5)
+      .transform[Option[NodeGeoLevel]] (
+        { s => Option(s.trim).filter(!_.isEmpty).flatMap(NodeGeoLevels.maybeWithName) },
+        { _.fold("")(_.esfn) }
+      )
+      .verifying("error.required", _.isDefined)
+      .transform [NodeGeoLevel] (_.get, Some.apply)
+  }
+
+
   // Ценовые значения
 
   import io.suggest.ym.parsers.Price

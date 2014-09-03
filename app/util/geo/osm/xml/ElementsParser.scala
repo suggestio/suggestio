@@ -329,16 +329,19 @@ trait ElementsParserT
     class MemberTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
       override def thisTagName = TAG_MEMBER
 
-      // Собираем результат в конструкторе, пока доступны аттрибуты тега.
-      Option( thisTagAttrs.getValue(ATTR_ROLE) )
+      /**
+       * Собираем результат в конструкторе, пока доступны аттрибуты тега.
+       * @see [[http://wiki.openstreetmap.org/wiki/Relation:boundary#Relation_members]]
+       */
+      val role = Option( thisTagAttrs.getValue(ATTR_ROLE) )
         .flatMap { RelMemberRoles.maybeWithName }
-        .foreach { role =>
-          membersAcc ::= OsmRelMemberParsed(
-            ref = thisTagAttrs.getValue(ATTR_REF).toLong,
-            typ = OsmElemTypes.withName( thisTagAttrs.getValue(ATTR_TYPE).toLowerCase ),
-            role = role
-          )
-        }
+        .getOrElse(RelMemberRoles.default)
+
+      membersAcc ::= OsmRelMemberParsed(
+        ref = thisTagAttrs.getValue(ATTR_REF).toLong,
+        typ = OsmElemTypes.withName( thisTagAttrs.getValue(ATTR_TYPE).toLowerCase ),
+        role = role
+      )
 
       override def startTag(tagName: String, attributes: Attributes): Unit = {
         super.startTag(tagName, attributes)

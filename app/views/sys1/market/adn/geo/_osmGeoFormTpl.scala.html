@@ -1,0 +1,14 @@
+@(gf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Верстка формы работы с osm-элементами. Ссылка и уровень отображения. *@
+
+@import helper._
+@import ctx._
+
+@form( submitCall ) {
+
+  @_glevelSelectTpl( gf("glevel") )
+  @inputText( gf("url") )
+
+  <input type="submit" value="@btnText" />
+}

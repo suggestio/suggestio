@@ -6,6 +6,7 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.geo.{GeoShapeQuerable, GeoShape}
 import io.suggest.model.{EsModel, EsModelT, EsModelMinimalStaticT}
@@ -36,6 +37,8 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
 
   /** Название поля, хранящего смежное гео-барахло. В модели оно неявное. Внутри -- nested-object. */
   val GEO_ESFN    = "geo"
+  val URL_ESFN    = "url"
+  val LAST_MODIFIED_ESFN = "lm"
 
   override val ES_TYPE_NAME = "ang"   // ang = adn node geo
 
@@ -56,6 +59,8 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
       }
     List(
       FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(URL_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldDate(LAST_MODIFIED_ESFN, index = null, include_in_all = false),
       FieldNestedObject(GEO_ESFN, enabled = true, properties = nglFields)
     )
   }
@@ -81,6 +86,8 @@ object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
       adnId       = EsModel.stringParser( m(ADN_ID_ESFN) ),
       glevel      = geo._1,
       shape       = geo._2,
+      url         = m.get(URL_ESFN).map(EsModel.stringParser),
+      lastModified = m.get(LAST_MODIFIED_ESFN).fold(DateTime.now)(EsModel.dateTimeParser),
       id          = id,
       versionOpt  = versionOpt
     )
@@ -142,6 +149,8 @@ final case class MAdnNodeGeo(
   adnId       : String,
   glevel      : NodeGeoLevel,
   shape       : GeoShape,
+  url         : Option[String] = None,
+  lastModified: DateTime = DateTime.now(),
   id          : Option[String] = None,
   versionOpt  : Option[Long] = None
 ) extends EsModelT {
@@ -152,10 +161,15 @@ final case class MAdnNodeGeo(
   override def companion = MAdnNodeGeo
 
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
-    ADN_ID_ESFN -> JsString(adnId) ::
-    GEO_ESFN -> JsObject(Seq(
-      glevel.esfn -> shape.toPlayJson
-    ))  ::  acc0
+    var acc: FieldsJsonAcc =
+      ADN_ID_ESFN -> JsString(adnId) ::
+      LAST_MODIFIED_ESFN -> EsModel.date2JsStr(lastModified) ::
+      GEO_ESFN -> JsObject(Seq(
+        glevel.esfn -> shape.toPlayJson
+      ))  ::  acc0
+    if (url.isDefined)
+      acc ::= URL_ESFN -> JsString(url.get)
+    acc
   }
 
   /** Дополнительные параметры сохранения (parent, ttl, etc) можно выставить через эту функцию. */
@@ -181,4 +195,11 @@ object NodeGeoLevels extends Enumeration {
 
   implicit def value2val(x: Value): NodeGeoLevel = x.asInstanceOf[NodeGeoLevel]
 
+  def maybeWithName(x: String): Option[NodeGeoLevel] = {
+    try {
+      Some(withName(x))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
 }

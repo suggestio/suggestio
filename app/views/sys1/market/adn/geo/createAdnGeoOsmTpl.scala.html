@@ -1,0 +1,15 @@
+@(gf: Form[_], adnNode: MAdnNode)(implicit ctx: Context)
+
+@import ctx._
+
+@geoBase("Создать из OSM-объекта", nodeOpt = Some(adnNode)) {
+
+  <p>Для создания новой фигуры, необходимо ввести ссылку на фиругу и задать уровень слой хранения.</p>
+
+  @_osmGeoFormTpl(
+    gf          = gf,
+    submitCall  = routes.SysAdnGeo.createForNodeOsmSubmit(adnNode.id.get),
+    btnText     = Messages("Create")
+  )
+
+}

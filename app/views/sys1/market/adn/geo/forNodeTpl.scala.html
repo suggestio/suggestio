@@ -1,0 +1,42 @@
+@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo])(implicit ctx: Context)
+
+@* Вывод гео-информации по узлу. *@
+
+@import ctx._
+@import datetime._
+
+@geoBase("География узла", nodeOpt = Some(adnNode)) {
+
+  <h1>География узла <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a></h1>
+
+  @if(geos.nonEmpty) {
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>URL</th>
+          <th>Level</th>
+          <th>Shape</th>
+          <th>Last-Modified</th>
+          <th>version</th>
+          <th>Другое</th>
+        </tr>
+      </thead>
+      <tbody>
+        @geos.map { geo =>
+          <tr>
+            <td><span title="@geo.id">@geo.id.get.substring(0, 4)...</span></td>
+            <td>@geo.url.map { url =><a href="@url" target="_blank">Go</a>}</td>
+            <td>@geo.glevel</td>
+            <td><span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span></td>
+            <td>@_prettyDate(geo.lastModified)</td>
+            <td>@geo.versionOpt</td>
+            <td></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <a href="">Добавить новый геошейп к этому узлу...</a>
+}
