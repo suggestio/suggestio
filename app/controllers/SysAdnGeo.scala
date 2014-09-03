@@ -25,7 +25,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
-
+  /** Маппинг формы создания/редактирования фигуры на базе OSM-геообъекта. */
   private def osmNodeFormM = Form(tuple(
     "glevel"  -> nodeGeoLevelM,
     "url"     -> urlStrM
@@ -79,6 +79,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     )
   }
 
+  /** Повесить recover на фьючерс фетч-парсинга osm.xml чтобы вернуть админу на экран нормальную ошибку. */
   private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPr: UrlParseResult): Future[Result] = {
     fut recover {
       case ex: OsmClientStatusCodeInvalidException =>
@@ -104,6 +105,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   }
 
 
+  /** Рендер страницы с формой редактирования osm-производной. */
   def editNodeOsm(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
     import request.adnGeo
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
@@ -114,6 +116,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     }
   }
 
+  /** Сабмит формы редактирования osm-производной. */
   def editNodeOsmSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
     lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
     osmNodeFormM.bindFromRequest().fold(
