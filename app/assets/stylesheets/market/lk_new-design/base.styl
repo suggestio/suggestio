@@ -101,6 +101,9 @@ leftMenuWidth   = 60
   font-size   13px
   min-width   projectMinWidth
 
+  &::-webkit-scrollbar
+    width 0
+
 .page
   position          relative
   min-height        100%
@@ -189,6 +192,9 @@ leftMenuWidth   = 60
     display       block
     height        60px
     color         #818284
+
+    background-repeat   no-repeat
+    transition(background-color 0.2s ease-in-out 0s)
 
     &:hover
       cursor            pointer

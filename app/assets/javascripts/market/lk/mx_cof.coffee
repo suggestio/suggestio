@@ -670,6 +670,75 @@ PersonalCabinet =
       .find('.ads-list-block__link')[0]
       .click()
 
+  ##################################################################################################################
+  ## Слайд блоки ##
+  ##################################################################################################################
+  slideBlock:
+
+    # возвращает jQuery объект который нужно слайдить или false
+    getSlideBlock: ($slideBlockBtn)->
+      href = $slideBlockBtn.attr 'href'
+
+      if href && href.charAt(0) == '#'
+        $slideBlock = $ href
+      else
+        $slideBlockWrap = $slideBlockBtn.closest '.js-slide-w'
+        ## :first потому что может быть вложенный слайд блок
+        $slideBlock = $slideBlockWrap.find '.js-slide-cnt:first'
+
+      if $slideBlock.is ':animated' || $slideBlock.data 'active'
+        $slideBlock = false
+
+      return $slideBlock
+
+    slideToggle: ($btn, $slideBlock)->
+      href = $btn.attr 'href'
+
+      if href && href.charAt(0) != '#'
+        $slideBlock.data
+          'active': true
+
+        $.ajax(
+          url: href
+          success: (data) ->
+            $data = $ data
+            $slideBlock.append $data
+            $slideBlock.slideDown()
+
+            $btn.removeAttr 'href'
+            $slideBlock.data
+              'active': false
+        )
+      else
+        $slideBlock.slideToggle()
+
+      $btn
+      .toggleClass '__js-open'
+      .closest '.js-slide-title'
+      .toggleClass '__js-open'
+
+    init: ()->
+
+      $(document).on 'click', '.js-slide-btn', (e)->
+        e.preventDefault()
+        e.stopPropagation() # чтобы не сработал обработчик на js-slide-title
+        $this = $ this
+        href = $this.attr 'href'
+        $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
+
+        if $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $this, $slideBlock
+
+      $(document).on 'click', '.js-slide-title', (e)->
+        e.preventDefault()
+        $this = $ this
+        $btn = $this.find '.js-slide-btn'
+        href = $this.attr 'href'
+        $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
+
+        if $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $btn, $slideBlock
+
   common:
 
     ##################################################################################################################
@@ -847,47 +916,6 @@ PersonalCabinet =
 
         $form.trigger 'submit'
 
-      $(document).on 'click', '.js-slide-btn', (e)->
-        e.preventDefault()
-        $this = $ this
-        href = $this.attr 'href'
-
-        if $this.data 'active'
-          return false
-
-        if href && href.charAt(0) == '#'
-          $slideBlock = $ href
-        else
-          $slideBlockWrap = $this.closest '.js-slide-w'
-          ## :first потому что может быть вложенный siomBlock
-          $slideBlock = $slideBlockWrap.find '.js-slide-cnt:first'
-
-        if $slideBlock.is ':animated'
-          return false
-
-        if href
-          if href.charAt(0) == '#'
-            $slideBlock.slideToggle()
-          else
-            $this.data
-              'active': true
-
-            $.ajax(
-              url: href
-              success: (data) ->
-                $data = $ data
-                $slideBlock.append $data
-                $slideBlock.slideDown()
-
-                $this.removeAttr 'href'
-                $this.data
-                  'active': false
-            )
-        else
-          $slideBlock.slideToggle()
-
-        $this.toggleClass '__open'
-
   init: () ->
 
     cbca.pc.common.setEqualHeightBlocks()
@@ -897,6 +925,7 @@ PersonalCabinet =
     cbca.pc.common.checkbox()
     cbca.pc.common.buttons()
 
+    cbca.pc.slideBlock.init()
     cbca.pc.statusBar.init()
     cbca.pc.wifi()
     cbca.pc.login()
