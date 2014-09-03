@@ -6,6 +6,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.event.SiowebNotifier
+import util.radius.RadiusServerImpl
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -63,6 +64,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     synchronized {
       cronTimers = Crontab.startTimers
     }
+    RadiusServerImpl.start(true, true)
   }
 
 
@@ -108,6 +110,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     }
     // При девелопменте: ES-клиент сам по себе не остановится, поэтому нужно его грохать вручную, иначе будет куча инстансов.
     SiowebEsUtil.stopNode()
+    RadiusServerImpl.stop()
   }
 
 
