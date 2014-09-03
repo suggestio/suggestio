@@ -60,12 +60,19 @@
       <hr class="delimiter __light"/>
       <div class="prop">
         <p class="prop_name __block">Фотографии объекта:</p>
-        @node.gallery.zipWithIndex.map { case (imgId, i) =>
-          <div class="image __size-M f-left @if(i % 4 == 0){ __first-in-line }">
-            <img class="image_src" src="@routes.Img.getThumb(imgId)" />
-            <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="image_remove-btn">Увеличить</a>
+        <div class="profile_photo-lst">
+          <div class="js-photo-slider">
+            @node.gallery.zipWithIndex.map { case (imgId, i) =>
+
+              <img class="profile_photo-i" src="@routes.Img.getThumb(imgId)" />
+
+              @*<div class="image __size-M f-left @if(i % 4 == 0){ __first-in-line }">
+                <img class="image_src" src="@routes.Img.getThumb(imgId)" />
+                <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="image_remove-btn">Увеличить</a>
+              </div>*@
+            }
           </div>
-        }
+        </div>
       </div>
     }
 

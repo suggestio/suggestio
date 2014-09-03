@@ -38,7 +38,6 @@ IndexPage =
     IndexPage.centeredContent()
     $window = $ window
     $window.resize ()->
-      console.log $window.height()
       IndexPage.centeredContent()
 
 IndexPage.init()
@@ -534,14 +533,11 @@ PersonalCabinet =
           dataMultiple = $this.attr 'data-multiple'
           dataMultiple && multiple = true
 
-          console.log fieldName
           if multiple
             # если уже есть загруженные фотографии
             $previews = $previewRoot.find '.js-preview'
             previewCounts = $previews.length
             fieldName = "#{fieldName}[#{previewCounts}]"
-
-          console.log fieldName
 
           html =  """
                    <div class="image js-preview #{previewClass}">
@@ -742,6 +738,19 @@ PersonalCabinet =
   common:
 
     ##################################################################################################################
+    ## Слайдер с фотографиями объекта ##
+    ##################################################################################################################
+    photoSlider: () ->
+
+      $ '.js-photo-slider'
+      .bxSlider(
+        auto: true,
+        pager: false,
+        infiniteLoop: false,
+        hideControlOnEnd: true
+      )
+
+    ##################################################################################################################
     ## Чекбоксы ##
     ##################################################################################################################
     checkbox: () ->
@@ -924,6 +933,7 @@ PersonalCabinet =
     cbca.pc.common.inputs()
     cbca.pc.common.checkbox()
     cbca.pc.common.buttons()
+    cbca.pc.common.photoSlider()
 
     cbca.pc.slideBlock.init()
     cbca.pc.statusBar.init()
@@ -1115,7 +1125,6 @@ CbcaPopup =
       setTimeout(
         ()->
           $activeInputs = $ 'input:focus'
-          console.log 'size = '+$activeInputs.size()
           if $activeInputs.size() == 0
             $ window
             .scrollTop(0)
@@ -1338,9 +1347,6 @@ market =
         offset_x = sw * offset_x / rw
         offset_y = sh * offset_y / rh
 
-        console.log 'offset_x : ' + offset_x
-        console.log 'offset_y : ' + offset_y
-
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
 
         target_size = rw + 'x' + rh
@@ -1371,7 +1377,6 @@ market =
           method : 'post'
           data : form_dom1.serialize()
           success : ( img_data ) ->
-            console.log market.img.crop.img_name
             $('input[name=\'' + market.img.crop.img_name + '\']').val img_data.image_key
             market.ad_form.queue_block_preview_request request_delay=10
 
@@ -1472,8 +1477,6 @@ market =
 
           mt_tab_counter_c = $('.mt-tab-' + mt + '-counter-c')
           mt_tab_counter = $('.mt-tab-' + mt + '-counter')
-
-          console.log mt + ' : ' + active_nodes
 
           if active_nodes != 0
             mt_tab_counter_c.show()
@@ -1616,7 +1619,6 @@ market =
 
         _value_dom.val _new_value
 
-        console.log _value_dom.val()
         market.ad_form.queue_block_preview_request request_delay=10
 
     set_descr_editor_bg : () ->
@@ -1638,8 +1640,6 @@ market =
 
         $('.js-tinymce').val data
         $('#promoOfferForm').unbind 'submit'
-
-        console.log $('.js-tinymce').val()
 
         submit_cb = () ->
           $('#promoOfferForm').submit()
