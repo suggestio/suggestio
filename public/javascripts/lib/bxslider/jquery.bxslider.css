@@ -85,31 +85,33 @@
 
 /* DIRECTION CONTROLS (NEXT / PREV) */
 
+.bx-controls-direction {
+  display: none;
+}
+
+.bx-wrapper:hover .bx-controls-direction {
+  display: block;
+}
+
 .bx-wrapper .bx-prev {
-	left: 10px;
-	background: url(images/controls.png) no-repeat 0 -32px;
+	left: 0;
+	background-color: white;
+	opacity: 0.81;
 }
 
 .bx-wrapper .bx-next {
-	right: 10px;
-	background: url(images/controls.png) no-repeat -43px -32px;
-}
-
-.bx-wrapper .bx-prev:hover {
-	background-position: 0 0;
-}
-
-.bx-wrapper .bx-next:hover {
-	background-position: -43px 0;
+	right: 0;
+	background-color: white;
+  opacity: 0.81;
 }
 
 .bx-wrapper .bx-controls-direction a {
 	position: absolute;
 	top: 50%;
-	margin-top: -16px;
+	margin-top: -22px;
 	outline: 0;
-	width: 32px;
-	height: 32px;
+	width: 44px;
+	height: 44px;
 	text-indent: -9999px;
 	z-index: 9999;
 }

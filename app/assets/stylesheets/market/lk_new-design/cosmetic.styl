@@ -44,20 +44,27 @@
   display         block
   width           150px
   height          150px
-  line-height     130px
+  line-height     150px
   box-sizing      border-box
 
   color           #a1a1a1
   text-align      center
   text-decoration none
 
-  vertical-align  middle
   cursor          pointer
   border          2px dashed
   transition(0.2s all ease-in-out 0s)
 
   &:hover
-    color #00b994
+    color             white
+    background-color  #00b994
+
+  span
+    display         inline-block
+    padding-top     50px
+    vertical-align  middle
+    font-size       14px
+    line-height     16px
 
 .adv-lst
   margin    15px 0
@@ -109,10 +116,10 @@
     left              0
     top               0
     z-index           40
-
     opacity           0
-    padding-top       75px
-    height            75px
+
+    display           inline-block
+    line-height       150px
     width             100%
     background-color  rgba(0,0,0,0.8)
 
@@ -122,6 +129,15 @@
 
     &:hover
       opacity 1
+
+    span
+      vertical-align  middle
+      display         inline-block
+      width           60px
+      height          60px
+
+      background-color  #f44040
+      border-radius(50%)
 
 /********************************************************************************************************************/
 /* Страница биллинга */
