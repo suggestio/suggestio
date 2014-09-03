@@ -314,3 +314,43 @@ case class IsSuperuserMir(mirId: String)
   extends IsSuperuserMirBase
   with ExpireSession[MirRequest]
 
+
+
+
+
+case class AdnGeoRequest[A](
+  adnGeo: MAdnNodeGeo,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt(request)
+
+/** Нужно админство и доступ к существующей географии узла по geo id. */
+trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
+  def geoId: String
+  override def invokeBlock[A](request: Request[A], block: (AdnGeoRequest[A]) => Future[Result]): Future[Result] = {
+  val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper isSuperuser pwOpt) {
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      MAdnNodeGeo.getById(geoId) flatMap {
+        case Some(geo) =>
+          srmFut flatMap { srm =>
+            val req1 = AdnGeoRequest(geo, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None =>
+          Future successful geoNotFound
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+  def geoNotFound = Results.NotFound(s"Geography $geoId not found.")
+}
+case class IsSuperuserAdnGeo(geoId: String)
+  extends IsSuperuserAdnGeoAbstract
+  with ExpireSession[AdnGeoRequest]
+
+

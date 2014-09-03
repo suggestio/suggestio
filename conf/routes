@@ -350,4 +350,5 @@ POST /id/wifi/by/phone/:phone/code       controllers.WifiIdent.idByPhoneCodeSubm
 GET  /sys/adn/geo/all/:adnId             controllers.SysAdnGeo.forNode(adnId)
 GET  /sys/adn/geo/add/:adnId             controllers.SysAdnGeo.createForNodeOsm(adnId)
 POST /sys/adn/geo/add/:adnId             controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
+POST /sys/adn/geo/del/:geoId             controllers.SysAdnGeo.deleteSubmit(geoId)
 

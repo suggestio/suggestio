@@ -2,10 +2,11 @@ package controllers
 
 import models.MAdnNodeGeo
 import play.api.data._, Forms._
+import play.api.mvc.ActionBuilder
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
-import util.acl.IsSuperuserAdnNode
+import util.acl.{IsSuperuserAdnGeo, IsSuperuser, IsSuperuserAdnNode}
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
@@ -81,6 +82,19 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     )
   }
 
+  /** Сабмит запроса на удаление элемента. */
+  def deleteSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+    // Надо прочитать geo-информацию, чтобы узнать adnId. Затем удалить его и отредиректить.
+    request.adnGeo.delete map { isDel =>
+      val flash: (String, String) = if (isDel) {
+        "success" -> "География удалена."
+      } else {
+        "error" -> "Географический объект не найден."
+      }
+      Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
+        .flashing(flash)
+    }
+  }
 
 
   object UrlParseResult {
