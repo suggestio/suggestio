@@ -742,7 +742,7 @@ PersonalCabinet =
     ##################################################################################################################
     photoSlider: () ->
 
-      $ '.js-photo-slider'
+      $().bxSlider && $ '.js-photo-slider'
       .bxSlider(
         auto: true,
         pager: false,
