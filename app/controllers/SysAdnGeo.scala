@@ -1,8 +1,8 @@
 package controllers
 
-import models.MAdnNodeGeo
+import models.{NodeGeoLevel, MAdnNodeCache, MAdnNodeGeo}
 import play.api.data._, Forms._
-import play.api.mvc.ActionBuilder
+import play.api.mvc.{Result, ActionBuilder}
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
@@ -12,6 +12,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient, OsmParsers}
 import views.html.sys1.market.adn.geo._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -59,7 +61,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
       },
       {case (glevel, urlPr) =>
         // Запросить у osm.org инфу по элементу
-        OsmClient.fetchElement(urlPr.osmType, urlPr.id) flatMap { osmObj =>
+        val resFut = OsmClient.fetchElement(urlPr.osmType, urlPr.id) flatMap { osmObj =>
           // Есть объект osm. Нужно его привести к шейпу, пригодному для модели и сохранить в ней же.
           val geo   = MAdnNodeGeo(
             adnId   = adnId,
@@ -71,15 +73,20 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
             Redirect( routes.SysAdnGeo.forNode(adnId) )
               .flashing("success" -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
           }
-        } recover {
-          case ex: OsmClientStatusCodeInvalidException =>
-            NotFound(s"osm.org returned unexpected http status: ${ex.statusCode} for ${urlPr.osmType.xmlUrl(urlPr.id)}")
-          case ex: Exception =>
-            warn("Exception occured while fetch/parsing of " + urlPr.osmType.xmlUrl(urlPr.id), ex)
-            NotFound(s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage)
         }
+        recoverOsm(resFut, glevel, urlPr)
       }
     )
+  }
+
+  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPr: UrlParseResult): Future[Result] = {
+    fut recover {
+      case ex: OsmClientStatusCodeInvalidException =>
+        NotFound(s"osm.org returned unexpected http status: ${ex.statusCode} for ${urlPr.osmType.xmlUrl(urlPr.id)}")
+      case ex: Exception =>
+        warn("Exception occured while fetch/parsing of " + urlPr.osmType.xmlUrl(urlPr.id), ex)
+        NotFound(s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage)
+    }
   }
 
   /** Сабмит запроса на удаление элемента. */
@@ -94,6 +101,44 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
       Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
         .flashing(flash)
     }
+  }
+
+
+  def editNodeOsm(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+    import request.adnGeo
+    val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
+    val urlPr = UrlParseResult.fromUrl( adnGeo.url.get ).get
+    val formFilled = osmNodeFormM.fill((adnGeo.glevel, urlPr))
+    nodeFut map { nodeOpt =>
+      Ok(editAdnGeoOsmTpl(adnGeo, formFilled, nodeOpt.get))
+    }
+  }
+
+  def editNodeOsmSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+    lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
+    osmNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val nodeFut = MAdnNodeCache.getById(request.adnGeo.adnId)
+        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        nodeFut map { nodeOpt =>
+          NotAcceptable(editAdnGeoOsmTpl(request.adnGeo, formWithErrors, nodeOpt.get))
+        }
+      },
+      {case (glevel2, urlPr2) =>
+        val resFut = OsmClient.fetchElement(urlPr2.osmType, urlPr2.id) flatMap { osmObj =>
+          val adnGeo2 = request.adnGeo.copy(
+            shape = osmObj.toGeoShape,
+            glevel = glevel2,
+            url = Some(urlPr2.url)
+          )
+          adnGeo2.save map { _geoId =>
+            Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
+              .flashing("success" -> "Географическая фигура обновлена.")
+          }
+        }
+        recoverOsm(resFut, glevel2, urlPr2)
+      }
+    )
   }
 
 

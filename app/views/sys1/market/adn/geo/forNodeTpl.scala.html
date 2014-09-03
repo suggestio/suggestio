@@ -32,7 +32,9 @@
             <td><span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span></td>
             <td>@_prettyDate(geo.lastModified)</td>
             <td>@geo.versionOpt</td>
-            <td>@_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get) )</td>
+            <td>
+              <a href="@routes.SysAdnGeo.editNodeOsm(geo.id.get)">@Messages("Edit")</a>
+            </td>
           </tr>
         }
       </tbody>
