@@ -46,7 +46,7 @@
       </div>
 
       @ctx.usernameOpt.map { username =>
-        <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
+        <a class="header_logout light-gray dark-link" href="@routes.Ident.logout" title="Выйти">@username</a>
       }
     </header>
 

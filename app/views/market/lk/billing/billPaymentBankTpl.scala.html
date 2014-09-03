@@ -5,15 +5,15 @@
 
 @rightBar = {
   <nav class="right-bar_menu">
-    <a class="right-bar_menu-i" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">
+    <a class="right-bar_menu-i __node-billing" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">
       <span>Биллинг тарифных планов</span>
     </a>
     <hr class="delimiter"/>
-    <a class="right-bar_menu-i" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">
+    <a class="right-bar_menu-i __transactions-history" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">
       <span>История операций</span>
     </a>
     <hr class="delimiter"/>
-    <a class="right-bar_menu-i __act" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">
+    <a class="right-bar_menu-i __requisites __act" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">
       <span>Реквизиты</span>
     </a>
     <hr class="delimiter"/>
