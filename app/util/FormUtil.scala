@@ -1,6 +1,6 @@
 package util
 
-import io.suggest.model.geo.{Distance, GeoPoint}
+import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -155,6 +155,36 @@ object FormUtil {
     { Distance.unapply }
   }
 
+  /** Опциональная дистанция, заданная значением и единицами измерения. Используется вместо optional([[distanceM]])
+    * т.к. units задаются select'ом, т.е. всегда присутсвуют. Что порождает ошибки при биндинге. */
+  def distanceOptM: Mapping[Option[Distance]] = {
+    mapping(
+      "value" -> optional(doubleM),
+      "units" -> optional(distanceUnitsM)
+    )
+    {(valueOpt, unitsOpt) =>
+      valueOpt.flatMap { distance =>
+        unitsOpt.map { units =>
+          Distance(distance, units)
+        }
+      }
+    }
+    {distanceOpt =>
+      val valueOpt = distanceOpt.map(_.distance)
+      val unitsOpt = distanceOpt.map(_.units)
+      Some((valueOpt, unitsOpt))
+    }
+  }
+
+  /** Маппинг для географического круга, задаваемого географическим центром и радиусом. */
+  def circleM: Mapping[CircleGs] = {
+    mapping(
+      "center"  -> latLng2geopointM,
+      "radius"  -> distanceM
+    )
+    { CircleGs.apply }
+    { CircleGs.unapply }
+  }
 
   def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
   def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {

@@ -353,4 +353,6 @@ POST /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsmS
 POST /sys/adn/geo/del/:geoId             controllers.SysAdnGeo.deleteSubmit(geoId)
 GET  /sys/adn/geo/edit/:geoId            controllers.SysAdnGeo.editNodeOsm(geoId)
 POST /sys/adn/geo/edit/:geoId/osm        controllers.SysAdnGeo.editNodeOsmSubmit(geoId)
+GET  /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircle(adnId)
+POST /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircleSubmit(adnId)
 

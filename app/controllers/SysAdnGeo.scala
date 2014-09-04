@@ -1,6 +1,8 @@
 package controllers
 
-import models.{NodeGeoLevel, MAdnNodeCache, MAdnNodeGeo}
+import io.suggest.model.geo.{Distance, CircleGs}
+import models.{NodeGeoLevels, NodeGeoLevel, MAdnNodeCache, MAdnNodeGeo}
+import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.mvc.{Result, ActionBuilder}
 import util.PlayLazyMacroLogsImpl
@@ -25,9 +27,11 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
+  private def glevelKM = "glevel" -> nodeGeoLevelM
+
   /** Маппинг формы создания/редактирования фигуры на базе OSM-геообъекта. */
   private def osmNodeFormM = Form(tuple(
-    "glevel"  -> nodeGeoLevelM,
+    glevelKM,
     "url"     -> urlStrM
       .transform[Option[UrlParseResult]] (
         { UrlParseResult.fromUrl },
@@ -140,6 +144,65 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
           }
         }
         recoverOsm(resFut, glevel2, urlPr2)
+      }
+    )
+  }
+
+
+  /** Маппинг формы биндинга geo-объекта в виде круга. */
+  private def circleFormM = {
+    Form(mapping(
+      glevelKM,
+      "circle" -> circleM
+    )
+    {(glevel, circle) =>
+      MAdnNodeGeo(
+        shape = circle,
+        adnId = null,
+        glevel = glevel
+      )
+    }
+    {geo =>
+      geo.shape match {
+        case circle: CircleGs =>
+          Some((geo.glevel, circle))
+        case other =>
+          warn(s"circleFormM(): Unable to unbind geo shape of class ${other.getClass.getSimpleName} into circle.")
+          None
+      }
+    })
+  }
+
+
+  /** Рендер страницы с формой создания круга. */
+  def createCircle(adnId: String) = IsSuperuserAdnNode(adnId).apply { implicit request =>
+    val form0 = circleFormM
+    // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
+    val form1 = request.adnNode.meta.location.fold(form0) { loc =>
+      val geoStub = MAdnNodeGeo(
+        adnId = adnId,
+        glevel = NodeGeoLevels.default,
+        shape = CircleGs(loc, Distance(0.0, DistanceUnit.METERS))
+      )
+      form0 fill geoStub
+    }
+    Ok(createCircleTpl(form1, request.adnNode))
+  }
+
+  /** Сабмит формы создания круга. */
+  def createCircleSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    lazy val logPrefix = s"createCircleSubmit($adnId): "
+    circleFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        NotAcceptable(createCircleTpl(formWithErrors, request.adnNode))
+      },
+      {geoStub =>
+        val geo = geoStub.copy(adnId = adnId)
+        geo.save.map { geoId =>
+          Redirect( routes.SysAdnGeo.forNode(adnId) )
+            .flashing("success" -> "Создан круг.")
+        }
       }
     )
   }

@@ -193,6 +193,8 @@ object NodeGeoLevels extends Enumeration {
   val NGL_TOWN_DISTRICT: NodeGeoLevel   = Val("td", "800m")
   val NGL_TOWN: NodeGeoLevel            = Val("to", "5km")
 
+  def default = NGL_BUILDING
+
   implicit def value2val(x: Value): NodeGeoLevel = x.asInstanceOf[NodeGeoLevel]
 
   def maybeWithName(x: String): Option[NodeGeoLevel] = {

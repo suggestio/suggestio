@@ -3,8 +3,11 @@
 @* Рендер селекта для выбора уровня сохранения геообъекта. *@
 
 @import helper._
+@import util.FC.tdFc
 
-@select(
-  gField,
-  options = options( NodeGeoLevels.values.iterator.map(ngl => ngl.esfn -> ngl.precision).toMap )
-)
+<table class="input-w __size-L">
+  @select(
+    gField,
+    options = options( NodeGeoLevels.values.iterator.map(ngl => ngl.esfn -> ngl.precision).toMap )
+  )
+</table>

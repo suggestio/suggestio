@@ -1,6 +1,6 @@
 @(af: Form[_], call: Call, companies: Seq[MCompany], btnText: String)(implicit ctx: util.Context)
 
-@* Форма для создания/редактирования торгового центра.
+@* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
 @import helper._
 @import ctx._
@@ -159,14 +159,6 @@
     @inputText(af("meta.location.lon"),  '_label -> "Долгота")
   </table>
 
-  <table class="input-w __size-L">
-    @inputText(af("meta.radius.value"),  '_label -> "Радиус обнаружения")
-    @select(
-      field     = af("meta.radius.units"),
-      options   = options( DistanceUnit.values.toList.map(du => du.toString -> du.name).sortBy(_._2) : _* ),
-      '_label   -> "Единицы расстояния"
-    )
-  </table>
 
   <div class="btn-w __size-M">
     <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>
