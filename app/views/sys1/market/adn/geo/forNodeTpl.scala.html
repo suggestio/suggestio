@@ -33,7 +33,7 @@
             <td>@_prettyDate(geo.lastModified)</td>
             <td>@geo.versionOpt</td>
             <td>
-              <a href="@routes.SysAdnGeo.editNodeOsm(geo.id.get)">@Messages("Edit")</a>
+              <a href="@if(geo.isCircle){@routes.SysAdnGeo.editCircle(geo.id.get)} else {@routes.SysAdnGeo.editNodeOsm(geo.id.get)}">@Messages("Edit")</a>
             </td>
           </tr>
         }

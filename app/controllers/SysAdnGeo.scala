@@ -208,6 +208,41 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   }
 
 
+  /** Рендер страницы с формой редактирования geo-круга. */
+  def editCircle(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+    import request.adnGeo
+    val nodeOptFut = MAdnNodeCache.getById(adnGeo.adnId)
+    val formBinded = circleFormM.fill(adnGeo)
+    nodeOptFut map { nodeOpt =>
+      Ok(editCircleTpl(adnGeo, formBinded, nodeOpt.get))
+    }
+  }
+
+  /** Сабмит формы редактирования круга. */
+  def editCircleSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+    lazy val logPrefix = s"editCircleSubmit($geoId): "
+    circleFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val nodeOptFut = MAdnNodeCache.getById(request.adnGeo.adnId)
+        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        nodeOptFut.map { nodeOpt =>
+          NotAcceptable(editCircleTpl(request.adnGeo, formWithErrors, nodeOpt.get))
+        }
+      },
+      {geoStub =>
+        val geo2 = request.adnGeo.copy(
+          shape = geoStub.shape,
+          glevel = geoStub.glevel
+        )
+        geo2.save map { _geoId =>
+          Redirect( routes.SysAdnGeo.forNode(geo2.adnId) )
+            .flashing("success" -> "Изменения сохранены.")
+        }
+      }
+    )
+  }
+
+
   object UrlParseResult {
     def fromUrl(url: String): Option[UrlParseResult] = {
       val parser = new OsmParsers

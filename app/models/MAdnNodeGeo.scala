@@ -8,7 +8,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
-import io.suggest.model.geo.{GeoShapeQuerable, GeoShape}
+import io.suggest.model.geo.{CircleGs, GeoShapeQuerable, GeoShape}
 import io.suggest.model.{EsModel, EsModelT, EsModelMinimalStaticT}
 import play.api.libs.json._
 import java.{util => ju}
@@ -177,6 +177,9 @@ final case class MAdnNodeGeo(
     super.saveBuilder(irb)
     irb.setParent(adnId)
   }
+
+  /** Является ли текущий геошейп - кругом? */
+  def isCircle: Boolean = shape.isInstanceOf[CircleGs]
 }
 
 
