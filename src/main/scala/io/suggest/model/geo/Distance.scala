@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import org.elasticsearch.common.unit.DistanceUnit
 import DistanceUnit.{Distance => EsDistance}
 
@@ -37,4 +38,8 @@ case class GeoDistanceQuery(center: GeoPoint, distanceMin: Option[Distance], dis
   def outerCircle = CircleGs(center, distanceMax)
 
   def innerCircleOpt = distanceMin.map { CircleGs(center, _) }
+
 }
+
+
+case class GeoShapeQueryData(gdq: GeoDistanceQuery, glevel: NodeGeoLevel)

@@ -5,7 +5,7 @@ import java.{util => ju}
 import akka.actor.ActorContext
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifier.{Event, Classifier, Subscriber}
-import io.suggest.event.subscriber.{SnClassSubscriber, SnFunSubscriber}
+import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
@@ -14,7 +14,9 @@ import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.common.geo.ShapeRelation
+import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilder, QueryBuilders}
 import org.joda.time.DateTime
 import play.api.libs.json._
 
@@ -128,6 +130,12 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     val shapeQuery = QueryBuilders.geoShapeQuery(glevel.fullEsfn, shape.toEsShapeBuilder)
     QueryBuilders.nestedQuery(GEO_ESFN, shapeQuery)
   }
+
+  def geoFilter(glevel: NodeGeoLevel, shape: GeoShapeQuerable): FilterBuilder = {
+    val gsq = QueryBuilders.geoShapeQuery(glevel.fullEsfn, shape.toEsShapeBuilder)
+    FilterBuilders.nestedFilter(GEO_ESFN, gsq)
+  }
+
 
   /**
    * Быстрый поиск узлов и быстрая десериализация результатов поиска по пересечению с указанной геолокацией.

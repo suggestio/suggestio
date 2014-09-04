@@ -1,12 +1,13 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.common.EMPersonIds
-import io.suggest.model.geo.{CircleGs, GeoDistanceQuery, Distance, GeoPoint}
+import io.suggest.model.geo.{GeoShapeQueryData, CircleGs, GeoDistanceQuery, GeoPoint}
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
+import io.suggest.ym.model.MAdnNodeGeo
+import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import io.suggest.ym.model.common.AdnRights.AdnRight
 import org.elasticsearch.action.search.SearchRequestBuilder
-import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.{SortOrder, SortBuilders}
@@ -26,8 +27,9 @@ object AdnNodesSearch {
     s"""_source.containsKey("$fn");"""
   }
 
-  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которыйх ближе, чем это допустимо. */
+  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которых ближе, чем это допустимо. */
   private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
+    // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил перепиливание подсистемы географии.
     innerCircle.fold(qb2) { inCircle =>
       val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnMMetadataStatic.META_LOCATION_ESFN)
         .point(inCircle.center.lat, inCircle.center.lon)
@@ -123,16 +125,19 @@ object AdnNodesSearch {
     // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
     }.map[QueryBuilder] { qb =>
       // Вешаем фильтры GeoShape
-      args.geoDistance.fold(qb) { gd =>
-        val gsfOuter = FilterBuilders.geoShapeFilter(AdnMMetadata.GEO_SHAPE_ESFN, gd.outerCircle.toEsShapeBuilder, ShapeRelation.INTERSECTS)
+      args.geoDistance.fold(qb) { gsqd =>
+        // География узлов живёт в отдельной модели, которая доступна через has_child
+        val gq = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val gsfOuter = FilterBuilders.hasChildFilter(MAdnNodeGeo.ES_TYPE_NAME, gq)
         val qb2 = QueryBuilders.filteredQuery(qb, gsfOuter)
-        innerUnshapeFilter(qb2, gd.innerCircleOpt)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
       }
     }.orElse[QueryBuilder] {
-      args.geoDistance.map { gd =>
+      args.geoDistance.map { gsqd =>
         // Создаём GeoShape query. query по внешнему контуру, и filter по внутреннему.
-        val qb2 = QueryBuilders.geoShapeQuery(AdnMMetadata.GEO_SHAPE_ESFN, gd.outerCircle.toEsShapeBuilder)
-        innerUnshapeFilter(qb2, gd.innerCircleOpt)
+        val gq  = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val qb2 = QueryBuilders.hasChildQuery(MAdnNodeGeo.ES_TYPE_NAME, gq)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
       }
 
     // Отрабатываем возможный список прав узла.
@@ -190,26 +195,6 @@ object AdnNodesSearch {
       qb2 = QueryBuilders.filteredQuery(qb2, ef)
     }
 
-    // Добавляем geo-фильтр по дистанции до точки, если необходимо.
-    // Закоменчено, т.к. часть логики перевешана на GeoShape-контуры.
-    /*if (args.geoDistance.isDefined) {
-      val gd = args.geoDistance.get
-      // Если задан distanceMin, то нужно использовать фильтр geo range. Иначе geo distance.
-      val gdf = gd.distanceMin.fold [FilterBuilder] {
-        // Фильтруем в радиусе указанной точки
-        FilterBuilders.geoDistanceFilter(EMAdnMMetadataStatic.META_LOCATION_ESFN)
-          .point(gd.center.lat, gd.center.lon)
-          .distance(gd.distanceMax.distance, gd.distanceMax.units)
-      } { distanceMin =>
-        // Фильтруем между радиусами из одной точки.
-        FilterBuilders.geoDistanceRangeFilter(EMAdnMMetadataStatic.META_LOCATION_ESFN)
-          .point(gd.center.lat, gd.center.lon)
-          .from( distanceMin.toString )
-          .to( gd.distanceMax.toString )
-      }
-      qb2 = QueryBuilders.filteredQuery(qb2, gdf)
-    }*/
-
     // Сборка завершена, возвращаем собранную es query.
     qb2
   }
@@ -245,7 +230,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   def withoutIds: Seq[String]
 
   /** Фильтровать по дистанции относительно какой-то точки. */
-  def geoDistance: Option[GeoDistanceQuery]
+  def geoDistance: Option[GeoShapeQueryData]
 
   /** Фильтровать по наличию/отсутсвию логотипа. */
   def hasLogo: Option[Boolean]

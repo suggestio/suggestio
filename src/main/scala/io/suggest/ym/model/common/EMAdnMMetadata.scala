@@ -149,7 +149,6 @@ object AdnMMetadata {
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
   val LOCATION_ESFN           = "loc"
-  val GEO_SHAPE_ESFN          = "geoShape"
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
@@ -179,8 +178,7 @@ object AdnMMetadata {
     FieldGeoPoint(LOCATION_ESFN, latLon = true,
       geohash = true, geohashPrefix = true,  geohashPrecision = "8",
       fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "1m")
-    ),
-    FieldGeoShape(GEO_SHAPE_ESFN, precision = "50m")
+    )
   )
 
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */
@@ -203,8 +201,7 @@ object AdnMMetadata {
         color       = Option(jmap get COLOR_ESFN) map stringParser,
         fgColor     = Option(jmap get FG_COLOR_ESFN) map stringParser,
         welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
-        location    = Option(jmap get LOCATION_ESFN) flatMap GeoPoint.deserializeOpt,
-        geoShape    = Option(jmap get GEO_SHAPE_ESFN) flatMap GeoShape.deserialize
+        location    = Option(jmap get LOCATION_ESFN) flatMap GeoPoint.deserializeOpt
       )
   }
 }
@@ -240,7 +237,6 @@ case class AdnMMetadata(
   humanTrafficAvg: Option[Int]   = None,
   info          : Option[String] = None,
   location      : Option[GeoPoint] = None,
-  geoShape      : Option[GeoShape] = None,
   // перемещено из visual
   // TODO Нужно цвета объеденить в карту цветов.
   color         : Option[String] = None,
@@ -286,8 +282,6 @@ case class AdnMMetadata(
       acc0 ::= WELCOME_AD_ID -> JsString(welcomeAdId.get)
     if (location.isDefined)
       acc0 ::= LOCATION_ESFN -> location.get.toPlayGeoJson
-    if (geoShape.isDefined)
-      acc0 ::= GEO_SHAPE_ESFN -> geoShape.get.toPlayJson
     JsObject(acc0)
   }
 
