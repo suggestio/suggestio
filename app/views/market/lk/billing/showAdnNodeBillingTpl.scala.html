@@ -5,30 +5,8 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 
-@rightBar = {
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __node-billing __act" href="@routes.MarketLkBilling.showAdnNodeBilling(adnNode.id.get)">
-      <span>Биллинг тарифных планов</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __transactions-history" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">
-      <span>История операций</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __requisites" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">
-      <span>Реквизиты</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
-}
 
-
-@market.lk.lkBaseLayout(
-  title    = "Биллинг | " + adnNode.meta.name,
-  adnIdOpt = adnNode.id,
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_BILLING),
-  rightBar  = Some(rightBar)
-) {
+@content = {
 
   @ctx.billBalanceOpt.map { mbb =>
 
@@ -98,3 +76,10 @@
   }
 
 }
+
+
+@billingBaseTpl(
+  title         = "Биллинг | " + adnNode.meta.name,
+  node          = adnNode,
+  rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
+)(content)
