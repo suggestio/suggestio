@@ -329,21 +329,21 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
         way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
       } else if (way.nodesOrdered.last == nodesAcc.head) {
         // Нужно добавить все элементы слева в акк в прямом порядке
-        way.nodesOrdered.tail.foldRight(nodesAcc) { (node, _acc) => node :: _acc }
+        way.nodesOrdered.foldRight(nodesAcc.tail) { (node, _acc) => node :: _acc }
       } else if (way.nodesOrdered.last == nodesAcc.last) {
         // Нужно добавить все элементы в хвост акку в обратном порядке
-        nodesAcc ++ way.nodesOrdered.reverse
+        nodesAcc ++ way.nodesOrdered.reverse.tail
       } else if (way.nodesOrdered.head == nodesAcc.last) {
         // нужно добавить все элемены в хвост акку в прямом порядке
-        nodesAcc ++ way.nodesOrdered
+        nodesAcc ++ way.nodesOrdered.tail
       } else {
         throw new IllegalArgumentException(s"directWays(): Cannot connect way $way to acc $nodesAcc -- no common points found.")
       }
     }
-    val lastNode = allPts.last
-    if (lastNode != allPts.head)
-      lastNode :: allPts
-    else
+    //val lastNode = allPts.last
+    //if (lastNode != allPts.head)
+      //lastNode :: allPts
+    //else
       allPts
   }
 
