@@ -46,7 +46,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    Seq(MCompany, MWelcomeAd, MShopPriceList, MShopPromoOffer, MYmCategory, MAdStat, MAdnNode, MAd)
+    Seq(MCompany, MWelcomeAd, MShopPriceList, MShopPromoOffer, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo)
   }
 
 
