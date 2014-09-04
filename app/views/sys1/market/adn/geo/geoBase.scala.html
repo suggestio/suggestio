@@ -1,0 +1,18 @@
+@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Шаблон-подложка для sys1 geo-adn-шаблонов. *@
+
+@import ctx._
+@import sys1.market.adn._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@adnBase(
+  title         = title + " | geo ",
+  hPathAfter    = Some(hPathAfter1),
+  nodeOpt       = nodeOpt
+)(content)

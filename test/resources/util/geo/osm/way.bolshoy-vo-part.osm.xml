@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.3.3 (1453 thorn-03.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="307016" visible="true" version="7" changeset="18934124" timestamp="2013-11-16T14:15:37Z" user="zdw" uid="353208" lat="59.9313858" lon="30.2565811">
+  <tag k="highway" v="traffic_signals"/>
+ </node>
+ <node id="307023" visible="true" version="9" changeset="18935332" timestamp="2013-11-16T15:23:22Z" user="zdw" uid="353208" lat="59.9295036" lon="30.2502073">
+  <tag k="highway" v="traffic_signals"/>
+ </node>
+ <node id="801260410" visible="true" version="2" changeset="15579195" timestamp="2013-04-02T09:54:41Z" user="Localknowledge" uid="1313454" lat="59.9306004" lon="30.2539090"/>
+ <node id="985222710" visible="true" version="6" changeset="18935332" timestamp="2013-11-16T15:23:23Z" user="zdw" uid="353208" lat="59.9295683" lon="30.2504248">
+  <tag k="crossing" v="traffic_signals"/>
+  <tag k="highway" v="crossing"/>
+ </node>
+ <node id="2166850614" visible="true" version="3" changeset="18801713" timestamp="2013-11-09T16:31:41Z" user="zdw" uid="353208" lat="59.9313244" lon="30.2563822">
+  <tag k="crossing" v="traffic_signals"/>
+  <tag k="highway" v="crossing"/>
+ </node>
+ <node id="668032270" visible="true" version="4" changeset="18935332" timestamp="2013-11-16T15:23:22Z" user="zdw" uid="353208" lat="59.9310982" lon="30.2556282"/>
+ <node id="801259973" visible="true" version="3" changeset="18936373" timestamp="2013-11-16T16:20:44Z" user="zdw" uid="353208" lat="59.9299246" lon="30.2516400"/>
+ <node id="1489132591" visible="true" version="4" changeset="24848698" timestamp="2014-08-19T04:06:31Z" user="Marlok" uid="1954779" lat="59.9312458" lon="30.2561186">
+  <tag k="bus" v="yes"/>
+  <tag k="name" v="26-27-я линии В.О."/>
+  <tag k="public_transport" v="stop_position"/>
+  <tag k="trolleybus" v="yes"/>
+ </node>
+ <node id="1491008694" visible="true" version="5" changeset="24848698" timestamp="2014-08-19T04:06:31Z" user="Marlok" uid="1954779" lat="59.9297190" lon="30.2509414">
+  <tag k="bus" v="yes"/>
+  <tag k="name" v="Детская улица"/>
+  <tag k="public_transport" v="stop_position"/>
+  <tag k="trolleybus" v="yes"/>
+ </node>
+ <way id="31399147" visible="true" version="22" changeset="21240001" timestamp="2014-03-22T09:13:22Z" user="EIjas" uid="700550">
+  <nd ref="307016"/>
+  <nd ref="2166850614"/>
+  <nd ref="1489132591"/>
+  <nd ref="668032270"/>
+  <nd ref="801260410"/>
+  <nd ref="801259973"/>
+  <nd ref="1491008694"/>
+  <nd ref="985222710"/>
+  <nd ref="307023"/>
+  <tag k="highway" v="secondary"/>
+  <tag k="lit" v="yes"/>
+  <tag k="name" v="Большой проспект В.О."/>
+  <tag k="name:en" v="Bol'shoy Avenue of V.I."/>
+  <tag k="name:ru" v="Большой проспект В.О."/>
+  <tag k="snowplowing" v="yes"/>
+  <tag k="trolley_wire" v="yes"/>
+ </way>
+</osm>

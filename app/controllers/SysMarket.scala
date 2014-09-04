@@ -229,10 +229,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "section"   -> sectionOptM,
     "siteUrl"   -> urlStrOptM,
     "color"     -> colorOptM,
-    "location"  -> latLng2geopointOptM,
-    "radius"    -> optional(distanceM)
+    "location"  -> latLng2geopointOptM
   )
-  {(name, descr, town, address, phone, floor, section, siteUrl, color, locationOpt, radiusOpt) =>
+  {(name, descr, town, address, phone, floor, section, siteUrl, color, locationOpt) =>
     AdnMMetadata(
       name    = name,
       description = descr,
@@ -243,14 +242,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       section = section,
       siteUrl = siteUrl,
       color   = color,
-      location = locationOpt,
-      geoShape = {
-        radiusOpt.flatMap { radius =>
-          locationOpt.map { loc =>
-            CircleGs(loc, radius)
-          }
-        }
-      }
+      location = locationOpt
     )
   }
   {meta =>
@@ -261,7 +253,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         warn(s"Cannot unapply $other into radius distance; CircleGs expected")
         None
     }
-    Some((name, description, town, address, phone, floor, section, siteUrl, color, location, radius))
+    Some((name, description, town, address, phone, floor, section, siteUrl, color, location))
   }
 
   private def adnRightsM: Mapping[Set[AdnRight]] = {
@@ -564,8 +556,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         section = adnNode2.meta.section,
         siteUrl = adnNode2.meta.siteUrl,
         color   = adnNode2.meta.color,
-        location = adnNode2.meta.location,
-        geoShape = adnNode2.meta.geoShape
+        location = adnNode2.meta.location
       ),
       adn = adnNode.adn.copy(
         memberType  = adnNode2.adn.memberType,

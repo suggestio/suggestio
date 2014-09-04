@@ -1,0 +1,16 @@
+@(username: String, password: String, submitUrl: String)(implicit ctx: Context)
+
+@wifiBase("Ok") {
+
+  Нажимая кнопку "Подтвердить", вы подтверждаете соглашение о пользовании интернетом.
+
+  <form action="@submitUrl" method="POST">
+    <input type="hidden" name="username" value="@username"/>
+    <input type="hidden" name="password" value="@password"/>
+    <input type="hidden" name="dst" value="@ctx.myAudienceUrl@routes.Application.index()"/>
+    <input type="hidden" name="popup" value="true"/>
+
+    <input type="submit" value="Подтвердить"/>
+  </form>
+
+}

@@ -21,6 +21,7 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/lightbox/css/lightbox.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk_new-design/lk.css")'/>
 
@@ -32,11 +33,11 @@
 
     <header class="header">
       <a class="header_logo-link" href="@routes.Market.index()">
-        <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="29" height="29"/>
+        <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
       </a>
 
       <div class="header_cnt">
-        <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="138"/>
+        <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="101" height="26"/>
 
         @adnIdOpt.map { adnId =>
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
@@ -45,7 +46,7 @@
       </div>
 
       @ctx.usernameOpt.map { username =>
-        <a class="header_logout light-gray dark-link def-transition" href="@routes.Ident.logout">@username</a>
+        <a class="header_logout light-gray dark-link" href="@routes.Ident.logout" title="Выйти">@username</a>
       }
     </header>
 
@@ -64,11 +65,11 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_NODE}){ __act}" href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)">User</a>
+            <a class="left-bar_menu-i __cards@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)">Cards</a>
+            <a class="left-bar_menu-i __profile@if(leftCurrEl exists {_ == LPL_NODE}){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i def-transition@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">Billing</a>
+            <a class="left-bar_menu-i __billing@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
             <hr class="delimiter"/>
           </nav>
         }
@@ -100,6 +101,7 @@
 
 
   <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>

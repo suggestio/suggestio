@@ -101,6 +101,9 @@ leftMenuWidth   = 60
   font-size   13px
   min-width   projectMinWidth
 
+  &::-webkit-scrollbar
+    width 0
+
 .page
   position          relative
   min-height        100%
@@ -165,11 +168,14 @@ leftMenuWidth   = 60
   &_logout
     position      absolute
     top           20px
-    right         0
+    right         10px
+
+    display       inline-block
+    line-height   22px
 
     overflow      hidden
-    padding       0 10px
-    width         190px
+    padding-right 40px
+    width         135px
     text-overflow ellipsis
 
 .left-bar
@@ -189,6 +195,9 @@ leftMenuWidth   = 60
     display       block
     height        60px
     color         #818284
+
+    background-repeat   no-repeat
+    transition(background-color 0.2s ease-in-out 0s)
 
     &:hover
       cursor            pointer
@@ -215,10 +224,20 @@ leftMenuWidth   = 60
     padding-top (headerHeight)px
 
   &_menu-i
-    display     block
-    height      60px
-    color       #a5a5a5
-    text-align  center
+    display       inline-block
+    box-sizing    border-box
+    line-height   60px
+    width         100%
+    padding-left  70px
+
+    color         #a5a5a5
+    font-size     14px
+    transition(background-color 0.2s ease-in-out 0s)
+
+    span
+      display         inline-block
+      line-height     14px
+      vertical-align  middle
 
     &:hover
       cursor            pointer
@@ -238,6 +257,7 @@ leftMenuWidth   = 60
     text-align  center
 
 .viewport
-  padding-top   (headerHeight + 40)px
-  padding-left  (leftMenuWidth + 20)px
-  padding-right (rightMenuWidth + 20)px
+  padding-top     (headerHeight + 40)px
+  padding-left    (leftMenuWidth + 20)px
+  padding-right   (rightMenuWidth + 20)px
+  padding-bottom  60px

@@ -133,7 +133,7 @@ object SiowebEsUtil extends SioEsClient {
       }
 
       // Обработать options.langs, дописав при необходимости дополнительный фильтр.
-      if (!sso.langs.isEmpty) {
+      if (sso.langs.nonEmpty) {
         val langs = sso.langs
         val termQuery = if (langs.tail.isEmpty) {
           // Один язык - делаем простой term-фильтр
@@ -147,13 +147,13 @@ object SiowebEsUtil extends SioEsClient {
 
       // Включена фильтрация по фасетам. Нужно добавить фасетный фильтр.
       // !!! Этот фильтр должен добавлятся последним, т.е. в самое начало списка фильтров. !!!
-      if (!sso.fiSearhInTags.isEmpty) {
+      if (sso.fiSearhInTags.nonEmpty) {
         val facetTagFilter = FilterBuilders.termsFilter(FIELD_PAGE_TAGS, sso.fiSearhInTags : _*)
         filters ::= facetTagFilter
       }
 
       // Если получилось несколько фильтров, то нужно их объеденить через and-фильтр.
-      val qFilter = if (!filters.tail.isEmpty) {
+      val qFilter = if (filters.tail.nonEmpty) {
         FilterBuilders.andFilter(filters : _*)
       } else {
         filters.head
@@ -185,7 +185,7 @@ object SiowebEsUtil extends SioEsClient {
       }
 
       // Добавить доролнительные поля для запроса, если такие есть.
-      if (!sso.fields.isEmpty) {
+      if (sso.fields.nonEmpty) {
         reqBuilder.addFields(sso.fields : _*)
       }
 

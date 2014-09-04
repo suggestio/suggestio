@@ -1,0 +1,33 @@
+@(cf: Form[_], submitCall: Call, btnText: String)(implicit ctx: util.Context)
+
+@* Форма для создания/редактирования географического круга. *@
+
+@import helper._
+@import ctx._
+@import util.FC.tdFc
+@import org.elasticsearch.common.unit.DistanceUnit
+
+
+@form(submitCall) {
+
+  @_glevelSelectTpl(cf("glevel"))
+
+  <table class="input-w __size-L">
+    @inputText(cf("circle.center.lat"),  '_label -> "Широта")
+    @inputText(cf("circle.center.lon"),  '_label -> "Долгота")
+  </table>
+
+  <table class="input-w __size-L">
+    @inputText(cf("circle.radius.value"),  '_label -> "Радиус")
+    @select(
+      field     = cf("radius.units"),
+      options   = options( DistanceUnit.values.toList.map(du => du.toString -> du.name).sortBy(_._2) : _* ),
+      '_label   -> "Единицы расстояния"
+    )
+  </table>
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>
+  </div>
+
+}

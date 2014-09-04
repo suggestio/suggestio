@@ -1,0 +1,16 @@
+@(geo: MAdnNodeGeo, gf: Form[_], adnNode: MAdnNode)(implicit ctx: Context)
+
+@import ctx._
+@import stuff._
+
+@geoBase("Редактировать OSM-производную", nodeOpt = Some(adnNode)) {
+
+  @_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get) )
+
+  @_osmGeoFormTpl(
+    gf          = gf,
+    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(adnNode.id.get),
+    btnText     = Messages("Update")
+  )
+
+}

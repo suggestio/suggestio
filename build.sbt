@@ -68,6 +68,10 @@ libraryDependencies ++= Seq(
   "com.vividsolutions" % "jts" % "1.13",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
+  // radius
+  "org.tinyradius" % "tinyradius" % "1.0.3"
+    exclude("commons-logging", "commons-logging")
+  ,
   // test
   "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )

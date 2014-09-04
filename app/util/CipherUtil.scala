@@ -6,7 +6,7 @@ import io.suggest.util.SioRandom
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
 import scala.util.Random
-import java.security.{MessageDigest, Security}
+import java.security.{SecureRandom, MessageDigest, Security}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 /**
  * Suggest.io
@@ -30,7 +30,7 @@ object CipherUtil {
   }
 
 
-  def generateSecretKey(bitLen: Int = 256, rnd: Random = SioRandom.rnd): Array[Byte] = {
+  def generateSecretKey(bitLen: Int = 256, rnd: SecureRandom = new SecureRandom()): Array[Byte] = {
     val arr = Array.fill[Byte](bitLen / 8)(0)
     rnd.nextBytes(arr)
     arr

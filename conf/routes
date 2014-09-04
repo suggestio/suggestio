@@ -339,3 +339,22 @@ POST /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSink
 GET  /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkCom(scId: Int)
 POST /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkComSubmit(scId: Int)
 POST /sys/m/b/sink/comm/del/:scId        controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)
+
+## wifi/radius ident
+GET  /id/wifi/by/phone                   controllers.WifiIdent.idByPhone
+POST /id/wifi/by/phone                   controllers.WifiIdent.idByPhoneSubmit
+GET  /id/wifi/by/phone/:phone/code       controllers.WifiIdent.idByPhoneCode(phone)
+POST /id/wifi/by/phone/:phone/code       controllers.WifiIdent.idByPhoneCodeSubmit(phone)
+
+## sys adn geo
+GET  /sys/adn/geo/all/:adnId             controllers.SysAdnGeo.forNode(adnId)
+GET  /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsm(adnId)
+POST /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
+POST /sys/adn/geo/del/:geoId             controllers.SysAdnGeo.deleteSubmit(geoId)
+GET  /sys/adn/geo/edit/:geoId            controllers.SysAdnGeo.editNodeOsm(geoId)
+POST /sys/adn/geo/edit/:geoId/osm        controllers.SysAdnGeo.editNodeOsmSubmit(geoId)
+GET  /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircle(adnId)
+POST /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircleSubmit(adnId)
+GET  /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircle(geoId)
+POST /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircleSubmit(geoId)
+

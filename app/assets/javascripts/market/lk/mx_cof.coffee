@@ -38,7 +38,6 @@ IndexPage =
     IndexPage.centeredContent()
     $window = $ window
     $window.resize ()->
-      console.log $window.height()
       IndexPage.centeredContent()
 
 IndexPage.init()
@@ -534,14 +533,11 @@ PersonalCabinet =
           dataMultiple = $this.attr 'data-multiple'
           dataMultiple && multiple = true
 
-          console.log fieldName
           if multiple
             # если уже есть загруженные фотографии
             $previews = $previewRoot.find '.js-preview'
             previewCounts = $previews.length
             fieldName = "#{fieldName}[#{previewCounts}]"
-
-          console.log fieldName
 
           html =  """
                    <div class="image js-preview #{previewClass}">
@@ -670,7 +666,92 @@ PersonalCabinet =
       .find('.ads-list-block__link')[0]
       .click()
 
+  ##################################################################################################################
+  ## Слайд блоки ##
+  ##################################################################################################################
+  slideBlock:
+
+    # возвращает jQuery объект который нужно слайдить или false
+    getSlideBlock: ($slideBlockBtn)->
+      href = $slideBlockBtn.attr 'href'
+
+      if href && href.charAt(0) == '#'
+        $slideBlock = $ href
+      else
+        $slideBlockWrap = $slideBlockBtn.closest '.js-slide-w'
+        ## :first потому что может быть вложенный слайд блок
+        $slideBlock = $slideBlockWrap.find '.js-slide-cnt:first'
+
+      if $slideBlock.is ':animated' || $slideBlock.data 'active'
+        $slideBlock = false
+
+      return $slideBlock
+
+    slideToggle: ($btn, $slideBlock)->
+      href = $btn.attr 'href'
+
+      if href && href.charAt(0) != '#'
+        $slideBlock.data
+          'active': true
+
+        $.ajax(
+          url: href
+          success: (data) ->
+            $data = $ data
+            $slideBlock.append $data
+            $slideBlock.slideDown()
+
+            $btn.removeAttr 'href'
+            $slideBlock.data
+              'active': false
+
+            cbca.pc.common.photoSlider()
+        )
+      else
+        $slideBlock.slideToggle()
+
+      $btn
+      .toggleClass '__js-open'
+      .closest '.js-slide-title'
+      .toggleClass '__js-open'
+
+    init: ()->
+
+      $(document).on 'click', '.js-slide-btn', (e)->
+        e.preventDefault()
+        e.stopPropagation() # чтобы не сработал обработчик на js-slide-title
+        $this = $ this
+        href = $this.attr 'href'
+        $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
+
+        if $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $this, $slideBlock
+
+      $(document).on 'click', '.js-slide-title', (e)->
+        e.preventDefault()
+        $this = $ this
+        $btn = $this.find '.js-slide-btn'
+        href = $this.attr 'href'
+        $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
+
+        if $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $btn, $slideBlock
+
   common:
+
+    ##################################################################################################################
+    ## Слайдер с фотографиями объекта ##
+    ##################################################################################################################
+    photoSlider: () ->
+
+      # TODO добавить проверку на то, что у данного dom элемента слайдер уже инициализирован
+      $().bxSlider && $ '.js-photo-slider'
+      .bxSlider(
+        auto: true,
+        pager: false,
+        infiniteLoop: false,
+        hideControlOnEnd: true
+      )
 
     ##################################################################################################################
     ## Чекбоксы ##
@@ -847,47 +928,6 @@ PersonalCabinet =
 
         $form.trigger 'submit'
 
-      $(document).on 'click', '.js-slide-btn', (e)->
-        e.preventDefault()
-        $this = $ this
-        href = $this.attr 'href'
-
-        if $this.data 'active'
-          return false
-
-        if href && href.charAt(0) == '#'
-          $slideBlock = $ href
-        else
-          $slideBlockWrap = $this.closest '.js-slide-w'
-          ## :first потому что может быть вложенный siomBlock
-          $slideBlock = $slideBlockWrap.find '.js-slide-cnt:first'
-
-        if $slideBlock.is ':animated'
-          return false
-
-        if href
-          if href.charAt(0) == '#'
-            $slideBlock.slideToggle()
-          else
-            $this.data
-              'active': true
-
-            $.ajax(
-              url: href
-              success: (data) ->
-                $data = $ data
-                $slideBlock.append $data
-                $slideBlock.slideDown()
-
-                $this.removeAttr 'href'
-                $this.data
-                  'active': false
-            )
-        else
-          $slideBlock.slideToggle()
-
-        $this.toggleClass '__open'
-
   init: () ->
 
     cbca.pc.common.setEqualHeightBlocks()
@@ -896,7 +936,9 @@ PersonalCabinet =
     cbca.pc.common.inputs()
     cbca.pc.common.checkbox()
     cbca.pc.common.buttons()
+    cbca.pc.common.photoSlider()
 
+    cbca.pc.slideBlock.init()
     cbca.pc.statusBar.init()
     cbca.pc.wifi()
     cbca.pc.login()
@@ -975,7 +1017,6 @@ CbcaPopup =
     else
       cbca.popup.showOverlay()
       cbca.popup.setPopupPosition popupSelector
-
 
     $window = $ window
     if $window.width() <= 1024
@@ -1086,7 +1127,6 @@ CbcaPopup =
       setTimeout(
         ()->
           $activeInputs = $ 'input:focus'
-          console.log 'size = '+$activeInputs.size()
           if $activeInputs.size() == 0
             $ window
             .scrollTop(0)
@@ -1309,9 +1349,6 @@ market =
         offset_x = sw * offset_x / rw
         offset_y = sh * offset_y / rh
 
-        console.log 'offset_x : ' + offset_x
-        console.log 'offset_y : ' + offset_y
-
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
 
         target_size = rw + 'x' + rh
@@ -1342,7 +1379,6 @@ market =
           method : 'post'
           data : form_dom1.serialize()
           success : ( img_data ) ->
-            console.log market.img.crop.img_name
             $('input[name=\'' + market.img.crop.img_name + '\']').val img_data.image_key
             market.ad_form.queue_block_preview_request request_delay=10
 
@@ -1443,8 +1479,6 @@ market =
 
           mt_tab_counter_c = $('.mt-tab-' + mt + '-counter-c')
           mt_tab_counter = $('.mt-tab-' + mt + '-counter')
-
-          console.log mt + ' : ' + active_nodes
 
           if active_nodes != 0
             mt_tab_counter_c.show()
@@ -1587,7 +1621,6 @@ market =
 
         _value_dom.val _new_value
 
-        console.log _value_dom.val()
         market.ad_form.queue_block_preview_request request_delay=10
 
     set_descr_editor_bg : () ->
@@ -1609,8 +1642,6 @@ market =
 
         $('.js-tinymce').val data
         $('#promoOfferForm').unbind 'submit'
-
-        console.log $('.js-tinymce').val()
 
         submit_cb = () ->
           $('#promoOfferForm').submit()
