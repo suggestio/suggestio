@@ -39,14 +39,14 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
     MAdnNode.findByPersonId(personId, maxResults = 2).map { adnNodes =>
       val rdrOrNull: Call = if (adnNodes.isEmpty) {
-        // У юзера нет ни магазинов, ни ТЦ во владении. Некуда его редиректить, вероятно ошибся адресом.
+        // У юзера нет рекламных узлов во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
       } else if (adnNodes.size == 1) {
-        // У юзера есть магазин или ТЦ
+        // У юзера есть один рекламный узел
         val adnNode = adnNodes.head
-        routes.MarketLkAdn.showAdnNode(adnNode.id.get)
+        routes.MarketLkAdn.showNodeAds(adnNode.id.get)
       } else {
-        // У юзера есть более одно объекта во владении. Нужно предоставить ему выбор.
+        // У юзера есть несколько узлов во владении. Нужно предоставить ему выбор.
         routes.MarketLk.lkList()
       }
       Option(rdrOrNull)

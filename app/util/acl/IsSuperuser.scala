@@ -328,11 +328,12 @@ case class AdnGeoRequest[A](
 /** Нужно админство и доступ к существующей географии узла по geo id. */
 trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
   def geoId: String
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AdnGeoRequest[A]) => Future[Result]): Future[Result] = {
   val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper isSuperuser pwOpt) {
       val srmFut = SioReqMd.fromPwOpt(pwOpt)
-      MAdnNodeGeo.getById(geoId) flatMap {
+      MAdnNodeGeo.get(geoId, adnId) flatMap {
         case Some(geo) =>
           srmFut flatMap { srm =>
             val req1 = AdnGeoRequest(geo, pwOpt, request, srm)
@@ -347,9 +348,9 @@ trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
     }
   }
 
-  def geoNotFound = Results.NotFound(s"Geography $geoId not found.")
+  def geoNotFound = Results.NotFound(s"Geography $geoId not found for node $adnId.")
 }
-case class IsSuperuserAdnGeo(geoId: String)
+case class IsSuperuserAdnGeo(geoId: String, adnId: String)
   extends IsSuperuserAdnGeoAbstract
   with ExpireSession[AdnGeoRequest]
 

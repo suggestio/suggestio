@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.{EsModelMinimalT, EsModelMinimalStaticT}
+import io.suggest.model.{EsModelT, EsModelStaticT}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.subscriber.SnClassSubscriber
@@ -23,9 +23,9 @@ import scala.reflect.ClassTag
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
+abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
 
-  type StaticModel_t <: EsModelMinimalStaticT { type T = T1 }
+  type StaticModel_t <: EsModelStaticT { type T = T1 }
   def companion: StaticModel_t
 
   val EXPIRE_SEC: Int

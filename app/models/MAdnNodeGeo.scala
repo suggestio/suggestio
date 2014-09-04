@@ -1,6 +1,7 @@
 package models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
@@ -9,7 +10,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.geo.{CircleGs, GeoShapeQuerable, GeoShape}
-import io.suggest.model.{EsModel, EsModelT, EsModelMinimalStaticT}
+import io.suggest.model._
 import play.api.libs.json._
 import java.{util => ju}
 import scala.collection.JavaConversions._
@@ -28,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * геообъектов необходимо, чтобы гибко управлять точностью и ресурсоёмкостью индекса. И просто чтобы регулировать
  * приоритет объектов.
  */
-object MAdnNodeGeo extends EsModelMinimalStaticT with PlayMacroLogsImpl {
+object MAdnNodeGeo extends EsChildModelStaticT with PlayMacroLogsImpl {
 
   override type T = MAdnNodeGeo
 
@@ -153,12 +154,14 @@ final case class MAdnNodeGeo(
   lastModified: DateTime = DateTime.now(),
   id          : Option[String] = None,
   versionOpt  : Option[Long] = None
-) extends EsModelT {
+) extends EsModelPlayJsonT with EsChildModelT {
 
   override type T = MAdnNodeGeo
 
   @JsonIgnore
   override def companion = MAdnNodeGeo
+  @JsonIgnore
+  override def parentId = adnId
 
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc =
@@ -170,12 +173,6 @@ final case class MAdnNodeGeo(
     if (url.isDefined)
       acc ::= URL_ESFN -> JsString(url.get)
     acc
-  }
-
-  /** Дополнительные параметры сохранения (parent, ttl, etc) можно выставить через эту функцию. */
-  override def saveBuilder(irb: IndexRequestBuilder): Unit = {
-    super.saveBuilder(irb)
-    irb.setParent(adnId)
   }
 
   /** Является ли текущий геошейп - кругом? */
@@ -208,3 +205,14 @@ object NodeGeoLevels extends Enumeration {
     }
   }
 }
+
+
+
+trait MAdnNodeGeoJmxMBean extends EsModelJMXMBeanCommonI
+final class MAdnNodeGeoJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelCommonJMXBase
+  with MAdnNodeGeoJmxMBean
+{
+  override def companion = MAdnNodeGeo
+}
+

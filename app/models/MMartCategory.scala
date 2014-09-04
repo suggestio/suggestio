@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * Description: Дерево пользовательских категорий конкретного ТЦ либо магазина (модель не различает владельцев).
  * Хранится в ES.
  */
-object MMartCategory extends EsModelMinimalStaticT with PlayMacroLogsImpl {
+object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -295,7 +295,7 @@ final case class MMartCategory(
   id            : Option[String] = None,
   cssClass      : Option[String] = None,
   includeInAll  : Boolean = true
-) extends EsModelEmpty with EMName with EMParentIdOpt with TreeSortable {
+) extends EsModelEmpty with EsModelT with EMName with EMParentIdOpt with TreeSortable {
 
   override type T = MMartCategory
   override def companion = MMartCategory
@@ -344,7 +344,7 @@ final case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
 
 
 /** JMX MBean интерфейс */
-trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon {
+trait MMartCategoryJmxMBean extends EsModelJMXMBeanI {
   def deleteAllOwnedNonDflt()
 }
 

@@ -5,11 +5,17 @@
 
 @geoBase("Редактировать OSM-производную", nodeOpt = Some(adnNode)) {
 
-  @_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get) )
+  @_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get) )
+
+  <p>Для импорта фигуры надо указать ссылку на сайт openstreetmap.org. Ссылка должна содержать указатель на конкретную фигуру.</p>
+
+  <p>Вместо импорта osm-фигуры можно
+    <a href="@routes.SysAdnGeo.createCircle(adnNode.id.get)">создать круг.</a>
+  </p>
 
   @_osmGeoFormTpl(
     gf          = gf,
-    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(adnNode.id.get),
+    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(geo.id.get, adnId = adnNode.id.get),
     btnText     = Messages("Update")
   )
 

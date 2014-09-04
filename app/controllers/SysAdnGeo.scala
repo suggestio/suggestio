@@ -37,7 +37,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
         { UrlParseResult.fromUrl },
         { _.fold("")(_.url) }
       )
-      .verifying("error.unsupported", _.isDefined)
+      .verifying("error.url.unsupported", _.isDefined)
       .transform[UrlParseResult](_.get, Some.apply)
   ))
 
@@ -95,7 +95,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   }
 
   /** Сабмит запроса на удаление элемента. */
-  def deleteSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+  def deleteSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     // Надо прочитать geo-информацию, чтобы узнать adnId. Затем удалить его и отредиректить.
     request.adnGeo.delete map { isDel =>
       val flash: (String, String) = if (isDel) {
@@ -110,7 +110,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
 
   /** Рендер страницы с формой редактирования osm-производной. */
-  def editNodeOsm(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+  def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     import request.adnGeo
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
     val urlPr = UrlParseResult.fromUrl( adnGeo.url.get ).get
@@ -121,7 +121,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   }
 
   /** Сабмит формы редактирования osm-производной. */
-  def editNodeOsmSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+  def editNodeOsmSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
     osmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -209,7 +209,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
 
   /** Рендер страницы с формой редактирования geo-круга. */
-  def editCircle(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+  def editCircle(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     import request.adnGeo
     val nodeOptFut = MAdnNodeCache.getById(adnGeo.adnId)
     val formBinded = circleFormM.fill(adnGeo)
@@ -219,7 +219,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   }
 
   /** Сабмит формы редактирования круга. */
-  def editCircleSubmit(geoId: String) = IsSuperuserAdnGeo(geoId).async { implicit request =>
+  def editCircleSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     lazy val logPrefix = s"editCircleSubmit($geoId): "
     circleFormM.bindFromRequest().fold(
       {formWithErrors =>

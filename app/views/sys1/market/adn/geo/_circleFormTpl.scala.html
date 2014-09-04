@@ -20,7 +20,7 @@
   <table class="input-w __size-L">
     @inputText(cf("circle.radius.value"),  '_label -> "Радиус")
     @select(
-      field     = cf("radius.units"),
+      field     = cf("circle.radius.units"),
       options   = options( DistanceUnit.values.toList.map(du => du.toString -> du.name).sortBy(_._2) : _* ),
       '_label   -> "Единицы расстояния"
     )

@@ -188,7 +188,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
 
 import MPersonIdent._
 
-trait MPersonIdent extends EsModelT {
+trait MPersonIdent extends EsModelPlayJsonT with EsModelT {
   override type T <: MPersonIdent
 
   def personId: String
@@ -214,7 +214,7 @@ trait MPersonIdent extends EsModelT {
 }
 
 
-trait EsModelStaticIdentT extends EsModelMinimalStaticT {
+trait EsModelStaticIdentT extends EsModelStaticT {
   override type T <: MPersonIdent
 }
 trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {

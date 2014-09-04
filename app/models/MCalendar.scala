@@ -15,7 +15,7 @@ import org.elasticsearch.client.Client
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
-object MCalendar extends EsModelMinimalStaticT with PlayMacroLogsImpl {
+object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
   import io.suggest.util.SioEsUtil._
   import LOGGER._
 
@@ -55,7 +55,7 @@ final case class MCalendar(
   data: String,
   id: Option[String] = None,
   versionOpt: Option[Long] = None
-) extends EsModelT {
+) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MCalendar
   override def companion = MCalendar
@@ -65,7 +65,7 @@ final case class MCalendar(
   }
 }
 
-trait MCalendarJmxMBean extends EsModelJMXMBeanCommon
+trait MCalendarJmxMBean extends EsModelJMXMBeanI
 final class MCalendarJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MCalendarJmxMBean

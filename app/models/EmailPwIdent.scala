@@ -83,7 +83,7 @@ final case class EmailPwIdent(
 
 
 // JMX
-trait EmailPwIdentJmxMBean extends EsModelJMXMBeanCommon
+trait EmailPwIdentJmxMBean extends EsModelJMXMBeanI
 final class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with EmailPwIdentJmxMBean

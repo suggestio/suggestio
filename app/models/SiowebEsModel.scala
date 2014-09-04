@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.{CopyContentResult, EsModel, EsModelMinimalStaticT}
+import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel, EsModelStaticT}
 import io.suggest.util.{JMXBase, SioEsUtil}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.SiowebEsUtil
@@ -25,9 +25,10 @@ object SiowebEsModel {
    * Список моделей, которые должны быть проинициалированы при старте.
    * @return Список EsModelMinimalStaticT.
    */
-  def ES_MODELS: Seq[EsModelMinimalStaticT] = {
+  def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq(
-      MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar
+      MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
+      MAdnNodeGeo
     )
   }
 
@@ -40,7 +41,7 @@ object SiowebEsModel {
 
   /** Запуск импорта данных ES-моделей из удалённого источника (es-кластера) в текущий.
     * Для подключения к стороннему кластеру будет использоваться transport client, не подключающийся к кластеру. */
-  def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelMinimalStaticT] = ES_MODELS): Future[CopyContentResult] = {
+  def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelCommonStaticT] = ES_MODELS): Future[CopyContentResult] = {
     val logger = play.api.Logger(getClass)
     val logPrefix = "importModelsFromRemote():"
     val esModelsCount = esModels.size
@@ -96,7 +97,7 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
     _importModelsFromRemote(remotes, SiowebEsModel.ES_MODELS)
   }
 
-  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelMinimalStaticT]) = {
+  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]) = {
     val addrs = remotes.split("[\\s,]+")
       .toIterator
       .map { hostPortStr =>

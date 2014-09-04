@@ -41,6 +41,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MCompanyJmx,
     new MCalendarJmx,
     new MInviteRequestJmx,
+    new MAdnNodeGeoJmx,
     new SiowebEsModelJmx
   )
 

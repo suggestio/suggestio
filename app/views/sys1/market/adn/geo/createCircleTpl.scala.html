@@ -1,11 +1,14 @@
 @(cf: Form[_], adnNode: MAdnNode)(implicit ctx: Context)
 
 @import ctx._
+@import stuff._
 
 @geoBase("Создать геокруг", nodeOpt = Some(adnNode)) {
 
   <p>Для создания новой фигуры, необходимо задать географические координаты центра и радиус.
-     Вместо круга можно <a href="@routes.SysAdnGeo.createForNodeOsm(adnNode.id.get)">задать произвольную osm-фигуру.</a></p>
+     Вместо круга можно
+     <a href="@routes.SysAdnGeo.createForNodeOsm(adnNode.id.get)">задать произвольную osm-фигуру.</a>
+  </p>
 
   @_circleFormTpl(
     cf          = cf,

@@ -25,7 +25,7 @@ import io.suggest.event.SioNotifierStaticClientI
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelMinimalStaticT with PlayMacroLogsImpl {
+object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -108,7 +108,7 @@ import MPerson._
 final case class MPerson(
   lang  : String,
   id    : Option[String] = None
-) extends EsModelT with MPersonLinks {
+) extends EsModelPlayJsonT with EsModelT with MPersonLinks {
 
   override type T = MPerson
   override def versionOpt = None
@@ -135,7 +135,7 @@ trait MPersonLinks {
 }
 
 
-trait MPersonJmxMBean extends EsModelJMXMBeanCommon
+trait MPersonJmxMBean extends EsModelJMXMBeanI
 final class MPersonJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MPersonJmxMBean

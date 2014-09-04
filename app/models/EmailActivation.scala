@@ -91,7 +91,7 @@ final case class EmailActivation(
 
 
 // JMX
-trait EmailActivationJmxMBean extends EsModelJMXMBeanCommon
+trait EmailActivationJmxMBean extends EsModelJMXMBeanI
 final class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with EmailActivationJmxMBean

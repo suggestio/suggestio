@@ -30,7 +30,8 @@ import EsModel.{stringParser, booleanParser, intParser}
  */
 
 object MInviteRequest
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
+  with EsModelStaticT
   with EMInviteRequestStatic
   with EMDateCreatedStatic
   with EMNameStaticMut
@@ -83,7 +84,7 @@ object MInviteRequest
     m.fold[JsObject](_.toPlayJsonWithId, idObjF)
   }
 
-  def deserializeEsModel[X](companion: EsModelMinimalStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
+  def deserializeEsModel[X](companion: EsModelStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
     jmap.get(ID_ESFN) match {
       case null =>
         val docId = Option(jmap get "id") map stringParser
@@ -145,6 +146,7 @@ final case class MInviteRequest(
   versionOpt    : Option[Long] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with EMInviteRequestMut
   with EMDateCreatedMut
   with EMNameMut
@@ -183,7 +185,7 @@ object InviteReqTypes extends Enumeration {
 
 
 /** mbean-интерфейс для JMX. */
-trait MInviteRequestJmxMBean extends EsModelJMXMBeanCommon
+trait MInviteRequestJmxMBean extends EsModelJMXMBeanI
 /** Реализация mbean'a: */
 final class MInviteRequestJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
@@ -337,7 +339,7 @@ case class SMJoinAnswers(
 // Если import вынести наружу, то будет "illegal cyclic reference involving object MInviteRequest"
 
 /** Аддон для статической части модели [[MInviteRequest]]. */
-sealed trait EMInviteRequestStatic extends EsModelStaticT {
+sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
   import MInviteRequest._
   override type T <: EMInviteRequestMut
 
@@ -391,7 +393,7 @@ sealed trait EMInviteRequestStatic extends EsModelStaticT {
 }
 
 /** Аддон для динамической части модели [[MInviteRequest]]. */
-sealed trait EMInviteRequestMut extends EsModelT {
+sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   import MInviteRequest._
   override type T <: EMInviteRequestMut
 

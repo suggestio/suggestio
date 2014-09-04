@@ -24,7 +24,7 @@ import org.elasticsearch.client.Client
  * Порт модели blog_record из старого sioweb.
  */
 
-object MBlog extends EsModelMinimalStaticT with PlayMacroLogsImpl {
+object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "blog"
 
   override type T = MBlog
@@ -74,7 +74,7 @@ final case class MBlog(
   text          : String,
   id            : Option[String] = None,
   date          : DateTime = DateTime.now()
-) extends EsModelT {
+) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MBlog
 
@@ -94,7 +94,7 @@ final case class MBlog(
 }
 
 
-trait MBlogJmxMBean extends EsModelJMXMBeanCommon
+trait MBlogJmxMBean extends EsModelJMXMBeanI
 final class MBlogJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MBlogJmxMBean

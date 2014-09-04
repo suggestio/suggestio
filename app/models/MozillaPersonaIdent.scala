@@ -55,7 +55,7 @@ final case class MozillaPersonaIdent(
 
 
 // JMX
-trait MozillaPersonaIdentJmxMBean extends EsModelJMXMBeanCommon
+trait MozillaPersonaIdentJmxMBean extends EsModelJMXMBeanI
 final class MozillaPersonaIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MozillaPersonaIdentJmxMBean
