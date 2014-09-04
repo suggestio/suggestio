@@ -18,14 +18,16 @@
     }
   }
 
-  <div class="image __size-M f-left js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
+  <div class="image __size-M f-left __first-in-line js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
     @stuff._fileUploadTpl(
       routes.Img.handleTempImg,
       fieldName = "welcomeImgId",
       previewRoot = "#welcomeImage",
       previewClass = "__size-M f-left"
     )
-    <a class="image_add-btn js-file-upload-btn" title="Загрузить картинку приветствия">Загрузить картинку приветствия</a>
+    <a class="image_add-btn js-file-upload-btn" title="Загрузить изображение">
+      <span>Загрузить<br/>изображение</span>
+    </a>
   </div>
 
 
