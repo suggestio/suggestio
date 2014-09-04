@@ -1695,6 +1695,8 @@ siomart =
 
     cursor :
       init : () ->
+        if siomart.utils.is_touch_device()
+          return false
         cursor_dom = siomart.utils.ge 'smFocusedAdsArrowLabel'
 
         siomart.utils.add_single_listener siomart.focused_ads.ads_container_dom, 'mousemove', ( event ) ->
