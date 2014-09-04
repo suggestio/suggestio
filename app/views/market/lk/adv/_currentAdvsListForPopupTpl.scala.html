@@ -15,8 +15,6 @@
   </div>
 }
 
-<div class="advs-statuses advs-statuses_in-popup">
-
   @advs.zipWithIndex.map { case(adv, i) =>
 
     @if(i == 2) {
@@ -50,7 +48,7 @@
 
     }
 
-    @if(advs.length > 3 && i == 2) {
+    @if(i == 2 && advs.length > 3) {
       </div>
     }
 
@@ -61,5 +59,3 @@
       <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">История операций</a>
     </span>
   }
-
-</div>

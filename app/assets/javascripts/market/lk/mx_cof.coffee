@@ -1001,10 +1001,6 @@ CbcaPopup =
     $popup = $ popupSelector
     $popup.show()
 
-    $popup
-    .find '.sm-block'
-    .addClass 'double-size'
-
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
 
