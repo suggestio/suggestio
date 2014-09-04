@@ -22,6 +22,13 @@
       </a>
       <hr class="delimiter"/>
 
+      @if(node.adn.isReceiver) {
+        <a class="right-bar_menu-i" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+          <span>Рекламодатели</span>
+        </a>
+        <hr class="delimiter"/>
+      }
+
       @if(isSuperuser) {
         <a class="right-bar_menu-i" href="@routes.SysMarket.showAdnNode(node.id.get)">
           <span>System</span>
@@ -29,6 +36,7 @@
         <hr class="delimiter"/>
       }
     }
+
   </nav>
 
   @rightBarAfter

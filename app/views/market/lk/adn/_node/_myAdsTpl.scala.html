@@ -32,13 +32,12 @@
             <span></span>
           </a>
         } { adv =>
-          <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))">
             @adv match {
               case advReq: MAdvReq => {
-                Находится<br/>на рассмотрении<br/>администратора
+                <a class="adv-item_status __request js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))"></a>
               }
               case advOk: MAdvOk => {
-                Находится<br/>в размещении
+                <a class="adv-item_status __ok js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))"></a>
               }
               case advRefused: MAdvRefuse => {
                 @* Этот код по идее никогда не должен выполняться: *@

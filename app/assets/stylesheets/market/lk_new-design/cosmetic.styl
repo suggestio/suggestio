@@ -140,6 +140,34 @@
       background-color  #f44040
       border-radius(50%)
 
+  &_status
+    position          absolute
+    left              0
+    top               0
+    z-index           40
+
+    display           block
+    width             150px
+    height            150px
+
+    color             white
+    text-align        center
+    text-decoration   none
+    cursor            pointer
+
+    span
+      display         inline-block
+      padding-top     50px
+      vertical-align  middle
+      font-size       14px
+      line-height     16px
+
+  &_status.__request
+    background-color  rgba(76,136,169,0.81)
+
+  &_status.__ok
+    background-color  rgba(26,188,138,0.81)
+
 /********************************************************************************************************************/
 /* Страница биллинга */
 /********************************************************************************************************************/
