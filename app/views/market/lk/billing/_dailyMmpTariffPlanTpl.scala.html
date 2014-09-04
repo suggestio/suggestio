@@ -12,7 +12,7 @@
 
   <table class="tariff_info">
     <tr>
-      <td>&nbsp;</td>
+      <td colspan="2">&nbsp;</td>
       <td class="td tariff_info-title">
         Будние&nbsp;дни:&nbsp;пн-чт
       </td>
@@ -26,27 +26,28 @@
       </td>
     </tr>
     <tr>
-      <td class="td tariff_pink ft-XS dark-gray">
+      <td class="td tariff_green ft-XS white">
         Минимальный&nbsp;модуль<br/>
         (на&nbsp;схеме&nbsp;слева)
       </td>
+      <td class="td"></td>
       @defining( mbmd.currency ) { currency =>
 
         <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpWeekday, currency)/сутки
         </td>
-        <td class="td tariff_pink"></td>
+        <td class="td"></td>
         <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpWeekend, currency)/сутки
         </td>
-        <td class="td tariff_pink"></td>
+        <td class="td"></td>
         <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpPrimetime, currency)/сутки
         </td>
       }
     </tr>
     <tr>
-      <td></td>
+      <td colspan="2"></td>
       <td class="td light-gray ft-XS" colspan="5">
         Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.shownTypeId) @adnNode.meta.name
         определены тарифные планы на @ctx.now.getYear год.
