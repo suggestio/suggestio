@@ -9,9 +9,8 @@ import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import scala.concurrent.future
 import play.api.libs.concurrent.Execution.Implicits._
-import models.MAdnNodeCache
+import models.{MAdnNodeGeo, MAdnNodeCache}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
-import io.suggest.ym.model.MAdnNode
 import io.suggest.ym.model.common.CleanupAdnProducerIdsOnAdnNodeDelete
 
 /**
@@ -44,7 +43,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     MAdnNodeCache,
     deleteAdsOnAdnNodeDeleteSNSC,
     cleanupAdnProducerIdsOnDeleteAdnNode,
-    controllers.MarketShowcase
+    controllers.MarketShowcase,
+    MAdnNodeGeo
   )
 
   /** SiowebSup собирается запустить сие. */

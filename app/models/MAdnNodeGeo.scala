@@ -1,7 +1,9 @@
 package models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.event.subscriber.SnFunSubscriber
+import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
@@ -15,6 +17,7 @@ import play.api.libs.json._
 import java.{util => ju}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -29,7 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * геообъектов необходимо, чтобы гибко управлять точностью и ресурсоёмкостью индекса. И просто чтобы регулировать
  * приоритет объектов.
  */
-object MAdnNodeGeo extends EsChildModelStaticT with PlayMacroLogsImpl {
+object MAdnNodeGeo extends EsChildModelStaticT with PlayMacroLogsImpl with SNStaticSubscriber {
+
+  import LOGGER._
 
   override type T = MAdnNodeGeo
 
@@ -104,12 +109,13 @@ object MAdnNodeGeo extends EsChildModelStaticT with PlayMacroLogsImpl {
    * @param offset Сдвиг по выдаче.
    * @return Фьючерс со списком результатов.
    */
-  def findByNode(adnId: String, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+  def findByNode(adnId: String, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVersions: Boolean = false)
                 (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
       .setQuery( adnIdQuery(adnId) )
       .setSize( maxResults )
       .setFrom( offset )
+      .setVersion(withVersions)
       .execute()
       .map { searchResp2list }
   }
@@ -138,6 +144,30 @@ object MAdnNodeGeo extends EsChildModelStaticT with PlayMacroLogsImpl {
       .addField(ADN_ID_ESFN)
       .execute()
       .map { searchResp2fnList[String](_, ADN_ID_ESFN) }
+  }
+
+  /** Удалить все документы, относящиеся к указанному adnId. */
+  def deleteByAdnId(adnId: String)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+    prepareDeleteByQuery
+      .setQuery( adnIdQuery(adnId) )
+      .execute()
+      .map { _.iterator().size }
+  }
+
+  /** При удалении узла нужно производить чистку в этой модели. */
+  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+    import play.api.libs.concurrent.Execution.Implicits.defaultContext
+    import _root_.util.SiowebEsUtil.client
+    List(
+      AdnNodeDeletedEvent.getClassifier() -> Seq(SnFunSubscriber {
+        case nde: AdnNodeDeletedEvent =>
+          trace(s"Node ${nde.adnId} deletion signal received. Let's clean-up node's geos...")
+          deleteByAdnId(nde.adnId) onComplete {
+            case Success(r)  => info(s"Successfully deleted $r geos related to node ${nde.adnId}.")
+            case Failure(ex) => error("Failed to cleanup geos, related to node " + nde.adnId, ex)
+          }
+      })
+    )
   }
 
 }

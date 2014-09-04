@@ -44,7 +44,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   /** Выдать страницу с географиями по узлам. */
   def forNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    MAdnNodeGeo.findByNode(adnId) map { geos =>
+    MAdnNodeGeo.findByNode(adnId, withVersions = true) map { geos =>
       Ok(forNodeTpl(request.adnNode, geos))
     }
   }
