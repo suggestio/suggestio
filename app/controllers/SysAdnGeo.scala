@@ -1,7 +1,8 @@
 package controllers
 
 import io.suggest.model.geo.{Distance, CircleGs}
-import models.{NodeGeoLevels, NodeGeoLevel, MAdnNodeCache, MAdnNodeGeo}
+import io.suggest.ym.model.{NodeGeoLevels, MAdnNodeGeo}
+import models.{NodeGeoLevel, MAdnNodeCache}
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.mvc.{Result, ActionBuilder}

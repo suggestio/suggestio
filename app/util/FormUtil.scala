@@ -1,6 +1,7 @@
 package util
 
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import io.suggest.ym.model.NodeGeoLevels
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -347,7 +348,7 @@ object FormUtil {
 
 
   // География
-  /** Маппинг для элемента [[models.NodeGeoLevels]]. */
+  /** Маппинг для элемента [[NodeGeoLevels]]. */
   def nodeGeoLevelM: Mapping[NodeGeoLevel] = {
     nonEmptyText(minLength = 1, maxLength = 5)
       .transform[Option[NodeGeoLevel]] (
