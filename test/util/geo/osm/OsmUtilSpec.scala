@@ -2,7 +2,7 @@ package util.geo.osm
 
 import java.io.InputStream
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.{LineStringGs, GeoPoint}
 import org.scalatestplus.play._
 import play.api.GlobalSettings
 import play.api.test.FakeApplication
@@ -68,13 +68,18 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
           resWay.nodesOrdered.size  mustBe  ri.ndLen
           resWay.nodesOrdered.head  mustBe  ri.firstNode
           resWay.nodesOrdered.last  mustBe  ri.lastNode
+          val gs = resWay.toGeoShape
+          assert( gs.isInstanceOf[LineStringGs] )
+          val lsgs = gs.asInstanceOf[LineStringGs]
+          lsgs.coords  mustBe  resWay.nodesOrdered.map(_.gp).toSeq
         }
       }
     }
 
 
     "parse relations" in {
-      case class ResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long)
+      case class ResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,
+                            allMemberIds: Seq[Long] = Nil)
       val rels: Seq[(String, ResultInfo)] = Seq(
         "rel.vaska.osm.xml" -> ResultInfo(1114252L, membersCount = 24,
           firstBorderMemberId = 71338507L,
@@ -90,7 +95,11 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
         ),
         "rel.spb.kirovsky-rajon.osm.xml" -> ResultInfo(369514L, 23,
           firstBorderMemberId = 31396996L,
-          lastBorderMemberId = 159348605L
+          lastBorderMemberId = 159348605L,
+          allMemberIds = Seq(31396996L, 182611220L, 37669206L, 71338511L, 79570062L, 46835382L, 46835375L,
+            79522204L, 79522201L, 46896188L, 46896180L, 46835385L, 45205337L, 79522192L, 79522199L, 45205338L,
+            79522198L, 79522202L, 79522193L, 45273634L, 264454722L, 264454721L, 159348605L
+          )
         )
       )
       rels foreach { case (rf, ri) =>
@@ -103,12 +112,20 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
           val bms = rel.borderMembers.toSeq
           bms.head.obj.id  mustBe  ri.firstBorderMemberId
           bms.last.obj.id  mustBe  ri.lastBorderMemberId
-          res.toGeoShape  // Не должно быть экзепшена
-          // TODO Нужно проверять корректность линий
+          println( res.toGeoShape.toPlayJson )  // Не должно быть экзепшена
+          if (ri.allMemberIds.nonEmpty) {
+            // Пройтись по всему списку member'ов
+            for(i <- 0 until rel.members.size) {
+              rel.members(i).obj.id  mustBe  ri.allMemberIds(i)
+            }
+          }
+          // TODO Нужно проверять корректность линий: порядок точек внутри way'я может быть как прямой, так и обратный
+          // по отношению к соседним путям.
         }
       }
     }
 
+    // TODO Нужны тесты для OsmRel.directWays()
   }
 
 }

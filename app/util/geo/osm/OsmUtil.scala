@@ -320,19 +320,43 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   def hasInners = inners.hasNext
   def hasSubareas = subareas.hasNext
 
+  /** Пути могут быть иметь обратный порядок узлов внутри себя. Надо стыковать текущую последнюю точку со следующей
+    * первой точкой путем реверса точек при необходимости. */
+  def directWays(ways: Iterator[OsmWay]): List[OsmNode] = {
+    val allPts = ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
+      if (way.nodesOrdered.head == nodesAcc.head) {
+        // нужно добавить все элементы слева в акк в обратном порядке
+        way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
+      } else if (way.nodesOrdered.last == nodesAcc.head) {
+        // Нужно добавить все элементы слева в акк в прямом порядке
+        way.nodesOrdered.tail.foldRight(nodesAcc) { (node, _acc) => node :: _acc }
+      } else if (way.nodesOrdered.last == nodesAcc.last) {
+        // Нужно добавить все элементы в хвост акку в обратном порядке
+        nodesAcc ++ way.nodesOrdered.reverse
+      } else if (way.nodesOrdered.head == nodesAcc.last) {
+        // нужно добавить все элемены в хвост акку в прямом порядке
+        nodesAcc ++ way.nodesOrdered
+      } else {
+        throw new IllegalArgumentException(s"directWays(): Cannot connect way $way to acc $nodesAcc -- no common points found.")
+      }
+    }
+    val lastNode = allPts.last
+    if (lastNode != allPts.head)
+      lastNode :: allPts
+    else
+      allPts
+  }
+
   override def toGeoShape: GeoShape = {
     // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
     val acc0: List[GeoShape] = if (hasOuters) {
-      val outerLineNodesIter = outerWays.flatMap(_.nodesOrdered)
-      val line = LineStringGs(outerLineNodesIter.map(_.gp).toSeq)
+      val outerLineNodes = directWays( outerWays )
+      val line = LineStringGs( outerLineNodes.map(_.gp) )
       val e = if (isOuterClosed) {
         val holes = innerHoles
           .map { wayGroup =>
-            val holePoints = wayGroup
-              .iterator
-              .flatMap { _.nodesOrdered }
+            val holePoints = directWays( wayGroup.iterator )
               .map(_.gp)
-              .toSeq
             LineStringGs( holePoints )
           }
           .toList

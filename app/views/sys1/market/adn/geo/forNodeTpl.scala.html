@@ -29,7 +29,11 @@
             <td><span title="@geo.id">@geo.id.get.substring(0, 4)...</span></td>
             <td>@geo.url.map { url =><a href="@url" target="_blank">Go</a>}</td>
             <td>@geo.glevel</td>
-            <td><span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span></td>
+            <td>
+              <a href="@routes.SysAdnGeo.showGeoJson(geo.id.get, geo.adnId)">
+                <span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span>
+              </a>
+            </td>
             <td>@_prettyDate(geo.lastModified)</td>
             <td>@geo.versionOpt</td>
             <td>
@@ -47,5 +51,9 @@
 
   <p>
     <a href="@routes.SysAdnGeo.createCircle(adnNode.id.get)">Добавить круг...</a>
+  </p>
+
+  <p>
+    <a href="http://geojsonlint.com/">Визуальная проверка GeoJSON.</a>
   </p>
 }

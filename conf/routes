@@ -357,4 +357,6 @@ GET  /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircle(adnI
 POST /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircleSubmit(adnId)
 GET  /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircle(geoId, adnId)
 POST /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircleSubmit(geoId, adnId)
+GET  /sys/adn/geo/json/:geoId            controllers.SysAdnGeo.showGeoJson(geoId, adnId)
+
 
