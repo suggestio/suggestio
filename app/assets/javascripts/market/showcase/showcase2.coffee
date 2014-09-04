@@ -1028,6 +1028,23 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
         siomart.focused_ads.close()
 
+    #############################
+    ## Обработка keyup
+    #############################
+    document_keyup : ( event ) ->
+      #esc
+      if event.keyCode == 27
+        siomart.focused_ads.close()
+
+      #left arrow
+      if event.keyCode == 37
+        siomart.focused_ads.prev_ad()
+
+      #right arrow
+      if event.keyCode == 39
+        siomart.focused_ads.next_ad()
+
+
     document_keyup_event : ( event ) ->
 
       if !event
@@ -1427,6 +1444,7 @@ siomart =
   ## Объект для работы с карточками продьюсера
   ############################################
   focused_ads :
+    is_active : false
     load_more_ads_requested : false
     
     load_more_ads : () ->
@@ -1654,6 +1672,7 @@ siomart =
 
     ## Закрыть
     close : () ->
+      this.is_active = false
       siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
       animation_cb = () ->
         siomart.utils.removeClass siomart.focused_ads._container, 'fs-animated-end'
@@ -1702,6 +1721,7 @@ siomart =
     ## Инициализация focused_ads
     ############################
     init : () ->
+      this.is_active = true
       siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
       this.ads_container_dom = siomart.utils.ge('smFocusedAdsContainer')
 
@@ -2005,6 +2025,7 @@ siomart =
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
     siomart.utils.add_single_listener document, _event, siomart.events.document_click
+    siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup
 
     ## Поиск
     _search_dom = siomart.utils.ge('smSearchField')
