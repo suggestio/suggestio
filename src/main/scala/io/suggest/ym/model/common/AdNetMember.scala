@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.ym.model.common.AdNetMemberTypes.AdNetMemberType
-import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
+import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
@@ -172,7 +172,7 @@ import AdNetMember._
 
 
 /** Трейт для статической части модели участника рекламной сети. */
-trait EMAdNetMemberStatic extends EsModelStaticT {
+trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
 
   override type T <: EMAdNetMember
 
@@ -453,7 +453,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
 
 
 /** Трейт для экземпляра модели участника рекламной сети. */
-trait EMAdNetMember extends EsModelT {
+trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
   override type T <: EMAdNetMember
 
   var adn: AdNetMemberInfo

@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.{JsObject, JsNumber}
@@ -18,7 +18,7 @@ object EMBlockMeta {
 
 import EMBlockMeta._
 
-trait EMBlockMetaStatic extends EsModelStaticT {
+trait EMBlockMetaStatic extends EsModelStaticMutAkvT {
   override type T <: EMBlockMetaMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -41,11 +41,11 @@ trait IBlockMeta {
 }
 
 /** Интерфейсная часть EMBlockMeta. Вынесена, чтобы избежать сериализации поля blockMeta когда это не нужно. */
-trait EMBlockMetaI extends EsModelT with IBlockMeta {
+trait EMBlockMetaI extends EsModelPlayJsonT with IBlockMeta {
   override type T <: EMBlockMetaI
 }
 
-/** Аддон для экземпляра [[io.suggest.model.EsModelT]] для интеграции поля blockId в модель. */
+/** Аддон для экземпляра [[io.suggest.model.EsModelPlayJsonT]] для интеграции поля blockId в модель. */
 trait EMBlockMeta extends EMBlockMetaI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     BLOCK_META_ESFN -> blockMeta.toPlayJson :: super.writeJsonFields(acc)

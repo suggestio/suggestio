@@ -20,7 +20,7 @@ import play.api.libs.json.JsString
  * Created: 18.03.14 11:35
  * Description: Метаданные об индексах ТЦ представляются и хранятся в этой модели.
  */
-object MMartInx extends EsModelStaticT with MacroLogsImpl {
+object MMartInx extends EsModelStaticMutAkvT with EsModelStaticT with MacroLogsImpl {
 
   override val ES_TYPE_NAME: String = "inxMart"
 
@@ -54,7 +54,7 @@ import MMartInx._
 case class MMartInx(
   var martId: String,
   var targetEsInxName: String
-) extends EsModelT with MSingleInxT {
+) extends EsModelPlayJsonT with EsModelT with MSingleInxT {
   override type T = MMartInx
 
   @JsonIgnore def id: Option[String] = Some(martId)
@@ -104,7 +104,7 @@ case class MMartInx(
 
 
 /** JMX MBean интерфейс */
-trait MMartInxJmxMBean extends EsModelJMXMBeanCommon
+trait MMartInxJmxMBean extends EsModelJMXMBeanI
 
 /** JMX MBean реализация. */
 final class MMartInxJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)

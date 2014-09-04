@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.JsString
@@ -23,7 +23,7 @@ object EMUserCatId {
 import EMUserCatId._
 
 
-trait EMUserCatIdStatic extends EsModelStaticT {
+trait EMUserCatIdStatic extends EsModelStaticMutAkvT {
   override type T <: EMUserCatIdMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -62,7 +62,7 @@ trait EMUserCatIdStatic extends EsModelStaticT {
 }
 
 
-trait EMUserCatIdI extends EsModelT {
+trait EMUserCatIdI extends EsModelPlayJsonT {
   override type T <: EMUserCatIdI
   def userCatId: Option[String]
 }

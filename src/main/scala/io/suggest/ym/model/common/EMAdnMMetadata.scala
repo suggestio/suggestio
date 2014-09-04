@@ -9,7 +9,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.QueryBuilders
 import org.joda.time.DateTime
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 import play.api.libs.json._
@@ -68,7 +68,7 @@ object EMAdnMMetadataStatic {
 import EMAdnMMetadataStatic._
 
 
-trait EMAdnMMetadataStatic extends EsModelStaticT {
+trait EMAdnMMetadataStatic extends EsModelStaticMutAkvT {
 
   override type T <: EMAdnMMetadata
 
@@ -103,7 +103,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticT {
 }
 
 
-trait EMAdnMMetadata extends EsModelT {
+trait EMAdnMMetadata extends EsModelPlayJsonT {
   override type T <: EMAdnMMetadata
 
   var meta: AdnMMetadata

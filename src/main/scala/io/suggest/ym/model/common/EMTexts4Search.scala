@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import java.{util => ju, lang => jl}
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -24,7 +24,7 @@ object EMTexts4Search {
 
 import EMTexts4Search._
 
-trait EMText4SearchStatic extends EsModelStaticT {
+trait EMText4SearchStatic extends EsModelStaticMutAkvT {
   override type T <: EMTexts4Search
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -40,7 +40,7 @@ trait EMText4SearchStatic extends EsModelStaticT {
   }
 }
 
-trait EMTexts4Search extends EsModelT {
+trait EMTexts4Search extends EsModelPlayJsonT {
   override type T <: EMTexts4Search
 
   var texts4search: Texts4Search

@@ -23,7 +23,7 @@ object EMPersonIds {
 
 import EMPersonIds._
 
-trait EMPersonIdsStatic extends EsModelStaticT {
+trait EMPersonIdsStatic extends EsModelStaticMutAkvT {
 
   override type T <: EMPersonIds
 
@@ -65,7 +65,7 @@ trait EMPersonIdsStatic extends EsModelStaticT {
   }
 }
 
-trait EMPersonIds extends EsModelT {
+trait EMPersonIds extends EsModelPlayJsonT {
 
   override type T <: EMPersonIds
 

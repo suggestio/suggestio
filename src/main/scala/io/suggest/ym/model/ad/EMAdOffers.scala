@@ -1,6 +1,6 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import java.util.Currency
 import java.{util => ju}
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -63,7 +63,7 @@ object EMAdOffers {
 import EMAdOffers._
 
 
-trait EMAdOffersStatic extends EsModelStaticT {
+trait EMAdOffersStatic extends EsModelStaticMutAkvT {
   override type T <: EMAdOffersMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -135,11 +135,11 @@ trait IOffers {
   def offers: List[AOBlock]
 }
 
-trait EMAdOffersI extends EsModelT with IOffers {
+trait EMAdOffersI extends EsModelPlayJsonT with IOffers {
   override type T <: EMAdOffersI
 }
 
-/** read-only аддон для экземпляра [[io.suggest.model.EsModelT]] для добавления поддержки работы с полем offers. */
+/** read-only аддон для экземпляра [[io.suggest.model.EsModelPlayJsonT]] для добавления поддержки работы с полем offers. */
 trait EMAdOffers extends EMAdOffersI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)

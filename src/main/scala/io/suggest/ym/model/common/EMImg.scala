@@ -2,7 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.{MPict, EsModelT, EsModelStaticT}
+import io.suggest.model.{MPict, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.client.Client
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,7 +47,7 @@ object EMImg {
 import EMImg._
 
 
-trait EMImgStatic extends EsModelStaticT {
+trait EMImgStatic extends EsModelStaticMutAkvT {
   override type T <: EMImgMut
 
   def LOGGER: Logger
@@ -83,7 +83,7 @@ trait Imgs {
   def imgs: Imgs_t
 }
 
-trait EMImgI extends EsModelT with Imgs {
+trait EMImgI extends EsModelPlayJsonT with Imgs {
   override type T <: EMImgI
 }
 

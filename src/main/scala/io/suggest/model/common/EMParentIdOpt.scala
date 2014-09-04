@@ -1,7 +1,7 @@
 package io.suggest.model.common
 
 import io.suggest.model.EsModel._
-import io.suggest.model.{EsModelMinimalStaticT, EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelCommonStaticT, EsModelStaticT, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import play.api.libs.json.JsString
 import io.suggest.util.SioEsUtil._
 
@@ -21,7 +21,7 @@ object EMParentIdOpt {
 }
 
 
-trait EMParentIdOptStatic extends EsModelMinimalStaticT {
+trait EMParentIdOptStatic extends EsModelCommonStaticT {
   override type T <: EMParentIdOpt
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -31,7 +31,7 @@ trait EMParentIdOptStatic extends EsModelMinimalStaticT {
 }
 
 
-trait EMParentIdOptStaticMut extends EsModelStaticT with EMParentIdOptStatic {
+trait EMParentIdOptStaticMut extends EsModelStaticMutAkvT with EMParentIdOptStatic {
   override type T <: EMParentIdOptMut
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
@@ -42,7 +42,7 @@ trait EMParentIdOptStaticMut extends EsModelStaticT with EMParentIdOptStatic {
 }
 
 
-trait EMParentIdOpt extends EsModelT {
+trait EMParentIdOpt extends EsModelPlayJsonT {
   override type T <: EMParentIdOpt
 
   def parentId: Option[String]

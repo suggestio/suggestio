@@ -22,7 +22,8 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
  * Рефакторинг в MMartAd был бы слишком глубок, поэтому лучше было начать с чистого листа.
  */
 object MAd
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
+  with EsModelStaticT
   with EMProducerIdStatic
   with EMAdOffersStatic
   with EMImgStatic
@@ -38,7 +39,7 @@ object MAd
   with EMDisableReasonStatic
   with EMRichDescrStatic
   with EMModerationStatic
-  with EsModelStaticIgnore
+  with EsModelStaticMutAkvIgnoreT
 {
   import LOGGER._
 
@@ -168,6 +169,7 @@ final case class MAd(
   var versionOpt    : Option[Long] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with MAdT
   with EMProducerIdMut
   with EMAdOffersMut
@@ -210,7 +212,7 @@ final case class MAd(
 
 
 /** JMX MBean интерфейс */
-trait MAdJmxMBean extends EsModelJMXMBeanCommon {
+trait MAdJmxMBean extends EsModelJMXMBeanI {
   def searchForReceiverAtPubLevel(receiverId: String, level: String): String
 }
 

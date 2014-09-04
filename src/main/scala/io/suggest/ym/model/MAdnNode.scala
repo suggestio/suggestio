@@ -22,7 +22,7 @@ import io.suggest.util.MacroLogsImpl
  * Модель узла конструируется компилятором из кучи кусков, вроде бы не связанных между собой.
  */
 object MAdnNode
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
   with EMCompanyIdStatic
   with EMPersonIdsStatic
   with EMAdNetMemberStatic
@@ -30,7 +30,7 @@ object MAdnNode
   with EMAdnMMetadataStatic
   with EMNodeConfStatic
   with EMImgGalleryStatic
-  with EsModelStaticIgnore
+  with EsModelStaticMutAkvIgnoreT
   with MacroLogsImpl
   with AdnNodesSearch
 {
@@ -82,6 +82,7 @@ final case class MAdnNode(
   versionOpt        : Option[Long] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with EMCompanyId
   with EMPersonIds
   with EMAdNetMember
@@ -138,7 +139,7 @@ final case class MAdnNode(
 
 
 /** JMX MBean интерфейс */
-trait MAdnNodeJmxMBean extends EsModelJMXMBeanCommon
+trait MAdnNodeJmxMBean extends EsModelJMXMBeanI
 
 /** JMX MBean реализация. */
 final class MAdnNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)

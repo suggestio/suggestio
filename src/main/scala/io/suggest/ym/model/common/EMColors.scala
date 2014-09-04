@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil._
@@ -20,7 +20,7 @@ object EMColors {
 import EMColors._
 
 
-trait EMColorsStatic extends EsModelStaticT {
+trait EMColorsStatic extends EsModelStaticMutAkvT {
   override type T <: EMColorsMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -41,7 +41,7 @@ trait IColors {
   def colors: Map[String, String]
 }
 
-trait EMColorsI extends EsModelT with IColors {
+trait EMColorsI extends EsModelPlayJsonT with IColors {
   override type T <: EMColorsI
 }
 

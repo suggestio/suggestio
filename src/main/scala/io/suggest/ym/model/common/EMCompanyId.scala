@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticT, EsModel, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
@@ -24,7 +24,7 @@ object EMCompanyId {
 import EMCompanyId._
 
 
-trait EMCompanyIdStatic extends EsModelStaticT {
+trait EMCompanyIdStatic extends EsModelStaticMutAkvT {
   override type T <: EMCompanyId
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -68,7 +68,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
 }
 
 
-trait EMCompanyId extends EsModelT with MCompanySel {
+trait EMCompanyId extends EsModelPlayJsonT with MCompanySel {
   override type T <: EMCompanyId
 
   var companyId: String

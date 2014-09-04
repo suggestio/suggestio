@@ -4,7 +4,7 @@ import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.ym.model.{MWelcomeAd, MAd, AdNetMemberType, MAdnNode}
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.util.MacroLogsImpl
-import io.suggest.model.EsModelMinimalStaticT
+import io.suggest.model.EsModelStaticT
 import scala.util.{Failure, Try, Success}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -105,7 +105,7 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
 
   /** Генератор complete-функции подхвата завершения удаления рекламных карточек.
     * Функция только сообщает в логи о своих успехах. */
-  private def handleFinishPf(logPrefix: String, model: EsModelMinimalStaticT): PartialFunction[Try[_], _] = {
+  private def handleFinishPf(logPrefix: String, model: EsModelStaticT): PartialFunction[Try[_], _] = {
     case Success(result) =>
       debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName)
     case Failure(ex) =>

@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -20,7 +20,7 @@ object EMAdPanelSettings {
 import EMAdPanelSettings._
 
 
-trait EMAdPanelSettingsStatic extends EsModelStaticT {
+trait EMAdPanelSettingsStatic extends EsModelStaticMutAkvT {
   override type T <: EMAdPanelSettingsMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -35,7 +35,7 @@ trait EMAdPanelSettingsStatic extends EsModelStaticT {
   }
 }
 
-trait EMAdPanelSettings extends EsModelT {
+trait EMAdPanelSettings extends EsModelPlayJsonT {
   override type T <: EMAdPanelSettings
   def panel: Option[AdPanelSettings]
 

@@ -1,6 +1,6 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil._
@@ -28,7 +28,7 @@ object EMRichDescr {
 import EMRichDescr._
 
 
-trait EMRichDescrStatic extends EsModelStaticT {
+trait EMRichDescrStatic extends EsModelStaticMutAkvT {
   override type T <: EMRichDescrMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -48,7 +48,7 @@ trait EMRichDescrStatic extends EsModelStaticT {
 }
 
 
-trait EMRichDescrI extends EsModelT {
+trait EMRichDescrI extends EsModelPlayJsonT {
   override type T <: EMRichDescrI
   def richDescrOpt: Option[RichDescr]
 }

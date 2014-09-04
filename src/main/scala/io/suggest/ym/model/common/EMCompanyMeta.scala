@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
 import play.api.libs.json._
@@ -23,7 +23,7 @@ object EMCompanyMeta {
 import EMCompanyMeta._
 
 
-trait EMCompanyMetaStatic extends EsModelStaticT {
+trait EMCompanyMetaStatic extends EsModelStaticMutAkvT {
   override type T <: EMCompanyMetaMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -40,7 +40,7 @@ trait EMCompanyMetaStatic extends EsModelStaticT {
 }
 
 
-trait EMCompanyMeta extends EsModelT {
+trait EMCompanyMeta extends EsModelPlayJsonT {
   override type T <: EMCompanyMeta
   def meta: MCompanyMeta
 

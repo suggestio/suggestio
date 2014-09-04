@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.search.sort.SortBuilder
 import scala.concurrent.{ExecutionContext, Future}
@@ -50,7 +50,7 @@ object EMProducerId {
 import EMProducerId._
 
 
-trait EMProducerIdStatic extends EsModelStaticT {
+trait EMProducerIdStatic extends EsModelStaticMutAkvT {
   override type T <: EMProducerIdMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -104,7 +104,7 @@ trait EMProducerIdStatic extends EsModelStaticT {
 }
 
 
-trait EMProducerIdI extends EsModelT {
+trait EMProducerIdI extends EsModelPlayJsonT {
   override type T <: EMProducerIdI
 
   /** Кто является изготовителем этой рекламной карточки? */

@@ -25,7 +25,7 @@ object EMLogoImg {
 import EMLogoImg._
 
 
-trait EMLogoImgStatic extends EsModelStaticT {
+trait EMLogoImgStatic extends EsModelStaticMutAkvT {
   override type T <: EMLogoImgMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -45,7 +45,7 @@ trait LogoImgOptI {
   def logoImgOpt: Option[MImgInfoT]
 }
 
-trait EMLogoImgI extends EsModelT with LogoImgOptI {
+trait EMLogoImgI extends EsModelPlayJsonT with LogoImgOptI {
   override type T <: EMLogoImgI
 }
 

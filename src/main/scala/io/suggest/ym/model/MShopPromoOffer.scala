@@ -23,7 +23,7 @@ import scala.util.{Failure, Success}
  * Этот оффер привязан к магазину -- это избавляет от кучи головной боли, хоть и бывает не оптимально.
  */
 
-object MShopPromoOffer extends EsModelMinimalStaticT with MacroLogsImpl {
+object MShopPromoOffer extends EsModelStaticT with MacroLogsImpl {
 
   import LOGGER._
 
@@ -117,7 +117,7 @@ case class MShopPromoOffer(
   // TODO Нужно использовать облегчённую модель датума, без постоянной сериализации-десериализации. Можно просто через набор одноимённых var + парсер json в над-трейте.
   datum: YmPromoOfferDatum = new YmPromoOfferDatum(),
   var id: Option[String] = None
-) extends EsModelMinimalT with MShopOffersSel {
+) extends EsModelT with MShopOffersSel {
 
   override type T = MShopPromoOffer
 

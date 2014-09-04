@@ -8,7 +8,7 @@ import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.model.EsModelMinimalStaticT
+import io.suggest.model.EsModelStaticT
 import io.suggest.ym.model.common.{SlNameTokenStr, DynSearchArgs, EsDynSearchStatic, EMReceivers}
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd

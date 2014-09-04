@@ -80,7 +80,7 @@ object EMReceivers {
 import EMReceivers._
 
 
-trait EMReceiversStatic extends EsModelStaticT {
+trait EMReceiversStatic extends EsModelStaticMutAkvT {
 
   override type T <: EMReceiversMut
 
@@ -115,7 +115,7 @@ trait EMReceiversStatic extends EsModelStaticT {
 }
 
 
-trait EMReceiversI extends EsModelT {
+trait EMReceiversI extends EsModelPlayJsonT {
   override type T <: EMReceiversI
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */

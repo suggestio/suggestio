@@ -27,7 +27,7 @@ object EMImgGallery {
 import EMImgGallery._
 
 
-trait EMImgGalleryStatic extends EsModelStaticT {
+trait EMImgGalleryStatic extends EsModelStaticMutAkvT {
   override type T <: EMImgGalleryMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -47,7 +47,7 @@ trait EMImgGalleryStatic extends EsModelStaticT {
   }
 }
 
-trait EMImgGallery extends EsModelT {
+trait EMImgGallery extends EsModelPlayJsonT {
   override type T <: EMImgGallery
   def gallery: List[String]
 

@@ -23,7 +23,8 @@ import io.suggest.model.common.{EMParentIdOptStaticMut, EMNameStaticMut, EMParen
  * Используется case-insensivitive-кодирование без пунктуации.
  */
 object MYmCategory
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
+  with EsModelStaticT
   with EMNameStaticMut
   with EMParentIdOptStaticMut
   with MacroLogsImpl
@@ -128,6 +129,7 @@ final case class MYmCategory(
   id            : Option[String] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with EMNameMut
   with EMParentIdOptMut
 {
@@ -136,12 +138,14 @@ final case class MYmCategory(
   override def versionOpt = None
   override def companion = MYmCategory
 
-  /** Дополнительные параметры сохранения можно выставить через эту функцию. */
-  override def saveBuilder(irb: IndexRequestBuilder) {
-    super.saveBuilder(irb)
+
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.indexRequestBuilder
     if (parentId.isDefined) {
       irb.setParent(parentId.get)
     }
+    irb
   }
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.model.common
 
-import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.JsNumber
@@ -17,7 +17,7 @@ object EMPrioOpt {
 
 import EMPrioOpt._
 
-trait EMPrioOptStatic extends EsModelStaticT {
+trait EMPrioOptStatic extends EsModelStaticMutAkvT {
   override type T <: EMPrioOptMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -34,7 +34,7 @@ trait EMPrioOptStatic extends EsModelStaticT {
 }
 
 
-trait EMPrioOptI extends EsModelT {
+trait EMPrioOptI extends EsModelPlayJsonT {
   override type T <: EMPrioOptI
   def prio: Option[Int]
 }

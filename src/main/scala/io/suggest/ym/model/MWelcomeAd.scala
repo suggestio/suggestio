@@ -20,12 +20,13 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
  * Description: Модель для приветственной рекламы. Поиск тут не требуется, только изолированное хранение.
  */
 object MWelcomeAd
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
+  with EsModelStaticT
   with EMProducerIdStatic
   with EMImgStatic
   with EMDateCreatedStatic
   with MacroLogsImplLazy
-  with EsModelStaticIgnore
+  with EsModelStaticMutAkvIgnoreT
 {
 
   override val ES_TYPE_NAME = "wcAd"
@@ -55,6 +56,7 @@ final case class MWelcomeAd(
   var id          : Option[String] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with MAdT
   with EMProducerIdMut
   with EMImgMut
@@ -76,7 +78,7 @@ final case class MWelcomeAd(
 
 
 /** JMX MBean интерфейс */
-trait MWelcomeAdJmxMBean extends EsModelJMXMBeanCommon {
+trait MWelcomeAdJmxMBean extends EsModelJMXMBeanI {
   /** Найти все id'шники, которые НЕ используются ни одним рекламным узлом. Некая read-only сборка мусора. */
   def printAllUnusedByAdnNodes(): String
 

@@ -84,7 +84,7 @@ object EMModeration {
 import EMModeration._
 
 /** Аддон для статического фунционала модели. */
-trait EMModerationStatic extends EsModelStaticT {
+trait EMModerationStatic extends EsModelStaticMutAkvT {
   override type T <: EMModerationMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -118,7 +118,7 @@ trait EMModerationI {
 }
 
 /** Аддон с функционалом для сериализации поля. */
-trait EMModeration extends EsModelT with EMModerationI {
+trait EMModeration extends EsModelPlayJsonT with EMModerationI {
   override type T <: EMModeration
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

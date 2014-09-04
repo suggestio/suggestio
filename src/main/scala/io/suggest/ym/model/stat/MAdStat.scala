@@ -31,7 +31,7 @@ import java.{lang => jl}
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelMinimalStaticT with MacroLogsImpl {
+object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   override type T = MAdStat
 
@@ -302,7 +302,7 @@ final class MAdStat(
   val clOsVsn     : Option[String]    = None,
   val clUid       : Option[String]    = None,
   val id          : Option[String]    = None
-) extends EsModelT {
+) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MAdStat
 
@@ -365,7 +365,7 @@ object AdStatActions extends Enumeration {
 // JMX Содержит кое-какие дополнительные функции.
 
 /** JMX MBean интерфейс */
-trait MAdStatJmxMBean extends EsModelJMXMBeanCommon {
+trait MAdStatJmxMBean extends EsModelJMXMBeanI {
   @ManagedOperation(impact = Impact.ACTION)
   @Description("Remove all occurencies BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss")
   def deleteBefore(dt: String): String

@@ -1,5 +1,6 @@
 package io.suggest.model
 
+import org.elasticsearch.action.update.UpdateRequestBuilder
 import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
@@ -26,10 +27,9 @@ import io.suggest.ym.model.stat._
 import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
 import play.api.libs.json._
 import org.joda.time.format.ISODateTimeFormat
-import org.elasticsearch.action.get.MultiGetResponse
+import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import io.suggest.util.SioEsUtil.IndexMapping
 import io.suggest.ym.model.UsernamePw
-import com.typesafe.scalalogging.slf4j.Logger
 import java.{util => ju, lang => jl}
 import SioConstants._
 
@@ -38,13 +38,14 @@ import SioConstants._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.02.14 14:41
  * Description: Общее для elasticsearch-моделей лежит в этом файле. Обычно используется общий индекс для хранилища.
+ * 2014.sep.04: Появились child-модели. Произошло разделение api трейтов: статических и немного динамических.
  */
 object EsModel extends MacroLogsImpl {
 
   import LOGGER._
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
-  def ES_MODELS: Seq[EsModelMinimalStaticT] = {
+  def ES_MODELS: Seq[EsModelCommonStaticT] = {
     Seq(MCompany, MWelcomeAd, MShopPriceList, MShopPromoOffer, MYmCategory, MAdStat, MAdnNode, MAd)
   }
 
@@ -52,7 +53,7 @@ object EsModel extends MacroLogsImpl {
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelMinimalStaticT] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       val imeFut = if (ignoreExists) {
@@ -119,7 +120,7 @@ object EsModel extends MacroLogsImpl {
   val OFFSET_DFLT = 0
   val SCROLL_KEEPALIVE_MS_DFLT = 60000L
 
-  /** Тип аккамулятора, который используется во [[EsModelT]].writeJsonFields(). */
+  /** Тип аккамулятора, который используется во [[EsModelPlayJsonT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
 
   def urlParser = stringParser
@@ -131,7 +132,7 @@ object EsModel extends MacroLogsImpl {
   }
 
   /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
-  def toEsJsonDoc(e: EsModelMinimalT): String = {
+  def toEsJsonDoc(e: EsModelCommonT): String = {
      var kvs = List[String] (s""" "$FIELD_SOURCE": ${e.toJson}""")
     if (e.versionOpt.isDefined)
       kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
@@ -141,7 +142,7 @@ object EsModel extends MacroLogsImpl {
   }
 
   /** Отрендерить экземпляры моделей в JSON. */
-  def toEsJsonDocs(e: Traversable[EsModelMinimalT]): String = {
+  def toEsJsonDocs(e: Traversable[EsModelCommonT]): String = {
     e.map { toEsJsonDoc }
       .mkString("[",  ",\n",  "]")
   }
@@ -422,8 +423,43 @@ object EsModel extends MacroLogsImpl {
   // Сериализация дат
   val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
 
-  implicit def date2str(dateTime: ReadableInstant) = dateFormatterDflt.print(dateTime)
-  implicit def date2JsStr(dateTime: ReadableInstant) = JsString(dateTime)
+  implicit def date2str(dateTime: ReadableInstant): String = dateFormatterDflt.print(dateTime)
+  implicit def date2JsStr(dateTime: ReadableInstant): JsString = JsString(dateTime)
+
+
+  /** Десериализовать тело документа внутри GetResponse в строку. */
+  def deserializeGetRespBodyRawStr(getResp: GetResponse): Option[String] = {
+    if (getResp.isExists) {
+      val result = getResp.getSourceAsString
+      Some(result)
+    } else {
+      None
+    }
+  }
+
+
+  /** Десериализовать документ всырую, вместе с _id, _type и т.д. */
+  def deserializeGetRespFullRawStr(getResp: GetResponse): Option[String] = {
+    if (getResp.isExists) {
+      val xc = getResp.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS)
+      val result = xc.string()
+      Some(result)
+    } else {
+      None
+    }
+  }
+
+
+  /** Общий код моделей, которые занимаются resave'ом. */
+  def resaveBase(getFut: Future[Option[EsModelCommonT]])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+    getFut flatMap {
+      case Some(e) =>
+        e.save map { Some.apply }
+      case None =>
+        Future successful None
+    }
+  }
+
 }
 
 
@@ -448,7 +484,7 @@ trait EsModelStaticMappingGenerators {
 import EsModel._
 
 /** Трейт содержит статические хелперы для работы с маппингами.
-  * Однажды был вынесен из [[EsModelStaticT]]. */
+  * Однажды был вынесен из [[EsModelStaticMutAkvT]]. */
 trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI {
 
   def ES_INDEX_NAME = DFLT_INDEX
@@ -488,11 +524,10 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
 }
 
 
-/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
-  * Здесь десериализация полностью выделена в отдельную функцию. */
-trait EsModelMinimalStaticT extends EsModelStaticMapping {
+/** Общий код для обычный и child-моделей. Был вынесен из-за разделения в логике работы обычный и child-моделей. */
+trait EsModelCommonStaticT extends EsModelStaticMapping {
 
-  type T <: EsModelMinimalT
+  type T <: EsModelCommonT
 
   // Кое-какие константы, которые можно переопределить в рамках конкретных моделей.
   def MAX_RESULTS_DFLT = EsModel.MAX_RESULTS_DFLT
@@ -500,18 +535,41 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def SCROLL_KEEPALIVE_MS_DFLT = EsModel.SCROLL_KEEPALIVE_MS_DFLT
   def SCROLL_KEEPALIVE_DFLT = new TimeValue(SCROLL_KEEPALIVE_MS_DFLT)
 
+
+  /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
+    * @param idOrNull id или null, если id отсутствует.
+    * @return None если routing не требуется, иначе Some(String).
+    */
+  def getRoutingKey(idOrNull: String): Option[String] = None
+
   // Короткие враппер для типичных операций в рамках статической модели.
   def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareGet(id: String)(implicit client: Client) = {
+
+  def prepareGetBase(id: String)(implicit client: Client) = {
     val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
     req
   }
-  def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
-  def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+
+  def prepareUpdateBase(id: String)(implicit client: Client) = {
+    val req = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
+
+  def prepareDeleteBase(id: String)(implicit client: Client) = {
+    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
+
   def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client) = {
     prepareSearch.setSearchType(SearchType.SCAN).setScroll(keepAlive)
@@ -526,19 +584,6 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
     EsModel.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
   }
-
-  /**
-   * Существует ли указанный магазин в хранилище?
-   * @param id id магазина.
-   * @return true/false
-   */
-  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    prepareGet(id)
-      .setFields()
-      .execute()
-      .map { _.isExists }
-  }
-
 
   /**
    * Сервисная функция для получения списка всех id.
@@ -577,12 +622,6 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     countByQuery(QueryBuilders.matchAllQuery())
   }
 
-  /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
-    * @param idOrNull id или null, если id отсутствует.
-    * @return None если routing не требуется, иначе Some(String).
-    */
-  def getRoutingKey(idOrNull: String): Option[String] = None
-
   /** Пересоздать маппинг удаляется и создаётся заново. */
   def resetMapping(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     deleteMapping flatMap { _ => putMapping() }
@@ -602,65 +641,11 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T
 
 
-  /**
-   * Выбрать ряд из таблицы по id.
-   * @param id Ключ магазина.
-   * @return Экземпляр сабжа, если такой существует.
-   */
-  def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
-    prepareGet(id)
-      .execute()
-      .map { getResp =>
-        if (getResp.isExists) {
-          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
-          Some(result)
-        } else {
-          None
-        }
-      }
-  }
-
-  /**
-   * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
-   * @param id id документа.
-   * @return Строка json с содержимым документа или None.
-   */
-  def getRawContentById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
-    prepareGet(id)
-      .execute()
-      .map { getResp =>
-        if (getResp.isExists) {
-          val result = getResp.getSourceAsString
-          Some(result)
-        } else {
-          None
-        }
-      }
-  }
-
-  /**
-   * Прочитать документ как бы всырую.
-   * @param id id документа.
-   * @return Строка json с документом полностью или None.
-   */
-  def getRawById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
-    prepareGet(id)
-      .execute()
-      .map { getResp =>
-        if (getResp.isExists) {
-          val xc = getResp.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS)
-          val result = xc.string()
-          Some(result)
-        } else {
-          None
-        }
-      }
-  }
-  
+  /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
   def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Seq[A] = {
     searchResp.getHits
       .iterator()
-      .map(f) 
+      .map(f)
       .toSeq
   }
 
@@ -684,25 +669,6 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     }
   }
 
-  /**
-   * Прочитать из базы все перечисленные id разом.
-   * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
-   * @return Список результатов в неопределённом порядке.
-   */
-  def multiGet(ids: TraversableOnce[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    if (ids.isEmpty) {
-      Future successful acc0
-    } else {
-      val req = client.prepareMultiGet()
-        .setRealtime(true)
-      ids.foreach {
-        id =>
-          req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      }
-      req.execute()
-        .map { mgetResp2list(_, acc0) }
-    }
-  }
 
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
@@ -766,28 +732,13 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   }
 
 
-  /**
-   * Генератор delete-реквеста. Используется при bulk-request'ах.
-   * @param id adId
-   * @return Новый экземпляр DeleteRequestBuilder.
-   */
-  def deleteRequestBuilder(id: String)(implicit client: Client): DeleteRequestBuilder = {
-    val req = prepareDelete(id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
-
-  /**
-   * Удалить документ по id.
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    deleteRequestBuilder(id)
-      .execute()
-      .map { _.isFound }
+  def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
+    if (getResp.isExists) {
+      val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
+      Some(result)
+    } else {
+      None
+    }
   }
 
 
@@ -803,14 +754,17 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     }
   }
 
-  def resave(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
-    getById(id) flatMap {
-      case Some(e) =>
-        e.save map { Some.apply }
-      case None =>
-        Future successful None
-    }
+
+  /** Рефреш всего индекса, в котором живёт эта модель. */
+  def refreshIndex(implicit client: Client): Future[_] = {
+    client.admin().indices()
+      .prepareRefresh(ES_INDEX_NAME)
+      .execute()
   }
+
+
+  def UPDATE_RETRIES_MAX: Int = EsModel.UPDATE_RETRIES_MAX_DFLT
+
 
   /**
    * Прочитать в RAM n документов, пересоздать маппинг, отправить документы назад в индекс.
@@ -847,44 +801,6 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         resultFut
       }
     }
-  }
-
-  /** Рефреш всего индекса, в котором живёт эта модель. */
-  def refreshIndex(implicit client: Client): Future[_] = {
-    client.admin().indices()
-      .prepareRefresh(ES_INDEX_NAME)
-      .execute()
-  }
-
-
-  def UPDATE_RETRIES_MAX: Int = EsModel.UPDATE_RETRIES_MAX_DFLT
-
-  /**
-   * Попытаться обновить экземпляр модели с помощью указанной функции.
-   * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
-   * @param retry Попытка
-   * @param updateF Функция для апдейта.
-   * @return Тоже самое, что и save().
-   */
-  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    updateF(inst0)
-      .save
-      .recoverWith {
-        case ex: VersionConflictEngineException =>
-          lazy val logPrefix = s"tryUpdate(${inst0.id}, try=$retry): "
-          if (retry < UPDATE_RETRIES_MAX) {
-            val n1 = retry + 1
-            LOGGER.warn(s"${logPrefix}Version conflict while trying to save. Retrying ($n1/$UPDATE_RETRIES_MAX)...")
-            getById(inst0.id.get) flatMap {
-              case Some(inst) =>
-                tryUpdate(inst, n1)(updateF)
-              case None =>
-                throw new IllegalStateException(s"${logPrefix}Looks like instance has been deleted during update. last try was $retry", ex)
-            }
-          } else {
-            throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + retry, ex)
-          }
-      }
   }
 
 
@@ -932,7 +848,235 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов
       }
   }
+
+
+  /**
+   * Перечитывание из хранилища указанного документа, используя реквизиты текущего документа.
+   * Нужно для parent-child случаев, когда одного _id уже мало.
+   * @param inst0 Исходный (устаревший) инстанс.
+   * @return тоже самое, что и getById()
+   */
+  def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]]
+
+  /**
+   * Попытаться обновить экземпляр модели с помощью указанной функции.
+   * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+   * @param retry Попытка
+   * @param updateF Функция для апдейта.
+   * @return Тоже самое, что и save().
+   */
+  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+    updateF(inst0)
+      .save
+      .recoverWith {
+        case ex: VersionConflictEngineException =>
+          lazy val logPrefix = s"tryUpdate(${inst0.id}, try=$retry): "
+          if (retry < UPDATE_RETRIES_MAX) {
+            val n1 = retry + 1
+            LOGGER.warn(s"${logPrefix}Version conflict while trying to save. Retrying ($n1/$UPDATE_RETRIES_MAX)...")
+            reget(inst0) flatMap {
+              case Some(inst) =>
+                tryUpdate(inst, n1)(updateF)
+              case None =>
+                throw new IllegalStateException(s"${logPrefix}Looks like instance has been deleted during update. last try was $retry", ex)
+            }
+          } else {
+            throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + retry, ex)
+          }
+      }
+  }
+
 }
+
+
+/** Базовый шаблон для статических частей ES-моделей, НЕ имеющих _parent'ов. Применяется в связке с [[EsModelT]].
+  * Здесь десериализация полностью выделена в отдельную функцию. */
+trait EsModelStaticT extends EsModelCommonStaticT {
+
+  override type T <: EsModelT
+
+  def prepareGet(id: String)(implicit client: Client) = {
+    prepareGetBase(id)
+  }
+
+  def prepareUpdate(id: String)(implicit client: Client) = prepareUpdateBase(id)
+  def prepareDelete(id: String)(implicit client: Client) = prepareDeleteBase(id)
+
+  /**
+   * Существует ли указанный документ в хранилище?
+   * @param id id магазина.
+   * @return true/false
+   */
+  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+    prepareGet(id)
+      .setFields()
+      .execute()
+      .map { _.isExists }
+  }
+
+
+  /**
+   * Выбрать ряд из таблицы по id.
+   * @param id Ключ документа.
+   * @return Экземпляр сабжа, если такой существует.
+   */
+  def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
+    prepareGet(id)
+      .execute()
+      .map { deserializeGetRespFull }
+  }
+
+  /**
+   * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
+   * @param id id документа.
+   * @return Строка json с содержимым документа или None.
+   */
+  def getRawContentById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id)
+      .execute()
+      .map { deserializeGetRespBodyRawStr }
+  }
+
+  /**
+   * Прочитать документ как бы всырую.
+   * @param id id документа.
+   * @return Строка json с документом полностью или None.
+   */
+  def getRawById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id)
+      .execute()
+      .map { deserializeGetRespFullRawStr }
+  }
+
+  /**
+   * Прочитать из базы все перечисленные id разом.
+   * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
+   * @return Список результатов в неопределённом порядке.
+   */
+  def multiGet(ids: TraversableOnce[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    if (ids.isEmpty) {
+      Future successful acc0
+    } else {
+      val req = client.prepareMultiGet()
+        .setRealtime(true)
+      ids.foreach {
+        id =>
+          req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
+      }
+      req.execute()
+        .map { mgetResp2list(_, acc0) }
+    }
+  }
+
+
+  /**
+   * Генератор delete-реквеста. Используется при bulk-request'ах.
+   * @param id adId
+   * @return Новый экземпляр DeleteRequestBuilder.
+   */
+  def deleteRequestBuilder(id: String)(implicit client: Client): DeleteRequestBuilder = {
+    val req = prepareDelete(id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
+
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    deleteRequestBuilder(id)
+      .execute()
+      .map { _.isFound }
+  }
+
+
+  def resave(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+    resaveBase( getById(id) )
+  }
+
+  def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    getById(inst0.id.get)
+  }
+
+}
+
+
+trait EsChildModelStaticT extends EsModelCommonStaticT {
+
+  override type T <: EsChildModelT
+
+  def prepareGet(id: String, parentId: String)(implicit client: Client) = prepareGetBase(id).setParent(parentId)
+  def prepareUpdate(id: String, parentId: String)(implicit client: Client) = prepareUpdateBase(id).setParent(parentId)
+  def prepareDelete(id: String, parentId: String)(implicit client: Client) = prepareDeleteBase(id).setParent(parentId)
+
+  /**
+   * Существует ли указанный магазин в хранилище?
+   * @param id id элемента.
+   * @param parentId id родительского элемента.
+   * @return true/false
+   */
+  def isExist(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+    prepareGet(id, parentId)
+      .setFields()
+      .execute()
+      .map { _.isExists }
+  }
+
+  def get(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
+    prepareGet(id, parentId)
+      .execute()
+      .map { deserializeGetRespFull }
+  }
+
+
+  /**
+   * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
+   * @param id id документа.
+   * @return Строка json с содержимым документа или None.
+   */
+  def getRawContent(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id, parentId)
+      .execute()
+      .map { deserializeGetRespBodyRawStr }
+  }
+
+  /**
+   * Прочитать документ как бы всырую.
+   * @param id id документа.
+   * @return Строка json с документом полностью или None.
+   */
+  def getRaw(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id, parentId)
+      .execute()
+      .map { deserializeGetRespFullRawStr }
+  }
+
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  def delete(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    prepareDelete(id, parentId)
+      .execute()
+      .map { _.isFound }
+  }
+
+
+  def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+    resaveBase( get(id, parentId) )
+  }
+
+  def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    get(inst0.id.get, inst0.parentId)
+  }
+
+}
+
 
 /**
  * Результаты работы метода Model.copyContent() возвращаются в этом контейнере.
@@ -942,10 +1086,8 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 case class CopyContentResult(success: Long, failed: Long)
 
 
-/** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */
-trait EsModelStaticT extends EsModelMinimalStaticT {
-
-  override type T <: EsModelT
+/** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelPlayJsonT]]. */
+trait EsModelStaticMutAkvT extends EsModelCommonStaticT {
 
   protected def dummy(id: Option[String], version: Option[Long]): T
 
@@ -955,7 +1097,6 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
   override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T = {
     val acc = dummy(id, version)
     m foreach applyKeyValue(acc)
-    acc.postDeserialize()
     acc
   }
 
@@ -976,25 +1117,22 @@ trait EraseResources {
   }
 }
 
-/** Шаблон для динамических частей ES-моделей.
- * В минимальной редакции механизм десериализации полностью абстрактен. */
-trait EsModelMinimalT extends OptStrId with EraseResources {
 
-  type T <: EsModelMinimalT
+/** Общий код динамических частей модели, независимо от child-модели или обычной. */
+trait EsModelCommonT extends OptStrId with EraseResources {
+
+  type T <: EsModelCommonT
 
   /** Модели, желающие версионизации, должны перезаписать это поле. */
-  @JsonIgnore def versionOpt: Option[Long]
+  def versionOpt: Option[Long]
 
-  @JsonIgnore def companion: EsModelMinimalStaticT
+  def companion: EsModelCommonStaticT
 
-  @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
-  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME
+  def esTypeName = companion.ES_TYPE_NAME
+  def esIndexName = companion.ES_INDEX_NAME
 
-  /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
-  @JsonIgnore def postDeserialize() {}
-
-  @JsonIgnore def toJson: String
-  @JsonIgnore def toJsonPretty: String = toJson
+  def toJson: String
+  def toJsonPretty: String = toJson
 
   @JsonIgnore def idOrNull = {
     if (id.isDefined)
@@ -1003,33 +1141,14 @@ trait EsModelMinimalT extends OptStrId with EraseResources {
       null
   }
 
-  def prepareUpdate(implicit client: Client) = {
-    val req = client.prepareUpdate(esIndexName, esTypeName, id.get)
-    if (versionOpt.isDefined)
-      req.setVersion(versionOpt.get)
-    req
-  }
-
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore
   def isFieldsValid: Boolean = true
 
-  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
   def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val irb = client.prepareIndex(esIndexName, esTypeName, idOrNull)
+    client.prepareIndex(esIndexName, esTypeName, idOrNull)
       .setSource(toJson)
-    saveBuilder(irb)
-    val rkOpt = getRoutingKey
-    if (rkOpt.isDefined)
-      irb.setRouting(rkOpt.get)
-    irb
   }
-
-  /** Узнать routing key для текущего экземпляра. */
-  def getRoutingKey = companion.getRoutingKey(idOrNull)
-
-  /** Генератор delete-реквеста. Полезно при построении bulk-реквестов. */
-  def deleteRequestBuilder(implicit client: Client) = companion.deleteRequestBuilder(id.get)
 
   /**
    * Сохранить экземпляр в хранилище ES.
@@ -1048,16 +1167,73 @@ trait EsModelMinimalT extends OptStrId with EraseResources {
     }
   }
 
-  /** Дополнительные параметры сохранения (parent, ttl, etc) можно выставить через эту функцию. */
-  def saveBuilder(irb: IndexRequestBuilder) {}
+  def companionDelete(_id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
+
 
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.
     */
   def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = id match {
-    case Some(_id)  => companion.deleteById(_id)
+    case Some(_id)  => companionDelete(_id)
     case None       => Future failed new IllegalStateException("id is not set")
   }
+
+  def prepareUpdate(implicit client: Client) = {
+    val req = client.prepareUpdate(esIndexName, esTypeName, id.get)
+    if (versionOpt.isDefined)
+      req.setVersion(versionOpt.get)
+    req
+  }
+
+}
+
+
+/** Шаблон для динамических частей ES-моделей.
+ * В минимальной редакции механизм десериализации полностью абстрактен. */
+trait EsModelT extends EsModelCommonT {
+
+  override type T <: EsModelT
+
+  override def companion: EsModelStaticT
+
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.indexRequestBuilder
+    val rkOpt = getRoutingKey
+    if (rkOpt.isDefined)
+      irb.setRouting(rkOpt.get)
+    irb
+  }
+
+  /** Узнать routing key для текущего экземпляра. */
+  def getRoutingKey = companion.getRoutingKey(idOrNull)
+
+  override def companionDelete(_id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    companion.deleteById(_id)
+  }
+}
+
+
+/** Динамическая сторона child-модели. */
+trait EsChildModelT extends EsModelCommonT {
+
+  override type T <: EsChildModelT
+
+  def parentId: String
+  override def companion: EsChildModelStaticT
+
+  override def prepareUpdate(implicit client: Client): UpdateRequestBuilder = {
+    super.prepareUpdate.setParent(parentId)
+  }
+
+  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
+    super.indexRequestBuilder.setParent(parentId)
+  }
+
+  override def companionDelete(_id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    companion.delete(_id, parentId)
+  }
+
 }
 
 
@@ -1069,9 +1245,10 @@ trait ToPlayJsonObj {
   def toPlayJsonWithId: JsObject
 }
 
-/** Шаблон для динамических частей ES-моделей. */
-trait EsModelT extends EsModelMinimalT with ToPlayJsonObj {
-  override type T <: EsModelT
+
+/** Шаблон для динамических частей ES-моделей, которые очень хорошо реализуют toJson() через play.json. */
+trait EsModelPlayJsonT extends EsModelCommonT with ToPlayJsonObj {
+  override type T <: EsModelPlayJsonT
 
   override def toPlayJsonAcc = writeJsonFields(Nil)
   override def toPlayJsonWithId: JsObject = {
@@ -1122,12 +1299,12 @@ class ListCmpOrdering[T <: Comparable[T]] extends Ordering[List[T]] {
 
 import Impact._
 
-trait EsModelJMXMBeanCommon {
+trait EsModelJMXMBeanCommonI {
+
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
   @ManagedOperation(impact=ACTION)
   def resaveMany(maxResults: Int): String
-  def resave(id: String): String
-  
+
   def remapMany(maxResults: Int): String
 
   /**
@@ -1159,6 +1336,23 @@ trait EsModelJMXMBeanCommon {
   @ManagedOperation(impact=INFO)
   def getRoutingKey(idOrNull: String): String
 
+  def esIndexName: String
+  def esTypeName: String
+
+  /**
+   * Выдать сколько-то id'шников в алфавитном порядке.
+   * @param maxResults Макс.кол-во выдачи.
+   * @return Текст, в каждой строчке новый id.
+   */
+  def getAllIds(maxResults: Int): String
+  def getAll(maxResults: Int): String
+
+  /** Подсчитать кол-во элементов. */
+  def countAll(): Long
+}
+
+trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
+
   /**
    * Выполнить удаление документа.
    * @param id id удаляемого докуметна.
@@ -1174,16 +1368,6 @@ trait EsModelJMXMBeanCommon {
    */
   def getById(id: String): String
 
-  def esIndexName: String
-  def esTypeName: String
-
-  /**
-   * Выдать сколько-то id'шников в алфавитном порядке.
-   * @param maxResults Макс.кол-во выдачи.
-   * @return Текст, в каждой строчке новый id.
-   */
-  def getAllIds(maxResults: Int): String
-  def getAll(maxResults: Int): String
 
   /**
    * Выдать документ "в сырую".
@@ -1199,6 +1383,8 @@ trait EsModelJMXMBeanCommon {
    */
   def getRawContentById(id: String): String
 
+  def resave(id: String): String
+
   /**
    * Отправить в хранилище один экземпляр модели, представленный в виде JSON.
    * @param data Сериализованный в JSON экземпляр модели.
@@ -1211,16 +1397,14 @@ trait EsModelJMXMBeanCommon {
     */
   def putAll(all: String): String
 
-  /** Подсчитать кол-во элементов. */
-  def countAll(): Long
 }
 
 
-trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsImplLazy {
+trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with MacroLogsImplLazy {
 
   import LOGGER._
 
-  def companion: EsModelMinimalStaticT
+  def companion: EsModelCommonStaticT
 
   override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
@@ -1229,19 +1413,18 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
   implicit def client: Client
   implicit def sn: SioNotifierStaticClientI
 
+  /** Ругнутся в логи и вернуть строку для возврата клиенту. */
+  protected def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
+    error(s"${logPrefix}Failed to make JMX Action:\n$data", ex)
+    ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTraceString
+  }
+
   override def resaveMany(maxResults: Int): String = {
     warn(s"resaveMany(maxResults = $maxResults)")
     val resavedIds = companion.resaveMany(maxResults).toSeq
     s"Total: ${resavedIds.size}\n---------\n" + resavedIds.mkString("\n")
   }
 
-  override def resave(id: String): String = {
-    trace(s"resave($id): jmx")
-    (companion.resave(id) : Option[String]) match {
-      case Some(_id) => "Resaved " + _id
-      case None      => "Not found id: " + id
-    }
-  }
 
   override def remapMany(maxResults: Int): String = {
     warn(s"remapMany(maxResults = $maxResults)")
@@ -1249,6 +1432,7 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
       .map { total => s"Remapped ok $total items." }
       .recover { case ex: Throwable => _formatEx(s"remapMany($maxResults)", "...", ex) }
   }
+
 
   override def isMappingExists: Boolean = {
     trace(s"isMappingExists()")
@@ -1291,17 +1475,6 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     companion.getRoutingKey(idOrNull).toString
   }
 
-  override def deleteById(id: String): Boolean = {
-    warn(s"deleteById($id)")
-    companion.deleteById(id)
-  }
-
-  override def getById(id: String): String = {
-    trace(s"getById($id)")
-    companion.getById(id)
-      .fold("not found")(_.toJsonPretty)
-  }
-
   override def getAllIds(maxResults: Int): String = {
     trace(s"getAllIds(maxResults = $maxResults)")
     companion.getAllIds(maxResults).sorted.mkString("\n")
@@ -1311,6 +1484,40 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     trace(s"getAll(maxResults = $maxResults)")
     val resultNonPretty = toEsJsonDocs( companion.getAll(maxResults, withVsn = true) )
     JacksonWrapper.prettify(resultNonPretty)
+  }
+
+  override def esTypeName: String = companion.ES_TYPE_NAME
+  override def esIndexName: String = companion.ES_INDEX_NAME
+
+  override def countAll(): Long = {
+    companion.countAll
+  }
+}
+
+
+trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
+
+  import LOGGER._
+
+  override def companion: EsModelStaticT
+
+  override def resave(id: String): String = {
+    trace(s"resave($id): jmx")
+    (companion.resave(id) : Option[String]) match {
+      case Some(_id) => "Resaved " + _id
+      case None      => "Not found id: " + id
+    }
+  }
+
+  override def deleteById(id: String): Boolean = {
+    warn(s"deleteById($id)")
+    companion.deleteById(id)
+  }
+
+  override def getById(id: String): String = {
+    trace(s"getById($id)")
+    companion.getById(id)
+      .fold("not found")(_.toJsonPretty)
   }
 
   override def getRawById(id: String): String = {
@@ -1324,9 +1531,6 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     companion.getRawContentById(id)
       .map { _.fold("not found")(JacksonWrapper.prettify) }
   }
-
-  override def esTypeName: String = companion.ES_TYPE_NAME
-  override def esIndexName: String = companion.ES_INDEX_NAME
 
   override def putOne(id: String, data: String): String = {
     info(s"putOne(id=$id): $data")
@@ -1360,16 +1564,6 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
     }
   }
 
-  override def countAll(): Long = {
-    companion.countAll
-  }
-
-  /** Ругнутся в логи и вернуть строку для возврата клиенту. */
-  private def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
-    error(s"${logPrefix}Failed to make JMX Action:\n$data", ex)
-    ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTraceString
-  }
-
   /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
   private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
     companion
@@ -1386,7 +1580,7 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon with MacroLogsIm
  * Для нормального stackable trait без подсветки красным цветом везде, надо чтобы была базовая реализация отдельно
  * от целевой реализации и stackable-реализаций (abstract override).
  * Тут реализованы методы-заглушки для хвоста стэка декораторов. */
-trait EsModelStaticEmpty extends EsModelStaticT {
+trait EsModelStaticMutAkvEmptyT extends EsModelStaticMutAkvT {
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     PartialFunction.empty
   }
@@ -1395,8 +1589,8 @@ trait EsModelStaticEmpty extends EsModelStaticT {
 }
 
 
-/** Дополнение к [[EsModelStaticEmpty]], но в applyKeyValue() не происходит MatchError. Втыкается в последнем with. */
-trait EsModelStaticIgnore extends EsModelStaticT {
+/** Дополнение к [[EsModelStaticMutAkvEmptyT]], но в applyKeyValue() не происходит MatchError. Втыкается в последнем with. */
+trait EsModelStaticMutAkvIgnoreT extends EsModelStaticMutAkvT {
   // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
@@ -1408,7 +1602,7 @@ trait EsModelStaticIgnore extends EsModelStaticT {
 
 /** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
   * Он содержит stackable-методы, реализованные пустышками. */
-trait EsModelEmpty extends EsModelT {
+trait EsModelEmpty extends EsModelPlayJsonT {
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     acc
   }

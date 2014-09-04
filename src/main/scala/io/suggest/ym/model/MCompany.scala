@@ -18,7 +18,8 @@ import io.suggest.util.MacroLogsImpl
  */
 
 object MCompany
-  extends EsModelStaticEmpty
+  extends EsModelStaticMutAkvEmptyT
+  with EsModelStaticT
   with EMCompanyMetaStatic
   with MacroLogsImpl
 {
@@ -77,6 +78,7 @@ final case class MCompany(
   versionOpt  : Option[Long] = None
 )
   extends EsModelEmpty
+  with EsModelT
   with EMCompanyMetaMut
 {
   override type T = MCompany
@@ -91,7 +93,7 @@ trait MCompanySel {
 }
 
 
-trait MCompanyJmxMBean extends EsModelJMXMBeanCommon
+trait MCompanyJmxMBean extends EsModelJMXMBeanI
 final class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MCompanyJmxMBean

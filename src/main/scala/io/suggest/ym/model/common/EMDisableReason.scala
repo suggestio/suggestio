@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json._
@@ -25,7 +25,7 @@ object EMDisableReason {
 
 import EMDisableReason._
 
-trait EMDisableReasonStatic extends EsModelStaticT {
+trait EMDisableReasonStatic extends EsModelStaticMutAkvT {
   override type T <: EMDisableReasonMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -52,7 +52,7 @@ trait EMDisableReasonStatic extends EsModelStaticT {
 }
 
 
-trait EMDisableReasonI extends EsModelT {
+trait EMDisableReasonI extends EsModelPlayJsonT {
   override type T <: EMDisableReasonI
 
   /** Кто является изготовителем этой рекламной карточки? */

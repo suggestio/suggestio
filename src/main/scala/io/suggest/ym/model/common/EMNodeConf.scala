@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
@@ -26,7 +26,7 @@ object EMNodeConf {
 import EMNodeConf._
 
 /** Аддон для статической стороны модели узла. */
-trait EMNodeConfStatic extends EsModelStaticT {
+trait EMNodeConfStatic extends EsModelStaticMutAkvT {
   override type T <: EMNodeConfMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -44,7 +44,7 @@ trait EMNodeConfStatic extends EsModelStaticT {
 
 
 /** аддон к динамической модели узла. */
-trait EMNodeConf extends EsModelT {
+trait EMNodeConf extends EsModelPlayJsonT {
   override type T <: EMNodeConf
   def conf: NodeConf
 

@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import java.{util => ju, lang => jl}
@@ -52,7 +52,7 @@ object EMTariff {
 
 import EMTariff._
 
-trait EMTariffStatic extends EsModelStaticT {
+trait EMTariffStatic extends EsModelStaticMutAkvT {
 
   override type T <: EMTariff
 
@@ -82,7 +82,7 @@ trait EMTariffStatic extends EsModelStaticT {
 }
 
 
-trait EMTariff extends EsModelT {
+trait EMTariff extends EsModelPlayJsonT {
   override type T <: EMTariff
 
   var tariffs: List[Tariff]

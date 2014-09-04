@@ -25,7 +25,7 @@ object EMName {
 
 import EMName._
 
-trait EMNameStatic extends EsModelMinimalStaticT {
+trait EMNameStatic extends EsModelCommonStaticT {
   override type T <: EMName
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -34,7 +34,7 @@ trait EMNameStatic extends EsModelMinimalStaticT {
   }
 }
 
-trait EMNameStaticMut extends EsModelStaticT with EMNameStatic {
+trait EMNameStaticMut extends EsModelStaticMutAkvT with EMNameStatic {
   override type T <: EMNameMut
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
@@ -45,7 +45,7 @@ trait EMNameStaticMut extends EsModelStaticT with EMNameStatic {
 }
 
 
-trait EMName extends EsModelT {
+trait EMName extends EsModelPlayJsonT {
   override type T <: EMName
   def name: String
 

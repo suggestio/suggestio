@@ -1,5 +1,6 @@
 package io.suggest.ym.model
 
+import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.util.{MacroLogsImpl, CascadingFieldNamer}
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
@@ -85,7 +86,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.model.EsModel._
 
 
@@ -96,7 +97,7 @@ import io.suggest.model.EsModel._
  * Description: Таблица хранит адреса прайс-листов магазинов. Модель является хранилищем для
  * [[io.suggest.ym.model.YmShopPriceUrlDatum]].
  */
-object MShopPriceList extends EsModelStaticT with MacroLogsImpl {
+object MShopPriceList extends EsModelStaticMutAkvT with EsModelStaticT with MacroLogsImpl {
 
   override type T = MShopPriceList
 
@@ -163,7 +164,7 @@ case class MShopPriceList(
   var url      : String,
   var authInfo : Option[UsernamePw],
   id           : Option[String] = None
-) extends EsModelT {
+) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MShopPriceList
 

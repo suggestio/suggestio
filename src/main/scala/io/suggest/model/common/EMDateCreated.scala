@@ -1,6 +1,6 @@
 package io.suggest.model.common
 
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.{FieldsJsonAcc, date2JsStr, dateTimeParser}
@@ -22,7 +22,7 @@ object EMDateCreatedStatic {
 import EMDateCreatedStatic._
 
 
-trait EMDateCreatedStatic extends EsModelStaticT {
+trait EMDateCreatedStatic extends EsModelStaticMutAkvT {
   override type T <: EMDateCreatedMut
 
   abstract override def generateMappingProps: List[DocField] = {
@@ -42,7 +42,7 @@ trait EMDateCreatedStatic extends EsModelStaticT {
 }
 
 
-trait EMDateCreatedI extends EsModelT {
+trait EMDateCreatedI extends EsModelPlayJsonT {
   override type T <: EMDateCreatedI
   def dateCreated: DateTime
 }
