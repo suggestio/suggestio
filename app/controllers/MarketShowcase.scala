@@ -1,7 +1,7 @@
 package controllers
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
-import io.suggest.model.geo.GeoDistanceQuery
+import io.suggest.model.geo.{GeoShapeQueryData, GeoDistanceQuery}
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -22,7 +22,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Call, Result, AnyContent}
+import play.api.mvc.{RequestHeader, Call, Result, AnyContent}
 import play.api.Play.{current, configuration}
 
 /**
@@ -244,6 +244,30 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
+  /** Поиск узла на основе текущей геоинформации. */
+  private def detectCurrentNodeByGeo[T](geo: GeoMode)(searchF: MAdnNodeSearch => Future[Seq[T]])
+                                       (implicit request: RequestHeader): Future[Option[T]] = {
+    Future.traverse( geo.nodeGeoLevels.zipWithIndex ) {
+      case (ngl, i) =>
+        geo.geoSearchInfo.flatMap { gsiOpt =>
+          val nodeSearchArgs = MAdnNodeSearch(
+            geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, ngl) },
+            maxResults = 1,
+            withGeoDistanceSort = geo.exactGeodata
+          )
+          searchF(nodeSearchArgs) map { _ -> i }
+        }
+    } map { results =>
+      val resultsNonEmptyIter = results.iterator.filter(_._1.nonEmpty)
+      if (resultsNonEmptyIter.isEmpty) {
+        None
+      } else {
+        resultsNonEmptyIter.maxBy(_._2)._1.headOption
+      }
+    }
+  }
+
+
   /**
    * indexTpl для выдачи, отвязанной от конкретного узла.
    * Этот экшен на основе параметров думает на тему того, что нужно отрендерить. Может отрендерится showcase узла,
@@ -254,27 +278,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     args.geo.exactGeodata match {
       // Есть координаты текущие точные. Нужно поискать ближайший рекламный узел в рамках города.
       case Some(gp) =>
-        val distanceMax = GeoIp.DISTANCE_DFLT
-        val gdq = GeoDistanceQuery(center = gp, distanceMin = None, distanceMax = distanceMax)
-        val nodeSearchArgs = MAdnNodeSearch(
-          geoDistance = Some(gdq),
-          maxResults = 1,
-          withGeoDistanceSort = Some(gp)
-        )
-        MAdnNode.dynSearch(nodeSearchArgs) flatMap { nodes =>
-          if (nodes.isEmpty) {
+        detectCurrentNodeByGeo(args.geo)(MAdnNode.dynSearch) flatMap { nodeOpt =>
+          if (nodeOpt.isEmpty) {
             // Нету узлов, подходящих под запрос.
-            debug(s"geoShowcase($args): No nodes found nearby $gp in ${distanceMax.distance} ${distanceMax.units}")
+            debug(s"geoShowcase($args): No nodes found nearby $gp")
             renderGeoShowcase(args)
           } else {
-            // Нанооптимизация: начинаем рендер и возможных нарушениях работы ругаться в логи.
-            val resultFut = renderNodeShowcaseSimple(nodes.head)
-            val nodesCount = nodes.size
-            if (nodesCount > 1) {
-              // Should never occur:
-              warn(s"geoShowcase($args): Unexpected count of nodes returned by search: $nodesCount, 0 or 1 collection length expected")
-            }
-            resultFut
+            renderNodeShowcaseSimple(nodeOpt.get)
           }
         }
 
@@ -357,21 +367,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val result = adSearch.copy(levels = lvls1)
         Future successful result
       } else if (adSearch.geo.isWithGeo) {
-        gsiFut.flatMap {
+        // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
+        detectCurrentNodeByGeo(adSearch.geo)(MAdnNode.dynSearchIds) map {
+          case Some(adnId) =>
+            adSearch.copy(receiverIds = List(adnId), geo = GeoNone)
           case None =>
-            Future successful adSearch
-          case Some(gsi) =>
-            val nodeSearchArgs = MAdnNodeSearch(
-              geoDistance = Option(gsi.geoDistanceQuery),
-              maxResults = 1,
-              withGeoDistanceSort = Some(gsi.geoPoint)
-            )
-            // Если узлы слишком далеко, то будет пустой список результатов.
-            MAdnNode.dynSearchIds(nodeSearchArgs) map { nodeIds =>
-              // TODO Если рекламных узлов по указанным координатам нет. То надо откатится на geoip? Или что отображать?
-              trace(s"$logPrefix geo: nodeIds = ${nodeIds.mkString(", ")}")
-              adSearch.copy(receiverIds = nodeIds.toList, geo = GeoNone)
-            }
+            adSearch
         } recover {
           // Допустима работа без геолокации при возникновении внутренней ошибки.
           case ex: Throwable =>
@@ -515,11 +516,31 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Поиск узлов в рекламной выдаче. */
   def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
-    val tstamp = System.currentTimeMillis()
-    for {
-      sargs <- args.toSearchArgs
-      nodes <- MAdnNode.dynSearch(sargs)
-    } yield {
+    // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
+    val tstamp = System.currentTimeMillis() / 50L
+    // В зависимости от настроек геолокации, надо произвести поиск узлов в разных слоях или вне их всех.
+    val ngls = args.geoMode.nodeGeoLevels
+    val nodesFut: Future[Seq[MAdnNode]] = if (ngls.isEmpty) {
+      // Уровней поиска геоинформации нет. Ищем в лоб.
+      args.toSearchArgs(None) flatMap { sargs =>
+        MAdnNode.dynSearch(sargs)
+      }
+    } else {
+      // Есть уровни для поиска. Надо запустить поиски узлов на разных уровнях.
+      Future.traverse( ngls.zipWithIndex ) {
+        case (glevel, i) =>
+          args.toSearchArgs(Some(glevel))
+            .flatMap { MAdnNode.dynSearch }
+            .map { _ -> i }
+      } map { results =>
+        // Восстанавливаем порядок согласно списку гео-уровней.
+        results.filter(_._1.nonEmpty)
+          .sortBy(_._2)
+          .flatMap(_._1)
+      }
+    }
+    // Когда все узлы будут собраны, нужно отрендерить результат.
+    nodesFut map { nodes =>
       val firstNodeJson = nodes.headOption.fold [JsValue] (JsNull) { adnNode =>
         JsObject(Seq(
           "name"  -> JsString(adnNode.meta.name),

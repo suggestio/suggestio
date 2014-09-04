@@ -11,6 +11,7 @@ import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import scala.concurrent.{Future, future}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -75,6 +76,9 @@ sealed trait GeoMode {
   def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
 
   def exactGeodata: Option[geo.GeoPoint]
+
+  /** На каких гео-уровнях производить поиск узлов и в каком порядке? */
+  def nodeGeoLevels: Seq[NodeGeoLevel]
 }
 
 
@@ -104,6 +108,9 @@ case object GeoNone extends GeoMode {
     Future successful None
   }
   override def exactGeodata = None
+
+  /** Отсутвие геолокацие означает отсутсвие уровней оной. */
+  override def nodeGeoLevels: Seq[NodeGeoLevel] = Nil
 }
 
 
@@ -186,14 +193,24 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   }
 
   override def exactGeodata: Option[geo.GeoPoint] = None
+
+  /** При geoip надо искать на уровнях городов и затем районов. */
+  override val nodeGeoLevels: Seq[NodeGeoLevel] = {
+    import NodeGeoLevels._
+    Seq(NGL_TOWN, NGL_TOWN_DISTRICT)
+  }
 }
 
 
 object GeoLocation {
 
-  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.location.distance.km.dflt") getOrElse 15.0
+  /** Дефолтовый радиус обнаружения пользователя, для которого известны координаты. */
+  val ES_DISTANCE_DFLT = {
+    val raw = configuration.getString("geo.location.distance.dflt") getOrElse "15m"
+    DistanceUnit.Distance.parseDistance(raw)
+  }
 
-  def DISTANCE_DFLT = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
+  val DISTANCE_DFLT = Distance(ES_DISTANCE_DFLT)
 
 }
 
@@ -223,10 +240,16 @@ final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
       }
       override def cityName = ipGeoloc.map(_.city.cityName)
       override def countryIso2 = ipGeoloc.map(_.range.countryIso2)
-      override def isLocalClient: Boolean = false
+      override def isLocalClient = false
     }
     Future successful Some(result)
   }
 
   override def exactGeodata = Some(geopoint)
+
+  /** При локации по координатам, надо искать на уровне зданий, районов и затем городов. */
+  override val nodeGeoLevels: Seq[NodeGeoLevel] = {
+    import NodeGeoLevels._
+    Seq(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
+  }
 }

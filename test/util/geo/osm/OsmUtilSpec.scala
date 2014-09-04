@@ -75,7 +75,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
 
     "parse relations" in {
       case class ResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long)
-      val rels = Seq(
+      val rels: Seq[(String, ResultInfo)] = Seq(
         "rel.vaska.osm.xml" -> ResultInfo(1114252L, membersCount = 24,
           firstBorderMemberId = 71338507L,
           lastBorderMemberId = 71346364L
@@ -87,6 +87,10 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
         "rel.spb.osm.xml" -> ResultInfo(337422L, 183,
           firstBorderMemberId = 197668703L,
           lastBorderMemberId = 175195149L
+        ),
+        "rel.spb.kirovsky-rajon.osm.xml" -> ResultInfo(369514L, 23,
+          firstBorderMemberId = 31396996L,
+          lastBorderMemberId = 159348605L
         )
       )
       rels foreach { case (rf, ri) =>
@@ -99,6 +103,8 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
           val bms = rel.borderMembers.toSeq
           bms.head.obj.id  mustBe  ri.firstBorderMemberId
           bms.last.obj.id  mustBe  ri.lastBorderMemberId
+          res.toGeoShape  // Не должно быть экзепшена
+          // TODO Нужно проверять корректность линий
         }
       }
     }

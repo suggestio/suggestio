@@ -247,12 +247,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
   {meta =>
     import meta._
-    val radius = geoShape.flatMap {
-      case cgs: CircleGs => Option(cgs.radius)
-      case other =>
-        warn(s"Cannot unapply $other into radius distance; CircleGs expected")
-        None
-    }
     Some((name, description, town, address, phone, floor, section, siteUrl, color, location))
   }
 

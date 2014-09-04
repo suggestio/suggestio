@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.geo.GeoDistanceQuery
+import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.common.AdnNodesSearchArgsT
 import play.api.mvc.{RequestHeader, QueryStringBindable}
 import util.qsb.QsbUtil._
@@ -24,7 +24,7 @@ case class MAdnNodeSearch(
   withAdnRights: Seq[AdnRight] = Nil,
   testNode    : Option[Boolean] = None,
   withoutIds  : Seq[String] = Nil,
-  geoDistance : Option[GeoDistanceQuery] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
+  geoDistance : Option[GeoShapeQueryData] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
   hasLogo     : Option[Boolean] = None,
   withGeoDistanceSort: Option[GeoPoint] = None,
   withNameSort: Boolean = false,
@@ -39,15 +39,19 @@ case class MAdnNodeSearch(
 case class SimpleNodesSearchArgs(
   qStr        : Option[String] = None,
   geoMode     : GeoMode = GeoNone,
+  maxResults  : Option[Int] = None,
   offset      : Option[Int] = None
 ) {
 
-  def toSearchArgs(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
+  def toSearchArgs(glevelOpt: Option[NodeGeoLevel])(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
     geoMode.geoSearchInfo.map { gsiOpt =>
       new MAdnNodeSearch(
         qStr          = qStr,
-        geoDistance   = gsiOpt.map { _.geoDistanceQuery },
+        geoDistance   = gsiOpt
+          .flatMap { gsi => glevelOpt.map(_ -> gsi) }
+          .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) },
         withGeoDistanceSort = gsiOpt.map { _.geoPoint },
+        maxResults    = maxResults.getOrElse(10),
         offset        = offset.getOrElse(0),
         withAdnRights = Seq(AdnRights.RECEIVER),
         testNode      = Some(false),
@@ -66,6 +70,18 @@ object SimpleNodesSearchArgs {
   val Q_SUF = ".q"
   val GEO_SUF = ".geo"
   val OFFSET_SUF = ".offset"
+  val MAX_RESULTS_SUF = ".limit"
+
+  val MAX_RESULTS_LIMIT_HARD = 50
+  val OFFSET_LIMIT_HARD = 300
+  val QSTR_LEN_MAX = 70
+
+  private def limitStrLen(str: String, maxLen: Int): String = {
+    if (str.length > maxLen)
+      str.substring(0, maxLen)
+    else
+      str
+  }
 
 
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
@@ -74,15 +90,17 @@ object SimpleNodesSearchArgs {
     new QueryStringBindable[SimpleNodesSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SimpleNodesSearchArgs]] = {
         for {
-          maybeQOpt     <- strOptB.bind(key +  Q_SUF, params)
-          maybeGeo      <- geoModeB.bind(key + GEO_SUF, params)
-          maybeOffset   <- intOptB.bind(key + OFFSET_SUF, params)
+          maybeQOpt       <- strOptB.bind(key +  Q_SUF, params)
+          maybeGeo        <- geoModeB.bind(key + GEO_SUF, params)
+          maybeOffset     <- intOptB.bind(key + OFFSET_SUF, params)
+          maybeMaxResults <- intOptB.bind(key + MAX_RESULTS_SUF, params)
         } yield {
           Right(
             SimpleNodesSearchArgs(
-              qStr    = maybeQOpt,
-              geoMode = maybeGeo,
-              offset  = maybeOffset
+              qStr        = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
+              geoMode     = maybeGeo,
+              offset      = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
+              maxResults  = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD)
             )
           )
         }
@@ -91,7 +109,9 @@ object SimpleNodesSearchArgs {
       override def unbind(key: String, value: SimpleNodesSearchArgs): String = {
         List(
           strOptB.unbind(key + Q_SUF, value.qStr),
-          geoModeB.unbind(key + GEO_SUF, value.geoMode)
+          geoModeB.unbind(key + GEO_SUF, value.geoMode),
+          intOptB.unbind(key + OFFSET_SUF, value.offset),
+          intOptB.unbind(key + MAX_RESULTS_SUF, value.maxResults)
         )
           .filter { s => !s.isEmpty && !s.endsWith("=") }
           .mkString("&")
