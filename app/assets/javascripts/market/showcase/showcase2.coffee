@@ -962,6 +962,8 @@ siomart =
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
         siomart.utils.ge('smGeoScreen').style.display = 'none'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
+        cbca_grid.left_offset = 0
+        cbca_grid.rebuild()
         return false
 
 
@@ -1580,7 +1582,7 @@ siomart =
         html += more_ads[i]
         this.ads.push more_ads[i]
 
-      siomart.utils.ge('ads' + this.ads_receiver_index).innerHTML = html
+      siomart.utils.ge('smads' + this.ads_receiver_index).innerHTML = html
       this.ads_rendered = this.ads.length + 1
 
       this.check_if_fully_loaded()
@@ -1643,7 +1645,7 @@ siomart =
 
       this.ads_receiver_index++
       attrs =
-        'id' : 'ads' + this.ads_receiver_index
+        'id' : 'smads' + this.ads_receiver_index
 
       _blocks_receiver_dom = siomart.utils.ce 'span', attrs
       _blocks_receiver_dom.innerHTML = this.loader_dom
@@ -1666,6 +1668,36 @@ siomart =
       delete siomart.focused_ads.active_ad_index
       delete siomart.shop_load_locked
 
+    cursor :
+      init : () ->
+        cursor_dom = siomart.utils.ge 'smFocusedAdsArrowLabel'
+
+        siomart.utils.add_single_listener siomart.focused_ads.ads_container_dom, 'mousemove', ( event ) ->
+          siomart.focused_ads.cursor.move event.clientX, event.clientY
+
+        siomart.utils.add_single_listener cursor_dom, 'click', ( event ) ->
+
+          direction = this.getAttribute 'data-direction'
+
+          if direction == "right"
+            console.log 'next ad'
+            siomart.focused_ads.next_ad()
+          if direction == "left"
+            console.log 'prev ad'
+            siomart.focused_ads.prev_ad()
+
+      move : ( x, y ) ->
+        cursor_dom = siomart.utils.ge 'smFocusedAdsArrowLabel'
+        cursor_dom.style.left = x - 10 + 'px'
+        cursor_dom.style.top = y - 10 + 'px'
+
+        if x > cbca_grid.ww / 2
+          cursor_dom.className = 'sm-focused-ads_arrow-label fad-arrow-label __right-arrow'
+          cursor_dom.setAttribute 'data-direction', 'right'
+        else
+          cursor_dom.className = 'sm-focused-ads_arrow-label fad-arrow-label __left-arrow'
+          cursor_dom.setAttribute 'data-direction', 'left'
+
     ############################
     ## Инициализация focused_ads
     ############################
@@ -1687,7 +1719,7 @@ siomart =
       for i, v of this.ads
         html += this.ads[i]
 
-      siomart.utils.ge('ads' + this.ads_receiver_index).innerHTML = html
+      siomart.utils.ge('smads' + this.ads_receiver_index).innerHTML = html
       this.check_if_fully_loaded()
       this.render_ads_receiver()
 
@@ -1716,9 +1748,13 @@ siomart =
       siomart.utils.add_single_listener this._container, 'touchend', ( event ) ->
         siomart.focused_ads.touchend_event event
 
+      ## События для стрелки
+      this.cursor.init()
+
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
 
+      siomart.styles.init()
       this.active_ad_index = 0
 
   ##################################################

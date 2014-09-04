@@ -3,6 +3,7 @@
 @* Рендер под-выдачи для просмотра развёрных карточек.
 Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
+@defining( producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
 @* Список карточек указанного продюссера *@
 <div class="sm-producer-header abs" style="@stuff._bgcolor( bgColor )">
 
@@ -16,6 +17,11 @@
 
 </div>
 
+<div class="sm-focused-ads_arrow-label fad-arrow-label" id="smFocusedAdsArrowLabel" style="background-color: #@bgColor;">
+  <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(fgColor)</div>
+  <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(fgColor)</div>
+</div>
+
 @* Контейнер с прокручивающимися офферами *@
 <div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@adsCount" style="@stuff._bgcolor( bgColor )">
   <span id="ads0">
@@ -25,3 +31,4 @@
   </span>
   @_focusedAdLoaderTpl()
 </div>
+}
