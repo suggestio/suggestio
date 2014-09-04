@@ -1,0 +1,30 @@
+@(title: String, node: MAdnNode, rightCurrEl: BillingRightPanelLink)(content: Html)(implicit ctx: Context)
+
+@import ctx._
+@import BillingRightPanelLinks._
+
+
+@rightBar = {
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i __node-billing @if(rightCurrEl == RPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(node.id.get)">
+      <span>Биллинг тарифных планов</span>
+    </a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i __transactions-history @if(rightCurrEl == RPL_TRANSACTIONS){ __act}" href="@routes.MarketLkBilling._txnsList(node.id.get)">
+      <span>История операций</span>
+    </a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i __requisites @if(rightCurrEl == RPL_REQUISITES){ __act}" href="@routes.MarketLkBilling.paymentRequsites(node.id.get)">
+      <span>Реквизиты</span>
+    </a>
+    <hr class="delimiter"/>
+  </nav>
+}
+
+
+@market.lk.lkBaseLayout(
+  title       = title,
+  leftCurrEl  = Some(LkLeftPanelLinks.LPL_BILLING),
+  adnIdOpt    = node.id,
+  rightBar    = Some(rightBar)
+)(content)
