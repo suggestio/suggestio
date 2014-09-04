@@ -956,6 +956,8 @@ siomart =
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
+        if siomart.events.is_touch_locked
+          return false
         siomart.geo.get_current_position()
         return false
 
@@ -969,6 +971,10 @@ siomart =
 
       geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
+
+        if siomart.events.is_touch_locked
+          return false
+
         node_id = geo_node_target.getAttribute 'data-id'
         siomart.geo.load_for_node_id node_id
 
