@@ -45,7 +45,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   private def audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
   private def humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
 
-  private def infoKM        = "info" -> toSomeStrM(text2048M)
+  private def infoKM        = "info" -> toStrOptM(text2048M)
 
   /** Маппер подформы метаданных для узла-ресивера. */
   private def rcvrMetaM = {

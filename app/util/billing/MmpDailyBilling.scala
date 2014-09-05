@@ -114,7 +114,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         case LVL_PRODUCER     => amountN
       }
       val amountAcc1 = amountAcc + incr
-      trace(s"$logPrefix +${ssl.sl} (sink=${ssl.adnSink.longName}}): +x$incr: $amountAcc => $amountAcc1")
+      trace(s"$logPrefix +${ssl.sl} (sink=${ssl.adnSink.longName}): +x$incr: $amountAcc => $amountAcc1")
       amountAcc1
     }
     trace(s"$logPrefix amount (min/Block/Full) = $amount1 / $amountN / $amountTotal")
