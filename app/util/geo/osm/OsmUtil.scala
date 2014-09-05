@@ -314,8 +314,6 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   override def firstNode: OsmNode = firstOuter
   override def lastNode: OsmNode = lastOuter
 
-  def isOuterClosed = firstOuter == lastOuter
-
   def hasOuters = outers.hasNext
   def hasInners = inners.hasNext
   def hasSubareas = subareas.hasNext
@@ -347,6 +345,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
     val acc0: List[GeoShape] = if (hasOuters) {
       val outerLineNodes = connectWays( outerWays )
       val line = LineStringGs( outerLineNodes.map(_.gp) )
+      val isOuterClosed = outerLineNodes.head == outerLineNodes.last  &&  outerLineNodes.tail.nonEmpty
       val e = if (isOuterClosed) {
         val holes = innerHoles
           .map { wayGroup =>
