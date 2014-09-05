@@ -174,11 +174,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    renderNodeShowcaseSimple(request.adnNode)
+    renderNodeShowcaseSimple(request.adnNode, isGeo = false)
   }
 
   /** Рендер отображения выдачи узла. */
-  private def renderNodeShowcaseSimple(adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
+  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
      val spsr = AdSearch(
       levels      = List(AdShowLevels.LVL_START_PAGE),
       receiverIds = List(adnNode.id.get)
@@ -186,7 +186,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val oncloseHref: String = adnNode.meta.siteUrl
       .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
       .getOrElse { ONCLOSE_HREF_DFLT }
-    nodeShowcaseRender(adnNode, spsr, oncloseHref)
+    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo)
   }
 
   /** Выдача для продьюсера, который сейчас админят. */
@@ -196,11 +196,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     )
     // При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет.
     val oncloseHref = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
-    nodeShowcaseRender(request.adnNode, spsr, oncloseHref)
+    nodeShowcaseRender(request.adnNode, spsr, oncloseHref, isGeo = false)
   }
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = adnNode.id.get
     // TODO Вынести сборку списка prods в отдельный экшен.
     // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
@@ -238,7 +238,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         shops       = prods,
         welcomeAdOpt = waOpt
       )
-      renderShowcase(args)
+      renderShowcase(args, isGeo, adnNode.id)
     }
   }
 
@@ -287,7 +287,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           renderGeoShowcase(args)
         } else {
           trace(logPrefix + "Choosen adn node according to geo is " + nodeOpt.flatMap(_.id))
-          renderNodeShowcaseSimple(nodeOpt.get)
+          renderNodeShowcaseSimple(nodeOpt.get, isGeo = true)
         }
       }
     } else {
@@ -311,15 +311,20 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         ),
         oncloseHref = ONCLOSE_HREF_DFLT
       )
-      renderShowcase(args)
+      renderShowcase(args, isGeo = true, currAdnId = None)
     }
   }
 
 
   /** Готовы данные для рендера showcase indexTpl. Сделать это и прочие сопутствующие операции. */
-  private def renderShowcase(args: SMShowcaseRenderArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
+  private def renderShowcase(args: SMShowcaseRenderArgs, isGeo: Boolean, currAdnId: Option[String])
+                            (implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
     val html = indexTpl(args)
-    val result = jsonOk("showcaseIndex", Some(html))
+    val jsonArgs: FieldsJsonAcc = List(
+      "is_geo"      -> JsBoolean(isGeo),
+      "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
+    )
+    val result = jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
     StatUtil.resultWithStatCookie(result)
   }
 
@@ -593,7 +598,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
 
   /** Метод для генерации json-ответа с html внутри. */
-  private def jsonOk(action: String, html: Option[JsString] = None, blocks: Seq[JsString] = Nil) = {
+  private def jsonOk(action: String, html: Option[JsString] = None, blocks: Seq[JsString] = Nil, acc0: FieldsJsonAcc = Nil) = {
     var acc: FieldsJsonAcc = Nil
     if (html.isDefined)
       acc ::= "html" -> html.get
