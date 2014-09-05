@@ -61,6 +61,8 @@ amt.of.type.r=Restaurant
 amt.of.type.R=Restaurant chain
 amt.of.type.a=Transport
 amt.of.type.b=Metro station
+amt.of.type.c=Town district
+amt.of.type.d=Town
 
 amts.of.type.s=Shops
 amts.of.type.m=Marts
@@ -68,6 +70,8 @@ amts.of.type.r=Restaurants
 amts.of.type.R=Restaurant chains
 amts.of.type.a=Transport
 amts.of.type.b=Metro stations
+amts.of.type.c=Town districts
+amts.of.type.d=Towns
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit

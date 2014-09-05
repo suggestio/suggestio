@@ -20,6 +20,8 @@ object AdnShownTypes extends Enumeration {
   // При совпадении двух id будет ошибка после запуска при первом обращении к этой модели.
   val TRANSPORT_NODE: AdnShownType    = Value("a")    // Вокзалы, аэропорты и др. более-менее крупные транспортные узлы.
   val METRO_STATION: AdnShownType     = Value("b")    // Станция метро
+  val TOWN_DISTRICT: AdnShownType     = Value("c")    // Район города
+  val TOWN: AdnShownType              = Value("d")    // Город
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
   def maybeWithName(n: String) = {

@@ -64,6 +64,8 @@ amt.of.type.r=Ресторан
 amt.of.type.R=Супервайзер сети ресторанов
 amt.of.type.a=Транспорт
 amt.of.type.b=Станция метро
+amt.of.type.c=Район города
+amt.of.type.d=Город
 
 amts.of.type.s=Магазины
 amts.of.type.m=Торговые центры
@@ -71,6 +73,8 @@ amts.of.type.r=Рестораны
 amts.of.type.R=Сети ресторанов
 amts.of.type.a=Транспорт
 amts.of.type.b=Станции метро
+amts.of.type.c=Городские районы
+amts.of.type.d=Города
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ
