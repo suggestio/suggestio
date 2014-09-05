@@ -414,7 +414,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
   private def collectReceivers(myNode: MAdnNode) = {
     val dropRcvrId = myNode.id.get
-    MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode)
+    MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode, maxResults = 500)
       // Самому себе через "управление размещением" публиковать нельзя.
       .map { _.filter(_.id.get != dropRcvrId) }
   }

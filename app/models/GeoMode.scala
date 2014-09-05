@@ -33,7 +33,7 @@ object GeoMode extends PlayLazyMacroLogsImpl {
         val res = GeoLocation(latStr.toDouble, lonStr.toDouble)
         Some(res)
       case "" =>
-        None
+        Some(GeoNone)
       case other =>
         warn(s"apply(): Unknown .geo format: $other - fallback to None.")
         None

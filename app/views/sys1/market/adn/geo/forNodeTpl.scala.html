@@ -28,7 +28,7 @@
           <tr>
             <td><span title="@geo.id">@geo.id.get.substring(0, 4)...</span></td>
             <td>@geo.url.map { url =><a href="@url" target="_blank">Go</a>}</td>
-            <td>@geo.glevel</td>
+            <td>@geo.glevel.precision</td>
             <td>
               <a href="@routes.SysAdnGeo.showGeoJson(geo.id.get, geo.adnId)">
                 <span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span>
