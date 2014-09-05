@@ -36,7 +36,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM
   private def townKM        = "town"    -> townSomeM
-  private def addressKM     = "address" -> addressSomeM
+  private def addressKM     = "address" -> addressOptM
   private def colorKM       = "color"   -> colorSomeM
   private def fgColorKM     = "fgColor" -> colorOptM
   private def siteUrlKM     = "siteUrl" -> urlStrOptM
