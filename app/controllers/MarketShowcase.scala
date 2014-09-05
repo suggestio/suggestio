@@ -264,7 +264,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       if (resultsNonEmptyIter.isEmpty) {
         None
       } else {
-        resultsNonEmptyIter.maxBy(_._2)._1.headOption
+        resultsNonEmptyIter.minBy(_._2)._1.headOption
       }
     }
   }

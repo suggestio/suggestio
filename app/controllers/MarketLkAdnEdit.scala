@@ -42,8 +42,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   private def siteUrlKM     = "siteUrl" -> urlStrOptM
   private def phoneKM       = "phone"   -> phoneOptM
 
-  private def audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
-  private def humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
+  private def audDescrKM    = "audienceDescr"   -> toStrOptM(audienceDescrM)
+  private def humTrafAvgKM  = "humanTrafficAvg" -> optional(humanTrafficAvgM)
 
   private def infoKM        = "info" -> toStrOptM(text2048M)
 

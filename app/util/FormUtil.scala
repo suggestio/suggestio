@@ -188,13 +188,16 @@ object FormUtil {
   }
 
   def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
-  def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
-    x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
+  def toStrOptM(x: Mapping[String], trimmer: String => String = strTrimSanitizeUnescapeF): Mapping[Option[String]] = {
+    x.transform[String](trimmer, strIdentityF)
+     .transform[Option[String]](
+       {s => Option(s).filter(!_.isEmpty)},
+       strOptGetOrElseEmpty
+     )
   }
   def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeUnescapeF): Mapping[Option[String]] = {
-    x.transform[String](trimmer, strIdentityF)
-     .verifying("error.required", !_.isEmpty)
-     .transform[Option[String]](Some.apply, strOptGetOrElseEmpty)
+    toStrOptM(x, trimmer)
+     .verifying("error.required", _.isDefined)
   }
 
 

@@ -29,4 +29,7 @@ trait MaybeAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
 }
 
-object MaybeAuth extends MaybeAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
+object MaybeAuth
+  extends MaybeAuthAbstract
+  with ExpireSession[AbstractRequestWithPwOpt]
+  with CookieCleanup[AbstractRequestWithPwOpt]
