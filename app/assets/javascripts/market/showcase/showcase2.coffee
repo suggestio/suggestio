@@ -2002,23 +2002,26 @@ siomart =
       image_dom.style.marginTop = - nh / 2 + 'px'
 
     hide : () ->
-      if this.img_dom == null
-        return false
-      siomart.utils.addClass siomart.welcome_ad.img_dom, '__fade-out'
 
+      _dom = if siomart.welcome_ad.img_dom == null then siomart.welcome_ad.div_dom else siomart.welcome_ad.img_dom
+
+      siomart.utils.addClass _dom, '__fade-out'
       dn_cb = () ->
-        siomart.welcome_ad.img_dom.style.display = 'none'
-
+        _dom.style.display = 'none'
       setTimeout dn_cb, siomart.welcome_ad.fadeout_transition_time
 
     init : () ->
 
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
-      if this.img_dom == null
-        return false
+      this.div_dom = siomart.utils.ge 'smWelcomeDiv'
 
-      this.fit this.img_dom
-      setTimeout siomart.welcome_ad.hide, this.hide_timeout
+      if this.img_dom == null
+        this.div_dom.style.display = 'block'
+        setTimeout siomart.welcome_ad.hide, this.hide_timeout
+        return false
+      else
+        this.fit this.img_dom
+        setTimeout siomart.welcome_ad.hide, this.hide_timeout
 
   ##################################################
   ## Забиндить события на навигационные кнопари

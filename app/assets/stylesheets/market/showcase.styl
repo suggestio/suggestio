@@ -91,6 +91,28 @@ code
     &.__fade-out
       opacity: 0
 
+.sm-welcome-div
+  display           none
+  position          absolute
+  left              0px
+  top               0px
+  width             100%
+  height            100%
+  background        #363636
+  z-index           10000
+  display           table
+  vertical-align    middle
+  text-align        center
+  -webkit-transition: all 0.2s linear
+  &.__fade-out
+    opacity: 0
+  &_helper
+    display         inline-block
+    height          100%
+    vertical-align  middle
+
+
+
 .sm-vflex
   display: -webkit-box
   -webkit-box-orient: vertical
