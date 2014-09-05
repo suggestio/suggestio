@@ -45,7 +45,8 @@ case class SimpleNodesSearchArgs(
   qStr        : Option[String] = None,
   geoMode     : GeoMode = GeoNone,
   maxResults  : Option[Int] = None,
-  offset      : Option[Int] = None
+  offset      : Option[Int] = None,
+  currAdnId   : Option[String] = None
 ) {
 
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel])(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
@@ -60,7 +61,8 @@ case class SimpleNodesSearchArgs(
         offset        = offset.getOrElse(0),
         withAdnRights = Seq(AdnRights.RECEIVER),
         testNode      = Some(false),
-        withNameSort  = true
+        withNameSort  = true,
+        withoutIds    = currAdnId.toSeq
       ) {
         override def ftsSearchFN: String = AdnMMetadata.NAME_ESFN
       }
@@ -78,6 +80,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
   val GEO_SUF = ".geo"
   val OFFSET_SUF = ".offset"
   val MAX_RESULTS_SUF = ".limit"
+  val CURR_ADN_ID_SUF = ".cai"
 
   val MAX_RESULTS_LIMIT_HARD = 50
   val OFFSET_LIMIT_HARD = 300
@@ -101,6 +104,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
           maybeGeo        <- geoModeB.bind(key + GEO_SUF, params)
           maybeOffset     <- intOptB.bind(key + OFFSET_SUF, params)
           maybeMaxResults <- intOptB.bind(key + MAX_RESULTS_SUF, params)
+          maybeCurAdnId   <- strOptB.bind(key + CURR_ADN_ID_SUF, params)
         } yield {
           trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
           Right(
@@ -108,7 +112,8 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
               qStr        = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
               geoMode     = maybeGeo,
               offset      = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
-              maxResults  = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD)
+              maxResults  = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
+              currAdnId   = maybeCurAdnId
             )
           )
         }
@@ -119,7 +124,8 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
           strOptB.unbind(key + Q_SUF, value.qStr),
           geoModeB.unbind(key + GEO_SUF, value.geoMode),
           intOptB.unbind(key + OFFSET_SUF, value.offset),
-          intOptB.unbind(key + MAX_RESULTS_SUF, value.maxResults)
+          intOptB.unbind(key + MAX_RESULTS_SUF, value.maxResults),
+          strOptB.unbind(key + CURR_ADN_ID_SUF, value.currAdnId)
         )
           .filter { s => !s.isEmpty && !s.endsWith("=") }
           .mkString("&")

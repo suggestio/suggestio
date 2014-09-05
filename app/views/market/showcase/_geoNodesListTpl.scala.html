@@ -1,4 +1,4 @@
-@(nodes: Seq[models.MAdnNode.T])(implicit ctx:util.Context)
+@(nodes: Seq[models.MAdnNode.T], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
 <div class="shops-list">
   @nodes.zipWithIndex.map { case (mnode, i) =>
