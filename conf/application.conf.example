@@ -60,18 +60,19 @@ smtp.password="BedCenEnakJidLilfEp"
 ## Akka
 ###############################################################################
 ## TODO Use akka clustering instead of remoting in future.
-akka {
- actor {
-  provider = "akka.remote.RemoteActorRefProvider"
- }
- remote {
-  enabled-transports = ["akka.remote.netty.tcp"]
-  netty.tcp {
-   hostname = "127.0.0.1"
-   port = 2552
-  }
- }
-}
+## Отключено пока siobix не используется.
+#akka {
+# actor {
+#  provider = "akka.remote.RemoteActorRefProvider"
+# }
+# remote {
+#  enabled-transports = ["akka.remote.netty.tcp"]
+#  netty.tcp {
+#   hostname = "127.0.0.1"
+#   port = 2552
+#  }
+# }
+#}
 
 
 ###############################################################################
@@ -202,4 +203,14 @@ market.join.request.notify.superusers.emails = ["support@suggest.io"]
 
 ## Отображать ли пустые категории в выдаче? [false]
 #market.frontend.cats.empty.show = false
+
+
+###############################################################################
+## Radius
+###############################################################################
+## Включать при запуске tinyradius server? [false]
+radius.server.tiny.enabled = true
+
+## Включать ли периодический импорт ipgeobase? Первая итерация при старте, потом по таймеру. [false]
+ipgeobase.import.enabled = true
 

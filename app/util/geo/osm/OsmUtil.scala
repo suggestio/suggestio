@@ -322,8 +322,8 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
 
   /** Пути могут быть иметь обратный порядок узлов внутри себя. Надо стыковать текущую последнюю точку со следующей
     * первой точкой путем реверса точек при необходимости. */
-  def directWays(ways: Iterator[OsmWay]): List[OsmNode] = {
-    val allPts = ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
+  def connectWays(ways: Iterator[OsmWay]): List[OsmNode] = {
+    ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
       if (way.nodesOrdered.head == nodesAcc.head) {
         // нужно добавить все элементы слева в акк в обратном порядке
         way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
@@ -340,22 +340,17 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
         throw new IllegalArgumentException(s"directWays(): Cannot connect way $way to acc $nodesAcc -- no common points found.")
       }
     }
-    //val lastNode = allPts.last
-    //if (lastNode != allPts.head)
-      //lastNode :: allPts
-    //else
-      allPts
   }
 
   override def toGeoShape: GeoShape = {
     // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
     val acc0: List[GeoShape] = if (hasOuters) {
-      val outerLineNodes = directWays( outerWays )
+      val outerLineNodes = connectWays( outerWays )
       val line = LineStringGs( outerLineNodes.map(_.gp) )
       val e = if (isOuterClosed) {
         val holes = innerHoles
           .map { wayGroup =>
-            val holePoints = directWays( wayGroup.iterator )
+            val holePoints = connectWays( wayGroup.iterator )
               .map(_.gp)
             LineStringGs( holePoints )
           }

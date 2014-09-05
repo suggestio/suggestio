@@ -29,6 +29,9 @@ object IpGeoBaseImport extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Активация импорта требует явного включения этой функции в конфиге. */
+  def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled") getOrElse false
+
   /** Ссылка для скачивания текущей базы. */
   def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.url") getOrElse "http://ipgeobase.ru/files/db/Main/geo_files.zip"
 

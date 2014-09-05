@@ -39,7 +39,7 @@ object Crontab extends PlayMacroLogsImpl {
   def startTimers: List[Cancellable] = {
     val _sched = sched
     import _sched.schedule
-    List(
+    var timers = List(
       // Чистить tmp-картинки
       schedule(7 seconds, 5 minutes) {
         try {
@@ -79,18 +79,20 @@ object Crontab extends PlayMacroLogsImpl {
         } catch {
           case ex: Throwable => error("Cron: MmpDailyBilling.advertiseOfflineAds() failed", ex)
         }
-      },
-      // Запуск обновления гео-базы ip-адресов.
-      // TODO Нужно обновлять не 1-2 раз в день, а не после каждого запуска
-      schedule(20 seconds, 1 day) {
+      }
+    )
+    // Запуск обновления гео-базы ip-адресов.
+    // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
+    if (IpGeoBaseImport.IS_ENABLED) {
+      timers ::= schedule(20 seconds, 1 day) {
         try {
           IpGeoBaseImport.updateIpBase()
         } catch {
           case ex: Throwable => error("Cron: IpGeoBase.updateIpBase() failed", ex)
         }
       }
-    )
-
+    }
+    timers
   }
 
   def stopTimers(timers: Seq[Cancellable]) {
