@@ -69,6 +69,7 @@ object AdNetMember {
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
   def ADN_IS_ENABLED_ESFN     = fullFN(IS_ENABLED_ESFN)
   def ADN_SINKS_ESFN          = fullFN(SINKS_ESFN)
+  def ADN_SHOWN_TYPE_ID       = fullFN(SHOWN_TYPE_ID_ESFN)
 
 
   /** Генератор es-query для указанного member type.
@@ -388,8 +389,10 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
    * @param rights Список прав, по которым происходит поиск.
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
-  def findByAllAdnRights(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def findByAllAdnRights(rights: Seq[AdnRight], withoutTestNodes: Boolean, maxResults: Int = MAX_RESULTS_DFLT)
+                        (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     val req = findByAllAdnRightsBuilder(rights, withoutTestNodes)
+      .setSize(maxResults)
     runSearch(req)
   }
 

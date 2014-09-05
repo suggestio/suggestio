@@ -7,6 +7,7 @@ import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.MAdnNodeGeo
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import io.suggest.ym.model.common.AdnRights.AdnRight
+import io.suggest.ym.model.common.AdnSinks.AdnSink
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders, QueryBuilder}
@@ -121,6 +122,23 @@ object AdnNodesSearch {
         Some(aq)
       }
 
+    // Поиск/фильтрация по полю shown type id, хранящий id типа узла.
+    }.map[QueryBuilder] { qb =>
+      if (args.shownTypeIds.isEmpty) {
+        qb
+      } else {
+        val stiFilter = FilterBuilders.termsFilter(AdNetMember.ADN_SHOWN_TYPE_ID, args.shownTypeIds : _*)
+        QueryBuilders.filteredQuery(qb, stiFilter)
+      }
+    }.orElse[QueryBuilder] {
+      if (args.shownTypeIds.isEmpty) {
+        None
+      } else {
+        val stiQuery = QueryBuilders.termsQuery(AdNetMember.ADN_SHOWN_TYPE_ID, args.shownTypeIds : _*)
+          .minimumMatch(1)  // может быть только один тип ведь у одного узла.
+        Some(stiQuery)
+      }
+
     // Отрабатываем geoDistance через geoShape'ы. Текущий запрос обнаружения описываем как круг.
     // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
     }.map[QueryBuilder] { qb =>
@@ -153,9 +171,26 @@ object AdnNodesSearch {
       if (args.withAdnRights.isEmpty) {
         None
       } else {
-        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name) : _*)
+        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name): _*)
           .minimumMatch(args.withAdnRights.size)
         Some(rq)
+      }
+
+    // Ищем/фильтруем по sink-флагам
+    }.map[QueryBuilder] { qb =>
+      if (args.onlyWithSinks.isEmpty) {
+        qb
+      } else {
+        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SINKS_ESFN, args.onlyWithSinks.map(_.name) : _*)
+        QueryBuilders.filteredQuery(qb, sf)
+      }
+    }.orElse[QueryBuilder] {
+      if (args.onlyWithSinks.isEmpty) {
+        None
+      } else {
+        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SINKS_ESFN, args.onlyWithSinks.map(_.name) : _*)
+          .minimumMatch(args.onlyWithSinks.size)
+        Some(sq)
       }
 
     // Отрабатываем флаг testNode.
@@ -220,8 +255,14 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Искать/фильтровать по id узла, которому была делегирована фунция модерации размещения рекламных карточек. */
   def advDelegateAdnIds: Seq[String]
 
+  /** Искать/фильтровать по shownTypeId узла. */
+  def shownTypeIds: Seq[String]
+
   /** Права, которые должны быть у узла. */
   def withAdnRights: Seq[AdnRight]
+
+  /** Искать/фильтровать по доступным sink'ам. */
+  def onlyWithSinks: Seq[AdnSink]
 
   /** Искать/фильтровать по значению флага тестового узла. */
   def testNode: Option[Boolean]
