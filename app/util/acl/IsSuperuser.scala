@@ -44,7 +44,7 @@ trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with P
 
   def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result]
 }
-object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] {
+object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] with CookieCleanup[AbstractRequestWithPwOpt] {
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     IsAuth.onUnauth(request)
   }

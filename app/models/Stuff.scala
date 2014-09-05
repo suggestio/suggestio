@@ -143,7 +143,7 @@ case class MLkSupportRequest(
 case class SMDemoSiteArgs(
   bgColor: String,
   showcaseCall: Call,
-  title: String,
+  title: Option[String] = None,
   adnId: Option[String]
 ) {
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.

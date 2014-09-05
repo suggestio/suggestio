@@ -36,16 +36,16 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM
   private def townKM        = "town"    -> townSomeM
-  private def addressKM     = "address" -> addressSomeM
+  private def addressKM     = "address" -> addressOptM
   private def colorKM       = "color"   -> colorSomeM
   private def fgColorKM     = "fgColor" -> colorOptM
   private def siteUrlKM     = "siteUrl" -> urlStrOptM
   private def phoneKM       = "phone"   -> phoneOptM
 
-  private def audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
-  private def humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
+  private def audDescrKM    = "audienceDescr"   -> toStrOptM(audienceDescrM)
+  private def humTrafAvgKM  = "humanTrafficAvg" -> optional(humanTrafficAvgM)
 
-  private def infoKM        = "info" -> toSomeStrM(text2048M)
+  private def infoKM        = "info" -> toStrOptM(text2048M)
 
   /** Маппер подформы метаданных для узла-ресивера. */
   private def rcvrMetaM = {

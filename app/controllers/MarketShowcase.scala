@@ -84,7 +84,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val args = SMDemoSiteArgs(
       showcaseCall  = showcaseCall,
       bgColor       = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-      title         = request.adnNode.meta.name,
+      title         = Some(request.adnNode.meta.name),
       adnId         = request.adnNode.id
     )
     Ok(demoWebsiteTpl(args))
@@ -106,7 +106,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,
-      title = Messages("showcase.site.geo.title"),
       adnId = None
     )
     Ok(demoWebsiteTpl(args))
@@ -265,7 +264,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       if (resultsNonEmptyIter.isEmpty) {
         None
       } else {
-        resultsNonEmptyIter.maxBy(_._2)._1.headOption
+        resultsNonEmptyIter.minBy(_._2)._1.headOption
       }
     }
   }

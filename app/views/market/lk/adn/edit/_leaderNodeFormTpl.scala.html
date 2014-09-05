@@ -66,7 +66,7 @@
       '_label -> "Сайт"
     )
 
-    @if(nodeInfo.isProducer) {
+    @if(nodeInfo.isProducer || nodeInfo.isReceiver) {
       @textarea(
         mf("meta.info"),
         '_label -> "Информация о товарах или услугах"
