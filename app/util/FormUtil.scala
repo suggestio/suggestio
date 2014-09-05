@@ -351,7 +351,7 @@ object FormUtil {
 
 
   // География
-  /** Маппинг для элемента [[NodeGeoLevels]]. */
+  /** Маппинг для элемента NodeGeoLevels. */
   def nodeGeoLevelM: Mapping[NodeGeoLevel] = {
     nonEmptyText(minLength = 1, maxLength = 5)
       .transform[Option[NodeGeoLevel]] (
