@@ -8,10 +8,10 @@
 @import util.TplDataFormatUtil._
 
 @_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
-  <div class="advs-statuses__status advs-statuses__@statusClass advs-statuses__status_in-popup">
-    <div class="advs-statuses__status-icon advs-statuses__status-icon_@statusClass"></div>
-    @Messages("amt.of.type." + node.adn.shownTypeId) <strong>@node.meta.name / @node.meta.town</strong>
-    @content
+  <div class="adv-preview_status __@statusClass">
+    <span class="ft-M">@node.meta.name / @node.meta.town.</span>
+    @*Messages("amt.of.type." + node.adn.shownTypeId)*@
+    <span class="dark-gray">@content</span>
   </div>
 }
 
@@ -26,25 +26,24 @@
 
         case advOk: MAdvOk => {
           @_single_status( "approved", node ) {
-            @if(advOk.isOnline){ <a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a> }
-            <span class="advs-statuses__status__date">@_prettyDate(advOk.dateStatus)</span>
+            @*if(advOk.isOnline){ <a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a> }*@
+            Размещено
+            @_prettyDate(advOk.dateStatus).
           }
           @* dateStatus - одобрение, dateStart - начало размещения. *@
         }
         case advReq: MAdvReq => {
           @_single_status( "pending", node ) {
-            рассматривает размещение.
+            На рассмотрении.
           }
         }
         case advRefused: MAdvRefuse => {
           @_single_status( "declined", node ) {
-            отменил размещение. @advRefused.reason
+            Отказано. @advRefused.reason.
           }
         }
 
       }
-
-      <div class="border-line"></div>
 
     }
 
