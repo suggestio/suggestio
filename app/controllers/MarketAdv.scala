@@ -1,5 +1,7 @@
 package controllers
 
+import io.suggest.model.OptStrId
+import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -301,8 +303,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Cannot bind form.")
       },
       {adves =>
-        val allRcvrIdsFut = MAdnNode.findIdsByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !request.producer.adn.testNode)
-          .map { _.filter(_ != request.producerId).toSet }
+        val allRcvrIdsFut = collectReceivers(request.producer)
+          .map { _.iterator.flatMap(_.id).toSet }
         val adves1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrIdsFut.map { allRcvrIds =>
           val adves2 = filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
@@ -381,7 +383,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         val allRcvrsFut = collectReceivers(request.producer)
         val advs1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrsFut flatMap { allRcvrs =>
-          val allRcvrIds = allRcvrs.map(_.id.get).toSet
+          val allRcvrIds = allRcvrs.iterator.map(_.id.get).toSet
           val advs2 = filterEntiesByPossibleRcvrs(advs1, allRcvrIds)
           // Пора сохранять новые реквесты на размещение в базу.
           if (advs2.nonEmpty) {
@@ -417,7 +419,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
-  private def collectReceivers(myNode: MAdnNode) = {
+  private def collectReceivers(myNode: OptStrId with EMAdNetMember) = {
     val dropRcvrId = myNode.id.get
     MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode, maxResults = 500)
       // Самому себе через "управление размещением" публиковать нельзя.
