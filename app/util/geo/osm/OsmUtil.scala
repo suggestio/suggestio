@@ -141,14 +141,16 @@ trait OsmParsersT extends JavaTokenParsers {
 
   def objIdP: Parser[Long] = "\\d+".r ^^ { _.toLong }
 
+  def typeIdPartP: Parser[OsmElemType ~ Long] = osmTypeP ~ ("/" ~> objIdP)
+
   /** Парсер строки типа [[http://www.openstreetmap.org/way/31399147]]. */
   def osmBrowserUrlP: Parser[OsmElemType ~ Long] = {
-    osmSitePrefixP ~> osmTypeP ~ ("/" ~> objIdP)
+    osmSitePrefixP ~> typeIdPartP
   }
 
   /** Парсер API-0.6-ссылки вида [[http://www.openstreetmap.org/api/0.6/way/31399147/full]]. */
   def osmApi06UrlP: Parser[OsmElemType ~ Long] = {
-    osmSitePrefixP ~> "(?i)api/0\\.6/".r ~> osmTypeP ~ ("/" ~> objIdP)
+    osmSitePrefixP ~> "(?i)api/0\\.6/".r ~> typeIdPartP
   }
 
   def osmBrowserUrl2TypeIdP: Parser[(OsmElemType, Long)] = {

@@ -49,11 +49,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       AdnSinks.SINK_WIFI.longName -> boolean,
       AdnSinks.SINK_GEO.longName  -> boolean
     )
-    .verifying("adv.node.at.least.one.sink.must.present", {
-      m => m match {
-        case (wifi, geo)  => wifi || geo
-      }
-    })
     .transform[Set[AdnSink]](
       {case (withWifi, withGeo) =>
         var acc = List.empty[AdnSink]
@@ -107,14 +102,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         }}),
       "end"   -> dateOptM
     )
-    .verifying("error.date.end.before.start", { m => m match {
-      // TODO Если галочка isAdv убрана, а даты всё-таки выставлены неправильно, то будет ошибка маппинга, которой быть не должно.
-      // Проверяем даты. end должна быть не позднее start.
-      case (Some(dateStart), Some(dateEnd)) =>
-        !(dateStart isAfter dateEnd)
-      // Даты не заданы. Этот true будет подавлен на следующем шаге маппинга в None.
-      case _ => true
-    }})
     .transform [Option[(LocalDate, LocalDate)]] (
       {case (Some(dateStart), Some(dateEnd))  =>  Some(dateStart -> dateEnd)
        case _  =>  None },
@@ -177,6 +164,24 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             "period"        -> advPeriodOptM
           )
         )
+          // TODO Нужно, чтобы в форме не сабмиттились не готовые поля. Тогда это дело можно будет перенести на уровень конкретных маппингов.
+          .verifying("adv.node.at.least.one.sink.must.present", {
+            _.forall {
+              case (_, isAdv, _, sinks, _)  =>  if (isAdv) sinks.nonEmpty else true
+            }
+          })
+          .verifying("error.date.end.before.start", { _.forall {
+            // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
+            case (_, isAdv, _, _, dates) =>
+              if (isAdv) {
+                dates match {
+                  case Some((dateStart, dateEnd))  =>  !(dateStart isAfter dateEnd)
+                  case _ => false
+                }
+              } else {
+                true
+              }
+          }})
           .transform [List[AdvFormEntry]] (
             {ts =>
               ts.foldLeft(List.empty[AdvFormEntry]) {
