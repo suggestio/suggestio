@@ -4,6 +4,7 @@ import java.io.{FileInputStream, File, InputStream}
 import OsmElemTypes.OsmElemType
 import io.suggest.model.geo._
 import org.xml.sax.SAXParseException
+import util.PlayLazyMacroLogsImpl
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -15,7 +16,9 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Description: Вспомогательная утиль для работы с osm.
  */
 
-object OsmUtil {
+object OsmUtil extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   /** Решение проблемы компиляции списка relation'ов, когда одни relation'ы включают в себя другие.
     * @param nodesMap Карта точек.
@@ -87,6 +90,35 @@ object OsmUtil {
           .toMap
         val rels = compileRelationsParsed(nodesMap, waysMap, handler.getRelations)
         rels(id)
+      }
+    }
+  }
+
+
+  /** Пути могут быть иметь обратный порядок узлов внутри себя. Надо стыковать текущую последнюю точку со следующей
+    * первой точкой путем реверса точек при необходимости. */
+  def connectWays(ways: Iterator[OsmWay]): List[OsmNode] = {
+    ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
+      lazy val wayLast = way.nodesOrdered.last
+      lazy val nodesAccLast = nodesAcc.last
+      if (way.nodesOrdered.head == nodesAcc.head) {
+        // нужно добавить все элементы слева в акк в обратном порядке
+        way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
+      } else if (wayLast == nodesAcc.head) {
+        // Нужно добавить все элементы слева в акк в прямом порядке
+        way.nodesOrdered.foldRight(nodesAcc.tail) { (node, _acc) => node :: _acc }
+      } else if (wayLast == nodesAccLast) {
+        // Нужно добавить все элементы в хвост акку в обратном порядке
+        nodesAcc ++ way.nodesOrdered.reverse.tail
+      } else if (way.nodesOrdered.head == nodesAccLast) {
+        // нужно добавить все элемены в хвост акку в прямом порядке
+        nodesAcc ++ way.nodesOrdered.tail
+      } else if (way.nodesOrdered.head == wayLast) {
+        // TODO Бывает, что есть внешний путь, который должен бы быть как отдельный relation. Не ясно, как сопоставить дырки и несколько outer-полигонов.
+        warn("connectWays(): TODO external closed way dropped: Not yet implemented:\n - way = " + way)
+        nodesAcc
+      } else {
+        throw new IllegalArgumentException(s"directWays(): Cannot connect way to nodes acc: no common points found:\n - way = $way\n - acc = $nodesAcc")
       }
     }
   }
@@ -262,7 +294,9 @@ case class OsmRelationParsed(id: Long, memberRefs: List[OsmRelMemberParsed]) {
 
 case class OsmRelMember(typ: OsmElemType, obj: OsmObject, role: RelMemberRole)
 
+
 case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject {
+
   override def osmElemType = OsmElemTypes.RELATION
 
   def filterByRole(role: RelMemberRole) = members.iterator.filter(_.role == role)
@@ -318,38 +352,16 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   def hasInners = inners.hasNext
   def hasSubareas = subareas.hasNext
 
-  /** Пути могут быть иметь обратный порядок узлов внутри себя. Надо стыковать текущую последнюю точку со следующей
-    * первой точкой путем реверса точек при необходимости. */
-  def connectWays(ways: Iterator[OsmWay]): List[OsmNode] = {
-    ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
-      if (way.nodesOrdered.head == nodesAcc.head) {
-        // нужно добавить все элементы слева в акк в обратном порядке
-        way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
-      } else if (way.nodesOrdered.last == nodesAcc.head) {
-        // Нужно добавить все элементы слева в акк в прямом порядке
-        way.nodesOrdered.foldRight(nodesAcc.tail) { (node, _acc) => node :: _acc }
-      } else if (way.nodesOrdered.last == nodesAcc.last) {
-        // Нужно добавить все элементы в хвост акку в обратном порядке
-        nodesAcc ++ way.nodesOrdered.reverse.tail
-      } else if (way.nodesOrdered.head == nodesAcc.last) {
-        // нужно добавить все элемены в хвост акку в прямом порядке
-        nodesAcc ++ way.nodesOrdered.tail
-      } else {
-        throw new IllegalArgumentException(s"directWays(): Cannot connect way $way to acc $nodesAcc -- no common points found.")
-      }
-    }
-  }
-
   override def toGeoShape: GeoShape = {
     // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
     val acc0: List[GeoShape] = if (hasOuters) {
-      val outerLineNodes = connectWays( outerWays )
+      val outerLineNodes = OsmUtil.connectWays( outerWays )
       val line = LineStringGs( outerLineNodes.map(_.gp) )
       val isOuterClosed = outerLineNodes.head == outerLineNodes.last  &&  outerLineNodes.tail.nonEmpty
       val e = if (isOuterClosed) {
         val holes = innerHoles
           .map { wayGroup =>
-            val holePoints = connectWays( wayGroup.iterator )
+            val holePoints = OsmUtil.connectWays( wayGroup.iterator )
               .map(_.gp)
             LineStringGs( holePoints )
           }

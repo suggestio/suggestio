@@ -136,3 +136,5 @@ includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 //pipelineStages := Seq(rjs, gzip)
 pipelineStages := Seq(gzip)
 
+testOptions in Test += Tests.Argument("-oF")
+

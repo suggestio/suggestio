@@ -2,7 +2,8 @@ package util.geo.osm
 
 import java.io.InputStream
 
-import io.suggest.model.geo.{LineStringGs, GeoPoint}
+import io.suggest.model.geo.GsTypes.GsType
+import io.suggest.model.geo.{GsTypes, LineStringGs, GeoPoint}
 import org.scalatestplus.play._
 import play.api.GlobalSettings
 import play.api.test.FakeApplication
@@ -36,6 +37,35 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
       is.close()
     }
   }
+
+
+
+  case class RelResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,
+                           gsType: GsType, allMemberIds: Seq[Long] = Nil)
+
+  private def testRel(rf: String, ri: RelResultInfo): Unit = {
+    withFileStream(rf) { is =>
+      val res = OsmUtil.parseElementFromStream(is, OsmElemTypes.RELATION, ri.id)
+      res.id mustBe ri.id
+      assert( res.isInstanceOf[OsmRelation] )
+      val rel = res.asInstanceOf[OsmRelation]
+      rel.members.size  mustBe  ri.membersCount
+      val bms = rel.borderMembers.toSeq
+      bms.head.obj.id  mustBe  ri.firstBorderMemberId
+      bms.last.obj.id  mustBe  ri.lastBorderMemberId
+      val gs = res.toGeoShape
+      gs.toPlayJson  // Не должно быть экзепшена
+      if (ri.allMemberIds.nonEmpty) {
+        // Пройтись по всему списку member'ов
+        for(i <- 0 until rel.members.size) {
+          rel.members(i).obj.id  mustBe  ri.allMemberIds(i)
+        }
+      }
+      // TODO Нужно проверять корректность линий: порядок точек внутри way'я может быть как прямой, так и обратный
+      // по отношению к соседним путям.
+    }
+  }
+
 
   "OsmUtil" must {
 
@@ -76,53 +106,42 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
       }
     }
 
+    "testRel(spb.vaska)" in {
+      testRel("rel.vaska.osm.xml", RelResultInfo(1114252L, membersCount = 24,
+        firstBorderMemberId = 71338507L,
+        lastBorderMemberId = 71346364L,
+        gsType = GsTypes.polygon
+      ))
+    }
 
-    "parse relations" in {
-      case class ResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,
-                            allMemberIds: Seq[Long] = Nil)
-      val rels: Seq[(String, ResultInfo)] = Seq(
-        "rel.vaska.osm.xml" -> ResultInfo(1114252L, membersCount = 24,
-          firstBorderMemberId = 71338507L,
-          lastBorderMemberId = 71346364L
-        ),
-        "rel.vyborgsky.spb.osm.xml" -> ResultInfo(1114354, 107,
-          firstBorderMemberId = 178770468,
-          lastBorderMemberId = 100599524L
-        ),
-        "rel.spb.osm.xml" -> ResultInfo(337422L, 183,
-          firstBorderMemberId = 197668703L,
-          lastBorderMemberId = 175195149L
-        ),
-        "rel.spb.kirovsky-rajon.osm.xml" -> ResultInfo(369514L, 23,
+    "testRel(rel.vyborgsky.spb)" in {
+      testRel("rel.vyborgsky.spb.osm.xml", RelResultInfo(1114354, 107,
+        firstBorderMemberId = 178770468,
+        lastBorderMemberId = 100599524L,
+        gsType = GsTypes.polygon
+      ))
+    }
+
+    "testRel(rel.spb.osm.xml)" in {
+      testRel("rel.spb.osm.xml", RelResultInfo(337422L, 183,
+        firstBorderMemberId = 197668703L,
+        lastBorderMemberId = 175195149L,
+        gsType = GsTypes.polygon
+      ))
+    }
+
+    "testRel(rel.spb.kirovsky)" in {
+      testRel(
+        "rel.spb.kirovsky-rajon.osm.xml", RelResultInfo(369514L, 23,
           firstBorderMemberId = 31396996L,
           lastBorderMemberId = 159348605L,
+          gsType = GsTypes.polygon,
           allMemberIds = Seq(31396996L, 182611220L, 37669206L, 71338511L, 79570062L, 46835382L, 46835375L,
             79522204L, 79522201L, 46896188L, 46896180L, 46835385L, 45205337L, 79522192L, 79522199L, 45205338L,
             79522198L, 79522202L, 79522193L, 45273634L, 264454722L, 264454721L, 159348605L
           )
         )
       )
-      rels foreach { case (rf, ri) =>
-        withFileStream(rf) { is =>
-          val res = OsmUtil.parseElementFromStream(is, OsmElemTypes.RELATION, ri.id)
-          res.id mustBe ri.id
-          assert( res.isInstanceOf[OsmRelation] )
-          val rel = res.asInstanceOf[OsmRelation]
-          rel.members.size  mustBe  ri.membersCount
-          val bms = rel.borderMembers.toSeq
-          bms.head.obj.id  mustBe  ri.firstBorderMemberId
-          bms.last.obj.id  mustBe  ri.lastBorderMemberId
-          println( res.toGeoShape.toPlayJson )  // Не должно быть экзепшена
-          if (ri.allMemberIds.nonEmpty) {
-            // Пройтись по всему списку member'ов
-            for(i <- 0 until rel.members.size) {
-              rel.members(i).obj.id  mustBe  ri.allMemberIds(i)
-            }
-          }
-          // TODO Нужно проверять корректность линий: порядок точек внутри way'я может быть как прямой, так и обратный
-          // по отношению к соседним путям.
-        }
-      }
     }
 
     // TODO Нужны тесты для OsmRel.directWays()
