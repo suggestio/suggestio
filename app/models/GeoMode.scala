@@ -9,7 +9,7 @@ import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
-import util.PlayMacroLogsImpl
+import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.{Future, future}
 
 /**
@@ -19,19 +19,30 @@ import scala.concurrent.{Future, future}
  * Description: Режимы геолокации и утиль для них.
  */
 
-object GeoMode {
+object GeoMode extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
-  val LAT_LON_RE = """-?\d{1,3}\.\d{0,8},-?\d{1,3}\.\d{0,8}""".r
+  val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})""".r
+
+  def maybeApply(raw: Option[String]): Option[GeoMode] = {
+    raw.flatMap {
+      case "ip"  => Some(GeoIp)
+      case LAT_LON_RE(latStr, lonStr) =>
+        val res = GeoLocation(latStr.toDouble, lonStr.toDouble)
+        Some(res)
+      case "" =>
+        None
+      case other =>
+        warn(s"apply(): Unknown .geo format: $other - fallback to None.")
+        None
+    }
+  }
 
   /** Распарсить опциональное сырое значение qs-параметра a.geo=. */
   def apply(raw: Option[String]): GeoMode = {
-    raw.fold [GeoMode] (GeoNone) {
-      case "ip"  => GeoIp
-      case LAT_LON_RE(latStr, lonStr) =>
-        GeoLocation(latStr.toDouble, lonStr.toDouble)
-      case other => GeoNone
-    }
+    maybeApply(raw) getOrElse GeoNone
   }
 
   /** Биндер для набега на GeoMode, сериализованный в qs. */
@@ -43,7 +54,7 @@ object GeoMode {
         for {
           maybeGeo <- strOptB.bind(key, params)
         } yield {
-          Right(GeoMode(maybeGeo))
+          maybeApply(maybeGeo).fold [Either[String,GeoMode]] {Left("error.unknown")} { Right.apply }
         }
       }
 

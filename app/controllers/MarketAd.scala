@@ -326,7 +326,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
               }
             }
             tryUpdate(mad).map { _ =>
-              Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
+              Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
                 .flashing("success" -> "Изменения сохранены")
             }
           }
@@ -350,7 +350,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
    */
   def deleteSubmit(adId: String) = CanEditAd(adId).async { implicit request =>
     MAd.deleteById(adId) map { _ =>
-      val routeCall = routes.MarketLkAdn.showAdnNode(request.mad.producerId)
+      val routeCall = routes.MarketLkAdn.showNodeAds(request.mad.producerId)
       Redirect(routeCall)
         .flashing("success" -> "Рекламная карточка удалена")
     }

@@ -3,6 +3,7 @@ package models
 import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.common.AdnNodesSearchArgsT
 import play.api.mvc.{RequestHeader, QueryStringBindable}
+import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -65,7 +66,9 @@ case class SimpleNodesSearchArgs(
 }
 
 
-object SimpleNodesSearchArgs {
+object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   val Q_SUF = ".q"
   val GEO_SUF = ".geo"
@@ -95,6 +98,7 @@ object SimpleNodesSearchArgs {
           maybeOffset     <- intOptB.bind(key + OFFSET_SUF, params)
           maybeMaxResults <- intOptB.bind(key + MAX_RESULTS_SUF, params)
         } yield {
+          trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
           Right(
             SimpleNodesSearchArgs(
               qStr        = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),

@@ -258,6 +258,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           searchF(nodeSearchArgs) map { _ -> i }
         }
     } map { results =>
+      trace {
+        s"detectCurrentNodeByGeo($geo): Matched geo results are:\n  ${results.mkString("\n  ")}"
+      }
       val resultsNonEmptyIter = results.iterator.filter(_._1.nonEmpty)
       if (resultsNonEmptyIter.isEmpty) {
         None
@@ -516,22 +519,29 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Поиск узлов в рекламной выдаче. */
   def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
+    lazy val logPrefix = s"findNodes(${System.currentTimeMillis}): "
     // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
+    trace(logPrefix + "Starting with args " + args + " ; remote = " + request.remoteAddress + " ; path = " + request.path + "?" + request.rawQueryString)
     val tstamp = System.currentTimeMillis() / 50L
     // В зависимости от настроек геолокации, надо произвести поиск узлов в разных слоях или вне их всех.
     val ngls = args.geoMode.nodeGeoLevels
     val nodesFut: Future[Seq[MAdnNode]] = if (ngls.isEmpty) {
+      trace(logPrefix + "No node geo levels available -- searching for all.")
       // Уровней поиска геоинформации нет. Ищем в лоб.
       args.toSearchArgs(None) flatMap { sargs =>
         MAdnNode.dynSearch(sargs)
       }
     } else {
+      trace(logPrefix + "geo levels = " + ngls.mkString(", "))
       // Есть уровни для поиска. Надо запустить поиски узлов на разных уровнях.
       Future.traverse( ngls.zipWithIndex ) {
         case (glevel, i) =>
           args.toSearchArgs(Some(glevel))
             .flatMap { MAdnNode.dynSearch }
-            .map { _ -> i }
+            .map { nodes =>
+              trace(s"${logPrefix}On level $glevel found nodes ${nodes.iterator.map(_.id.get).mkString(", ")}")
+              nodes -> i
+            }
       } map { results =>
         // Восстанавливаем порядок согласно списку гео-уровней.
         results.filter(_._1.nonEmpty)
