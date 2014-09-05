@@ -858,6 +858,39 @@ siomart =
 
       window.vendor_prefix = obj
 
+    rgb_to_hsl : ( rgb ) ->
+      r = rgb[0]
+      g = rgb[1]
+      b = rgb[2]
+
+      r /= 255
+      g /= 255
+      b /= 255
+
+      max = Math.max(r, g, b)
+      min = Math.min(r, g, b)
+
+      h = s = l = (max + min) / 2
+
+      if max is min
+        h = s = 0 # achromatic
+      else
+        d = max - min
+        s = (if l > 0.5 then d / (2 - max - min) else d / (max + min))
+        switch max
+          when r
+            h = (g - b) / d + ((if g < b then 6 else 0))
+          when g
+            h = (b - r) / d + 2
+          when b
+            h = (r - g) / d + 4
+        h /= 6
+      [
+        h
+        s
+        l
+      ]
+
   ###########################
   ## Единая обработка событий
   ###########################
@@ -2015,11 +2048,14 @@ siomart =
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
       this.div_dom = siomart.utils.ge 'smWelcomeDiv'
 
+
+
       if this.img_dom == null
         this.div_dom.style.display = 'block'
         setTimeout siomart.welcome_ad.hide, this.hide_timeout
         return false
       else
+        this.div_dom.style.display = 'none'
         this.fit this.img_dom
         setTimeout siomart.welcome_ad.hide, this.hide_timeout
 
