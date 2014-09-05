@@ -599,7 +599,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Метод для генерации json-ответа с html внутри. */
   private def jsonOk(action: String, html: Option[JsString] = None, blocks: Seq[JsString] = Nil, acc0: FieldsJsonAcc = Nil) = {
-    var acc: FieldsJsonAcc = Nil
+    var acc: FieldsJsonAcc = acc0
     if (html.isDefined)
       acc ::= "html" -> html.get
     if (blocks.nonEmpty)
