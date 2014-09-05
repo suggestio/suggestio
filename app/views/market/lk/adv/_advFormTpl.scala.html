@@ -10,6 +10,7 @@
 @import util.DateTimePrettyPrinter._
 @import args._
 @import controllers.MarketAdv.CUSTOM_PERIOD
+@import AdnShownTypes._
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
 @sslCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, label: String)(busyAttrs: => Html) = {
@@ -93,7 +94,7 @@
 
             <strong>
               <a class="blue-link js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a>
-            </strong> / @node.meta.town
+            </strong>@if(node.meta.town.isDefined  &&  node.adn.shownTypeId.showWithTown) {/ @node.meta.town}
 
 
             @if(maybeBusyAdv.isDefined) {
