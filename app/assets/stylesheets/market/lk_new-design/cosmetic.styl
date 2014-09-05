@@ -208,9 +208,10 @@
   margin-bottom 35px
 
   &_illustration-w
-    float         left
-    padding-left  20px
-    padding-right 50px
+    float           left
+    padding-left    20px
+    padding-right   50px
+    padding-bottom  10px
 
   &_illustration
     width             85px
@@ -270,12 +271,38 @@
 /********************************************************************************************************************/
 /* Превью рекламной карточки в попапе */
 /********************************************************************************************************************/
-.adv-preview
+.adv-status
 
-  &_status
-    margin          10px 0
-    padding-left    50px
-    padding-top     10px
-    padding-bottom  10px
-    border-bottom 1px solid #c2c2c2
-    font-size 14px
+  &_lst
+    margin  15px 0
+
+  &_i
+    margin            5px 0
+    padding           10px 10px 10px 50px
+    background-color  #ffffff
+
+    color             darkGray
+    font-size         14px
+    text-align        center
+    border-radius(10px)
+
+  &_i.__in-popup
+    margin            10px 0
+    border-bottom     1px solid #c2c2c2
+    background-color  none
+    text-align        left
+    border-radius(0)
+
+  &_i-time
+    float       right
+    min-width   120px
+    text-align  left
+
+/********************************************************************************************************************/
+/* Управление рекламой */
+/********************************************************************************************************************/
+.adv-management
+
+  &_left-bar
+    width         460px
+    padding-right 20px

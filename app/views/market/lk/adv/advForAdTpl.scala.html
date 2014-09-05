@@ -11,12 +11,8 @@
   leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS)
 ) {
 
-  @market.lk.lkBlock("Информация") {
-    @_currentAdvsTpl(currAdvsArgs)
-  }
+  @_currentAdvsTpl(currAdvsArgs)
 
-  @market.lk.lkBlock("Разместить рекламную карточку") {
-    @_advFormTpl(formArgs)
-  }
+  @_advFormTpl(formArgs)
 
 }

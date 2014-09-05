@@ -543,7 +543,7 @@ PersonalCabinet =
                    <div class="image js-preview #{previewClass}">
                    <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
                    <img class="image_src js-image-preview" src="#{respData.image_link}" />
-                   <a class="image_remove-btn js-remove-image" title="Удалить файл">Удалить</a>
+                   <a class="image_remove-btn js-remove-image" title="Удалить файл"><span></span></a>
                    </div>
                   """
 
@@ -728,7 +728,6 @@ PersonalCabinet =
           PersonalCabinet.slideBlock.slideToggle $this, $slideBlock
 
       $(document).on 'click', '.js-slide-title', (e)->
-        e.preventDefault()
         $this = $ this
         $btn = $this.find '.js-slide-btn'
         href = $this.attr 'href'

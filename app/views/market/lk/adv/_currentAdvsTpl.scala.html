@@ -9,37 +9,15 @@
 @import args._
 
 @if( !advs.isEmpty ){
-<div class="advs-info-block">
+  @_currentAdvsListTpl(advs, adv2adn)
 
-  <div class="advs-info-block__section advs-info-block__section_left js-equal-height">
-
-    @* Информация о статусе карточки — нужно уточнить, что именно тут будет выводиться *@
-    <div class="g-sm-strong">Рекламная карточка находится на рассмотрении администратора.</div>
-    <div class="sm-light-text">(создана 22 мая 2014).</div>
-
-  </div>
-
-  <div class="advs-info-block__section advs-info-block__section_center js-equal-height">
-    @_currentAdvsListTpl(advs, adv2adn)
-  </div>
-  <div class="advs-info-block__section advs-info-block__section_right js-equal-height">
-
-    Под данную рекламу заблокировано:
-
-    <div class="advs-info-block__price">
-    @if(blockedSums.isEmpty) {
-      @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
-    } else {
-      @blockedSums.map { case (amount, currency) =>
-        @formatPrice(amount, currency)
-      }
+  @*Под данную рекламу заблокировано:
+  @if(blockedSums.isEmpty) {
+    @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
+  } else {
+    @blockedSums.map { case (amount, currency) =>
+      @formatPrice(amount, currency)
     }
-    </div>
-  </div>
+  }*@
 
-  <div class="clear"></div>
-
-</div>
-}else{
-  Карточка пока что нигде не размещена
 }

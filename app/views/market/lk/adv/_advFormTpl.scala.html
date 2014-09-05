@@ -41,6 +41,36 @@
   }
 }
 
+<h2 class="page_title">Разместить рекламную карточку</h2>
+<hr class="delimiter __light"/>
+
+<div class="adv-management">
+  @form(routes.MarketAdv.advFormSubmit(adId)) {
+    @defining( adnNodes.groupBy(_.meta.town).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
+
+      @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
+      @af.globalError.map { ge =>
+        <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
+      }
+
+      <div class="adv-management_left-bar">
+        <h2  class="minor-title">Выбор города/ места</h2>
+        @market.lk.lkBlockNewDesign() {
+          <p class="ft-M">
+            <input type="checkbox"/>&nbsp;<label>Города</label>
+          </p>
+        } {
+          @adnNodesMap.zipWithIndex.map { case ((memberTown, _), i) =>
+            @memberTown
+          }
+        }
+      </div>
+
+    }
+  }
+</div>
+
+
 <div class="advs-form-block" id="advsFormBlock">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
 @*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@

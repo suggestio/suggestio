@@ -4,31 +4,48 @@
 @import ctx._
 @import helper._
 
-@defining(mf("welcomeImgId").value) { imgIdOpt =>
+<table class="prop">
+  <td class="prop_name td">
+    Фон приветствия,
+    фоновая картинка, над
+    ней будет распологаться
+    логотип или знак
+  </td>
+  <td class="td" id="welcomeImage">
+    @defining(mf("welcomeImgId").value) { imgIdOpt =>
 
-  @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
-    @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
-      <div class="image __size-M __first-in-line js-preview">
-        <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
-        <img class="image_src" src="@routes.Img.getImg(imgId)" />
-        <a class="image_remove-btn js-remove-image" title="Удалить">
-          <span></span>
+      @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
+        @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
+          <div class="image __size-M __first-in-line js-preview">
+            <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
+            <img class="image_src" src="@routes.Img.getImg(imgId)" />
+            <a class="image_remove-btn js-remove-image" title="Удалить">
+              <span></span>
+            </a>
+          </div>
+        }
+      }
+
+      <div class="image __size-M f-left __first-in-line js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
+        @stuff._fileUploadTpl(
+          routes.Img.handleTempImg,
+          fieldName = "welcomeImgId",
+          previewRoot = "#welcomeImage",
+          previewClass = "__size-M f-left"
+        )
+        <a class="image_add-btn js-file-upload-btn" title="Загрузить изображение">
+          <span>Загрузить<br/>изображение</span>
         </a>
       </div>
+
     }
-  }
+  </td>
+  <td class="prop_name td">
+    Логотип или знак будет
+    накладываться на фон
+    картинки приветствия
+  </td>
+  <td class="td">
 
-  <div class="image __size-M f-left __first-in-line js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
-    @stuff._fileUploadTpl(
-      routes.Img.handleTempImg,
-      fieldName = "welcomeImgId",
-      previewRoot = "#welcomeImage",
-      previewClass = "__size-M f-left"
-    )
-    <a class="image_add-btn js-file-upload-btn" title="Загрузить изображение">
-      <span>Загрузить<br/>изображение</span>
-    </a>
-  </div>
-
-
-}
+  </td>
+</table>
