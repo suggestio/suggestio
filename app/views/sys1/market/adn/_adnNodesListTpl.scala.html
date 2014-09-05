@@ -2,7 +2,7 @@
 
 @* Инлайновый список узлов. *@
 
-@if(adnNodes) {
+@if(adnNodes.nonEmpty) {
 
   <table class="siom-table __size-XL color-strong">
     <tr>
@@ -33,7 +33,8 @@
         </th>
       }
     </tr>
-    @adnNodes.groupBy(_.adn.memberType).map { case (memberType, adnNodes1) =>
+
+    @adnNodes.groupBy(_.adn.shownTypeId).map { case (shownTypeId, adnNodes1) =>
       @if(withDelims) {
         <tr>
           <td>
@@ -44,8 +45,8 @@
           </td>
           <td>
             <div class="siom-cell-cnt __size-M">
-              <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(memberType.name))">
-                @Messages("amt.of.type." + memberType)
+              <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(shownTypeId))">
+                @Messages("amts.of.type." + shownTypeId)
               </a>
             </div>
             <div class="border-line"></div>
@@ -70,11 +71,15 @@
         <tr>
           <td>
             <div class="siom-cell-cnt __size-M">
-              <strong>
+              @if(adnNode.adn.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
                 <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">
                   @adnNode.meta.name
                 </a>
-              </strong>
+              @if(adnNode.adn.isEnabled) {</strong>} else {</strike>}
+              @if(adnNode.adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
+              @if(adnNode.adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
+              @if(adnNode.adn.hasWifiSink) {<span title="Включена Wi-Fi выдача.">wifi</span>}
+              @if(adnNode.adn.hasGeoSink) {<span title="Включена geo-выдача.">geo</span>}
             </div>
             <div class="border-line"></div>
           </td>

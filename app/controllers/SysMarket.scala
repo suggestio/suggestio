@@ -162,16 +162,19 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   import views.html.sys1.market.adn._
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType.  */
-  def adnNodesList(anmtRaw: Option[String]) = IsSuperuser.async { implicit request =>
+  def adnNodesList(stiIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
     val companiesFut = MCompany
       .getAll(maxResults = 1000)
       .map { companies =>
         companies.map { c  =>  c.id.get -> c }.toMap
       }
-    val adnNodesFut = anmtRaw match {
-      case Some(_anmtRaw) =>
-        val anmt = AdNetMemberTypes.withName(_anmtRaw)
-        MAdnNode.findAllByType(anmt, maxResult = 1000)
+    val adnNodesFut = stiIdOpt match {
+      case Some(stiId) =>
+        val sargs = MAdnNodeSearch(
+          shownTypes = Seq(AdnShownTypes.withName(stiId)),
+          maxResults = 1000
+        )
+        MAdnNode.dynSearch(sargs)
       case None =>
         MAdnNode.getAll(maxResults = 1000)
     }

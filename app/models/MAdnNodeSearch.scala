@@ -29,9 +29,12 @@ case class MAdnNodeSearch(
   hasLogo     : Option[Boolean] = None,
   withGeoDistanceSort: Option[GeoPoint] = None,
   withNameSort: Boolean = false,
+  shownTypes  : Seq[AdnShownType] = Nil,
   maxResults  : Int = 10,
   offset      : Int = 0
-) extends AdnNodesSearchArgsT
+) extends AdnNodesSearchArgsT {
+  override def shownTypeIds: Seq[String] = shownTypes.map(_.name)
+}
 
 
 
