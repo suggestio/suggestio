@@ -20,7 +20,7 @@ object SMShowcaseReqArgs {
           maybeGeo  <- strOptB.bind(key + ".geo", params)
         } yield {
           Right(SMShowcaseReqArgs(
-            geo  = GeoMode(maybeGeo)
+            geo  = GeoMode.maybeApply(maybeGeo).filter(_.isWithGeo).getOrElse(GeoIp)
           ))
         }
       }

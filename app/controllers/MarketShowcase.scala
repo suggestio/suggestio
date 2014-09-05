@@ -277,21 +277,21 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
    * @param args Аргументы.
    */
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
-    args.geo.exactGeodata match {
-      // Есть координаты текущие точные. Нужно поискать ближайший рекламный узел в рамках города.
-      case Some(gp) =>
-        detectCurrentNodeByGeo(args.geo)(MAdnNode.dynSearch) flatMap { nodeOpt =>
-          if (nodeOpt.isEmpty) {
-            // Нету узлов, подходящих под запрос.
-            debug(s"geoShowcase($args): No nodes found nearby $gp")
-            renderGeoShowcase(args)
-          } else {
-            renderNodeShowcaseSimple(nodeOpt.get)
-          }
+    lazy val logPrefix = s"geoShowcase(${System.currentTimeMillis}): "
+    trace(logPrefix + "Starting, args = " + args)
+    if (args.geo.isWithGeo) {
+      detectCurrentNodeByGeo(args.geo)(MAdnNode.dynSearch) flatMap { nodeOpt =>
+        if (nodeOpt.isEmpty) {
+          // Нету узлов, подходящих под запрос.
+          debug(logPrefix + "No nodes found nearby " + args.geo)
+          renderGeoShowcase(args)
+        } else {
+          trace(logPrefix + "Choosen adn node according to geo is " + nodeOpt.flatMap(_.id))
+          renderNodeShowcaseSimple(nodeOpt.get)
         }
-
-      case None =>
-        renderGeoShowcase(args)
+      }
+    } else {
+      renderGeoShowcase(args)
     }
   }
   private def renderGeoShowcase(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
