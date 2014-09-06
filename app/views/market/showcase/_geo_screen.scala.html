@@ -1,4 +1,5 @@
 @(args: SMShowcaseRenderArgs)(implicit ctx:util.Context)
+@import util.TplDataFormatUtil._
 
 <div class="sm-geo-screen" id="smGeoScreen">
 
@@ -19,8 +20,13 @@
   }
 
   <style type="text/css">
+    @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
     .shops-list_row {
       color:#@args.fgColor;
+    }
+    .shops-list_row.__odd {
+      background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
+    }
     }
   </style>
 

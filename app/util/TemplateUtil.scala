@@ -9,6 +9,8 @@ import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
 
+import util._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -16,6 +18,7 @@ import views.html.helper.FieldConstructor
  * Description: Разная мелкая утиль для шаблонов.
  */
 object TplDataFormatUtil {
+
   // Надо укорачивать валюту до минимума
   private val CURRENCY_FIXER_RUB = "руб\\.".r
   private val CURRENCY_FIXER_USD = "USD".r
@@ -34,6 +37,45 @@ object TplDataFormatUtil {
       val xint = Integer.parseInt(subhex, 16)
       colorHex2rgb(hex, untilPos, xint :: acc)
     }
+  }
+
+  final def colorRgb2Hsl(rgb: List[Int]): List[Int] = {
+
+    val r:Float = rgb(0).toFloat / 255
+    val g:Float = rgb(1).toFloat / 255
+    val b:Float = rgb(2).toFloat / 255
+
+    val rgbSorted = List(r,g,b).sortWith(_ < _)
+
+    val max = rgbSorted(2)
+    val min = rgbSorted(0)
+
+    if( max == min ){
+      List( 0, 0, ((max + min)/2*100).toInt)
+    }else{
+
+      val l = ( max + min ) / 2
+
+      val s = if( l < 0.5 ){
+        (max - min) / (max + min)
+      } else {
+        (max - min) / (2.0 - max - min)
+      }
+
+      val h = if( r == max ){
+        (g - b) / (max - min)
+      } else if( g == max ){
+        2.0 + (b - r) / ( max - min )
+      } else {
+        4.0 + (r - g) / ( max - min )
+      }
+
+      val h1 = if( h < 0 ) h*60 + 360 else h*60
+      
+      List( h1.toInt, (s*100).toInt, (l*100).toInt )
+
+    }
+
   }
 
   /** Постпроцессинг цен. Использовать неразрывные пробелы вместо обычных. */

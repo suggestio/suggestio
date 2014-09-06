@@ -421,18 +421,20 @@ cbca_grid =
 
           _pelt = document.getElementById('elt' + id)
 
-          ## temp
-          _pelt.style.opacity = 1
-          _pelt.style.display = 'block'
-
           if _pelt != null
 
-            for p in [vendor_prefix.css + 'transform', 'transform']
-              style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
-              _pelt.style[p] = style_string
+            ## temp
+            _pelt.style.opacity = 1
+            _pelt.style.display = 'block'
 
-          left_pointer += b.width + this.cell_padding
-          pline = cline
+            if _pelt != null
+
+              for p in [vendor_prefix.css + 'transform', 'transform']
+                style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
+                _pelt.style[p] = style_string
+
+            left_pointer += b.width + this.cell_padding
+            pline = cline
 
         else
           cur_column++
@@ -538,7 +540,9 @@ siomart =
       if refresh == false && siomart.geo.nodes_loaded == true
         siomart.response_callbacks.find_nodes siomart.geo.nodes_data_cached
         return false
+      node_query_param = if siomart.config.mart_id then '&a.cai=' + siomart.config.mart_id else ''
       console.log 'load nodes'
+      console.log node_query_param
       url = '/market/nodes/search?' + this.request_query_param()
       siomart.request.perform url
 
@@ -859,37 +863,47 @@ siomart =
       window.vendor_prefix = obj
 
     rgb_to_hsl : ( rgb ) ->
-      r = rgb[0]
-      g = rgb[1]
-      b = rgb[2]
 
-      r /= 255
-      g /= 255
-      b /= 255
+      r1 = rgb[0] / 255
+      g1 = rgb[1] / 255
+      b1 = rgb[2] / 255
 
-      max = Math.max(r, g, b)
-      min = Math.min(r, g, b)
+      maxColor = Math.max(r1, g1, b1)
+      minColor = Math.min(r1, g1, b1)
 
-      h = s = l = (max + min) / 2
+      L = (maxColor + minColor) / 2
+      S = 0
+      H = 0
 
-      if max is min
-        h = s = 0 # achromatic
-      else
-        d = max - min
-        s = (if l > 0.5 then d / (2 - max - min) else d / (max + min))
-        switch max
-          when r
-            h = (g - b) / d + ((if g < b then 6 else 0))
-          when g
-            h = (b - r) / d + 2
-          when b
-            h = (r - g) / d + 4
-        h /= 6
-      [
-        h
-        s
-        l
+      unless maxColor is minColor
+
+        #Calculate S:
+        if L < 0.5
+          S = (maxColor - minColor) / (maxColor + minColor)
+        else
+          S = (maxColor - minColor) / (2.0 - maxColor - minColor)
+
+        #Calculate H:
+        if r1 is maxColor
+          H = (g1 - b1) / (maxColor - minColor)
+        else if g1 is maxColor
+          H = 2.0 + (b1 - r1) / (maxColor - minColor)
+        else
+          H = 4.0 + (r1 - g1) / (maxColor - minColor)
+
+
+      L = L * 100
+      S = S * 100
+      H = H * 60
+
+      H += 360  if H < 0
+
+      result = [
+        H
+        S
+        L
       ]
+      result
 
   ###########################
   ## Единая обработка событий
@@ -1357,6 +1371,9 @@ siomart =
       container = siomart.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       siomart.utils.ge_tag('body')[0].style.overflow = 'hidden'
+
+      if data.curr_adn_id != null
+        siomart.config.mart_id = data.curr_adn_id
 
       siomart.grid_ads.adjust_dom()
       siomart.geo.adjust()
