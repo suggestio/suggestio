@@ -379,20 +379,16 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
   // ===================================== ad show levels =============================================
 
   /** Форма для маппинга результатов  */
-  private def adShowLevelFormM: Form[(SinkShowLevel, Boolean)] = Form(tuple(
+  private def adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
     // id уровня, прописано в чекбоксе
     "levelId" -> nonEmptyText(maxLength = 1)
-      .transform [Option[SinkShowLevel]] (
-        { v =>
-          SinkShowLevels.maybeWithName(v).orElse {
-            AdShowLevels.maybeWithName(v).map(asl => SinkShowLevels.withArgs(AdnSinks.default, asl))
-          }
-        },
+      .transform [Option[AdShowLevel]] (
+        { AdShowLevels.maybeWithName },
         { case Some(sl) => sl.toString()
           case None => "" }
       )
       .verifying("ad.show.level.undefined", _.isDefined)
-      .transform[SinkShowLevel](_.get, Some.apply)
+      .transform[AdShowLevel](_.get, Some.apply)
     ,
     "levelEnabled" -> boolean   // Новое состояние чекбокса.
   ))
@@ -408,7 +404,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
         debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
         NotAcceptable("Request body invalid.")
       },
-      {case (levelId, isLevelEnabled) =>
+      {case (sl, isLevelEnabled) =>
         // Бывает, что ресиверы ещё не выставлены. Тогда нужно найти получателя и вписать его сразу.
         val additionalReceiversFut: Future[Receivers_t] = if (request.mad.receivers.isEmpty) {
           val rcvrsFut = detectReceivers(request.producer)
@@ -420,12 +416,20 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
         } else {
           Future successful Map.empty
         }
+        // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
+        // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
+        val ssls = request.producer
+          .adn
+          .sinks
+          .map { SinkShowLevels.withArgs(_, sl) }
         additionalReceiversFut flatMap { addRcvrs =>
           // Нужно, чтобы настройки отображения также повлияли на выдачу. Добавляем выхлоп для producer'а.
           MAd.tryUpdate(request.mad) { mad =>
             val rcvrs1 = mad.receivers ++ addRcvrs
             val rcvrs2 = rcvrs1.get(mad.producerId).fold(rcvrs1) { prodRcvr =>
-              val prodRcvr1 = prodRcvr.copy(sls = prodRcvr.sls + levelId)
+              val prodRcvr1 = prodRcvr.copy(
+                sls = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
+              )
               rcvrs1 + (mad.producerId -> prodRcvr1)
             }
             mad.copy(
