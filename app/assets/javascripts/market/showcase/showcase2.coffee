@@ -519,9 +519,11 @@ siomart =
       geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
       geo_screen_content = siomart.utils.ge('smGeoNodesContent')
 
-      geo_screen.style.height = cbca_grid.wh - 100
-      geo_screen_wrapper.style.height = cbca_grid.wh - 100
-      geo_screen_content.style.minHeight = cbca_grid.wh - 100 + 1
+      _offset = 135
+
+      geo_screen.style.height = cbca_grid.wh - _offset
+      geo_screen_wrapper.style.height = cbca_grid.wh - _offset
+      geo_screen_content.style.minHeight = cbca_grid.wh - _offset + 1
 
 
     request_query_param : () ->
@@ -564,6 +566,7 @@ siomart =
       console.log 'resize'
       siomart.welcome_ad.fit siomart.welcome_ad.img_dom
       window.scrollTo(0,0)
+
       if typeof siomart.window_resize_timer != 'undefined'
         clearTimeout siomart.window_resize_timer
 
@@ -578,6 +581,8 @@ siomart =
         siomart.focused_ads.show_ad_by_index siomart.focused_ads.active_ad_index
 
         siomart.grid_ads.adjust_dom()
+
+        siomart.geo.adjust()
 
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
