@@ -23,11 +23,6 @@ object MarketAdFormUtil {
   type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
 
-  // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
-  val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
-  val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
-
-
   /** Маппинг для выравнивания текста в рамках поля. */
   val textAlignOptM: Mapping[Option[TextAlign]] = {
     optional(text(maxLength = 10))
@@ -72,7 +67,7 @@ object MarketAdFormUtil {
   }
 
   /** Маппер для значения font.family. */
-  val fontFamilyOptM: Mapping[Option[String]] = {
+  def fontFamilyOptM: Mapping[Option[String]] = {
     optional(
       // TODO RELEASE: Добавить валидацию перед запуском
       text(maxLength = 32)
@@ -81,7 +76,7 @@ object MarketAdFormUtil {
 
 
   /** Маппер для описания, прилагаемого к рекламной карточке. */
-  val richDescrOptM: Mapping[Option[RichDescr]] = {
+  def richDescrOptM: Mapping[Option[RichDescr]] = {
     val rdTextM = text(maxLength = 8192)
       .transform(strFmtTrimF, strIdentityF)
     val m = mapping(
@@ -136,11 +131,20 @@ object MarketAdFormUtil {
   }
 
 
-  val coordM = number(min = 0, max = 2048)
-  val coords2DM: Mapping[Coords2D] = {
+  /** Парсер координаты. Координата может приходить нецелой, поэтому нужно округлить. */
+  val coordM: Mapping[Int] = {
+    // TODO Достаточно парсить первые цифры до $ или до десятичной точки/запятой, остальное отбрасывать.
+    doubleM
+      .transform[Int](_.toInt, _.toDouble)
+      .verifying("error.coord.too.big", { _ <= 2048 })
+      .verifying("error.coord.negative", { _ >= 0 })
+  }
+  def coords2DM: Mapping[Coords2D] = {
+    // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
+    val _coordM = coordM
     mapping(
-      "x" -> coordM,
-      "y" -> coordM
+      "x" -> _coordM,
+      "y" -> _coordM
     )
     { Coords2D.apply }
     { Coords2D.unapply }
@@ -280,16 +284,6 @@ object MarketAdFormUtil {
       }}
     }
   }
-
-
-  val DISCOUNT_TEXT_MAXLEN = 256
-
-  val AD_TEXT_MAXLEN = 256
-
-
-  // Дублирующиеся куски маппина выносим за пределы метода.
-  val CAT_ID_K = "catId"
-  val AD_IMG_ID_K = "image_key"
 
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.

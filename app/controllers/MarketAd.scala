@@ -427,10 +427,15 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
           MAd.tryUpdate(request.mad) { mad =>
             val rcvrs1 = mad.receivers ++ addRcvrs
             val rcvrs2 = rcvrs1.get(mad.producerId).fold(rcvrs1) { prodRcvr =>
-              val prodRcvr1 = prodRcvr.copy(
-                sls = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
-              )
-              rcvrs1 + (mad.producerId -> prodRcvr1)
+              val sls2 = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
+              if (sls2.isEmpty) {
+                rcvrs1 - mad.producerId
+              } else {
+                val prodRcvr1 = prodRcvr.copy(
+                  sls = sls2
+                )
+                rcvrs1 + (mad.producerId -> prodRcvr1)
+              }
             }
             mad.copy(
               receivers = rcvrs2
