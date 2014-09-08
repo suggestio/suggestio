@@ -57,7 +57,7 @@ case class SimpleNodesSearchArgs(
           .flatMap { gsi => glevelOpt.map(_ -> gsi) }
           .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) },
         withGeoDistanceSort = gsiOpt.map { _.geoPoint },
-        maxResults    = maxResults.getOrElse(10),
+        maxResults    = maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT,
         offset        = offset.getOrElse(0),
         withAdnRights = Seq(AdnRights.RECEIVER),
         testNode      = Some(false),
@@ -83,6 +83,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
   val CURR_ADN_ID_SUF = ".cai"
 
   val MAX_RESULTS_LIMIT_HARD = 50
+  def MAX_RESULTS_DFLT = MAX_RESULTS_LIMIT_HARD
   val OFFSET_LIMIT_HARD = 300
   val QSTR_LEN_MAX = 70
 
