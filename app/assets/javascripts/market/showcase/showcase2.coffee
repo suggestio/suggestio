@@ -519,7 +519,7 @@ siomart =
       geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
       geo_screen_content = siomart.utils.ge('smGeoNodesContent')
 
-      _offset = 135
+      _offset = 100
 
       geo_screen.style.height = cbca_grid.wh - _offset
       geo_screen_wrapper.style.height = cbca_grid.wh - _offset
