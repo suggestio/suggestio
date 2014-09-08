@@ -61,8 +61,8 @@ case class SimpleNodesSearchArgs(
         offset        = offset.getOrElse(0),
         withAdnRights = Seq(AdnRights.RECEIVER),
         testNode      = Some(false),
-        withNameSort  = true,
-        withoutIds    = currAdnId.toSeq
+        //withoutIds    = currAdnId.toSeq,
+        withNameSort  = true
       ) {
         override def ftsSearchFN: String = AdnMMetadata.NAME_ESFN
       }
