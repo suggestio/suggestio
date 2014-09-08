@@ -96,6 +96,7 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
           val logPrefix = s"event(prodId=$producerId): "
           debug(logPrefix + "Starting deletion of all ads, related to producer...")
           MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
+          MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
 
         case other =>
           warn("Unexpected event received: " + other)
@@ -107,7 +108,7 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
     * Функция только сообщает в логи о своих успехах. */
   private def handleFinishPf(logPrefix: String, model: EsModelStaticT): PartialFunction[Try[_], _] = {
     case Success(result) =>
-      debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName)
+      debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName + " ;; result = " + result)
     case Failure(ex) =>
       error(logPrefix + "Failed to rm ads from model " + model.getClass.getSimpleName, ex)
   }

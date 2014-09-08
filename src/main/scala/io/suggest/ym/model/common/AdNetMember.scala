@@ -36,10 +36,6 @@ object AdNetMember {
   val MEMBER_TYPE_ESFN    = "mType"
   val RIGHTS_ESFN         = "rights"
 
-  /** Название поля с подчинёнными продьюсерами, от которых происходит приём рекламного контента.
-    * Например: список id магазинов по отношению к ТЦ. Или id супервизора в каждом из подчинённых ресторанов. */
-  val PRODUCER_IDS_ESFN   = "producerIds"
-
   /** Option[String] поле, содержит id узла-делегата размещения рекламных карточек.
     * К такому узлу рекламные карточки попадают на модерацию. */
   val ADV_DELEGATE_ESFN = "advDg"
@@ -63,7 +59,6 @@ object AdNetMember {
   // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
   def ADN_SUPERVISOR_ID_ESFN  = fullFN(SUPERVISOR_ID_ESFN)
   def ADN_MEMBER_TYPE_ESFN    = fullFN(MEMBER_TYPE_ESFN)
-  def ADN_PRODUCER_IDS_ESFN   = fullFN(PRODUCER_IDS_ESFN)
   def ADN_ADV_DELEGATE_ESFN   = fullFN(ADV_DELEGATE_ESFN)
   def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
@@ -78,11 +73,6 @@ object AdNetMember {
     */
   def adnMemberTypeQuery(memberType: AdNetMemberType) = {
     QueryBuilders.termQuery(ADN_MEMBER_TYPE_ESFN, memberType.toString())
-  }
-
-  /** Сгенерить запрос для поиска по внешним продьюсерам. */
-  def incomingProducerIdQuery(producerId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_PRODUCER_IDS_ESFN, producerId)
   }
 
   def supIdQuery(supId: String): QueryBuilder = {
@@ -184,7 +174,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
-      FieldString(PRODUCER_IDS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
@@ -207,13 +196,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
         },
         shownTypeIdOpt = Option(vm get SHOWN_TYPE_ID_ESFN) map stringParser,
         supId = Option(vm get SUPERVISOR_ID_ESFN) map stringParser,
-        producerIds = Option(vm get PRODUCER_IDS_ESFN)
-          .fold(Set.empty[String]) {
-            case l: jl.Iterable[_] =>
-              l.foldLeft[List[String]] (Nil) {
-                (acc, e) => e.toString :: acc
-              }.toSet
-          },
         advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
         testNode = Option(vm get TEST_NODE_ESFN)
           .fold(false)(booleanParser),
@@ -414,17 +396,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
   }
 
 
-  /** Поиск по элементу из поля списка внешних продьюсеров. Позволяет найти ТЦ по id магазина например.
-    * @param producerId id исходного продьюсера.
-    * @return
-    */
-  def findByIncomingProducerId(producerId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val req = prepareSearch
-      .setQuery( incomingProducerIdQuery(producerId) )
-    runSearch(req)
-  }
-
-
   // Поиски по полю adn.advDelegate
 
   /**
@@ -501,7 +472,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
   * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
   * @param supId Опциональный id супер-узла.
-  * @param producerIds id узлов-продьюсеров, которые поставляют контент указанному узлу. Пока не используется толком.
   * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
@@ -514,7 +484,6 @@ case class AdNetMemberInfo(
   rights          : Set[AdnRight],
   shownTypeIdOpt  : Option[String] = None,
   supId           : Option[String] = None,
-  producerIds     : Set[String] = Set.empty,
   advDelegate     : Option[String] = None,
   testNode        : Boolean = false,
   // перемещено из mpub:
@@ -558,12 +527,6 @@ case class AdNetMemberInfo(
         (acc, e) => JsString(e.toString) :: acc
       }
       acc0 ::= RIGHTS_ESFN -> JsArray(rightsJson)
-    }
-    if (producerIds.nonEmpty) {
-      val arrElems = producerIds.foldLeft[List[JsString]] (Nil) {
-        (acc, e)  =>  JsString(e) :: acc
-      }
-      acc0 ::= PRODUCER_IDS_ESFN -> JsArray(arrElems)
     }
     if (shownTypeIdOpt.isDefined)
       acc0 ::= SHOWN_TYPE_ID_ESFN -> JsString(shownTypeIdOpt.get)
@@ -737,33 +700,5 @@ case class AdnMemberShowLevels(
 
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)
-}
-
-
-/** Чистить adn.producerIds узлов при стирании узла рекламной сети. */
-object CleanupAdnProducerIdsOnAdnNodeDelete {
-
-  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
-    val sub = SnFunSubscriber {
-      case ande: AdnNodeDeletedEvent =>
-        MAdnNode.findByIncomingProducerId(ande.adnId)
-          .filter(_.nonEmpty)
-          .foreach { ands =>
-            ands.foreach { adnNode =>
-              if (adnNode.adn.producerIds contains ande.adnId) {
-                MAdnNode.tryUpdate(adnNode) { adnNode0 =>
-                  adnNode0.copy(
-                    adn = adnNode0.adn.copy(
-                      producerIds = adnNode0.adn.producerIds - ande.adnId
-                    )
-                  )
-                } // tryUpdate()
-              }   // if contains
-            }     // ands.foreach
-          }
-    }
-    val subs = Seq(sub)
-    Seq( AdnNodeDeletedEvent.getClassifier(isDeleted = Some(true)) -> subs )
-  }
 }
 

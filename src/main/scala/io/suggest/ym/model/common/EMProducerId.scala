@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
+import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.search.sort.SortBuilder
 import scala.concurrent.{ExecutionContext, Future}
@@ -70,9 +70,11 @@ trait EMProducerIdStatic extends EsModelStaticMutAkvT {
    * @param adnId id узла, создавшего рекламные карточки.
    * @return Список результатов.
    */
-  def findForProducer(adnId: String, withSorter: Option[SortBuilder] = None)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def findForProducer(adnId: String, withSorter: Option[SortBuilder] = None, maxResults: Int = MAX_RESULTS_DFLT)
+                     (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     val req = prepareSearch
       .setQuery( producerIdQuery(adnId) )
+      .setSize(maxResults)
     if (withSorter.isDefined)
       req.addSort(withSorter.get)
     req
@@ -85,7 +87,8 @@ trait EMProducerIdStatic extends EsModelStaticMutAkvT {
    * @param producerId id продьюсера.
    * @return Список MAd.
    */
-  def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+  def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)
+                       (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     findQueryRt(producerIdQuery(producerId), maxResults)
   }
 
@@ -116,7 +119,6 @@ trait EMProducerId extends EMProducerIdI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     PRODUCER_ID_ESFN -> JsString(producerId) :: super.writeJsonFields(acc)
   }
-
 }
 
 trait EMProducerIdMut extends EMProducerId {
