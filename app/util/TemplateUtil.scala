@@ -71,7 +71,7 @@ object TplDataFormatUtil {
       }
 
       val h1 = if( h < 0 ) h*60 + 360 else h*60
-      
+
       List( h1.toInt, (s*100).toInt, (l*100).toInt )
 
     }
