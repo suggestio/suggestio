@@ -418,24 +418,36 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
         }
         // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
         // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-        val ssls = request.producer
-          .adn
-          .sinks
+        val prodSinks = request.producer.adn.sinks
+        val ssls = prodSinks
           .map { SinkShowLevels.withArgs(_, sl) }
+        trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
         additionalReceiversFut flatMap { addRcvrs =>
           // Нужно, чтобы настройки отображения также повлияли на выдачу. Добавляем выхлоп для producer'а.
           MAd.tryUpdate(request.mad) { mad =>
             val rcvrs1 = mad.receivers ++ addRcvrs
-            val rcvrs2 = rcvrs1.get(mad.producerId).fold(rcvrs1) { prodRcvr =>
-              val sls2 = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
-              if (sls2.isEmpty) {
-                rcvrs1 - mad.producerId
-              } else {
-                val prodRcvr1 = prodRcvr.copy(
-                  sls = sls2
-                )
-                rcvrs1 + (mad.producerId -> prodRcvr1)
-              }
+            val rcvrs2: Receivers_t = rcvrs1.get(mad.producerId) match {
+              // Ещё не было такого ресивера.
+              case None =>
+                if (isLevelEnabled) {
+                  rcvrs1 + (mad.producerId -> AdReceiverInfo(mad.producerId, ssls.toSet))
+                } else {
+                  // Вычитать уровни из отсутсвующего ресивера бессмысленно. TODO Не обновлять mad в этом случае.
+                  rcvrs1
+                }
+              // Уже есть ресивер с какими-то уровнями (или без них) в карте ресиверов.
+              case Some(prodRcvr) =>
+                val sls2 = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
+                if (sls2.isEmpty) {
+                  // Уровней отображения больше не осталось, поэтому выпиливаем ресивера целиком.
+                  rcvrs1 - mad.producerId
+                } else {
+                  // Добавляем новые уровни отображения к имеющемуся ресиверу.
+                  val prodRcvr1 = prodRcvr.copy(
+                    sls = sls2
+                  )
+                  rcvrs1 + (mad.producerId -> prodRcvr1)
+                }
             }
             mad.copy(
               receivers = rcvrs2
