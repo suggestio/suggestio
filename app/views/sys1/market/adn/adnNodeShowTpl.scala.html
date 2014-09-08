@@ -96,14 +96,6 @@
 
         <strong class="color-strong">
           @adnNode.adn.rights.map(_.longName).mkString(", ")
-
-          @if(!adnNode.adn.producerIds.isEmpty) {
-
-            producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
-              <a class="blue-link" href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
-            }
-            <br/>
-          }
         </strong>
 
       }
