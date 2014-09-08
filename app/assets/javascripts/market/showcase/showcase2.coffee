@@ -617,8 +617,8 @@ siomart =
     base_path : null
     is_supported : () ->
       !!(window.history && history.pushState);
-
     navigate : ( state ) ->
+      return false
       console.log 'navigate to :'
       console.log state
 
@@ -627,10 +627,7 @@ siomart =
         return false
 
       if state == null
-        if siomart.utils.ge('sioMartIndexGrid').innerHTML == ''
-          return false
-        siomart.navigation_layer.back()
-        siomart.grid_ads.load_index_ads()
+        siomart.navigation_layer.close()
         return false
 
       if state.action == 'load_for_shop_id'
@@ -643,12 +640,10 @@ siomart =
         siomart.load_for_cat_id state.cat_id, false
 
     push : ( data, title, path ) ->
-
-      #history.pushState data, title, this.base_path + path
-      history.pushState data, title, this.base_path
+      return false
+      history.pushState data, title, this.base_path + '#' + path
 
     init : () ->
-
       this.base_path = window.location.pathname
 
       if !this.is_supported()
@@ -1067,7 +1062,7 @@ siomart =
       ## Работа с категориями
       #######################
       if siomart.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
-        siomart.navigation_layer.open()
+        siomart.navigation_layer.open( true )
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
@@ -1365,9 +1360,8 @@ siomart =
       ## Забиндить оконные события
       siomart.bind_window_events()
 
-
       ## Инициализировать history api
-      ## this.history.init()
+      #siomart.history.init()
 
       window.scrollTo 0,0
 
@@ -1883,7 +1877,7 @@ siomart =
       if history_push == true
         state_data =
           action : 'open_navigation_layer'
-        siomart.history.push state_data, 'SioMarket', '/n/categories'
+        siomart.history.push state_data, 'SioMarket', '/c/categories'
 
     reset_tabs : () ->
       this.show_tab this.tabs[0]
