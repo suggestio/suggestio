@@ -1,20 +1,21 @@
 @(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0)(implicit ctx: util.Context)
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
+@defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
 
 <div class="focused-ad_offer">
   @_single_offer(mad, isWithAction = false)
 </div>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}">
+<div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}; color: #@pFgColor">
 
-  <div class="focused-ad_count">
+  <div class="focused-ad_count" style="color: #@pFgColor; border-color: #@pFgColor;">
     <div>@adIndex/@adsCount</div>
   </div>
 
   <div class="focused-ad_location-icon">
-    @svg._fadLocationIconTpl()
+    @svg._fadLocationIconTpl(pFgColor)
   </div>
   <div class="focused-ad_location-info">
     <span>@producer.meta.address.map { address => @address }</span>
@@ -28,5 +29,6 @@
 <div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
   @Html(rd.text)
 </div>
+}
 }
 }
