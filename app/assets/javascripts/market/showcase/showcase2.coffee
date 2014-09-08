@@ -1029,6 +1029,8 @@ siomart =
 
       if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
         siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
+        siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-index-icon'
+        siomart.navigation_layer.close()
         siomart.grid_ads.load_index_ads()
         return false
 
@@ -1867,7 +1869,7 @@ siomart =
         cbca_grid.rebuild()
 
       ## Скрыть кнопки хидера главного экрана
-      siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
+      siomart.utils.addClass siomart.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
       if typeof history_push != 'boolean'
         history_push = true
@@ -1904,6 +1906,8 @@ siomart =
 
       cbca_grid.right_offset = 0
       cbca_grid.rebuild()
+
+      siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
       if all_except_search == true
         siomart.utils.addClass siomart.utils.ge('smCategoriesScreen'), '__search-mode'
