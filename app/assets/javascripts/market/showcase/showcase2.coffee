@@ -525,6 +525,11 @@ siomart =
       geo_screen_wrapper.style.height = cbca_grid.wh - _offset
       geo_screen_content.style.minHeight = cbca_grid.wh - _offset + 1
 
+    close : () ->
+      siomart.utils.ge('smGeoScreen').style.display = 'none'
+      siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
+      cbca_grid.left_offset = 0
+      cbca_grid.rebuild()
 
     request_query_param : () ->
 
@@ -1027,10 +1032,7 @@ siomart =
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
-        siomart.utils.ge('smGeoScreen').style.display = 'none'
-        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
-        cbca_grid.left_offset = 0
-        cbca_grid.rebuild()
+        siomart.geo.close()
         return false
 
 
@@ -1763,6 +1765,7 @@ siomart =
       delete siomart.shop_load_locked
 
     cursor :
+      offset : -2
       init : () ->
         if siomart.utils.is_touch_device()
           return false
@@ -1771,9 +1774,9 @@ siomart =
         siomart.utils.add_single_listener siomart.focused_ads.ads_container_dom, 'mousemove', ( event ) ->
           siomart.focused_ads.cursor.move event.clientX, event.clientY
 
-        siomart.utils.add_single_listener cursor_dom, 'click', ( event ) ->
+        siomart.utils.add_single_listener siomart.focused_ads._container, 'click', ( event ) ->
 
-          direction = this.getAttribute 'data-direction'
+          direction = siomart.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'
 
           if direction == "right"
             console.log 'next ad'
@@ -1784,8 +1787,8 @@ siomart =
 
       move : ( x, y ) ->
         cursor_dom = siomart.utils.ge 'smFocusedAdsArrowLabel'
-        cursor_dom.style.left = x - 10 + 'px'
-        cursor_dom.style.top = y - 10 + 'px'
+        cursor_dom.style.left = x - siomart.focused_ads.cursor.offset + 'px'
+        cursor_dom.style.top = y - siomart.focused_ads.cursor.offset + 'px'
 
         if x > cbca_grid.ww / 2
           cursor_dom.className = 'sm-focused-ads_arrow-label fad-arrow-label __right-arrow'
@@ -1942,7 +1945,7 @@ siomart =
 
     back : () ->
       console.log 'navigation layer back'
-      
+
   #########################################
   ## Показать / скрыть экран со списком магазинов
   #########################################
@@ -2008,6 +2011,7 @@ siomart =
     if typeof siomart.shop_load_locked != 'undefined'
       return false
 
+    siomart.geo.close()
     siomart.shop_load_locked = true
     a_rcvr = if siomart.config.mart_id == '' then '' else '&a.rcvr=' + siomart.config.mart_id
 
