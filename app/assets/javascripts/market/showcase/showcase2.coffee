@@ -809,19 +809,36 @@ siomart =
         element.className = newClassName
 
     ############################
-    ## Удалить класс для объекта
+    ## добавить класс для объекта
     ############################
-    addClass : (element, value) ->
-      element = this.ge element
+    addClass : (elm, className) ->
 
-      if element == null
-        return false
+      if document.documentElement.classList
+        addClass = (elm, className) ->
+          elm.classList.add className
+      else
+        addClass = (elm, className) ->
+          if !elm
+            return false
 
-      for _i, _c of element.classList
-        if _c == value
-          return false
+          if !siomart.utils.containsClass(elm, className)
+            elm.className += (elm.className ? " " : "") + className
 
-      element.className += ' ' + value
+      addClass elm, className
+
+    containsClass : (elm, className) ->
+      if document.documentElement.classList
+        containsClass = (elm, className) ->
+          return elm.classList.contains className
+
+      else
+        containsClass = (elm, className) ->
+          if !elm || !elm.className
+            return false
+          re = new RegExp('(^|\\s)' + className + '(\\s|$)');
+          return elm.className.match re
+
+      return containsClass elm, className
 
     ############################################
     ## Прицепить собтие(-я) к DOM элементу(-там)
@@ -924,9 +941,8 @@ siomart =
         if typeof target.className != 'undefined'
           regexp = new RegExp( lookup_criteria ,"g")
 
-          for cn in target.classList
-            if cn == lookup_criteria
-              return target
+          if siomart.utils.containsClass target, lookup_criteria
+            return target
 
       return siomart.events.target_lookup target.parentNode, lookup_method, lookup_criteria
 
@@ -1808,7 +1824,9 @@ siomart =
       siomart.utils.addClass this._container, 'fs-animated-start'
 
       animation_cb = () ->
-        siomart.utils.addClass siomart.focused_ads._container, 'fs-animated-end transition-animated'
+        siomart.utils.addClass siomart.focused_ads._container, 'fs-animated-end'
+        siomart.utils.addClass siomart.focused_ads._container, 'transition-animated'
+
       setTimeout animation_cb, 20
 
       ## События
