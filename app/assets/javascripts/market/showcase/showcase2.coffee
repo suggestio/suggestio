@@ -827,13 +827,15 @@ siomart =
       addClass elm, className
 
     containsClass : (elm, className) ->
-      if document.documentElement.classList
+
+      if document.documentElement.classList && elm.classList
         containsClass = (elm, className) ->
           return elm.classList.contains className
-
       else
+        if !elm || !elm.className
+          return false
         containsClass = (elm, className) ->
-          if !elm || !elm.className
+          if typeof elm.className != 'string'
             return false
           re = new RegExp('(^|\\s)' + className + '(\\s|$)');
           return elm.className.match re
@@ -1940,8 +1942,7 @@ siomart =
 
     back : () ->
       console.log 'navigation layer back'
-
-
+      
   #########################################
   ## Показать / скрыть экран со списком магазинов
   #########################################
