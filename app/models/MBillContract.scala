@@ -1,15 +1,21 @@
 package models
 
+import akka.actor.ActorContext
 import anorm._
+import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber}
+import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
+import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.{ToPlayJsonObj, EsModel}
 import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.db.DB
 import util.anorm.{AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
 import AnormPgArray._
 import org.joda.time.DateTime
 import io.suggest.util.SioRandom.rnd
 import java.sql.Connection
-import util.SqlModelSave
+import util.event.{ContractDeletedEvent, SiowebNotifier}
+import util.{PlayLazyMacroLogsImpl, SqlModelSave}
 import java.text.DecimalFormat
 import org.joda.time.format.DateTimeFormat
 import io.suggest.util.TextUtil
@@ -194,6 +200,56 @@ object MBillContract extends SqlModelStatic with FromJson {
         id            = Option(jmap get ID_FN) map intParser
       )
   }
+
+  override def deleteById(id: Int)(implicit c: Connection): Int = {
+    getById(id, SelectPolicies.UPDATE) match {
+      case Some(mbc)  => _deleteMbc(mbc)
+      case None       => 0
+    }
+  }
+
+  private def _deleteMbc(mbc: MBillContract)(implicit c: Connection): Int = {
+    mbc.id.fold(0) { mbcId =>
+      val rowsDeleted = super.deleteById(mbcId)
+      if (rowsDeleted > 0)
+        SiowebNotifier.publish(ContractDeletedEvent(mbcId))
+      rowsDeleted
+    }
+  }
+
+  /** Удалить контракты все контракты для указанного узла.
+    * @param adnId id узла.
+    * @return Кол-во удалённых рядов.
+    */
+  def deleteByAdnId(adnId: String)(implicit c: Connection): Int = {
+    findForAdn(adnId)
+      .foldLeft(0) { (counter, mbc)  =>  _deleteMbc(mbc) + counter }
+  }
+
+  /** Подписчик на события удаления узла. Он удаляет контракт, что вызывает каскадное удаление в bill-моделях. */
+  class DelContractsWhenAdnNodeDeleted extends SNStaticSubscriber with SnClassSubscriber with PlayLazyMacroLogsImpl {
+    import LOGGER._
+
+    /** Подписка на события. */
+    override def snMap: Seq[(Classifier, Seq[Subscriber])] = List(
+      AdnNodeDeletedEvent.getClassifier() -> Seq(this)
+    )
+
+    /** Обработать наступившие событие. */
+    override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
+      event match {
+        case ande: AdnNodeDeletedEvent =>
+          val totalDeleted = DB.withConnection { implicit c =>
+            deleteByAdnId(ande.adnId)
+          }
+          info(s"Deleted $totalDeleted contracts for deleted adnId[${ande.adnId}].")
+
+        case other =>
+          warn("Unknown event received: " + other)
+      }
+    }
+  }
+
 }
 
 import MBillContract._
@@ -207,13 +263,15 @@ final case class MBillContract(
   isActive      : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
   id            : Option[Int] = None
-) extends SqlModelSave[MBillContract] with ToPlayJsonObj {
+) extends SqlModelSave[MBillContract] with ToPlayJsonObj with SqlModelDelete {
 
   def hasId: Boolean = id.isDefined
 
   def legalContractId = formatLegalContractId(id.get, crand=crand, suffix=suffix)
 
   def printContractDate: String = CONTRACT_DATE_FMT.print(contractDate)
+
+  override def companion = MBillContract
 
   def suffixMatches(suffix1: Option[String]) = MBillContract.matchSuffixes(suffix, suffix1)
 
@@ -263,6 +321,10 @@ final case class MBillContract(
     if (id.isDefined)
       acc ::= ID_FN -> JsNumber(id.get)
     JsObject(acc)
+  }
+
+  override def delete(implicit c: Connection): Int = {
+    MBillContract._deleteMbc(this)
   }
 }
 

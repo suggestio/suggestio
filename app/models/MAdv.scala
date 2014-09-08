@@ -1,7 +1,13 @@
 package models
 
+import akka.actor.ActorContext
 import anorm._
+import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
+import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
+import io.suggest.event.subscriber.SnClassSubscriber
 import org.joda.time.{Period, LocalDate, DateTime}
+import play.api.db.DB
+import util.PlayLazyMacroLogsImpl
 import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
 import AnormPgArray._
@@ -47,6 +53,9 @@ object MAdv {
 
   val COUNT_PARSER = get[Long]("c")
 
+  /** Список статических adv-моделей. */
+  def ADV_MODELS: Seq[MAdvStatic] = Seq(MAdvOk, MAdvRefuse, MAdvReq)
+
   implicit def modes2strs(modes: Traversable[MAdvMode]): Traversable[String] = {
     modes.map(_.toString)
   }
@@ -76,6 +85,38 @@ object MAdv {
     SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
       .on('modes -> strings2pgArray(modes), 'prodId -> prodId, 'rcvrId -> rcvrId)
       .as(MAdv.AD_ID_PARSER *)
+  }
+
+  /** Обработчик события удаления MAd. Стираются все adv-ряды из всех adv-моделей. */
+  class DeleteAllAdvsOnAdDeleted(implicit current: play.api.Application) extends SnClassSubscriber with SNStaticSubscriber with PlayLazyMacroLogsImpl {
+    import LOGGER._
+
+    /** Карта подписок. */
+    override def snMap: Seq[(Classifier, Seq[Subscriber])] = List(
+      AdDeletedEvent.getClassifier() -> Seq(this)
+    )
+
+    /** Обработать событие удаления рекламной карточки. */
+    override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
+      event match {
+        case ade: AdDeletedEvent =>
+          ade.mad.id.foreach { adId =>
+            val totalDeleted = DB.withConnection { implicit c =>
+              ADV_MODELS.foldLeft(0) {
+                (counter, advModel) =>
+                  val modelDeleted = advModel.deleteByAdId(adId)
+                  if (modelDeleted > 0)
+                    debug(s"Deleted $modelDeleted advs for adId[$adId] in model ${advModel.getClass.getSimpleName}.")
+                  modelDeleted + counter
+              }
+            }
+            info(s"Deleted $totalDeleted advs for adId[$adId].")
+          }
+
+        case other =>
+          warn("Unknown message received: " + other)
+      }
+    }
   }
 }
 
@@ -313,6 +354,18 @@ trait MAdvStatic extends SqlModelStatic {
       .as(rowParser *)
       .headOption
   }
+
+  /**
+   * Удалить все ряды по id рекламной карточки.
+   * @param adId id рекламной карточки.
+   * @return Кол-во удалённых рядов.
+   */
+  def deleteByAdId(adId: String)(implicit c: Connection): Int = {
+    SQL("DELETE FROM " + TABLE_NAME + " WHERE ad_id = {adId}")
+      .on('adId -> adId)
+      .executeUpdate()
+  }
+
 }
 
 

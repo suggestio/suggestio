@@ -42,6 +42,8 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
   /** Дефолтовый id владелеца категории. */
   val DEFAULT_OWNER_ID = "~DFLT"
 
+  override val MAX_RESULTS_DFLT = 100
+
   private def ownerIdQuery(ownerId: String) = {
     QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
   }
@@ -94,13 +96,14 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
    * @param ownerId id сущности-владельца.
    * @return Список top-level-категорий в порядке position и затем name.
    */
-  def findTopForOwner(ownerId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+  def findTopForOwner(ownerId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
     val ownerQuery = ownerIdQuery(ownerId)
     val noParentFilter = FilterBuilders.missingFilter(PARENT_ID_ESFN)
     val query = QueryBuilders.filteredQuery(ownerQuery, noParentFilter)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(query)
+      .setSize(maxResults)
       .execute()
       .map { searchResp2listSortLex }
   }
@@ -110,11 +113,12 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
    * @param parentCatId id категории.
    * @return Список подкатегорий без потомков.
    */
-  def findDirectSubcatsOf(parentCatId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+  def findDirectSubcatsOf(parentCatId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
     val query = QueryBuilders.termQuery(PARENT_ID_ESFN, parentCatId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(query)
+      .setSize(maxResults)
       .execute()
       .map { searchResp2listSortLex }
   }
@@ -134,19 +138,8 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
     }
   }
 
-  /**
-   * Найти категории на текущем уровне указанной категории.
-   * @param catOwnerId id владельца дерева категорий. Используется если это категорий 1 уровня.
-   * @param catId id текущей категории.
-   * @return Nil если дерево отсуствует. Иначе Seq[MMC].
-   */
-  private def findAllOnSameLevel(catOwnerId: String, catId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
-    getParentIdOf(catId) flatMap {
-      findAllOnSameLevelParent(catOwnerId, _)
-    }
-  }
-
-  private def findAllOnSameLevelParent(catOwnerId: String, maybeParentCat: Option[Option[String]])(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+  private def findAllOnSameLevelParent(catOwnerId: String, maybeParentCat: Option[Option[String]], maxResults: Int = MAX_RESULTS_DFLT)
+                                      (implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
     maybeParentCat match {
       // Вообще нет такой категории в хранилище. Это странная ситуация.
       case None =>
@@ -155,11 +148,11 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
       // Это категория верхнего уровня. Используем catOwnerId для доступа к списку категорий на текущем уровне.
       case Some(None) =>
-        findTopForOwner(catOwnerId)
+        findTopForOwner(catOwnerId, maxResults = maxResults)
 
       // Это категория уровня >= 1. Берем id её родителя и находим категории на этом уровне.
       case Some(Some(parentCatId)) =>
-        findDirectSubcatsOf(parentCatId)
+        findDirectSubcatsOf(parentCatId, maxResults = maxResults)
     }
   }
 
@@ -180,21 +173,22 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
     * Используется, чтобы сгенерить селекторы категорий на всех уровнях необходимых (начиная от top и заканчивая текущей
     * категорией). Используется восходящий траверс.
     */
-  def collectCatListsUpTo(catOwnerId: String, currCatId: String, acc: CollectMMCatsAcc_t = Nil)(implicit ec: ExecutionContext, client: Client): Future[CollectMMCatsAcc_t] = {
+  def collectCatListsUpTo(catOwnerId: String, currCatId: String, acc: CollectMMCatsAcc_t = Nil, maxResults: Int = MAX_RESULTS_DFLT)
+                         (implicit ec: ExecutionContext, client: Client): Future[CollectMMCatsAcc_t] = {
     getParentIdOf(currCatId) flatMap {
       // Вообще None означает, что категория, на которую ссылалась карточка, была удалена и утрачена.
       // Реанимируем работу через возврат исходного списка категорий.
       case None =>
         debug(s"collectCatListsUpTo(own=$catOwnerId, catId=$currCatId): expected currCat don't exists! Recovering with top cats...")
-        catsAsAccFut(findTopForOwner(catOwnerId))
+        catsAsAccFut(findTopForOwner(catOwnerId, maxResults))
       // Не-None результат означает, что можно двигаться дальше.
       case maybeParentId =>
-        findAllOnSameLevelParent(catOwnerId, maybeParentId) flatMap { lCats =>
+        findAllOnSameLevelParent(catOwnerId, maybeParentId, maxResults) flatMap { lCats =>
           // Нужно решить: надо ли подниматься ещё выше или это уже вершина?
           val acc1 = (Some(currCatId), lCats) :: acc
           maybeParentId match {
             case Some(Some(parentId)) =>
-              collectCatListsUpTo(catOwnerId, currCatId=parentId, acc1)
+              collectCatListsUpTo(catOwnerId, currCatId=parentId, acc1, maxResults)
 
             case _ => Future successful acc1
           }

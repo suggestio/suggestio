@@ -23,6 +23,30 @@ trait SqlTableName {
 
   /** Название таблицы. Используется при сборке sql-запросов. */
   val TABLE_NAME: String
+
+  /** Блокировка таблицы на запись в целях защиты от добавления рядов. */
+  def lockTableWrite(implicit c: Connection) {
+    SQL("LOCK TABLE " + TABLE_NAME + " IN ROW EXCLUSIVE MODE")
+      .executeUpdate()
+  }
+
+  def hasId(id: Int)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE id = {id}")
+      .on('id -> id)
+      .as(SqlModelStatic.boolColumnParser single)
+  }
+
+  /**
+   * Удалить ряд по ключу.
+   * @param id id ряда.
+   * @return Кол-во удалённых рядов, т.е. 0 или 1.
+   */
+  def deleteById(id: Int)(implicit c: Connection): Int = {
+    SQL("DELETE FROM " + TABLE_NAME + " WHERE id = {id}")
+      .on('id -> id)
+      .executeUpdate()
+  }
+
 }
 
 
@@ -55,12 +79,6 @@ trait SqlModelStaticMinimal extends SqlTableName {
       .as(rowParser *)
   }
 
-
-  /** Блокировка таблицы на запись в целях защиты от добавления рядов. */
-  def lockTableWrite(implicit c: Connection) {
-    SQL("LOCK TABLE " + TABLE_NAME + " IN ROW EXCLUSIVE MODE")
-      .executeUpdate()
-  }
 }
 
 
@@ -89,25 +107,6 @@ trait SqlModelStatic extends SqlModelStaticMinimal {
       .as(rowParser *)
       .headOption
   }
-
-
-  def hasId(id: Int)(implicit c: Connection): Boolean = {
-    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE id = {id}")
-      .on('id -> id)
-      .as(SqlModelStatic.boolColumnParser single)
-  }
-
-  /**
-   * Удалить ряд по ключу.
-   * @param id id ряда.
-   * @return Кол-во удалённых рядов, т.е. 0 или 1.
-   */
-  def deleteById(id: Int)(implicit c: Connection): Int = {
-    SQL("DELETE FROM " + TABLE_NAME + " WHERE id = {id}")
-      .on('id -> id)
-      .executeUpdate()
-  }
-
 
   /**
    * Получение пачкой всех перечисленных рядов.

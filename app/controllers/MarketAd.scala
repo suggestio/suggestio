@@ -491,7 +491,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
           upCats  <- upCatsFut
           subcats <- subcatsFut
         } yield {
-          if (!subcats.isEmpty)
+          if (subcats.nonEmpty)
             upCats ++ List(None -> subcats)
           else
             upCats
