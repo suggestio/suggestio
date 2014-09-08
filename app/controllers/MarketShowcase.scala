@@ -359,7 +359,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
-    trace(s"$logPrefix ${request.path}")
+    trace(s"$logPrefix ${request.path}?${request.rawQueryString}")
     lazy val gsiFut = adSearch.geo.geoSearchInfo
     val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> Future.successful(adSearch)

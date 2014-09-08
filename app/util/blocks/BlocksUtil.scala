@@ -197,7 +197,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
 
   def withFontColor: Boolean
   def withFontSizes: List[FontSize]
-  def withFontSize = !withFontSizes.isEmpty
+  def withFontSize = withFontSizes.nonEmpty
   def fontSizeDflt: Option[Int]
   def fontForSize(sz: Int): Option[FontSize] = withFontSizes.find(_.size == sz)
   def lineHeightDflt: Option[Int] = fontSizeDflt.flatMap(fontForSize).map(_.lineHeight)
