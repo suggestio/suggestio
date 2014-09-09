@@ -2081,6 +2081,8 @@ siomart =
 
       _dom = if siomart.welcome_ad.img_dom == null then siomart.welcome_ad.div_dom else siomart.welcome_ad.img_dom
 
+      siomart.utils.addClass _dom, '__animated'
+
       siomart.utils.addClass _dom, '__fade-out'
       dn_cb = () ->
         _dom.style.display = 'none'
@@ -2091,16 +2093,15 @@ siomart =
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
       this.div_dom = siomart.utils.ge 'smWelcomeDiv'
 
-
-
       if this.img_dom == null
         this.div_dom.style.display = 'block'
         setTimeout siomart.welcome_ad.hide, this.hide_timeout
         return false
       else
-        this.div_dom.style.display = 'none'
         this.fit this.img_dom
-        setTimeout siomart.welcome_ad.hide, this.hide_timeout
+
+        this.img_dom.onload = () ->
+          setTimeout siomart.welcome_ad.hide, siomart.welcome_ad.hide_timeout
 
   ##################################################
   ## Забиндить события на навигационные кнопари

@@ -7,19 +7,24 @@
 @defining( ctx.myAudienceUrl + args.logoImgOpt.map { logoImg => routes.Img.getImg(logoImg.filename) }.getOrElse{ routes.Assets.at("images/market/showcase-logo.png")} ) { nodeLogo =>
 
 @* Картинка-приветствие для первого экрана *@
-@args.welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
-<div class="sm-welcome-ad">
-  <img style="background-color: #@args.bgColor;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
-       data-width="@welcomeAdImg.meta.map(_.width)"
-       data-height="@welcomeAdImg.meta.map(_.height)"
-       src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
-</div>
-}
+@defining( args.welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)) ) { welcomeAdOpt =>
 
-<div id="smWelcomeDiv" class="sm-welcome-div" style="background: #@args.bgColor;">
-  <span class="sm-welcome-div_helper"></span>
-  <img height="60" class="sm-welcome-div_img" src="@nodeLogo"/>
-</div>
+  @if( welcomeAdOpt.isEmpty ){
+    <div id="smWelcomeDiv" class="sm-welcome-div" style="background: #@args.bgColor;">
+      <span class="sm-welcome-div_helper"></span>
+      <img height="60" class="sm-welcome-div_img" src="@nodeLogo"/>
+    </div>
+  }else{
+    @welcomeAdOpt.map { welcomeAdImg =>
+    <div class="sm-welcome-ad">
+      <img style="background-color: #@args.bgColor;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
+           data-width="@welcomeAdImg.meta.map(_.width)"
+           data-height="@welcomeAdImg.meta.map(_.height)"
+           src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+    </div>
+    }
+  }
+}
 
 @* Основной контейнер, шапка + карточки *@
 <div class="sm-focused-ads" id="smFocusedAds"></div>
