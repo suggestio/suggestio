@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.geo.GeoShapeQueryData
+import io.suggest.model.geo.{GeoShapeIndexed, GeoShapeQueryData}
 import io.suggest.ym.model.common.AdnNodesSearchArgsT
 import play.api.mvc.{RequestHeader, QueryStringBindable}
 import util.PlayMacroLogsImpl
@@ -26,6 +26,7 @@ case class MAdnNodeSearch(
   testNode    : Option[Boolean] = None,
   withoutIds  : Seq[String] = Nil,
   geoDistance : Option[GeoShapeQueryData] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
+  intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Nil,
   hasLogo     : Option[Boolean] = None,
   withGeoDistanceSort: Option[GeoPoint] = None,
   withNameSort: Boolean = false,
