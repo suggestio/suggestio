@@ -302,11 +302,26 @@
 /* Управление рекламой */
 /********************************************************************************************************************/
 .adv-management
+  overflow  hidden
 
   &_left-bar
+    float         left
     width         460px
     padding-right 20px
 
+  &_right-bar
+    overflow  hidden
+
+  &_date-bar
+    padding           10px
+    background-color  white
+    border-radius(10px)
+
+  &_date-value
+    margin-top  25px
+    font-size   16px
+    color       darkGray
+    text-align  center
 
   &_city-i
     padding 10px
