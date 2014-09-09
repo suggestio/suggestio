@@ -64,6 +64,7 @@ object MShopPromoOffer extends EsModelStaticT with MacroLogsImpl {
     */
   def getShopIdFor(offerId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, offerId)
+      .setFetchSource(false)
       .setFields(YmOfferDatumFields.SHOP_ID_ESFN)
       .execute()
       .map { getResp =>

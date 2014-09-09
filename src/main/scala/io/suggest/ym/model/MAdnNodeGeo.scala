@@ -9,13 +9,12 @@ import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
-import io.suggest.model.geo.{CircleGs, GeoShape, GeoShapeQuerable}
+import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.ShapeRelation
-import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilder, QueryBuilders}
 import org.joda.time.DateTime
 import play.api.libs.json._
@@ -43,13 +42,16 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   override type T = MAdnNodeGeo
 
+  private[this] val GEO_ESFN = "geo"
+
   /** Название поля с id узла. */
   val ADN_ID_ESFN = "adnId"
-
-  /** Название поля, хранящего смежное гео-барахло. В модели оно неявное. Внутри -- nested-object. */
-  val GEO_ESFN    = "geo"
+  /** Поле с опциональной ссылкой на исходник. */
   val URL_ESFN    = "url"
+  /** Дата последнего обновления документа. */
   val LAST_MODIFIED_ESFN = "lm"
+  /** Храним название поля в отдельном поле. Это нужно для получения уровня без получения самого документа. */
+  val GLEVEL_ESFN = "gl"
 
   override val ES_TYPE_NAME = "ang"   // ang = adn node geo
 
@@ -68,23 +70,29 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
           val ngl: NodeGeoLevel = nglv
           FieldGeoShape(ngl.esfn, precision = ngl.precision)  ::  acc
       }
-    List(
-      FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(URL_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldDate(LAST_MODIFIED_ESFN, index = null, include_in_all = false),
-      FieldNestedObject(GEO_ESFN, enabled = true, properties = nglFields)
-    )
+    // Генерим top level object mapping:
+    FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
+      FieldString(URL_ESFN, index = FieldIndexingVariants.no, include_in_all = false) ::
+      FieldDate(LAST_MODIFIED_ESFN, index = null, include_in_all = false) ::
+      // store = true для возможности простого и быстрого получения названия используемого glevel-поля в обход очень тяжелого _source.
+      FieldString(GLEVEL_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
+      nglFields
   }
 
-  /** Десериализация данных, сохранённых в nested гео-контейнере. */
-  val deserializeGeoContainer: PartialFunction[Any, (NodeGeoLevel, GeoShape)] = {
-    case jmap: ju.Map[_, _] =>
-      _deserializeGeoTuple(jmap.head)
-    case smap: collection.Map[_, _] =>
-      _deserializeGeoTuple(smap.head)
+  /** Десериализация данных, сохранённых в nested гео-контейнере старого формата.
+    * Нужно удалить этот код по завершению миграции на новый формат (нужно пересохранение). */
+  @deprecated("nested-object geo structure replaced by flat structure.", "2014.09.09")
+  private[this] def deserializeGeoContainer(raw: Any): (NodeGeoLevel, GeoShape) = {
+    raw match {
+      case jmap: ju.Map[_, _] =>
+        _deserializeGeoTuple(jmap.head)
+      case smap: collection.Map[_, _] =>
+        _deserializeGeoTuple(smap.head)
+    }
   }
 
-  private def _deserializeGeoTuple(raw: (Any,Any)): (NodeGeoLevel, GeoShape) = {
+  @deprecated("nested-object geo structure replaced by flat structure.", "2014.09.09")
+  private[this] def _deserializeGeoTuple(raw: (Any,Any)): (NodeGeoLevel, GeoShape) = {
     val (esfnRaw, shapeRaw) = raw
     val esfn = NodeGeoLevels.withName( EsModel.stringParser(esfnRaw) )
     val shape = GeoShape.deserialize(shapeRaw).get
@@ -92,11 +100,26 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
   }
 
   override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], versionOpt: Option[Long]): T = {
-    val geo = deserializeGeoContainer( m(GEO_ESFN) )
+    // 2014.09.09: Вместо nested object используется полностью flat-структура полей без всяких object'ов вообще.
+    // Название используемого поля хранится в поле GLEVEL_ESFN.
+    val glevelOpt: Option[NodeGeoLevel] = m.get(GLEVEL_ESFN)
+      .map(EsModel.stringParser)
+      .map(NodeGeoLevels.withName)
+    val (glevel, shape): (NodeGeoLevel, GeoShape) = glevelOpt match {
+      // Современный формат геоданных
+      case Some(_glevel) =>
+        val gs = m.get(_glevel.esfn)
+          .flatMap(GeoShape.deserialize)
+          .get
+        _glevel -> gs
+      // Устаревший формат geo-данных
+      case None =>
+        deserializeGeoContainer( m(GEO_ESFN) )
+    }
     MAdnNodeGeo(
       adnId       = EsModel.stringParser( m(ADN_ID_ESFN) ),
-      glevel      = geo._1,
-      shape       = geo._2,
+      glevel      = glevel,
+      shape       = shape,
       url         = m.get(URL_ESFN).map(EsModel.stringParser),
       lastModified = m.get(LAST_MODIFIED_ESFN).fold(DateTime.now)(EsModel.dateTimeParser),
       id          = id,
@@ -121,19 +144,19 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .setSize( maxResults )
       .setFrom( offset )
       .setVersion(withVersions)
+      .setFetchSource(true)
+      .setRouting(adnId)  // adnId является parentId, поэтому можно точно указать шарду, в которой надо искать результат.
       .execute()
       .map { searchResp2list }
   }
 
   /** Сгенерить запрос для поиска совпадений в гео-полях указанного уровня. */
   def geoQuery(glevel: NodeGeoLevel, shape: GeoShapeQuerable): QueryBuilder = {
-    val shapeQuery = QueryBuilders.geoShapeQuery(glevel.fullEsfn, shape.toEsShapeBuilder)
-    QueryBuilders.nestedQuery(GEO_ESFN, shapeQuery)
+    QueryBuilders.geoShapeQuery(glevel.esfn, shape.toEsShapeBuilder)
   }
 
   def geoFilter(glevel: NodeGeoLevel, shape: GeoShapeQuerable): FilterBuilder = {
-    val gsq = QueryBuilders.geoShapeQuery(glevel.fullEsfn, shape.toEsShapeBuilder)
-    FilterBuilders.nestedFilter(GEO_ESFN, gsq)
+    FilterBuilders.geoShapeFilter(glevel.esfn, shape.toEsShapeBuilder, ShapeRelation.INTERSECTS)
   }
 
 
@@ -157,7 +180,10 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .map { searchResp2fnList[String](_, ADN_ID_ESFN) }
   }
 
-  /** Удалить все документы, относящиеся к указанному adnId. */
+  /** Удалить все документы, относящиеся к указанному adnId.
+    * @param adnId id узла-родителя.
+    * @return Кол-во удалённых рядов.
+    */
   def deleteByAdnId(adnId: String)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
     prepareDeleteByQuery
       .setQuery( adnIdQuery(adnId) )
@@ -165,6 +191,60 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .map { _.iterator().size }
   }
 
+  /**
+   * Быстрое узнавание гео-уровня (гео-слоя), в котором сохранена геоинформация указанного документа.
+   * @param id id документа.
+   * @param parentId id родительского узла.
+   * @return Фьючерс с опциональным значением геоуровня.
+   */
+  def getGeoLevelsUsed(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[NodeGeoLevel]] = {
+    // Используем быстрый доступ к сохранённому glevel через stored-значение поля GLEVEL_ESFN.
+    // Это позволяет избежать фетчинга и разбора жирного _source.
+    prepareGet(id, parentId = parentId)
+      // Для доступа через stored-поле нужно realtime=false. Если будет true, то будет ковыряние в тяжелом _source.
+      // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-get.html#realtime
+      .setRealtime(false)
+      .setFields(GLEVEL_ESFN)
+      .setFetchSource(false)
+      .execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          Option(getResp.getField(GLEVEL_ESFN))
+            .flatMap { field => NodeGeoLevels.maybeWithName( field.getValue.toString ) }
+        } else {
+          None
+        }
+      }
+  }
+
+  /**
+   * Аналог getGeoLevelUsed(), но с поиском по полю adn_id.
+   * @param adnId id узла.
+   * @param maxResults макс. кол-во результатов.
+   * @return Список указателей в неопределённом порядке.
+   */
+  def findIndexedPtrsForNode(adnId: String, maxResults: Int = MAX_RESULTS_DFLT)
+                            (implicit ec: ExecutionContext, client: Client): Future[List[MAdnNodeGeoIndexed]] = {
+    prepareSearch
+      .setQuery( adnIdQuery(adnId) )
+      .setRouting(adnId)
+      .setSize(maxResults)
+      .setFetchSource(false)
+      .addField(GLEVEL_ESFN)
+      .execute()
+      .map { searchResp =>
+        searchResp.getHits.foldLeft (List[MAdnNodeGeoIndexed]()) { (acc, hit) =>
+          val res = MAdnNodeGeoIndexed(
+            _id = hit.getId,
+            glevel = Option(hit.field(GLEVEL_ESFN))
+              .flatMap { sf => Option(sf.getValue[String]) }
+              .flatMap { NodeGeoLevels.maybeWithName }
+              .get
+          )
+          res :: acc
+        }
+      }
+  }
 
   /** Подписчик на события удаления узла. Нужно чистить модель при удалении узла. */
   class CleanUpOnAdnNodeDelete(implicit ec: ExecutionContext, client: Client) extends SNStaticSubscriber with SnClassSubscriber {
@@ -212,10 +292,10 @@ final case class MAdnNodeGeo(
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc =
       ADN_ID_ESFN -> JsString(adnId) ::
+      GLEVEL_ESFN -> JsString(glevel.esfn) ::
+      glevel.esfn -> shape.toPlayJson ::
       LAST_MODIFIED_ESFN -> EsModel.date2JsStr(lastModified) ::
-      GEO_ESFN -> JsObject(Seq(
-        glevel.esfn -> shape.toPlayJson
-      ))  ::  acc0
+      acc0
     if (url.isDefined)
       acc ::= URL_ESFN -> JsString(url.get)
     acc
@@ -223,15 +303,16 @@ final case class MAdnNodeGeo(
 
   /** Является ли текущий геошейп - кругом? */
   def isCircle: Boolean = shape.isInstanceOf[CircleGs]
+
+  /** Сконвертить интанс в экземпляр указателя, пригодного для гео-поиска pre-indexed shape. */
+  def toIndexedPtr = MAdnNodeGeoIndexed(id.get, glevel)
 }
 
 
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
 object NodeGeoLevels extends Enumeration {
 
-  protected case class Val(esfn: String, precision: String) extends super.Val(esfn) {
-    def fullEsfn = GEO_ESFN + "." + esfn
-  }
+  protected case class Val(esfn: String, precision: String) extends super.Val(esfn)
 
   type NodeGeoLevel = Val
 
@@ -260,5 +341,13 @@ final class MAdnNodeGeoJmx(implicit val ec: ExecutionContext, val client: Client
   with MAdnNodeGeoJmxMBean
 {
   override def companion = MAdnNodeGeo
+}
+
+
+/** Враппер для описания указателя на уже проиндексированный шейп. */
+case class MAdnNodeGeoIndexed(_id: String, glevel: NodeGeoLevel) extends GeoShapeIndexed {
+  override def _index = MAdnNodeGeo.ES_INDEX_NAME
+  override def _type  = MAdnNodeGeo.ES_TYPE_NAME
+  override def name   = glevel.esfn
 }
 

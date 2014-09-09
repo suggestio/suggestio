@@ -546,6 +546,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
 
+  def prepareTermVectorBase(id: String)(implicit client: Client) = {
+    val req = client.prepareTermVector(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
+
   def prepareGetBase(id: String)(implicit client: Client) = {
     val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
@@ -899,6 +907,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     prepareGetBase(id)
   }
 
+  def prepareTermVector(id: String)(implicit client: Client) = prepareTermVectorBase(id)
+
   def prepareUpdate(id: String)(implicit client: Client) = prepareUpdateBase(id)
   def prepareDelete(id: String)(implicit client: Client) = prepareDeleteBase(id)
 
@@ -1010,6 +1020,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   override type T <: EsChildModelT
 
   def prepareGet(id: String, parentId: String)(implicit client: Client) = prepareGetBase(id).setParent(parentId)
+  def prepareTermVector(id: String, parentId: String)(implicit client: Client) = prepareTermVectorBase(id).setParent(parentId)
   def prepareUpdate(id: String, parentId: String)(implicit client: Client) = prepareUpdateBase(id).setParent(parentId)
   def prepareDelete(id: String, parentId: String)(implicit client: Client) = prepareDeleteBase(id).setParent(parentId)
 
@@ -1022,6 +1033,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   def isExist(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     prepareGet(id, parentId)
       .setFields()
+      .setFetchSource(false)
       .execute()
       .map { _.isExists }
   }

@@ -1,10 +1,10 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.common.EMPersonIds
-import io.suggest.model.geo.{GeoShapeQueryData, CircleGs, GeoDistanceQuery, GeoPoint}
+import io.suggest.model.geo._
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
-import io.suggest.ym.model.MAdnNodeGeo
+import io.suggest.ym.model.{MAdnNodeGeoIndexed, MAdnNodeGeo}
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import io.suggest.ym.model.common.AdnRights.AdnRight
 import io.suggest.ym.model.common.AdnSinks.AdnSink
@@ -158,6 +158,33 @@ object AdnNodesSearch {
         innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
       }
 
+    // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
+    }.map[QueryBuilder] { qb =>
+      if (args.intersectsWithPreIndexed.isEmpty) {
+        qb
+      } else {
+        val filters = args.intersectsWithPreIndexed
+          .map { _.toGeoShapeFilter }
+        val filter = if (filters.size == 1) {
+          filters.head
+        } else {
+          FilterBuilders.orFilter(filters: _*)
+        }
+        QueryBuilders.filteredQuery(qb, filter)
+      }
+    }.orElse[QueryBuilder] {
+      if (args.intersectsWithPreIndexed.isEmpty) {
+        None
+      } else if (args.intersectsWithPreIndexed.size == 1) {
+        val qb = args.intersectsWithPreIndexed.head.toGeoShapeQuery
+        Some(qb)
+      } else {
+        val qb = args.intersectsWithPreIndexed.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
+          (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
+        }
+        Some(qb)
+      }
+
     // Отрабатываем возможный список прав узла.
     }.map[QueryBuilder] { qb =>
       if (args.withAdnRights.isEmpty) {
@@ -272,6 +299,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
 
   /** Фильтровать по дистанции относительно какой-то точки. */
   def geoDistance: Option[GeoShapeQueryData]
+
+  /** Пересечение с шейпом другого узла. Полезно для поиска узлов, географически входящих в указанный узел. */
+  def intersectsWithPreIndexed: Seq[GeoShapeIndexed]
 
   /** Фильтровать по наличию/отсутсвию логотипа. */
   def hasLogo: Option[Boolean]

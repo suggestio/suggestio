@@ -93,6 +93,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticMutAkvT {
     prepareScroll()
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxResultsPerStep)
+      .setFetchSource(false)
       .addField(fn)
       .execute()
       .flatMap { searchResp =>
