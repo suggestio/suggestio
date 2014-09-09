@@ -553,15 +553,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           .flatMap(_._1)
       }
     }
-    val currNodeOptFut = args.currAdnId.fold[Future[Option[MAdnNode]]]
-      { Future successful None }
-      { MAdnNodeCache.getById }
     // Когда все узлы будут собраны, нужно отрендерить результат.
     for {
       nodes       <- nodesFut
-      currNodeOpt <- currNodeOptFut
     } yield {
-      val firstNodeJson = nodes.headOption.fold [JsValue] (JsNull) { adnNode =>
+      val firstNodeOpt = nodes.headOption
+      val firstNodeJson = firstNodeOpt.fold [JsValue] (JsNull) { adnNode =>
         JsObject(Seq(
           "name"  -> JsString(adnNode.meta.name),
           "_id"   -> JsString(adnNode.id getOrElse "")
@@ -571,7 +568,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         "action"      -> JsString("findNodes"),
         "status"      -> JsString("ok"),
         "first_node"  -> firstNodeJson,
-        "nodes"       -> _geoNodesListTpl(nodes, currNodeOpt),
+        "nodes"       -> _geoNodesListTpl(nodes, firstNodeOpt),
         "timestamp"   -> JsNumber(tstamp)
       ))
       Ok( Jsonp(JSONP_CB_FUN, json) )
