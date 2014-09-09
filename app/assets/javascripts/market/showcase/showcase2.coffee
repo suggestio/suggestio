@@ -473,6 +473,7 @@ siomart =
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   geo :
+    loaded : false
     location_requested : false
     nodes_loaded : false
     search :
@@ -550,9 +551,11 @@ siomart =
       node_query_param = if siomart.config.mart_id then '&a.cai=' + siomart.config.mart_id else ''
       console.log 'load nodes'
       console.log node_query_param
+      nodesw = if siomart.geo.loaded == false then '' else '&a.nodesw=true'
 
-      url = '/market/nodes/search?' + this.request_query_param() + node_query_param + '&a.nodesw=true'
+      url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
       siomart.request.perform url
+      siomart.geo.loaded = true
 
     init : () ->
       if window.with_geo == true
