@@ -40,12 +40,14 @@ transform( param )
   -webkit-transform : param
   -moz-transform : param
   -o-transform : param
+  -ms-transform : param
   transform : param
 
 transform-origin( param )
   -webkit-transform-origin : param
   -moz-transform-origin : param
   -o-transform-origin : param
+  -ms-transform-origin : param
   transform-origin : param
 
 box-shadow( param )
@@ -369,7 +371,7 @@ code
       display: none!important
 
   &_header
-    height: 50px
+    margin-top  50px
   &_tabs
     width       100%
     height      50px
@@ -486,7 +488,7 @@ code
     position: relative
     text-align: center
     color: #fff
-    font-family: 'opensans-regular-webfont'
+    font-family: 'opensans-regular-webfont', 'opensans-light'
     font-size: 14px
     background: default_color_w_opacity
     cursor: pointer
@@ -499,7 +501,7 @@ code
     position: absolute
     left: -54px
     top: -26px
-    -webkit-transform: scale3d(0.3, 0.3, 0.3)
+    transform( scale3d(0.3, 0.3, 0.3) )
 
 .sm-geo-nodes
   background: default_color
@@ -620,7 +622,7 @@ code
     padding-right: 0px
 
   &_location-info
-    font-family: 'opensans-regular-webfont'
+    font-family: 'opensans-regular-webfont', 'opensans-light'
     font-size: 14px
     float: left
     div

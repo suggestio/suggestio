@@ -1047,8 +1047,8 @@ siomart =
 
         return false
 
-      if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null
-        
+      if siomart.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null || siomart.events.target_lookup( event.target, 'id', 'smCategoriesIndexButton' ) != null
+
         siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-global-cat'
         siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-index-icon'
         siomart.navigation_layer.close()
