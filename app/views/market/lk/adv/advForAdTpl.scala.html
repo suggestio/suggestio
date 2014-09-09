@@ -4,10 +4,29 @@
 @import ctx._
 @import market.lk._
 
+@rightBar = {
+  <div class="right-bar-price-widget">
+    <h2 class="right-bar-price-widget_title">
+      Общий счет
+    </h2>
+    <div class="right-bar-price-widget_cnt">
+      <p class="right-bar-price-widget_descr">
+        Общая стоимость <a class="link" href="">согласно ставке тарифного плана</a>
+      </p>
+      <p class="right-bar-price-widget_price-value">
+        89 213 р.
+      </p>
+      <button class="right-bar-price-widget_request-btn btn __major __size-L">Отправить запрос</button>
+    </div>
+  </div>
+}
+
+
 @market.lk.lkBaseLayout(
   title = "Управление рекламой",
   adnIdOpt = Some(mad.producerId),
   backHref = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url),
+  rightBar  = Some(rightBar),
   leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS)
 ) {
 
