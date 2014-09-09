@@ -312,6 +312,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Сортировать по названиям? */
   def withNameSort: Boolean
 
+  /** Дополнительно задать ключ для роутинга. */
+  def withRouting: Seq[String]
+
   /** По каким полям будем искать? */
   def ftsSearchFN: String = SioConstants.FIELD_ALL
 
@@ -330,6 +333,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     if (withNameSort) {
       srb1.addSort(AdnMMetadata.NAME_ESFN, SortOrder.ASC)
     }
+    // Заливаем ключи роутинга, если он задан.
+    if (withRouting.nonEmpty)
+      srb1.setRouting(withRouting : _*)
     srb1
   }
 

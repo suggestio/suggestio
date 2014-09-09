@@ -53,21 +53,17 @@ trait GeoShapeIndexed {
   def _type: String
   def _id: String
   def name: String
-  def path: Option[String] = Some(name)
+  def path: String
 
   def toGeoShapeQuery: QueryBuilder = {
-    val qb = QueryBuilders.geoShapeQuery(name, _id, _type)
+    QueryBuilders.geoShapeQuery(name, _id, _type)
       .indexedShapeIndex(_index)
-    if (path.isDefined)
-      qb.indexedShapePath(path.get)
-    qb
+      .indexedShapePath(path)
   }
 
   def toGeoShapeFilter: FilterBuilder = {
-    val fb = FilterBuilders.geoShapeFilter(name, _id, _type, ShapeRelation.INTERSECTS)
+    FilterBuilders.geoShapeFilter(name, _id, _type, ShapeRelation.INTERSECTS)
       .indexedShapeIndex(_index)
-    if (path.isDefined)
-      fb.indexedShapePath(path.get)
-    fb
+      .indexedShapePath(path)
   }
 }

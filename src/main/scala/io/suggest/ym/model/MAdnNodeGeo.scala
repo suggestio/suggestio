@@ -312,13 +312,35 @@ final case class MAdnNodeGeo(
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
 object NodeGeoLevels extends Enumeration {
 
-  protected sealed case class Val(esfn: String, precision: String, isLowest: Boolean) extends super.Val(esfn)
+  protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
+    def precision: String
+    def isLowest: Boolean
+    def lower: Option[NodeGeoLevel]
+    def upper: Option[NodeGeoLevel]
+  }
 
   type NodeGeoLevel = Val
 
-  val NGL_BUILDING: NodeGeoLevel        = Val("bu", "50m", isLowest = true)
-  val NGL_TOWN_DISTRICT: NodeGeoLevel   = Val("td", "800m", isLowest = false)
-  val NGL_TOWN: NodeGeoLevel            = Val("to", "5km", isLowest = false)
+  val NGL_BUILDING: NodeGeoLevel        = new Val("bu") {
+    override def isLowest = true
+    override def lower: Option[NodeGeoLevel] = None
+    override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
+    override def precision = "50m"
+  }
+
+  val NGL_TOWN_DISTRICT: NodeGeoLevel   = new Val("td") {
+    override def isLowest = false
+    override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
+    override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
+    override def precision = "800m"
+  }
+
+  val NGL_TOWN: NodeGeoLevel            = new Val("to") {
+    override def isLowest = false
+    override def lower: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
+    override def upper: Option[NodeGeoLevel] = None
+    override def precision = "5km"
+  }
 
   def default = NGL_BUILDING
 
@@ -349,5 +371,6 @@ case class MAdnNodeGeoIndexed(_id: String, glevel: NodeGeoLevel) extends GeoShap
   override def _index = MAdnNodeGeo.ES_INDEX_NAME
   override def _type  = MAdnNodeGeo.ES_TYPE_NAME
   override def name   = glevel.esfn
+  override def path   = glevel.esfn
 }
 
