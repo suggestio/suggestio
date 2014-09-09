@@ -312,13 +312,13 @@ final case class MAdnNodeGeo(
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
 object NodeGeoLevels extends Enumeration {
 
-  protected case class Val(esfn: String, precision: String) extends super.Val(esfn)
+  protected sealed case class Val(esfn: String, precision: String, isLowest: Boolean) extends super.Val(esfn)
 
   type NodeGeoLevel = Val
 
-  val NGL_BUILDING: NodeGeoLevel        = Val("bu", "50m")
-  val NGL_TOWN_DISTRICT: NodeGeoLevel   = Val("td", "800m")
-  val NGL_TOWN: NodeGeoLevel            = Val("to", "5km")
+  val NGL_BUILDING: NodeGeoLevel        = Val("bu", "50m", isLowest = true)
+  val NGL_TOWN_DISTRICT: NodeGeoLevel   = Val("td", "800m", isLowest = false)
+  val NGL_TOWN: NodeGeoLevel            = Val("to", "5km", isLowest = false)
 
   def default = NGL_BUILDING
 
