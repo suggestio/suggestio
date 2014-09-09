@@ -47,7 +47,8 @@ case class SimpleNodesSearchArgs(
   geoMode     : GeoMode = GeoNone,
   maxResults  : Option[Int] = None,
   offset      : Option[Int] = None,
-  currAdnId   : Option[String] = None
+  currAdnId   : Option[String] = None,
+  isNodeSwitch: Boolean = false
 ) {
 
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel])(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
@@ -82,6 +83,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
   val OFFSET_SUF = ".offset"
   val MAX_RESULTS_SUF = ".limit"
   val CURR_ADN_ID_SUF = ".cai"
+  val NODE_SWITCH_SUF = ".nodesw"
 
   val MAX_RESULTS_LIMIT_HARD = 50
   def MAX_RESULTS_DFLT = MAX_RESULTS_LIMIT_HARD
@@ -98,7 +100,8 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
 
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
                    geoModeB: QueryStringBindable[GeoMode],
-                   intOptB: QueryStringBindable[Option[Int]]) = {
+                   intOptB: QueryStringBindable[Option[Int]],
+                   boolOptB: QueryStringBindable[Option[Boolean]]) = {
     new QueryStringBindable[SimpleNodesSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SimpleNodesSearchArgs]] = {
         for {
@@ -107,15 +110,17 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
           maybeOffset     <- intOptB.bind(key + OFFSET_SUF, params)
           maybeMaxResults <- intOptB.bind(key + MAX_RESULTS_SUF, params)
           maybeCurAdnId   <- strOptB.bind(key + CURR_ADN_ID_SUF, params)
+          maybeNodeSwitch <- boolOptB.bind(key + NODE_SWITCH_SUF, params)
         } yield {
           trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
           Right(
             SimpleNodesSearchArgs(
-              qStr        = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
-              geoMode     = maybeGeo,
-              offset      = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
-              maxResults  = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
-              currAdnId   = maybeCurAdnId
+              qStr          = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
+              geoMode       = maybeGeo,
+              offset        = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
+              maxResults    = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
+              currAdnId     = maybeCurAdnId,
+              isNodeSwitch  = maybeNodeSwitch getOrElse false
             )
           )
         }
