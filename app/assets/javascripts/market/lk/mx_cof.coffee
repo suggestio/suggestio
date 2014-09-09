@@ -732,16 +732,24 @@ PersonalCabinet =
         $ ".js-select-node_w[data-city = #{city}] input:enabled"
         .prop 'checked', value
 
-    # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов
+    # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов + true || false
     allNodesChecked = (_type)->
       activeNodes = 0
+      checked = true
       $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:enabled"
       .each ()->
         $this = $ this
         if $this.prop 'checked'
           activeNodes += 1
+        else
+          checked = false
 
-      return activeNodes
+        return true
+
+      return {
+        'activeNodes': activeNodes
+        'checked':   checked
+      }
 
     # просматриваем типы узлов текущего города
     typesObserver = ()->
@@ -756,7 +764,7 @@ PersonalCabinet =
       $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:enabled"
       .prop 'checked', checked
 
-    # просматриваем галочки и узлов и меняем по ним информацию в типах узлов
+    # просматриваем галочки у узлов в текущем городе и меняем по ним информацию в типах узлов
     nodesObserver = ()->
 
       $ ".js-select-type_w[data-city = #{city}] .js-select-type"
@@ -768,23 +776,23 @@ PersonalCabinet =
         else
           checked = false
 
-          activeNodes = allNodesChecked(thisType)
-
-          if activeNodes > 0
+          nodesChecked = allNodesChecked(thisType)
+          if nodesChecked.activeNodes > 0
             checked = true
             $this
             .filter "[data-value = #{thisType}]"
             .find '.js-active-nodes-count'
-            .html "(#{activeNodes})"
+            .html "(#{nodesChecked.activeNodes})"
           else
             $this
             .filter "[data-value = #{thisType}]"
             .find '.js-active-nodes-count'
             .html ""
+
           $this
           .filter "[data-value = #{thisType}]"
           .find 'input:enabled'
-          .prop 'checked', checked
+          .prop 'checked', nodesChecked.checked
 
 
     $ document
@@ -818,7 +826,6 @@ PersonalCabinet =
       setActiveType()
       checkNodes(checked)
       showNodes()
-      nodesObserver()
       if type < 0
         checkTypes(checked)
       else
@@ -826,6 +833,7 @@ PersonalCabinet =
         $ ".js-select-type_w[data-city = #{city}] .js-select-type[data-value = '-1'] input"
         .prop 'checked', false
 
+      nodesObserver()
       typesObserver()
 
     # чекбоксы у заголовков узлов
@@ -862,6 +870,7 @@ PersonalCabinet =
       $slideWrap
       .find '.js-slide-title input'
       .prop 'checked', titleInputChecked
+
       nodesObserver()
       typesObserver()
 
