@@ -550,7 +550,8 @@ siomart =
       node_query_param = if siomart.config.mart_id then '&a.cai=' + siomart.config.mart_id else ''
       console.log 'load nodes'
       console.log node_query_param
-      url = '/market/nodes/search?' + this.request_query_param() + node_query_param
+
+      url = '/market/nodes/search?' + this.request_query_param() + node_query_param + '&a.nodesw=true'
       siomart.request.perform url
 
     init : () ->
