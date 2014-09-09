@@ -1,18 +1,18 @@
-@( href: Option[Call] = None )(title: Html)(cnt: Html)(implicit ctx: util.Context)
+@( href: Option[Call] = None, open: Boolean = true )(title: Html)(cnt: Html)(implicit ctx: util.Context)
 
 <div class="slide-block js-slide-w">
 
   <div class="slide-block_title js-slide-title">
     @title
 
-    @if(href) {
-      <a class="slide-block_btn js-slide-btn " href="@href"></a>
-    } else {
+    @if(open) {
       <a class="slide-block_btn __js-open js-slide-btn "></a>
+    } else {
+      <a class="slide-block_btn js-slide-btn " href="@href"></a>
     }
   </div>
 
-  <div class="slide-block_cnt js-slide-cnt"  @if(href){ style="display: none;" }>
+  <div class="slide-block_cnt js-slide-cnt"  @if(!open){ style="display: none;" }>
     @cnt
   </div>
 

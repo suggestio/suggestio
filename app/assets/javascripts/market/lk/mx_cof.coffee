@@ -417,61 +417,6 @@ PersonalCabinet =
         $this = $ this
         cbca.pc.statusBar.close $this
 
-  ##################################################################################################################
-  ## Форма опроса при запросе инвайта для владельца WiFi сети ##
-  ##################################################################################################################
-  wifi: () ->
-
-    $ '.js-quiz__checkbox'
-    .removeAttr 'disabled'
-    .removeAttr 'checked'
-
-    $ document
-    .on 'submit', '#wifiJoinForm', (e)->
-      $form = $ this
-
-      $form
-      .find '.js-quiz__checkbox'
-      .removeAttr 'disabled'
-
-      return true
-
-    $ document
-    .on 'click', '.js-quiz__checkbox', (e)->
-      $this = $ this
-      nextSelector = $this.attr 'data-next'
-      quizElement = $this.closest '.js-quiz__element'
-      thisIndex = quizElement.attr 'data-index'
-
-      $ '.js-quiz__element:visible'
-      .not this
-      .each () ->
-        $element = $ this
-
-        if $element.attr('data-index') > thisIndex
-          $element
-          .hide()
-          .find 'input'
-          .removeAttr 'disabled'
-          .removeAttr 'checked'
-
-        if $element.attr('data-index') == thisIndex
-          $element
-          .find 'input'
-          .removeAttr 'disabled'
-
-      $this.attr 'disabled', 'disabled'
-      $ '.js-quiz__result'
-      .hide()
-
-      ## вместе с описательным текстом показать кнопку Написать ##
-      if nextSelector == '#text0' || nextSelector == '#text1'
-        nextSelector += ',#text3'
-
-      $ nextSelector
-      .show()
-
-
   images: ()->
 
     $ document
@@ -687,7 +632,8 @@ PersonalCabinet =
 
       return $slideBlock
 
-    slideToggle: ($btn, $slideBlock)->
+    slideToggle: ($slideBlock, $btn)->
+      $btn = $btn || $slideBlock.parent().find '.js-slide-btn'
       href = $btn.attr 'href'
 
       if href && href.charAt(0) != '#'
@@ -725,7 +671,7 @@ PersonalCabinet =
         $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
 
         if $slideBlock
-          PersonalCabinet.slideBlock.slideToggle $this, $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $slideBlock, $this
 
       $(document).on 'click', '.js-slide-title', (e)->
         $this = $ this
@@ -734,7 +680,192 @@ PersonalCabinet =
         $slideBlock = PersonalCabinet.slideBlock.getSlideBlock $this
 
         if $slideBlock
-          PersonalCabinet.slideBlock.slideToggle $btn, $slideBlock
+          PersonalCabinet.slideBlock.slideToggle $slideBlock, $btn
+
+  ##################################################################################################################
+  ## Управление рекламой ##
+  ##################################################################################################################
+  advManagement: ()->
+    # TODO зарефакторить
+    city = -1
+    type = -1
+
+    # показать типы узлов текущего города
+    showNodeTypes = ()->
+      $ ".js-select-node_w, .js-select-type_w[data-city != #{city}]"
+      .hide()
+      if city < 0
+        return false
+      $ ".js-select-type_w[data-city = #{city}]"
+      .show()
+
+    # выделить активную вкладку типа
+    setActiveType = ()->
+      $ ".js-select-type.__js-act"
+      .removeClass '__js-act'
+      $ ".js-select-type[data-value = #{type}]"
+      .addClass '__js-act'
+
+    # показать узлы текущего города и типа
+    showNodes = ()->
+      if type < 0
+        $ ".js-select-node_w[data-city = #{city}]"
+        .show()
+        return false
+
+      $ ".js-select-node_w[data-type != #{type}]"
+      .hide()
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}]"
+      .show()
+
+    # поставить или снять галочки со всех типов
+    checkTypes = (value = false)->
+      $ ".js-select-type_w[data-city = #{city}] input:enabled"
+      .prop 'checked', value
+
+    # поставить или снять галочки со всех узлов текущего города и типа
+    checkNodes = (value = false)->
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:enabled"
+      .prop 'checked', value
+
+      if type < 0
+        $ ".js-select-node_w[data-city = #{city}] input:enabled"
+        .prop 'checked', value
+
+    # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов
+    allNodesChecked = (_type)->
+      activeNodes = 0
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:enabled"
+      .each ()->
+        $this = $ this
+        if $this.prop 'checked'
+          activeNodes += 1
+
+      return activeNodes
+
+    # просматриваем типы узлов текущего города
+    typesObserver = ()->
+      checked = true
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:gt(0) input:enabled"
+      .each ()->
+        $this = $ this
+        if !$this.prop 'checked'
+          checked = false
+          return false
+
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:enabled"
+      .prop 'checked', checked
+
+    # просматриваем галочки и узлов и меняем по ним информацию в типах узлов
+    nodesObserver = ()->
+
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type"
+      .each ()->
+        $this = $ this
+        thisType = $this.attr 'data-value'
+        if thisType < 0
+          return true
+        else
+          checked = false
+
+          activeNodes = allNodesChecked(thisType)
+
+          if activeNodes > 0
+            checked = true
+            $this
+            .filter "[data-value = #{thisType}]"
+            .find '.js-active-nodes-count'
+            .html "(#{activeNodes})"
+          else
+            $this
+            .filter "[data-value = #{thisType}]"
+            .find '.js-active-nodes-count'
+            .html ""
+          $this
+          .filter "[data-value = #{thisType}]"
+          .find 'input:enabled'
+          .prop 'checked', checked
+
+
+    $ document
+    .on 'click', '.js-select-city', (e)->
+      $this = $ this
+      $title = $ '.js-city'
+      $slideBlock = $this.closest '.js-slide-cnt'
+      cityName = $this.text()
+      city = parseInt( $this.attr 'data-value' )
+
+      $title.text cityName
+      PersonalCabinet.slideBlock.slideToggle $slideBlock
+      showNodeTypes()
+
+    $ document
+    .on 'click', '.js-select-type', (e)->
+      $this = $ this
+      type = $this.attr 'data-value'
+
+      setActiveType()
+      showNodes()
+
+    # чекбоксы у типов
+    $ document
+    .on 'click', '.js-select-type_w input', (e)->
+      e.stopPropagation()
+      $this = $ this
+      type = parseInt( $this.parent().attr 'data-value' )
+      checked = $this.prop 'checked'
+
+      setActiveType()
+      checkNodes(checked)
+      showNodes()
+      nodesObserver()
+      if type < 0
+        checkTypes(checked)
+      else
+        # снять чекбокс с элемента Все места
+        $ ".js-select-type_w[data-city = #{city}] .js-select-type[data-value = '-1'] input"
+        .prop 'checked', false
+
+      typesObserver()
+
+    # чекбоксы у заголовков узлов
+    $ document
+    .on 'click', '.js-select-node_w .js-slide-title input', (e)->
+      e.stopPropagation()
+      $this = $ this
+      checked = $this.prop 'checked'
+      $slideWrap = $this.closest '.js-slide-w'
+
+      # управление чекбоксами внутри узла
+      $slideWrap.find '.js-slide-cnt input:enabled'
+      .prop 'checked', checked
+      nodesObserver()
+      typesObserver()
+
+    # чекбоксы внутри узлов
+    $ document
+    .on 'click', '.js-select-node_w .js-slide-cnt input', (e)->
+      e.stopPropagation()
+      $this = $ this
+      checked = $this.prop 'checked'
+      $slideCnt = $this.closest '.js-slide-cnt'
+      $slideWrap = $this.closest '.js-slide-w'
+
+      titleInputChecked = false
+      $slideCnt.find 'input:enabled'
+      .each (e)->
+        $input = $ this
+        inputChecked = $input.prop 'checked'
+        if inputChecked
+          titleInputChecked = true
+
+      $slideWrap
+      .find '.js-slide-title input'
+      .prop 'checked', titleInputChecked
+      nodesObserver()
+      typesObserver()
+
+
 
   common:
 
@@ -758,6 +889,7 @@ PersonalCabinet =
     checkbox: () ->
 
       $ '.lk input[type = "checkbox"]'
+      .filter ':enabled'
       .each ()->
         $this = $ this
         checked = $this.attr 'data-checked'
@@ -886,6 +1018,10 @@ PersonalCabinet =
       event = if isTouchDevice() then 'touchend' else 'click'
 
       $ document
+      .on event, '.js-stop-bubble', (e)->
+        e.stopPropagation()
+
+      $ document
       .on event, '.js-btn', (e)->
         e.preventDefault()
         $this = $ this
@@ -939,10 +1075,10 @@ PersonalCabinet =
 
     cbca.pc.slideBlock.init()
     cbca.pc.statusBar.init()
-    cbca.pc.wifi()
     cbca.pc.login()
     cbca.pc.billing()
     cbca.pc.advRequest()
+    cbca.pc.advManagement()
     cbca.pc.adsList()
     cbca.pc.images()
 

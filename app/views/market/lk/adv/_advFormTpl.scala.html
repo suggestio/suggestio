@@ -45,29 +45,186 @@
 <hr class="delimiter __light"/>
 
 <div class="adv-management">
-  @form(routes.MarketAdv.advFormSubmit(adId)) {
-    @defining( adnNodes.groupBy(_.meta.town).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
+    <div class="adv-management_left-bar">
+      <h2 class="minor-title">Выбор города/ места</h2>
 
-      @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
-      @af.globalError.map { ge =>
-        <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
+      @market.lk.lkBlockNewDesign( open = false ) {
+        <div class="js-city">
+          <span class="checkbox_title __major __no-input">Выберите город</span>
+        </div>
+      } {
+        <div class="adv-management_city-i js-select-city" data-value="1">Санкт-Петербург</div>
+        <div class="adv-management_city-i js-select-city" data-value="2">Москва</div>
       }
 
-      <div class="adv-management_left-bar">
-        <h2  class="minor-title">Выбор города/ места</h2>
-        @market.lk.lkBlockNewDesign() {
-          <p class="ft-M">
-            <input type="checkbox"/>&nbsp;<label>Города</label>
-          </p>
+
+      <div class="select-tab_lst js-select-type_w" data-city="1">
+        <div class="select-tab_i js-select-type" data-value="-1">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Все места</span>
+        </div>
+        <div class="select-tab_i js-select-type" data-value="1">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Районы</span>
+          <span class="js-active-nodes-count"></span>
+        </div>
+        <div class="select-tab_i js-select-type" data-value="2">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Кинотеатры</span>
+          <span class="js-active-nodes-count"></span>
+        </div>
+      </div>
+
+      <div class="select-tab_lst js-select-type_w" data-city="2">
+        <div class="select-tab_i js-select-type" data-value="-1">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Все места</span>
+        </div>
+        <div class="select-tab_i js-select-type" data-value="1">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Библиотеки</span>
+          <span class="js-active-nodes-count"></span>
+        </div>
+        <div class="select-tab_i js-select-type" data-value="2">
+          <input type="checkbox"/>
+          <span class="select-tab_i-title">Рестораны</span>
+          <span class="js-active-nodes-count"></span>
+        </div>
+      </div>
+
+      <div class="select-tab_lst js-select-node_w" data-city="1" data-type="1">
+        <h3>Районы</h3>
+        @market.lk.lkBlockNewDesign( open = false ) {
+          <input type="checkbox"/>
+          <span class="checkbox_title __major">Московский</span>
         } {
-          @adnNodesMap.zipWithIndex.map { case ((memberTown, _), i) =>
-            @memberTown
-          }
+          <div class="advm-node_block">
+            <div class="advm-node_left">Размещение</div>
+            <div class="advm-node_right">
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
+              </label>
+            </div>
+          </div>
+          <hr class="delimiter __light advm-node_delimiter"/>
+          <div class="advm-node_block">
+            <label class="f-left">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+            </label>
+            <label class="f-right">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
+            </label>
+          </div>
+        }
+        @market.lk.lkBlockNewDesign( open = false ) {
+          <input type="checkbox"/>
+          <span class="checkbox_title __major">Невский</span>
+        } {
+          <div class="advm-node_block">
+            <div class="advm-node_left">Размещение</div>
+            <div class="advm-node_right">
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
+              </label>
+            </div>
+          </div>
+          <hr class="delimiter __light advm-node_delimiter"/>
+          <div class="advm-node_block">
+            <label class="f-left">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+            </label>
+            <label class="f-right">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
+            </label>
+          </div>
         }
       </div>
 
-    }
-  }
+      <div class="select-tab_lst js-select-node_w" data-city="1" data-type="2">
+        <h3>Кинотеатры</h3>
+        @market.lk.lkBlockNewDesign( open = false ) {
+          <input type="checkbox"/>
+          <span class="checkbox_title __major">Московский</span>
+        } {
+          <div class="advm-node_block">
+            <div class="advm-node_left">Размещение</div>
+            <div class="advm-node_right">
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
+              </label>
+            </div>
+          </div>
+          <hr class="delimiter __light advm-node_delimiter"/>
+          <div class="advm-node_block">
+            <label class="f-left">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+            </label>
+            <label class="f-right">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
+            </label>
+          </div>
+        }
+        @market.lk.lkBlockNewDesign( open = false ) {
+          <input type="checkbox"/>
+          <span class="checkbox_title __major">Невский</span>
+        } {
+          <div class="advm-node_block">
+            <div class="advm-node_left">Размещение</div>
+            <div class="advm-node_right">
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
+              </label>
+              <label class="checkbox_w">
+                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
+              </label>
+            </div>
+          </div>
+          <hr class="delimiter __light advm-node_delimiter"/>
+          <div class="advm-node_block">
+            <label class="f-left">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+            </label>
+            <label class="f-right">
+              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
+            </label>
+          </div>
+        }
+      </div>
+
+    </div>
 </div>
 
 
