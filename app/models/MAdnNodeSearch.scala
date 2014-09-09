@@ -6,6 +6,7 @@ import play.api.mvc.{RequestHeader, QueryStringBindable}
 import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 
 import scala.concurrent.Future
 
@@ -23,7 +24,7 @@ case class MAdnNodeSearch(
   anyOfPersonIds: Seq[String] = Nil,
   advDelegateAdnIds: Seq[String] = Nil,
   withAdnRights: Seq[AdnRight] = Nil,
-  testNode    : Option[Boolean] = None,
+  testNode    : Option[Boolean] = Some(false),
   withoutIds  : Seq[String] = Nil,
   geoDistance : Option[GeoShapeQueryData] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
   intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Nil,
@@ -32,6 +33,7 @@ case class MAdnNodeSearch(
   withNameSort: Boolean = false,
   shownTypes  : Seq[AdnShownType] = Nil,
   onlyWithSinks: Seq[AdnSink] = Nil,
+  withRouting : Seq[String] = Nil,
   maxResults  : Int = 10,
   offset      : Int = 0
 ) extends AdnNodesSearchArgsT {
@@ -43,12 +45,13 @@ case class MAdnNodeSearch(
 
 /** Bindable-версия искалки. */
 case class SimpleNodesSearchArgs(
-  qStr        : Option[String] = None,
-  geoMode     : GeoMode = GeoNone,
-  maxResults  : Option[Int] = None,
-  offset      : Option[Int] = None,
-  currAdnId   : Option[String] = None,
-  isNodeSwitch: Boolean = false
+  qStr            : Option[String] = None,
+  geoMode         : GeoMode = GeoNone,
+  maxResults      : Option[Int] = None,
+  offset          : Option[Int] = None,
+  currAdnId       : Option[String] = None,
+  isNodeSwitch    : Boolean = false,
+  withNeighbors   : Boolean = false
 ) {
 
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel])(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
@@ -62,7 +65,6 @@ case class SimpleNodesSearchArgs(
         maxResults    = maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT,
         offset        = offset.getOrElse(0),
         withAdnRights = Seq(AdnRights.RECEIVER),
-        testNode      = Some(false),
         //withoutIds    = currAdnId.toSeq,
         withNameSort  = true
       ) {
@@ -78,18 +80,28 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
 
   import LOGGER._
 
-  val Q_SUF = ".q"
-  val GEO_SUF = ".geo"
-  val OFFSET_SUF = ".offset"
-  val MAX_RESULTS_SUF = ".limit"
-  val CURR_ADN_ID_SUF = ".cai"
-  val NODE_SWITCH_SUF = ".nodesw"
+  val Q_SUF                   = ".q"
+  val GEO_SUF                 = ".geo"
+  val OFFSET_SUF              = ".offset"
+  val MAX_RESULTS_SUF         = ".limit"
+  val CURR_ADN_ID_SUF         = ".cai"
+  val NODE_SWITCH_SUF         = ".nodesw"
+  val WITH_NEIGHBORS_SUF      = ".neigh"
 
-  val MAX_RESULTS_LIMIT_HARD = 50
-  def MAX_RESULTS_DFLT = MAX_RESULTS_LIMIT_HARD
-  val OFFSET_LIMIT_HARD = 300
-  val QSTR_LEN_MAX = 70
+  /** Ограничение сверху для значения max results. */
+  val MAX_RESULTS_LIMIT_HARD  = configuration.getInt("nodes.search.results.max.hard") getOrElse 50
 
+  /** Дефолтовое значение для max_results. */
+  val MAX_RESULTS_DFLT        = configuration.getInt("nodes.search.results.max.dflt") getOrElse MAX_RESULTS_LIMIT_HARD
+
+  /** Ограничение сверху на максимальный сдвиг в выдаче. */
+  val OFFSET_LIMIT_HARD       = configuration.getInt("nodes.search.results.offset.max.hard") getOrElse 300
+
+  /** Макс.длина тектового поискового запроса. */
+  val QSTR_LEN_MAX            = configuration.getInt("nodes.search.qstr.len.max") getOrElse 70
+
+
+  /** Урезание длины строки, если она превышает указанный предел. */
   private def limitStrLen(str: String, maxLen: Int): String = {
     if (str.length > maxLen)
       str.substring(0, maxLen)
@@ -98,10 +110,9 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
   }
 
 
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
-                   geoModeB: QueryStringBindable[GeoMode],
-                   intOptB: QueryStringBindable[Option[Int]],
-                   boolOptB: QueryStringBindable[Option[Boolean]]) = {
+  /** Биндилка для simpleNodesSearchArgs, вызываемая из routes. */
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],  geoModeB: QueryStringBindable[GeoMode],
+                   intOptB: QueryStringBindable[Option[Int]],  boolOptB: QueryStringBindable[Option[Boolean]]) = {
     new QueryStringBindable[SimpleNodesSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SimpleNodesSearchArgs]] = {
         for {
@@ -111,6 +122,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
           maybeMaxResults <- intOptB.bind(key + MAX_RESULTS_SUF, params)
           maybeCurAdnId   <- strOptB.bind(key + CURR_ADN_ID_SUF, params)
           maybeNodeSwitch <- boolOptB.bind(key + NODE_SWITCH_SUF, params)
+          maybeWithNeigh  <- boolOptB.bind(key + WITH_NEIGHBORS_SUF, params)
         } yield {
           trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
           Right(
@@ -120,7 +132,8 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
               offset        = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
               maxResults    = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
               currAdnId     = maybeCurAdnId,
-              isNodeSwitch  = maybeNodeSwitch getOrElse false
+              isNodeSwitch  = maybeNodeSwitch getOrElse false,
+              withNeighbors = maybeWithNeigh getOrElse false
             )
           )
         }
@@ -132,7 +145,9 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
           geoModeB.unbind(key + GEO_SUF, value.geoMode),
           intOptB.unbind(key + OFFSET_SUF, value.offset),
           intOptB.unbind(key + MAX_RESULTS_SUF, value.maxResults),
-          strOptB.unbind(key + CURR_ADN_ID_SUF, value.currAdnId)
+          strOptB.unbind(key + CURR_ADN_ID_SUF, value.currAdnId),
+          boolOptB.unbind(key + NODE_SWITCH_SUF, Some(value.isNodeSwitch)),
+          boolOptB.unbind(key + WITH_NEIGHBORS_SUF, Some(value.withNeighbors))
         )
           .filter { s => !s.isEmpty && !s.endsWith("=") }
           .mkString("&")

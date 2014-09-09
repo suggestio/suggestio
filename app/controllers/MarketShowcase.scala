@@ -520,6 +520,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
+  /** Функция сплющивания списка слоев в список узлов из этих слоёв, сохраняя порядок. */
+  private def flattenLays(_laysFut: Future[Seq[GeoNodesLayer]]): Future[Seq[MAdnNode]] = {
+    _laysFut.map { _.flatMap(_.nodes) }
+  }
+
 
   /** Поиск узлов в рекламной выдаче. */
   def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
@@ -529,46 +534,179 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val tstamp = System.currentTimeMillis() / 50L
     // В зависимости от настроек геолокации, надо произвести поиск узлов в разных слоях или вне их всех.
     val ngls = args.geoMode.nodeGeoLevels
-    val nodesFut: Future[Seq[MAdnNode]] = if (ngls.isEmpty) {
-      trace(logPrefix + "No node geo levels available -- searching for all.")
-      // Уровней поиска геоинформации нет. Ищем в лоб.
-      args.toSearchArgs(None) flatMap { sargs =>
-        MAdnNode.dynSearch(sargs)
-      }
-    } else {
-      trace(logPrefix + "geo levels = " + ngls.mkString(", "))
-      // Есть уровни для поиска. Надо запустить поиски узлов на разных уровнях.
-      Future.traverse( ngls.zipWithIndex ) {
-        case (glevel, i) =>
-          args.toSearchArgs(Some(glevel))
-            .flatMap { MAdnNode.dynSearch }
-            .map { nodes =>
-              trace(s"${logPrefix}On level $glevel found nodes ${nodes.iterator.map(_.id.get).mkString(", ")}")
-              nodes -> i
-            }
-      } map { results =>
-        // Восстанавливаем порядок согласно списку гео-уровней.
-        results.filter(_._1.nonEmpty)
-          .sortBy(_._2)
-          .flatMap(_._1)
+
+    // Послойная последовательность узлов.
+    val nodesLaysFut: Future[Seq[GeoNodesLayer]] = {
+      if (ngls.isEmpty) {
+        // Если искомых геоуровней нет в текущем режиме, то и искать по географии не надо.
+        trace(logPrefix + "No node geo levels available -- searching for all.")
+        // Уровней поиска геоинформации нет. Ищем в лоб.
+        args.toSearchArgs(None) flatMap { sargs =>
+          MAdnNode.dynSearch(sargs)
+        } map { nodes =>
+          Seq(GeoNodesLayer(nodes))
+        }
+      } else {
+        // Есть уровни для поиска. Надо запустить поиски узлов на разных уровнях.
+        trace(logPrefix + "geo levels = " + ngls.mkString(", "))
+        Future.traverse( ngls.zipWithIndex ) {
+          // На каждом уровне (сохраняя порядок уровней) поискать узлы, подходящие географически.
+          case (glevel, i) =>
+            val someGlevel = Some(glevel)
+            args.toSearchArgs(someGlevel)
+              .flatMap { MAdnNode.dynSearch }
+              .map { nodes =>
+                trace(s"${logPrefix}On level $glevel found nodes ${nodes.iterator.map(_.id.get).mkString(", ")}")
+                GeoNodesLayer(nodes, someGlevel, i)
+              }
+        } map {
+          // Восстанавливаем порядок согласно списку гео-уровней.
+          _.filter(_.nodes.nonEmpty)
+            .sortBy(_.i)
+        }
       }
     }
-    // Когда все узлы будут собраны, нужно отрендерить результат.
+
+    // Промежуточный результат со списком узлов.
+    val nodes0Fut = flattenLays(nodesLaysFut)
+
+    // Определение узла, на котором будет юзер после выполнения запроса.
+    val nextNodeOptFut: Future[Option[MAdnNode]] = if (args.isNodeSwitch) {
+      // Идёт переключение узлов. Следующим узлом будет первый по списку узел. Если узлов не найдено, то юзер останется на текущем узле.
+      nodes0Fut flatMap { nodes =>
+        val firstNodeOpt = nodes.headOption
+        if (firstNodeOpt.isDefined) {
+          Future successful firstNodeOpt
+        } else if (args.currAdnId.isDefined) {
+          // Переключение узла невозможно, используем currAdnId как fallback для определения следующего узла.
+          MAdnNodeCache.getById(args.currAdnId.get)
+        } else {
+          Future successful None
+        }
+      }
+    } else if (args.currAdnId.isDefined) {
+      // Переключение узлов НЕ требуется, и веб-морда сообщила .cai с id узла. Поискать инстанс этого узла среди текущих узлов и в кеше.
+      val currAdnId = args.currAdnId.get
+      nodes0Fut.flatMap { nodes =>
+        // Сначала ищем текущий узел в списке имеющихся узлов.
+        val nodeFromNodesOpt = nodes.find(_.id.exists(_ == currAdnId))
+        if (nodeFromNodesOpt.isDefined) {
+          Future successful nodeFromNodesOpt
+        } else {
+          // Обращаемся к кешу узлов за текущим узлом:
+          MAdnNodeCache.getById(currAdnId)
+        }
+      }
+    } else {
+      // Определение следующего узла выдачи не требуется или невозможно.
+      Future successful None
+    }
+
+    // Если запрошены соседние узлы, то нужно запустить поиск оных, выбрав слои для исходного узла и для инжекции neigh-узлов.
+    val nodesFut: Future[Seq[MAdnNode]] = if (args.withNeighbors) {
+      nodesLaysFut flatMap { nodeLays =>
+        nextNodeOptFut flatMap { nextNodeOpt =>
+          if (nextNodeOpt.nonEmpty && nodeLays.nonEmpty) {
+            lazy val nodesCount = nodeLays.iterator.map(_.nodes.size).sum
+            val nextNode = nextNodeOpt.get
+            // Есть данные для заполнения списка узлов соседними узлами. Нужно модифицировать текущий уровень или нижний уровень
+            val isOnLowestGl = nodeLays.exists { _.glevelOpt.exists(_.isLowest) }
+            trace(s"${logPrefix}nodesFut: searching neigh nodes. isOnLowerGl=$isOnLowestGl nextNode=${nextNode.id.get} nodesCount=$nodesCount")
+            val nextNodeLayOpt = nodeLays.find(_.nodes.exists(_.id == nextNode.id))
+            val parentLayOpt: Option[GeoNodesLayer] = if (isOnLowestGl) {
+              // Мы на самом нижнем уровне. Надо найти узел (узлы) уровнем выше текущего и запустить геопоиск узлов, входящих в него географически.
+              // Найденные узлы закинуть на нижний уровень.
+              nextNodeLayOpt.flatMap { currLay =>
+                val upperLaysIter = nodeLays.iterator.filter(_.i <= currLay.i)
+                if (upperLaysIter.nonEmpty) {
+                  Some(upperLaysIter.minBy(_.i))
+                } else {
+                  None
+                }
+              }
+            } else {
+              nextNodeLayOpt
+            }
+            // Собрать указатели на проиндексированные геошейпы узлов уровня
+            val nodeGeoPtrsFut = parentLayOpt.fold(Future successful Seq[MAdnNodeGeoIndexed]()) { parentLay =>
+              Future.traverse( parentLay.nodes )
+                {adnNode  =>  MAdnNodeGeo.findIndexedPtrsForNode(adnNode.id.get) }
+                .map { _.flatten.toSeq }
+            }
+            val neighNodesFut = nodeGeoPtrsFut flatMap { ptrs =>
+              val neightSargs = MAdnNodeSearch(
+                withoutIds = nextNode.id.toSeq,
+                intersectsWithPreIndexed = ptrs,
+                maxResults = args.maxResults.map(_ - nodesCount) getOrElse 10
+                // TODO Сортировать по близости к координатам юзера или координатам текущего узла.
+              )
+              MAdnNode.dynSearch(neightSargs)
+            }
+            // Определить подслой, в который надо добавлять найденные узлы.
+            val childLayOpt: Option[GeoNodesLayer] = if (isOnLowestGl) {
+              nextNodeLayOpt
+            } else {
+              parentLayOpt.flatMap { parentLay =>
+                val lowerLayIter = nodeLays.iterator.filter(_.i >= parentLay.i)
+                if (lowerLayIter.nonEmpty) {
+                  Some(lowerLayIter.maxBy(_.i))
+                } else {
+                  None
+                }
+              }
+            }
+            trace(s"${logPrefix}nextNodeLay=$nextNodeLayOpt parentLay=$parentLayOpt childLay=$childLayOpt")
+            // Инжектим найденные узлы в child-уровень, остальные просто пропускаем.
+            val nodesLays2Fut = neighNodesFut map { neighNodes =>
+              nodeLays.map { nodeLay =>
+                if (childLayOpt.exists(_.i == nodeLay.i)) {
+                  // Инжектим соседние ноды в список нод текущего слоя
+                  nodeLay.copy(nodes = nodeLay.nodes ++ neighNodes)
+                } else {
+                  nodeLay
+                }
+              }
+            }
+            flattenLays(nodesLays2Fut)
+
+          } else {
+            trace(s"${logPrefix}Neigh nodes search skipped. nextNodeOpt.nonEmpty=${nextNodeOpt.nonEmpty} nodeLays.nonEmpty=${nodeLays.nonEmpty}")
+            nodes0Fut
+          }
+        }
+      }
+    } else {
+      trace(s"${logPrefix}Neigh nodes search disabled in args.")
+      nodes0Fut
+    }
+
+    // Когда все данные будут собраны, нужно отрендерить результат в виде json.
     for {
       nodes       <- nodesFut
+      nextNodeOpt <- nextNodeOptFut
     } yield {
-      val firstNodeOpt = nodes.headOption
-      val firstNodeJson = firstNodeOpt.fold [JsValue] (JsNull) { adnNode =>
-        JsObject(Seq(
-          "name"  -> JsString(adnNode.meta.name),
-          "_id"   -> JsString(adnNode.id getOrElse "")
-        ))
+      // Рендер в json следующего узла, если он есть.
+      val nextNodeJson = nextNodeOpt
+        .fold [JsValue] (JsNull) { adnNode =>
+          JsObject(Seq(
+            "name"  -> JsString(adnNode.meta.name),
+            "_id"   -> JsString(adnNode.id getOrElse "")
+          ))
+        }
+      // Список узлов, который надо рендерить юзеру.
+      val nodesRendered: Seq[MAdnNode] = if (args.isNodeSwitch && nodes.nonEmpty) {
+        // При переключении узла, переключение идёт на наиболее подходящий узел, который первый в списке.
+        // Тогда этот узел НЕ надо отображать в списке узлов.
+        nodes.tail
+      } else {
+        // Нет переключения узлов. Рендерим все подходящие узлы.
+        nodes
       }
       val json = JsObject(Seq(
         "action"      -> JsString("findNodes"),
         "status"      -> JsString("ok"),
-        "first_node"  -> firstNodeJson,
-        "nodes"       -> _geoNodesListTpl(nodes, firstNodeOpt),
+        "first_node"  -> nextNodeJson,
+        "nodes"       -> _geoNodesListTpl(nodesRendered, nextNodeOpt),
         "timestamp"   -> JsNumber(tstamp)
       ))
       Ok( Jsonp(JSONP_CB_FUN, json) )
@@ -634,5 +772,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
+  /** Найденные узлы с одного геоуровня. */
+  sealed case class GeoNodesLayer(nodes: Seq[MAdnNode], glevelOpt: Option[NodeGeoLevel] = None, i: Int = -1)
 }
 

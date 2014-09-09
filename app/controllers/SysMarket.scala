@@ -172,7 +172,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       case Some(stiId) =>
         val sargs = MAdnNodeSearch(
           shownTypes = Seq(AdnShownTypes.withName(stiId)),
-          maxResults = 1000
+          maxResults = 1000,
+          testNode = None
         )
         MAdnNode.dynSearch(sargs)
       case None =>
