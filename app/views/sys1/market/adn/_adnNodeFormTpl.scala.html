@@ -5,7 +5,6 @@
 @import helper._
 @import ctx._
 @import util.FC.tdFc
-@import org.elasticsearch.common.unit.DistanceUnit
 
 
 @form(call) {
@@ -153,12 +152,6 @@
       )
     }
   </table>
-
-  <table class="input-w __size-L">
-    @inputText(af("meta.location.lat"),  '_label -> "Широта")
-    @inputText(af("meta.location.lon"),  '_label -> "Долгота")
-  </table>
-
 
   <div class="btn-w __size-M">
     <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>

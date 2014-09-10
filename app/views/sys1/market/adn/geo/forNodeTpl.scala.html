@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo])(implicit ctx: Context)
+@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MAdnNode])(implicit ctx: Context)
 
 @* Вывод гео-информации по узлу. *@
 
@@ -6,6 +6,21 @@
 @import datetime._
 @import stuff._
 
+@* Отрендерить список нод на основе списка id нод. Используется карта parentsMap для доступа к инфе по узлу. *@
+@_renderNodes(nodesIds: Traversable[String]) = {
+  @nodesIds.map { parentId =>
+    <a href="@routes.SysMarket.showAdnNode(parentId)">
+      @parentsMap.get(parentId).fold {
+        @parentId
+      } { parentNode =>
+        <span title="@parentNode.meta.town / @parentId">@parentNode.meta.name</span>
+      }
+    </a>
+  }
+}
+
+
+@* Рендер самой страницы. *@
 @geoBase("География узла", nodeOpt = Some(adnNode)) {
 
   <h1>География узла <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a></h1>
@@ -56,4 +71,33 @@
   <p>
     <a href="http://geojsonlint.com/">Визуальная проверка GeoJSON.</a>
   </p>
+
+
+  <br/><br/>
+  <h1>Геоданные узла</h1>
+  @if(adnNode.geo.isEmpty) {
+    Отсутствуют.
+    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(adnNode.id.get)">Попробовать автозаполнение геоданных...</a>
+  } else {
+    @adnNode.geo.point.map { point =>
+      Точка: lat=@point.lat lon=@point.lon<br/>
+    }
+
+    @if(adnNode.geo.directParentIds.nonEmpty) {
+      <p>
+        Геородительские узлы:
+        @_renderNodes(adnNode.geo.directParentIds)
+      </p>
+    }
+
+    @if(adnNode.geo.allParentIds.nonEmpty) {
+      <p>
+        Все геородительские узлы:
+        @_renderNodes(adnNode.geo.allParentIds)
+      </p>
+    }
+  }
+
+  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(adnNode.id.get)">Редактировать...</a>
+
 }

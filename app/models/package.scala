@@ -174,6 +174,10 @@ package object models {
   val  MAdnNodeGeo          = ym.model.MAdnNodeGeo
   type MAdnNodeGeo          = ym.model.MAdnNodeGeo
 
-  type MAdnNodeGeoIndexed   = ym.model.MAdnNodeGeoIndexed
   val  MAdnNodeGeoIndexed   = ym.model.MAdnNodeGeoIndexed
+  type MAdnNodeGeoIndexed   = ym.model.MAdnNodeGeoIndexed
+
+  val  AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
+  type AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
+
 }

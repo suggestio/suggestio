@@ -348,6 +348,7 @@ POST /id/wifi/by/phone/:phone/code       controllers.WifiIdent.idByPhoneCodeSubm
 
 ## sys adn geo
 GET  /sys/adn/geo/all/:adnId             controllers.SysAdnGeo.forNode(adnId)
+## MAdnNodeGeo
 GET  /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsm(adnId)
 POST /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
 POST /sys/adn/geo/del/:geoId             controllers.SysAdnGeo.deleteSubmit(geoId, adnId)
@@ -358,5 +359,8 @@ POST /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircleSubmi
 GET  /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircle(geoId, adnId)
 POST /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircleSubmit(geoId, adnId)
 GET  /sys/adn/geo/json/:geoId            controllers.SysAdnGeo.showGeoJson(geoId, adnId)
-
+## node geodata
+GET  /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodata(adnId)
+GET  /sys/adn/geodata/propose/:adnId     controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
+POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
 

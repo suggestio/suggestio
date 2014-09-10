@@ -1,0 +1,23 @@
+@(adnNode: MAdnNode, gf: Form[_], nodesMap: Map[String, MAdnNode], isProposed: Boolean)(implicit ctx: Context)
+
+@import ctx._
+
+@geoBase("Редактирование геоданных узла", nodeOpt = Some(adnNode)) {
+
+  @if(!isProposed) {
+    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(adnNode.id.get)">Предложить автозаполнение формы...</a>
+  } else {
+    <p>
+        Эта форма заполнена автоматически. Эти данные могут быть неверны, и пока не сохранены.
+        <a href="@routes.SysAdnGeo.editAdnNodeGeodata(adnNode.id.get)">Вернутся к редактированию существующих данных...</a>
+    </p>
+  }
+
+  @_nodeGeodataFormTpl(
+    submitCall  = routes.SysAdnGeo.editAdnNodeGeodataSubmit(adnNode.id.get),
+    gf          = gf,
+    btnText     = Messages("Save"),
+    nodesMap    = nodesMap
+  )
+
+}

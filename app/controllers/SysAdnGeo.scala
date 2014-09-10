@@ -1,11 +1,10 @@
 package controllers
 
-import io.suggest.model.geo.{Distance, CircleGs}
-import io.suggest.ym.model.{NodeGeoLevels, MAdnNodeGeo}
-import models.{NodeGeoLevel, MAdnNodeCache}
+import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
+import io.suggest.ym.model.common.AdnNodeGeodata
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
-import play.api.mvc.{Result, ActionBuilder}
+import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
@@ -15,6 +14,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient, OsmParsers}
 import views.html.sys1.market.adn.geo._
+import models._
 
 import scala.concurrent.Future
 
@@ -23,6 +23,8 @@ import scala.concurrent.Future
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.09.14 14:43
  * Description: Контроллер для работы с географическими данными узлов. Например, закачка из osm.
+ * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
+ * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
@@ -45,8 +47,12 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   /** Выдать страницу с географиями по узлам. */
   def forNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    MAdnNodeGeo.findByNode(adnId, withVersions = true) map { geos =>
-      Ok(forNodeTpl(request.adnNode, geos))
+    val parentsMapFut = adnIds2NodesMap(request.adnNode.geo.allParentIds)
+    for {
+      geos        <- MAdnNodeGeo.findByNode(adnId, withVersions = true)
+      parentsMap  <- parentsMapFut
+    } yield {
+      Ok(forNodeTpl(request.adnNode, geos, parentsMap))
     }
   }
 
@@ -179,7 +185,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   def createCircle(adnId: String) = IsSuperuserAdnNode(adnId).apply { implicit request =>
     val form0 = circleFormM
     // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
-    val form1 = request.adnNode.meta.location.fold(form0) { loc =>
+    val form1 = request.adnNode.geo.point.fold(form0) { loc =>
       val geoStub = MAdnNodeGeo(
         adnId = adnId,
         glevel = NodeGeoLevels.default,
@@ -246,6 +252,150 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   /** Отрендерить geojson для валидации через geojsonlint. */
   def showGeoJson(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).apply { implicit request =>
     Ok(request.adnGeo.shape.toPlayJson)
+  }
+
+
+  /** Маппинг для формы, которая описывает поле geo в модели MAdnNode. */
+  private def nodeGeoFormM: Form[AdnNodeGeodata] = {
+    Form(
+      mapping(
+        "point"         -> latLng2geopointOptM,
+        "parentAdnId"   -> optional(esIdM)
+      )
+      {(pointOpt, parentIdOpt) => AdnNodeGeodata(pointOpt, directParentIds = parentIdOpt.toSet) }
+      { angd => Some((angd.point, angd.directParentIds.headOption)) }
+    )
+  }
+
+  /** Собрать карту узлов на основе списка. */
+  private def adnIds2NodesMap(parentIds: TraversableOnce[String]): Future[Map[String, MAdnNode]] = {
+    MAdnNodeCache.multiGet(parentIds)
+      .map { nodes2nodesMap }
+  }
+
+  /** Список узлов в карту (adnId -> adnNode). */
+  private def nodes2nodesMap(nodes: Iterable[MAdnNode]): Map[String, MAdnNode] = {
+    nodes.iterator.map { parent => parent.id.get -> parent }.toMap
+  }
+
+  /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения. */
+  private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MAdnNode]] = {
+    MAdnNodeGeo.findAdnIdsWithLevels(glevels)
+      .map { _.toSet }
+      .flatMap { MAdnNodeCache.multiGet }
+  }
+
+  /**
+   * Рендер страницы с предложением по заполнению геоданными geo-поле узла.
+   * @param adnId id узла.
+   * @return 200 ок + страница с формой редактирования geo-поля узла.
+   */
+  def editAdnNodeGeodataPropose(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    // Запускаем поиск всех шейпов текущего узла.
+    val nodeShapesFut = MAdnNodeGeo.findByNode(adnId)
+    // Для parentAdnId: берем шейп на текущем уровне, затем ищем пересечение с ним на уровне (уровнях) выше.
+    val parentAdnIdsFut: Future[Set[String]] = nodeShapesFut.flatMap { shapes =>
+      shapes
+        .filter(_.glevel.upper.isDefined)
+        .find(_.shape.isInstanceOf[GeoShapeQuerable])
+        .fold(Future successful Set.empty[String]) { geo =>
+          val upperGlevel = geo.glevel.upper.get
+          val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
+          MAdnNodeGeo.geoFindAdnIdsOnLevel(upperGlevel, shapeq, maxResults = 1)
+            .map { _.toSet }
+        }
+    }
+    val nodesMapFut = nodeShapesFut flatMap { geos =>
+      geos.headOption
+        .map(_.glevel.allUpperLevels)
+        .filter(_.nonEmpty)
+        .fold
+          { Future successful Map.empty[String, MAdnNode] }
+          { upperLevels => collectNodesOnLevels(upperLevels) map nodes2nodesMap }
+    }
+    // Предлагаем центр имеющегося круга за точку центра.
+    val pointOptFut: Future[Option[GeoPoint]] = nodeShapesFut.map { geos =>
+      geos.find(_.shape.isInstanceOf[CircleGs])
+        .map(_.shape.asInstanceOf[CircleGs].center)
+    }
+    // Когда всё готово, рендерим шаблон.
+    for {
+      pointOpt      <- pointOptFut
+      parentAdnIds  <- parentAdnIdsFut
+      nodesMap      <- nodesMapFut
+    } yield {
+      val geo = AdnNodeGeodata(pointOpt, parentAdnIds)
+      val formBinded = nodeGeoFormM.fill(geo)
+      Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = true))
+    }
+  }
+
+  private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MAdnNode]] = {
+    MAdnNodeGeo.findIndexedPtrsForNode(adnId).flatMap { geoPtrs =>
+      val glevels = geoPtrs.map(_.glevel).headOption.fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
+      if (glevels.nonEmpty) {
+        collectNodesOnLevels(glevels) map nodes2nodesMap
+      } else {
+        Future successful Map.empty[String, MAdnNode]
+      }
+    }
+  }
+
+  /**
+   * Рендер страницы с формой редактирования geo-части adn-узла.
+   * Тут по сути расширение формы обычного редактирования узла.
+   * @param adnId id редактируемого узла.
+   * @return 200 Ok + страница с формой редактирования узла.
+   */
+  def editAdnNodeGeodata(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    val nodesMapFut = adnId2possibleParentsMap(adnId)
+    val formBinded = nodeGeoFormM fill request.adnNode.geo
+    nodesMapFut map { nodesMap =>
+      Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = false))
+    }
+  }
+
+  /**
+   * Сабмит формы редактирования гео-части узла.
+   * @param adnId id редактируемого узла.
+   * @return редирект || 406 NotAcceptable.
+   */
+  def editAdnNodeGeodataSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    lazy val logPrefix = s"editAdnNodeGeodataSubmit($adnId): "
+    nodeGeoFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val nodesMapFut = adnId2possibleParentsMap(adnId)
+        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        nodesMapFut map { nodesMap =>
+          NotAcceptable(editNodeGeodataTpl(request.adnNode, formWithErrors, nodesMap, isProposed = false))
+        }
+      },
+      {geo2 =>
+        // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.
+        Future.traverse( geo2.directParentIds ) { parentAdnId =>
+          MAdnNodeCache.getById(parentAdnId).map { parentNodeOpt =>
+            parentNodeOpt.get.geo.allParentIds
+          }
+        }.map {
+          _.reduce(_ ++ _)
+        }.flatMap { allParentIds0 =>
+          val allParentIds = geo2.directParentIds ++ allParentIds0
+          MAdnNode.tryUpdate(request.adnNode) { adnNode =>
+            val geo3 = adnNode.geo.copy(
+              point           = geo2.point,
+              directParentIds = geo2.directParentIds,
+              allParentIds    = allParentIds
+            )
+            adnNode.copy(
+              geo = geo3
+            )
+          }.map { _adnId =>
+            Redirect( routes.SysAdnGeo.forNode(_adnId) )
+              .flashing("success" -> "Геоданные узла обновлены.")
+          }
+        }
+      }
+    )
   }
 
 
