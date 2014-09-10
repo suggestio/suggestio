@@ -20,12 +20,12 @@ object MarketIndexAccess extends ActionBuilder[MarketIndexRequest] {
   /** Надо найти узлы, которые стоит отобразить на странице как точки для размещения рекламы.
    * Это должны быть не-тестовые ресиверы, имеющие логотипы. */
   def getNodes: Future[Seq[MAdnNode]] = {
-    val nodeSearchArgs = MAdnNodeSearch(
-      hasLogo       = Some(true),
-      testNode      = Some(false),
-      maxResults    = controllers.Market.INDEX_NODES_LIST_LEN,
-      withAdnRights  = Seq(AdnRights.RECEIVER)
-    )
+    val nodeSearchArgs = new AdnNodesSearchArgs {
+      override def hasLogo = Some(true)
+      override def testNode = Some(false)
+      override def maxResults = controllers.Market.INDEX_NODES_LIST_LEN
+      override def withAdnRights = Seq(AdnRights.RECEIVER)
+    }
     MAdnNode.dynSearch(nodeSearchArgs)
   }
 

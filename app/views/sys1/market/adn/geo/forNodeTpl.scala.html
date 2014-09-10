@@ -15,7 +15,7 @@
       } { parentNode =>
         <span title="@parentNode.meta.town / @parentId">@parentNode.meta.name</span>
       }
-    </a>
+    </a>,
   }
 }
 
@@ -24,7 +24,8 @@
 @geoBase("География узла", nodeOpt = Some(adnNode)) {
 
   <h1>География узла <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a></h1>
-
+  <p>Географическая информация узла -- это геометрические фигуры в координатах поверхности земли. Они тяжеловесные, и
+     хранятся отдельно от родительского узла, в той же шарде узла, но в отдельной модели.</p>
   @if(geos.nonEmpty) {
     <table>
       <thead>
@@ -75,24 +76,34 @@
 
   <br/><br/>
   <h1>Геоданные узла</h1>
+  <p>Геоданные узла хранятся и индексируются в самом узле.</p>
   @if(adnNode.geo.isEmpty) {
     Отсутствуют.
     <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(adnNode.id.get)">Попробовать автозаполнение геоданных...</a>
   } else {
     @adnNode.geo.point.map { point =>
-      Точка: lat=@point.lat lon=@point.lon<br/>
+      @* TODO Почему-то маркер точки не подсвечивается на карте, поэтому используем большое увеличение (18) и отметку по центру. *@
+      <span title="Примитивная координата, до которой можно измерить расстояние или использовать при сортировки по расстоянию. Например географический центр узла.">
+        Координата:
+      </span>
+      <a href="http://www.openstreetmap.org/#map=18/@point.lat/@point.lon" target="_blank" title="Открыть карту в новой вкладке. Цель будет в центре.">
+        <span title="(lat, lon), т.е. (широта, долгота) в WGS84.">
+          (@point.lat, @point.lon)
+        </span>
+      </a>
+      <br/>
     }
 
     @if(adnNode.geo.directParentIds.nonEmpty) {
       <p>
-        Геородительские узлы:
+        <span title="Прямые родители узла в географическом плане.">Геородительские узлы:</span>
         @_renderNodes(adnNode.geo.directParentIds)
       </p>
     }
 
     @if(adnNode.geo.allParentIds.nonEmpty) {
       <p>
-        Все геородительские узлы:
+        <span title="Все географически родительские узлы. Т.е. прямые родители и все их геородители.">Все геородительские узлы:</span>
         @_renderNodes(adnNode.geo.allParentIds)
       </p>
     }

@@ -161,7 +161,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /* Унифицированные узлы ADN */
   import views.html.sys1.market.adn._
 
-  /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType.  */
+  /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
+  // TODO stiIdOpt должен быть не id, а конретным экземпляром ShownTypeId.
   def adnNodesList(stiIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
     val companiesFut = MCompany
       .getAll(maxResults = 1000)
@@ -170,11 +171,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       }
     val adnNodesFut = stiIdOpt match {
       case Some(stiId) =>
-        val sargs = MAdnNodeSearch(
-          shownTypes = Seq(AdnShownTypes.withName(stiId)),
-          maxResults = 1000,
-          testNode = None
-        )
+        val sargs = new AdnNodesSearchArgs {
+          override def shownTypeIds = Seq(stiId)
+          override def maxResults = 1000
+          override def testNode = None
+        }
         MAdnNode.dynSearch(sargs)
       case None =>
         MAdnNode.getAll(maxResults = 1000)

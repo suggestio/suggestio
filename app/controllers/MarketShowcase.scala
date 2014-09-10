@@ -73,6 +73,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** id узла для демо-выдачи. */
   val DEMO_ADN_ID_OPT = configuration.getString("market.demo.adn.id")
 
+  /** Какой метод использовать для поиска соседних узлов?
+    * true - использовать MAdnNodeGeo, наложение шейпов и т.д. См. [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
+    * [false] - использовать ручные связи между узлами через MAdnNode.geo.directParentIds и смежные. */
+  private val NEIGH_NODES_USE_GEOSHAPES = configuration.getBoolean("market.showcase.nodes.neigh.use_geoshapes") getOrElse false
+
+  /** Сколько нод максимум накидывать к списку нод в качестве соседних нод. */
+  val NEIGH_NODES_MAX = configuration.getInt("market.showcase.nodes.neigh.max") getOrElse 10
+
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
@@ -244,16 +252,16 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
 
   /** Поиск узла на основе текущей геоинформации. */
-  private def detectCurrentNodeByGeo[T](geo: GeoMode)(searchF: MAdnNodeSearch => Future[Seq[T]])
+  private def detectCurrentNodeByGeo[T](geo: GeoMode)(searchF: AdnNodesSearchArgsT => Future[Seq[T]])
                                        (implicit request: RequestHeader): Future[Option[T]] = {
     Future.traverse( geo.nodeGeoLevels.zipWithIndex ) {
       case (ngl, i) =>
         geo.geoSearchInfo.flatMap { gsiOpt =>
-          val nodeSearchArgs = MAdnNodeSearch(
-            geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, ngl) },
-            maxResults = 1,
-            withGeoDistanceSort = geo.exactGeodata
-          )
+          val nodeSearchArgs = new AdnNodesSearchArgs {
+            override def geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, ngl)}
+            override def maxResults = 1
+            override def withGeoDistanceSort = geo.exactGeodata
+          }
           searchF(nodeSearchArgs) map { _ -> i }
         }
     } map { results =>
@@ -610,14 +618,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             lazy val nodesCount = nodeLays.iterator.map(_.nodes.size).sum
             val nextNode = nextNodeOpt.get
             // Есть данные для заполнения списка узлов соседними узлами. Нужно модифицировать текущий уровень или нижний уровень
-            val isOnLowestGl = nodeLays.exists { _.glevelOpt.exists(_.isLowest) }
-            trace(s"${logPrefix}nodesFut: searching neigh nodes. isOnLowerGl=$isOnLowestGl nextNode=${nextNode.id.get} nodesCount=$nodesCount")
             val nextNodeLayOpt = nodeLays.find(_.nodes.exists(_.id == nextNode.id))
+            // Следующая нода в нижнем гео-слое? Это влияет на определение родительского слоя.
+            val isOnLowestGl = nextNodeLayOpt.exists { _.glevelOpt.exists(_.isLowest) }
+            trace(s"${logPrefix}nodesFut: searching neigh nodes. isOnLowerGl=$isOnLowestGl nextNode=${nextNode.id.get} nodesCount=$nodesCount")
             val parentLayOpt: Option[GeoNodesLayer] = if (isOnLowestGl) {
               // Мы на самом нижнем уровне. Надо найти узел (узлы) уровнем выше текущего и запустить геопоиск узлов, входящих в него географически.
               // Найденные узлы закинуть на нижний уровень.
               nextNodeLayOpt.flatMap { currLay =>
-                val upperLaysIter = nodeLays.iterator.filter(_.i <= currLay.i)
+                val upperLaysIter = nodeLays.iterator.filter(_.i > currLay.i)
                 if (upperLaysIter.nonEmpty) {
                   Some(upperLaysIter.minBy(_.i))
                 } else {
@@ -627,27 +636,50 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             } else {
               nextNodeLayOpt
             }
-            // Собрать указатели на проиндексированные геошейпы узлов уровня
-            val nodeGeoPtrsFut = parentLayOpt.fold(Future successful Seq[MAdnNodeGeoIndexed]()) { parentLay =>
-              Future.traverse( parentLay.nodes )
+
+            // Собираем соседние узлы по тому или иному алгоритму (в зависимости от настроек конфига).
+            val neighNodesFut: Future[Seq[MAdnNode]] = if (NEIGH_NODES_USE_GEOSHAPES) {
+              // Собрать указатели на проиндексированные геошейпы узлов уровня
+              // TODO Этот код никогда не работал из-за https://github.com/elasticsearch/elasticsearch/issues/7663 - может он вообще не рабочий.
+              // TODO Код был написан 2014.09.09. Если он долго не использовался, то он не нужен, и его надо удалить.
+              val nodeGeoPtrsFut = parentLayOpt.fold(Future successful Seq[MAdnNodeGeoIndexed]()) { parentLay =>
+                Future.traverse( parentLay.nodes )
                 {adnNode  =>  MAdnNodeGeo.findIndexedPtrsForNode(adnNode.id.get) }
-                .map { _.flatten.toSeq }
-            }
-            val neighNodesFut = nodeGeoPtrsFut flatMap { ptrs =>
-              val neightSargs = MAdnNodeSearch(
-                withoutIds = nextNode.id.toSeq,
-                intersectsWithPreIndexed = ptrs,
-                maxResults = args.maxResults.map(_ - nodesCount) getOrElse 10
-                // TODO Сортировать по близости к координатам юзера или координатам текущего узла.
-              )
-              MAdnNode.dynSearch(neightSargs)
+                  .map { _.flatten.toSeq }
+              }
+              nodeGeoPtrsFut flatMap { ptrs =>
+                val neightSargs = new AdnNodesSearchArgs {
+                  override def withoutIds = nextNode.id.toSeq
+                  override def intersectsWithPreIndexed = ptrs
+                  override def maxResults = NEIGH_NODES_MAX
+                  // TODO Сортировать по близости к координатам юзера или координатам текущего узла.
+                }
+                MAdnNode.dynSearch(neightSargs)
+              }
+            } else {
+              // Извлекаем из parent-уровня id узлов и ищем их в поле parent-узлов.
+              parentLayOpt
+                .filter(_.nodes.nonEmpty)
+                .fold(Future successful Seq.empty[MAdnNode]) { parentLay =>
+                  val sargs = new AdnNodesSearchArgs {
+                    override def withDirectGeoParents = parentLay.nodes.flatMap(_.id)
+                    override def withoutIds = {
+                      nextNodeLayOpt.fold(Seq.empty[String]) {
+                        _.nodes.flatMap(_.id)
+                      }
+                    }
+                    override def withNameSort = true
+                    override def maxResults: Int = NEIGH_NODES_MAX
+                  }
+                  MAdnNode.dynSearch(sargs)
+                }
             }
             // Определить подслой, в который надо добавлять найденные узлы.
             val childLayOpt: Option[GeoNodesLayer] = if (isOnLowestGl) {
               nextNodeLayOpt
             } else {
               parentLayOpt.flatMap { parentLay =>
-                val lowerLayIter = nodeLays.iterator.filter(_.i >= parentLay.i)
+                val lowerLayIter = nodeLays.iterator.filter(_.i < parentLay.i)
                 if (lowerLayIter.nonEmpty) {
                   Some(lowerLayIter.maxBy(_.i))
                 } else {
@@ -655,7 +687,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
                 }
               }
             }
-            trace(s"${logPrefix}nextNodeLay=$nextNodeLayOpt parentLay=$parentLayOpt childLay=$childLayOpt")
+            trace(s"${logPrefix}onLower=$isOnLowestGl\n nextNodeLay=$nextNodeLayOpt\n parentLay=$parentLayOpt\n childLay=$childLayOpt")
             // Инжектим найденные узлы в child-уровень, остальные просто пропускаем.
             val nodesLays2Fut = neighNodesFut map { neighNodes =>
               nodeLays.map { nodeLay =>

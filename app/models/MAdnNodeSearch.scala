@@ -1,7 +1,6 @@
 package models
 
-import io.suggest.model.geo.{GeoShapeIndexed, GeoShapeQueryData}
-import io.suggest.ym.model.common.AdnNodesSearchArgsT
+import io.suggest.model.geo.GeoShapeQueryData
 import play.api.mvc.{RequestHeader, QueryStringBindable}
 import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
@@ -17,32 +16,6 @@ import scala.concurrent.Future
  * Description: Набор аргументов для динамического поиска узла.
  */
 
-case class MAdnNodeSearch(
-  qStr        : Option[String] = None,
-  companyIds  : Seq[String] = Nil,
-  adnSupIds   : Seq[String] = Nil,
-  anyOfPersonIds: Seq[String] = Nil,
-  advDelegateAdnIds: Seq[String] = Nil,
-  withAdnRights: Seq[AdnRight] = Nil,
-  testNode    : Option[Boolean] = Some(false),
-  withoutIds  : Seq[String] = Nil,
-  geoDistance : Option[GeoShapeQueryData] = None,    // TODO Не bindable, т.к. geo=ip требует implicit request и производит future.
-  intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Nil,
-  hasLogo     : Option[Boolean] = None,
-  withGeoDistanceSort: Option[GeoPoint] = None,
-  withNameSort: Boolean = false,
-  shownTypes  : Seq[AdnShownType] = Nil,
-  onlyWithSinks: Seq[AdnSink] = Nil,
-  withRouting : Seq[String] = Nil,
-  maxResults  : Int = 10,
-  offset      : Int = 0
-) extends AdnNodesSearchArgsT {
-  override def shownTypeIds: Seq[String] = shownTypes.map(_.name)
-}
-
-
-
-
 /** Bindable-версия искалки. */
 case class SimpleNodesSearchArgs(
   qStr            : Option[String] = None,
@@ -51,24 +24,22 @@ case class SimpleNodesSearchArgs(
   offset          : Option[Int] = None,
   currAdnId       : Option[String] = None,
   isNodeSwitch    : Boolean = false,
-  withNeighbors   : Boolean = false
-) {
+  withNeighbors   : Boolean = true
+) { snsa =>
 
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel])(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
     geoMode.geoSearchInfo.map { gsiOpt =>
-      new MAdnNodeSearch(
-        qStr          = qStr,
-        geoDistance   = gsiOpt
+      new AdnNodesSearchArgs {
+        override def qStr = snsa.qStr
+        override def geoDistance   = gsiOpt
           .flatMap { gsi => glevelOpt.map(_ -> gsi) }
-          .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) },
-        withGeoDistanceSort = gsiOpt.map { _.geoPoint },
-        maxResults    = maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT,
-        offset        = offset.getOrElse(0),
-        withAdnRights = Seq(AdnRights.RECEIVER),
-        //withoutIds    = currAdnId.toSeq,
-        withNameSort  = true
-      ) {
-        override def ftsSearchFN: String = AdnMMetadata.NAME_ESFN
+          .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) }
+        override def withGeoDistanceSort = gsiOpt.map { _.geoPoint }
+        override def maxResults = snsa.maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT
+        override def offset = snsa.offset.getOrElse(0)
+        override def withAdnRights = Seq(AdnRights.RECEIVER)
+        override def withNameSort = true
+        override def ftsSearchFN = AdnMMetadata.NAME_ESFN
       }
     }
   }
@@ -133,7 +104,7 @@ object SimpleNodesSearchArgs extends PlayMacroLogsImpl {
               maxResults    = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
               currAdnId     = maybeCurAdnId,
               isNodeSwitch  = maybeNodeSwitch getOrElse false,
-              withNeighbors = maybeWithNeigh getOrElse false
+              withNeighbors = maybeWithNeigh getOrElse true
             )
           )
         }
