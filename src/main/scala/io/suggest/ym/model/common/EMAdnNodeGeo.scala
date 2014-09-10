@@ -119,6 +119,12 @@ object AdnNodeGeodata {
   }
 
   val empty = AdnNodeGeodata()
+
+
+  private def strIds2jsStrArray(strs: Iterable[String]): JsArray = {
+    JsArray(strs.iterator.map(JsString.apply).toSeq)
+  }
+
 }
 
 
@@ -156,7 +162,9 @@ case class AdnNodeGeodata(
     if (point.isDefined)
       acc ::= POINT_ESFN -> point.get.toPlayGeoJson
     if (directParentIds.nonEmpty)
-      acc ::= DIRECT_PARENT_NODES_ESFN -> JsArray(directParentIds.iterator.map(JsString.apply).toSeq)
+      acc ::= DIRECT_PARENT_NODES_ESFN -> strIds2jsStrArray(directParentIds)
+    if (allParentIds.nonEmpty)
+      acc ::= ALL_PARENT_NODES_ESFN -> strIds2jsStrArray(allParentIds)
     JsObject(acc)
   }
 

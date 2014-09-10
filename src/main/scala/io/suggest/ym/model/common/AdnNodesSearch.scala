@@ -1,11 +1,11 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.EsModel
 import io.suggest.model.common.EMPersonIds
 import io.suggest.model.geo._
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
-import io.suggest.ym.model.{MAdnNodeGeoIndexed, MAdnNodeGeo}
-import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
+import io.suggest.ym.model.MAdnNodeGeo
 import io.suggest.ym.model.common.AdnRights.AdnRight
 import io.suggest.ym.model.common.AdnSinks.AdnSink
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -120,6 +120,38 @@ object AdnNodesSearch {
         val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, args.advDelegateAdnIds: _*)
           .minimumMatch(1)
         Some(aq)
+      }
+
+    // Отрабатываем прямых гео-родителей
+    }.map[QueryBuilder] { qb =>
+      if (args.withDirectGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, args.withDirectGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (args.withDirectGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, args.withDirectGeoParents: _*)
+        Some(qb)
+      } else {
+        None
+      }
+
+    // Отрабатываем поиск по любым гео-родителям
+    }.map[QueryBuilder] { qb =>
+      if (args.withGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, args.withGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (args.withGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, args.withGeoParents : _*)
+        Some(qb)
+      } else {
+        None
       }
 
     // Поиск/фильтрация по полю shown type id, хранящий id типа узла.
@@ -282,6 +314,12 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Искать/фильтровать по id узла, которому была делегирована фунция модерации размещения рекламных карточек. */
   def advDelegateAdnIds: Seq[String]
 
+  /** Искать по прямым гео-родителям. Нужно чтобы у узлов была проставлена инфа по геородителям. */
+  def withDirectGeoParents: Seq[String]
+
+  /** Искать по гео-родителям любого уровня. */
+  def withGeoParents: Seq[String]
+
   /** Искать/фильтровать по shownTypeId узла. */
   def shownTypeIds: Seq[String]
 
@@ -324,7 +362,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     val srb1 = super.prepareSearchRequest(srb)
     // Добавить сортировку по дистанции до указанной точки, если необходимо.
     withGeoDistanceSort.foreach { geoPoint =>
-      val sb = SortBuilders.geoDistanceSort(EMAdnNodeGeo.GEO_ESFN)
+      val sb = SortBuilders.geoDistanceSort(EMAdnNodeGeo.GEO_POINT_ESFN)
         .point(geoPoint.lat, geoPoint.lon)
         .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
         .unit(DistanceUnit.KILOMETERS)
@@ -339,6 +377,32 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     srb1
   }
 
+}
+
+
+
+/** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
+trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
+  override def qStr: Option[String] = None
+  override def companyIds: Seq[String] = Seq.empty
+  override def advDelegateAdnIds: Seq[String] = Seq.empty
+  override def adnSupIds: Seq[String] = Seq.empty
+  override def withGeoDistanceSort: Option[GeoPoint] = None
+  override def hasLogo: Option[Boolean] = None
+  override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
+  override def shownTypeIds: Seq[String] = Seq.empty
+  override def withDirectGeoParents: Seq[String] = Seq.empty
+  override def anyOfPersonIds: Seq[String] = Seq.empty
+  override def withRouting: Seq[String] = Seq.empty
+  override def testNode: Option[Boolean] = None
+  override def onlyWithSinks: Seq[AdnSink] = Seq.empty
+  override def geoDistance: Option[GeoShapeQueryData] = None
+  override def withGeoParents: Seq[String] = Seq.empty
+  override def withoutIds: Seq[String] = Seq.empty
+  override def withAdnRights: Seq[AdnRight] = Seq.empty
+  override def withNameSort: Boolean = false
+  override def maxResults: Int = EsModel.MAX_RESULTS_DFLT
+  override def offset: Int = EsModel.OFFSET_DFLT
 }
 
 

@@ -342,7 +342,15 @@ object NodeGeoLevels extends Enumeration {
 
   protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
     def precision: String
-    def isLowest: Boolean
+
+    /** Это самый нижний слой с самым мелким масштабом? */
+    def isLowest: Boolean = false
+
+    /** Это самый верхний слой с самым крупным масштабом? */
+    def isHighest: Boolean = false
+
+    /** Это крайний слой? */
+    def isOutermost = isLowest || isHighest
 
     /** Рекурсивный метод для пошагового накопления уровней и аккамулятор.
       * @param currLevel текущий (начальный) уровень.
@@ -380,17 +388,16 @@ object NodeGeoLevels extends Enumeration {
   }
 
   val NGL_TOWN_DISTRICT: NodeGeoLevel   = new Val("td") {
-    override def isLowest = false
     override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
     override def precision = "800m"
   }
 
   val NGL_TOWN: NodeGeoLevel            = new Val("to") {
-    override def isLowest = false
     override def lower: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
     override def upper: Option[NodeGeoLevel] = None
     override def precision = "5km"
+    override def isHighest = true
   }
 
   def default = NGL_BUILDING
