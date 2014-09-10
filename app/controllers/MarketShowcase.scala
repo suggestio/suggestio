@@ -265,9 +265,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           searchF(nodeSearchArgs) map { _ -> i }
         }
     } map { results =>
-      trace {
-        s"detectCurrentNodeByGeo($geo): Matched geo results are:\n  ${results.mkString("\n  ")}"
-      }
+      //trace(s"detectCurrentNodeByGeo($geo): Matched geo results are:\n  ${results.mkString("\n  ")}")
       val resultsNonEmptyIter = results.iterator.filter(_._1.nonEmpty)
       if (resultsNonEmptyIter.isEmpty) {
         None
@@ -687,7 +685,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
                 }
               }
             }
-            trace(s"${logPrefix}onLower=$isOnLowestGl\n nextNodeLay=$nextNodeLayOpt\n parentLay=$parentLayOpt\n childLay=$childLayOpt")
+            //trace(s"${logPrefix}onLower=$isOnLowestGl\n nextNodeLay=$nextNodeLayOpt\n parentLay=$parentLayOpt\n childLay=$childLayOpt")
             // Инжектим найденные узлы в child-уровень, остальные просто пропускаем.
             val nodesLays2Fut = neighNodesFut map { neighNodes =>
               nodeLays.map { nodeLay =>
