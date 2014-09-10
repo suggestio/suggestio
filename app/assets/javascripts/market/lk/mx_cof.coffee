@@ -380,6 +380,132 @@ Slider =
 
 
 
+###################################################################################################################
+## Виджет для работы с датами ##
+###################################################################################################################
+
+CleverDateWidget = (_widgetId)->
+  start               = new Date()
+  end                 = new Date()
+  interval            = 0
+
+  @setStartCallback     = false
+  @setEndCallback       = false
+  @setIntervalCallback  = false
+
+  setStart: (_start)->
+    time = Date.parse _start
+    if !isNaN(time)
+      start.setTime time
+
+    @setStartCallback && @setStartCallback()
+    true
+
+  getStart: ()->
+    start.getTime()
+
+  setEnd: (_end)->
+    time = Date.parse(_end)
+
+    if !isNaN(time)
+      end.setTime time
+
+    @setEndCallback && @setEndCallback()
+    true
+
+  getEnd: ()->
+    end.getTime()
+
+  # интервал задается в днях
+  setInterval: (_interval)->
+    if _interval != 'custom'
+      newEnd = new Date( this.getStart() )
+      _interval = newEnd.getDate() + _interval
+      newEnd.setDate _interval
+      this.setEnd newEnd
+
+
+    @setIntervalCallback && @setIntervalCallback(_interval)
+    true
+
+  getInterval: ()->
+    interval
+
+  getRusDate: (time)->
+    date = new Date( time )
+    rusMonth = ['января','февраля','марта','апреля','мая','июня', 'июля','августа','сентября','октября','ноября','декабря']
+
+    day   = date.getDate()
+    month = rusMonth[ date.getMonth() ]
+    year  = date.getFullYear()
+
+    "#{day} #{month} #{year}"
+
+  init: (preInit = false)->
+
+    _instance = this
+
+    preInit && preInit(_instance)
+
+    $ document
+    .on 'change', "input[data-start][data-widget-id = #{_widgetId}]", (e)->
+      $this = $ this
+      value = $this.val()
+
+      _instance.setStart value
+
+    $ document
+    .on 'change', "input[data-end][data-widget-id = #{_widgetId}]", (e)->
+      $this = $ this
+      value = $this.val()
+
+      _instance.setEnd value
+
+    $ document
+    .on 'change', "select[data-interval][data-widget-id = #{_widgetId}]", (e)->
+      $this = $ this
+      value = $this.val()
+
+      switch value
+        when 'P3D' then value = 3
+        when 'P1W' then value = 7
+        when 'P1M' then value = 30
+        else value = 'custom'
+
+      _instance.setInterval value
+
+
+
+advManagementDateWidget = new CleverDateWidget 'advManagementDateWidget'
+
+advManagementDateWidget.setStartCallback = ()->
+
+  start = advManagementDateWidget.getRusDate( advManagementDateWidget.getStart() )
+  $ '#advManagementDateStartValue'
+  .text start
+
+advManagementDateWidget.setEndCallback = ()->
+  end = advManagementDateWidget.getRusDate( advManagementDateWidget.getEnd() )
+  $ '#advManagementDateEndValue'
+  .text end
+
+advManagementDateWidget.setIntervalCallback = (_interval)->
+  if _interval == 'custom'
+    $ '#advManagementDateStart, #advManagementDateEnd'
+    .show()
+  else
+    $ '#advManagementDateStart, #advManagementDateEnd'
+    .hide()
+
+advManagementDateWidget.init(
+  ()->
+
+    $ '#advManagementDateStart, #advManagementDateEnd'
+    .hide()
+)
+advManagementDateWidget.setStart()
+advManagementDateWidget.setInterval(3)
+
 
 
 

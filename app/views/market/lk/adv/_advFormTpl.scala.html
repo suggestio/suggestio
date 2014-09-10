@@ -226,41 +226,43 @@
     </div>
     <div class="adv-management_right-bar">
       <h2 class="minor-title">Выбор даты</h2>
-      <div class="adv-management_date-bar">
+
+      <div class="date-widget">
         <table class="prop">
           <td class="prop_name">Срок размещение</td>
           <td class="prop_value">
-            <div class="input __size-S">
-              <select>
-                <option>Три дня</option>
-                <option>Неделя</option>
-                <option>Месяц</option>
-                <option>Задать интервал</option>
+            <div class="input __size-S" >
+              <select data-interval="true" data-widget-id="advManagementDateWidget">
+                <option value="P3D">Три дня</option>
+                <option value="P1W">Неделя</option>
+                <option value="P1M">Месяц</option>
+                <option value="custom">Задать интервал</option>
               </select>
             </div>
           </td>
         </table>
-        <table class="prop">
+        <table class="prop" id="advManagementDateStart">
           <td class="prop_name">Дата начала</td>
           <td class="prop_value">
             <div class="input __size-S">
-              <input type="text"/>
+              <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget"/>
             </div>
           </td>
         </table>
-        <table class="prop">
+        <table class="prop" id="advManagementDateEnd">
           <td class="prop_name">Дата окончания</td>
           <td class="prop_value">
             <div class="input __size-S">
-              <input type="text"/>
+              <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget"/>
             </div>
           </td>
         </table>
         <hr class="delimiter __light"/>
-        <div class="adv-management_date-value">
-          22 августа 2014  -  22 сентября 2014
+        <div class="date-widget_result">
+          <span id="advManagementDateStartValue"></span>&nbsp;-&nbsp;<span id="advManagementDateEndValue"></span>
         </div>
       </div>
+
     </div>
 </div>
 
