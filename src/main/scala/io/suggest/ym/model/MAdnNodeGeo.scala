@@ -13,12 +13,14 @@ import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerab
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
+import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilder, QueryBuilders}
 import org.joda.time.DateTime
 import play.api.libs.json._
 
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -159,6 +161,11 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     FilterBuilders.geoShapeFilter(glevel.esfn, shape.toEsShapeBuilder, ShapeRelation.INTERSECTS)
   }
 
+  def glevelsQuery(glevels: Seq[NodeGeoLevel]): QueryBuilder = {
+    QueryBuilders.termsQuery(GLEVEL_ESFN, glevels.map(_.esfn) : _*)
+  }
+
+  private def searchResp2adnIdsList(searchResp: SearchResponse) = searchResp2fnList[String](searchResp, ADN_ID_ESFN)
 
   /**
    * Быстрый поиск узлов и быстрая десериализация результатов поиска по пересечению с указанной геолокацией.
@@ -174,10 +181,30 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .setQuery( geoQuery(glevel, shape) )
       .setSize( maxResults )
       .setFrom( offset )
-      .setNoFields()
+      .setFetchSource(false)
       .addField(ADN_ID_ESFN)
       .execute()
-      .map { searchResp2fnList[String](_, ADN_ID_ESFN) }
+      .map { searchResp2adnIdsList }
+  }
+
+  /**
+   * Сбор adnId, имеющих фигуры на указанных уровнях (слоях). Этот поиск идёт БЕЗ использования геошейпов.
+   * @param glevels слои
+   * @param maxResults Макс. кол-во результатов.
+   * @param offset Сдвиг в выдаче.
+   * @return Список adn_id в неопределённом порядке, с возможными дубликатами.
+   */
+  def findAdnIdsWithLevels(glevels: Seq[NodeGeoLevel], maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                          (implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+
+    prepareSearch
+      .setQuery(glevelsQuery(glevels))
+      .setFetchSource(false)
+      .addField(ADN_ID_ESFN)
+      .setSize(maxResults)
+      .setFrom(offset)
+      .execute()
+      .map { searchResp2adnIdsList }
   }
 
   /** Удалить все документы, относящиеся к указанному adnId.
@@ -216,6 +243,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
         }
       }
   }
+
 
   /**
    * Аналог getGeoLevelUsed(), но с поиском по полю adn_id.
@@ -315,8 +343,31 @@ object NodeGeoLevels extends Enumeration {
   protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
     def precision: String
     def isLowest: Boolean
+
+    /** Рекурсивный метод для пошагового накопления уровней и аккамулятор.
+      * @param currLevel текущий (начальный) уровень.
+      * @param acc Аккамулятор.
+      * @param nextLevelF Функция перехода на следующий уровень с текущего.
+      * @return Аккамулятор накопленных уровней.
+      */
+    private def collectLevels(currLevel: NodeGeoLevel = this, acc: List[NodeGeoLevel] = Nil)
+                             (nextLevelF: NodeGeoLevel => Option[NodeGeoLevel]): List[NodeGeoLevel] = {
+      val nextOpt = nextLevelF(currLevel)
+      if (nextOpt.isDefined) {
+        val _next = nextOpt.get
+        collectLevels(_next, _next :: acc)(nextLevelF)
+      } else {
+        acc
+      }
+    }
+
     def lower: Option[NodeGeoLevel]
+    def lowerOfThis: NodeGeoLevel = lower getOrElse this
+    def allLowerLevels: List[NodeGeoLevel] = collectLevels()(_.lower)
+
     def upper: Option[NodeGeoLevel]
+    def upperOrThis: NodeGeoLevel = upper getOrElse this
+    def allUpperLevels: List[NodeGeoLevel] = collectLevels()(_.upper)
   }
 
   type NodeGeoLevel = Val

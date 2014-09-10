@@ -30,6 +30,7 @@ object MAdnNode
   with EMAdnMMetadataStatic
   with EMNodeConfStatic
   with EMImgGalleryStatic
+  with EMAdnNodeGeoStatic
   with EsModelStaticMutAkvIgnoreT
   with MacroLogsImpl
   with AdnNodesSearch
@@ -78,6 +79,7 @@ final case class MAdnNode(
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf = NodeConf.DEFAULT,
   var gallery       : List[String] = Nil,
+  var geo           : AdnNodeGeodata = AdnNodeGeodata.empty,
   var id            : Option[String] = None,
   versionOpt        : Option[Long] = None
 )
@@ -90,6 +92,7 @@ final case class MAdnNode(
   with EMAdnMMetadata
   with EMNodeConfMut
   with EMImgGalleryMut
+  with EMAdnNodeGeoMut
 {
   override type T = MAdnNode
 

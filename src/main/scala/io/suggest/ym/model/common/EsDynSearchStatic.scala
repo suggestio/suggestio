@@ -43,6 +43,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    */
   def dynSearchIds(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
     dynSearchReqBuilder(dsa)
+      .setFetchSource(false)
       .setNoFields()
       .execute()
       .map { searchResp2idsList }
@@ -63,6 +64,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
     * изменчивых результатов, например поиск сразу после сохранения. */
   def dynSearchRt(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     dynSearchReqBuilder(dsa)
+      .setFetchSource(false)
       .setNoFields()
       .execute()
       .flatMap { searchResp2RtMultiget(_) }

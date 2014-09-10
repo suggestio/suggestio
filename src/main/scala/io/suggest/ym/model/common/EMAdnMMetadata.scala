@@ -32,7 +32,6 @@ object EMAdnMMetadataStatic {
 
   def META_FLOOR_ESFN           = fullFN( AdnMMetadata.FLOOR_ESFN )
   def META_WELCOME_AD_ID_ESFN   = fullFN( AdnMMetadata.WELCOME_AD_ID )
-  def META_LOCATION_ESFN        = fullFN( AdnMMetadata.LOCATION_ESFN )
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -149,7 +148,6 @@ object AdnMMetadata {
   val WELCOME_AD_ID           = "welcomeAdId"
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
-  val LOCATION_ESFN           = "loc"
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
@@ -174,12 +172,7 @@ object AdnMMetadata {
     // Перемещено из visual - TODO Перенести в conf.
     FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldString(FG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false),
-    // location. Снижаем точность хешей до необходимых в целях.
-    FieldGeoPoint(LOCATION_ESFN, latLon = true,
-      geohash = true, geohashPrefix = true,  geohashPrecision = "8",
-      fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "1m")
-    )
+    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false)
   )
 
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */
@@ -201,8 +194,7 @@ object AdnMMetadata {
         info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get COLOR_ESFN) map stringParser,
         fgColor     = Option(jmap get FG_COLOR_ESFN) map stringParser,
-        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
-        location    = Option(jmap get LOCATION_ESFN) flatMap GeoPoint.deserializeOpt
+        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser
       )
   }
 }
@@ -237,7 +229,6 @@ case class AdnMMetadata(
   audienceDescr : Option[String] = None,
   humanTrafficAvg: Option[Int]   = None,
   info          : Option[String] = None,
-  location      : Option[GeoPoint] = None,
   // перемещено из visual
   // TODO Нужно цвета объеденить в карту цветов.
   color         : Option[String] = None,
@@ -281,8 +272,6 @@ case class AdnMMetadata(
       acc0 ::= FG_COLOR_ESFN -> JsString(fgColor.get)
     if (welcomeAdId.isDefined)
       acc0 ::= WELCOME_AD_ID -> JsString(welcomeAdId.get)
-    if (location.isDefined)
-      acc0 ::= LOCATION_ESFN -> location.get.toPlayGeoJson
     JsObject(acc0)
   }
 

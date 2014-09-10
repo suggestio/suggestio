@@ -603,6 +603,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
       .setScroll(SCROLL_KEEPALIVE_DFLT)
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxPerStep)
+      .setFetchSource(false)
       .setNoFields()
       .execute()
       .flatMap { searchResp =>
@@ -716,6 +717,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     prepareSearch
       .setQuery(query)
+      .setFetchSource(false)
       .setNoFields()
       .setSize(maxResults)
       .execute()

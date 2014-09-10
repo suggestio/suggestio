@@ -32,7 +32,7 @@ object AdnNodesSearch {
   private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
     // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил перепиливание подсистемы географии.
     innerCircle.fold(qb2) { inCircle =>
-      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnMMetadataStatic.META_LOCATION_ESFN)
+      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnNodeGeo.GEO_POINT_ESFN)
         .point(inCircle.center.lat, inCircle.center.lon)
         .distance(inCircle.radius.distance, inCircle.radius.units)
       val notInner = FilterBuilders.notFilter(innerFilter)
@@ -324,7 +324,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     val srb1 = super.prepareSearchRequest(srb)
     // Добавить сортировку по дистанции до указанной точки, если необходимо.
     withGeoDistanceSort.foreach { geoPoint =>
-      val sb = SortBuilders.geoDistanceSort(EMAdnMMetadataStatic.META_LOCATION_ESFN)
+      val sb = SortBuilders.geoDistanceSort(EMAdnNodeGeo.GEO_ESFN)
         .point(geoPoint.lat, geoPoint.lon)
         .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
         .unit(DistanceUnit.KILOMETERS)

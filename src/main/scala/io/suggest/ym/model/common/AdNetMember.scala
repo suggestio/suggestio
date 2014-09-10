@@ -381,6 +381,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
 
   def findIdsByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
     findByAllAdnRightsBuilder(rights, withoutTestNodes)
+      .setFetchSource(false)
       .setNoFields()
   }
 
@@ -419,6 +420,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     prepareSearch
       .setQuery( advDelegatesQuery(dgAdnId) )
       .setSize( maxResults )
+      .setFetchSource(false)
       .setNoFields()
       .execute()
       .map { searchResp2idsList }
