@@ -467,6 +467,27 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     ensureProducerLevel(sls1, SinkShowLevels.GEO_PRODUCER_SL)
   }
 
+
+  /**
+   * Пересчёт текущих размещений указанной рекламной карточки на основе данных MAdvOk online.
+   * @param adId id рекламной карточки.
+   * @return Карта ресиверов.
+   */
+  def calcualteReceiversMapForAd(adId: String): Receivers_t = {
+    val advsOk = DB.withConnection { implicit c =>
+      MAdvOk.findOnlineFor(adId, isOnline = true)
+    }
+    advsOk
+      .map { advOk =>
+        AdReceiverInfo(advOk.rcvrAdnId, advOk.showLevels)
+      }
+      // Размещение одной карточки на одном узле на разных уровнях может быть проведено через разные размещения.
+      .groupBy(_.receiverId)
+      .mapValues { _.reduceLeft[AdReceiverInfo] {
+        (prev, next) => next.copy(sls = next.sls ++ prev.sls) }
+      }
+  }
+
 }
 
 import MmpDailyBilling.prepareShowLevels
