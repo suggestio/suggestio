@@ -719,13 +719,14 @@ PersonalCabinet =
   adsList: () ->
 
     ## удаляем зигзаг там, где он не нужен
-    $ '.adv-item  .sm-block.height-300'
+    $ '.adv-item .sm-block.height-300, .adv-item .sm-block.height-140'
     .each ()->
       $this = $ this
       $advItem = $this.closest '.adv-item'
-      $advItemBorder = $advItem.find '.adv-item_preview-border'
 
-      $advItemBorder.remove()
+      $advItem
+      .find '.adv-item_preview-border'
+      .remove()
 
 
     $ document
