@@ -1313,6 +1313,9 @@ siomart =
 
   draw_layout : () ->
 
+    if siomart.utils.ge('sioMartRoot') != null
+      siomart.utils.re('sioMartRoot')
+
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
@@ -1572,7 +1575,10 @@ siomart =
       console.log 'this.blocks.length : ' + this.ads.length
       
       if this.active_ad_index > this.ads.length
-        this.load_more_ads()
+        cb = () ->
+          siomart.focused_ads.load_more_ads()
+
+        setTimeout cb, 400
       
       if direction == '+'
         ad_c_el = siomart.utils.ge('focusedAd' + ( ad_index + 1 ) )
@@ -1720,6 +1726,13 @@ siomart =
 
       if typeof this.sm_blocks == 'undefined'
         return false
+
+      loader_dom = siomart.utils.ge('smFocusedAdsLoaderContent')
+      if loader_dom != null
+        if cbca_grid.ww >= 660
+          loader_dom.className = 'sm-block sm-focused-ads-loader'
+        else
+          loader_dom.className = 'sm-block sm-focused-ads-loader __small'
 
       for _b in this.sm_blocks
 
