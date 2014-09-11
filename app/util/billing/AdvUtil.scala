@@ -49,9 +49,15 @@ object AdvUtil extends PlayMacroLogsImpl {
         val psls2 = pri.sls
           // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
           // уровням отображения, которые записаны в политике исходящих размещений
-          .filter { ssl  =>  producer.adn.hasSink(ssl.adnSink)  &&  producer.adn.canOutAtLevel(ssl.sl) }
-        val prkv = pri.receiverId -> pri.copy(sls = psls2)
-        receivers0 + prkv
+          .filter { ssl  =>  producer.adn.isReceiver  &&  producer.adn.hasSink(ssl.adnSink)  &&  producer.adn.canOutAtLevel(ssl.sl) }
+        if (psls2.isEmpty) {
+          // Удаляем саморесивер, т.к. уровни пусты.
+          receivers0
+        } else {
+          // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
+          val prkv = pri.receiverId -> pri.copy(sls = psls2)
+          receivers0 + prkv
+        }
       }
     }
     // Если trace, то нужно сообщить разницу в карте ресиверов до и после.
