@@ -69,12 +69,14 @@ trait EMNodeConfMut extends EMNodeConf {
 /** Статическая утиль контейнера конфига. */
 object NodeConf {
   val WITH_BLOCKS_ESFN = "wb"
+  val SHOWCASE_VOID_FILLER_ESFN = "svf"
 
   /** Дефолтовый неизменяемый инстанс контейнера конфига. Для изменения - перезаписывать поле через copy(). */
   val DEFAULT = NodeConf()
 
   def generateMappingProps: List[DocField] = List(
-    FieldNumber(WITH_BLOCKS_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldNumber(WITH_BLOCKS_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(SHOWCASE_VOID_FILLER_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
   )
 
   val deserialize: PartialFunction[Any, NodeConf] = {
@@ -83,18 +85,21 @@ object NodeConf {
         withBlocks = Option(jmap get WITH_BLOCKS_ESFN).fold[Set[Int]] (Set.empty) {
           case l: jl.Iterable[_] =>
             l.toTraversable.map(EsModel.intParser).toSet
-        }
+        },
+        showcaseVoidFiller = Option(jmap get SHOWCASE_VOID_FILLER_ESFN).map(stringParser)
       )
   }
 }
 
 /**
  * Контейнер конфига, должен быть immutable целиком!
- * @param withBlocks Множество дополнительных id блоков, которые
+ * @param withBlocks Множество дополнительных id блоков, которые доступны этому узлу.
+ * @param showcaseVoidFiller id или какие-то иные данные заполнятеля пустот в выдаче.
  */
 case class NodeConf(
   // var использовать нельзя, т.к. это в целом плохо + дефолтовый конфиг сейчас шарится между инстансами узлов.
-  withBlocks: Set[Int] = Set.empty
+  withBlocks            : Set[Int] = Set.empty,
+  showcaseVoidFiller    : Option[String] = None
 ) {
   import NodeConf._
 
@@ -109,6 +114,8 @@ case class NodeConf(
     var acc: FieldsJsonAcc = Nil
     if (withBlocks.nonEmpty)
       acc ::= WITH_BLOCKS_ESFN -> JsArray( withBlocks.toSeq.map(JsNumber(_)) )
+    if (showcaseVoidFiller.isDefined)
+      acc ::= SHOWCASE_VOID_FILLER_ESFN -> JsString(showcaseVoidFiller.get)
     JsObject(acc)
   }
 }

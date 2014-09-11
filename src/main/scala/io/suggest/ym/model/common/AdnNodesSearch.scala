@@ -406,6 +406,32 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
 }
 
 
+/** Враппер над аргументами поиска узлов, переданными в underlying. */
+trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT {
+  def underlying: AdnNodesSearchArgsT
+  override def qStr = underlying.qStr
+  override def companyIds = underlying.companyIds
+  override def advDelegateAdnIds = underlying.advDelegateAdnIds
+  override def adnSupIds = underlying.adnSupIds
+  override def withGeoDistanceSort = underlying.withGeoDistanceSort
+  override def hasLogo = underlying.hasLogo
+  override def intersectsWithPreIndexed = underlying.intersectsWithPreIndexed
+  override def shownTypeIds = underlying.shownTypeIds
+  override def withDirectGeoParents = underlying.withDirectGeoParents
+  override def anyOfPersonIds = underlying.anyOfPersonIds
+  override def withRouting = underlying.withRouting
+  override def testNode = underlying.testNode
+  override def onlyWithSinks = underlying.onlyWithSinks
+  override def geoDistance = underlying.geoDistance
+  override def withGeoParents = underlying.withGeoParents
+  override def withoutIds = underlying.withoutIds
+  override def withAdnRights = underlying.withAdnRights
+  override def withNameSort = underlying.withNameSort
+  override def maxResults = underlying.maxResults
+  override def offset = underlying.offset
+}
+
+
 /** Аддон для static-моделей (модели MAdnNode), добавляющий динамический поиск в статическую модель. */
 trait AdnNodesSearch extends EsDynSearchStatic[AdnNodesSearchArgsT]
 

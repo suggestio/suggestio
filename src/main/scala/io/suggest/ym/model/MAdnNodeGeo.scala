@@ -380,20 +380,20 @@ object NodeGeoLevels extends Enumeration {
 
   type NodeGeoLevel = Val
 
-  val NGL_BUILDING: NodeGeoLevel        = new Val("bu") {
+  val NGL_BUILDING: NodeGeoLevel = new Val("bu") {
     override def isLowest = true
     override def lower: Option[NodeGeoLevel] = None
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
     override def precision = "50m"
   }
 
-  val NGL_TOWN_DISTRICT: NodeGeoLevel   = new Val("td") {
+  val NGL_TOWN_DISTRICT: NodeGeoLevel = new Val("td") {
     override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
     override def precision = "800m"
   }
 
-  val NGL_TOWN: NodeGeoLevel            = new Val("to") {
+  val NGL_TOWN: NodeGeoLevel = new Val("to") {
     override def lower: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
     override def upper: Option[NodeGeoLevel] = None
     override def precision = "5km"
