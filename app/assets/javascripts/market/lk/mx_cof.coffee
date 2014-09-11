@@ -847,23 +847,23 @@ PersonalCabinet =
 
     # поставить или снять галочки со всех типов
     checkTypes = (value = false)->
-      $ ".js-select-type_w[data-city = #{city}] input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] input:checkbox:enabled"
       .prop 'checked', value
 
     # поставить или снять галочки со всех узлов текущего города и типа
     checkNodes = (value = false)->
-      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:enabled"
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:checkbox:enabled"
       .prop 'checked', value
 
       if type < 0
-        $ ".js-select-node_w[data-city = #{city}] input:enabled"
+        $ ".js-select-node_w[data-city = #{city}] input:checkbox:enabled"
         .prop 'checked', value
 
     # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов + true || false
     allNodesChecked = (_type)->
       activeNodes = 0
       checked = true
-      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:enabled"
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:checkbox:enabled"
       .each ()->
         $this = $ this
         if $this.prop 'checked'
@@ -881,14 +881,14 @@ PersonalCabinet =
     # просматриваем типы узлов текущего города
     typesObserver = ()->
       checked = true
-      $ ".js-select-type_w[data-city = #{city}] .js-select-type:gt(0) input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:gt(0) input:checkbox:enabled"
       .each ()->
         $this = $ this
         if !$this.prop 'checked'
           checked = false
           return false
 
-      $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:checkbox:enabled"
       .prop 'checked', checked
 
     # просматриваем галочки у узлов в текущем городе и меняем по ним информацию в типах узлов
@@ -918,7 +918,7 @@ PersonalCabinet =
 
           $this
           .filter "[data-value = #{thisType}]"
-          .find 'input:enabled'
+          .find 'input:checkbox:enabled'
           .prop 'checked', nodesChecked.checked
 
 
