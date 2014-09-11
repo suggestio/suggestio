@@ -49,6 +49,8 @@ cbca_grid =
       this.layout_dom.style.left = cm/2 + 'px'
       this.layout_dom.style.opacity = 1
 
+      siomart.utils.ge('smGridAdsLoader').style.width = cw + 'px'
+
     this.columns = this.columns - this.left_offset - this.right_offset
 
   ##############
@@ -333,6 +335,10 @@ cbca_grid =
 
   rebuild : () ->
     cbca_grid.set_container_size()
+
+    if typeof cbca_grid.all_blocks == 'undefined' || cbca_grid.all_blocks.length == 0
+      return false
+
     cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
     cbca_grid.blocks = cbca_grid.m_blocks
     cbca_grid.build()
@@ -500,6 +506,9 @@ siomart =
       siomart.geo.load_nodes( true )
 
     get_current_position : () ->
+      siomart.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
+      siomart.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
+
       this.location_requested = true
       navigator.geolocation.getCurrentPosition siomart.geo.position_callback
 
@@ -542,16 +551,19 @@ siomart =
       else
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
-    load_nodes : ( refresh ) ->
-      refresh = refresh || false
+    load_nodes : ( for_node_reload ) ->
 
-      if refresh == false && siomart.geo.nodes_loaded == true
-        siomart.response_callbacks.find_nodes siomart.geo.nodes_data_cached
+      for_node_reload = for_node_reload || false
+
+      if siomart.geo.loaded == true && for_node_reload == false
+        console.log 'no need to update'
         return false
+
       node_query_param = if siomart.config.mart_id then '&a.cai=' + siomart.config.mart_id else ''
       console.log 'load nodes'
       console.log node_query_param
-      nodesw = if siomart.geo.loaded == false then '' else '&a.nodesw=true'
+
+      nodesw = if for_node_reload == false then '' else '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
       siomart.request.perform url
@@ -808,7 +820,7 @@ siomart =
     removeClass : (element, value) ->
       element = this.ge element
 
-      if element==null
+      if element==null || typeof element == 'undefined'
         return 0
 
       if !element.className
@@ -1019,7 +1031,6 @@ siomart =
 
       ## гео добро
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
-        siomart.geo.load_nodes()
 
         if cbca_grid.columns > 2
           siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
@@ -1027,11 +1038,15 @@ siomart =
           cbca_grid.rebuild()
         siomart.utils.ge('smGeoScreen').style.display = 'block'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
+
+        siomart.geo.load_nodes()
+
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
         if siomart.events.is_touch_locked
           return false
+
         siomart.geo.get_current_position()
         return false
 
@@ -1048,6 +1063,7 @@ siomart =
 
         node_id = geo_node_target.getAttribute 'data-id'
         siomart.geo.load_for_node_id node_id
+        siomart.geo.loaded = false
 
         return false
 
@@ -1297,6 +1313,9 @@ siomart =
 
   draw_layout : () ->
 
+    if siomart.utils.ge('sioMartRoot') != null
+      siomart.utils.re('sioMartRoot')
+
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
@@ -1509,16 +1528,11 @@ siomart =
 
     find_nodes : ( data ) ->
 
-      if typeof siomart.geo.nodes_data_cached != 'undefined'
-        siomart.utils.ge('smGeoLocationLabel').innerHTML = siomart.geo.nodes_data_cached.first_node.name
-
-      siomart.geo.nodes_data_cached = data
-      siomart.geo.nodes_loaded = true
-
       if siomart.geo.location_requested == true
         siomart.geo.location_requested = false
         siomart.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
         siomart.geo.load_for_node_id data.first_node._id
+        siomart.geo.loaded = false
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
@@ -1561,7 +1575,10 @@ siomart =
       console.log 'this.blocks.length : ' + this.ads.length
       
       if this.active_ad_index > this.ads.length
-        this.load_more_ads()
+        cb = () ->
+          siomart.focused_ads.load_more_ads()
+
+        setTimeout cb, 400
       
       if direction == '+'
         ad_c_el = siomart.utils.ge('focusedAd' + ( ad_index + 1 ) )
@@ -1710,6 +1727,13 @@ siomart =
       if typeof this.sm_blocks == 'undefined'
         return false
 
+      loader_dom = siomart.utils.ge('smFocusedAdsLoaderContent')
+      if loader_dom != null
+        if cbca_grid.ww >= 660
+          loader_dom.className = 'sm-block sm-focused-ads-loader'
+        else
+          loader_dom.className = 'sm-block sm-focused-ads-loader __small'
+
       for _b in this.sm_blocks
 
         _block_width = _b.getAttribute 'data-width'
@@ -1754,6 +1778,10 @@ siomart =
 
     ## Закрыть
     close : () ->
+
+      if typeof siomart.focused_ads.ads_container_dom == 'undefined'
+        return false
+
       this.is_active = false
       siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
       animation_cb = () ->

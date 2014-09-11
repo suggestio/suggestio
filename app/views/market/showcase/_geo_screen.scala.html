@@ -13,7 +13,9 @@
 
   <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, true );">
     <div class="sm-geo-screen_current-location-inner">
-      <div class="sm-geo-screen_current-location-icon">@svg._geoButtonLargeTpl("ffffff")</div><span id="smGeoLocationLabel">Определить местоположение</span>
+      <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoButtonLargeTpl(args.fgColor)</div>
+      <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
+      <span id="smGeoLocationLabel" style="color: #@args.fgColor">Определить местоположение</span>
     </div>
   </div>
   @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, false ).toString ){
