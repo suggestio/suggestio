@@ -1010,13 +1010,22 @@ PersonalCabinet =
     photoSlider: () ->
 
       # TODO добавить проверку на то, что у данного dom элемента слайдер уже инициализирован
-      $().bxSlider && $ '.js-photo-slider'
-      .bxSlider(
-        auto: true,
-        pager: false,
-        infiniteLoop: false,
-        hideControlOnEnd: true
-      )
+      if $().bxSlider
+        $ '.js-photo-slider'
+        .each ()->
+          $this = $ this
+
+          if !$this.data 'sliderInit'
+            $this
+            .bxSlider(
+              auto: true,
+              pager: false,
+              infiniteLoop: false,
+              hideControlOnEnd: true
+            )
+            .data(
+              'sliderInit': true
+            )
 
     ##################################################################################################################
     ## Чекбоксы ##
