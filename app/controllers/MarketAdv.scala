@@ -4,6 +4,7 @@ import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
+import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.HtmlFormat
 import util.SiowebEsUtil.client
@@ -41,6 +42,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def freeAdvFormM: Form[Option[Boolean]] = Form(
     "freeAdv" -> optional(boolean)
   )
+
+  /** Ключ маппинга для списка узлов. */
+  val NODES_KM = "node"
 
   /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
   val CUSTOM_PERIOD = "custom"
@@ -154,7 +158,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def advFormM: AdvFormM_t = {
     import util.FormUtil._
     Form(
-      "node" -> {
+      NODES_KM -> {
         // TODO list mapping не умеет удобный для нас unbind(). Нужно изобрести какой-то костыль.
         list(
           tuple(
@@ -215,25 +219,28 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    renderAdvFormFor(adId, advFormM)
+    renderAdvForm(adId, advFormM)
       .map { Ok(_) }
   }
 
-  /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
-  private def renderAdvFormFor(adId: String, form: AdvFormM_t)(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
-    // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возможно опубликовать карточку.
-    val rcvrsFut = collectReceivers(request.producer)
-    renderAdvFormForRcvrs(adId, form, rcvrsFut)
-  }
-
-  private def renderAdvFormForRcvrs(adId: String, form: AdvFormM_t, rcvrsAllFut: Future[Seq[MAdnNode]])
-                                   (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+  /**
+   * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
+   * @param adId id рекламной карточки.
+   * @param form Форма размещения рекламной карточки.
+   * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
+   * @return Отрендеренная страница управления карточкой с формой размещения.
+   */
+  private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
+                           (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+    // Если поиск ресиверов ещё не запущен, то сделать это.
+    val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
     val allRcvrsMapFut = rcvrsAllFut map { rcvrs =>
       rcvrs.iterator
         .map { rcvr  =>  rcvr.id.get -> rcvr }
         .toMap
     }
+
     // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
@@ -249,11 +256,72 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
     val (advsOk, advsReq, advsRefused, adnIdsReady, blockedSums) = syncResult
     val adnIdsReadySet = adnIdsReady.toSet
+
     // Сразу запускаем в фоне генерацию старого формата передачи ресиверов в шаблон.
     val rcvrsReadyFut = rcvrsAllFut map { rcvrs =>
       // Выкинуть узлы, у которых нет своего тарифного плана.
+      // TODO Нельзя публиковать прямо в городах. Нужно фильтровать тут и при сабмите.
       rcvrs filter { node => adnIdsReadySet contains node.id.get }
     }
+
+    // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
+    val adnId2indexMapFut: Future[Map[String, Int]] = rcvrsReadyFut map { rcvrs =>
+      // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
+      val formIndex2adnIdMap0 = form(NODES_KM).indexes
+        .flatMap { fi => form(s"$NODES_KM[$fi].adnId").value.map(fi -> _) }
+        .toMap
+      val missingRcvrIds = rcvrs.flatMap(_.id).toSet -- formIndex2adnIdMap0.valuesIterator
+      // Делаем источник допустимых index'ов, которые могут быть в list-mapping'е.
+      val indexesIter = (1 to Int.MaxValue)   // TODO с нуля начинать надо отсчет или с единицы?
+        .iterator
+        .filterNot(formIndex2adnIdMap0.contains)
+      // Итератор по недостающим элементам карты.
+      val missingResIter = missingRcvrIds
+        .iterator
+        .map { adnId => adnId -> indexesIter.next }
+      // Итератор по готовым данным, уже забитых в форме.
+      val existsingIter = formIndex2adnIdMap0
+        .iterator
+        .map { case (i, adnId)  =>  adnId -> i }
+      // Склеиваем итераторы и делаем из них финальную неизменяемую карту.
+      (missingResIter ++ existsingIter).toMap
+    }
+
+    // Строим набор городов и их узлов, сгруппированных по категориям.
+    val citiesFut: Future[Seq[AdvFormCity]] = for {
+      rcvrs     <- rcvrsReadyFut
+      rcvrsMap  <- allRcvrsMapFut
+    } yield {
+      // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
+      val userLang = request2lang
+      rcvrs
+        .groupBy { rcvr =>
+          findFirstGeoParentOfType(rcvr, AdnShownTypes.TOWN, rcvrsMap)
+            .flatMap(_.id)
+            .getOrElse("")
+        }
+        .iterator
+        .map { case (cityId, cityNodes) =>
+          val cityNode = rcvrsMap(cityId)
+          val cats = cityNodes.groupBy(_.adn.shownTypeId)
+            .iterator
+            .map { case (shownTypeId, catNodes) =>
+              val ast = AdnShownTypes.shownTypeId2val(shownTypeId)
+              AdvFormCityCat(
+                shownType = ast,
+                nodes = catNodes.map(AdvFormNode.apply),
+                name = Messages(ast.singular)(userLang)
+              )
+            }
+            .toSeq
+            .sortBy(_.name)
+          AdvFormCity(cityNode, cats)
+        }
+        .toSeq
+        .sortBy(_.node.meta.name)
+    }
+
+    // Продолжаем синхронные операции в текущем потоке
     trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
@@ -263,27 +331,61 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
     }
     // В текущем потоке строим карту уже занятых какими-то размещением узлы.
-    val busyAdns: Map[String, MAdvI] = {
+    val busyAdvs: Map[String, MAdvI] = {
       val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
       val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
       (adnAdvsOk ++ adnAdvsReq).toMap
     }
+
+    // Сборка финального контейнера аргументов для _advFormTpl().
+    val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
+      rcvrs1          <- rcvrsReadyFut
+      adnId2indexMap  <- adnId2indexMapFut
+      cities          <- citiesFut
+    } yield {
+      AdvFormTplArgs(
+        adId = adId,
+        af = form,
+        busyAdvs = busyAdvs,
+        cities = cities,
+        adnId2formIndex = adnId2indexMap,
+        adnNodes = rcvrs1
+      )
+    }
+
+    // Когда всё станет готово - рендерим результат.
     for {
-      rcvrs1        <- rcvrsReadyFut
       currAdvsArgs  <- currAdvsArgsFut
+      formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      val formArgs = AdvFormTplArgs(adId, form, busyAdns, adnNodes = rcvrs1)
       advForAdTpl(request.mad, currAdvsArgs, formArgs)
     }
   }
 
 
-  /** Используя дерево гео-связей нужно найти родительский узел, являющийся городом. */
-  private def getTownNodeOf(node: MAdnNode, nodes: Map[String, MAdnNode]): Option[MAdnNode] = {
-    node.geo.directParentIds.toStream.
+  /** Используя дерево гео-связей нужно найти родительский узел, имеющий указанный shownType. */
+  private def findFirstGeoParentOfType(node: MAdnNode, parentShowType: AdnShownType, nodes: Map[String, MAdnNode]): Option[MAdnNode] = {
+    // Поднимаемся наверх по иерархии гео-родительства.
+    val iter = node.geo
+      .directParentIds
+      .iterator // Для ленивого обхода коллекции используем итератор. Нам по факту нужен только первый подходящий узел.
+      .flatMap(nodes.get)
+      .flatMap { parentNode =>
+        if (parentNode.adn.shownTypeId == parentShowType.name) {
+          // Текущий узел имеет искомый id типа
+          Some(parentNode)
+        } else {
+          findFirstGeoParentOfType(parentNode, parentShowType, nodes)
+        }
+      }
+    // Берём первый элемент итератора (если есть), имитируя работу headOption() через if-else.
+    if (iter.hasNext) {
+      Some(iter.next())
+    } else {
+      None
+    }
   }
-
 
   private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MAdnNode]): Map[Int, MAdnNode] = {
     val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
@@ -321,7 +423,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Cannot bind form.")
       },
       {adves =>
-        val allRcvrIdsFut = collectReceivers(request.producer)
+        val allRcvrIdsFut = collectAllReceivers(request.producer)
           .map { _.iterator.flatMap(_.id).toSet }
         val adves1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrIdsFut.map { allRcvrIds =>
@@ -391,14 +493,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvFormFor(adId, formWithErrors)
+        renderAdvForm(adId, formWithErrors)
           .map(NotAcceptable(_))
       },
       {adves =>
         trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
-        val allRcvrsFut = collectReceivers(request.producer)
+        val allRcvrsFut = collectAllReceivers(request.producer)
         val advs1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrsFut flatMap { allRcvrs =>
           val allRcvrIds = allRcvrs.iterator.map(_.id.get).toSet
@@ -423,7 +525,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                 // Для бесплатной инжекции: сгенерить экзепшен, чтобы привелегированному юзеру код ошибки отобразился на экране.
                 if (isFree) throw ex
                 val formWithErrors = formBinded.withGlobalError("error.no.money")
-                renderAdvFormForRcvrs(adId, formWithErrors, allRcvrsFut)
+                renderAdvForm(adId, formWithErrors, Some(allRcvrsFut))
                   .map { NotAcceptable(_) }
             }
           } else {
@@ -437,7 +539,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
-  private def collectReceivers(myNode: OptStrId with EMAdNetMember) = {
+  private def collectAllReceivers(myNode: OptStrId with EMAdNetMember) = {
     val dropRcvrId = myNode.id.get
     MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode, maxResults = 500)
       // Самому себе через "управление размещением" публиковать нельзя.

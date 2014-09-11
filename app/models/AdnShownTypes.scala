@@ -8,7 +8,13 @@ package models
  */
 object AdnShownTypes extends Enumeration {
 
-  protected sealed case class Val(name: String, showWithTown: Boolean = true) extends super.Val(name)
+  protected sealed case class Val(name: String, showWithTown: Boolean = true) extends super.Val(name) {
+    /** Код локализованного названия в единственном числе. */
+    val singular = "amt.of.type." + name
+
+    /** Код локализованного названия во множественном числе. */
+    val plural   = "amts.of.type." + name
+  }
 
   type AdnShownType = Val
 

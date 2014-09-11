@@ -301,7 +301,7 @@
       @adnNodesMap.zipWithIndex.map { case ((memberType, adnNodes), i) =>
         <div class="mt-block mt-@memberType-block" @if( i > 0 ){style="display: none;"}>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
-          @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
+          @defining(args.busyAdvs.get(node.id.get)) { maybeBusyAdv =>
           @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
           @defining((memberType.id + 1) * (i + 1)) { mid =>
           <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }" id="advs@mid">

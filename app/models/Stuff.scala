@@ -98,9 +98,9 @@ case class CurrentAdvsTplArgs(
 case class AdvFormTplArgs(
   adId: String,
   af: Form[_],
-  busyAdns: Map[String, MAdvI],
+  busyAdvs: Map[String, MAdvI],
   cities: Seq[AdvFormCity],
-  adnId2formId: Map[String, Int],
+  adnId2formIndex: Map[String, Int],
   @deprecated("Field replaced with .cities", "2014.sep.11") adnNodes: Seq[MAdnNode] = Seq.empty
 )
 
@@ -110,8 +110,9 @@ case class AdvFormNode(
 )
 /** advForm: Описание одной вкладки группы узлов в рамках города. */
 case class AdvFormCityCat(
-  shownTypeId: AdnShownType,
+  shownType: AdnShownType,
   nodes: Seq[AdvFormNode],
+  name: String,
   isSelected: Boolean = false
 )
 /** advForm: Описание одного города в списке городов. */
