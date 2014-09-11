@@ -14,6 +14,9 @@ object AdnShownTypes extends Enumeration {
 
     /** Код локализованного названия во множественном числе. */
     val plural   = "amts.of.type." + name
+
+    def pluralNoTown = plural
+    def singularNoTown = singular
   }
 
   type AdnShownType = Val
@@ -28,7 +31,11 @@ object AdnShownTypes extends Enumeration {
   // При совпадении двух id будет ошибка после запуска при первом обращении к этой модели.
   val TRANSPORT_NODE: AdnShownType    = Val("a")    // Вокзалы, аэропорты и др. более-менее крупные транспортные узлы.
   val METRO_STATION: AdnShownType     = Val("b")    // Станция метро
-  val TOWN_DISTRICT: AdnShownType     = Val("c")    // Район города
+  // Район города
+  val TOWN_DISTRICT: AdnShownType     = new Val("c") {
+    override val singularNoTown = "District"
+    override val pluralNoTown   = "Districts"
+  }
   val TOWN: AdnShownType              = Val("d", showWithTown = false)    // Город
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".

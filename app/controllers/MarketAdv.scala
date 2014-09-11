@@ -305,7 +305,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.singular)(userLang),
+                name = Messages(ast.pluralNoTown)(userLang),
                 i = i
               )
             }
