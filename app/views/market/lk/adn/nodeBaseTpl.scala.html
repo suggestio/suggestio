@@ -1,4 +1,4 @@
-@(title: String, node: MAdnNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None,
+@(title: String, node: MAdnNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None, popupContent:Option[Html] = None,
   rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 
@@ -48,5 +48,6 @@
   leftCurrEl = Some(LkLeftPanelLinks.LPL_NODE),
   adnIdOpt  = node.id,
   rightBar  = Some(rightBar1),
-  povAdnId  = povAdnIdOpt
+  povAdnId  = povAdnIdOpt,
+  popupContent = popupContent
 )(content)

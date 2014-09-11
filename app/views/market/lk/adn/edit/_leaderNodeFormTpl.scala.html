@@ -97,7 +97,7 @@
       <div class="prop" id="profileGallery">
         <p class="prop_name __block">Фотографии объекта:</p>
 
-        <div class="image __size-M __first-in-line f-left js-image-upload" >
+        <div class="image __size-M f-left js-image-upload" >
           @stuff._fileUploadTpl(
             routes.Img.handleTempImg,
             fieldName = "gallery",
@@ -115,7 +115,7 @@
           @gf.indexes.map { gfi =>
             @defining( s"gallery[$gfi]" ) { gfn =>
               @mf(gfn).value.map { imgId =>
-                <div class="image __size-M f-left js-preview @if(gfi % 4 == 3){ __first-in-line}">
+                <div class="image __size-M f-left js-preview @if(gfi % 4 == 2){ __last-in-line}">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@routes.Img.getThumb(imgId)" />
                   <a class="image_remove-btn js-remove-image" title="Удалить">
@@ -148,7 +148,7 @@
         <div class="delimiter __light __vertical js-vertical-line"></div>
       </td>
       <td class="td __padding-S prop_name">
-        Цвет текста и иконок категорий в ленте выдачи
+        Цвет текста и иконок категорий в ленте выдачи <a class="link js-btn" href="#editHelp">?</a>
       </td>
       <td class="td __color-title">
         <span class="dark-gray ft-S">Цвет<br/>контента</span>
