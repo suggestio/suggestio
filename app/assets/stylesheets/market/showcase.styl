@@ -497,11 +497,18 @@ code
     display: inline-block
     position: relative
 
-  &_current-location-icon
+  &_current-location-icon,
+  &_current-location-spinner
     position: absolute
     left: -54px
     top: -26px
     transform( scale3d(0.3, 0.3, 0.3) )
+
+  &_current-location-spinner
+    display     none
+    transform( scale3d(0.5, 0.5, 0.5) )
+    left        -34px
+    top         -6px
 
 .sm-geo-nodes
   background: default_color
