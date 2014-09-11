@@ -1,6 +1,5 @@
 package controllers
 
-import io.suggest.model.geo.CircleGs
 import io.suggest.util.MacroLogsImpl
 import org.joda.time.DateTime
 import play.api.db.DB
@@ -389,7 +388,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         { _.mkString(", ") }
       )
     mapping(
-      "withBlocks" -> default [Set[Int]] (intSetM, Set.empty)
+      "withBlocks" -> default [Set[Int]] (intSetM, Set.empty),
+      "showcaseVoidFiller" -> optional(
+        text(maxLength = 255).transform(strTrimF, strIdentityF)
+      ).transform[Option[String]] (emptyStrOptToNone, identity)
     )
     { NodeConf.apply }
     { NodeConf.unapply }
@@ -566,7 +568,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         sinks       = adnNode2.adn.sinks
       ),
       conf = adnNode.conf.copy(
-        withBlocks = adnNode2.conf.withBlocks
+        withBlocks = adnNode2.conf.withBlocks,
+        showcaseVoidFiller = adnNode2.conf.showcaseVoidFiller
       )
     )
   }
