@@ -210,6 +210,14 @@ object AdReceiverInfo {
       name -> JsArray(arrayElements) :: acc
     }
   }
+
+  /** Напечатать карту ресиверов в человеко-читабельный текст.
+    * @param receivers Карта ресиверов.
+    * @return Строка без переносов строк.
+    */
+  def formatReceiversMapPretty(receivers: Receivers_t): String = {
+    receivers.toSeq.sortBy(_._1).mkString("Rcvrs(\n",  ",\n    ",  "\n)")
+  }
 }
 
 import AdReceiverInfo._
@@ -249,5 +257,9 @@ case class AdReceiverInfo(
     JsObject(acc)
   }
 
+  override def toString: String = {
+    val rcvrsFmt = sls.iterator.map(_.name).mkString(", ")
+    s"ri[$receiverId -> $rcvrsFmt]"
+  }
 }
 

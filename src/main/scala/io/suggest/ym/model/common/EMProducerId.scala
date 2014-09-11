@@ -107,11 +107,14 @@ trait EMProducerIdStatic extends EsModelStaticMutAkvT {
 }
 
 
-trait EMProducerIdI extends EsModelPlayJsonT {
-  override type T <: EMProducerIdI
-
+trait IProducerId {
   /** Кто является изготовителем этой рекламной карточки? */
   def producerId: String
+}
+
+
+trait EMProducerIdI extends EsModelPlayJsonT with IProducerId {
+  override type T <: EMProducerIdI
 }
 
 

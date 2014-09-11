@@ -509,12 +509,13 @@ case class AdNetMemberInfo(
 
   /** Быстрая и простая проверка на наличие wifi sink во флагах. */
   @JsonIgnore
-  def hasWifiSink = sinks contains AdnSinks.SINK_WIFI
+  def hasWifiSink = hasSink(AdnSinks.SINK_WIFI)
 
   /** Быстрая и простая проверка на наличие синка с геолокацией. */
   @JsonIgnore
-  def hasGeoSink  = sinks contains AdnSinks.SINK_GEO
+  def hasGeoSink  = hasSink(AdnSinks.SINK_GEO)
 
+  def hasSink(sink: AdnSink): Boolean = sinks contains sink
 
   /** Сериализовать в JSON поля текущего экземпляра класса. */
   @JsonIgnore
