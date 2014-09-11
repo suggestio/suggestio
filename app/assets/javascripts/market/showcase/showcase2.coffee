@@ -49,6 +49,8 @@ cbca_grid =
       this.layout_dom.style.left = cm/2 + 'px'
       this.layout_dom.style.opacity = 1
 
+      siomart.utils.ge('smGridAdsLoader').style.width = cw + 'px'
+
     this.columns = this.columns - this.left_offset - this.right_offset
 
   ##############

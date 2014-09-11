@@ -3,6 +3,15 @@
 @stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
 
   <div class="sm-grid-ads_container" id="smGridAdsContainer" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"></div>
-  <div class="sm-grid-ads_loader hidden" id="smGridAdsLoader"></div>
+  <div class="sm-grid-ads_loader h idden" id="smGridAdsLoader">
+    <div class="sm-grid-ads_loader-spinner">@svg._spinnerTpl(args.bgColor)</div>
+  </div>
 
 }
+
+<style type="text/css">
+  .sm-grid-ads_loader {
+    background-image: url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="5px" viewBox="0 0 10 5" enable-background="new 0 0 10 5" xml:space="preserve"><polygon fill="#@args.bgColor" points="10,3.16 5,0 0,3.16 0,5 5,1.84 10,5 "/></svg>');
+    background-repeat: repeat-x;
+  }
+</style>
