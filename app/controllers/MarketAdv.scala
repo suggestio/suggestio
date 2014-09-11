@@ -34,7 +34,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  private type AdvFormM_t = Form[List[AdvFormEntry]]
+  private type AdvFormValueM_t = List[AdvFormEntry]
+  private type AdvFormM_t = Form[AdvFormValueM_t]
 
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
@@ -93,7 +94,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private type DatePeriodOpt_t = Option[(LocalDate, LocalDate)]
+  private type DatePeriod_t = (LocalDate, LocalDate)
+  private type DatePeriodOpt_t = Option[DatePeriod_t]
 
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
   private def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
@@ -117,7 +119,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
-  private def advPeriodOptM: Mapping[DatePeriodOpt_t] = {
+  private def advPeriodM: Mapping[DatePeriod_t] = {
     tuple(
       "period" -> nonEmptyText(minLength = 1, maxLength = 10)
         .transform [Option[QuickAdvPeriod]] (
@@ -127,29 +129,32 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         )
       ,
       "date"  -> advDatePeriodOptM
+        // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
+        .verifying("error.date.end.before.start", { m => m match {
+          case Some((dateStart, dateEnd))  =>  !(dateStart isAfter dateEnd)
+          case _ => false
+        }})
     )
-    .transform [DatePeriodOpt_t] (
+    .verifying("error.required", { m => m match {
+      case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
+    }})
+    .transform [DatePeriod_t] (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
           val now = LocalDate.now()
-          Some(now -> now.plus(qap.toPeriod))
-        case (_, dpo) if dpo.isDefined =>
-          dpo
-        case _ =>
-          None
+          now -> now.plus(qap.toPeriod)
+        case (_, dpo) =>
+          dpo.get
       },
       // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
       // При неудаче вернуть кастомный период.
-      { case dpo @ Some((dateStart, dateEnd)) =>
-          // Угадываем период либо откатываемся на custom_period
-          val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
-          QuickAdvPeriods.maybeWithName(periodStr) match {
-            case Some(qap)  =>  Some(qap) -> None
-            case None       =>  None -> dpo
-          }
-        // Почему-то нет данных по интервалу размещения.
-        case None =>
-          Some(QuickAdvPeriods.default) -> None
+      {case dp @ (dateStart, dateEnd) =>
+        // Угадываем период либо откатываемся на custom_period
+        val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
+        QuickAdvPeriods.maybeWithName(periodStr) match {
+          case Some(qap)  =>  Some(qap) -> None
+          case None       =>  None -> Some(dp)
+        }
       }
     )
   }
@@ -157,61 +162,49 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Маппинг формы размещения рекламы на других узлах. */
   private def advFormM: AdvFormM_t = {
     import util.FormUtil._
-    Form(
-      NODES_KM -> {
-        // TODO list mapping не умеет удобный для нас unbind(). Нужно изобрести какой-то костыль.
-        list(
-          tuple(
-            "adnId"         -> esIdM,
-            "advertise"     -> boolean,
-            "showLevel"     -> adSlsM,
-            "sink"          -> sinksM,
-            // optional, т.к. если галочки нет, то эти проблемы надо игнорировать.
-            "period"        -> advPeriodOptM
-          )
-        )
-          // TODO Нужно, чтобы в форме не сабмиттились не готовые поля. Тогда это дело можно будет перенести на уровень конкретных маппингов.
-          .verifying("adv.node.at.least.one.sink.must.present", {
-            _.forall {
-              case (_, isAdv, _, sinks, _)  =>  if (isAdv) sinks.nonEmpty else true
+    val nodesM = list(
+      tuple(
+        "adnId"         -> esIdM,
+        "advertise"     -> boolean,
+        "showLevel"     -> adSlsM,
+        "sink"          -> sinksM
+      )
+      .verifying("adv.node.at.least.one.sink.must.present", { m => m match {
+        case (_, isAdv, _, sinks)  =>  if (isAdv) sinks.nonEmpty else true
+      }})
+    )
+    Form[AdvFormValueM_t] (
+      mapping(
+        NODES_KM -> nodesM,
+        "period" -> advPeriodM
+      )
+      {(nodesAdv, advPeriod) =>
+        nodesAdv.foldLeft(List.empty[AdvFormEntry]) {
+          case (acc, (adnId, isAdv @ true, adSls, sinks) ) =>
+            val ssls = for(sl <- adSls; sink <- sinks) yield {
+              SinkShowLevels.withArgs(sink, sl)
             }
-          })
-          .verifying("error.date.end.before.start", { _.forall {
-            // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
-            case (_, isAdv, _, _, dates) =>
-              if (isAdv) {
-                dates match {
-                  case Some((dateStart, dateEnd))  =>  !(dateStart isAfter dateEnd)
-                  case _ => false
-                }
-              } else {
-                true
-              }
-          }})
-          .transform [List[AdvFormEntry]] (
-            {ts =>
-              ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, adSls, sinks, Some((dateStart, dateEnd)) ) ) =>
-                  val ssls = for(sl <- adSls; sink <- sinks) yield {
-                    SinkShowLevels.withArgs(sink, sl)
-                  }
-                  val result = AdvFormEntry(
-                    adnId = adnId,
-                    advertise = isAdv,
-                    showLevels = ssls,
-                    dateStart = dateStart,
-                    dateEnd = dateEnd
-                  )
-                  result :: acc
-                case (acc, _) => acc
-              }
-            },
-            {_.map { e =>
-              val adSls = e.showLevels.map(_.sl)
-              val sinks = e.showLevels.map(_.adnSink)
-              (e.adnId, e.advertise, adSls, sinks, Option(e.dateStart -> e.dateEnd))
-            }}
-          )
+            val result = AdvFormEntry(
+              adnId       = adnId,
+              advertise   = isAdv,
+              showLevels  = ssls,
+              dateStart   = advPeriod._1,
+              dateEnd     = advPeriod._2
+            )
+            result :: acc
+          case (acc, _) => acc
+        }
+      }
+      {l =>
+        l.headOption.map { first =>
+          val nodesAdvs = l.map { e =>
+            val adSls = e.showLevels.map(_.sl)
+            val sinks = e.showLevels.map(_.adnSink)
+            (e.adnId, e.advertise, adSls, sinks)
+          }
+          val dates = first.dateStart -> first.dateEnd
+          nodesAdvs -> dates
+        }
       }
     )
   }
@@ -287,13 +280,13 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       (missingResIter ++ existsingIter).toMap
     }
 
+    // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
+    val userLang = request2lang
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[AdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
       rcvrsMap  <- allRcvrsMapFut
     } yield {
-      // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
-      val userLang = request2lang
       rcvrs
         .groupBy { rcvr =>
           findFirstGeoParentOfType(rcvr, AdnShownTypes.TOWN, rcvrsMap)
@@ -301,22 +294,27 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             .getOrElse("")
         }
         .iterator
+        .filter(!_._1.isEmpty)
         .map { case (cityId, cityNodes) =>
           val cityNode = rcvrsMap(cityId)
           val cats = cityNodes.groupBy(_.adn.shownTypeId)
             .iterator
-            .map { case (shownTypeId, catNodes) =>
+            .zipWithIndex
+            .map { case ((shownTypeId, catNodes), i) =>
               val ast = AdnShownTypes.shownTypeId2val(shownTypeId)
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.singular)(userLang)
+                name = Messages(ast.singular)(userLang),
+                i = i
               )
             }
             .toSeq
             .sortBy(_.name)
-          AdvFormCity(cityNode, cats)
+          (cityNode, cats)
         }
+        .zipWithIndex
+        .map { case ((cityNode, cats), i)  =>  AdvFormCity(cityNode, cats, i) }
         .toSeq
         .sortBy(_.node.meta.name)
     }
@@ -336,10 +334,12 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
       (adnAdvsOk ++ adnAdvsReq).toMap
     }
+    // Периоды размещения. Обычно одни и те же
+    val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
+      .map(ps => ps -> Messages("adv.period." + ps)(userLang))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
-      rcvrs1          <- rcvrsReadyFut
       adnId2indexMap  <- adnId2indexMapFut
       cities          <- citiesFut
     } yield {
@@ -349,7 +349,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         busyAdvs = busyAdvs,
         cities = cities,
         adnId2formIndex = adnId2indexMap,
-        adnNodes = rcvrs1
+        advPeriodsAvail = advPeriodsAvailable
       )
     }
 

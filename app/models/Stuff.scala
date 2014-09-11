@@ -101,7 +101,7 @@ case class AdvFormTplArgs(
   busyAdvs: Map[String, MAdvI],
   cities: Seq[AdvFormCity],
   adnId2formIndex: Map[String, Int],
-  @deprecated("Field replaced with .cities", "2014.sep.11") adnNodes: Seq[MAdnNode] = Seq.empty
+  advPeriodsAvail: List[(String, String)]
 )
 
 /** advForm: Описание одного узла для размещения рекламы. */
@@ -113,12 +113,14 @@ case class AdvFormCityCat(
   shownType: AdnShownType,
   nodes: Seq[AdvFormNode],
   name: String,
+  i: Int,
   isSelected: Boolean = false
 )
 /** advForm: Описание одного города в списке городов. */
 case class AdvFormCity(
   node: MAdnNode,
   cats: Seq[AdvFormCityCat],
+  i: Int,
   isSelected: Boolean = false
 )
 
