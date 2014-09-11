@@ -93,11 +93,32 @@ case class CurrentAdvsTplArgs(
   adv2adn: Map[Int, MAdnNode],
   blockedSums: Seq[(Float, Currency)]
 )
+
+/** Аргументы для рендера страницы управления рекламной карточкой с формой размещения оной. */
 case class AdvFormTplArgs(
   adId: String,
-  adnNodes: Seq[MAdnNode],
   af: Form[_],
-  busyAdns: Map[String, MAdvI]
+  busyAdns: Map[String, MAdvI],
+  cities: Seq[AdvFormCity],
+  adnId2formId: Map[String, Int],
+  @deprecated("Field replaced with .cities", "2014.sep.11") adnNodes: Seq[MAdnNode] = Seq.empty
+)
+
+/** advForm: Описание одного узла для размещения рекламы. */
+case class AdvFormNode(
+  node: MAdnNode
+)
+/** advForm: Описание одной вкладки группы узлов в рамках города. */
+case class AdvFormCityCat(
+  shownTypeId: AdnShownType,
+  nodes: Seq[AdvFormNode],
+  isSelected: Boolean = false
+)
+/** advForm: Описание одного города в списке городов. */
+case class AdvFormCity(
+  node: MAdnNode,
+  cats: Seq[AdvFormCityCat],
+  isSelected: Boolean = false
 )
 
 

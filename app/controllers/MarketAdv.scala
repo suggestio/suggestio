@@ -226,9 +226,15 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     renderAdvFormForRcvrs(adId, form, rcvrsFut)
   }
 
-  private def renderAdvFormForRcvrs(adId: String, form: AdvFormM_t, rcvrsFut: Future[Seq[MAdnNode]])
+  private def renderAdvFormForRcvrs(adId: String, form: AdvFormM_t, rcvrsAllFut: Future[Seq[MAdnNode]])
                                    (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
-    // Работа с синхронными моделями.
+    // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
+    val allRcvrsMapFut = rcvrsAllFut map { rcvrs =>
+      rcvrs.iterator
+        .map { rcvr  =>  rcvr.id.get -> rcvr }
+        .toMap
+    }
+    // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
       val advsOk = MAdvOk.findNotExpiredByAdId(adId)
@@ -243,27 +249,39 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
     val (advsOk, advsReq, advsRefused, adnIdsReady, blockedSums) = syncResult
     val adnIdsReadySet = adnIdsReady.toSet
+    // Сразу запускаем в фоне генерацию старого формата передачи ресиверов в шаблон.
+    val rcvrsReadyFut = rcvrsAllFut map { rcvrs =>
+      // Выкинуть узлы, у которых нет своего тарифного плана.
+      rcvrs filter { node => adnIdsReadySet contains node.id.get }
+    }
     trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
-    val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
+    val currAdvsArgsFut = rcvrsReadyFut map { rcvrs =>
+      val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
+      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
+      CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
+    }
+    // В текущем потоке строим карту уже занятых какими-то размещением узлы.
     val busyAdns: Map[String, MAdvI] = {
       val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
       val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
       (adnAdvsOk ++ adnAdvsReq).toMap
     }
     for {
-      rcvrs <- rcvrsFut
+      rcvrs1        <- rcvrsReadyFut
+      currAdvsArgs  <- currAdvsArgsFut
     } yield {
-      // Выкинуть узлы, у которых нет своего тарифного плана.
-      val rcvrs1 = rcvrs
-        .filter { node => adnIdsReadySet contains node.id.get }
-      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs1)
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      val formArgs = AdvFormTplArgs(adId, rcvrs1, form, busyAdns)
-      val currAdvsArgs = CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
+      val formArgs = AdvFormTplArgs(adId, form, busyAdns, adnNodes = rcvrs1)
       advForAdTpl(request.mad, currAdvsArgs, formArgs)
     }
+  }
+
+
+  /** Используя дерево гео-связей нужно найти родительский узел, являющийся городом. */
+  private def getTownNodeOf(node: MAdnNode, nodes: Map[String, MAdnNode]): Option[MAdnNode] = {
+    node.geo.directParentIds.toStream.
   }
 
 
