@@ -4,6 +4,7 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
 import play.api.Play.{configuration, current}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
@@ -16,12 +17,13 @@ import scala.concurrent.Future
  */
 
 /** Статическая утиль для вычисления списка экстра-ресиверов на основе гео-родительских связей. */
-object AdvFreeGeoParentRcvrs extends AdvExtraRcvrsCalculator {
+object AdvFreeGeoParentRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Включено ли geo-parent авто-размещение? Фича была добавлена 2014.sep.12.
     * Её суть: бесплатная автопубликация гео-размещений на нижнем уровне всех геородителей. */
   override def isEnabled: Boolean = configuration.getBoolean("adv.fwd.geo.parent.free.enabled") getOrElse true
-
 
   /**
    * Считаем ресиверов на основе карты непосредственных ресиверов.
@@ -43,18 +45,27 @@ object AdvFreeGeoParentRcvrs extends AdvExtraRcvrsCalculator {
       }
     }
       .map(_._1)
-    calcFreeGeoParentRcvrs(geoRcvrIds)
+    val resultFut = calcFreeGeoParentRcvrs(geoRcvrIds)
+    // Поделится радостью полученных данных с логгером:
+    if (LOGGER.underlying.isTraceEnabled) {
+      resultFut onSuccess { case result =>
+        if (result.nonEmpty)
+          trace("Found geoparent rcvrs: " + result.valuesIterator.mkString(", "))
+      }
+    }
+    // Всё, вернуть результат.
+    resultFut
   }
 
 
   /**
    * Рассчитать карту бесплатных размещений на гео-родительских узлах.
-   * @param directGeoRcvrIds Множество непосредственных ресиверов (без ресивера саморазмещения!).
+   * @param geoRcvrIds Множество непосредственных ресиверов (без ресивера саморазмещения!).
    * @return Карта только гео-родительских ресиверов, пригодная для последующего объединения
    *         с исходной картой.
    */
-  def calcFreeGeoParentRcvrs(directGeoRcvrIds: TraversableOnce[String]): Future[Receivers_t] = {
-    MAdnNodeCache.multiGet(directGeoRcvrIds)
+  def calcFreeGeoParentRcvrs(geoRcvrIds: TraversableOnce[String]): Future[Receivers_t] = {
+    MAdnNodeCache.multiGet(geoRcvrIds)
       .map { nodes =>
         val sls = Set(SinkShowLevels.GEO_PRODUCER_SL)
         nodes.iterator

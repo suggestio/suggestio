@@ -4,6 +4,7 @@ import io.suggest.ym.model.common.AdnSinks
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import play.api.Play.{configuration, current}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
 import models._
@@ -15,7 +16,9 @@ import models._
  * Description: Если все районы города покрыты размещением, то размещение должно перебрасываться и на весь город.
  * Здесь калькулятор карты экстра-ресиверов, который реализует этот принцип. 
  */
-object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator {
+object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Метод для проверки включенности модуля в рабочий процесс. */
   override def isEnabled: Boolean = configuration.getBoolean("adv.fwd.town.coverage.enabled") getOrElse true
@@ -77,7 +80,7 @@ object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator {
       tdisMap.mapValues(_.size)
     }
     // Карту размещений конвертим в карту townAdnId -> sls. Для этого нужна карта district -> town
-    for {
+    val resultFut = for {
       tdisMap           <- townDistrictIdsMapFut
       tdisCountMap      <- townAllDistrictsCountMapFut
     } yield {
@@ -109,6 +112,14 @@ object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator {
         .map { case (townId, sslsRaw)  =>  townId -> AdReceiverInfo(townId, sslsRaw.map(_._2).toSet) }
         .toMap
     }
+    // Напечатать в логи результат сложной мыслительной работы.
+    if (LOGGER.underlying.isDebugEnabled) {
+      resultFut onSuccess { case resultRcvrs =>
+        if (resultRcvrs.nonEmpty)
+          debug("Town coverage detected: +" + resultRcvrs)
+      }
+    }
+    resultFut
   }
 
 
