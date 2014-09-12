@@ -386,6 +386,8 @@ Slider =
 
 class DateModel
 
+  # значения start, end хранятся в timestamp
+  # interval - в днях
   constructor: (_start = false, _end = false, _interval = false)->
     @start = _start
     @end = _end
@@ -393,50 +395,54 @@ class DateModel
 
 
 class DateController
+  MIN_INTERVAL = 1 # задается в днях
   dateModel = false
 
-  constructor: (_dateModel)->
-    dateModel = _dateModel
+  constructor: ()->
+    dateModel = new DateModel()
 
-  setStart: (time = false)->
-    today = new Date()
-    today.getTime()
-
-    if !time
-      time = today
-    else
-      time = Date.parse time
-
-      if isNaN(time)
-        return false
-
-      if time < today
-        time = today
-        dateModel.start = time
-        return false
-
-    dateModel.start = time
-    @updateEnd()
-    return true
-
-  getStart: ()->
-    new Date( dateModel.start )
-
-  setEnd: (time)->
-
+  validateStart: (time)->
     time = Date.parse time
 
     if isNaN(time)
       return false
 
-    if time <= dateModel.start
+    return time
+
+  setStart: (time = false)->
+    today = new Date()
+    today.getTime()
+
+    if !( time = @validateStart(time) ) || time < today
+      time = today
+
+    dateModel.start = time
+    @checkForUpdateEnd()
+    return true
+
+  getStart: ()->
+    new Date( dateModel.start )
+
+  checkForUpdateEnd: ()->
+    if dateModel.start >= dateModel.end || dateModel.interval != 'custom'
+      @updateEnd()
+
+  validateEnd: (time)->
+    time = Date.parse time
+
+    if isNaN(time) || time <= dateModel.start
+      return false
+
+    return time
+
+  setEnd: (time = false)->
+
+    if !( time = @validateEnd(time) )
       return false
 
     dateModel.end = time
-    true
 
   updateEnd: ()->
-    MIN_INTERVAL = 1
 
     if dateModel.interval == 'custom' || !dateModel.end
       interval = MIN_INTERVAL
@@ -452,48 +458,39 @@ class DateController
   getEnd: ()->
     new Date( dateModel.end )
 
-  setInterval: (_interval)->
-    _interval = @intervalToDays _interval
+  validateInterval: (interval)->
 
-    if _interval != 'custom'
-      _interval = parseInt _interval
+    if interval != 'custom'
+      interval = parseInt interval
 
-      if isNaN(_interval)
+      if isNaN(interval)
         return false
 
-    dateModel.interval = _interval
+    return true
 
-    if _interval != 'custom'
-      @setStart()
-      @updateEnd()
+  setInterval: (interval = false)->
+    if !@validateInterval(interval)
+      return false
 
-    true
+    dateModel.interval = interval
 
-  getInterval: (projectFormat = false)->
-    if projectFormat
-      switch dateModel.interval
-        when 3 then 'P3D'
-        when 7 then 'P1W'
-        when 30 then 'P1M'
-        else 'custom'
-    else
-      dateModel.interval
+    if interval != 'custom'
+      @setStart() # если интервал не кастомный, размещение с сегодняшнего дня
+      @checkForUpdateEnd()
 
-  intervalToDays: (_value)->
-    switch _value
-      when 'P3D' then 3
-      when 'P1W' then 7
-      when 'P1M' then 30
-      else 'custom'
+    return true
+
+  getInterval: ()->
+    dateModel.interval
 
 
 class DateView
   widgetId = false
   controller = false
 
-  constructor: (_widgetId = false, _controller)->
+  constructor: (_widgetId = false)->
     widgetId = _widgetId
-    controller = _controller
+    controller = new DateController()
     @init()
 
   inputValue: (element, value = false)->
@@ -514,6 +511,20 @@ class DateView
       .find 'option:selected'
       .val()
 
+  intervalToString: (value)->
+    switch value
+      when 3 then 'P3D'
+      when 7 then 'P1W'
+      when 30 then 'P1M'
+      else 'custom'
+
+  intervalToInt: (value)->
+    switch value
+      when 'P3D' then 3
+      when 'P1W' then 7
+      when 'P1M' then 30
+      else 'custom'
+
   getFormattedDate: (time, format = 'default')->
     date = new Date( time )
     rusMonth = ['января','февраля','марта','апреля','мая','июня', 'июля','августа','сентября','октября','ноября','декабря']
@@ -532,11 +543,10 @@ class DateView
   updateView: ()->
     start = controller.getStart()
     end = controller.getEnd()
-    interval = controller.getInterval(true)
+    interval = @intervalToString( controller.getInterval() )
 
     @inputValue 'start', @getFormattedDate(start)
     @inputValue 'end', @getFormattedDate(end)
-    @selectValue 'interval', interval
 
     $ '#advManagementDateStartValue'
     .text @getFormattedDate(start, 'rus')
@@ -554,7 +564,7 @@ class DateView
   init: ()->
 
     _instance = this
-    interval = @selectValue 'interval'
+    interval = @intervalToInt( @selectValue('interval') )
 
     if interval == 'custom'
       start = @inputValue 'start'
@@ -562,8 +572,8 @@ class DateView
     else
       start = new Date()
 
-    controller.setStart start
     controller.setInterval interval
+    controller.setStart start
 
     @updateView()
 
@@ -589,15 +599,14 @@ class DateView
     .on 'change', "select[data-interval][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
       value = $this.find('option:selected').val()
+      value = _instance.intervalToInt value
 
       if !controller.setInterval value
         _instance.selectValue 'interval', controller.getInterval(true)
       _instance.updateView()
 
 
-dateModel = new DateModel()
-dateController = new DateController(dateModel)
-dateView = new DateView('advManagementDateWidget', dateController)
+dateView = new DateView('advManagementDateWidget')
 
 
 
