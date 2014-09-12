@@ -377,6 +377,38 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     srb1
   }
 
+  private def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): Unit = {
+    if (coll.nonEmpty)
+      sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
+  }
+
+  override def toString: String = {
+    val sb = new StringBuilder("NodeSearchArgs {")
+    fmtColl2sb("qStr", qStr, sb)
+    fmtColl2sb("companyIds", companyIds, sb)
+    fmtColl2sb("adnSupIds", adnSupIds, sb)
+    fmtColl2sb("anyOfPersonIds", anyOfPersonIds, sb)
+    fmtColl2sb("advDelegateAdnIds", advDelegateAdnIds, sb)
+    fmtColl2sb("withDirectGeoParents", withDirectGeoParents, sb)
+    fmtColl2sb("withGeoParents", withGeoParents, sb)
+    fmtColl2sb("shownTypeIds", shownTypeIds, sb)
+    fmtColl2sb("withAdnRights", withAdnRights, sb)
+    fmtColl2sb("onlyWithSinks", onlyWithSinks, sb)
+    fmtColl2sb("testNode", testNode, sb)
+    fmtColl2sb("withoutIds", withoutIds, sb)
+    fmtColl2sb("geoDistance", geoDistance, sb)
+    fmtColl2sb("intersectsWithPreIndexed", intersectsWithPreIndexed, sb)
+    fmtColl2sb("hasLogo", hasLogo, sb)
+    fmtColl2sb("withGeoDistanceSort", withGeoDistanceSort, sb)
+    if (withNameSort)
+      sb.append("\n  withNameSort = true")
+    fmtColl2sb("withRouting", withRouting, sb)
+    if (ftsSearchFN != SioConstants.FIELD_ALL)
+      fmtColl2sb("ftsSearchFN", ftsSearchFN, sb)
+    sb.append("\n}")
+    sb.toString()
+  }
+
 }
 
 

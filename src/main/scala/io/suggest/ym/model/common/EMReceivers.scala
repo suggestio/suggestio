@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.util.SioConstants
+import io.suggest.util.{Lists, SioConstants}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
 import io.suggest.ym.model.AdShowLevel
@@ -219,6 +219,20 @@ object AdReceiverInfo {
   def formatReceiversMapPretty(receivers: Receivers_t): String = {
     receivers.toSeq.sortBy(_._1).mkString("Rcvrs(\n",  ",\n    ",  "\n)")
   }
+
+  /**
+   * Мержить карты ресиверов надо через этот метод, а НЕ через ++.
+   * @param maps Карты ресиверов.
+   * @return Единая Карта Ресиверов.
+   */
+  def mergeRcvrMaps(maps: Receivers_t*): Receivers_t = {
+    Lists.mergeMaps(maps: _*) { (_, ri1, ri2) =>
+      ri1.copy(
+        sls = ri1.sls ++ ri2.sls
+      )
+    }
+  }
+
 }
 
 import AdReceiverInfo._

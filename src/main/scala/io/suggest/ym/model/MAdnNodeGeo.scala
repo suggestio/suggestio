@@ -380,6 +380,8 @@ object NodeGeoLevels extends Enumeration {
 
   type NodeGeoLevel = Val
 
+  // Двигаемся от мелкому к крупному.
+
   val NGL_BUILDING: NodeGeoLevel = new Val("bu") {
     override def isLowest = true
     override def lower: Option[NodeGeoLevel] = None
