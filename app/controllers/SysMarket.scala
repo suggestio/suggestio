@@ -6,7 +6,8 @@ import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
-import util.billing.{AdvUtil, MmpDailyBilling}
+import util.adv.AdvUtil
+import util.billing.MmpDailyBilling
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._

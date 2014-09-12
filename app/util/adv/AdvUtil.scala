@@ -1,13 +1,12 @@
-package util.billing
+package util.adv
 
-import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import io.suggest.ym.model.common.{IProducerId, EMReceiversI}
+import models.AdReceiverInfo.formatReceiversMapPretty
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
-import AdReceiverInfo.formatReceiversMapPretty
+import util.billing.MmpDailyBilling
 
 import scala.concurrent.Future
 
@@ -21,13 +20,24 @@ object AdvUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Текущие активные аддоны, участвующие в генерации списка ресиверов. */
+  val EXTRA_RCVRS_CALCS: Seq[AdvExtraRcvrsCalculator] = {
+    Seq(
+      AdvFreeGeoParentRcvrs,
+      AdvTownCoverageRcvrs
+    )
+    .filter(_.isEnabled)
+  }
+  
+  info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.mkString(", "))
+
   /**
    * Пересчет текущих размещений рекламной карточки на основе данных других моделей.
    * Данные по саморазмещению мигрируют из исходных данных размещения.
    * @param mad Исходная рекламная карточка или её интерфейс.
    * @param producerOpt Экземпляр продьюсера
    */
-  def calculateReceiversFor(mad: EMReceiversI with OptStrId with IProducerId, producerOpt: Option[MAdnNode] = None): Future[Receivers_t] = {
+  def calculateReceiversFor(mad: MAdT, producerOpt: Option[MAdnNode] = None): Future[Receivers_t] = {
     val priOpt = mad.receivers.get(mad.producerId)
     val needProducer = priOpt.isDefined
     // Нам нужен продьюсер для фильтрации копируемых sls продьюсера. Ищем его в фоне.
@@ -41,9 +51,11 @@ object AdvUtil extends PlayMacroLogsImpl {
     } else {
       Future successful producerOpt.orNull
     }
-    // Считаем ресиверов через mmp-billing, т.е. платные размещения по времени.
-    val receivers0 = MmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
-    val resultFut = priOpt.fold(Future successful receivers0) { pri =>
+    // Считаем непосредственных ресиверов через mmp-billing, т.е. платные размещения по времени.
+    val receiversMmp = MmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
+
+    // Чистим саморазмещение и добавляем в карту прямых ресиверов.
+    val prodResultFut: Future[Receivers_t] = priOpt.fold(Future successful receiversMmp) { pri =>
       producerFut map { producer =>
         // Оставляем только уровни отображения, которые доступны ресиверу.
         val psls2 = pri.sls
@@ -52,14 +64,22 @@ object AdvUtil extends PlayMacroLogsImpl {
           .filter { ssl  =>  producer.adn.isReceiver  &&  producer.adn.hasSink(ssl.adnSink)  &&  producer.adn.canOutAtLevel(ssl.sl) }
         if (psls2.isEmpty) {
           // Удаляем саморесивер, т.к. уровни пусты.
-          receivers0
+          receiversMmp
         } else {
           // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
           val prkv = pri.receiverId -> pri.copy(sls = psls2)
-          receivers0 + prkv
+          receiversMmp + prkv
         }
       }
     }
+
+    // На чищенную карту ресиверов запускаем поиск экстра-ресиверов на основе списка непосредственных.
+    val rcvrsExtraFut = prodResultFut
+      .flatMap { calcExtraRcvrs(_, mad.producerId) }
+
+    // Финальный результат объединяет все карты.
+    val resultFut: Future[Receivers_t] = Future.reduce(Seq(prodResultFut, rcvrsExtraFut)) { _ ++ _ }
+
     // Если trace, то нужно сообщить разницу в карте ресиверов до и после.
     if (LOGGER.underlying.isTraceEnabled) {
       resultFut onSuccess { case result =>
@@ -69,4 +89,34 @@ object AdvUtil extends PlayMacroLogsImpl {
     resultFut
   }
 
+
+  /**
+   * Рассчет смежных ресиверов на основе списка напрямую выбранных ресиверов.
+   * Здесь происходят вызовы к конкретным методикам рассчета доп.ресиверов.
+   * @param allDirectRcvrs Карта непосредсвенных ресиверов, выбранных напрямую для карточки.
+   * @return Карта других ресиверов, на которых тоже нужно разместить исходную карточку. 
+   */
+  def calcExtraRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t] = {
+    Future.traverse(EXTRA_RCVRS_CALCS) { src =>
+      src.calcForDirectRcvrs(allDirectRcvrs, producerId)
+    } map { _.reduce(_ ++ _) }
+  }
+
 }
+
+
+/** Интерфейс для модулей рассчета extra-ресиверов карточки. */
+trait AdvExtraRcvrsCalculator {
+
+  /** Метод для проверки активности модуля. */
+  def isEnabled: Boolean
+
+  /**
+   * Рассчет доп.ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
+   * @param allDirectRcvrs Карта непосредственных ресиверов.
+   * @param producerId id продьюсера.
+   * @return Фьючерс с картой extra-ресиверов.
+   */
+  def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t]
+}
+
