@@ -21,15 +21,15 @@ object AdvUtil extends PlayMacroLogsImpl {
   import LOGGER._
 
   /** Текущие активные аддоны, участвующие в генерации списка ресиверов. */
-  val EXTRA_RCVRS_CALCS: Seq[AdvExtraRcvrsCalculator] = {
-    Seq(
+  val EXTRA_RCVRS_CALCS: List[AdvExtraRcvrsCalculator] = {
+    List(
       AdvFreeGeoParentRcvrs,
       AdvTownCoverageRcvrs
     )
     .filter(_.isEnabled)
   }
   
-  info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.mkString(", "))
+  info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.iterator.map(_.getClass.getSimpleName).mkString(", "))
 
   /**
    * Пересчет текущих размещений рекламной карточки на основе данных других моделей.
@@ -74,11 +74,12 @@ object AdvUtil extends PlayMacroLogsImpl {
     }
 
     // На чищенную карту ресиверов запускаем поиск экстра-ресиверов на основе списка непосредственных.
-    val rcvrsExtraFut = prodResultFut
-      .flatMap { calcExtraRcvrs(_, mad.producerId) }
-
-    // Финальный результат объединяет все карты.
-    val resultFut: Future[Receivers_t] = Future.reduce(Seq(prodResultFut, rcvrsExtraFut)) { _ ++ _ }
+    // Получающиеся карты ресиверов объединяем асинхронно.
+    val resultFut: Future[Receivers_t] = prodResultFut
+      .flatMap { prodResults =>
+        val extrasFuts = calcExtraRcvrs(prodResults, mad.producerId)
+        Future.reduce(prodResultFut :: extrasFuts) { AdReceiverInfo.mergeRcvrMaps(_, _) }
+      }
 
     // Если trace, то нужно сообщить разницу в карте ресиверов до и после.
     if (LOGGER.underlying.isTraceEnabled) {
@@ -96,10 +97,10 @@ object AdvUtil extends PlayMacroLogsImpl {
    * @param allDirectRcvrs Карта непосредсвенных ресиверов, выбранных напрямую для карточки.
    * @return Карта других ресиверов, на которых тоже нужно разместить исходную карточку. 
    */
-  def calcExtraRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t] = {
-    Future.traverse(EXTRA_RCVRS_CALCS) { src =>
+  private def calcExtraRcvrs(allDirectRcvrs: Receivers_t, producerId: String): List[Future[Receivers_t]] = {
+    EXTRA_RCVRS_CALCS.map { src =>
       src.calcForDirectRcvrs(allDirectRcvrs, producerId)
-    } map { _.reduce(_ ++ _) }
+    }
   }
 
 }
