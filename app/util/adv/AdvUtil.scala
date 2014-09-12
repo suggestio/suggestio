@@ -74,10 +74,12 @@ object AdvUtil extends PlayMacroLogsImpl {
     }
 
     // На чищенную карту ресиверов запускаем поиск экстра-ресиверов на основе списка непосредственных.
-    // Получающиеся карты ресиверов объединяем асинхронно.
     val resultFut: Future[Receivers_t] = prodResultFut
       .flatMap { prodResults =>
-        val extrasFuts = calcExtraRcvrs(prodResults, mad.producerId)
+        // Запускаем сборку данных по доп.ресиверами. Получающиеся карты ресиверов объединяем асинхронно.
+        val extrasFuts = EXTRA_RCVRS_CALCS.map { src =>
+          src.calcForDirectRcvrs(prodResults, mad.producerId)
+        }
         Future.reduce(prodResultFut :: extrasFuts) { AdReceiverInfo.mergeRcvrMaps(_, _) }
       }
 
@@ -88,19 +90,6 @@ object AdvUtil extends PlayMacroLogsImpl {
       }
     }
     resultFut
-  }
-
-
-  /**
-   * Рассчет смежных ресиверов на основе списка напрямую выбранных ресиверов.
-   * Здесь происходят вызовы к конкретным методикам рассчета доп.ресиверов.
-   * @param allDirectRcvrs Карта непосредсвенных ресиверов, выбранных напрямую для карточки.
-   * @return Карта других ресиверов, на которых тоже нужно разместить исходную карточку. 
-   */
-  private def calcExtraRcvrs(allDirectRcvrs: Receivers_t, producerId: String): List[Future[Receivers_t]] = {
-    EXTRA_RCVRS_CALCS.map { src =>
-      src.calcForDirectRcvrs(allDirectRcvrs, producerId)
-    }
   }
 
 }

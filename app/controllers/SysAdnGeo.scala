@@ -330,14 +330,20 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     }
   }
 
+  /** Сбор возможных родительских узлов. */
   private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MAdnNode]] = {
     MAdnNodeGeo.findIndexedPtrsForNode(adnId).flatMap { geoPtrs =>
-      val glevels = geoPtrs.map(_.glevel).headOption.fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
-      if (glevels.nonEmpty) {
-        collectNodesOnLevels(glevels) map nodes2nodesMap
+      val glevels0 = geoPtrs
+        .map(_.glevel)
+        .headOption
+        .fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
+      // Бывает, что нет результатов.
+      val glevels = if (glevels0.nonEmpty) {
+        glevels0
       } else {
-        Future successful Map.empty[String, MAdnNode]
+        List(NodeGeoLevels.NGL_TOWN, NodeGeoLevels.NGL_TOWN_DISTRICT)
       }
+      collectNodesOnLevels(glevels) map nodes2nodesMap
     }
   }
 
