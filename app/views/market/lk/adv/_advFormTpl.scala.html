@@ -20,8 +20,10 @@
       @maybeBusyAdv.fold {
         @* Рендер аттрибутов инпута когда существующего размещения ещё нет (т.е. всё можно размещать). *@
         name="@{NODES_KM}[@midOpt].@fnSuffix"
+        value="false"
       } { busyAdv =>
         @* Рендер атрибутов инпута, если размещение уже было сделано ранее. *@
+        value="true"
         disabled="disabled" @busyAttrs
       }
     /><span class="checkbox_title">@label</span>
@@ -97,10 +99,12 @@
               @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
                 @if(maybeBusyAdv.isEmpty) {
                   @market.lk.lkBlockNewDesign( open = false ) {
-                    <input type="checkbox" name="@{NODES_KM}[$midOpt].advertise"/>
-                    <input type="hidden" name="@{NODES_KM}[$midOpt].adnId" value="@adnId"/>
+                    <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                    <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
-                      <a class="link" href="#">@an.node.meta.name</a>
+                      <a class="link js-btn" href="@routes.MarketLkBilling._renderNodeMbmds(adnId)">
+                        @an.node.meta.name
+                      </a>
                     </span>
                   } {
                     <div class="advm-node_block">
