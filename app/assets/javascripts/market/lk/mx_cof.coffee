@@ -1784,7 +1784,7 @@ market =
 
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
-      $('#advsFormBlock input').bind 'change', () ->
+      $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
         cf_id = $(this).attr 'data-connected-field'
         cf = $('#' + cf_id)
         if typeof cf_id != 'undefined'
