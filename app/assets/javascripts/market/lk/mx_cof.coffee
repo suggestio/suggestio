@@ -1172,6 +1172,10 @@ PersonalCabinet =
         $this = $ this
         href = $this.attr 'href'
 
+
+        if $this.closest('.js-slide-title').size()
+          e.stopPropagation()
+
         if !href
           return false
 
