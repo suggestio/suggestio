@@ -585,6 +585,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
               override def withGeoDistanceSort: Option[GeoPoint] = gsiOpt.map(_.geoPoint)
               override def shownTypeIds: Seq[String] = Seq(AdnShownTypes.TOWN.name)
               override def maxResults: Int = 1
+              override def testNode = Some(false)
             }
             MAdnNode.dynSearch(sargs)
               .map(_.headOption)
