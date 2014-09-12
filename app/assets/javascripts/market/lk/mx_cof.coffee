@@ -384,127 +384,220 @@ Slider =
 ## Виджет для работы с датами ##
 ###################################################################################################################
 
-CleverDateWidget = (_widgetId)->
-  start               = new Date()
-  end                 = new Date()
-  interval            = 0
+class DateModel
 
-  @setStartCallback     = false
-  @setEndCallback       = false
-  @setIntervalCallback  = false
+  constructor: (_start = false, _end = false, _interval = false)->
+    @start = _start
+    @end = _end
+    @interval = _interval
 
-  setStart: (_start)->
-    time = Date.parse _start
-    if !isNaN(time)
-      start.setTime time
 
-    @setStartCallback && @setStartCallback()
-    true
+class DateController
+  dateModel = false
+
+  constructor: (_dateModel)->
+    dateModel = _dateModel
+
+  setStart: (time = false)->
+    today = new Date()
+    today.getTime()
+
+    if !time
+      time = today
+    else
+      time = Date.parse time
+
+      if isNaN(time)
+        return false
+
+      if time < today
+        time = today
+        dateModel.start = time
+        return false
+
+    dateModel.start = time
+    @updateEnd()
+    return true
 
   getStart: ()->
-    start.getTime()
+    new Date( dateModel.start )
 
-  setEnd: (_end)->
-    time = Date.parse(_end)
+  setEnd: (time)->
 
-    if !isNaN(time)
-      end.setTime time
+    time = Date.parse time
 
-    @setEndCallback && @setEndCallback()
+    if isNaN(time)
+      return false
+
+    if time <= dateModel.start
+      return false
+
+    dateModel.end = time
     true
+
+  updateEnd: ()->
+    MIN_INTERVAL = 1
+
+    if dateModel.interval == 'custom' || !dateModel.end
+      interval = MIN_INTERVAL
+    else
+      interval = dateModel.interval
+
+    newEnd = new Date(dateModel.start)
+    day = newEnd.getDate() + interval
+    newEnd.setDate(day)
+
+    dateModel.end = newEnd.getTime()
 
   getEnd: ()->
-    end.getTime()
+    new Date( dateModel.end )
 
-  # интервал задается в днях
   setInterval: (_interval)->
+    _interval = @intervalToDays _interval
+
     if _interval != 'custom'
-      newEnd = new Date( this.getStart() )
-      _interval = newEnd.getDate() + _interval
-      newEnd.setDate _interval
-      this.setEnd newEnd
+      _interval = parseInt _interval
 
+      if isNaN(_interval)
+        return false
 
-    @setIntervalCallback && @setIntervalCallback(_interval)
+    dateModel.interval = _interval
+
+    if _interval != 'custom'
+      @setStart()
+      @updateEnd()
+
     true
 
-  getInterval: ()->
-    interval
+  getInterval: (projectFormat = false)->
+    if projectFormat
+      switch dateModel.interval
+        when 3 then 'P3D'
+        when 7 then 'P1W'
+        when 30 then 'P1M'
+        else 'custom'
+    else
+      dateModel.interval
 
-  getRusDate: (time)->
+  intervalToDays: (_value)->
+    switch _value
+      when 'P3D' then 3
+      when 'P1W' then 7
+      when 'P1M' then 30
+      else 'custom'
+
+
+class DateView
+  widgetId = false
+  controller = false
+
+  constructor: (_widgetId = false, _controller)->
+    widgetId = _widgetId
+    controller = _controller
+    @init()
+
+  inputValue: (element, value = false)->
+    $input = $ "input[data-#{element}][data-widget-id = #{widgetId}]"
+    if value
+      $input.val value
+    else
+      $input.val()
+
+  selectValue: (element, value = false)->
+    $select = $ "select[data-#{element}][data-widget-id = #{widgetId}]"
+    if value
+      $select
+      .find "option[val = #{value}]"
+      .prop 'selected', 'selected'
+    else
+      $select
+      .find 'option:selected'
+      .val()
+
+  getFormattedDate: (time, format = 'default')->
     date = new Date( time )
     rusMonth = ['января','февраля','марта','апреля','мая','июня', 'июля','августа','сентября','октября','ноября','декабря']
 
     day   = date.getDate()
-    month = rusMonth[ date.getMonth() ]
+    fullDay = ("0" + day ).slice(-2)
+    month = parseInt( date.getMonth() )
+    fullMonth = ("0" + (month + 1)).slice(-2)
     year  = date.getFullYear()
 
-    "#{day} #{month} #{year}"
+    if format == 'rus'
+      "#{day} #{rusMonth[ month ]} #{year}"
+    else
+      "#{year}-#{fullMonth}-#{fullDay}"
 
-  init: (preInit = false)->
+  updateView: ()->
+    start = controller.getStart()
+    end = controller.getEnd()
+    interval = controller.getInterval(true)
+
+    @inputValue 'start', @getFormattedDate(start)
+    @inputValue 'end', @getFormattedDate(end)
+    @selectValue 'interval', interval
+
+    $ '#advManagementDateStartValue'
+    .text @getFormattedDate(start, 'rus')
+
+    $ '#advManagementDateEndValue'
+    .text @getFormattedDate(end, 'rus')
+
+    if interval == 'custom'
+      $ '#advManagementDateStart, #advManagementDateEnd'
+      .show()
+    else
+      $ '#advManagementDateStart, #advManagementDateEnd'
+      .hide()
+
+  init: ()->
 
     _instance = this
+    interval = @selectValue 'interval'
 
-    preInit && preInit(_instance)
+    if interval == 'custom'
+      start = @inputValue 'start'
+      controller.setEnd @inputValue 'end'
+    else
+      start = new Date()
+
+    controller.setStart start
+    controller.setInterval interval
+
+    @updateView()
 
     $ document
-    .on 'change', "input[data-start][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "input[data-start][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
       value = $this.val()
 
-      _instance.setStart value
+      if !controller.setStart value
+        _instance.inputValue 'start', _instance.getFormattedDate( controller.getStart() )
+      _instance.updateView()
 
     $ document
-    .on 'change', "input[data-end][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "input[data-end][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
       value = $this.val()
 
-      _instance.setEnd value
+      if !controller.setEnd value
+        _instance.inputValue 'end', _instance.getFormattedDate( controller.getEnd() )
+      _instance.updateView()
 
     $ document
-    .on 'change', "select[data-interval][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "select[data-interval][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
-      value = $this.val()
+      value = $this.find('option:selected').val()
 
-      switch value
-        when 'P3D' then value = 3
-        when 'P1W' then value = 7
-        when 'P1M' then value = 30
-        else value = 'custom'
-
-      _instance.setInterval value
+      if !controller.setInterval value
+        _instance.selectValue 'interval', controller.getInterval(true)
+      _instance.updateView()
 
 
-
-advManagementDateWidget = new CleverDateWidget 'advManagementDateWidget'
-
-advManagementDateWidget.setStartCallback = ()->
-
-  start = advManagementDateWidget.getRusDate( advManagementDateWidget.getStart() )
-  $ '#advManagementDateStartValue'
-  .text start
-
-advManagementDateWidget.setEndCallback = ()->
-  end = advManagementDateWidget.getRusDate( advManagementDateWidget.getEnd() )
-  $ '#advManagementDateEndValue'
-  .text end
-
-advManagementDateWidget.setIntervalCallback = (_interval)->
-  if _interval == 'custom'
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .show()
-  else
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .hide()
-
-advManagementDateWidget.init(
-  ()->
-
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .hide()
-)
-advManagementDateWidget.setStart()
-advManagementDateWidget.setInterval(3)
+dateModel = new DateModel()
+dateController = new DateController(dateModel)
+dateView = new DateView('advManagementDateWidget', dateController)
 
 
 
