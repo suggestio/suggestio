@@ -5,6 +5,7 @@ import io.suggest.util.SioEsUtil._
 import io.suggest.model._
 import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.ym.model.common.AdnSinks.AdnSink
 import io.suggest.ym.model.common.SinkShowLevels.SinkShowLevel
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
@@ -241,6 +242,15 @@ case class AdReceiverInfo(
 
   def allShowLevels = sls.map(_.sl)
   def allSinks = sls.map(_.adnSink)
+
+  /**
+   * sls отфильтровать по указанному синку.
+   * @param sink Sink выдачи.
+   * @return Множество SinkShowLevel, у которых adnSink == sink.
+   */
+  def slsOnSink(sink: AdnSink): Set[SinkShowLevel] = {
+    sls.filter(_.adnSink == sink)
+  }
 
   @JsonIgnore
   override def hashCode(): Int = receiverId.hashCode
