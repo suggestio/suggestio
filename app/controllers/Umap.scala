@@ -63,8 +63,14 @@ object Umap extends SioController with PlayMacroLogsImpl {
     Ok(resp)
   }
 
+  /** Сабмит одного слоя на карте. */
   def saveMapDataLayers = IsSuperuser { implicit request =>
-    Ok("STUB")
+    val resp = JsObject(Seq(
+      "name"          -> JsString("Sloy 1"),
+      "id"            -> JsNumber(1),
+      "displayOnLoad" -> JsBoolean(true)
+    ))
+    Ok(resp)
   }
 
 }
