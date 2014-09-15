@@ -323,39 +323,6 @@ fieldset.toggle.on .more_style_options {
 /* ************************************************* */
 
 
-@font-face {
-    font-family: 'fira_sansbold';
-    src: url('/static/umap/font/FiraSans-Bold.eot?25bad732e47c');
-    src: url('/static/umap/font/FiraSans-Bold.eot?&25bad732e47c#iefix') format('embedded-opentype'),
-         url('/static/umap/font/FiraSans-Bold.woff?25bad732e47c') format('woff'),
-         url('/static/umap/font/FiraSans-Bold.ttf?25bad732e47c') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-
-}
-
-
-@font-face {
-    font-family: 'fira_sansregular';
-    src: url('/static/umap/font/FiraSans-Regular.eot?25bad732e47c');
-    src: url('/static/umap/font/FiraSans-Regular.eot?&25bad732e47c#iefix') format('embedded-opentype'),
-         url('/static/umap/font/FiraSans-Regular.woff?25bad732e47c') format('woff'),
-         url('/static/umap/font/FiraSans-Regular.ttf?25bad732e47c') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'fira_sanslight';
-    src: url('/static/umap/font/FiraSans-Light.eot?25bad732e47c');
-    src: url('/static/umap/font/FiraSans-Light.eot?&25bad732e47c#iefix') format('embedded-opentype'),
-         url('/static/umap/font/FiraSans-Light.woff?25bad732e47c') format('woff'),
-         url('/static/umap/font/FiraSans-Light.ttf?25bad732e47c') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-
 /*
 * Generic
 */
@@ -367,7 +334,7 @@ hr, input, textarea {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'fira_sanslight', sans-serif;
+    font-family: sans-serif;
 }
 a {
     text-decoration: none;
@@ -389,7 +356,7 @@ hr {
     border-width: 1px 0 0;
 }
 h1, h2, h3, h4, h5 {
-    font-family: 'fira_sansbold', sans-serif;
+    font-family: sans-serif;
     font-weight: normal;
 }
 h1, h2 {
@@ -404,7 +371,7 @@ p {
     margin-bottom: 14px;
 }
 strong {
-    font-family: 'fira_sansbold';
+    font-family: sans-serif;
     font-weight: normal;
 }
 
@@ -612,7 +579,7 @@ nav h1 a {
     background-position: left center;
     background-repeat: no-repeat;
     background-size: 60px auto;
-    font-family: 'fira_sansbold';
+    font-family: sans-serif;
     font-size: 30px;
     font-weight: normal;
     height: 70px;
@@ -651,7 +618,7 @@ footer a {
     background-position: left center;
     background-repeat: no-repeat;
     background-size: 60px auto;
-    font-family: 'fira_sansbold';
+    font-family: sans-serif;
     font-size: 30px;
     font-weight: normal;
     height: 140px;
@@ -679,14 +646,14 @@ footer a {
 }
 .map_list .legend a {
     color: #222;
-    font-family: "fira_sansbold";
+    font-family: sans-serif;
     font-style: normal;
     font-weight: normal;
 }
 .map_list .legend em,
 .map_list .legend em a {
     color: #444;
-    font-family: "fira_sanslight";
+    font-family: sans-serif;
     font-style: normal;
 }
 .map_list hr {
