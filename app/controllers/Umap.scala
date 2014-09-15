@@ -35,7 +35,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
         ))
       )),
       "properties" -> JsObject(Seq.empty),
-      "type" -> JsString("feature")
+      "type" -> JsString("Feature")
     ))
     val features = JsArray(Seq(feature1))
     val storage = JsObject(Seq(
