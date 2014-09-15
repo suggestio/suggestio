@@ -230,7 +230,7 @@
           "datalayersControl": true,
           "urls": {
           "map": "/ru/map/{slug}_{pk}",
-          "datalayer_view": "/ru/datalayer/{pk}/",
+          "datalayer_view": "/sys/umap/nodes/datalayer",
           "map_update": "/ru/map/{map_id}/update/settings/",
           "map_old_url": "/ru/map/{username}/{slug}/",
           "ajax_proxy": "/ajax-proxy/?url={url}",
@@ -343,24 +343,17 @@
           });
     </script>
 
-    
     <script type="text/javascript">
-    
-</script>
-
-
-    
-        <script type="text/javascript">
-            L.S.on('ui:ready', function () {
-                L.S.AutoComplete.multiSelect('id_editors', {
-                    placeholder: "Введите имя редактора, чтобы добавить..."
-                });
-                L.S.AutoComplete.select('id_owner', {
-                    placeholder: "Type new owner nick…"
-                });
+        L.S.on('ui:ready', function () {
+            L.S.AutoComplete.multiSelect('id_editors', {
+                placeholder: "Введите имя редактора, чтобы добавить..."
             });
-        </script>
-    
+            L.S.AutoComplete.select('id_owner', {
+                placeholder: "Type new owner nick…"
+            });
+        });
+    </script>
+
     
 </body>
 </html>
