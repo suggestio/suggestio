@@ -3,6 +3,8 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
+import org.rbayer.GruntSbtPlugin._
+import GruntKeys._
 
 
 organization := "io.suggest"
@@ -65,6 +67,7 @@ libraryDependencies ++= Seq(
   // webjars
   "org.webjars" % "leaflet" % "0.7.3",
   "org.webjars" % "leaflet-markercluster" % "0.4.0",
+  "org.webjars" % "leaflet-plugins" % "1.1.2",
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
   "com.vividsolutions" % "jts" % "1.13",
@@ -139,4 +142,6 @@ pipelineStages := Seq(rjs, gzip)
 //pipelineStages := Seq(gzip)
 
 testOptions in Test += Tests.Argument("-oF")
+
+gruntSettings
 
