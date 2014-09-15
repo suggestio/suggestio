@@ -1,6 +1,9 @@
 package controllers
 
+import java.nio.file.Files
+
 import models._
+import org.apache.commons.io.IOUtils
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.RequestHeader
 import util.PlayMacroLogsImpl
@@ -82,8 +85,15 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит одного слоя на карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser { implicit request =>
+  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser(parse.multipartFormData) { implicit request =>
+    //val deleteFut = MAdnNodeGeo.deleteAllRenderable(ngl)
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.
+    request.body.file("geojson").fold {
+      NotAcceptable("geojson not found in response")
+    } { tempFile =>
+      val jsonBytes = Files.readAllBytes(tempFile.ref.file.toPath)
+      ???
+    }
     val resp = layerJson(ngl, request2lang)
     Ok(resp)
   }
