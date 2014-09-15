@@ -55,11 +55,13 @@
           "scaleControl": true,
           "tilelayer": {},
           "datalayers": [
-          {
-          "displayOnLoad": true,
-          "name": "\u0421\u043b\u043e\u0439 1",
-          "id": 30694
-          }
+            @NodeGeoLevels.values.toSeq.sortBy(_.id).map { ngl =>
+              {
+                "displayOnLoad": true,
+                "name": "ngls.@ngl.esfn" ,
+                "id": @ngl.id
+              }
+            }
           ],
           "moreControl": true,
           "licence": "",

@@ -251,7 +251,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   /** Отрендерить geojson для валидации через geojsonlint. */
   def showGeoJson(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).apply { implicit request =>
-    Ok(request.adnGeo.shape.toPlayJson)
+    Ok(request.adnGeo.shape.toPlayJson())
   }
 
 

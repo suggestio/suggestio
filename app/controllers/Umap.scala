@@ -1,5 +1,6 @@
 package controllers
 
+import models.NodeGeoLevel
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -22,8 +23,8 @@ object Umap extends SioController with PlayMacroLogsImpl {
     Ok(mapBaseTpl())
   }
 
-  def getDatalayerGeojson = IsSuperuser { implicit request =>
-
+  /** Рендер одного слоя, перечисленного в карте слоёв. */
+  def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser { implicit request =>
     val feature1 = JsObject(Seq(
       "type" -> JsString("Feature"),
       "geometry" -> JsObject(Seq(
@@ -64,7 +65,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит одного слоя на карте. */
-  def saveMapDataLayers = IsSuperuser { implicit request =>
+  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser { implicit request =>
     val resp = JsObject(Seq(
       "name"          -> JsString("Sloy 1"),
       "id"            -> JsNumber(1),

@@ -54,7 +54,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
       bms.head.obj.id  mustBe  ri.firstBorderMemberId
       bms.last.obj.id  mustBe  ri.lastBorderMemberId
       val gs = res.toGeoShape
-      gs.toPlayJson  // Не должно быть экзепшена
+      gs.toPlayJson()  // Не должно быть экзепшена
       if (ri.allMemberIds.nonEmpty) {
         // Пройтись по всему списку member'ов
         for(i <- 0 until rel.members.size) {
