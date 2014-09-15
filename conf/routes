@@ -372,6 +372,6 @@ POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodat
 GET  /sys/umap/nodes                     controllers.Umap.getAdnNodesMap
 GET  /sys/umap/nodes/datalayer           controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
 POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
-POST /sys/umap/nodes/data                controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/datalayer           controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
 
 

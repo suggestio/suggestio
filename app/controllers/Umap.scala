@@ -34,6 +34,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
     Ok( mapBaseTpl(nglsJson)(ctx) )
   }
 
+
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser { implicit request =>
     val feature1 = JsObject(Seq(
