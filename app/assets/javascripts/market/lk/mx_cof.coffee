@@ -1193,6 +1193,7 @@ PersonalCabinet =
               .append data
 
               cbca.popup.showPopup '#'+popupId
+              cbca.pc.common.photoSlider()
           )
 
       $ document
