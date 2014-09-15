@@ -1,0 +1,111 @@
+@()(implicit ctx: Context)
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Leaflet.Storage Tests</title>
+    <meta charset="utf-8">
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/leaflet/leaflet-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/editable/Leaflet.Editable.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/draw/leaflet.draw-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/hash/leaflet-hash.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/i18n/Leaflet.i18n.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/minimap/Control.MiniMap.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/csv2geojson/csv2geojson.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/togeojson/togeojson.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/osmtogeojson/osmtogeojson.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/contextmenu/leaflet.contextmenu-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/loading/Control.Loading.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/leaflet.markercluster-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/measure/leaflet.measurecontrol.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label-src.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.core.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.popup.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.xhr.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.forms.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.icon.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.features.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.layer.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.controls.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.slideshow.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.tableeditor.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/contrib/js/storage.ui.default.js")"></script>
+
+
+
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/leaflet/leaflet.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/draw/leaflet.draw.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/minimap/Control.MiniMap.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/editinosm/Leaflet.EditInOSM.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/MarkerCluster.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/MarkerCluster.Default.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/contextmenu/leaflet.contextmenu.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/src/css/storage.css")' />
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/contrib/css/storage.ui.default.css")' />
+
+
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/sinon/pkg/sinon.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/mocha/mocha.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/chai/chai.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/happen/happen.js")"></script>
+    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/mocha/mocha.css")' />
+
+
+    <script>mocha.setup({ui: 'bdd', bail: true})</script>
+    <script type="text/javascript">
+        expect = chai.expect;
+        assert = chai.assert;
+    </script>
+
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/_pre.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Map.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/DataLayer.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Poly.js")"></script>
+    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Util.js")"></script>
+    <script src='@routes.Assets.at("javascripts/lib/lefafletUmap/Controls.js")'></script>
+
+    <style type="text/css">
+      #mocha {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+        background-color: white;
+        box-shadow: 0px 0px 8px 0px black;
+        overflow-y: auto;
+        display: none;
+      }
+      #mocha-stats {
+        position: absolute;
+      }
+    </style>
+  </head>
+
+  <body >
+
+    <div id="mocha"></div>
+    <div id="map"></div>
+    <div id="storage-ui-container"></div>
+    <div id="storage-alert-container"></div>
+    <div id="storage-tooltip-container"></div>
+    <script>
+        var runner = mocha.run(function (failures) {
+            if (window.location.search.indexOf('debug') === -1) qs('#mocha').style.display = 'block';
+            console.log(failures);
+        });
+        runner.on('fail', function(test, err) {
+            console.log(test.title, test.err);
+            console.log(test.err.expected, test.err.actual);
+            console.log(test.err.stack);
+        });
+    </script>
+
+  </body>
+
+</html>

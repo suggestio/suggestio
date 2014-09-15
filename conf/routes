@@ -368,3 +368,9 @@ GET  /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodat
 GET  /sys/adn/geodata/propose/:adnId     controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
 POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
 
+## Карта umap
+GET  /sys/umap/nodes                     controllers.Umap.getAdnNodesMap
+POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
+POST /sys/umap/nodes/data                controllers.Umap.saveMapDataLayers
+
+
