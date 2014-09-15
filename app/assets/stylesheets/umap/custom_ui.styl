@@ -1,0 +1,44 @@
+@import "../market/lk_new-design/mixins"
+
+.storage-edit-enabled
+  .custom-ui
+    display: block
+
+.custom-ui
+  display   none
+  position  absolute
+  top       60px
+  left      100px
+  z-index   100
+
+  &_btn-lst
+    background-color  white
+
+  &_btn
+    float             left
+    margin            0
+
+    display           inline-block
+    padding           6px 12px
+    vertical-align    middle
+    box-sizing        no-wrap
+
+    background        white
+    border            none
+    cursor            pointer
+    text-align        center
+
+    white-space       nowrap
+    outline           none
+    appearance(none)
+    backface(hidden)
+
+  &_btn:hover,
+  &_btn.js-act
+    background-color  #e6e6e6
+
+
+
+
+
+

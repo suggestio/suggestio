@@ -930,15 +930,3 @@ body.content #storage-ui-container {
         display: block;
     }
 }
-
-.custom-ui {
-  display: none;
-  position: absolute;
-  top: 60px;
-  left: 100px;
-  z-index: 100;
-}
-
-.storage-edit-enabled .custom-ui {
-  display: block;
-}

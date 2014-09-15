@@ -7,7 +7,8 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="@routes.Assets.at("stylesheets/umap/base.css")" type="text/css" />
     <link rel="stylesheet" href="@routes.Assets.at("stylesheets/umap/leaflet.storage.css")" type="text/css" />
-    
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/umap/custom_ui.css")" type="text/css" />
+
     <script type="text/javascript" src="@routes.Assets.at("javascripts/umap/leaflet.storage.min.js")"></script>
 
     <script src="@routes.Assets.at("javascripts/umap/locale/ru.js")"></script>
@@ -24,19 +25,20 @@
     <div id="storage-alert-container"></div>
     <div id="storage-tooltip-container"></div>
     <div id="map"></div>
-    
+
     <div class="custom-ui">
-      <select class="js-select-label">
-        <option value="0">Выберите слой</option>
-        <option value="label-1">Слой 1</option>
-        <option value="label-2">Слой 2</option>
-      </select>
-      <select class="js-select-id" data-label="label-1">
+      <div class="custom-ui_btn-lst js-select-label">
+        <button class="custom-ui_btn js-act" data-label="1">Здания</button>
+        <button class="custom-ui_btn" data-label="2">Районы городов</button>
+        <button class="custom-ui_btn" data-label="3">Города</button>
+      </div>
+
+      <select class="js-select-id" data-label="1">
         <option value="0">Выберите город</option>
         <option value="test-id-1">Москва</option>
         <option value="test-id-2">Санкт-Петербург</option>
       </select>
-      <select class="js-select-id" data-label="label-2">
+      <select class="js-select-id" data-label="2">
         <option value="0">Выберите ТЦ</option>
         <option value="test-id-1">Галерея</option>
         <option value="test-id-2">Стокманн</option>

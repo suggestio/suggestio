@@ -4,13 +4,20 @@ $doc.ready ->
   $ '.js-select-id'
   .hide()
 
-$doc.on 'change', '.js-select-label', ->
+$doc.on 'click', '.js-select-label button', ->
   $this = $ this
-  $selected = $this.find 'option:selected'
-  value = $selected.val()
 
-  $this.hide()
-  $ ".js-select-id[data-label = '#{value}']"
+  if $this.hasClass 'js-act'
+    return false
+
+  $ '.js-select-label .js-act'
+  .removeClass 'js-act'
+  $this.addClass 'js-act'
+  value = $this.attr 'data-label'
+
+  $ ".js-select-id"
+  .hide()
+  .filter "[data-label = '#{value}']"
   .show()
 
 $doc.on 'change', '.js-select-id', ->
@@ -18,5 +25,5 @@ $doc.on 'change', '.js-select-id', ->
   $selected = $this.find 'option:selected'
   value = $selected.val()
   $storageProps = $ '#storage-feature-properties'
-  $input = $storageProps.find 'input[name = "name"]'
-  $input.val value
+  $input = $storageProps.find 'textarea'
+  $input.text value
