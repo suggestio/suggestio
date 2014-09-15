@@ -25,11 +25,21 @@
     <div id="storage-tooltip-container"></div>
     <div id="map"></div>
     
-    <div>
-      <select>
-        <option>Выберите город</option>
-        <option>Москва</option>
-        <option>Санкт-Петербург</option>
+    <div class="custom-ui">
+      <select class="js-select-label">
+        <option value="0">Выберите слой</option>
+        <option value="label-1">Слой 1</option>
+        <option value="label-2">Слой 2</option>
+      </select>
+      <select class="js-select-id" data-label="label-1">
+        <option value="0">Выберите город</option>
+        <option value="test-id-1">Москва</option>
+        <option value="test-id-2">Санкт-Петербург</option>
+      </select>
+      <select class="js-select-id" data-label="label-2">
+        <option value="0">Выберите ТЦ</option>
+        <option value="test-id-1">Галерея</option>
+        <option value="test-id-2">Стокманн</option>
       </select>
     </div>
     
@@ -232,7 +242,7 @@
           "datalayersControl": true,
           "urls": {
           "map": "/ru/map/{slug}_{pk}",
-          "datalayer_view": "/sys/umap/nodes/datalayer",
+          "datalayer_view": "/sys/umap/nodes/datalayer?ngl={pk}",
           "map_update": "/sys/umap/nodes/settings",
           "map_old_url": "/ru/map/{username}/{slug}/",
           "ajax_proxy": "/ajax-proxy/?url={url}",
@@ -240,7 +250,7 @@
           "map_short_url": "/ru/m/{pk}/",
           "map_anonymous_edit_url": "/ru/map/anonymous-edit/{signature}",
           "map_new": "/ru/map/new/",
-          "datalayer_update": "/sys/umap/nodes/data",
+          "datalayer_update": "/sys/umap/nodes/datalayer?ngl={pk}",
           "map_delete": "/ru/map/{map_id}/update/delete/",
           "map_create": "/ru/map/create/",
           "logout": "/ru/logout/",
@@ -356,6 +366,9 @@
         });
     </script>
 
-    
+    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+    <script src="@routes.Assets.at("javascripts/umap/custom_ui.js")"></script>
+
+
 </body>
 </html>
