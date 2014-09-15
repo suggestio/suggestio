@@ -44,7 +44,7 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
   override def shapeType = GsTypes.multilinestring
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val playJson = lines.map { line => LineStringGs.coords2playJson(line.coords) }
     List(COORDS_ESFN -> JsArray(playJson))
   }

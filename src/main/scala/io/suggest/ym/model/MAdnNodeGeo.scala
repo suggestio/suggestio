@@ -54,6 +54,8 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
   val LAST_MODIFIED_ESFN = "lm"
   /** Храним название поля в отдельном поле. Это нужно для получения уровня без получения самого документа. */
   val GLEVEL_ESFN = "gl"
+  /** Флаг совместимости фигуры с geo-json. */
+  val GEO_JSON_COMPATIBLE_ESFN = "gjsc"
 
   override val ES_TYPE_NAME = "ang"   // ang = adn node geo
 
@@ -78,6 +80,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       FieldDate(LAST_MODIFIED_ESFN, index = null, include_in_all = false) ::
       // store = true для возможности простого и быстрого получения названия используемого glevel-поля в обход очень тяжелого _source.
       FieldString(GLEVEL_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
+      FieldBoolean(GEO_JSON_COMPATIBLE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = false) ::
       nglFields
   }
 
@@ -159,6 +162,10 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   def geoFilter(glevel: NodeGeoLevel, shape: GeoShapeQuerable): FilterBuilder = {
     FilterBuilders.geoShapeFilter(glevel.esfn, shape.toEsShapeBuilder, ShapeRelation.INTERSECTS)
+  }
+
+  def glevelQuery(glevel: NodeGeoLevel): QueryBuilder = {
+    QueryBuilders.termQuery(GLEVEL_ESFN, glevel.esfn)
   }
 
   def glevelsQuery(glevels: Seq[NodeGeoLevel]): QueryBuilder = {
@@ -294,6 +301,34 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     }
   }
 
+  def renderableFilter = FilterBuilders.termFilter(GEO_JSON_COMPATIBLE_ESFN, true)
+  def renderableFiltered(q: QueryBuilder) = QueryBuilders.filteredQuery(q, renderableFilter)
+
+  /**
+   * Найти все пригодные для рендера фигуры. Непригодные -- это circle, envelope. Они не имеют true значения в поле
+   * совместимости с GeoJSON.
+   * @param glevel На каком уровне ищем фигуры.
+   * @param maxResults Макс.кол-во результатов в выдаче.
+   * @param offset Сдвиг в выдаче.
+   * @return Список результатов в неопределённом порядке.
+   */
+  def findAllRenderable(glevel: NodeGeoLevel, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                       (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val query = renderableFiltered(glevelQuery(glevel))
+    prepareSearch
+      .setQuery(query)
+      .setSize(maxResults)
+      .setFrom(offset)
+      .execute()
+      .map { searchResp2list }
+  }
+
+  def deleteAllRenderable(glevel: NodeGeoLevel)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    prepareDeleteByQuery
+      .setQuery( renderableFiltered(glevelQuery(glevel)) )
+      .execute()
+  }
+
 }
 
 
@@ -321,8 +356,9 @@ final case class MAdnNodeGeo(
     var acc: FieldsJsonAcc =
       ADN_ID_ESFN -> JsString(adnId) ::
       GLEVEL_ESFN -> JsString(glevel.esfn) ::
-      glevel.esfn -> shape.toPlayJson ::
+      glevel.esfn -> shape.toPlayJson(geoJsonCompatible = false) ::
       LAST_MODIFIED_ESFN -> EsModel.date2JsStr(lastModified) ::
+      GEO_JSON_COMPATIBLE_ESFN -> JsBoolean(shape.shapeType.isGeoJsonCompatible) ::
       acc0
     if (url.isDefined)
       acc ::= URL_ESFN -> JsString(url.get)
@@ -413,6 +449,15 @@ object NodeGeoLevels extends Enumeration {
       case ex: NoSuchElementException => None
     }
   }
+
+  def maybeWithId(id: Int): Option[NodeGeoLevel] = {
+    try {
+      Some(NodeGeoLevels(id))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
+
 }
 
 

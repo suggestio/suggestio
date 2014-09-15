@@ -32,7 +32,7 @@ class CircleGsTest extends FlatSpec with Matchers with CoordRnd {
 
   "CircleGs" should "serialize/deserialize to/from ES JSON" in {
     mkTests { cgs =>
-      val jsonStr = Json.stringify( cgs.toPlayJson )
+      val jsonStr = Json.stringify( cgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       CircleGs.deserialize(jacksonJson)  shouldBe  Some(cgs)
       val esShape = cgs.toEsShapeBuilder

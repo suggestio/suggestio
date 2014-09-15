@@ -15,7 +15,7 @@ class PointGsTest extends FlatSpec with Matchers with LatLonRnd[PointGs] {
 
   "PoingGs" should "serialize/deserialize to/from JSON" in {
     mkTests { pgs =>
-      val jsonStr = Json.stringify( pgs.toPlayJson )
+      val jsonStr = Json.stringify( pgs.toPlayJson() )
       // TODO Надо тестить через XContentHelpers
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       PointGs.deserialize(jacksonJson)  shouldBe  Some(pgs)

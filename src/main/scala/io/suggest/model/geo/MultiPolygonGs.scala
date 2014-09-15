@@ -40,7 +40,7 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
   override def shapeType = GsTypes.multipolygon
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val coords = JsArray(polygons.map { _._toPlayJsonCoords })
     List(COORDS_ESFN -> coords)
   }

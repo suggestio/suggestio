@@ -27,7 +27,7 @@ class MultiLineStringGsTest extends FlatSpec with Matchers with CoordLineRnd {
 
   "MultiLineStringGs" should "serialize/deserialize to/from ES JSON" in {
     mkTests { mlsgs =>
-      val jsonStr = Json.stringify( mlsgs.toPlayJson )
+      val jsonStr = Json.stringify( mlsgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       MultiLineStringGs.deserialize(jacksonJson)  shouldBe  Some(mlsgs)
       mlsgs.toEsShapeBuilder  should not be  null

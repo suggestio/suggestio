@@ -44,8 +44,8 @@ case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
   override def shapeType = GsTypes.geometrycollection
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
-    val geomsJson = geoms.map { _.toPlayJson }
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val geomsJson = geoms.map { _.toPlayJson(geoJsonCompatible) }
     List(
       GEOMETRIES_ESFN -> JsArray(geomsJson)
     )

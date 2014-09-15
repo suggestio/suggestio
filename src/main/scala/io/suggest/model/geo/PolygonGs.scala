@@ -42,7 +42,7 @@ object PolygonGs {
 case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShapeQuerable {
   override def shapeType = GsTypes.polygon
 
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(COORDS_ESFN -> _toPlayJsonCoords)
   }
 

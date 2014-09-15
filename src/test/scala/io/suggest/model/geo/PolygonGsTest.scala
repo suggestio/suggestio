@@ -25,7 +25,7 @@ class PolygonGsTest extends FlatSpec with Matchers with CoordLineRnd {
   
   "PolygonGs" should "serialize/deserialize to/from ES JSON" in {
     mkTestsNoHoles { pgs =>
-      val jsonStr = Json.stringify( pgs.toPlayJson )
+      val jsonStr = Json.stringify( pgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       PolygonGs.deserialize(jacksonJson)  shouldBe  Some(pgs)
       pgs.toEsShapeBuilder  should not be  null

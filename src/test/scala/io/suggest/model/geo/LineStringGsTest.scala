@@ -39,7 +39,7 @@ trait MultiPoingGeoShapeTest extends FlatSpec with Matchers with CoordLineRnd {
 
   testName should "serialize/deserialize to/from ES JSON" in {
     mkTests { lsgs =>
-      val jsonStr = Json.stringify( lsgs.toPlayJson )
+      val jsonStr = Json.stringify( lsgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       companion.deserialize(jacksonJson)  shouldBe  Some(lsgs)
       lsgs.toEsShapeBuilder  should not be  null

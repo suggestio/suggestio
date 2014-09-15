@@ -33,7 +33,8 @@ import CircleGs._
 case class CircleGs(center: GeoPoint, radius: Distance) extends GeoShapeQuerable {
   override def shapeType = GsTypes.circle
 
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(
       COORDS_ESFN  -> center.toPlayGeoJson,
       RADIUS_ESFN  -> JsString(radius.toString)

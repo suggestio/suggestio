@@ -27,7 +27,7 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.point
 
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(COORDS_ESFN -> coord.toPlayGeoJson)
   }
 

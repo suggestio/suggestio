@@ -48,7 +48,7 @@ trait MultiPointShape extends GeoShapeQuerable {
   def coords: Seq[GeoPoint]
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal: FieldsJsonAcc = {
+  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val coordsJson = LineStringGs.coords2playJson(coords)
     List(COORDS_ESFN -> coordsJson)
   }

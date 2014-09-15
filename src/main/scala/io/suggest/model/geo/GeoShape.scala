@@ -48,13 +48,18 @@ trait GeoShape {
   def shapeType: GsTypes.GsType
 
   /** Отрендерить json для сохранения внутри _source. */
-  def toPlayJson: JsObject = {
-    val acc = TYPE_ESFN -> JsString(shapeType.toString) :: _toPlayJsonInternal
+  def toPlayJson(geoJsonCompatible: Boolean = false): JsObject = {
+    val typeName: String = if (geoJsonCompatible) {
+      shapeType.geoJsonName.get
+    } else {
+      shapeType.esName
+    }
+    val acc = TYPE_ESFN -> JsString(typeName) :: _toPlayJsonInternal(geoJsonCompatible)
     JsObject(acc)
   }
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  def _toPlayJsonInternal: FieldsJsonAcc
+  def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc
 
 }
 
@@ -73,8 +78,24 @@ trait GeoShapeQuerable extends GeoShape {
 
 /** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
 object GsTypes extends Enumeration {
-  type GsType = Value
-  val point, linestring, polygon, multipoint, multilinestring, multipolygon, geometrycollection, envelope, circle = Value
+
+  protected case class Val(esName: String, geoJsonName: Option[String]) extends super.Val(esName) {
+    def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
+  }
+
+  type GsType = Val
+
+  val point               = Val("point", Some("Point"))
+  val linestring          = Val("linestring", Some("LineString"))
+  val polygon             = Val("polygon", Some("Polygon"))
+  val multipoint          = Val("multipoint", Some("MultiPoint"))
+  val multilinestring     = Val("multilinestring", Some("MultiLineString"))
+  val multipolygon        = Val("multipolygon", Some("MultiPolygon"))
+  val geometrycollection  = Val("geometrycollection", Some("GeometryCollection"))
+  val envelope            = Val("envelope", None)
+  val circle              = Val("circle", None)
+
+  implicit def value2val(x: Value): GsType = x.asInstanceOf[GsType]
 
   def maybeWithName(n: String): Option[GsType] = {
     try {
@@ -83,4 +104,6 @@ object GsTypes extends Enumeration {
       case ex: Exception => None
     }
   }
+
 }
+
