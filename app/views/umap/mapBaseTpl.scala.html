@@ -1,111 +1,371 @@
-@()(implicit ctx: Context)
-
+@()
 
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Leaflet.Storage Tests</title>
+<head>
+    <title>Безымянная карта - uMap</title>
     <meta charset="utf-8">
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/leaflet/leaflet-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/editable/Leaflet.Editable.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/draw/leaflet.draw-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/hash/leaflet-hash.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/i18n/Leaflet.i18n.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/minimap/Control.MiniMap.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/csv2geojson/csv2geojson.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/togeojson/togeojson.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/osmtogeojson/osmtogeojson.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/contextmenu/leaflet.contextmenu-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/loading/Control.Loading.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/leaflet.markercluster-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/measure/leaflet.measurecontrol.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label-src.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.core.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.popup.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.xhr.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.forms.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.icon.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.features.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.layer.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.controls.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.slideshow.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.tableeditor.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/src/js/leaflet.storage.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/contrib/js/storage.ui.default.js")"></script>
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/umap/base.css")" type="text/css" />
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/umap/leaflet.storage.css")" type="text/css" />
+    
+<script type="text/javascript" src="@routes.Assets.at("javascripts/umap/leaflet.storage.js")"></script>
+
+    <script src="@routes.Assets.at("javascripts/umap/locale/ru.js")"></script>
+
+<script type="text/javascript" src="@routes.Assets.at("javascripts/umap/leaflet.storage.singleton.js")"></script>
 
 
+    <script type="text/javascript" src="@routes.Assets.at("javascripts/umap/leaflet.storage.autocomplete.js")"></script>
 
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/leaflet/leaflet.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/draw/leaflet.draw.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/minimap/Control.MiniMap.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/editinosm/Leaflet.EditInOSM.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/MarkerCluster.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/markercluster/MarkerCluster.Default.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/contextmenu/leaflet.contextmenu.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/reqs/label/leaflet.label.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/src/css/storage.css")' />
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/contrib/css/storage.ui.default.css")' />
-
-
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/sinon/pkg/sinon.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/mocha/mocha.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/chai/chai.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/happen/happen.js")"></script>
-    <link rel="stylesheet" href='@routes.Assets.at("javascripts/lib/lefafletUmap/node_modules/mocha/mocha.css")' />
-
-
-    <script>mocha.setup({ui: 'bdd', bail: true})</script>
-    <script type="text/javascript">
-        expect = chai.expect;
-        assert = chai.assert;
-    </script>
-
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/_pre.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Map.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/DataLayer.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Poly.js")"></script>
-    <script src="@routes.Assets.at("javascripts/lib/lefafletUmap/Util.js")"></script>
-    <script src='@routes.Assets.at("javascripts/lib/lefafletUmap/Controls.js")'></script>
-
-    <style type="text/css">
-      #mocha {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 10000;
-        background-color: white;
-        box-shadow: 0px 0px 8px 0px black;
-        overflow-y: auto;
-        display: none;
-      }
-      #mocha-stats {
-        position: absolute;
-      }
-    </style>
-  </head>
-
-  <body >
-
-    <div id="mocha"></div>
-    <div id="map"></div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<body class="map_detail">
     <div id="storage-ui-container"></div>
     <div id="storage-alert-container"></div>
     <div id="storage-tooltip-container"></div>
-    <script>
-        var runner = mocha.run(function (failures) {
-            if (window.location.search.indexOf('debug') === -1) qs('#mocha').style.display = 'block';
-            console.log(failures);
-        });
-        runner.on('fail', function(test, err) {
-            console.log(test.title, test.err);
-            console.log(test.err.expected, test.err.actual);
-            console.log(test.err.stack);
-        });
+
+    
+    
+
+    
+    
+        
+    <div id="map"></div>
+    <script type="text/javascript">
+        var MAP = new L.Storage.Map("map", {
+"geometry": {
+"type": "Point",
+"coordinates": [
+2,
+51
+]
+},
+"type": "Feature",
+"properties": {
+"miniMap": false,
+"description": "",
+"scrollWheelZoom": true,
+"locale": "ru",
+"displayPopupFooter": false,
+"allowEdit": false,
+"slideshow": {},
+"scaleControl": true,
+"tilelayer": {},
+"datalayers": [
+{
+"displayOnLoad": true,
+"name": "\u0421\u043b\u043e\u0439 1",
+"id": 30694
+}
+],
+"moreControl": true,
+"licence": "",
+"tilelayersControl": true,
+"default_iconUrl": "/static/storage/src/img/marker.png",
+"name": "\u0411\u0435\u0437\u044b\u043c\u044f\u043d\u043d\u0430\u044f \u043a\u0430\u0440\u0442\u0430",
+"shortUrl": "http://u.osmfr.org/m/16717/",
+"tilelayers": [
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] under ODbL ",
+"name": "OSM-Fr",
+"url_template": "http://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+"selected": true,
+"rank": 1,
+"minZoom": 0,
+"maxZoom": 20,
+"id": 10
+},
+{
+"attribution": "Tiles \u00a9 [[http://www.thunderforest.com/outdoors/|Gravitystorm]] / map data [[http://osm.org/copyright|OpenStreetMap]]",
+"name": "Outdoors (OSM)",
+"url_template": "http://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png",
+"rank": 2,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 14
+},
+{
+"attribution": "Map data \u00a9  [[http://osm.org/copyright|OpenStreetMap contributors]], tiles [[http://giscience.uni-hd.de/|GIScience Research Group @@ Heidelberg University]]",
+"name": "OSM Roads",
+"url_template": "http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}",
+"rank": 3,
+"minZoom": 0,
+"maxZoom": 19,
+"id": 18
+},
+{
+"attribution": "Tiles \u00a9 [[http://www.thunderforest.com/outdoors/|Gravitystorm]] / map data [[http://osm.org/copyright|OpenStreetMap]]",
+"name": "Landscape",
+"url_template": "http://{s}.tile3.opencyclemap.org/landscape/{z}/{x}/{y}.png",
+"rank": 4,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 6
+},
+{
+"attribution": "Map tiles by [[http://stamen.com|Stamen Design]], under [[http://creativecommons.org/licenses/by/3.0|CC BY 3.0]]. Data by [[http://openstreetmap.org|OpenStreetMap]], under [[http://creativecommons.org/licenses/by-sa/3.0|CC BY SA]].",
+"name": "Toner",
+"url_template": "http://{s}.tile.stamen.com/toner-lite/{z}/{x}/{y}.png",
+"rank": 5,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 2
+},
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] contributors",
+"name": "OpenStreetMap",
+"url_template": "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+"rank": 6,
+"minZoom": 0,
+"maxZoom": 19,
+"id": 1
+},
+{
+"attribution": "Tiles \u00a9 [[http://www.thunderforest.com/outdoors/|Gravitystorm]] / map data [[http://osm.org/copyright|OpenStreetMap]]",
+"name": "Transport",
+"url_template": "http://{s}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png",
+"rank": 7,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 3
+},
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] - Tiles courtesy of [[http://www.mapquest.com/|MapQuest]] {{http://developer.mapquest.com/content/osm/mq_logo.png}}",
+"name": "MapQuest Open",
+"url_template": "http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png",
+"rank": 8,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 7
+},
+{
+"attribution": "Data \u00a9 OpenStreetMap Contributors - Tiles \u00a9 HOT",
+"name": "HOTOSM style",
+"url_template": "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+"rank": 9,
+"minZoom": 0,
+"maxZoom": 20,
+"id": 15
+},
+{
+"attribution": "\u201cOpenCycleMap\u201d and \u201cOpenStreetMap contributors\u201d",
+"name": "OpenCycleMap",
+"url_template": "http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png",
+"rank": 10,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 5
+},
+{
+"attribution": "Map tiles by [[http://stamen.com|Stamen Design]], under [[http://creativecommons.org/licenses/by/3.0|CC BY 3.0]]. Data by [[http://openstreetmap.org|OpenStreetMap]], under [[http://creativecommons.org/licenses/by-sa/3.0|CC BY SA]].",
+"name": "Watercolor",
+"url_template": "http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg",
+"rank": 11,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 8
+},
+{
+"attribution": "Tiles HikeBikeMap \u2014 Map Data \u00a9 [[http://www.openstreetmap.org/copyright|OpenStreetMap]] contributors",
+"name": "hikebikemap",
+"url_template": "http://toolserver.org/tiles/hikebike/{z}/{x}/{y}.png",
+"rank": 12,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 9
+},
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] - Tiles courtesy of [[https://geodienste.lyrk.de/copyright/|Lyrk]]",
+"name": "Lyrk",
+"url_template": "http://tiles.lyrk.org/ls/{z}/{x}/{y}?apikey=982c82cc765f42cf950a57de0d891076",
+"rank": 13,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 13
+},
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] contributors",
+"name": "OSM-monochrome",
+"url_template": "http://www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png",
+"rank": 14,
+"minZoom": 1,
+"maxZoom": 18,
+"id": 11
+},
+{
+"attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] - Tiles courtesy of [[http://openstreetmap.se|OpenStreetMap Sweden]]",
+"name": "Hydda",
+"url_template": "http://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png",
+"rank": 15,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 16
+},
+{
+"attribution": "Kartendaten: \u00a9 [[https://openstreetmap.org/copyright|OpenStreetMap]]-Mitwirkende, [[http://viewfinderpanoramas.org/|SRTM]] | Kartendarstellung: \u00a9 [[https://opentopomap.org/|OpenTopoMap]] ([[https://creativecommons.org/licenses/by-sa/3.0/|CC-BY-SA]])",
+"name": "OpenTopoMap",
+"url_template": "http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+"rank": 16,
+"minZoom": 7,
+"maxZoom": 15,
+"id": 17
+},
+{
+"attribution": "\u00a9 OSM Contributors - tiles OpenRiverboatMap",
+"name": "OpenRiverboatMap",
+"url_template": "http://{s}.tile.openstreetmap.fr/openriverboatmap/{z}/{x}/{y}.png",
+"rank": 17,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 4
+},
+{
+"attribution": "Karte hergestellt aus [[http://osm.org|OpenStreetMap-Daten]] | Lizenz: [[http://opendatacommons.org/licenses/odbl/|Open Database License (ODbL)]] | Courtesy of [[http://openstreetmap.fr|OpenStreetMap.de]]",
+"name": "OSM - Deutschland",
+"url_template": "http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png",
+"rank": 18,
+"minZoom": 0,
+"maxZoom": 18,
+"id": 19
+}
+],
+"zoom": 6,
+"zoomControl": true,
+"limitBounds": {},
+"datalayersControl": true,
+"urls": {
+"map": "/ru/map/{slug}_{pk}",
+"datalayer_view": "/ru/datalayer/{pk}/",
+"map_update": "/ru/map/{map_id}/update/settings/",
+"map_old_url": "/ru/map/{username}/{slug}/",
+"ajax_proxy": "/ajax-proxy/?url={url}",
+"map_geojson": "/ru/map/{pk}/geojson/",
+"map_short_url": "/ru/m/{pk}/",
+"map_anonymous_edit_url": "/ru/map/anonymous-edit/{signature}",
+"map_new": "/ru/map/new/",
+"datalayer_update": "/ru/map/{map_id}/datalayer/update/{pk}/",
+"map_delete": "/ru/map/{map_id}/update/delete/",
+"map_create": "/ru/map/create/",
+"logout": "/ru/logout/",
+"routing": "http://map.project-osrm.org/?loc={lat},{lng}&hl={locale}",
+"datalayer_create": "/ru/map/{map_id}/datalayer/create/",
+"map_clone": "/ru/map/{map_id}/update/clone/",
+"login_popup_end": "/ru/login/popup/end/",
+"login": "/ru/login/",
+"datalayer_delete": "/ru/map/{map_id}/datalayer/delete/{pk}/",
+"pictogram_list_json": "/ru/pictogram/json/",
+"map_update_permissions": "/ru/map/{map_id}/update/permissions/"
+},
+"storage_id": 16717,
+"captionBar": false,
+"licences": {
+"No licence set": {
+"url": "",
+"name": "No licence set"
+},
+"\u041d\u044f\u043c\u0430 \u0438\u0437\u0431\u0440\u0430\u043d \u043b\u0438\u0446\u0435\u043d\u0437": {
+"url": "",
+"name": "\u041d\u044f\u043c\u0430 \u0438\u0437\u0431\u0440\u0430\u043d \u043b\u0438\u0446\u0435\u043d\u0437"
+},
+"M\u00e4\u00e4ritt\u00e4m\u00e4t\u00f6n lisenssi": {
+"url": "",
+"name": "M\u00e4\u00e4ritt\u00e4m\u00e4t\u00f6n lisenssi"
+},
+"WTFPL": {
+"url": "http://www.wtfpl.net/",
+"name": "WTFPL"
+},
+"\u30e9\u30a4\u30bb\u30f3\u30b9\u672a\u8a2d\u5b9a": {
+"url": "",
+"name": "\u30e9\u30a4\u30bb\u30f3\u30b9\u672a\u8a2d\u5b9a"
+},
+"Nenustatyta licenzija": {
+"url": "",
+"name": "Nenustatyta licenzija"
+},
+"Licence nenastavena.": {
+"url": "",
+"name": "Licence nenastavena."
+},
+"Ning\u00fan conjunto de licencias": {
+"url": "",
+"name": "Ning\u00fan conjunto de licencias"
+},
+"No s'ha indicat llic\u00e8ncia": {
+"url": "",
+"name": "No s'ha indicat llic\u00e8ncia"
+},
+"Nenhuma licen\u00e7a definida": {
+"url": "",
+"name": "Nenhuma licen\u00e7a definida"
+},
+"\u041b\u0438\u0446\u0435\u043d\u0437\u0438\u044f \u043d\u0435 \u0437\u0430\u0434\u0430\u043d\u0430": {
+"url": "",
+"name": "\u041b\u0438\u0446\u0435\u043d\u0437\u0438\u044f \u043d\u0435 \u0437\u0430\u0434\u0430\u043d\u0430"
+},
+"ODbl": {
+"url": "http://opendatacommons.org/licenses/odbl/",
+"name": "ODbl"
+},
+"Ingen licens angivet": {
+"url": "",
+"name": "Ingen licens angivet"
+},
+"\u672a\u6307\u5b9a\u6388\u6b0a\u689d\u6b3e": {
+"url": "",
+"name": "\u672a\u6307\u5b9a\u6388\u6b0a\u689d\u6b3e"
+},
+"Keine Lizenz ausgew\u00e4hlt": {
+"url": "",
+"name": "Keine Lizenz ausgew\u00e4hlt"
+},
+"No se ha especificado la licencia": {
+"url": "",
+"name": "No se ha especificado la licencia"
+},
+"B\u1ea3n quy\u1ec1n kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1eb7t": {
+"url": "",
+"name": "B\u1ea3n quy\u1ec1n kh\u00f4ng \u0111\u01b0\u1ee3c \u0111\u1eb7t"
+},
+"Licence ouverte/Open Licence": {
+"url": "http://www.data.gouv.fr/Licence-Ouverte-Open-Licence",
+"name": "Licence ouverte/Open Licence"
+},
+"Nessuna licenza impostata": {
+"url": "",
+"name": "Nessuna licenza impostata"
+},
+"Aucune licence": {
+"url": "",
+"name": "Aucune licence"
+},
+"Nessuna licenza definita": {
+"url": "",
+"name": "Nessuna licenza definita"
+}
+}
+}
+});
     </script>
 
-  </body>
+    
+    <script type="text/javascript">
+    
+</script>
 
+
+    
+        <script type="text/javascript">
+            L.S.on('ui:ready', function () {
+                L.S.AutoComplete.multiSelect('id_editors', {
+                    placeholder: "Введите имя редактора, чтобы добавить..."
+                });
+                L.S.AutoComplete.select('id_owner', {
+                    placeholder: "Type new owner nick…"
+                });
+            });
+        </script>
+    
+    
+</body>
 </html>

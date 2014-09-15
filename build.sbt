@@ -3,8 +3,8 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
-import org.rbayer.GruntSbtPlugin._
-import GruntKeys._
+//import org.rbayer.GruntSbtPlugin._
+//import GruntKeys._
 
 
 organization := "io.suggest"
@@ -143,5 +143,5 @@ pipelineStages := Seq(rjs, gzip)
 
 testOptions in Test += Tests.Argument("-oF")
 
-gruntSettings
+//gruntSettings
 

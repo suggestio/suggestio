@@ -43,5 +43,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2x-SNAPSHOT")
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
 
 // Grunt.js
-addSbtPlugin("org.rbayer" % "grunt-sbt" % "1.0")
+//addSbtPlugin("org.rbayer" % "grunt-sbt" % "1.0")
 
