@@ -23,9 +23,17 @@
     <div id="storage-ui-container"></div>
     <div id="storage-alert-container"></div>
     <div id="storage-tooltip-container"></div>
-
-
     <div id="map"></div>
+    
+    <div>
+      <select>
+        <option>Выберите город</option>
+        <option>Москва</option>
+        <option>Санкт-Петербург</option>
+      </select>
+    </div>
+    
+    
     <script type="text/javascript">
         var MAP = new L.Storage.Map("map", {
           "geometry": {
@@ -63,7 +71,7 @@
           {
           "attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] under ODbL ",
           "name": "OSM-Fr",
-          "url_template": "http://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+          "url_template": "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
           "selected": true,
           "rank": 1,
           "minZoom": 0,
