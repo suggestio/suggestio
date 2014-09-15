@@ -1122,7 +1122,7 @@ a.osm-editor:hover {
     height: 36px;
     width: 36px;
     line-height: 36px;
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
 }
 .leaflet-control-embed,
 .leaflet-control-tilelayers,
@@ -1191,7 +1191,7 @@ a.storage-control-text {
     font-size: 0.8em;
 }
 .leaflet-control-edit-enable a {
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     background-position: -1px -1px;
 }
 
@@ -1215,7 +1215,7 @@ a.storage-control-text {
     border-bottom: none;
     border-right: 1px solid #eee;
     background-repeat: no-repeat;
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     background-size: auto auto;
 }
 .storage-toolbar {
@@ -1266,7 +1266,7 @@ a.storage-control-text {
 /* ********************************* */
 
 .leaflet-control-edit-in-osm .leaflet-control-edit-in-osm-toggle {
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     background-position: -121px -121px;
 }
 .storage-measure-control,
@@ -1333,7 +1333,7 @@ a.storage-control-text {
     margin-left: 5px;
     background-position: -12px -12px;
     background-repeat: no-repeat;
-    background-image: url('/static/storage/src/img/16.png?a221bd60e41b');
+    background-image: url('/assets/images/umap/16.png');
     vertical-align: middle;
 }
 
@@ -1570,7 +1570,7 @@ a.storage-control-text {
 /* ********************************* */
 
 .leaflet-control-browse .storage-browse-toggle {
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     width: 36px;
     height: 36px;
     background-position: -39px -82px;
@@ -1590,7 +1590,7 @@ a.storage-control-text {
 .storage-caption i,
 .leaflet-control-browse .storage-browse-datalayers i {
     background-repeat: no-repeat;
-    background-image: url('/static/storage/src/img/16.png?a221bd60e41b');
+    background-image: url('/assets/images/umap/16.png');
     display: inline;
     padding: 0 10px;
     cursor: pointer;
@@ -1664,7 +1664,7 @@ a.storage-control-text {
 }
 .leaflet-control-browse a.add-datalayer:before,
 .leaflet-control-browse a.storage-browse-link:before {
-    background-image: url('/static/storage/src/img/16.png?a221bd60e41b');
+    background-image: url('/assets/images/umap/16.png');
     background-repeat: no-repeat;
     background-position: -92px -168px;
     width: 24px;
@@ -1729,7 +1729,7 @@ a.storage-control-text {
 .storage-browse-features .polygon .feature-color,
 .storage-browse-features .polyline .feature-color {
     box-shadow: 0 0 4px 0 black inset;
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     background-size: 500%;
 }
 .storage-browse-features .polyline .feature-color {
@@ -1838,7 +1838,7 @@ a.storage-control-text {
 /* ********************************* */
 .storage-icon-16 {
     background-repeat: no-repeat;
-    background-image: url('/static/storage/src/img/16.png?a221bd60e41b');
+    background-image: url('/assets/images/umap/16.png');
     display: inline;
     padding: 0 10px;
 }
@@ -1941,7 +1941,7 @@ a.storage-control-text {
     height: 16px;
     margin-left: 5px;
     background-repeat: no-repeat;
-    background-image: url('/static/storage/src/img/16.png?a221bd60e41b');
+    background-image: url('/assets/images/umap/16.png');
     vertical-align: middle;
     content: " ";
 }
@@ -2051,7 +2051,7 @@ a.storage-control-text {
     height: 24px;
     line-height: 24px;
     display: inline-block;
-    background-image: url('/static/storage/src/img/24.png?abfdfddd50f9');
+    background-image: url('/assets/images/umap/24.png');
     vertical-align: bottom;
     content: " ";
 }
