@@ -24,7 +24,7 @@ case class SimpleNodesSearchArgs(
   offset          : Option[Int] = None,
   currAdnId       : Option[String] = None,
   isNodeSwitch    : Boolean = false,
-  withNeighbors   : Boolean = true
+  withNeighbors   : Boolean = false
 ) { snsa =>
 
   private def maxResultsDflt = snsa.maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT

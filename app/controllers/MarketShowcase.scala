@@ -532,8 +532,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Поиск узлов в рекламной выдаче. */
   def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"findNodes(${System.currentTimeMillis}): "
-    // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
     trace(logPrefix + "Starting with args " + args + " ; remote = " + request.remoteAddress + " ; path = " + request.path + "?" + request.rawQueryString)
+    // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
     val tstamp = System.currentTimeMillis() / 50L
 
     // Запуск детектора текущей ноды, если необходимо. Асинхронно возвращает (lvl, node) или экзепшен.
@@ -572,7 +572,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
     // Нода, которая будет отображена как текущая при следующем набеге на выдачу.
     val nextNodeOptFut: Future[Option[MAdnNode]] = nextNodeSwitchFut
-      .map { case (lvl, node) => Some(node) }
+      .map {
+        case (lvl, node) => Some(node)
+      }
       .recoverWith {
         case ex: NoSuchElementException => currAdnOptFut
       }
@@ -608,14 +610,17 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
 
     // Уровни списка нод, по которым гуляет юзер.
-    // Их наполнение формируется на основе данных по текущему узлу.
-    // Послойные последовательности узлов.
+    // Их наполнение формируется на основе данных по текущему узлу. Послойные последовательности узлов.
+    lazy val nodesLaysFut2: Future[Seq[GeoNodesLayer]] = nextNodeWithLvlOptFut.flatMap { nextLvlNodeOpt =>
+      ???
+    }
+
     val nodesLaysFut: Future[Seq[GeoNodesLayer]] = {
       // В зависимости от режима геолокации, надо произвести поиск узлов в разных слоях или вне их всех.
       val ngls = args.geoMode.nodeGeoLevelsAlways
       if (ngls.isEmpty) {
         // Если искомых геоуровней нет в текущем режиме, то и искать по географии не надо.
-        trace(logPrefix + "No node geo levels available -- searching for all.")
+        debug(logPrefix + "No node geo levels available -- searching for all.")
         // Уровней поиска геоинформации нет. Ищем в лоб.
         args.toSearchArgs(None) flatMap { sargs =>
           MAdnNode.dynSearch(sargs)
@@ -649,6 +654,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         nextNodeOpt <- nextNodeOptFut
       } yield {
         val nextNodeIdOpt = nextNodeOpt.flatMap(_.id)
+        // Если текущая нода оказалась в нижнем слое, то нужно развернуть список слоёв.
+        // Такое бывает в случае ноды-города.
         if (lays.lastOption.exists(_.nodes.exists(_.id == nextNodeIdOpt))) {
           lays.reverse
         } else {
