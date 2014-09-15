@@ -370,7 +370,7 @@ POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodat
 
 ## Карта umap
 GET  /sys/umap/nodes                     controllers.Umap.getAdnNodesMap
-GET  /sys/umap/nodes/datalayer		 controllers.Umap.getDatalayerGeojson
+GET  /sys/umap/nodes/datalayer		     controllers.Umap.getDatalayerGeojson
 POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
 POST /sys/umap/nodes/data                controllers.Umap.saveMapDataLayers
 

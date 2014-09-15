@@ -23,6 +23,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   def getDatalayerGeojson = IsSuperuser { implicit request =>
+
     val feature1 = JsObject(Seq(
       "type" -> JsString("Feature"),
       "geometry" -> JsObject(Seq(
@@ -51,8 +52,15 @@ object Umap extends SioController with PlayMacroLogsImpl {
     Ok(resp)
   }
 
+  /** Сохранение сеттингов карты. */
   def saveMapSettingsSubmit = IsSuperuser { implicit request =>
-    Ok("STUB")
+    // TODO Stub
+    val resp = JsObject(Seq(
+      "url"  -> JsString( routes.Umap.getAdnNodesMap().url ),
+      "info" -> JsString( "Settings ignored" ),
+      "id"   -> JsNumber( -1 )
+    ))
+    Ok(resp)
   }
 
   def saveMapDataLayers = IsSuperuser { implicit request =>
