@@ -1,6 +1,7 @@
 package controllers
 
-import models.NodeGeoLevel
+import models._
+import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -20,7 +21,17 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
   /** Рендер статической карты, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuser { implicit request =>
-    Ok(mapBaseTpl())
+    val ctx = implicitly[Context]
+    val nglsJson = JsArray(
+      NodeGeoLevels.values.toSeq.sortBy(_.id).map { ngl =>
+        JsObject(Seq(
+          "displayOnLoad" -> JsBoolean(true),
+          "name"          -> JsString( Messages("ngls." + ngl.esfn)(ctx.lang) ),
+          "id"            -> JsNumber(ngl.id)
+        ))
+      }
+    )
+    Ok( mapBaseTpl(nglsJson)(ctx) )
   }
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */

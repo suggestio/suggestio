@@ -1,4 +1,4 @@
-@()
+@(nglsJson: play.api.libs.json.JsArray)(implicit ctx: Context)
 
 <!DOCTYPE html>
 <html>
@@ -54,15 +54,7 @@
           "slideshow": {},
           "scaleControl": true,
           "tilelayer": {},
-          "datalayers": [
-            @NodeGeoLevels.values.toSeq.sortBy(_.id).map { ngl =>
-              {
-                "displayOnLoad": true,
-                "name": "ngls.@ngl.esfn" ,
-                "id": @ngl.id
-              }
-            }
-          ],
+          "datalayers": @Html(nglsJson.toString),
           "moreControl": true,
           "licence": "",
           "tilelayersControl": true,
