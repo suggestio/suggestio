@@ -19,6 +19,9 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Название поля в форме карты, которое содержит id узла. */
+  val ADN_ID_SHAPE_FORM_FN = "name"
+
   /** Рендер статической карты, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuser { implicit request =>
     val ctx = implicitly[Context]
@@ -36,33 +39,31 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
-  def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser { implicit request =>
-    val feature1 = JsObject(Seq(
-      "type" -> JsString("Feature"),
-      "geometry" -> JsObject(Seq(
-        "type" -> JsString("Polygon"),
-        "coordinates" -> JsArray(Seq(JsArray(Seq(
-          JsArray(Seq(JsNumber( -4.6142578125), JsNumber(69.9679672584945))),
-          JsArray(Seq(JsNumber(2.6806640625), JsNumber(70.1552878601035))),
-          JsArray(Seq(JsNumber(1.2744140625), JsNumber(67.9581478610158))),
-          JsArray(Seq(JsNumber(-4.2626953125), JsNumber(68.00757101804))),
-          JsArray(Seq(JsNumber(-4.6142578125), JsNumber(69.9679672584945)))
-        ))))
-      )),
-      "properties" -> JsObject(Seq.empty)
-    ))
-    val features = JsArray(Seq(feature1))
-    val storage = JsObject(Seq(
-      "name" -> JsString("Узлы ADN"),
-      "displayOnLoad" -> JsBoolean(true),
-      "id" -> JsNumber(666)
-    ))
-    val resp = JsObject(Seq(
-      "type"      -> JsString("FeatureCollection"),
-      "_storage"  -> storage,
-      "features"  -> features
-    ))
-    Ok(resp)
+  def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser.async { implicit request =>
+    MAdnNodeGeo.findAllRenderable(ngl, maxResults = 600).map { geos =>
+      val features: Seq[JsObject] = geos.map { geo =>
+        JsObject(Seq(
+          "type" -> JsString("Feature"),
+          "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
+          "properties" -> JsObject(Seq(
+            "name" -> JsString(geo.adnId)
+          ))
+        ))
+      }
+      val lang = request2lang
+      val storage = JsObject(Seq(
+        "name"            -> JsString( Messages("ngls." + ngl.esfn)(lang) ),
+        "displayOnLoad"   -> JsBoolean(true),
+        "id"              -> JsNumber(ngl.id)
+      ))
+      val resp = JsObject(Seq(
+        "type"      -> JsString("FeatureCollection"),
+        "_storage"  -> storage,
+        "features"  -> JsArray(features)
+      ))
+      Ok(resp)
+    }
+
   }
 
   /** Сохранение сеттингов карты. */
