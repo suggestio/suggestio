@@ -493,6 +493,7 @@ code
 .geo-nodes-list
   padding-bottom    2px
   &_layer
+    opacity         0.7
     border-top      1px #fff dashed
     border-bottom   1px #fff dashed
     &.__active
@@ -500,12 +501,15 @@ code
     &.__bo-border
       border-top-color    transparent
   &_layer-inner
+    position        relative
     width           260px
     margin          0px auto
     font-family     'opensans-light'
     font-size       14px
     padding         12px 0px
     text-transform  uppercase
+  &_layer-counter
+    float           right
   &_row
     width           260px
     margin          0px auto

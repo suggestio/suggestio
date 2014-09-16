@@ -5,7 +5,7 @@
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
     <div class="geo-nodes-list_layer __active @if( i==0 ){ __bo-border }">
       <div class="geo-nodes-list_layer-inner">@nl.glevelOpt.map{ glevel =>
-        @Messages("ngls." + glevel )
+        @Messages("ngls." + glevel ) <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
         }</div>
     </div>
     <div class="geo-nodes-list_rows">
