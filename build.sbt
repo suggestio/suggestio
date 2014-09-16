@@ -3,6 +3,8 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
+//import org.rbayer.GruntSbtPlugin._
+//import GruntKeys._
 
 
 organization := "io.suggest"
@@ -63,6 +65,9 @@ libraryDependencies ++= Seq(
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   // webjars
+  "org.webjars" % "leaflet" % "0.7.3",
+  "org.webjars" % "leaflet-markercluster" % "0.4.0",
+  "org.webjars" % "leaflet-plugins" % "1.1.2",
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
   "com.vividsolutions" % "jts" % "1.13",
@@ -133,8 +138,16 @@ includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
-//pipelineStages := Seq(rjs, gzip)
-pipelineStages := Seq(gzip)
+pipelineStages := Seq(rjs, gzip)
+//pipelineStages := Seq(gzip)
 
 testOptions in Test += Tests.Argument("-oF")
+
+//gruntSettings
+
+
+// Не генерить мусорную документацию во время stage/dist. Она не нужна никому.
+sources in (Compile,doc) := Seq.empty
+
+publishArtifact in (Compile, packageDoc) := false
 

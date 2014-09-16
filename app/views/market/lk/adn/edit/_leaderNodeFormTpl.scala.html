@@ -140,9 +140,11 @@
         <span class="dark-gray ft-S">Основной<br/>цвет</span>
       </td>
       <td class="td __padding-S">
-        <div class="color __select js-custom-color" data-for=".__logo" style="background-color: #@mf("meta.color").value;">
-          <input type="hidden" name="meta.color" value="@mf("meta.color").value"/>
-        </div>
+        @defining( mf("meta.color").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+          <div class="color __select js-custom-color" data-for=".__logo" style="background-color: #@colorValue;">
+            <input type="hidden" name="meta.color" value="@colorValue"/>
+          </div>
+        }
       </td>
       <td class="td __padding-S">
         <div class="delimiter __light __vertical js-vertical-line"></div>
@@ -154,9 +156,11 @@
         <span class="dark-gray ft-S">Цвет<br/>контента</span>
       </td>
       <td class="td __padding-S dark-gray">
-        <div class="color __select js-custom-color" style="background-color: #@mf("meta.fgColor").value;">
-          <input id="meta_color" type="hidden" name="meta.fgColor" value="@mf("meta.fgColor").value"/>
-        </div>
+        @defining( mf("meta.fgColor").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+          <div class="color __select js-custom-color" style="background-color: #@colorValue;">
+            <input id="meta_color" type="hidden" name="meta.fgColor" value="@colorValue"/>
+          </div>
+        }
       </td>
     </table>
 

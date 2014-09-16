@@ -90,6 +90,15 @@ adn.sink.wifi=Wi-Fi
 adn.sink.geo=Geolocation
 
 
+ngl.bu=Building
+ngl.td=Town district
+ngl.to=Town
+
+ngls.bu=Buildings
+ngls.td=Town districts
+ngls.to=Towns
+
+
 Input.text.from.picture=Input text from the picture
 error.captcha=Invalid human-check code
 
