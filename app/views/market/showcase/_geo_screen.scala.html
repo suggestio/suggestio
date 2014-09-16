@@ -13,7 +13,7 @@
     <div class="sm-geo-screen_current-location-inner">
       <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoFillTpl(args.fgColor)</div>
       <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
-      <span id="smGeoLocationLabel" style="color: #@args.fgColor">Определить местоположение</span>
+      <span id="smGeoLocationLabel" style="color: #@args.fgColor;">Определить местоположение</span>
     </div>
   </div>
   @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, true ).toString ){
@@ -35,12 +35,13 @@
     }
 
     .geo-nodes-list_rows {
-      -webkit-box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-4}% );
-      box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-4}% );
+      -webkit-box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-6}% );
+      box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-6}% );
     }
 
     .geo-nodes-list_row,
-    .geo-nodes-list_layer{
+    .geo-nodes-list_layer,
+    .sm-geo-screen_current-location-inner{
       border-color: rgba( @colorHex2rgb(args.fgColor).mkString(","), 0.5 );
     }
     }

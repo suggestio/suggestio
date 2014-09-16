@@ -204,12 +204,12 @@ code
 
   &_txt-logo
     font-family     'opensans-regular-webfont'
-    font-size       16px
+    font-size       14px
     line-height     50px
     text-transform  uppercase
     color           #fff
     border          1px #fff solid
-    border-radius(  5px )
+    border-radius(  3px )
     padding         4px 20px
 
   &_icon
@@ -491,10 +491,14 @@ code
      background     default_color_w_opacity
 
 .geo-nodes-list
+  padding-bottom    2px
   &_layer
+    border-top      1px #fff dashed
     border-bottom   1px #fff dashed
     &.__active
       border-bottom-color transparent
+    &.__bo-border
+      border-top-color    transparent
   &_layer-inner
     width           260px
     margin          0px auto
@@ -510,7 +514,8 @@ code
     border-bottom   1px #fff dashed
     font-size       12px
     font-family     'opensans-regular-webfont'
-
+    &.__no-border
+      border-bottom 0px
 
 /*
 ------------------------------------*/
