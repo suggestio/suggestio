@@ -958,15 +958,18 @@ PersonalCabinet =
     checkTypes = (value = false)->
       $ ".js-select-type_w[data-city = #{city}] input:checkbox:enabled"
       .prop 'checked', value
+      .attr 'value', value
 
     # поставить или снять галочки со всех узлов текущего города и типа
     checkNodes = (value = false)->
       $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:checkbox:enabled"
       .prop 'checked', value
+      .attr 'value', value
 
       if type < 0
         $ ".js-select-node_w[data-city = #{city}] input:checkbox:enabled"
         .prop 'checked', value
+        .attr 'value', value
 
     # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов + true || false
     allNodesChecked = (_type)->
@@ -999,6 +1002,7 @@ PersonalCabinet =
 
       $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:checkbox:enabled"
       .prop 'checked', checked
+      .attr 'value', checked
 
     # просматриваем галочки у узлов в текущем городе и меняем по ним информацию в типах узлов
     nodesObserver = ()->
@@ -1029,6 +1033,7 @@ PersonalCabinet =
           .filter "[data-value = #{thisType}]"
           .find 'input:checkbox:enabled'
           .prop 'checked', nodesChecked.checked
+          .attr 'value', nodesChecked.checked
 
 
     $ document
@@ -1068,6 +1073,7 @@ PersonalCabinet =
         # снять чекбокс с элемента Все места
         $ ".js-select-type_w[data-city = #{city}] .js-select-type[data-value = '-1'] input"
         .prop 'checked', false
+        .attr 'value', false
 
       nodesObserver()
       typesObserver()
@@ -1106,6 +1112,7 @@ PersonalCabinet =
       $slideWrap
       .find '.js-slide-title input'
       .prop 'checked', titleInputChecked
+      .attr 'value', titleInputChecked
 
       nodesObserver()
       typesObserver()
@@ -1911,6 +1918,18 @@ market =
 
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
+
+      $ document
+      .on 'change', '#advsFormBlock input:checkbox', (e)->
+        $this = $ this
+        value = $this.attr 'value'
+
+        console.log value
+        if value == false
+          $this.attr 'value', false
+        else
+          $this.attr 'value', true
+
       $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
         cf_id = $(this).attr 'data-connected-field'
         cf = $('#' + cf_id)
