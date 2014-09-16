@@ -9,16 +9,14 @@
     </div>
   </div>
 
-  @*_search_bar( args, "smGeoSearch", "Быстрый поиск по местам" )*@
-
   <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, true );">
     <div class="sm-geo-screen_current-location-inner">
-      <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoButtonLargeTpl(args.fgColor)</div>
+      <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoFillTpl(args.fgColor)</div>
       <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
       <span id="smGeoLocationLabel" style="color: #@args.fgColor">Определить местоположение</span>
     </div>
   </div>
-  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, false ).toString ){
+  @stuff.scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", stuff._bgcolor( args.bgColor, true ).toString ){
   }
 
   <style type="text/css">
@@ -26,8 +24,24 @@
     .shops-list_row {
       color:#@args.fgColor;
     }
-    .shops-list_row.__odd {
-      background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
+
+    .geo-nodes-list {
+      background: #@args.bgColor;
+    }
+
+    .geo-nodes-list_layer,
+    .geo-nodes-list_row {
+      color: #@args.fgColor;
+    }
+
+    .geo-nodes-list_rows {
+      -webkit-box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-4}% );
+      box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-4}% );
+    }
+
+    .geo-nodes-list_row,
+    .geo-nodes-list_layer{
+      border-color: rgba( @colorHex2rgb(args.fgColor).mkString(","), 0.5 );
     }
     }
   </style>

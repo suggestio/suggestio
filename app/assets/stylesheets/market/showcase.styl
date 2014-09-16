@@ -202,6 +202,16 @@ code
   &_logo
     padding-top: 10px
 
+  &_txt-logo
+    font-family     'opensans-regular-webfont'
+    font-size       16px
+    line-height     50px
+    text-transform  uppercase
+    color           #fff
+    border          1px #fff solid
+    border-radius(  5px )
+    padding         4px 20px
+
   &_icon
     display: none
 
@@ -468,9 +478,8 @@ code
   padding-bottom    50px
   &_letter
     display         inline-block
-    font-weight     bold
     opacity         0.5
-    font-family     'opensans-regular-webfont'
+    font-family     'opensans-bold'
   &_row
     cursor          pointer
     padding         13px 0px
@@ -480,6 +489,28 @@ code
     margin          0px auto
     &.__even
      background     default_color_w_opacity
+
+.geo-nodes-list
+  &_layer
+    border-bottom   1px #fff dashed
+    &.__active
+      border-bottom-color transparent
+  &_layer-inner
+    width           260px
+    margin          0px auto
+    font-family     'opensans-bold'
+    padding         12px 0px
+  &_row
+    width           260px
+    margin          0px auto
+    padding         14px 0px
+    font-family     'opensans-regular-webfont'
+    text-align      center
+    color           #fff
+    border-bottom   1px #fff dashed
+    font-size       12px
+    font-family     'opensans-regular-webfont'
+
 
 /*
 ------------------------------------*/
@@ -508,21 +539,26 @@ code
     cursor: pointer
 
   &_current-location-inner
-    display: inline-block
-    position: relative
+    display         inline-block
+    position        relative
+    width           260px
+    border          1px #fff dotted
+    border-radius(  5px )
+    font-family     'opensans-bold'
+    font-size       12px
+    padding         10px 0px
 
   &_current-location-icon,
   &_current-location-spinner
-    position: absolute
-    left: -54px
-    top: -26px
-    transform( scale3d(0.3, 0.3, 0.3) )
+    position    absolute
+    left        0px
+    top         1px
 
   &_current-location-spinner
     display     none
     transform( scale3d(0.5, 0.5, 0.5) )
-    left        -34px
-    top         -6px
+    left        0px
+    top         3px
 
 .sm-geo-nodes
   background: default_color
@@ -534,11 +570,14 @@ code
   background: default_color_w_opacity
 
   &_field
-    position: relative
-    border: 1px #636363 solid
-    background: default_color_w_opacity
-    width: 100%
-    height: 34px
+    position          relative
+    width             258px
+    margin            0px auto
+    height            34px
+    border            1px #636363 dotted
+    background        default_color_w_opacity
+    border-radius(    5px)
+    font-family:      'opensans-bold'
     &.__active
       background: #fff!important
       .sm-search-bar_input

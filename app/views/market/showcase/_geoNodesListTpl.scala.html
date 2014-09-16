@@ -1,14 +1,18 @@
 @(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
 
-<div class="shops-list">
+<div class="geo-nodes-list">
   @nodeLayers.iterator.map { nl =>
+    <div class="geo-nodes-list_layer __active">
+      <div class="geo-nodes-list_layer-inner">@nl.glevelOpt.map{ glevel =>
+        @Messages("ngls." + glevel )
+        }</div>
+    </div>
+    <div class="geo-nodes-list_rows">
     @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
-
-      <div class="shops-list_row @if(i%2 == 0){__odd} js-geo-node" data-id="@mnode.id">
+      <div class="geo-nodes-list_row @*if(i%2 == 0){__odd}*@ js-geo-node" data-id="@mnode.id">
         @mnode.meta.name
       </div>
-
-    }
+    }</div>
   }
 </div>
