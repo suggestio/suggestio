@@ -54,7 +54,7 @@
   <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
 }
 
-@form(routes.MarketAdv.advFormSubmit(adId)) {
+@form(routes.MarketAdv.advFormSubmit(adId), 'id->"advsForm") {
 @*form(routes.MarketAdv.getAdvPriceSubmit(adId)) *@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
   <input type="hidden" value="@routes.MarketAdv.getAdvPriceSubmit(adId)" id="advsPriceUpdateUrl">
 
