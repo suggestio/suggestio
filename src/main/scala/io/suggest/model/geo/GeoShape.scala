@@ -35,6 +35,7 @@ object GeoShape {
           case GsTypes.geometrycollection => GeometryCollectionGs.deserialize(jmap)
         }
   }
+
 }
 
 
@@ -98,11 +99,12 @@ object GsTypes extends Enumeration {
   implicit def value2val(x: Value): GsType = x.asInstanceOf[GsType]
 
   def maybeWithName(n: String): Option[GsType] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: Exception => None
-    }
+    values
+      .find { v =>
+        val _v: GsType = v
+        _v.esName == n || _v.geoJsonName.exists(_ == n)
+      }
+      .asInstanceOf[Option[GsType]]
   }
 
 }

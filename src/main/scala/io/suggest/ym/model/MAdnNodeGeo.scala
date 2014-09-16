@@ -168,6 +168,10 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     QueryBuilders.termQuery(GLEVEL_ESFN, glevel.esfn)
   }
 
+  def glevelFilter(glevel: NodeGeoLevel): FilterBuilder = {
+    FilterBuilders.termFilter(GLEVEL_ESFN, glevel.esfn)
+  }
+
   def glevelsQuery(glevels: Seq[NodeGeoLevel]): QueryBuilder = {
     QueryBuilders.termsQuery(GLEVEL_ESFN, glevels.map(_.esfn) : _*)
   }
@@ -312,21 +316,30 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
    * @param offset Сдвиг в выдаче.
    * @return Список результатов в неопределённом порядке.
    */
-  def findAllRenderable(glevel: NodeGeoLevel, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+  def findAllRenderable(glevel: NodeGeoLevel, adnIdOpt: Option[String] = None, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                        (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val query = renderableFiltered(glevelQuery(glevel))
     prepareSearch
-      .setQuery(query)
+      .setQuery( renderableQuery(glevel, adnIdOpt) )
       .setSize(maxResults)
       .setFrom(offset)
       .execute()
       .map { searchResp2list }
   }
 
-  def deleteAllRenderable(glevel: NodeGeoLevel)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  def deleteAllRenderable(glevel: NodeGeoLevel, adnIdOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[_] = {
     prepareDeleteByQuery
-      .setQuery( renderableFiltered(glevelQuery(glevel)) )
+      .setQuery( renderableQuery(glevel, adnIdOpt) )
       .execute()
+  }
+
+  private def renderableQuery(glevel: NodeGeoLevel, adnIdOpt: Option[String]): QueryBuilder = {
+    val query0 = adnIdOpt match {
+      case Some(adnId) =>
+        QueryBuilders.filteredQuery(adnIdQuery(adnId), glevelFilter(glevel))
+      case None =>
+        glevelQuery(glevel)
+    }
+    renderableFiltered(query0)
   }
 
 }
@@ -374,7 +387,7 @@ final case class MAdnNodeGeo(
 
 
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
-object NodeGeoLevels extends Enumeration {
+object NodeGeoLevels extends Enumeration(1) {
 
   protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
     def precision: String
@@ -457,6 +470,9 @@ object NodeGeoLevels extends Enumeration {
       case ex: NoSuchElementException => None
     }
   }
+
+  /** Вывести множество значений этого enum'а, но выставив текущий тип значения вместо Value. */
+  def valuesNgl = values.toSet.asInstanceOf[Set[NodeGeoLevel]]
 
 }
 

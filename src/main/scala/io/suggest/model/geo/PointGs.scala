@@ -4,6 +4,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import java.{util => ju}
 import GeoShape._
+import play.api.libs.json.JsValue
 
 /**
  * Suggest.io

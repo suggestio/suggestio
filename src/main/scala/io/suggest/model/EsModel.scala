@@ -1080,7 +1080,6 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
       .map { _.isFound }
   }
 
-
   def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
     resaveBase( get(id, parentId) )
   }
@@ -1164,6 +1163,13 @@ trait EsModelCommonT extends OptStrId with EraseResources {
       .setSource(toJson)
   }
 
+  def prepareIndex(implicit client: Client): IndexRequestBuilder = {
+    val irb = indexRequestBuilder
+    if (versionOpt.isDefined)
+      irb.setVersion(versionOpt.get)
+    irb
+  }
+
   /**
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
@@ -1171,10 +1177,8 @@ trait EsModelCommonT extends OptStrId with EraseResources {
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     if (isFieldsValid) {
-      val irb = indexRequestBuilder
-      if (versionOpt.isDefined)
-        irb.setVersion(versionOpt.get)
-      irb.execute()
+      prepareIndex
+        .execute()
         .map { _.getId }
     } else {
       throw new IllegalStateException("Some or all important fields have invalid values: " + this)
@@ -1183,7 +1187,6 @@ trait EsModelCommonT extends OptStrId with EraseResources {
 
   def companionDelete(_id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
 
-
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.
     */
@@ -1191,6 +1194,8 @@ trait EsModelCommonT extends OptStrId with EraseResources {
     case Some(_id)  => companionDelete(_id)
     case None       => Future failed new IllegalStateException("id is not set")
   }
+
+  def prepareDelete(implicit client: Client): DeleteRequestBuilder
 
   def prepareUpdate(implicit client: Client) = {
     val req = client.prepareUpdate(esIndexName, esTypeName, id.get)
@@ -1225,6 +1230,8 @@ trait EsModelT extends EsModelCommonT {
   override def companionDelete(_id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     companion.deleteById(_id)
   }
+
+  override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get)
 }
 
 
@@ -1248,6 +1255,7 @@ trait EsChildModelT extends EsModelCommonT {
     companion.delete(_id, parentId)
   }
 
+  override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get, parentId)
 }
 
 
