@@ -1,4 +1,6 @@
-@(nglsJson: play.api.libs.json.JsArray)(implicit ctx: Context)
+@(nglsJson: play.api.libs.json.JsArray, nodesMap: Map[AdnShownType, Seq[MAdnNode]])(implicit ctx: Context)
+
+@import ctx._
 
 <!DOCTYPE html>
 <html>
@@ -27,22 +29,22 @@
     <div id="map"></div>
 
     <div class="custom-ui">
-      <div class="custom-ui_btn-lst js-select-label">
-        <button class="custom-ui_btn js-act" data-label="1">Здания</button>
-        <button class="custom-ui_btn" data-label="2">Районы городов</button>
-        <button class="custom-ui_btn" data-label="3">Города</button>
-      </div>
+      @defining( nodesMap.toSeq ) { nodesSeq =>
+        <div class="custom-ui_btn-lst js-select-label">
+          @nodesSeq.map { case (ast, _) =>
+            <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">@Messages("amts.of.type." + ast.name)</button>
+          }
+        </div>
 
-      <select class="js-select-id" data-label="1">
-        <option value="0">Выберите город</option>
-        <option value="test-id-1">Москва</option>
-        <option value="test-id-2">Санкт-Петербург</option>
-      </select>
-      <select class="js-select-id" data-label="2">
-        <option value="0">Выберите ТЦ</option>
-        <option value="test-id-1">Галерея</option>
-        <option value="test-id-2">Стокманн</option>
-      </select>
+        @nodesSeq.map { case (ast, nodes) =>
+          <select class="js-select-id" data-label="@ast.id">
+            <option value="0">Выберите @Messages("amt.of.type." + ast.name)</option>
+            @nodes.iterator.zipWithIndex.map { case (adnNode, i) =>
+              <option value="@adnNode.id">@adnNode.meta.name / @adnNode.meta.town</option>
+            }
+          </select>
+        }
+      }
     </div>
     
     

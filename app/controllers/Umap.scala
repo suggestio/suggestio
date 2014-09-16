@@ -2,16 +2,18 @@ package controllers
 
 import java.nio.file.Files
 
+import play.api.mvc.Result
+import util.geo.umap.UmapUtil, UmapUtil.ADN_ID_SHAPE_FORM_FN
 import models._
-import org.apache.commons.io.IOUtils
 import play.api.i18n.{Lang, Messages}
-import play.api.mvc.RequestHeader
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.acl.IsSuperuser
 import views.html.umap._
 import play.api.libs.json._
+import io.suggest.util.SioEsUtil.laFuture2sFuture
+import AdnShownTypes._
 
 import scala.concurrent.Future
 
@@ -25,11 +27,20 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** Название поля в форме карты, которое содержит id узла. */
-  val ADN_ID_SHAPE_FORM_FN = "description"
-
   /** Рендер статической карты, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = IsSuperuser { implicit request =>
+  def getAdnNodesMap = IsSuperuser.async { implicit request =>
+    // Скачиваем все узлы из базы. TODO Закачать через кэш?
+    val allNodesMapFut: Future[Map[AdnShownType, Seq[MAdnNode]]] = {
+      val sargs = new AdnNodesSearchArgs {
+        override def withAdnRights = Seq(AdnRights.RECEIVER)
+        override def maxResults = 500
+      }
+      MAdnNode.dynSearch(sargs)
+    } map { allNodes =>
+      allNodes
+        .groupBy { node => AdnShownTypes.withName(node.adn.shownTypeId) : AdnShownType }
+        .mapValues { _.sortBy(_.meta.name) }
+    }
     val ctx = implicitly[Context]
     val nglsJson = JsArray(
       NodeGeoLevels.values.toSeq.sortBy(_.id).map { ngl =>
@@ -40,7 +51,9 @@ object Umap extends SioController with PlayMacroLogsImpl {
         ))
       }
     )
-    Ok( mapBaseTpl(nglsJson)(ctx) )
+    allNodesMapFut map { nodesMap =>
+      Ok(mapBaseTpl(nglsJson, nodesMap)(ctx))
+    }
   }
 
 
@@ -85,17 +98,63 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит одного слоя на карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser(parse.multipartFormData) { implicit request =>
-    //val deleteFut = MAdnNodeGeo.deleteAllRenderable(ngl)
+  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser.async(parse.multipartFormData) { implicit request =>
+    val logPrefix = s"saveMapDataLayer($ngl): "
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.
-    request.body.file("geojson").fold {
+    request.body.file("geojson").fold[Future[Result]] {
       NotAcceptable("geojson not found in response")
     } { tempFile =>
-      val jsonBytes = Files.readAllBytes(tempFile.ref.file.toPath)
-      ???
+      val allRenderableFut = MAdnNodeGeo.findAllRenderable(ngl)
+      // TODO Надо бы задействовать InputStream или что-то ещё для парсинга.
+      val jsonBytes = try {
+        Files.readAllBytes(tempFile.ref.file.toPath)
+      } finally {
+        tempFile.ref.file.delete()
+      }
+      val layerData = UmapUtil.deserializeFromBytes(jsonBytes).get
+      // Собираем BulkRequest для сохранения данных.
+      val bulk = client.prepareBulk()
+      layerData.features
+        .filter(_.adnIdOpt.isDefined)
+        .foreach { feature =>
+          val geo = MAdnNodeGeo(
+            adnId = feature.adnIdOpt.get,
+            glevel = ngl,
+            shape = feature.geometry
+          )
+          bulk.add(geo.indexRequestBuilder)
+        }
+      // TODO Надо защиту на случай проблем.
+      // Слой распарсился и готов к сохранению. Запускаем удаление исходных данных слоя.
+      allRenderableFut.flatMap { all =>
+        val bulkDel = client.prepareBulk()
+        all.foreach { geo =>
+          bulkDel.add(geo.prepareDelete)
+        }
+        trace(logPrefix + "Deleting " + bulkDel.numberOfActions() + " shapes on layer...")
+        bulkDel.execute()
+      } flatMap { bulkDelResult =>
+        trace(s"${logPrefix}Layer $ngl wiped: $bulkDelResult ;; Starting to save new shapes...")
+        bulk.execute()
+      } map { br =>
+        trace(logPrefix + "Layer saved: " + br.buildFailureMessage())
+        val resp = layerJson(ngl, request2lang)
+        Ok(resp)
+      } recoverWith {
+        case ex: Throwable =>
+          error("Failed to update layer " + ngl, ex)
+          allRenderableFut flatMap { all =>
+            val bulkReSave = client.prepareBulk()
+            all.foreach { geo =>
+              bulkReSave.add(geo.indexRequestBuilder)
+            }
+            bulkReSave.execute()
+          } map { bsr =>
+            debug("Rollbacked deleted data")
+            InternalServerError("Failed to save. See logs.")
+          }
+      }
     }
-    val resp = layerJson(ngl, request2lang)
-    Ok(resp)
   }
 
   def createMapDataLayer = IsSuperuser(parse.multipartFormData) { implicit request =>
