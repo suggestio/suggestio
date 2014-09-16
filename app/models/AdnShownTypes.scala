@@ -41,14 +41,22 @@ object AdnShownTypes extends Enumeration {
 
   // Пользовательские типы узлов. Для id'шников можно использовать идентификаторы, не использованные в вышеуказанных вещах.
   // При совпадении двух id будет ошибка после запуска при первом обращении к этой модели.
-  val TRANSPORT_NODE: AdnShownType    = Val("a", nglsBuilding)    // Вокзалы, аэропорты и др. более-менее крупные транспортные узлы.
-  val METRO_STATION: AdnShownType     = Val("b", nglsBuilding)    // Станция метро
+
+  /** Вокзалы, аэропорты и др. более-менее крупные транспортные узлы. */
+  val TRANSPORT_NODE: AdnShownType    = Val("a", nglsBuilding)
+
+  /** Станция метро. */
+  val METRO_STATION: AdnShownType     = Val("b", nglsBuilding)
+
   /** Район города. */
   val TOWN_DISTRICT: AdnShownType     = new Val("c", List(NodeGeoLevels.NGL_TOWN_DISTRICT)) {
     override val singularNoTown = "District"
     override val pluralNoTown   = "Districts"
   }
-  val TOWN: AdnShownType              = Val("d", List(NodeGeoLevels.NGL_TOWN), showWithTown = false)    // Город
+
+  /** Город. */
+  val TOWN: AdnShownType              = Val("d", List(NodeGeoLevels.NGL_TOWN), showWithTown = false)
+
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
   def maybeWithName(n: String): Option[AdnShownType] = {

@@ -129,15 +129,18 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         )
       ,
       "date"  -> advDatePeriodOptM
-        // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
-        .verifying("error.date.end.before.start", { m => m match {
-          case Some((dateStart, dateEnd))  =>  !(dateStart isAfter dateEnd)
-          case _ => false
-        }})
     )
     .verifying("error.required", { m => m match {
       case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
     }})
+      // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
+    .verifying("error.date.end.before.start", { m => m match {
+       // Если даты имеют смысл, то они заданы, и их проверяем.
+       case (None, Some((dateStart, dateEnd)))    => !(dateStart isAfter dateEnd)
+       // Остальные случаи не отрабатываем - смысла нет.
+       case _ => true
+    }})
+
     .transform [DatePeriod_t] (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>

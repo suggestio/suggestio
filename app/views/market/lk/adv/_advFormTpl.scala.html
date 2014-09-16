@@ -56,6 +56,15 @@
 
 @form(routes.MarketAdv.advFormSubmit(adId)) {
 @*form(routes.MarketAdv.getAdvPriceSubmit(adId)) *@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
+  @* Суперюзерам доступно беплатное размещение на любом узле. *@
+  @if(ctx.isSuperuser) {
+    <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
+      <label>
+        <input type="checkbox" name="@af("freeAdv").name" value="true" />
+        Размещать бесплатно, без подтверждения?
+      </label>
+    </div>
+  }
 
   <div class="adv-management_left-bar">
     <h2 class="minor-title">Выбор города/ места</h2>
