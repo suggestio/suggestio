@@ -1080,7 +1080,7 @@ PersonalCabinet =
 
     # чекбоксы у заголовков узлов
     $ document
-    .on 'click', '.js-select-node_w .js-slide-title input', (e)->
+    .on 'click', '.js-select-node_w .js-slide-title input:checkbox', (e)->
       e.stopPropagation()
       $this = $ this
       checked = $this.prop 'checked'
@@ -1089,6 +1089,7 @@ PersonalCabinet =
       # управление чекбоксами внутри узла
       $slideWrap.find '.js-slide-cnt input:enabled'
       .prop 'checked', checked
+      .attr 'value', checked
       nodesObserver()
       typesObserver()
 
@@ -1110,7 +1111,7 @@ PersonalCabinet =
           titleInputChecked = true
 
       $slideWrap
-      .find '.js-slide-title input'
+      .find '.js-slide-title input:checkbox'
       .prop 'checked', titleInputChecked
       .attr 'value', titleInputChecked
 
@@ -1919,18 +1920,18 @@ market =
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
 
-      $ document
-      .on 'change', '#advsFormBlock input:checkbox', (e)->
+
+      $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
         $this = $ this
         value = $this.attr 'value'
 
-        console.log value
-        if value == false
-          $this.attr 'value', false
-        else
-          $this.attr 'value', true
+        if $this.is ':checkbox'
+          if value == false
+            $this.attr 'value', false
+          else
+            $this.attr 'value', true
 
-      $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
+
         cf_id = $(this).attr 'data-connected-field'
         cf = $('#' + cf_id)
         if typeof cf_id != 'undefined'
