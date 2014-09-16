@@ -267,6 +267,10 @@ POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id
 GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
 POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
 POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
+# sys.ad
+GET  /sys/ad/:adId/rcvrs/analyze        controllers.SysMarket.analyzeAdRcvrs(adId)
+POST /sys/ad/:adId/rcvrs/reset          controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
+
 GET  /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
 POST /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
 GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(catId)
@@ -363,4 +367,14 @@ GET  /sys/adn/geo/json/:geoId            controllers.SysAdnGeo.showGeoJson(geoId
 GET  /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodata(adnId)
 GET  /sys/adn/geodata/propose/:adnId     controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
 POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
+
+## Карта umap
+GET  /sys/umap/nodes                     controllers.Umap.getAdnNodesMap
+GET  /sys/umap/nodes/datalayer           controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
+POST /sys/umap/nodes/datalayer           controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/datalayer/new       controllers.Umap.createMapDataLayer
+GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
+GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
+POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 

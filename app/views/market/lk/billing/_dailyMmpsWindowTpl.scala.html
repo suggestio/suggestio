@@ -5,26 +5,18 @@
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
 
-<div id="dailyMmpsWindow" class="popup js-hidden">
+<div class="popup js-popup" id="dailyMmpsWindow" >
 
   <div class="popup_header">
     <a class="close f-right js-close-popup" href="#"></a>
   </div>
 
-  <div class="popup_cnt">
-    <div class="popup_t">
-      Ставка тарифных планов @adnNode.meta.name / @adnNode.meta.town
-    </div>
+  <h2 class="minor-title">
+    Ставка тарифных планов @adnNode.meta.name / @adnNode.meta.town
+  </h2>
 
-
-    <div class="siom-block_cnt-w">
-      <div class="siom-block_cnt">
-        @_dailyMmpTariffPlansTpl(mbmds, adnNode)
-      </div>
-    </div>
-
-
-
+  <div class="tariff __in-popup"> <!--этот класс используется, чтобы нормально рендерилась информация о тарифе -->
+    @_dailyMmpTariffPlansTpl(mbmds, adnNode)
   </div>
 
 </div>

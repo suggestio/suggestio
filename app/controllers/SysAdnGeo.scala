@@ -120,8 +120,13 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     import request.adnGeo
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
-    val urlPr = UrlParseResult.fromUrl( adnGeo.url.get ).get
-    val formFilled = osmNodeFormM.fill((adnGeo.glevel, urlPr))
+    val formFilled = adnGeo.url match {
+      case Some(url) =>
+        val urlPr = UrlParseResult.fromUrl( url ).get
+        osmNodeFormM.fill((adnGeo.glevel, urlPr))
+      case None =>
+        osmNodeFormM
+    }
     nodeFut map { nodeOpt =>
       Ok(editAdnGeoOsmTpl(adnGeo, formFilled, nodeOpt.get))
     }
@@ -251,7 +256,7 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   /** Отрендерить geojson для валидации через geojsonlint. */
   def showGeoJson(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).apply { implicit request =>
-    Ok(request.adnGeo.shape.toPlayJson)
+    Ok(request.adnGeo.shape.toPlayJson())
   }
 
 
@@ -330,14 +335,20 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     }
   }
 
+  /** Сбор возможных родительских узлов. */
   private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MAdnNode]] = {
     MAdnNodeGeo.findIndexedPtrsForNode(adnId).flatMap { geoPtrs =>
-      val glevels = geoPtrs.map(_.glevel).headOption.fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
-      if (glevels.nonEmpty) {
-        collectNodesOnLevels(glevels) map nodes2nodesMap
+      val glevels0 = geoPtrs
+        .map(_.glevel)
+        .headOption
+        .fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
+      // Бывает, что нет результатов.
+      val glevels = if (glevels0.nonEmpty) {
+        glevels0
       } else {
-        Future successful Map.empty[String, MAdnNode]
+        List(NodeGeoLevels.NGL_TOWN, NodeGeoLevels.NGL_TOWN_DISTRICT)
       }
+      collectNodesOnLevels(glevels) map nodes2nodesMap
     }
   }
 

@@ -1,0 +1,27 @@
+@(mad: MAd, currRcvrsInfo: String, newRcvrsInfo: String, nodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
+
+@* Отображение доп.инфы по карточке. *@
+
+@import helper._
+@import ctx._
+
+@adnBase(
+  title = "Карта ресиверов рекламной карточки",
+  nodeOpt = nodeOpt
+) {
+
+  <h2>Текущая карта ресиверов</h2>
+  <pre>@currRcvrsInfo</pre>
+
+  @if(currRcvrsInfo == newRcvrsInfo) {
+    <p>Карта соответсвует расчетной.</p>
+  } else {
+    <p>Рассчетная карта ресиверов отличается от текущей!</p>
+    <pre>@newRcvrsInfo</pre>
+  }
+
+  @form( routes.SysMarket.resetReceivers(mad.id.get, r = Some(ctx.request.path)) ) {
+    <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
+  }
+
+}

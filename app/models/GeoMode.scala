@@ -89,7 +89,13 @@ sealed trait GeoMode {
   def exactGeodata: Option[geo.GeoPoint]
 
   /** На каких гео-уровнях производить поиск узлов и в каком порядке? */
-  def nodeGeoLevels: Seq[NodeGeoLevel]
+  def nodeGeoLevelsAlways: Seq[NodeGeoLevel]
+
+  /** Уровни, на которых надо искать узлы, если есть текущий узел на надуровнях. */
+  def nodeGeoLevelsSub: Seq[NodeGeoLevel]
+
+  /** Уровни, по которым надо искать. */
+  def nodeDetectLevels: Seq[NodeGeoLevel]
 }
 
 
@@ -120,8 +126,10 @@ case object GeoNone extends GeoMode {
   }
   override def exactGeodata = None
 
-  /** Отсутвие геолокацие означает отсутсвие уровней оной. */
-  override def nodeGeoLevels: Seq[NodeGeoLevel] = Nil
+  /** Отсутвие геолокации означает отсутсвие уровней оной. */
+  override def nodeGeoLevelsAlways = Nil
+  override def nodeGeoLevelsSub = Nil
+  override def nodeDetectLevels = Nil
 }
 
 
@@ -206,10 +214,14 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   override def exactGeodata: Option[geo.GeoPoint] = None
 
   /** При geoip надо искать на уровнях городов и затем районов. */
-  override val nodeGeoLevels: Seq[NodeGeoLevel] = {
+  override val nodeGeoLevelsAlways: Seq[NodeGeoLevel] = {
     import NodeGeoLevels._
     Seq(NGL_TOWN, NGL_TOWN_DISTRICT)
   }
+
+  override val nodeGeoLevelsSub = Seq(NodeGeoLevels.NGL_BUILDING)
+
+  override val nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
 }
 
 
@@ -223,6 +235,10 @@ object GeoLocation {
 
   val DISTANCE_DFLT = Distance(ES_DISTANCE_DFLT)
 
+  private val NGLS_b2t = {
+    import NodeGeoLevels._
+    Seq(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
+  }
 }
 
 
@@ -258,9 +274,9 @@ final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
 
   override def exactGeodata = Some(geopoint)
 
-  /** При локации по координатам, надо искать на уровне зданий, районов и затем городов. */
-  override val nodeGeoLevels: Seq[NodeGeoLevel] = {
-    import NodeGeoLevels._
-    Seq(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
-  }
+
+  override def nodeGeoLevelsAlways = GeoLocation.NGLS_b2t
+  override def nodeGeoLevelsSub = Nil
+  override def nodeDetectLevels = GeoLocation.NGLS_b2t
+
 }

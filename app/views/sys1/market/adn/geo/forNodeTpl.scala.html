@@ -23,6 +23,12 @@
 @* Рендер самой страницы. *@
 @geoBase("География узла", nodeOpt = Some(adnNode)) {
 
+  <h2>
+    <a href="@routes.Umap.getAdnNodeMap(adnNode.id.get)">Картографический редактор...</a>
+    (@geos.iterator.filter(_.shape.shapeType.isGeoJsonCompatible).size отображаемых фигур)
+  </h2>
+  <br/>
+
   <h1>География узла <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a></h1>
   <p>Географическая информация узла -- это геометрические фигуры в координатах поверхности земли. Они тяжеловесные, и
      хранятся отдельно от родительского узла, в той же шарде узла, но в отдельной модели.</p>
@@ -53,6 +59,11 @@
             <td>@_prettyDate(geo.lastModified)</td>
             <td>@geo.versionOpt</td>
             <td>
+              @if(!geo.shape.shapeType.isGeoJsonCompatible) {
+                <span title="Круги и прямоугольники не совместимо со стандартном GeoJSON, поэтому не отображаются в картографическом редакторе фигур.">
+                  НЕ отображается на карте.
+                </span>
+              }
               <a href="@if(geo.isCircle){@routes.SysAdnGeo.editCircle(geo.id.get, geo.adnId)} else {@routes.SysAdnGeo.editNodeOsm(geo.id.get, geo.adnId)}">@Messages("Edit")</a>
             </td>
           </tr>

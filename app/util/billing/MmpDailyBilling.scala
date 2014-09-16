@@ -4,6 +4,7 @@ import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
+import util.adv.AdvUtil
 import scala.annotation.tailrec
 import util.blocks.{BfHeight, BlocksUtil, BlocksConf}
 import util.PlayMacroLogsImpl
@@ -450,26 +451,27 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   }
 
 
-  /** Логика добавления уровеня отображения */
-  private def ensureProducerLevel(sls: Set[SinkShowLevel], sl: SinkShowLevel): Set[SinkShowLevel] = {
-    if (sls.exists(_.adnSink == sl.adnSink)  &&  !sls.contains(sl)) {
-      sls + sl
-    } else {
-      sls
+  /**
+   * Пересчёт текущих размещений указанной рекламной карточки на основе данных MAdvOk online.
+   * @param adId id рекламной карточки.
+   * @return Карта ресиверов.
+   */
+  def calcualteReceiversMapForAd(adId: String): Receivers_t = {
+    val advsOk = DB.withConnection { implicit c =>
+      MAdvOk.findOnlineFor(adId, isOnline = true)
     }
-  }
-
-  /** Нужно убеждаться, что есть producer-уровень в наборе уровней. */
-  def prepareShowLevels(sls: Set[SinkShowLevel]): Set[SinkShowLevel] = {
-    // Добавить wifi-producer sl, если есть любой другой уровень wifi-уровень.
-    val sls1 = ensureProducerLevel(sls, SinkShowLevels.WIFI_PRODUCER_SL)
-    // Добавить geo-producer sl, если есть любой другой geo-уровень отображения.
-    ensureProducerLevel(sls1, SinkShowLevels.GEO_PRODUCER_SL)
+    advsOk
+      .map { advOk =>
+        AdReceiverInfo(advOk.rcvrAdnId, advOk.showLevels)
+      }
+      // Размещение одной карточки на одном узле на разных уровнях может быть проведено через разные размещения.
+      .groupBy(_.receiverId)
+      .mapValues { _.reduceLeft[AdReceiverInfo] {
+        (prev, next) => next.copy(sls = next.sls ++ prev.sls) }
+      }
   }
 
 }
-
-import MmpDailyBilling.prepareShowLevels
 
 
 /** Код вывода в выдачу и последующего сокрытия рекламных карточек крайне похож, поэтому он вынесен в трейт. */
@@ -480,8 +482,6 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
   lazy val logPrefix = ""
 
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
-
-  def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t
 
   def nothingToDo() {}
 
@@ -494,32 +494,43 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
     if (advs.nonEmpty) {
       trace(s"${logPrefix}Where are ${advs.size} items. ids = ${advs.map(_.id.get).mkString(", ")}")
       val advsMap = advs.groupBy(_.adId)
+      val now = DateTime.now
       advsMap foreach { case (adId, advsOk) =>
-        // Определяем неблокирующую функцию получения и обновления рекламной карточки, которую можно многократно вызывать.
-        // Повторная попытка получения и обновления карточки поможет разрулить конфликт версий.
+        val advsOk1 = advsOk
+          .map { updateAdvOk(_, now) }
+        DB.withTransaction { implicit c =>
+          advsOk1.foreach(_.save)
+        }
+        // Запустить пересчёт уровней отображения для затронутой рекламной карточки.
         val madUpdFut = MAd.getById(adId) flatMap {
           case Some(mad0) =>
-            MAd.tryUpdate(mad0) { mad1 =>
-              mad1.copy(
-                receivers = updateReceivers(mad0.receivers, advsOk)
-              )
+            // Запускаем полный пересчет карты ресиверов.
+            AdvUtil.calculateReceiversFor(mad0) flatMap { rcvrs1 =>
+              // Новая карта ресиверов готова. Заливаем её в карточку и сохраняем последнюю.
+              MAd.tryUpdate(mad0) { mad1 =>
+                mad1.copy(
+                  receivers = rcvrs1
+                )
+              }
             }
+
           case None =>
             Future failed new RuntimeException(s"MAd not found: $adId, but it should. Cannot continue.")
         }
         madUpdFut onComplete {
           case Success(_) =>
-            trace(s"${logPrefix}Updating isOnline state for ${advsOk.size} advsOk...")
-            val now = DateTime.now
-            val advsOk1 = advsOk
-              .map { updateAdvOk(_, now) }
-            DB.withTransaction { implicit c =>
-              advsOk1.foreach(_.save)
-            }
-            trace(s"${logPrefix}Successfully updated state for ad.id=$adId for advs = ${advsOk.mkString(", ")}")
+            debug(s"${logPrefix}Successfully updated rcvrs map for ad[$adId] for advs = ${advsOk.mkString(", ")}")
 
           case Failure(ex) =>
-            error(s"${logPrefix}Failed to update ad $adId advs states", ex)
+            error(s"${logPrefix}Failed to update ad[$adId] rcvrs. Rollbacking advOks update txn...", ex)
+            try {
+              DB.withConnection { implicit c =>
+                advs.foreach(_.save)
+              }
+              debug(s"${logPrefix}Successfully recovered adv state back for ad[$adId]. Will retry update on next time.")
+            } catch {
+              case ex: Throwable => error(s"${logPrefix}Failed to rollback advOks update txn! Adv state inconsistent. Advs:\n  $advs", ex)
+            }
         }
       }
     } else {
@@ -531,26 +542,9 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
 
 /** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе, которая должна бы выйти в свет. */
 object AdvertiseOfflineAdvs extends AdvSlsUpdater {
-  import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
     MAdvOk.findAllOfflineOnTime
-  }
-
-  /** Добавить новые ресиверы для рекламной карточки. */
-  override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
-    rcvrs0 ++ advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
-      trace(s"${logPrefix}Advertising ad ${advOk.adId} on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
-      val sls2 = prepareShowLevels(advOk.showLevels)
-      val rcvrInfo = rcvrs0.get(advOk.rcvrAdnId) match {
-        case None =>
-          AdReceiverInfo(advOk.rcvrAdnId, sls2)
-        case Some(ri) =>
-          // Всё уже готово вроде бы.
-          ri.copy(sls = ri.sls ++ sls2)
-      }
-      advOk.rcvrAdnId -> rcvrInfo :: acc
-    }
   }
 
   override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {
@@ -567,47 +561,9 @@ object AdvertiseOfflineAdvs extends AdvSlsUpdater {
 /** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы, которая должна уйти из выдачи
   * по истечению срока размещения. */
 object DepublishExpiredAdvs extends AdvSlsUpdater {
-  import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
     MAdvOk.findDateEndExpired()
-  }
-
-  /** Удалить ресиверы для рекламной карточки. */
-  override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
-    val adId = advsOk.headOption.fold("???")(_.adId)
-    val rcvr2adv = advsOk
-      .map { advOk => advOk.rcvrAdnId -> advOk }
-      .toMap
-    val rcvrs1 = rcvrs0.foldLeft[List[(String, AdReceiverInfo)]] (Nil) {
-      case (acc, e @ (rcvrAdnId, rcvrInfo)) =>
-        rcvr2adv.get(rcvrAdnId) match {
-          // Работа не касается этого ресивера. Просто пропускаем его на выход.
-          case None =>
-            e :: acc
-
-          // Есть ресивер. Надо подстричь его уровни отображения или всего ресивера целиком.
-          case Some(advOk) =>
-            trace(s"${logPrefix}Depublishing ad $adId on rcvrNode $rcvrAdnId ;; advOk.id = ${advOk.id}")
-            // Восстановить уровни отображения, которые были задействованы при добавлении оных в ресиверы.
-            val sls0 = prepareShowLevels(advOk.showLevels)
-            // Нужно отфильтровать уровни отображения или целиком этот ресивер спилить.
-            val sls2 = rcvrInfo.sls -- sls0
-            if (sls2.isEmpty) {
-              // Нет уровней отображения для этого ресивера.
-              trace(s"updateReceivers(): Removing rcvr[$rcvrAdnId] from ad[$adId], because no more show levels available.")
-              acc
-            } else {
-              // Ещё остались уровни для отображения. Запиливаем ресивер в кучу.
-              trace(s"updateReceivers(): KEEPing rcvr[$rcvrAdnId] for ad[$adId], because there are some show levels: ${sls2.mkString(", ")}.")
-              val e1 = rcvrInfo.copy(
-                sls = sls2
-              )
-              rcvrAdnId -> e1  ::  acc
-            }
-        }
-    }
-    rcvrs1.toMap
   }
 
   override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {

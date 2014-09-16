@@ -2,10 +2,11 @@ package models
 
 import java.util.Currency
 import org.joda.time.Period
-import play.api.i18n.Messages
+import play.api.i18n.{Lang, Messages}
 import play.api.data.Form
+import play.api.libs.json._
 import play.api.mvc.Call
-import util.PlayLazyMacroLogsImpl
+import _root_.util.PlayLazyMacroLogsImpl
 import scala.collection.JavaConversions._
 /**
  * Suggest.io
@@ -230,4 +231,43 @@ object BillingRightPanelLinks extends Enumeration {
 object LkLeftPanelLinks extends Enumeration {
   type LkLeftPanelLink = Value
   val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
+}
+
+
+/** Найденные узлы с одного геоуровня. Используеся в ctl.MarketShowcase для списка узлов. */
+case class GeoNodesLayer(nodes: Seq[MAdnNode], glevelOpt: Option[NodeGeoLevel] = None, i: Int = -1)
+
+
+
+object UmapTplArgs {
+
+  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit lang: Lang): JsArray = {
+    val lvls = ngls.map { ngl =>
+      JsObject(Seq(
+        "displayOnLoad" -> JsBoolean(true),
+        "name"          -> JsString( Messages("ngls." + ngl.esfn) ),
+        "id"            -> JsNumber(ngl.id)
+      ))
+    }
+    JsArray(lvls)
+  }
+
+}
+
+/**
+ * Набор аргументов для рендера шаблоны с картой Umap.
+ * @param nodesMap Карта узлов по категориям. Если пусто, то значит работа идёт в рамках одного узла.
+ * @param dlUpdateUrl Заготовка ссылки, которая будет делать сабмит для сохранения слоя.
+ *                    На месте вставки id слоя надо использовать шаблон "{pk}".
+ */
+case class UmapTplArgs(
+  dlUpdateUrl: String,
+  dlGetUrl: String,
+  nodesMap: Map[AdnShownType, Seq[MAdnNode]],
+  editAllowed: Boolean = true,
+  title: String,
+  ngls: Seq[NodeGeoLevel]
+) {
+  def nglsJson(implicit lang: Lang) = UmapTplArgs.nodeGeoLevelsJson(ngls)
+
 }

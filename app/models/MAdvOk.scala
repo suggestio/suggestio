@@ -92,20 +92,19 @@ object MAdvOk extends MAdvStatic {
   }
 
   /**
-   * Найти все ряды, которые относятся к указанной рекламной карточке и ресиверу,
-   * и выставлен флаг online в указанное значение (true по дефолту),
+   * Найти все ряды, которые относятся к указанной рекламной карточке, и выставлен флаг online в указанное
+   * значение (true по дефолту).
    * @param adId id рекламной карточки.
-   * @param rcvrId id ресивера.
    * @param isOnline значение поля isOnline, по дефолту true.
    * @param policy Политика блокирования рядов.
    * @return Список рядов в неопределённом порядке.
    */
-  def findOnlineFor(adId: String, rcvrId: String, isOnline: Boolean = true,
+  def findOnlineFor(adId: String, isOnline: Boolean = true,
                     policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MAdvOk] = {
     findBy(
-      " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND online = {isOnline}",
+      " WHERE ad_id = {adId} AND online = {isOnline}",
       policy,
-      'adId -> adId, 'rcvrId -> rcvrId, 'isOnline -> isOnline
+      'adId -> adId, 'isOnline -> isOnline
     )
   }
 

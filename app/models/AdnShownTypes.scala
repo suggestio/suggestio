@@ -8,7 +8,17 @@ package models
  */
 object AdnShownTypes extends Enumeration {
 
-  protected sealed case class Val(name: String, showWithTown: Boolean = true) extends super.Val(name) {
+  /**
+   * Интанс этой модели.
+   * @param name Название (обычно - однобуквенное).
+   * @param ngls Список дефолтовых геоуровней.
+   * @param showWithTown Флаг того, что нужно отображать в паре с городом. false для городов или выше.
+   */
+  protected sealed case class Val(
+    name: String,
+    ngls: List[NodeGeoLevel],
+    showWithTown: Boolean = true
+  ) extends super.Val(name) {
     /** Код локализованного названия в единственном числе. */
     val singular = "amt.of.type." + name
 
@@ -21,22 +31,24 @@ object AdnShownTypes extends Enumeration {
 
   type AdnShownType = Val
 
+  private val nglsBuilding = List(NodeGeoLevels.NGL_BUILDING)
+
   // Штатные (исторические) типы узлов
-  val MART: AdnShownType              = Val( AdNetMemberTypes.MART.name )
-  val SHOP: AdnShownType              = Val( AdNetMemberTypes.SHOP.name )
-  val RESTAURANT: AdnShownType        = Val( AdNetMemberTypes.RESTAURANT.name )
-  val RESTAURANT_SUP: AdnShownType    = Val( AdNetMemberTypes.RESTAURANT_SUP.name )
+  val MART: AdnShownType              = Val( AdNetMemberTypes.MART.name, nglsBuilding )
+  val SHOP: AdnShownType              = Val( AdNetMemberTypes.SHOP.name, nglsBuilding )
+  val RESTAURANT: AdnShownType        = Val( AdNetMemberTypes.RESTAURANT.name, nglsBuilding )
+  val RESTAURANT_SUP: AdnShownType    = Val( AdNetMemberTypes.RESTAURANT_SUP.name, Nil )
 
   // Пользовательские типы узлов. Для id'шников можно использовать идентификаторы, не использованные в вышеуказанных вещах.
   // При совпадении двух id будет ошибка после запуска при первом обращении к этой модели.
-  val TRANSPORT_NODE: AdnShownType    = Val("a")    // Вокзалы, аэропорты и др. более-менее крупные транспортные узлы.
-  val METRO_STATION: AdnShownType     = Val("b")    // Станция метро
-  // Район города
-  val TOWN_DISTRICT: AdnShownType     = new Val("c") {
+  val TRANSPORT_NODE: AdnShownType    = Val("a", nglsBuilding)    // Вокзалы, аэропорты и др. более-менее крупные транспортные узлы.
+  val METRO_STATION: AdnShownType     = Val("b", nglsBuilding)    // Станция метро
+  /** Район города. */
+  val TOWN_DISTRICT: AdnShownType     = new Val("c", List(NodeGeoLevels.NGL_TOWN_DISTRICT)) {
     override val singularNoTown = "District"
     override val pluralNoTown   = "Districts"
   }
-  val TOWN: AdnShownType              = Val("d", showWithTown = false)    // Город
+  val TOWN: AdnShownType              = Val("d", List(NodeGeoLevels.NGL_TOWN), showWithTown = false)    // Город
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
   def maybeWithName(n: String): Option[AdnShownType] = {

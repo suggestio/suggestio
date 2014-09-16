@@ -6,6 +6,7 @@ import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
+import util.adv.AdvUtil
 import util.billing.MmpDailyBilling
 import views.html.sys1.market._
 import play.api.data._, Forms._
@@ -920,6 +921,40 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           Ok(views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx) : String)
 
       case None => martNotFound(adnId)
+    }
+  }
+
+
+  /** Вывести результат анализа ресиверов рекламной карточки. */
+  def analyzeAdRcvrs(adId: String) = IsSuperuser.async { implicit request =>
+    MAd.getById(adId).flatMap { madOpt =>
+      val mad = madOpt.get
+      val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+      val newRcvrsFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
+      val currRcvrsStr = AdReceiverInfo.formatReceiversMapPretty(mad.receivers)
+      for {
+        newRcvrs <- newRcvrsFut
+        producerOpt <- producerOptFut
+      } yield {
+        val newRcvrsStr = AdReceiverInfo.formatReceiversMapPretty(newRcvrs)
+        Ok(showAdRcvrsTpl(mad, currRcvrsStr, newRcvrsStr, producerOpt))
+      }
+    }
+  }
+
+  /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
+  def resetReceivers(adId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
+    MAd.getById(adId).flatMap { madOpt =>
+      val mad0 = madOpt.get
+      AdvUtil.calculateReceiversFor(mad0) flatMap { newRcvrs =>
+        MAd.tryUpdate(mad0) { mad =>
+          mad.copy(
+            receivers = newRcvrs
+          )
+        } map { _adId =>
+          RdrBackOr(r)( routes.SysMarket.showAdnNode(mad0.producerId) )
+        }
+      }
     }
   }
 

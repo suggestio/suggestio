@@ -1306,6 +1306,7 @@ PersonalCabinet =
               .append data
 
               cbca.popup.showPopup '#'+popupId
+              cbca.pc.common.photoSlider()
           )
 
       $ document
@@ -1345,7 +1346,7 @@ PersonalCabinet =
 #######################################################################################################################
 CbcaPopup =
 
-  $container: $ '#popups'
+  $container: $ '.popups-container'
   $body: $ 'body'
 
   showOverlay: () ->
@@ -1819,11 +1820,24 @@ market =
         this.container_offset_x = container_offset_x
         this.container_offset_y = container_offset_y
 
+        # надо высчитать top у попапа, когда он будет показан
+        MIN_TOP  = 25
+
+        popupHeight = this.crop_tool_dom.height()
+        containerHeight = $('.popups-container').height()
+        diffHeight = containerHeight - popupHeight
+
+        if diffHeight > MIN_TOP*2 && $(window).width() > 767
+          top = Math.ceil( (containerHeight - popupHeight)/2 )
+        else
+          top = MIN_TOP
+
         x1 = this.crop_tool_container_div_dom.offset()['left']
-        y1 = this.crop_tool_container_div_dom.offset()['top']
+        y1 = this.crop_tool_container_div_dom.offset()['top'] + top
 
         x2 = x1 + container_offset_x
         y2 = y1 + container_offset_y
+
 
         this.crop_tool_img_dom.draggable
           'containment' : [x1,y1,x2,y2]
