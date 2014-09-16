@@ -94,11 +94,35 @@ case class CurrentAdvsTplArgs(
   adv2adn: Map[Int, MAdnNode],
   blockedSums: Seq[(Float, Currency)]
 )
+
+/** Аргументы для рендера страницы управления рекламной карточкой с формой размещения оной. */
 case class AdvFormTplArgs(
   adId: String,
-  adnNodes: Seq[MAdnNode],
   af: Form[_],
-  busyAdns: Map[String, MAdvI]
+  busyAdvs: Map[String, MAdvI],
+  cities: Seq[AdvFormCity],
+  adnId2formIndex: Map[String, Int],
+  advPeriodsAvail: List[(String, String)]
+)
+
+/** advForm: Описание одного узла для размещения рекламы. */
+case class AdvFormNode(
+  node: MAdnNode
+)
+/** advForm: Описание одной вкладки группы узлов в рамках города. */
+case class AdvFormCityCat(
+  shownType: AdnShownType,
+  nodes: Seq[AdvFormNode],
+  name: String,
+  i: Int,
+  isSelected: Boolean = false
+)
+/** advForm: Описание одного города в списке городов. */
+case class AdvFormCity(
+  node: MAdnNode,
+  cats: Seq[AdvFormCityCat],
+  i: Int,
+  isSelected: Boolean = false
 )
 
 

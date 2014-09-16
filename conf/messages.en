@@ -80,6 +80,8 @@ editing.of.amt.profile.R=Supervisor profile edit
 editing.of.amt.profile.a=Transport node profile edit
 editing.of.amt.profile.b=Metro station profile edit
 
+District=District
+Districts=Areas
 
 adv.period.custom=Custom
 adv.period.P3D=Three days
