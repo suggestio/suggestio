@@ -120,8 +120,13 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
   def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).async { implicit request =>
     import request.adnGeo
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
-    val urlPr = UrlParseResult.fromUrl( adnGeo.url.get ).get
-    val formFilled = osmNodeFormM.fill((adnGeo.glevel, urlPr))
+    val formFilled = adnGeo.url match {
+      case Some(url) =>
+        val urlPr = UrlParseResult.fromUrl( url ).get
+        osmNodeFormM.fill((adnGeo.glevel, urlPr))
+      case None =>
+        osmNodeFormM
+    }
     nodeFut map { nodeOpt =>
       Ok(editAdnGeoOsmTpl(adnGeo, formFilled, nodeOpt.get))
     }
