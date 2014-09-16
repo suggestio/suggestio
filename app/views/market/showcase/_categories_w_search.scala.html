@@ -35,10 +35,23 @@
   @_categoriesListTpl( args )
   @_shopsListTpl( args )
 
+  @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslBgColor =>
   <style type="text/css">
     .sm-tab.__inactive {
       color: #@args.fgColor!important;
     }
+
+    .sm-categories,
+    .sm-shops {
+      -webkit-box-shadow: inset 0px 10px 10px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-10}% );
+      box-shadow: inset 0px 5px 5px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-6}% );
+    }
+
+    .shops-list_row {
+      border-color: rgba( @colorHex2rgb(args.fgColor).mkString(","), 0.5 );
+    }
+
   </style>
+  }
 
 </div>
