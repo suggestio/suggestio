@@ -650,7 +650,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
     def compileLays(laysFut: Future[Seq[GeoNodesLayer]]): Future[Seq[GeoNodesLayer]] = {
       for {
-        lays <- laysFut
+        lays        <- laysFut
         nextNodeOpt <- nextNodeOptFut
       } yield {
         val nextNodeIdOpt = nextNodeOpt.flatMap(_.id)
@@ -771,11 +771,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       nodesLaysFut
     }
 
-    val nodesFut = compileLays(nodesLays2Fut).map { _.flatMap(_.nodes) }
+    val nodesLaysFut5 = compileLays(nodesLays2Fut)
 
     // Когда все данные будут собраны, нужно отрендерить результат в виде json.
     for {
-      nodes       <- nodesFut
+      nodesLays5  <- nodesLaysFut5
       nextNodeOpt <- nextNodeOptFut
     } yield {
       // Рендер в json следующего узла, если он есть.
@@ -787,13 +787,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           ))
         }
       // Список узлов, который надо рендерить юзеру.
-      val nodesRendered: Seq[MAdnNode] = if (args.isNodeSwitch && nodes.nonEmpty) {
+      val nodesRendered: Seq[GeoNodesLayer] = if (args.isNodeSwitch && nodesLays5.nonEmpty) {
         // При переключении узла, переключение идёт на наиболее подходящий узел, который первый в списке.
         // Тогда этот узел НЕ надо отображать в списке узлов.
-        nodes.tail
+        val nodes0 = nodesLays5.head.nodes
+        nodesLays5.head.copy(nodes = nodes0.tail) :: nodesLays5.toList.tail
       } else {
         // Нет переключения узлов. Рендерим все подходящие узлы.
-        nodes
+        nodesLays5
       }
       val json = JsObject(Seq(
         "action"      -> JsString("findNodes"),
@@ -865,7 +866,5 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
-  /** Найденные узлы с одного геоуровня. */
-  sealed case class GeoNodesLayer(nodes: Seq[MAdnNode], glevelOpt: Option[NodeGeoLevel] = None, i: Int = -1)
 }
 

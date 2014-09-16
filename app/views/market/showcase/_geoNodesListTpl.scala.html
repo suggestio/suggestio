@@ -1,12 +1,14 @@
-@(nodes: Seq[models.MAdnNode.T], currNode: Option[MAdnNode])(implicit ctx:util.Context)
+@(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
 
 <div class="shops-list">
-  @nodes.zipWithIndex.map { case (mnode, i) =>
+  @nodeLayers.iterator.map { nl =>
+    @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
 
-    <div class="shops-list_row @if(i%2 == 0){__odd} js-geo-node" data-id="@mnode.id">
-      @mnode.meta.name
-    </div>
+      <div class="shops-list_row @if(i%2 == 0){__odd} js-geo-node" data-id="@mnode.id">
+        @mnode.meta.name
+      </div>
 
+    }
   }
 </div>
