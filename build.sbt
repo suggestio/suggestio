@@ -145,3 +145,9 @@ testOptions in Test += Tests.Argument("-oF")
 
 //gruntSettings
 
+
+// Не генерить мусорную документацию во время stage/dist. Она не нужна никому.
+sources in (Compile,doc) := Seq.empty
+
+publishArtifact in (Compile, packageDoc) := false
+
