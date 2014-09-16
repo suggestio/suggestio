@@ -3,12 +3,12 @@
 
 <div class="geo-nodes-list">
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
-    <div class="geo-nodes-list_layer __active @if( i==0 ){ __bo-border }">
+    <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border __active }" data-index="@i" id="geoLayer@i">
       <div class="geo-nodes-list_layer-inner">@nl.glevelOpt.map{ glevel =>
         @Messages("ngls." + glevel ) <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
         }</div>
     </div>
-    <div class="geo-nodes-list_rows">
+    <div class="geo-nodes-list_rows @if( i > 0 ){ __hidden }"  id="geoLayerNodes@i">
     @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
       <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @*if(i%2 == 0){__odd}*@ js-geo-node" data-id="@mnode.id">
         @mnode.meta.name

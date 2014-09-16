@@ -225,6 +225,7 @@ code
     .sm-producer-header_exit-button,
     .sm-producer-header_geo-button,
     .sm-producer-header_logo,
+    .sm-producer-header_txt-logo,
     .sm-producer-header_search-button
       display: none!important
 
@@ -237,7 +238,6 @@ code
   &.__w-index-icon
     .sm-producer-header_exit-button,
     .sm-producer-header_geo-button,
-    .sm-producer-header_logo,
     .sm-producer-header_icon,
     .sm-producer-header_search-button
       display: none!important
@@ -429,16 +429,19 @@ code
     color       #959595
 
 .categories-list
-  width           320px
+  width           260px
   margin          0px auto
   padding-bottom  30px
+  padding-top     10px
+  &_horizontal-delimiter
+    clear         both
+    border-bottom 1px rgba(255, 255, 255, 0.5) dashed
   &_single-cat
     float         left
     margin-left   7px
     margin-right  7px
-    margin-top    25px
-    margin-bottom 25px
-
+    margin-top    0px
+    margin-bottom 10px
     &.__no-margin
       margin-left 0px
 
@@ -451,11 +454,15 @@ code
   font-size: 13px
   display: block
   text-align: center
-  width: 73px
-  height: 92px
+  width: 100px
+  height: 76px
   margin-left: 15px
   margin-right: 15px
   margin-bottom: 15px
+
+  &.__disabled
+    opacity       0.5
+    cursor        default
 
   &_icon
     margin: 0px auto
@@ -496,7 +503,10 @@ code
     opacity         0.7
     border-top      1px #fff dashed
     border-bottom   1px #fff dashed
+    cursor          pointer
     &.__active
+      cursor        default
+      opacity       1
       border-bottom-color transparent
     &.__bo-border
       border-top-color    transparent
@@ -510,6 +520,9 @@ code
     text-transform  uppercase
   &_layer-counter
     float           right
+  &_rows
+    &.__hidden
+      display       none
   &_row
     width           260px
     margin          0px auto

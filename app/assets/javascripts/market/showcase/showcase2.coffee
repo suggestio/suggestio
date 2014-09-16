@@ -482,6 +482,7 @@ siomart =
     loaded : false
     location_requested : false
     nodes_loaded : false
+    active_layer : 0
     search :
       min_request_length : 2
       search_delay : 500
@@ -504,6 +505,15 @@ siomart =
     position_callback : ( gp_obj ) ->
       siomart.geo.geo_position_obj = gp_obj
       siomart.geo.load_nodes( true )
+
+    open_layer : ( index ) ->
+      siomart.utils.removeClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
+      siomart.utils.addClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
+
+      siomart.geo.active_layer = index
+
+      siomart.utils.addClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
+      siomart.utils.removeClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
 
     get_current_position : () ->
       siomart.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
@@ -529,7 +539,7 @@ siomart =
       geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
       geo_screen_content = siomart.utils.ge('smGeoNodesContent')
 
-      _offset = 100
+      _offset = 128
 
       geo_screen.style.height = cbca_grid.wh - _offset
       geo_screen_wrapper.style.height = cbca_grid.wh - _offset
@@ -1032,6 +1042,9 @@ siomart =
       ## гео добро
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
 
+        if cbca_grid.ww <= 400
+          siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
+
         if cbca_grid.columns > 2
           siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
           cbca_grid.left_offset = 2
@@ -1051,6 +1064,7 @@ siomart =
         return false
 
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
+        siomart.utils.removeClass siomart.utils.ge('smGridAds'), '__blurred'
         siomart.geo.close()
         return false
 
@@ -1073,6 +1087,7 @@ siomart =
         siomart.utils.removeClass siomart.utils.ge('smRootProducerHeader'), '__w-index-icon'
         siomart.navigation_layer.close()
         siomart.grid_ads.load_index_ads()
+
         return false
 
       shop_link_target = siomart.events.target_lookup( event.target, 'className', 'js-shop-link' )
@@ -1123,6 +1138,12 @@ siomart =
       ##############
       if siomart.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
         siomart.focused_ads.close()
+
+      target = siomart.events.target_lookup( event.target, 'className', 'geo-nodes-list_layer' )
+      if target != null
+        index = target.getAttribute 'data-index'
+        siomart.geo.open_layer( index )
+
 
     #############################
     ## Обработка keyup
