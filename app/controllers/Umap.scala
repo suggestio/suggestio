@@ -127,30 +127,42 @@ object Umap extends SioController with PlayMacroLogsImpl {
       // TODO Надо защиту на случай проблем.
       // Слой распарсился и готов к сохранению. Запускаем удаление исходных данных слоя.
       allRenderableFut.flatMap { all =>
-        val bulkDel = client.prepareBulk()
-        all.foreach { geo =>
-          bulkDel.add(geo.prepareDelete)
+        if (all.nonEmpty) {
+          val bulkDel = client.prepareBulk()
+          all.foreach { geo =>
+            bulkDel.add(geo.prepareDelete)
+          }
+          trace(logPrefix + "Deleting " + bulkDel.numberOfActions() + " shapes on layer...")
+          bulkDel.execute() map { Some.apply }
+        } else {
+          Future successful None
         }
-        trace(logPrefix + "Deleting " + bulkDel.numberOfActions() + " shapes on layer...")
-        bulkDel.execute()
-      } flatMap { bulkDelResult =>
-        trace(s"${logPrefix}Layer $ngl wiped: $bulkDelResult ;; Starting to save new shapes...")
+      } flatMap { bulkDelResultOpt =>
+        trace(s"${logPrefix}Layer $ngl wiped: $bulkDelResultOpt ;; Starting to save new shapes...")
         bulk.execute()
       } map { br =>
-        trace(logPrefix + "Layer saved: " + br.buildFailureMessage())
+        if (br.hasFailures) {
+          warn("Layer saved with problems: " + br.buildFailureMessage())
+        } else {
+          trace(logPrefix + "Layer saved without problems.")
+        }
         val resp = layerJson(ngl, request2lang)
         Ok(resp)
       } recoverWith {
         case ex: Throwable =>
           error("Failed to update layer " + ngl, ex)
           allRenderableFut flatMap { all =>
-            val bulkReSave = client.prepareBulk()
-            all.foreach { geo =>
-              bulkReSave.add(geo.indexRequestBuilder)
+            if (all.nonEmpty) {
+              val bulkReSave = client.prepareBulk()
+              all.foreach { geo =>
+                bulkReSave.add(geo.indexRequestBuilder)
+              }
+              bulkReSave.execute().map(Some.apply)
+            } else {
+              Future successful None
             }
-            bulkReSave.execute()
-          } map { bsr =>
-            debug("Rollbacked deleted data")
+          } map { bsrOpt =>
+            debug("Rollbacked deleted data: " + bsrOpt)
             InternalServerError("Failed to save. See logs.")
           }
       }
