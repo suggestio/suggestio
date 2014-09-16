@@ -31,7 +31,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
-  val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse true
+  val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
@@ -144,17 +144,17 @@ object Umap extends SioController with PlayMacroLogsImpl {
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
     // Продолжаем веселье.
-    _saveMapDataLayer(ngl)(_.adnIdOpt.get)
+    _saveMapDataLayer(ngl, None)(_.adnIdOpt.get)
   }
 
   /** Сабмит одного слоя на карте узла. */
   def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = IsSuperuserAdnNode(adnId).async(parse.multipartFormData) {
     implicit request =>
-      _saveMapDataLayer(ngl){ _ => adnId }
+      _saveMapDataLayer(ngl, request.adnNode.id){ _ => adnId }
   }
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
-  private def _saveMapDataLayer(ngl: NodeGeoLevel)(getAdnIdF: UmapFeature => String)
+  private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: UmapFeature => String)
                                (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // Готовимся к сохранению присланных данных.
     val logPrefix = s"saveMapDataLayer($ngl): "
@@ -162,7 +162,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
     request.body.file("geojson").fold[Future[Result]] {
       NotAcceptable("geojson not found in response")
     } { tempFile =>
-      val allRenderableFut = MAdnNodeGeo.findAllRenderable(ngl)
+      val allRenderableFut = MAdnNodeGeo.findAllRenderable(ngl, adnIdOpt)
       // TODO Надо бы задействовать InputStream или что-то ещё для парсинга.
       val jsonBytes = try {
         Files.readAllBytes(tempFile.ref.file.toPath)
