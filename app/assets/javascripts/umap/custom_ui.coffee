@@ -26,4 +26,6 @@ $doc.on 'change', '.js-select-id', ->
   value = $selected.val()
   $storageProps = $ '#storage-feature-properties'
   $input = $storageProps.find 'textarea'
-  $input.text value
+
+  if value
+    $input.val value
