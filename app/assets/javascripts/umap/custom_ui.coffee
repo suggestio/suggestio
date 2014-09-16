@@ -27,7 +27,5 @@ $doc.on 'change', '.js-select-id', ->
   $storageProps = $ '#storage-feature-properties'
   $input = $storageProps.find 'textarea'
 
-  if value
+  if parseInt(value) != 0
     $input.val value
-    $input.attr 'name', 'description'
-    $input.trigger 'change'

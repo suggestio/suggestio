@@ -1,4 +1,4 @@
-@(nglsJson: play.api.libs.json.JsArray, nodesMap: Map[AdnShownType, Seq[MAdnNode]])(implicit ctx: Context)
+@(args: UmapTplArgs)(implicit ctx: Context)
 
 @import ctx._
 
@@ -23,13 +23,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
 <body class="map_detail">
-    <div id="storage-ui-container"></div>
-    <div id="storage-alert-container"></div>
-    <div id="storage-tooltip-container"></div>
-    <div id="map"></div>
+  <div id="storage-ui-container"></div>
+  <div id="storage-alert-container"></div>
+  <div id="storage-tooltip-container"></div>
+  <div id="map"></div>
 
+  @* Если карты узлов нет, значит идёт редактирование в рамках известного узла. *@
+  @if(args.nodesMap.nonEmpty) {
     <div class="custom-ui">
-      @defining( nodesMap.toSeq ) { nodesSeq =>
+      @defining( args.nodesMap.toSeq ) { nodesSeq =>
         <div class="custom-ui_btn-lst js-select-label">
           @nodesSeq.map { case (ast, _) =>
             <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">@Messages("amts.of.type." + ast.name)</button>
@@ -46,6 +48,7 @@
         }
       }
     </div>
+  }
     
     
     <script type="text/javascript">
@@ -64,16 +67,16 @@
             "scrollWheelZoom": true,
             "locale": "ru",
             "displayPopupFooter": false,
-            "allowEdit": true,
+            "allowEdit": @args.editAllowed,
             "slideshow": {},
             "scaleControl": true,
             "tilelayer": {},
-            "datalayers": @Html(nglsJson.toString),
+            "datalayers": @Html(args.nglsJson.toString),
             "moreControl": true,
             "licence": "",
             "tilelayersControl": true,
             "default_iconUrl": "/static/storage/src/img/marker.png",
-            "name": "\u0411\u0435\u0437\u044b\u043c\u044f\u043d\u043d\u0430\u044f \u043a\u0430\u0440\u0442\u0430",
+            "name": "@args.title",
             "shortUrl": "@ctx.myAudienceUrl@routes.Umap.getAdnNodesMap()",
             "tilelayers": [
               {
@@ -246,15 +249,15 @@
             "datalayersControl": true,
             "urls": {
               "map": "/ru/map/{slug}_{pk}",
-              "datalayer_view": "/sys/umap/nodes/datalayer?ngl={pk}",
-              "map_update": "/sys/umap/nodes/settings",
+              "datalayer_view": "@args.dlGetUrl",
+              "map_update": "@routes.Umap.saveMapSettingsSubmit().url",
               "map_old_url": "/ru/map/{username}/{slug}/",
               "ajax_proxy": "/ajax-proxy/?url={url}",
               "map_geojson": "/ru/map/{pk}/geojson/",
               "map_short_url": "/ru/m/{pk}/",
               "map_anonymous_edit_url": "/ru/map/anonymous-edit/{signature}",
               "map_new": "/ru/map/new/",
-              "datalayer_update": "/sys/umap/nodes/datalayer?ngl={pk}",
+              "datalayer_update": "@args.dlUpdateUrl",
               "map_delete": "/ru/map/{map_id}/update/delete/",
               "map_create": "/ru/map/create/",
               "logout": "/ru/logout/",

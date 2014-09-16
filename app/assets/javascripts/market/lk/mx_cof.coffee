@@ -545,6 +545,29 @@ PersonalCabinet =
 
   images: ()->
 
+    #фотографии в галерее профиля
+    $ document
+    .on 'click', '.js-crop-image-btn', (e)->
+      e.preventDefault()
+
+      img_key = $('input', $(this).parent()).val()
+      img_name = $('input', $(this).parent()).attr 'name'
+
+      if img_key == ''
+        alert 'сначала нужно загрузить картинку'
+        return false
+
+      width   = 790
+      height  = 250
+
+      $.ajax
+        url : "/img/crop/#{img_key}?width=#{width}&height=#{height}"
+        success : ( data ) ->
+          $('#popupsContainer').html data
+          CbcaPopup.showPopup()
+          market.img.crop.init( img_name )
+
+    # удаление изображения
     $ document
     .on 'click', '.js-remove-image', (e)->
       e.preventDefault()
@@ -600,6 +623,9 @@ PersonalCabinet =
           # имя поля для загрузки фотографии
           fieldName = $this.attr 'data-name'
 
+          # класс у кнопки редактирования, по умолчанию remove
+          editBtnClass = $this.attr 'data-edit-btn' || 'image_remove-btn js-remove-image'
+
           # загрузка одной или нескольких фотографии
           dataMultiple = $this.attr 'data-multiple'
           dataMultiple && multiple = true
@@ -614,7 +640,7 @@ PersonalCabinet =
                    <div class="image js-preview #{previewClass}">
                    <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
                    <img class="image_src js-image-preview" src="#{respData.image_link}" />
-                   <a class="image_remove-btn js-remove-image" title="Удалить файл"><span></span></a>
+                   <a class="#{editBtnClass}" title="Удалить файл"><span></span></a>
                    </div>
                   """
 
@@ -1010,7 +1036,6 @@ PersonalCabinet =
     ##################################################################################################################
     photoSlider: () ->
 
-      # TODO добавить проверку на то, что у данного dom элемента слайдер уже инициализирован
       if $().bxSlider
         $ '.js-photo-slider'
         .each ()->
@@ -1579,7 +1604,10 @@ market =
 
 
     crop :
+
+
       init_triggers : () ->
+
         $('.js-img-w-crop').unbind 'click'
         $('.js-img-w-crop').bind 'click', () ->
 
@@ -1596,7 +1624,7 @@ market =
           marker = $(this).attr 'data-marker'
 
           $.ajax
-            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker
+            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker # маркер тут вроде не нужен, если удалить ничего не меняется
             success : ( data ) ->
               $('#popupsContainer').html data
               CbcaPopup.showPopup()
@@ -1709,12 +1737,13 @@ market =
 
         # надо высчитать top у попапа, когда он будет показан
         MIN_TOP  = 25
+        $window = $  window
 
         popupHeight = this.crop_tool_dom.height()
-        containerHeight = $('.popups-container').height()
+        containerHeight = $window.height()
         diffHeight = containerHeight - popupHeight
 
-        if diffHeight > MIN_TOP*2 && $(window).width() > 767
+        if diffHeight > MIN_TOP*2 && $window.width() > 767
           top = Math.ceil( (containerHeight - popupHeight)/2 )
         else
           top = MIN_TOP

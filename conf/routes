@@ -374,4 +374,7 @@ GET  /sys/umap/nodes/datalayer           controllers.Umap.getDataLayerGeoJson(ng
 POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
 POST /sys/umap/nodes/datalayer           controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
 POST /sys/umap/nodes/datalayer/new       controllers.Umap.createMapDataLayer
+GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
+GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
+POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
