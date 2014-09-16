@@ -51,6 +51,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Дефолтовый цвет элементов переднего плана. */
   val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
 
+  /** Дефолтовое имя ноды. */
+  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+
+
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
   val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = {
@@ -240,6 +244,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val args = SMShowcaseRenderArgs(
         bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
         fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
+        name        = adnNode.meta.name,
         mmcats      = mmcats,
         catsStats   = catsStats,
         spsr        = spsr,
@@ -311,6 +316,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val args = SMShowcaseRenderArgs(
         bgColor = SITE_BGCOLOR_GEO,
         fgColor = SITE_FGCOLOR_GEO,
+        name = SITE_NAME_GEO,
         mmcats  = mmcats,
         catsStats = catsStats,
         spsr = AdSearch(

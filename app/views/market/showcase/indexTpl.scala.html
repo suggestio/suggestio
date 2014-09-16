@@ -38,7 +38,7 @@
   </div>
 
   <div class="sm-producer-header_geo-button sm-button sm-producer-header_btn __left-aligned abs hidden" id="smGeoScreenButton">
-    @svg._geoButtonTpl( args.fgColor )
+    @svg._geoFillTpl( args.fgColor )
   </div>
 
   <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
@@ -52,7 +52,12 @@
   }
   </span>
 
-  <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">Suggest.io</span>
+  <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+    @args.name
+    <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
+    <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
+  </span>
+
   @*
   <img class="sm-producer-header_logo" height="30" src="@nodeLogo"/>
   *@

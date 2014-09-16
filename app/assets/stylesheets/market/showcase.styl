@@ -203,6 +203,7 @@ code
     padding-top: 10px
 
   &_txt-logo
+    position        relative
     font-family     'opensans-regular-webfont'
     font-size       14px
     line-height     50px
@@ -211,7 +212,17 @@ code
     border          1px #fff solid
     border-radius(  3px )
     padding         4px 20px
-
+    &-dot
+      background    #fff
+      width         6px
+      height        6px
+      border-radius(50px)
+      position      absolute
+      left          -15px
+      top           9px
+      &.__right
+        left        auto
+        right       -15px
   &_icon
     display: none
 
@@ -610,18 +621,19 @@ code
     padding: 0px 5px
 
   &_message
-    display: none
-    position: absolute
-    left: -1px
-    bottom: -27px
-    line-height: 12px
-    font-size: 11px
-    padding: 6px
-    height: 14px
-    background: #f44040
-    color: #fff
-    font-family: 'opensans-regular-webfont'
-    z-index: 10
+    display         none
+    position        absolute
+    left            -1px
+    bottom          -28px
+    line-height     12px
+    font-size       11px
+    padding         4px 6px
+    height          14px
+    background      #363636
+    color           #fff
+    font-family     'opensans-regular-webfont'
+    z-index         10
+    border-radius(  3px )
 
   &_input
     width: 100%

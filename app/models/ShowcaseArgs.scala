@@ -57,6 +57,7 @@ case class SMShowcaseReqArgs(
 case class SMShowcaseRenderArgs(
   bgColor: String,
   fgColor: String,
+  name: String,
   mmcats: Seq[MMartCategory],
   catsStats: Map[String, Long],
   spsr: AdSearch,
