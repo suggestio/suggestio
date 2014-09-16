@@ -30,3 +30,4 @@ $doc.on 'change', '.js-select-id', ->
   if value
     $input.val value
     $input.attr 'name', 'description'
+    $input.trigger 'change'
