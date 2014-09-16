@@ -207,3 +207,8 @@ object LkLeftPanelLinks extends Enumeration {
   type LkLeftPanelLink = Value
   val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
 }
+
+
+/** Найденные узлы с одного геоуровня. */
+case class GeoNodesLayer(nodes: Seq[MAdnNode], glevelOpt: Option[NodeGeoLevel] = None, i: Int = -1)
+
