@@ -1102,13 +1102,8 @@ PersonalCabinet =
       $slideCnt = $this.closest '.js-slide-cnt'
       $slideWrap = $this.closest '.js-slide-w'
 
-      titleInputChecked = false
-      $slideCnt.find 'input:enabled'
-      .each (e)->
-        $input = $ this
-        inputChecked = $input.prop 'checked'
-        if inputChecked
-          titleInputChecked = true
+      titleInputChecked = true
+
 
       $slideWrap
       .find '.js-slide-title input:checkbox'
