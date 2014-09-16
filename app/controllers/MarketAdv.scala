@@ -4,6 +4,7 @@ import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
+import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.HtmlFormat
 import util.SiowebEsUtil.client
@@ -33,7 +34,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  private type AdvFormM_t = Form[List[AdvFormEntry]]
+  private type AdvFormValueM_t = List[AdvFormEntry]
+  private type AdvFormM_t = Form[AdvFormValueM_t]
 
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
@@ -41,6 +43,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def freeAdvFormM: Form[Option[Boolean]] = Form(
     "freeAdv" -> optional(boolean)
   )
+
+  /** Ключ маппинга для списка узлов. */
+  val NODES_KM = "node"
 
   /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
   val CUSTOM_PERIOD = "custom"
@@ -89,7 +94,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private type DatePeriodOpt_t = Option[(LocalDate, LocalDate)]
+  private type DatePeriod_t = (LocalDate, LocalDate)
+  private type DatePeriodOpt_t = Option[DatePeriod_t]
 
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
   private def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
@@ -113,7 +119,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
-  private def advPeriodOptM: Mapping[DatePeriodOpt_t] = {
+  private def advPeriodM: Mapping[DatePeriod_t] = {
     tuple(
       "period" -> nonEmptyText(minLength = 1, maxLength = 10)
         .transform [Option[QuickAdvPeriod]] (
@@ -124,28 +130,34 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       ,
       "date"  -> advDatePeriodOptM
     )
-    .transform [DatePeriodOpt_t] (
+    .verifying("error.required", { m => m match {
+      case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
+    }})
+      // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
+    .verifying("error.date.end.before.start", { m => m match {
+       // Если даты имеют смысл, то они заданы, и их проверяем.
+       case (None, Some((dateStart, dateEnd)))    => !(dateStart isAfter dateEnd)
+       // Остальные случаи не отрабатываем - смысла нет.
+       case _ => true
+    }})
+
+    .transform [DatePeriod_t] (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
           val now = LocalDate.now()
-          Some(now -> now.plus(qap.toPeriod))
-        case (_, dpo) if dpo.isDefined =>
-          dpo
-        case _ =>
-          None
+          now -> now.plus(qap.toPeriod)
+        case (_, dpo) =>
+          dpo.get
       },
       // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
       // При неудаче вернуть кастомный период.
-      { case dpo @ Some((dateStart, dateEnd)) =>
-          // Угадываем период либо откатываемся на custom_period
-          val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
-          QuickAdvPeriods.maybeWithName(periodStr) match {
-            case Some(qap)  =>  Some(qap) -> None
-            case None       =>  None -> dpo
-          }
-        // Почему-то нет данных по интервалу размещения.
-        case None =>
-          Some(QuickAdvPeriods.default) -> None
+      {case dp @ (dateStart, dateEnd) =>
+        // Угадываем период либо откатываемся на custom_period
+        val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
+        QuickAdvPeriods.maybeWithName(periodStr) match {
+          case Some(qap)  =>  Some(qap) -> None
+          case None       =>  None -> Some(dp)
+        }
       }
     )
   }
@@ -153,61 +165,49 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Маппинг формы размещения рекламы на других узлах. */
   private def advFormM: AdvFormM_t = {
     import util.FormUtil._
-    Form(
-      "node" -> {
-        // TODO list mapping не умеет удобный для нас unbind(). Нужно изобрести какой-то костыль.
-        list(
-          tuple(
-            "adnId"         -> esIdM,
-            "advertise"     -> boolean,
-            "showLevel"     -> adSlsM,
-            "sink"          -> sinksM,
-            // optional, т.к. если галочки нет, то эти проблемы надо игнорировать.
-            "period"        -> advPeriodOptM
-          )
-        )
-          // TODO Нужно, чтобы в форме не сабмиттились не готовые поля. Тогда это дело можно будет перенести на уровень конкретных маппингов.
-          .verifying("adv.node.at.least.one.sink.must.present", {
-            _.forall {
-              case (_, isAdv, _, sinks, _)  =>  if (isAdv) sinks.nonEmpty else true
+    val nodesM = list(
+      tuple(
+        "adnId"         -> esIdM,
+        "advertise"     -> boolean,
+        "showLevel"     -> adSlsM,
+        "sink"          -> sinksM
+      )
+      .verifying("adv.node.at.least.one.sink.must.present", { m => m match {
+        case (_, isAdv, _, sinks)  =>  if (isAdv) sinks.nonEmpty else true
+      }})
+    )
+    Form[AdvFormValueM_t] (
+      mapping(
+        NODES_KM -> nodesM,
+        "period" -> advPeriodM
+      )
+      {(nodesAdv, advPeriod) =>
+        nodesAdv.foldLeft(List.empty[AdvFormEntry]) {
+          case (acc, (adnId, isAdv @ true, adSls, sinks) ) =>
+            val ssls = for(sl <- adSls; sink <- sinks) yield {
+              SinkShowLevels.withArgs(sink, sl)
             }
-          })
-          .verifying("error.date.end.before.start", { _.forall {
-            // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
-            case (_, isAdv, _, _, dates) =>
-              if (isAdv) {
-                dates match {
-                  case Some((dateStart, dateEnd))  =>  !(dateStart isAfter dateEnd)
-                  case _ => false
-                }
-              } else {
-                true
-              }
-          }})
-          .transform [List[AdvFormEntry]] (
-            {ts =>
-              ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, adSls, sinks, Some((dateStart, dateEnd)) ) ) =>
-                  val ssls = for(sl <- adSls; sink <- sinks) yield {
-                    SinkShowLevels.withArgs(sink, sl)
-                  }
-                  val result = AdvFormEntry(
-                    adnId = adnId,
-                    advertise = isAdv,
-                    showLevels = ssls,
-                    dateStart = dateStart,
-                    dateEnd = dateEnd
-                  )
-                  result :: acc
-                case (acc, _) => acc
-              }
-            },
-            {_.map { e =>
-              val adSls = e.showLevels.map(_.sl)
-              val sinks = e.showLevels.map(_.adnSink)
-              (e.adnId, e.advertise, adSls, sinks, Option(e.dateStart -> e.dateEnd))
-            }}
-          )
+            val result = AdvFormEntry(
+              adnId       = adnId,
+              advertise   = isAdv,
+              showLevels  = ssls,
+              dateStart   = advPeriod._1,
+              dateEnd     = advPeriod._2
+            )
+            result :: acc
+          case (acc, _) => acc
+        }
+      }
+      {l =>
+        l.headOption.map { first =>
+          val nodesAdvs = l.map { e =>
+            val adSls = e.showLevels.map(_.sl)
+            val sinks = e.showLevels.map(_.adnSink)
+            (e.adnId, e.advertise, adSls, sinks)
+          }
+          val dates = first.dateStart -> first.dateEnd
+          nodesAdvs -> dates
+        }
       }
     )
   }
@@ -215,20 +215,29 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    renderAdvFormFor(adId, advFormM)
+    renderAdvForm(adId, advFormM)
       .map { Ok(_) }
   }
 
-  /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
-  private def renderAdvFormFor(adId: String, form: AdvFormM_t)(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
-    // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возможно опубликовать карточку.
-    val rcvrsFut = collectReceivers(request.producer)
-    renderAdvFormForRcvrs(adId, form, rcvrsFut)
-  }
+  /**
+   * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
+   * @param adId id рекламной карточки.
+   * @param form Форма размещения рекламной карточки.
+   * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
+   * @return Отрендеренная страница управления карточкой с формой размещения.
+   */
+  private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
+                           (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+    // Если поиск ресиверов ещё не запущен, то сделать это.
+    val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
+    // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
+    val allRcvrsMapFut = rcvrsAllFut map { rcvrs =>
+      rcvrs.iterator
+        .map { rcvr  =>  rcvr.id.get -> rcvr }
+        .toMap
+    }
 
-  private def renderAdvFormForRcvrs(adId: String, form: AdvFormM_t, rcvrsFut: Future[Seq[MAdnNode]])
-                                   (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
-    // Работа с синхронными моделями.
+    // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
       val advsOk = MAdvOk.findNotExpiredByAdId(adId)
@@ -243,29 +252,143 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
     val (advsOk, advsReq, advsRefused, adnIdsReady, blockedSums) = syncResult
     val adnIdsReadySet = adnIdsReady.toSet
+
+    // Сразу запускаем в фоне генерацию старого формата передачи ресиверов в шаблон.
+    val rcvrsReadyFut = rcvrsAllFut map { rcvrs =>
+      // Выкинуть узлы, у которых нет своего тарифного плана.
+      // TODO Нельзя публиковать прямо в городах. Нужно фильтровать тут и при сабмите.
+      rcvrs filter { node => adnIdsReadySet contains node.id.get }
+    }
+
+    // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
+    val adnId2indexMapFut: Future[Map[String, Int]] = rcvrsReadyFut map { rcvrs =>
+      // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
+      val formIndex2adnIdMap0 = form(NODES_KM).indexes
+        .flatMap { fi => form(s"$NODES_KM[$fi].adnId").value.map(fi -> _) }
+        .toMap
+      val missingRcvrIds = rcvrs.flatMap(_.id).toSet -- formIndex2adnIdMap0.valuesIterator
+      // Делаем источник допустимых index'ов, которые могут быть в list-mapping'е.
+      val indexesIter = (1 to Int.MaxValue)   // TODO с нуля начинать надо отсчет или с единицы?
+        .iterator
+        .filterNot(formIndex2adnIdMap0.contains)
+      // Итератор по недостающим элементам карты.
+      val missingResIter = missingRcvrIds
+        .iterator
+        .map { adnId => adnId -> indexesIter.next }
+      // Итератор по готовым данным, уже забитых в форме.
+      val existsingIter = formIndex2adnIdMap0
+        .iterator
+        .map { case (i, adnId)  =>  adnId -> i }
+      // Склеиваем итераторы и делаем из них финальную неизменяемую карту.
+      (missingResIter ++ existsingIter).toMap
+    }
+
+    // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
+    val userLang = request2lang
+    // Строим набор городов и их узлов, сгруппированных по категориям.
+    val citiesFut: Future[Seq[AdvFormCity]] = for {
+      rcvrs     <- rcvrsReadyFut
+      rcvrsMap  <- allRcvrsMapFut
+    } yield {
+      rcvrs
+        .groupBy { rcvr =>
+          findFirstGeoParentOfType(rcvr, AdnShownTypes.TOWN, rcvrsMap)
+            .flatMap(_.id)
+            .getOrElse("")
+        }
+        .iterator
+        .filter(!_._1.isEmpty)
+        .map { case (cityId, cityNodes) =>
+          val cityNode = rcvrsMap(cityId)
+          val cats = cityNodes.groupBy(_.adn.shownTypeId)
+            .iterator
+            .zipWithIndex
+            .map { case ((shownTypeId, catNodes), i) =>
+              val ast = AdnShownTypes.shownTypeId2val(shownTypeId)
+              AdvFormCityCat(
+                shownType = ast,
+                nodes = catNodes.map(AdvFormNode.apply),
+                name = Messages(ast.pluralNoTown)(userLang),
+                i = i
+              )
+            }
+            .toSeq
+            .sortBy(_.name)
+          (cityNode, cats)
+        }
+        .zipWithIndex
+        .map { case ((cityNode, cats), i)  =>  AdvFormCity(cityNode, cats, i) }
+        .toSeq
+        .sortBy(_.node.meta.name)
+    }
+
+    // Продолжаем синхронные операции в текущем потоке
     trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
-    val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
-    val busyAdns: Map[String, MAdvI] = {
+    val currAdvsArgsFut = rcvrsReadyFut map { rcvrs =>
+      val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
+      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
+      CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
+    }
+    // В текущем потоке строим карту уже занятых какими-то размещением узлы.
+    val busyAdvs: Map[String, MAdvI] = {
       val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
       val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
       (adnAdvsOk ++ adnAdvsReq).toMap
     }
-    for {
-      rcvrs <- rcvrsFut
+    // Периоды размещения. Обычно одни и те же
+    val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
+      .map(ps => ps -> Messages("adv.period." + ps)(userLang))
+
+    // Сборка финального контейнера аргументов для _advFormTpl().
+    val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
+      adnId2indexMap  <- adnId2indexMapFut
+      cities          <- citiesFut
     } yield {
-      // Выкинуть узлы, у которых нет своего тарифного плана.
-      val rcvrs1 = rcvrs
-        .filter { node => adnIdsReadySet contains node.id.get }
-      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs1)
+      AdvFormTplArgs(
+        adId = adId,
+        af = form,
+        busyAdvs = busyAdvs,
+        cities = cities,
+        adnId2formIndex = adnId2indexMap,
+        advPeriodsAvail = advPeriodsAvailable
+      )
+    }
+
+    // Когда всё станет готово - рендерим результат.
+    for {
+      currAdvsArgs  <- currAdvsArgsFut
+      formArgs      <- advFormTplArgsFut
+    } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      val formArgs = AdvFormTplArgs(adId, rcvrs1, form, busyAdns)
-      val currAdvsArgs = CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
       advForAdTpl(request.mad, currAdvsArgs, formArgs)
     }
   }
 
+
+  /** Используя дерево гео-связей нужно найти родительский узел, имеющий указанный shownType. */
+  private def findFirstGeoParentOfType(node: MAdnNode, parentShowType: AdnShownType, nodes: Map[String, MAdnNode]): Option[MAdnNode] = {
+    // Поднимаемся наверх по иерархии гео-родительства.
+    val iter = node.geo
+      .directParentIds
+      .iterator // Для ленивого обхода коллекции используем итератор. Нам по факту нужен только первый подходящий узел.
+      .flatMap(nodes.get)
+      .flatMap { parentNode =>
+        if (parentNode.adn.shownTypeId == parentShowType.name) {
+          // Текущий узел имеет искомый id типа
+          Some(parentNode)
+        } else {
+          findFirstGeoParentOfType(parentNode, parentShowType, nodes)
+        }
+      }
+    // Берём первый элемент итератора (если есть), имитируя работу headOption() через if-else.
+    if (iter.hasNext) {
+      Some(iter.next())
+    } else {
+      None
+    }
+  }
 
   private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MAdnNode]): Map[Int, MAdnNode] = {
     val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
@@ -303,7 +426,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Cannot bind form.")
       },
       {adves =>
-        val allRcvrIdsFut = collectReceivers(request.producer)
+        val allRcvrIdsFut = collectAllReceivers(request.producer)
           .map { _.iterator.flatMap(_.id).toSet }
         val adves1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrIdsFut.map { allRcvrIds =>
@@ -373,14 +496,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvFormFor(adId, formWithErrors)
+        renderAdvForm(adId, formWithErrors)
           .map(NotAcceptable(_))
       },
       {adves =>
         trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
-        val allRcvrsFut = collectReceivers(request.producer)
+        val allRcvrsFut = collectAllReceivers(request.producer)
         val advs1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrsFut flatMap { allRcvrs =>
           val allRcvrIds = allRcvrs.iterator.map(_.id.get).toSet
@@ -405,7 +528,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                 // Для бесплатной инжекции: сгенерить экзепшен, чтобы привелегированному юзеру код ошибки отобразился на экране.
                 if (isFree) throw ex
                 val formWithErrors = formBinded.withGlobalError("error.no.money")
-                renderAdvFormForRcvrs(adId, formWithErrors, allRcvrsFut)
+                renderAdvForm(adId, formWithErrors, Some(allRcvrsFut))
                   .map { NotAcceptable(_) }
             }
           } else {
@@ -419,7 +542,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
-  private def collectReceivers(myNode: OptStrId with EMAdNetMember) = {
+  private def collectAllReceivers(myNode: OptStrId with EMAdNetMember) = {
     val dropRcvrId = myNode.id.get
     MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode, maxResults = 500)
       // Самому себе через "управление размещением" публиковать нельзя.

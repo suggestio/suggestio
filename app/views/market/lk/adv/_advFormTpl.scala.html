@@ -9,229 +9,159 @@
 @import util.FC.tdFc
 @import util.DateTimePrettyPrinter._
 @import args._
-@import controllers.MarketAdv.CUSTOM_PERIOD
+@import controllers.MarketAdv.{CUSTOM_PERIOD, NODES_KM}
 @import AdnShownTypes._
 
+
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
-@sslCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, label: String)(busyAttrs: => Html) = {
-  <label>
-    <input type="checkbox" id="node_@{mid}_@fnSuffix"
+@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String)(busyAttrs: => Html) = {
+  <label class="block">
+    <input type="checkbox"
       @maybeBusyAdv.fold {
-        name="node[@mid].@fnSuffix" value="true" checked="checked" data-checked="checked"
+        @* Рендер аттрибутов инпута когда существующего размещения ещё нет (т.е. всё можно размещать). *@
+        name="@{NODES_KM}[@midOpt].@fnSuffix"
+        value="false"
       } { busyAdv =>
+        @* Рендер атрибутов инпута, если размещение уже было сделано ранее. *@
+        value="true"
         disabled="disabled" @busyAttrs
       }
-    />
-    @label
+    /><span class="checkbox_title">@label</span>
   </label>
 }
 
 @* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
-@slCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sl: AdShowLevel, label: String) = {
+@slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String) = {
   @* TODO Генерить label на основе sl. *@
-  @sslCheckbox(maybeBusyAdv, mid, fnSuffix, label) {
+  @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label) {
     @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {data-checked="checked"}
   }
 }
 
 @* Шаблон чекбокса для выбора sink'а вадачи. *@
-@sinkCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sink: AdnSink) = {
-  @sslCheckbox(maybeBusyAdv, mid, fnSuffix, label = Messages("adn.sink." + sink.longName)) {
+@sinkCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], sink: AdnSink) = {
+  @sslCheckbox(maybeBusyAdv, midOpt, "sink." + sink.longName, label = Messages("adn.sink." + sink.longName)) {
     @if(maybeBusyAdv.exists(_ hasOnSink sink)) {data-checked="checked"}
   }
 }
 
 <hr class="delimiter __light"/>
 
-<div class="adv-management">
-    <div class="adv-management_left-bar">
-      <h2 class="minor-title">Выбор города/ места</h2>
+<div class="adv-management" id="advsFormBlock">
 
+@* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
+@af.globalError.map { ge =>
+  <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
+}
+
+@form(routes.MarketAdv.advFormSubmit(adId), 'id->"advsForm") {
+@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) *@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
+  <input type="hidden" value="@routes.MarketAdv.getAdvPriceSubmit(adId)" id="advsPriceUpdateUrl">
+
+  @* Суперюзерам доступно беплатное размещение на любом узле. *@
+  @if(ctx.isSuperuser) {
+    <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
+      <label>
+        <input type="checkbox" name="@af("freeAdv").name" value="true" />
+        Размещать бесплатно, без подтверждения?
+      </label>
+    </div>
+  }
+
+  <div class="adv-management_left-bar">
+    <h2 class="minor-title">Выбор города/ места</h2>
+
+      @* Список городов. *@
       @market.lk.lkBlockNewDesign( open = false ) {
         <div class="js-city">
           <span class="checkbox_title __major __no-input">Выберите город</span>
         </div>
       } {
-        <div class="adv-management_city-i js-select-city" data-value="1">Санкт-Петербург</div>
-        <div class="adv-management_city-i js-select-city" data-value="2">Москва</div>
+        @args.cities.map { city =>
+          <div class="adv-management_city-i js-select-city" data-value="@city.i">@city.node.meta.name</div>
+        }
       }
 
-
-      <div class="select-tab_lst js-select-type_w" data-city="1">
-        <div class="select-tab_i js-select-type" data-value="-1">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Все места</span>
-        </div>
-        <div class="select-tab_i js-select-type" data-value="1">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Районы</span>
-          <span class="js-active-nodes-count"></span>
-        </div>
-        <div class="select-tab_i js-select-type" data-value="2">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Кинотеатры</span>
-          <span class="js-active-nodes-count"></span>
-        </div>
-      </div>
-
-      <div class="select-tab_lst js-select-type_w" data-city="2">
-        <div class="select-tab_i js-select-type" data-value="-1">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Все места</span>
-        </div>
-        <div class="select-tab_i js-select-type" data-value="1">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Библиотеки</span>
-          <span class="js-active-nodes-count"></span>
-        </div>
-        <div class="select-tab_i js-select-type" data-value="2">
-          <input type="checkbox"/>
-          <span class="select-tab_i-title">Рестораны</span>
-          <span class="js-active-nodes-count"></span>
-        </div>
-      </div>
-
-      <div class="select-tab_lst js-select-node_w" data-city="1" data-type="1">
-        <h3>Районы</h3>
-        @market.lk.lkBlockNewDesign( open = false ) {
-          <input type="checkbox"/>
-          <span class="checkbox_title __major">
-            <a class="link" href="#">Московский</a>
-          </span>
-        } {
-          <div class="advm-node_block">
-            <div class="advm-node_left">Размещение</div>
-            <div class="advm-node_right">
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
-              </label>
+      @* Списки-вкладки категорий в городах. *@
+      @args.cities.map { city =>
+        <div class="select-tab_lst js-select-type_w" data-city="@city.i">
+          <div class="select-tab_i js-select-type" data-value="-1">
+            <input type="checkbox"/>
+            <span class="select-tab_i-title">Все места</span>
+          </div>
+          @city.cats.map { cat =>
+            <div class="select-tab_i js-select-type" data-value="@cat.i">
+              <input type="checkbox"/>
+              <span class="select-tab_i-title">@cat.name</span>
+              <span class="js-active-nodes-count"></span>
             </div>
-          </div>
-          <hr class="delimiter __light advm-node_delimiter"/>
-          <div class="advm-node_block">
-            <label class="f-left">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
-            </label>
-            <label class="f-right">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
-            </label>
-          </div>
-        }
-        @market.lk.lkBlockNewDesign( open = false ) {
-          <input type="checkbox"/>
-          <span class="checkbox_title __major">
-            <a class="link" href="#">Невский</a>
-          </span>
-        } {
-          <div class="advm-node_block">
-            <div class="advm-node_left">Размещение</div>
-            <div class="advm-node_right">
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
-              </label>
-            </div>
-          </div>
-          <hr class="delimiter __light advm-node_delimiter"/>
-          <div class="advm-node_block">
-            <label class="f-left">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
-            </label>
-            <label class="f-right">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
-            </label>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
 
-      <div class="select-tab_lst js-select-node_w" data-city="1" data-type="2">
-        <h3>Кинотеатры</h3>
-        @market.lk.lkBlockNewDesign( open = false ) {
-          <input type="checkbox"/>
-          <span class="checkbox_title __major">
-            <a class="link" href="#">Московский</a>
-          </span>
-        } {
-          <div class="advm-node_block">
-            <div class="advm-node_left">Размещение</div>
-            <div class="advm-node_right">
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
-              </label>
-            </div>
+      @* Рендер списков узлов в городах. *@
+      @args.cities.map { city =>
+        @city.cats.map { cat =>
+          <div class="select-tab_lst js-select-node_w" data-city="@city.i" data-type="@cat.i">
+            <h3 class="adv-management_cat-title">@cat.name</h3>
+            @cat.nodes.map { an =>
+              @defining( an.node.id.get ) { adnId =>
+              @defining( args.adnId2formIndex.get(adnId) ) { midOpt =>
+              @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
+                @if(maybeBusyAdv.isEmpty) {
+                  @market.lk.lkBlockNewDesign( open = false ) {
+                    <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                    <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
+                    <span class="checkbox_title __major">
+                      <a class="link js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">
+                        @an.node.meta.name
+                      </a>
+                    </span>
+                  } {
+                    <div class="advm-node_block">
+                      <div class="advm-node_left">
+                        <p class="block">Отображение</p>
+                        <div class="block __margin-XS">
+                          <hr class="delimiter __light"/>
+                        </div>
+                        @* Галочки уровней отображения. *@
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров")
+                        <label class="block">
+                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+                        </label>
+                      </div>
+                      <div class="advm-node_right">
+                        <p class="block">Таргетинг</p>
+                        <div class="block __margin-XS">
+                          <hr class="delimiter __light"/>
+                        </div>
+                        @an.node.adn.sinks.iterator.map { sink =>
+                          @* Галочки sink'ов выдачи. *@
+                          @sinkCheckbox(maybeBusyAdv, midOpt, sink)
+                        }
+                      </div>
+                    </div>
+                  }
+                } else {
+                  <div class="slide-block_title">
+                    <span class="checkbox_title __major">
+                      <a href="#" class="link">@an.node.meta.name</a>
+                    </span>
+                    <span class="ft-S light-gray"> (размещено)</span>
+                  </div>
+                }
+              } @* lkBlockNewDesign cnt *@
+              } @* mid *@
+              } @* adnId *@
+            } @* node in cat *@
           </div>
-          <hr class="delimiter __light advm-node_delimiter"/>
-          <div class="advm-node_block">
-            <label class="f-left">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
-            </label>
-            <label class="f-right">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
-            </label>
-          </div>
-        }
-        @market.lk.lkBlockNewDesign( open = false ) {
-          <input type="checkbox"/>
-          <span class="checkbox_title __major">
-            <a class="link" href="#">Невский</a>
-          </span>
-        } {
-          <div class="advm-node_block">
-            <div class="advm-node_left">Размещение</div>
-            <div class="advm-node_right">
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Главный экран</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Категории товаров</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">Wi-Fi</span>
-              </label>
-              <label class="checkbox_w">
-                <input type="checkbox"/><span class="checkbox_title">GEO локация</span>
-              </label>
-            </div>
-          </div>
-          <hr class="delimiter __light advm-node_delimiter"/>
-          <div class="advm-node_block">
-            <label class="f-left">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
-            </label>
-            <label class="f-right">
-              <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Suggest.io</span>
-            </label>
-          </div>
-        }
-      </div>
+        } @* cat in city *@
+      } @* city *@
 
-    </div>
+    </div> @* adv-management_left-bar *@
+
+
     <div class="adv-management_right-bar">
       <h2 class="minor-title">Выбор даты</h2>
 
@@ -240,11 +170,12 @@
           <td class="prop_name">Срок размещение</td>
           <td class="prop_value">
             <div class="input __size-S" >
-              <select data-interval="true" data-widget-id="advManagementDateWidget">
-                <option value="P3D">Три дня</option>
-                <option value="P1W">Неделя</option>
-                <option value="P1M">Месяц</option>
-                <option value="custom">Задать интервал</option>
+              <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
+                @defining( args.af("period.period").value ) { currPeriod =>
+                  @args.advPeriodsAvail.map { case (v, msg) =>
+                    <option value="@v" @if(currPeriod.exists(_ equalsIgnoreCase v)) {selected="selected"}>@msg</option>
+                  }
+                }
               </select>
             </div>
           </td>
@@ -253,7 +184,7 @@
           <td class="prop_name">Дата начала</td>
           <td class="prop_value">
             <div class="input __size-S">
-              <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget"/>
+              <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
             </div>
           </td>
         </table>
@@ -261,7 +192,7 @@
           <td class="prop_name">Дата окончания</td>
           <td class="prop_value">
             <div class="input __size-S">
-              <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget"/>
+              <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
             </div>
           </td>
         </table>
@@ -271,124 +202,7 @@
         </div>
       </div>
 
-    </div>
-</div>
-
-
-<div class="advs-form-block" id="advsFormBlock">
-@form(routes.MarketAdv.advFormSubmit(adId)) {
-@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
-
-  @* Суперюзерам доступно беплатное размещение на любом узле. *@
-  @if(ctx.isSuperuser) {
-    <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
-      <input type="checkbox" name="@af("freeAdv").name" value="true" /> Размещать бесплатно, без подтверждения?
-    </div>
-  }
-
-  @defining( adnNodes.groupBy{ n => AdnShownTypes.withName(n.adn.shownTypeId) }.mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
-
-    @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
-    @af.globalError.map { ge =>
-      <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
-    }
-
-    @* Рендерим табы по типам узлов. *@
-    <div class="advs-form-block__tabs">
-      @adnNodesMap.zipWithIndex.map { case ((memberType, _), i) =>
-        <div class="advs-form-block__tabs-single-tab mt-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }" data-member-type="@memberType">@Messages("amts.of.type." + memberType) <span class="mt-tab-@memberType-counter-c" style="display: none;">(<span class="mt-tab-@memberType-counter">1</span>)</span></div>
-      }
-      <div class="clear"></div>
-    </div>
-
-    @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
-    <div class="advs-form-block__nodes advs-nodes">
-      @defining( now.plusDays(1) ) { tomorrow1 =>
-      @defining( tomorrow1.plusDays(1) ) { tomorrow2 =>
-      @defining( (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD)).map(ps => ps -> Messages("adv.period." + ps)) ) { periodOptions =>
-      @adnNodesMap.zipWithIndex.map { case ((memberType, adnNodes), i) =>
-        <div class="mt-block mt-@memberType-block" @if( i > 0 ){style="display: none;"}>
-        @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
-          @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
-          @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
-          @defining((memberType.id + 1) * (i + 1)) { mid =>
-          <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }" id="advs@mid">
-
-            @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
-            @if(maybeBusyAdv.isDefined) {
-              @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
-              <input type="checkbox" checked="checked" disabled="disabled" data-checked="checked"/>
-            } else {
-              @* Узел может принять рекламную карточку. *@
-              <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
-              @defining( s"node[$mid].advertise" ) { fn =>
-                <input data-connected-field="advs@mid" type="checkbox" id="node_@{mid}_onStartPage" name="@fn" value="true" />
-              }
-            }
-
-            <strong>
-              <a class="blue-link js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a>
-            </strong>@if(node.meta.town.isDefined  &&  node.adn.shownTypeId.showWithTown) {/ @node.meta.town}
-
-
-            @if(maybeBusyAdv.isDefined) {
-            <div class="advs-nodes__node-dates advs-node-dates">
-              @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
-            </div>
-            } else {
-            <div class="advs-nodes__node-dates advs-nodes__node-dates_hidden advs-node-dates">
-                @select(
-                  af(s"node[$mid].period.period"),
-                  options = periodOptions,
-                  '_label -> "Срок размещения:"
-                )
-
-              <label class="advs-node-dates__elt">Дата начала</label>
-              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].period.date.start" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
-              <label class="advs-node-dates__elt"><strong>&mdash;</strong></label>
-              <label class="advs-node-dates__elt">Дата конца</label>
-              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].period.date.end" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
-              <div class="clear"></div>
-            </div>
-            }
-
-            @* Перечисление уровней отображения: главный экран, категории и т.д. *@
-            <div class="advs-nodes__node-options @if(maybeBusyAdv.isEmpty) { advs-nodes__node-options_hidden }">
-              <div><input type="checkbox" id="node_@{mid}_inCatalog" name="" data-checked="checked" disabled="disabled" value="true"/> Каталог</div>
-              <div>@slCheckbox(maybeBusyAdv, mid, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров и услуг")</div>
-              <div>@slCheckbox(maybeBusyAdv, mid, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран")</div>
-            </div>
-
-            @* Перечисление доступных на узле размещений: geo, wifi, etc *@
-            @node.adn.sinks.map { sink =>
-              @sinkCheckbox(maybeBusyAdv, mid, "sink." + sink.longName, sink)
-            }
-          }
-          }
-          </div>
-        }
-        </div>
-      }
-      } @* periodOptions *@
-      }
-      }
-    </div>
-
-  }
-
-  @* Рендерим url для подсчета цены для дальнейшего использования в js *@
-  <input type="hidden" id="advsPriceUpdateUrl" value="@routes.MarketAdv.getAdvPriceSubmit(adId)">
-
-  <div class="paragraph __size-L __text-1">
-    <div>Стоимость согласно ставке тарифных планов</div>
-    <div class="g-price adv-submit-block__price js-pre-price">0 р.</div>
   </div>
-
-  <div class="submit-w __size-M">
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM js-submit-btn">Отправить запрос</a>
-  </div>
-
 }
-
-
 </div>
+

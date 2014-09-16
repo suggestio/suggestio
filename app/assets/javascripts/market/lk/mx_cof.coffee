@@ -384,127 +384,236 @@ Slider =
 ## Виджет для работы с датами ##
 ###################################################################################################################
 
-CleverDateWidget = (_widgetId)->
-  start               = new Date()
-  end                 = new Date()
-  interval            = 0
+class DateModel
 
-  @setStartCallback     = false
-  @setEndCallback       = false
-  @setIntervalCallback  = false
-
-  setStart: (_start)->
-    time = Date.parse _start
-    if !isNaN(time)
-      start.setTime time
-
-    @setStartCallback && @setStartCallback()
-    true
-
-  getStart: ()->
-    start.getTime()
-
-  setEnd: (_end)->
-    time = Date.parse(_end)
-
-    if !isNaN(time)
-      end.setTime time
-
-    @setEndCallback && @setEndCallback()
-    true
-
-  getEnd: ()->
-    end.getTime()
-
-  # интервал задается в днях
-  setInterval: (_interval)->
-    if _interval != 'custom'
-      newEnd = new Date( this.getStart() )
-      _interval = newEnd.getDate() + _interval
-      newEnd.setDate _interval
-      this.setEnd newEnd
+  # значения start, end хранятся в timestamp
+  # interval - в днях
+  constructor: (_start = false, _end = false, _interval = false)->
+    @start = _start
+    @end = _end
+    @interval = _interval
 
 
-    @setIntervalCallback && @setIntervalCallback(_interval)
-    true
+class DateController
+  MIN_INTERVAL = 1 # задается в днях
+  dateModel = false
+  _instance = false
 
-  getInterval: ()->
-    interval
+  constructor: ()->
+    dateModel = new DateModel()
+    _instance = this
 
-  getRusDate: (time)->
+  start:
+
+    set: (time = false)->
+      today = new Date()
+      today.getTime()
+
+      if !( time = @validate(time) ) || time < today
+        time = today
+
+      dateModel.start = time
+      _instance.end.checkForUpdate()
+      return true
+
+    get: ()->
+      new Date( dateModel.start )
+
+    validate: (time)->
+      time = Date.parse time
+
+      if isNaN(time)
+        return false
+
+      return time
+
+  end:
+
+    set: (time = false)->
+      if !( time = @validate(time) )
+        return false
+
+      dateModel.end = time
+
+    get: ()->
+      new Date( dateModel.end )
+
+    checkForUpdate: ()->
+      if dateModel.start >= dateModel.end || dateModel.interval != 'custom'
+        @update()
+
+    update: ()->
+
+      if dateModel.interval == 'custom' || !dateModel.end
+        interval = MIN_INTERVAL
+      else
+        interval = dateModel.interval
+
+      newEnd = new Date(dateModel.start)
+      day = newEnd.getDate() + interval
+      newEnd.setDate(day)
+      dateModel.end = newEnd.getTime()
+
+    validate: (time)->
+      time = Date.parse time
+
+      if isNaN(time) || time <= dateModel.start
+        return false
+
+      return time
+
+  interval:
+
+    set: (interval = false)->
+      if !@validate(interval)
+        return false
+
+      dateModel.interval = interval
+
+      if interval != 'custom'
+        _instance.start.set() # если интервал не кастомный, размещение с сегодняшнего дня
+        _instance.end.checkForUpdate()
+
+      return true
+
+    get: ()->
+      dateModel.interval
+
+    validate: (interval)->
+
+      if interval != 'custom'
+        interval = parseInt interval
+
+        if isNaN(interval)
+          return false
+
+      return true
+
+
+class DateView
+  widgetId = false
+  controller = false
+
+  constructor: (_widgetId = false)->
+    widgetId = _widgetId
+    controller = new DateController()
+    @init()
+
+  inputValue: (element, value = false)->
+    $input = $ "input[data-#{element}][data-widget-id = #{widgetId}]"
+    if value
+      $input.val value
+    else
+      $input.val()
+
+  selectValue: (element, value = false)->
+    $select = $ "select[data-#{element}][data-widget-id = #{widgetId}]"
+    if value
+      $select
+      .find "option[val = #{value}]"
+      .prop 'selected', 'selected'
+    else
+      $select
+      .find 'option:selected'
+      .val()
+
+  intervalToString: (value)->
+    switch value
+      when 3 then 'P3D'
+      when 7 then 'P1W'
+      when 30 then 'P1M'
+      else 'custom'
+
+  intervalToInt: (value)->
+    switch value
+      when 'P3D' then 3
+      when 'P1W' then 7
+      when 'P1M' then 30
+      else 'custom'
+
+  getFormattedDate: (time, format = 'default')->
     date = new Date( time )
     rusMonth = ['января','февраля','марта','апреля','мая','июня', 'июля','августа','сентября','октября','ноября','декабря']
 
     day   = date.getDate()
-    month = rusMonth[ date.getMonth() ]
+    fullDay = ("0" + day ).slice(-2)
+    month = parseInt( date.getMonth() )
+    fullMonth = ("0" + (month + 1)).slice(-2)
     year  = date.getFullYear()
 
-    "#{day} #{month} #{year}"
+    if format == 'rus'
+      "#{day} #{rusMonth[ month ]} #{year}"
+    else
+      "#{year}-#{fullMonth}-#{fullDay}"
 
-  init: (preInit = false)->
+  updateView: ()->
+    start = controller.start.get()
+    end = controller.end.get()
+    interval = @intervalToString( controller.interval.get() )
+
+    @inputValue 'start', @getFormattedDate(start)
+    @inputValue 'end', @getFormattedDate(end)
+
+    $ '#advManagementDateStartValue'
+    .text @getFormattedDate(start, 'rus')
+
+    $ '#advManagementDateEndValue'
+    .text @getFormattedDate(end, 'rus')
+
+    if interval == 'custom'
+      $ '#advManagementDateStart, #advManagementDateEnd'
+      .show()
+    else
+      $ '#advManagementDateStart, #advManagementDateEnd'
+      .hide()
+
+  init: ()->
 
     _instance = this
+    interval = @intervalToInt( @selectValue('interval') )
 
-    preInit && preInit(_instance)
+    if interval == 'custom'
+      start = @inputValue 'start'
+      controller.end.set @inputValue 'end'
+    else
+      start = new Date()
+
+    controller.interval.set interval
+    controller.start.set start
+
+    @updateView()
 
     $ document
-    .on 'change', "input[data-start][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "input[data-start][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
       value = $this.val()
 
-      _instance.setStart value
+      if !controller.start.set value
+        _instance.inputValue 'start', _instance.getFormattedDate( controller.start.get() )
+      _instance.updateView()
 
     $ document
-    .on 'change', "input[data-end][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "input[data-end][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
       value = $this.val()
 
-      _instance.setEnd value
+      if !controller.end.set value
+        _instance.inputValue 'end', _instance.getFormattedDate( controller.end.get() )
+      _instance.updateView()
 
     $ document
-    .on 'change', "select[data-interval][data-widget-id = #{_widgetId}]", (e)->
+    .on 'change', "select[data-interval][data-widget-id = #{widgetId}]", (e)->
       $this = $ this
-      value = $this.val()
+      value = $this.find('option:selected').val()
+      value = _instance.intervalToInt value
 
-      switch value
-        when 'P3D' then value = 3
-        when 'P1W' then value = 7
-        when 'P1M' then value = 30
-        else value = 'custom'
-
-      _instance.setInterval value
+      if !controller.interval.set value
+        interval = _instance.intervalToString( controller.interval.get() )
+        _instance.selectValue 'interval', interval
+      _instance.updateView()
 
 
-
-advManagementDateWidget = new CleverDateWidget 'advManagementDateWidget'
-
-advManagementDateWidget.setStartCallback = ()->
-
-  start = advManagementDateWidget.getRusDate( advManagementDateWidget.getStart() )
-  $ '#advManagementDateStartValue'
-  .text start
-
-advManagementDateWidget.setEndCallback = ()->
-  end = advManagementDateWidget.getRusDate( advManagementDateWidget.getEnd() )
-  $ '#advManagementDateEndValue'
-  .text end
-
-advManagementDateWidget.setIntervalCallback = (_interval)->
-  if _interval == 'custom'
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .show()
-  else
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .hide()
-
-advManagementDateWidget.init(
-  ()->
-
-    $ '#advManagementDateStart, #advManagementDateEnd'
-    .hide()
-)
-advManagementDateWidget.setStart()
-advManagementDateWidget.setInterval(3)
+dateView = new DateView('advManagementDateWidget')
 
 
 
@@ -873,23 +982,26 @@ PersonalCabinet =
 
     # поставить или снять галочки со всех типов
     checkTypes = (value = false)->
-      $ ".js-select-type_w[data-city = #{city}] input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] input:checkbox:enabled"
       .prop 'checked', value
+      .attr 'value', value
 
     # поставить или снять галочки со всех узлов текущего города и типа
     checkNodes = (value = false)->
-      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:enabled"
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{type}] input:checkbox:enabled"
       .prop 'checked', value
+      .attr 'value', value
 
       if type < 0
-        $ ".js-select-node_w[data-city = #{city}] input:enabled"
+        $ ".js-select-node_w[data-city = #{city}] input:checkbox:enabled"
         .prop 'checked', value
+        .attr 'value', value
 
     # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов + true || false
     allNodesChecked = (_type)->
       activeNodes = 0
       checked = true
-      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:enabled"
+      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:checkbox:enabled"
       .each ()->
         $this = $ this
         if $this.prop 'checked'
@@ -907,15 +1019,16 @@ PersonalCabinet =
     # просматриваем типы узлов текущего города
     typesObserver = ()->
       checked = true
-      $ ".js-select-type_w[data-city = #{city}] .js-select-type:gt(0) input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:gt(0) input:checkbox:enabled"
       .each ()->
         $this = $ this
         if !$this.prop 'checked'
           checked = false
           return false
 
-      $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:enabled"
+      $ ".js-select-type_w[data-city = #{city}] .js-select-type:eq(0) input:checkbox:enabled"
       .prop 'checked', checked
+      .attr 'value', checked
 
     # просматриваем галочки у узлов в текущем городе и меняем по ним информацию в типах узлов
     nodesObserver = ()->
@@ -944,8 +1057,9 @@ PersonalCabinet =
 
           $this
           .filter "[data-value = #{thisType}]"
-          .find 'input:enabled'
+          .find 'input:checkbox:enabled'
           .prop 'checked', nodesChecked.checked
+          .attr 'value', nodesChecked.checked
 
 
     $ document
@@ -985,13 +1099,14 @@ PersonalCabinet =
         # снять чекбокс с элемента Все места
         $ ".js-select-type_w[data-city = #{city}] .js-select-type[data-value = '-1'] input"
         .prop 'checked', false
+        .attr 'value', false
 
       nodesObserver()
       typesObserver()
 
     # чекбоксы у заголовков узлов
     $ document
-    .on 'click', '.js-select-node_w .js-slide-title input', (e)->
+    .on 'click', '.js-select-node_w .js-slide-title input:checkbox', (e)->
       e.stopPropagation()
       $this = $ this
       checked = $this.prop 'checked'
@@ -1000,6 +1115,7 @@ PersonalCabinet =
       # управление чекбоксами внутри узла
       $slideWrap.find '.js-slide-cnt input:enabled'
       .prop 'checked', checked
+      .attr 'value', checked
       nodesObserver()
       typesObserver()
 
@@ -1012,17 +1128,13 @@ PersonalCabinet =
       $slideCnt = $this.closest '.js-slide-cnt'
       $slideWrap = $this.closest '.js-slide-w'
 
-      titleInputChecked = false
-      $slideCnt.find 'input:enabled'
-      .each (e)->
-        $input = $ this
-        inputChecked = $input.prop 'checked'
-        if inputChecked
-          titleInputChecked = true
+      titleInputChecked = true
+
 
       $slideWrap
-      .find '.js-slide-title input'
+      .find '.js-slide-title input:checkbox'
       .prop 'checked', titleInputChecked
+      .attr 'value', titleInputChecked
 
       nodesObserver()
       typesObserver()
@@ -1196,6 +1308,10 @@ PersonalCabinet =
         e.preventDefault()
         $this = $ this
         href = $this.attr 'href'
+
+
+        if $this.closest('.js-slide-title').size()
+          e.stopPropagation()
 
         if !href
           return false
@@ -1827,7 +1943,19 @@ market =
 
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
-      $('#advsFormBlock input').bind 'change', () ->
+
+
+      $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
+        $this = $ this
+        value = $this.attr 'value'
+
+        if $this.is ':checkbox'
+          if value == false
+            $this.attr 'value', false
+          else
+            $this.attr 'value', true
+
+
         cf_id = $(this).attr 'data-connected-field'
         cf = $('#' + cf_id)
         if typeof cf_id != 'undefined'
