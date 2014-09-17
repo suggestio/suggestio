@@ -685,7 +685,7 @@ PersonalCabinet =
 
       if dataFor
         imageKey = $this.attr 'data-for'
-        $input = $ "input[value = #{imageKey}]"
+        $input = $ "input[value = '#{imageKey}']"
         $preview = $input.closest '.js-preview'
       else
         $preview = $this.closest '.js-preview'
