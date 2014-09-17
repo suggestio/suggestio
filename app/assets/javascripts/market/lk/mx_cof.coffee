@@ -684,8 +684,7 @@ PersonalCabinet =
       dataFor = $this.attr 'data-for'
 
       if dataFor
-        imageKey = $this.attr 'data-for'
-        $input = $ "input[value = '#{imageKey}']"
+        $input = $ "input[name = \'#{dataFor}'\]"
         $preview = $input.closest '.js-preview'
       else
         $preview = $this.closest '.js-preview'
@@ -1818,6 +1817,7 @@ market =
 
             $('#overlay, #overlayData').hide()
             $('#overlayData').html ''
+            $('#imgCropTool').remove()
 
 
       init : (img_name) ->
@@ -1837,9 +1837,11 @@ market =
           'width' : width + 'px'
           'height' : height + 'px'
 
+        # TODO зарефакторить
+        this.crop_tool_dom.find '.js-remove-image'
+        .attr 'data-for', img_name
 
-        ## отресайзить картинку по нужной стороне
-
+        # отресайзить картинку по нужной стороне
         wbh = width/height
         img_wbh = img_width/img_height
 

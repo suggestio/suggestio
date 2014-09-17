@@ -1,7 +1,7 @@
-@(call: Call, fieldName: String = "", multiple: Boolean = false, previewRoot: String = "", previewClass: String = "")(implicit ctx: util.Context)
+@(call: Call, fieldName: String = "", multiple: Boolean = false, previewRoot: String = "", previewClass: String = "", editBtnClass: String = "")(implicit ctx: util.Context)
 
 @* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
 @import helper._
 
-<input type="file" class="add-file-input js-file-upload" data-action="@call" name="picture" data-preview-class="@previewClass" data-preview-root="@previewRoot" data-name="@fieldName" @if(multiple) {data-multiple="multiple"}/>
+<input type="file" class="add-file-input js-file-upload" data-edit-btn="@editBtnClass" data-action="@call" name="picture" data-preview-class="@previewClass" data-preview-root="@previewRoot" data-name="@fieldName" @if(multiple) {data-multiple="multiple"}/>
