@@ -1,18 +1,19 @@
 @(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
-
 <div class="geo-nodes-list">
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
-    <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border __active }" data-index="@i" id="geoLayer@i">
+    <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
       <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>@nl.glevelOpt.map{ glevel =>
         @Messages("ngls." + glevel ) <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
         }</div>
     </div>
-    <div class="geo-nodes-list_rows @if( i > 0 ){ __hidden }"  id="geoLayerNodes@i">
+
+    @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ){
     @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
       <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node" data-id="@mnode.id">
         @mnode.meta.name
       </div>
-    }</div>
+    }
+    }
   }
 </div>
