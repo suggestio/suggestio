@@ -38,7 +38,14 @@
       </a>
 
       <div class="header_cnt">
-        <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="101" height="26"/>
+
+        @if(nodeOpt.isEmpty) {
+          <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="101" height="26"/>
+        } else {
+          @nodeOpt.map { node =>
+            <span class="header_logo-text">@node.meta.name</span>
+          }
+        }
 
         @adnIdOpt.map { adnId =>
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@

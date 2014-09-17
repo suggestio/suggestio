@@ -3,7 +3,7 @@
 @import ctx._
 @import helper._
 
-<div class="popup __size-M" id="imgCropTool" data-width="@width" data-height="@height">
+<div class="popup __size-M js-popup" id="imgCropTool" data-width="@width" data-height="@height">
 
   <div class="popup_header">
     <a class="close f-right js-close-popup"></a>
@@ -34,8 +34,14 @@
         <input type="hidden" name="marker" value="@marker"/>
       }
 
-      <div class="submit-w __size-M">
-        <button class="btn __major __size-M" type="submit">@Messages("Save")</button>
+      <div class="block __margin-M">
+        Передвигая изображения вверх вниз вы выделяете<br/>
+        видимую область картинки
+      </div>
+
+      <div class="btn-w __size-M">
+        <button class="btn __minor __size-M js-remove-image" data-for="@imgId">Удалить</button>
+        <button class="btn __major __size-M __list" type="submit">@Messages("Save")</button>
       </div>
 
 

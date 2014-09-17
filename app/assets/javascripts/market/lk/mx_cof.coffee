@@ -681,18 +681,30 @@ PersonalCabinet =
     .on 'click', '.js-remove-image', (e)->
       e.preventDefault()
       $this = $ this
-      $preview = $this.closest '.js-preview'
+      dataFor = $this.attr 'data-for'
+
+      if dataFor
+        imageKey = $this.attr 'data-for'
+        $input = $ "input[value = '#{imageKey}']"
+        $preview = $input.closest '.js-preview'
+      else
+        $preview = $this.closest '.js-preview'
+        $input = $preview.find '.js-image-key'
 
       # находим кнопку для загрузки изображении для этого поля
-      $input = $preview.find '.js-image-key'
       name = $input.attr 'name'
-
       $ ".js-file-upload[data-name = '#{name}']"
       .closest '.js-image-upload'
       .show()
 
       $preview.remove()
       market.ad_form.queue_block_preview_request()
+
+      if dataFor
+        $popup = $this.closest '.js-popup'
+        popupId = $popup.attr 'id'
+        CbcaPopup.hidePopup("##{popupId}")
+        $popup.remove()
 
     #################################################################################################################
     ## Работа с изображениями ##
@@ -1458,8 +1470,9 @@ CbcaPopup =
     this.hideOverlay()
     $popup.hide()
     ## закрытие клавиатуры на мобильном устройстве
-    $ "input"
-    .blur()
+    if $(window).width() < 1024
+      $ "input"
+      .blur()
 
     $ '#overlayData'
     .hide()
