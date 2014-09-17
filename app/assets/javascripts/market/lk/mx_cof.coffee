@@ -733,7 +733,7 @@ PersonalCabinet =
           fieldName = $this.attr 'data-name'
 
           # класс у кнопки редактирования, по умолчанию remove
-          editBtnClass = $this.attr 'data-edit-btn' || 'image_remove-btn js-remove-image'
+          editBtnClass = $this.attr('data-edit-btn') || 'image_remove-btn js-remove-image'
 
           # загрузка одной или нескольких фотографии
           dataMultiple = $this.attr 'data-multiple'
