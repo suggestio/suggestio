@@ -486,6 +486,7 @@ siomart =
     screen_offset : 129
     layers_count : 2
     layer_dom_height : 44
+    requested_node_id : undefined
     search :
       min_request_length : 2
       search_delay : 500
@@ -569,6 +570,20 @@ siomart =
       geo_screen.style.height = cbca_grid.wh - siomart.geo.screen_offset
       geo_screen_wrapper.style.height = cbca_grid.wh - siomart.geo.screen_offset
       geo_screen_content.style.minHeight = cbca_grid.wh - siomart.geo.screen_offset + 1
+
+    open_screen : ( node_id ) ->
+      siomart.geo.requested_node_id = node_id
+      if cbca_grid.ww <= 400
+        siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
+
+      if cbca_grid.columns > 2
+        siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+        cbca_grid.left_offset = 2
+        cbca_grid.rebuild()
+      siomart.utils.ge('smGeoScreen').style.display = 'block'
+      siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
+
+      siomart.geo.load_nodes()
 
     close : () ->
       siomart.utils.ge('smGeoScreen').style.display = 'none'
@@ -1067,17 +1082,7 @@ siomart =
       ## гео добро
       if siomart.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
 
-        if cbca_grid.ww <= 400
-          siomart.utils.addClass siomart.utils.ge('smGridAds'), '__blurred'
-
-        if cbca_grid.columns > 2
-          siomart.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
-          cbca_grid.left_offset = 2
-          cbca_grid.rebuild()
-        siomart.utils.ge('smGeoScreen').style.display = 'block'
-        siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
-
-        siomart.geo.load_nodes()
+        siomart.geo.open_screen()
 
         return false
 
@@ -1093,6 +1098,11 @@ siomart =
         siomart.geo.close()
         return false
 
+      if siomart.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
+
+        siomart.geo.open_screen( siomart.config.mart_id )
+
+        return false
 
       geo_node_target = siomart.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
@@ -1364,6 +1374,8 @@ siomart =
     if siomart.utils.ge('sioMartRoot') != null
       siomart.utils.re('sioMartRoot')
 
+    siomart.geo.active_layer = null
+
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
@@ -1589,6 +1601,18 @@ siomart =
         siomart.utils.ge('smGeoLocationLabel').innerHTML = siomart.geo.location_node.name
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
+
+      if typeof siomart.geo.requested_node_id != 'undefined'
+        node_dom = siomart.utils.ge_class document, 'gn-' + siomart.geo.requested_node_id
+        first_node = node_dom[0]
+        console.log first_node
+        if typeof first_node != 'undefined'
+          layer_id = first_node.parentNode.id
+          layer_id = layer_id.replace 'geoLayerNodes', ''
+          layer_id = layer_id.replace 'Content', ''
+
+          siomart.geo.open_layer layer_id
+
 
   ############################################
   ## Объект для работы с карточками продьюсера

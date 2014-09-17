@@ -10,7 +10,7 @@
       </div>
 
       @mshops.zipWithIndex.map { case (mshop,si) =>
-      <div class="shops-list_row @*if((i+si)%2 == 0){__odd}*@ js-shop-link" data-producer-id="@mshop.id">
+      <div class="shops-list_row @if((si)%2 == 0){__odd} js-shop-link" data-producer-id="@mshop.id">
         @mshop.meta.name
       </div>
       }

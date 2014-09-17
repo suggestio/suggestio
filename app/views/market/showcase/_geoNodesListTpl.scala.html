@@ -10,7 +10,7 @@
 
     @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ){
     @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
-      <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node" data-id="@mnode.id">
+      <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
         @mnode.meta.name
       </div>
     }
