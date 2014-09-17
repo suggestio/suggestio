@@ -4,12 +4,20 @@
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
-<img @cssClass.map { _cssClass => class="@_cssClass" }
-  src="@ctx.myAudienceUrl@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).orElse(dfltImg map routes.Assets.at)"
-  @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
-    @if(iBgColorOpt.isDefined || style.isDefined) {
-      style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
-    }
+@defining( mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg) ) { image =>
+
+  @if(image) {
+    <img @cssClass.map { _cssClass => class="@_cssClass" }
+      src="@ctx.myAudienceUrl@image"
+      @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
+        @if(iBgColorOpt.isDefined || style.isDefined) {
+          style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
+        }
+      }
+      alt="@alt"
+    />
+  } else {
+    <div class="no-photo"></div>
   }
-  alt="@alt"
-/>
+
+}
