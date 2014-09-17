@@ -1,7 +1,7 @@
 package util.showcase
 
 import io.suggest.ym.model.common.IBlockMeta
-import models.{BlockConf, MMartCategory, _}
+import models.{BlockConf, MMartCategory}
 import util.blocks.BlocksConf
 
 /**

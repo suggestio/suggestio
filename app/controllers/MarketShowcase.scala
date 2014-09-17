@@ -551,6 +551,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val nextNodeFut = ShowcaseNodeListUtil.detectRecoverGuessCurrentNode(gsiOptFut, args.currAdnId)(nextNodeSwitchFut)
 
 
+
     val nodesLaysFut: Future[List[GeoNodesLayer]] = {
       // В зависимости от режима геолокации, надо произвести поиск узлов в разных слоях или вне их всех.
       val ngls = args.geoMode.nodeGeoLevelsAlways

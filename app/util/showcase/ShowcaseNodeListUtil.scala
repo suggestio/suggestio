@@ -1,13 +1,10 @@
 package util.showcase
 
-
 import io.suggest.model.geo.GeoShapeQueryData
-import io.suggest.ym.model.common.IBlockMeta
-import models.{BlockConf, MMartCategory, _}
+import io.suggest.ym.model.NodeGeoLevels
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.RequestHeader
 import util.SiowebEsUtil.client
-import util.blocks.BlocksConf
+import models._
 import AdnShownTypes.adnInfo2val
 
 import scala.concurrent.Future
@@ -130,8 +127,10 @@ object ShowcaseNodeListUtil {
 
   def getTownLayerOfNode(node: MAdnNode): Future[GeoNodesLayer] = {
     getTownOfNode(node)
-      .map { townNode => GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN) }
+      .map(town2layer)
   }
+
+  def town2layer(townNode: MAdnNode) = GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN)
 
 
   /**
@@ -153,49 +152,110 @@ object ShowcaseNodeListUtil {
 
   /**
    * Найти районы для города.
-   * @param townNode узел города.
+   * @param townNodeId id узла-города.
    * @return Список узлов-районов.
    */
-  def getDistrictsForTown(townNode: MAdnNode): Future[Seq[MAdnNode]] = {
-    val sargs = new AdnNodesSearchArgs {
+  def getDistrictsForTown(townNodeId: String): Future[Seq[MAdnNode]] = {
+    val sargs = new SmNodesSearchArgsT {
       override def maxResults = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
-      override def withDirectGeoParents: Seq[String] = Seq(townNode.id.get)
-      override def testNode = Some(false)
+      override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
       override def shownTypeIds = Seq(AdnShownTypes.TOWN_DISTRICT.name)
       override def withNameSort = true
-      override def isEnabled = Some(true)
     }
     MAdnNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNode: MAdnNode): Future[GeoNodesLayer] = {
-    getDistrictsForTown(townNode)
+  def getDistrictsLayerForTown(townNodeId: String): Future[GeoNodesLayer] = {
+    getDistrictsForTown(townNodeId)
       .map { districtNodes  =>  GeoNodesLayer(districtNodes, NodeGeoLevels.NGL_TOWN_DISTRICT) }
   }
 
 
+  /**
+   * Собрать здания в рамках района.
+   * @param districtAdnId id района.
+   * @return Список узлов на раёне в алфавитном порядке.
+   */
   def getBuildingsOfDistrict(districtAdnId: String): Future[Seq[MAdnNode]] = {
-    val sargs = new AdnNodesSearchArgs {
+    val sargs = new SmNodesSearchArgsT {
       override def maxResults = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents = Seq(districtAdnId)
-      override def testNode = Some(false)
       override def withNameSort = true
-      override def isEnabled = Some(true)
     }
     MAdnNode.dynSearch(sargs)
+  }
+
+  def getBuildingsLayerOfDistrict(districtAdnId: String): Future[GeoNodesLayer] = {
+    getBuildingsOfDistrict(districtAdnId)
+      .map { nodes => GeoNodesLayer(nodes, NodeGeoLevels.NGL_BUILDING) }
+  }
+
+
+  /**
+   * Сбор стопки слоёв в одну кучу.
+   * @param geoMode Текущий режим геолокации.
+   * @param currNode Текущий узел.
+   * @param currNodeLayer Уровень, на котором находится текущий узел.
+   * @return Фьючерс со слоями в порядке рендера (город внизу).
+   */
+  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel): Future[Seq[GeoNodesLayer]] = {
+    currNodeLayer match {
+      // Это -- город.
+      case NodeGeoLevels.NGL_TOWN =>
+        getDistrictsLayerForTown(currNode.id.get) map { districtsLayer =>
+          Seq(
+            districtsLayer,
+            town2layer(currNode)
+          )
+        }
+
+      // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
+      case NodeGeoLevels.NGL_TOWN_DISTRICT =>
+        val districtsFut = getDistrictsLayerForTown(currNode.geo.directParentIds.head)
+        val buildingsFut = getBuildingsLayerOfDistrict(currNode.id.get)
+        for {
+          townLayer       <- getTownLayerOfNode(currNode)
+          districtsLayer  <- districtsFut
+          buildingsLayer  <- buildingsFut
+        } yield {
+          Seq(buildingsLayer, districtsLayer, townLayer)
+        }
+
+      // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
+      case NodeGeoLevels.NGL_BUILDING =>
+        val townFut = getTownOfNode(currNode)
+        val districtsLayerFut = townFut flatMap { townNode =>
+          getDistrictsLayerForTown(townNode.id.get)
+        }
+        val townLayerFut = townFut.map(town2layer)
+        val currDistrictId = currNode.geo.directParentIds.head
+        val buildingsLayerFut = getBuildingsLayerOfDistrict(currDistrictId)
+        for {
+          townLayer <- townLayerFut
+          districtsLayer <- districtsLayerFut
+          buildingsLayer <- buildingsLayerFut
+        } yield {
+          Seq(buildingsLayer, districtsLayer, townLayer)
+        }
+    }
   }
 
 }
 
 
+/** В рамках списка узлов выдачи всегда НЕ нужны отключённые и тестовые узлы. */
+sealed trait SmNodesSearchArgsT extends AdnNodesSearchArgs {
+  override def testNode = Some(false)
+  override def isEnabled = Some(true)
+}
+
+
 /** При детектирования текущего узла происходит поиск единственного продакшен-ресивера.
   * Тут -- common-аргументы, задающие это поведение при поиске узлов. */
-sealed trait NodeDetectArgsT extends AdnNodesSearchArgs {
+sealed trait NodeDetectArgsT extends SmNodesSearchArgsT {
   override def withAdnRights = Seq(AdnRights.RECEIVER)
   override def maxResults = 1
   override def offset = 0
-  override def testNode = Some(false)
-  override def isEnabled = Some(true)
 }
