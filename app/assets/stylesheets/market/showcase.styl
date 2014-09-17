@@ -514,14 +514,21 @@ code
 .geo-nodes-list
   padding-bottom    2px
   &_layer
+    margin-top      -1px
     opacity         0.7
-    border-top      1px #fff dashed
-    border-bottom   1px #fff dashed
+    border-top      1px #fff dotted
+    border-bottom   1px #fff dotted
     cursor          pointer
     &.__active
       cursor        default
       opacity       1
       border-bottom-color transparent
+
+      .geo-nodes-list_layer-icon
+        display     block
+      .geo-nodes-list_layer-icon-right
+        display     none
+
     &.__bo-border
       border-top-color    transparent
   &_layer-inner
@@ -532,6 +539,13 @@ code
     font-size       14px
     padding         12px 0px
     text-transform  uppercase
+  &_layer-icon
+    display         none
+  &_layer-icon,
+  &_layer-icon-right
+    position        absolute
+    left            -30px
+    top             3px
   &_layer-counter
     font-family     'opensans-bold'
     font-size       13px

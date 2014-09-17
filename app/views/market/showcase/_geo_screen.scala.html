@@ -40,7 +40,12 @@
     }
 
     .geo-nodes-list_row.__even {
-      background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-4}%);
+      background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-3}%);
+    }
+
+    .geo-nodes-list_layer-icon path,
+    .geo-nodes-list_layer-icon-right path{
+      fill:     #@args.fgColor;
     }
 
     .geo-nodes-list_row,
