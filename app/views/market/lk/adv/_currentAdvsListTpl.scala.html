@@ -18,8 +18,12 @@
 <hr class="delimiter __light"/>
 <div class="adv-status_lst">
 
-  @advs.map { adv =>
+  @advs.zipWithIndex.map { case(adv, i) =>
     @adv2adn.get(adv.id.get).map { node =>
+
+      @if(i ==  1) {
+        <div class="ovh hidden" id="adOperationHistory">
+      }
 
       @adv match {
         case advOk: MAdvOk => {
@@ -41,10 +45,14 @@
         }
       }
 
+      @if(i ==  advs.size - 1) {
+        </div>
+      }
+
     }
 
   }
 
 </div>
-<button class="btn __helper __size-S adv-status_btn f-right">История операции</button>
+<button class="btn __helper __size-S adv-status_btn f-right js-slide-btn" href="#adOperationHistory">Показать все</button>
 
