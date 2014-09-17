@@ -226,6 +226,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Форма для маппинг метаданных произвольного узла ADN. */
   private def adnNodeMetaM = mapping(
     "name"      -> nameM,
+    "nameShort" -> optional(text(maxLength = 25))
+      .transform [Option[String]] (emptyStrOptToNone, identity),
     "descr"     -> publishedTextOptM,
     "town"      -> townOptM,
     "address"   -> addressOptM,
@@ -235,9 +237,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "siteUrl"   -> urlStrOptM,
     "color"     -> colorOptM
   )
-  {(name, descr, town, address, phone, floor, section, siteUrl, color) =>
+  {(name, nameShort, descr, town, address, phone, floor, section, siteUrl, color) =>
     AdnMMetadata(
       name    = name,
+      nameShortOpt = nameShort,
       description = descr,
       town    = town,
       address = address,
@@ -250,7 +253,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
   {meta =>
     import meta._
-    Some((name, description, town, address, phone, floor, section, siteUrl, color))
+    Some((name, nameShortOpt, description, town, address, phone, floor, section, siteUrl, color))
   }
 
   private def adnRightsM: Mapping[Set[AdnRight]] = {
@@ -548,6 +551,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       personIds = adnNode2.personIds,
       meta = adnNode.meta.copy(
         name    = adnNode2.meta.name,
+        nameShortOpt = adnNode2.meta.nameShortOpt,
         description = adnNode2.meta.description,
         town    = adnNode2.meta.town,
         address = adnNode2.meta.address,

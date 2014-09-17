@@ -234,9 +234,6 @@ object LkLeftPanelLinks extends Enumeration {
 }
 
 
-/** Найденные узлы с одного геоуровня. Используеся в ctl.MarketShowcase для списка узлов. */
-case class GeoNodesLayer(nodes: Seq[MAdnNode], glevelOpt: Option[NodeGeoLevel] = None, i: Int = -1)
-
 
 
 object UmapTplArgs {

@@ -84,12 +84,12 @@ sealed trait GeoMode {
    * @param request Текущий реквест.
    * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
    */
-  def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
+  def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
 
   def exactGeodata: Option[geo.GeoPoint]
 
   /** На каких гео-уровнях производить поиск узлов и в каком порядке? */
-  def nodeGeoLevelsAlways: Seq[NodeGeoLevel]
+  def nodeGeoLevelsAlways: List[NodeGeoLevel]
 
   /** Уровни, на которых надо искать узлы, если есть текущий узел на надуровнях. */
   def nodeGeoLevelsSub: Seq[NodeGeoLevel]
@@ -121,7 +121,7 @@ trait GeoSearchInfo {
 case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     Future successful None
   }
   override def exactGeodata = None
@@ -148,7 +148,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
     future {
       val ra = getRemoteAddr
@@ -214,9 +214,9 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   override def exactGeodata: Option[geo.GeoPoint] = None
 
   /** При geoip надо искать на уровнях городов и затем районов. */
-  override val nodeGeoLevelsAlways: Seq[NodeGeoLevel] = {
+  override val nodeGeoLevelsAlways: List[NodeGeoLevel] = {
     import NodeGeoLevels._
-    Seq(NGL_TOWN, NGL_TOWN_DISTRICT)
+    List(NGL_TOWN, NGL_TOWN_DISTRICT)
   }
 
   override val nodeGeoLevelsSub = Seq(NodeGeoLevels.NGL_BUILDING)
@@ -237,7 +237,7 @@ object GeoLocation {
 
   private val NGLS_b2t = {
     import NodeGeoLevels._
-    Seq(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
+    List(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
   }
 }
 
@@ -249,7 +249,7 @@ final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
   override def isWithGeo = true
   override def toQsStringOpt = Some(s"$lat,$lon")
 
-  override def geoSearchInfo(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     val result = new GeoSearchInfo {
       override def geoPoint: geo.GeoPoint = gl.geopoint
       override def geoDistanceQuery = GeoDistanceQuery(
