@@ -456,7 +456,6 @@ code
   padding-top     10px
   &_horizontal-delimiter
     clear         both
-    border-bottom 1px rgba(255, 255, 255, 0.5) dashed
   &_single-cat
     float         left
     margin-left   7px
@@ -517,7 +516,11 @@ code
      background     default_color_w_opacity
 
 .geo-nodes-list
+  position          absolute
+  left              0px
+  width             100%
   background        none
+  z-index           10
   &_layer
     opacity         0.7
     border-top      1px rgba(255,255,255,0.5) dotted
@@ -563,6 +566,25 @@ code
     font-family     'opensans-light'
     &.__no-border
       border-bottom 0px
+
+.geo-nodes-links
+  height        40px
+  width         100%
+  position      absolute
+  left          0px
+  bottom        0px
+  font-family   'opensans-regular-webfont', 'opensans-light'
+  font-size     12px
+  line-height   40px
+  opacity       0.6
+  &_inner
+    width       260px
+    margin      0px auto
+  &_right-aligned
+    float       right
+  a
+    text-decoration none
+    color       #fff
 
 /*
 ------------------------------------*/
@@ -652,7 +674,7 @@ code
     color           #fff
     font-family     'opensans-regular-webfont'
     z-index         10
-    border-radius(  3px )
+    border-radius(  5px )
 
   &_input
     width: 100%

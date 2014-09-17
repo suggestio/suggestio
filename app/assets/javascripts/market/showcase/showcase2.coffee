@@ -512,7 +512,7 @@ siomart =
 
     open_layer : ( index ) ->
 
-      siomart.geo.layers_count = siomart.utils.ge('geoNodesListContainer').getAttribute('data-layers-count')
+      siomart.geo.layers_count = parseInt( siomart.utils.ge('geoNodesListContainer').getAttribute('data-layers-count') )
 
       if siomart.geo.active_layer != null
         siomart.utils.removeClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
@@ -529,7 +529,7 @@ siomart =
         siomart.utils.removeClass layer_nodes_dom, '__hidden'
 
         layer_nodes_dom_height = layer_nodes_dom.offsetHeight
-        max_height = ( cbca_grid.wh - siomart.geo.screen_offset - siomart.geo.layers_count * siomart.geo.layer_dom_height )
+        max_height = ( cbca_grid.wh - siomart.geo.screen_offset - parseInt( siomart.geo.layers_count + 1 ) * siomart.geo.layer_dom_height )
 
         if layer_nodes_dom_height > max_height
           layer_nodes_dom.style.height = max_height + 'px'
