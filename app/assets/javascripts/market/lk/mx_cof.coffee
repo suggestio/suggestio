@@ -343,9 +343,10 @@ Slider =
     $ document
     .on event, '.js-card-btn', (e)->
       e.preventDefault()
-      $this  = $ this
-      parent = $this.parent()[0]
-      index = $('#wifiPoints').find('.js-wifi-point').index(parent)
+      #$this  = $ this
+      #parent = $this.parent()[0]
+      #index = $('#wifiPoints').find('.js-wifi-point').index(parent)
+      index = 0
 
       if Slider.cardStatus[index] == true
         Slider.open(index)

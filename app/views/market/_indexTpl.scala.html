@@ -29,8 +29,8 @@
 
       } else {
 
-        <a class="siom-new-btn __size-L __color-1 __vertical-first js-btn" href="#emailPwLoginForm" >
-          Войти в систему
+        <a class="siom-new-btn __size-L __color-1 __vertical-first js-card-btn"  >
+          Локации для рекламы
         </a>
 
       }
@@ -43,14 +43,14 @@
     </div>
 
     @if(nodes.nonEmpty) {
-      <div class="index-page_wifi-points">
+      <div class="index-page_wifi-points" style="display: none;">
         <h2 class="wifi-points_title">Места для вашей рекламы</h2>
 
         <div class="wifi-points_lst" id="wifiPoints">
           @nodes.map { node =>
             <div class="wifi-points_i-w js-wifi-point">
               <a class="wifi-points_i js-card-btn" data-href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);" title="@node.meta.name / @node.meta.town">
-                @* В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем: *@
+                <!--В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем:-->
                 <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
               </a>
             </div>
