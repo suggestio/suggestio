@@ -1,4 +1,4 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None,
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None, headAfter:Option[Html] = None,
   popupContent: Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
@@ -8,6 +8,7 @@
 @import stuff._
 @import LkLeftPanelLinks._
 
+@defining( nodeOpt.flatMap(_.id)) { adnIdOpt =>
 <!DOCTYPE html>
 <html>
 <head>
@@ -92,7 +93,8 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl exists {_ == LPL_SUPPORT}){ __act}" href="@routes.MarketLkSupport.supportForm(adnIdOpt, r = Some(request.path))">Служба поддержки</a>
+        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl exists {_ == LPL_SUPPORT}){ __act}"
+                        href="@ctx.supportFormCall(adnIdOpt)">Служба поддержки</a>
         <a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>
 
@@ -111,3 +113,4 @@
 
 </body>
 </html>
+}

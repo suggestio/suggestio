@@ -24,11 +24,11 @@
 
 
 @market.lk.lkBaseLayout(
-  title    = "Рекламные карточки",
-  adnIdOpt = node.id,
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS),
-  rightBar  = Some(rightBar),
-  povAdnId = povAdnIdOpt
+  title         = "Рекламные карточки",
+  nodeOpt       = Some(node),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  rightBar      = Some(rightBar),
+  povAdnId      = povAdnIdOpt
 ) {
 
   @if(node.adn.isProducer) {

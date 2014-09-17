@@ -1,8 +1,15 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None,
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None, headAfter:Option[Html] = None,
   backHref: Option[String] = None, rightBar: Option[Html] = None, povAdnId: Option[String] = None, popupContent:Option[Html] = None
 )(content: Html)(implicit ctx: util.Context)
 
-@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter, popupContent = popupContent, povAdnId = povAdnId, leftCurrEl = leftCurrEl) {
+@lkBase(
+  title = title,
+  nodeOpt = nodeOpt,
+  headAfter = headAfter,
+  popupContent = popupContent,
+  povAdnId = povAdnId,
+  leftCurrEl = leftCurrEl
+) {
 
   <aside class="right-bar">
     @rightBar

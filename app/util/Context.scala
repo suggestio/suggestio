@@ -1,5 +1,6 @@
 package util
 
+import controllers.routes
 import org.joda.time.DateTime
 import play.api.i18n.Lang
 import play.api.mvc.{RequestHeader, Request}
@@ -103,6 +104,16 @@ trait Context {
 
   /** Локальный ГСЧ, иногда нужен. */
   lazy val PRNG = new Random(System.currentTimeMillis())
+
+  /** Пользователю может потребоваться помощь на любой странице. Нужны генератор ссылок в зависимости от обстоятельств. */
+  def supportFormCall(adnIdOpt: Option[String] = None) = {
+    val r = Some(request.path)
+    adnIdOpt match {
+      case Some(adnId) => routes.MarketLkSupport.supportFormNode(adnId, r)
+      case None        => routes.MarketLkSupport.supportForm(r)
+    }
+  }
+
 }
 
 

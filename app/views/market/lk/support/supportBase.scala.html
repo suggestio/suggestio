@@ -1,4 +1,4 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter: Option[Html] = None, r: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(title: String, nodeOpt: Option[MAdnNode] = None, headAfter: Option[Html] = None, r: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Шаблон-подложка для шаблонов саппорта в ЛК. *@
 
@@ -6,9 +6,9 @@
 @import market.lk._
 
 @lkBaseLayout(
-  title     = title,
-  headAfter = headAfter,
-  backHref  = r orElse Some(adnIdOpt.fold(routes.Ident.rdrUserSomewhere)(routes.MarketLkAdn.showAdnNode(_)).url),
-  adnIdOpt  = adnIdOpt,
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_SUPPORT)
+  title         = title,
+  headAfter     = headAfter,
+  backHref      = r  orElse  Some(nodeOpt.flatMap(_.id).fold(routes.Ident.rdrUserSomewhere)(routes.MarketLkAdn.showAdnNode(_)).url),
+  nodeOpt       = nodeOpt,
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_SUPPORT)
 )(content)

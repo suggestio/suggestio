@@ -149,19 +149,11 @@ GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeM
 GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
 GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
 
-# Управление промо-офферами (для арендатора и для владельца ТЦ).
-GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
-GET  /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferForm(shopId: String)
-# promo-offer'ы (poffer)
-POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
-POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
-GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(offerId)
-GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
-POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
-
 # Обращение в тех.поддерку зареганного клиента sio-market.
-GET  /m/lk/support                      controllers.MarketLkSupport.supportForm(adnId: Option[String] ?= None, r: Option[String] ?= None)
-POST /m/lk/support                      controllers.MarketLkSupport.supportFormSubmit(adnId: Option[String] ?= None, r: Option[String] ?= None)
+GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
+POST /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
+GET  /m/support                         controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
+POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
 
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg

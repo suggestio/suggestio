@@ -362,7 +362,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      advForAdTpl(request.mad, currAdvsArgs, formArgs)
+      advForAdTpl(request.mad, request.producer, currAdvsArgs, formArgs)
     }
   }
 

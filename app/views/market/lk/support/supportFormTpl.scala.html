@@ -1,13 +1,14 @@
-@(adnIdOpt: Option[String], sf: Form[_], r: Option[String])(implicit ctx: Context)
+@(nodeOpt: Option[MAdnNode], sf: Form[_], r: Option[String])(implicit ctx: Context)
 
 @import helper._
 @import ctx._
 @import util.FC.tdFc
 
 
-@supportBase("СЛУЖБА ПОДДЕРЖКИ", adnIdOpt = adnIdOpt, r = r) {
+@supportBase("СЛУЖБА ПОДДЕРЖКИ", nodeOpt = nodeOpt, r = r) {
 
-  @form(routes.MarketLkSupport.supportFormSubmit(adnIdOpt, r = r)) {
+
+  @form( ctx.supportFormCall(nodeOpt.flatMap(_.id)) ) {
 
     <table class="input-w __size-L">
       @inputText(

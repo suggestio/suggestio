@@ -44,10 +44,10 @@
 
 
 @market.lk.lkBaseLayout(
-  title     = title,
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_NODE),
-  adnIdOpt  = node.id,
-  rightBar  = Some(rightBar1),
-  povAdnId  = povAdnIdOpt,
-  popupContent = popupContent
+  title         = title,
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE),
+  nodeOpt       = Some(node),
+  rightBar      = Some(rightBar1),
+  povAdnId      = povAdnIdOpt,
+  popupContent  = popupContent
 )(content)

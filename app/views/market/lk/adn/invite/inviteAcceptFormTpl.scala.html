@@ -6,16 +6,16 @@
 @import market.contract._
 @import ctx._
 
-@table_fieldset(Label:String, Class:String)(Input:Html) = {
-<table class="input-w __size-L @Class">
+@table_fieldset(label:String, clazz:String)(input:Html) = {
+<table class="input-w __size-L @clazz">
   <td class="input-w_left">
-    <label class="input-w_prop-name" for="adnNodeName">@Label</label>
+    <label class="input-w_prop-name" for="adnNodeName">@label</label>
   </td>
 
   <td>
     <div class="input clearfix">
       <div class="input_shadow">
-        @Input
+        @input
       </div>
 
     </div>
@@ -34,10 +34,10 @@
   <div class="body_cnt">
     <div class="success-label success-label__adn-invite-accept">
       <div class="success-label__icon"></div>
-      <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
+      <div class="success-label__title">Вы приглашены к участию в системе Sio.Market</div>
     </div>
 
-    @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
+    @form( routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get) ) {
       @* Рендер текста открытой оферты. *@
       @if(withOfferText) {
         @market.contract._inviteWidgetTpl(iaf)

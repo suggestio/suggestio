@@ -1,4 +1,4 @@
-@(mad: MAd, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
+@(mad: MAd, producerNode: MAdnNode, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
 
 @* Страница управления размещением рекламной карточки. *@
 @import ctx._
@@ -20,11 +20,11 @@
 
 
 @market.lk.lkBaseLayout(
-  title = "Управление рекламой",
-  adnIdOpt = Some(mad.producerId),
-  backHref = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url),
-  rightBar  = Some(rightBar),
-  leftCurrEl = Some(LkLeftPanelLinks.LPL_ADS)
+  title         = "Управление рекламой",
+  nodeOpt       = Some(producerNode),
+  backHref      = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url),
+  rightBar      = Some(rightBar),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS)
 ) {
 
   @_currentAdvsTpl(currAdvsArgs)

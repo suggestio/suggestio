@@ -2,10 +2,11 @@ package controllers
 
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.Result
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.PlayLazyMacroLogsImpl
-import util.acl.IsAuth
+import util.acl.{IsAdnNodeAdmin, AbstractRequestWithPwOpt, IsAuth}
 import views.html.market.lk.support._
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
@@ -40,32 +41,56 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
   }
 
 
-  /** Отрендерить форму с запросом помощи.
-    * @return 200 Ок и страница с формой.
-    */
-  def supportForm(adnIdOpt: Option[String], r: Option[String]) = IsAuth.async { implicit request =>
+  /**
+   * Отрендерить форму с запросом помощи с узла.
+   * @return 200 Ок и страница с формой.
+   */
+  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    _supportForm(Some(request.adnNode), r)
+  }
+
+  /**
+   * Отрендерить форму запроса помощи вне узла.
+   * @param r Адрес для возврата.
+   * @return 200 Ok и страница с формой.
+   */
+  def supportForm(r: Option[String]) = IsAuth.async { implicit request =>
+    _supportForm(None, r)
+  }
+
+  private def _supportForm(nodeOpt: Option[MAdnNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
     val emailsDfltFut = request.pwOpt.fold [Future[Seq[String]]]
       { Future successful Nil }
       { pw => MPersonIdent.findAllEmails(pw.personId) }
-    emailsDfltFut map { emailsDflt =>
+    for {
+      emailsDflt <- emailsDfltFut
+    } yield {
       val emailDflt = emailsDflt.headOption getOrElse ""
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
       val form = supportFormM fill lsr
-      Ok(supportFormTpl(adnIdOpt, form, r))
+      Ok(supportFormTpl(nodeOpt, form, r))
     }
   }
 
 
-  /**
-   * Сабмит формы обращения за помощью.
-   */
-  def supportFormSubmit(adnIdOpt: Option[String], r: Option[String]) = IsAuth.async { implicit request =>
-    lazy val logPrefix = s"supportFormSubmit(adnId=$adnIdOpt): "
+  /** Сабмит формы обращения за помощью по узлу, которым управляем. */
+  def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    _supportFormSubmit(Some(request.adnNode), r)
+  }
+
+  /** Сабмит формы обращения за помощью вне узла. */
+  def supportFormSubmit(r: Option[String]) = IsAuth.async { implicit request =>
+    _supportFormSubmit(None, r)
+  }
+
+  private def _supportFormSubmit(nodeOpt: Option[MAdnNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    lazy val adnIdOpt = nodeOpt.flatMap(_.id)
+    lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(supportFormTpl(adnIdOpt, formWithErrors, r))
+        NotAcceptable(supportFormTpl(nodeOpt, formWithErrors, r))
       },
       {lsr =>
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)

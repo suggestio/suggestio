@@ -1,21 +1,16 @@
-@(title: String, adnId: String)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnNode: MAdnNode)(content: Html)(implicit ctx: util.Context)
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
-@headAfter1 = {
-
-}
-
 @market.lk.lkBase(
   title         = title,
-  headAfter     = Some(headAfter1),
-  adnIdOpt      = Some(adnId),
+  nodeOpt       = Some(adnNode),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS)
 ) {
 
   <div class="page-title">
     <div class="page-title_cnt">
-      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnId)" title="Вернуться назад"></a>
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)" title="Вернуться назад"></a>
       @title.toUpperCase
     </div>
   </div>

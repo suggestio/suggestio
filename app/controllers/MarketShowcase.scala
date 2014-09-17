@@ -711,6 +711,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
               }
             }
 
+            trace(s"${logPrefix}parentLay = ${parentLayOpt.flatMap(_.glevelOpt)} childLay = ${childLayOpt.flatMap(_.glevelOpt)}")
+
             // Собираем соседние узлы по тому или иному алгоритму (в зависимости от настроек конфига).
             lazy val neighWithoutIds = nodeLays.iterator.flatMap(_.nodes).flatMap(_.id).toSeq.distinct
             val neighNodesSearchArgs: Future[Option[AdnNodesSearchArgsT]] = if (NEIGH_NODES_USE_GEOSHAPES) {

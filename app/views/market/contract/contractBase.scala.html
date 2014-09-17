@@ -1,4 +1,4 @@
-@(clang: String)(content: Html)(implicit ctx: Context)
+@(clang: String, nodeOpt: Option[MAdnNode] = None)(content: Html)(implicit ctx: Context)
 
 @import market.lk._
 
@@ -9,7 +9,8 @@
 @lkBase(
   title         = "Договор на оказание услуг SIO Маркет",
   headAfter     = Some(headAfter),
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_BILLING)
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_BILLING),
+  nodeOpt       = nodeOpt
 ) {
 
   <div class="title-wrap">
