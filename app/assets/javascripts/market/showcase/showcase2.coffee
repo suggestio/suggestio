@@ -1577,10 +1577,16 @@ siomart =
     find_nodes : ( data ) ->
 
       if siomart.geo.location_requested == true
+
+        siomart.geo.location_node = data.first_node
+
         siomart.geo.location_requested = false
         siomart.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
         siomart.geo.load_for_node_id data.first_node._id
         siomart.geo.loaded = false
+
+      if typeof siomart.geo.geo_position_obj != 'undefined'
+        siomart.utils.ge('smGeoLocationLabel').innerHTML = siomart.geo.location_node.name
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 

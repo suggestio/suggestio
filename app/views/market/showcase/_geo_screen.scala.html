@@ -34,6 +34,10 @@
       color: #@args.fgColor;
     }
 
+    .geo-nodes-list_layer {
+      border-color: rgba( @colorHex2rgb(args.fgColor).mkString(","), 0.5 );
+    }
+
     .geo-nodes-list_rows {
       -webkit-box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-6}% );
       box-shadow: inset 0px 5px 5px hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-6}% );

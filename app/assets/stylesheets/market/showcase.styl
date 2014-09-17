@@ -83,6 +83,10 @@ html
 code
   display: none
 
+.sm-body
+  background    #676767 url('/assets/images/market/showcase-logo.png') no-repeat center center
+  background-size 112px 30px
+
 .sm-welcome-ad
   position: absolute
   left: 50%
@@ -424,7 +428,7 @@ code
 
 .sm-tab
   color         #343434
-  border        1px #c2c2c2 dotted
+  border        1px #c2c2c2 solid
   text-align    center
   background    #c2c2c2
   padding       8px 0px
@@ -515,12 +519,11 @@ code
   background        none
   &_layer
     opacity         0.7
-    border-top      1px #fff dotted
+    border-top      1px rgba(255,255,255,0.5) dotted
     cursor          pointer
     background      none
     &.__active
       opacity       1
-      border-bottom-color transparent
 
       .geo-nodes-list_layer-icon
         display     block
@@ -643,6 +646,7 @@ code
     font-size       11px
     padding         4px 6px
     height          14px
+    width           248px
     background      #363636
     color           #fff
     font-family     'opensans-regular-webfont'
