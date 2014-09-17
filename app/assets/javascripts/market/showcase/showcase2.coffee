@@ -482,7 +482,10 @@ siomart =
     loaded : false
     location_requested : false
     nodes_loaded : false
-    active_layer : 0
+    active_layer : null
+    screen_offset : 129
+    layers_count : 2
+    layer_dom_height : 44
     search :
       min_request_length : 2
       search_delay : 500
@@ -507,13 +510,34 @@ siomart =
       siomart.geo.load_nodes( true )
 
     open_layer : ( index ) ->
-      siomart.utils.removeClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
-      siomart.utils.addClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
 
-      siomart.geo.active_layer = index
+      if siomart.geo.active_layer != null
+        siomart.utils.removeClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
+        siomart.utils.addClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
 
-      siomart.utils.addClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
-      siomart.utils.removeClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
+      if siomart.geo.active_layer != index
+        siomart.geo.active_layer = index
+
+        layer_nodes_dom = siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer)
+        layer_nodes_dom_wrapper = siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer + 'Wrapper')
+        layer_nodes_dom_content = siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer + 'Content')
+
+        siomart.utils.addClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
+        siomart.utils.removeClass layer_nodes_dom, '__hidden'
+
+        layer_nodes_dom_height = layer_nodes_dom.offsetHeight
+        max_height = ( cbca_grid.wh - siomart.geo.screen_offset - siomart.geo.layers_count * siomart.geo.layer_dom_height )
+
+        if layer_nodes_dom_height > max_height
+          layer_nodes_dom.style.height = max_height + 'px'
+          layer_nodes_dom_wrapper.style.height = max_height + 'px'
+          layer_nodes_dom_content.style.minHeight = max_height + 1 + 'px'
+        else
+          layer_nodes_dom_wrapper.style.height = layer_nodes_dom_height + 'px'
+          layer_nodes_dom_content.style.minHeight = layer_nodes_dom_height + 1 + 'px'
+
+      else
+        siomart.geo.active_layer = null
 
     get_current_position : () ->
       siomart.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
@@ -535,15 +559,14 @@ siomart =
       siomart.load_mart()
 
     adjust : () ->
+
       geo_screen = siomart.utils.ge('smGeoNodes')
       geo_screen_wrapper = siomart.utils.ge('smGeoNodesWrapper')
       geo_screen_content = siomart.utils.ge('smGeoNodesContent')
 
-      _offset = 128
-
-      geo_screen.style.height = cbca_grid.wh - _offset
-      geo_screen_wrapper.style.height = cbca_grid.wh - _offset
-      geo_screen_content.style.minHeight = cbca_grid.wh - _offset + 1
+      geo_screen.style.height = cbca_grid.wh - siomart.geo.screen_offset
+      geo_screen_wrapper.style.height = cbca_grid.wh - siomart.geo.screen_offset
+      geo_screen_content.style.minHeight = cbca_grid.wh - siomart.geo.screen_offset + 1
 
     close : () ->
       siomart.utils.ge('smGeoScreen').style.display = 'none'
@@ -1141,6 +1164,8 @@ siomart =
 
       target = siomart.events.target_lookup( event.target, 'className', 'geo-nodes-list_layer' )
       if target != null
+        if siomart.events.is_touch_locked
+          return false
         index = target.getAttribute 'data-index'
         siomart.geo.open_layer( index )
 
