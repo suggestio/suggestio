@@ -1877,7 +1877,7 @@ market =
         ## Забиндить событие на сохранение формы
         $('#imgCropTool form').bind 'submit', () ->
           market.img.crop.save_crop $(this)
-
+          CbcaPopup.hidePopup('#imgCropTool')
           return false
 
   ################################
