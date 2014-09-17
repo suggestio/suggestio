@@ -13,7 +13,7 @@
           <a class="close __white f-right icon-icomoon js-close-slider"></a>
         </div>
 
-        <div class="card_photo-w">
+        @*<div class="card_photo-w">
           @adnNode.gallery.headOption.map { filename =>
             <div class="card_photo" style="background-image: url(@routes.Img.getImg(filename));"></div>
 
@@ -23,7 +23,7 @@
               <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
             </a>
           </div>
-        </div>
+        </div>*@
 
         <h2 class="card_title">@adnNode.meta.name</h2>
 
