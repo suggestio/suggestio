@@ -511,6 +511,8 @@ siomart =
 
     open_layer : ( index ) ->
 
+      siomart.geo.layers_count = siomart.utils.ge('geoNodesListContainer').getAttribute('data-layers-count')
+
       if siomart.geo.active_layer != null
         siomart.utils.removeClass siomart.utils.ge('geoLayer' + siomart.geo.active_layer), '__active'
         siomart.utils.addClass siomart.utils.ge('geoLayerNodes' + siomart.geo.active_layer), '__hidden'
