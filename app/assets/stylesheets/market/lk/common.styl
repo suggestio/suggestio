@@ -1647,6 +1647,9 @@ th.__bg-head
   font-family: 'PT_Sans-Narrow'
 
 .close
+  display             block
+  width               20px
+  height              20px
   opacity             0.6
   padding             10px
 
@@ -1655,12 +1658,6 @@ th.__bg-head
   cursor              pointer
   text-decoration     none
   transition(opacity 0.2s ease-in-out 0s)
-
-  &:hover
-    opacity 1
-
-  &.__white
-    color white
 
 
 .adn-title-buttons
@@ -1854,13 +1851,23 @@ th.__bg-head
   display           block
   width             300px
   background-color  #9e9e9e
-  border-radius(10px)
+  border-radius(4px)
 
   &_photo
     width               100%
     height              150px
     background-size     cover
     background-position center
+
+  &_location
+    position    absolute
+    top         90px
+    padding-top 50px
+    width       100%
+
+    color       white
+    font-size   12px
+    text-align  center
 
   &_logo-w
     display inline-block
@@ -1889,15 +1896,19 @@ th.__bg-head
       width   100%
 
   &_title
+    position        absolute
+    top             155px
+    width           100%
+
     font-size       16px
     text-transform  uppercase
     text-align      center
     color           #ffffff
 
   &_town
+    margin        20px 0
     font-size     12px
     text-align    center
-    margin-bottom 20px
     color         #3d3d3d
 
   &_prop
