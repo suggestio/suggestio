@@ -3,17 +3,17 @@
 <div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length">
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
     <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
-      <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>@nl.glevelOpt.map{ glevel =>
-        @Messages("ngls." + glevel ) <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
-        }</div>
+      <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
+        @Messages("ngls." + nl.glevel) <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
+        </div>
     </div>
 
-    @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ){
-    @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
-      <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
-        @mnode.meta.name
-      </div>
-    }
+    @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ) {
+      @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
+        <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
+          @mnode.meta.name
+        </div>
+      }
     }
   }
 </div>
