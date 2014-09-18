@@ -1,6 +1,7 @@
 @(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
 <div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length">
+
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
     <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
       <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>

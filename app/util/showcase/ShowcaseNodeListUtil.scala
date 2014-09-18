@@ -130,7 +130,9 @@ object ShowcaseNodeListUtil {
       .map(town2layer)
   }
 
-  def town2layer(townNode: MAdnNode) = GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN)
+  def town2layer(townNode: MAdnNode) = {
+    GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN)
+  }
 
 
   /**

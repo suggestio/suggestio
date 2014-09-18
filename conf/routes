@@ -17,6 +17,7 @@ GET  /                                  controllers.Application.index
 GET  /xd_server                         controllers.Application.xd_server
 GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
+GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
 GET  /thumb/get/$imageId<[-_\w\d]+>     controllers.Img.getThumb(imageId)
 GET  /search/site                       controllers.Search.siteSearchGET

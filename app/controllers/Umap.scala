@@ -33,7 +33,6 @@ object Umap extends SioController with PlayMacroLogsImpl {
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false
 
-
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuser.async { implicit request =>
     // Скачиваем все узлы из базы. TODO Закачать через кэш?

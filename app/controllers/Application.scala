@@ -61,6 +61,14 @@ object Application extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Экшен для скрытого продления сессии в фоне. Может дергаться в js'ом незаметно.
+   * @return 201 No Content - всё ок.
+   *         Другой код - сессия истекла.
+   */
+  def keepAliveSession = IsAuth { implicit request =>
+    NoContent
+  }
 
   /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
   def http404Fut(implicit request: RequestHeader): Future[Result] = http404AdHoc
