@@ -1124,7 +1124,7 @@ PersonalCabinet =
 
       nodesObserver()
       typesObserver()
-      market.adv_form.update_price()
+      setTimeout market.adv_form.update_price, 100
 
     # чекбоксы у заголовков узлов
     $ document
@@ -1138,9 +1138,10 @@ PersonalCabinet =
       $slideWrap.find '.js-slide-cnt input:enabled'
       .prop 'checked', checked
       .attr 'value', checked
+
       nodesObserver()
       typesObserver()
-      market.adv_form.update_price()
+      setTimeout market.adv_form.update_price, 100
 
     # чекбоксы внутри узлов
     $ document
@@ -1161,7 +1162,7 @@ PersonalCabinet =
 
       nodesObserver()
       typesObserver()
-      market.adv_form.update_price()
+      setTimeout market.adv_form.update_price, 100
 
 
 
@@ -1952,7 +1953,7 @@ market =
         success : ( data ) ->
           $('.js-pre-price').html data
 
-      this.tabs.refine_counters()
+      #this.tabs.refine_counters()
 
     tabs :
       init : () ->
