@@ -1124,6 +1124,7 @@ PersonalCabinet =
 
       nodesObserver()
       typesObserver()
+      market.adv_form.update_price()
 
     # чекбоксы у заголовков узлов
     $ document
@@ -1139,6 +1140,7 @@ PersonalCabinet =
       .attr 'value', checked
       nodesObserver()
       typesObserver()
+      market.adv_form.update_price()
 
     # чекбоксы внутри узлов
     $ document
@@ -1159,6 +1161,7 @@ PersonalCabinet =
 
       nodesObserver()
       typesObserver()
+      market.adv_form.update_price()
 
 
 
@@ -2011,21 +2014,6 @@ market =
             $this.attr 'value', false
           else
             $this.attr 'value', true
-
-
-        cf_id = $(this).attr 'data-connected-field'
-        cf = $('#' + cf_id)
-        if typeof cf_id != 'undefined'
-          if $(this).is(':checked')
-            cf.addClass 'advs-nodes__node_active'
-            cf.find('.advs-nodes__node-dates').removeClass 'advs-nodes__node-dates_hidden'
-            cf.find('.advs-nodes__node-options').removeClass 'advs-nodes__node-options_hidden'
-          else
-            cf.removeClass 'advs-nodes__node_active'
-            cf.find('.advs-nodes__node-dates').addClass 'advs-nodes__node-dates_hidden'
-            cf.find('.advs-nodes__node-options').addClass 'advs-nodes__node-options_hidden'
-
-        market.adv_form.update_price()
 
   ##############################
   ## Редактор рекламной карточки
