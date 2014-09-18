@@ -2006,7 +2006,7 @@ market =
         market.adv_form.submit()
 
 
-      $('#advsFormBlock input, #advsFormBlock select').bind 'change', () ->
+      $('#advsFormBlock input:checkbox').bind 'change', () ->
         $this = $ this
         value = $this.attr 'value'
 
@@ -2015,6 +2015,10 @@ market =
             $this.attr 'value', false
           else
             $this.attr 'value', true
+
+      $ document
+      .on 'change', '#advsFormBlock select, #advsFormBlock input:text', (e)->
+        setTimeout market.adv_form.update_price, 100
 
   ##############################
   ## Редактор рекламной карточки
