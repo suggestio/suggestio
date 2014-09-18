@@ -26,6 +26,12 @@ import MarketLkAdnEdit.logoKM
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
 
+  // Форма "запросить звонок" с капчей, именем, телефоном и временем прозвона.
+  //val callbackRequestFormM = Form(mapping(
+  //))
+
+
+
   private def colorOptKM  = "color"   -> colorOptM
   private def companyKM   = "company" -> companyNameM
   private def townKM      = "town"    -> townSomeM

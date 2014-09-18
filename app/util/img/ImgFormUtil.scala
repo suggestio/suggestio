@@ -2,7 +2,7 @@ package util.img
 
 import util.{PlayLazyMacroLogsImpl, FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import io.suggest.model.{MUserImgMetadata, MImgThumb, MUserImgOrig, MPict}
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -14,9 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import models._
 import play.api.cache.Cache
 import io.suggest.ym.model.common.MImgInfoT
-import net.sf.jmimemagic.MagicMatch
 import play.api.Logger
-import com.typesafe.scalalogging.slf4j
 
 /**
  * Suggest.io
@@ -37,7 +35,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   // Ключи в карте MUserImgMeta, которые хранят данные о картинке.
   val IMETA_WIDTH  = "w"
   val IMETA_HEIGHT = "h"
-  
+
+  /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
+    * появившиеся в ходе ошибочной логики. */
+  val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
+
+
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
     .transform[ImgIdKey](ImgIdKey.apply, _.filename)
@@ -152,7 +155,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
   private def updateOrigImgFullDo(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
-    val oldImgsSet = oldImgs.toSet
     // newTmpImgs - это одноразовый итератор, содержит исходные индексы и списки картинок для сохранения.
     val newTmpImgs = needImgs
       .iterator
@@ -212,23 +214,61 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         .toList
     }
     // Какие картинки надо оставить с прошлого раза и отфорвардить в результаты
-    val needOrigImgs = needImgs
+    val needOrigImgs1 = needImgs
       .iterator
       .zipWithIndex
       .filter { case (ii4s, i) => ii4s.iik.isInstanceOf[OrigImgIdKey] }
       // Из старых картинок выбрать подходящую уже сохранённую, если она там есть.
       .flatMap { case (ti4s, i) => oldImgs.find { oii => ti4s.iik == oii }.map { _ -> i } }
       .toList
+
+    // 2014.09.18: Из-за бага с удалением ненужных картинок, была введена валидация уже сохранённых orig img, подлежащих повторному сохранению.
+    // Это нужно будет отключить, когда "дырки" в галереях карточек и узлов исчезнут. Валидация уже сохранённых картинок сильно замедляет сохранение.
+    val needOrigImgsFilteredFut = if (REVALIDATE_ALREADY_SAVED_IMGS) {
+      Future.traverse(needOrigImgs1) { case v @ (miit, _) =>
+        try {
+          val oid: OrigImgIdKey = miit
+          MUserImgMetadata.getById(oid.data.rowKey, oid.origQualifierOpt)
+            .map {
+              // Всё ок, картинка скорее всего есть в базе, пропускаем.
+              case Some(_) =>
+                Some(v)
+              // Ревалидация выявила проблему: картинки нет в базе. Затираем весь ряд для надежности.
+              case None =>
+                eraseOiik(oid)
+                warn("Revalidate: Found invalid orig img reference: " + oid + " -- Reerasing it and forgetting.")
+                None
+            }
+        } catch {
+          case ex: Exception => Future successful None
+        }
+      } map { _.flatMap(identity(_)) }
+    } else {
+      Future successful needOrigImgs1
+    }
+
     // Восстановить исходный порядок needImgs на основе исходных индексов, собрать финальный результат метода.
-    val resultFut = savedTmpImgsFut map { newSavedImgs =>
-      (newSavedImgs ++ needOrigImgs)
+    val resultFut = for {
+      newSavedImgs  <- savedTmpImgsFut
+      needOrigImgs2 <- needOrigImgsFilteredFut
+    } yield {
+      (newSavedImgs ++ needOrigImgs2)
         .sortBy(_._2)
         .map(_._1)
     }
     // Если сохранение удалось, то надо запустить в фоне удаление старых картинок.
-    resultFut onSuccess { case result =>
-      val delOldImgs = oldImgsSet -- needOrigImgs.map(_._1)
-      Future.traverse(delOldImgs)(eraseOiik)
+    resultFut onSuccess { case _ =>
+      needOrigImgsFilteredFut onSuccess { case needOrigImgs2 =>
+        // 2014.sep.18: Нужно удалять по ключам и сравнивать по ключам, без учёта кропов всяких и т.д.
+        val delOldImgs = oldImgs.filterNot { miit =>
+          val oiik: OrigImgIdKey = miit
+          needOrigImgs2.exists { needOI =>
+            needOI._1.data.rowKey  ==  oiik.data.rowKey
+          }
+        }
+        trace("Will delete unused imgs: " + delOldImgs.mkString(", "))
+        Future.traverse(delOldImgs)(eraseOiik)
+      }
     }
     // Вернуть результат.
     resultFut
@@ -238,8 +278,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   private def eraseOiik(oiik: MImgInfoT): Future[_] = {
     val fut = MPict.deleteFully(oiik.data.rowKey)
     fut onComplete {
-      case Success(_)  => trace("Old img deleted: " + oiik)
-      case Failure(ex) => error("Failed to delete old img " + oiik, ex)
+      case Success(res) => trace("Old img deleted: " + oiik + " result: " + res)
+      case Failure(ex)  => error("Failed to delete old img " + oiik, ex)
     }
     fut
   }
@@ -408,7 +448,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   def getTmpMetaCacheKey(id: String) = id + ".tme"
-  val TMP_META_EXPIRE_SEC: Int = current.configuration.getInt("img.tmp.meta.cache.expire.seconds") getOrElse 40
+  val TMP_META_EXPIRE_SEC: Int = configuration.getInt("img.tmp.meta.cache.expire.seconds") getOrElse 40
 
   def getMetaForTmpImgCached(img: TmpImgIdKey): Option[MImgInfoMeta] = {
     val ck = getTmpMetaCacheKey(img.mptmp.data.key)
@@ -446,19 +486,19 @@ object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override val MIN_SZ_PX: Int = current.configuration.getInt("img.orig.sz.min.px") getOrElse 256
+  override val MIN_SZ_PX: Int = configuration.getInt("img.orig.sz.min.px") getOrElse 256
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
   override def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
 
   /** Качество сжатия jpeg. */
-  override val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.orig.jpeg.quality") getOrElse 90.0
+  override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.orig.jpeg.quality") getOrElse 90.0
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  override val DOWNSIZE_HORIZ_PX: Integer  = Integer valueOf (current.configuration.getInt("img.orig.maxsize.h.px") getOrElse 2048)
-  override val DOWNSIZE_VERT_PX:  Integer  = current.configuration.getInt("img.orig.maxsize.v.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
+  override val DOWNSIZE_HORIZ_PX: Integer  = Integer valueOf (configuration.getInt("img.orig.maxsize.h.px") getOrElse 2048)
+  override val DOWNSIZE_VERT_PX:  Integer  = configuration.getInt("img.orig.maxsize.v.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
 
   override def GAUSSIAN_BLUG: Option[lang.Double] = None
 }
@@ -467,8 +507,8 @@ object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (current.configuration.getInt("img.thumb.maxsize.h.px") getOrElse 256)
-  val DOWNSIZE_VERT_PX : Integer = current.configuration.getInt("img.thumb.maxsize.h.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
+  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.thumb.maxsize.h.px") getOrElse 256)
+  val DOWNSIZE_VERT_PX : Integer = configuration.getInt("img.thumb.maxsize.h.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
 
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
@@ -481,7 +521,7 @@ object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   override def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
 
   /** Качество сжатия jpeg. */
-  override val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.thumb.jpeg.quality") getOrElse 85.0
+  override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.thumb.jpeg.quality") getOrElse 85.0
 }
 
 
@@ -490,18 +530,18 @@ object AdnLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (current.configuration.getInt("img.logo.shop.maxsize.h.px") getOrElse 512)
-  val DOWNSIZE_VERT_PX: Integer  = Integer valueOf (current.configuration.getInt("img.logo.shop.maxsize.v.px") getOrElse 128)
+  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.logo.shop.maxsize.h.px") getOrElse 512)
+  val DOWNSIZE_VERT_PX: Integer  = Integer valueOf (configuration.getInt("img.logo.shop.maxsize.v.px") getOrElse 128)
 
   /** Качество сжатия jpeg. */
-  val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.logo.shop.jpeg.quality") getOrElse 0.95
+  val JPEG_QUALITY_PC: Double = configuration.getDouble("img.logo.shop.jpeg.quality") getOrElse 0.95
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
   def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  val MIN_SZ_PX: Int = current.configuration.getInt("img.logo.shop.side.min.px") getOrElse 30
+  val MIN_SZ_PX: Int = configuration.getInt("img.logo.shop.side.min.px") getOrElse 30
 
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
   def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
@@ -513,17 +553,17 @@ trait SqLogoImageUtil  extends SioImageUtilT with PlayMacroLogsImpl {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (current.configuration.getInt("img.logo.mart.maxsize.h.px") getOrElse 512)
-  val DOWNSIZE_VERT_PX: Integer  = current.configuration.getInt("img.logo.mart.maxsize.v.px").map(Integer valueOf) getOrElse DOWNSIZE_HORIZ_PX
+  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.logo.mart.maxsize.h.px") getOrElse 512)
+  val DOWNSIZE_VERT_PX: Integer  = configuration.getInt("img.logo.mart.maxsize.v.px").map(Integer valueOf) getOrElse DOWNSIZE_HORIZ_PX
 
   /** Качество сжатия jpeg. */
-  val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.logo.mart.jpeg.quality") getOrElse 0.95
+  val JPEG_QUALITY_PC: Double = configuration.getDouble("img.logo.mart.jpeg.quality") getOrElse 0.95
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  val MIN_SZ_PX: Int = current.configuration.getInt("img.logo.mart.side.min.px") getOrElse 70
+  val MIN_SZ_PX: Int = configuration.getInt("img.logo.mart.side.min.px") getOrElse 70
 
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
-  val MAX_OUT_FILE_SIZE_BYTES: Option[Int] = current.configuration.getInt("img.logo.mart.result.size.max")
+  val MAX_OUT_FILE_SIZE_BYTES: Option[Int] = configuration.getInt("img.logo.mart.result.size.max")
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
