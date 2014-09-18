@@ -51,4 +51,5 @@ case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
     )
   }
 
+  override def firstPoint = geoms.head.firstPoint
 }

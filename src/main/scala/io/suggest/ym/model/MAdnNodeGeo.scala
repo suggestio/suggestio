@@ -432,6 +432,9 @@ object NodeGeoLevels extends Enumeration(1) {
     def upper: Option[NodeGeoLevel]
     def upperOrThis: NodeGeoLevel = upper getOrElse this
     def allUpperLevels: List[NodeGeoLevel] = collectLevels()(_.upper)
+
+    /** Предлагаемый масштаб osm-карты при отображении объекта на ней в полный рост. */
+    def osmMapScale: Int
   }
 
   type NodeGeoLevel = Val
@@ -443,12 +446,14 @@ object NodeGeoLevels extends Enumeration(1) {
     override def lower: Option[NodeGeoLevel] = None
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
     override def precision = "50m"
+    override def osmMapScale = 16
   }
 
   val NGL_TOWN_DISTRICT: NodeGeoLevel = new Val("td") {
     override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
     override def precision = "800m"
+    override def osmMapScale = 12
 
     /** У "Районов города" есть короткое название - "Районы" */
     override val l10nSingularShort = "District"
@@ -460,6 +465,7 @@ object NodeGeoLevels extends Enumeration(1) {
     override def upper: Option[NodeGeoLevel] = None
     override def precision = "5km"
     override def isHighest = true
+    override def osmMapScale = 10
   }
 
   def default = NGL_BUILDING

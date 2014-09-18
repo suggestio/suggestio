@@ -46,5 +46,7 @@ case class CircleGs(center: GeoPoint, radius: Distance) extends GeoShapeQuerable
       .center(center.lon, center.lat)
       .radius(radius.distance, radius.units)
   }
+
+  override def firstPoint = center
 }
 

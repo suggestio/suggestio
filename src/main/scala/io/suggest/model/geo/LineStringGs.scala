@@ -41,4 +41,6 @@ case class LineStringGs(coords: Seq[GeoPoint]) extends MultiPointShape {
   override protected def shapeBuilder: Shape_t = {
     ShapeBuilder.newLineString()
   }
+
+  override def firstPoint = coords.head
 }

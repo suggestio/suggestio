@@ -71,4 +71,5 @@ case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) exten
     poly
   }
 
+  override def firstPoint = outer.firstPoint
 }

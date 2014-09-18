@@ -62,4 +62,5 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
     }
   }
 
+  override def firstPoint = lines.head.firstPoint
 }

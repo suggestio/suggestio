@@ -56,5 +56,6 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
     }
   }
 
+  override def firstPoint = polygons.head.firstPoint
 }
 

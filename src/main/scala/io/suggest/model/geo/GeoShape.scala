@@ -62,6 +62,7 @@ trait GeoShape {
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc
 
+  def firstPoint: GeoPoint
 }
 
 

@@ -36,6 +36,7 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
     ShapeBuilder.newPoint(coord.lon, coord.lat)
   }
 
+  override def firstPoint = coord
 }
 
 
