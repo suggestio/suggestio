@@ -786,12 +786,14 @@ PersonalCabinet =
     .on 'click', '#captchaReload', (e)->
       e.preventDefault()
       $this = $ this
-      $captchaImage = $ '#captchaImage'
+      dataFor = $this.attr 'data-for'
+      $captchaImage = $ dataFor
       $parent = $captchaImage.parent()
       random = Math.random()
 
       $captchaImage.remove()
-      $parent.prepend '<img class="captcha_img" id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
+      captchaId = dataFor.substr(1)
+      $parent.prepend "<img class='captcha_img' id='#{captchaId}' src='/captcha/get/#{$('#captchaId').val()}?v=#{random}' />"
 
     $newPasswordForm = $ '#newPasswordForm'
     if $newPasswordForm.size()

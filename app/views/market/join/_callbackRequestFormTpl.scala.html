@@ -17,6 +17,7 @@
     @inputText(
       jf("phone"),
       '_class -> "__transparent",
+      'type -> "tel",
       'placeholder -> "Телефон"
     )
 
@@ -32,8 +33,8 @@
     <div class="captcha">
       @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
       <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-      <a class="captcha_reload-btn" id="captchaReload" href=""></a>
+      <img class="captcha_img" id="captchaImageCallbackForm" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+      <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageCallbackForm" href=""></a>
       }
     </div>
 
