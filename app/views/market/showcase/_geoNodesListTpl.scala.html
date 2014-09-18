@@ -6,19 +6,24 @@
 
     @* Если true, то рендерить селектор "районы", "города" и т.д. *@
     @if(nl.withLayerSelector) {
-      <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
+      <div class="geo-nodes-list_layer js-gnlayer" data-index="@i" id="geoLayer@i">
         <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
           @Messages(nl.glevel.l10nPluralShort)
           <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
         </div>
       </div>
-    }
-
-    @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ) {
-      @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
-        <div class="geo-nodes-list_row @if( i+1 == nl.nodes.length ){__no-border} @if(i%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
-          @mnode.meta.nameShort
-        </div>
+      @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ) {
+        @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
+          <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border} @if(si%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
+            @mnode.meta.nameShort
+          </div>
+        }
+      }
+    }else{
+      @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
+      <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
+        <div class="geo-nodes-list_layer-inner js-geo-node" data-id="@mnode.id">@mnode.meta.nameShort</div>
+      </div>
       }
     }
   }
@@ -29,6 +34,6 @@
 <div class="geo-nodes-links">
   <div class="geo-nodes-links_inner">
     <a class="geo-nodes-links_link" href=""><span class="geo-nodes-links_icon"></span>Разместить рекламу</a>
-    <a class="geo-nodes-links_link geo-nodes-links_right-aligned" href=""><span class="geo-nodes-links_icon"></span>О проекте</a>
+    <a class="geo-nodes-links_link geo-nodes-links_right-aligned" href=""><span class="geo-nodes-links_icon geo-nodes-links_icon-info"></span>О проекте</a>
   </div>
 </div>

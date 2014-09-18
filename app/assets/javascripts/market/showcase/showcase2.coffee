@@ -1602,6 +1602,14 @@ siomart =
 
       siomart.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
+      gls = siomart.utils.ge_class document, 'js-gnlayer'
+      #i = 0
+      #for gl in gls
+      #  gl.setAttribute 'data-index', i
+      #  gl.id = 'geoLayer' + i
+      #  i++
+      siomart.geo.layers_count = gls.length
+
       if typeof siomart.geo.requested_node_id != 'undefined'
         node_dom = siomart.utils.ge_class document, 'gn-' + siomart.geo.requested_node_id
         first_node = node_dom[0]
