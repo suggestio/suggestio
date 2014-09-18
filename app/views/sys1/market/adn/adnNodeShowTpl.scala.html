@@ -34,11 +34,7 @@
 
 
 
-@hPathAfter = {
-  @* Исходного заголовка достаточно для рендера. *@
-}
-
-@adnBase(adnNode.meta.name, Some(hPathAfter), Some(adnNode)) {
+@adnBase(adnNode.meta.name, nodeOpt = Some(adnNode)) {
 
   <div class="sys_t">
     @Messages("amt.of.type." + adnNode.adn.shownTypeId):

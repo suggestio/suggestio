@@ -350,8 +350,26 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       .map { _.toMap }
     // Текущие категории узла
     val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
+      // Включено отображение всех категорий.
       val catOwnerId = adnIdOpt.fold(MMartCategory.DEFAULT_OWNER_ID) { getCatOwner }
-      MMartCategory.findTopForOwner(catOwnerId)
+      for {
+        mmcats <- MMartCategory.findTopForOwner(catOwnerId)
+        catsStats <- catsStatsFut
+      } yield {
+        // Нужно, чтобы пустые категории шли после непустых. И алфавитная сортировка
+        val nonEmptyCatIds = catsStats
+          .iterator
+          .filter { case (_, count)  =>  count > 0L }
+          .map { _._1 }
+          .toSet
+        mmcats.sortBy { mmcat =>
+          val sortPrefix: String = nonEmptyCatIds.contains(mmcat.idOrNull) match {
+            case true  => "a"
+            case false => "z"
+          }
+          sortPrefix + mmcat.name
+        }
+      }
     } else {
       // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
       catsStatsFut flatMap { catsStats =>
