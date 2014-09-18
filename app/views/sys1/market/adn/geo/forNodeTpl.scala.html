@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MAdnNode])(implicit ctx: Context)
+@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MAdnNode], mapStateHash: Option[String] = None)(implicit ctx: Context)
 
 @* Вывод гео-информации по узлу. *@
 
@@ -24,7 +24,7 @@
 @geoBase("География узла", nodeOpt = Some(adnNode)) {
 
   <h2>
-    <a href="@routes.Umap.getAdnNodeMap(adnNode.id.get)">Картографический редактор...</a>
+    <a href="@routes.Umap.getAdnNodeMap(adnNode.id.get)@mapStateHash">Картографический редактор...</a>
     (@geos.iterator.filter(_.shape.shapeType.isGeoJsonCompatible).size отображаемых фигур)
   </h2>
   <br/>

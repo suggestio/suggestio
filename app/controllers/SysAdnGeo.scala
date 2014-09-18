@@ -52,7 +52,13 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
       geos        <- MAdnNodeGeo.findByNode(adnId, withVersions = true)
       parentsMap  <- parentsMapFut
     } yield {
-      Ok(forNodeTpl(request.adnNode, geos, parentsMap))
+      val mapStateHash: Option[String] = {
+        request.adnNode.geo.point.orElse(geos.headOption.map(_.shape.firstPoint)).map { point =>
+          val scale = geos.headOption.map { _.glevel.osmMapScale }.getOrElse(10)
+          "#" + scale + "/" + point.lat + "/" + point.lon
+        }
+      }
+      Ok(forNodeTpl(request.adnNode, geos, parentsMap, mapStateHash))
     }
   }
 
