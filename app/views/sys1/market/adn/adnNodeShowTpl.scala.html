@@ -48,12 +48,7 @@
     @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }{ }
 
     @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
-      @btn(siteCall, 40) { demo<br/>WebSite } {
-
-        <a href="http://10.0.0.101:9001@siteCall" class="siom-ac-btn __color-2 __size-XL __ft-XM __sys-market-index">
-          osm01-vpn
-        </a>
-      }
+      @btn(siteCall, 40) { demo<br/>WebSite } { }
     }
 
     @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { BILLING }{ }
