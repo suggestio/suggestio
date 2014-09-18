@@ -41,7 +41,8 @@
 @adnBase(adnNode.meta.name, Some(hPathAfter), Some(adnNode)) {
 
   <div class="sys_t">
-    @Messages("amt.of.type." + adnNode.adn.memberType)
+    @Messages("amt.of.type." + adnNode.adn.shownTypeId):
+    @adnNode.meta.nameShort
 
     <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
   </div>
