@@ -392,6 +392,13 @@ object NodeGeoLevels extends Enumeration(1) {
   protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
     def precision: String
 
+    // Для упрощения геморроя делаем локализацию прямо тут, хотя сами коды лежат на стороне sioweb21/conf/messages.*
+    def l10nSingular = "ngl." + esfn
+    def l10nSingularShort = l10nSingular
+
+    def l10nPlural = "ngls." + esfn
+    def l10nPluralShort = l10nPlural
+
     /** Это самый нижний слой с самым мелким масштабом? */
     def isLowest: Boolean = false
 
@@ -442,6 +449,10 @@ object NodeGeoLevels extends Enumeration(1) {
     override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
     override def precision = "800m"
+
+    /** У "Районов города" есть короткое название - "Районы" */
+    override val l10nSingularShort = "District"
+    override val l10nPluralShort = l10nSingularShort + "s"
   }
 
   val NGL_TOWN: NodeGeoLevel = new Val("to") {
