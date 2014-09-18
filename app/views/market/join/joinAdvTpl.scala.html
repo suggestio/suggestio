@@ -2,6 +2,8 @@
 
 @* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
 
+@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
 
 @joinBase("Разместить рекламу") {
 
@@ -21,26 +23,13 @@
         </div>
         <div class="adv-req-page_call-back" id="callBack">
 
-          <form class="adv-req-page_call-back-form">
-            <div class="input-radial-w __transparent">
-              <input type="text" placeholder="Имя"/>
-            </div>
-            <div class="input-radial-w __transparent">
-              <input type="text" placeholder="Телефон"/>
-            </div>
-            <div class="adv-req-page_call-time">
-              <div class="adv-req-page_call-time-t">Время звонка</div>
-              <div class="adv-req-page_call-time-btn-lst">
-                <a class="adv-req-page_call-time-btn js-input-btn __js-act" data-value="10:00 - 14:00" data-for="#callTime">10:00&nbsp;-&nbsp;14:00</a>
-                <a class="adv-req-page_call-time-btn js-input-btn" data-value="14:00 - 18:00" data-for="#callTime">14:00&nbsp;-&nbsp;18:00</a>
-              </div>
-              <input id="callTime" type="hidden" value="10:00 - 14:00"/>
-            </div>
+          @_callbackRequestFormTpl(
+            jf = jf,
+            btnClass = "blue",
+            submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+            isWifi = false
+          )
 
-            <div class="btn-w __size-M">
-              <input class="siom-new-btn __size-M __fill-1" type="submit" value="Заказать" />
-            </div>
-          </form>
         </div>
 
         <div class="adv-req-page_or-text">Или позвоните нам сами</div>

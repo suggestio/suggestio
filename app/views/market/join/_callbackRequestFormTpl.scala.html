@@ -1,0 +1,50 @@
+@(jf: Form[_], btnClass: String, submitCall: Call, isWifi: Boolean)(implicit ctx: Context)
+
+@import ctx._
+@import helper._
+@import util.FC.radialFc
+@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
+
+@form(submitCall, 'class->"adv-req-page_call-back-form") {
+
+    @inputText(
+      jf("name"),
+      '_class -> "__transparent",
+      'placeholder -> "Имя"
+    )
+
+    @inputText(
+      jf("phone"),
+      '_class -> "__transparent",
+      'placeholder -> "Телефон"
+    )
+
+    <div class="adv-req-page_call-time">
+      <div class="adv-req-page_call-time-t">Время звонка</div>
+      <div class="adv-req-page_call-time-btn-lst">
+        <a class="adv-req-page_call-time-btn js-input-btn __js-act" data-value="10:00 - 14:00" data-for="#callTime">10:00&nbsp;-&nbsp;14:00</a>
+        <a class="adv-req-page_call-time-btn js-input-btn" data-value="14:00 - 18:00" data-for="#callTime">14:00&nbsp;-&nbsp;18:00</a>
+      </div>
+      <input id="callTime" type="hidden" value="10:00 - 14:00"/>
+    </div>
+
+    <div class="captcha">
+      @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+      <a class="captcha_reload-btn" id="captchaReload" href=""></a>
+      }
+    </div>
+
+    @inputText(
+      jf(CAPTCHA_TYPED_FN),
+      '_class -> "__transparent",
+      'placeholder -> "Введите текст с картинки"
+    )
+
+    <div class="btn-w __size-M">
+      <input class="siom-new-btn __size-M __fill-1" type="submit" value="Заказать" />
+    </div>
+
+}
