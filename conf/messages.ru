@@ -94,6 +94,7 @@ adv.period.P1M=Месяц
 adn.sink.wifi=Wi-Fi
 adn.sink.geo=Геолокация
 
+
 ngl.bu=Здание
 ngl.td=Район города
 ngl.to=Город
@@ -101,6 +102,7 @@ ngl.to=Город
 ngls.bu=Здания
 ngls.td=Районы городов
 ngls.to=Города
+
 
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
