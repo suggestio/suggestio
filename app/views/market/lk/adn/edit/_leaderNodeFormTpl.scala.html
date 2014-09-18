@@ -97,6 +97,10 @@
       <div class="prop" id="profileGallery">
         <p class="prop_name __block">Фотографии объекта:</p>
 
+        @mf("gallery").errors.map { error =>
+          <p class="block __margin-M red">Ошибка: @Messages(error.message, error.args: _*)</p>
+        }
+
         <div class="image __size-M f-left js-image-upload" >
           @stuff._fileUploadTpl(
             routes.Img.handleTempImg,
