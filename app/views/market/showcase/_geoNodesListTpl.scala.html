@@ -4,7 +4,8 @@
 
 @import ctx._
 
-<div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length">
+<div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length"
+     xmlns="http://www.w3.org/1999/html">
 
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
 
@@ -37,7 +38,7 @@
 
 <div class="geo-nodes-links">
   <div class="geo-nodes-links_inner">
-    <a class="geo-nodes-links_link" href=""><span class="geo-nodes-links_icon"></span>Разместить рекламу</a>
-    <a class="geo-nodes-links_link geo-nodes-links_right-aligned" href=""><span class="geo-nodes-links_icon geo-nodes-links_icon-info"></span>О проекте</a>
+    <a class="geo-nodes-links_link" href=""><span class="geo-nodes-links_icon"></span><span class="geo-nodes-links_text">Разместить рекламу</span></a>
+    <a class="geo-nodes-links_link geo-nodes-links_right-aligned" href=""><span class="geo-nodes-links_icon geo-nodes-links_icon-info"></span><span class="geo-nodes-links_text">О проекте</span></a>
   </div>
 </div>

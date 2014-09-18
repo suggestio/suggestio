@@ -516,8 +516,6 @@ code
      background     default_color_w_opacity
 
 .geo-nodes-list
-  position          absolute
-  left              0px
   width             100%
   background        none
   z-index           10
@@ -576,7 +574,8 @@ code
   font-family   'opensans-regular-webfont', 'opensans-light'
   font-size     12px
   line-height   40px
-  opacity       0.6
+  &_text
+    opacity     0.6
   &_inner
     width       260px
     margin      0px auto
