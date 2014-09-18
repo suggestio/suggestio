@@ -20,20 +20,19 @@
     </div>
 
     <div class="index-page_login-btn">
-      @if(ctx.isAuth) {
-      @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
+      @*if(ctx.isAuth) {
+      <!--Юзер залогинен. Нужно отобразить кнопку на его ЛК.-->
 
         <a class="siom-new-btn __size-L __color-1 __vertical-first" href="@routes.Ident.rdrUserSomewhere">
           @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
         </a>
 
-      } else {
+      } else {*@
 
         <a class="siom-new-btn __size-L __color-1 __vertical-first js-card-btn"  >
           Локации для рекламы
         </a>
 
-      }
     </div>
 
     <div class="index-page_how-it-works-btn">
