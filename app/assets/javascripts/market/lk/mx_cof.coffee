@@ -1267,7 +1267,12 @@ PersonalCabinet =
       $obj = $obj || $ 'html'
       $elements = $obj.find '.js-hidden'
 
-      $elements.hide()
+      # если есть ошибка внутри контейнера, его нужно отобразить
+      $errors = $elements.find '.__error'
+      if $errors.size()
+        $elements.show()
+      else
+        $elements.hide()
 
     ##################################################################################################################
     ## Высота вертикальных линий ##
