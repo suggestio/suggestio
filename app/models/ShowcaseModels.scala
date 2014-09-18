@@ -14,14 +14,9 @@ case class GeoDetectResult(ngl: NodeGeoLevel, node: MAdnNode)
 /**
  * Найденные узлы с одного геоуровня. Используеся в ctl.MarketShowcase для списка узлов.
  * @param nodes Список узлов в порядке отображения.
- * @param glevel Уровень.
- * @param withLayerSelector Рендерить вне селектора.
- * @param renderAstGrouped Надо бы сгруппировать узлы по отображаемому типу.
+ * @param nameOpt messages-код отображаемого слоя. Если None, то не будет ничего отображено.
  */
 case class GeoNodesLayer(
   nodes: Seq[MAdnNode],
-  glevel: NodeGeoLevel,
-  withLayerSelector: Boolean = true,
-  renderAstGrouped: Boolean = false
+  nameOpt: Option[String] = None
 )
-

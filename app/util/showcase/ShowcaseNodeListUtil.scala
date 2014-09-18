@@ -2,6 +2,7 @@ package util.showcase
 
 import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.NodeGeoLevels
+import play.api.i18n.{Messages, Lang}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import models._
@@ -125,13 +126,13 @@ object ShowcaseNodeListUtil {
     }
   }
 
-  def getTownLayerOfNode(node: MAdnNode): Future[GeoNodesLayer] = {
+  def getTownLayerOfNode(node: MAdnNode)(implicit lang: Lang): Future[GeoNodesLayer] = {
     getTownOfNode(node)
       .map(town2layer)
   }
 
-  def town2layer(townNode: MAdnNode) = {
-    GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN, withLayerSelector = false)
+  def town2layer(townNode: MAdnNode)(implicit lang: Lang) = {
+    GeoNodesLayer( Seq(townNode) )
   }
 
 
@@ -168,9 +169,14 @@ object ShowcaseNodeListUtil {
     MAdnNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNodeId: String): Future[GeoNodesLayer] = {
+  def getDistrictsLayerForTown(townNodeId: String)(implicit lang: Lang): Future[GeoNodesLayer] = {
     getDistrictsForTown(townNodeId)
-      .map { districtNodes  =>  GeoNodesLayer(districtNodes, NodeGeoLevels.NGL_TOWN_DISTRICT) }
+      .map { districtNodes =>
+        GeoNodesLayer(
+          nodes = districtNodes,
+          nameOpt = Some( Messages(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort) )
+        )
+      }
   }
 
 
@@ -184,14 +190,29 @@ object ShowcaseNodeListUtil {
       override def maxResults = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents = Seq(districtAdnId)
-      override def withNameSort = true
+      // Сортировать по имени не требуется, т.к. тут будет группировка.
     }
     MAdnNode.dynSearch(sargs)
   }
 
-  def getBuildingsLayerOfDistrict(districtAdnId: String): Future[GeoNodesLayer] = {
+  /**
+   * Получение нод и сборка слоёв для зданий района.
+   * @param districtAdnId id узла района.
+   * @return Фьючерс со списком слоёв с узлами.
+   */
+  def getBuildingsLayersOfDistrict(districtAdnId: String)(implicit lang: Lang): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId)
-      .map { nodes => GeoNodesLayer(nodes, NodeGeoLevels.NGL_BUILDING, withLayerSelector = false, renderAstGrouped = true) }
+      .map { nodes =>
+        nodes.groupBy(_.adn.shownTypeId)
+          .iterator
+          .map { case (sti, layNodes) =>
+            val ast: AdnShownType = sti
+            val lsSorted = layNodes.sortBy(_.meta.nameShort)
+            GeoNodesLayer(lsSorted, Some(Messages(ast.pluralNoTown)))
+          }
+          .toList
+          .sortBy(_.nameOpt.getOrElse(""))
+      }
   }
 
 
@@ -202,7 +223,7 @@ object ShowcaseNodeListUtil {
    * @param currNodeLayer Уровень, на котором находится текущий узел.
    * @return Фьючерс со слоями в порядке рендера (город внизу).
    */
-  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel): Future[Seq[GeoNodesLayer]] = {
+  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)(implicit lang: Lang): Future[Seq[GeoNodesLayer]] = {
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>
@@ -216,13 +237,13 @@ object ShowcaseNodeListUtil {
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
       case NodeGeoLevels.NGL_TOWN_DISTRICT =>
         val districtsFut = getDistrictsLayerForTown(currNode.geo.directParentIds.head)
-        val buildingsFut = getBuildingsLayerOfDistrict(currNode.id.get)
+        val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get)
         for {
           townLayer       <- getTownLayerOfNode(currNode)
           districtsLayer  <- districtsFut
-          buildingsLayer  <- buildingsFut
+          buildingsLayers  <- buildingsFut
         } yield {
-          Seq(buildingsLayer, districtsLayer, townLayer)
+          (townLayer :: districtsLayer :: buildingsLayers).reverse
         }
 
       // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
@@ -233,13 +254,13 @@ object ShowcaseNodeListUtil {
         }
         val townLayerFut = townFut.map(town2layer)
         val currDistrictId = currNode.geo.directParentIds.head
-        val buildingsLayerFut = getBuildingsLayerOfDistrict(currDistrictId)
+        val buildingsLayerFut = getBuildingsLayersOfDistrict(currDistrictId)
         for {
           townLayer <- townLayerFut
           districtsLayer <- districtsLayerFut
-          buildingsLayer <- buildingsLayerFut
+          buildingsLayers <- buildingsLayerFut
         } yield {
-          Seq(buildingsLayer, districtsLayer, townLayer)
+          (townLayer :: districtsLayer :: buildingsLayers).reverse
         }
     }
   }

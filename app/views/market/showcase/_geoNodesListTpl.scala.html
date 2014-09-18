@@ -1,14 +1,18 @@
 @(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode])(implicit ctx:util.Context)
 
+@* Список узлов выдачи в левой колонке. *@
+
+@import ctx._
+
 <div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length">
 
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
 
     @* Если true, то рендерить селектор "районы", "города" и т.д. *@
-    @if(nl.withLayerSelector) {
+    @if(nl.nameOpt.isDefined) {
       <div class="geo-nodes-list_layer js-gnlayer" data-index="@i" id="geoLayer@i">
         <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
-          @Messages(nl.glevel.l10nPluralShort)
+          @nl.nameOpt
           <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
         </div>
       </div>
@@ -21,9 +25,9 @@
       }
     }else{
       @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
-      <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
-        <div class="geo-nodes-list_layer-inner js-geo-node" data-id="@mnode.id">@mnode.meta.nameShort</div>
-      </div>
+        <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
+          <div class="geo-nodes-list_layer-inner js-geo-node" data-id="@mnode.id">@mnode.meta.nameShort</div>
+        </div>
       }
     }
   }
