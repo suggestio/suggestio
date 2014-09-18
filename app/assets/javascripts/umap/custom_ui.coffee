@@ -33,22 +33,25 @@ $doc.on 'change', '.js-select-id', ->
     $input.val value
 
 # следим за сессией
-getSessionStatus = (error = false)->
+connectionErr = false
+getSessionStatus = ()->
   SESSION_END    = 'Кажется, ваша сессия истекла'
   CONNECTION_ERR = 'Нет свзяи с сервером!'
 
   jsRoutes.controllers.Application.keepAliveSession().ajax
     type: 'post'
     success: (data, textStatus, xhr)->
+      connectionErr = false
       if xhr.status == 204
         setTimeout getSessionStatus, 120000
       else
         confirm SESSION_END
     error: (error, textstatus)->
-      if error
+      if connectionErr
         alert CONNECTION_ERR
         return false
       if textStatus == 'timeout'
-        setTimeout getSessionStatus(true), 10000
+        connectionErr = true
+        setTimeout getSessionStatus, 10000
 
 getSessionStatus()
