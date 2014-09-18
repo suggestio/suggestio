@@ -4,6 +4,7 @@ $doc.ready ->
   $ '.js-select-id'
   .hide()
 
+# выбор слоя
 $doc.on 'click', '.js-select-label button', ->
   $this = $ this
 
@@ -20,6 +21,7 @@ $doc.on 'click', '.js-select-label button', ->
   .filter "[data-label = '#{value}']"
   .show()
 
+# выбор объекта
 $doc.on 'change', '.js-select-id', ->
   $this = $ this
   $selected = $this.find 'option:selected'
@@ -29,3 +31,24 @@ $doc.on 'change', '.js-select-id', ->
 
   if parseInt(value) != 0
     $input.val value
+
+# следим за сессией
+getSessionStatus = (error = false)->
+  SESSION_END    = 'Кажется, ваша сессия истекла'
+  CONNECTION_ERR = 'Нет свзяи с сервером!'
+
+  jsRoutes.controllers.Application.keepAliveSession().ajax
+    type: 'post'
+    success: (data, textStatus, xhr)->
+      if xhr.status == 204
+        setTimeout getSessionStatus, 120000
+      else
+        confirm SESSION_END
+    error: (error, textstatus)->
+      if error
+        alert CONNECTION_ERR
+        return false
+      if textStatus == 'timeout'
+        setTimeout getSessionStatus(true), 10000
+
+getSessionStatus()
