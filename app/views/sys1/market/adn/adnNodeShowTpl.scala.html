@@ -32,9 +32,14 @@
 
 }
 
+@* Обязательно нужен пустой токен пути заголовка, иначе будет дублирование названия узла в пути заголовка. *@
+@hPathAfter = { }
 
-
-@adnBase(adnNode.meta.name, nodeOpt = Some(adnNode)) {
+@adnBase(
+  title = adnNode.meta.name,
+  hPathAfter = Some(hPathAfter),
+  nodeOpt = Some(adnNode)
+) {
 
   <div class="sys_t">
     @Messages("amt.of.type." + adnNode.adn.shownTypeId):
