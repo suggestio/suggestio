@@ -63,7 +63,7 @@ object Application extends SioController with PlayMacroLogsImpl {
 
   /**
    * Экшен для скрытого продления сессии в фоне. Может дергаться в js'ом незаметно.
-   * @return 201 No Content - всё ок.
+   * @return 204 No Content - всё ок.
    *         Другой код - сессия истекла.
    */
   def keepAliveSession = IsAuth { implicit request =>

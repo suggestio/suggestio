@@ -3,12 +3,16 @@
 <div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length">
 
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
-    <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
-      <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
-        @Messages(nl.glevel.l10nPluralShort)
-        <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
+
+    @* Если true, то рендерить селектор "районы", "города" и т.д. *@
+    @if(nl.withLayerSelector) {
+      <div class="geo-nodes-list_layer @if( i==0 ){ __bo-border }" data-index="@i" id="geoLayer@i">
+        <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
+          @Messages(nl.glevel.l10nPluralShort)
+          <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
+        </div>
       </div>
-    </div>
+    }
 
     @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ) {
       @nl.nodes.iterator.zipWithIndex.map { case (mnode, i) =>
@@ -18,7 +22,9 @@
       }
     }
   }
+
 </div>
+
 
 <div class="geo-nodes-links">
   <div class="geo-nodes-links_inner">

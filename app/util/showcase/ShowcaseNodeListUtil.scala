@@ -131,7 +131,7 @@ object ShowcaseNodeListUtil {
   }
 
   def town2layer(townNode: MAdnNode) = {
-    GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN)
+    GeoNodesLayer(Seq(townNode), NodeGeoLevels.NGL_TOWN, withLayerSelector = false)
   }
 
 
@@ -191,7 +191,7 @@ object ShowcaseNodeListUtil {
 
   def getBuildingsLayerOfDistrict(districtAdnId: String): Future[GeoNodesLayer] = {
     getBuildingsOfDistrict(districtAdnId)
-      .map { nodes => GeoNodesLayer(nodes, NodeGeoLevels.NGL_BUILDING) }
+      .map { nodes => GeoNodesLayer(nodes, NodeGeoLevels.NGL_BUILDING, withLayerSelector = false, renderAstGrouped = true) }
   }
 
 
