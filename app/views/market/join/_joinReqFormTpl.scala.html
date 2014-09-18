@@ -67,7 +67,7 @@
     <div class="captcha">
       @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-        <img class="captcha_img" id="captchaImageJoinReqForm" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+        <div class="captcha_img" id="captchaImageJoinReqForm" style="background: url( @routes.Captcha.getCaptcha(captchaId) );"></div>
         <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageJoinReqForm" href=""></a>
       }
     </div>
