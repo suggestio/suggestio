@@ -1,8 +1,8 @@
-package util
+package util.showcase
 
-import util.blocks.BlocksConf
 import io.suggest.ym.model.common.IBlockMeta
-import models.{MMartCategory, BlockConf}
+import models.{BlockConf, MMartCategory}
+import util.blocks.BlocksConf
 
 /**
  * Suggest.io
@@ -43,5 +43,5 @@ object ShowcaseUtil {
     acc1.reverse
   }
 
-
 }
+

@@ -30,7 +30,7 @@ case class SimpleNodesSearchArgs(
   private def maxResultsDflt = snsa.maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT
 
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel], maxResults2: Int = maxResultsDflt)(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
-    geoMode.geoSearchInfo.map { gsiOpt =>
+    geoMode.geoSearchInfoOpt.map { gsiOpt =>
       new AdnNodesSearchArgs {
         override def qStr = snsa.qStr
         override def geoDistance   = gsiOpt

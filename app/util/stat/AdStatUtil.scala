@@ -38,7 +38,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
                 (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     // Запускаем асинхронные задачи:
-    val gsiFut = gsi getOrElse GeoIp.geoSearchInfo
+    val gsiFut = gsi getOrElse GeoIp.geoSearchInfoOpt
     val onNodeIdOpt = a.receiverIds
       .headOption
       .filter { _ => a.receiverIds.size == 1 }    // Если задано много ресиверов, то не ясно, где именно оно было отражено.
