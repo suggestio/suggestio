@@ -673,8 +673,13 @@ PersonalCabinet =
       $.ajax
         url : "/img/crop/#{img_key}?width=#{width}&height=#{height}"
         success : ( data ) ->
-          $('#popupsContainer').html data
-          CbcaPopup.showPopup()
+          $popup = $ data
+          popupId = $popup.attr 'id'
+          $ "##{popupId}"
+          .remove()
+          $ '#popupsContainer'
+          .append data
+          CbcaPopup.showPopup "##{popupId}"
           market.img.crop.init( img_name )
 
     # удаление изображения
@@ -1424,6 +1429,10 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
+    console.log popupSelector
+    console.log popupHeight
+    console.log containerHeight
+
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
@@ -1537,14 +1546,12 @@ CbcaPopup =
     $ document
     .on event, '.js-remove-popup', (e)->
       $this = $ this
-      $popup = $this.closest '.popup'
+      $popup = $this.closest '.js-popup'
       popupId = $popup.attr 'id'
       popupSelector = '#'+popupId
 
       cbca.popup.hidePopup popupSelector
-
-      $ popupSelector
-      .remove()
+      $popup.remove()
 
     ## esc button
     $ document
