@@ -456,11 +456,8 @@ object NodeGeoLevels extends Enumeration(1) {
   implicit def value2val(x: Value): NodeGeoLevel = x.asInstanceOf[NodeGeoLevel]
 
   def maybeWithName(x: String): Option[NodeGeoLevel] = {
-    try {
-      Some(withName(x))
-    } catch {
-      case ex: NoSuchElementException => None
-    }
+    values.find(_.esfn == x)
+      .asInstanceOf[Option[NodeGeoLevel]]
   }
 
   def maybeWithId(id: Int): Option[NodeGeoLevel] = {

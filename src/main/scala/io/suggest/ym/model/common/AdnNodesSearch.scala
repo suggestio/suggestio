@@ -50,6 +50,22 @@ object AdnNodesSearch {
       TextQueryV2Util.queryStr2QueryMarket(qStr, args.ftsSearchFN)
         .map { _.q }
 
+    // Отрабатываем withIds, ограничивающий выдачу по ids.
+    }.map[QueryBuilder] { qb =>
+      if (args.withIds.nonEmpty) {
+        val idf = FilterBuilders.idsFilter().ids(args.withIds: _*)
+        QueryBuilders.filteredQuery(qb, idf)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (args.withIds.nonEmpty) {
+        val qb = QueryBuilders.idsQuery().ids(args.withIds: _*)
+        Some(qb)
+      } else {
+        None
+      }
+
     // Отрабатываем companyId
     }.map[QueryBuilder] { qb =>
       if (args.companyIds.isEmpty) {
@@ -268,8 +284,19 @@ object AdnNodesSearch {
         QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
       }
 
+    // Ищем/фильтруем по флагу включённости узла.
+    }.map[QueryBuilder] { qb =>
+      args.isEnabled.fold(qb) { isEnabled =>
+        val ief = FilterBuilders.termFilter(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
+        QueryBuilders.filteredQuery(qb, ief)
+      }
+    }.orElse[QueryBuilder] {
+      args.isEnabled.map { isEnabled =>
+        QueryBuilders.termQuery(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
+      }
+
+    // Нет критерия для поиска по индексу - сдаёмся.
     }.getOrElse[QueryBuilder] {
-      // Нет критерия для поиска по индексу - сдаёмся.
       QueryBuilders.matchAllQuery()
     }
 
@@ -302,6 +329,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Поиск по слову/словам. */
   def qStr: Option[String]
 
+  /** Искать только результаты, имеющие указанные _id. */
+  def withIds: Seq[String]
+
   /** id компаний, под которые копаем узлы ADN. */
   def companyIds: Seq[String]
 
@@ -331,6 +361,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
 
   /** Искать/фильтровать по значению флага тестового узла. */
   def testNode: Option[Boolean]
+
+  /** Искать/фильтровать по галочки активности узла. */
+  def isEnabled: Option[Boolean]
 
   /** Отсеивать из результатов документы (узлы) с перечисленными id. */
   def withoutIds: Seq[String]
@@ -385,6 +418,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   override def toString: String = {
     val sb = new StringBuilder("NodeSearchArgs {")
     fmtColl2sb("qStr", qStr, sb)
+    fmtColl2sb("withIds", withIds, sb)
     fmtColl2sb("companyIds", companyIds, sb)
     fmtColl2sb("adnSupIds", adnSupIds, sb)
     fmtColl2sb("anyOfPersonIds", anyOfPersonIds, sb)
@@ -416,6 +450,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
 trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
   override def qStr: Option[String] = None
+  override def withIds: Seq[String] = Seq.empty
   override def companyIds: Seq[String] = Seq.empty
   override def advDelegateAdnIds: Seq[String] = Seq.empty
   override def adnSupIds: Seq[String] = Seq.empty
@@ -427,6 +462,7 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
   override def anyOfPersonIds: Seq[String] = Seq.empty
   override def withRouting: Seq[String] = Seq.empty
   override def testNode: Option[Boolean] = None
+  override def isEnabled: Option[Boolean] = None
   override def onlyWithSinks: Seq[AdnSink] = Seq.empty
   override def geoDistance: Option[GeoShapeQueryData] = None
   override def withGeoParents: Seq[String] = Seq.empty
@@ -442,6 +478,7 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
 trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT {
   def underlying: AdnNodesSearchArgsT
   override def qStr = underlying.qStr
+  override def withIds = underlying.withIds
   override def companyIds = underlying.companyIds
   override def advDelegateAdnIds = underlying.advDelegateAdnIds
   override def adnSupIds = underlying.adnSupIds
@@ -453,6 +490,7 @@ trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT {
   override def anyOfPersonIds = underlying.anyOfPersonIds
   override def withRouting = underlying.withRouting
   override def testNode = underlying.testNode
+  override def isEnabled = underlying.isEnabled
   override def onlyWithSinks = underlying.onlyWithSinks
   override def geoDistance = underlying.geoDistance
   override def withGeoParents = underlying.withGeoParents

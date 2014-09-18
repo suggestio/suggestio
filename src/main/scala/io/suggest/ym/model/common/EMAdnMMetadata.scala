@@ -134,6 +134,7 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
 object AdnMMetadata {
 
   val NAME_ESFN               = "name"
+  val NAME_SHORT_ESFN         = "ns"
   val TOWN_ESFN               = "town"
   val ADDRESS_ESFN            = "address"
   val DATE_CREATED_ESFN       = "dateCreated"
@@ -155,7 +156,8 @@ object AdnMMetadata {
   }
 
   def generateMappingProps: List[DocField] = List(
-    fieldString(NAME_ESFN, iia = true, index = FieldIndexingVariants.analyzed),
+    FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     fieldString(DESCRIPTION_ESFN, iia = true),
     FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal
@@ -181,6 +183,7 @@ object AdnMMetadata {
       import EsModel.stringParser
       AdnMMetadata(
         name        = stringParser(jmap get NAME_ESFN),
+        nameShortOpt = Option(jmap get NAME_SHORT_ESFN) map stringParser,
         description = Option(jmap get DESCRIPTION_ESFN) map stringParser,
         dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
         town        = Option(jmap get TOWN_ESFN) map stringParser,
@@ -203,6 +206,7 @@ object AdnMMetadata {
 /**
  * Экземпляр контейнера метаданных узла.
  * @param name Отображаемое имя/название.
+ * @param nameShortOpt Необязательно короткое имя узла.
  * @param description Пользовательское описание.
  * @param town Город.
  * @param address Адрес в городе.
@@ -216,6 +220,7 @@ object AdnMMetadata {
  */
 case class AdnMMetadata(
   name          : String,
+  nameShortOpt  : Option[String] = None,
   description   : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
   // перемещено из legal
@@ -237,6 +242,14 @@ case class AdnMMetadata(
 ) {
   import AdnMMetadata._
 
+  /** Выдать имя, по возможности короткое. */
+  def nameShort: String = {
+    if (nameShortOpt.isDefined)
+      nameShortOpt.get
+    else
+      name
+  }
+
   /** Статически-типизированный json-генератор. */
   @JsonIgnore
   def toPlayJson: JsObject = {
@@ -244,6 +257,8 @@ case class AdnMMetadata(
       NAME_ESFN -> JsString(name),
       DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
     )
+    if (nameShortOpt.isDefined)
+      acc0 ::= NAME_SHORT_ESFN -> JsString(nameShortOpt.get)
     if (description.isDefined)
       acc0 ::= DESCRIPTION_ESFN -> JsString(description.get)
     if (town.isDefined)
