@@ -941,8 +941,10 @@ PersonalCabinet =
       .toggleClass '__js-open'
 
     init: ()->
+      event = if isTouchDevice() then 'touchend' else 'click'
 
-      $(document).on 'click', '.js-slide-btn', (e)->
+      $ document
+      .on event, '.js-slide-btn', (e)->
         e.preventDefault()
         e.stopPropagation() # чтобы не сработал обработчик на js-slide-title
         $this = $ this
@@ -1315,6 +1317,26 @@ PersonalCabinet =
     buttons: () ->
 
       event = if isTouchDevice() then 'touchend' else 'click'
+
+      $ document
+      .on event, '.js-input-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+
+        if $this.hasClass '__js-act'
+          return true
+
+        dataFor = $this.attr 'data-for'
+        value = $this.attr 'data-value'
+
+        # присваиваем значение input'у
+        $input = $ dataFor
+        $input.val value
+
+        # меняем активный элемент
+        $ '.js-input-btn.__js-act'
+        .removeClass '__js-act'
+        $this.addClass '__js-act'
 
       $ document
       .on event, '.js-stop-bubble', (e)->

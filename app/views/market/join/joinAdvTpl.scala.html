@@ -10,36 +10,79 @@
 
     <div class="body_cnt __responsive adv-req-page">
 
-      <div class="adv-req-page_right">
-
-        @_joinReqFormTpl(
-          jf = jf,
-          btnClass = "blue",
-          submitCall = routes.MarketJoin.joinAdvRequestSubmit,
-          isWifi = false
-        )
-
-      </div>
-
-      <div class="adv-req-page_left">
-
+      <div class="phone-visible">
 
         <a class="index-page_logo-link" href="@routes.Market.index" >
           <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
         </a>
 
+        <div class="adv-req-page_call-back-btn">
+          <a class="siom-new-btn __size-L __fill-1 js-slide-btn" href="#callBack">Заказать обратный звонок</a>
+        </div>
+        <div class="adv-req-page_call-back" id="callBack">
 
-        <h2 class="adv-req-page_welcome">Добро пожаловать</h2>
+          <form class="adv-req-page_call-back-form">
+            <div class="input-radial-w __transparent">
+              <input type="text" placeholder="Имя"/>
+            </div>
+            <div class="input-radial-w __transparent">
+              <input type="text" placeholder="Телефон"/>
+            </div>
+            <div class="adv-req-page_call-time">
+              <div class="adv-req-page_call-time-t">Время звонка</div>
+              <div class="adv-req-page_call-time-btn-lst">
+                <a class="adv-req-page_call-time-btn js-input-btn __js-act" data-value="10:00 - 14:00" data-for="#callTime">10:00&nbsp;-&nbsp;14:00</a>
+                <a class="adv-req-page_call-time-btn js-input-btn" data-value="14:00 - 18:00" data-for="#callTime">14:00&nbsp;-&nbsp;18:00</a>
+              </div>
+              <input id="callTime" type="hidden" value="10:00 - 14:00"/>
+            </div>
 
-        <p class="adv-req-page_text">
-          Мы рады что вы с нами<br/>
-          с сио вы получите эффективную рекламу<br/>
-          в сетях Wi-Fi Free
-        </p>
+            <div class="btn-w __size-M">
+              <input class="siom-new-btn __size-M __fill-1" type="submit" value="Заказать" />
+            </div>
+          </form>
+        </div>
 
-        <a href="tel:88126407646" class="phone-btn adv-req-page_phone">
-          8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
-        </a>
+        <div class="adv-req-page_or-text">Или позвоните нам сами</div>
+
+        <div class="ovh">
+          <a class="adv-req-page_call-btn" href="tel:88126407646"></a>
+        </div>
+
+        <div class="adv-req-page_how-it-works">
+          <a class="siom-new-btn __size-L __color-1" href="@routes.Market.marketBooklet"> Как это работает? </a>
+        </div>
+
+      </div>
+
+      <div class="phone-hidden">
+
+        <div class="adv-req-page_right">
+          @_joinReqFormTpl(
+            jf = jf,
+            btnClass = "blue",
+            submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+            isWifi = false
+          )
+        </div>
+
+        <div class="adv-req-page_left">
+          <a class="index-page_logo-link" href="@routes.Market.index" >
+            <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+          </a>
+
+
+          <h2 class="adv-req-page_welcome">Добро пожаловать</h2>
+
+          <p class="adv-req-page_text">
+            Мы рады, что с нами<br/>
+            вы получите эффективную рекламу<br/>
+          </p>
+
+          <a href="tel:88126407646" class="phone-btn adv-req-page_phone">
+            8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
+          </a>
+        </div>
 
       </div>
 
