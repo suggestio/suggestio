@@ -1842,7 +1842,12 @@ market =
           method : 'post'
           data : form_dom1.serialize()
           success : ( img_data ) ->
-            $('input[name=\'' + market.img.crop.img_name + '\']').val img_data.image_key
+            $input = $ 'input[name=\'' + market.img.crop.img_name + '\']'
+            $input.val img_data.image_key
+            $input
+            .parent()
+            .find 'img'
+            .attr 'src', img_data.image_link
             market.ad_form.queue_block_preview_request request_delay=10
 
             $('#overlay, #overlayData').hide()
