@@ -193,10 +193,6 @@ GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: 
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsForm(j: Option[SMJoinAnswers] ?= None)
-POST /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsFormSubmit
-GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: SMJoinAnswers)
-POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: SMJoinAnswers)
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
 GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
