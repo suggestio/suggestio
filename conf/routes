@@ -19,7 +19,7 @@ GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
-GET  /thumb/get/$imageId<[-_\w\d]+>     controllers.Img.getThumb(imageId)
+GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
@@ -158,7 +158,7 @@ POST /m/support                         controllers.MarketLkSupport.supportFormS
 
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
-GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
+GET  /img/tmp/$filename<[-_\w\d~.]+>    controllers.Img.getTempImg(filename)
 GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)

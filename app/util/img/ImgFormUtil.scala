@@ -242,7 +242,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         } catch {
           case ex: Exception => Future successful None
         }
-      } map { _.flatMap(identity(_)) }
+      } map {
+        _.flatMap(identity(_))
+      }
     } else {
       Future successful needOrigImgs1
     }
@@ -252,7 +254,16 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       newSavedImgs  <- savedTmpImgsFut
       needOrigImgs2 <- needOrigImgsFilteredFut
     } yield {
-      (newSavedImgs ++ needOrigImgs2)
+      // 2014.sep.19: Бывает ситуация, когда картинка была сохранена оригиналом, а потом откропана и снова сохранена под тем же rowkey. Нужно устранять дубликаты.
+      val needOrigImgs3 = needOrigImgs2
+        .filter { case (miit, _) =>
+          val oiit: OrigImgIdKey = miit
+          !newSavedImgs.exists {
+            case (miitNew, _) =>
+              miitNew.data.rowKey == oiit.data.rowKey
+          }
+        }
+      (newSavedImgs ++ needOrigImgs3)
         .sortBy(_._2)
         .map(_._1)
     }

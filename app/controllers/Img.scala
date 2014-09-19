@@ -57,17 +57,26 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    * Выдать картинку из HDFS. Используется для визуализации выдачи.
    * Валидность параметров проверяется в роутере регэкспами.
    * @param imageId Хеш-ключ картинки в хранилище домена.
-   * @return
+   * @return 200 Ok и картинка.
+   *         404 Not Found.
    */
   def getThumb(imageId: String) = Action.async { implicit request =>
     suppressQsFlood(routes.Img.getThumb(imageId)) {
-      MImgThumb.getThumbById(imageId) map {
-        case Some(its) =>
-          serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
+      // Thumb'ы у нас [пока] только не кропаные, поэтому надо срезать crop-суффикс из imageId.
+      ImgIdKey(imageId) match {
+        case oiik: OrigImgIdKey =>
+          MImgThumb.getThumbById(oiik.data.rowKey) map {
+            case Some(its) =>
+              serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
 
-        case None =>
-          info(s"getThumb($imageId): 404 Not found")
-          imgNotFound
+            case None =>
+              info(s"getThumb($imageId): 404 Not found")
+              imgNotFound
+          }
+
+        // Если запрос идёт за itmp, то надо вернуть соответсвующий itmp, т.к. thumb'ов для них не предусмотрено.
+        case tiik: TmpImgIdKey =>
+          _getTempImg(tiik.filename)
       }
     }
   }
@@ -134,18 +143,22 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   // TODO Тут надо бы IsAuth, но он мешает работать программистам из-за использования audience_url в ряде случаев.
   def getTempImg(filename: String) = Action.async { implicit request =>
     suppressQsFlood(routes.Img.getTempImg(filename)) {
-      // Надо бы добавить сюда поддержку if-modifier-since...
-      MPictureTmp.find(filename) match {
-        case Some(mptmp) =>
-          val f = mptmp.file
-          Ok.sendFile(f, inline = true)
-            .withHeaders(
-              LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
-              CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
-            )
+      _getTempImg(filename)
+    }
+  }
 
-        case None => imgNotFound
-      }
+  private def _getTempImg(filename: String): Result = {
+    // Надо бы добавить сюда поддержку if-modifier-since...
+    MPictureTmp.find(filename) match {
+      case Some(mptmp) =>
+        val f = mptmp.file
+        Ok.sendFile(f, inline = true)
+          .withHeaders(
+            LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
+            CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
+          )
+
+      case None => imgNotFound
     }
   }
 

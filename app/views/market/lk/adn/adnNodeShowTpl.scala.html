@@ -64,7 +64,7 @@
           <div class="js-photo-slider">
             @node.gallery.zipWithIndex.map { case (imgId, i) =>
 
-              <img class="profile_photo-i" src="@routes.Img.getThumb(imgId)" />
+              <img class="profile_photo-i" src="@routes.Img.getImg(imgId)" />
 
               @*<div class="image __size-M f-left @if(i % 4 == 0){ __first-in-line }">
                 <img class="image_src" src="@routes.Img.getThumb(imgId)" />
