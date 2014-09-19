@@ -236,14 +236,22 @@ object ShowcaseNodeListUtil {
 
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
       case NodeGeoLevels.NGL_TOWN_DISTRICT =>
-        val districtsFut = getDistrictsLayerForTown(currNode.geo.directParentIds.head)
+        val districtsOptFut: Future[Option[GeoNodesLayer]] = {
+          currNode.geo.directParentIds.headOption match {
+            case Some(dparent)  => getDistrictsLayerForTown(dparent).map(Some.apply)
+            case None           => Future successful None
+          }
+        }
         val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get)
         for {
-          townLayer       <- getTownLayerOfNode(currNode)
-          districtsLayer  <- districtsFut
-          buildingsLayers  <- buildingsFut
+          townLayer           <- getTownLayerOfNode(currNode)
+          districtsLayerOpt   <- districtsOptFut
+          buildingsLayers     <- buildingsFut
         } yield {
-          (townLayer :: districtsLayer :: buildingsLayers).reverse
+          var acc = buildingsLayers
+          if (districtsLayerOpt.isDefined)
+            acc ::= districtsLayerOpt.get
+          (townLayer :: acc).reverse
         }
 
       // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
@@ -253,12 +261,16 @@ object ShowcaseNodeListUtil {
           getDistrictsLayerForTown(townNode.id.get)
         }
         val townLayerFut = townFut.map(town2layer)
-        val currDistrictId = currNode.geo.directParentIds.head
-        val buildingsLayerFut = getBuildingsLayersOfDistrict(currDistrictId)
+        val buildingsLayersFut = {
+          currNode.geo.directParentIds.headOption match {
+            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId)
+            case None                 => Future successful Nil
+          }
+        }
         for {
-          townLayer <- townLayerFut
-          districtsLayer <- districtsLayerFut
-          buildingsLayers <- buildingsLayerFut
+          townLayer         <- townLayerFut
+          districtsLayer    <- districtsLayerFut
+          buildingsLayers   <- buildingsLayersFut
         } yield {
           (townLayer :: districtsLayer :: buildingsLayers).reverse
         }
