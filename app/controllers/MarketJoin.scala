@@ -240,7 +240,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       reqType   = reqType,
       company   = Left(company),
       adnNode   = Some(Left(node)),
-      contract  = Left(mbc),
+      contract  = Some(Left(mbc)),
       mmp       = mmp,
       balance   = Left(mbb),
       emailAct  = Left(eact),
