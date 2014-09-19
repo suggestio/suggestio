@@ -1105,16 +1105,22 @@ PersonalCabinet =
 
     # чекбоксы у типов
     $ document
-    .on 'click', '.js-select-type_w input', (e)->
+    .on 'click', '.js-select-type label', (e)->
+      e.stopPropagation()
+
+    $ document
+    .on 'click', '.js-select-type input:checkbox', (e)->
       e.stopPropagation()
       $this = $ this
-      type = parseInt( $this.parent().attr 'data-value' )
+      $selectType = $this.closest '.js-select-type'
+      type = parseInt( $selectType.attr 'data-value' )
       checked = $this.prop 'checked'
 
       setActiveType()
       checkNodes(checked)
       showNodes()
       if type < 0
+        # если ставим галочку у типа Все места, то ставим/снимаем галочки со всех типов
         checkTypes(checked)
       else
         # снять чекбокс с элемента Все места
@@ -1127,6 +1133,10 @@ PersonalCabinet =
       setTimeout market.adv_form.update_price, 100
 
     # чекбоксы у заголовков узлов
+    $ document
+    .on 'click', '.js-select-node_w .js-slide-title label', (e)->
+      e.stopPropagation()
+
     $ document
     .on 'click', '.js-select-node_w .js-slide-title input:checkbox', (e)->
       e.stopPropagation()

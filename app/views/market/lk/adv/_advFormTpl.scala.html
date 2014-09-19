@@ -63,6 +63,7 @@
     <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
       <label>
         <input type="checkbox" name="@af("freeAdv").name" value="true" />
+        <span class="styled-checkbox"></span>
         Размещать бесплатно, без подтверждения?
       </label>
     </div>
@@ -86,12 +87,12 @@
       @args.cities.map { city =>
         <div class="select-tab_lst js-select-type_w" data-city="@city.i">
           <div class="select-tab_i js-select-type" data-value="-1">
-            <input type="checkbox"/>
+            <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
             <span class="select-tab_i-title">Все места</span>
           </div>
           @city.cats.map { cat =>
             <div class="select-tab_i js-select-type" data-value="@cat.i">
-              <input type="checkbox"/>
+              <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
               <span class="select-tab_i-title">@cat.name</span>
               <span class="js-active-nodes-count"></span>
             </div>
@@ -110,7 +111,10 @@
               @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
                 @if(maybeBusyAdv.isEmpty) {
                   @market.lk.lkBlockNewDesign( open = false ) {
-                    <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                    <label>
+                      <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                      <span class="styled-checkbox"></span>
+                    </label>
                     <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
                       <a class="link js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">

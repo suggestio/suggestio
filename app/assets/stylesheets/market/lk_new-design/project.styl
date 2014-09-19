@@ -295,9 +295,9 @@
     display block
 
   &_title
-    color         #575757
-    padding-left  10px
-    font-size     14px
+    color           #575757
+    padding-left    10px
+    font-size       14px
 
   &_title.__major
     padding-left  20px
@@ -308,6 +308,52 @@
 
   &_title.__disabled
     color #8c8c8c
+
+label
+  input[type=checkbox]
+    display none
+
+  input[type=checkbox] + .checkbox_title:before
+    display         inline-block
+    height          16px
+    width           16px
+    margin          0 5px 0 0
+    line-height     16px
+    vertical-align  middle
+    border          1px solid #acacac
+
+    content         "\0020"
+    color           #00b893
+    font-size       16px
+    text-align      center
+    border-radius(4px)
+
+  input[type=checkbox]:checked + .checkbox_title:before
+    content "\2713"
+
+  input[type=checkbox]:disabled + .checkbox_title:before
+    color #acacac
+
+  input[type=checkbox] + .styled-checkbox:before
+    display         inline-block
+    height          16px
+    width           16px
+    line-height     16px
+    vertical-align  middle
+    border          1px solid #acacac
+
+    content         "\0020"
+    color           #00b893
+    font-size       16px
+    text-align      center
+    border-radius(4px)
+
+  input[type=checkbox]:checked + .styled-checkbox:before
+    content "\2713"
+
+  input[type=checkbox]:disabled + .styled-checkbox:before
+    color #acacac
+
 
 /********************************************************************************************************************/
 /* Ценовой виджет в правой панели  */
