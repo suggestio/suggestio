@@ -126,7 +126,7 @@ object MInviteRequest
 }
 
 
-/** Экземпляр модели. */
+/** Экземпляр модели, хранящий данные по запросу подключения и состояние его обработки. */
 final case class MInviteRequest(
   var name      : String,
   var reqType   : InviteReqType,

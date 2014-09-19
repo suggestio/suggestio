@@ -13,6 +13,8 @@ import play.api.mvc._
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CaptchaUtil
 
+import scala.util.Random
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -38,20 +40,27 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
 
   val CAPTCHA_FMT_LC = "png"
 
+  /** Кол-во цифр в цифровой капче (длина строки капчи). */
+  val DIGITS_CAPTCHA_LEN = 5
+
   def createCaptchaText: String
+
+  /** Генерация текста цифровой капчи (n цифр от 0 до 9). */
+  def createCaptchaDigits: String = {
+    val rnd = new Random()
+    val sb = new StringBuilder(DIGITS_CAPTCHA_LEN)
+    for(_ <- 1 to DIGITS_CAPTCHA_LEN) {
+      sb append rnd.nextInt(10)
+    }
+    sb.toString()
+  }
+
   def createCaptchaImg(ctext: String): Array[Byte]
 
   val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds") getOrElse 1800
   val COOKIE_FLAG_SECURE = configuration.getBoolean("session.secure") getOrElse false
 
-  /**
-   * Вернуть картинку капчи, выставив зашифрованный ответ на капчу в куки.
-   * @param captchaId id капчи, генерится в шаблоне формы. Используется для генерации имени кукиса с ответом.
-   * @return image
-   */
-  def getCaptcha(captchaId: String) = Action { implicit request =>
-    val ctext = createCaptchaText
-    LOGGER.trace(s"getCaptcha($captchaId): ctext -> $ctext")
+  protected def _getCaptchaImg(captchaId: String, ctext: String)(implicit request: RequestHeader): Result = {
     val ctextCrypt = CaptchaUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
       .withHeaders(
@@ -61,12 +70,35 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
         CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
       )
       .withCookies(Cookie(
-        name = cookieName(captchaId),
-        value = ctextCrypt,
-        maxAge = Some(COOKIE_MAXAGE_SECONDS),
-        httpOnly = true,
-        secure = COOKIE_FLAG_SECURE
-      ))
+      name = cookieName(captchaId),
+      value = ctextCrypt,
+      maxAge = Some(COOKIE_MAXAGE_SECONDS),
+      httpOnly = true,
+      secure = COOKIE_FLAG_SECURE
+    ))
+  }
+
+  /**
+   * Вернуть картинку капчи, выставив зашифрованный ответ на капчу в куки.
+   * @param captchaId id капчи, генерится в шаблоне формы. Используется для генерации имени кукиса с ответом.
+   * @return image/png
+   */
+  def getCaptcha(captchaId: String) = Action { implicit request =>
+    val ctext = createCaptchaText
+    LOGGER.trace(s"getCaptcha($captchaId): ctext -> $ctext")
+    _getCaptchaImg(captchaId, ctext = ctext)
+  }
+
+  /**
+   * Вернуть картинку капчи, которая состоит только из цифр.
+   * Такую картинку будет проще ввести на мобильном устройстве.
+   * @param captchaId id капчи.
+   * @return image/png
+   */
+  def getDigitalCaptcha(captchaId: String) = Action { implicit request =>
+    val ctext = createCaptchaDigits
+    LOGGER.trace(s"getDigitalCaptcha($captchaId): ctext -> $ctext")
+    _getCaptchaImg(captchaId, ctext = ctext)
   }
 
 

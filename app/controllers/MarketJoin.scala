@@ -64,7 +64,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
    * @return
    */
   def callbackRequestSubmit = MaybeAuth.async { implicit request =>
-    val formBinded = callbackRequestFormM.bindFromRequest()
+    val formBinded = checkCaptcha( callbackRequestFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
         debug("callbackRequestSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))

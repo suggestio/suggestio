@@ -5,6 +5,7 @@
 @import util.FC.radialFc
 @import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
+@import controllers.Captcha.DIGITS_CAPTCHA_LEN
 
 @form(submitCall, 'class->"adv-req-page_call-back-form") {
 
@@ -33,7 +34,7 @@
     <div class="captcha">
       @defining( crf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getCaptcha(captchaId) );" ></div>
+        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getDigitalCaptcha(captchaId) );" ></div>
         <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageCallbackForm" href=""></a>
       }
     </div>
@@ -41,7 +42,7 @@
     @inputText(
       crf(CAPTCHA_TYPED_FN),
       '_class -> "__transparent",
-      'placeholder -> "Введите текст с картинки"
+      'placeholder -> s"Введите $DIGITS_CAPTCHA_LEN цифр, изображенных на картинке"
     )
 
     <div class="btn-w __size-M">
