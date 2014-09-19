@@ -29,4 +29,11 @@
     }
   }
 
+  @* Время для обзвона. *@
+  @if(mcm.callTimeStart.isDefined || mcm.callTimeEnd.isDefined) {
+    @_ptableRowTpl("Время обзвона:") {
+      С @mcm.callTimeStart по @mcm.callTimeEnd.
+    }
+  }
+
 }

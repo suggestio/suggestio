@@ -70,12 +70,12 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
         CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
       )
       .withCookies(Cookie(
-      name = cookieName(captchaId),
-      value = ctextCrypt,
-      maxAge = Some(COOKIE_MAXAGE_SECONDS),
-      httpOnly = true,
-      secure = COOKIE_FLAG_SECURE
-    ))
+        name = cookieName(captchaId),
+        value = ctextCrypt,
+        maxAge = Some(COOKIE_MAXAGE_SECONDS),
+        httpOnly = true,
+        secure = COOKIE_FLAG_SECURE
+      ))
   }
 
   /**

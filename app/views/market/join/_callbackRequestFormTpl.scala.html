@@ -25,11 +25,20 @@
 
     <div class="adv-req-page_call-time">
       <div class="adv-req-page_call-time-t">Время звонка</div>
-      <div class="adv-req-page_call-time-btn-lst">
-        <a class="adv-req-page_call-time-btn js-input-btn __js-act" data-value="10:00 - 14:00" data-for="#callTime">10:00&nbsp;-&nbsp;14:00</a>
-        <a class="adv-req-page_call-time-btn js-input-btn" data-value="14:00 - 18:00" data-for="#callTime">14:00&nbsp;-&nbsp;18:00</a>
-      </div>
-      <input id="callTime" type="hidden" value="10:00 - 14:00"/>
+      @defining( CallBackReqCallTimes.values.toSeq.sortBy(_.id) ) { cbrts =>
+      @defining( crf("callTime").value.getOrElse(cbrts.head.formatTime) ) { cbrctV =>
+        <div class="adv-req-page_call-time-btn-lst">
+          @cbrts.map { cbrct =>
+            @defining(cbrct.formatTime) { cbrctFmt =>
+              <a class="adv-req-page_call-time-btn js-input-btn @if(cbrctFmt == cbrctV) {__js-act}" data-value="@cbrctFmt" data-for="#callTime">
+                @cbrct.formatTimeStart&nbsp;-&nbsp;@cbrct.formatTimeEnd
+              </a>
+            }
+          }
+        </div>
+        <input id="callTime" type="hidden" name="callTime" value="@cbrctV"/>
+      }
+      }
     </div>
 
     <div class="captcha">
