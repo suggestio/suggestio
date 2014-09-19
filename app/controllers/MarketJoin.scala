@@ -1,5 +1,6 @@
 package controllers
 
+import models.CallBackReqCallTimes.CallBackReqCallTime
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.billing.MmpDailyBilling
@@ -34,11 +35,17 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       mapping(
         "name"  -> nameM,
         "phone" -> phoneM,
+        "callTime" -> CallBackReqCallTimes.mapping,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(name, phone, _, _) =>
-        val mcMeta = MCompanyMeta(name = name, officePhones = List(phone))
+      {(name, phone, callTime, _, _) =>
+        val mcMeta = MCompanyMeta(
+          name          = name,
+          officePhones  = List(phone),
+          callTimeStart = Some(callTime.timeStart),
+          callTimeEnd   = Some(callTime.timeEnd)
+        )
         val mc = MCompany(mcMeta)
         MInviteRequest(
           name = s"Запрос звонка от '$name' тел $phone",
@@ -49,7 +56,17 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       {mir =>
         val name = unapplyCompanyName(mir)
         val phone = unapplyOfficePhone(mir)
-        Some((name, phone, "", ""))
+        val callTime: CallBackReqCallTime = mir.company
+          .left.map { mc =>
+            mc.meta.callTimeStart.flatMap { callTimeStart =>
+              mc.meta.callTimeEnd.flatMap { callTimeEnd =>
+                CallBackReqCallTimes.forTimes(callTimeStart, callTimeEnd)
+              }
+            }
+          }
+          .left.getOrElse(None)
+          .getOrElse(CallBackReqCallTimes.values.head)
+        Some((name, phone, callTime, "", ""))
       }
     )
   }
