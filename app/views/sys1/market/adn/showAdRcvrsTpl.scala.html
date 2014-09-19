@@ -1,9 +1,46 @@
-@(mad: MAd, currRcvrsInfo: String, newRcvrsInfo: String, nodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
+@(mad: MAd, newRcvrsMap: Receivers_t, nodesMap: Map[String, MAdnNode], nodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
 
 @* Отображение доп.инфы по карточке. *@
 
 @import helper._
 @import ctx._
+
+@_rcvrsMap(rcvrs: Receivers_t) = {
+  @if(rcvrs.isEmpty) {
+    Карта пуста. Карточка нигде не отображается.
+  } else {
+    <table>
+      <thead>
+        <tr>
+          <td title="Узел, на котором размещается эта карточка">Узел-получатель</td>
+          <td title="Первая буква - sink, вторая - show level.">Уровни размещения</td>
+        </tr>
+      </thead>
+      <tbody>
+        @rcvrs.iterator.map { case (rcvrId, ri) =>
+          <tr>
+            <td>
+              <a href="@routes.SysMarket.showAdnNode(rcvrId)">
+                @nodesMap.get(rcvrId).fold {
+                  @rcvrId
+                } { rcvrNode =>
+                  @rcvrNode.meta.name <span title="@rcvrNode.meta.address">/ @rcvrNode.meta.town</span>
+                }
+              </a>
+            </td>
+            <td>
+              @ri.sls.iterator.map { ssl =>
+                @Messages("adn.sink." + ssl.adnSink.longName): @Messages("lk.sl." + ssl.sl)
+                <br/>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}
+
 
 @adnBase(
   title = "Карта ресиверов рекламной карточки",
@@ -11,22 +48,40 @@
 ) {
 
   <h2>Текущая карта ресиверов</h2>
-  <pre>@currRcvrsInfo</pre>
+  @_rcvrsMap(mad.receivers)
 
-  @if(currRcvrsInfo == newRcvrsInfo) {
-    <p>Карта соответсвует расчетной.</p>
+  @if(mad.receivers == newRcvrsMap) {
+    <p><strong>Карта соответсвует расчетной.</strong></p>
   } else {
-    <p>Рассчетная карта ресиверов отличается от текущей!</p>
-    <pre>@newRcvrsInfo</pre>
+    <br/>
+    <p><strong>Рассчетная карта ресиверов отличается от текущей!</strong></p>
+    <br/>
+    @_rcvrsMap(newRcvrsMap)
   }
+
+  <br/><br/>
 
   @form( routes.SysMarket.resetReceivers(mad.id.get, r = ctx.r) ) {
     <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
   }
 
+  <br/><br/>
+
   @form( routes.SysMarket.cleanReceivers(mad.id.get, r = ctx.r) ) {
-    <input type="submit" value="Очистить карту ресиверов карточки."
-           title="Можно отменить через кнопку сохранения рассчетной карты ресиверов."/>
+    <input type="submit" value="Очистить карту ресиверов карточки." />
+    Очистку карты ресиверов приведёт к сокрытию карточки на всех узлах.<br/>
+    Очистку можно отменить на 90% кнопкой сохранения рассчетной карты ресиверов.<br/>
+    Саморазмещение у самого себя (через галочки) в таком случае НЕ будут восстановлены.
+  }
+
+  <br/><br/>
+
+  @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, r = ctx.r) ) {
+    <input type="submit" value="Уничтожить все размещения (НЕЛЬЗЯ ОТМЕНИТЬ)." />
+    Карта размещений будет стёрта.<br/>
+    Все одобренные размещениями этой карточки будут закрыты текущей датой.<br/>
+    Все запросы размещения карточки будут отменены.<br/>
+    <strong>Действие нельзя отменить.</strong>
   }
 
 }

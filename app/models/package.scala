@@ -58,6 +58,8 @@ package object models {
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
 
+  type Receivers_t          = ym.model.common.EMReceivers.Receivers_t
+
   val  MWelcomeAd           = ym.model.MWelcomeAd
   type MWelcomeAd           = ym.model.MWelcomeAd
 

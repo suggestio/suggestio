@@ -83,12 +83,6 @@ object AdvUtil extends PlayMacroLogsImpl {
         Future.reduce(prodResultFut :: extrasFuts) { AdReceiverInfo.mergeRcvrMaps(_, _) }
       }
 
-    // Если trace, то нужно сообщить разницу в карте ресиверов до и после.
-    if (LOGGER.underlying.isTraceEnabled) {
-      resultFut onSuccess { case result =>
-        trace(s"calculateReceiversFor(${mad.id.get}): withProducer=$needProducer\n  oldRcvrs = ${formatReceiversMapPretty(mad.receivers)}\n  newRcvrs=${formatReceiversMapPretty(result)}")
-      }
-    }
     resultFut
   }
 

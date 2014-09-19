@@ -136,6 +136,10 @@ ad.stat.action.c=Клик
 mir.type.a=Рекламодатель
 mir.type.w=Владелец Wi-Fi
 
+adv.mode.o=Принятое
+adv.mode.r=Запрошенное
+adv.mode.e=Отклонённое
+
 join.qsn.haveWifi=У вас есть Wi-Fi?
 join.qsn.fullCoverage=Wi-fi оборудование покрывает всю необходимую площадь помещения?
 join.qsn.knownEquipment=Вы знаете какое wi-fi оборудование у вас используется?

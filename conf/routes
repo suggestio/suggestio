@@ -202,8 +202,7 @@ POST /market/join/callback              controllers.MarketJoin.callbackRequestSu
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
 
-# /sys/index вместо /sys для решения проблем с rewrite в nginx, который слэши в правилах как-то по-своему трактует.
-GET  /sys/index                         controllers.Sys.index
+GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
 GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
@@ -241,7 +240,7 @@ GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supI
 POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
 POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
 GET  /sys/market/ads                    controllers.SysMarket.showAdnNodeAds(a: AdSearch)
-POST /sys/market/ad/:adId/rm/rcvr/:rcvrId controllers.SysMarket.removeAdRcvr(adId, rcvrId, r: Option[String] ?= None)
+POST /sys/market/ad/:adId/rm/rcvr       controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
 GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart

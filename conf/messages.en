@@ -141,6 +141,10 @@ nth.floor={0}th floor
 
 username.unknown=Who?
 
+adv.mode.o=Accepted
+adv.mode.r=Requested
+adv.mode.e=Refused
+
 join.qsn.haveWifi=Do you have Wi-Fi?
 join.qsn.fullCoverage=Your Wi-Fi equipment covers all needed room?
 join.qsn.knownEquipment=Do you know technical information about your Wi-Fi equipment?

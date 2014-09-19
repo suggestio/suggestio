@@ -20,7 +20,7 @@ import play.api.Play.{current, configuration}
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
-import play.api.mvc.AnyContent
+import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.Messages
 
 /**
@@ -775,15 +775,27 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   val SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
 
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
-  def removeAdRcvr(adId: String, rcvrId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
-    lazy val logPrefix = s"removeAdRcvr(ad[$adId], rcvr[$rcvrId]): "
+  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = IsSuperuser.async { implicit request =>
+    lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
+    val madOptFut = MAd.getById(adId)
+    // Радуемся в лог.
+    rcvrIdOpt match {
+      case Some(rcvrId) => info(logPrefix + "Starting removing for single rcvr...")
+      case None         => warn(logPrefix + "Starting removing ALL rcvrs...")
+    }
     // Надо убрать указанного ресиверов из списка ресиверов
-    val isOkFut = MAd.getById(adId) flatMap {
+    val isOkFut = madOptFut flatMap {
       case Some(mad) =>
-        mad.copy(
-          receivers = mad.receivers.filterKeys(_ != rcvrId)
-        ) .save
-          .map { _ => true }
+        MAd.tryUpdate(mad) { mad1 =>
+          mad1.copy(
+            receivers = if (rcvrIdOpt.isEmpty) {
+              Map.empty
+            } else {
+              mad1.receivers.filterKeys(_ != rcvrIdOpt.get)
+            }
+          )
+        }
+        .map { _ => true }
       case None =>
         warn(logPrefix + "MAd not found: " + adId)
         Future successful false
@@ -791,22 +803,46 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
     DB.withTransaction { implicit c =>
       // Резать как online, так и в очереди на публикацию.
-      MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrId, policy = SelectPolicies.UPDATE)
+      val sepo = SelectPolicies.UPDATE
+      val advsOk = if (rcvrIdOpt.isDefined) {
+        MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
+      } else {
+        MAdvOk.findNotExpiredByAdId(adId, policy = sepo)
+      }
+      advsOk
         .foreach { advOk =>
-          trace(s"${logPrefix}offlining advOk[${advOk.id.get}]...")
-          advOk.copy(dateEnd = DateTime.now, isOnline = false).saveUpdate
+          info(s"${logPrefix}offlining advOk[${advOk.id.get}] by superuser[${request.pwOpt.get.personId}] request...")
+          advOk.copy(dateEnd = DateTime.now, isOnline = false)
+            .saveUpdate
         }
       // Запросы размещения переколбашивать в refused с возвратом бабла.
-      MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrId, policy = SelectPolicies.UPDATE)
-        .foreach { madvReq =>
-          trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
-          // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-          MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
-        }
+      val advsReq = if (rcvrIdOpt.isDefined) {
+        MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
+      } else {
+        MAdvReq.findByAdId(adId, policy = sepo)
+      }
+      advsReq.foreach { madvReq =>
+        trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
+        // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
+        MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
+      }
     }
-    // Дождаться завершения остальных операций.
+    // Начинаем асинхронно генерить ответ клиенту.
+    val rdrToFut: Future[Result] = RdrBackOrFut(r) {
+      rcvrIdOpt.fold[Future[Call]] {
+        madOptFut map {
+          case Some(mad) => routes.SysMarket.showAdnNode(mad.producerId)
+          case None => routes.SysMarket.index()
+        }
+      }
+      { rcvrId =>
+        val call = routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = List(rcvrId)))
+        Future successful call
+      }
+    }
+    // Дождаться завершения всех операций.
     for {
-      rdr  <- RdrBackOr(r) { routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = List(rcvrId))) }
+      rdr  <- rdrToFut
       isOk <- isOkFut
     } yield {
       // Вернуть редирект с результатом работы.
@@ -866,14 +902,26 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     MAd.getById(adId).flatMap { madOpt =>
       val mad = madOpt.get
       val producerOptFut = MAdnNodeCache.getById(mad.producerId)
-      val newRcvrsFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
-      val currRcvrsStr = AdReceiverInfo.formatReceiversMapPretty(mad.receivers)
+      val newRcvrsMapFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
+      // Достаём из кеша узлы.
+      val nodesMapFut: Future[Map[String, MAdnNode]] = {
+        val adnIds1 = mad.receivers.keySet
+        for {
+          adns1       <- MAdnNodeCache.multiGet(adnIds1)
+          newRcvrsMap <- newRcvrsMapFut
+          newAdns     <- MAdnNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
+        } yield {
+          (adns1.iterator ++ newAdns.iterator)
+            .map { adnNode => adnNode.id.get -> adnNode }
+            .toMap
+        }
+      }
       for {
-        newRcvrs <- newRcvrsFut
+        newRcvrsMap <- newRcvrsMapFut
         producerOpt <- producerOptFut
+        nodesMap    <- nodesMapFut
       } yield {
-        val newRcvrsStr = AdReceiverInfo.formatReceiversMapPretty(newRcvrs)
-        Ok(showAdRcvrsTpl(mad, currRcvrsStr, newRcvrsStr, producerOpt))
+        Ok(showAdRcvrsTpl(mad, newRcvrsMap, nodesMap, producerOpt))
       }
     }
   }

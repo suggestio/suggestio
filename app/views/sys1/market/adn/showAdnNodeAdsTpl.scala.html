@@ -58,8 +58,12 @@
       @mad.id.flatMap(rcvrsMap.get).map { rcvrs =>
         <br/>
         @rcvrs.map { rcvr =>
-          @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id.get) ) {
-            <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">Убрать из выдачи<br/>на узле<br/><strong>&laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;</strong></a>
+          @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id, r = ctx.r) ) {
+            <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">
+              Убрать из выдачи<br/>
+              на узле<br/>
+              <strong>&laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;</strong>
+            </a>
           }
         }
       }
@@ -71,11 +75,7 @@
       @mad.id.flatMap(ad2advMap.get).map { advs =>
         @advs.map { adv =>
           <p>
-            @adv.mode match {
-              case MAdvModes.OK         => { Принятое }
-              case MAdvModes.REQ        => { Запрошенное }
-              case MAdvModes.REFUSED    => { Отклонённое }
-            }
+            @Messages("adv.mode." + adv.mode)
             @adv.maybeOk.map { advOk =>
               @if(advOk.isAuto) {авто}
             }размещение
