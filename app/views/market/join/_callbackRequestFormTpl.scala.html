@@ -19,6 +19,7 @@
       crf("phone"),
       '_class -> "__transparent",
       'type -> "tel",
+      'mask -> "tel",
       'placeholder -> "Телефон"
     )
 
@@ -42,6 +43,7 @@
     @inputText(
       crf(CAPTCHA_TYPED_FN),
       '_class -> "__transparent",
+      'type -> "tel",
       'placeholder -> s"Введите $DIGITS_CAPTCHA_LEN цифр, изображенных на картинке"
     )
 

@@ -7,15 +7,13 @@
   <div class="body __responsive index-page_cnt">
     <div class="body_cnt __responsive adv-req-page">
 
-      @_joinPhoneOuterTpl {
-
+      @_joinPhoneOuterTpl(withCallTo = false) {
         @_callbackRequestFormTpl(
           crf = crf,
           btnClass = "blue",
           submitCall = routes.MarketJoin.callbackRequestSubmit(),
           isWifi = false
         )
-
       }
 
     </div>

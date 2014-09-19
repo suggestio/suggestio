@@ -793,7 +793,9 @@ PersonalCabinet =
 
       $captchaImage.remove()
       captchaId = dataFor.substr(1)
-      $parent.prepend "<img class='captcha_img' id='#{captchaId}' src='/captcha/get/#{$('#captchaId').val()}?v=#{random}' />"
+      $ '#captchaTyped'
+      .val ''
+      $parent.prepend "<img class='captcha_img' id='#{captchaId}' src='/captcha/digital/#{$('#captchaId').val()}?v=#{random}' />"
 
     $newPasswordForm = $ '#newPasswordForm'
     if $newPasswordForm.size()
@@ -1311,6 +1313,11 @@ PersonalCabinet =
     ## Элементы ввода ##
     ##################################################################################################################
     inputs: () ->
+
+      #маска для телефонов
+      if $().mask
+        $ 'input[mask = tel]'
+        .mask '+7 (999) 999-99-99'
 
       ##выставит ьвысоту textarea
       $ 'textarea'

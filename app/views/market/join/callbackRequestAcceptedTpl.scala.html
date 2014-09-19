@@ -3,9 +3,11 @@
 @* Страница, сообщающая юзеру, что его запрос обратного звонка принят к рассмотрению. *@
 
 @joinBase("Запрос обратного звонка принят") {
-
-  @_joinPhoneOuterTpl {
-    Ваш запрос обратного звонка принят.
+<div class="body __responsive index-page_cnt">
+  <div class="body_cnt __responsive adv-req-page">
+  @_joinPhoneOuterTpl(false) {
+    <div class="block __margin-M">Ваш запрос принят. Вам перезвонят.</div>
   }
-
+</div>
+  </div>
 }
