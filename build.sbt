@@ -67,6 +67,8 @@ libraryDependencies ++= {
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn
       exclude("commons-beanutils", "commons-beanutils")
     ,
+    // cassandra
+    //"com.netflix.astyanax" % "astyanax-cassandra" % "2.0.1",
     // hbase
     "org.apache.hbase" % "hbase" % hbaseVsn,
     "org.apache.hbase" % "hbase-server" % hbaseVsn
