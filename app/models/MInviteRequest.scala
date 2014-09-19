@@ -136,7 +136,7 @@ final case class MInviteRequest(
   var adnNode   : Option[Either[MAdnNode, String]] = None,
   var contract  : Option[Either[MBillContract, Int]],
   var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
-  var balance   : Either[MBillBalance, String],
+  var balance   : Option[Either[MBillBalance, String]],
   var emailAct  : Either[EmailActivation, String],
   var payReqs   : Option[Either[MBillPayReqsRu, Int]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
@@ -377,7 +377,7 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
         val result = deseralizeSqlIntModel(MBillMmpDaily, jmap)
         acc.mmp = Option(result)
       case (BALANCE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.balance = deseralizeSqlStrModel(MBillBalance, jmap)
+        acc.balance = Option(jmap) map { deseralizeSqlStrModel(MBillBalance, _) }
       case (EMAIL_ACT_ESFN, jmap: ju.Map[_, _]) =>
         acc.emailAct = deserializeEsModel(EmailActivation, jmap)
       case (PAY_REQS_ESFN, jmap: ju.Map[_, _]) =>
@@ -404,7 +404,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var adnNode   : Option[Either[MAdnNode, String]]
   var contract  : Option[Either[MBillContract, Int]]
   var mmp       : Option[Either[MBillMmpDaily, Int]]
-  var balance   : Either[MBillBalance, String]
+  var balance   : Option[Either[MBillBalance, String]]
   var emailAct  : Either[EmailActivation, String]
   var payReqs   : Option[Either[MBillPayReqsRu, Int]]
   var joinAnswers: Option[SMJoinAnswers]
@@ -416,13 +416,14 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
     var acc =
       REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
       COMPANY_ESFN    -> strModel2json(company) ::
-      BALANCE_ESFN    -> strModel2json(balance) ::
       EMAIL_ACT_ESFN  -> strModel2json(emailAct) ::
       acc1
     if (adnNode.isDefined)
       acc ::= ADN_NODE_ESFN -> strModel2json(adnNode.get)
     if (contract.isDefined)
       acc ::= CONTRACT_EFSN -> intModel2json(contract.get)
+    if (balance.isDefined)
+      acc ::= BALANCE_ESFN -> strModel2json(balance.get)
     if (waOpt.isDefined)
       acc ::= WELCOME_AD_ESFN -> strModel2json(waOpt.get)
     if (joinAnswers exists { _.isDefined })

@@ -242,7 +242,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       adnNode   = Some(Left(node)),
       contract  = Some(Left(mbc)),
       mmp       = mmp,
-      balance   = Left(mbb),
+      balance   = Some(Left(mbb)),
       emailAct  = Left(eact),
       payReqs   = None, // TODO Нужно сохранить сюда распарсенные платёжные атрибуты
       payReqsRaw = payReqs
