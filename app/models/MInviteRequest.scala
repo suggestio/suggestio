@@ -134,10 +134,10 @@ final case class MInviteRequest(
   var company   : Either[MCompany, String],
   var waOpt     : Option[Either[MWelcomeAd, String]] = None,
   var adnNode   : Option[Either[MAdnNode, String]] = None,
-  var contract  : Option[Either[MBillContract, Int]],
+  var contract  : Option[Either[MBillContract, Int]] = None,
   var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
-  var balance   : Option[Either[MBillBalance, String]],
-  var emailAct  : Either[EmailActivation, String],
+  var balance   : Option[Either[MBillBalance, String]] = None,
+  var emailAct  : Option[Either[EmailActivation, String]] = None,
   var payReqs   : Option[Either[MBillPayReqsRu, Int]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
   var dateCreated: DateTime = DateTime.now(),
@@ -161,7 +161,9 @@ final case class MInviteRequest(
     fut = adnNode.fold(fut) { adnNodeEith =>
       MInviteRequest.withEraseLeftResources(fut, adnNodeEith)
     }
-    fut = MInviteRequest.withEraseLeftResources(fut, emailAct)
+    fut = emailAct.fold(fut) { emailActEith =>
+      MInviteRequest.withEraseLeftResources(fut, emailActEith)
+    }
     fut = waOpt.fold(fut) {
       _waOpt => MInviteRequest.withEraseLeftResources(fut, _waOpt)
     }
@@ -370,16 +372,16 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
       case (COMPANY_ESFN, jmap: ju.Map[_, _]) =>
         acc.company = deserializeEsModel(MCompany, jmap)
       case (ADN_NODE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.adnNode = Option(jmap) map { deserializeEsModel(MAdnNode, _) }
+        acc.adnNode = Some( deserializeEsModel(MAdnNode, jmap) )
       case (CONTRACT_EFSN, jmap: ju.Map[_, _]) =>
-        acc.contract = Option(jmap) map { deseralizeSqlIntModel(MBillContract, _) }
+        acc.contract = Some( deseralizeSqlIntModel(MBillContract, jmap) )
       case (DAILY_MMP_ESFN, jmap: ju.Map[_, _]) =>
         val result = deseralizeSqlIntModel(MBillMmpDaily, jmap)
         acc.mmp = Option(result)
       case (BALANCE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.balance = Option(jmap) map { deseralizeSqlStrModel(MBillBalance, _) }
+        acc.balance = Some( deseralizeSqlStrModel(MBillBalance, jmap) )
       case (EMAIL_ACT_ESFN, jmap: ju.Map[_, _]) =>
-        acc.emailAct = deserializeEsModel(EmailActivation, jmap)
+        acc.emailAct = Some( deserializeEsModel(EmailActivation, jmap) )
       case (PAY_REQS_ESFN, jmap: ju.Map[_, _]) =>
         val r = deseralizeSqlIntModel(MBillPayReqsRu, jmap)
         acc.payReqs = Option(r)
@@ -405,7 +407,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var contract  : Option[Either[MBillContract, Int]]
   var mmp       : Option[Either[MBillMmpDaily, Int]]
   var balance   : Option[Either[MBillBalance, String]]
-  var emailAct  : Either[EmailActivation, String]
+  var emailAct  : Option[Either[EmailActivation, String]]
   var payReqs   : Option[Either[MBillPayReqsRu, Int]]
   var joinAnswers: Option[SMJoinAnswers]
   var payReqsRaw: Option[String]
@@ -416,7 +418,6 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
     var acc =
       REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
       COMPANY_ESFN    -> strModel2json(company) ::
-      EMAIL_ACT_ESFN  -> strModel2json(emailAct) ::
       acc1
     if (adnNode.isDefined)
       acc ::= ADN_NODE_ESFN -> strModel2json(adnNode.get)
@@ -424,6 +425,8 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
       acc ::= CONTRACT_EFSN -> intModel2json(contract.get)
     if (balance.isDefined)
       acc ::= BALANCE_ESFN -> strModel2json(balance.get)
+    if (emailAct.isDefined)
+      acc ::= EMAIL_ACT_ESFN -> strModel2json(emailAct.get)
     if (waOpt.isDefined)
       acc ::= WELCOME_AD_ESFN -> strModel2json(waOpt.get)
     if (joinAnswers exists { _.isDefined })

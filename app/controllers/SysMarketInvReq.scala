@@ -315,7 +315,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     import request.mir
     val adnId = mir.adnNode.get.right.get
     val adnNodeOptFut = MAdnNodeCache.getById(adnId)
-    val eact = mir.emailAct.left.get.copy(
+    val eact = mir.emailAct.get.left.get.copy(
       key = adnId
     )
     val previoslyExistedFut = eact.id.fold [Future[Boolean]]
@@ -333,7 +333,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               // Пора переключить состояние mir
               MInviteRequest.tryUpdate(mir) { mir0 =>
                 mir0.copy(
-                  emailAct = Right(eaId)
+                  emailAct = Some(Right(eaId))
                 )
               }
             }
@@ -422,9 +422,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
       "MIR.eact is installed, but action possible only for already NOT-installed EAct. Go back and press F5."
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
-      super.isMirStateOk(mir) && {
-        mir.emailAct.isLeft
-      }
+      super.isMirStateOk(mir) && mir.emailAct.exists(_.isLeft)
     }
   }
   private def isNodeEactLeft(mirId: String) = new IsSuperuserMir(mirId) {
@@ -433,7 +431,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
       super.isMirStateOk(mir) && {
-        mir.adnNode.exists(_.isRight) && mir.emailAct.isLeft
+        mir.adnNode.exists(_.isRight) && mir.emailAct.exists(_.isLeft)
       }
     }
   }
@@ -456,10 +454,12 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   }
 
   private def getEactOptFut(mir: MInviteRequest): Future[Option[EmailActivation]] = {
-    mir.emailAct.fold [Future[Option[EmailActivation]]] (
-      { eact => Future successful Option(eact) },
-      { EmailActivation.getById }
-    )
+    mir.emailAct.fold [Future[Option[EmailActivation]]] (Future successful None) { eactEith =>
+      eactEith.fold[Future[Option[EmailActivation]]](
+        { eact => Future successful Option(eact)},
+        { EmailActivation.getById }
+      )
+    }
   }
 
 }

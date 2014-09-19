@@ -179,10 +179,12 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     mir.payReqs
       .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
   }
+
   private def unapplyEmail(mir: MInviteRequest): String = {
-    mir.emailAct
-      .left.map(_.email)
-      .left.getOrElse("")
+    mir.emailAct.fold("") {
+       _.left.map(_.email)
+        .left.getOrElse("")
+    }
   }
   private def unapplyInfo(mir: MInviteRequest): Option[String] = {
     mir.adnNode.flatMap {
@@ -243,7 +245,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       contract  = Some(Left(mbc)),
       mmp       = mmp,
       balance   = Some(Left(mbb)),
-      emailAct  = Left(eact),
+      emailAct  = Some(Left(eact)),
       payReqs   = None, // TODO Нужно сохранить сюда распарсенные платёжные атрибуты
       payReqsRaw = payReqs
     )

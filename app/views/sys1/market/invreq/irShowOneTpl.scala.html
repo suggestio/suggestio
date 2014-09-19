@@ -119,7 +119,7 @@
         <h3>Инвайт на управление узлом</h3>
         Указанный email: <a href="mailto:@eact.email">@eact.email</a>
         @if(nodeInstalled) {
-          @if(mir.emailAct.isLeft) {
+          @if(mir.emailAct.exists(_.isLeft)) {
             @btn("Выслать инвайт", routes.SysMarketInvReq.eactInstallSubmit(mir.id.get))
           } else {
             @* TODO Кнопка деинсталляция запроса на активацию. *@
