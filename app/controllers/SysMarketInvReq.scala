@@ -1,6 +1,5 @@
 package controllers
 
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.HtmlFormat
 import util.acl._
@@ -176,7 +175,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   }
 
   /** Запрос страницы с формой редактирования заготовки узла. */
-  def nodeEdit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
+  def nodeEdit(mirId: String) = isNodeLeftOrMissing(mirId).async { implicit request =>
     nodeEditBody(request.mir)(Ok(_))
   }
 
@@ -186,12 +185,14 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     val adnOptFut = getNodeOptFut(mir)
     mcOptFut flatMap {
       case Some(mc) =>
-        adnOptFut map {
-          case Some(adnNode) =>
-            val formFilled = adnNodeFormM fill adnNode
-            Ok(nodeEditTpl(mir, adnNode, mc, formFilled))
-          case None =>
-            NotFound("Node not found")
+        adnOptFut map { adnNodeOpt =>
+          val formFilled = adnNodeOpt match {
+            case Some(adnNode) =>
+              adnNodeFormM fill adnNode
+            case None =>
+              adnNodeFormM
+          }
+          Ok(nodeEditTpl(mir, adnNodeOpt, mc, formFilled))
         }
 
       case None =>
@@ -201,7 +202,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
 
   /** Сабмит формы редактирования заготовки рекламного узла.
     * Здесь может быть подвох в поле companyId, которое может содержать пустое значение. */
-  def nodeEditFormSubmit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
+  def nodeEditFormSubmit(mirId: String) = isNodeLeftOrMissing(mirId).async { implicit request =>
     import request.mir
     adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -210,10 +211,11 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
       },
       {adnNode2 =>
         MInviteRequest.tryUpdate(mir) { mir0 =>
-          val adnNode = mir0.adnNode.left.get
-          val adnNode3 = SysMarket.updateAdnNode(adnNode, adnNode2)
+          val adnNode3 = mir0.adnNode.fold [MAdnNode] (adnNode2) { adnNodeEith =>
+            SysMarket.updateAdnNode(adnNodeEith.left.get, adnNode2)
+          }
           mir0.copy(
-            adnNode = Left(adnNode3)
+            adnNode = Some(Left(adnNode3))
           )
         } map { _ =>
           rdrToIr(mirId, "Шаблон узла сохранён.")
@@ -227,7 +229,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     import request.mir
     assert(mir.company.isRight, "error.company.not.installed")
     val mcId = mir.company.right.get
-    val adnNode0 = mir.adnNode.left.get
+    val adnNode0 = mir.adnNode.get.left.get
     // Определить, существовал ли узел. Если нет, то при ошибке обновления MIR новый созданный узел будет удалён.
     val previoslyExistedFut = adnNode0.id.fold [Future[Boolean]]
       { Future successful false }
@@ -251,7 +253,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
           // Узел сохранён. Пора обновить экземпляр MIR
           val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
             mir0.copy(
-              adnNode = Right(adnId),
+              adnNode = Some(Right(adnId)),
               waOpt = waSavedIdOpt.map(Right.apply)
             )
           }
@@ -280,7 +282,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   /** sio-админ приказывает деинсталлировать узел. */
   def nodeUninstallSubmit(mirId: String) = isNodeRight(mirId).async { implicit request =>
     import request.mir
-    val adnId = mir.adnNode.right.get
+    val adnId = mir.adnNode.get.right.get
     MAdnNode.getById(adnId) flatMap {
       case Some(adnNode) =>
         adnNode.delete flatMap {
@@ -288,7 +290,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             // Узел удалён. Пора залить его в состояние MIR
             val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
               mir0.copy(
-                adnNode = Left(adnNode)
+                adnNode = Some(Left(adnNode))
               )
             }
             updateFut onFailure { case ex =>
@@ -311,7 +313,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   /** sio-админ командует создать реквест и отправить письмо на email. */
   def eactInstallSubmit(mirId: String) = isNodeEactLeft(mirId).async { implicit request =>
     import request.mir
-    val adnId = mir.adnNode.right.get
+    val adnId = mir.adnNode.get.right.get
     val adnNodeOptFut = MAdnNodeCache.getById(adnId)
     val eact = mir.emailAct.left.get.copy(
       key = adnId
@@ -387,10 +389,22 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
       super.isMirStateOk(mir) && {
-        mir.adnNode.isLeft
+        mir.adnNode.exists(_.isLeft)
       }
     }
   }
+
+  private def isNodeLeftOrMissing(mirId: String) = new IsSuperuserMir(mirId) {
+     override def mirStateInvalidMsg: String = {
+      "MIR.node is installed, but action possible only for NOT installed node. Go back and press F5."
+    }
+    override def isMirStateOk(mir: MInviteRequest): Boolean = {
+      super.isMirStateOk(mir) && {
+        mir.adnNode.isEmpty  ||  mir.adnNode.exists(_.isLeft)
+      }
+    }
+  }
+
 
   private def isNodeRight(mirId: String) = new IsSuperuserMir(mirId) {
     override def mirStateInvalidMsg: String = {
@@ -398,7 +412,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
       super.isMirStateOk(mir) && {
-        mir.adnNode.isRight
+        mir.adnNode.exists(_.isRight)
       }
     }
   }
@@ -419,7 +433,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
       super.isMirStateOk(mir) && {
-        mir.adnNode.isRight && mir.emailAct.isLeft
+        mir.adnNode.exists(_.isRight) && mir.emailAct.isLeft
       }
     }
   }
@@ -433,10 +447,12 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   }
 
   private def getNodeOptFut(mir: MInviteRequest): Future[Option[MAdnNode]] = {
-    mir.adnNode.fold[Future[Option[MAdnNode]]](
-      { an => Future successful Option(an) },
-      { adnId => MAdnNodeCache.getById(adnId) }
-    )
+    mir.adnNode.fold [Future[Option[MAdnNode]]] (Future successful None) { nodeEith =>
+      nodeEith.fold[Future[Option[MAdnNode]]](
+        { an => Future successful Option(an)},
+        { adnId => MAdnNodeCache.getById(adnId)}
+      )
+    }
   }
 
   private def getEactOptFut(mir: MInviteRequest): Future[Option[EmailActivation]] = {

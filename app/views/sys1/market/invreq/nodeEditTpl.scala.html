@@ -1,4 +1,4 @@
-@(mir: MInviteRequest, node: MAdnNode, company: MCompany, af:Form[_])(implicit ctx: Context)
+@(mir: MInviteRequest, nodeOpt: Option[MAdnNode], company: MCompany, af:Form[_])(implicit ctx: Context)
 
 @* Рендер страницы с формой редактирования компании. *@
 @import ctx._

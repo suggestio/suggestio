@@ -126,35 +126,48 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   private def unapplyCompanyName(mir: MInviteRequest): String = {
     mir.company
       .left.map(_.meta.name)
-      .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
+      .left.getOrElse {
+        mir.adnNode
+          .fold("") { _.left.map(_.meta.name).left.getOrElse("") }
+      }
   }
   private def unapplyTown(mir: MInviteRequest): Option[String] = {
-    mir.adnNode
-      .left.map(_.meta.town)
-      .left.getOrElse(None)
+    mir.adnNode.flatMap {
+       _.left.map(_.meta.town)
+        .left.getOrElse(None)
+    }
   }
+
   private def unapplyAudDescr(mir: MInviteRequest): String = {
     mir.adnNode
-      .left.map(_.meta.audienceDescr)
-      .left.getOrElse(None)
+      .flatMap {
+        _.left.map(_.meta.audienceDescr)
+         .left.getOrElse(None)
+      }
       .getOrElse("")
   }
   private def unapplyHumanTraffic(mir: MInviteRequest): Int = {
     mir.adnNode
-      .left.map(_.meta.humanTrafficAvg)
-      .left.getOrElse(None)
+      .flatMap {
+         _.left.map(_.meta.humanTrafficAvg)
+          .left.getOrElse(None)
+      }
       .getOrElse(0)
   }
   private def unapplyAddress(mir: MInviteRequest): String = {
     mir.adnNode
-      .left.map(_.meta.address)
-      .left.getOrElse(None)
+      .flatMap {
+        _.left.map(_.meta.address)
+         .left.getOrElse(None)
+      }
       .getOrElse("")
   }
   private def unapplySiteUrl(mir: MInviteRequest): Option[String] = {
     mir.adnNode
-      .left.map(_.meta.siteUrl)
-      .left.getOrElse(None)
+      .flatMap {
+        _.left.map(_.meta.siteUrl)
+         .left.getOrElse(None)
+      }
   }
   private def unapplyOfficePhone(mir: MInviteRequest): String = {
     mir.company
@@ -172,14 +185,16 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.getOrElse("")
   }
   private def unapplyInfo(mir: MInviteRequest): Option[String] = {
-    mir.adnNode
-      .left.map(_.meta.info)
-      .left.getOrElse(None)
+    mir.adnNode.flatMap {
+       _.left.map(_.meta.info)
+        .left.getOrElse(None)
+    }
   }
   private def unapplyColor(mir: MInviteRequest): Option[String] = {
-    mir.adnNode
-      .left.map(_.meta.color)
-      .left.getOrElse(None)
+    mir.adnNode.flatMap {
+       _.left.map(_.meta.color)
+        .left.getOrElse(None)
+    }
   }
 
 
@@ -224,7 +239,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       name      = companyName + " от " + email1,
       reqType   = reqType,
       company   = Left(company),
-      adnNode   = Left(node),
+      adnNode   = Some(Left(node)),
       contract  = Left(mbc),
       mmp       = mmp,
       balance   = Left(mbb),
@@ -249,7 +264,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
       {case (mir, galleryIiks, logoOpt, welcomeImgId) =>
-        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
         // Схоронить логотип
         val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs  = Nil)
         // Схоронить картинку приветствия
@@ -263,11 +278,13 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
               val mir2 = mir.copy(
                 joinAnswers = Some(smja),
                 waOpt   = waOpt.map(Left.apply),
-                adnNode = mir.adnNode.left.map { adnNode0 =>
-                  adnNode0.copy(
-                    gallery = GalleryUtil.gallery2filenames(savedImgs),
-                    logoImgOpt = savedLogoOpt
-                  )
+                adnNode = mir.adnNode.map {
+                  _.left.map { adnNode0 =>
+                    adnNode0.copy(
+                      gallery = GalleryUtil.gallery2filenames(savedImgs),
+                      logoImgOpt = savedLogoOpt
+                    )
+                  }
                 }
               )
               mir2.save.map { irId =>
@@ -349,14 +366,16 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         NotAcceptable(joinAdvTpl(formWithErrors))
       },
       {case (mir, logoOpt) =>
-        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
         val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs = Nil)
         savedLogoFut flatMap { savedLogoOpt =>
           val mir2 = mir.copy(
-            adnNode = mir.adnNode.left.map { adnNode0 =>
-              adnNode0.copy(
-                logoImgOpt = savedLogoOpt
-              )
+            adnNode = mir.adnNode.map {
+              _.left.map { adnNode0 =>
+                adnNode0.copy(
+                  logoImgOpt = savedLogoOpt
+                )
+              }
             }
           )
           mir2.save.map { irId =>

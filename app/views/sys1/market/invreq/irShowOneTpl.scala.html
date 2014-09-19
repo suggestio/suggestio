@@ -52,7 +52,7 @@
   }
 
   @defining( mir.company.isRight ) { mcInstalled =>
-  @defining( mir.adnNode.isRight ) { nodeInstalled =>
+  @defining( mir.adnNode.exists(_.isRight) ) { nodeInstalled =>
 
     @* Блок компании. *@
     <br/><br/>
@@ -83,8 +83,10 @@
     <br/><br/>
     <div>
       @nodeOpt.fold {
-        <p>Ошибка доступа к данным узла.</p>
-        TODO Нужна ссылка для синтеза нового узла.
+        <p>
+          Узел не существует даже в виде заготовки.
+          <a href="@routes.SysMarketInvReq.nodeEdit(mir.id.get)">Создать заготовку...</a>
+        </p>
       } { node =>
         <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
         @_nodeMetaTpl(node.meta)
@@ -108,9 +110,11 @@
     <div>
       @eactOpt.fold {
         <p>Кажется, инвайт уже использован или был удалён.</p>
-        @mir.adnNode.right.map { adnId =>
-          <a href="@routes.SysMarket.nodeOwnerInviteForm(adnId)">Инвайты на управление узлом</a>
-        }.right.getOrElse {}
+        @mir.adnNode.map { adnNodeEith =>
+          @adnNodeEith.right.map { adnId =>
+            <a href="@routes.SysMarket.nodeOwnerInviteForm(adnId)">Инвайты на управление узлом</a>
+          }.right.getOrElse {}
+        }
       } { eact =>
         <h3>Инвайт на управление узлом</h3>
         Указанный email: <a href="mailto:@eact.email">@eact.email</a>
@@ -120,7 +124,9 @@
           } else {
             @* TODO Кнопка деинсталляция запроса на активацию. *@
           }
-          <a href="@routes.SysMarket.nodeOwnerInviteForm(mir.adnNode.right.get)">Смотреть инвайты на управление узлом...</a>
+          @if(nodeInstalled) {
+            <a href="@routes.SysMarket.nodeOwnerInviteForm(mir.adnNode.get.right.get)">Смотреть инвайты на управление узлом...</a>
+          }
         }
       }
     </div>

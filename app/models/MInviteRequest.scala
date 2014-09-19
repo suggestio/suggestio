@@ -133,7 +133,7 @@ final case class MInviteRequest(
   var reqType   : InviteReqType,
   var company   : Either[MCompany, String],
   var waOpt     : Option[Either[MWelcomeAd, String]] = None,
-  var adnNode   : Either[MAdnNode, String],
+  var adnNode   : Option[Either[MAdnNode, String]] = None,
   var contract  : Either[MBillContract, Int],
   var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
   var balance   : Either[MBillBalance, String],
@@ -158,7 +158,9 @@ final case class MInviteRequest(
   override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     var fut = super.eraseResources
     fut = MInviteRequest.withEraseLeftResources(fut, company)
-    fut = MInviteRequest.withEraseLeftResources(fut, adnNode)
+    fut = adnNode.fold(fut) { adnNodeEith =>
+      MInviteRequest.withEraseLeftResources(fut, adnNodeEith)
+    }
     fut = MInviteRequest.withEraseLeftResources(fut, emailAct)
     fut = waOpt.fold(fut) {
       _waOpt => MInviteRequest.withEraseLeftResources(fut, _waOpt)
@@ -368,7 +370,7 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
       case (COMPANY_ESFN, jmap: ju.Map[_, _]) =>
         acc.company = deserializeEsModel(MCompany, jmap)
       case (ADN_NODE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.adnNode = deserializeEsModel(MAdnNode, jmap)
+        acc.adnNode = Option(jmap) map { deserializeEsModel(MAdnNode, _) }
       case (CONTRACT_EFSN, jmap: ju.Map[_, _]) =>
         acc.contract = deseralizeSqlIntModel(MBillContract, jmap)
       case (DAILY_MMP_ESFN, jmap: ju.Map[_, _]) =>
@@ -399,7 +401,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
 
   var reqType   : InviteReqType
   var company   : Either[MCompany, String]
-  var adnNode   : Either[MAdnNode, String]
+  var adnNode   : Option[Either[MAdnNode, String]]
   var contract  : Either[MBillContract, Int]
   var mmp       : Option[Either[MBillMmpDaily, Int]]
   var balance   : Either[MBillBalance, String]
@@ -414,11 +416,12 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
     var acc =
       REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
       COMPANY_ESFN    -> strModel2json(company) ::
-      ADN_NODE_ESFN   -> strModel2json(adnNode) ::
       CONTRACT_EFSN   -> intModel2json(contract) ::
       BALANCE_ESFN    -> strModel2json(balance) ::
       EMAIL_ACT_ESFN  -> strModel2json(emailAct) ::
       acc1
+    if (adnNode.isDefined)
+      acc ::= ADN_NODE_ESFN -> strModel2json(adnNode.get)
     if (waOpt.isDefined)
       acc ::= WELCOME_AD_ESFN -> strModel2json(waOpt.get)
     if (joinAnswers exists { _.isDefined })
