@@ -60,6 +60,9 @@ trait Context {
   implicit def pwOpt: PwOpt_t
   implicit def lang: Lang
 
+  /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
+  def r = Some(request.path)
+
   // srm в protected т.к. пока нет смысла её отображать. Раскрываем её api прямо тут:
   protected def sioReqMdOpt: Option[SioReqMd]
   def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)

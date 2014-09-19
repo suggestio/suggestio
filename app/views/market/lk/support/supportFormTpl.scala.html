@@ -5,7 +5,7 @@
 @import util.FC.tdFc
 
 
-@supportBase("СЛУЖБА ПОДДЕРЖКИ", nodeOpt = nodeOpt, r = r) {
+@supportBase("СЛУЖБА ПОДДЕРЖКИ", nodeOpt = nodeOpt, r = ctx.r) {
 
 
   @form( ctx.supportFormCall(nodeOpt.flatMap(_.id)) ) {

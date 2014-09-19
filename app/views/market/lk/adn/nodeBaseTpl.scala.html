@@ -17,7 +17,7 @@
         <span>Редактировать профиль</span>
       </a>
       <hr class="delimiter"/>
-      <a class="right-bar_menu-i __change-pass@if(rightCurrEl == RPL_USER_EDIT){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = Some(ctx.request.path))">
+      <a class="right-bar_menu-i __change-pass@if(rightCurrEl == RPL_USER_EDIT){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = ctx.r)">
         <span>@Messages("Password.change")</span>
       </a>
       <hr class="delimiter"/>

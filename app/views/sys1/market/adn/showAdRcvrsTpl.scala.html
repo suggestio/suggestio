@@ -20,8 +20,13 @@
     <pre>@newRcvrsInfo</pre>
   }
 
-  @form( routes.SysMarket.resetReceivers(mad.id.get, r = Some(ctx.request.path)) ) {
+  @form( routes.SysMarket.resetReceivers(mad.id.get, r = ctx.r) ) {
     <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
+  }
+
+  @form( routes.SysMarket.cleanReceivers(mad.id.get, r = ctx.r) ) {
+    <input type="submit" value="Очистить карту ресиверов карточки."
+           title="Можно отменить через кнопку сохранения рассчетной карты ресиверов."/>
   }
 
 }

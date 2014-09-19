@@ -42,7 +42,7 @@
                 @_single_offer(mad)
                 </div>
               <div class="ads-list-block__zigzag-mask"></div>
-              <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = Some(request.path))"
+              <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
                 Нажмите для<br/>
                 просмотра<br/>

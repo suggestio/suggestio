@@ -894,5 +894,23 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
+
+  /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
+    * Это действие можно откатить через resetReceivers. */
+  def cleanReceivers(adId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
+    MAd.getById(adId).flatMap { madOpt =>
+      val mad0 = madOpt.get
+      MAd.tryUpdate(madOpt.get) { mad =>
+        mad.copy(
+          receivers = Map.empty
+        )
+      } map { _adId =>
+        RdrBackOr(r) { routes.SysMarket.showAdnNode(mad0.producerId) }
+      }
+    }
+  }
+
+
+
 }
 

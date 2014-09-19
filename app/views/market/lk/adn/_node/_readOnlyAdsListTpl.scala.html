@@ -8,7 +8,7 @@
 
 @wndAnchor(adId: String, advIdOpt: Option[Int])(text: Html) = {
   <a class="ads-list-block__link js-advertising-requests-item_get-info"
-     href="@routes.MarketAdv.advFullWnd(adId, povAdnId = povAdnIdOpt, advId = advIdOpt, r = Some(request.path))">
+     href="@routes.MarketAdv.advFullWnd(adId, povAdnId = povAdnIdOpt, advId = advIdOpt, r = ctx.r)">
   </a>
 }
 

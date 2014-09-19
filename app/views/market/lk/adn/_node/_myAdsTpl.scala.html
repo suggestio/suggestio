@@ -34,10 +34,10 @@
         } { adv =>
             @adv match {
               case advReq: MAdvReq => {
-                <a class="adv-item_status __request js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))"></a>
+                <a class="adv-item_status __request js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = ctx.r)"></a>
               }
               case advOk: MAdvOk => {
-                <a class="adv-item_status __ok js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = Some(request.path))"></a>
+                <a class="adv-item_status __ok js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = ctx.r)"></a>
               }
               case advRefused: MAdvRefuse => {
                 @* Этот код по идее никогда не должен выполняться: *@
