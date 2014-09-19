@@ -20,14 +20,12 @@
     </div>
 
     <div class="index-page_login-btn">
-      @*if(ctx.isAuth) {
-      <!--Юзер залогинен. Нужно отобразить кнопку на его ЛК.-->
-
+      @*
+        <!--Юзер залогинен. Нужно отобразить кнопку на его ЛК.-->
         <a class="siom-new-btn __size-L __color-1 __vertical-first" href="@routes.Ident.rdrUserSomewhere">
           @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
         </a>
-
-      } else {*@
+      *@
 
         <a class="siom-new-btn __size-L __color-1 __vertical-first js-card-btn"  >
           Локации для рекламы
@@ -58,23 +56,6 @@
       </div>
     }
 
-
-
-    @*<div class="login-page__join-wifi">
-      <a class="siom-link-btn __color-4 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutMarket" >?</a>
-
-      <a class="siom-ac-btn __color-1 __size-XL __ft-L" href="@routes.MarketJoin.wifiJoinQuestionsForm()">
-        СТАТЬ УЧАСТНИКОМ СЕТИ
-      </a>
-    </div>*@
-
-    @*<div class="login-page__demo-btn">
-      @DEMO_ADN_ID_OPT.map { demoAdnId =>
-        <a class="siom-ac-btn __color-5 __ft-XM __size-M" href="@routes.MarketShowcase.demoWebSite(demoAdnId)" target="_blank">
-          ДЕМО
-        </a>
-      }
-    </div>*@
 
   </div>
 
