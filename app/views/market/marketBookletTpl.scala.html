@@ -21,24 +21,128 @@
 
 
   </head>
-  <body>
+  <body class="booklet">
 
     <header class="header" id="header">
       <div class="header_cnt">
-        <a class="header_logo link js-slide-to" href="#sio-market">
-          <span class="color-attention def-transition">Sio</span><span class="color-light default-transition">Market</span>
-        </a>
+        <a class="header_logo link js-slide-to" href="#yourAdv">
+          <img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTExcHgiIGhlaWdodD0iMjYuNjY3cHgiIHZpZXdCb3g9IjEwLjc4NyA1Mi41ODIgMTExIDI2LjY2NyIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAxMC43ODcgNTIuNTgyIDExMSAyNi42NjciDQoJIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTE5LjU4NSw1OC43NzhjMC45MTUsMCwxLjY3LDAuMjMxLDIuMjYyLDAuNjg3YzAuNTkzLDAuNDU5LDAuODg4LDEuMDM4LDAuODg4LDEuNzM2DQoJYzAsMC40MDMtMC4xMzYsMC43NDgtMC40MTMsMS4wMzljLTAuMjc1LDAuMjg4LTAuNjMyLDAuNDM0LTEuMDcsMC40MzRjLTAuMzU3LDAtMC42NzEtMC4xMDUtMC45NDctMC4zMTUNCgljLTAuMjc0LTAuMjA5LTAuNDE0LTAuNTExLTAuNDE0LTAuOTAzYzAtMC4xNiwwLjA0NC0wLjMzNiwwLjEyOS0wLjUzMmMwLjA1Ny0wLjEzMiwwLjA4NS0wLjIyOSwwLjA4NS0wLjI5NQ0KCWMwLTAuMzI1LTAuMjQ4LTAuNDg5LTAuNzQzLTAuNDg5Yy0wLjM1NywwLTAuNjczLDAuMTI4LTAuOTQ3LDAuMzg2Yy0wLjI3OCwwLjI1NS0wLjQxNCwwLjYxMy0wLjQxNCwxLjA3DQoJYzAsMC4zOTMsMC4xMjcsMC43NjQsMC4zNzgsMS4xMTRjMC4yNSwwLjM1MSwwLjkxNSwwLjkxNCwxLjk4OCwxLjY4OGMxLjAzNywwLjc0NywxLjc2MSwxLjQzNiwyLjE3LDIuMDY3DQoJYzAuNDEyLDAuNjMsMC42MTcsMS4zNDIsMC42MTcsMi4xMzVjMCwxLjI2LTAuNDA1LDIuMjM4LTEuMjE5LDIuOTM0Yy0wLjgxMSwwLjY5Ni0xLjc3OSwxLjA0Ny0yLjg5OSwxLjA0Nw0KCWMtMS4wNjUsMC0xLjkyNy0wLjI1Ni0yLjU4NS0wLjc2NmMtMC42NTgtMC41MDktMC45ODctMS4xNTYtMC45ODctMS45MzljMC0wLjQzLDAuMTMxLTAuODAxLDAuMzkyLTEuMTEyDQoJYzAuMjYtMC4zMTMsMC42MzktMC40NjgsMS4xMzQtMC40NjhjMC44OTgsMCwxLjM0NiwwLjQyMiwxLjM0NiwxLjI3MmMwLDAuMTQtMC4wMjksMC4zMi0wLjA4NiwwLjU0Ng0KCWMtMC4wNTgsMC4yMDUtMC4wODYsMC4zNS0wLjA4NiwwLjQzNGMwLDAuNDU5LDAuMzI4LDAuNjg4LDAuOTgxLDAuNjg4YzAuNDk3LDAsMC45MDgtMC4xNTYsMS4yMzUtMC40NjgNCgljMC4zMjgtMC4zMTMsMC40OTItMC42NzEsMC40OTItMS4wNzFjMC0wLjQzOS0wLjE0My0wLjg0My0wLjQyOC0xLjIxM2MtMC4yODUtMC4zNy0wLjg0My0wLjg3MS0xLjY3NS0xLjUwNw0KCWMtMS4xMi0wLjg1OC0xLjkwOS0xLjYtMi4zNjUtMi4yMjFjLTAuNDU5LTAuNjE5LTAuNjg4LTEuMzY1LTAuNjg4LTIuMjMzYzAtMS4xMTIsMC4zOTMtMi4wMTMsMS4xNzctMi43MDUNCglDMTcuNjgsNTkuMTI0LDE4LjU3Niw1OC43NzgsMTkuNTg1LDU4Ljc3OCIvPg0KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTc2LjgyNiw1OC43NzhjMC45MTYsMCwxLjY2OSwwLjIzMSwyLjI2MiwwLjY4NmMwLjU5MywwLjQ1OSwwLjg5LDEuMDM3LDAuODksMS43MzcNCgljMCwwLjQwMi0wLjEzOSwwLjc0Ni0wLjQxMiwxLjAzNmMtMC4yNzYsMC4yODktMC42MzMsMC40MzQtMS4wNjksMC40MzRjLTAuMzU0LDAtMC42Ny0wLjEwNS0wLjk0Ny0wLjMxNQ0KCWMtMC4yNzQtMC4yMS0wLjQxMS0wLjUxMS0wLjQxMS0wLjkwMmMwLTAuMTU5LDAuMDQzLTAuMzM1LDAuMTI5LTAuNTMxYzAuMDU1LTAuMTMyLDAuMDgyLTAuMjI5LDAuMDgyLTAuMjk0DQoJYzAtMC4zMjgtMC4yNDYtMC40OS0wLjc0Mi0wLjQ5Yy0wLjM1NCwwLTAuNjY4LDAuMTI3LTAuOTQ0LDAuMzg1Yy0wLjI3NywwLjI1Ni0wLjQxNiwwLjYxMy0wLjQxNiwxLjA3MQ0KCWMwLDAuMzksMC4xMjYsMC43NjIsMC4zNzksMS4xMTNjMC4yNTMsMC4zNDksMC45MTUsMC45MTIsMS45ODcsMS42ODVjMS4wMzcsMC43NSwxLjc2LDEuNDM2LDIuMTcxLDIuMDY0DQoJYzAuNDA5LDAuNjMxLDAuNjE2LDEuMzQyLDAuNjE2LDIuMTM3YzAsMS4yNTktMC40MDUsMi4yMzYtMS4yMTcsMi45MzJjLTAuODEzLDAuNjk1LTEuNzc5LDEuMDQ0LTIuODk5LDEuMDQ0DQoJYy0xLjA2MywwLTEuOTI3LTAuMjU2LTIuNTgyLTAuNzYzYy0wLjY1OC0wLjUxLTAuOTg2LTEuMTU3LTAuOTg2LTEuOTM5YzAtMC40MywwLjEyOS0wLjgwMSwwLjM5NC0xLjExMQ0KCWMwLjI2LTAuMzEyLDAuNjM3LTAuNDY5LDEuMTMxLTAuNDY5YzAuODk2LDAsMS4zNDYsMC40MjQsMS4zNDYsMS4yNzNjMCwwLjEzOS0wLjAyOSwwLjMyLTAuMDg1LDAuNTQ0DQoJYy0wLjA2LDAuMjA2LTAuMDg0LDAuMzUxLTAuMDg0LDAuNDM1YzAsMC40NTcsMC4zMjMsMC42ODgsMC45NzksMC42ODhjMC40OTQsMCwwLjkwNS0wLjE1NSwxLjIzMi0wLjQ2OQ0KCWMwLjMyOC0wLjMxMiwwLjQ5MS0wLjY3LDAuNDkxLTEuMDdjMC0wLjQzOS0wLjE0NC0wLjg0NC0wLjQyOS0xLjIxYy0wLjI4MS0wLjM3My0wLjg0LTAuODczLTEuNjcyLTEuNTA3DQoJYy0xLjExOS0wLjg1OS0xLjkxLTEuNTk5LTIuMzY3LTIuMjJjLTAuNDU1LTAuNjE5LTAuNjg1LTEuMzY0LTAuNjg1LTIuMjMzYzAtMS4xMDgsMC4zOTItMi4wMTEsMS4xNzUtMi43MDENCglDNzQuOTI2LDU5LjEyNyw3NS44MTcsNTguNzc4LDc2LjgyNiw1OC43NzgiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik04NC44LDYwLjYxNmgtMC40ODZjLTAuMjE1LDAtMC4zMTgtMC4wOTItMC4zMTgtMC4yNzh2LTAuNjk0YzAtMC4xOTUsMC4xMDItMC4zNzEsMC4zMDctMC41MjgNCgljMC4yNjgtMC4xOTYsMC40NC0wLjQxNCwwLjUxNC0wLjY2M2MwLjA3NC0wLjI0MywwLjExMy0wLjY0NSwwLjExMy0xLjJ2LTIuMjhjMC0wLjIyMywwLjE0Ni0wLjM1NCwwLjQ0My0wLjM5bDEuNjkzLTAuMTgNCgljMC4xNDgtMC4wMiwwLjI0OC0wLjAyOCwwLjI5NS0wLjAyOGMwLjEyNywwLDAuMTk1LDAuMTEzLDAuMTk1LDAuMzM1djQuNDA2aDEuNDE2YzAuMjcxLDAsMC40MDIsMC4xMDYsMC40MDIsMC4zMTh2MC44NDgNCgljMCwwLjIyMy0wLjEwNSwwLjMzNS0wLjMxOCwwLjMzNWgtMS41djguNDUxYzAsMC45MTksMC4yOCwxLjA5NywwLjg0OCwxLjA5N2MwLjEyOCwwLDAuMjY3LTAuMDE4LDAuNDE0LTAuMDU1DQoJYzAuMTA0LTAuMDI3LDAuMTg1LTAuMDQsMC4yMzgtMC4wNGMwLjE2NCwwLDAuMjczLDAuMDYyLDAuMzE4LDAuMTkzbDAuMjA5LDAuOTQ2YzAuMDI3LDAuMDU2LDAuMDQzLDAuMDk5LDAuMDQzLDAuMTI1DQoJYzAsMC4yMDMtMC4zMDcsMC40NTEtMC45MiwwLjc0NGMtMC42MTEsMC4yOTEtMS4xODYsMC40MzgtMS43MjEsMC40MzhjLTEuNDU3LDAtMi4xODctMC45MDQtMi4xODctMi43MTFMODQuOCw2MC42MTZMODQuOCw2MC42MTZ6Ig0KCS8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzEuNDIyLDU4Ljc4OWMtMC4xNzksMC0wLjI2NywwLjA4Mi0wLjI2NywwLjI0NXYwLjY3OGMwLDAuMDcyLDAuMDcxLDAuMTc2LDAuMjE0LDAuMzA0DQoJYzAuMjQsMC4yMTgsMC4zNTgsMC40MzQsMC4zNTgsMC42NDVsMC4wMDksNC45NWwwLDB2NC4xMWMwLDAuNTc0LTAuNDY3LDEuMDQyLTEuMDQzLDEuMDQyYy0wLjU3NywwLTEuMDQzLTAuNDY4LTEuMDQzLTEuMDQydi00LjExDQoJdi00LjI5NFY1OC43OGwtMy4wNDIsMC4wMWMtMC4xODMsMC0wLjI3NSwwLjA4Mi0wLjI3NSwwLjI0NXYwLjY3OGMwLDAuMDcyLDAuMDczLDAuMTc2LDAuMjIxLDAuMzA0DQoJYzAuMjQ4LDAuMjE4LDAuMzcxLDAuNDM0LDAuMzcxLDAuNjQ1djQuMjM5djAuNzExdjMuMTkzYzAsMi4wNTUsMS42NjUsMy43MjEsMy43MiwzLjcyMXMzLjcyMS0xLjY2NiwzLjcyMS0zLjcyMVY2NS42MXYtMC43MTENCgl2LTYuMTJMMzEuNDIyLDU4Ljc4OXoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00MS4zNjEsNjkuOTQzaC0xLjM2OWwwLjc1Ni0xLjgyMWMwLjQ2NywwLjA3OCwwLjg2LDAuMTE1LDEuMTc2LDAuMTE1YzAuMTc2LDAsMC4zNDQtMC4wMTIsMC41MDktMC4wMjkNCgljMC40OTQtMC4wMjQsMC45NjEtMC4xODYsMS4zODMtMC40NDljMC4wNDUtMC4wMjgsMC4wOS0wLjA1NywwLjEzNC0wLjA4NmMwLjAyMS0wLjAxNiwwLjA0My0wLjAzLDAuMDY0LTAuMDQ3DQoJYzAuMjcyLTAuMTksMC41Mi0wLjQyNCwwLjczNi0wLjcwNWMwLjA4Ny0wLjExNCwwLjE2OC0wLjIzMiwwLjI0NC0wLjM1NGMwLjUyNi0wLjgxNywwLjg0Ni0xLjg3NiwwLjg0Ni0zLjAzDQoJYzAtMS42MzItMC41ODItMi45OTYtMS41MTQtMy44MTdsMC42MjUtMS41MTZjMC4xMjItMC4yOTQtMC4wNTMtMC42NDUtMC4zOS0wLjc4NGwtMC4wNzctMC4wMzENCgljLTAuMzM3LTAuMTQyLTAuNzA5LTAuMDE1LTAuODMyLDAuMjc5bC0wLjU1OSwxLjM1NGMtMC4xMzgtMC4wNC0wLjI4LTAuMDc0LTAuNDI0LTAuMDk3Yy0wLjI3NS0wLjA1Ni0wLjU2Mi0wLjA4Mi0wLjg2MS0wLjA4Mg0KCWMtMS4zMzksMC0yLjMzNCwwLjQ0NS0yLjk4MiwxLjMzOWMtMC42NSwwLjg5MS0wLjk3NSwyLjAyMS0wLjk3NSwzLjM4N2MwLDEuNzQ4LDAuNTU2LDMuMDg1LDEuNjY2LDQuMDEzbC0xLjY1MSwzLjk2OQ0KCWMtMC4xNDksMC4zNzMtMC4yMjMsMC42MjUtMC4yMjMsMC43NThjMCwwLjE4NCwwLjE1OSwwLjI3MywwLjQ3NCwwLjI3M2MwLjE3LDAsMC40MjgtMC4wMSwwLjc3NC0wLjAyOQ0KCWMwLjY3NS0wLjAyNywxLjI1LTAuMDQsMS43MjYtMC4wNGMyLjM1OCwwLDMuNTM5LDAuNTE0LDMuNTM5LDEuNTQ1YzAsMC40NzktMC4yMzEsMC44NzgtMC42OTMsMS4yMDQNCgljLTAuNDYsMC4zMjYtMS4wMTMsMC40ODgtMS42NTYsMC40ODhjLTAuNTA3LDAtMC45OTgtMC4xMTEtMS40NzItMC4zM2MwLjEzNy0wLjI2LDAuMjA3LTAuNDg4LDAuMjA3LTAuNjg4DQoJYzAtMC4zMzUtMC4xMzEtMC42MTEtMC4zOTYtMC44MzJjLTAuMjYxLTAuMjE5LTAuNTg1LTAuMzI4LTAuOTc0LTAuMzI4Yy0wLjQxNiwwLTAuNzUzLDAuMTI0LTEuMDEyLDAuMzc5DQoJYy0wLjI1NSwwLjI1NC0wLjM4OCwwLjU3LTAuMzg4LDAuOTUyYzAsMC42NzEsMC4zMzYsMS4yLDEuMDA2LDEuNTkzYzAuNjY5LDAuMzkyLDEuNTg5LDAuNTg2LDIuNzU4LDAuNTg2DQoJYzEuNDY3LDAsMi42NTQtMC4zMzIsMy41NjItMC45OTRjMC45MDctMC42NjYsMS4zNjEtMS41OCwxLjM2MS0yLjc0NkM0Ni40NjIsNzEuMDczLDQ0Ljc2MSw2OS45NDMsNDEuMzYxLDY5Ljk0M3ogTTQwLjYzMyw2MS4zNDYNCgljMC0wLjU4NCwwLjQ3NS0xLjA2MSwxLjA2MS0xLjA2MXMxLjA2MiwwLjQ3NywxLjA2MiwxLjA2MXY0LjExNmMwLDAuNTg3LTAuNDc2LDEuMDYyLTEuMDYyLDEuMDYyYy0wLjU4NSwwLTEuMDYxLTAuNDc1LTEuMDYxLTEuMDYyDQoJVjYxLjM0NnoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik01My4wMzMsNjkuOTQzaC0xLjM2OGwwLjc1NS0xLjgyMWMwLjQ2OCwwLjA3OCwwLjg2LDAuMTE1LDEuMTc2LDAuMTE1YzAuMTc2LDAsMC4zNDUtMC4wMTIsMC41MDgtMC4wMjkNCgljMC40OTQtMC4wMjQsMC45NjItMC4xODYsMS4zODQtMC40NDljMC4wNDYtMC4wMjgsMC4wOS0wLjA1NywwLjEzNS0wLjA4NmMwLjAyMS0wLjAxNiwwLjA0Mi0wLjAzLDAuMDYzLTAuMDQ3DQoJYzAuMjcyLTAuMTksMC41Mi0wLjQyNCwwLjczNy0wLjcwNWMwLjA4Ny0wLjExNCwwLjE2Ny0wLjIzMiwwLjI0My0wLjM1NGMwLjUyNi0wLjgxNywwLjg0Ni0xLjg3NiwwLjg0Ni0zLjAzDQoJYzAtMS42MzItMC41ODItMi45OTYtMS41MTQtMy44MTdsMC42MjYtMS41MTZjMC4xMjItMC4yOTQtMC4wNTQtMC42NDUtMC4zOTEtMC43ODRsLTAuMDc3LTAuMDMxDQoJYy0wLjMzNy0wLjE0Mi0wLjcxLTAuMDE1LTAuODMyLDAuMjc5bC0wLjU2LDEuMzU0Yy0wLjEzOC0wLjA0LTAuMjc5LTAuMDc0LTAuNDI1LTAuMDk3Yy0wLjI3NC0wLjA1Ni0wLjU2Mi0wLjA4Mi0wLjg2MS0wLjA4Mg0KCWMtMS4zMzksMC0yLjMzMywwLjQ0NS0yLjk4MiwxLjMzOWMtMC42NDksMC44OTEtMC45NzQsMi4wMjEtMC45NzQsMy4zODdjMCwxLjc0OCwwLjU1NiwzLjA4NSwxLjY2Niw0LjAxM2wtMS42NTEsMy45NjkNCgljLTAuMTQ5LDAuMzczLTAuMjIzLDAuNjI1LTAuMjIzLDAuNzU4YzAsMC4xODQsMC4xNTksMC4yNzMsMC40NzUsMC4yNzNjMC4xNjgsMCwwLjQyOC0wLjAxLDAuNzc0LTAuMDI5DQoJYzAuNjc0LTAuMDI3LDEuMjUtMC4wNCwxLjcyNS0wLjA0YzIuMzU4LDAsMy41NCwwLjUxNCwzLjU0LDEuNTQ1YzAsMC40NzktMC4yMywwLjg3OC0wLjY5MiwxLjIwNA0KCWMtMC40NiwwLjMyNi0xLjAxNCwwLjQ4OC0xLjY1NiwwLjQ4OGMtMC41MDgsMC0wLjk5OC0wLjExMS0xLjQ3MS0wLjMzYzAuMTM2LTAuMjYsMC4yMDctMC40ODgsMC4yMDctMC42ODgNCgljMC0wLjMzNS0wLjEzMi0wLjYxMS0wLjM5Ni0wLjgzMmMtMC4yNi0wLjIxOS0wLjU4NS0wLjMyOC0wLjk3My0wLjMyOGMtMC40MTYsMC0wLjc1MywwLjEyNC0xLjAxMSwwLjM3OQ0KCWMtMC4yNTYsMC4yNTQtMC4zODgsMC41Ny0wLjM4OCwwLjk1MmMwLDAuNjcxLDAuMzM1LDEuMiwxLjAwNSwxLjU5M2MwLjY2OSwwLjM5MiwxLjU4OSwwLjU4NiwyLjc1OSwwLjU4Ng0KCWMxLjQ2NiwwLDIuNjUzLTAuMzMyLDMuNTYyLTAuOTk0YzAuOTA3LTAuNjY2LDEuMzYxLTEuNTgsMS4zNjEtMi43NDZDNTguMTM0LDcxLjA3Myw1Ni40MzMsNjkuOTQzLDUzLjAzMyw2OS45NDN6IE01Mi4zMDUsNjEuMzQ2DQoJYzAtMC41ODQsMC40NzUtMS4wNjEsMS4wNjEtMS4wNjFjMC41ODUsMCwxLjA2MSwwLjQ3NywxLjA2MSwxLjA2MXY0LjExNmMwLDAuNTg3LTAuNDc1LDEuMDYyLTEuMDYxLDEuMDYyDQoJYy0wLjU4NiwwLTEuMDYxLTAuNDc1LTEuMDYxLTEuMDYyVjYxLjM0NnoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik02Ny45MzEsNjAuMjI0Yy0wLjY4My0wLjk3NC0xLjU4LTEuNDYxLTIuNjkyLTEuNDYxYy0xLjI1MywwLTIuMjUxLDAuNjI3LTIuOTk0LDEuODgyDQoJYy0wLjc0NCwxLjI1Ni0xLjExNSwyLjk3OS0xLjExNSw1LjE3MWMwLDIuMjU5LDAuMzkyLDMuOTU3LDEuMTc3LDUuMDg4YzAuNzg2LDEuMTM2LDEuODQ2LDEuNzAyLDMuMTg0LDEuNzAyDQoJYzIuMDE4LDAsMy4xMzUtMS4yNCwzLjM1Mi0zLjcyNWwtMS40OTYtMC4yNTRjLTAuMjcyLDEuMzY5LTAuODc1LDIuMDQ3LTEuNTg0LDIuMDQ3Yy0wLjYwOSwwLTEuMTEzLTAuMzM2LTEuNDQ5LTEuMDA2DQoJYy0wLjMyMS0wLjY0My0wLjM2Ny0xLjY0Ni0wLjM2Ny0yLjkxdi0xLjE1Mmg0LjY1N2MwLjIzNCwwLDAuMzUzLTAuMTEzLDAuMzUzLTAuMzM2di0xLjE4Mw0KCUM2OC45NTUsNjIuNDg1LDY4LjYxNCw2MS4xOTcsNjcuOTMxLDYwLjIyNHogTTY2LjE4OCw2My42MDdjMCwwLjQ2My0wLjM3NSwwLjg0LTAuODM4LDAuODRjLTAuNDY0LDAtMC44MzktMC4zNzctMC44MzktMC44NFY2MS41Mg0KCWMwLTAuNDYzLDAuMzc1LTAuODQxLDAuODM5LTAuODQxYzAuNDYzLDAsMC44MzgsMC4zNzgsMC44MzgsMC44NDFWNjMuNjA3eiIvPg0KPHBhdGggZmlsbD0iI0ZGMzEzMSIgZD0iTTExMi44ODEsNTguNjc1Yy0xLjE4NSwwLTIuMTU5LDAuNTM4LTIuOTMyLDEuNjE4Yy0wLjc3MSwxLjA3Ny0xLjE1NywyLjc5MS0xLjE1Nyw1LjE0Mw0KCWMwLDIuMjQ5LDAuMzcsMy45NDEsMS4xMDcsNS4wODRjMC43NCwxLjE0NSwxLjc5MSwxLjcxNiwzLjE2LDEuNzE2YzEuMzUsMCwyLjM4MS0wLjU4MywzLjA5OS0xLjc0OA0KCWMwLjcxNi0xLjE2NSwxLjA3My0yLjgyMSwxLjA3My00Ljk3QzExNy4yMzEsNjAuOTU0LDExNS43ODEsNTguNjc1LDExMi44ODEsNTguNjc1eiBNMTE0LjIwOSw2OC45OTMNCgljMCwwLjY0Ni0wLjUyMiwxLjE3Mi0xLjE2OSwxLjE3MnMtMS4xNy0wLjUyNC0xLjE3LTEuMTcydi03LjA1OWMwLTAuNjQ2LDAuNTIxLTEuMTcsMS4xNy0xLjE3YzAuNjQ2LDAsMS4xNjksMC41MjQsMS4xNjksMS4xNw0KCVY2OC45OTN6Ii8+DQo8cGF0aCBmaWxsPSIjRkYzMTMxIiBkPSJNOTYuNDAxLDY3LjcxM2MtMS45MzQsMC0zLjUsMS41NjYtMy41LDMuNDk4YzAsMS45MzYsMy41LDYuNjU0LDMuNSw2LjY1NHMzLjUwMi00LjcyLDMuNTAyLTYuNjU0DQoJQzk5LjkwMyw2OS4yOCw5OC4zMzUsNjcuNzEzLDk2LjQwMSw2Ny43MTN6IE05Ni40MDMsNzIuMzkzYy0wLjc1NCwwLTEuMzY3LTAuNjExLTEuMzY3LTEuMzY3YzAtMC43NTQsMC42MTMtMS4zNjUsMS4zNjctMS4zNjUNCgljMC43NTUsMCwxLjM2NSwwLjYxMSwxLjM2NSwxLjM2NVM5Ny4xNTgsNzIuMzkzLDk2LjQwMyw3Mi4zOTN6Ii8+DQo8Zz4NCgk8cGF0aCBmaWxsPSIjRkYzMTMxIiBkPSJNMTA1Ljg0Miw2OS42MjRjLTAuNDQtMC4yMDctMC43MjYtMC42NTItMC43MjYtMS4xMzh2LTIuODI3di0wLjY4NXYtMi40NTMNCgkJYzAtMC4wMTctMC4wMDItMC4wMzItMC4wMDQtMC4wNDZjMC0wLjAzNiwwLjAwNC0wLjA3LDAuMDA0LTAuMTA1YzAtMS42NzEtMS4wNzctMy4xMTYtMi42ODItMy41OTkNCgkJYy0wLjAyMy0wLjAwOC0wLjA0OS0wLjAxMy0wLjA3NC0wLjAxM2MtMC4xMDQsMC0wLjE5OSwwLjA2MS0wLjI0LDAuMTYxbC0xLjA1OSwyLjU1M2MtMC4wNTIsMC4xMjYsMC4wMDQsMC4yNzYsMC4xMzEsMC4zMzMNCgkJYzAuNDQsMC4yMDcsMC43MjYsMC42NTMsMC43MjYsMS4xMzV2Mi4wMzR2MC43OTV2Mi43NjV2MC4zNzNjMCwwLjAxNiwwLjAwMiwwLjAzMywwLjAwNSwwLjA0OQ0KCQljLTAuMDAzLDAuMDMzLTAuMDA1LDAuMDY4LTAuMDA1LDAuMTA0YzAsMS42NywxLjA3NywzLjExNSwyLjY4MSwzLjZjMC4wMjQsMC4wMDgsMC4wNDksMC4wMTIsMC4wNzQsMC4wMTINCgkJYzAuMTA0LDAsMC4xOTktMC4wNjIsMC4yNC0wLjE2MmwxLjA1OS0yLjU1MUMxMDYuMDI0LDY5LjgyOSwxMDUuOTY3LDY5LjY4MiwxMDUuODQyLDY5LjYyNHoiLz4NCgk8cGF0aCBmaWxsPSIjRkYzMTMxIiBkPSJNMTAzLjAzMiw1NC4xMTJjMC40NzksMCwwLjg3NiwwLjE2LDEuMTk5LDAuNDgyYzAuMzE5LDAuMzIsMC40NzksMC43MTEsMC40NzksMS4xNjkNCgkJYzAsMC40NS0wLjE2LDAuODM3LTAuNDc5LDEuMTU2Yy0wLjMyMywwLjMyLTAuNzA3LDAuNDgyLTEuMTU1LDAuNDgyYy0wLjQ2MSwwLTAuODUxLTAuMTYyLTEuMTczLTAuNDgyDQoJCWMtMC4zMi0wLjMxOS0wLjQ4LTAuNzA2LTAuNDgtMS4xNTZjMC0wLjQ3OCwwLjE2Ny0wLjg3MSwwLjUwMi0xLjE4M0MxMDIuMjU4LDU0LjI2OCwxMDIuNjI3LDU0LjExMiwxMDMuMDMyLDU0LjExMiIvPg0KPC9nPg0KPC9zdmc+DQo=" />        </a>
 
         <nav class="header_nav top-menu">
-          <a class="top-menu_i link def-transition js-slide-to" href="#about">О приложении</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-looks">Как выглядит?</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-works">Как работает?</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#about">О проекте</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-looks">Уровни локации</a>
           <a class="top-menu_i link def-transition js-slide-to" href="#advantages">Преимущества</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#partnership">Партнерство</a>
         </nav>
-      </div>
-    </header><!-- header end -->
 
+        <span class="header_phone">8 812 640 76 46</span>
+        <a class="header_btn btn">Разместить рекламу</a>
+      </div>
+    </header>
+
+    <!-- Ваша реклама -->
+    <section class="your-adv" id="yourAdv">
+      <div class="your-adv_cnt">
+        <h2 class="your-adv_t title">Ваша реклама</h2>
+        в геонацеленной поисковой системе
+        Suggest.io
+      </div>
+      <div class="your-adv_geo"></div>
+      <div class="your-adv_btns">
+        <a class="btn __major __size-M">Узнать больше</a>
+        <a class="btn __helper-white __size-M __list">Демо выдача</a>
+      </div>
+    </section>
+
+    <!-- Цена -->
+    <section class="price" id="price">
+      <div class="price_green">
+        <div class="price_t">
+          Стоимость размещения рекламы в Suggest.io начинается
+          <div class="title">от 200 руб./месяц.</div>
+        </div>
+      </div>
+      <div class="price_white">
+        <div class="price_cnt">
+          <p class="price_text __major">
+            Поисковая выдача Suggest.io зависит от<br/>места, в котором находится<br/>пользователь
+          </p>
+          <p class="price_text">
+            Пользователи Suggest.io ищут информацию о товарах и услугах в шаговой доступности, в своем районе, во всем Санкт-Петербурге и видят рекламу на экранах своих
+            мобильных коммуникаторов
+          </p>
+        </div>
+        <div class="price_fingers"></div>
+        <div class="price_map">
+          <div class="price_map-inner">
+            <p class="price_map-text">
+              Выдача рекламных предложений<br/>в рамках заданных<br/>территорий
+            </p>
+            <a class="btn __helper-green __size-M">Подробнее</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Индивидуальная формировка -->
+    <section class="individual" id="individual">
+      <div class="individual_red">
+        <div class="individual_red-inner">
+          В настоящее время<br/>
+          геонацеленная поисковая выдача Suggest.io
+          <h2 class="title">
+            Может формироваться индивидуально<br/>
+            по следующим локациям
+          </h2>
+        </div>
+      </div>
+      <div class="individual_white">
+        <div class="individual_cnt">
+          <p class="individual_text __major">
+            Для всей территории/всех районов<br/>
+            Санкт-Петербурга<br/>
+            одновременно.
+          </p>
+          <p class="individual_text __major">
+            Для любого из 18 районов<br/>
+            Санкт-Петербурга.
+          </p>
+          <p class="individual_text __major">
+            Для крупнейших торговых центров<br/>
+            Санкт-Петербурга.
+          </p>
+          <p class="individual_text">
+            В зависимости от масштаба вашего бизнеса и характеристик вашей целевой аудитории вы можете разместить свою рекламу в геонацеленной поисковой выдаче Suggest.io в любой локации, в нескольких локациях или во всех локациях сразу.
+          </p>
+          <div class="individual_btn">
+            <a class="btn __helper-green __size-M">Преимущества</a>
+          </div>
+        </div>
+        <div class="individual_ipad"></div>
+      </div>
+    </section>Для размещения рекламы
+    свяжитесь с нашими специалистами
+
+    <!-- Уровни размещения -->
+    <section class="levels" id="levels">
+      <div class="levels_blue">
+        <h2 class="title">Suggest.io предлагает<br/>несколько уровней размещения
+        </h2>
+        рекламы для каждой локации
+      </div>
+      <div class="levels_white">
+        <div class="levels_phone">
+          <span class="levels_phone-text __left">Каталог/рубрикатор</span>
+          <span class="levels_phone-text __right">Собственный раздел<br/>рекламодателя со всеми<br/>товарными предложениями.</span>
+          <span class="levels_phone-text __bottom">Первый экран</span>
+        </div>
+        <div class="levels_cnt">
+          <span class="levels_text">Строка <a class="link" href="">Live Search</a> дает возможность быстрого поиска товаров и услуг.</span>
+          <div class="levels_btn">
+            <a class="btn __helper-green __size-M">Попробовать</a>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </body>
 </html>
