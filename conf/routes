@@ -251,10 +251,6 @@ GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmail
 # sys.market.shop
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showEmailInviteMsg(id, isHtml: Boolean)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
-# sys.market.shop.pricelist
-GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
-POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)
-POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id: String)
 # sys.market.cats
 GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
 POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
