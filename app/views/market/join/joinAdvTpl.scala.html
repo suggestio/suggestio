@@ -1,4 +1,4 @@
-@(jf: Form[_])(implicit ctx: Context)
+@(jf: Form[_], crf: Form[_])(implicit ctx: Context)
 
 @* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
 
@@ -21,12 +21,12 @@
         <div class="adv-req-page_call-back-btn">
           <a class="siom-new-btn __size-L __fill-1 js-slide-btn" href="#callBack">Заказать обратный звонок</a>
         </div>
-        <div class="adv-req-page_call-back js-hidden" id="callBack">
+        <div class="adv-req-page_call-back @if(!crf.hasErrors) {js-hidden}" id="callBack">
 
           @_callbackRequestFormTpl(
-            jf = jf,
+            crf = crf,
             btnClass = "blue",
-            submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+            submitCall = routes.MarketJoin.callbackRequestSubmit(),
             isWifi = false
           )
 

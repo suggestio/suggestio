@@ -26,9 +26,52 @@ import MarketLkAdnEdit.logoKM
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
 
-  // Форма "запросить звонок" с капчей, именем, телефоном и временем прозвона.
-  //val callbackRequestFormM = Form(mapping(
-  //))
+  /** Маппинг формы запроса обратного звонка с капчей, именем, телефоном и временем прозвона. */
+  private def callbackRequestFormM = {
+    Form(
+      mapping(
+        "name"  -> nameM,
+        "phone" -> phoneM,
+        CAPTCHA_ID_FN     -> Captcha.captchaIdM,
+        CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
+      )
+      {(name, phone, _, _) =>
+        val mcMeta = MCompanyMeta(name = name, officePhones = List(phone))
+        val mc = MCompany(mcMeta)
+        MInviteRequest(
+          name = s"Запрос звонка от '$name' тел $phone",
+          reqType = InviteReqTypes.Adv,
+          company = Left(mc)
+        )
+      }
+      {mir =>
+        val name = unapplyCompanyName(mir)
+        val phone = unapplyOfficePhone(mir)
+        Some((name, phone, "", ""))
+      }
+    )
+  }
+
+  /**
+   * Сабмит формы запроса обратного вызова.
+   * @return
+   */
+  def callbackRequestSubmit = MaybeAuth.async { implicit request =>
+    val formBinded = callbackRequestFormM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug("callbackRequestSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+        NotAcceptable(joinAdvTpl(advJoinFormM, formWithErrors))
+      },
+      {mir =>
+        mir.save.map { irId =>
+          sendEmailNewIR(irId, mir)
+          rmCaptcha(formBinded, mirSavedRdr(irId))
+        }
+      }
+    )
+  }
+
 
 
 
@@ -353,7 +396,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
   def joinAdvRequest = MaybeAuth { implicit request =>
-    Ok(joinAdvTpl(advJoinFormM))
+    Ok(joinAdvTpl(advJoinFormM, callbackRequestFormM))
   }
 
   /**
@@ -365,7 +408,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     formBinded.fold(
       {formWithErrors =>
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(joinAdvTpl(formWithErrors))
+        NotAcceptable(joinAdvTpl(formWithErrors, callbackRequestFormM))
       },
       {case (mir, logoOpt) =>
         assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
