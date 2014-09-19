@@ -141,8 +141,9 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
             }
           } map { _ =>
             // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-            val result = Redirect(routes.Ident.recoverPwAccepted(email1))
-            rmCaptcha(formBinded, result)
+            rmCaptcha(formBinded){
+              Redirect(routes.Ident.recoverPwAccepted(email1))
+            }
           }
         }
       )

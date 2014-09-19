@@ -1,0 +1,21 @@
+@(content: Html, withCallTo: Boolean = true)(implicit ctx: Context)
+
+@* Обрамляющая верстка в /m, отображаемая только на телефоне. *@
+
+<a class="index-page_logo-link" href="@routes.Market.index" >
+  <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+</a>
+
+@content
+
+@if(withCallTo) {
+  <div class="adv-req-page_or-text">Или позвоните нам сами</div>
+
+  <div class="ovh">
+    <a class="adv-req-page_call-btn" href="tel:88126407646"></a>
+  </div>
+}
+
+<div class="adv-req-page_how-it-works">
+  <a class="siom-new-btn __size-L __color-1" href="@routes.Market.marketBooklet"> Как это работает? </a>
+</div>

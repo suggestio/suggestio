@@ -61,8 +61,7 @@ object MInviteRequest
   override val ES_TYPE_NAME = "invReq"
 
   override def dummy(id: Option[String], version: Option[Long]): T = {
-    MInviteRequest(id = id, versionOpt = version, reqType = null, company = null,
-      adnNode = null, contract = null, balance = null, emailAct = null, name = "")
+    MInviteRequest(id = id, versionOpt = version, reqType = null, company = null, name = "")
   }
 
   override def generateMappingStaticFields: List[Field] = List(

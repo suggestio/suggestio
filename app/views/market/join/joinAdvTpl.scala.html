@@ -1,4 +1,4 @@
-@(jf: Form[_], crf: Form[_])(implicit ctx: Context)
+@(jf: Form[_])(implicit ctx: Context)
 
 @* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
 
@@ -7,42 +7,20 @@
 
 @joinBase("Разместить рекламу") {
 
-
   <div class="body __responsive index-page_cnt">
 
     <div class="body_cnt __responsive adv-req-page">
 
       <div class="phone-visible">
 
-        <a class="index-page_logo-link" href="@routes.Market.index" >
-          <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
-        </a>
-
-        <div class="adv-req-page_call-back-btn">
-          <a class="siom-new-btn __size-L __fill-1 js-slide-btn" href="#callBack">Заказать обратный звонок</a>
-        </div>
-        <div class="adv-req-page_call-back @if(!crf.hasErrors) {js-hidden}" id="callBack">
-
-          @_callbackRequestFormTpl(
-            crf = crf,
-            btnClass = "blue",
-            submitCall = routes.MarketJoin.callbackRequestSubmit(),
-            isWifi = false
-          )
-
-        </div>
-
-        <div class="adv-req-page_or-text">Или позвоните нам сами</div>
-
-        <div class="ovh">
-          <a class="adv-req-page_call-btn" href="tel:88126407646"></a>
-        </div>
-
-        <div class="adv-req-page_how-it-works">
-          <a class="siom-new-btn __size-L __color-1" href="@routes.Market.marketBooklet"> Как это работает? </a>
-        </div>
+        @_joinPhoneOuterTpl {
+          <div class="adv-req-page_call-back-btn">
+            <a class="siom-new-btn __size-L __fill-1" href="@routes.MarketJoin.callbackRequest()">Запросить обратный звонок</a>
+          </div>
+        }
 
       </div>
+
 
       <div class="phone-hidden">
 

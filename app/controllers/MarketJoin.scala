@@ -24,7 +24,9 @@ import MarketLkAdnEdit.logoKM
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
+
   import LOGGER._
+
 
   /** Маппинг формы запроса обратного звонка с капчей, именем, телефоном и временем прозвона. */
   private def callbackRequestFormM = {
@@ -52,6 +54,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     )
   }
 
+  /** Рендер страницы с формой обратного звонка. */
+  def callbackRequest = MaybeAuth { implicit request =>
+    Ok(callbackRequestTpl(callbackRequestFormM))
+  }
+
   /**
    * Сабмит формы запроса обратного вызова.
    * @return
@@ -61,17 +68,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     formBinded.fold(
       {formWithErrors =>
         debug("callbackRequestSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable(joinAdvTpl(advJoinFormM, formWithErrors))
+        NotAcceptable(callbackRequestTpl(formWithErrors))
       },
       {mir =>
         mir.save.map { irId =>
           sendEmailNewIR(irId, mir)
-          rmCaptcha(formBinded, mirSavedRdr(irId))
+          rmCaptcha(formBinded) {
+            Ok( callbackRequestAcceptedTpl(mir.company.left.get.meta) )
+          }
         }
       }
     )
   }
-
 
 
 
@@ -334,7 +342,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
               )
               mir2.save.map { irId =>
                 sendEmailNewIR(irId, mir2)
-                rmCaptcha(formBinded, mirSavedRdr(irId))
+                rmCaptcha(formBinded) {
+                  mirSavedRdr(irId)
+                }
               }
             }
           }
@@ -396,7 +406,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
   def joinAdvRequest = MaybeAuth { implicit request =>
-    Ok(joinAdvTpl(advJoinFormM, callbackRequestFormM))
+    Ok(joinAdvTpl(advJoinFormM))
   }
 
   /**
@@ -408,7 +418,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     formBinded.fold(
       {formWithErrors =>
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(joinAdvTpl(formWithErrors, callbackRequestFormM))
+        NotAcceptable(joinAdvTpl(formWithErrors))
       },
       {case (mir, logoOpt) =>
         assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
@@ -425,7 +435,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
           )
           mir2.save.map { irId =>
             sendEmailNewIR(irId, mir2)
-            rmCaptcha(formBinded, mirSavedRdr(irId))
+            rmCaptcha(formBinded) {
+              mirSavedRdr(irId)
+            }
           }
         }
       }

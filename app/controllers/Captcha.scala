@@ -154,7 +154,7 @@ trait CaptchaValidator extends PlayMacroLogsI {
    * @param response Http-ответ.
    * @return Модифицированный http-ответ.
    */
-  def rmCaptcha(form: Form[_], response: Result) = {
+  def rmCaptcha(form: Form[_])(response: Result): Result = {
     form.data.get(CAPTCHA_ID_FN).fold(response) { captchaId =>
       val cookieName = Captcha.cookieName(captchaId)
       response

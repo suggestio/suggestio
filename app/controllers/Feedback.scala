@@ -78,10 +78,11 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
         mail.setRecipient(FEEDBACK_RCVR_EMAILS : _*)
         val ctx = getContext2
         mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
-        // Отредиректить юзера куда-нибудь, стерев капчу из кукисов.
-        val resp = Redirect(routes.Application.index())
-          .flashing("success" -> Messages("f.feedback_sent_success")(ctx.lang))
-        rmCaptcha(formBinded, resp)
+        rmCaptcha(formBinded) {
+          // Отредиректить юзера куда-нибудь, стерев капчу из кукисов.
+          Redirect(routes.Application.index())
+            .flashing("success" -> Messages("f.feedback_sent_success")(ctx.lang))
+        }
       }
     )
   }
