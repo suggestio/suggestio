@@ -105,8 +105,6 @@ cbca_grid =
 
   fetch_spacer : (block_max_w, tmp_block, i) ->
 
-    console.log 'fetch_spacer of ' + this.spacers.length
-
     if this.spacers.length == 0
       return null
 
@@ -217,9 +215,6 @@ cbca_grid =
       cbca_grid.spacers = []
       cbca_grid.m_spacers = []
       i = 0
-
-    console.log 'cbca_grid.all_blocks'
-    console.log cbca_grid.all_blocks
 
     ## TODO : make selector configurable
 
@@ -487,24 +482,6 @@ siomart =
     layers_count : 2
     layer_dom_height : 44
     requested_node_id : undefined
-    search :
-      min_request_length : 2
-      search_delay : 500
-      queue_request : ( request ) ->
-
-        if request.length < this.min_request_length
-          return false
-
-        if typeof this.timer != 'undefined'
-          clearTimeout this.timer
-
-        cb = () ->
-          siomart.geo.search.do request
-
-        this.timer = setTimeout cb, this.search_delay
-
-      do : ( request ) ->
-        console.log 'request : ' + request
 
     position_callback : ( gp_obj ) ->
       siomart.geo.geo_position_obj = gp_obj
@@ -552,7 +529,7 @@ siomart =
     init_events : () ->
       _geo_nodes_search_dom = siomart.utils.ge('smGeoSearchField')
       siomart.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
-        console.log siomart.geo.search.queue_request this.value
+        siomart.log siomart.geo.search.queue_request this.value
 
     load_for_node_id : ( node_id ) ->
 
@@ -606,12 +583,9 @@ siomart =
       for_node_reload = for_node_reload || false
 
       if siomart.geo.loaded == true && for_node_reload == false
-        console.log 'no need to update'
         return false
 
       node_query_param = if siomart.config.mart_id then '&a.cai=' + siomart.config.mart_id else ''
-      console.log 'load nodes'
-      console.log node_query_param
 
       nodesw = if for_node_reload == false then '' else '&a.nodesw=true'
 
@@ -634,7 +608,6 @@ siomart =
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
-      console.log 'resize'
       siomart.welcome_ad.fit siomart.welcome_ad.img_dom
       window.scrollTo(0,0)
 
@@ -690,8 +663,6 @@ siomart =
       !!(window.history && history.pushState);
     navigate : ( state ) ->
       return false
-      console.log 'navigate to :'
-      console.log state
 
       if typeof siomart.focused_ads.requested_ad_id != 'undefined'
         siomart.close_focused_ads()
@@ -718,7 +689,6 @@ siomart =
       this.base_path = window.location.pathname
 
       if !this.is_supported()
-        console.log 'history api not supported'
         return false
 
       siomart.utils.add_single_listener window, 'popstate', ( event ) ->
@@ -1207,7 +1177,6 @@ siomart =
       ## Exc button
       if event.keyCode == 27
         siomart.close_focused_ads()
-        siomart.navigation_layer.back()
 
       if event.keyCode == 39
         siomart.focused_ads.next_ad()
@@ -1329,12 +1298,7 @@ siomart =
     load_more : () ->
       if this.is_load_more_requested == true || this.is_fully_loaded == true
         return false
-      console.log 'load more'
-      console.log 'loaded : ' + this.loaded
-
       this.is_load_more_requested = true
-
-      console.log this.c_url
 
       siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
 
@@ -1360,8 +1324,6 @@ siomart =
 
       url = url.replace '&a.geo=ip', ''
       siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + siomart.geo.request_query_param()
-
-      console.warn siomart.grid_ads.c_url
 
       siomart.request.perform siomart.grid_ads.c_url + '&a.size=' + siomart.config.ads_per_load
 
@@ -1532,8 +1494,6 @@ siomart =
           siomart.focused_ads.ads = data.blocks
         siomart.focused_ads.init()
 
-        console.log 'producerAds : ready'
-
     ##############################
     ## Отобразить карточки в сетке
     ##############################
@@ -1559,8 +1519,6 @@ siomart =
           siomart.grid_ads.loader.show()
 
         siomart.grid_ads.loaded += data.blocks.length
-
-        console.warn 'siomart.grid_ads.is_load_more_requested : ' + siomart.grid_ads.is_load_more_requested
 
         if siomart.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
@@ -1613,7 +1571,7 @@ siomart =
       if typeof siomart.geo.requested_node_id != 'undefined'
         node_dom = siomart.utils.ge_class document, 'gn-' + siomart.geo.requested_node_id
         first_node = node_dom[0]
-        console.log first_node
+
         if typeof first_node != 'undefined'
           layer_id = first_node.parentNode.id
           layer_id = layer_id.replace 'geoLayerNodes', ''
@@ -1656,10 +1614,7 @@ siomart =
         return false
 
       this.active_ad_index = ad_index
-      
-      console.log 'this.active_ad_index : ' + this.active_ad_index
-      console.log 'this.blocks.length : ' + this.ads.length
-      
+
       if this.active_ad_index > this.ads.length
         cb = () ->
           siomart.focused_ads.load_more_ads()
@@ -1730,8 +1685,6 @@ siomart =
         else
           siomart.focused_ads.scroll_or_move = 'move'
 
-      console.log siomart.focused_ads.scroll_or_move
-
       if siomart.focused_ads.scroll_or_move == 'scroll'
         return false
       else
@@ -1750,7 +1703,7 @@ siomart =
       this.last_x = ex
 
     touchend_event : ( event ) ->
-      console.log 'touchend'
+
       siomart.utils.addClass this.ads_container_dom, '__animated'
 
       delete siomart.focused_ads.tstart_x
@@ -1796,9 +1749,6 @@ siomart =
       siomart.styles.init()
 
     check_if_fully_loaded : () ->
-
-      console.log 'this.ads_count : ' + this.ads_count
-      console.log 'this.ads_rendered : ' + this.ads_rendered
 
       if parseInt( this.ads_count ) == parseInt( this.ads_rendered )
         this.is_fully_loaded = true
@@ -1848,8 +1798,6 @@ siomart =
 
     render_ads_receiver : () ->
 
-      console.warn 'this.is_fully_loaded : ' + this.is_fully_loaded
-
       if this.is_fully_loaded == true
         return false
 
@@ -1898,10 +1846,8 @@ siomart =
           direction = siomart.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'
 
           if direction == "right"
-            console.log 'next ad'
             siomart.focused_ads.next_ad()
           if direction == "left"
-            console.log 'prev ad'
             siomart.focused_ads.prev_ad()
 
       move : ( x, y ) ->
@@ -2061,9 +2007,6 @@ siomart =
         if sm_cat_screen_dom != null
           sm_cat_screen_dom.style.display = 'none'
         siomart.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
-
-    back : () ->
-      console.log 'navigation layer back'
 
   #########################################
   ## Показать / скрыть экран со списком магазинов
@@ -2294,6 +2237,8 @@ siomart =
   init : () ->
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
+
+    alert siomart.config.mart_id
 
     this.utils.set_vendor_prefix()
 
