@@ -1128,11 +1128,12 @@ sm =
       #######################
       ## Работа с категориями
       #######################
-      # Открыть экран с категориями
+      ## Открыть экран с категориями
       if sm.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
         sm.states.transform_state { cat_screen : {is_opened : true }, geo_screen : {is_opened : false }}
         return false
 
+      ## Переключить таб
       if sm.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
         sm.navigation_layer.show_tab 'smCategories'
 
@@ -2069,8 +2070,16 @@ sm =
     if typeof sm.shop_load_locked != 'undefined'
       return false
 
-    sm.geo.close()
     sm.shop_load_locked = true
+
+    sm.states.transform_state
+      fads :
+        is_opened : true
+        producer_id : shop_id
+        ad_id : ad_id
+
+  do_load_for_shop_id : ( shop_id, ad_id ) ->
+
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + sm.config.mart_id
 
     url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param()
@@ -2204,6 +2213,8 @@ sm =
         is_opened : false
       geo_screen :
         is_opened : false
+      fads :
+        is_opened : false
 
     cur_state : () ->
       if this.cur_state_index == -1
@@ -2219,6 +2230,7 @@ sm =
       if typeof ns.cat_class == 'undefined' then ns.cat_class = this.ds.cat_class
       if typeof ns.cat_screen == 'undefined' then ns.cat_screen = this.ds.cat_screen
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
+      if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
 
       this.push ns
 
@@ -2234,6 +2246,7 @@ sm =
 
       ns.geo_screen = if typeof stp.geo_screen != 'undefined' then stp.geo_screen else cs.geo_screen
       ns.cat_screen = if typeof stp.cat_screen != 'undefined' then stp.cat_screen else cs.cat_screen
+      ns.fads = if typeof stp.fads != 'undefined' then stp.fads else cs.fads
 
       ns.cat_id = stp.cat_id
       ns.cat_class = stp.cat_class
@@ -2306,6 +2319,11 @@ sm =
       if state.cat_screen.is_opened == false
         sm.navigation_layer.close()
 
+      ## 4. Focused ads
+      if typeof state.fads != 'undefined' && state.fads.is_opened == true
+        sm.do_load_for_shop_id state.fads.producer_id, state.fads.ad_id
+      else
+        sm.focused_ads.close()
 
   ############################
   ## Функции для инициализации
