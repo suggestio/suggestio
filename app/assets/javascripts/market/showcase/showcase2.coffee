@@ -485,7 +485,7 @@ sm =
 
     position_callback : ( gp_obj ) ->
       sm.geo.geo_position_obj = gp_obj
-      sm.geo.load_nodes( true )
+      sm.geo.load_nodes_and_reload_with_mart_id()
 
     open_layer : ( index ) ->
 
@@ -532,11 +532,8 @@ sm =
         sm.log sm.geo.search.queue_request this.value
 
     load_for_node_id : ( node_id ) ->
-
-      sm.config.index_action =
-      sm.config.mart_id = node_id
-
-      sm.load_mart()
+      sm.states.add_state
+        mart_id : node_id
 
     adjust : () ->
 
@@ -552,7 +549,6 @@ sm =
     ## Открыть экран с гео добром
     #############################
     open_screen : () ->
-      #sm.geo.requested_node_id = node_id
 
       if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
@@ -567,7 +563,7 @@ sm =
 
       console.log 'open screen'
 
-      sm.geo.load_nodes()
+      sm.geo.load_nodes( true )
 
     close_screen : () ->
 
@@ -591,20 +587,21 @@ sm =
       else
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
-    load_nodes : ( for_node_reload ) ->
-
-      for_node_reload = for_node_reload || false
-
-      if sm.geo.loaded == true && for_node_reload == false
-        return false
-
+    load_nodes_and_reload_with_mart_id : () ->
       node_query_param = if sm.config.mart_id then '&a.cai=' + sm.config.mart_id else ''
-
-      nodesw = if for_node_reload == false then '' else '&a.nodesw=true'
+      nodesw = '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
       sm.request.perform url
-      sm.geo.loaded = true
+
+    load_nodes : () ->
+
+      node_query_param = if sm.config.mart_id then '&a.cai=' + sm.config.mart_id else ''
+
+      nodesw = ''
+
+      url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
+      sm.request.perform url
 
     init : () ->
       if window.with_geo == true
@@ -1047,13 +1044,16 @@ sm =
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
         return false
 
-      ## гео добро
+      #########################################################
+      ## Элементы, отвечающие за изменение состояния geo screen
+      #########################################################
+
+      ## Открыть экран geo
       if sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
-        sm.states.transform_state
-          geo_screen :
-            is_opened : true
+        sm.states.transform_state { geo_screen : { is_opened : true } }
         return false
 
+      ## Кнопка для определения текущей геопозиции, напрямую на влияет на состояние выдачи
       if sm.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
         if sm.events.is_touch_locked
           return false
@@ -1061,17 +1061,17 @@ sm =
         sm.geo.get_current_position()
         return false
 
+      ## Кнопка закрытия экрана geo
       if sm.events.target_lookup( event.target, 'id', 'smGeoScreenCloseButton' ) != null
-        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
-        sm.geo.close()
+        sm.states.transform_state { geo_screen : { is_opened : false } }
         return false
 
+      ## Логотип-кнока
       if sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
-
-        sm.geo.open_screen( sm.config.mart_id )
-
+        sm.states.transform_state { geo_screen : { is_opened : true } }
         return false
 
+      ## Юзер нажал на ноду в списке
       geo_node_target = sm.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
 
@@ -1080,17 +1080,15 @@ sm =
 
         node_id = geo_node_target.getAttribute 'data-id'
 
-        sm.states.add_state
-          mart_id : node_id
-          cat_screen :
-            is_opened : false
-          geo_screen :
-            is_opened : false
+        sm.states.add_state {mart_id : node_id}
 
         return false
 
-      if sm.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null || sm.events.target_lookup( event.target, 'id', 'smCategoriesIndexButton' ) != null
+      ##########################################################################################
+      ## Элементы, отвечающие за изменение состояния выдачи в зависимости от выбранной категорий
+      ##########################################################################################
 
+      if sm.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null || sm.events.target_lookup( event.target, 'id', 'smCategoriesIndexButton' ) != null
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
         sm.navigation_layer.close()
@@ -1111,6 +1109,7 @@ sm =
 
         return false
 
+      ## Кнопка открытия экрана с выдачей категории
       cat_link_target = sm.events.target_lookup( event.target, 'className', 'js-cat-link' )
       if cat_link_target != null
 
@@ -1119,7 +1118,7 @@ sm =
 
         cat_id = cat_link_target.getAttribute 'data-cat-id'
         cat_class = cat_link_target.getAttribute 'data-cat-class'
-
+        
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !sm.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
           sm.load_for_cat_id cat_id, true, cat_class
@@ -1127,10 +1126,9 @@ sm =
       #######################
       ## Работа с категориями
       #######################
+      # Открыть экран с категориями
       if sm.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
-        sm.states.transform_state
-          cat_screen :
-            is_opened : true
+        sm.states.transform_state { cat_screen : {is_opened : true }}
         return false
 
       if sm.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
@@ -1139,9 +1137,10 @@ sm =
       if sm.events.target_lookup( event.target, 'id', 'smShopsTab' ) != null
         sm.navigation_layer.show_tab 'smShops'
 
+      ## Кнопка закрытия экрана с категориями
       if sm.events.target_lookup( event.target, 'id', 'smCategoriesScreenCloseButton' ) != null
-        sm.navigation_layer.close()
-        sm.search.exit()
+        sm.states.transform_state { cat_screen : {is_opened : false }}
+        return false
 
       ##############
       ## focused_ads
@@ -1382,7 +1381,7 @@ sm =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
-    
+
     sm.log 'receive_response : got some data'
     sm.warn data
 
@@ -1567,16 +1566,15 @@ sm =
 
       sm.utils.ge('smGeoNodesContent').innerHTML = data.nodes
 
+      if sm.geo.location_requested == true
+        return false
+
       gls = sm.utils.ge_class document, 'js-gnlayer'
-      #i = 0
-      #for gl in gls
-      #  gl.setAttribute 'data-index', i
-      #  gl.id = 'geoLayer' + i
-      #  i++
       sm.geo.layers_count = gls.length
 
-      if typeof sm.geo.requested_node_id != 'undefined'
-        node_dom = sm.utils.ge_class document, 'gn-' + sm.geo.requested_node_id
+      cs = sm.states.cur_state()
+      if typeof cs != 'undefined'
+        node_dom = sm.utils.ge_class document, 'gn-' + cs.mart_id
         first_node = node_dom[0]
 
         if typeof first_node != 'undefined'
@@ -1593,15 +1591,15 @@ sm =
   focused_ads :
     is_active : false
     load_more_ads_requested : false
-    
+
     load_more_ads : () ->
       if this.is_fully_loaded == true
         return false
       sm.request.perform this.curl + '&h=' + false + '&a.offset=' + this.ads.length
       this.load_more_ads_requested = true
-    
+
     scroll_or_move : undefined
-    
+
     show_ad_by_index : ( ad_index, direction ) ->
 
       if typeof this.ads == 'undefined'
@@ -1614,9 +1612,9 @@ sm =
         sm.focused_ads.ads_container_dom.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*ad_index + 'px, 0px, 0px)'
       else
         sm.focused_ads.ads_container_dom.style['transform'] = 'translate3d(-' + cbca_grid.ww*ad_index + 'px, 0px, 0px)'
-      
+
       sm.focused_ads.ads_container_dom.setAttribute 'data-x-offset', -cbca_grid.ww*ad_index
-      
+
       if ad_index == this.active_ad_index
         return false
 
@@ -1627,7 +1625,7 @@ sm =
           sm.focused_ads.load_more_ads()
 
         setTimeout cb, 400
-      
+
       if direction == '+'
         ad_c_el = sm.utils.ge('focusedAd' + ( ad_index + 1 ) )
         if ad_c_el != null
@@ -2184,7 +2182,7 @@ sm =
       _window_class = 'sm-w-400'
 
     sm.utils.ge('sioMartLayout').className = _window_class
-  
+
   ###################
   ## Состояния выдачи
   ###################
@@ -2193,25 +2191,36 @@ sm =
     requested_state : undefined
     cur_state_index : -1
 
+    ds :
+      url : '/'
+      mart_id : undefined
+      cat_screen :
+        is_opened : false
+      geo_screen :
+        is_opened : false
+
     cur_state : () ->
       if this.cur_state_index == -1
         sm.warn 'no state with index -1'
         return undefined
       this.list[this.cur_state_index]
 
-    add_state : ( state ) ->
-      sm.error 'add_state'
-      this.push state
+    add_state : ( ns ) ->
+
+      if typeof ns.url == 'undefined' then ns.url = this.ds.url
+      if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
+      if typeof ns.cat_screen == 'undefined' then ns.cat_screen = this.ds.cat_screen
+      if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
+
+      this.push ns
 
     update_state : ( sup ) -> #state_update_params
-      sm.error 'update_state'
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       this.list[this.list.length-1] = cs
 
     transform_state : ( stp ) -> #state_transform_params
-      sm.error 'transform_state'
       cs = sm.states.cur_state()
       ns = {}
 
@@ -2255,6 +2264,7 @@ sm =
       sm.warn 'process_state_2 invoked'
       sm.warn state
       this.requested_state = undefined
+
       ## 2. Экран с гео добром
       if state.geo_screen.is_opened == true
         sm.geo.open_screen()
@@ -2262,10 +2272,17 @@ sm =
       if state.geo_screen.is_opened == false
         sm.geo.close_screen()
 
+      ## 3. Экран с категориями
+      if state.cat_screen.is_opened == true
+        sm.navigation_layer.open()
+
+      if state.cat_screen.is_opened == false
+        sm.navigation_layer.close()
+
   ############################
   ## Функции для инициализации
   ############################
-  
+
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
@@ -2303,12 +2320,7 @@ sm =
     sm_id = window.siomart_id || undefined
     ## Переключиться на первичное состояние
     this.states.add_state
-      url : '/'
       mart_id : sm_id
-      cat_screen :
-        is_opened : false
-      geo_screen :
-        is_opened : false
 
 window.sm = window.siomart = sm
 sm.init()
