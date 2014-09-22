@@ -1187,7 +1187,13 @@ sm =
       ## focused_ads
       ##############
       if sm.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
-        sm.states.transform_state { fads : {is_opened : false }}
+
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
         return false
 
       target = sm.events.target_lookup( event.target, 'className', 'geo-nodes-list_layer' )
@@ -2111,7 +2117,11 @@ sm =
 
     sm.shop_load_locked = true
 
+    cs = sm.states.cur_state()
+
     sm.states.transform_state
+      cat_id : cs.cat_id
+      cat_class : cs.cat_class
       fads :
         is_opened : true
         producer_id : shop_id
@@ -2341,8 +2351,10 @@ sm =
         sm.geo.close_screen()
 
       ## 2. Карточки по категориям
-      if typeof state.cat_id != 'undefined'
+      if typeof state.cat_id != 'undefined' && sm.global_cat_id != state.cat_id
         sm.load_for_cat_id state.cat_id, state.cat_class
+
+      sm.global_cat_id = state.cat_id
 
       if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
