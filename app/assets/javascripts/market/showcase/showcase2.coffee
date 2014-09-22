@@ -552,7 +552,6 @@ sm =
     ## Открыть экран с гео добром
     #############################
     open_screen : () ->
-
       #sm.geo.requested_node_id = node_id
 
       if cbca_grid.ww <= 400
@@ -1442,7 +1441,8 @@ sm =
       container.innerHTML = data.html
       sm.utils.ge_tag('body')[0].style.overflow = 'hidden'
 
-      if data.curr_adn_id != null
+      cs = sm.states.cur_state()
+      if data.curr_adn_id != null && typeof cs.mart_id == 'undefined'
         sm.states.update_state
           mart_id : data.curr_adn_id
 
@@ -1480,6 +1480,9 @@ sm =
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
       sm.is_market_loaded = true
+
+      if typeof sm.states.requested_state != 'undefined'
+        sm.states.process_state_2 sm.states.requested_state
 
     ##########################################################
     ## Отобразить рекламные карточки для указанного продьюсера
@@ -2187,8 +2190,9 @@ sm =
   ###################
   states :
     list : []
+    requested_state : undefined
     cur_state_index : -1
-    
+
     cur_state : () ->
       if this.cur_state_index == -1
         sm.warn 'no state with index -1'
@@ -2196,16 +2200,18 @@ sm =
       this.list[this.cur_state_index]
 
     add_state : ( state ) ->
+      sm.error 'add_state'
       this.push state
 
     update_state : ( sup ) -> #state_update_params
-
+      sm.error 'update_state'
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       this.list[this.list.length-1] = cs
 
     transform_state : ( stp ) -> #state_transform_params
+      sm.error 'transform_state'
       cs = sm.states.cur_state()
       ns = {}
 
@@ -2241,7 +2247,14 @@ sm =
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
       if typeof cs == 'undefined' || cs.mart_id == undefined || cs.mart_id != state.mart_id
         sm.load_mart state
+        this.requested_state = state
+      else
+        this.process_state_2 state
 
+    process_state_2 : ( state ) ->
+      sm.warn 'process_state_2 invoked'
+      sm.warn state
+      this.requested_state = undefined
       ## 2. Экран с гео добром
       if state.geo_screen.is_opened == true
         sm.geo.open_screen()
