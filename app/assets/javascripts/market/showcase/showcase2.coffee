@@ -1089,11 +1089,11 @@ sm =
       ##########################################################################################
 
       if sm.events.target_lookup( event.target, 'id', 'smIndexButton' ) != null || sm.events.target_lookup( event.target, 'id', 'smCategoriesIndexButton' ) != null
-        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
-        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
-        sm.navigation_layer.close()
-        sm.grid_ads.load_index_ads()
-
+        sm.states.transform_state
+          cat_id : undefined
+          cat_class : undefined
+          cat_screen :
+            is_opened : false
         return false
 
       shop_link_target = sm.events.target_lookup( event.target, 'className', 'js-shop-link' )
@@ -1118,17 +1118,19 @@ sm =
 
         cat_id = cat_link_target.getAttribute 'data-cat-id'
         cat_class = cat_link_target.getAttribute 'data-cat-class'
-        
+
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !sm.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
-          sm.load_for_cat_id cat_id, true, cat_class
+          sm.states.transform_state
+            cat_id : cat_id
+            cat_class : cat_class
 
       #######################
       ## Работа с категориями
       #######################
       # Открыть экран с категориями
       if sm.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
-        sm.states.transform_state { cat_screen : {is_opened : true }}
+        sm.states.transform_state { cat_screen : {is_opened : true }, geo_screen : {is_opened : false }}
         return false
 
       if sm.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
@@ -2086,9 +2088,11 @@ sm =
 
     document.getElementById('smGridAdsWrapper').scrollTop = '0'
 
+    cs = sm.states.cur_state()
+
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
-    a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + sm.config.mart_id
+    a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
     url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param()
     sm.request.perform url
 
@@ -2190,10 +2194,12 @@ sm =
     list : []
     requested_state : undefined
     cur_state_index : -1
-
+    prev_state : undefined
     ds :
       url : '/'
       mart_id : undefined
+      cat_id : undefined
+      cat_class : undefined
       cat_screen :
         is_opened : false
       geo_screen :
@@ -2209,6 +2215,8 @@ sm =
 
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
       if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
+      if typeof ns.cat_id == 'undefined' then ns.cat_id = this.ds.cat_id
+      if typeof ns.cat_class == 'undefined' then ns.cat_class = this.ds.cat_class
       if typeof ns.cat_screen == 'undefined' then ns.cat_screen = this.ds.cat_screen
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
 
@@ -2224,10 +2232,17 @@ sm =
       cs = sm.states.cur_state()
       ns = {}
 
-      if typeof stp.geo_screen != 'undefined' then ns.geo_screen = stp.geo_screen else ns.geo_screen = cs.geo_screen
-      if typeof stp.cat_screen != 'undefined' then ns.cat_screen = stp.cat_screen else ns.cat_screen = cs.cat_screen
+      ns.geo_screen = if typeof stp.geo_screen != 'undefined' then stp.geo_screen else cs.geo_screen
+      ns.cat_screen = if typeof stp.cat_screen != 'undefined' then stp.cat_screen else cs.cat_screen
+
+      ns.cat_id = stp.cat_id
+      ns.cat_class = stp.cat_class
 
       ns.mart_id = cs.mart_id
+
+      sm.error 'transform_state'
+      sm.error ns
+
       this.push ns
 
     push : ( state ) ->
@@ -2261,16 +2276,28 @@ sm =
         this.process_state_2 state
 
     process_state_2 : ( state ) ->
+
+      cs = this.cur_state()
+
       sm.warn 'process_state_2 invoked'
       sm.warn state
       this.requested_state = undefined
 
-      ## 2. Экран с гео добром
+      ## 1. Экран с гео добром
       if state.geo_screen.is_opened == true
         sm.geo.open_screen()
 
       if state.geo_screen.is_opened == false
         sm.geo.close_screen()
+
+      ## 2. Карточки по категориям
+      if typeof state.cat_id != 'undefined'
+        sm.load_for_cat_id state.cat_id, state.cat_class
+
+      if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
+        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
+        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
+        sm.grid_ads.load_index_ads()
 
       ## 3. Экран с категориями
       if state.cat_screen.is_opened == true
@@ -2278,6 +2305,7 @@ sm =
 
       if state.cat_screen.is_opened == false
         sm.navigation_layer.close()
+
 
   ############################
   ## Функции для инициализации
