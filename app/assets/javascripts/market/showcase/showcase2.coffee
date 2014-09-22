@@ -988,17 +988,20 @@ sm =
       sm.error 'lo zero by 988'
       cbca_grid.left_offset = 0
 
-    if cbca_grid.columns > 2
+    if cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
       sm_cat_screen = sm.utils.ge('smCategoriesScreen')
       if sm_cat_screen != null
         if sm_cat_screen.style.display == "" || sm_cat_screen.style.display == "none"
+          sm.error 'lo zero by 995'
           cbca_grid.right_offset = 0
         else
           sm_cat_screen.style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
           cbca_grid.right_offset = 2
       else
+        sm.error 'lo zero by 1001'
         cbca_grid.right_offset = 0
     else
+      sm.error 'lo zero by 1004'
       cbca_grid.right_offset = 0
 
     sm.warn 'cbca_grid.left_offset : ' + cbca_grid.left_offset
