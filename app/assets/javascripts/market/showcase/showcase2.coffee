@@ -673,30 +673,15 @@ sm =
   #########################
   history :
     base_path : null
+
     is_supported : () ->
       !!(window.history && history.pushState);
+
     navigate : ( state ) ->
-      return false
-
-      if typeof sm.focused_ads.requested_ad_id != 'undefined'
-        sm.close_focused_ads()
-        return false
-
-      if state == null
-        sm.navigation_layer.close()
-        return false
-
-      if state.action == 'load_for_shop_id'
-        sm.load_for_shop_id state.shop_id, state.ad_id, false
-
-      if state.action == 'open_navigation_layer'
-        sm.navigation_layer.open( false )
-
-      if state.action == 'load_for_cat_id'
-        sm.load_for_cat_id state.cat_id, false
+      sm.log 'navigate to : ' + state.state_index
+      sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
-      return false
       history.pushState data, title, this.base_path + '#' + path
 
     init : () ->
@@ -1095,8 +1080,13 @@ sm =
           return false
 
         node_id = geo_node_target.getAttribute 'data-id'
-        sm.geo.load_for_node_id node_id
-        sm.geo.loaded = false
+
+        sm.states.add_state
+          mart_id : node_id
+          cat_screen :
+            is_opened : false
+          geo_screen :
+            is_opened : false
 
         return false
 
@@ -1443,9 +1433,6 @@ sm =
 
       ## Забиндить оконные события
       sm.bind_window_events()
-
-      ## Инициализировать history api
-      #sm.history.init()
 
       window.scrollTo 0,0
 
@@ -2200,10 +2187,17 @@ sm =
   ###################
   states :
     list : []
+    cur_state_index : -1
+    
     cur_state : () ->
-      this.list[this.list.length-1]
+      if this.cur_state_index == -1
+        sm.warn 'no state with index -1'
+        return undefined
+      this.list[this.cur_state_index]
+
     add_state : ( state ) ->
       this.push state
+
     update_state : ( sup ) -> #state_update_params
 
       cs = sm.states.cur_state()
@@ -2223,15 +2217,22 @@ sm =
 
     push : ( state ) ->
       this.process_state state
+
+      this.list = this.list.slice 0, this.cur_state_index+1
       this.list.push state
 
-    pull : () ->
+      ## state index
+      this.cur_state_index = this.list.length - 1
+      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', '/p' + this.cur_state_index
 
-      ps = if this.list.length > 1 then this.list[this.list.length-2] else undefined
+    goto : ( state_index ) ->
+      if state_index == -1
+        sio.warn 'no state with index -1'
+        return false
 
-      if typeof ps != 'undefined'
-        this.process_state ps
-        this.list.pop()
+      state = this.list[state_index]
+      this.process_state state
+      this.cur_state_index = state_index
 
     process_state : ( state ) ->
 
@@ -2283,8 +2284,8 @@ sm =
   init : () ->
 
     sm.config.host = window.siomart_host
-
     this.utils.set_vendor_prefix()
+    this.history.init()
 
     sm_id = window.siomart_id || undefined
     ## Переключиться на первичное состояние
