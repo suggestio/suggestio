@@ -553,16 +553,14 @@ sm =
       if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
-      if cbca_grid.columns > 2
-        sm.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
-        cbca_grid.left_offset = 2
-        cbca_grid.rebuild()
-
       sm.utils.ge('smGeoScreen').style.display = 'block'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
 
+      sm.rebuild_grid()
+
       console.log 'open screen'
 
+      siomart.utils.ge('smGeoScreenButton').style.display = 'none'
       sm.geo.load_nodes( true )
 
     close_screen : () ->
@@ -576,6 +574,8 @@ sm =
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
       cbca_grid.left_offset = 0
       cbca_grid.rebuild()
+
+      siomart.utils.ge('smGeoScreenButton').style.display = 'block'
 
     request_query_param : () ->
 
@@ -960,6 +960,38 @@ sm =
       ]
       result
 
+  rebuild_grid : ( do_rebuild ) ->
+
+    do_rebuild = do_rebuild || true
+
+    if cbca_grid.columns > 2
+      sm_geo_screen = sm.utils.ge('smGeoScreen')
+
+      if sm_geo_screen != null
+        if sm_geo_screen.style.display == "" || sm_geo_screen.style.display == "none"
+          cbca_grid.left_offset = 0
+        else
+          sm_geo_screen.style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+          cbca_grid.left_offset = 2
+      else
+        cbca_grid.left_offset = 0
+
+      sm_cat_screen = sm.utils.ge('smCategoriesScreen')
+      if sm_cat_screen != null
+        if sm_cat_screen.style.display == "" || sm_cat_screen.style.display == "none"
+          cbca_grid.right_offset = 0
+        else
+          sm_cat_screen.style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
+          cbca_grid.right_offset = 2
+      else
+        cbca_grid.right_offset = 0
+    else
+      cbca_grid.left_offset = 0
+      cbca_grid.right_offset = 0
+
+    if do_rebuild == true
+      cbca_grid.rebuild()
+
   ###########################
   ## Единая обработка событий
   ###########################
@@ -1311,9 +1343,6 @@ sm =
 
     load_index_ads : () ->
 
-      cbca_grid.left_offset = 0
-      cbca_grid.right_offset = 0
-
       grd_c = sm.utils.ge('smGridAdsContainer')
       url = grd_c.getAttribute 'data-index-offers-action'
 
@@ -1478,13 +1507,13 @@ sm =
         sm.init_navigation()
         sm.grid_ads.load_index_ads()
 
-
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
       sm.is_market_loaded = true
 
       if typeof sm.states.requested_state != 'undefined'
         sm.states.process_state_2 sm.states.requested_state
+
 
     ##########################################################
     ## Отобразить рекламные карточки для указанного продьюсера
@@ -1529,6 +1558,7 @@ sm =
 
         sm.grid_ads.loaded += data.blocks.length
 
+        sm.rebuild_grid( false )
         if sm.grid_ads.is_load_more_requested == false
           grid_container_dom.innerHTML = html
           cbca_grid.init()
@@ -1538,11 +1568,6 @@ sm =
 
         sm.styles.init()
 
-        if cbca_grid.ww == 320
-          if data.action == 'searchAds'
-            sm.navigation_layer.close true
-          else
-            sm.navigation_layer.close()
       else
 
         if data.action == 'searchAds'
@@ -1959,15 +1984,12 @@ sm =
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
       this.adjust()
-      if cbca_grid.columns > 2
-        sm.utils.ge('smCategoriesScreen').style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
-        cbca_grid.right_offset = 2
-        cbca_grid.rebuild()
 
       ## Скрыть кнопки хидера главного экрана
       sm.utils.addClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
       sm.utils.ge('smCategoriesScreen').style.display = 'block'
+      sm.rebuild_grid()
 
     reset_tabs : () ->
       this.show_tab this.tabs[0]
@@ -2080,7 +2102,8 @@ sm =
 
   do_load_for_shop_id : ( shop_id, ad_id ) ->
 
-    a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + sm.config.mart_id
+    cs = sm.states.cur_state()
+    a_rcvr = '&a.rcvr=' + cs.mart_id
 
     url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param()
 
@@ -2252,9 +2275,6 @@ sm =
       ns.cat_class = stp.cat_class
 
       ns.mart_id = cs.mart_id
-
-      sm.error 'transform_state'
-      sm.error ns
 
       this.push ns
 
