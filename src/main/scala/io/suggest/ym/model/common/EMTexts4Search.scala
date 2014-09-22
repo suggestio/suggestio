@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
+import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import java.{util => ju, lang => jl}
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -47,7 +47,7 @@ trait EMTexts4Search extends EsModelPlayJsonT {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!texts4search.isEmpty)
+    if (texts4search.nonEmpty)
       SEARCH_TEXT_ESFN -> texts4search.toPlayJson  ::  acc0
     else
       acc0
@@ -58,46 +58,70 @@ trait EMTexts4Search extends EsModelPlayJsonT {
 
 object Texts4Search {
 
+  /** Название поля, которое содержит название узла-продьюсера. */
+  val PRODUCER_NAME_ESFN = "pn"
+
   /** Название поля, которое содержит строковое название категории. */
   val USER_CAT_ESFN = "userCat"
 
   /** Генерация пропертисов объекта. */
   def generateMappingProps = List(
+    FieldString(PRODUCER_NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, boost = Some(0.75F)),
     FieldString(USER_CAT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, boost = Some(0.5F))
   )
 
   /** Десериализация ранее сериализованного Texts4Search. */
-  def deserialize(value: ju.Map[_,_], acc0: Texts4Search = Texts4Search()): Texts4Search = {
-    if (value != null) {
-      Option(value.get(USER_CAT_ESFN)).map {
-        case catsRaw: jl.Iterable[_] =>
-          acc0.userCat = catsRaw.foldLeft[List[String]] (Nil) {
-            (acc, e) => e.toString :: acc
-          }.reverse
-      }
-    }
-    acc0
+  def deserialize(value: ju.Map[_,_]): Texts4Search = {
+    Texts4Search(
+      producerName = Option(value get PRODUCER_NAME_ESFN)
+        .map(EsModel.stringParser),
+      userCat = Option(value get USER_CAT_ESFN)
+        .fold (List.empty[String]) {
+          case catsRaw: jl.Iterable[_] =>
+            catsRaw.foldLeft[List[String]] (Nil) {
+              (acc, e) => e.toString :: acc
+            }.reverse
+        }
+    )
   }
-  
+
+  /** Статический неизменяемый дефолтовый расшаренный экземпляр T4S.
+    * Используется как дефолтовое значение соответствующего поля в моделях верхнего уровня. */
+  val EMPTY = Texts4Search()
 }
 
 import Texts4Search._
 
 /**
- * Класс с текстовыми полями, подлежащими полнотекстовой индексации.
+ * Неизменяемый экземпляр класса с текстовыми полями, подлежащими полнотекстовой индексации.
  * @param userCat Список из названий категорий.
  */
 case class Texts4Search(
-  var userCat: List[String] = Nil
+  producerName    : Option[String] = None,
+  userCat         : List[String] = Nil
 ) {
+
   @JsonIgnore
-  def isEmpty = userCat.isEmpty
+  def nonEmpty: Boolean = {
+    productIterator.exists {
+      case opt: Option[_]         => opt.nonEmpty
+      case to: TraversableOnce[_] => to.nonEmpty
+      case _                      => true
+    }
+  }
+
+  @JsonIgnore
+  def isEmpty = !nonEmpty
 
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = Nil
-    if (!userCat.isEmpty)
+    if (producerName.nonEmpty)
+      acc0 ::= PRODUCER_NAME_ESFN -> JsString(producerName.get)
+    if (userCat.nonEmpty)
       acc0 ::= USER_CAT_ESFN -> JsArray(userCat.map(JsString.apply))
     JsObject(acc0)
   }
+
 }
+
