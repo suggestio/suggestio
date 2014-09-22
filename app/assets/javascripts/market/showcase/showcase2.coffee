@@ -548,8 +548,13 @@ sm =
       geo_screen_wrapper.style.height = cbca_grid.wh - sm.geo.screen_offset
       geo_screen_content.style.minHeight = cbca_grid.wh - sm.geo.screen_offset + 1
 
-    open_screen : ( node_id ) ->
-      sm.geo.requested_node_id = node_id
+    #############################
+    ## Открыть экран с гео добром
+    #############################
+    open_screen : () ->
+
+      #sm.geo.requested_node_id = node_id
+
       if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
@@ -557,13 +562,22 @@ sm =
         sm.utils.ge('smGeoScreen').style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
         cbca_grid.left_offset = 2
         cbca_grid.rebuild()
+
       sm.utils.ge('smGeoScreen').style.display = 'block'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
 
+      console.log 'open screen'
+
       sm.geo.load_nodes()
 
-    close : () ->
-      sm.utils.ge('smGeoScreen').style.display = 'none'
+    close_screen : () ->
+
+      gs = sm.utils.ge('smGeoScreen')
+
+      if gs == null || gs.style.display == '' || gs.style.display == 'none'
+        return false
+
+      gs.style.display = 'none'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
       cbca_grid.left_offset = 0
       cbca_grid.rebuild()
@@ -1125,7 +1139,9 @@ sm =
       ## Работа с категориями
       #######################
       if sm.events.target_lookup( event.target, 'id', 'smNavigationLayerButton' ) != null
-        sm.navigation_layer.open( true )
+        sm.states.transform_state
+          cat_screen :
+            is_opened : true
         return false
 
       if sm.events.target_lookup( event.target, 'id', 'smCategoriesTab' ) != null
@@ -1946,7 +1962,7 @@ sm =
         sm.utils.ge(t + 'Wrapper').style.height = cbca_grid.wh - offset
         sm.utils.ge(t + 'Content').style.height = cbca_grid.wh - ( offset - 1 )
 
-    open : ( history_push ) ->
+    open : () ->
 
       if cbca_grid.ww == 320
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
@@ -1960,15 +1976,7 @@ sm =
       ## Скрыть кнопки хидера главного экрана
       sm.utils.addClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
-      if typeof history_push != 'boolean'
-        history_push = true
-
       sm.utils.ge('smCategoriesScreen').style.display = 'block'
-
-      if history_push == true
-        state_data =
-          action : 'open_navigation_layer'
-        sm.history.push state_data, 'SioMarket', '/c/categories'
 
     reset_tabs : () ->
       this.show_tab this.tabs[0]
@@ -1989,7 +1997,7 @@ sm =
           sm.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
-
+      console.log 'close navigaion screen'
       if cbca_grid.ww == 320
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
@@ -2063,10 +2071,7 @@ sm =
       _dom = sm.utils.ge 'smIndexNavigation'
       sm.utils.removeClass _dom, 'hidden'
 
-  load_for_shop_id : ( shop_id, ad_id, history_push ) ->
-
-    if typeof history_push == 'undefined'
-      history_push = true
+  load_for_shop_id : ( shop_id, ad_id ) ->
 
     if sm.utils.is_touch_device() && sm.events.is_touch_locked
       return false
@@ -2082,18 +2087,11 @@ sm =
 
     sm.focused_ads.curl = url
 
-    if history_push == true
-      state_data =
-        action : 'load_for_shop_id'
-        shop_id : shop_id
-        ad_id : ad_id
-      sm.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
-
     sm.focused_ads.requested_ad_id = ad_id
     sm.request.perform url
 
   ## Загрузить все офферы для магазина
-  load_for_cat_id : ( cat_id, history_push, cat_class ) ->
+  load_for_cat_id : ( cat_id, cat_class ) ->
 
     sm.grid_ads.is_load_more_requested = false
     sm.grid_ads.is_fully_loaded = false
@@ -2101,15 +2099,6 @@ sm =
     document.getElementById('smGridAdsWrapper').scrollTop = '0'
 
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
-
-    if typeof history_push != 'boolean'
-      history_push = true
-
-    if history_push == true
-      state_data =
-        action : 'load_for_cat_id'
-        cat_id : cat_id
-      sm.history.push state_data, 'SioMarket', '/n/cat/' + cat_id
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + sm.config.mart_id
     url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param()
@@ -2226,29 +2215,38 @@ sm =
       cs = sm.states.cur_state()
       ns = {}
 
-      console.log stp
-      console.log cs
       if typeof stp.geo_screen != 'undefined' then ns.geo_screen = stp.geo_screen else ns.geo_screen = cs.geo_screen
       if typeof stp.cat_screen != 'undefined' then ns.cat_screen = stp.cat_screen else ns.cat_screen = cs.cat_screen
 
       ns.mart_id = cs.mart_id
-
       this.push ns
 
     push : ( state ) ->
       this.process_state state
       this.list.push state
 
+    pull : () ->
+
+      ps = if this.list.length > 1 then this.list[this.list.length-2] else undefined
+
+      if typeof ps != 'undefined'
+        this.process_state ps
+        this.list.pop()
+
     process_state : ( state ) ->
+
       cs = this.cur_state()
 
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
       if typeof cs == 'undefined' || cs.mart_id == undefined || cs.mart_id != state.mart_id
         sm.load_mart state
-        
-      ## 2. Geo экран
-      if cs.geo_screen.is_opened == true
-        sm.geo.open_layer()
+
+      ## 2. Экран с гео добром
+      if state.geo_screen.is_opened == true
+        sm.geo.open_screen()
+
+      if state.geo_screen.is_opened == false
+        sm.geo.close_screen()
 
   ############################
   ## Функции для инициализации
@@ -2294,9 +2292,9 @@ sm =
       url : '/'
       mart_id : sm_id
       cat_screen :
-        is_active : false
+        is_opened : false
       geo_screen :
-        is_active : false
+        is_opened : false
 
 window.sm = window.siomart = sm
 sm.init()
