@@ -554,7 +554,7 @@ sm =
       if gs.style.display == 'block'
         return false
 
-      if cbca_grid.ww == 320
+      if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
       sm.utils.ge('smGeoScreen').style.display = 'block'
@@ -574,7 +574,7 @@ sm =
       if gs == null || gs.style.display == '' || gs.style.display == 'none'
         return false
 
-      if cbca_grid.ww == 320
+      if cbca_grid.ww <= 400
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       gs.style.display = 'none'
@@ -1162,9 +1162,19 @@ sm =
 
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !sm.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
-          sm.states.transform_state
-            cat_id : cat_id
-            cat_class : cat_class
+
+          if cbca_grid.ww <= 400
+            ns =
+              cat_screen :
+                is_opened :false
+              cat_id : cat_id
+              cat_class : cat_class
+          else
+            ns =
+              cat_id : cat_id
+              cat_class : cat_class
+          
+          sm.states.transform_state ns
 
       #######################
       ## Работа с категориями
@@ -2000,7 +2010,7 @@ sm =
       if cs.style.display == "block"
         return false
 
-      if cbca_grid.ww == 320
+      if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
       this.adjust()
@@ -2037,7 +2047,7 @@ sm =
         return false
 
       console.log 'close navigaion screen'
-      if cbca_grid.ww == 320
+      if cbca_grid.ww <= 400
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       cbca_grid.right_offset = 0
