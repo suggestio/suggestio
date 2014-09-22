@@ -25,7 +25,8 @@ import MPict.{idStr2Bin, imgUrl2id, deserializeId, deserializeThumb, serializeId
  *  - Метаданные (т.е. ссылка) теперь в отдельном поле с отдельным Qualifier'ом.
  *  - thumb в отдельном поле.
  *
- *  2014.sep.22: Переезд на cassandra, сохраняя совместимость с hbase.
+ * 2014.sep.22: Четкое разделение backend'а (AsyncHbase) и frontend'ов статики и динамики.
+ * Сама модель оставлена для кравлера.
  */
 
 object MImgThumb extends MImgThumbStaticAsyncHBase with MImgThumbStaticFieldsT {
@@ -161,7 +162,6 @@ trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
 }
 
 
-
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
 class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBase {
 
@@ -196,6 +196,7 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBa
     s"${getClass.getSimpleName}($idStr, ${thumb.length} bytes, $getTimestampHoursAgo hours ago, $imageUrl)"
   }
 }
+
 
 
 /** Базовый код экземпляра модели и её родственников, отвязанный от своего объекта-компаньона.
@@ -262,6 +263,7 @@ trait MImgThumbSaver {
 }
 
 
+/** Код сохранения экземпляра модели MImgThumb в HBase через драйвер AsyncHBase. */
 trait MImgThumbSaverAsyncHBase extends MImgThumbSaver with MPictSubmodel {
 
   import SioHBaseAsyncClient._
