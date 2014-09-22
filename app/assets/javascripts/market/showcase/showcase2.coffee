@@ -971,18 +971,21 @@ sm =
 
     do_rebuild = do_rebuild || true
 
-    if cbca_grid.columns > 2
+    if cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
       sm_geo_screen = sm.utils.ge('smGeoScreen')
 
       if sm_geo_screen != null
         if sm_geo_screen.style.display == "" || sm_geo_screen.style.display == "none"
+          sm.error 'lo zero by 979'
           cbca_grid.left_offset = 0
         else
           sm_geo_screen.style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
           cbca_grid.left_offset = 2
       else
+        sm.error 'lo zero by 985'
         cbca_grid.left_offset = 0
     else
+      sm.error 'lo zero by 988'
       cbca_grid.left_offset = 0
 
     if cbca_grid.columns > 2
@@ -997,6 +1000,9 @@ sm =
         cbca_grid.right_offset = 0
     else
       cbca_grid.right_offset = 0
+
+    sm.warn 'cbca_grid.left_offset : ' + cbca_grid.left_offset
+    sm.warn 'cbca_grid.right_offset : ' + cbca_grid.right_offset
 
     if do_rebuild == true
       cbca_grid.rebuild()

@@ -93,7 +93,7 @@ code
   position: absolute
   left: 50%
   top: 50%
-  z-index: 100
+  z-index: 999
   img
     &.__animated
       -webkit-transition: all 0.2s linear
@@ -246,6 +246,7 @@ code
     .sm-producer-header_exit-button,
     .sm-producer-header_geo-button,
     .sm-producer-header_logo,
+    .sm-producer-header_search-button,
     .sm-producer-header_txt-logo
       display: none!important
 
@@ -834,3 +835,8 @@ code
       padding: 0px
     &_location-info
       max-width 180px
+
+  .sm-producer-header
+    &.__w-global-cat
+      .sm-producer-header_search-button
+        display: block!important
