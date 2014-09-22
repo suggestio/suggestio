@@ -277,7 +277,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             needOI._1.data.rowKey  ==  oiik.data.rowKey
           }
         }
-        trace("Will delete unused imgs: " + delOldImgs.mkString(", "))
+        if (delOldImgs.nonEmpty)
+          debug("Will delete unused imgs: " + delOldImgs.mkString(", "))
         Future.traverse(delOldImgs)(eraseOiik)
       }
     }

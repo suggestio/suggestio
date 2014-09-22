@@ -47,9 +47,9 @@ class HistogramParsersSpec extends PlaySpec {
   /** Пример выхлопа гистограммы IM. */
   private val hist1 = {
     """
-      |     21689: ( 42, 45, 12) #2A2D0C srgb(42,45,12)
+      |     21689: ( 42, 45, 12) #2A2D0C yellow
       |      5487: ( 54, 42, 18) #362A12 srgb(54,42,18)
-      |     83956: (100, 96, 33) #646021 srgb(100,96,33)
+      |     83956: (100, 96, 33) #646021 double cyan
       |    176410: (144,139, 91) #908B5B srgb(144,139,91)
     """.stripMargin
   }

@@ -2,6 +2,7 @@ package util.img
 
 import java.awt.Color
 import java.io.{FileInputStream, InputStreamReader, File}
+import java.nio.file.Files
 import java.text.ParseException
 import io.suggest.model.MUserImgOrig
 import models.BlockConf
@@ -69,9 +70,15 @@ object MainColorDetector extends PlayMacroLogsImpl {
         // Читаем и парсим из файла гистограмму.
         val pr = HistogramParsers.parseFromFile(resultFile)
         pr getOrElse {
-          lazy val msg = s"Failed to parse histogram file: ${resultFile.getAbsolutePath} ::\n $pr"
+          val histContent = Files.readAllBytes(resultFile.toPath)
+          val msgSb = new StringBuilder(histContent.length + 128,  "Failed to understand histogram file: \n")
+          msgSb append pr
+          msgSb append '\n'
+          msgSb append " Histogram file content was:\n"
+          msgSb append new String(histContent)
+          val msg = msgSb.toString()
           if (suppressErrors) {
-            warn(msg)
+            warn(msg )
             Nil
           } else {
             throw new ParseException(msg, -1)
@@ -231,20 +238,30 @@ object HistogramParsers extends JavaTokenParsers {
   def BYTE_NUMBER_P = """(2[0-4]\d|25[0-5]|1?\d{1,2})""".r ^^ { _.toInt }
 
   def COMMA_SP_SEP: Parser[_] = """,\s*""".r
-  def RGB_TUPLE_P = "(" ~> (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ BYTE_NUMBER_P <~ ")"
+  def RGB_TUPLE_P = {
+    val p = "(" ~> (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ (BYTE_NUMBER_P <~ COMMA_SP_SEP) ~ BYTE_NUMBER_P <~ ")"
+    p ^^ {
+      case r ~ g ~ b  =>  RGB(red = r, green = g, blue = b)
+    }
+  }
 
   def HEX_COLOR_P = "#" ~> "(?i)[0-9A-F]{6}".r
 
+  /** Запись цвета в srgb. Следует помнить, что для RGB(0,0,0) im возвращает строку "black". */
   def SRGB_REC_P = {
     val comma: Parser[_] = ","
     val p = "srgb(" ~> (BYTE_NUMBER_P <~ comma) ~ (BYTE_NUMBER_P <~ comma) ~ BYTE_NUMBER_P <~ ")"
-    p ^^ { case r ~ g ~ b  =>  RGB(red = r, green = g, blue = b) }
+    p ^^ {
+      case r ~ g ~ b  =>  RGB(red = r, green = g, blue = b)
+    }
   }
 
+  def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+".r
+
   def LINE_PARSER = {
-    val p = (FREQ_P <~ ":" <~ RGB_TUPLE_P) ~ HEX_COLOR_P ~ SRGB_REC_P
+    val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ (SRGB_REC_P | COLOR_NAME_P)
     p ^^ {
-      case freq ~ hexColor ~ rgb  =>  HistogramEntry(freq, hexColor, rgb = rgb)
+      case freq ~ rgb ~ hexColor =>  HistogramEntry(freq, hexColor, rgb = rgb)
     }
   }
 
