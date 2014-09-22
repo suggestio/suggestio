@@ -158,7 +158,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
             createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
           },
           {case (mad, bim) =>
-            val t4s2Fut = newTexts4search(mad)
+            val t4s2Fut = newTexts4search(mad, request.adnNode)
             // Асинхронно обрабатываем логотип.
             val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc)
             bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height) flatMap { savedImgs =>
@@ -285,7 +285,7 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
             renderFailedEditFormWith(formWithErrors)
           },
           {case (mad2, bim) =>
-            val t4s2Fut = newTexts4search(mad2)
+            val t4s2Fut = newTexts4search(mad2, request.producer)
             val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mad.colors)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас проблема: что при ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
@@ -358,20 +358,33 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
 
 
   /**
-   * Залить в mad.text4search новые данные, в частности по категориям.
-   * @param mad Изменяемый инстанс рекламной карточки.
+   * Сгенерить экземпляр Text4Search на основе данных старой и новой рекламных карточек.
+   * @param newMadData Забинденные данные формы для новой (будущей) рекламной карточки.
+   * @param producer Нода-продьюсер рекламной карточки.
    */
-  private def newTexts4search(mad: MAd): Future[Texts4Search] = {
-    mad.userCatId.fold(Future successful mad.texts4search) { userCatId =>
-      MMartCategory.foldUpChain [List[String]] (userCatId, Nil) {
-        (acc, e) =>
-          if (e.includeInAll)
-            e.name :: acc
-          else
-            acc
-      } map { ucats =>
-        mad.texts4search.copy(userCat = ucats)
+  private def newTexts4search(newMadData: MAd, producer: MAdnNode): Future[Texts4Search] = {
+    // Собираем названия родительских категорий:
+    val catNamesFut: Future[List[String]] = {
+      newMadData.userCatId.fold(Future successful List.empty[String]) { userCatId =>
+        MMartCategory.foldUpChain [List[String]] (userCatId, Nil) {
+          (acc, e) =>
+            if (e.includeInAll) {
+              e.name :: acc
+            } else {
+              acc
+            }
+        }
       }
+    }
+    // Узнаём название узла-продьюсера:
+    // Генерим общий результат:
+    for {
+      catNames <- catNamesFut
+    } yield {
+      newMadData.texts4search.copy(
+        userCat = catNames,
+        producerName = Some(producer.meta.name)
+      )
     }
   }
 

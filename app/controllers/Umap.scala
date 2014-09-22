@@ -103,7 +103,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
         "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
         "properties" -> JsObject(Seq(
           "name" -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
-          ADN_ID_SHAPE_FORM_FN -> JsString(geo.adnId)
+          "description" -> JsString(routes.SysMarket.showAdnNode(geo.adnId).absoluteURL())
         ))
       ))
     }
