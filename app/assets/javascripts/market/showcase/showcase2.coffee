@@ -549,6 +549,10 @@ sm =
     ## Открыть экран с гео добром
     #############################
     open_screen : () ->
+      gs = sm.utils.ge('smGeoScreen')
+
+      if gs.style.display == 'block'
+        return false
 
       if cbca_grid.ww <= 400
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
@@ -975,7 +979,10 @@ sm =
           cbca_grid.left_offset = 2
       else
         cbca_grid.left_offset = 0
+    else
+      cbca_grid.left_offset = 0
 
+    if cbca_grid.columns > 2
       sm_cat_screen = sm.utils.ge('smCategoriesScreen')
       if sm_cat_screen != null
         if sm_cat_screen.style.display == "" || sm_cat_screen.style.display == "none"
@@ -986,7 +993,6 @@ sm =
       else
         cbca_grid.right_offset = 0
     else
-      cbca_grid.left_offset = 0
       cbca_grid.right_offset = 0
 
     if do_rebuild == true
@@ -1181,7 +1187,8 @@ sm =
       ## focused_ads
       ##############
       if sm.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
-        sm.focused_ads.close()
+        sm.states.transform_state { fads : {is_opened : false }}
+        return false
 
       target = sm.events.target_lookup( event.target, 'className', 'geo-nodes-list_layer' )
       if target != null
@@ -1979,6 +1986,10 @@ sm =
         sm.utils.ge(t + 'Content').style.height = cbca_grid.wh - ( offset - 1 )
 
     open : () ->
+      cs = sm.utils.ge('smCategoriesScreen')
+
+      if cs.style.display == "block"
+        return false
 
       if cbca_grid.ww == 320
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
@@ -1988,7 +1999,7 @@ sm =
       ## Скрыть кнопки хидера главного экрана
       sm.utils.addClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
-      sm.utils.ge('smCategoriesScreen').style.display = 'block'
+      cs.style.display = 'block'
       sm.rebuild_grid()
 
     reset_tabs : () ->
@@ -2010,6 +2021,12 @@ sm =
           sm.utils.addClass tab_dom, '__inactive'
 
     close : ( all_except_search ) ->
+
+      cs = sm.utils.ge('smCategoriesScreen')
+
+      if cs == null || cs.style.display == "" || cs.style.display == "none"
+        return false
+
       console.log 'close navigaion screen'
       if cbca_grid.ww == 320
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
