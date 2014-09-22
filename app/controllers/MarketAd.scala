@@ -158,23 +158,26 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
             createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
           },
           {case (mad, bim) =>
+            // Асинхронно обрабатываем всякие прочие данные.
+            val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
             val t4s2Fut = newTexts4search(mad, request.adnNode)
-            // Асинхронно обрабатываем логотип.
             val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc)
-            bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height) flatMap { savedImgs =>
-              mad.producerId = adnId
-              mad.imgs = savedImgs
-              t4s2Fut flatMap { t4s2 =>
-                mad.texts4search = t4s2
-                ibgcUpdFut flatMap { ibgsUpd =>
-                  mad.colors = ibgsUpd.updateColors(mad.colors)
-                  // Сохранить изменения в базу
-                  mad.save.map { adId =>
-                    Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
-                      .flashing("success" -> "Рекламная карточка создана.")
-                  }
-                }
+            // Когда всё готово, сохраняем саму карточку.
+            for {
+              t4s2      <- t4s2Fut
+              savedImgs <- saveImgsFut
+              ibgcUpd   <- ibgcUpdFut
+              adId      <- {
+                mad.copy(
+                  producerId    = adnId,
+                  imgs          = savedImgs,
+                  texts4search  = t4s2,
+                  colors        = ibgcUpd.updateColors(mad.colors)
+                ).save
               }
+            } yield {
+              Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
+                .flashing("success" -> "Рекламная карточка создана.")
             }
           }
         )
@@ -261,15 +264,6 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
       .map { Ok(_) }
   }
 
-  /** Импортировать выхлоп маппинга формы в старый экземпляр рекламы. Этот код вызывается во всех editAd-экшенах. */
-  private def importFormAdData(oldMad: MAd, newMad: MAd) {
-    oldMad.offers = newMad.offers
-    oldMad.prio = newMad.prio
-    oldMad.userCatId = newMad.userCatId
-    oldMad.blockMeta = newMad.blockMeta
-    oldMad.colors = newMad.colors
-    oldMad.richDescrOpt = newMad.richDescrOpt
-  }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
@@ -288,44 +282,35 @@ object MarketAd extends SioController with TempImgSupport with PlayMacroLogsImpl
             val t4s2Fut = newTexts4search(mad2, request.producer)
             val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mad.colors)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
-            // Сейчас проблема: что при ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
-            val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = mad.imgs, blockHeight = mad.blockMeta.height)
-            // Для подавления конфликтов версий при сохранении используем рекурсивную функцию обновления,
-            // которая повторяет получение рекламной карточки и её обновление при конфликте версий.
-            // TODO Использовать MAd.tryUpdate() вместо этого велосипеда.
-            def tryUpdate(mad0: MAd, counter: Int = 0): Future[_] = {
-              saveImgsFut flatMap { imgsSaved =>
-                mad0.imgs = imgsSaved
-                importFormAdData(oldMad = mad0, newMad = mad2)
-                t4s2Fut flatMap { t4s2 =>
-                  mad0.texts4search = t4s2
-                  mad0.disableReason = Nil
-                  // Выкинуть выверенную успешную модерацию, т.к. карточка была отредактирована.
-                  // Если карточка не прошла, то она и не пройдёт её.
-                  mad0.moderation = mad0.moderation.copy(
-                    freeAdv = mad0.moderation.freeAdv.filter { _.isAllowed != true }
-                  )
-                  ibgcUpdFut.flatMap { ibgcUpd =>
-                    mad0.colors = ibgcUpd.updateColors(mad0.colors)
-                    // Попытаться сохранить модифицированную карточку
-                    mad0.save.recoverWith {
-                      case ex: VersionConflictEngineException =>
-                        if (counter < SAVE_AD_RETRIES_MAX) {
-                          val remadOptFut = MAd.getById(adId)
-                          val counter1 = counter + 1
-                          trace(s"editAdSubmit($adId): ES said: Version conflict. Retrying... ($counter1/$SAVE_AD_RETRIES_MAX)")
-                          remadOptFut flatMap { remadOpt =>
-                            tryUpdate(remadOpt.get, counter1)
-                          }
-                        } else {
-                          Future failed new RuntimeException(s"Cannot save ad $adId, too many vsn conflicts: $counter, lastVsn = ${mad0.versionOpt}, vsn0 = ${mad.versionOpt}", ex)
-                        }
-                    }
-                  }
-                }
+            // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
+            val saveImgsFut = bc.saveImgs(
+              newImgs = bim,
+              oldImgs = mad.imgs,
+              blockHeight = mad2.blockMeta.height
+            )
+            // 2014.09.22: Обновление карточки переписано на потоко-безопасный манер с как-бы immutable-полями.
+            for {
+              imgsSaved <- saveImgsFut
+              t4s2      <- t4s2Fut
+              ibgcUpd   <- ibgcUpdFut
+              _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
+                mad0.copy(
+                  imgs          = imgsSaved,
+                  texts4search  = t4s2,
+                  disableReason = Nil,
+                  moderation    = mad0.moderation.copy(
+                    freeAdv = mad0.moderation.freeAdv
+                      .filter { _.isAllowed != true }
+                  ),
+                  colors        = ibgcUpd.updateColors(mad2.colors),
+                  offers        = mad2.offers,
+                  prio          = mad2.prio,
+                  userCatId     = mad2.userCatId,
+                  blockMeta     = mad2.blockMeta,
+                  richDescrOpt  = mad2.richDescrOpt
+                )
               }
-            }
-            tryUpdate(mad).map { _ =>
+            } yield {
               Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
                 .flashing("success" -> "Изменения сохранены")
             }
