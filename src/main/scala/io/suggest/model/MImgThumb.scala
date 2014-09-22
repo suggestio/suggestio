@@ -1,14 +1,12 @@
 package io.suggest.model
 
-import SioHBaseAsyncClient._
-import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import io.suggest.util.CascadingFieldNamer
 import com.scaleunlimited.cascading.BaseDatum
 import cascading.tuple.{Tuple, Fields, TupleEntry}
-import MPict._
+import MPict.{idStr2Bin, imgUrl2id, deserializeId, deserializeThumb, serializeId, serializeThumb, CF_METADATA, Q_IMAGE_URL, CF_THUMBS, Q_THUMB}
 
 /**
  * Suggest.io
@@ -26,11 +24,31 @@ import MPict._
  *  В основном кортеже есть поля для:
  *  - Метаданные (т.е. ссылка) теперь в отдельном поле с отдельным Qualifier'ом.
  *  - thumb в отдельном поле.
+ *
+ *  2014.sep.22: Переезд на cassandra, сохраняя совместимость с hbase.
  */
 
-object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
+object MImgThumb extends MImgThumbStaticAsyncHBase with MImgThumbStaticFieldsT {
   
   val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
+
+}
+
+
+/** Обычный код объекта вынесен за скобки для возможности легкого порождения дочерних моделей. */
+trait MImgThumbStaticFieldsT extends CascadingFieldNamer {
+
+  val ID_FN        = fieldName("id")
+  val IMAGE_URL_FN = fieldName("imageUrl")
+  val THUMB_FN     = fieldName("thumb")
+  val TIMESTAMP_FN = fieldName("timestamp")
+
+  val FIELDS: Fields
+
+}
+
+/** common-код статической thumb-модели. Backend'ы реализуют эти методы. */
+trait MImgThumbStatic {
 
   /**
    * Прочитать значения поля url со ссылкой на исходную картинку.
@@ -40,16 +58,14 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
   def getUrl(idStr: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
     getUrl(idStr2Bin(idStr))
   }
-  def getUrl(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[String]] = {
-    val getUrlReq = new GetRequest(HTABLE_NAME, id)
-      .family(CF_METADATA)
-      .qualifier(Q_IMAGE_URL)
-    ahclient.get(getUrlReq) map { kvs =>
-      kvs.headOption.map {
-        kv => new String(kv.value)
-      }
-    }
-  }
+
+  /**
+   * Чтение значение из хранилища по первичному ключу.
+   * @param id id двоичный ключ ряда.
+   * @return Фьючерс с опциональной ссылкой на картинку внутри.
+   */
+  def getUrl(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[String]]
+
 
   /**
    * Прочитать по hex id и dkey.
@@ -101,7 +117,29 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
    * @param id Бинарный id по MPict.
    * @return Фьючерс с опциональным результатом (thumb -> timestamp).
    */
-  def getThumbById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
+  def getThumbById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]]
+
+}
+
+
+/** HBase-backend для выполнения операций модели. */
+trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
+
+  import SioHBaseAsyncClient._
+  import org.hbase.async.GetRequest
+
+  override def getUrl(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[String]] = {
+    val getUrlReq = new GetRequest(HTABLE_NAME, id)
+      .family(CF_METADATA)
+      .qualifier(Q_IMAGE_URL)
+    ahclient.get(getUrlReq) map { kvs =>
+      kvs.headOption.map {
+        kv => new String(kv.value)
+      }
+    }
+  }
+
+  override def getThumbById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
     val getReq = new GetRequest(HTABLE_NAME_BYTES, id)
       .family(CF_THUMBS)
       .qualifier(Q_THUMB)
@@ -123,21 +161,9 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
 }
 
 
-/** Обычный код объекта вынесен за скобки для возможности легкого порождения дочерних моделей. */
-trait MImgThumbStaticT extends CascadingFieldNamer {
-
-  val ID_FN        = fieldName("id")
-  val IMAGE_URL_FN = fieldName("imageUrl")
-  val THUMB_FN     = fieldName("thumb")
-  val TIMESTAMP_FN = fieldName("timestamp")
-
-  val FIELDS: Fields
-
-}
-
 
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
-final class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaver {
+class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBase {
 
   def this(te: TupleEntry) = {
     this()
@@ -175,7 +201,7 @@ final class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaver {
 /** Базовый код экземпляра модели и её родственников, отвязанный от своего объекта-компаньона.
   * @param companionObject Экземпляр объекта-компаньона. Это позволяет управлять статическими именами полей и сериализацией.
   */
-abstract class MImgThumbAbstract(val companionObject: MImgThumbStaticT) extends BaseDatum(companionObject.FIELDS) {
+abstract class MImgThumbAbstract(val companionObject: MImgThumbStaticFieldsT) extends BaseDatum(companionObject.FIELDS) {
 
   import companionObject._
   import cascading.tuple.coerce.Coercions.LONG
@@ -217,20 +243,37 @@ abstract class MImgThumbAbstract(val companionObject: MImgThumbStaticT) extends 
 /** Подмешиваемая функция сохранения MImgThumb. Не для всех потомков MImgThumbAbstract это необходимо. */
 trait MImgThumbSaver {
 
-  def companionObject: MImgThumbStaticT
   def id: Array[Byte]
   def thumb: Array[Byte]
   def imageUrl: String
 
-  // TODO Надо timestamp выставлять?
+  def saveThumb: Future[_]
 
-  def saveThumb: Future[_] = {
+  def maybeSaveImgUrl: Future[_]
+
+  /** Сохранить в таблицу. */
+  def save(implicit ec: ExecutionContext): Future[_] = {
+    val saveImgUrlFut = maybeSaveImgUrl
+    saveThumb flatMap { _ =>
+      saveImgUrlFut
+    }
+  }
+
+}
+
+
+trait MImgThumbSaverAsyncHBase extends MImgThumbSaver with MPictSubmodel {
+
+  import SioHBaseAsyncClient._
+  import org.hbase.async.PutRequest
+
+  override def saveThumb: Future[_] = {
     val qT = Q_THUMB.getBytes
     val thumbPutReq = new PutRequest(HTABLE_NAME_BYTES, id, CF_THUMBS.getBytes, qT, thumb)
     ahclient.put(thumbPutReq)
   }
 
-  def maybeSaveImgUrl: Future[_] = {
+  override def maybeSaveImgUrl: Future[_] = {
     val maybeUrl = imageUrl
     if (maybeUrl != null) {
       val qIT = Q_IMAGE_URL.getBytes
@@ -238,16 +281,6 @@ trait MImgThumbSaver {
       ahclient.put(iuPutReq)
     } else {
       Future successful null
-    }
-  }
-
-  /** Сохранить в таблицу. */
-  def save(implicit ec: ExecutionContext): Future[_] = {
-    val saveImgUrlFut = maybeSaveImgUrl
-    // Возможно, не стоит инзертить параллельно из-за проблем в прошлом asynchbase?
-    // https://groups.google.com/forum/#!msg/asynchbase/jOlYz1l5Ehs/zyeiWxgy4XYJ (2012 год)
-    saveThumb flatMap { _ =>
-      saveImgUrlFut
     }
   }
 
