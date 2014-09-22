@@ -554,7 +554,7 @@ sm =
       if gs.style.display == 'block'
         return false
 
-      if cbca_grid.ww <= 400
+      if cbca_grid.ww == 320
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
 
       sm.utils.ge('smGeoScreen').style.display = 'block'
@@ -573,6 +573,9 @@ sm =
 
       if gs == null || gs.style.display == '' || gs.style.display == 'none'
         return false
+
+      if cbca_grid.ww == 320
+        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       gs.style.display = 'none'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
