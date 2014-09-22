@@ -1,6 +1,7 @@
 package util.stat
 
 import io.suggest.model.OptStrId
+import io.suggest.util.UuidUtil
 import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import util._
@@ -72,7 +73,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
       Nil
     }
     val clUidOpt = StatUtil.getFromRequest
-      .map { StatUtil.uuidToBase64 }
+      .map { UuidUtil.uuidToBase64 }
     val resultFut = gsiFut flatMap { gsiOpt =>
       adnNodeOptFut flatMap { adnNodeOpt =>
         val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }

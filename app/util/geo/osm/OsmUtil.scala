@@ -20,6 +20,9 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
+  /** Добавлять ли subarea-relation'ы в путь relation'а? */
+  val RELATION_ADD_SUBAREAS: Boolean = false
+
   /** Решение проблемы компиляции списка relation'ов, когда одни relation'ы включают в себя другие.
     * @param nodesMap Карта точек.
     * @param waysMap Карта путей.
@@ -43,7 +46,13 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
               (relp :: accFail) -> relsOkMap
           }
       }
-      compileRelationsParsed(nodesMap, waysMap, relpsFailed, newRels)
+      val restRelsCount = relps.size
+      if (restRelsCount == relpsFailed.size) {
+        warn(s"compileRelationsParsed(): Cannot compile $restRelsCount relations: " + relpsFailed.iterator.map(_.id).mkString(", "))
+        newRels
+      } else {
+        compileRelationsParsed(nodesMap, waysMap, relpsFailed, newRels)
+      }
     }
   }
 
@@ -88,7 +97,12 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
           .iterator
           .map { wayp => wayp.id -> wayp.toWay(nodesMap) }
           .toMap
-        val rels = compileRelationsParsed(nodesMap, waysMap, handler.getRelations)
+        val relsRaw = if (RELATION_ADD_SUBAREAS) {
+          handler.getRelations
+        } else {
+          handler.getRelations.filter(_.id == id)
+        }
+        val rels = compileRelationsParsed(nodesMap, waysMap, relsRaw)
         rels(id)
       }
     }
@@ -280,13 +294,17 @@ case class OsmRelationParsed(id: Long, memberRefs: List[OsmRelMemberParsed]) {
                  relsMap: collection.Map[Long, OsmRelation]): OsmRelation = {
     OsmRelation(
       id = id,
-      members = memberRefs.map { mr =>
+      members = memberRefs.flatMap { mr =>
         val m = mr.typ match {
           case OsmElemTypes.NODE      => nodesMap(mr.ref)
           case OsmElemTypes.WAY       => waysMap(mr.ref)
-          case OsmElemTypes.RELATION  => relsMap(mr.ref)
+          case OsmElemTypes.RELATION if OsmUtil.RELATION_ADD_SUBAREAS =>
+            relsMap(mr.ref)
+          case OsmElemTypes.RELATION => null
         }
-        OsmRelMember(mr.typ, m, mr.role)
+        Option(m) map {
+          OsmRelMember(mr.typ, _, mr.role)
+        }
       }
     )
   }
@@ -376,9 +394,13 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
     } else {
       Nil
     }
-    // Добавляем все subarea в кучу
-    val acc2 = subareas.foldLeft(acc0) { (acc, subarea) =>
-      subarea.obj.toGeoShape :: acc
+    // Добавляем все subarea в кучу? Обычно, это не нужно.
+    val acc2 = if (OsmUtil.RELATION_ADD_SUBAREAS) {
+      subareas.foldLeft(acc0) { (acc, subarea) =>
+        subarea.obj.toGeoShape :: acc
+      }
+    } else {
+      acc0
     }
     // Заворачиваем в финальный гео-объект контейнер.
     if (acc2.tail.isEmpty) {

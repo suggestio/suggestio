@@ -1,11 +1,12 @@
 package util.stat
 
-import java.io.{DataInputStream, ByteArrayInputStream, DataOutputStream, ByteArrayOutputStream}
+import java.io.ByteArrayOutputStream
 import java.{util => ju}
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import play.api.Play.{current, configuration}
+import io.suggest.util.UuidUtil._
 
 import org.apache.commons.codec.binary.Base64
 import play.api.mvc.{Cookie, Result, RequestHeader}
@@ -18,6 +19,7 @@ import util.PlayMacroLogsImpl
  * Description: Утиль для сбора разной статистики. Для мониторинга юзеров используются куки,
  * живущие до конца сессии. Они содержат некоторый id юзера и HMAC для защиты suggest.io от проблем с подставными
  * куками.
+ * 2014.sep.22: uuid-конвертеры вынесены в sioutil/io.suggest.util.UuidUtil.
  */
 object StatUtil extends PlayMacroLogsImpl {
 
@@ -74,35 +76,6 @@ object StatUtil extends PlayMacroLogsImpl {
     Base64.encodeBase64URLSafeString(baos.toByteArray)
   }
 
-  /** Конвертануть uuid в набор байт. */
-  def uuidToBytes(uuid: UUID = UUID.randomUUID()): Array[Byte] = {
-    val baos = new ByteArrayOutputStream(16)
-    val os = new DataOutputStream(baos)
-    os.writeLong(uuid.getMostSignificantBits)
-    os.writeLong(uuid.getLeastSignificantBits)
-    os.flush()
-    baos.toByteArray
-  }
-
-  /** Завернуть uuid в base64. */
-  def uuidToBase64(uuid: UUID): String = {
-    val uuidBytes = uuidToBytes(uuid)
-    Base64.encodeBase64URLSafeString(uuidBytes)
-  }
-
-  /** Декодировать uuid, закодированный в base64. */
-  def base64ToUuid(b64s: String): UUID = {
-    val bytes = Base64.decodeBase64(b64s)
-    bytesToUuid(bytes)
-  }
-
-
-  def bytesToUuid(data: Array[Byte], start: Int = 0, len: Int = UID_BYTE_LEN): UUID = {
-    val bais = new ByteArrayInputStream(data, start, len)
-    val is = new DataInputStream(bais)
-    new UUID(is.readLong(), is.readLong())
-  }
-
   /** Десериализация значения кукиса, созданного через mkUidCookieValue().
     * @param s Строка со значением кукиса.
     * @return UUID если всё ок. Или былинный отказ, если не ок.
@@ -124,10 +97,10 @@ object StatUtil extends PlayMacroLogsImpl {
         val macBytesReal = ju.Arrays.copyOfRange(bytes, UID_BYTE_LEN, expectedLen)
         if ( ju.Arrays.equals(macBytesExpected, macBytesReal) ) {
           // Десериализовать UUID
-          Some(bytesToUuid(bytes, 0))
+          Some(bytesToUuid(bytes, 0, len = UID_BYTE_LEN))
 
         } else {
-          warn(s"${logPrefix}MAC invalid:\n real[${macBytesReal.length}] = ${formatArray(macBytesReal)}\n expected[${macBytesExpected.length}] = ${formatArray(macBytesExpected)}\n invalid_uuid = ${bytesToUuid(bytes, 0)}")
+          warn(s"${logPrefix}MAC invalid:\n real[${macBytesReal.length}] = ${formatArray(macBytesReal)}\n expected[${macBytesExpected.length}] = ${formatArray(macBytesExpected)}\n invalid_uuid = ${bytesToUuid(bytes, 0, len = UID_BYTE_LEN)}")
           None
         }
 

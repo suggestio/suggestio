@@ -10,7 +10,7 @@ import play.api.test.FakeApplication
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.08.14 12:04
- * Description:
+ * Description: Тесты для [[util.stat.StatUtil]].
  */
 class StatUtilSpec extends PlaySpec with OneAppPerSuite {
 
@@ -33,30 +33,11 @@ class StatUtilSpec extends PlaySpec with OneAppPerSuite {
 
   "StatUtil" must {
 
-    "serialize and deserialize UUIDs to bytes" in {
-      def ed: Unit = {
-        val uuid = UUID.randomUUID()
-        val uuidBytes = uuidToBytes(uuid)
-        uuid  mustBe  bytesToUuid(uuidBytes)
-      }
-      times(ed)
-    }
-
-
     "serialize and deserialize UUIDs to String+MAC" in {
       def ed: Unit = {
         val uuid = UUID.randomUUID()
         val cookieVal = mkUidCookieValue(uuid)
         deserializeCookieValue(cookieVal)  mustBe  Some(uuid)
-      }
-      times(ed)
-    }
-
-    "serialize/deserialize UUIDs from/to base64" in {
-      def ed: Unit = {
-        val uuid = UUID.randomUUID()
-        val uuidB64 = uuidToBase64(uuid)
-        base64ToUuid(uuidB64)  mustBe  uuid
       }
       times(ed)
     }
