@@ -25,7 +25,7 @@ case class MImgThumb2(
   thumb     : ByteBuffer,
   timestamp : DateTime = DateTime.now,
   id        : UUID = UUID.randomUUID()
-) extends IdStr {
+) extends UuidIdStr {
 
   def save = MImgThumb2.insertThumb(this)
   def delete = MImgThumb2.deleteById(id)
@@ -45,24 +45,11 @@ sealed class MImgThumb2Record extends CassandraTable[MImgThumb2Record, MImgThumb
     MImgThumb2(imageUrl(row), thumb(row), timestamp(row), id(row))
   }
 
-  /** Сохранение экземпляра модели в хранилище. */
-  def insertThumb(mit2: MImgThumb2) = {
-    insert
-      .value(_.id, mit2.id)
-      .value(_.imageUrl, mit2.imageUrl)
-      .value(_.thumb, mit2.thumb)
-      .value(_.timestamp, mit2.timestamp)
-      .future()
-  }
-
-  /** Отправить запрос на создание таблицы. */
-  def createTable = create.future()
-
 }
 
 
 /** Статическая сторона модели MImgThumb2. */
-object MImgThumb2 extends MImgThumb2Record {
+object MImgThumb2 extends MImgThumb2Record with CassandraStaticModel[MImgThumb2Record, MImgThumb2] {
 
   override val tableName = "it"
 
@@ -81,4 +68,24 @@ object MImgThumb2 extends MImgThumb2Record {
   }
 
   def deleteById(id: UUID) = delete.where(_.id eqs id).execute()
+
+
+  /** Сохранение экземпляра модели в хранилище. */
+  def insertThumb(mit2: MImgThumb2) = {
+    insert
+      .value(_.id, mit2.id)
+      .value(_.imageUrl, mit2.imageUrl)
+      .value(_.thumb, mit2.thumb)
+      .value(_.timestamp, mit2.timestamp)
+      .future()
+  }
+
 }
+
+
+// JMX
+trait MImgThumb2JmxMBean extends CassandraModelJxmMBeanI
+class MImgThumb2Jmx extends CassandraModelJmxMBeanImpl with MImgThumb2JmxMBean {
+  override def companion = MImgThumb2
+}
+

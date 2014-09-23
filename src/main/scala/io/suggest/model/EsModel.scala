@@ -1428,7 +1428,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   def companion: EsModelCommonStaticT
 
-  override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def jmxName = "io.suggest.model:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   // Контексты, зависимые от конкретного проекта.
   implicit def ec: ExecutionContext

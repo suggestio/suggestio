@@ -2,8 +2,8 @@ package io.suggest.model
 
 import java.util.UUID
 import io.suggest.util.UuidUtil
-import com.websudos.phantom.Implicits._
 import SioCassandraClient.session
+import com.websudos.phantom.Implicits._
 
 import scala.concurrent.Future
 import MPict.Q_USER_IMG_ORIG
@@ -19,7 +19,7 @@ case class MUserImgMeta2(
   md: Map[String, String],
   q: String,
   id: UUID = UUID.randomUUID()
-) extends IdStr {
+) extends UuidIdStr {
 
   def save = MUserImgMeta2.insertMd(this)
   def delete = MUserImgMeta2.deleteById(id)
@@ -42,7 +42,7 @@ sealed class MUserImgMetaRecord extends CassandraTable[MUserImgMetaRecord, MUser
 
 
 /** Статическая сторона модели. */
-object MUserImgMeta2 extends MUserImgMetaRecord {
+object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserImgMetaRecord, MUserImgMeta2] {
 
   override val tableName = "im"
 
@@ -64,9 +64,15 @@ object MUserImgMeta2 extends MUserImgMetaRecord {
       .future()
   }
 
-  def createTable = create.execute()
-
   def deleteById(id: UUID) = delete.where(_.id eqs id).execute()
   def deleteByStrId(id: String) = deleteById(UuidUtil.base64ToUuid(id))
 
+}
+
+
+
+// JMX
+trait MUserImgMeta2JmxMBean extends CassandraModelJxmMBeanI
+class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxMBean {
+  override def companion = MUserImgMeta2
 }
