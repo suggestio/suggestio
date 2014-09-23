@@ -67,6 +67,24 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
   }
 
 
+  case class WayResultInfo(id: Long, ndLen: Int, firstNode: OsmNode, lastNode: OsmNode)
+  private def testWay(wf: String, ri: WayResultInfo): Unit = {
+    withFileStream(wf) { is =>
+      val res = OsmUtil.parseElementFromStream(is, OsmElemTypes.WAY, ri.id)
+      res.id  mustBe  ri.id
+      assert( res.isInstanceOf[OsmWay] )
+      val resWay = res.asInstanceOf[OsmWay]
+      resWay.nodesOrdered.size  mustBe  ri.ndLen
+      resWay.nodesOrdered.head  mustBe  ri.firstNode
+      resWay.nodesOrdered.last  mustBe  ri.lastNode
+      val gs = resWay.toGeoShape
+      assert( gs.isInstanceOf[LineStringGs] )
+      val lsgs = gs.asInstanceOf[LineStringGs]
+      lsgs.coords  mustBe  resWay.nodesOrdered.map(_.gp).toSeq
+    }
+  }
+
+
   "OsmUtil" must {
 
     "parse nodes" in {
@@ -81,29 +99,14 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
     }
 
 
-    "parse ways" in {
-      case class ResultInfo(id: Long, ndLen: Int, firstNode: OsmNode, lastNode: OsmNode)
-      val ways = Seq(
-        "way.bolshoy-vo-part.osm.xml" -> ResultInfo(31399147L, ndLen = 9,
+    "testWay(way.bolshoy-vo-part.osm.xml)" in {
+      testWay(
+        "way.bolshoy-vo-part.osm.xml",
+        WayResultInfo(31399147L, ndLen = 9,
           firstNode = OsmNode(307016L, GeoPoint(lat = 59.9313858, lon = 30.2565811)),
           lastNode  = OsmNode(307023L, GeoPoint(lat = 59.9295036, lon = 30.2502073))
         )
       )
-      ways foreach { case (wf, ri) =>
-        withFileStream(wf) { is =>
-          val res = OsmUtil.parseElementFromStream(is, OsmElemTypes.WAY, ri.id)
-          res.id  mustBe  ri.id
-          assert( res.isInstanceOf[OsmWay] )
-          val resWay = res.asInstanceOf[OsmWay]
-          resWay.nodesOrdered.size  mustBe  ri.ndLen
-          resWay.nodesOrdered.head  mustBe  ri.firstNode
-          resWay.nodesOrdered.last  mustBe  ri.lastNode
-          val gs = resWay.toGeoShape
-          assert( gs.isInstanceOf[LineStringGs] )
-          val lsgs = gs.asInstanceOf[LineStringGs]
-          lsgs.coords  mustBe  resWay.nodesOrdered.map(_.gp).toSeq
-        }
-      }
     }
 
     "testRel(spb.vaska)" in {
