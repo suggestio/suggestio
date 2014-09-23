@@ -88,12 +88,6 @@ sealed trait GeoMode {
 
   def exactGeodata: Option[geo.GeoPoint]
 
-  /** На каких гео-уровнях производить поиск узлов и в каком порядке? */
-  def nodeGeoLevelsAlways: List[NodeGeoLevel]
-
-  /** Уровни, на которых надо искать узлы, если есть текущий узел на надуровнях. */
-  def nodeGeoLevelsSub: Seq[NodeGeoLevel]
-
   /** Уровни, по которым надо искать. */
   def nodeDetectLevels: Seq[NodeGeoLevel]
 }
@@ -127,8 +121,6 @@ case object GeoNone extends GeoMode {
   override def exactGeodata = None
 
   /** Отсутвие геолокации означает отсутсвие уровней оной. */
-  override def nodeGeoLevelsAlways = Nil
-  override def nodeGeoLevelsSub = Nil
   override def nodeDetectLevels = Nil
 }
 
@@ -213,14 +205,6 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def exactGeodata: Option[geo.GeoPoint] = None
 
-  /** При geoip надо искать на уровнях городов и затем районов. */
-  override val nodeGeoLevelsAlways: List[NodeGeoLevel] = {
-    import NodeGeoLevels._
-    List(NGL_TOWN, NGL_TOWN_DISTRICT)
-  }
-
-  override val nodeGeoLevelsSub = Seq(NodeGeoLevels.NGL_BUILDING)
-
   override val nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
 }
 
@@ -275,8 +259,6 @@ final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
   override def exactGeodata = Some(geopoint)
 
 
-  override def nodeGeoLevelsAlways = GeoLocation.NGLS_b2t
-  override def nodeGeoLevelsSub = Nil
   override def nodeDetectLevels = GeoLocation.NGLS_b2t
 
 }
