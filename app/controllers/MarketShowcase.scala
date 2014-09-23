@@ -214,15 +214,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
   /** Рендер отображения выдачи узла. */
-  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
-     val spsr = AdSearch(
+  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
+    val spsr = AdSearch(
       levels      = List(AdShowLevels.LVL_START_PAGE),
       receiverIds = List(adnNode.id.get)
     )
     val oncloseHref: String = adnNode.meta.siteUrl
       .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
       .getOrElse { ONCLOSE_HREF_DFLT }
-    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo)
+    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo, geoListGoBack = geoListGoBack)
   }
 
   /** Выдача для продьюсера, который сейчас админят. */
@@ -236,7 +236,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean, geoListGoBack: Option[Boolean] = None)
+                                (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = adnNode.id.get
     // TODO Вынести сборку списка prods в отдельный экшен.
     // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
@@ -273,34 +274,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         oncloseHref = oncloseHref,
         logoImgOpt  = adnNode.logoImgOpt,
         shops       = prods,
+        geoListGoBack = geoListGoBack,
         welcomeAdOpt = waOpt
       )
       renderShowcase(args, isGeo, adnNode.id)
-    }
-  }
-
-
-  /** Поиск узла на основе текущей геоинформации. */
-  private def detectCurrentNodeByGeo[T](geo: GeoMode)(searchF: AdnNodesSearchArgsT => Future[Seq[T]])
-                                       (implicit request: RequestHeader): Future[Option[T]] = {
-    Future.traverse( geo.nodeGeoLevelsAlways.zipWithIndex ) {
-      case (ngl, i) =>
-        geo.geoSearchInfoOpt.flatMap { gsiOpt =>
-          val nodeSearchArgs = new AdnNodesSearchArgs {
-            override def geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, ngl)}
-            override def maxResults = 1
-            override def withGeoDistanceSort = geo.exactGeodata
-          }
-          searchF(nodeSearchArgs) map { _ -> i }
-        }
-    } map { results =>
-      //trace(s"detectCurrentNodeByGeo($geo): Matched geo results are:\n  ${results.mkString("\n  ")}")
-      val resultsNonEmptyIter = results.iterator.filter(_._1.nonEmpty)
-      if (resultsNonEmptyIter.isEmpty) {
-        None
-      } else {
-        resultsNonEmptyIter.minBy(_._2)._1.headOption
-      }
     }
   }
 
@@ -315,27 +292,28 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     lazy val logPrefix = s"geoShowcase(${System.currentTimeMillis}): "
     trace(logPrefix + "Starting, args = " + args)
     if (args.geo.isWithGeo) {
-      detectCurrentNodeByGeo(args.geo)(MAdnNode.dynSearch) flatMap { nodeOpt =>
-        if (nodeOpt.isEmpty) {
+      val gsiOptFut = args.geo.geoSearchInfoOpt
+      val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
+      gdrFut flatMap { gdr =>
+        trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
+        renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest) )
+      } recoverWith {
+        case ex: NoSuchElementException =>
           // Нету узлов, подходящих под запрос.
           debug(logPrefix + "No nodes found nearby " + args.geo)
           renderGeoShowcase(args)
-        } else {
-          trace(logPrefix + "Choosen adn node according to geo is " + nodeOpt.flatMap(_.id))
-          renderNodeShowcaseSimple(nodeOpt.get, isGeo = true)
-        }
       }
     } else {
       renderGeoShowcase(args)
     }
   }
-  private def renderGeoShowcase(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
+  private def renderGeoShowcase(reqArgs: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val (catsStatsFut, mmcatsFut) = getCats(None)
     for {
       mmcats    <- mmcatsFut
       catsStats <- catsStatsFut
     } yield {
-      val args = SMShowcaseRenderArgs(
+      val renderArgs = SMShowcaseRenderArgs(
         bgColor = SITE_BGCOLOR_GEO,
         fgColor = SITE_FGCOLOR_GEO,
         name = SITE_NAME_GEO,
@@ -347,7 +325,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         ),
         oncloseHref = ONCLOSE_HREF_DFLT
       )
-      renderShowcase(args, isGeo = true, currAdnId = None)
+      renderShowcase(renderArgs, isGeo = true, currAdnId = None)
     }
   }
 
@@ -391,17 +369,20 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Future successful result
       } else if (adSearch.geo.isWithGeo) {
         // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
-        detectCurrentNodeByGeo(adSearch.geo)(MAdnNode.dynSearchIds) map {
-          case Some(adnId) =>
-            adSearch.copy(receiverIds = List(adnId), geo = GeoNone)
-          case None =>
-            adSearch
-        } recover {
-          // Допустима работа без геолокации при возникновении внутренней ошибки.
-          case ex: Throwable =>
-            error(logPrefix + " Failed to get geoip info for " + request.remoteAddress, ex)
-            adSearch
-        }
+        ShowcaseNodeListUtil.detectCurrentNode(adSearch.geo, adSearch.geo.geoSearchInfoOpt)
+          .map { gdr => Some(gdr.node) }
+          .recover { case ex: NoSuchElementException => None }
+          .map {
+            case Some(adnNode) =>
+              adSearch.copy(receiverIds = List(adnNode.id.get), geo = GeoNone)
+            case None =>
+              adSearch
+          } recover {
+            // Допустима работа без геолокации при возникновении внутренней ошибки.
+            case ex: Throwable =>
+              error(logPrefix + " Failed to get geoip info for " + request.remoteAddress, ex)
+              adSearch
+          }
       } else {
         // Слегка неожиданные параметры запроса.
         warn(logPrefix + " Strange search request: " + adSearch)

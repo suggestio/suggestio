@@ -62,6 +62,7 @@ case class SMShowcaseRenderArgs(
   catsStats: Map[String, Long],
   spsr: AdSearch,
   oncloseHref: String,
+  geoListGoBack: Option[Boolean] = None,
   logoImgOpt: Option[MImgInfoT] = None,
   shops: Map[String, MAdnNode] = Map.empty,
   welcomeAdOpt: Option[MWelcomeAd] = None

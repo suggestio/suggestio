@@ -23,9 +23,12 @@ object ShowcaseNodeListUtil {
    * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
    * Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.
    * @param geoMode Текущий георежим.
+   * @param gsiOptFut Фьючерс с геоинфой.
+   * @param searchF Используемая для поиска, которая возвращает список результатов произвольного типа.
    * @return Фьючерс с результатом детектирования. Если не удалось, то будет exception.
    */
-  def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
+  def detectCurrentNodeUsing[T](geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]])
+                               (searchF: AdnNodesSearchArgsT => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
     val detectLevels = geoMode.nodeDetectLevels.iterator.zipWithIndex
     Future.traverse(detectLevels) { case (lvl, prio) =>
       gsiOptFut.map { gsiOpt =>
@@ -34,7 +37,7 @@ object ShowcaseNodeListUtil {
           override val withGeoDistanceSort = gsiOpt.map { _.geoPoint }
         }
       } flatMap { sargs =>
-        MAdnNode.dynSearch(sargs)
+        searchF(sargs)
       } map {
         (lvl, _, prio)
       }
@@ -45,7 +48,7 @@ object ShowcaseNodeListUtil {
         val (lvl, node, _) = filtered
           .map { case (_lvl, _nodes, _prio) => (_lvl, _nodes.head, _prio) }
           .minBy(_._3)
-        Some(GeoDetectResult(lvl, node))
+        Some((lvl, node))
       } else {
         None
       }
@@ -56,6 +59,16 @@ object ShowcaseNodeListUtil {
     }
   }
 
+  /**
+   * Запуск поиска экземпляра текущей ноды. По сути враппер над detectCurrentNodeUsing().
+   * @param geoMode Текущий geo-режим работы.
+   * @param gsiOptFut Фоново-собираемые данные о географии.
+   * @return Фьючерс с GeoDetectResult.
+   */
+  def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
+    detectCurrentNodeUsing(geoMode, gsiOptFut)(MAdnNode.dynSearch)
+      .map { case (lvl, node) => GeoDetectResult(lvl, node) }
+  }
 
   /**
    * Последовательное объединение функционала двух методов детектирования.
