@@ -486,7 +486,7 @@ object NodeGeoLevels extends Enumeration(1) {
   }
 
   /** Вывести множество значений этого enum'а, но выставив текущий тип значения вместо Value. */
-  def valuesNgl = values.toSet.asInstanceOf[Set[NodeGeoLevel]]
+  def valuesNgl: Set[NodeGeoLevel] = values.toSet.asInstanceOf[Set[NodeGeoLevel]]
 
 }
 
