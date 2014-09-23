@@ -18,30 +18,45 @@ import scala.concurrent.Future
  */
 object SioCassandraClient {
 
-  /** Название кейспейса. */
+  /** Название кейспейса, который используется в проекте. */
   val SIO_KEYSPACE = "Sio"
 
+  /** Ноды, на которые надо долбиться при старте. Это seed-ноды, они сообщат весь список кластера. */
   def CONTRACT_NODES: Seq[String] = CONFIG.getStringList("cassandra.cluster.nodes.connect.on.start").map(_.toSeq) getOrElse Seq("localhost")
 
+  /** Можно ли менять keyspace? Через JMX например. [false], если иное явно не указано в конфиге. */
+  def CAN_ALTER_KEYSPACE: Boolean = CONFIG.getBoolean("cassandra.session.keyspace.can_alter") getOrElse false
+
+  /** Собираем инфу по кластеру. */
   val cluster = synchronized {
     Cluster.builder()
       .addContactPoints(CONTRACT_NODES: _*)
       .build()
   }
 
-
+  /** Открываем прочный канал связи с кластером. */
   implicit val session = synchronized {
     cluster.newSession()
   }
 
+  /** Создать пространство ключей под нужды s.io. */
   def createSioKeyspace = {
     session.executeAsync(s"CREATE KEYSPACE $SIO_KEYSPACE " +
       s"WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}" +
       s"AND DURABLE_WRITES = false;")
   }
-  def useKeyspaceSync(ks: String) = session.execute(s"USE $ks;")
 
-  useKeyspaceSync(SIO_KEYSPACE)
+  private def _useKeyspaceSync(ks: String) = session.execute(s"USE $ks;")
+
+  /** Выставить клиенту используемый keyspace. */
+  def useKeyspaceSync(ks: String) = {
+    if (!CAN_ALTER_KEYSPACE)
+      throw new IllegalAccessException("can_alter_keyspace not explicitly allowed in app config.")
+    _useKeyspaceSync(ks)
+  }
+
+  // При старте надо выставить keyspace как дефолтовый. В нём живут все модели.
+  _useKeyspaceSync(SIO_KEYSPACE)
 }
 
 

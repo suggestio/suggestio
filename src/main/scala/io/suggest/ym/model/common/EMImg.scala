@@ -35,7 +35,7 @@ object EMImg {
   def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {
     Future.traverse(imgs) { case (_, img) =>
       val imgId = img.filename
-      val logPrefix = s"eraseLinkedImage($img): "
+      lazy val logPrefix = s"eraseLinkedImage($img): "
       MPict.deleteFully(imgId) andThen {
         case Success(_)  => LOGGER.trace(logPrefix + "Successfuly erased main picture: " + imgId)
         case Failure(ex) => LOGGER.error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
