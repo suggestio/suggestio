@@ -79,7 +79,11 @@ object MUserImgMetadata extends MPictSubmodel with MUserImgDeleteByIdStatic {
 }
 
 
-final case class MUserImgMetadata(idStr: String, md: Map[String, String], q: String) {
+final case class MUserImgMetadata(
+  idStr: String,
+  md: Map[String, String],
+  q: String
+) {
 
   def id = idStr2Bin(idStr)
 
@@ -90,7 +94,7 @@ final case class MUserImgMetadata(idStr: String, md: Map[String, String], q: Str
     ahclient.put(putReq)
   }
 
-  def delete = MUserImgMetadata.deleteById(idStr)
+  def delete: Future[_] = MUserImgMetadata.deleteById(idStr)
 }
 
 

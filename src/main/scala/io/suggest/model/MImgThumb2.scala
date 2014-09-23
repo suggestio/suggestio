@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 import com.websudos.phantom.Implicits._
 import SioCassandraClient.session
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -23,12 +23,12 @@ import scala.concurrent.{ExecutionContext, Future}
 case class MImgThumb2(
   imageUrl  : Option[String],
   thumb     : ByteBuffer,
-  timestamp : DateTime,
+  timestamp : DateTime = DateTime.now,
   id        : UUID = UUID.randomUUID()
-) {
+) extends IdStr {
 
   def save = MImgThumb2.insertThumb(this)
-
+  def delete = MImgThumb2.deleteById(id)
 }
 
 
@@ -64,7 +64,7 @@ sealed class MImgThumb2Record extends CassandraTable[MImgThumb2Record, MImgThumb
 /** Статическая сторона модели MImgThumb2. */
 object MImgThumb2 extends MImgThumb2Record {
 
-  override val tableName = "t"
+  override val tableName = "it"
 
   /**
    * Прочитать из базы по id.
@@ -80,4 +80,5 @@ object MImgThumb2 extends MImgThumb2Record {
     select.where(_.id eqs uuid).one()
   }
 
+  def deleteById(id: UUID) = delete.where(_.id eqs id).execute()
 }
