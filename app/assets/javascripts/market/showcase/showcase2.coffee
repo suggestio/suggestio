@@ -520,6 +520,10 @@ sm =
         sm.geo.active_layer = null
 
     get_current_position : () ->
+
+      if this.location_requested == true
+        return false
+
       sm.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
       sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
@@ -1104,6 +1108,8 @@ sm =
 
         cs = sm.states.cur_state()
 
+        sm.states.requested_geo_id = cs.mart_id
+
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
@@ -1130,6 +1136,7 @@ sm =
       ## Логотип-кнока
       if sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
         cs = sm.states.cur_state()
+        sm.states.requested_geo_id = cs.mart_id
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
@@ -1655,8 +1662,9 @@ sm =
       sm.geo.layers_count = gls.length
 
       cs = sm.states.cur_state()
-      if typeof cs != 'undefined'
-        node_dom = sm.utils.ge_class document, 'gn-' + cs.mart_id
+      if typeof sm.states.requested_geo_id != 'undefined'
+        node_dom = sm.utils.ge_class document, 'gn-' + sm.states.requested_geo_id
+        sm.states.requested_geo_id = undefined
         first_node = node_dom[0]
 
         if typeof first_node != 'undefined'
@@ -1666,11 +1674,9 @@ sm =
 
           sm.geo.open_layer layer_id
 
-      if typeof sm.geo.geo_position_obj == 'undefined'
-        console.log 'get position'
+      if typeof sm.geo.geo_position_obj == 'undefined' && sm.geo.location_requested == false
         sm.geo.get_current_position()
         return false
-
 
   ############################################
   ## Объект для работы с карточками продьюсера
