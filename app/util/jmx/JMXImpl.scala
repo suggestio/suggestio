@@ -42,7 +42,12 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MCalendarJmx,
     new MInviteRequestJmx,
     new MAdnNodeGeoJmx,
-    new SiowebEsModelJmx
+    new SiowebEsModelJmx,
+    // cassandra
+    new SioCassandraClientJmx,
+    new MImgThumb2Jmx,
+    new MUserImgMeta2Jmx,
+    new MUserImg2Jmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
