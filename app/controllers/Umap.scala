@@ -98,23 +98,24 @@ object Umap extends SioController with PlayMacroLogsImpl {
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MAdnNode],
                                    geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
-    val features: TraversableOnce[JsObject] = {
+    val features: Seq[JsObject] = {
       UmapUtil.prepareDataLayerGeos(geos.iterator)
         .map { geo =>
-        JsObject(Seq(
-          "type" -> JsString("Feature"),
-          "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
-          "properties" -> JsObject(Seq(
-            "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
-            "description" -> JsString( routes.SysMarket.showAdnNode(geo.adnId).absoluteURL() )
+          JsObject(Seq(
+            "type" -> JsString("Feature"),
+            "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
+            "properties" -> JsObject(Seq(
+              "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
+              "description" -> JsString( routes.SysMarket.showAdnNode(geo.adnId).absoluteURL() )
+            ))
           ))
-        ))
-      }
+        }
+        .toSeq
     }
     val resp = JsObject(Seq(
       "type"      -> JsString("FeatureCollection"),
       "_storage"  -> layerJson(ngl, request2lang),
-      "features"  -> JsArray(features.toSeq)
+      "features"  -> JsArray(features)
     ))
     Ok(resp)
   }
