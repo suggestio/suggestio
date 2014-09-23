@@ -528,7 +528,7 @@ sm =
       sm.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
       sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
-      this.location_requested = true
+      sm.geo.location_requested = true
       navigator.geolocation.getCurrentPosition sm.geo.position_callback
 
     init_events : () ->
@@ -614,7 +614,7 @@ sm =
       cs = sm.states.cur_state()
       node_query_param = if cs.mart_id then '&a.cai=' + cs.mart_id else ''
 
-      nodesw = if typeof sm.geo.geo_position_obj == 'undefined' then '' else '&a.nodesw=true'
+      nodesw = ''
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
       sm.request.perform url
@@ -719,7 +719,6 @@ sm =
     this.write_log('error', message)
 
   write_log : ( fun, message ) ->
-    return false
     console[fun](message)
 
   utils :
@@ -1113,7 +1112,12 @@ sm =
         if sm.events.is_touch_locked
           return false
 
-        sm.geo.get_current_position()
+        if typeof sm.geo.location_node == 'undefined'
+          sm.geo.get_current_position()
+        else
+          sm.states.add_state
+            mart_id : sm.geo.location_node._id
+            with_welcome_ad : false
         return false
 
       ## Кнопка закрытия экрана geo
@@ -1127,11 +1131,15 @@ sm =
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
 
+        if geogoBack == "false"
+          sm.states.gb_mart_id = cs.mart_id
+
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
-            mart_id : sm.geo.location_node._id
+            #mart_id : sm.geo.location_node._id
+            mart_id : sm.states.gb_mart_id
             with_welcome_ad : false
             geo_screen :
               is_opened : true
@@ -1631,9 +1639,11 @@ sm =
 
     find_nodes : ( data ) ->
 
+      sm.error 'sm.geo.location_requested : ' + sm.geo.location_requested
+
       if sm.geo.location_requested == true
 
-        if typeof sm.geo.location_node != 'undefined'
+        if typeof sm.geo.location_node == 'undefined'
 
           sm.geo.location_node = data.first_node
 
@@ -1642,13 +1652,10 @@ sm =
           sm.geo.load_for_node_id data.first_node._id
           sm.geo.loaded = false
 
-      if typeof sm.geo.geo_position_obj != 'undefined'
+      if typeof sm.geo.location_node != 'undefined'
         sm.utils.ge('smGeoLocationLabel').innerHTML = sm.geo.location_node.name
 
       sm.utils.ge('smGeoNodesContent').innerHTML = data.nodes
-
-      if sm.geo.location_requested == true
-        return false
 
       gls = sm.utils.ge_class document, 'js-gnlayer'
       sm.geo.layers_count = gls.length
