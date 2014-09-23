@@ -550,6 +550,9 @@ sm =
     #############################
     open_screen : () ->
       gs = sm.utils.ge('smGeoScreen')
+      
+      if typeof sm.geo.geo_position_obj == 'undefined'
+        sm.geo.get_current_position()
 
       if gs.style.display == 'block'
         return false
@@ -605,7 +608,7 @@ sm =
 
       node_query_param = if sm.config.mart_id then '&a.cai=' + sm.config.mart_id else ''
 
-      nodesw = ''
+      nodesw = if typeof sm.geo.geo_position_obj == 'undefined' then '' else '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
       sm.request.perform url
