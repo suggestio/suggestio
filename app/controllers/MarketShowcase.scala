@@ -579,9 +579,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         "nodes"       -> _geoNodesListTpl(nodesRendered, Some(nextNode)),
         "timestamp"   -> JsNumber(tstamp)
       ))
-      cacheControlShort {
-        Ok( Jsonp(JSONP_CB_FUN, json) )
-      }
+      // Без кеша, ибо timestamp.
+      Ok( Jsonp(JSONP_CB_FUN, json) )
     }
   }
 
