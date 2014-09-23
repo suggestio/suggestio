@@ -567,7 +567,7 @@ sm =
 
       sm.rebuild_grid()
 
-      console.log 'open screen'
+      sm.log 'open screen'
 
       siomart.utils.ge('smGeoScreenButton').style.display = 'none'
       sm.geo.load_nodes( true )
@@ -715,6 +715,7 @@ sm =
     this.write_log('error', message)
 
   write_log : ( fun, message ) ->
+    return false
     console[fun](message)
 
   utils :
@@ -1110,7 +1111,8 @@ sm =
 
         sm.states.requested_geo_id = cs.mart_id
 
-        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
+        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || ( typeof( geogoBack ) != 'undefined' && geogoBack == true )
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
@@ -1137,7 +1139,8 @@ sm =
       if sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
-        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
+        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || ( typeof( geogoBack ) != 'undefined' && geogoBack == true )
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
@@ -1453,7 +1456,7 @@ sm =
 
     ## Обработать ошибку
     on_request_error : () ->
-      console.log "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
+      sm.log "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
 
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
@@ -2085,7 +2088,7 @@ sm =
       if cs == null || cs.style.display == "" || cs.style.display == "none"
         return false
 
-      console.log 'close navigaion screen'
+      sm.log 'close navigaion screen'
       if cbca_grid.ww <= 400
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
