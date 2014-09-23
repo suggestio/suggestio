@@ -82,7 +82,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Сколько нод максимум накидывать к списку нод в качестве соседних нод. */
   val NEIGH_NODES_MAX = configuration.getInt("market.showcase.nodes.neigh.max") getOrElse 20
 
-
   /** Кеш на клиенте для короткоживующих данных. */
   private def cacheControlShort(result: Result): Result = {
     if (play.api.Play.isProd) {
@@ -338,10 +337,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "is_geo"      -> JsBoolean(isGeo),
       "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
     )
-    cacheControlShort {
-      StatUtil.resultWithStatCookie {
-        jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
-      }
+    StatUtil.resultWithStatCookie {
+      jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
     }
   }
 
