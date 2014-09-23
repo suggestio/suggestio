@@ -111,26 +111,31 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
 
   /** Пути могут быть иметь обратный порядок узлов внутри себя. Надо стыковать текущую последнюю точку со следующей
     * первой точкой путем реверса точек при необходимости. */
-  def connectWays(ways: Iterator[OsmWay]): List[OsmNode] = {
-    ways.foldLeft ( ways.next().nodesOrdered ) { (nodesAcc, way) =>
+  def connectWays(ways: Iterator[OsmWay]): List[List[OsmNode]] = {
+    ways.foldLeft ( List(ways.next().nodesOrdered) ) { (waysAcc, way) =>
+      val nodesAcc = waysAcc.head
       lazy val wayLast = way.nodesOrdered.last
       lazy val nodesAccLast = nodesAcc.last
       if (way.nodesOrdered.head == nodesAcc.head) {
         // нужно добавить все элементы слева в акк в обратном порядке
-        way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
+        val w2 = way.nodesOrdered.tail.foldLeft(nodesAcc) { (_acc, node) => node :: _acc }
+        w2 :: waysAcc.tail
       } else if (wayLast == nodesAcc.head) {
         // Нужно добавить все элементы слева в акк в прямом порядке
-        way.nodesOrdered.foldRight(nodesAcc.tail) { (node, _acc) => node :: _acc }
+        val w2 = way.nodesOrdered.foldRight(nodesAcc.tail) { (node, _acc) => node :: _acc }
+        w2 :: waysAcc.tail
       } else if (wayLast == nodesAccLast) {
         // Нужно добавить все элементы в хвост акку в обратном порядке
-        nodesAcc ++ way.nodesOrdered.reverse.tail
+        val w2 = nodesAcc ++ way.nodesOrdered.reverse.tail
+        w2 :: waysAcc.tail
       } else if (way.nodesOrdered.head == nodesAccLast) {
         // нужно добавить все элемены в хвост акку в прямом порядке
-        nodesAcc ++ way.nodesOrdered.tail
-      } else if (way.nodesOrdered.head == wayLast) {
-        // TODO Бывает, что есть внешний путь, который должен бы быть как отдельный relation. Не ясно, как сопоставить дырки и несколько outer-полигонов.
-        warn("connectWays(): TODO external closed way dropped: Not yet implemented:\n - way = " + way)
-        nodesAcc
+        val w2 = nodesAcc ++ way.nodesOrdered.tail
+        w2 :: waysAcc.tail
+      } else if (nodesAccLast == nodesAcc.head) {
+        // Текущий контур уже замкнут, а точки продолжаются. Значит это отдельный островок. Стартуем новый контур в аккамуляторе.
+        trace("connectWays(): Starting new way in acc...")
+        way.nodesOrdered :: waysAcc
       } else {
         throw new IllegalArgumentException(s"directWays(): Cannot connect way to nodes acc: no common points found:\n - way = $way\n - acc = $nodesAcc")
       }
@@ -375,22 +380,35 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   override def toGeoShape: GeoShape = {
     // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
     val acc0: List[GeoShape] = if (hasOuters) {
-      val outerLineNodes = OsmUtil.connectWays( outerWays )
-      val line = LineStringGs( outerLineNodes.map(_.gp) )
-      val isOuterClosed = outerLineNodes.head == outerLineNodes.last  &&  outerLineNodes.tail.nonEmpty
-      val e = if (isOuterClosed) {
-        val holes = innerHoles
-          .map { wayGroup =>
-            val holePoints = OsmUtil.connectWays( wayGroup.iterator )
-              .map(_.gp)
-            LineStringGs( holePoints )
+      val outerLineWays = OsmUtil.connectWays(outerWays)
+      if (outerLineWays.tail.isEmpty) {
+        // Одна линия. Если это полигон, то можно вырезанть в нём дырки.
+        val hd = outerLineWays.head
+        val line = LineStringGs(hd.map(_.gp))
+        val isOuterClosed = hd.head == hd.last && hd.tail.nonEmpty
+        val e = if (isOuterClosed) {
+          val holes = innerHoles
+            .flatMap { wayGroup =>
+            OsmUtil.connectWays(wayGroup.iterator)
+              .map { w => LineStringGs(w.map(_.gp))}
           }
-          .toList
-        PolygonGs(line, holes)
+            .toList
+          PolygonGs(line, holes)
+        } else {
+          // Линия не замкнутая, например дорога. Inner holes тут нет.
+          line
+        }
+        List(e)
       } else {
-        line
+        // Мультиполигон.
+        val polys = outerLineWays
+          .map { olw =>
+            val ls = LineStringGs(olw.map(_.gp))
+            // TODO Нужно определять, какие дырки относятся к текущему полигону.
+            PolygonGs(ls)
+          }
+        List( MultiPolygonGs(polys) )
       }
-      List(e)
     } else {
       Nil
     }
@@ -406,7 +424,6 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
     if (acc2.tail.isEmpty) {
       acc2.head
     } else {
-      // TODO Может быть стоит производить более глубокий анализ?
       GeometryCollectionGs(acc2)
     }
   }
