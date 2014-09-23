@@ -4,7 +4,7 @@ import java.nio.file.Files
 
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
-import _root_.util.geo.umap.{UmapFeature, UmapUtil}, UmapUtil.ADN_ID_SHAPE_FORM_FN
+import _root_.util.geo.umap._
 import models._
 import play.api.i18n.{Lang, Messages}
 import util.PlayMacroLogsImpl
@@ -32,6 +32,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false
+
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuser.async { implicit request =>
@@ -97,20 +98,23 @@ object Umap extends SioController with PlayMacroLogsImpl {
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MAdnNode],
                                    geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
-    val features: Seq[JsObject] = geos.map { geo =>
-      JsObject(Seq(
-        "type" -> JsString("Feature"),
-        "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
-        "properties" -> JsObject(Seq(
-          "name" -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
-          "description" -> JsString(routes.SysMarket.showAdnNode(geo.adnId).absoluteURL())
+    val features: TraversableOnce[JsObject] = {
+      UmapUtil.prepareDataLayerGeos(geos.iterator)
+        .map { geo =>
+        JsObject(Seq(
+          "type" -> JsString("Feature"),
+          "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
+          "properties" -> JsObject(Seq(
+            "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
+            "description" -> JsString( routes.SysMarket.showAdnNode(geo.adnId).absoluteURL() )
+          ))
         ))
-      ))
+      }
     }
     val resp = JsObject(Seq(
       "type"      -> JsString("FeatureCollection"),
       "_storage"  -> layerJson(ngl, request2lang),
-      "features"  -> JsArray(features)
+      "features"  -> JsArray(features.toSeq)
     ))
     Ok(resp)
   }
