@@ -310,10 +310,11 @@ cbca_grid =
     if typeof cbca_grid.blocks == 'undefined'
       return false
 
-    cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
-    cbca_grid.blocks = cbca_grid.m_blocks
+    if typeof cbca_grid.all_blocks != 'undefined'
+      cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+      cbca_grid.blocks = cbca_grid.m_blocks
 
-    this.build()
+      this.build()
 
   count_columns : () ->
     # Определеяем сколько колонок влезет в экран колонок
@@ -600,7 +601,9 @@ sm =
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
     load_nodes_and_reload_with_mart_id : () ->
-      node_query_param = if sm.config.mart_id then '&a.cai=' + sm.config.mart_id else ''
+
+      cs = sm.states.cur_state()
+      node_query_param = if cs.mart_id then '&a.cai=' + cs.mart_id else ''
       nodesw = '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
@@ -608,7 +611,8 @@ sm =
 
     load_nodes : () ->
 
-      node_query_param = if sm.config.mart_id then '&a.cai=' + sm.config.mart_id else ''
+      cs = sm.states.cur_state()
+      node_query_param = if cs.mart_id then '&a.cai=' + cs.mart_id else ''
 
       nodesw = if typeof sm.geo.geo_position_obj == 'undefined' then '' else '&a.nodesw=true'
 
@@ -1630,7 +1634,7 @@ sm =
       if sm.geo.location_requested == true
 
         if typeof sm.geo.location_node != 'undefined'
-          
+
           sm.geo.location_node = data.first_node
 
           sm.geo.location_requested = false
