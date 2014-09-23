@@ -2,12 +2,10 @@ package controllers
 
 import io.suggest.model.{MUserImgOrig, ImgWithTimestamp, MImgThumb}
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
-import org.apache.hadoop.fs.Path
-import io.suggest.util.SioConstants._
+import util.{PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.joda.time.Instant
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import util.acl._
 import util.img._
 import play.api.libs.json._
@@ -32,16 +30,12 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   import LOGGER._
 
-  val domainsRoot   = SiobixFs.siobix_out_path
-  val thumbsSubpath = new Path(THUMBS_SUBDIR)
-
-  val CACHE_THUMB_CLIENT_SECONDS = {
-    current.configuration.getInt("img.thumb.cache.client.seconds") getOrElse 36000
-  }
+  /** Время кеширования thumb'а на клиенте. */
+  val CACHE_THUMB_CLIENT_SECONDS = configuration.getInt("img.thumb.cache.client.seconds") getOrElse 36000
 
   /** Сколько времени кешировать temp-картинки на клиенте. */
   val TEMP_IMG_CACHE_SECONDS = {
-    val cacheMinutes = current.configuration.getInt("img.temp.cache.client.minutes") getOrElse 10
+    val cacheMinutes = configuration.getInt("img.temp.cache.client.minutes") getOrElse 10
     val cacheDuration = cacheMinutes.minutes
     cacheDuration.toSeconds.toInt
   }
@@ -49,7 +43,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
-    val cacheDuration = current.configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse 2.days
+    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse 2.days
     cacheDuration.toSeconds.toInt
   }
 
