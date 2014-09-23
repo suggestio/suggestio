@@ -43,8 +43,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
-  /** Отображать ли пустые категории? */
-  val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
+  // сбор категорий перенесён в ShowcaseUtil.
 
   /** Дефолтовый цвет выдачи, если нет ничего. */
   val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
@@ -84,6 +83,23 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val NEIGH_NODES_MAX = configuration.getInt("market.showcase.nodes.neigh.max") getOrElse 20
 
 
+  /** Кеш на клиенте для короткоживующих данных. */
+  private def cacheControlShort(result: Result): Result = {
+    if (play.api.Play.isProd) {
+      result
+        .withHeaders(CACHE_CONTROL -> "public, max-age=600")
+    } else {
+      result
+    }
+  }
+
+  /** Кеш на клиенте для редкоизмеяющихся данных выдачи. */
+  private def cacheControlLong(result: Result): Result = {
+    result
+      .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+  }
+
+
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
    * @param showcaseCall Call для обращения за indexTpl.
@@ -97,7 +113,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       title         = Some(request.adnNode.meta.name),
       adnId         = request.adnNode.id
     )
-    Ok(demoWebsiteTpl(args))
+    cacheControlShort {
+      Ok(demoWebsiteTpl(args))
+    }
   }
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
@@ -118,7 +136,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
     )
-    Ok(demoWebsiteTpl(args))
+    cacheControlLong {
+      Ok(demoWebsiteTpl(args))
+    }
   }
 
 
@@ -173,12 +193,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "color"    -> node.meta.color.fold [JsValue] (JsNull) (JsString.apply),
       "logo_src" -> (logoSrcOpt getOrElse JsNull)
     ))
-    Ok( Jsonp(JSONP_CB_FUN, json) )
+    cacheControlShort {
+      Ok(Jsonp(JSONP_CB_FUN, json))
+    }
   }
 
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl( request.adnNode.id )) as "text/javascript"
+    Ok(_installScriptTpl(request.adnNode.id))
+      .withHeaders(
+        CONTENT_TYPE  -> "text/javascript; charset=utf-8",
+        CACHE_CONTROL -> "public, max-age=36000"
+      )
   }
 
 
@@ -334,51 +360,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "is_geo"      -> JsBoolean(isGeo),
       "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
     )
-    val result = jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
-    StatUtil.resultWithStatCookie(result)
-  }
-
-
-  private def getCats(adnIdOpt: Option[String]) = {
-    val catAdsSearch = AdSearch(
-      receiverIds   = adnIdOpt.toList,
-      maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_CATS)
-    )
-    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
-      .map { _.toMap }
-    // Текущие категории узла
-    val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
-      // Включено отображение всех категорий.
-      val catOwnerId = adnIdOpt.fold(MMartCategory.DEFAULT_OWNER_ID) { getCatOwner }
-      for {
-        mmcats <- MMartCategory.findTopForOwner(catOwnerId)
-        catsStats <- catsStatsFut
-      } yield {
-        // Нужно, чтобы пустые категории шли после непустых. И алфавитная сортировка
-        val nonEmptyCatIds = catsStats
-          .iterator
-          .filter { case (_, count)  =>  count > 0L }
-          .map { _._1 }
-          .toSet
-        mmcats.sortBy { mmcat =>
-          val sortPrefix: String = nonEmptyCatIds.contains(mmcat.idOrNull) match {
-            case true  => "a"
-            case false => "z"
-          }
-          sortPrefix + mmcat.name
-        }
-      }
-    } else {
-      // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
-      catsStatsFut flatMap { catsStats =>
-        MMartCategory.multiGet(catsStats.keysIterator)
-          .map { _.sortBy(MMartCategory.sortByMmcat) }
+    cacheControlShort {
+      StatUtil.resultWithStatCookie {
+        jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
       }
     }
-    (catsStatsFut, mmcatsFut)
   }
+
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
@@ -442,7 +430,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Асинхронно рендерим результат.
     madsRenderedFut map { madsRendered =>
-      jsonOk(jsAction, blocks = madsRendered)
+      cacheControlShort {
+        jsonOk(jsAction, blocks = madsRendered)
+      }
     }
   }
 
@@ -521,7 +511,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           for {
             blocks <- blocksHtmlsFut
           } yield {
-            jsonOk("producerAds", htmlOpt, blocks)
+            cacheControlShort {
+              jsonOk("producerAds", htmlOpt, blocks)
+            }
           }
         }
       }
@@ -540,7 +532,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       case Some(mad) =>
         val bc: BlockConf = BlocksConf(mad.blockMeta.blockId)
         // TODO Проверять карточку на опубликованность?
-        Ok( bc.renderBlock(mad, isStandalone = true) )
+        cacheControlShort {
+          Ok( bc.renderBlock(mad, isStandalone = true) )
+        }
 
       case None =>
         warn(s"AdId $adId not found.")
@@ -599,7 +593,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         "nodes"       -> _geoNodesListTpl(nodesRendered, Some(nextNode)),
         "timestamp"   -> JsNumber(tstamp)
       ))
-      Ok( Jsonp(JSONP_CB_FUN, json) )
+      cacheControlShort {
+        Ok( Jsonp(JSONP_CB_FUN, json) )
+      }
     }
   }
 

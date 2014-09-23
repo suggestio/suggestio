@@ -229,7 +229,7 @@ object FormUtil {
     .transform [Option[String]] (emptyStrOptToNone, identity)
   def townSomeM = toSomeStrM(townM)
 
-  def addressM = nonEmptyText(minLength = 10, maxLength = 128)
+  def addressM = nonEmptyText(minLength = 6, maxLength = 128)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
