@@ -209,7 +209,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    renderNodeShowcaseSimple(request.adnNode, isGeo = false)
+    MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1).flatMap { geos =>
+      renderNodeShowcaseSimple(
+        adnNode = request.adnNode,
+        isGeo = false,  // Оксюморон с названием парамера. Все запросы гео-выдачи приходят в этот экшен, а геолокация отключена.
+        geoListGoBack = geos.headOption.map(_.glevel.isLowest)
+      )
+    }
   }
 
   /** Рендер отображения выдачи узла. */
@@ -337,6 +343,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "is_geo"      -> JsBoolean(isGeo),
       "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
     )
+    // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
+    // произошло какое-то другое изменение
     StatUtil.resultWithStatCookie {
       jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
     }
