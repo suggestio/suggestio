@@ -1101,7 +1101,17 @@ sm =
 
       ## Открыть экран geo
       if sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
-        sm.states.transform_state { geo_screen : { is_opened : true } }
+
+        cs = sm.states.cur_state()
+
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
+          sm.states.transform_state { geo_screen : { is_opened : true } }
+        else
+          sm.states.add_state
+            mart_id : sm.geo.location_node._id
+            with_welcome_ad : false
+            geo_screen :
+              is_opened : true
         return false
 
       ## Кнопка для определения текущей геопозиции, напрямую на влияет на состояние выдачи
@@ -1119,7 +1129,15 @@ sm =
 
       ## Логотип-кнока
       if sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
-        sm.states.transform_state { geo_screen : { is_opened : true } }
+        cs = sm.states.cur_state()
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id )
+          sm.states.transform_state { geo_screen : { is_opened : true } }
+        else
+          sm.states.add_state
+            mart_id : sm.geo.location_node._id
+            with_welcome_ad : false
+            geo_screen :
+              is_opened : true
         return false
 
       ## Юзер нажал на ноду в списке
@@ -2221,8 +2239,17 @@ sm =
 
     init : () ->
 
+      cs = sm.states.cur_state()
+
       this.img_dom = sm.utils.ge 'smWelcomeAd'
       this.div_dom = sm.utils.ge 'smWelcomeDiv'
+
+      if typeof cs.with_welcome_ad != 'undefined' && cs.with_welcome_ad == false
+        if this.img_dom != null
+          this.img_dom.style.display = 'none'
+        if this.div_dom != null
+          this.div_dom.style.display = 'none'
+        return false
 
       if this.img_dom == null
         this.div_dom.style.display = 'block'
@@ -2285,6 +2312,7 @@ sm =
     ds :
       url : '/'
       mart_id : undefined
+      with_welcome_ad : true
       cat_id : undefined
       cat_class : undefined
       cat_screen :
@@ -2304,6 +2332,7 @@ sm =
 
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
       if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
+      if typeof ns.with_welcome_ad == 'undefined' then ns.with_welcome_ad = this.ds.with_welcome_ad
       if typeof ns.cat_id == 'undefined' then ns.cat_id = this.ds.cat_id
       if typeof ns.cat_class == 'undefined' then ns.cat_class = this.ds.cat_class
       if typeof ns.cat_screen == 'undefined' then ns.cat_screen = this.ds.cat_screen
