@@ -23,23 +23,25 @@ object SioCassandraClient {
 
   def CONTRACT_NODES: Seq[String] = CONFIG.getStringList("cassandra.cluster.nodes.connect.on.start").map(_.toSeq) getOrElse Seq("localhost")
 
-  val cluster = Cluster.builder()
-    .addContactPoints(CONTRACT_NODES: _*)
-    .build()
+  val cluster = synchronized {
+    Cluster.builder()
+      .addContactPoints(CONTRACT_NODES: _*)
+      .build()
+  }
 
 
-  implicit val session = cluster.newSession()
+  implicit val session = synchronized {
+    cluster.newSession()
+  }
 
   def createSioKeyspace = {
     session.executeAsync(s"CREATE KEYSPACE $SIO_KEYSPACE " +
       s"WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}" +
       s"AND DURABLE_WRITES = false;")
   }
-
   def useKeyspaceSync(ks: String) = session.execute(s"USE $ks;")
 
   useKeyspaceSync(SIO_KEYSPACE)
-
 }
 
 
