@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<osm version="0.6" generator="CGImap 0.3.3 (1453 thorn-03.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+<osm version="0.6" generator="CGImap 0.3.3 (4876 thorn-03.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
  <node id="307016" visible="true" version="7" changeset="18934124" timestamp="2013-11-16T14:15:37Z" user="zdw" uid="353208" lat="59.9313858" lon="30.2565811">
   <tag k="highway" v="traffic_signals"/>
  </node>

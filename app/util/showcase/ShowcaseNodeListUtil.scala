@@ -34,7 +34,7 @@ object ShowcaseNodeListUtil {
       gsiOptFut.map { gsiOpt =>
         new NodeDetectArgsT {
           override val geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, lvl) }
-          override val withGeoDistanceSort = geoMode.exactGeodata
+          override val withGeoDistanceSort = geoMode.exactGeodata  // TODO Сделать обязательным м.б.?
           override def maxResults = 1
         }
       } flatMap { sargs =>
