@@ -549,10 +549,8 @@ sm =
     ## Открыть экран с гео добром
     #############################
     open_screen : () ->
+
       gs = sm.utils.ge('smGeoScreen')
-      
-      if typeof sm.geo.geo_position_obj == 'undefined'
-        sm.geo.get_current_position()
 
       if gs.style.display == 'block'
         return false
@@ -1649,6 +1647,11 @@ sm =
           layer_id = layer_id.replace 'Content', ''
 
           sm.geo.open_layer layer_id
+
+      if typeof sm.geo.geo_position_obj == 'undefined'
+        console.log 'get position'
+        sm.geo.get_current_position()
+        return false
 
 
   ############################################
