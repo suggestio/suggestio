@@ -1104,24 +1104,6 @@ sm =
       ## Элементы, отвечающие за изменение состояния geo screen
       #########################################################
 
-      ## Открыть экран geo
-      if sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null
-
-        cs = sm.states.cur_state()
-
-        sm.states.requested_geo_id = cs.mart_id
-
-        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
-        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || ( typeof( geogoBack ) != 'undefined' && geogoBack == true )
-          sm.states.transform_state { geo_screen : { is_opened : true } }
-        else
-          sm.states.add_state
-            mart_id : sm.geo.location_node._id
-            with_welcome_ad : false
-            geo_screen :
-              is_opened : true
-        return false
-
       ## Кнопка для определения текущей геопозиции, напрямую на влияет на состояние выдачи
       if sm.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
         if sm.events.is_touch_locked
@@ -1136,11 +1118,12 @@ sm =
         return false
 
       ## Логотип-кнока
-      if sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null
+      if ( sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null ) || ( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null )
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
-        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || ( typeof( geogoBack ) != 'undefined' && geogoBack == true )
+
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
@@ -1646,12 +1629,14 @@ sm =
 
       if sm.geo.location_requested == true
 
-        sm.geo.location_node = data.first_node
+        if typeof sm.geo.location_node != 'undefined'
+          
+          sm.geo.location_node = data.first_node
 
-        sm.geo.location_requested = false
-        sm.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
-        sm.geo.load_for_node_id data.first_node._id
-        sm.geo.loaded = false
+          sm.geo.location_requested = false
+          sm.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
+          sm.geo.load_for_node_id data.first_node._id
+          sm.geo.loaded = false
 
       if typeof sm.geo.geo_position_obj != 'undefined'
         sm.utils.ge('smGeoLocationLabel').innerHTML = sm.geo.location_node.name
