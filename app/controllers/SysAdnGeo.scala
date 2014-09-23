@@ -8,14 +8,13 @@ import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
-import util.acl.{IsSuperuserAdnGeo, IsSuperuser, IsSuperuserAdnNode}
+import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnGeo, IsSuperuser, IsSuperuserAdnNode}
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient, OsmParsers}
 import views.html.sys1.market.adn.geo._
 import models._
-
 import scala.concurrent.Future
 
 /**
@@ -62,10 +61,16 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
     }
   }
 
+  private def guessGeoLevel(implicit request: AbstractRequestForAdnNode[_]): Option[NodeGeoLevel] = {
+    AdnShownTypes.maybeWithName( request.adnNode.adn.shownTypeId )
+      .flatMap( _.ngls.headOption )
+  }
 
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
   def createForNodeOsm(adnId: String) = IsSuperuserAdnNode(adnId).apply { implicit request =>
-    Ok(createAdnGeoOsmTpl(osmNodeFormM, request.adnNode))
+    val form = guessGeoLevel
+      .fold(osmNodeFormM) { ngl => osmNodeFormM.fill((ngl, UrlParseResult("", null, -1))) }
+    Ok(createAdnGeoOsmTpl(form, request.adnNode))
   }
 
   /** Сабмит формы создания фигуры на базе osm-объекта. */
@@ -194,16 +199,15 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
 
   /** Рендер страницы с формой создания круга. */
   def createCircle(adnId: String) = IsSuperuserAdnNode(adnId).apply { implicit request =>
-    val form0 = circleFormM
+    val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
     // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
-    val form1 = request.adnNode.geo.point.fold(form0) { loc =>
-      val geoStub = MAdnNodeGeo(
-        adnId = adnId,
-        glevel = NodeGeoLevels.default,
-        shape = CircleGs(loc, Distance(0.0, DistanceUnit.METERS))
-      )
-      form0 fill geoStub
-    }
+    val gpStub = request.adnNode.geo.point getOrElse GeoPoint(0, 0)
+    val geoStub = MAdnNodeGeo(
+      adnId = adnId,
+      glevel = ngl,
+      shape = CircleGs(gpStub, Distance(0.0, DistanceUnit.METERS))
+    )
+    val form1 = circleFormM fill geoStub
     Ok(createCircleTpl(form1, request.adnNode))
   }
 
