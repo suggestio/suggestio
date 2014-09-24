@@ -24,6 +24,7 @@ import util.SiowebEsUtil.client
  * Description: Копирование картинок из hbase-моделей в cassandra.
  * Модуль был написан в связи с переездом img-моделей на cassandra.
  * До этого использовалась hbase, которая была в кравлере siobix, но так и не дожила до продакшена.
+ * Данные MInviteRequest тут пропускаются, т.к. до запуска это не актуально ни разу.
  */
 object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
 
@@ -152,8 +153,8 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
         val mui2 = MUserImg2(
           id  = newId,
           q   = origImg.q,
-          img = ByteBuffer.wrap(origImg.img),
-          timestamp = new DateTime(origImg.timestamp)
+          img = ByteBuffer.wrap(origImg.imgBytes),
+          timestamp = new DateTime(origImg.timestampMs)
         )
         mui2.save
       } map { _ =>
@@ -192,7 +193,7 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
         val mit2 = MImgThumb2(
           id = newId,
           imageUrl = oldThumb.imageUrlOpt,
-          thumb = ByteBuffer.wrap(oldThumb.thumb),
+          img = ByteBuffer.wrap(oldThumb.thumb),
           timestamp = new DateTime( oldThumb.timestamp )
         )
         mit2.save
@@ -206,29 +207,27 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
 // JMX доступ к этому модулю
 
 trait ImgsHbase2CassandraJmxMBean {
-  def updateMAd: String
-  def updateMWelcomeAd: String
-  def updateMAdnNode: String
+  def updateMAd(): String
+  def updateMWelcomeAd(): String
+  def updateMAdnNode(): String
 }
 
 class ImgsHbase2CassandraJmx extends JMXBaseHBase with ImgsHbase2CassandraJmxMBean {
 
-  override def updateMAdnNode: String = {
+  override def updateMAdnNode(): String = {
     ImgsHbase2Cassandra.updateMAdnNode()
       .map { result => s"Nodes updated: $result" }
   }
 
-  override def updateMAd: String = {
+  override def updateMAd(): String = {
     ImgsHbase2Cassandra.updateMAd()
       .map { result => s"MAds updated: $result" }
   }
 
-  override def updateMWelcomeAd: String = {
+  override def updateMWelcomeAd(): String = {
     ImgsHbase2Cassandra.updateWelcomeAd()
       .map { result => s"MWelcomeAds update: $result" }
   }
+
 }
-
-
-
 

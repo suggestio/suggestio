@@ -1,9 +1,13 @@
 package util.img
 
+import java.nio.ByteBuffer
+import java.util.UUID
+
+import io.suggest.util.UuidUtil
 import util.{PlayLazyMacroLogsImpl, FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
-import io.suggest.model.{MUserImgMetadata, MImgThumb, MUserImgOrig, MPict}
+import io.suggest.model.{MUserImgMetadata, MUserImgOrig, MPict}
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.io.{File, FileNotFoundException}
@@ -164,8 +168,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
       .map { case (ii4sRaw, i) =>
         val ti4s = ii4sRaw.asInstanceOf[ImgInfo4Save[TmpImgIdKey]]
-        val id = MPict.randomId
-        val idStr = MPict.idBin2Str(id)
+        val id = UUID.randomUUID()
+        val idStr = UuidUtil.uuidToBase64(id)
         val idOpt = Some(idStr)
         val results = if (ti4s.iik.isCropped) {
           // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
@@ -228,7 +232,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       Future.traverse(needOrigImgs1) { case v @ (miit, _) =>
         try {
           val oid: OrigImgIdKey = miit
-          MUserImgMetadata.getById(oid.data.rowKey, oid.origQualifierOpt)
+          MUserImgMeta2.getByStrId(oid.data.rowKey, oid.origQualifierOpt)
             .map {
               // Всё ок, картинка скорее всего есть в базе, пропускаем.
               case Some(_) =>
@@ -288,7 +292,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   private def eraseOiik(oiik: MImgInfoT): Future[_] = {
-    val fut = MPict.deleteFully(oiik.data.rowKey)
+    val rowKey = oiik.data.rowKey
+    val fut = Future.traverse(Seq(MUserImg2, MUserImgMeta2, MImgThumb2)) { imodel =>
+      imodel.deleteByStrId(rowKey)
+    }
     fut onComplete {
       case Success(res) => trace("Old img deleted: " + oiik + " result: " + res)
       case Failure(ex)  => error("Failed to delete old img " + oiik, ex)
@@ -308,10 +315,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     trace(s"${logPrefix}Starting: crop=${tii.iik.cropOpt}, withThumb=${tii.withThumb} withId=${tii.withId}")
     val (rowkeyStr, rowkey) = tii.withId match {
       case Some(_rowkeyStr) =>
-        _rowkeyStr -> MPict.idStr2Bin(_rowkeyStr)
+        _rowkeyStr -> UuidUtil.base64ToUuid(_rowkeyStr)
       case None =>
-        val _rowkey = MPict.randomId
-        val _rowkeyStr = MPict.idBin2Str(_rowkey)
+        val _rowkey = UUID.randomUUID()
+        val _rowkeyStr = UuidUtil.uuidToBase64(_rowkey)
         _rowkeyStr -> _rowkey
     }
     // qualifier для сохранения картинки и её метаданных
@@ -342,7 +349,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     val saveOrigFut = future {
       OrigImageUtil.maybeReadFromFile(mptmp4save.file)
     } flatMap { imgBytes =>
-      MUserImgOrig(rowkeyStr, imgBytes, q = q)
+      MUserImg2(id = rowkey, img = ByteBuffer.wrap(imgBytes), q = q)
         .save
         .map { _ =>
           val savedFilename = OrigImgData(rowkeyStr, cropOpt = crop4nameOpt).toFilename
@@ -381,7 +388,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         } finally {
           tmpThumbFile.delete()
         }
-        new MImgThumb(id=rowkey, thumb=thumbBytes, imageUrl=null)
+        new MImgThumb2(
+          id = rowkey,
+          img = ByteBuffer.wrap(thumbBytes),
+          imageUrl = None
+        )
       } flatMap { thumbDatum =>
         thumbDatum.save
       }
@@ -730,7 +741,7 @@ object OrigImgIdKey {
     * @return Асинхронные метаданные по ширине-высоте картинки.
     */
   private def getOrigImageWH(rowKey: String): Future[Option[MImgInfoMeta]] = {
-    MUserImgMetadata.getById(rowKey)
+    MUserImgMeta2.getByStrId(rowKey)
       .map { imetaOpt =>
         for {
           imeta     <- imetaOpt
@@ -765,11 +776,11 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta], data: Orig
 
   @JsonIgnore
   override def isExists: Future[Boolean] = {
-    MUserImgOrig.getById(filename, q = None).map(_.isDefined)
+    MUserImg2.getByStrId(data.rowKey, q = None).map(_.isDefined)
   }
 
   @JsonIgnore
-  override def isValid: Boolean = MPict.isStrIdValid(filename)
+  override def isValid: Boolean = UuidUtil.isUuidStrValid(filename)
 
   @JsonIgnore
   override def equals(obj: scala.Any): Boolean = {
@@ -823,7 +834,6 @@ object OutImgFmts extends Enumeration {
   }
 }
 
-import OutImgFmts._
 
 /**
  * Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей)

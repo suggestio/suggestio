@@ -1,6 +1,6 @@
 package controllers
 
-import io.suggest.model.{MUserImgOrig, ImgWithTimestamp, MImgThumb}
+import io.suggest.model.ImgWithTimestamp
 import play.api.mvc._
 import util.{PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
@@ -59,7 +59,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       // Thumb'ы у нас [пока] только не кропаные, поэтому надо срезать crop-суффикс из imageId.
       ImgIdKey(imageId) match {
         case oiik: OrigImgIdKey =>
-          MImgThumb.getThumbById(oiik.data.rowKey) map {
+          MImgThumb2.getThumbByStrId(oiik.data.rowKey) map {
             case Some(its) =>
               serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
 
@@ -89,7 +89,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   def getOrigIik(oiik: OrigImgIdKey) = Action.async { implicit request =>
     import oiik.filename
     suppressQsFlood(routes.Img.getOrig(filename)) {
-      MUserImgOrig.getById(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
+      MUserImg2.getByStrId(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 
@@ -104,8 +104,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** Обслуживание картинки. */
   private def serveImgBytes(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader) = {
     // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
-    val ims = its.timestamp % 1000L
-    val ts0 = new Instant(its.timestamp - ims) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
+    val ims = its.timestampMs % 1000L
+    val ts0 = new Instant(its.timestampMs - ims) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
     val isCached = request.headers.get(IF_MODIFIED_SINCE)
       .flatMap { DateTimeUtil.parseRfcDate }
       .exists { dt => !(ts0 isAfter dt) }
@@ -113,10 +113,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       //trace("serveImg(): 304 Not Modified")
       NotModified
     } else {
-      trace(s"serveImg(): 200 OK. size = ${its.img.length} bytes")
+      trace(s"serveImg(): 200 OK. size = ${its.imgBytes.length} bytes")
       // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
-      val magicMatch = Magic.getMagicMatch(its.img)
-      Ok(its.img)
+      val magicMatch = Magic.getMagicMatch(its.imgBytes)
+      Ok(its.imgBytes)
         .withHeaders(
           CONTENT_TYPE  -> magicMatch.getMimeType,
           LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
@@ -252,12 +252,12 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
             Future successful tiik.mptmp
           case oiik: OrigImgIdKey =>
             // Нужно выкачать из hbase исходную картинку во временный файл.
-            MUserImgOrig.getById(oiik.data.rowKey, q = None) map { oimgOpt =>
+            MUserImg2.getByStrId(oiik.data.rowKey, q = None) map { oimgOpt =>
               val oimg = oimgOpt.get
-              val magicMatch = Magic.getMagicMatch(oimg.img)
+              val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
               val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
               val mptmp = MPictureTmp.mkNew(markerOpt, cropOpt = None, oif)
-              mptmp.writeIntoFile(oimg.img)
+              mptmp.writeIntoFile(oimg.imgBytes)
               mptmp
             }
         }
