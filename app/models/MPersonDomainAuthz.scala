@@ -16,7 +16,6 @@ import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.JavaConversions._
 import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
-import scala.Some
 import play.api.Logger
 import org.elasticsearch.client.Client
 

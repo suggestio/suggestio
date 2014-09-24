@@ -251,7 +251,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
   def redirectCallUserSomewhere(personId: String): Future[Call] = {
     MarketLk.getMarketRdrCallFor(personId) map {
-      _ getOrElse routes.Admin.index()
+      _ getOrElse routes.Market.index() // Был раньше Admin.index(), но кравлер пока выпилен ведь.
     }
   }
 
@@ -344,7 +344,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
     MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
-      callOpt getOrElse routes.Admin.index()
+      callOpt getOrElse routes.Market.index()
     }
   }
 

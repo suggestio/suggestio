@@ -40,7 +40,7 @@ sio.proto.dflt = http
 ###############################################################################
 # Используемое хранилище. Модели могут использовать "DFS" или "HBase". Регистр
 # символов значения не имеет значение. [DFS]
-storage = "HBASE"
+storage = "DFS"
 
 # dfs address/path for DFS model backends. See util.SiobixFs. Not related to hbase backend.
 siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
