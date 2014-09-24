@@ -57,8 +57,6 @@ libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
   "com.google.guava" % "guava" % "17.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
-  // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
-  "org.erlang.otp" % "jinterface" % "1.5.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.4.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
