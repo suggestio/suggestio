@@ -268,6 +268,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
           }
         }
       (newSavedImgs ++ needOrigImgs3)
+        // Вышеуказанная проблема всё равно присутствует...
+        .groupBy(_._1.data.rowKey)
+        // Отфильтровываем orig-картинку при наличии кропаной версии.
+        .mapValues(_.sortBy(_._1.filename).reverse.head)
+        .values
+        .toList
         .sortBy(_._2)
         .map(_._1)
     }
@@ -369,9 +375,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         IMETA_WIDTH  -> w.toString,
         IMETA_HEIGHT -> h.toString
       )
-      MUserImgMetadata(rowkeyStr, savedMeta, q = q).save map { _ =>
-        MImgInfoMeta(height = h,  width = w)
-      }
+      MUserImgMeta2(id = rowkey, md = savedMeta, q = q)
+        .save
+        .map { _ => MImgInfoMeta(height = h,  width = w) }
     }
     imgMetaFut onComplete {
       case Success(result) => trace(logPrefix + "Img metadata saved ok: " + result)

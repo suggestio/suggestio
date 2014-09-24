@@ -96,10 +96,11 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
   /** Обработка абстрактной карточки. */
   private def processMAd(mad0: OptStrId with Imgs): Future[Imgs_t] = {
     // Пробегаемся по карте картинок, узнаём картинки из карты,
-    Future.traverse( mad0.imgs ) { case (filename, imgInfo) =>
+    // imgId = это logoImg, bgImg или другой идентификатор картинки в карте. Алиасы картинок задаются в blocks.
+    Future.traverse( mad0.imgs ) { case (imgAlias, imgInfo) =>
       processImgInfo(imgInfo)
         .map { oiik2 =>
-          (oiik2.filename, oiik2)
+          (imgAlias, oiik2)
         }
     } map { imgs2l =>
       // Делаем новую карту imgs и возвращаем её.
