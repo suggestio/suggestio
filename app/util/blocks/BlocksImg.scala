@@ -17,12 +17,37 @@ import play.api.Play.{current, configuration}
 
 /** Интерфейс для сохранения картинок. */
 trait ISaveImgs {
-  def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+
+  /**
+   * Метод для обновления карты картинок. Дергает _saveImgs() и подметает потом за ним.
+   * @param newImgs Новая карта картинок.
+   * @param oldImgs Старая карта картинок.
+   * @param blockHeight Высота блока.
+   * @return Новое значение для поля imgs карточки.
+   */
+  final def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+    val resultFut = _saveImgs(newImgs, oldImgs, blockHeight)
+    resultFut onSuccess { case newImgs2 =>
+      // 2014.sep.24: Выявлена проблема неудаления картинки. Это происходит если старый алиас ушел из новой карты.
+      // Картинка оставалась в хранилище, но на неё терялись все указатели.
+      val abandonedOldImgAliases = oldImgs.keySet -- newImgs2.keySet
+      val oldImgsAbandoned = oldImgs
+        .filterKeys(abandonedOldImgAliases contains)
+      if (oldImgsAbandoned.nonEmpty) {
+        ImgFormUtil.updateOrigImg(needImgs = Seq.empty, oldImgs = oldImgsAbandoned.values)
+      }
+    }
+    resultFut
+  }
+
+  /** Метод, выполняющий необходимые обновления картинки. Должен быть перезаписан в конкретных подреализациях. */
+  protected def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     Future successful Map.empty
   }
 
   def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
 }
+
 
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
 object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
@@ -86,9 +111,9 @@ trait BgImg extends ValT with SaveBgImgI {
   def BG_IMG_FN = BgImg.BG_IMG_FN
   def bgImgBf = BgImg.bgImgBf
 
-  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     import BgImg.{FINAL_DOWNSIZE_SIDE_REL => c}
-    val supImgsFut = super.saveImgs(newImgs, oldImgs, blockHeight)
+    val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
       fn = BG_IMG_FN,
       newImgs = newImgs,
@@ -136,8 +161,8 @@ trait LogoImg extends ValT with ISaveImgs {
   def LOGO_IMG_FN = LogoImg.LOGO_IMG_FN
   def logoImgBf = LogoImg.logoImgBf
 
-  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    val supImgsFut = super.saveImgs(newImgs, oldImgs, blockHeight)
+  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+    val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
       fn = LOGO_IMG_FN,
       newImgs = newImgs,
