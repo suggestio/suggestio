@@ -17,6 +17,8 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
+import scala.util.{Failure, Success}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -35,13 +37,18 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
    * @return Фьючерс c кол-вом отработанных экземпляров модели.
    */
   def updateMAd() = {
-    MAd.updateAll() { mad0 =>
+    val resultFut = MAd.updateAll() { mad0 =>
       processMAd(mad0) map { imgs2 =>
         mad0.copy(
           imgs = imgs2
         )
       }
     }
+    resultFut onComplete {
+      case Success(total) => info("updateMAd(): Finished ok, total = " + total)
+      case Failure(ex)    => error("updateMAd(): Failed", ex)
+    }
+    resultFut
   }
 
   /**
@@ -49,13 +56,18 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
    * @return Фьючерс c кол-вом отработанных экземпляров модели.
    */
   def updateWelcomeAd() = {
-    MWelcomeAd.updateAll() { mwa0 =>
+    val resultFut = MWelcomeAd.updateAll() { mwa0 =>
       processMAd(mwa0) map { imgs2 =>
         mwa0.copy(
           imgs = imgs2
         )
       }
     }
+    resultFut onComplete {
+      case Success(total) => info("updateWelcomeAd(): Finished ok, total = " + total)
+      case Failure(ex)    => error("updateWelcomeAd(): Failed", ex)
+    }
+    resultFut
   }
 
   /**
@@ -63,7 +75,8 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
    * @return Фьючерс с кол-во обновлённых узлов.
    */
   def updateMAdnNode() = {
-    MAdnNode.updateAll() { adnNode =>
+    val resultFut = MAdnNode.updateAll() { adnNode =>
+      trace(s"Updating adnNode[${adnNode.id.getOrElse("?")}] ${adnNode.meta.name}...")
       val gallery2Fut = processAdnNodeGallery(adnNode.gallery)
       for {
         logo2       <- processAdnNodeLogo(adnNode.logoImgOpt)
@@ -75,6 +88,11 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
         )
       }
     }
+    resultFut onComplete {
+      case Success(total) => info("updateMAdnNode(): Finished ok, total = " + total)
+      case Failure(ex)    => error("updateMAdnNode(): Failed", ex)
+    }
+    resultFut
   }
 
 
@@ -95,6 +113,7 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
 
   /** Обработка абстрактной карточки. */
   private def processMAd(mad0: OptStrId with Imgs): Future[Imgs_t] = {
+    debug(s"processMAd(${mad0.id.getOrElse("?")}): [${mad0.getClass.getSimpleName}] with ${mad0.imgs.size} imgs...")
     // Пробегаемся по карте картинок, узнаём картинки из карты,
     // imgId = это logoImg, bgImg или другой идентификатор картинки в карте. Алиасы картинок задаются в blocks.
     Future.traverse( mad0.imgs ) { case (imgAlias, imgInfo) =>
@@ -105,7 +124,7 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
     } map { imgs2l =>
       // Делаем новую карту imgs и возвращаем её.
       val imgs2: Imgs_t = imgs2l.toMap
-      assert(imgs2.size == mad0.imgs.size, "Imgs map sizes does not match")
+      assert(imgs2.size == mad0.imgs.size, "Imgs map sizes does not match for adId=" + mad0.id)
       // Заливаем новую карту моделей в карточку
       imgs2
     }
@@ -117,6 +136,7 @@ object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
     processImgInfo(imgInfo.filename, imgInfo.meta)
   }
   private def processImgInfo(filename: String, meta: Option[MImgInfoMeta] = None): Future[OrigImgIdKey] = {
+    trace(s"processImgInfo($filename): Starting..., meta = $meta")
     val oiik = OrigImgIdKey(filename, meta)
     // Помимо кропаной картинки, надо также захватывать оригинал.
     val qs = List(oiik.origQualifierOpt, None).distinct
@@ -213,21 +233,40 @@ trait ImgsHbase2CassandraJmxMBean {
   def updateMAdnNode(): String
 }
 
-class ImgsHbase2CassandraJmx extends JMXBaseHBase with ImgsHbase2CassandraJmxMBean {
+class ImgsHbase2CassandraJmx extends JMXBaseHBase with ImgsHbase2CassandraJmxMBean with PlayLazyMacroLogsImpl {
+
+  import LOGGER._
+
+  protected def formatAsyncResult(msgPrefix: String, resultFut: Future[Int]): String = {
+    resultFut
+      .map { result =>
+        val msg = s"$msgPrefix updated: $result"
+        info(msg)
+        msg
+      }
+      .recover {
+        case ex: Throwable =>
+          error(s"$msgPrefix Failure occured", ex)
+          s"$msgPrefix: Failed to complete action: ${ex.getClass.getSimpleName}: ${ex.getMessage}\n${ex.getStackTraceString}"
+      }
+  }
 
   override def updateMAdnNode(): String = {
-    ImgsHbase2Cassandra.updateMAdnNode()
-      .map { result => s"Nodes updated: $result" }
+    warn("updateMAdnNode() called...")
+    val fut = ImgsHbase2Cassandra.updateMAdnNode()
+    formatAsyncResult("Nodes", fut)
   }
 
   override def updateMAd(): String = {
-    ImgsHbase2Cassandra.updateMAd()
-      .map { result => s"MAds updated: $result" }
+    warn("updateMAd() called...")
+    val fut = ImgsHbase2Cassandra.updateMAd()
+    formatAsyncResult("MAds", fut)
   }
 
   override def updateMWelcomeAd(): String = {
-    ImgsHbase2Cassandra.updateWelcomeAd()
-      .map { result => s"MWelcomeAds update: $result" }
+    warn("updateMWelcomeAd() called...")
+    val fut = ImgsHbase2Cassandra.updateWelcomeAd()
+    formatAsyncResult("MWelcomeAds", fut)
   }
 
 }
