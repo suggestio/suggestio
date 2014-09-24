@@ -985,32 +985,26 @@ sm =
 
       if sm_geo_screen != null
         if sm_geo_screen.style.display == "" || sm_geo_screen.style.display == "none"
-          sm.error 'lo zero by 979'
           cbca_grid.left_offset = 0
         else
           sm_geo_screen.style.width = 280 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
           cbca_grid.left_offset = 2
       else
-        sm.error 'lo zero by 985'
         cbca_grid.left_offset = 0
     else
-      sm.error 'lo zero by 988'
       cbca_grid.left_offset = 0
 
     if cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
       sm_cat_screen = sm.utils.ge('smCategoriesScreen')
       if sm_cat_screen != null
         if sm_cat_screen.style.display == "" || sm_cat_screen.style.display == "none"
-          sm.error 'lo zero by 995'
           cbca_grid.right_offset = 0
         else
           sm_cat_screen.style.width = 300 + Math.round((cbca_grid.ww - parseInt(cbca_grid.cw)) / 2)
           cbca_grid.right_offset = 2
       else
-        sm.error 'lo zero by 1001'
         cbca_grid.right_offset = 0
     else
-      sm.error 'lo zero by 1004'
       cbca_grid.right_offset = 0
 
     sm.warn 'cbca_grid.left_offset : ' + cbca_grid.left_offset
@@ -1133,6 +1127,9 @@ sm =
 
         if geogoBack == "false"
           sm.states.gb_mart_id = cs.mart_id
+        else
+          if cs.mart_id == sm.geo.location_node._id
+            sm.states.gb_mart_id = cs.mart_id
 
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
@@ -1638,8 +1635,6 @@ sm =
       sm.grid_ads.is_load_more_requested = false
 
     find_nodes : ( data ) ->
-
-      sm.error 'sm.geo.location_requested : ' + sm.geo.location_requested
 
       if sm.geo.location_requested == true
 
@@ -2475,6 +2470,7 @@ sm =
     this.history.init()
 
     sm_id = window.siomart_id || undefined
+
     ## Переключиться на первичное состояние
     this.states.add_state
       mart_id : sm_id
