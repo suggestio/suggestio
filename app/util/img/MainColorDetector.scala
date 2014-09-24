@@ -4,7 +4,7 @@ import java.awt.Color
 import java.io.{FileInputStream, InputStreamReader, File}
 import java.nio.file.Files
 import java.text.ParseException
-import io.suggest.model.MUserImgOrig
+import models.MUserImg2
 import models.BlockConf
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.im4java.core.{IMOperation, ConvertCmd}
@@ -161,7 +161,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
         case oiik: OrigImgIdKey =>
           oldColors.get(IMG_BG_COLOR_FN).fold [Future[ImgBgColorUpdateAction]] {
             // Старая картинка в базе, а цвета нет. Такое бывает сразу после апдейта до новой версии SIO-market.
-            MUserImgOrig.getById(oiik.data.rowKey, oiik.origQualifierOpt) map {
+            MUserImg2.getByStrId(oiik.data.rowKey, oiik.origQualifierOpt) map {
               case Some(oimg) =>
                 val fileSuffix = {
                   val e1 = FilenameUtils.getExtension(oiik.filename)
@@ -169,7 +169,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
                 }
                 val tempImg = File.createTempFile("adPrepareUpdateBgColors", fileSuffix)
                 try {
-                  FileUtils.writeByteArrayToFile(tempImg, oimg.img)
+                  FileUtils.writeByteArrayToFile(tempImg, oimg.imgBytes)
                   val heOpt = detectFileMainColor(tempImg, suppressErrors = true)
                   val result = he2updateAction(heOpt)
                   trace(s"${logPrefix}Detected color info for already saved orig img: $result")

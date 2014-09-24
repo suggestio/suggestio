@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.5.1-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.6.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")

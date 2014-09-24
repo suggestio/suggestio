@@ -185,4 +185,15 @@ package object models {
   type AdnNodesSearchArgs   = ym.model.common.AdnNodesSearchArgs
   type AdnNodesSearchArgsT  = ym.model.common.AdnNodesSearchArgsT
 
+
+  // cassandra img models
+  type MImgThumb2           = io.suggest.model.MImgThumb2
+  val  MImgThumb2           = io.suggest.model.MImgThumb2
+
+  type MUserImgMeta2        = io.suggest.model.MUserImgMeta2
+  val  MUserImgMeta2        = io.suggest.model.MUserImgMeta2
+
+  type MUserImg2            = io.suggest.model.MUserImg2
+  val  MUserImg2            = io.suggest.model.MUserImg2
+
 }
