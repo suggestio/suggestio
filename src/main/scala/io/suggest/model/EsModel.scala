@@ -1,5 +1,8 @@
 package io.suggest.model
 
+import java.util.concurrent.atomic.AtomicInteger
+
+import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
 import org.elasticsearch.action.update.UpdateRequestBuilder
 import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
 import org.elasticsearch.common.unit.TimeValue
@@ -119,6 +122,12 @@ object EsModel extends MacroLogsImpl {
   val MAX_RESULTS_DFLT = 100
   val OFFSET_DFLT = 0
   val SCROLL_KEEPALIVE_MS_DFLT = 60000L
+
+  /** Дефолтовый размер скролла, т.е. макс. кол-во получаемых за раз документов. */
+  val SCROLL_SIZE_DFLT = 10
+
+  /** number of actions, после которого bulk processor делает flush. */
+  val BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
   /** Тип аккамулятора, который используется во [[EsModelPlayJsonT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
@@ -534,7 +543,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   def OFFSET_DFLT = EsModel.OFFSET_DFLT
   def SCROLL_KEEPALIVE_MS_DFLT = EsModel.SCROLL_KEEPALIVE_MS_DFLT
   def SCROLL_KEEPALIVE_DFLT = new TimeValue(SCROLL_KEEPALIVE_MS_DFLT)
-
+  def SCROLL_SIZE_DFLT = EsModel.SCROLL_SIZE_DFLT
+  def BULK_PROCESSOR_BULK_SIZE_DFLT = EsModel.BULK_PROCESSOR_BULK_SIZE_DFLT
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     * @param idOrNull id или null, если id отсутствует.
@@ -592,6 +602,144 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
     EsModel.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
   }
+
+  /**
+   * Метод для краткого запуска скроллинга над моделью.
+   * @param query Поисковый запрос, по которому скроллим.
+   * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
+   * @param keepAliveMs TTL scroll-курсора на стороне ES.
+   * @return Фьючерс, подлежащий дальнейшей обработке.
+   */
+  def startScroll(query: QueryBuilder = QueryBuilders.matchAllQuery(), resultsPerScroll: Int = SCROLL_SIZE_DFLT,
+                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
+    prepareScroll(new TimeValue(keepAliveMs))
+      .setQuery(QueryBuilders.matchAllQuery())
+      .setSize(10)
+      .setFetchSource(true)
+      .execute()
+  }
+
+  /**
+   * Пройтись асинхронно по всем документам модели.
+   * @param acc0 Начальный аккамулятор.
+   * @param resultsPerScroll Кол-во результатов на итерацию [10].
+   * @param keepAliveMs Таймаут курсора на стороне ES.
+   * @param f Асинхронная функция обхода.
+   * @tparam A Тип аккамулятора.
+   * @return Финальный аккамулятор.
+   */
+  def foldLeft[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                 (f: (A, T) => A)(implicit ec: ExecutionContext, client: Client): Future[A] = {
+    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
+      .flatMap { searchResp =>
+        foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
+          (acc01, hits) =>
+            val acc02 = hits
+              .iterator()
+              .map { deserializeSearchHit }
+              .foldLeft(acc01)(f)
+            Future successful acc02
+        }
+      }
+  }
+
+  /**
+   * Аналог foldLeft, но с асинхронным аккамулированием. Полезно, если функция совершает какие-то сайд-эффекты.
+   * @param acc0 Начальный акк.
+   * @param resultsPerScroll Кол-во результатов за scroll-итерацию [10].
+   * @param keepAliveMs TTL scroll-курсора на стороне ES.
+   * @param f Функция асинхронной сверстки.
+   * @tparam A Тип значения аккамулятора (без Future[]).
+   * @return Фьючерс с результирующим аккамулятором.
+   */
+  def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                      (f: (Future[A], T) => Future[A])(implicit ec: ExecutionContext, client: Client): Future[A] = {
+    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
+      .flatMap { searchResp =>
+        foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
+          (acc01, hits) =>
+            hits
+              .iterator()
+              .map { deserializeSearchHit }
+              .foldLeft(Future successful acc01)(f)
+        }
+      }
+  }
+
+
+  /**
+   * foreach для асинхронного обхода всех документов модели.
+   * @param resultsPerScroll По сколько документов скроллить?
+   * @param keepAliveMs Время жизни scroll-курсора на стороне es.
+   * @param f Функция обработки одного результата.
+   * @return
+   */
+  def foreach[U](resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                (f: T => U)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    // Оборачиваем foldLeft(), просто фиксируя аккамулятор.
+    val acc0 = None
+    foldLeft(acc0, resultsPerScroll, keepAliveMs) {
+      (acc, inst) =>
+        f(inst)
+        acc0
+    }
+  }
+
+  /**
+   * Реактивное обновление всех документов модели.
+   * Документы читаются пачками через scroll и сохраняются пачками через bulk по мере готовности оных.
+   * Функция обработчик может быть асинхронной, т.е. может затрагивать другие модели или производить другие
+   * асинхронные сайд-эффекты. Функция обработчки никогад НЕ должна вызывать save(), а лишь порождать новый
+   * экземпляр модели, пригодный для сохранения.
+   * Внутри метода используется BulkProcessor, который асинхронно, по мере наполнения очереди индексации,
+   * отправляет реквесты на индексацию.
+   * Метод полезен для обновления модели, которое затрагивает внутреннюю структуру данных.
+   * @param resultsPerScroll Кол-во результатов на каждой итерации. [10]
+   * @param keepAliveMs Таймаут scroll-курсора на стороне ES.
+   * @param bulkActions Макс.кол-во запросов в очереди на bulk-индексацию. После пробоя этого значения,
+   *                    вся очередь реквестов будет отправлена на индексацию.
+   * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
+   * @return Фьючес с кол-вом обработанных экземпляров модели.
+   */
+  def updateAll(resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
+               (f: T => Future[T])(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+    val logPrefix = s"update(${System.currentTimeMillis}): "
+    val bp = BulkProcessor.builder(client, new BulkProcessor.Listener {
+      /** Перед отправкой каждого bulk-реквеста. */
+      override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
+        LOGGER.trace(s"${logPrefix}Going to execute bulk req with ${request.numberOfActions()} actions.")
+      }
+
+      /** Данные успешно отправлены в индекс. */
+      override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
+        LOGGER.trace(s"$logPrefix")
+      }
+
+      /** Ошибка индексации. */
+      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
+        LOGGER.error(s"${logPrefix}Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+      }
+    })
+      .setName(logPrefix)
+      .setBulkActions(100)
+      .build()
+    // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
+    // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
+    val counter = new AtomicInteger(0)
+    // Аккамулятор фиксирован (не используется).
+    foldLeftAsync(None, resultsPerScroll, keepAliveMs) {
+      (accFut, v) =>
+        f(v) flatMap { v1 =>
+          bp add v1.prepareIndex.request
+          counter.incrementAndGet()
+          accFut
+        }
+    } map { _ =>
+      bp.close()
+      counter.get
+    }
+  }
+
 
   /**
    * Сервисная функция для получения списка всех id.
