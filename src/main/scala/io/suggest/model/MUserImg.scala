@@ -43,6 +43,7 @@ sealed trait MUserImgDeleteByIdStatic {
  * Модель используется совместно с MImgThumb, но она абстрагирована от URL. Есть поле,
  * описывающее тип главного элемента, и есть значение. Если картинка имеет url, то это задаётся в MImgThumb.
  */
+@deprecated("Use cassandra-model MUserImgMeta2 instead.", "2014.sep.24")
 object MUserImgMetadata extends MPictSubmodel with MUserImgDeleteByIdStatic {
   
   val deserializeMetaData: PartialFunction[AnyRef, Option[Map[String, String]]] = {
@@ -79,7 +80,12 @@ object MUserImgMetadata extends MPictSubmodel with MUserImgDeleteByIdStatic {
 }
 
 
-final case class MUserImgMetadata(idStr: String, md: Map[String, String], q: String) {
+@deprecated("Use cassandra-model MUserImgMeta2 instead.", "2014.sep.24")
+final case class MUserImgMetadata(
+  idStr: String,
+  md: Map[String, String],
+  q: String
+) {
 
   def id = idStr2Bin(idStr)
 
@@ -90,12 +96,13 @@ final case class MUserImgMetadata(idStr: String, md: Map[String, String], q: Str
     ahclient.put(putReq)
   }
 
-  def delete = MUserImgMetadata.deleteById(idStr)
+  def delete: Future[_] = MUserImgMetadata.deleteById(idStr)
 }
 
 
 
 /** Модель для оригиналов картинок. Затем также стала хранить и кадрированные версии под динамическими qualifiers. */
+@deprecated("Use cassandra-model MUserImg2 instead.", "2014.sep.24")
 object MUserImgOrig extends MPictSubmodel with MUserImgDeleteByIdStatic {
 
   /**
@@ -122,17 +129,18 @@ object MUserImgOrig extends MPictSubmodel with MUserImgDeleteByIdStatic {
 
 }
 
-final case class MUserImgOrig(idStr: String, img: Array[Byte], q: String, timestamp: Long = -1L) extends ImgWithTimestamp {
+@deprecated("Use cassandra-model MUserImg2 instead.", "2014.sep.24")
+final case class MUserImgOrig(idStr: String, imgBytes: Array[Byte], q: String, timestampMs: Long = -1L) extends ImgWithTimestamp {
 
   def id = idStr2Bin(idStr)
 
   def save: Future[_] = {
     val cfOrigsB = CF_ORIGINALS.getBytes
     val qUserImgOrigB = q.getBytes
-    val putReq = if (timestamp > 0) {
-      new PutRequest(HTABLE_NAME_BYTES, id, cfOrigsB, qUserImgOrigB, img, timestamp)
+    val putReq = if (timestampMs > 0) {
+      new PutRequest(HTABLE_NAME_BYTES, id, cfOrigsB, qUserImgOrigB, imgBytes, timestampMs)
     } else {
-      new PutRequest(HTABLE_NAME_BYTES, id, cfOrigsB, qUserImgOrigB, img)
+      new PutRequest(HTABLE_NAME_BYTES, id, cfOrigsB, qUserImgOrigB, imgBytes)
     }
     ahclient.put(putReq)
   }

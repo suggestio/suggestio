@@ -108,11 +108,13 @@ trait HBaseModelJMXBeanCommon {
   def getTableDescriptor: String
 }
 
-trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
+trait JMXBaseHBase extends JMXBase {
+  override def jmxName = "io.suggest.model:type=hbase,name=" + getClass.getSimpleName.replace("Jmx", "")
+}
+
+trait HBaseModelJMXBase extends JMXBaseHBase with HBaseModelJMXBeanCommon {
 
   def companion: HTableModel
-
-  override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def ensureTableExists() {
     awaitFuture(companion.ensureTableExists)

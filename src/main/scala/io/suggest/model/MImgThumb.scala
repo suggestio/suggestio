@@ -25,9 +25,11 @@ import MPict.{idStr2Bin, imgUrl2id, deserializeId, deserializeThumb, serializeId
  *  - Метаданные (т.е. ссылка) теперь в отдельном поле с отдельным Qualifier'ом.
  *  - thumb в отдельном поле.
  *
- *  2014.sep.22: Переезд на cassandra, сохраняя совместимость с hbase.
+ * 2014.sep.22: Четкое разделение backend'а (AsyncHbase) и frontend'ов статики и динамики.
+ * Сама модель оставлена для кравлера.
  */
 
+@deprecated("This is a hbase model with random access. User MImgThumb2 instead (cassandra).")
 object MImgThumb extends MImgThumbStaticAsyncHBase with MImgThumbStaticFieldsT {
   
   val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
@@ -90,8 +92,8 @@ trait MImgThumbStatic {
       thumbRespOpt map { thumbResp =>
         val it = new MImgThumb(idBin)
         // Заливаем thumb в датум
-        it.thumb = thumbResp.img
-        it.timestamp = thumbResp.timestamp
+        it.thumb = thumbResp.imgBytes
+        it.timestamp = thumbResp.timestampMs
         // Заливаем image url
         if (mdResp.isDefined) {
           it.imageUrl = mdResp.get
@@ -150,8 +152,8 @@ trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
         val cell = kvs.head
         // Наверное надо какой-то нормальный экземпляр модели сделать?
         val result = new ImgWithTimestamp {
-          val img = cell.value
-          val timestamp = cell.timestamp
+          val imgBytes = cell.value
+          val timestampMs = cell.timestamp
         }
         Some(result)
       }
@@ -161,8 +163,8 @@ trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
 }
 
 
-
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
+@deprecated("This is a hbase model with random access. User MImgThumb2 instead (cassandra).")
 class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBase {
 
   def this(te: TupleEntry) = {
@@ -196,6 +198,7 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBa
     s"${getClass.getSimpleName}($idStr, ${thumb.length} bytes, $getTimestampHoursAgo hours ago, $imageUrl)"
   }
 }
+
 
 
 /** Базовый код экземпляра модели и её родственников, отвязанный от своего объекта-компаньона.
@@ -262,6 +265,7 @@ trait MImgThumbSaver {
 }
 
 
+/** Код сохранения экземпляра модели MImgThumb в HBase через драйвер AsyncHBase. */
 trait MImgThumbSaverAsyncHBase extends MImgThumbSaver with MPictSubmodel {
 
   import SioHBaseAsyncClient._

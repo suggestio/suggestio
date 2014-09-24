@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.5.1-SNAPSHOT"
+version := "1.6.0-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 //scalaVersion := "2.11.1"
@@ -15,7 +15,8 @@ resolvers ++= Seq(
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "websudos-releases" at "http://maven.websudos.co.uk/ext-release-local"
 )
 
 
@@ -31,6 +32,7 @@ libraryDependencies ++= {
   val playVsn       = "2.3.3"
   val morphVsn      = "1.3-SNAPSHOT"
   val bcVsn         = "1.46"
+  val phantomVersion = "1.2.8"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -68,7 +70,7 @@ libraryDependencies ++= {
       exclude("commons-beanutils", "commons-beanutils")
     ,
     // cassandra
-    //"com.netflix.astyanax" % "astyanax-cassandra" % "2.0.1",
+    "com.websudos"  %% "phantom-dsl" % phantomVersion,
     // hbase
     "org.apache.hbase" % "hbase" % hbaseVsn,
     "org.apache.hbase" % "hbase-server" % hbaseVsn
