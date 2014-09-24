@@ -658,6 +658,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
       .flatMap { searchResp =>
         foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
+            LOGGER.trace(s"foldLeftAsync(): Starting next scroll with ${hits.getHits.length} new hits...")
             hits
               .iterator()
               .map { deserializeSearchHit }
