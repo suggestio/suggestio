@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.model._
-import io.suggest.util.{JMXBase, UuidUtil}
+import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.Imgs
 import models.MImgThumb2
 import models.MUserImg2

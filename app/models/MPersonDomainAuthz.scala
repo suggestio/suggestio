@@ -1,5 +1,7 @@
 package models
 
+import java.io.IOException
+
 import org.joda.time.{ReadableDuration, DateTime, Duration}
 import io.suggest.util.{SioModelUtil, StringUtil}
 import util._
@@ -357,7 +359,14 @@ object MPersonDomainAuthz {
 
     def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = future {
       val personDomainsDir = personPath(personId)
-      fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
+      val fss = try {
+        fs.listStatus(personDomainsDir)
+      } catch {
+        case ex: IOException =>
+          LOGGER.warn("Suppressed failure call fs.listStatus() for dir " + personDomainsDir, ex)
+          Array.empty[FileStatus]
+      }
+      fss.foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
         if (fstatus.isDirectory) {
           val authzPath = authzFilePath(fstatus.getPath)
           readOneAcc(acc, authzPath)
