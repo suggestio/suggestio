@@ -29,6 +29,7 @@ import MPict.{idStr2Bin, imgUrl2id, deserializeId, deserializeThumb, serializeId
  * Сама модель оставлена для кравлера.
  */
 
+@deprecated("This is a hbase model with random access. User MImgThumb2 instead (cassandra).")
 object MImgThumb extends MImgThumbStaticAsyncHBase with MImgThumbStaticFieldsT {
   
   val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
@@ -91,8 +92,8 @@ trait MImgThumbStatic {
       thumbRespOpt map { thumbResp =>
         val it = new MImgThumb(idBin)
         // Заливаем thumb в датум
-        it.thumb = thumbResp.img
-        it.timestamp = thumbResp.timestamp
+        it.thumb = thumbResp.imgBytes
+        it.timestamp = thumbResp.timestampMs
         // Заливаем image url
         if (mdResp.isDefined) {
           it.imageUrl = mdResp.get
@@ -151,8 +152,8 @@ trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
         val cell = kvs.head
         // Наверное надо какой-то нормальный экземпляр модели сделать?
         val result = new ImgWithTimestamp {
-          val img = cell.value
-          val timestamp = cell.timestamp
+          val imgBytes = cell.value
+          val timestampMs = cell.timestamp
         }
         Some(result)
       }
@@ -163,6 +164,7 @@ trait MImgThumbStaticAsyncHBase extends MImgThumbStatic with MPictSubmodel {
 
 
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
+@deprecated("This is a hbase model with random access. User MImgThumb2 instead (cassandra).")
 class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaverAsyncHBase {
 
   def this(te: TupleEntry) = {

@@ -131,8 +131,8 @@ trait MPictSubmodel {
 
 
 trait ImgWithTimestamp {
-  def img: Array[Byte]
-  def timestamp: Long
+  def imgBytes: Array[Byte]
+  def timestampMs: Long
 }
 
 

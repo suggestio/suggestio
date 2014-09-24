@@ -22,10 +22,10 @@ import scala.concurrent.Future
 
 case class MImgThumb2(
   imageUrl  : Option[String],
-  thumb     : ByteBuffer,
+  img       : ByteBuffer,
   timestamp : DateTime = DateTime.now,
   id        : UUID = UUID.randomUUID()
-) extends UuidIdStr {
+) extends UuidIdStr with CassandraImgWithTimestamp {
 
   def save = MImgThumb2.insertThumb(this)
   def delete = MImgThumb2.deleteById(id)
@@ -49,16 +49,16 @@ sealed class MImgThumb2Record extends CassandraTable[MImgThumb2Record, MImgThumb
 
 
 /** Статическая сторона модели MImgThumb2. */
-object MImgThumb2 extends MImgThumb2Record with CassandraStaticModel[MImgThumb2Record, MImgThumb2] {
+object MImgThumb2 extends MImgThumb2Record with CassandraStaticModel[MImgThumb2Record, MImgThumb2] with DeleteByStrId {
 
   override val tableName = "it"
 
   /**
    * Прочитать из базы по id.
-   * @param uuidB64 строка-идентификатор энтерпрайза.
+   * @param uuidB64 строка-идентификатор картинки.
    * @return Фьючерс для синхронизации.
    */
-  def getThumbById(uuidB64: String): Future[Option[MImgThumb2]] = {
+  def getThumbByStrId(uuidB64: String): Future[Option[MImgThumb2]] = {
     val uuid = UuidUtil.base64ToUuid(uuidB64)
     getThumbById(uuid)
   }
@@ -67,15 +67,14 @@ object MImgThumb2 extends MImgThumb2Record with CassandraStaticModel[MImgThumb2R
     select.where(_.id eqs uuid).one()
   }
 
-  def deleteById(id: UUID) = delete.where(_.id eqs id).execute()
-
+  def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
   /** Сохранение экземпляра модели в хранилище. */
   def insertThumb(mit2: MImgThumb2) = {
     insert
       .value(_.id, mit2.id)
       .value(_.imageUrl, mit2.imageUrl)
-      .value(_.thumb, mit2.thumb)
+      .value(_.thumb, mit2.img)
       .value(_.timestamp, mit2.timestamp)
       .future()
   }

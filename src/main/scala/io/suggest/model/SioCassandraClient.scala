@@ -1,12 +1,15 @@
 package io.suggest.model
 
+import java.nio.ByteBuffer
 import java.util.UUID
 
 import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.utils.Bytes
 import com.websudos.phantom.query.{TruncateQuery, SelectCountQuery, CreateQuery}
 import com.websudos.phantom.Implicits._
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.util.{JMXBase, UuidUtil}
+import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
@@ -120,6 +123,16 @@ trait UuidIdStr {
 }
 
 
+/** Реализация ImgWithTimestamp для моделей. */
+trait CassandraImgWithTimestamp extends ImgWithTimestamp {
+  def timestamp: DateTime
+  def img: ByteBuffer
+
+  override def imgBytes: Array[Byte] = Bytes.getArray(img)
+  override def timestampMs: Long = timestamp.getMillis
+}
+
+
 /** Общий JMX-интерфейс для cassandra-моделей. */
 trait CassandraModelJxmMBeanI {
 
@@ -130,6 +143,12 @@ trait CassandraModelJxmMBeanI {
   def countAll: Long
 
   def truncateTable: String
+}
+
+
+trait DeleteByStrId {
+  def deleteById(id: UUID): Future[ResultSet]
+  def deleteByStrId(id: String) = deleteById(UuidUtil.base64ToUuid(id))
 }
 
 

@@ -21,7 +21,7 @@ case class MUserImg2(
   img       : ByteBuffer,
   timestamp : DateTime = DateTime.now,
   id        : UUID = UUID.randomUUID()
-) extends UuidIdStr {
+) extends UuidIdStr with CassandraImgWithTimestamp {
 
   def save = MUserImg2.insertImg(this)
   def delete = MUserImg2.deleteById(id)
@@ -48,7 +48,7 @@ sealed class MUserImgRecord extends CassandraTable[MUserImgRecord, MUserImg2] {
 
 
 /** Статическая сторона модели. */
-object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord, MUserImg2] {
+object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord, MUserImg2] with DeleteByStrId {
 
   override val tableName = "i2"
 
@@ -71,7 +71,6 @@ object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord
       .future()
   }
 
-  def deleteByStrId(strId: String) = deleteById(UuidUtil.base64ToUuid(strId))
   def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
 }

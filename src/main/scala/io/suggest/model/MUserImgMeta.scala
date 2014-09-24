@@ -42,7 +42,7 @@ sealed class MUserImgMetaRecord extends CassandraTable[MUserImgMetaRecord, MUser
 
 
 /** Статическая сторона модели. */
-object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserImgMetaRecord, MUserImgMeta2] {
+object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserImgMetaRecord, MUserImgMeta2] with DeleteByStrId {
 
   override val tableName = "im"
 
@@ -64,8 +64,7 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
       .future()
   }
 
-  def deleteById(id: UUID) = delete.where(_.id eqs id).execute()
-  def deleteByStrId(id: String) = deleteById(UuidUtil.base64ToUuid(id))
+  def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
 }
 

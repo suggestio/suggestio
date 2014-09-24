@@ -43,5 +43,14 @@ object UuidUtil {
     new UUID(is.readLong(), is.readLong())
   }
 
+  /** Проверка валидности сериализованного uuid. */
+  def isUuidStrValid(uuidStr: String): Boolean = {
+    try {
+      base64ToUuid(uuidStr)
+      true
+    } catch {
+      case ex: Exception => false
+    }
+  }
 
 }
