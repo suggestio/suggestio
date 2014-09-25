@@ -3,6 +3,7 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
+import com.typesafe.sbt.SbtProguard.ProguardKeys._
 
 
 organization := "io.suggest"
@@ -109,7 +110,7 @@ resolvers ++= Seq(
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
   "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/",
-  "websudos-releases" at "http://maven.websudos.co.uk/ext-release-local"
+  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases"
 )
 
 
@@ -144,4 +145,45 @@ testOptions in Test += Tests.Argument("-oF")
 sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
+
+
+// proguard: защита скомпиленного кода от реверса.
+proguardSettings
+
+ProguardKeys.options in Proguard ++= Seq(
+  "-dontnote",
+  "-dontwarn",
+  "-ignorewarnings",
+  "-keepnames class * implements org.xml.sax.EntityResolver",
+  """-keepclasseswithmembers public class * {
+      public static void main(java.lang.String[]);
+  }""",
+  """-keepclassmembers class * {
+      ** MODULE$;
+  }""",
+  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinPool {
+      long eventCount;
+      int  workerCounts;
+      int  runControl;
+      scala.concurrent.forkjoin.ForkJoinPool$WaitQueueNode syncStack;
+      scala.concurrent.forkjoin.ForkJoinPool$WaitQueueNode spareStack;
+  }""",
+  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinWorkerThread {
+      int base;
+      int sp;
+      int runState;
+  }""",
+  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinTask {
+      int status;
+  }""",
+  """-keepclassmembernames class scala.concurrent.forkjoin.LinkedTransferQueue {
+      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference head;
+      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
+      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
+  }"""
+)
+
+ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
+
+javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 

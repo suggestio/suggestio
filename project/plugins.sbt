@@ -42,6 +42,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2sio2")
 
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
 
-// Grunt.js
-//addSbtPlugin("org.rbayer" % "grunt-sbt" % "1.0")
+// ProGuard занимается обфускацией скомпиленных данных.
+addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 

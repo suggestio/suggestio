@@ -31,7 +31,10 @@ object AdnShownTypes extends Enumeration {
 
   type AdnShownType = Val
 
+  /** Расшаренные между экземплярами коллекции слоёв лежат тут для экономии RAM. */
   private val nglsBuilding = List(NodeGeoLevels.NGL_BUILDING)
+  private val nglsDistrict = List(NodeGeoLevels.NGL_TOWN_DISTRICT)
+  private val nglsTown     = List(NodeGeoLevels.NGL_TOWN)
 
   // Штатные (исторические) типы узлов
   val MART: AdnShownType              = Val( AdNetMemberTypes.MART.name, nglsBuilding )
@@ -49,16 +52,19 @@ object AdnShownTypes extends Enumeration {
   val METRO_STATION: AdnShownType     = Val("b", nglsBuilding)
 
   /** Район города. */
-  val TOWN_DISTRICT: AdnShownType     = new Val("c", List(NodeGeoLevels.NGL_TOWN_DISTRICT)) {
+  val TOWN_DISTRICT: AdnShownType     = new Val("c", nglsDistrict) {
     override val singularNoTown = "District"
     override val pluralNoTown   = "Districts"
   }
 
   /** Город. */
-  val TOWN: AdnShownType              = Val("d", List(NodeGeoLevels.NGL_TOWN), showWithTown = false)
+  val TOWN: AdnShownType              = Val("d", nglsTown, showWithTown = false)
 
   /** Спортивные объекты: фитнес, стадионы и т.д. */
   val SPORT: AdnShownType             = Val("e", nglsBuilding)
+
+  /** Округ мегаполиса. Логически находится над городскими районами, но занимает слой районов. */
+  val CITY_DISTRICT: AdnShownType     = Val("f", nglsDistrict)
 
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
