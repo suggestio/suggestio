@@ -1,24 +1,18 @@
 package controllers
 
 import play.api.Play.current
-import play.api.libs.ws._
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
 import views.html.ident._, recover._
-import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.concurrent.duration._
 import scala.concurrent.Future
-import play.api.libs.json.JsString
 import models._
 import play.api.mvc.Security.username
-import play.api.i18n.{Messages, Lang}
+import play.api.i18n.Messages
 import SiowebEsUtil.client
-import scala.util.{Failure, Success}
-import com.typesafe.scalalogging.slf4j.Logger
 import com.typesafe.plugin.{use, MailerPlugin}
 import util.acl.PersonWrapper.PwOpt_t
 import FormUtil.{passwordM, passwordWithConfirmM}

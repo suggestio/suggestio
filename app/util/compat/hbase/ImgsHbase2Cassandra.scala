@@ -28,6 +28,7 @@ import scala.util.{Failure, Success}
  * До этого использовалась hbase, которая была в кравлере siobix, но так и не дожила до продакшена.
  * Данные MInviteRequest тут пропускаются, т.к. до запуска это не актуально ни разу.
  */
+@SuppressWarnings(Array("deprecation")) // TODO scala не понимает сие. Будем терпеть, потом этот модуль можно снести.
 object ImgsHbase2Cassandra extends PlayLazyMacroLogsImpl {
 
   import LOGGER._

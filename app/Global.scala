@@ -1,6 +1,6 @@
 import akka.actor.Cancellable
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
-import io.suggest.model.EsModel
+import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
@@ -15,6 +15,7 @@ import play.api.Play._
 import play.api._
 import scala.concurrent.duration._
 import models._
+import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
 
 /**
  * Suggest.io
@@ -108,9 +109,12 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
       Crontab.stopTimers(cronTimers)
       cronTimers = null
     }
-    // При девелопменте: ES-клиент сам по себе не остановится, поэтому нужно его грохать вручную, иначе будет куча инстансов.
+    // Останавливаем клиенты к es, cassandra, останавливаем радиус.
+    val casCloseFut = SioCassandraClient.session.closeAsync()
+      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
     SiowebEsUtil.stopNode()
     RadiusServerImpl.stop()
+    Await.ready(casCloseFut, 20 seconds)
   }
 
 
