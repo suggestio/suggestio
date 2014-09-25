@@ -102,6 +102,14 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
    * @param app Экщемпляр класса Application.
    */
   override def onStop(app: Application) {
+    // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
+    val casCloseFut = SioCassandraClient.session.closeAsync()
+      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
+    val esCloseFut = future {
+      SiowebEsUtil.stopNode()
+    }
+
+    // В текущем потоке: Исполняем синхронные задачи завершения работы...
     super.onStop(app)
     JMXImpl.unregisterAll()
     // Остановить таймеры
@@ -109,12 +117,12 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
       Crontab.stopTimers(cronTimers)
       cronTimers = null
     }
-    // Останавливаем клиенты к es, cassandra, останавливаем радиус.
-    val casCloseFut = SioCassandraClient.session.closeAsync()
-      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
-    SiowebEsUtil.stopNode()
+    // Останавливаем RADIUS-сервер.
     RadiusServerImpl.stop()
-    Await.ready(casCloseFut, 20 seconds)
+
+    // Дожидаемся завершения асинхронных задач.
+    val closeFut = casCloseFut.flatMap(_ => esCloseFut)
+    Await.ready(closeFut, 20 seconds)
   }
 
 
