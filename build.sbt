@@ -3,8 +3,6 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
-//import org.rbayer.GruntSbtPlugin._
-//import GruntKeys._
 
 
 organization := "io.suggest"
@@ -23,8 +21,8 @@ scalaVersion := "2.10.4"
 libraryDependencies ++= Seq(
   jdbc, 
   anorm,
-  cache,      // play-2.2+
-  json,       // play-2.3+
+  cache,
+  json,
   ws,
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
@@ -110,11 +108,11 @@ resolvers ++= Seq(
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/"
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/",
+  "websudos-releases" at "http://maven.websudos.co.uk/ext-release-local"
 )
 
 
-//net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 routesImport ++= Seq(
   "models._",
@@ -140,8 +138,6 @@ pipelineStages := Seq(rjs, gzip)
 //pipelineStages := Seq(gzip)
 
 testOptions in Test += Tests.Argument("-oF")
-
-//gruntSettings
 
 
 // Не генерить мусорную документацию во время stage/dist. Она не нужна никому.
