@@ -36,8 +36,9 @@ object MWelcomeAd
   override protected def dummy(id: Option[String], version: Option[Long]) = {
     MWelcomeAd(
       producerId = null,
-      imgs = null,
-      id = id
+      imgs = Map.empty,
+      id = id,
+      versionOpt = version
     )
   }
 
@@ -53,7 +54,8 @@ final case class MWelcomeAd(
   var producerId  : String,
   var imgs        : Imgs_t,
   var dateCreated : DateTime = null,
-  var id          : Option[String] = None
+  var id          : Option[String] = None,
+  versionOpt      : Option[Long] = None
 )
   extends EsModelEmpty
   with EsModelT
@@ -63,7 +65,6 @@ final case class MWelcomeAd(
   with EMDateCreatedMut
 {
   override type T = MWelcomeAd
-  @JsonIgnore override def versionOpt = None
   @JsonIgnore override def companion = MWelcomeAd
 
   @JsonIgnore override def offers = Nil

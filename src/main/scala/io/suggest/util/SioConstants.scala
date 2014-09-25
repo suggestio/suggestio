@@ -31,6 +31,7 @@ object SioConstants {
   def FIELD_ANALYZER      = AnalyzerMapper.NAME
   def FIELD_BOOST         = BoostFieldMapper.NAME
   def FIELD_ID            = IdFieldMapper.NAME
+  def FIELD_UID           = UidFieldMapper.NAME
   def FIELD_TTL           = TTLFieldMapper.NAME
   def FIELD_VERSION       = VersionFieldMapper.NAME
   def FIELD_PARENT        = ParentFieldMapper.NAME

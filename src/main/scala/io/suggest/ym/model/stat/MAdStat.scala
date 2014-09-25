@@ -238,9 +238,10 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /** Статические поля для маппиннга. */
   override def generateMappingStaticFields: List[Field] = List(
+    FieldId(index = FieldIndexingVariants.no, store = false),
     FieldSource(enabled = true),
     FieldAll(enabled = true),
-    FieldTtl(enabled = true, default = TTL_DAYS_DFLT + "d")
+    FieldTtl(enabled = true, default = s"${TTL_DAYS_DFLT}d")
   )
 
   /** Маппинги для типа этой модели. */

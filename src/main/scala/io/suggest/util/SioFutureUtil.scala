@@ -1,9 +1,12 @@
 package io.suggest.util
 
+import java.util.concurrent.{Executor, ExecutionException}
+
 import scala.concurrent.{ExecutionContext, Promise, Future}
-import scala.util.{Try, Success, Failure}
+import scala.util.{Success, Failure}
 import scala.concurrent.duration.FiniteDuration
 import java.util.TimerTask
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * Suggest.io
@@ -22,7 +25,7 @@ object SioFutureUtil extends Logs {
    * @tparam B Тип возвращаемых элементов.
    * @return Фьючерс с последовательностью результатов последовательно вызванных фьючерсов.
    */
-  def mapLeftSequentally[A, B](in:Seq[A], ignoreErrors:Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
+  def mapLeftSequentally[A, B](in: Seq[A], ignoreErrors: Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
     val acc0: List[B] = Nil
     val foldF: (List[B], A) => Future[List[B]] = {
       case (acc, a) => f(a) map( _ :: acc)
@@ -42,7 +45,7 @@ object SioFutureUtil extends Logs {
    * @tparam Acc Тип аккамулятора.
    * @return Конечных аккамулятор.
    */
-  def foldLeftSequental[A, Acc](in:Seq[A], acc0:Acc, ignoreErrors:Boolean = false)(f: (Acc, A) => Future[Acc])(implicit executor:ExecutionContext): Future[Acc] = {
+  def foldLeftSequental[A, Acc](in: Seq[A], acc0: Acc, ignoreErrors: Boolean = false)(f: (Acc, A) => Future[Acc])(implicit executor:ExecutionContext): Future[Acc] = {
     val p = Promise[Acc]()
     lazy val hash = in.hashCode() * f.hashCode() + acc0.hashCode()
     def foldLeftStep(acc:Acc, inRest:Seq[A]) {
@@ -88,7 +91,7 @@ object SioFutureUtil extends Logs {
    * @tparam A Тип результата фьючерса.
    * @return Future[A]
    */
-  def timeoutFuture[A](messageFut:Future[A], duration:FiniteDuration)(implicit ec:ExecutionContext): Future[A] = {
+  def timeoutFuture[A](messageFut: Future[A], duration: FiniteDuration)(implicit ec: ExecutionContext): Future[A] = {
     val p = Promise[A]()
     val task = new TimerTask {
       def run() { p completeWith messageFut }
@@ -102,9 +105,39 @@ object SioFutureUtil extends Logs {
     warn("foldLeftSequentally()#%s: Suppressed exception in/before future for element %s" format (hash, h), ex)
   }
 
+
+  /**
+   * Конверсия guava ListenableFuture к scala Future.
+   * @param gfut java-фьючерс.
+   * @tparam T Тип значения.
+   * @return Экземпляр scala.concurrent.Future[T].
+   */
+  implicit def guavaFuture2scalaFuture[T](gfut: ListenableFuture[T])(implicit ec: ExecutionContext): Future[T] = {
+    val p = Promise[T]()
+    val listener = new Runnable {
+      override def run(): Unit = {
+        try {
+          p success gfut.get()
+        } catch {
+          case eex: ExecutionException =>
+            p failure eex.getCause
+          case ex: Throwable =>
+            p failure ex
+        }
+      }
+    }
+    // Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся.
+    val executor: Executor = ec match {
+      case exc: Executor => exc
+      case _ => scala.concurrent.ExecutionContext.Implicits.global
+    }
+    gfut.addListener(listener, executor)
+    p.future
+  }
+
 }
 
 
-case class TraverseSequentallyException(inRest:Seq[Any], resultsAcc:Any, cause:Throwable)
+case class TraverseSequentallyException(inRest: Seq[Any], resultsAcc: Any, cause: Throwable)
   extends Exception("Traversing future exception", cause)
 
