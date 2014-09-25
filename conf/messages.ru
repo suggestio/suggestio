@@ -66,6 +66,7 @@ amt.of.type.a=Транспорт
 amt.of.type.b=Станция метро
 amt.of.type.c=Район города
 amt.of.type.d=Город
+amt.of.type.e=Спорт
 
 amts.of.type.s=Магазины
 amts.of.type.m=Торговые центры
@@ -75,6 +76,7 @@ amts.of.type.a=Транспорт
 amts.of.type.b=Станции метро
 amts.of.type.c=Городские районы
 amts.of.type.d=Города
+amts.of.type.e=Спорт
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ

@@ -63,6 +63,7 @@ amt.of.type.a=Transport
 amt.of.type.b=Metro station
 amt.of.type.c=Town district
 amt.of.type.d=Town
+amt.of.type.e=Sport
 
 amts.of.type.s=Shops
 amts.of.type.m=Marts
@@ -72,6 +73,7 @@ amts.of.type.a=Transport
 amts.of.type.b=Metro stations
 amts.of.type.c=Town districts
 amts.of.type.d=Towns
+amts.of.type.e=Sports
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit

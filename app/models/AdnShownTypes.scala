@@ -57,6 +57,9 @@ object AdnShownTypes extends Enumeration {
   /** Город. */
   val TOWN: AdnShownType              = Val("d", List(NodeGeoLevels.NGL_TOWN), showWithTown = false)
 
+  /** Спортивные объекты: фитнес, стадионы и т.д. */
+  val SPORT: AdnShownType             = Val("e", List(NodeGeoLevels.NGL_BUILDING))
+
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
   def maybeWithName(n: String): Option[AdnShownType] = {

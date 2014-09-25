@@ -105,12 +105,12 @@ resolvers ~= {
 // Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
 resolvers ++= Seq(
   "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-releases",
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
-  //"sonatype-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/"
 )
 
 
