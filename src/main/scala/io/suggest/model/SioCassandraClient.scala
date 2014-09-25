@@ -8,10 +8,11 @@ import com.datastax.driver.core.utils.Bytes
 import com.websudos.phantom.query.{TruncateQuery, SelectCountQuery, CreateQuery}
 import com.websudos.phantom.Implicits._
 import io.suggest.util.MyConfig.CONFIG
-import io.suggest.util.{JMXBase, UuidUtil}
+import io.suggest.util.{MacroLogsImplLazy, JMXBase, UuidUtil}
 import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
+import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
 
 /**
  * Suggest.io
@@ -19,21 +20,26 @@ import scala.concurrent.Future
  * Created: 22.09.14 17:21
  * Description: Клиент для cassandra-кластера.
  */
-object SioCassandraClient {
+object SioCassandraClient extends MacroLogsImplLazy {
+
+  import LOGGER._
 
   /** Название кейспейса, который используется в проекте. */
-  val SIO_KEYSPACE = "Sio"
+  val SIO_KEYSPACE = CONFIG.getString("cassandra.keyspace.sio.name") getOrElse "Sio"
 
   /** Ноды, на которые надо долбиться при старте. Это seed-ноды, они сообщат весь список кластера. */
-  def CONTRACT_NODES: Seq[String] = CONFIG.getStringList("cassandra.cluster.nodes.connect.on.start").map(_.toSeq) getOrElse Seq("localhost")
+  def CONTACT_NODES: Seq[String] = CONFIG.getStringList("cassandra.cluster.nodes.connect.on.start").map(_.toSeq) getOrElse Seq("localhost")
 
   /** Можно ли менять keyspace? Через JMX например. [false], если иное явно не указано в конфиге. */
   def CAN_ALTER_KEYSPACE: Boolean = CONFIG.getBoolean("cassandra.session.keyspace.can_alter") getOrElse false
 
+  /** Настройка репликации для создаваемого кейспейса. */
+  def SIO_KEYSPACE_REPLICATION: String = CONFIG.getString("cassandra.keyspace.sio.replication") getOrElse "{'class': 'SimpleStrategy', 'replication_factor': 1}"
+
   /** Собираем инфу по кластеру. */
   val cluster = synchronized {
     Cluster.builder()
-      .addContactPoints(CONTRACT_NODES: _*)
+      .addContactPoints(CONTACT_NODES: _*)
       .build()
   }
 
@@ -44,9 +50,11 @@ object SioCassandraClient {
 
   /** Создать пространство ключей под нужды s.io. */
   def createSioKeyspace = {
-    session.executeAsync(s"CREATE KEYSPACE $SIO_KEYSPACE " +
-      s"WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}" +
-      s"AND DURABLE_WRITES = false;")
+    val cmd = "CREATE KEYSPACE " + SIO_KEYSPACE +
+      " WITH REPLICATION = " + SIO_KEYSPACE_REPLICATION +
+      " AND DURABLE_WRITES = false;"
+    info(s"Creating keyspace '$SIO_KEYSPACE'...\n $cmd")
+    session.executeAsync(cmd)
   }
 
   private def _useKeyspaceSync(ks: String) = session.execute(s"USE $ks;")
@@ -59,7 +67,12 @@ object SioCassandraClient {
   }
 
   // При старте надо выставить keyspace как дефолтовый. В нём живут все модели.
-  _useKeyspaceSync(SIO_KEYSPACE)
+  try {
+    _useKeyspaceSync(SIO_KEYSPACE)
+  } catch {
+    case ex: Throwable =>
+      error(s"Suppressing failure to connect to keyspace $SIO_KEYSPACE; Not created? Use JMX console to create it.", ex)
+  }
 }
 
 
@@ -75,7 +88,8 @@ trait SioCassandraClientJmxMBean {
 class SioCassandraClientJmx extends CassandraJmxBase with SioCassandraClientJmxMBean {
 
   override def createSioKeyspace: String = {
-    SioCassandraClient.createSioKeyspace.get().toString
+    val fut = SioCassandraClient.createSioKeyspace.map { _.toString }
+    awaitString(fut)
   }
 
   override def useKeyspace(ks: String): String = {
@@ -140,7 +154,7 @@ trait CassandraModelJxmMBeanI {
 
   def createTable: String
 
-  def countAll: Long
+  def countAll: String
 
   def truncateTable: String
 }
@@ -161,15 +175,19 @@ trait CassandraModelJmxMBeanImpl extends CassandraJmxBase with CassandraModelJxm
   override def getTableName: String = companion.tableName
 
   override def createTable: String = {
-    companion.createTable.map(_.toString)
+    val fut = companion.createTable.map(_.toString)
+    awaitString(fut)
   }
 
   override def truncateTable: String = {
-    companion.truncateTable.map(_.toString)
+    val fut = companion.truncateTable.map(_.toString)
+    awaitString(fut)
   }
 
-  override def countAll: Long = {
-    companion.countAll
+  override def countAll: String = {
+    val fut = companion.countAll
+      .map { _.toString }
+    awaitString(fut)
   }
 
 }

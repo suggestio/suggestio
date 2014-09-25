@@ -118,4 +118,5 @@ final class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client,
       }
     }
   }
+
 }

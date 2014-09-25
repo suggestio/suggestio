@@ -33,8 +33,17 @@ trait JMXBase {
       case ex: Throwable =>
         val logger = LoggerFactory.getLogger(getClass)
         logger.error("Failed to execute async JMX action: " + fut.toString, ex)
-        // TODO Нужно возвращать сериализабельный экзепшен, чтобы юзеру нормально отобразился.
         throw ex
+    }
+  }
+
+  /** Если на выходе ожидается строка, то можно отрендерить экзепшен вместо re-throw. */
+  def awaitString(fut: Awaitable[String]): String = {
+    try {
+      fut: String
+    } catch {
+      case ex: Throwable =>
+        s"${ex.getClass.getSimpleName} occured: ${ex.getMessage}\n\n${ex.getStackTraceString}"
     }
   }
 

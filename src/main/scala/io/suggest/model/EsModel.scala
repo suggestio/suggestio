@@ -1519,7 +1519,7 @@ trait EsModelJMXMBeanCommonI {
   def getAll(maxResults: Int): String
 
   /** Подсчитать кол-во элементов. */
-  def countAll(): Long
+  def countAll(): String
 }
 
 trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
@@ -1626,8 +1626,9 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def deleteMapping(): String = {
     warn("deleteMapping()")
-    companion.deleteMapping
+    val fut = companion.deleteMapping
       .map { _ => "Deleted." }
+    awaitString(fut)
   }
 
   override def generateMapping(): String = {
@@ -1638,7 +1639,10 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def readCurrentMapping(): String = {
     trace("readCurrentMapping()")
-    companion.getCurrentMapping.fold("Mapping not found.") { JacksonWrapper.prettify }
+    val fut = companion.getCurrentMapping.map {
+      _.fold("Mapping not found.") { JacksonWrapper.prettify }
+    }
+    awaitString(fut)
   }
 
   override def getRoutingKey(idOrNull: String): String = {
@@ -1648,20 +1652,28 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def getAllIds(maxResults: Int): String = {
     trace(s"getAllIds(maxResults = $maxResults)")
-    companion.getAllIds(maxResults).sorted.mkString("\n")
+    val fut = companion.getAllIds(maxResults)
+      .map { _.sorted.mkString("\n") }
+    awaitString(fut)
   }
 
   override def getAll(maxResults: Int): String = {
     trace(s"getAll(maxResults = $maxResults)")
-    val resultNonPretty = toEsJsonDocs( companion.getAll(maxResults, withVsn = true) )
-    JacksonWrapper.prettify(resultNonPretty)
+    val fut = companion.getAll(maxResults, withVsn = true)
+      .map { r =>
+        val resultNonPretty = toEsJsonDocs(r)
+        JacksonWrapper.prettify(resultNonPretty)
+      }
+    awaitString(fut)
   }
 
   override def esTypeName: String = companion.ES_TYPE_NAME
   override def esIndexName: String = companion.ES_INDEX_NAME
 
-  override def countAll(): Long = {
-    companion.countAll
+  override def countAll(): String = {
+    val fut = companion.countAll
+      .map { _.toString }
+    awaitString(fut)
   }
 }
 
@@ -1674,10 +1686,11 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def resave(id: String): String = {
     trace(s"resave($id): jmx")
-    (companion.resave(id) : Option[String]) match {
+    val fut = companion.resave(id) map {
       case Some(_id) => "Resaved " + _id
       case None      => "Not found id: " + id
     }
+    awaitString(fut)
   }
 
   override def deleteById(id: String): Boolean = {
@@ -1687,20 +1700,24 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getById(id: String): String = {
     trace(s"getById($id)")
-    companion.getById(id)
-      .fold("not found")(_.toJsonPretty)
+    val fut = companion.getById(id) map {
+      _.fold("not found")(_.toJsonPretty)
+    }
+    awaitString(fut)
   }
 
   override def getRawById(id: String): String = {
     trace(s"getRawById($id)")
-    companion.getRawById(id)
+    val fut = companion.getRawById(id)
       .map { _.fold("not found")(JacksonWrapper.prettify) }
+    awaitString(fut)
   }
 
   override def getRawContentById(id: String): String = {
     trace(s"getRawContentById($id)")
-    companion.getRawContentById(id)
+    val fut = companion.getRawContentById(id)
       .map { _.fold("not found")(JacksonWrapper.prettify) }
+    awaitString(fut)
   }
 
   override def putOne(id: String, data: String): String = {
