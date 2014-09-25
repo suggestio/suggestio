@@ -41,6 +41,34 @@ case class SMShowcaseReqArgs(
 
 
 
+/** Статическая утиль для аргументов рендера showcase-шаблонов. */
+object SMShowcaseRenderArgs {
+
+  /** Регэксп для нахождения первого словесного символа в строке. */
+  val NON_PUNCTUATION_CHAR = "(?U)\\w".r
+
+  /** Найти первую словесную букву. */
+  def firstWordChar(str: String): Char = {
+    // TODO Может надо использовать Character.isLetterOrDigit()?
+    NON_PUNCTUATION_CHAR.findFirstIn(str).get.charAt(0)
+  }
+
+  /**
+   * При сортировке по символам используется space-префикс для русских букв, чтобы они были сверху.
+   * @param c Символ.
+   * @return Строка.
+   */
+  private def russianFirst(c: Char): String = {
+    val sb = new StringBuilder(2)
+    if (Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CYRILLIC) {
+      sb.append(' ')
+    }
+    sb.append(c).toString()
+  }
+
+}
+
+import SMShowcaseRenderArgs._
 
 /**
  * Аргументы для рендера market/showcase/indexTpl.
@@ -66,5 +94,27 @@ case class SMShowcaseRenderArgs(
   logoImgOpt: Option[MImgInfoT] = None,
   shops: Map[String, MAdnNode] = Map.empty,
   welcomeAdOpt: Option[MWelcomeAd] = None
-) extends LogoImgOptI
+) extends LogoImgOptI {
+
+  /** Генерация списка групп рекламодателей по первым буквам. */
+  lazy val shopsLetterGroupedIter = {
+    shops
+      .values
+      // Сгруппировать по первой букве или цифре.
+      .groupBy { node =>
+        val firstChar = firstWordChar(node.meta.nameShort)
+        java.lang.Character.toUpperCase(firstChar)
+      }
+      // Отсортировать ноды по названиям в рамках группы.
+      .mapValues { nodes =>
+        nodes.toSeq.sortBy(_.meta.nameShort.toLowerCase)
+      }
+      .toSeq
+      // Отсортировать по первой букве группы, но русские -- сверху.
+      .sortBy { case (c, _) => russianFirst(c) }
+      .iterator
+      .zipWithIndex
+  }
+
+}
 

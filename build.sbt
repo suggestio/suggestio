@@ -151,9 +151,6 @@ publishArtifact in (Compile, packageDoc) := false
 proguardSettings
 
 ProguardKeys.options in Proguard ++= Seq(
-  "-dontnote",
-  "-dontwarn",
-  "-ignorewarnings",
   "-keepnames class * implements org.xml.sax.EntityResolver",
   """-keepclasseswithmembers public class * {
       public static void main(java.lang.String[]);
@@ -180,7 +177,10 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference head;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
-  }"""
+  }""",
+  "-dontnote",
+  "-dontwarn",
+  "-ignorewarnings"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")

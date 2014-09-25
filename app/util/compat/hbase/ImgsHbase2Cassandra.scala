@@ -17,6 +17,7 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 /**
@@ -237,6 +238,9 @@ trait ImgsHbase2CassandraJmxMBean {
 class ImgsHbase2CassandraJmx extends JMXBaseHBase with ImgsHbase2CassandraJmxMBean with PlayLazyMacroLogsImpl {
 
   import LOGGER._
+  import scala.concurrent.duration._
+
+  override def futureTimeout: FiniteDuration = 5 minutes
 
   protected def formatAsyncResult(msgPrefix: String, resultFut: Future[Int]): String = {
     resultFut
