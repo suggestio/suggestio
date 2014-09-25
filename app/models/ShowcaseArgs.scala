@@ -97,7 +97,7 @@ case class SMShowcaseRenderArgs(
 ) extends LogoImgOptI {
 
   /** Генерация списка групп рекламодателей по первым буквам. */
-  lazy val shopsLetterGroupedIter = {
+  lazy val shopsLetterGrouped = {
     shops
       .values
       // Сгруппировать по первой букве или цифре.
@@ -112,7 +112,6 @@ case class SMShowcaseRenderArgs(
       .toSeq
       // Отсортировать по первой букве группы, но русские -- сверху.
       .sortBy { case (c, _) => russianFirst(c) }
-      .iterator
       .zipWithIndex
   }
 

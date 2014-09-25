@@ -4,6 +4,7 @@ import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.NodeGeoLevels
 import play.api.i18n.{Messages, Lang}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 import util.SiowebEsUtil.client
 import models._
 import AdnShownTypes.adnInfo2val
@@ -18,6 +19,13 @@ import scala.concurrent.Future
  */
 
 object ShowcaseNodeListUtil {
+
+  /** Показывать все города в выдаче или только текущий? */
+  val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all") getOrElse false
+
+  /** Если включён вывод списка городов, то надо определить макс.длину этого списка. */
+  val MAX_TOWNS: Int = configuration.getInt("showcase.nodes.towns.max") getOrElse 10
+
 
   /**
    * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
@@ -145,10 +153,34 @@ object ShowcaseNodeListUtil {
       .map(town2layer)
   }
 
-  def town2layer(townNode: MAdnNode)(implicit lang: Lang) = {
+  def town2layer(townNode: MAdnNode) = {
     GeoNodesLayer( Seq(townNode) )
   }
 
+
+  /** Выдать все города,  */
+  def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
+    val sargs = new NodeDetectArgsT {
+      override val shownTypeIds: Seq[String] = Seq(AdnShownTypes.TOWN.name)
+      override def withGeoDistanceSort = currGeoPoint
+      override def withNameSort = currGeoPoint.isEmpty
+      override def maxResults = MAX_TOWNS
+    }
+    MAdnNode.dynSearch(sargs)
+  }
+
+  /** Обернуть список городов в гео-слой. */
+  def townsToLayer(townNodes: Seq[MAdnNode])(implicit lang: Lang): GeoNodesLayer = {
+    if (townNodes.isEmpty) {
+      GeoNodesLayer(Seq.empty)
+    } else if (townNodes.tail.isEmpty) {
+      town2layer(townNodes.head)
+    } else {
+      GeoNodesLayer(
+        nodes = townNodes,
+        nameOpt = Some( Messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)) )
+    }
+  }
 
   /**
    * Узнаём уровень, на котором находится текущая нода.
@@ -241,11 +273,21 @@ object ShowcaseNodeListUtil {
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>
-        getDistrictsLayerForTown(currNode.id.get) map { districtsLayer =>
-          Seq(
-            districtsLayer,
-            town2layer(currNode)
-          )
+        val districtsLayerFut = getDistrictsLayerForTown(currNode.id.get)
+        // 2014.sep.25: Нужно выдавать другие города в целях отладки. Это должно быть отлючаемо.
+        val townsLayerFut: Future[GeoNodesLayer] = if (SHOW_ALL_TOWNS) {
+          val gpOpt = geoMode.exactGeodata.orElse(currNode.geo.point)
+          allTowns(gpOpt) map { townNodes =>
+            townsToLayer(townNodes)
+          }
+        } else {
+          Future successful town2layer(currNode)
+        }
+        for {
+          districtsLayer <- districtsLayerFut
+          townsLayer     <- townsLayerFut
+        } yield {
+          Seq(districtsLayer, townsLayer)
         }
 
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
