@@ -560,9 +560,6 @@ sm =
       if gs.style.display == 'block'
         return false
 
-      if cbca_grid.ww <= 400
-        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
-
       sm.utils.ge('smGeoScreen').style.display = 'block'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'none'
 
@@ -579,9 +576,6 @@ sm =
 
       if gs == null || gs.style.display == '' || gs.style.display == 'none'
         return false
-
-      if cbca_grid.ww <= 400
-        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       gs.style.display = 'none'
       sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
@@ -1080,12 +1074,10 @@ sm =
       ## Обработка событий для открытия / закрытия экрана выхода
       if sm.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         sm.utils.ge('smCloseScreen').style.display = 'block'
-        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
         return false
 
       if sm.events.target_lookup( event.target, 'id', 'smExitCloseScreenButton' ) != null
         sm.utils.ge('smCloseScreen').style.display = 'none'
-        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
         return false
 
       if sm.events.target_lookup( event.target, 'id', 'smCloseScreenContainer' ) != null
@@ -1094,7 +1086,6 @@ sm =
 
       if sm.events.target_lookup( event.target, 'id', 'smCloseScreen' ) != null
         sm.utils.ge('smCloseScreen').style.display = 'none'
-        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
         return false
 
       #########################################################
@@ -1909,7 +1900,6 @@ sm =
         return false
 
       this.is_active = false
-      sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
       animation_cb = () ->
         sm.utils.removeClass sm.focused_ads._container, 'fs-animated-end'
       setTimeout animation_cb, 3
@@ -1959,7 +1949,6 @@ sm =
     ############################
     init : () ->
       this.is_active = true
-      sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
       this.ads_container_dom = sm.utils.ge('smFocusedAdsContainer')
 
       this.ads_receiver_index = 0
@@ -2043,9 +2032,6 @@ sm =
       if cs.style.display == "block"
         return false
 
-      if cbca_grid.ww <= 400
-        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
-
       this.adjust()
 
       ## Скрыть кнопки хидера главного экрана
@@ -2078,10 +2064,6 @@ sm =
 
       if cs == null || cs.style.display == "" || cs.style.display == "none"
         return false
-
-      sm.log 'close navigaion screen'
-      if cbca_grid.ww <= 400
-        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       cbca_grid.right_offset = 0
       cbca_grid.rebuild()
@@ -2117,13 +2099,11 @@ sm =
   ######################################################
   open_close_screen : ( event ) ->
     sm.utils.ge('smCloseScreen').style.display = 'block'
-    sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
   exit_close_screen : ( event ) ->
     sm.utils.ge('smCloseScreen').style.display = 'none'
-    sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
     event.preventDefault()
     return false
 
@@ -2430,6 +2410,12 @@ sm =
         sm.do_load_for_shop_id state.fads.producer_id, state.fads.ad_id
       else
         sm.focused_ads.close()
+
+      if cbca_grid.ww <= 400
+        if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
+          sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
+        else
+          sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
   ############################
   ## Функции для инициализации
