@@ -525,8 +525,9 @@ sm =
       if this.location_requested == true
         return false
 
-      sm.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
-      sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
+      if sm.utils.ge('smGeoLocationButtonIcon') != null
+        sm.utils.ge('smGeoLocationButtonIcon').style.display = 'none'
+        sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
       sm.geo.location_requested = true
       navigator.geolocation.getCurrentPosition sm.geo.position_callback
@@ -2460,6 +2461,8 @@ sm =
     ## Переключиться на первичное состояние
     this.states.add_state
       mart_id : sm_id
+
+    sm.geo.get_current_position()
 
 window.sm = window.siomart = sm
 sm.init()
