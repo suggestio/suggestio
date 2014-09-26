@@ -74,6 +74,9 @@ libraryDependencies ++= Seq(
   "org.tinyradius" % "tinyradius" % "1.0.3"
     exclude("commons-logging", "commons-logging")
   ,
+  // Явный дубляж из util, эти зависимости по факту нужны datastax-cassandra-драйверу, но он их не тянет.
+  "org.xerial.snappy" % "snappy-java" % "1.+",
+  "net.jpountz.lz4" % "lz4" % "1.+",
   // svg
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test

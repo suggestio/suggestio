@@ -51,11 +51,12 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
         val hasAdv = DB.withConnection { implicit c =>
           MAdvOk.hasAdvUntilNow(mad.id.get)  ||  MAdvReq.hasAdvUntilNow(mad.id.get)
         }
-        if (hasAdv) {
+        val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
+        if (hasAdv && !isSuperuser) {
           // Если объява уже где-то опубликована, то значит редактировать её нельзя.
           forbiddenFut(adId, "Ad is advertised somewhere. Cannot edit during advertising.", request)
         } else {
-          if (PersonWrapper isSuperuser pwOpt) {
+          if (isSuperuser) {
             MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
               srmFut flatMap { srm =>
                 val req1 = RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get)
