@@ -36,6 +36,10 @@ object SioCassandraClient extends MacroLogsImplLazy {
   /** Настройка репликации для создаваемого кейспейса. */
   def SIO_KEYSPACE_REPLICATION: String = CONFIG.getString("cassandra.keyspace.sio.replication") getOrElse "{'class': 'SimpleStrategy', 'replication_factor': 1}"
 
+  /** Явно разрешено ли в конфиге вызывать truncate над cassandra-таблицей? */
+  def JMX_CAN_TRUNCATE_TABLE: Boolean = CONFIG.getBoolean("cassandra.table.ALL.truncate.allowed") getOrElse false
+
+
   /** Собираем инфу по кластеру. */
   val cluster = synchronized {
     Cluster.builder()
@@ -180,8 +184,12 @@ trait CassandraModelJmxMBeanImpl extends CassandraJmxBase with CassandraModelJxm
   }
 
   override def truncateTable: String = {
-    val fut = companion.truncateTable.map(_.toString)
-    awaitString(fut)
+    if (SioCassandraClient.JMX_CAN_TRUNCATE_TABLE) {
+      val fut = companion.truncateTable.map(_.toString)
+      awaitString(fut)
+    } else {
+      "TRUNCATE not enabled in application config. Ignored."
+    }
   }
 
   override def countAll: String = {

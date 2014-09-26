@@ -80,6 +80,8 @@ libraryDependencies ++= {
       exclude("org.mortbay.jetty", "jsp-2.1")
       exclude("org.mortbay.jetty", "jsp-api-2.1")
       exclude("org.mortbay.jetty", "servlet-api-2.5")
+      exclude("tomcat", "jasper-compiler")
+      exclude("tomcat", "jasper-runtime")
     ,
     "org.apache.hbase" % "hbase-common" % hbaseVsn,
     "org.hbase" % "asynchbase" % "1.5.0A-SNAPSHOT",
