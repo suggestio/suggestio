@@ -71,6 +71,8 @@ libraryDependencies ++= {
     ,
     // cassandra
     "com.websudos"  %% "phantom-dsl" % phantomVersion,
+    "org.xerial.snappy" % "snappy-java" % "1.+",
+    "net.jpountz.lz4" % "lz4" % "1.+",
     // hbase
     "org.apache.hbase" % "hbase" % hbaseVsn,
     "org.apache.hbase" % "hbase-server" % hbaseVsn
