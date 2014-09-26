@@ -20,6 +20,7 @@ class SvgUtilSpec extends PlaySpec {
 
   /** Тестируем isSvgValid() и isSvgFileValid(). */
   private def testFilePath(filepath: String, isSvg: Boolean): Unit = {
+    // Тестируем isSvgValid():
     val is = getClass.getResourceAsStream(filepath)
     assert(is != null)
     try {
@@ -27,7 +28,7 @@ class SvgUtilSpec extends PlaySpec {
     } finally {
       is.close()
     }
-
+    // тестируем isSvgFileValid():
     val fpath = getClass.getResource(filepath).getFile
     val f = new File(fpath)
     SvgUtil.isSvgFileValid(f) mustBe isSvg
@@ -65,6 +66,5 @@ class SvgUtilSpec extends PlaySpec {
     }
 
   } // isSvgValid()
-
 
 }

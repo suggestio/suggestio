@@ -327,19 +327,25 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         val _rowkeyStr = UuidUtil.uuidToBase64(_rowkey)
         _rowkeyStr -> _rowkey
     }
+    // 26.sep.2014: Костыли для поддержки svg.
+    val isVectorImage = mptmp.file.getName.endsWith(".svg")
     // qualifier для сохранения картинки и её метаданных
-    // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
-    val mptmp4save: MPictureTmp = tii.withDownsize.fold(mptmp) {
-      iim =>
+    // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в модель.
+    val mptmp4save: MPictureTmp = tii.withDownsize
+      .filter { _ => !isVectorImage }   // svg не имеют фактического размера, делать downsize нельзя.
+      .fold(mptmp) { iim =>
         val dsImgUtil = DownsizeImageUtil(iim)
         val mptmpNew = MPictureTmp.mkNew(cropOpt = tii.iik.cropOpt, outFmt = OutImgFmts.JPEG)
         dsImgUtil.convert(fileOld = mptmp.file, fileNew = mptmpNew.file)
         mptmpNew
-    }
-    // В фоне запускаем сборку данных по финальной сохраняемой картинке
+      }
+    // Запускаем сборку данных по финальной сохраняемой картинке
+    // 26.sep.2014: TODO svg-картинки не имеют размера, но identify как-то его определяет.
     val identifyResult = OrigImageUtil.identify(mptmp4save.file)
     // Параметр кропа отображаем на выходной размер фотки.
-    val crop4nameOpt: Option[ImgCrop] = {
+    val crop4nameOpt: Option[ImgCrop] = if (isVectorImage) {
+      None
+    } else {
       val crop4name0 = tii.iik.cropOpt
       tii.withDownsize.fold { crop4name0 } { wds =>
         crop4name0.map {

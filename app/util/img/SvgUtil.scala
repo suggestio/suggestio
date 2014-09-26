@@ -44,4 +44,14 @@ object SvgUtil extends PlayMacroLogsImpl {
     }
   }
 
+
+  /**
+   * Может ли указанные mime-тип быть svg? Это нужно для исправления JMimeMagic.
+   * @param mime MIME-type.
+   * @return true, если svg внутри допустим. Иначе false.
+   */
+  def maybeSvgMime(mime: String): Boolean = {
+    mime.startsWith("text/") || mime.startsWith("image/svg")
+  }
+
 }

@@ -218,7 +218,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
           val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
           // Отрабатываем svg: не надо конвертить.
           val srcMime = srcMagicMatch.getMimeType
-          if (srcMime.startsWith("text/") || srcMime.startsWith("image/svg")) {
+          if (SvgUtil maybeSvgMime srcMime) {
             // Это svg?
             if (SvgUtil isSvgFileValid srcFile) {
               // Это svg. Надо его сжать и переместить в tmp-хранилище.

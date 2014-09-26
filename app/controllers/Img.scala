@@ -115,10 +115,16 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     } else {
       trace(s"serveImg(): 200 OK. size = ${its.imgBytes.length} bytes")
       // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
-      val magicMatch = Magic.getMagicMatch(its.imgBytes)
+      val ct = Option( Magic.getMagicMatch(its.imgBytes) )
+        .flatMap { mm => Option(mm.getMimeType) }
+        .map {
+          case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
+          case other => other
+        }
+        .getOrElse("image/unknown")   // Should never happen
       Ok(its.imgBytes)
         .withHeaders(
-          CONTENT_TYPE  -> magicMatch.getMimeType,
+          CONTENT_TYPE  -> ct,
           LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
           CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
         )
