@@ -471,7 +471,7 @@ sm =
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
     ads_per_load : 30
-    producer_ads_per_load : 5
+    producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   geo :
@@ -1289,7 +1289,8 @@ sm =
         sm.search.error_message 'короткий запрос, минимум 3 символа'
         return false
 
-      a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + sm.config.mart_id
+      cs = sm.states.cur_state()
+      a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
       url = '/market/ads?a.q=' + request + a_rcvr + '&' + sm.geo.request_query_param()
       sm.request.perform url
 
@@ -1567,6 +1568,8 @@ sm =
     ## Отобразить рекламные карточки для указанного продьюсера
     ##########################################################
     producer_ads : ( data ) ->
+
+      siomart.utils.ge('fsLoaded').style.display = 'none'
 
       if sm.focused_ads.load_more_ads_requested == true
         sm.focused_ads.render_more data.blocks
@@ -2142,6 +2145,7 @@ sm =
     if typeof sm.shop_load_locked != 'undefined'
       return false
 
+    siomart.utils.ge('fsLoaded').style.display = 'block'
     sm.shop_load_locked = true
 
     cs = sm.states.cur_state()
@@ -2462,7 +2466,9 @@ sm =
     this.states.add_state
       mart_id : sm_id
 
-    sm.geo.get_current_position()
+    cb = () ->
+      sm.geo.get_current_position()
+    setTimeout cb, 1000
 
 window.sm = window.siomart = sm
 sm.init()

@@ -3,6 +3,7 @@
 @* Начальная страница для sio-market. Многочисленные аргументы передаются в контейнере для удобства передачи оных в подшаблоны. *@
 
 @import util.img.WelcomeUtil.WELCOME_IMG_KEY
+@import util.TplDataFormatUtil._
 
 @defining( ctx.myAudienceUrl + args.logoImgOpt.map { logoImg => routes.Img.getImg(logoImg.filename) }.getOrElse{ routes.Assets.at("images/market/showcase-logo.png")} ) { nodeLogo =>
 
@@ -80,6 +81,9 @@
 @* Окно с версткой гео-меню *@
 @_geo_screen(args)
 
+<div id="fsLoaded" class="fs-loader" style="background: rgba( @{colorHex2rgb( args.bgColor ).mkString(",")}, 0.3);">
+  <div class="fs-loader_spinner">@svg._spinnerTpl(args.fgColor)</div>
+</div>
 
 <div class="sm-loading" id="smLoading"></div>
 
