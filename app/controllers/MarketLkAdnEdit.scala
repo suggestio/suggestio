@@ -231,7 +231,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo = Action.async(parse.multipartFormData) { implicit request =>
+  def handleTempLogo = IsAuth.async(parse.multipartFormData) { implicit request =>
     bruteForceProtected {
       _handleTempImg(LogoImageUtil, Some(TMP_LOGO_MARKER), preserveFmt = true)
     }

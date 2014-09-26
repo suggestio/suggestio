@@ -821,6 +821,7 @@ object OutImgFmts extends Enumeration {
   val JPEG = Value("jpeg")
   val PNG  = Value("png")
   val GIF  = Value("gif")
+  val SVG  = Value("svg")
 
   /**
    * Предложить формат для mime-типа.

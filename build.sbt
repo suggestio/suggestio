@@ -74,6 +74,8 @@ libraryDependencies ++= Seq(
   "org.tinyradius" % "tinyradius" % "1.0.3"
     exclude("commons-logging", "commons-logging")
   ,
+  // svg
+  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test
   "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )

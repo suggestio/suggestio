@@ -1,8 +1,11 @@
 package util
 
+import java.io.File
+import java.nio.file.Files
+
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import play.api.Play, Play.{current, configuration}
-import play.api.templates.HtmlFormat
+import play.twirl.api.HtmlFormat
 
 /**
  * Suggest.io
@@ -12,19 +15,20 @@ import play.api.templates.HtmlFormat
  */
 object HtmlCompressUtil {
 
+  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", Play.isDev)
+  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", Play.isProd)
+  val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
+  val STRIP_HTTP_PROTO            = getBool("html.compress.global.remove.proto.http", false)
+  val STRIP_HTTPS_PROTO           = getBool("html.compress.global.remove.proto.https", false)
+
   def getForGlobalUsing = {
     val compressor = new HtmlCompressor()
-    compressor.setPreserveLineBreaks(
-      getBool("html.compress.global.preserve.line.breaks", Play.isDev))
-    compressor.setRemoveComments(
-      getBool("html.compress.global.remove.comments", Play.isProd))
-    compressor.setRemoveIntertagSpaces(
-      getBool("html.compress.global.remove.spaces.intertag", true))
+    compressor.setPreserveLineBreaks(PRESERVE_LINE_BREAKS_DFLT)
+    compressor.setRemoveComments(REMOVE_COMMENTS_DFLT)
+    compressor.setRemoveIntertagSpaces(REMOVE_INTERTAG_SPACES_DFLT)
     // http false из-за проблем в iframe в demoWebSite.
-    compressor.setRemoveHttpProtocol(
-      getBool("html.compress.global.remove.proto.http", false))
-    compressor.setRemoveHttpsProtocol(
-      getBool("html.compress.global.remove.proto.https", false))
+    compressor.setRemoveHttpProtocol(STRIP_HTTP_PROTO)
+    compressor.setRemoveHttpsProtocol(STRIP_HTTPS_PROTO)
     compressor
   }
 
@@ -55,7 +59,9 @@ object HtmlCompressUtil {
   def compressForJson(html: HtmlFormat.Appendable) = html4jsonCompressor.compress(html.body)
 
 
-  private val html4emailCompressor = {
+
+  /** Почта редкая, поэтому проще собирать компрессор каждый раз заново. */
+  private def html4emailCompressor = {
     val compressor = getForGlobalUsing
     compressor.setRemoveIntertagSpaces(true)
     compressor.setRemoveMultiSpaces(true)
@@ -67,6 +73,38 @@ object HtmlCompressUtil {
   }
 
   def compressForEmail(html: HtmlFormat.Appendable) = html4emailCompressor.compress(html.body)
+
+
+
+  /** SVG редкие сохраняются, поэтому выгоднее просто пересобирать компрессор каждый раз заново. */
+  private def html4svgCompressor = {
+    val compressor = getForGlobalUsing
+    compressor.setRemoveIntertagSpaces(true)
+    compressor.setRemoveHttpProtocol(false)
+    compressor.setRemoveHttpsProtocol(false)
+    compressor.setPreserveLineBreaks(false)
+    compressor.setRemoveComments(true)
+    compressor.setRemoveMultiSpaces(true)
+    compressor
+  }
+
+  /**
+   * Прочитать svg из файла и сжать.
+   * @param f файл.
+   * @return Сжатое содержимое.
+   */
+  def compressSvgFromFile(f: File): String = {
+    val svgData = Files.readAllBytes(f.toPath)
+    val svgText = new String(svgData)
+    compressSvgText(svgText)
+  }
+
+  /**
+   * Сжать svg-текст.
+   * @param svgText Текст svg xml.
+   * @return Сжатый svg-текст.
+   */
+  def compressSvgText(svgText: String): String = html4svgCompressor.compress(svgText)
 
 }
 
