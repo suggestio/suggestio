@@ -167,6 +167,7 @@ POST /img/crop                          controllers.Img.imgCropSubmit
 
 
 # Витрина market'а и её экшены
+GET  /b/svg/:bTpl/:fillColor            controllers.MarketShowcase.blockSvg(bTpl: BlockSvg, fillColor: String)
 GET  /market/demo                       controllers.MarketShowcase.demoShowcase
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId)

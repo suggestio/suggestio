@@ -1,6 +1,5 @@
 package controllers
 
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import util.PlayMacroLogsImpl
 import views.html.market.lk.ad._
 import models._

@@ -25,7 +25,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, Call, Result, AnyContent}
+import play.api.mvc._
 import play.api.Play.{current, configuration}
 
 /**
@@ -640,6 +640,29 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Redirect(routes.MarketShowcase.demoWebSite(adnId))
       case None =>
         http404AdHoc
+    }
+  }
+
+
+  /** Рендер svg-шаблона картинки блока. */
+  def blockSvg(svgTpl: BlockSvg, fillColor: String) = Action { implicit request =>
+    val newEtag = svgTpl.template.hashCode().toString
+    val isNotModified = request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) => etag == newEtag
+      case None => false
+    }
+    if (isNotModified) {
+      NotModified
+    } else {
+      val args = request.queryString
+        .iterator
+        .flatMap { case (k, vs) => if (vs.nonEmpty) List((k, vs.head)) else Nil}
+        .toMap
+      Ok(svgTpl.render(fillColor, args))
+        .withHeaders(
+          CACHE_CONTROL -> "public, max-age=700",
+          ETAG          -> svgTpl.template.hashCode.toString
+        )
     }
   }
 
