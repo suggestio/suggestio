@@ -114,9 +114,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       NotModified
     } else {
       trace(s"serveImg(): 200 OK. size = ${its.imgBytes.length} bytes")
-      // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
+      // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:
       val ct = Option( Magic.getMagicMatch(its.imgBytes) )
         .flatMap { mm => Option(mm.getMimeType) }
+        // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
         .map {
           case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
           case other => other
