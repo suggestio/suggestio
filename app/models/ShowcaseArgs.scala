@@ -93,7 +93,8 @@ case class SMShowcaseRenderArgs(
   geoListGoBack: Option[Boolean] = None,
   logoImgOpt: Option[MImgInfoT] = None,
   shops: Map[String, MAdnNode] = Map.empty,
-  welcomeAdOpt: Option[MWelcomeAd] = None
+  welcomeAdOpt: Option[MWelcomeAd] = None,
+  searchInAdnId: Option[String] = None
 ) extends LogoImgOptI {
 
   /** Генерация списка групп рекламодателей по первым буквам. */
