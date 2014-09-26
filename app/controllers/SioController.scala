@@ -1,9 +1,11 @@
 package controllers
 
-import java.io.File
+import java.io.{FileInputStream, File}
 import java.net.JarURLConnection
+import java.nio.file.{StandardCopyOption, Files}
 
 import models.Context
+import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc._
@@ -19,7 +21,7 @@ import play.api.data.Form
 import io.suggest.img.SioImageUtilT
 import play.api.libs.Files.TemporaryFile
 import models._
-import util.img.OutImgFmts
+import util.img.{SvgUtil, OutImgFmts}
 import net.sf.jmimemagic.Magic
 import play.api.libs.json.JsString
 import play.api.mvc.Result
@@ -206,35 +208,62 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
 trait TempImgSupport extends SioController with PlayMacroLogsI {
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        val outFmt = if (preserveFmt) {
+  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)
+                              (implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+    try {
+      request.body.file("picture") match {
+        case Some(pictureFile) =>
+          val fileRef = pictureFile.ref
+          val srcFile = fileRef.file
           val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-          OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        } else {
-          OutImgFmts.JPEG
-        }
-        val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
-        try {
-          imageUtil.convert(srcFile, mptmp.file)
-          Ok(Img.jsonTempOk(mptmp.filename))
-        } catch {
-          case ex: Throwable =>
-            LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = Img.jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-        } finally {
-          srcFile.delete()
-        }
+          // Отрабатываем svg: не надо конвертить.
+          val srcMime = srcMagicMatch.getMimeType
+          if (SvgUtil maybeSvgMime srcMime) {
+            // Это svg?
+            if (SvgUtil isSvgFileValid srcFile) {
+              // Это svg. Надо его сжать и переместить в tmp-хранилище.
+              val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
+              val mptmp = MPictureTmp.getForTempFile(srcFile, OutImgFmts.SVG, marker)
+              FileUtils.writeStringToFile(mptmp.file, newSvg)
+              Ok(Img.jsonTempOk(mptmp.filename))
+            } else {
+              val reply = Img.jsonImgError("SVG format invalid or not supported.")
+              NotAcceptable(reply)
+            }
 
-      case None =>
-        val reply = Img.jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
+          } else {
+            // Это наверное растровая картинка.
+            val outFmt = if (preserveFmt) {
+              OutImgFmts.forImageMime(srcMime)
+            } else {
+              OutImgFmts.JPEG
+            }
+            try {
+              val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
+              imageUtil.convert(srcFile, mptmp.file)
+              Ok(Img.jsonTempOk(mptmp.filename))
+            } catch {
+              case ex: Throwable =>
+                LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+                val reply = Img.jsonImgError("Unsupported picture format.")
+                NotAcceptable(reply)
+            }
+          }
+
+        // В реквесте не найдена именованая часть, содержащая картинку.
+        case None =>
+          val reply = Img.jsonImgError("picture part not found in request.")
+          NotAcceptable(reply)
+      }
+
+    } finally {
+      // Удалить все файлы, которые были приняты в реквесте.
+      request.body.files.foreach { f =>
+        f.ref.file.delete()
+      }
     }
   }
+
 }
 
 
