@@ -36,7 +36,7 @@ object SvgUtil extends PlayMacroLogsImpl {
       val factory = new SAXSVGDocumentFactory(parser)
       val doc = factory.createDocument("http://suggest.io/test.svg", is)
       // TODO Добавить ещё проверки для распарсенного документа?
-      true
+      doc != null
     } catch {
       case ex: Throwable =>
         warn("isSvgValid(): Invalid svg data", ex)

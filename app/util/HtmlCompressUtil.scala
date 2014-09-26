@@ -48,6 +48,7 @@ object HtmlCompressUtil {
   }
 
 
+  /** Перманентный компрессор для html-in-json, который активно используется в выдаче. */
   private val html4jsonCompressor = {
     val compressor = getForGlobalUsing
     compressor.setPreserveLineBreaks(false)
@@ -76,7 +77,7 @@ object HtmlCompressUtil {
 
 
 
-  /** SVG редкие сохраняются, поэтому выгоднее просто пересобирать компрессор каждый раз заново. */
+  /** SVG изредка сохраняются, поэтому выгоднее просто пересобирать компрессор каждый раз заново. */
   private def html4svgCompressor = {
     val compressor = getForGlobalUsing
     compressor.setRemoveIntertagSpaces(true)
