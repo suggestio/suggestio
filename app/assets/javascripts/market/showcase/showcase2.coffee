@@ -1289,10 +1289,8 @@ sm =
         sm.search.error_message 'короткий запрос, минимум 3 символа'
         return false
 
-      cs = sm.states.cur_state()
-      a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
-      url = '/market/ads?a.q=' + request + a_rcvr + '&' + sm.geo.request_query_param()
-      sm.request.perform url
+      sm.states.transform_state
+        search_request : request
 
     queue_request : ( request ) ->
 
@@ -1482,12 +1480,6 @@ sm =
       this.response_callbacks.producer_ads data
 
     if data.action == 'findAds' || data.action == 'searchAds'
-
-      if data.action == 'searchAds'
-        cbca_grid.top_offset = 120
-      else
-        cbca_grid.top_offset = 70
-
       this.response_callbacks.find_ads data
 
     if data.action == 'findNodes'
@@ -2306,6 +2298,7 @@ sm =
         is_opened : false
       fads :
         is_opened : false
+      search_request : undefined
 
     cur_state : () ->
       if this.cur_state_index == -1
@@ -2323,6 +2316,7 @@ sm =
       if typeof ns.cat_screen == 'undefined' then ns.cat_screen = this.ds.cat_screen
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
       if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
+      if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
 
       this.push ns
 
@@ -2336,6 +2330,7 @@ sm =
       cs = sm.states.cur_state()
       ns = {}
 
+      ns.search_request = if typeof stp.search_request != 'undefined' then stp.search_request else undefined
       ns.geo_screen = if typeof stp.geo_screen != 'undefined' then stp.geo_screen else cs.geo_screen
       ns.cat_screen = if typeof stp.cat_screen != 'undefined' then stp.cat_screen else cs.cat_screen
       ns.fads = if typeof stp.fads != 'undefined' then stp.fads else cs.fads
@@ -2421,6 +2416,12 @@ sm =
           sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
         else
           sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+
+      ## 5. Search
+      if typeof state.search_request != 'undefined'
+        a_rcvr = '&a.rcvr=' + state.mart_id
+        url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param()
+        sm.request.perform url
 
   ############################
   ## Функции для инициализации
