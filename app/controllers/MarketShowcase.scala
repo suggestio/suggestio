@@ -3,6 +3,7 @@ package controllers
 import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import _root_.util.img.{WelcomeUtil, ImgFormUtil, OrigImgIdKey}
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
 import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.common.AdnNodesSearchArgsWrapper
@@ -259,12 +260,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         .toMap
     }
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
-    val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
-      case Some(waId) => MWelcomeAd.getById(waId)
-      case None => Future successful None
-    }
+    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode)
     for {
-      waOpt     <- welcomeAdOptFut
+      waOpt     <- waOptFut
       catsStats <- catsStatsFut
       prods     <- prodsFut
       mmcats    <- mmcatsFut
@@ -280,7 +278,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         logoImgOpt  = adnNode.logoImgOpt,
         shops       = prods,
         geoListGoBack = geoListGoBack,
-        welcomeAdOpt = waOpt
+        welcomeOpt  = waOpt
       )
       renderShowcase(args, isGeo, adnNode.id)
     }

@@ -1,5 +1,7 @@
 package util.img
 
+import controllers.MarketShowcase
+
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -86,5 +88,48 @@ object WelcomeUtil {
       .flatMap { _.imgs.headOption }
       .map[OrigImgIdKey] { img => img._2 }
   }
+
+
+  /**
+   * Асинхронно собрать аргументы для рендера карточки приветствия.
+   * @param adnNode Узел, для которого нужно подготовить настройки рендера приветствия.
+   * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
+   */
+  def getWelcomeRenderArgs(adnNode: MAdnNode): Future[Option[WelcomeRenderArgsT]] = {
+    adnNode.meta.welcomeAdId match {
+      case Some(waId) =>
+        // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
+        val bgFut = adnNode.gallery
+          .headOption
+          .fold[Future[Either[String, MImgInfoT]]] {
+            Future successful colorBg(adnNode)
+          } { bgImgFilename =>
+            val oiik = OrigImgIdKey.apply(bgImgFilename)
+            oiik.getImageWH map {
+              case metaSome if metaSome.nonEmpty =>
+                Right(oiik.copy(meta = metaSome))
+              case _ => colorBg(adnNode)
+            }
+          }
+        // Получить карточку из базы.
+        for {
+          welcomeAdOpt  <- MWelcomeAd.getById(waId)
+          bg1           <- bgFut
+        } yield {
+          welcomeAdOpt.map { wad1 =>
+            new WelcomeRenderArgsT {
+              override def wad = wad1
+              override def bg = bg1
+              override def fgImage = wad.imgs.get(WELCOME_IMG_KEY)
+            }
+          }
+        }
+
+      case None => Future successful None
+    }
+  }
+
+  /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
+  private def colorBg(adnNode: MAdnNode) = Left(adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT))
 
 }

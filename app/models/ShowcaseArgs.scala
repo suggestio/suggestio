@@ -1,5 +1,6 @@
 package models
 
+import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
@@ -80,20 +81,20 @@ import SMShowcaseRenderArgs._
  * @param oncloseHref Абсолютный URL перехода при закрытии выдачи.
  * @param logoImgOpt Логотип, если есть.
  * @param shops Список магазинов в торговом центре.
- * @param welcomeAdOpt Приветствие, если есть.
+ * @param welcomeOpt Приветствие, если есть.
  */
 case class SMShowcaseRenderArgs(
-  bgColor: String,
-  fgColor: String,
-  name: String,
-  mmcats: Seq[MMartCategory],
-  catsStats: Map[String, Long],
-  spsr: AdSearch,
-  oncloseHref: String,
-  geoListGoBack: Option[Boolean] = None,
-  logoImgOpt: Option[MImgInfoT] = None,
-  shops: Map[String, MAdnNode] = Map.empty,
-  welcomeAdOpt: Option[MWelcomeAd] = None
+  bgColor       : String,
+  fgColor       : String,
+  name          : String,
+  mmcats        : Seq[MMartCategory],
+  catsStats     : Map[String, Long],
+  spsr          : AdSearch,
+  oncloseHref   : String,
+  geoListGoBack : Option[Boolean] = None,
+  logoImgOpt    : Option[MImgInfoT] = None,
+  shops         : Map[String, MAdnNode] = Map.empty,
+  welcomeOpt    : Option[WelcomeRenderArgsT] = None
 ) extends LogoImgOptI {
 
   /** Генерация списка групп рекламодателей по первым буквам. */
@@ -115,5 +116,28 @@ case class SMShowcaseRenderArgs(
       .zipWithIndex
   }
 
+  /** Абсолютная ссылка на логотип для рендера. */
+  lazy val logoImgUrl: String = {
+    val path = logoImgOpt.fold {
+      routes.Assets.at("images/market/showcase-logo.png")
+    } { logoImg =>
+      routes.Img.getImg(logoImg.filename)
+    }
+    util.Context.MY_AUDIENCE_URL + path
+  }
+
+}
+
+
+/** Данные по рендеру приветствия. */
+trait WelcomeRenderArgsT {
+
+  /** Карточка приветствия. */
+  def wad: MWelcomeAd
+
+  /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
+  def bg: Either[String, MImgInfoT]
+
+  def fgImage: Option[MImgInfoT]
 }
 

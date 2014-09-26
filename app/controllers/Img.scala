@@ -226,7 +226,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     IsAuth.async { implicit request =>
       val iik0 = ImgIdKey(imgId)
       val iik = iik0.uncropped
-      iik.getImageWH map { imetaOpt =>
+      iik.getBaseImageWH map { imetaOpt =>
         val imeta: MImgInfoMeta = imetaOpt getOrElse {
           val stub = MImgInfoMeta(640, 480)
           warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
