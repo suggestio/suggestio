@@ -35,16 +35,12 @@
     @mad.offers.headOption.map { offer =>
 
       @offer.discount.map { discount =>
-      <div class="sale" style="color: #@discount.font.color;">
-        @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
-      </div>
+        <div class="sale" style="color: #@discount.font.color;">
+          @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+        </div>
       }
 
-
-      @_saleIcon13Tpl(
-        cssClass = "svg",
-        fillColor = discoIconColor
-      )
+      <img class="svg" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIcon13, Map(Fill -> discoIconColor))" />
 
         @_saleIconMask13Tpl(
           cssClass = "svg-mask",
