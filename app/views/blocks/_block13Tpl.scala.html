@@ -41,11 +41,7 @@
       }
 
       <img class="svg" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIcon13, Map(Fill -> discoIconColor))" />
-
-        @_saleIconMask13Tpl(
-          cssClass = "svg-mask",
-          fillColor = borderColor
-        )
+      <img class="svg-mask" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIconMask13, Map(Fill -> borderColor))" />
 
       @offer.text1.map { text1 =>
         <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
