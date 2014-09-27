@@ -645,25 +645,21 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
 
   /** Рендер svg-шаблона картинки блока. */
-  def blockSvg(svgTpl: BlockSvg, fillColor: String) = Action { implicit request =>
+  def blockSvg(svgTpl: BlockSvg, colors: BSvgColorMap) = Action { implicit request =>
     val newEtag = svgTpl.template.hashCode().toString
     val isNotModified = request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) => etag == newEtag
       case None => false
     }
-    if (isNotModified) {
+    val result = if (isNotModified) {
       NotModified
     } else {
-      val args = request.queryString
-        .iterator
-        .flatMap { case (k, vs) => if (vs.nonEmpty) List((k, vs.head)) else Nil}
-        .toMap
-      Ok(svgTpl.render(fillColor, args))
-        .withHeaders(
-          CACHE_CONTROL -> "public, max-age=700",
-          ETAG          -> svgTpl.template.hashCode.toString
-        )
+      Ok(svgTpl.render(colors))
     }
+    result.withHeaders(
+      CACHE_CONTROL -> "public, max-age=700",
+      ETAG          -> svgTpl.template.hashCode.toString
+    )
   }
 
 }

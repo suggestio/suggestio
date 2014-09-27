@@ -4,6 +4,7 @@
 @import common._
 @import svg._
 @import util.blocks.BlocksConf.{Block19 => bc}
+@import BSvgColorNames._
 
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 @blockBase(isStandalone, mad, bc,
@@ -11,7 +12,7 @@
 ) {
 
   @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { fillColor =>
-    <img class="bg" src="@routes.MarketShowcase.blockSvg(BlocksSvg.bg19, fillColor)" alt="" />
+    <img class="bg" src="@routes.MarketShowcase.blockSvg(BlocksSvg.bg19, Map(Fill -> fillColor))" alt="" />
   }
 
   <div class="substrate" style="background: #@fillColor">

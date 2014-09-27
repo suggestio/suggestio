@@ -1,9 +1,13 @@
-@(cssClass: String, fillColor: String, borderColor: String)
+@(colors: BSvgColorMap)
 
+@import BSvgColorNames._
 
-<svg class="@cssClass" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 width="108px" height="1200px" viewBox="0 0 108 1200" enable-background="new 0 0 108 1200" xml:space="preserve">
-<polygon fill="#@fillColor" points="0,1200 108,1200 108,1184.261 24.87,1100.93 24.86,98.638 108,16.066 108,0 0,0 "/>
-<polygon fill="#@borderColor" points="7.973,90.548 98.651,0 88.227,0 0,88.1 0,89.444 0,89.444 0,1110.172 0,1110.172 0,1111.901 88.227,1200
-	98.651,1200 7.973,1109.453 "/>
+<polygon @colors.get(Fill).map { fico => fill="#@fico" }
+         points="0,1200 108,1200 108,1184.261 24.87,1100.93 24.86,98.638 108,16.066 108,0 0,0 "/>
+<polygon
+    @colors.get(Border).map { boco => fill="#@boco" }
+    points="7.973,90.548 98.651,0 88.227,0 0,88.1 0,89.444 0,89.444 0,1110.172 0,1110.172 0,1111.901 88.227,1200
+	98.651,1200 7.973,1109.453" />
 </svg>

@@ -123,7 +123,8 @@ resolvers ++= Seq(
 routesImport ++= Seq(
   "models._",
   "util.qsb._",
-  "util.qsb.QSBs._"
+  "util.qsb.QSBs._",
+  "models.BSvgColorsUtil._"
 )
 
 
