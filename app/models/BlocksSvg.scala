@@ -25,7 +25,8 @@ object BlocksSvg extends Enumeration {
   val bg19                = Val("bg19", _bg19Tpl)
   val block6LeftBorder    = Val("b6lb", _block6_left_border)
   val block6RightBorder   = Val("b6rb", _block6_right_border)
-
+  val bottom145           = Val("b145", _bottom145)
+  val top145              = Val("t145", _top145)
 
   implicit def value2val(x: Value): BlockSvg = x.asInstanceOf[BlockSvg]
 
@@ -57,6 +58,7 @@ object BSvgColorNames extends Enumeration {
 
   val Fill   = Value("f")
   val Border = Value("b")
+  val Line   = Value("l")
 
   def maybeWithName(x: String): Option[BSvgColorName] = {
     values
