@@ -1,7 +1,9 @@
-@(cssClass: String, fillColor: String)
+@(colors: BSvgColorMap)
 
+@import BSvgColorNames._
 
-<svg class="@cssClass" fill="#@fillColor" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+<svg @colors.get(Fill).map { fico => fill="#@fico" }
+     version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 width="1200px" height="800px" viewBox="0 25 1200 800" enable-background="new 0 25 1200 800" xml:space="preserve">
 <g>
 	<path d="M347.745,232.254l-119.859,10.648c0-52.17-7.915-112.858-48.623-112.858c-31.661,1.065-41.838,33.005-41.838,77.723
