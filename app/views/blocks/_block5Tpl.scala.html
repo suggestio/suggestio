@@ -4,6 +4,7 @@
 @import svg._
 @import common._
 @import util.blocks.BlocksConf.{Block5 => bc}
+@import BSvgColorNames._
 
 
 @blockBase(isStandalone, mad, bc) {
@@ -14,10 +15,8 @@
   )
 
   @defining( mad.colors.getOrElse(bc.maskColorBf.name, bc.maskColorBf.anyDefaultValue) ) { fillColor =>
-  @_mask5(
-    cssClass = "mask abs",
-    fillColor = fillColor
-  )
+  @defining( Map(Fill -> fillColor) ) { colorsMap =>
+    <img class="mask abs" src="@routes.MarketShowcase.blockSvg(BlocksSvg.mask5, colorsMap)" alt="" />
 
   @_mask5_460(
     cssClass = "mask-460 abs",
@@ -29,7 +28,7 @@
     fillColor = fillColor
   )
   }
-
+  }
 
   <div class="info">
     @mad.imgs.get(bc.LOGO_IMG_FN).map { logoImg =>

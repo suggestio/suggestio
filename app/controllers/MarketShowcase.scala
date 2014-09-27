@@ -4,8 +4,6 @@ import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
-import io.suggest.model.geo.GeoShapeQueryData
-import io.suggest.ym.model.common.AdnNodesSearchArgsWrapper
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -53,6 +51,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Дефолтовое имя ноды. */
   val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+
+  /** Сколько секунд следует кешировать переменную svg-картинку блока карточки. */
+  def BLOCK_SVG_CACHE_SECONDS = configuration.getInt("market.showcase.blocks.svg.cache.seconds") getOrElse 700
 
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
@@ -644,6 +645,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
+  /** Значение заголовка Cache-Control для svg-картинок блока. */
+  private val BLOCK_SVG_CACHE_CONTROL = s"public, max-age=$BLOCK_SVG_CACHE_SECONDS"
+
   /** Рендер svg-шаблона картинки блока. */
   def blockSvg(svgTpl: BlockSvg, colors: BSvgColorMap) = Action { implicit request =>
     val newEtag = svgTpl.template.hashCode().toString
@@ -651,15 +655,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       case Some(etag) => etag == newEtag
       case None => false
     }
-    val result = if (isNotModified) {
+    val cch = CACHE_CONTROL -> BLOCK_SVG_CACHE_CONTROL
+    if (isNotModified) {
       NotModified
+        .withHeaders(cch)
     } else {
       Ok(svgTpl.render(colors))
+        .withHeaders(
+          cch,
+          CONTENT_TYPE  -> "image/svg+xml",
+          ETAG          -> svgTpl.template.hashCode.toString
+        )
     }
-    result.withHeaders(
-      CACHE_CONTROL -> "public, max-age=700",
-      ETAG          -> svgTpl.template.hashCode.toString
-    )
   }
 
 }
