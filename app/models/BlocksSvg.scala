@@ -30,6 +30,8 @@ object BlocksSvg extends Enumeration {
   val circles17           = Val("c17",  _circles17)
   val mask2               = Val("m2",   _mask2)
   val mask5               = Val("m5",   _mask5)
+  val mask5_460           = Val("m54",  _mask5_460)
+  val mask5_620           = Val("m56",  _mask5_620)
 
   implicit def value2val(x: Value): BlockSvg = x.asInstanceOf[BlockSvg]
 
