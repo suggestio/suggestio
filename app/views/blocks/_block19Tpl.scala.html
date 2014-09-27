@@ -7,9 +7,7 @@
 @import BSvgColorNames._
 
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
-@blockBase(isStandalone, mad, bc,
-  style = Some(s"background: #$fillColor")
-) {
+@blockBase(isStandalone, mad, bc, style = Some(s"background: #$fillColor")) {
 
   @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { fillColor =>
     <img class="bg" src="@routes.MarketShowcase.blockSvg(BlocksSvg.bg19, Map(Fill -> fillColor))" alt="" />

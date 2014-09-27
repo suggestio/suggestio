@@ -22,8 +22,10 @@ object BlocksSvg extends Enumeration {
   type BlockSvg = Val
 
   // Перечисление шаблонов и зацепок к ним.
-  val bg19 = Val("bg19", _bg19Tpl)
-  val block6LeftBorder = Val("b6lb", _block6_left_border)
+  val bg19                = Val("bg19", _bg19Tpl)
+  val block6LeftBorder    = Val("b6lb", _block6_left_border)
+  val block6RightBorder   = Val("b6rb", _block6_right_border)
+
 
   implicit def value2val(x: Value): BlockSvg = x.asInstanceOf[BlockSvg]
 
