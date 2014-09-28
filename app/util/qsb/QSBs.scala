@@ -70,4 +70,29 @@ object QSBs {
     }
   }
 
+
+  /** routes-биндер для MImgInfoMeta, которая содержит размеры. */
+  implicit def mImgInfoMetaQsb(implicit intB: QueryStringBindable[Int]) = {
+    new QueryStringBindable[MImgInfoMeta] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
+        for {
+          maybeWidth  <- intB.bind(key + ".w", params)
+          maybeHeight <- intB.bind(key + ".h", params)
+        } yield {
+          maybeWidth.right.flatMap { width =>
+            maybeHeight.right.map { height =>
+              MImgInfoMeta(width = width, height = height)
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MImgInfoMeta): String = {
+        s"$key.w=${value.width}&$key.h=${value.height}"
+      }
+    }
+  }
+
 }
+
+
