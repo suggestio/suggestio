@@ -90,37 +90,31 @@ code
   background-size 112px 30px
 
 .sm-welcome-ad
-  position: absolute
-  left: 50%
-  top: 50%
-  z-index: 999
-  img
-    &.__animated
-      -webkit-transition: all 0.2s linear
-    &.__fade-out
-      opacity: 0
-
-.sm-welcome-div
-  display           none
   position          absolute
   left              0px
   top               0px
   width             100%
   height            100%
-  background        #363636
-  z-index           10000
+  z-index           999
+  background        default_color
+  overflow          hidden
   display           table
   vertical-align    middle
   text-align        center
-  -webkit-transition: all 0.2s linear
+
+  &.__animated
+    -webkit-transition: all 0.2s linear
   &.__fade-out
     opacity: 0
   &_helper
     display         inline-block
     height          100%
     vertical-align  middle
-
-
+  &_bg-img,
+  &_fg-img
+    position        absolute
+    left            50%
+    top             50%
 
 .sm-vflex
   display: -webkit-box

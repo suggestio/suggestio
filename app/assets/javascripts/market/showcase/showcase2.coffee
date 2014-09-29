@@ -483,10 +483,16 @@ sm =
     layers_count : 2
     layer_dom_height : 44
     requested_node_id : undefined
+    position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
+
+    position_callback_fallback : () ->
+      if typeof sm.geo.geo_position_obj == 'undefined'
+        sm.geo.load_for_node_id()
 
     open_layer : ( index ) ->
 
@@ -521,7 +527,6 @@ sm =
         sm.geo.active_layer = null
 
     get_current_position : () ->
-
       if this.location_requested == true
         return false
 
@@ -530,7 +535,8 @@ sm =
         sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
       sm.geo.location_requested = true
-      navigator.geolocation.getCurrentPosition sm.geo.position_callback
+
+      navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
 
     init_events : () ->
       _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
@@ -538,6 +544,8 @@ sm =
         sm.log sm.geo.search.queue_request this.value
 
     load_for_node_id : ( node_id ) ->
+      sm.warn 'load_for_node_id'
+      cs = sm.geo.cur_state
       sm.states.add_state
         mart_id : node_id
 
@@ -598,7 +606,7 @@ sm =
     load_nodes_and_reload_with_mart_id : () ->
 
       cs = sm.states.cur_state()
-      node_query_param = if cs.mart_id then '&a.cai=' + cs.mart_id else ''
+      node_query_param = if typeof cs != 'undefined' && cs.mart_id then '&a.cai=' + cs.mart_id else ''
       nodesw = '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
@@ -1195,7 +1203,7 @@ sm =
             ns =
               cat_id : cat_id
               cat_class : cat_class
-          
+
           sm.states.transform_state ns
 
       #######################
@@ -1623,21 +1631,28 @@ sm =
 
     find_nodes : ( data ) ->
 
+      smGeoLabel = sm.utils.ge('smGeoLocationLabel')
+
       if sm.geo.location_requested == true
+
+        sm.warn 'sm.geo.location_node : ' + sm.geo.location_node
 
         if typeof sm.geo.location_node == 'undefined'
 
           sm.geo.location_node = data.first_node
 
-          sm.geo.location_requested = false
-          sm.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
+          if smGeoLabel != null
+            smGeoLabel.innerHTML = data.first_node.name
           sm.geo.load_for_node_id data.first_node._id
           sm.geo.loaded = false
 
       if typeof sm.geo.location_node != 'undefined'
-        sm.utils.ge('smGeoLocationLabel').innerHTML = sm.geo.location_node.name
+        if smGeoLabel != null
+          smGeoLabel.innerHTML = sm.geo.location_node.name
 
-      sm.utils.ge('smGeoNodesContent').innerHTML = data.nodes
+      smGeoNodesDom = sm.utils.ge('smGeoNodesContent')
+      if smGeoNodesDom != null
+        smGeoNodesDom.innerHTML = data.nodes
 
       gls = sm.utils.ge_class document, 'js-gnlayer'
       sm.geo.layers_count = gls.length
@@ -2185,18 +2200,27 @@ sm =
     hide_timeout : 1700
     fadeout_transition_time : 700
 
-    fit : ( image_dom ) ->
-      if this.img_dom == null
+    fit : ( image_dom, is_divided ) ->
+
+      is_divided = is_divided || false
+
+      if image_dom == null
         return false
       image_w = parseInt image_dom.getAttribute "data-width"
       image_h = parseInt image_dom.getAttribute "data-height"
 
-      if image_w / image_h < cbca_grid.ww / cbca_grid.wh
-        nw = cbca_grid.ww
-        nh = nw * image_h / image_w
+      console.log image_dom
+
+      if is_divided == true
+        nw = image_w/2
+        nh = image_h/2
       else
-        nh = cbca_grid.wh
-        nw = nh * image_w / image_h
+        if image_w / image_h < cbca_grid.ww / cbca_grid.wh
+          nw = cbca_grid.ww
+          nh = nw * image_h / image_w
+        else
+          nh = cbca_grid.wh
+          nw = nh * image_w / image_h
 
       image_dom.style.width = nw + 'px'
       image_dom.style.height = nh + 'px'
@@ -2205,11 +2229,11 @@ sm =
 
     hide : () ->
 
-      _dom = if sm.welcome_ad.img_dom == null then sm.welcome_ad.div_dom else sm.welcome_ad.img_dom
+      _dom = sm.utils.ge 'smWelcomeAd'
 
       sm.utils.addClass _dom, '__animated'
-
       sm.utils.addClass _dom, '__fade-out'
+
       dn_cb = () ->
         _dom.style.display = 'none'
       setTimeout dn_cb, sm.welcome_ad.fadeout_transition_time
@@ -2218,25 +2242,21 @@ sm =
 
       cs = sm.states.cur_state()
 
-      this.img_dom = sm.utils.ge 'smWelcomeAd'
-      this.div_dom = sm.utils.ge 'smWelcomeDiv'
+      this._dom = sm.utils.ge 'smWelcomeAd'
 
       if typeof cs.with_welcome_ad != 'undefined' && cs.with_welcome_ad == false
-        if this.img_dom != null
-          this.img_dom.style.display = 'none'
-        if this.div_dom != null
-          this.div_dom.style.display = 'none'
+
+        ## Все скрыть и вернуть false
+        this._dom.style.display = 'none'
         return false
 
-      if this.img_dom == null
-        this.div_dom.style.display = 'block'
-        setTimeout sm.welcome_ad.hide, this.hide_timeout
-        return false
-      else
-        this.fit this.img_dom
+      _bg_img_dom = siomart.utils.ge 'smWelcomeAdBgImage'
+      _fg_img_dom = siomart.utils.ge 'smWelcomeAdfgImage'
 
-        this.img_dom.onload = () ->
-          setTimeout sm.welcome_ad.hide, sm.welcome_ad.hide_timeout
+      this.fit _bg_img_dom
+      this.fit _fg_img_dom, true
+
+      setTimeout sm.welcome_ad.hide, this.hide_timeout
 
   ##################################################
   ## Забиндить события на навигационные кнопари
@@ -2367,6 +2387,7 @@ sm =
 
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
       if typeof cs == 'undefined' || cs.mart_id == undefined || cs.mart_id != state.mart_id
+        sm.log 'process_state : switch nodes'
         sm.load_mart state
         this.requested_state = state
       else
@@ -2463,13 +2484,12 @@ sm =
 
     sm_id = window.siomart_id || undefined
 
-    ## Переключиться на первичное состояние
-    this.states.add_state
-      mart_id : sm_id
+    console.warn 'initial mart_id : ' + sm_id
 
-    cb = () ->
+    ## Если еще не запрашивали координаты у юзера
+    if sm.geo.location_requested == false
       sm.geo.get_current_position()
-    setTimeout cb, 1000
+
 
 window.sm = window.siomart = sm
 sm.init()

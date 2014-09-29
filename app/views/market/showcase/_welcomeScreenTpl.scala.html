@@ -1,0 +1,48 @@
+@(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+
+@* Рендер страницы приветствия, если таковая имеется.
+   Она может отсутствовать, иметь фон цвета или фон картинки. *@
+
+@args.welcomeOpt.fold {
+  @* Нету карточки приветствия. *@
+  <div id="smWelcomeAd" class="sm-welcome-ad" style="background: #@args.bgColor;">
+      <span class="sm-welcome-ad_helper"></span>
+      <img height="60" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
+  </div>
+
+} { wargs =>
+
+  @* Есть приветствие. *@
+  <div id="smWelcomeAd" class="sm-welcome-ad">
+
+    @* Рендерим фон приветствия: цвет узла или картинка. *@
+    @wargs.bg match {
+      case Left(color) => {
+        @* Доступен только цвет фона. *@
+        <style type="text/css">
+          .sm-welcome-ad {
+            background-color: @color;
+          }
+        </style>
+      }
+
+      case Right(imgInfo) => {
+        @* Доступно фоновое изображение. *@
+        <img id="smWelcomeAdBgImage" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
+             data-width="@imgInfo.meta.map(_.width)"
+             data-height="@imgInfo.meta.map(_.height)"
+             src="@ctx.myAudienceUrl@routes.Img.getImg(imgInfo.filename)"/>
+      }
+    }
+
+    @* Рендерим покрывающую картинку (svg/png) *@
+    @wargs.fgImage.map { fgImage =>
+      <span class="sm-welcome-ad_helper"></span>
+      <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
+           data-width="@fgImage.meta.map(_.width)"
+           data-height="@fgImage.meta.map(_.height)"
+           src="@ctx.myAudienceUrl@routes.Img.getImg(fgImage.filename)"/>
+    }
+
+  </div>
+}
