@@ -15,6 +15,7 @@
 
 
     <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
+    <script src='@routes.Assets.at("javascripts/market/booklet.js")'></script>
 
     <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
@@ -30,7 +31,7 @@
 
         <nav class="header_nav top-menu">
           <a class="top-menu_i link def-transition js-slide-to" href="#about">О проекте</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-looks">Уровни локации</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#levels">Уровни локации</a>
           <a class="top-menu_i link def-transition js-slide-to" href="#advantages">Преимущества</a>
         </nav>
 
@@ -52,19 +53,19 @@
         быстрый доступ к suggest.io
       </div>
       <div class="your-adv_suggest-btn">
-        <a class="ic-suggestio"></a>
+        <a class="ic-suggestio js-slide-btn" id="slideBtn" data-slide="#phones"></a>
       </div>
       <div class="your-adv_btns">
-        <a class="btn __helper-white __size-M ic-android __white">&nbsp;</a>
-        <a class="btn __helper-white __size-M __list ic-ios __white">&nbsp;</a>
+        <a class="btn __helper-white __size-M ic-android __white js-tab" data-cnt="#ios">&nbsp;</a>
+        <a class="btn __helper-white __size-M __list ic-ios __white js-tab" data-cnt="#android">&nbsp;</a>
       </div>
       <div class="your-adv_footer-text">
         Suggest.io – браузерное решение. Никаких загрузок/инсталляций не требуется. 
       </div>
     </section>
 
-    <!--Ios -->
-    <section class="phones" id="phones">
+    <!--Phones -->
+    <section class="phones hidden" id="phones">
       <div class="phones_triangle"></div>
       <h2 class="phones_title">
         Чтобы начать пользоваться системой надо открыть браузер на своем<br/>
@@ -75,11 +76,11 @@
         Если вы хотите пользоваться Suggest.io постоянно, мы рекомендуем поставить иконку<br/>системы на рабочий стол.
       </p>
       <div class="phones_btns">
-        <div class="phones_btn __act ic-ios __gray"></div>
-        <div class="phones_btn ic-android __gray"></div>
+        <div class="phones_btn __js-act ic-ios __gray js-tab" data-cnt="#ios"></div>
+        <div class="phones_btn ic-android __gray js-tab" data-cnt="#android"></div>
       </div>
 
-      <div class="phones_step-lst">
+      <div class="phones_step-lst js-tab-cnt" id="ios">
         <div class="phones_step-i">
           <h3 class="phones_step-t">Шаг 1</h3>
           <div class="phones_step-img">
@@ -122,7 +123,7 @@
         </div>
       </div>
 
-      <div class="phones_step-lst">
+      <div class="phones_step-lst js-tab-cnt hidden" id="android">
         <div class="phones_step-i">
           <h3 class="phones_step-t">Шаг 1</h3>
           <div class="phones_step-img __big">
@@ -263,6 +264,35 @@
           <div class="levels_btn">
             <a class="btn __helper-green __size-M">Попробовать</a>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slider" id="slider">
+      <div class="slider_i slide-1">
+        <div class="slide-1_bg">
+          <h2 class="slide-1_t title">
+            Кто увидит мою рекламу?
+          </h2>
+          <h2 class="slide-1_t title">
+          Округа Москвы/районы Санкт-Петербурга
+          </h2>
+          Москва – второй после Лондона, а Санкт-Петербург – третий после Москвы<br/>
+          и Лондона город Европы по численности населения.
+        </div>
+        <div class="slide-1_white">
+          <h3 class="slide-1_subtitle">
+            В Москве проживает <span class="slide-1_subtitle-major">12.1 млн.</span> чел, в Санкт-Петербурге – более <span class="slide-1_subtitle-major">5 млн.</span>
+          </h3>
+          <p class="slide-1_text-minor">
+            Ежегодно Москву посещает более <span class="slide-1_text-green">5 млн</span>, Санкт-Петербург – более <span class="slide-1_text-green">2.5 млн</span> иностранных туристов.
+          </p>
+          <p>
+            Геонацеленная реклама на административные округа Москвы и районы<br/>
+            Санкт-Петербурга может быть эффективным средством продвижения самых разнообразных<br/>
+            торговых марок – от мировых брендов и фешенебельных заведений в центре до товаров и услуг<br/>
+            шаговой доступности в спальных районах.
+          </p>
         </div>
       </div>
     </section>

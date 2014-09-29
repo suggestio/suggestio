@@ -1,7 +1,3 @@
-bookletScrollr = ''
-initMaxScroll = 0
-afterHideMaxScroll = 0
-
 $ document
 .scroll () ->
 
@@ -15,6 +11,22 @@ $ document
     $header.removeClass '__js-dark'
 
 
+$ document
+.on 'click', '.js-tab', (e) ->
+  $this = $ this
+  selector = $this.attr 'data-cnt'
+  $cnt = $ selector
+
+  if $this.hasClass '__js-act'
+    return false
+
+  $ '.js-tab.__js-act'
+  .removeClass '__js-act'
+  $this.addClass '__js-act'
+
+  $ '.js-tab-cnt:visible'
+  .hide()
+  $cnt.show()
 
 $ document
 .on 'click', '.js-slide-btn', (e) ->
@@ -22,17 +34,7 @@ $ document
   slideSelector = $this.attr 'data-slide'
   $slideElement = $ slideSelector
 
-  $slideElement.slideToggle(
-    600
-    () ->
-      if bookletScrollr
-
-        if $slideElement.is ':visible'
-          bookletScrollr.setMaxScrollTop initMaxScroll
-        else
-          bookletScrollr.setMaxScrollTop afterHideMaxScroll
-  )
-
+  $slideElement.slideToggle()
 
 
 $ document
@@ -43,62 +45,8 @@ $ document
   $target = $ targetSelector
   targetScrollTop = $target.offset().top
 
-  if bookletScrollr
-    currentScrollTop = bookletScrollr.getScrollTop()
-    targetScrollTop = targetScrollTop + currentScrollTop
-    bookletScrollr.animateTo targetScrollTop
-  else
-    $ 'body, html'
-    .animate(
-      scrollTop: targetScrollTop,
-      800
-    )
-
-
-initScrollr = () ->
-
-  $window = $ window
-  winWidth = $window.width()
-  $equipmentSlideCnt = $ '#equipment_slide-cnt'
-
-  if winWidth <= 1024
-
-    $equipmentSlideCnt.show()
-    if bookletScrollr
-
-      bookletScrollr.refresh()
-    else
-      skrollr.init(
-        smoothScrolling: false,
-        mobileDeceleration: 0.004,
-        render: (data) ->
-          $header = $ '#header'
-          if data.curTop > 50
-            $header.addClass '__js-dark'
-          else
-            $header.removeClass '__js-dark'
-      )
-
-      bookletScrollr = skrollr.get()
-
-    initMaxScroll = bookletScrollr.getMaxScrollTop()
-    $equipmentSlideCnt.hide()
-    afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
-
-  else
-    $equipmentSlideCnt.hide()
-
-
-$ document
-.ready () ->
-
-  initScrollr()
-
-$ window
-.resize () ->
-
-  window.setTimeout(
-    () ->
-      initScrollr()
-    100
+  $ 'body, html'
+  .animate(
+    scrollTop: targetScrollTop,
+    800
   )

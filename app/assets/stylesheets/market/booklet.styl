@@ -46,6 +46,9 @@ body
   text-decoration none
   cursor          pointer
 
+.hidden
+  display none
+
 /********************************************************************************************************************/
 /* Иконки */
 /********************************************************************************************************************/
@@ -75,7 +78,7 @@ body
     background-position center -72px
 
   &.__gray:hover,
-  &.__gray.__act
+  &.__gray.__js-act
     background-position center 6px
 
 .ic-ios
@@ -94,7 +97,7 @@ body
     background-position center -74px
 
   &.__gray:hover,
-  &.__gray.__act
+  &.__gray.__js-act
     background-position center 6px
 
 
@@ -240,14 +243,15 @@ body
 /********************************************************************************************************************/
 .phones
   position        relative
-  padding-top     30px
+  margin-top      -25px
+  padding-top     25px
   padding-bottom  60px
   color           #adadad
   text-align      center
 
   &_triangle
     position      absolute
-    top           -25px
+    top           0
     left          50%
     margin-left   -50px
 
@@ -258,6 +262,7 @@ body
     border-color  transparent transparent #ffffff
 
   &_title
+    margin-top    30px
     margin-bottom 30px
     font-size     18px
     color         #060606
@@ -277,7 +282,7 @@ body
     cursor      pointer
 
   &_btn:hover,
-  &_btn.__act
+  &_btn.__js-act
     background-color  #00b994
 
   &_step-lst
@@ -447,6 +452,7 @@ body
 /* Секция Уровни размещения */
 /********************************************************************************************************************/
 .levels
+  padding-bottom  25px
 
   &_blue
     height            280px
@@ -506,3 +512,44 @@ body
   &_btn
     padding 30px 0
 
+/********************************************************************************************************************/
+/* Slider */
+/********************************************************************************************************************/
+.slider
+
+  &_i
+    height  610px
+
+.slide-1
+  text-align  center
+
+  &_bg
+    height            350px
+    overflow          hidden
+    background-image  url('/assets/images/market/booklet/slide-1_retina.jpg')
+    background-size   cover
+
+  &_t
+    margin  50px 0
+
+  &_white
+    font-family 'heliosthin'
+    font-size   18px
+    color       #4a2868
+
+  &_subtitle
+    margin    25px 0
+    font-size 24px
+    color     #4d4d4d
+
+  &_subtitle-major
+    font-size 30px
+
+  &_text-minor
+    margin-bottom 35px
+    font-size     12px
+    color         #666666
+
+  &_text-green
+    font-size 21px
+    color     #22b073
