@@ -286,4 +286,16 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     )
   }
 
+
+  /**
+   * Запрос картинки с опрделёнными параметрами.
+   * Ссылка на картинку формируется на сервере и имеет HMAC-подпись для защиты от модификации.
+   * @param args Данные по желаемой картинке.
+   * @return Картинки или 304 Not modified.
+   */
+  def dynImg(args: DynImgArgs) = Action.async { implicit request =>
+
+    ???
+  }
+
 }

@@ -3,6 +3,10 @@ package models
 import play.api.Play.{current, configuration}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
+import util.PlayLazyMacroLogsImpl
+
+import scala.annotation.tailrec
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -13,13 +17,42 @@ import util.qsb.QsbSigner
  * чтобы избежать модификации аргументов на клиенте.
  * Контроллер, получая эти аргументы, должен выдать картинку, или произвести её на основе оригинала.
  */
-object DynImgArgs {
+object DynImgArgs extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   private val SIGN_SUF   = ".s"
   private val IMG_ID_SUF = ".id"
   private val SZ_SUF     = ".sz"
 
-  private val SIGN_SECRET: String = configuration.getString("dynimg.sign.key").get
+  /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
+  private val SIGN_SECRET: String = {
+    val confKey = "dynimg.sign.key"
+    configuration.getString(confKey) getOrElse {
+      if (play.api.Play.isProd) {
+        // В продакшене без ключа нельзя. Генерить его и в логи писать его тоже писать не стоит наверное.
+        throw new IllegalStateException(s"""Production mode without dyn-img signature key defined is impossible. Please define '$confKey = ' like 'application.secret' property with 64 length.""")
+      } else {
+        // В devel/test-режимах допускается использование рандомного ключа.
+        val rnd = new Random()
+        val len = 64
+        val sb = new StringBuilder(len)
+        @tailrec def nextPrintableCharNonQuote: Char = {
+          val next = rnd.nextPrintableChar()
+          if (next == '"')
+            nextPrintableCharNonQuote
+          else
+            next
+        }
+        for(i <- 1 to len) {
+          sb append nextPrintableCharNonQuote
+        }
+        val result = sb.toString()
+        warn(s"""Please define secret key for dyn-img cryto-signing in application.conf:\n  $confKey = "$result" """)
+        result
+      }
+    }
+  }
 
   /** routes-биндер для query-string. */
   def qsb(implicit strB: QueryStringBindable[String], miimB: QueryStringBindable[Option[MImgInfoMeta]]) = {
