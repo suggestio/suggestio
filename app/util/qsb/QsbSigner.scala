@@ -4,19 +4,34 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.apache.commons.codec.binary.Hex
 import play.api.mvc.QueryStringBindable
+import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 28.09.14 21:38
- * Description:
+ * Description: QSB для подписывания qs с помощью HMAC.
+ */
+object QsbSigner {
+
+  val ALGO_DFLT = configuration.getString("qsb.signer.mac.algo.dflt") getOrElse "HmacSHA1"
+
+  val SIG_INVALID_MSG = configuration.getString("qsb.signer.signature.invalid.msg") getOrElse "Invalid signature."
+
+}
+
+import QsbSigner._
+
+
+/**
  * QSB для подписывания параметров, передаваемых в qs в рамках указанного ключа.
  * @param secretKey Ключ подписи. Например "item". Лучше вместе с точкой в конце, если проверяются под-параметры.
  * @param signKeyName Имя qs-ключа с подписью.
  * @param strB QSB-биндер для строк.
  */
-class QsbSigner(secretKey: String, signKeyName: String, algo: String = "HmacSHA1")
+class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner.ALGO_DFLT)
                (implicit strB: QueryStringBindable[String])
 extends QueryStringBindable[Map[String, Seq[String]]]
 with PlayMacroLogsImpl
@@ -78,7 +93,7 @@ with PlayMacroLogsImpl
           Right(params2)
         } else {
           warn(s"Invalid qsb signature for key '$key': expected=$signature real=$realSignature\n params = $params")
-          Left("Invalid signature.")
+          Left(SIG_INVALID_MSG)
         }
       }
     }
@@ -108,15 +123,15 @@ with PlayMacroLogsImpl
    * @param qsStr Строка qs после предшествующих unbind'ов.
    * @return Подписанная строка qs.
    */
-  def mkSigned(qsStr: String): String = {
-    val mac = mkMac
-    val macBytes = mac.doFinal(qsStr.getBytes)
-    val s = Hex.encodeHexString(macBytes)
+  def mkSigned(key: String, qsStr: String): String = {
+    val paramsMap = FormUrlEncodedParser.parse(qsStr)
+    val signature = mkSignForMap(key, paramsMap)
     val sb = new StringBuilder(qsStr)
     if (!qsStr.isEmpty) {
       sb.append('&')
     }
-    sb.append(signKeyName).append('=').append(s).toString()
+    sb.append(signKeyName).append('=').append(signature)
+      .toString()
   }
 
   /**

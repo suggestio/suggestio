@@ -1,11 +1,8 @@
 package models
 
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
-import org.apache.commons.codec.binary.Hex
 import play.api.Play.{current, configuration}
 import play.api.mvc.QueryStringBindable
-import util.qsb.{QsbSigner, QsbUtil}
+import util.qsb.QsbSigner
 
 /**
  * Suggest.io
@@ -58,7 +55,7 @@ object DynImgArgs {
             .append(miimB.unbind(key + SZ_SUF, value.sz))
         }
         val unsignedResult = sb.toString()
-        getQsbSigner(key).mkSigned(unsignedResult)
+        getQsbSigner(key).mkSigned(key, unsignedResult)
       }
     }
   }
