@@ -663,7 +663,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       Ok(svgTpl.render(colors))
         .withHeaders(
           cch,
-          CONTENT_TYPE  -> "image/svg+xml",
+          CONTENT_TYPE  -> "image/svg+xml; charset=utf8",
           ETAG          -> svgTpl.template.hashCode.toString
         )
     }
