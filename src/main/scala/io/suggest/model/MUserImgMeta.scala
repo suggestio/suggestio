@@ -4,6 +4,7 @@ import java.util.UUID
 import io.suggest.util.UuidUtil
 import SioCassandraClient.session
 import com.websudos.phantom.Implicits._
+import org.joda.time.DateTime
 
 import scala.concurrent.Future
 import MPict.Q_USER_IMG_ORIG
@@ -18,7 +19,8 @@ import MPict.Q_USER_IMG_ORIG
 case class MUserImgMeta2(
   md: Map[String, String],
   q: String,
-  id: UUID = UUID.randomUUID()
+  id: UUID = UUID.randomUUID(),
+  timestamp: DateTime = DateTime.now()
 ) extends UuidIdStr {
 
   def save = MUserImgMeta2.insertMd(this)
@@ -33,9 +35,16 @@ sealed class MUserImgMetaRecord extends CassandraTable[MUserImgMetaRecord, MUser
   object id extends UUIDColumn(this) with PartitionKey[UUID]
   object q extends StringColumn(this) with PrimaryKey[String]
   object md extends MapColumn[MUserImgMetaRecord, MUserImgMeta2, String, String](this)
+  object timestamp extends DateTimeColumn(this)
 
   override def fromRow(row: Row): MUserImgMeta2 = {
-    MUserImgMeta2(md(row), q(row), id(row))
+    // Раньше колонки timestamp не было.
+    val dt: DateTime = try {
+      timestamp(row)
+    } catch {
+      case ex: Exception => DateTime.now()
+    }
+    MUserImgMeta2(md(row), q(row), id(row), dt)
   }
 
 }
@@ -61,6 +70,7 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
       .value(_.id, m.id)
       .value(_.q, m.q)
       .value(_.md, m.md)
+      .value(_.timestamp, m.timestamp)
       .future()
   }
 

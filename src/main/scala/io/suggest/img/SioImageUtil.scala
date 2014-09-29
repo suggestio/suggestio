@@ -46,7 +46,7 @@ trait SioImageUtilT {
   /** Размывка для сокрытия артифактов. */
   def GAUSSIAN_BLUG: Option[java.lang.Double] = None
 
-  /** Некое цветовое переплетение.
+  /** Некое цветовое переплетение. Позволяет делать progressive jpeg.
     * @see [[http://www.imagemagick.org/script/command-line-options.php#interlace]] */
   def INTERLACING: Option[String] = Some("Plane")
 
