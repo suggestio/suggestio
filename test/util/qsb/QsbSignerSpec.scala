@@ -25,11 +25,13 @@ class QsbSignerSpec extends PlaySpec with OneAppPerSuite {
     )
   }
 
+  /** Функция для тестирования генерации подписанной qs и проверки подписи. */
   private def singAndCheck(unSignedQsString: String, key: String, paramsMap: Map[String, Seq[String]], signKeyName: String): Unit = {
     val signer = new QsbSigner("secretKey1", signKeyName)
     val signedQsString = signer.mkSigned(key, unSignedQsString)
     signedQsString must include (unSignedQsString)
-    signedQsString must include ("&")
+    if (paramsMap.nonEmpty)
+      signedQsString must include ("&")
     signedQsString must include (s"$signKeyName=")
     // Имитируем обращение к сгенеренной ссылке
     val qsParams = FormUrlEncodedParser.parse(signedQsString)
@@ -45,6 +47,7 @@ class QsbSignerSpec extends PlaySpec with OneAppPerSuite {
     val sigInvalidResult = signer.bind(key, sigInvalidParams)
     sigInvalidResult mustBe Some(Left(QsbSigner.SIG_INVALID_MSG))
   }
+
 
   "QsbSigner" must {
 
@@ -66,6 +69,42 @@ class QsbSignerSpec extends PlaySpec with OneAppPerSuite {
       )
     }
 
+    "sign and verify comples qs.string with no-sig parts" in {
+      singAndCheck(
+        unSignedQsString = "i.id=awdfawerfwe5235_234df&i.sz.w=314&i.sz.h=234&z=asdasd",
+        key = "i.",
+        paramsMap = Map("i.id" -> Seq("awdfawerfwe5235_234df"), "i.sz.w" -> Seq("314"), "i.sz.h" -> Seq("234")),
+        signKeyName = "sig"
+      )
+    }
+
+
+    "sign and verify comples qs.string with no-sig parts and sig inside signed keyspace" in {
+      singAndCheck(
+        unSignedQsString = "i.id=awdfawerfwe5235_234df&i.sz.w=314&i.sz.h=234&z=asdasd",
+        key = "i.",
+        paramsMap = Map("i.id" -> Seq("awdfawerfwe5235_234df"), "i.sz.w" -> Seq("314"), "i.sz.h" -> Seq("234")),
+        signKeyName = "i.sig"
+      )
+    }
+
+    "sign and verify empty query string" in {
+      singAndCheck(
+        unSignedQsString = "",
+        key = "",
+        paramsMap = Map(),
+        signKeyName = "siga"
+      )
+    }
+
+    "sign and verify empty query string with non-signed data" in {
+      singAndCheck(
+        unSignedQsString = "a.z=123&a.c=123",
+        key = "x",
+        paramsMap = Map(),
+        signKeyName = "siga"
+      )
+    }
   }
 
 }
