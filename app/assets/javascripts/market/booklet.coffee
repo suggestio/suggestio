@@ -59,7 +59,6 @@ $ document
   if !$slideElement.is ':visible'
     $slideElement.slideDown()
 
-  console.log cntSelector
   $cnt = $ cntSelector
 
   if !$cnt.is ':visible'
