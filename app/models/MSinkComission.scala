@@ -50,7 +50,7 @@ final case class MSinkComission(
 
   override def saveUpdate(implicit c: Connection): Int = {
     SQL(s"UPDATE " + TABLE_NAME + " SET sink = {sink}, sio_comission = {sioComission} WHERE id = {id}")
-      .on('sink -> sink, 'sioComission -> sioComission)
+      .on('sink -> sink, 'sioComission -> sioComission, 'id -> id.get)
       .executeUpdate()
   }
 
