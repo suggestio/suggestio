@@ -11,6 +11,17 @@ $ document
     $header.removeClass '__js-dark'
 
 
+slideToElement = (selector)->
+  $target = $ selector
+  targetScrollTop = $target.offset().top
+
+  $ 'body, html'
+  .animate(
+    scrollTop: targetScrollTop,
+    800
+  )
+
+
 $ document
 .on 'click', '.js-tab', (e) ->
   $this = $ this
@@ -28,13 +39,42 @@ $ document
   .hide()
   $cnt.show()
 
+
 $ document
 .on 'click', '.js-slide-btn', (e) ->
   $this = $ this
+  selector = $this.attr 'data-slide'
+  $slideElement = $ selector
+
+  $slideElement.slideDown()
+  slideToElement selector
+
+$ document
+.on 'click', '.js-slide-tab', (e) ->
+  $this = $ this
   slideSelector = $this.attr 'data-slide'
+  cntSelector = $this.attr 'data-cnt'
   $slideElement = $ slideSelector
 
-  $slideElement.slideToggle()
+  if !$slideElement.is ':visible'
+    $slideElement.slideDown()
+
+  console.log cntSelector
+  $cnt = $ cntSelector
+
+  if !$cnt.is ':visible'
+    $slideElement
+    .find '.__js-act'
+    .removeClass '__js-act'
+    $slideElement
+    .find ".js-tab[data-cnt = #{cntSelector}]"
+    .addClass '__js-act'
+    $slideElement
+    .find '.js-tab-cnt'
+    .hide()
+    $cnt.show()
+
+  slideToElement slideSelector
 
 
 $ document
@@ -42,11 +82,4 @@ $ document
   e.preventDefault()
   $this = $ this
   targetSelector = $this.attr 'href'
-  $target = $ targetSelector
-  targetScrollTop = $target.offset().top
-
-  $ 'body, html'
-  .animate(
-    scrollTop: targetScrollTop,
-    800
-  )
+  slideToElement targetSelector
