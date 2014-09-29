@@ -644,6 +644,7 @@ sealed trait ImgIdKey {
   def isTmp: Boolean
   override def hashCode = filename.hashCode
   def cropOpt: Option[ImgCrop]
+  def getBaseImageWH: Future[Option[MImgInfoMeta]]
   def getImageWH: Future[Option[MImgInfoMeta]]
 
   // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
@@ -685,6 +686,11 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
   override def isValid: Boolean = mptmp.isExist
 
   @JsonIgnore
+  override def getBaseImageWH: Future[Option[MImgInfoMeta]] = {
+    // TODO Нужно считать размер для неоткропанной картинки, если текущая уже откропана.
+    getImageWH
+  }
+
   override def getImageWH: Future[Option[MImgInfoMeta]] = {
     val result = try {
       val info = OrigImageUtil.identify(mptmp.file)
@@ -752,8 +758,8 @@ object OrigImgIdKey {
     * @param rowKey Чистый ключ картинки. Доступен через [[OrigImgIdKey.data.rowKey]].
     * @return Асинхронные метаданные по ширине-высоте картинки.
     */
-  private def getOrigImageWH(rowKey: String): Future[Option[MImgInfoMeta]] = {
-    MUserImgMeta2.getByStrId(rowKey)
+  private def getOrigImageWH(rowKey: String, qOpt: Option[String] = None): Future[Option[MImgInfoMeta]] = {
+    MUserImgMeta2.getByStrId(rowKey, qOpt)
       .map { imetaOpt =>
         for {
           imeta     <- imetaOpt
@@ -807,7 +813,9 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta], data: Orig
   override def cropOpt = data.cropOpt
 
   @JsonIgnore
-  override def getImageWH = OrigImgIdKey.getOrigImageWH(data.rowKey)
+  override def getBaseImageWH = OrigImgIdKey.getOrigImageWH(data.rowKey)
+
+  override def getImageWH = OrigImgIdKey.getOrigImageWH(data.rowKey, origQualifierOpt)
 
   override def uncropped: OrigImgIdKey = {
     if (isCropped) {

@@ -126,7 +126,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
         Future successful oiik.meta
       case oiik: OrigImgIdKey =>
         // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        oiik.getImageWH
+        oiik.getBaseImageWH
           .recover {
             case ex: Exception =>
               error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
