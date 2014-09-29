@@ -2,25 +2,24 @@
 
 @import blocks.svg._
 @import util.TplDataFormatUtil._
+@import BSvgColorNames._
 
 @blockBase(isStandalone, mad, bc) {
 
   @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { bgColor =>
-    @_circles17(
-      cssClass = "bg",
-      fillColor = mad.colors.getOrElse(bc.circleFillColorBf.name, bc.circleFillColorBf.anyDefaultValue),
-      bgColor = bgColor
-    )
 
-    @_saleIcon13Tpl(
-      cssClass = "svg",
-      fillColor = mad.colors.getOrElse(bc.discoIconColorBf.name, bc.discoIconColorBf.anyDefaultValue)
-    )
+    @defining( mad.colors.getOrElse(bc.circleFillColorBf.name, bc.circleFillColorBf.anyDefaultValue) ) { fillColor =>
+      <img class="bg" alt=""
+           src="@routes.MarketShowcase.blockSvg(BlocksSvg.circles17, Map(Fill -> fillColor, Bg -> bgColor))"/>
+    }
 
-    @_saleIconMask13Tpl(
-      cssClass = "svg-mask",
-      fillColor = mad.colors.getOrElse(bc.discoBorderColorBf.name, bc.discoBorderColorBf.anyDefaultValue)
-    )
+    @defining( mad.colors.getOrElse(bc.discoIconColorBf.name, bc.discoIconColorBf.anyDefaultValue) ) { diColor =>
+      <img class="svg" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIcon13, Map(Fill -> diColor))" />
+    }
+
+    @defining( mad.colors.getOrElse(bc.discoBorderColorBf.name, bc.discoBorderColorBf.anyDefaultValue) ) { dbColor =>
+      <img class="svg-mask" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIconMask13, Map(Fill -> dbColor))" />
+    }
 
     @mad.offers.headOption.map { offer =>
       <div class="inner" style="background: #@bgColor;">

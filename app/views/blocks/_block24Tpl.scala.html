@@ -5,6 +5,7 @@
 @import common._
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.{Block24 => bc}
+@import BSvgColorNames._
 
 @blockBase(isStandalone, mad, bc) {
 
@@ -13,10 +14,9 @@
     dfltImg = Some("images/market/blocks/tpl5-bg.jpg")
   )
 
-  @_mask24(
-    cssClass = "mask abs",
-    fillColor = mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue)
-  )
+  @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
+    <img class="mask abs" src="@routes.MarketShowcase.blockSvg(BlocksSvg.mask24, Map(Fill -> fillColor))" alt="" />
+  }
 
   <div class="info">
     <img class="logo" src="@ctx.myAudienceUrl@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />

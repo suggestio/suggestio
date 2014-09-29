@@ -1,12 +1,15 @@
-@(cssClass: String, fillColor: String)
+@(colors: BSvgColorMap)
 
-<svg class="@cssClass" version="1.1"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+@import BSvgColorNames._
+
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
 	 x="0px" y="0px" width="595px" height="842px" viewBox="-96.208 -218.746 595 842"
 	 overflow="visible" enable-background="new -96.208 -218.746 595 842" xml:space="preserve">
   <defs>
   </defs>
-  <path fill="#@fillColor" d="M201.334,402.685l-24.631-14.232l-27.479,7.378l-20.109-20.128h-28.448l-14.215-24.638l-27.488-7.353
+  <path @colors.get(Fill).map { fillColor => fill="#@fillColor" }
+    d="M201.334,402.685l-24.631-14.232l-27.479,7.378l-20.109-20.128h-28.448l-14.215-24.638l-27.488-7.353
     l-7.36-27.479l-24.631-14.235v-28.43L6.854,253.443l7.364-27.471L0,201.333l14.218-24.622l-7.364-27.488l20.118-20.109v-28.438
     l24.631-14.233l7.359-27.469l27.48-7.379l14.224-24.622h28.448l20.109-20.127l27.479,7.387L201.333,0l24.639,14.215l27.479-7.37
     l20.109,20.127h28.448l14.225,24.622l27.47,7.379l7.361,27.462l24.639,14.241v28.438l20.117,20.11l-7.368,27.487l14.225,24.622

@@ -4,29 +4,27 @@
 @import common._
 @import svg._
 @import util.blocks.BlocksConf.{Block6 => bc}
+@import BSvgColorNames._
 
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
+@defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) ) { borderColor =>
 
   @blockBase(isStandalone, mad, bc, style = Some(s"background: #$fillColor;")) {
 
-    @_block6_left_border(
-      cssClass = "left-border abs",
-      fillColor = fillColor,
-      borderColor = mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)
-    )
+    @defining( Map(Fill -> "ffffff", Border -> borderColor) ) { colorsMap =>
+      <img class="left-border abs" alt=""
+           src="@routes.MarketShowcase.blockSvg(BlocksSvg.block6LeftBorder, colorsMap)" />
 
-    @_block6_right_border(
-      cssClass = "right-border abs",
-      fillColor = fillColor,
-      borderColor = mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)
-    )
+      <img class="right-border abs" alt=""
+           src="@routes.MarketShowcase.blockSvg(BlocksSvg.block6RightBorder, colorsMap)" />
+    }
 
     @bgImgTpl(mad, bc,
       dfltImg  = Some("images/market/blocks/tpl6-bg.jpg"),
       cssClass = Some("bg abs")
     )
 
-    <div class="info abs" style="background-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue);">
+    <div class="info abs" style="background-color: #@borderColor;">
       @mad.offers.map { offer =>
         <div class="item">
           @offer.text1.map { text1 =>
@@ -51,4 +49,5 @@
     </div>
 
   }
+}
 }

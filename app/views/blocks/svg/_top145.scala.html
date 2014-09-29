@@ -1,9 +1,14 @@
-@(cssClass: String, fillColor: String, lineColor: String = "B35151")
+@(colors: BSvgColorMap)
 
-<svg class="@cssClass" fill="#@fillColor" style="background: #@lineColor" version="1.1"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
-	 x="0px" y="0px" width="1260px" height="842px" viewBox="-33.343 -93 1260 842"
-	 overflow="visible" enable-background="new -33.343 -93 1260 842" xml:space="preserve">
+@import BSvgColorNames._
+
+<svg @colors.get(Fill).map { fico => fill="#@fico" }
+     @colors.get(Line).map { lico => style="background: #@lico;" }
+     version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+     x="0px" y="0px" width="1260px" height="842px" viewBox="-33.343 -93 1260 842"
+     overflow="visible" enable-background="new -33.343 -93 1260 842" xml:space="preserve">
   <defs>
   </defs>
   <polygon fill-rule="evenodd" clip-rule="evenodd" points="973.385,438.271 848.483,566.443 723.581,437.945 598.352,566.771

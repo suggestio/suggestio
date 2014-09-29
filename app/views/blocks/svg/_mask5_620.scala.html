@@ -1,8 +1,10 @@
-@(cssClass: String, fillColor: String)
+@(colors: BSvgColorMap)
 
+@import BSvgColorNames._
 
-<svg class="@cssClass" fill="#@fillColor" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-width="1200px" height="2480px" viewBox="0 -216 1200 2480" enable-background="new 0 -216 1200 2480" xml:space="preserve">
+<svg @colors.get(Fill).map { fillColor => fill="#@fillColor" }
+     version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     width="1200px" height="2480px" viewBox="0 -216 1200 2480" enable-background="new 0 -216 1200 2480" xml:space="preserve">
 <polygon opacity="0.8" enable-background="new    " points="1190.002,2254.003 1190.002,-205.914 10,-205.913 10.05,1074.04
 	20.028,1084.071 20.028,2243.964 1179.963,2243.964 20.071,1084.074 20.063,-195.879 1180.002,-195.913 1180.002,2243.974
 	1189.943,2253.964 10.028,2253.973 10.028,1074.031 -0.019,1063.984 -0.019,2264 1200,2264 "/>
