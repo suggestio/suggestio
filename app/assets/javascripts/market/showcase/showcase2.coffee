@@ -2457,8 +2457,7 @@ sm =
     this.define_per_load_values()
 
     ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
-    
-    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id else '/market/geo/index' + '?' + ww_param
+    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
 
     sm.log 'about to call index_action : ' + index_action
     this.request.perform index_action
