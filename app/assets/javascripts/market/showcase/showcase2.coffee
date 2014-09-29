@@ -538,8 +538,8 @@ sm =
       if typeof navigator.geolocation != 'undefined'
         navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
       else
-        sm.geo.position_callback_fallback
-        
+        sm.geo.position_callback_fallback()
+
     init_events : () ->
       _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
       sm.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
