@@ -483,7 +483,7 @@ sm =
     layers_count : 2
     layer_dom_height : 44
     requested_node_id : undefined
-    position_callback_timeout : 3000
+    position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
 
@@ -536,8 +536,7 @@ sm =
 
       sm.geo.location_requested = true
 
-      setTimeout sm.geo.position_callback_fallback, sm.geo.position_callback_timeout
-      navigator.geolocation.getCurrentPosition sm.geo.position_callback
+      navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
 
     init_events : () ->
       _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
@@ -607,7 +606,7 @@ sm =
     load_nodes_and_reload_with_mart_id : () ->
 
       cs = sm.states.cur_state()
-      node_query_param = if cs.mart_id then '&a.cai=' + cs.mart_id else ''
+      node_query_param = if typeof cs != 'undefined' && cs.mart_id then '&a.cai=' + cs.mart_id else ''
       nodesw = '&a.nodesw=true'
 
       url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
@@ -1527,12 +1526,6 @@ sm =
         sm.states.update_state
           mart_id : data.curr_adn_id
 
-      ## Если еще не запрашивали координаты у юзера
-      if sm.geo.location_requested == false
-        sm.geo.get_current_position()
-        cs.mart_id = undefined
-        return false
-
       sm.grid_ads.adjust_dom()
       sm.geo.adjust()
       sm.geo.init_events()
@@ -1638,6 +1631,8 @@ sm =
 
     find_nodes : ( data ) ->
 
+      smGeoLabel = sm.utils.ge('smGeoLocationLabel')
+
       if sm.geo.location_requested == true
 
         sm.warn 'sm.geo.location_node : ' + sm.geo.location_node
@@ -1646,14 +1641,18 @@ sm =
 
           sm.geo.location_node = data.first_node
 
-          sm.utils.ge('smGeoLocationLabel').innerHTML = data.first_node.name
+          if smGeoLabel != null
+            smGeoLabel.innerHTML = data.first_node.name
           sm.geo.load_for_node_id data.first_node._id
           sm.geo.loaded = false
 
       if typeof sm.geo.location_node != 'undefined'
-        sm.utils.ge('smGeoLocationLabel').innerHTML = sm.geo.location_node.name
+        if smGeoLabel != null
+          smGeoLabel.innerHTML = sm.geo.location_node.name
 
-      sm.utils.ge('smGeoNodesContent').innerHTML = data.nodes
+      smGeoNodesDom = sm.utils.ge('smGeoNodesContent')
+      if smGeoNodesDom != null
+        smGeoNodesDom.innerHTML = data.nodes
 
       gls = sm.utils.ge_class document, 'js-gnlayer'
       sm.geo.layers_count = gls.length
@@ -2202,8 +2201,7 @@ sm =
     fadeout_transition_time : 700
 
     fit : ( image_dom ) ->
-      return false
-      if this.img_dom == null
+      if image_dom == null
         return false
       image_w = parseInt image_dom.getAttribute "data-width"
       image_h = parseInt image_dom.getAttribute "data-height"
@@ -2238,10 +2236,15 @@ sm =
       this._dom = sm.utils.ge 'smWelcomeAd'
 
       if typeof cs.with_welcome_ad != 'undefined' && cs.with_welcome_ad == false
+
         ## Все скрыть и вернуть false
+        this._dom.style.display = 'none'
         return false
 
-      this.fit this.img_dom
+      _bg_img_dom = siomart.utils.ge 'smWelcomeAdBgImage'
+      if _bg_img_dom != null
+        this.fit _bg_img_dom
+
       setTimeout sm.welcome_ad.hide, this.hide_timeout
 
   ##################################################
@@ -2471,9 +2474,11 @@ sm =
     sm_id = window.siomart_id || undefined
 
     console.warn 'initial mart_id : ' + sm_id
-    ## Переключиться на первичное состояние
-    this.states.add_state
-      mart_id : sm_id
+
+    ## Если еще не запрашивали координаты у юзера
+    if sm.geo.location_requested == false
+      sm.geo.get_current_position()
+
 
 window.sm = window.siomart = sm
 sm.init()

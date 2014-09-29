@@ -28,7 +28,7 @@
 
       case Right(imgInfo) => {
         @* Доступно фоновое изображение. *@
-        <img style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
+        <img id="smWelcomeAdBgImage" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
              data-width="@imgInfo.meta.map(_.width)"
              data-height="@imgInfo.meta.map(_.height)"
              src="@ctx.myAudienceUrl@routes.Img.getImg(imgInfo.filename)"/>
