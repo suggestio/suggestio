@@ -535,8 +535,11 @@ sm =
 
       sm.geo.location_requested = true
 
-      navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
-
+      if typeof navigator.geolocation != 'undefined'
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
+      else
+        sm.geo.position_callback_fallback
+        
     init_events : () ->
       _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
       sm.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
@@ -1114,7 +1117,7 @@ sm =
           return false
 
         sm.geo.location_requested = false
-        sm.geo.get_current_position()
+        setTimeout sm.geo.get_current_position, 200
         return false
 
       ## Кнопка закрытия экрана geo
