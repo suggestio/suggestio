@@ -38,7 +38,7 @@
     @* Рендерим покрывающую картинку (svg/png) *@
     @wargs.fgImage.map { fgImage =>
       <span class="sm-welcome-ad_helper"></span>
-      <img style="background-color: #@args.bgColor;" class="sm-welcome-ad_fg-img"
+      <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
            src="@ctx.myAudienceUrl@routes.Img.getImg(fgImage.filename)"/>

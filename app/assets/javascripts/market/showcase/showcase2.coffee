@@ -2200,18 +2200,27 @@ sm =
     hide_timeout : 1700
     fadeout_transition_time : 700
 
-    fit : ( image_dom ) ->
+    fit : ( image_dom, is_divided ) ->
+
+      is_divided = is_divided || false
+
       if image_dom == null
         return false
       image_w = parseInt image_dom.getAttribute "data-width"
       image_h = parseInt image_dom.getAttribute "data-height"
 
-      if image_w / image_h < cbca_grid.ww / cbca_grid.wh
-        nw = cbca_grid.ww
-        nh = nw * image_h / image_w
+      console.log image_dom
+
+      if is_divided == true
+        nw = image_w/2
+        nh = image_h/2
       else
-        nh = cbca_grid.wh
-        nw = nh * image_w / image_h
+        if image_w / image_h < cbca_grid.ww / cbca_grid.wh
+          nw = cbca_grid.ww
+          nh = nw * image_h / image_w
+        else
+          nh = cbca_grid.wh
+          nw = nh * image_w / image_h
 
       image_dom.style.width = nw + 'px'
       image_dom.style.height = nh + 'px'
@@ -2242,8 +2251,10 @@ sm =
         return false
 
       _bg_img_dom = siomart.utils.ge 'smWelcomeAdBgImage'
-      if _bg_img_dom != null
-        this.fit _bg_img_dom
+      _fg_img_dom = siomart.utils.ge 'smWelcomeAdfgImage'
+
+      this.fit _bg_img_dom
+      this.fit _fg_img_dom, true
 
       setTimeout sm.welcome_ad.hide, this.hide_timeout
 
