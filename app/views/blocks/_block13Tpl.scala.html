@@ -4,22 +4,20 @@
 @import util.blocks.BlocksConf.{Block13 => bc}
 @import util.TplDataFormatUtil._
 @import common._
+@import BSvgColorNames._
 
 @blockBase(isStandalone, mad, bc) {
+@defining(bc.discoBorderColorBf) { smcbf =>
+@defining( mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue) ) { borderColor =>
 
-  @defining(bc.discoBorderColorBf) { smcbf =>
-  @_block6_left_border(
-    cssClass = "left-border abs",
-    fillColor = "ffffff",
-    borderColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
-  )
+  @defining( Map(Fill -> "ffffff", Border -> borderColor) ) { colorsMap =>
+    <img class="left-border abs" alt=""
+         src="@routes.MarketShowcase.blockSvg(BlocksSvg.block6LeftBorder, colorsMap)" />
 
-  @_block6_right_border(
-    cssClass = "right-border abs",
-    fillColor = "ffffff",
-    borderColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
-  )
+    <img class="right-border abs" alt=""
+         src="@routes.MarketShowcase.blockSvg(BlocksSvg.block6RightBorder, colorsMap)" />
   }
+
 
   <div class="photo" style="overflow:hidden;">
     @bgImgTpl(mad, bc,
@@ -37,23 +35,13 @@
     @mad.offers.headOption.map { offer =>
 
       @offer.discount.map { discount =>
-      <div class="sale" style="color: #@discount.font.color;">
-        @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
-      </div>
+        <div class="sale" style="color: #@discount.font.color;">
+          @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+        </div>
       }
 
-
-      @_saleIcon13Tpl(
-        cssClass = "svg",
-        fillColor = discoIconColor
-      )
-
-      @defining(bc.discoBorderColorBf) { smcbf =>
-        @_saleIconMask13Tpl(
-          cssClass = "svg-mask",
-          fillColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
-        )
-      }
+      <img class="svg" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIcon13, Map(Fill -> discoIconColor))" />
+      <img class="svg-mask" alt="" src="@routes.MarketShowcase.blockSvg(BlocksSvg.saleIconMask13, Map(Fill -> borderColor))" />
 
       @offer.text1.map { text1 =>
         <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
@@ -77,4 +65,6 @@
 
   }
 
+}
+}
 }

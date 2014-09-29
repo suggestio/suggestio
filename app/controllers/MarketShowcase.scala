@@ -4,8 +4,6 @@ import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
-import io.suggest.model.geo.GeoShapeQueryData
-import io.suggest.ym.model.common.AdnNodesSearchArgsWrapper
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -25,7 +23,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, Call, Result, AnyContent}
+import play.api.mvc._
 import play.api.Play.{current, configuration}
 
 /**
@@ -53,6 +51,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Дефолтовое имя ноды. */
   val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+
+  /** Сколько секунд следует кешировать переменную svg-картинку блока карточки. */
+  def BLOCK_SVG_CACHE_SECONDS = configuration.getInt("market.showcase.blocks.svg.cache.seconds") getOrElse 700
 
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
@@ -641,6 +642,31 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Redirect(routes.MarketShowcase.demoWebSite(adnId))
       case None =>
         http404AdHoc
+    }
+  }
+
+
+  /** Значение заголовка Cache-Control для svg-картинок блока. */
+  private val BLOCK_SVG_CACHE_CONTROL = s"public, max-age=$BLOCK_SVG_CACHE_SECONDS"
+
+  /** Рендер svg-шаблона картинки блока. */
+  def blockSvg(svgTpl: BlockSvg, colors: BSvgColorMap) = Action { implicit request =>
+    val newEtag = svgTpl.template.hashCode().toString
+    val isNotModified = request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) => etag == newEtag
+      case None => false
+    }
+    val cch = CACHE_CONTROL -> BLOCK_SVG_CACHE_CONTROL
+    if (isNotModified) {
+      NotModified
+        .withHeaders(cch)
+    } else {
+      Ok(svgTpl.render(colors))
+        .withHeaders(
+          cch,
+          CONTENT_TYPE  -> "image/svg+xml; charset=utf8",
+          ETAG          -> svgTpl.template.hashCode.toString
+        )
     }
   }
 

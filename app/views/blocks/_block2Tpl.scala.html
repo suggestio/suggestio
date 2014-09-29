@@ -6,25 +6,24 @@
 @import common._
 @import svg._
 @import util.blocks.BlocksConf.{Block2 => bc}
+@import BSvgColorNames._
 
 @blockBase(isStandalone, mad, bc) {
 
   @mad.offers.headOption.map { offer =>
     @offer.discount.map { discount =>
-    <div class="sale-icon" style="color: #@discount.font.color;">
-      @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
-    </div>
+      <div class="sale-icon" style="color: #@discount.font.color;">
+        @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+      </div>
     }
   }
 
   @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
+  @defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) ) { borderColor =>
 
-    <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
+    <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@borderColor">
 
-      @_mask2(
-        cssClass = "mask",
-        fillColor = fillColor
-      )
+      <img class="mask" src="@routes.MarketShowcase.blockSvg(BlocksSvg.mask2, Map(Fill -> fillColor))" alt="" />
 
       <!--<div class="mask"></div>-->
       <div class="bg">
@@ -32,7 +31,7 @@
       </div>
     </div>
 
-    <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
+    <div class="info" style="background: #@fillColor; border-color: #@borderColor">
       @mad.offers.headOption.map { offer =>
         @offer.text1.map { title =>
           <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
@@ -52,6 +51,7 @@
 
       }
     </div>
+  }
   }
 
 }

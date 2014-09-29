@@ -1,21 +1,20 @@
 @(mad: MAdT, isStandalone: Boolean, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: Context)
 
 @import blocks.svg._
+@import BSvgColorNames._
 
 @blockBase(isStandalone, mad, bc) {
 
   @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
-    @_top145(
-      cssClass  = "svg-top",
-      fillColor = mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue),
-      lineColor = lineColor
-    )
+    @defining( mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue) ) { fillColor =>
+      <img class="svg-top" alt=""
+           src="@routes.MarketShowcase.blockSvg(BlocksSvg.top145, Map(Fill -> fillColor, Line -> lineColor))" />
+    }
 
-    @_bottom145(
-      cssClass  = "svg-bottom",
-      fillColor = mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue),
-      lineColor = lineColor
-    )
+    @defining( mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue) ) { fillColor =>
+      <img class="svg-bottom" alt=""
+           src="@routes.MarketShowcase.blockSvg(BlocksSvg.bottom145, Map(Fill -> fillColor))" />
+    }
 
     <div class="bottom-bg abs" style="background: #@lineColor"></div>
   }

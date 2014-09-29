@@ -1,7 +1,8 @@
-@(cssClass: String, fillColor: String, lineColor: String = "B35151")
+@(colors: BSvgColorMap)
 
+@import BSvgColorNames._
 
-<svg class="@cssClass" fill="#@fillColor" version="1.1"
+<svg @colors.get(Fill).map { fico => fill="#@fico" } version="1.1"
 	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
 	 x="0px" y="0px" width="1260px" height="1323px" viewBox="-27.128 -15.996 1260 1323"
 	 overflow="visible" enable-background="new -27.128 -15.996 1260 1323" xml:space="preserve">

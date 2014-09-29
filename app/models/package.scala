@@ -196,4 +196,8 @@ package object models {
   type MUserImg2            = io.suggest.model.MUserImg2
   val  MUserImg2            = io.suggest.model.MUserImg2
 
+  type BlockSvg             = BlocksSvg.BlockSvg
+  type BSvgColorName        = BSvgColorNames.BSvgColorName
+  type BSvgColorMap         = BSvgColorsUtil.BSvgColorMap
+
 }
