@@ -124,7 +124,8 @@ routesImport ++= Seq(
   "models._",
   "util.qsb._",
   "util.qsb.QSBs._",
-  "models.BSvgColorsUtil._"
+  "models.BSvgColorsUtil._",
+  "models.im.ImOp._"
 )
 
 

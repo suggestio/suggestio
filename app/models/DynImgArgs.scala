@@ -1,7 +1,9 @@
 package models
 
+import models.im.ImOp
 import play.api.Play.{current, configuration}
 import play.api.mvc.QueryStringBindable
+import util.img.ImgIdKey
 import util.qsb.QsbSigner
 import util.PlayLazyMacroLogsImpl
 
@@ -21,9 +23,8 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
-  private val SIGN_SUF   = ".s"
+  private val SIGN_SUF   = ".sig"
   private val IMG_ID_SUF = ".id"
-  private val SZ_SUF     = ".sz"
 
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
   private val SIGN_SECRET: String = {
@@ -37,9 +38,10 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
         val rnd = new Random()
         val len = 64
         val sb = new StringBuilder(len)
+        // Избегаем двойной ковычи в ключе, дабы не нарываться на проблемы при копипасте ключа в конфиг.
         @tailrec def nextPrintableCharNonQuote: Char = {
           val next = rnd.nextPrintableChar()
-          if (next == '"')
+          if (next == '"' || next == '\\')
             nextPrintableCharNonQuote
           else
             next
@@ -55,7 +57,7 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
   }
 
   /** routes-биндер для query-string. */
-  def qsb(implicit strB: QueryStringBindable[String], miimB: QueryStringBindable[Option[MImgInfoMeta]]) = {
+  implicit def qsb(implicit iikB: QueryStringBindable[ImgIdKey],  imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
     new QueryStringBindable[DynImgArgs] {
 
       /** Создать подписывалку для qs. */
@@ -63,31 +65,31 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, DynImgArgs]] = {
         // Собираем результат
+        val keyDotted = s"$key."
         for {
           // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
-          params2     <- getQsbSigner(key).signedOrNone(s"$key.", params)
-          maybeImgId  <- strB.bind(key + IMG_ID_SUF, params2)
-          maybeSz     <- miimB.bind(key + SZ_SUF, params2)
+          params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
+          maybeImgId      <- iikB.bind(key + IMG_ID_SUF, params2)   // И сразу запрещаем содержимое cropOpt:
+            .map { _.right.filter(_.cropOpt.isEmpty) getOrElse Left("Already croppped imgs are not supported.") }
+          maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
         } yield {
           maybeImgId.right.flatMap { imgId =>
-            maybeSz.right.map { szOpt =>
-              DynImgArgs(
-                imgId = imgId,
-                sz    = szOpt
-              )
+            maybeImOpsOpt.right.map { imOpsOpt =>
+              val imOps = imOpsOpt.getOrElse(Nil)
+              DynImgArgs(imgId, imOps)
             }
           }
         }
       }
 
       override def unbind(key: String, value: DynImgArgs): String = {
-        val imgIdRaw = strB.unbind(key + IMG_ID_SUF, value.imgId)
-        val sb = new StringBuilder(imgIdRaw)
-        if (value.sz.isDefined) {
-          sb.append('&')
-            .append(miimB.unbind(key + SZ_SUF, value.sz))
+        val imgIdRaw = iikB.unbind(key + IMG_ID_SUF, value.imgId)
+        val imOpsUnbinded = imOpsOptB.unbind(s"$key.", if (value.imOps.isEmpty) None else Some(value.imOps))
+        val unsignedResult = if (imOpsUnbinded.isEmpty) {
+          imgIdRaw
+        } else {
+          imgIdRaw + "&" + imOpsUnbinded
         }
-        val unsignedResult = sb.toString()
         getQsbSigner(key).mkSigned(key, unsignedResult)
       }
     }
@@ -96,15 +98,19 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
 }
 
 
-import DynImgArgs._
-
-
 /**
- *
+ * Контейнер с распарсенными результатами.
  * @param imgId ID (rowkey) картинки, производную от которой надо получить.
- * @param sz Размер картинки по вертикали и горизонтали.
+ * @param imOps трансформации, которые необходимо сделать.
  */
 case class DynImgArgs(
-  imgId   : String,
-  sz      : Option[MImgInfoMeta] = None
-)
+  imgId       : ImgIdKey,
+  imOps       : Seq[ImOp]
+) {
+
+  def imOpsToString: String = {
+    ImOp.qsbSeq.unbind("", imOps)
+  }
+
+}
+

@@ -1,10 +1,11 @@
 package controllers
 
 import io.suggest.model.ImgWithTimestamp
+import io.suggest.util.UuidUtil
 import play.api.mvc._
 import util.{PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
-import org.joda.time.Instant
+import org.joda.time.{ReadableInstant, DateTime, Instant}
 import play.api.Play.{current, configuration}
 import util.acl._
 import util.img._
@@ -61,7 +62,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         case oiik: OrigImgIdKey =>
           MImgThumb2.getThumbByStrId(oiik.data.rowKey) map {
             case Some(its) =>
-              serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
+              serveImgMaybeCached(its, CACHE_THUMB_CLIENT_SECONDS)
 
             case None =>
               info(s"getThumb($imageId): 404 Not found")
@@ -91,7 +92,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     suppressQsFlood(routes.Img.getOrig(filename)) {
       MUserImg2.getByStrId(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
         case Some(its) =>
-          serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
+          serveImgMaybeCached(its, CACHE_ORIG_CLIENT_SECONDS)
 
         case None =>
           info(s"getOrig($filename): 404")
@@ -100,36 +101,54 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     }
   }
 
+  /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
+  private def withoutMs(timestampMs: Long): Instant = {
+    val ims = timestampMs % 1000L
+    new Instant(timestampMs - ims)
+  }
+
+
+  /**
+   * Проверить значение If-Modified-Since в реквесте.
+   * true - not modified, false иначе.
+   */
+  private def isModifiedSinceCached(modelTstampMs: ReadableInstant)(implicit request: RequestHeader): Boolean = {
+    request.headers.get(IF_MODIFIED_SINCE)
+      .flatMap { DateTimeUtil.parseRfcDate }
+      .exists { dt => !(modelTstampMs isAfter dt) }
+  }
 
   /** Обслуживание картинки. */
-  private def serveImgBytes(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader) = {
+  private def serveImgMaybeCached(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader): Result = {
     // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
-    val ims = its.timestampMs % 1000L
-    val ts0 = new Instant(its.timestampMs - ims) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
-    val isCached = request.headers.get(IF_MODIFIED_SINCE)
-      .flatMap { DateTimeUtil.parseRfcDate }
-      .exists { dt => !(ts0 isAfter dt) }
+    val modelInstant = withoutMs(its.timestampMs)
+    val isCached = isModifiedSinceCached(modelInstant)
     if (isCached) {
       //trace("serveImg(): 304 Not Modified")
       NotModified
+        .withHeaders(CACHE_CONTROL -> s"public, max-age=$cacheSeconds")
     } else {
-      trace(s"serveImg(): 200 OK. size = ${its.imgBytes.length} bytes")
-      // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:
-      val ct = Option( Magic.getMagicMatch(its.imgBytes) )
-        .flatMap { mm => Option(mm.getMimeType) }
-        // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
-        .map {
-          case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
-          case other => other
-        }
-        .getOrElse("image/unknown")   // Should never happen
-      Ok(its.imgBytes)
-        .withHeaders(
-          CONTENT_TYPE  -> ct,
-          LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
-          CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
-        )
+      serveImgBytes(its.imgBytes, cacheSeconds, modelInstant)
     }
+  }
+
+  private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: Instant): Result = {
+    trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
+    // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:
+    val ct = Option( Magic.getMagicMatch(imgBytes) )
+      .flatMap { mm => Option(mm.getMimeType) }
+      // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
+      .map {
+        case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
+        case other => other
+      }
+      .getOrElse("image/unknown")   // Should never happen
+    Ok(imgBytes)
+      .withHeaders(
+        CONTENT_TYPE  -> ct,
+        LAST_MODIFIED -> DateTimeUtil.df.print(modelInstant),
+        CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
+      )
   }
 
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
@@ -170,9 +189,13 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    */
   def getImg(imgId: String): Action[AnyContent] = {
     val iik = ImgIdKey(imgId)
+    _getImg(iik)
+  }
+
+  def _getImg(iik: ImgIdKey) = {
     if (iik.isValid) {
       iik match {
-        case tiik: TmpImgIdKey  => getTempImg(imgId)
+        case tiik: TmpImgIdKey  => getTempImg(iik.filename)
         case oiik: OrigImgIdKey => getOrigIik(oiik)
       }
     } else {
@@ -252,24 +275,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         NotAcceptable("crop request parse failed")
       },
       {case (iik0, icrop, markerOpt) =>
-        // Нужно получить исходную картинку из хранилища в файл.
-        val origMptmpFut: Future[MPictureTmp] = iik0 match {
-          case tiik: TmpImgIdKey =>
-            // Для временной картинки файл уже доступен.
-            Future successful tiik.mptmp
-          case oiik: OrigImgIdKey =>
-            // Нужно выкачать из hbase исходную картинку во временный файл.
-            MUserImg2.getByStrId(oiik.data.rowKey, q = None) map { oimgOpt =>
-              val oimg = oimgOpt.get
-              val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
-              val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
-              val mptmp = MPictureTmp.mkNew(markerOpt, cropOpt = None, oif)
-              mptmp.writeIntoFile(oimg.imgBytes)
-              mptmp
-            }
-        }
         // В будущем уже есть на руках исходная картинка. Надо запустить кроп.
-        origMptmpFut map { origMptmp =>
+        iik0.toTempPictOrig map { origMptmp =>
           // TODO Нужно дополнительно провалидировать значение icrop, чтобы не было попыток DoS-атаки через 100000000x100000000+10000000...
           val cropOpt = Some(icrop)
           val croppedMptmpData = origMptmp.data.copy(cropOpt = cropOpt)
@@ -293,9 +300,76 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    * @param args Данные по желаемой картинке.
    * @return Картинки или 304 Not modified.
    */
-  def dynImg(args: DynImgArgs) = Action.async { implicit request =>
+  def dynImg(args: DynImgArgs) = {
+    if (args.imOps.isEmpty) {
+      _getImg(args.imgId)
+    } else {
+      _dynImg(args)
+    }
+  }
 
-    ???
+
+  /** dyn-img-экшен, в котором картинка точно отрабатывается с модификациями относительно оригинала,
+    * т.е. список args.imOps не пустой. */
+  private def _dynImg(args: DynImgArgs) = Action.async { implicit request =>
+    val oiik = args.imgId.asInstanceOf[OrigImgIdKey]
+    // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
+    val rowKeyStr = oiik.data.rowKey
+    val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
+    val qualifier = args.imOpsToString.trim
+    if (!qualifier.isEmpty)
+      throw new IllegalArgumentException("Args.imgOps produces empty qualifier. This should never happen.\n  args = " + args)
+    val qOpt = Some(qualifier)
+    val notModifiedFut: Future[Boolean] = {
+      request.headers.get(IF_MODIFIED_SINCE) match {
+        case Some(ims) =>
+          MUserImgMeta2.getById(rowKey, qOpt) map {
+            case Some(imeta) =>
+              val newModelInstant = withoutMs(imeta.timestamp.getMillis)
+              isModifiedSinceCached(newModelInstant)
+            case None =>
+              false
+          }
+
+        case None => Future successful false
+      }
+    }
+    notModifiedFut flatMap {
+      case true =>
+        NotModified
+          .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS")
+
+      // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
+      case false =>
+        MUserImg2.getById(rowKey, qOpt) flatMap {
+          case Some(img) =>
+            val modelInstant = withoutMs(img.timestamp.getMillis)
+            serveImgBytes(img.imgBytes, CACHE_ORIG_CLIENT_SECONDS, modelInstant)
+
+          // Картинки в указанном виде нету. Нужно сделать из оригинала.
+          case None =>
+            DynImgUtil.mkReadyImgToFile(args)
+              .map { imgFile =>
+                val msRaw = DateTime.now.getMillis
+                val newModelInstant = withoutMs(msRaw)
+                val saveDt = newModelInstant.toDateTime
+                // В фоне запускаем сохранение полученной картинки в базу.
+                DynImgUtil.saveDynImgAsync(imgFile, rowKey, qualifier, saveDt)
+                Ok.sendFile(imgFile)
+                  .withHeaders(
+                    LAST_MODIFIED -> DateTimeUtil.df.print(saveDt),
+                    CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS"
+                  )
+              }.recover {
+                case ex: NoSuchElementException =>
+                  warn(s"Orig unmodified image not found: id[$rowKeyStr]")
+                  imgNotFound
+                case ex: Throwable =>
+                  error(s"Unknown exception occured during fetchg/processing of source image id[$rowKey] newQu=$qualifier\n  args = $args", ex)
+                  imgNotFound
+              }
+        }
+    }
   }
 
 }

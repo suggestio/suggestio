@@ -1,7 +1,10 @@
 package util.qsb
 
+import java.util.UUID
+
 import play.api.mvc.QueryStringBindable
 import models._
+import util.img.ImgIdKey
 
 /**
  * Suggest.io
@@ -92,6 +95,7 @@ object QSBs {
       }
     }
   }
+
 
 }
 
