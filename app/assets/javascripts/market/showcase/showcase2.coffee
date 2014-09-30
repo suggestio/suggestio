@@ -537,7 +537,7 @@ sm =
 
       if typeof navigator.geolocation != 'undefined'
         if sm.utils.is_webkit() == true
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000}
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000, maximumAge : 60000 }
         else
           sm.geo.position_callback_fallback()
           navigator.geolocation.getCurrentPosition sm.geo.position_callback
@@ -1634,6 +1634,11 @@ sm =
           cbca_grid.init(is_add = true)
 
         sm.styles.init()
+
+        if data.action == 'searchAds'
+          if cbca_grid.ww <= 400
+            sm.navigation_layer.close()
+            sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       else
 
