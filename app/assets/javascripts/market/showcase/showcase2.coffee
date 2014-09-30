@@ -490,6 +490,7 @@ sm =
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+      console.log 'position_callback_fallback'
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -536,7 +537,12 @@ sm =
       sm.geo.location_requested = true
 
       if typeof navigator.geolocation != 'undefined'
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
+        if sm.utils.is_webkit() == true
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
+        else
+          sm.geo.position_callback_fallback()
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback
+
       else
         sm.geo.position_callback_fallback()
 
@@ -737,7 +743,11 @@ sm =
     elts_cache : {}
     is_firefox : () ->
       navigator.userAgent.toLowerCase().indexOf('firefox') > -1
-
+    is_webkit : () ->
+      if typeof document.documentElement.style['WebkitAppearance'] == 'undefined'
+        return false
+      else
+        return true
     is_touch_device : () ->
       if document.ontouchstart != null
         false
