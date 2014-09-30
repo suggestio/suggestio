@@ -218,7 +218,7 @@ object ShowcaseNodeListUtil {
       override def maxResults = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
-      override def shownTypeIds = Seq(AdnShownTypes.TOWN_DISTRICT.name)
+      override def shownTypeIds = Seq(AdnShownTypes.TOWN_DISTRICT.name, AdnShownTypes.CITY_DISTRICT.name)
       override def withNameSort = true
     }
     MAdnNode.dynSearch(sargs)
