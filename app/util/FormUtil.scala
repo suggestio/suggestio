@@ -2,6 +2,7 @@ package util
 
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
+import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -569,6 +570,30 @@ object FormUtil {
       )
       .verifying("error.required", _.isDefined)
       .transform [AdnSink] (_.get, Some.apply)
+  }
+
+
+  def slsStrM: Mapping[LvlMap_t] = {
+    text(maxLength = 256)
+      .transform[LvlMap_t](
+        {raw =>
+          raw.split("\\s*,\\s*")
+            .toSeq
+            .map { one =>
+              val Array(slRaw, slMaxRaw) = one.split("\\s*=\\s*")
+              val sl: AdShowLevel = AdShowLevels.withName(slRaw)
+              sl -> slMaxRaw.toInt
+            }
+            .filter(_._2 > 0)
+            .toMap
+        },
+        {sls =>
+          val raws = sls.map {
+            case (sl, slMax)  =>  s"${sl.name} = $slMax"
+          }
+          raws.mkString(", ")
+        }
+      )
   }
 
 }
