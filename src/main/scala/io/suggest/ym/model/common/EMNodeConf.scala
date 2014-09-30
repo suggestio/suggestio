@@ -20,6 +20,11 @@ object EMNodeConf {
 
   val CONF_ESFN = "c"
 
+  private def fullFN(fn: String) = s"$CONF_ESFN.$fn"
+
+  // Полные es-имена полей контейнера значения.
+  def CONF_SHOW_IN_SC_NODES_LIST_ESFN = fullFN(NodeConf.SHOW_IN_SC_NODES_LIST_ESFN)
+
 }
 
 

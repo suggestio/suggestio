@@ -8,6 +8,7 @@ import org.joda.time.DateTime
 
 import scala.concurrent.Future
 import MPict.Q_USER_IMG_ORIG
+import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
 
 /**
  * Suggest.io
@@ -77,12 +78,30 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
 
   def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
+
+  /**
+   * 2014.09.30: добавлялка поля timestamp. Потом надо удалить это отсюда и из jmx.
+   * @return Фьючерс для синхронизации.
+   */
+  def addTimestampColumn(): Future[ResultSet] = {
+    session.executeAsync(s"ALTER TABLE $tableName ADD timestamp timestamp;")
+  }
+
 }
 
 
 
 // JMX
-trait MUserImgMeta2JmxMBean extends CassandraModelJxmMBeanI
+trait MUserImgMeta2JmxMBean extends CassandraModelJxmMBeanI {
+  def addTimestampColumn(): String
+}
 class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxMBean {
   override def companion = MUserImgMeta2
+
+  override def addTimestampColumn(): String = {
+    val fut = companion.addTimestampColumn()
+      .map(_.toString)
+    awaitString(fut)
+  }
+
 }

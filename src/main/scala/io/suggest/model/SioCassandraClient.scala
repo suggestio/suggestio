@@ -116,6 +116,7 @@ trait ICassandraStaticModel {
   def createTable: Future[ResultSet]
   def countAll: Future[Long]
   def truncateTable: Future[ResultSet]
+  def schema: String
 }
 
 
@@ -161,6 +162,8 @@ trait CassandraModelJxmMBeanI {
   def countAll: String
 
   def truncateTable: String
+
+  def getSchema: String
 }
 
 
@@ -198,5 +201,6 @@ trait CassandraModelJmxMBeanImpl extends CassandraJmxBase with CassandraModelJxm
     awaitString(fut)
   }
 
+  override def getSchema: String = companion.schema
 }
 

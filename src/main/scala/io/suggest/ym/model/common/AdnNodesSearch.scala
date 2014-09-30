@@ -284,6 +284,17 @@ object AdnNodesSearch {
         QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
       }
 
+    // Отрабатываем флаг conf.showInScNodeList
+    }.map[QueryBuilder] { qb =>
+      args.showInScNodeList.fold(qb) { sscFlag =>
+        val sscf = FilterBuilders.termFilter(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+        QueryBuilders.filteredQuery(qb, sscf)
+      }
+    }.orElse[QueryBuilder] {
+      args.showInScNodeList.map { sscFlag =>
+        QueryBuilders.termQuery(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+      }
+
     // Ищем/фильтруем по флагу включённости узла.
     }.map[QueryBuilder] { qb =>
       args.isEnabled.fold(qb) { isEnabled =>
@@ -362,6 +373,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Искать/фильтровать по значению флага тестового узла. */
   def testNode: Option[Boolean]
 
+  /** искать/фильтровать по флагу отображения в списке узлов поисковой выдачи. */
+  def showInScNodeList: Option[Boolean]
+
   /** Искать/фильтровать по галочки активности узла. */
   def isEnabled: Option[Boolean]
 
@@ -429,6 +443,7 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     fmtColl2sb("withAdnRights", withAdnRights, sb)
     fmtColl2sb("onlyWithSinks", onlyWithSinks, sb)
     fmtColl2sb("testNode", testNode, sb)
+    fmtColl2sb("showInScNodeList", showInScNodeList, sb)
     fmtColl2sb("withoutIds", withoutIds, sb)
     fmtColl2sb("geoDistance", geoDistance, sb)
     fmtColl2sb("intersectsWithPreIndexed", intersectsWithPreIndexed, sb)
@@ -462,6 +477,7 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
   override def anyOfPersonIds: Seq[String] = Seq.empty
   override def withRouting: Seq[String] = Seq.empty
   override def testNode: Option[Boolean] = None
+  override def showInScNodeList: Option[Boolean] = None
   override def isEnabled: Option[Boolean] = None
   override def onlyWithSinks: Seq[AdnSink] = Seq.empty
   override def geoDistance: Option[GeoShapeQueryData] = None
@@ -490,6 +506,7 @@ trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT {
   override def anyOfPersonIds = underlying.anyOfPersonIds
   override def withRouting = underlying.withRouting
   override def testNode = underlying.testNode
+  override def showInScNodeList = underlying.showInScNodeList
   override def isEnabled = underlying.isEnabled
   override def onlyWithSinks = underlying.onlyWithSinks
   override def geoDistance = underlying.geoDistance
