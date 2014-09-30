@@ -64,7 +64,10 @@ object AdnShownTypes extends Enumeration {
   val SPORT: AdnShownType             = Val("e", nglsBuilding)
 
   /** Округ мегаполиса. Логически находится над городскими районами, но занимает слой районов. */
-  val CITY_DISTRICT: AdnShownType     = Val("f", nglsDistrict)
+  val CITY_DISTRICT: AdnShownType     = new Val("f", nglsDistrict) {
+    override val pluralNoTown = "Areas"
+    override val singularNoTown = "Area"
+  }
 
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".

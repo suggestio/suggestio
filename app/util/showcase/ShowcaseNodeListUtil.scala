@@ -224,12 +224,19 @@ object ShowcaseNodeListUtil {
     MAdnNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNodeId: String)(implicit lang: Lang): Future[GeoNodesLayer] = {
+  def getDistrictsLayerForTown(townNode: MAdnNode)(implicit lang: Lang): Future[GeoNodesLayer] = {
+    val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId)
       .map { districtNodes =>
+        // 2014.sep.30: В Москве у нас "округа", а не "районы". Да и возможны иные вариации. Определяем код названия по найденным нодам.
+        val nameL10n = districtNodes
+          .headOption
+          .map(_.adn.shownTypeId)
+          .flatMap(AdnShownTypes.maybeWithName)
+          .fold(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
         GeoNodesLayer(
           nodes = districtNodes,
-          nameOpt = Some( Messages(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort) )
+          nameOpt = Some( Messages(nameL10n) )
         )
       }
   }
@@ -282,7 +289,7 @@ object ShowcaseNodeListUtil {
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>
-        val districtsLayerFut = getDistrictsLayerForTown(currNode.id.get)
+        val districtsLayerFut = getDistrictsLayerForTown(currNode)
         // 2014.sep.25: Нужно выдавать другие города в целях отладки. Это должно быть отлючаемо.
         val townsLayerFut: Future[GeoNodesLayer] = if (SHOW_ALL_TOWNS) {
           val gpOpt = geoMode.exactGeodata.orElse(currNode.geo.point)
@@ -302,15 +309,19 @@ object ShowcaseNodeListUtil {
 
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
       case NodeGeoLevels.NGL_TOWN_DISTRICT =>
+        val townFut = getTownOfNode(currNode)
+        val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get)
         val districtsOptFut: Future[Option[GeoNodesLayer]] = {
-          currNode.geo.directParentIds.headOption match {
-            case Some(dparent)  => getDistrictsLayerForTown(dparent).map(Some.apply)
-            case None           => Future successful None
+          townFut flatMap { townNode =>
+            currNode.geo.directParentIds.headOption match {
+              case Some(dparent)  => getDistrictsLayerForTown(townNode).map(Some.apply)
+              case None           => Future successful None
+            }
           }
         }
-        val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get)
+        val townLayerFut = townFut.map { town2layer }
         for {
-          townLayer           <- getTownLayerOfNode(currNode)
+          townLayer           <- townLayerFut
           districtsLayerOpt   <- districtsOptFut
           buildingsLayers     <- buildingsFut
         } yield {
@@ -326,7 +337,7 @@ object ShowcaseNodeListUtil {
       case NodeGeoLevels.NGL_BUILDING =>
         val townFut = getTownOfNode(currNode)
         val districtsLayerFut = townFut flatMap { townNode =>
-          getDistrictsLayerForTown(townNode.id.get)
+          getDistrictsLayerForTown(townNode)
         }
         val townLayerFut = townFut.map(town2layer)
         val buildingsLayersFut = {

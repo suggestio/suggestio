@@ -624,9 +624,6 @@ sealed case class DownsizeImageUtil(iim: MImgInfoMeta) extends SioImageUtilT wit
 /** Конвертор картинок в логотипы ТЦ. */
 object LogoImageUtil extends SqLogoImageUtil
 
-/** Конвертор картинок во вторичные логотипы на рекламных карточках. */
-object AdLogoImageUtil extends SqLogoImageUtil
-
 
 object ImgIdKey {
   def apply(key: String): ImgIdKey = {
