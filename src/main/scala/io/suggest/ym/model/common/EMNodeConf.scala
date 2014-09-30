@@ -73,9 +73,10 @@ trait EMNodeConfMut extends EMNodeConf {
 
 /** Статическая утиль контейнера конфига. */
 object NodeConf {
-  val WITH_BLOCKS_ESFN = "wb"
-  val SHOWCASE_VOID_FILLER_ESFN = "svf"
-  val SHOW_IN_SC_NODES_LIST_ESFN = "ssnl"
+
+  val WITH_BLOCKS_ESFN            = "wb"
+  val SHOWCASE_VOID_FILLER_ESFN   = "svf"
+  val SHOW_IN_SC_NODES_LIST_ESFN  = "ssnl"
 
   /** Дефолтовый неизменяемый инстанс контейнера конфига. Для изменения - перезаписывать поле через copy(). */
   val DEFAULT = NodeConf()
@@ -132,5 +133,6 @@ case class NodeConf(
       acc ::= SHOWCASE_VOID_FILLER_ESFN -> JsString(showcaseVoidFiller.get)
     JsObject(acc)
   }
+
 }
 
