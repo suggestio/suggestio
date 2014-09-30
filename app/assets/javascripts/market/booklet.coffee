@@ -12,12 +12,16 @@ $ document
 
 
 slideToElement = (selector)->
+  HEADER_HEIGHT = 60
   $target = $ selector
   targetScrollTop = $target.offset().top
 
+  if targetScrollTop > HEADER_HEIGHT
+    scrollTop = targetScrollTop - HEADER_HEIGHT
+
   $ 'body, html'
   .animate(
-    scrollTop: targetScrollTop,
+    scrollTop: scrollTop,
     800
   )
 
