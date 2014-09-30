@@ -486,12 +486,10 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
-      console.log 'position_callback'
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
-      console.log 'position_callback_fallback'
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -539,7 +537,7 @@ sm =
 
       if typeof navigator.geolocation != 'undefined'
         if sm.utils.is_webkit() == true
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000}
         else
           sm.geo.position_callback_fallback()
           navigator.geolocation.getCurrentPosition sm.geo.position_callback
