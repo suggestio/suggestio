@@ -49,6 +49,12 @@ body
 .hidden
   display none
 
+.f-left
+  float left
+
+.f-right
+  float right
+
 /********************************************************************************************************************/
 /* Иконки */
 /********************************************************************************************************************/
@@ -243,11 +249,7 @@ body
     padding-top 150px
 
     font-family 'heliosthin'
-    font-size   30px
-    line-height 30px
-
-  &_t
-    margin-bottom 50px
+    font-size   40px
 
   &_geo
     margin  40px auto 0
@@ -263,7 +265,7 @@ body
     margin-top  40px
 
   &_text-major
-    font-size 27px
+    font-size 20px
 
   &_suggest-btn
     margin          25px 0
@@ -416,8 +418,9 @@ body
     border-top      1px solid #e1e1e1
     border-bottom   1px solid #e1e1e1
 
-    background-image  url('/assets/images/market/booklet/map_retina.jpg')
-    background-size   auto 250px
+    background-image    url('/assets/images/market/booklet/map_retina.jpg')
+    background-size     auto 250px
+    background-position -400px 0
 
   &_map-inner
     margin  0 auto
@@ -427,7 +430,7 @@ body
   &_map-text
     padding   40px 0
     color     #464646
-    font-size 24px
+    font-size 30px
 
 /********************************************************************************************************************/
 /* Секция Индивидуальная формировка */
@@ -443,6 +446,7 @@ body
     margin      0 auto
     width       1024px
     text-align  center
+    font-size   18px
 
   &_white
     position          relative
@@ -552,12 +556,15 @@ body
   &_btn
     padding 30px 0
 
+  &_link
+    color #f44040
+
 /********************************************************************************************************************/
 /* Slider */
 /********************************************************************************************************************/
 .bx-pager
   position  static !important
-  margin    40px 0 !important
+  margin    0 0 40px !important
 
 .bx-pager-link
   width               15px !important
@@ -616,7 +623,7 @@ body
 .slider
 
   &_i
-    height      610px
+    height      640px
     text-align  center
 
 .slide-1
@@ -628,15 +635,20 @@ body
     background-size   cover
 
   &_t
-    margin  50px 0
+    font-size 50px
+    margin    40px 0
+
+  &_t-2
+    font-size 40px
+    margin    40px 0
 
   &_white
     font-family 'heliosthin'
-    font-size   18px
+    font-size   22px
     color       #4a2868
 
   &_subtitle
-    margin    25px 0
+    margin    25px 0 0
     font-size 24px
     color     #4d4d4d
 
@@ -659,9 +671,11 @@ body
     overflow          hidden
     background-image  url('/assets/images/market/booklet/slide-2_retina.jpg')
     background-size   cover
+    font-size         22px
 
   &_t
-    margin  65px 0
+    margin    65px 0 30px
+    font-size 50px
 
   &_color-bg
     border-top        1px solid white
@@ -679,8 +693,70 @@ body
 
   &_text
     margin-top  35px
-    font-size   12px
+    font-size   16px
     color       #666666
+
+.slide-3
+
+  &_bg
+    height            336px
+    overflow          hidden
+    background-image  url('/assets/images/market/booklet/slide-3_retina.jpg')
+    background-size   cover
+
+  &_t
+    margin    50px 0
+    font-size 50px
+
+  &_subtitle-major
+    font-size 37px
+
+  &_subtitle-major.__small
+    font-size 22px
+
+  &_text
+    margin    30px auto
+    width     1024px
+    overflow  hidden
+    color     #808080
+
+    &.__centered
+      width 685px
+
+    &.__major
+      color       #4d4d4d
+      font-family 'heliosthin'
+      font-size   18px
+
+    &.__size-S
+      font-size 12px
+
+.slide-4
+  position  relative
+
+  &_bg
+    height            336px
+    overflow          hidden
+    background-image  url('/assets/images/market/booklet/slide-4_retina.jpg')
+    background-size   cover
+
+  &_t
+    margin    20px 0 30px
+    font-size 50px
+
+  &_ipad
+    position    absolute
+    bottom      0
+    left        50%
+    margin-left -250px
+
+    width   500px
+    height  381px
+
+    background-image  url('/assets/images/market/booklet/slide-4_ipad_retina.png')
+    background-repeat no-repeat
+    background-size   auto 381px
+
 
 /********************************************************************************************************************/
 /*  Преимущества */
@@ -694,7 +770,8 @@ body
     text-align        center
 
   &_t
-    margin  40px 0
+    margin    40px 0 25px
+    font-size 50px
 
   &_column-lst
     margin    0 auto
@@ -705,7 +782,7 @@ body
     float         left
     width         33%
     font-family   'heliosthin'
-    font-size     18px
+    font-size     20px
 
   &_bottom
     position  relative
