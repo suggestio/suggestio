@@ -537,7 +537,7 @@ sm =
 
       if typeof navigator.geolocation != 'undefined'
         if sm.utils.is_webkit() == true
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000, maximumAge : 60000 }
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000, maximumAge : 100 }
         else
           sm.geo.position_callback_fallback()
           navigator.geolocation.getCurrentPosition sm.geo.position_callback
@@ -652,6 +652,8 @@ sm =
       sm.welcome_ad.fit sm.welcome_ad._bg_img_dom
       sm.welcome_ad.fit sm.welcome_ad._fg_img_dom, true
       window.scrollTo(0,0)
+
+      sm.navigation_layer.adjust()
 
       if typeof sm.window_resize_timer != 'undefined'
         clearTimeout sm.window_resize_timer
