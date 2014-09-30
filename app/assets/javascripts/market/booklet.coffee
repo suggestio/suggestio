@@ -98,7 +98,7 @@ $doc.on event, '.js-slide-to', (e) ->
   slideToElement targetSelector
 
 
-$doc.ready ()->
+$win.load ()->
 
   sliderControls = true
   windWidth = $win.width()
@@ -108,14 +108,15 @@ $doc.ready ()->
     .remove()
     sliderControls = false
 
-  $ '#sliderCOMMENTED'
-  .bxSlider(
-    auto: true,
-    pager: sliderControls,
-    controls: sliderControls,
-    infiniteLoop: false,
-    hideControlOnEnd: false
-  )
+  if windWidth >= 768
+    $ '#slider'
+    .bxSlider(
+      auto: true,
+      pager: sliderControls,
+      controls: sliderControls,
+      infiniteLoop: false,
+      hideControlOnEnd: false
+    )
 
   if windWidth < 768
     $ '.js-ios-slider'
