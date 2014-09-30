@@ -1,13 +1,6 @@
 @import "reset"
 @import "mixins"
-
-title( v )
-  letter-spacing v
-  padding-left   v
-  text-align     center
-  font-size      30px
-  font-weight    700
-  font-family    'opensans-bold'
+@import "lk_new-design/buttons"
 
 font-face( name )
   @font-face
@@ -19,10 +12,6 @@ font-face( name )
     font-weight: normal
     font-style: normal
 
-darkColor = black
-lightColor = white
-attentionColor = #ec1c23
-
 screen768 = 'screen and (max-width: 767px)'
 screen1024 = 'screen and (max-width: 1024px)'
 screenGorizontalIpad = 'screen and (max-width: 1024px) and (orientation : landscape)'
@@ -33,255 +22,216 @@ screen1200 = 'screen and (max-width: 1200px)'
 retina = "only screen and (-Webkit-min-device-pixel-ratio: 1.5), only screen and (-moz-min-device-pixel-ratio: 1.5), only screen and (-o-min-device-pixel-ratio: 3/2), only screen and (min-device-pixel-ratio: 1.5)"
 
 
-
-
 font-face( 'opensans-light' )
 font-face( 'opensans-bold' )
+font-face( 'heliosthin' )
 
 body
+  min-width     320px
+  color         white
   font-family   'opensans-light'
   font-size     14px
   height        100% !important
 
-/********************************************************************************************************************/
-/* Common elements */
-/********************************************************************************************************************/
+  /* во всех кнопках uppercase */
+  .btn
+    text-transform  uppercase
+
+.title
+  font-family 'heliosthin'
+  font-size    40px
+
+.link
+  color           #00b994
+  text-decoration none
+  cursor          pointer
 
 .hidden
   display none
 
-.ft-S
-  font-size   16px
-  font-weight 300
-
-.ft-L
-  font-size   18px
-  font-weight 300
-
-.color-dark
-  color darkColor
-
-.color-light
-  color lightColor
-
-  &.__strong
-    color #a6a3a3
-
-.color-attention
-  color attentionColor
-
-.link
-  cursor          pointer
-  text-decoration none
-
-  &:hover
-    text-decoration none
-
-    .color-attention
-      color lightColor
-
-    .color-attention.__strong
-      color #a6a3a3
-
-    .color-light
-      color attentionColor
-
-    .color-light.__strong
-      color attentionColor
-
-    .color-light.__with-attention-bg
-      color #a6a3a3
-
-.def-transition
-  -webkit-backface-visibility   hidden
-  -moz-backface-visibility      hidden
-  transition(all 0.2s ease-in-out 0s)
-
-.relative
-  position relative
-
-.abs
-  position absolute
-
-.ovh
-  overflow hidden
-
-.w
-  display block
-
-  &.__margin-L
-    margin 20px 0
-
-.bg-mask
-  position  absolute
-  top       0
-  left      0
-  z-index   100
-  width     100%
-  height    100%
-
-  &.__dark
-    background-color  #414141
-    opacity           0.78
-
-  &.__dark-strong
-    background-color  #282828
-    opacity           0.87
-
-  &.__attention
-    background-color  attentionColor
-    opacity           0.68
-
-.start-work-btn-w
-  text-align center
-
-.start-work-btn
-  display     inline-block
-  padding     10px 40px
-  border      3px solid white
-  font-size   16px
-  color       lightColor
-  border-radius(36px)
-
-  &:hover
-    background-color  lightColor
-    color             attentionColor
-
-  &:active
-    padding 11px 40px 9px
-
-  &.__fill
-    background-color  #ec1c23
-    border            none
-    color             white
-
-  &.__section-sio-market
-    margin-top 50px
-
-  &.__section-only-you
-    margin-top  100px
-
-  &.__attention
-    color        attentionColor
-    border-color attentionColor
-
-    &:hover
-      background-color  attentionColor
-      color             lightColor
-
-.demo-btn
-  display           inline-block
-  padding           10px 40px
-
-  border            3px solid white
-  background-color  attentionColor
-  border            none
-
-  font-size         16px
-  color             white
-  border-radius(36px)
-
-  &:hover
-    background-color  lightColor
-    color             attentionColor
-
-  &:active
-    padding 11px 40px 9px
-
-.qr-code
-
-  &.__block
-    display inline-block
-    margin  0 20px
-
-.section-cnt
-  margin    0 auto
-  max-width 870px
-
-.title
-  font-size       30px
-  font-weight     800
-  text-transform  uppercase
-
-.phone-visible,
-.ipad-visible
+.phone-visible
   display none
 
-/********************************************************************************************************************/
-/* Paralax styles */
-/********************************************************************************************************************/
-.paralax
-  width                   100%
-  margin                  auto
-  position                relative
+@media screen768
 
-  background-attachment   fixed
-  background-clip         border-box
-  background-color        rgba(0, 0, 0, 0)
-  background-origin       padding-box
-  background-position     center top
-  background-repeat       no-repeat
+  .phone-hidden
+    display none
 
-.bg-paralax
-  background-attachment fixed
-  background-size       cover
-  background-clip       border-box
-  background-repeat     repeat-y
-  height                100%
-  position              absolute
-  width                 100%
-  z-index               -1
+  .phone-visible
+    display block
+
+.f-left
+  float left
+
+.f-right
+  float right
+
+/********************************************************************************************************************/
+/* Иконки */
+/********************************************************************************************************************/
+.ic-suggestio
+  display             inline-block
+  min-width           55px
+  min-height          55px
+
+  cursor              pointer
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNTUuMTcxcHgiIGhlaWdodD0iNTQuODI4cHgiIHZpZXdCb3g9IjI0Ljg5MSAyNS4zNTggNTUuMTcxIDU0LjgyOCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAyNC44OTEgMjUuMzU4IDU1LjE3MSA1NC44MjgiDQoJIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc+DQoJPGc+DQoJCTxkZWZzPg0KCQkJPHBhdGggaWQ9IlNWR0lEXzFfIiBkPSJNNzksNjUuNjE0Qzc5LDczLjEwOSw3My4xMDksNzksNjUuNjE1LDc5aC0yNS4yM0MzMi44OTEsNzksMjcsNzMuMTA5LDI3LDY1LjYxNFY0MC4zODYNCgkJCQlDMjcsMzIuODkxLDMyLjg5MSwyNyw0MC4zODYsMjdoMjUuMjI5QzczLjEwOSwyNyw3OSwzMi44OTEsNzksNDAuMzg2VjY1LjYxNHoiLz4NCgkJPC9kZWZzPg0KCQk8Y2xpcFBhdGggaWQ9IlNWR0lEXzJfIj4NCgkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzFfIiAgb3ZlcmZsb3c9InZpc2libGUiLz4NCgkJPC9jbGlwUGF0aD4NCgkJPGcgY2xpcC1wYXRoPSJ1cmwoI1NWR0lEXzJfKSI+DQoJCQkNCgkJCQk8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzNfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9Ii0yMTEiIHkxPSI0MS42ODUxIiB4Mj0iLTIxMSIgeTI9IjE5My40MDk4IiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIC0xIDI2MiAxNTkpIj4NCgkJCQk8c3RvcCAgb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojMTY5Qjg5Ii8+DQoJCQkJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzAwMEY0MiIvPg0KCQkJPC9saW5lYXJHcmFkaWVudD4NCgkJCTxyZWN0IHg9IjE5IiB5PSIyMC41IiBmaWxsPSJ1cmwoI1NWR0lEXzNfKSIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ii8+DQoJCQk8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNNTcuMjk4LDQ1Ljk3MmM0LjAxOS0wLjEwMiw3Ljc0NiwxLjQxNCwxMC43MDQsNC4wMjENCgkJCQljLTEuNzU1LTguNzI4LTguNzEzLTE1LjE2NC0xNi44NTctMTQuOTU2Yy05LjI3MiwwLjIzNi0xNi41NzIsOC45OTMtMTYuMzAxLDE5LjU1N2MwLjE1Miw1Ljk4NywyLjcwNSwxMS4yNjgsNi41NzUsMTQuNjc5DQoJCQkJYy0wLjI0My0xLjIwOS0wLjM4OC0yLjQ2LTAuNDItMy43NDRDNDAuNzI4LDU0Ljk2Niw0OC4wMjQsNDYuMjA5LDU3LjI5OCw0NS45NzJ6Ii8+DQoJCQk8Zz4NCgkJCQk8ZyBvcGFjaXR5PSIwLjQiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIj4NCgkJCQkJPGRlZnM+DQoJCQkJCQk8cmVjdCBpZD0iU1ZHSURfNF8iIHg9IjI1LjUiIHk9IjI2IiBvcGFjaXR5PSIwLjQiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiB3aWR0aD0iNTQiIGhlaWdodD0iNTMiLz4NCgkJCQkJPC9kZWZzPg0KCQkJCQk8Y2xpcFBhdGggaWQ9IlNWR0lEXzVfIj4NCgkJCQkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzRfIiAgb3ZlcmZsb3c9InZpc2libGUiLz4NCgkJCQkJPC9jbGlwUGF0aD4NCgkJCQkJPHBvbHlnb24gY2xpcC1wYXRoPSJ1cmwoI1NWR0lEXzVfKSIgcG9pbnRzPSI2NS42NCw5NS4zNTIgMzcuOTg0LDY3LjM5OCA3MC42OTcsNjQuNjQzIDY2LjgyNCwzNy43OTIgOTkuOTU5LDY5LjcwNSAJCQkJCSIvPg0KCQkJCTwvZz4NCgkJCQk8Zz4NCgkJCQkJDQoJCQkJCQk8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzZfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9Ii0yMDguNjk4MiIgeTE9IjEyNy41ODIiIHgyPSItMjExLjcwMzkiIHkyPSIyMi4zODQ2IiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIC0xIDI2MiAxNTkpIj4NCgkJCQkJCTxzdG9wICBvZmZzZXQ9IjAuMTIwOSIgc3R5bGU9InN0b3AtY29sb3I6I0ZGRkZGRiIvPg0KCQkJCQkJPHN0b3AgIG9mZnNldD0iMC4yMTI2IiBzdHlsZT0ic3RvcC1jb2xvcjojRUNFQ0VDIi8+DQoJCQkJCQk8c3RvcCAgb2Zmc2V0PSIwLjM5OCIgc3R5bGU9InN0b3AtY29sb3I6I0JDQkNCQyIvPg0KCQkJCQkJPHN0b3AgIG9mZnNldD0iMC42NjA0IiBzdHlsZT0ic3RvcC1jb2xvcjojNkU2RTZFIi8+DQoJCQkJCQk8c3RvcCAgb2Zmc2V0PSIwLjk4NzMiIHN0eWxlPSJzdG9wLWNvbG9yOiMwNDA0MDQiLz4NCgkJCQkJCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDAwMDAiLz4NCgkJCQkJPC9saW5lYXJHcmFkaWVudD4NCgkJCQkJPHBhdGggZmlsbD0idXJsKCNTVkdJRF82XykiIGQ9Ik01Mi42NzYsNzMuOTA2Yy0xMS4zNTIsMC0yMC41ODgtOS4yMzctMjAuNTg4LTIwLjU5YzAtMTEuMzUyLDkuMjM3LTIwLjU4OCwyMC41ODgtMjAuNTg4DQoJCQkJCQljMTEuMzU0LDAsMjAuNTg5LDkuMjM2LDIwLjU4OSwyMC41ODhDNzMuMjY1LDY0LjY2OSw2NC4wMjksNzMuOTA2LDUyLjY3Niw3My45MDZ6IE01Mi42NzYsNDAuMDY3DQoJCQkJCQljLTcuMzA2LDAtMTMuMjQ5LDUuOTQzLTEzLjI0OSwxMy4yNDljMCw3LjMwNyw1Ljk0MywxMy4yNSwxMy4yNDksMTMuMjVjNy4zMDcsMCwxMy4yNTEtNS45NDMsMTMuMjUxLTEzLjI1DQoJCQkJCQlDNjUuOTI3LDQ2LjAxMSw1OS45ODIsNDAuMDY3LDUyLjY3Niw0MC4wNjd6Ii8+DQoJCQkJPC9nPg0KCQkJCTxwYXRoIGZpbGw9IiNBMDIwMjkiIGQ9Ik02NS41ODQsNjAuOTE0YzAsNy4xNTUtNS44MDIsMTIuOTU0LTEyLjk1NywxMi45NTRzLTEyLjk1My01Ljc5OS0xMi45NTMtMTIuOTU0DQoJCQkJCXM1Ljc5OS0xMi45NTYsMTIuOTUzLTEyLjk1NkM1OS43ODIsNDcuOTU4LDY1LjU4NCw1My43Niw2NS41ODQsNjAuOTE0eiIvPg0KCQkJCTxwYXRoIGZpbGw9IiNFRDFDMjQiIGQ9Ik02NS41ODQsNTkuODQyYzAsNy4xNTUtNS44MDIsMTIuOTU2LTEyLjk1NywxMi45NTZzLTEyLjk1My01LjgwMS0xMi45NTMtMTIuOTU2DQoJCQkJCWMwLTcuMTU0LDUuNzk5LTEyLjk1NSwxMi45NTMtMTIuOTU1QzU5Ljc4Miw0Ni44ODcsNjUuNTg0LDUyLjY4OCw2NS41ODQsNTkuODQyeiIvPg0KCQkJCTxnPg0KCQkJCQk8ZyBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIj4NCgkJCQkJCTxkZWZzPg0KCQkJCQkJCTxjaXJjbGUgaWQ9IlNWR0lEXzdfIiBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBjeD0iNTIuNjI5IiBjeT0iNTkuODQyIiByPSIxMi45NTUiLz4NCgkJCQkJCTwvZGVmcz4NCgkJCQkJCTxjbGlwUGF0aCBpZD0iU1ZHSURfOF8iPg0KCQkJCQkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzdfIiAgb3ZlcmZsb3c9InZpc2libGUiLz4NCgkJCQkJCTwvY2xpcFBhdGg+DQoJCQkJCQk8cG9seWdvbiBjbGlwLXBhdGg9InVybCgjU1ZHSURfOF8pIiBwb2ludHM9IjUwLjQzOCw2NC41MDQgNTEuNzYzLDY2LjIyNSA1My43MzgsNjUuNDQzIDU0LjkzOSw2My41NzggNTIuMzgxLDU5LjA4IA0KCQkJCQkJCTUwLjQzOCw1Ni44MyA1MS4yNTUsNTMuOTMyIDUzLjYxNCw1My45MzIgNTQuMTQ1LDUzLjMxNiA4MC4wNzMsNzUuNDM0IDY2LjQzOCw4NC45MjkgNDkuNjk0LDY2LjI4MSAJCQkJCQkiLz4NCgkJCQkJPC9nPg0KCQkJCQk8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTIuOTQ2LDUzLjU1NWMwLjkwOCwwLDEuNjU4LDAuMjI5LDIuMjQ1LDAuNjgyYzAuNTg4LDAuNDUyLDAuODgxLDEuMDI2LDAuODgxLDEuNzIzDQoJCQkJCQljMCwwLjM5Ny0wLjEzNSwwLjc0Mi0wLjQxLDEuMDI4Yy0wLjI3MSwwLjI4Ni0wLjYyNiwwLjQzMy0xLjA2MSwwLjQzM2MtMC4zNTQsMC0wLjY2My0wLjEwNS0wLjkzOC0wLjMxNA0KCQkJCQkJYy0wLjI3My0wLjIwOS0wLjQxMi0wLjUwNy0wLjQxMi0wLjg5NmMwLTAuMTU3LDAuMDQ1LTAuMzMzLDAuMTI3LTAuNTI3YzAuMDU5LTAuMTMxLDAuMDg2LTAuMjI5LDAuMDg2LTAuMjkyDQoJCQkJCQljMC0wLjMyNC0wLjI0Ni0wLjQ4NS0wLjczOC0wLjQ4NWMtMC4zNTMsMC0wLjY2NywwLjEyOC0wLjkzOCwwLjM4MWMtMC4yNzYsMC4yNTUtMC40MTEsMC42MS0wLjQxMSwxLjA2Mw0KCQkJCQkJYzAsMC4zODksMC4xMjYsMC43NTcsMC4zNzUsMS4xMDRjMC4yNSwwLjM0OCwwLjkwOCwwLjkwNiwxLjk3MiwxLjY3NGMxLjAyOSwwLjc0MSwxLjc0NiwxLjQyNiwyLjE1NCwyLjA1MQ0KCQkJCQkJczAuNjEsMS4zMzEsMC42MSwyLjExOWMwLDEuMjUtMC4zOTksMi4yMjEtMS4yMDgsMi45MWMtMC44MDQsMC42ODktMS43NjMsMS4wMzUtMi44NzcsMS4wMzVjLTEuMDU1LDAtMS45MDgtMC4yNTMtMi41NjMtMC43NTgNCgkJCQkJCWMtMC42NTItMC41MDUtMC45NzgtMS4xNDctMC45NzgtMS45MjRjMC0wLjQyNywwLjEzLTAuNzk1LDAuMzg2LTEuMTA0YzAuMjYtMC4zMTEsMC42MzUtMC40NjYsMS4xMjgtMC40NjYNCgkJCQkJCWMwLjg5MSwwLDEuMzMzLDAuNDIxLDEuMzMzLDEuMjY0YzAsMC4xNC0wLjAyOSwwLjMxOC0wLjA4MywwLjU0MmMtMC4wNiwwLjIwMi0wLjA4OCwwLjM0OC0wLjA4OCwwLjQzMQ0KCQkJCQkJYzAsMC40NTMsMC4zMjYsMC42OCwwLjk3NSwwLjY4YzAuNDkxLDAsMC44OTktMC4xNTUsMS4yMjQtMC40NjRjMC4zMjYtMC4zMSwwLjQ4Ni0wLjY2NCwwLjQ4Ni0xLjA2Mg0KCQkJCQkJYzAtMC40MzgtMC4xNDEtMC44MzctMC40MjItMS4yMDNjLTAuMjgzLTAuMzY2LTAuODM3LTAuODY0LTEuNjYyLTEuNDkzYy0xLjExMS0wLjg1My0xLjg5NS0xLjU4OC0yLjM0OC0yLjIwNA0KCQkJCQkJYy0wLjQ1NS0wLjYxNC0wLjY4MS0xLjM1NC0wLjY4MS0yLjIxNWMwLTEuMTA0LDAuMzktMS45OTgsMS4xNjctMi42ODRDNTEuMDYsNTMuODk2LDUxLjk0Niw1My41NTUsNTIuOTQ2LDUzLjU1NSIvPg0KCQkJCTwvZz4NCgkJCTwvZz4NCgkJPC9nPg0KCTwvZz4NCjwvZz4NCjwvc3ZnPg0K')
+  background-repeat   no-repeat
+  background-position center
+
+.ic-android
+  min-width           10px
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMzdweCIgaGVpZ2h0PSIxMTRweCIgdmlld0JveD0iMTguMjUgNTcuMjUgMzcgMTE0IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDE4LjI1IDU3LjI1IDM3IDExNCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzMuMzcyLDc3LjUzOGMtMC4zMDksMC0wLjU5OCwwLTAuODg4LDBjLTAuNzYyLTAuMDAxLTEuMzQ5LTAuNTYtMS4zNTctMS4zMjQNCgljLTAuMDEyLTEuMTkzLTAuMDA0LTIuMzg3LTAuMDA0LTMuNThjMC0xLjQyNywwLTIuODU0LDAtNC4yODFjMC0wLjA2MSwwLTAuMTIxLDAtMC4xOTJjMy43MjIsMCw3LjQzLDAsMTEuMTQ2LDANCgljMC4wMDQsMC4wNDYsMC4wMDksMC4wODYsMC4wMDksMC4xMjZjMCwyLjYsMCw1LjE5OSwwLjAwMSw3Ljc5OWMwLDAuNTE3LTAuMTc4LDAuOTUyLTAuNjI1LDEuMjI4DQoJYy0wLjE4NiwwLjExNS0wLjQxNiwwLjE4My0wLjYzNSwwLjIxM2MtMC4yNjUsMC4wMzctMC41MzgsMC4wMTEtMC44MDgsMC4wMTFjLTAuMjA1LDAuMDAxLTAuMjA1LDAtMC4yMDYsMC4xOTkNCgljMCwwLjg0LDAuMDAxLDEuNjgxLDAsMi41MjJjLTAuMDAxLDAuNjk3LTAuNTM5LDEuMjMxLTEuMjQxLDEuMjMyYy0wLjY4MiwwLjAwMS0xLjIyNC0wLjUzNy0xLjIyNi0xLjIyMg0KCWMtMC4wMDItMC44NTEtMC4wMDMtMS43MDIsMC4wMDItMi41NTNjMC4wMDEtMC4xNDEtMC4wMzUtMC4xODYtMC4xODMtMC4xODFjLTAuNDM2LDAuMDExLTAuODcyLDAuMDAzLTEuMzA4LDAuMDAzDQoJYy0wLjA1NywwLTAuMTExLDAtMC4xNzgsMGMtMC4wMDQsMC4wNTMtMC4wMDksMC4wOTItMC4wMSwwLjEzMmMtMC4wMDEsMC44NTEsMCwxLjcwMi0wLjAwMSwyLjU1Mw0KCWMtMC4wMDEsMC42MDQtMC4zNzgsMS4wOTEtMC45NTgsMS4yNDFjLTAuNjgsMC4xNzUtMS40MTYtMC4zMTYtMS41MDItMS4wMDljLTAuMDE4LTAuMTMyLTAuMDI3LTAuMjY4LTAuMDI4LTAuNDAyDQoJYy0wLjAwMi0wLjc3My0wLjAwMS0xLjU0NS0wLjAwMS0yLjMxOUMzMy4zNzIsNzcuNjc2LDMzLjM3Miw3Ny42MTksMzMuMzcyLDc3LjUzOHoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00Mi4yODksNjcuNzE3Yy0wLjExMywwLTAuMTk0LDAtMC4yNzYsMGMtMy41NzMsMC03LjE0OC0wLjAwMS0xMC43MjMsMC4wMDINCgljLTAuMTQ4LDAtMC4xOTQtMC4wMzQtMC4xODYtMC4xODljMC4wODItMS40NTcsMC43MDYtMi42NDMsMS44LTMuNTg0YzAuMjc3LTAuMjM3LDAuNTk5LTAuNDI1LDAuOTA5LTAuNjINCgljMC4xMDYtMC4wNjcsMC4xMzEtMC4xMTEsMC4wNjctMC4yMjVjLTAuMjM5LTAuNDIzLTAuNDY5LTAuODUyLTAuNzA0LTEuMjc4Yy0wLjAyNC0wLjA0NS0wLjA1Mi0wLjA5LTAuMDcyLTAuMTM3DQoJYy0wLjA0LTAuMDk0LTAuMDQ1LTAuMTk1LDAuMDU3LTAuMjQ0YzAuMDk5LTAuMDQ2LDAuMTg4LTAuMDEyLDAuMjQ2LDAuMDk0YzAuMjQ0LDAuNDUsMC40OTMsMC44OTcsMC43MzksMS4zNDYNCgljMC4wMzcsMC4wNjcsMC4wNzMsMC4xMzQsMC4xMTIsMC4yMDhjMS42MjEtMC42NjcsMy4yMzItMC42NzMsNC44NTgsMC4wMDFjMC4wODctMC4xNDgsMC4xNzUtMC4yOTIsMC4yNTYtMC40NDENCgljMC4xOTktMC4zNjMsMC4zOTgtMC43MjYsMC41OS0xLjA5MWMwLjA2Mi0wLjExOCwwLjE0OS0wLjE3MSwwLjI2MS0wLjExNWMwLjEyMywwLjA2MiwwLjEwMiwwLjE2OSwwLjA0MSwwLjI4DQoJYy0wLjI1NywwLjQ2LTAuNTA5LDAuOTI0LTAuNzYyLDEuMzg2Yy0wLjAyMiwwLjA0LTAuMDQyLDAuMDgxLTAuMDY1LDAuMTI3QzQxLjE3Nyw2NC4yMTksNDIuMTk0LDY1LjY1Myw0Mi4yODksNjcuNzE3eg0KCSBNMzkuMjUxLDY0Ljc2MWMtMC4yNjEtMC4wMDUtMC40NzcsMC4xOTEtMC40ODQsMC40NDFjLTAuMDA5LDAuMjU0LDAuMjEsMC40ODksMC40NTksMC40OTRzMC40NjQtMC4yMDUsMC40NzEtMC40NTkNCglDMzkuNzA1LDY0Ljk3NSwzOS41MDksNjQuNzY2LDM5LjI1MSw2NC43NjF6IE0zNC4xNDcsNjQuNzZjLTAuMjUyLDAtMC40NjgsMC4yMTYtMC40NjQsMC40NjNjMC4wMDQsMC4yNDksMC4yMjIsMC40NjksMC40NjUsMC40NzINCgljMC4yNDUsMC4wMDMsMC40NjgtMC4yMTgsMC40Ny0wLjQ2M0MzNC42MjEsNjQuOTcsMzQuNDExLDY0Ljc2MSwzNC4xNDcsNjQuNzZ6Ii8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDIuNzE1LDcxLjczNGMwLTAuODcyLTAuMDA0LTEuNzQ0LDAuMDAxLTIuNjE1YzAuMDA1LTAuNjQzLDAuNTQ1LTEuMTg4LDEuMTg1LTEuMjENCgljMC42NTMtMC4wMjIsMS4yMTMsMC40NjEsMS4yNzgsMS4xMDdjMC4wMSwwLjA5OCwwLjAxNSwwLjE5NywwLjAxNSwwLjI5NGMwLjAwMSwxLjY1NiwwLjAwMSwzLjMxMSwwLjAwMSw0Ljk2Nw0KCWMwLDAuNDQ5LTAuMTY5LDAuODEyLTAuNTM1LDEuMDgyYy0wLjY5MiwwLjUxMS0xLjc2NywwLjA4Ni0xLjkxNS0wLjc2M2MtMC4wMi0wLjExMS0wLjAyOS0wLjIyNy0wLjAyOS0wLjMzOQ0KCWMtMC4wMDQtMC44NC0wLjAwMi0xLjY4Mi0wLjAwMi0yLjUyMkM0Mi43MTQsNzEuNzM0LDQyLjcxNSw3MS43MzQsNDIuNzE1LDcxLjczNHoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0zMC42NjQsNzEuNzQ4YzAsMC45MDIsMC4wMSwxLjgwNC0wLjAwMywyLjcwNmMtMC4wMDgsMC41Ny0wLjU0NSwxLjA3Ny0xLjExNSwxLjEyMQ0KCWMtMC43ODIsMC4wNjEtMS4zNjEtMC41OS0xLjM1MS0xLjI4OWMwLjAyMi0xLjcsMC4wMTUtMy40MDIsMC4wMDItNS4xMDJjLTAuMDA0LTAuNTc1LDAuMzc2LTEuMDkxLDAuOTM3LTEuMjM4DQoJYzAuNTU0LTAuMTQ2LDEuMTI1LDAuMTE5LDEuNDA4LDAuNjUxYzAuMTAyLDAuMTkxLDAuMTI5LDAuNCwwLjEyOSwwLjYxNmMtMC4wMDMsMC44NDUtMC4wMDEsMS42OS0wLjAwMSwyLjUzNg0KCUMzMC42NjcsNzEuNzQ4LDMwLjY2Nyw3MS43NDgsMzAuNjY0LDcxLjc0OHoiLz4NCjxwYXRoIGZpbGw9IiMwMEI5OTQiIGQ9Ik0zMy4zNzIsMTE2LjMwNGMtMC4zMDksMC0wLjU5OCwwLjAwMS0wLjg4OCwwYy0wLjc2Mi0wLjAwMi0xLjM0OS0wLjU1OS0xLjM1Ny0xLjMyMw0KCWMtMC4wMTItMS4xOTMtMC4wMDQtMi4zODctMC4wMDQtMy41ODFjMC0xLjQyNywwLTIuODU0LDAtNC4yODFjMC0wLjA2MSwwLTAuMTIxLDAtMC4xOTJjMy43MjIsMCw3LjQzLDAsMTEuMTQ2LDANCgljMC4wMDQsMC4wNDYsMC4wMDksMC4wODYsMC4wMDksMC4xMjZjMCwyLjYsMCw1LjE5OSwwLjAwMSw3Ljc5OWMwLDAuNTE3LTAuMTc4LDAuOTUxLTAuNjI1LDEuMjI4DQoJYy0wLjE4NiwwLjExNS0wLjQxNiwwLjE4NC0wLjYzNSwwLjIxNGMtMC4yNjUsMC4wMzctMC41MzgsMC4wMS0wLjgwOCwwLjAxMWMtMC4yMDUsMC4wMDEtMC4yMDUsMC4wMDEtMC4yMDYsMC4yDQoJYzAsMC44NCwwLjAwMSwxLjY4MSwwLDIuNTIxYy0wLjAwMSwwLjY5Ny0wLjUzOSwxLjIzLTEuMjQxLDEuMjMxYy0wLjY4MiwwLjAwMi0xLjIyNC0wLjUzNi0xLjIyNi0xLjIyMQ0KCWMtMC4wMDItMC44NTItMC4wMDMtMS43MDIsMC4wMDItMi41NTRjMC4wMDEtMC4xNDEtMC4wMzUtMC4xODYtMC4xODMtMC4xODJjLTAuNDM2LDAuMDExLTAuODcyLDAuMDA0LTEuMzA4LDAuMDA0DQoJYy0wLjA1NywwLTAuMTExLDAtMC4xNzgsMGMtMC4wMDQsMC4wNTMtMC4wMDksMC4wOTItMC4wMSwwLjEzMmMtMC4wMDEsMC44NTEsMCwxLjcwMi0wLjAwMSwyLjU1Mw0KCWMtMC4wMDEsMC42MDQtMC4zNzgsMS4wOTEtMC45NTgsMS4yNDFjLTAuNjgsMC4xNzYtMS40MTYtMC4zMTYtMS41MDItMS4wMWMtMC4wMTgtMC4xMzMtMC4wMjctMC4yNjgtMC4wMjgtMC40MDENCgljLTAuMDAyLTAuNzczLTAuMDAxLTEuNTQ2LTAuMDAxLTIuMzE5QzMzLjM3MiwxMTYuNDQyLDMzLjM3MiwxMTYuMzg1LDMzLjM3MiwxMTYuMzA0eiIvPg0KPHBhdGggZmlsbD0iIzAwQjk5NCIgZD0iTTQyLjI4OSwxMDYuNDg0Yy0wLjExMywwLTAuMTk0LDAtMC4yNzYsMGMtMy41NzMsMC03LjE0OC0wLjAwMS0xMC43MjMsMC4wMDINCgljLTAuMTQ4LDAtMC4xOTQtMC4wMzQtMC4xODYtMC4xOWMwLjA4Mi0xLjQ1NywwLjcwNi0yLjY0MiwxLjgtMy41ODNjMC4yNzctMC4yMzgsMC41OTktMC40MjUsMC45MDktMC42MjENCgljMC4xMDYtMC4wNjcsMC4xMzEtMC4xMTEsMC4wNjctMC4yMjVjLTAuMjM5LTAuNDI0LTAuNDY5LTAuODUyLTAuNzA0LTEuMjc5Yy0wLjAyNC0wLjA0NS0wLjA1Mi0wLjA4OS0wLjA3Mi0wLjEzNw0KCWMtMC4wNC0wLjA5NC0wLjA0NS0wLjE5NSwwLjA1Ny0wLjI0M2MwLjA5OS0wLjA0NiwwLjE4OC0wLjAxMywwLjI0NiwwLjA5NGMwLjI0NCwwLjQ1LDAuNDkzLDAuODk3LDAuNzM5LDEuMzQ2DQoJYzAuMDM3LDAuMDY3LDAuMDczLDAuMTM0LDAuMTEyLDAuMjA4YzEuNjIxLTAuNjY4LDMuMjMyLTAuNjczLDQuODU4LDAuMDAxYzAuMDg3LTAuMTQ4LDAuMTc1LTAuMjkzLDAuMjU2LTAuNDQxDQoJYzAuMTk5LTAuMzYzLDAuMzk4LTAuNzI1LDAuNTktMS4wOTJjMC4wNjItMC4xMTcsMC4xNDktMC4xNzEsMC4yNjEtMC4xMTVjMC4xMjMsMC4wNjIsMC4xMDIsMC4xNjksMC4wNDEsMC4yOA0KCWMtMC4yNTcsMC40NjEtMC41MDksMC45MjQtMC43NjIsMS4zODZjLTAuMDIyLDAuMDQtMC4wNDIsMC4wODEtMC4wNjUsMC4xMjdDNDEuMTc3LDEwMi45ODUsNDIuMTk0LDEwNC40Miw0Mi4yODksMTA2LjQ4NHoNCgkgTTM5LjI1MSwxMDMuNTI4Yy0wLjI2MS0wLjAwNS0wLjQ3NywwLjE5MS0wLjQ4NCwwLjQ0MWMtMC4wMDksMC4yNTQsMC4yMSwwLjQ4OSwwLjQ1OSwwLjQ5M2MwLjI0OSwwLjAwNSwwLjQ2NC0wLjIwNCwwLjQ3MS0wLjQ1OQ0KCUMzOS43MDUsMTAzLjc0MSwzOS41MDksMTAzLjUzMiwzOS4yNTEsMTAzLjUyOHogTTM0LjE0NywxMDMuNTI3Yy0wLjI1MiwwLTAuNDY4LDAuMjE2LTAuNDY0LDAuNDYzDQoJYzAuMDA0LDAuMjQ5LDAuMjIyLDAuNDY5LDAuNDY1LDAuNDcyYzAuMjQ1LDAuMDAzLDAuNDY4LTAuMjE3LDAuNDctMC40NjNDMzQuNjIxLDEwMy43MzcsMzQuNDExLDEwMy41MjgsMzQuMTQ3LDEwMy41Mjd6Ii8+DQo8cGF0aCBmaWxsPSIjMDBCOTk0IiBkPSJNNDIuNzE1LDExMC41YzAtMC44NzItMC4wMDQtMS43NDQsMC4wMDEtMi42MTZjMC4wMDUtMC42NDMsMC41NDUtMS4xODgsMS4xODUtMS4yMDkNCgljMC42NTMtMC4wMjIsMS4yMTMsMC40NjEsMS4yNzgsMS4xMDZjMC4wMSwwLjA5OCwwLjAxNSwwLjE5NiwwLjAxNSwwLjI5NGMwLjAwMSwxLjY1NiwwLjAwMSwzLjMxMSwwLjAwMSw0Ljk2Ng0KCWMwLDAuNDUtMC4xNjksMC44MTMtMC41MzUsMS4wODJjLTAuNjkyLDAuNTExLTEuNzY3LDAuMDg2LTEuOTE1LTAuNzYyYy0wLjAyLTAuMTExLTAuMDI5LTAuMjI3LTAuMDI5LTAuMzM5DQoJYy0wLjAwNC0wLjg0MS0wLjAwMi0xLjY4Mi0wLjAwMi0yLjUyMkM0Mi43MTQsMTEwLjUsNDIuNzE1LDExMC41LDQyLjcxNSwxMTAuNXoiLz4NCjxwYXRoIGZpbGw9IiMwMEI5OTQiIGQ9Ik0zMC42NjQsMTEwLjUxNGMwLDAuOTAyLDAuMDEsMS44MDUtMC4wMDMsMi43MDdjLTAuMDA4LDAuNTY5LTAuNTQ1LDEuMDc3LTEuMTE1LDEuMTINCgljLTAuNzgyLDAuMDYtMS4zNjEtMC41OS0xLjM1MS0xLjI5YzAuMDIyLTEuNywwLjAxNS0zLjQwMSwwLjAwMi01LjEwMmMtMC4wMDQtMC41NzUsMC4zNzYtMS4wOTEsMC45MzctMS4yMzgNCgljMC41NTQtMC4xNDYsMS4xMjUsMC4xMTksMS40MDgsMC42NWMwLjEwMiwwLjE5MiwwLjEyOSwwLjQsMC4xMjksMC42MTZjLTAuMDAzLDAuODQ1LTAuMDAxLDEuNjktMC4wMDEsMi41MzYNCglDMzAuNjY3LDExMC41MTQsMzAuNjY3LDExMC41MTQsMzAuNjY0LDExMC41MTR6Ii8+DQo8cGF0aCBmaWxsPSIjQThBOEE4IiBkPSJNMzMuMzcyLDE1NC45NjJjLTAuMzA5LDAtMC41OTgsMC4wMDEtMC44ODgsMGMtMC43NjItMC4wMDItMS4zNDktMC41Ni0xLjM1Ny0xLjMyNA0KCWMtMC4wMTItMS4xOTItMC4wMDQtMi4zODctMC4wMDQtMy41OGMwLTEuNDI3LDAtMi44NTQsMC00LjI4MWMwLTAuMDYxLDAtMC4xMjEsMC0wLjE5MmMzLjcyMiwwLDcuNDMsMCwxMS4xNDYsMA0KCWMwLjAwNCwwLjA0NywwLjAwOSwwLjA4NiwwLjAwOSwwLjEyNmMwLDIuNiwwLDUuMiwwLjAwMSw3LjhjMCwwLjUxNi0wLjE3OCwwLjk1MS0wLjYyNSwxLjIyOGMtMC4xODYsMC4xMTUtMC40MTYsMC4xODQtMC42MzUsMC4yMTMNCgljLTAuMjY1LDAuMDM3LTAuNTM4LDAuMDExLTAuODA4LDAuMDEyYy0wLjIwNSwwLjAwMS0wLjIwNSwwLjAwMS0wLjIwNiwwLjE5OWMwLDAuODQxLDAuMDAxLDEuNjgxLDAsMi41MjENCgljLTAuMDAxLDAuNjk3LTAuNTM5LDEuMjMtMS4yNDEsMS4yMzJjLTAuNjgyLDAuMDAyLTEuMjI0LTAuNTM3LTEuMjI2LTEuMjIyYy0wLjAwMi0wLjg1MS0wLjAwMy0xLjcwMSwwLjAwMi0yLjU1NA0KCWMwLjAwMS0wLjE0MS0wLjAzNS0wLjE4NS0wLjE4My0wLjE4MWMtMC40MzYsMC4wMTEtMC44NzIsMC4wMDQtMS4zMDgsMC4wMDRjLTAuMDU3LDAtMC4xMTEsMC0wLjE3OCwwDQoJYy0wLjAwNCwwLjA1Mi0wLjAwOSwwLjA5MS0wLjAxLDAuMTMxYy0wLjAwMSwwLjg1MiwwLDEuNzAyLTAuMDAxLDIuNTU0Yy0wLjAwMSwwLjYwNC0wLjM3OCwxLjA5MS0wLjk1OCwxLjI0MQ0KCWMtMC42OCwwLjE3Ni0xLjQxNi0wLjMxNi0xLjUwMi0xLjAxYy0wLjAxOC0wLjEzMy0wLjAyNy0wLjI2OC0wLjAyOC0wLjQwMWMtMC4wMDItMC43NzMtMC4wMDEtMS41NDctMC4wMDEtMi4zMg0KCUMzMy4zNzIsMTU1LjEsMzMuMzcyLDE1NS4wNDMsMzMuMzcyLDE1NC45NjJ6Ii8+DQo8cGF0aCBmaWxsPSIjQThBOEE4IiBkPSJNNDIuMjg5LDE0NS4xNDJjLTAuMTEzLDAtMC4xOTQsMC0wLjI3NiwwYy0zLjU3MywwLTcuMTQ4LTAuMDAxLTEwLjcyMywwLjAwMw0KCWMtMC4xNDgsMC0wLjE5NC0wLjAzMy0wLjE4Ni0wLjE4OWMwLjA4Mi0xLjQ1NywwLjcwNi0yLjY0MywxLjgtMy41ODRjMC4yNzctMC4yMzgsMC41OTktMC40MjUsMC45MDktMC42MjENCgljMC4xMDYtMC4wNjYsMC4xMzEtMC4xMSwwLjA2Ny0wLjIyNWMtMC4yMzktMC40MjQtMC40NjktMC44NTItMC43MDQtMS4yNzhjLTAuMDI0LTAuMDQ1LTAuMDUyLTAuMDktMC4wNzItMC4xMzcNCgljLTAuMDQtMC4wOTQtMC4wNDUtMC4xOTUsMC4wNTctMC4yNDNjMC4wOTktMC4wNDcsMC4xODgtMC4wMTMsMC4yNDYsMC4wOTRjMC4yNDQsMC40NSwwLjQ5MywwLjg5NywwLjczOSwxLjM0Ng0KCWMwLjAzNywwLjA2NywwLjA3MywwLjEzNCwwLjExMiwwLjIwOGMxLjYyMS0wLjY2OCwzLjIzMi0wLjY3Myw0Ljg1OCwwLjAwMWMwLjA4Ny0wLjE0OCwwLjE3NS0wLjI5MywwLjI1Ni0wLjQ0MQ0KCWMwLjE5OS0wLjM2MiwwLjM5OC0wLjcyNSwwLjU5LTEuMDkxYzAuMDYyLTAuMTE4LDAuMTQ5LTAuMTcxLDAuMjYxLTAuMTE1YzAuMTIzLDAuMDYyLDAuMTAyLDAuMTY5LDAuMDQxLDAuMjgNCgljLTAuMjU3LDAuNDYtMC41MDksMC45MjMtMC43NjIsMS4zODZjLTAuMDIyLDAuMDQtMC4wNDIsMC4wODEtMC4wNjUsMC4xMjdDNDEuMTc3LDE0MS42NDQsNDIuMTk0LDE0My4wNzcsNDIuMjg5LDE0NS4xNDJ6DQoJIE0zOS4yNTEsMTQyLjE4NmMtMC4yNjEtMC4wMDUtMC40NzcsMC4xOS0wLjQ4NCwwLjQ0MWMtMC4wMDksMC4yNTQsMC4yMSwwLjQ4OCwwLjQ1OSwwLjQ5M3MwLjQ2NC0wLjIwNCwwLjQ3MS0wLjQ1OQ0KCUMzOS43MDUsMTQyLjM5OCwzOS41MDksMTQyLjE5LDM5LjI1MSwxNDIuMTg2eiBNMzQuMTQ3LDE0Mi4xODVjLTAuMjUyLDAtMC40NjgsMC4yMTctMC40NjQsMC40NjMNCgljMC4wMDQsMC4yNDksMC4yMjIsMC40NjksMC40NjUsMC40NzNjMC4yNDUsMC4wMDMsMC40NjgtMC4yMTgsMC40Ny0wLjQ2NEMzNC42MjEsMTQyLjM5NSwzNC40MTEsMTQyLjE4NiwzNC4xNDcsMTQyLjE4NXoiLz4NCjxwYXRoIGZpbGw9IiNBOEE4QTgiIGQ9Ik00Mi43MTUsMTQ5LjE1OGMwLTAuODcyLTAuMDA0LTEuNzQzLDAuMDAxLTIuNjE1YzAuMDA1LTAuNjQzLDAuNTQ1LTEuMTg4LDEuMTg1LTEuMjENCgljMC42NTMtMC4wMjIsMS4yMTMsMC40NjEsMS4yNzgsMS4xMDZjMC4wMSwwLjA5OCwwLjAxNSwwLjE5NiwwLjAxNSwwLjI5NGMwLjAwMSwxLjY1NiwwLjAwMSwzLjMxMiwwLjAwMSw0Ljk2Nw0KCWMwLDAuNDUtMC4xNjksMC44MTItMC41MzUsMS4wODJjLTAuNjkyLDAuNTExLTEuNzY3LDAuMDg2LTEuOTE1LTAuNzYzYy0wLjAyLTAuMTExLTAuMDI5LTAuMjI3LTAuMDI5LTAuMzM5DQoJYy0wLjAwNC0wLjg0MS0wLjAwMi0xLjY4Mi0wLjAwMi0yLjUyMkM0Mi43MTQsMTQ5LjE1OCw0Mi43MTUsMTQ5LjE1OCw0Mi43MTUsMTQ5LjE1OHoiLz4NCjxwYXRoIGZpbGw9IiNBOEE4QTgiIGQ9Ik0zMC42NjQsMTQ5LjE3MWMwLDAuOTAyLDAuMDEsMS44MDUtMC4wMDMsMi43MDdjLTAuMDA4LDAuNTY5LTAuNTQ1LDEuMDc3LTEuMTE1LDEuMTIxDQoJYy0wLjc4MiwwLjA2LTEuMzYxLTAuNTkxLTEuMzUxLTEuMjljMC4wMjItMS43LDAuMDE1LTMuNDAxLDAuMDAyLTUuMTAyYy0wLjAwNC0wLjU3NSwwLjM3Ni0xLjA5MSwwLjkzNy0xLjIzOA0KCWMwLjU1NC0wLjE0NiwxLjEyNSwwLjExOSwxLjQwOCwwLjY1YzAuMTAyLDAuMTkyLDAuMTI5LDAuNCwwLjEyOSwwLjYxNmMtMC4wMDMsMC44NDUtMC4wMDEsMS42OS0wLjAwMSwyLjUzNQ0KCUMzMC42NjcsMTQ5LjE3MSwzMC42NjcsMTQ5LjE3MSwzMC42NjQsMTQ5LjE3MXoiLz4NCjwvc3ZnPg0K')
+  background-repeat   no-repeat
+  transition(none)
+
+  &.__white
+    background-position center 6px
+
+    &:hover
+      background-position center -33px
+
+  &.__gray
+    background-position center -72px
+
+  &.__gray:hover,
+  &.__gray.__js-act
+    background-position center 6px
+
+.ic-ios
+  min-width           10px
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMzdweCIgaGVpZ2h0PSIxMTRweCIgdmlld0JveD0iMTguMjUgNTcuNTgzIDM3IDExNCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAxOC4yNSA1Ny41ODMgMzcgMTE0IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnPg0KCTxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00Mi41MDYsNjYuMTA5Yy0wLjE4NCwwLjE2OS0wLjM3LDAuMzM3LTAuNTUzLDAuNTA5Yy0wLjY3NiwwLjYzOC0xLjE2OSwxLjM4NS0xLjMyMSwyLjMxNQ0KCQljLTAuMTk1LDEuMTkxLDAuMDYzLDIuMjgyLDAuNzg4LDMuMjU1YzAuMzcxLDAuNDk5LDAuODEyLDAuOTE0LDEuMzk4LDEuMTUyYzAuMDY5LDAuMDI4LDAuMTM5LDAuMDUzLDAuMjIzLDAuMDg0DQoJCWMtMC4wNzcsMC4yMS0wLjE0NiwwLjQxNi0wLjIyOSwwLjYxNmMtMC40OCwxLjE2NC0xLjEwNCwyLjI0MS0xLjk1OCwzLjE3NmMtMC4xNTksMC4xNzMtMC4zMzgsMC4zMzEtMC41MjEsMC40NzkNCgkJYy0wLjYyMywwLjUwMy0xLjMyMSwwLjY5Ny0yLjEwNywwLjQ2OGMtMC4zOS0wLjExNC0wLjc3NC0wLjI0LTEuMTYyLTAuMzZjLTAuNDA1LTAuMTI2LTAuODE2LTAuMjI4LTEuMjQ2LTAuMjM4DQoJCWMtMC41MjQtMC4wMTItMS4wMTIsMC4xNDUtMS40OTcsMC4zMjRjLTAuMzY4LDAuMTM2LTAuNzM4LDAuMjc2LTEuMTIsMC4zNjZjLTAuNiwwLjE0My0xLjE0Mi0wLjA0Mi0xLjY0LTAuMzgNCgkJYy0wLjUwMi0wLjMzOS0wLjg5Ny0wLjc4Ni0xLjI0Mi0xLjI3NmMtMC44NjUtMS4yMzQtMS41MjItMi41NjktMS45MjMtNC4wMjRjLTAuMzU2LTEuMjg4LTAuNDU0LTIuNTk0LTAuMjUzLTMuOTE3DQoJCWMwLjE3OC0xLjE2OSwwLjYxNC0yLjIyNCwxLjQzOC0zLjA5NmMwLjg1My0wLjkwMywxLjkwMi0xLjI3MywzLjEzMy0xLjE1MWMwLjYxNCwwLjA2MSwxLjE5OSwwLjIzOCwxLjc4OCwwLjQxDQoJCWMwLjI0NCwwLjA3MSwwLjQ5NCwwLjEyNSwwLjc0MSwwLjE4OGMwLjM1NCwwLjA4OSwwLjcwNCwwLjA0OCwxLjA0Ni0wLjA1MmMwLjQ4MS0wLjE0MiwwLjk1OC0wLjMwMiwxLjQ0MS0wLjQ0NQ0KCQljMC43NTgtMC4yMjUsMS41MjQtMC4yOCwyLjMwMy0wLjEwNGMwLjkwNSwwLjIwNSwxLjYyLDAuNzEsMi4yMjQsMS4zOTVjMC4wNzcsMC4wOSwwLjE1NywwLjE4MiwwLjIzNCwwLjI3Mg0KCQlDNDIuNDk3LDY2LjA4NCw0Mi41LDY2LjA5Niw0Mi41MDYsNjYuMTA5eiIvPg0KCTxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0zOC44OCw2MC4yMjVjMC4wNzMsMC4xOTcsMC4wNzUsMC4zOTcsMC4wNjEsMC41OTRjLTAuMDc4LDEuMDYzLTAuNDk0LDEuOTc5LTEuMjI3LDIuNzUNCgkJYy0wLjMzMSwwLjM0OC0wLjY5NywwLjY1My0xLjE0OSwwLjgzM2MtMC4zOTIsMC4xNTYtMC44MDgsMC4xODEtMS4yMjMsMC4yMjFDMzUuMzgzLDYyLjM5MywzNi40NjMsNjAuNzI2LDM4Ljg4LDYwLjIyNXoiLz4NCjwvZz4NCjxnPg0KCTxwYXRoIGZpbGw9IiMwMEI5OTQiIGQ9Ik00Mi41MDYsMTA3LjEzOWMtMC4xODQsMC4xNjktMC4zNywwLjMzNy0wLjU1MywwLjUwOWMtMC42NzYsMC42MzgtMS4xNjksMS4zODUtMS4zMjEsMi4zMTUNCgkJYy0wLjE5NSwxLjE5MSwwLjA2MywyLjI4MiwwLjc4OCwzLjI1NGMwLjM3MSwwLjUsMC44MTIsMC45MTUsMS4zOTgsMS4xNTJjMC4wNjksMC4wMjgsMC4xMzksMC4wNTMsMC4yMjMsMC4wODUNCgkJYy0wLjA3NywwLjIxLTAuMTQ2LDAuNDE2LTAuMjI5LDAuNjE2Yy0wLjQ4LDEuMTY0LTEuMTA0LDIuMjQxLTEuOTU4LDMuMTc2Yy0wLjE1OSwwLjE3My0wLjMzOCwwLjMzLTAuNTIxLDAuNDc5DQoJCWMtMC42MjMsMC41MDMtMS4zMjEsMC42OTYtMi4xMDcsMC40NjhjLTAuMzktMC4xMTMtMC43NzQtMC4yNC0xLjE2Mi0wLjM2Yy0wLjQwNS0wLjEyNi0wLjgxNi0wLjIyOC0xLjI0Ni0wLjIzNw0KCQljLTAuNTI0LTAuMDE0LTEuMDEyLDAuMTQ1LTEuNDk3LDAuMzI0Yy0wLjM2OCwwLjEzNi0wLjczOCwwLjI3Ni0xLjEyLDAuMzY2Yy0wLjYsMC4xNDMtMS4xNDItMC4wNDMtMS42NC0wLjM4DQoJCWMtMC41MDItMC4zNC0wLjg5Ny0wLjc4NS0xLjI0Mi0xLjI3NWMtMC44NjUtMS4yMzQtMS41MjItMi41NjktMS45MjMtNC4wMjRjLTAuMzU2LTEuMjg5LTAuNDU0LTIuNTk0LTAuMjUzLTMuOTE2DQoJCWMwLjE3OC0xLjE3LDAuNjE0LTIuMjI1LDEuNDM4LTMuMDk3YzAuODUzLTAuOTAzLDEuOTAyLTEuMjczLDMuMTMzLTEuMTUxYzAuNjE0LDAuMDYxLDEuMTk5LDAuMjM5LDEuNzg4LDAuNDENCgkJYzAuMjQ0LDAuMDcxLDAuNDk0LDAuMTI1LDAuNzQxLDAuMTg3YzAuMzU0LDAuMDksMC43MDQsMC4wNDksMS4wNDYtMC4wNTJjMC40ODEtMC4xNDIsMC45NTgtMC4zMDIsMS40NDEtMC40NDUNCgkJYzAuNzU4LTAuMjI1LDEuNTI0LTAuMjgsMi4zMDMtMC4xMDRjMC45MDUsMC4yMDUsMS42MiwwLjcxLDIuMjI0LDEuMzk0YzAuMDc3LDAuMDksMC4xNTcsMC4xODIsMC4yMzQsMC4yNzMNCgkJQzQyLjQ5NywxMDcuMTE0LDQyLjUsMTA3LjEyNiw0Mi41MDYsMTA3LjEzOXoiLz4NCgk8cGF0aCBmaWxsPSIjMDBCOTk0IiBkPSJNMzguODgsMTAxLjI1NWMwLjA3MywwLjE5NywwLjA3NSwwLjM5NywwLjA2MSwwLjU5NWMtMC4wNzgsMS4wNjMtMC40OTQsMS45NzktMS4yMjcsMi43NQ0KCQljLTAuMzMxLDAuMzQ4LTAuNjk3LDAuNjUzLTEuMTQ5LDAuODMzYy0wLjM5MiwwLjE1Ni0wLjgwOCwwLjE4Mi0xLjIyMywwLjIyMUMzNS4zODMsMTAzLjQyMywzNi40NjMsMTAxLjc1NiwzOC44OCwxMDEuMjU1eiIvPg0KPC9nPg0KPGc+DQoJPHBhdGggZmlsbD0iI0E4QThBOCIgZD0iTTQyLjUwNiwxNDguMDU0Yy0wLjE4NCwwLjE2OS0wLjM3LDAuMzM3LTAuNTUzLDAuNTA5Yy0wLjY3NiwwLjYzOC0xLjE2OSwxLjM4NS0xLjMyMSwyLjMxNA0KCQljLTAuMTk1LDEuMTkxLDAuMDYzLDIuMjgyLDAuNzg4LDMuMjU1YzAuMzcxLDAuNDk5LDAuODEyLDAuOTE1LDEuMzk4LDEuMTUyYzAuMDY5LDAuMDI4LDAuMTM5LDAuMDUzLDAuMjIzLDAuMDg1DQoJCWMtMC4wNzcsMC4yMS0wLjE0NiwwLjQxNS0wLjIyOSwwLjYxNWMtMC40OCwxLjE2NS0xLjEwNCwyLjI0Mi0xLjk1OCwzLjE3NmMtMC4xNTksMC4xNzQtMC4zMzgsMC4zMzEtMC41MjEsMC40NzkNCgkJYy0wLjYyMywwLjUwNC0xLjMyMSwwLjY5Ny0yLjEwNywwLjQ2OGMtMC4zOS0wLjExMy0wLjc3NC0wLjIzOS0xLjE2Mi0wLjM2Yy0wLjQwNS0wLjEyNi0wLjgxNi0wLjIyOC0xLjI0Ni0wLjIzNw0KCQljLTAuNTI0LTAuMDEzLTEuMDEyLDAuMTQ2LTEuNDk3LDAuMzI0Yy0wLjM2OCwwLjEzNy0wLjczOCwwLjI3Ni0xLjEyLDAuMzY3Yy0wLjYsMC4xNDMtMS4xNDItMC4wNDMtMS42NC0wLjM4MQ0KCQljLTAuNTAyLTAuMzM5LTAuODk3LTAuNzg1LTEuMjQyLTEuMjc1Yy0wLjg2NS0xLjIzNC0xLjUyMi0yLjU2OS0xLjkyMy00LjAyNGMtMC4zNTYtMS4yODgtMC40NTQtMi41OTQtMC4yNTMtMy45MTYNCgkJYzAuMTc4LTEuMTcsMC42MTQtMi4yMjQsMS40MzgtMy4wOTZjMC44NTMtMC45MDMsMS45MDItMS4yNzQsMy4xMzMtMS4xNTFjMC42MTQsMC4wNjEsMS4xOTksMC4yMzgsMS43ODgsMC40MDkNCgkJYzAuMjQ0LDAuMDcyLDAuNDk0LDAuMTI1LDAuNzQxLDAuMTg4YzAuMzU0LDAuMDksMC43MDQsMC4wNDgsMS4wNDYtMC4wNTNjMC40ODEtMC4xNDEsMC45NTgtMC4zMDIsMS40NDEtMC40NDQNCgkJYzAuNzU4LTAuMjI2LDEuNTI0LTAuMjgsMi4zMDMtMC4xMDRjMC45MDUsMC4yMDUsMS42MiwwLjcxLDIuMjI0LDEuMzk1YzAuMDc3LDAuMDksMC4xNTcsMC4xODIsMC4yMzQsMC4yNzMNCgkJQzQyLjQ5NywxNDguMDI5LDQyLjUsMTQ4LjA0MSw0Mi41MDYsMTQ4LjA1NHoiLz4NCgk8cGF0aCBmaWxsPSIjQThBOEE4IiBkPSJNMzguODgsMTQyLjE2OWMwLjA3MywwLjE5NywwLjA3NSwwLjM5NiwwLjA2MSwwLjU5NWMtMC4wNzgsMS4wNjMtMC40OTQsMS45NzktMS4yMjcsMi43NQ0KCQljLTAuMzMxLDAuMzQ3LTAuNjk3LDAuNjUyLTEuMTQ5LDAuODMzYy0wLjM5MiwwLjE1Ni0wLjgwOCwwLjE4Mi0xLjIyMywwLjIyMkMzNS4zODMsMTQ0LjMzNywzNi40NjMsMTQyLjY3LDM4Ljg4LDE0Mi4xNjl6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==')
+  background-repeat   no-repeat
+  transition(none)
+
+  &.__white
+    background-position 3px 8px
+
+    &:hover
+      background-position 3px -33px
+
+  &.__gray
+    background-position center -74px
+
+  &.__gray:hover,
+  &.__gray.__js-act
+    background-position center 6px
+
 
 /********************************************************************************************************************/
 /* Header */
 /********************************************************************************************************************/
 
 .header
-  position  fixed
+  position  absolute
   top       0
   left      0
-  right     0
+  width     100%
   z-index   1000
-  height    50px
+
+  min-width 320px
+  height    70px
+
   transition(all 0.4s linear 0s)
-
-  &.__js-dark
-    background-color  rgba(88,88,88,0.9)
-    border-bottom     1px solid #777777
-
-    .top-menu_i
-      color       white
-
-      &:hover
-        color #d5d5d5
 
   &_cnt
     position  relative
     margin    0 auto
-    max-width 1330px
+    max-width 1024px
 
   &_logo
     position    absolute
-    top         10px
-    left        10px
-
-    font-size   18px
+    top         25px
+    left        0
 
   &_nav
     position  absolute
+    left      110px
+    top       30px
+
+  &_phone
+    position    absolute
+    top         30px
+    right       210px
+    font-family 'opensans-bold'
+
+  &_btn
+    position  absolute
+    top       20px
     right     0
-    top       15px
+
+    padding-bottom    6px
+    padding-top       8px
+    padding-left      15px
+    padding-right     15px
+    cursor  pointer
+
+    background-color  rgba(255, 255, 255, 0.25)
+    border            1px solid #f3f5f5
+    color             #ffffff
+
+    transition( all 0.2s linear 0s)
+    border-radius(4px)
+
+    &:hover
+      background-color  rgba(255, 255, 255, 0.5)
+
+  &_btn-2
+    position  absolute
+    top       20px
+    right     0
+
+.header.__slide
+  position  fixed
+  top       -61px
+  right     0
+  z-index   10000
+
+  height            60px
+  border-bottom     1px solid #dadfe1
+
+  color             #b0babf
+  background-color  white
+  transition(0.5s all ease 0s)
+
+  .header_logo
+    top 15px
+
+  .header_nav
+    top 20px
+
+  .header_phone
+    top 20px
+
+  .header_btn-2
+    top 10px
+
+  .top-menu_i
+    color #b0babf
+
+  .top-menu_i:hover,
+  .top-menu_i.__js-act
+    color rgba(79, 89, 98, 0.75)
+
+.header.__slide.__visible
+  transform(translate3d(0, 61px, 0))
+
+
 
 .top-menu
   overflow hidden /* внутри элементы со свойством float */
+  text-transform  uppercase
 
   &_i
     float       left
     display     inline-block
-    width       120px
-    text-align  center
-    color       #7a857d
-    font-weight 300
+    padding     0 20px
+
+    color           white
+    font-size       13px
+    font-weight     300
+    text-align      center
+    text-decoration none
 
     &:hover
       color #d5d5d5
@@ -289,1481 +239,935 @@ body
   &_i.__js-act
     color #d5d5d5
 
+@media screen768
+
+  .title
+    font-size 30px
+
+  .header.__slide
+    display none !important
+
+  .header
+
+    &_nav,
+    &_btn
+      display none
+
+    &_logo
+      top   5px
+      left  10px
+
+    &_phone
+      top   10px
+      right 10px
 
 /********************************************************************************************************************/
-/* Section SioMarket */
+/* Секция Ваша реклама */
 /********************************************************************************************************************/
-.section-sio-market
+.your-adv
   height            100%
   min-height        700px
   max-height        1081px /* высота изображения бэкграунда */
-  background-image  url('/assets/images/market/booklet/section-sio-market_bg.jpg')
-  background-size   cover
+  text-align        center
+
+  background-image      url('/assets/images/market/booklet/section-sio-market_bg.jpg')
+  background-size       cover
+  background-attachment fixed
+
+
+  &_cnt
+    margin      0 auto
+    max-width   500px
+    padding-top 150px
+
+    font-family 'heliosthin'
+    font-size   40px
+
+  &_geo
+    margin  40px auto 0
+    display block
+    width   25px
+    height  25px
+
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTMxLjI0cHgiIGhlaWdodD0iMTMwLjgyOXB4IiB2aWV3Qm94PSIwIDAgMTMxLjI0IDEzMC44MjkiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDEzMS4yNCAxMzAuODI5Ig0KCSB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik02OC42MDIsNTguNzU3Yy0zLjYxNCwwLTYuNTQyLDIuOTMtNi41NDIsNi41NDFjMCwzLjYxNSw2LjU0MiwxMi40MzgsNi41NDIsMTIuNDM4DQoJczYuNTQ3LTguODIyLDYuNTQ3LTEyLjQzOEM3NS4xNDgsNjEuNjg3LDcyLjIxNyw1OC43NTcsNjguNjAyLDU4Ljc1N3ogTTY4LjYwNCw2Ny41MDRjLTEuNDA3LDAtMi41NTQtMS4xNDQtMi41NTQtMi41NTcNCgljMC0xLjQwOSwxLjE0Ni0yLjU1MSwyLjU1NC0yLjU1MWMxLjQxMiwwLDIuNTU1LDEuMTQyLDIuNTU1LDIuNTUxQzcxLjE1OCw2Ni4zNiw3MC4wMTYsNjcuNTA0LDY4LjYwNCw2Ny41MDR6Ii8+DQo8L3N2Zz4NCg==')
+    background-repeat   no-repeat
+    background-position center
+
+  &_text
+    margin-top  40px
+
+  &_text-major
+    font-size 20px
+
+  &_suggest-btn
+    margin          25px 0
+    padding-bottom  10px
+
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMThweCIgaGVpZ2h0PSIxMC4xNjdweCIgdmlld0JveD0iOSA1LjA4MyAxOCAxMC4xNjciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgOSA1LjA4MyAxOCAxMC4xNjciIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPHBvbHlnb24gZmlsbD0iI0ZGRkZGRiIgcG9pbnRzPSIxOC41NjMsMTQuMzE2IDE0LjgxMywxMC45ODkgMTEuMDY0LDcuNjY0IDE4LjU2Myw3LjY2NCAyNi4wNjQsNy42NjQgMjIuMzE0LDEwLjk4OSAiLz4NCjwvc3ZnPg0K')
+    background-repeat   no-repeat
+    background-position bottom  center
+
+  &_footer-text
+    margin-top  20px
+    font-size   12px
+
+
+@media screen768
+
+  .your-adv
+    min-height  500px
+    background-attachment scroll
+
+    &_cnt
+      padding-top 60px
+      font-size   30px
+
+    &_btns,
+    &_footer-text
+      display none
+
+/********************************************************************************************************************/
+/* Секция Phones */
+/********************************************************************************************************************/
+.phones
+  position        relative
+  margin-top      -25px
+  padding-top     25px
+  padding-bottom  60px
+  color           #adadad
+  text-align      center
+
+  &_triangle
+    position      absolute
+    top           0
+    left          50%
+    margin-left   -50px
+
+    width         0
+    height        0
+    border-style  solid
+    border-width  0 50px 25px 50px
+    border-color  transparent transparent #ffffff
+
+  &_title
+    margin-top    30px
+    margin-bottom 30px
+    font-size     18px
+    color         #060606
+
+  &_btns
+    margin      25px auto
+    overflow    hidden
+    width       190px
+    border      1px solid #00b994
+    border-radius(4px)
+
+  &_btn
+    display     block
+    float       left
+    width       50%
+    height      40px
+    cursor      pointer
+
+  &_btn:hover,
+  &_btn.__js-act
+    background-color  #00b994
+
+  &_step-lst
+    margin    0 auto
+    overflow  hidden
+    width     1024px
+
+  &_step-i
+    float       left
+    width       25%
+    text-align  center
+
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTNweCIgaGVpZ2h0PSIxOHB4IiB2aWV3Qm94PSIyLjE2NyA5LjMzMyAxMyAxOCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAyLjE2NyA5LjMzMyAxMyAxOCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8cG9seWdvbiBmaWxsPSIjRUQxQzI0IiBwb2ludHM9IjExLjg5OCwxOC45ODkgOC44OTgsMjIuMzcyIDUuODk4LDI1Ljc1NCA1Ljg5OCwxOC45ODkgNS44OTgsMTIuMjIzIDguODk4LDE1LjYwNCAiLz4NCjwvc3ZnPg0K')
+    background-repeat   no-repeat
+    background-position center right
+
+  &_step-i.__last
+    background-image  none
+
+  &_step-img
+    position  relative
+    height    320px
+
+  &_step-img.__big
+    height  340px
+
+  &_step-t
+    margin-bottom 30px
+    font-size     18px
+    color         #060606
+
+  &_step-major-text
+    color #292929
+
+
+@media screen768
+
+  .phones
+    padding-bottom  10px
+
+    &_triangle,
+    &_title
+      display  none
+
+    &_step-lst
+      width 100%
+
+    &_step-i
+      width       320px
+      padding     0 10px
+      box-sizing  border-box
+
+    .bx-wrapper
+      img
+        display  inline
+
+/********************************************************************************************************************/
+/* Секция Стоимость */
+/********************************************************************************************************************/
+.price
+  overflow  hidden
+
+  &_green
+    text-align        center
+    padding           15px 0
+    background-color  #00b994
+
+  &_t
+    display     inline-block
+    padding     15px 35px
+    border      2px solid white
+    text-align  center
+
+  &_white
+    position          relative
+    padding-bottom    65px
+    background-color  white
+
+  &_cnt
+    position  reelative
+    margin    0 auto
+    width     1024px
+    padding   40px
+    color     #b1b1b1
+
+  &_fingers
+    position    absolute
+    top         -35px
+    left        50%
+    margin-left -280px
+
+    width     1024px
+    height    737px
+
+    background-image    url('/assets/images/market/booklet/phone_lacation_retina.png')
+    background-repeat   no-repeat
+    background-position right center
+    background-size     auto  737px
+
+  &_text
+    width         460px
+    padding-left  20px
+
+  &_text.__major
+    margin-bottom 40px
+    line-height   40px
+    color         #656565
+    font-family   'heliosthin'
+    font-size     24px
+
+  &_map
+    height          250px
+    border-top      1px solid #e1e1e1
+    border-bottom   1px solid #e1e1e1
+
+    background-image    url('/assets/images/market/booklet/map_retina.jpg')
+    background-size     auto 250px
+    background-position -400px 0
+
+  &_map-inner
+    margin  0 auto
+    padding 0 20px
+    width   984px
+
+  &_map-text
+    padding   40px 0
+    color     #464646
+    font-size 30px
+
+
+@media screen768
+
+  .price
+
+    &_t
+      border none
+
+      .title
+        font-size 26px
+
+    &_cnt
+      width       100%
+      box-sizing  border-box
+      padding     10px
+
+    &_text
+      padding 0
+      width   auto
+
+    &_text.__major
+      margin-bottom 10px
+      font-size     24px
+      line-height   24px
+
+    &_white
+      padding-bottom  0
+
+    &_map
+      height              216px
+      background-image    url('/assets/images/market/booklet/price-map_retina_phone.png')
+      background-repeat   no-repeat
+      background-size     100%
+      background-position center
+
+      .btn
+        display none
+
+    &_map-inner
+      margin  10px 0 0 10px
+      padding 0
+      width   auto
+
+    &_map-text
+      width     180px
+      padding   0
+      font-size 18px
+
+    &_fingers
+      top         auto
+      left        auto
+      margin-left 0
+      right       -140px
+      bottom      -130px
+
+      width   100%
+      height  370px
+
+      background-size auto 370px
+
+/********************************************************************************************************************/
+/* Секция Индивидуальная формировка */
+/********************************************************************************************************************/
+.individual
+
+  &_red
+    padding           50px 0
+    border            1px solid #e1e1e1
+    background-color  #9d8080
+
+  &_red-inner
+    margin      0 auto
+    max-width   1024px
+    text-align  center
+    font-size   18px
+
+  &_white
+    position          relative
+    margin            0 auto
+    max-width         1024px
+    padding           25px 0
+    background-color  white
+
+  &_cnt
+    margin        0 auto
+    max-width     1024px
+    counter-reset list
+
+  &_text-i:before
+    float             left
+    padding-right     20px
+
+    font-family       'heliosthin'
+    color             #494949
+    font-size         36px
+
+    counter-increment list
+    content           counter(list) ". "
+
+  &_text
+    margin-bottom 30px
+    overflow      hidden
+    color         #494949
+    font-size     18px
+
+  &_ipad
+    position  absolute
+    bottom    0
+    left      340px
+
+    width     1000px
+    height    527px
+
+    background-image  url('/assets/images/market/booklet/ipad-map_retina.png')
+    background-size   auto 527px
+
+  &_footer-text
+    color       #b1b1b1
+    text-align  center
+
+@media screen768
+
+  .individual
+
+    &_red
+      padding 10px 0
+
+    &_red-inner
+      font-size 16px
+
+      .title
+        font-size 26px
+
+    &_cnt
+      padding 0 10px
+
+    &_white
+      padding-bottom  0
+
+    &_text-i:before
+      font-size 30px
+
+    &_text
+      font-size 16px
+
+    &_ipad
+      position  static
+      height    270px
+      width     100%
+
+      background-image    url('/assets/images/market/booklet/ipad-map_phone_retina.jpg')
+      background-size     auto 270px
+      background-repeat   no-repeat
+      background-position center
+
+    &_footer-text
+      padding       0 10px
+      margin-bottom 10px
+
+/********************************************************************************************************************/
+/* Секция Уровни размещения */
+/********************************************************************************************************************/
+.levels
+  padding-bottom  25px
+
+  &_blue
+    height            280px
+    padding-top       20px
+    background-color  #23969e
+    text-align        center
+
+  &_white
+    position  relative
+    height    400px
+
+  &_phone
+    position    absolute
+    top         -150px
+    left        50%
+    margin-left -530px
+
+    width       1024px
+    height      401px
+
+    background-image    url('/assets/images/market/booklet/phone_screen_retina.png')
+    background-size     auto 401px
+    background-repeat   no-repeat
+    background-position center
+
+  &_phone-text
+    position  absolute
+    color     #393939
+    font-size 18px
+
+  &_phone-text.__left
+    top   221px
+    left  110px
+
+  &_phone-text.__right
+    top   193px
+    right -5px
+
+  &_phone-text.__bottom
+    bottom  -15px
+    left    470px
 
   &_cnt
     position    relative
-    z-index     500
-    padding-top 200px
-
-  &_title
-    title(40px)
-
-  &_logo
-    margin-top    50px
-    margin-left   auto
-    margin-right  auto
-    display       block
+    top         300px
+    text-align  center
 
   &_text
-    padding-top 25px
-    text-align  center
-    color       #aeadad
+    padding-left  40px
+    color         #464646
+    font-size     18px
 
-  &_wifi
-    color     #e3e3e3
-    font-size 24p
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTMxLjI0cHgiIGhlaWdodD0iMTMwLjgyOXB4IiB2aWV3Qm94PSIwIDAgMTMxLjI0IDEzMC44MjkiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDEzMS4yNCAxMzAuODI5Ig0KCSB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik03NC45NDMsNzMuMDY2bC0zLjQ4LTMuNDgxYzAuNzYtMS4wNzksMS4xNzQtMi4zNTksMS4xNzQtMy43MDZjMC0xLjcyNi0wLjY3Mi0zLjM0OC0xLjg5My00LjU2Nw0KCWMtMS4yMi0xLjIyLTIuODQyLTEuODkyLTQuNTY3LTEuODkycy0zLjM0OCwwLjY3Mi00LjU2NywxLjg5MmMtMi41MTksMi41MTktMi41MTksNi42MTYsMCw5LjEzNQ0KCWMxLjIyLDEuMjIxLDIuODQyLDEuODkzLDQuNTY3LDEuODkzYzEuMzQ3LDAsMi42MjctMC40MTQsMy43MDUtMS4xNzRsMy40ODEsMy40ODFMNzQuOTQzLDczLjA2NnogTTYzLjAyMyw2OS4wMzINCgljLTEuNzM4LTEuNzM5LTEuNzM4LTQuNTY3LDAtNi4zMDdjMC44NDItMC44NDIsMS45NjItMS4zMDYsMy4xNTMtMS4zMDZzMi4zMTIsMC40NjQsMy4xNTMsMS4zMDYNCgljMC44NDMsMC44NDMsMS4zMDcsMS45NjIsMS4zMDcsMy4xNTNzLTAuNDY0LDIuMzExLTEuMzA3LDMuMTUzcy0xLjk2MiwxLjMwNy0zLjE1MywxLjMwN1M2My44NjYsNjkuODc1LDYzLjAyMyw2OS4wMzJ6Ii8+DQo8L3N2Zz4NCg==')
+    background-repeat   no-repeat
+    background-position -50px center
+
+  &_btn
+    padding 30px 0
+
+  &_link
+    color #f44040
+
+@media screen768
+  .levels
+    display none
+
+/********************************************************************************************************************/
+/* Slider */
+/********************************************************************************************************************/
+.bx-pager
+  position  static !important
+  margin    0 0 40px !important
+
+.bx-pager-link
+  width               15px !important
+  color               white !important
+  background-color    transparent !important
+
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTQuNzVweCIgaGVpZ2h0PSIzNC4xMDlweCIgdmlld0JveD0iMCAwIDE0Ljc1IDM0LjEwOSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTQuNzUgMzQuMTA5IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBCOTk0IiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGN4PSI3LjI2NSIgY3k9IjI2LjEwOCIgcj0iMy44NzMiLz4NCjxjaXJjbGUgZmlsbD0iIzAwQjk5NCIgc3Ryb2tlPSIjMDBCOTk0IiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGN4PSI3LjI2NSIgY3k9IjguMTA4IiByPSIzLjg3MyIvPg0KPC9zdmc+DQo=') !important
+  background-repeat   no-repeat !important
+  background-position 0 -3px !important
+  border-radius(0 !important)
+
+  &.active
+    background-position 0 -21px !important
+
+.bx-controls-direction
+  position    absolute
+  bottom      40px
+  left        50%
+  margin-left -175px
+
+  display     block
+  width       350px
+
+.bx-prev
+  width             40px !important
+  height            40px !important
+  top               5px !important
+  margin-top        0 !important
+  opacity           1 !important
+  background-color  transparent !important
+
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNDBweCIgaGVpZ2h0PSI5Mi41cHgiIHZpZXdCb3g9IjAgMCA0MCA5Mi41IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA0MCA5Mi41IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0iIzAwQjk5NCIgY3g9IjIwLjUiIGN5PSI3Mi4yNSIgcj0iMTYuNSIvPg0KPHBvbHlsaW5lIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRzPSINCgkyMy4zMzQsNjMuNzkyIDE0Ljg5Niw3Mi4yMjkgMjMuNzEsODEuMDQyICIvPg0KPHBvbHlsaW5lIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwQjk5NCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRzPSINCgkyMy4zMzQsMTYuNzkyIDE0Ljg5NiwyNS4yMjkgMjMuNzEsMzQuMDQyICIvPg0KPC9zdmc+DQo=') !important
+  background-repeat   no-repeat !important
+  background-position 0 0 !important
+
+  &:hover
+    background-position 0 -50px !important
+
+.bx-next
+  width             40px !important
+  height            40px !important
+  top               5px !important
+  margin-top        0 !important
+  opacity           1 !important
+  background-color  transparent !important
+
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNDBweCIgaGVpZ2h0PSI5Mi41cHgiIHZpZXdCb3g9IjAgMCA0MCA5Mi41IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA0MCA5Mi41IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0iIzAwQjk5NCIgY3g9IjIwLjUiIGN5PSI3MS41IiByPSIxNi41Ii8+DQo8cG9seWxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludHM9Ig0KCTE3LjY2Niw2My4wNDIgMjYuMTA0LDcxLjQ3OSAxNy4yOSw4MC4yOTIgIi8+DQo8cG9seWxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBCOTk0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludHM9Ig0KCTE3LjY2NiwxNi4wNDIgMjYuMTA0LDI0LjQ3OSAxNy4yOSwzMy4yOTIgIi8+DQo8L3N2Zz4NCg==')
+  background-repeat   no-repeat !important
+  background-position 0 0 !important
+
+  &:hover
+    background-position 0 -50px !important
+
+.slider
+
+  &_i
+    height      640px
+    text-align  center
+
+.slide-1
+
+  &_bg
+    height              350px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-1_retina.jpg')
+    background-size     cover
+    background-position center
+
+  &_t
+    font-size 50px
+    margin    40px 0
+
+  &_t-2
+    font-size 40px
+    margin    40px 0
+
+  &_white
+    font-family 'heliosthin'
+    font-size   22px
+    color       #4a2868
+
+  &_subtitle
+    margin    25px 0 0
+    font-size 24px
+    color     #4d4d4d
+
+  &_subtitle-major
+    font-size 30px
+
+  &_text-minor
+    margin-bottom 35px
+    font-size     12px
+    color         #666666
+
+  &_text-green
+    font-size 21px
+    color     #22b073
+
+@media screen768
+
+  .slider_i
+    height    auto
+    font-size 14px
+
+  .slide-1
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    15px 0
+      font-size 30px
+
+    &_t-2
+      margin    0
+      font-size 20px
+
+    &_subtitle
+      margin-top    5px
+      display       inline-block
+      border        2px solid #4a2868
+      padding       5px 20px
+
+    &_text-minor
+      margin  10px 0
+
+    &_white
+      margin-bottom 10px
+      padding       0 10px
+      font-size     14px
+
+
+.slide-2
+
+  &_bg
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-2_retina.jpg')
+    background-size     cover
+    background-position center
+    font-size           22px
+
+  &_t
+    margin    65px 0 30px
+    font-size 50px
+
+  &_color-bg
+    border-top        1px solid white
+    padding           20px 0
+    background-color  #00b994
+
+  &_border-title
+    display   inline-block
+    padding   15px 35px
+    border    2px solid white
+    font-size 20px
+
+  &_border-title-major
+    font-size 33px
+
+  &_text
+    margin-top  35px
+    font-size   16px
+    color       #666666
+
+@media screen768
+
+  .slide-2
+
+    &_bg
+      height    160px
+      font-size 14px
+
+    &_t
+      margin    10px 0
+      font-size 24px
+
+    &_border-title
+      border    none
+      padding   0 15px
+      font-size 14px
+
+    &_border-title-major
+      font-size 24px
+
+    &_text
+      margin    15px 0
+      font-size 14px
+
+.slide-3
+
+  &_bg
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-3_retina.jpg')
+    background-size     cover
+    background-position center
+
+  &_t
+    margin    50px 0
+    font-size 50px
+
+  &_subtitle-major
+    font-size 37px
+
+  &_subtitle-major.__small
+    font-size 22px
+
+  &_text
+    margin    30px auto
+    max-width 1024px
+    overflow  hidden
+    color     #808080
+
+    &.__centered
+      max-width 685px
+
+    &.__major
+      color       #4d4d4d
+      font-family 'heliosthin'
+      font-size   18px
+
+    &.__size-S
+      font-size 12px
+
+@media screen768
+
+  .slide-3
+
+    .f-left,
+    .f-right
+      float   none
+      display block
+      margin  10px 0
+
+      &:first-child
+        margin-top  0
+
+      &:last-child
+        margin-bottom 0
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    10px 0
+      font-size 30px
+
+    &_gray
+      color #787878
+
+    &_text
+      margin  10px 0
+
+    &_phone-green
+      color #00b994
+
+    &_phone-border
+      margin  10px
+      border  2px solid #00b994
+
+
+.slide-4
+  position  relative
+
+  &_bg
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-4_retina.jpg')
+    background-size     cover
+    background-position center
+
+  &_t
+    margin    20px 0 30px
+    font-size 50px
+
+  &_ipad
+    position    absolute
+    bottom      0
+    left        50%
+    margin-left -250px
+
+    width   500px
+    height  381px
+
+    background-image  url('/assets/images/market/booklet/slide-4_ipad_retina.png')
+    background-repeat no-repeat
+    background-size   auto 381px
+
+
+@media screen768
+
+  .slide-4
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    40px 0
+      font-size 30px
+
+    &_ipad
+      position  static
+      width     100%
+      height    216px
+      margin    0
+
+      background-image    url('/assets/images/market/booklet/search_phone_retina.jpg')
+      background-repeat   no-repeat
+      background-size     auto 216px
+      background-position center
+
+    &_phone-gray
+      margin    10px 0
+      color     #8b8b8b
+
+
+/********************************************************************************************************************/
+/*  Преимущества */
+/********************************************************************************************************************/
+.advantages
+
+  &_color-bg
+    height            325px
+    overflow          hidden
+    background-color  #9d8080
+    text-align        center
+
+  &_t
+    margin    40px 0 25px
+    font-size 50px
+
+  &_column-lst
+    margin    0 auto
+    overflow  hidden
+    max-width 1024px
+
+  &_column
+    float         left
+    width         33%
+    font-family   'heliosthin'
+    font-size     20px
+
+  &_bottom
+    position  relative
+    height    325px
+
+  &_map
+    float   left
+    width   50%
+    height  100%
+
+    background-image  url('/assets/images/market/booklet/map-advantages_retina.jpg')
+    background-size   cover
+
+  &_wood
+    position  relative
+    float     left
+    width     50%
+    height    100%
+
+    background-image  url('/assets/images/market/booklet/wood_retina.jpg')
+    background-size   cover
+
+  &_gadgets
+    position    absolute
+    bottom      0
+    left        50%
+    margin-left -395px
+
+    width       790px
+    height      449px
+
+    background-image    url('/assets/images/market/booklet/gadgets_retina.png')
+    background-repeat   no-repeat
+    background-size     auto  449px
+    background-position 0 20px
+
+  &_phone
+    position  absolute
+    bottom    100px
+    left      600px
+
+    text-align  left
+    font-size   18px
+    font-weight bold
 
   &_btn
     position  absolute
-    bottom    150px
-    left      0
-    width     100%
+    bottom    50px
+    left      600px
 
-  &_go-bottom-btn
-    position    absolute
-    left        50%
-    bottom      10px
-    z-index     10
-    margin-left -13px
-
-    display     block
-    width       27px
-    height      45px
-    background  url('/assets/images/market/booklet/go-bottom-icon.png') no-repeat
-
-/********************************************************************************************************************/
-/* Section About */
-/********************************************************************************************************************/
-.section-about
-
-  &_cnt
-    padding-top 150px
-
-  &_title
-    color           #666
-    title(40px)
-
-
-  &_wifi-title
-    text-align  center
-    margin-top  80px
-    font-size   20px
-    color       #4c4c4c
-
-  &_wifi-text
-    text-align  center
-    margin-top  15px
-    font-size   16px
-    font-weight 300
-    color       #666
-
-  &_icons-title
-    text-align  center
-    margin-top  50px
-    font-size   20px
-    color       #ec1c23
-
-  &_offers
-    overflow      hidden /* внутри элементы со свойством float */
-    margin-top    90px
-    margin-bottom 90px
-    text-align    center
-
-  &_bottom-title
-    margin-top      150px
-    margin-bottom   50px
-    title(40px)
-
-
-.section-about-offer
-  width 33%
-  float left
-
-  &_icon
-    margin      0 auto
-    width       103px
-    height      103px
-    background  url('/assets/images/market/booklet/section-about_icons.png')
-
-  &_icon.__icon-1
-    background-position 0 -153px
-
-  &_icon.__icon-2
-    background-position 0 -306px
-
-  &_icon.__icon-3
-    background-position 0 0
-
-  &_text
-    margin-top  15px
-    padding     0 10px
-    color       #666
-    text-align  center
-    font-size   14px
-    font-weight 300
-
-/********************************************************************************************************************/
-/* Section Start */
-/********************************************************************************************************************/
-.section-start
-
-  &_bg-paralax
-    background-image    url('/assets/images/market/booklet/section-2-4_bg.jpg')
-    background-position center -270px
-
-  &_cnt
-    position    relative
-    padding-top 65px
-
-  &_icon
-    float       left
-    width       50%
-    height      233px
-    background  url('/assets/images/market/booklet/section-start_icon.png') no-repeat center center
-
-  &_descr
-    overflow    hidden
-    text-align  center
-    color       #d3d1d1
-    font-size   12px
-
-  &_title
-    padding-top     10px
-    padding-bottom  20px
-    color           attentionColor
-    title(40px)
-
-  &_text
-    font-size   16px
-    font-weight 300
-    color       white
-    padding 0 10px
-
-  &_btn
-    margin-top 30px
-
-.browsers
-  overflow      hidden
-  margin-top    50px
-  margin-bottom 20px
-  text-align    center
-
-  &_i
-    display           inline-block
-    width             50px
-    height            50px
-    background-image  url('/assets/images/market/booklet/retina/browser-icons.png')
-    background-repeat no-repeat
-    background-size   46px auto
-
-  &_i.__icon-1
-    background-position 0 0
-
-  &_i.__icon-2
-    background-position 0 -70px
-
-  &_i.__icon-3
-    background-position 0 -138px
-
-  &_i.__list
-    margin-left 70px
-
-
-/********************************************************************************************************************/
-/* Section I can */
-/********************************************************************************************************************/
-.section-i-can
-
-  &_cnt
-    overflow        hidden
-    padding-top     180px
-    padding-bottom  240px
-
-  &_descr
-    position    relative
-    float       left
-    width       50%
-
-    color       #666
-    font-size   16px
-    font-weight 300
-    text-align  center
-
-  &_title
-    padding-bottom  35px
-    color           attentionColor
-    title(30px)
-
-  &_icon
-    float       left
-    width       50%
-    height      189px
-    background  url('/assets/images/market/booklet/section-i-can_icon.png') no-repeat center center
-
-  &_text
-    padding 0 10px
-
-/********************************************************************************************************************/
-/* Section You wil notice */
-/********************************************************************************************************************/
-.section-you-notice
-  height              400px
-
-  &_bg-paralax
-    background-image    url('/assets/images/market/booklet/section-2-4_bg.jpg')
-    background-position center -270px
-
-  &_cnt
-    position    relative
-    padding-top 85px
-
-  &_icon
-    float       left
-    width       50%
-    height      205px
-    background  url('/assets/images/market/booklet/section-you-notice_icon.png') no-repeat center center
-
-  &_descr
-    overflow    hidden
-    width       50%
-
-    color       white
-    font-size   16px
-    font-weight 300
-    text-align  center
-
-  &_title
-    padding-bottom  50px
-    color           attentionColor
-    title(30px)
-
-  &_text
-    padding 0 10px
-
-/********************************************************************************************************************/
-/* Section So easy */
-/********************************************************************************************************************/
-.section-so-easy
-
-  &_cnt
-    overflow        hidden
-    padding-top     70px
-    padding-bottom  140px
-
-  &_descr
-    float       left
-    width       50%
-
-    color       #666
-    font-size   16px
-    font-weight 300
-    text-align  center
-
-  &_title
-    padding-bottom  35px
-    color           attentionColor
-    title(30px)
-
-  &_text
-    padding 0 10px
-
-  &_icon
-    overflow     hidden
-    width       50%
-    height      246px
-    background  url('/assets/images/market/booklet/section-so-easy_icon.png') no-repeat center center
-
-  &_btn
-    margin-top  100px
-
-/********************************************************************************************************************/
-/* Section How it works */
-/********************************************************************************************************************/
-.section-how-it-works
-
-  &_bg-paralax
-    background-image    url('/assets/images/market/booklet/section-how-it-works_bg.jpg')
-
-  &_cnt
-    position        relative
-    padding-bottom  140px
-
-  &_title
-    position        relative
-    margin          0 auto
-    max-width       1090px
-    padding-top     250px
-    title(45px)
-
-  &_icon
-    margin-top    160px
-    margin-left   auto
-    margin-right  auto
-    width         106px
-    height        106px
-    background    url('/assets/images/market/booklet/section-how-it-works_icon.png') no-repeat
-
-  &_text
-    max-width   650px
-    margin      70px auto 0
-    font-size   16px
-    font-weight 300
-    color       #9b9b9b
-    text-align  center
-
-  &_place-icon
-    margin-top    50px
-    margin-bottom 100px
-    margin-left   auto
-    margin-right  auto
-
-    width         33px
-    height        52px
-    background    url('/assets/images/market/booklet/place-icon.png') no-repeat
-
-/********************************************************************************************************************/
-/* Section Only you */
-/********************************************************************************************************************/
-.section-only-you
-
-  &_cnt
-    margin          0 auto
-    max-width       1090px
-    padding-top     75px
-    padding-bottom  135px
-
-  &_text
-    margin-top    70px
-    margin-bottom 50px
-    color         #666
-    font-size     16px
-    font-weight   300
-    text-align    center
-
-  &_title-w
-    display       inline-block
-    margin-bottom 50px
-
-  &_title
-    title(50px)
-
-  &_title-border
-    height              20px
-    margin              0 108px
-    background-image    url('/assets/images/market/booklet/section-only-you_border.png')
-    background-repeat   repeat-x
-    background-position center bottom
-
-.only-you-block
-  float left
-  width 50%
-
-  &_icon
-    margin            0 auto
-    width             100px
-    height            100px
-    background-image  url('/assets/images/market/booklet/section-only-you_icons.png')
-    background-repeat no-repeat
-
-  &_icon.__block-1
-    background-position 0 0
-
-  &_icon.__block-2
-    background-position 0 -133px
-
-  &_icon.__block-3
-    background-position 0 -283px
-
-  &_icon.__block-4
-    background-position 0 -412px
-
-  &_text
-    margin-top  15px
-    padding     0 15px
-    color       #666
-    text-align  center
-    font-size   14px
-    font-weight 300
-
-/********************************************************************************************************************/
-/* Section Advantages */
-/********************************************************************************************************************/
-.section-advantages
-
-  &_bg-paralax
-    background-image    url('/assets/images/market/booklet/section-advantages_bg.jpg')
-
-  &_cnt
-    position        relative
-    padding-top     150px
-    padding-bottom  100px
-    text-align      center
-
-  &_title
-    display         inline-block
-    padding-top     5px
-    padding-bottom  5px
-    color           lightColor
-    border          3px solid lightColor
-    title(40px)
-
-  &_plus
-    color       lightColor
-    font-size   30px
-    margin-top  70px
-    text-align  center
-
-  &_btn
-    margin-top 50px
-
-  &_block
-    max-width     450px
-    margin-left   auto
-    margin-right  auto
-    margin-top    70px
-    color         #e7e7e7
-    text-align    center
-    font-size     14px
-    font-weight   300
-
-/********************************************************************************************************************/
-/* Section Equipment */
-/********************************************************************************************************************/
-.section-equipment
-
-  &_btn-w
-    padding-top     40px
-    padding-bottom  20px
-
-  &_btn
-    display             block
-    width               74px
-    height              74px
-    margin              0 auto
-    border              2px solid attentionColor
-
-    cursor              pointer
-    background          url('/assets/images/market/booklet/retina/wifi-icon.png') no-repeat
-    background-size     34px auto
-    background-position center 18px
-    border-radius(50%)
-
-    &:hover
-      background-color    attentionColor
-      background-position center -47px
-
-    &:active
-      background-position center -46px
-
-  &_slide
-    overflow    hidden
-    position    relative
-
-  &_cnt-w
-    margin-top        18px
-    background-color  #eeecec
-
-  &_cnt
-    max-width         1110px
-    margin            0 auto
-    padding-top       35px
-    padding-bottom    100px
-
-
-  &_title
-    margin-bottom   50px
-    title(50px)
-
-  &_angle
-    position    absolute
-    top         0
-    left        50%
-    margin-left -44px
-    z-index     200
-
-    width       88px
-    height      18px
-    background  url('/assets/images/market/booklet/section-equipment_angle.png') no-repeat
-
-.equipment-block
-  width 33%
-  float left
-
-  &_icon
-    margin      0 auto
-    width       20px
-    height      20px
-    padding     10px
-    border      1px solid attentionColor
-
-    font-size   18px
-    line-height 18px
-    text-align  center
-    border-radius(50%)
-
-  &_text
-    margin-top  30px
-    padding     0 10px
-
-    color       #666
-    font-size   14px
-    font-weight 300
-    text-align  center
-
-/********************************************************************************************************************/
-/* Section Partnership */
-/********************************************************************************************************************/
-.section-partnership
-
-  &_cnt
-    padding 70px 0
-
-  &_title
-    title(50px)
-
-  &_text
-    margin      40px auto 0
-    max-width   500px
-    padding     0 10px
-
-    color       #666
-    font-size   16px
-    font-weight 300
-    text-align  center
-
-  &_btns
-    overflow  hidden
-    max-width 430px
-    margin    100px auto 0
-
-  &_phone
-    float               left
-    margin-left         50px
-    width               140px
-    padding-top         100px
-    height              40px
-
-    border              2px solid transparent
-    background-color    #f44040
-    background-image    url('/assets/images/market/booklet/phone-icon.png')
-    background-repeat   no-repeat
-    background-position center 20px
-
-    cursor              pointer
-    color               white
-    text-align          center
-    text-decoration     none
-    border-radius(10px)
-
-  &_mail
-    float               right
-    margin-right        50px
-    width               140px
-    padding-top         100px
-    height              40px
-
-    border              2px solid #f44040
-    background-image    url('/assets/images/market/booklet/mail-icon.png')
-    background-repeat   no-repeat
-    background-position center 35px
-
-    cursor              pointer
-    color               #828282
-    text-decoration     none
-    text-align          center
-    border-radius(10px)
-
-    &:hover
-      color               white
-      background-color    #f44040
-      background-image    url('/assets/images/market/booklet/mail-icon_white.png')
-
-
-.retina
-  display none
-
-/********************************************************************************************************************/
-/* Устройства с разрешением меньше 1200px */
-/********************************************************************************************************************/
-@media screen1200
-
-
-  .section-about_title
-    title(30px)
-
-  .section-i-can
-
-    &_descr
-      width 45%
-
-    &_icon
-      width 55%
-
-  .section-how-it-works_title
-    title(25px)
-
-  .section-advantages_title
-    title(35px)
-
-  .section-partnership_title
-    title(45px)
-
-/********************************************************************************************************************/
-/* Устройства с разрешением меньше 1024px */
-/********************************************************************************************************************/
-@media screen1024
-
-  .ipad-visible
-    display block
-
-  .start-work-btn.__section-only-you
-    display none
-
-  .w.__margin-L
-    margin 10px 0
-
-  /* Section SioMarket */
-  .section-sio-market
-    background  none
-    min-height  100%
-    max-height  100%
-
-  /* Section About */
-  .section-about
-    height 100%
-
-    &_bottom-title
-      title(30px)
-
-  /* Section Start */
-  .section-start
-    height 50%
-
-    &_bg-paralax
-      display none
-
-  .browsers
-    margin-top 25px
-
-  /* Section I can */
-  .section-i-can
-    height 50%
-
-   /* Section You notice */
-  .section-you-notice
-    height 50%
-
-  /* Section So easy */
-  .section-so-easy
-    height 50%
-
-   /* Section How it works */
-  .section-how-it-works
-    height 100%
-
-    &_bg-paralax
-      display none
-
-  /* Section Only you */
-  .section-only-you
-    height      100%
-
-  /* Section Advantages */
-  .section-advantages
-    height 100%
-
-    &_bg-paralax
-      display none
-
-  .section-equipment_title
-    title(35px)
-
-/********************************************************************************************************************/
-/* Горизонтальный Ipad */
-/********************************************************************************************************************/
-@media screenGorizontalIpad
-
-
-  /* Section SioMarket */
-  .section-sio-market
-
-    &_cnt
-      padding-top 150px
-
-    &_go-bottom-btn
-      bottom 50px
-
-  /* Section About */
-  .section-about
-
-    &_cnt
-      padding-top 60px
-
-    &_wifi-title
-      margin-top 15px
-
-    &_wifi-text
-      margin-top  5px
-
-    &_icons-title
-      margin-top 40px
-
-    &_offers
-      margin-top    10px
-      margin-bottom 45px
-
-    &_bottom-title
-      margin-top    25px
-      margin-bottom auto
-
-  /* Section Start */
-  .section-start
-
-    &_cnt
-      padding-top 40px
-
-  /* Section I can */
-  .section-i-can
-
-    &_cnt
-      padding-top     80px
-      padding-bottom  none
-
-   /* Section You notice */
-  .section-you-notice
-
-    &_cnt
-      padding-top     40px
-      padding-bottom  none
-
-  /* Section So easy */
-  .section-so-easy
-
-    &_cnt
-      padding-top    10px
-      padding-bottom 0
-
-    &_title
-      padding-top     35px
-      padding-bottom  15px
-
-    &_btn
-      margin-top 10px
-
-   /* Section How it works */
-  .section-how-it-works
-
-    &_title
-      padding-top 100px
-
-    &_icon
-      margin-top 60px
-
-    &_text
-      margin-top 20px
-
-    &_place-icon
-      margin-bottom 50px
-
-  /* Section Only you */
-  .section-only-you
-
-    &_cnt
-      padding-top 15px
-
-    &_text
-      margin-top    30px
-      margin-bottom 10px
-
-  /* Section Advantages */
-  .section-advantages
-
-    &_cnt
-      padding-top 60px
-
-    &_plus
-      margin-top 20px
-
-    &_btn
-      margin-top 0
-
-    &_block
-      margin-top 20px
-
-  /* Section Partnership */
-  .section-partnership
-
-    &_btns
-      margin-top 50px
-
-
-
-/********************************************************************************************************************/
-/* Вертикальный Ipad */
-/********************************************************************************************************************/
-@media screenVerticallIpad
-
-  /* Section About */
-  .section-about
-
-    &_cnt
-      padding-top 60px
-
-    &_bottom-title
-      margin-top 100px
-
-  /* Section I can */
-  .section-i-can
-
-    &_cnt
-      padding-top     100px
-      padding-bottom  0
-
-    &_title
-      title(20px)
-
-  /* Section You notice */
-  .section-you-notice
-
-    &_title
-      title(10px)
-
-  /* Section So easy */
-  .section-so-easy
-
-    &_cnt
-      padding-bottom  0
-      padding-top     40px
-
-    &_btn
-      margin-top 70px
-
-    &_title
-      padding-top 35px
-      title(10px)
-
-  /* Section How it works */
-  .section-how-it-works
-
-    &_title
-      padding-top 150px
-
-    &_icon
-      margin-top 60px
-
-  /* Section Advantages */
-  .section-advantages
-
-    &_cnt
-      padding-top 60px
-
-    &_plus,
-    &_block
-      margin-top 50px
-
-  /* Section Equipment */
-  .section-equipment
-
-    &_btn-w
-      padding-top 80px
-
-
-
-/********************************************************************************************************************/
-/* Retina ready */
-/********************************************************************************************************************/
-@media retina
-
-  .not-retina
-    display none
-
-  .retina
-    display block
-
-  .section-sio-market_go-bottom-btn
-    background-image  url('/assets/images/market/booklet/retina/go-bottom-icon.png')
-    background-size   27px auto
-
-  .section-about-offer_icon
-    background-image  url('/assets/images/market/booklet/retina/section-about-icons.png')
-    background-size   103px auto
-
-    &.__icon-1
-      background-position 0 0
-
-    &.__icon-2
-      background-position 0 -128px
-
-    &.__icon-3
-      background-position 0 -256px
-
-  .section-start_icon
-    background-image  url('/assets/images/market/booklet/retina/section-start_icon.png')
-    background-size   auto 100%
-
-  .section-i-can_icon
-    background-image  url('/assets/images/market/booklet/retina/section-i-can_icon.png')
-    background-size   335px auto
-
-  .section-you-notice_icon
-    background-image  url('/assets/images/market/booklet/retina/section-you-notice_icon.png')
-    background-size   321px auto
-
-  .section-so-easy_icon
-    background-image  url('/assets/images/market/booklet/retina/section-so-easy_icon.png')
-    background-size   auto 100%
-
-  .section-how-it-works_icon
-    background-image  url('/assets/images/market/booklet/retina/section-how-it-works_icon.png')
-    background-size   100% auto
-
-  .section-how-it-works_place-icon
-    background-image  url('/assets/images/market/booklet/retina/place-icon.png')
-    background-size   100% auto
-
-  .only-you-block_icon
-    background-image  url('/assets/images/market/booklet/retina/section-only-you_icons.png')
-    background-size   90px 404px
-
-    &.__block-1
-      background-position 0 0
-
-    &.__block-2
-      background-position 0 -108px
-
-    &.__block-3
-      background-position 0 -233px
-
-    &.__block-4
-      background-position 0 -337px
-
-
-  .section-only-you_title-border
-    background-image    url('/assets/images/market/booklet/retina/section-only-you_border.png')
-    background-repeat   repeat-x
-    background-size     35px auto
-    background-position center bottom
-
-  .section-partnership_phone
-    background-image  url('/assets/images/market/booklet/retina/phone-icon.png')
-    background-size   35px auto
-
-  .section-partnership_mail
-    background-image  url('/assets/images/market/booklet/retina/mail-icon.png')
-    background-size   102px auto
-
-    &:hover
-      background-image url('/assets/images/market/booklet/retina/mail-icon_white.png')
-      background-size  102px auto
-
-
-/********************************************************************************************************************/
-/* Устройства с разрешением меньше 768px */
-/********************************************************************************************************************/
 @media screen768
 
-  .ipad-visible
-    display none
+  .advantages
 
-  .phone-visible
-    display block
+    &_color-bg
+      height  auto
 
-  .phone-hidden
-    display none
-
-  .start-work-btn
-    font-size 12px
-    padding   10px 50px
-
-    &:active
-      padding 11px 50px 9px
-
-    &.__section-sio-market
-      margin-top 10px
-
-    &.__section-only-you
-      margin-top 0
-
-  .w
-
-    &.__margin-L
-      margin 10px 0
-
-  .header
-    display none
-
-  /* Section SioMarket */
-  .section-sio-market
-    background  none
-    min-height  100%
-    max-height  100%
-
-    &_cnt
-      padding-top 10px
-
-    &_title
-      title(5px)
-
-    &_btn
-      bottom 10px
-
-    &_logo
-      margin-top 10px
-
-    &_text
-      padding-top   25px
-      padding-left  10px
-      padding-right 10px
-
-    &_go-bottom-btn
-      display none
-
-  /* Section About */
-  .section-about
-    height 200%
-
-    &_cnt
-      padding-top 10px
-
-    &_title
+    &_t
+      margin    10px 0 15px
       font-size 30px
-      title(0)
 
-    &_wifi-title
-      font-size  16px
-      margin-top 10px
+    &_gadgets
+      left    0
+      margin  0
+      top     0
 
-    &_wifi-text
-      padding     0 10px
-      margin-top  5px
+      width   100%
+      height  100%
 
-    &_icons-title
-      margin-top 15px
+      text-align  center
 
-    &_offers
-      margin-top    10px
-      margin-bottom 20px
+      background-image    url('/assets/images/market/booklet/gadgets_phone_retina.png')
+      background-repeat   no-repeat
+      background-position center 0
+      background-size     267px auto
 
-    &_bottom-title
-      margin-top    25px
+    &_column
+      float         none
       margin-bottom 15px
-      title(0)
-
-  .section-about-offer
-    float         none
-    width         auto
-    margin-bottom 10px
-
-    &_text
-      margin-top  5px
-
-  /* Section Start */
-  .section-start
-    height 100%
-
-    &_cnt
-      padding-top 35px
-
-    &_icon
-      float           none
-      width           300px
-      height          150px
-      margin          0 auto
-      background-size auto 100%
-
-    &_title
-      padding-bottom 15px
-
-  /* Section I can */
-  .section-i-can
-    height 100%
-
-    &_cnt
-      padding-top     10px
-
-    &_descr
-      float none
-      width auto
-
-    &_title
-      padding-bottom 15px
-      title(20px)
-
-    &_icon
-      float           none
-      width           260px
-      height          150px
-      margin          0 auto
-      background-size 100% auto
-
-  /* Section You notice */
-  .section-you-notice
-    height 100%
-
-    &_cnt
-      padding-top 0
-
-    &_icon
-      float           none
-      width           260px
-      height          190px
-      margin          0 auto
-      background-size 100% auto
-
-    &_descr
-      float       none
-      width       auto
-      margin-top  10px
-
-    &_title
-      font-size      26px
-      padding-bottom 10px
-      title(5px)
-
-  /* Section So easy */
-  .section-so-easy
-    height 100%
-
-    &_cnt
-      padding-top     15px
-      padding-bottom  30px
-
-    &_descr
-      float none
-      width auto
-
-    &_icon
-      float           none
-      height          150px
-      margin          20px auto 0
-      background-size auto 100%
-
-    &_title
-      padding-top     0
-      padding-bottom  10px
-      title(5px)
+      width         100%
+      font-size     16px
 
     &_btn
-      margin-top 30px
-
-  /* Section How it works */
-  .section-how-it-works
-    height 100%
-
-    &_cnt
-      padding-bottom 20px
-
-    &_title
-      padding-top 0
-      title(0)
-
-    &_icon
-      margin-top 5px
-      width           53px
-      height          53px
-      background-size 100% auto
-
-    &_text
-      margin-top 10px
-      padding 0 10px
-
-    &_place-icon
-      margin-top    0
-      margin-bottom 5px
-
-  /* Section Only you */
-  .section-only-you
-    height 300%
-
-    &_cnt
-      padding-top 30px
-      padding-bottom 0
-
-    &_text
-      margin-top    50px
-      margin-bottom 50px
-      padding       0 10px
-
-    &_title-w
-      margin-bottom 20px
-
-    &_title
-      title(10px)
-
-    &_title-border
-      margin 0 40px
-
-  .only-you-block
-    float         none
-    width         auto
-    margin-bottom 30px
-
-  /* Section Advantages */
-  .section-advantages
-    height 200%
-
-    &_plus
-      margin-top 20px
-
-    &_cnt
-      padding-top 10px
-
-    &_title
-      title(5px)
-      font-size 20px
-
-    &_block
-      margin-top 20px
-
-  /* Section Equipment */
-  .section-equipment
-
-    &_btn-w
-      padding-top 20px
-
-    &_title
-      margin-bottom 30px
-      title(5px)
-
-    &_cnt
-      padding-bottom 10px
-
-  .equipment-block
-    float         none
-    width         auto
-    margin-bottom 30px
-
-    &_text
-      margin-top 10px
-
-  /* Section Partnership */
-  .section-partnership
-    min-height 100%
-
-    &_cnt
-      padding 0
-
-    &_title
-      title(5px)
-
-    &_text
-      margin-top 15px
-      font-size  14px
-
-    &_btns
-      margin-top  10px
-      max-width   300px
+      margin-top  220px
+      position    static
 
     &_phone
-      margin-left         10px
-      width               120px
-      height              30px
-      padding-top         90px
-      background-position center 20px
+      left    0
+      bottom  20px
+      width   100%
 
-    &_mail
-      margin-right        10px
-      width               120px
-      height              50px
-      padding-top         70px
-      background-position center 20px
-
-/********************************************************************************************************************/
-/* Iphone 5 */
-/********************************************************************************************************************/
-@media screenIphone5
-
-  /* Section Sio market */
-  .section-sio-market
-
-    &_cnt
-      padding-top 30px
-
-  /* Section About */
-  .section-about
-    height 200%
-
-    &_cnt
-      padding-top 20px
-
-  .section-you-notice_cnt
-    padding-top 20px
-
-  .section-so-easy_cnt
-    padding-top 20px
-
-  .section-i-can_cnt
-    padding-top 20px
-
-  /* Section Start */
-  .section-start_cnt
-    padding-top 20px
-
-  /* Section Advantages */
-  .section-advantages
-
-    &_cnt
-      padding-top 40px
-
-    &_plus
-      margin-top 40px
-
-    &_block
-      margin-top 50px
-
-    &_btn
-      margin-top 20px
-
-  .section-how-it-works_place-icon
-    margin-bottom 20px
-
-  .section-start_icon
-    background-size   auto 150px
-
-  .section-i-can_icon
-    background-size   260px auto
-
-  .section-you-notice_icon
-    background-size   260px auto
-
-  .section-so-easy_icon
-    background-size   auto 150px
-
-/********************************************************************************************************************/
-/* Iphone 4 */
-/********************************************************************************************************************/
-@media screenIphone4
-
-  /* Section Sio market */
-  .section-sio-market
-
-    &_cnt
-      padding-top 0
-
-    &_logo
-      margin-top 0
-
-    &_text
-      font-size   14px
-      padding-top 10px
-
-  /* Section About */
-  .section-about
-
-    &_wifi-text
-      font-size 14px
-
-    .start-work-btn-w
-      display none
-
-    &_bottom-title
-      display none
-
-  .section-start
-
-    &_cnt
-      padding-top 5px
-
-    &_title
-      padding 0
-
-    &_text
-      font-size 14px
-
-    &_btn
-      margin-top 10px
-
-  .section-i-can_text
-    font-size 14px
-
-  .section-you-notice
-
-    &_title
-      padding-bottom 0
-
-    &_descr
-      font-size 14px
-
-  /* Section So easy */
-  .section-so-easy
-
-    &_cnt
-      padding-top     10px
-
-    &_text
-      font-size 14px
-
-    &_icon
-      margin-top 10px
-
-    &_btn
-      margin-top 10px
-
-  /* Section How it works */
-  .section-how-it-works
-
-    .start-work-btn-w
-      display none
-
-    &_text
-      font-size 14px
-
-  .only-you-block
-
-    &_text
-      margin-top 5px
-
-    &_icon
-      width             45px
-      height            60px
-      background-image  url('/assets/images/market/booklet/section-only-you_icons.png')
-      background-repeat no-repeat
-      background-size   45px auto
-
-    &_icon.__block-2
-      background-position 0 -60px
-
-    &_icon.__block-3
-      background-position 0 -140px
-
-    &_icon.__block-4
-      background-position 0 -195px
-
-
-  /* Section Partnership */
-  .section-partnership
-
-    &_text
-      margin-top 5px
-
-    &_btns
-      margin-top  10px
-      max-width   300px
-
-    &_phone
-      margin-left         30px
-      width               80px
-      height              20px
-      padding-top         60px
-      font-size           10px
-      background-position center 10px
-      background-size     auto 40px
-
-    &_mail
-      margin-right        30px
-      width               80px
-      height              35px
-      padding-top         45px
-      font-size           10px
-      background-position center 15px
-      background-size     60px auto
+      text-align  center
+      color       #101010
