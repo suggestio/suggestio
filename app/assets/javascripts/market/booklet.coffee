@@ -82,3 +82,15 @@ $ document
   $this = $ this
   targetSelector = $this.attr 'href'
   slideToElement targetSelector
+
+$doc = $ document
+
+$doc.ready ()->
+
+  $ '#slider'
+  .bxSlider(
+    auto: true,
+    pager: true,
+    infiniteLoop: false,
+    hideControlOnEnd: false
+  )

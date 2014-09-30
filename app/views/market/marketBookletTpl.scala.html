@@ -14,9 +14,7 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
-    <script src='@routes.Assets.at("javascripts/market/booklet.js")'></script>
-
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.css")'/>
     <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
 
@@ -297,6 +295,27 @@
           </p>
         </div>
       </div>
+
+      <div class="slider_i slide-2">
+        <div class="slide-2_bg">
+          <h2 class="slide-2_t title">
+            Торговые центры
+          </h2>
+          Реклама, размещенная в локации того или иного торгового центра доступна для<br/>просмотров пользователей, которые находятся на территории данного ТЦ или<br/> в непосредственной близости к нему (30-50 м)
+        </div>
+        <div class="slide-2_color-bg">
+          <h3 class="slide-2_border-title">
+            Ежедневный трафик посетителей 100 крупнейших торговых центров Москвы и Санкт-Петербурга<br/>
+            <span class="slide-2_border-title-major">не менее 2 000 000 чел. в день/60 000 000 чел. в месяц.</span>
+          </h3>
+        </div>
+        <p class="slide-2_text">
+          В основном, это молодая, активная публика, настроенная на покупки. Их интересы: одежда, современная электроника,<br/>
+          косметика, парфюмерия, спорт, отдых, развлечения. Посетители ТК находятся непосредственно в поиске товаров,<br/>
+           реклама на них является наиболее эффективной.
+        </p>
+      </div>
+
     </section>
 
     <!--  Преимущества -->
@@ -318,12 +337,24 @@
             рекламодателя.
           </div>
           <div class="advantages_column">
-            Реклама работает на тех покупателей, которые
+            Реклама работает на тех покупателе
             находятся в поиске<br/>товаров и услуг.
           </div>
         </div>
       </div>
+      <div class="advantages_bottom">
+        <div class="advantages_map"></div>
+        <div class="advantages_wood"></div>
+        <div class="advantages_gadgets"></div>
+      </div>
     </section>
+
+
+
+    <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
+    <script src="@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+    <script src='@routes.Assets.at("javascripts/market/booklet.js")'></script>
+
 
   </body>
 </html>
