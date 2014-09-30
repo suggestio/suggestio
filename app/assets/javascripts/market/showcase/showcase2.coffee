@@ -486,6 +486,7 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+      console.log 'position_callback'
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
@@ -1127,6 +1128,7 @@ sm =
           return false
 
         sm.geo.location_requested = false
+        sm.geo.location_node = undefined
         setTimeout sm.geo.get_current_position, 200
         return false
 
