@@ -35,7 +35,7 @@ trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
 
               // Юзер не является админом.
               case None =>
-                IsAdnNodeAdmin.onUnauth(request)
+                IsAdnNodeAdmin.onUnauth(request, pwOpt)
             }
 
           case None => Future successful Results.NotFound

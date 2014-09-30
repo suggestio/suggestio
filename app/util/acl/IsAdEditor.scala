@@ -44,9 +44,10 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
 
   def adId: String
   override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+    val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MAd.getById(adId) flatMap {
+    madOptFut flatMap {
       case Some(mad) =>
         val hasAdv = DB.withConnection { implicit c =>
           MAdvOk.hasAdvUntilNow(mad.id.get)  ||  MAdvReq.hasAdvUntilNow(mad.id.get)
@@ -82,7 +83,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
 
               case None =>
                 debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Anonymous access prohibited.")
-                onUnauth(request)
+                onUnauth(request, pwOpt)
             }
           }
         }
@@ -136,11 +137,12 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
   def adId: String
 
   override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+    val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper getFromRequest request
     pwOpt match {
       // Юзер залогинен. Продолжаем...
       case Some(pw) =>
-        MAd.getById(adId) flatMap {
+        madOptFut flatMap {
           // Найдена запрошенная рекламная карточка
           case Some(mad) =>
             // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
@@ -174,7 +176,7 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
       // С анонимусами разговор короткий.
       case None =>
         trace("invokeBlock(): Anonymous access prohibited to " + adId)
-        onUnauth(request)
+        onUnauth(request, pwOpt)
     }
   }
 }
