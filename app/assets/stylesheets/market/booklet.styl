@@ -27,7 +27,7 @@ font-face( 'opensans-bold' )
 font-face( 'heliosthin' )
 
 body
-  min-width     1024px
+  min-width     320px
   color         white
   font-family   'opensans-light'
   font-size     14px
@@ -48,6 +48,17 @@ body
 
 .hidden
   display none
+
+.phone-visible
+  display none
+
+@media screen768
+
+  .phone-hidden
+    display none
+
+  .phone-visible
+    display block
 
 .f-left
   float left
@@ -118,7 +129,7 @@ body
   width     100%
   z-index   1000
 
-  min-width 1024px
+  min-width 320px
   height    70px
 
   transition(all 0.4s linear 0s)
@@ -228,6 +239,27 @@ body
   &_i.__js-act
     color #d5d5d5
 
+@media screen768
+
+  .title
+    font-size 30px
+
+  .header.__slide
+    display none !important
+
+  .header
+
+    &_nav,
+    &_btn
+      display none
+
+    &_logo
+      top   5px
+      left  10px
+
+    &_phone
+      top   10px
+      right 10px
 
 /********************************************************************************************************************/
 /* Секция Ваша реклама */
@@ -245,7 +277,7 @@ body
 
   &_cnt
     margin      0 auto
-    width       500px
+    max-width   500px
     padding-top 150px
 
     font-family 'heliosthin'
@@ -280,8 +312,22 @@ body
     font-size   12px
 
 
+@media screen768
+
+  .your-adv
+    min-height  500px
+    background-attachment scroll
+
+    &_cnt
+      padding-top 60px
+      font-size   30px
+
+    &_btns,
+    &_footer-text
+      display none
+
 /********************************************************************************************************************/
-/* Секция Ios/Android */
+/* Секция Phones */
 /********************************************************************************************************************/
 .phones
   position        relative
@@ -359,6 +405,28 @@ body
   &_step-major-text
     color #292929
 
+
+@media screen768
+
+  .phones
+    padding-bottom  10px
+
+    &_triangle,
+    &_title
+      display  none
+
+    &_step-lst
+      width 100%
+
+    &_step-i
+      width       320px
+      padding     0 10px
+      box-sizing  border-box
+
+    .bx-wrapper
+      img
+        display  inline
+
 /********************************************************************************************************************/
 /* Секция Стоимость */
 /********************************************************************************************************************/
@@ -432,6 +500,66 @@ body
     color     #464646
     font-size 30px
 
+
+@media screen768
+
+  .price
+
+    &_t
+      border none
+
+      .title
+        font-size 26px
+
+    &_cnt
+      width       100%
+      box-sizing  border-box
+      padding     10px
+
+    &_text
+      padding 0
+      width   auto
+
+    &_text.__major
+      margin-bottom 10px
+      font-size     24px
+      line-height   24px
+
+    &_white
+      padding-bottom  0
+
+    &_map
+      height              216px
+      background-image    url('/assets/images/market/booklet/price-map_retina_phone.png')
+      background-repeat   no-repeat
+      background-size     100%
+      background-position center
+
+      .btn
+        display none
+
+    &_map-inner
+      margin  10px 0 0 10px
+      padding 0
+      width   auto
+
+    &_map-text
+      width     180px
+      padding   0
+      font-size 18px
+
+    &_fingers
+      top         auto
+      left        auto
+      margin-left 0
+      right       -140px
+      bottom      -130px
+
+      width   100%
+      height  370px
+
+      background-size auto 370px
+
 /********************************************************************************************************************/
 /* Секция Индивидуальная формировка */
 /********************************************************************************************************************/
@@ -444,20 +572,20 @@ body
 
   &_red-inner
     margin      0 auto
-    width       1024px
+    max-width   1024px
     text-align  center
     font-size   18px
 
   &_white
     position          relative
     margin            0 auto
-    width             1024px
+    max-width         1024px
     padding           25px 0
     background-color  white
 
   &_cnt
-    margin  0 auto
-    width   1024px
+    margin        0 auto
+    max-width     1024px
     counter-reset list
 
   &_text-i:before
@@ -491,6 +619,45 @@ body
   &_footer-text
     color       #b1b1b1
     text-align  center
+
+@media screen768
+
+  .individual
+
+    &_red
+      padding 10px 0
+
+    &_red-inner
+      font-size 16px
+
+      .title
+        font-size 26px
+
+    &_cnt
+      padding 0 10px
+
+    &_white
+      padding-bottom  0
+
+    &_text-i:before
+      font-size 30px
+
+    &_text
+      font-size 16px
+
+    &_ipad
+      position  static
+      height    270px
+      width     100%
+
+      background-image    url('/assets/images/market/booklet/ipad-map_phone_retina.jpg')
+      background-size     auto 270px
+      background-repeat   no-repeat
+      background-position center
+
+    &_footer-text
+      padding       0 10px
+      margin-bottom 10px
 
 /********************************************************************************************************************/
 /* Секция Уровни размещения */
@@ -559,6 +726,10 @@ body
   &_link
     color #f44040
 
+@media screen768
+  .levels
+    display none
+
 /********************************************************************************************************************/
 /* Slider */
 /********************************************************************************************************************/
@@ -618,8 +789,6 @@ body
   &:hover
     background-position 0 -50px !important
 
-
-
 .slider
 
   &_i
@@ -629,10 +798,11 @@ body
 .slide-1
 
   &_bg
-    height            350px
-    overflow          hidden
-    background-image  url('/assets/images/market/booklet/slide-1_retina.jpg')
-    background-size   cover
+    height              350px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-1_retina.jpg')
+    background-size     cover
+    background-position center
 
   &_t
     font-size 50px
@@ -664,14 +834,47 @@ body
     font-size 21px
     color     #22b073
 
+@media screen768
+
+  .slider_i
+    height  auto
+
+  .slide-1
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    15px 0
+      font-size 30px
+
+    &_t-2
+      margin    0
+      font-size 20px
+
+    &_subtitle
+      display       inline-block
+      border        2px solid #4a2868
+      padding       5px 20px
+
+    &_text-minor
+      margin  15px 0
+
+    &_white
+      margin-bottom 10px
+      padding       0 10px
+      font-size     14px
+
+
 .slide-2
 
   &_bg
-    height            336px
-    overflow          hidden
-    background-image  url('/assets/images/market/booklet/slide-2_retina.jpg')
-    background-size   cover
-    font-size         22px
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-2_retina.jpg')
+    background-size     cover
+    background-position center
+    font-size           22px
 
   &_t
     margin    65px 0 30px
@@ -696,13 +899,38 @@ body
     font-size   16px
     color       #666666
 
+@media screen768
+
+  .slide-2
+
+    &_bg
+      height    160px
+      font-size 14px
+
+    &_t
+      margin    10px 0
+      font-size 24px
+
+    &_border-title
+      border    none
+      padding   0 15px
+      font-size 14px
+
+    &_border-title-major
+      font-size 24px
+
+    &_text
+      margin    15px 0
+      font-size 14px
+
 .slide-3
 
   &_bg
-    height            336px
-    overflow          hidden
-    background-image  url('/assets/images/market/booklet/slide-3_retina.jpg')
-    background-size   cover
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-3_retina.jpg')
+    background-size     cover
+    background-position center
 
   &_t
     margin    50px 0
@@ -716,12 +944,12 @@ body
 
   &_text
     margin    30px auto
-    width     1024px
+    max-width 1024px
     overflow  hidden
     color     #808080
 
     &.__centered
-      width 685px
+      max-width 685px
 
     &.__major
       color       #4d4d4d
@@ -731,14 +959,45 @@ body
     &.__size-S
       font-size 12px
 
+@media screen768
+
+  .slide-3
+
+    .f-left,
+    .f-right
+      float   none
+      display block
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    10px 0
+      font-size 30px
+
+    &_gray
+      color #787878
+
+    &_text
+      margin  15px 0
+
+    &_phone-green
+      color #00b994
+
+    &_phone-border
+      margin  10px
+      border  2px solid #00b994
+
+
 .slide-4
   position  relative
 
   &_bg
-    height            336px
-    overflow          hidden
-    background-image  url('/assets/images/market/booklet/slide-4_retina.jpg')
-    background-size   cover
+    height              336px
+    overflow            hidden
+    background-image    url('/assets/images/market/booklet/slide-4_retina.jpg')
+    background-size     cover
+    background-position center
 
   &_t
     margin    20px 0 30px
@@ -756,6 +1015,33 @@ body
     background-image  url('/assets/images/market/booklet/slide-4_ipad_retina.png')
     background-repeat no-repeat
     background-size   auto 381px
+
+
+@media screen768
+
+  .slide-4
+
+    &_bg
+      height  160px
+
+    &_t
+      margin    40px 0
+      font-size 30px
+
+    &_ipad
+      position  static
+      width     100%
+      height    216px
+      margin    0
+
+      background-image    url('/assets/images/market/booklet/search_phone_retina.jpg')
+      background-repeat   no-repeat
+      background-size     auto 216px
+      background-position center
+
+    &_phone-gray
+      margin  10px 0
+      color   #8b8b8b
 
 
 /********************************************************************************************************************/
@@ -776,7 +1062,7 @@ body
   &_column-lst
     margin    0 auto
     overflow  hidden
-    width     1024px
+    max-width 1024px
 
   &_column
     float         left
@@ -811,8 +1097,8 @@ body
     left        50%
     margin-left -395px
 
-    width   790px
-    height  449px
+    width       790px
+    height      449px
 
     background-image    url('/assets/images/market/booklet/gadgets_retina.png')
     background-repeat   no-repeat
@@ -832,3 +1118,47 @@ body
     position  absolute
     bottom    50px
     left      600px
+
+@media screen768
+
+  .advantages
+
+    &_color-bg
+      height  auto
+
+    &_t
+      margin    10px 0 15px
+      font-size 30px
+
+    &_gadgets
+      left    0
+      margin  0
+      top     0
+
+      width   100%
+      height  100%
+
+      text-align  center
+
+      background-image    url('/assets/images/market/booklet/gadgets_phone_retina.png')
+      background-repeat   no-repeat
+      background-position center 0
+      background-size     267px auto
+
+    &_column
+      float         none
+      margin-bottom 15px
+      width         100%
+      font-size     16px
+
+    &_btn
+      margin-top  220px
+      position    static
+
+    &_phone
+      left    0
+      bottom  20px
+      width   100%
+
+      text-align  center
+      color       #101010

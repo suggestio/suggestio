@@ -79,7 +79,7 @@
     </section>
 
     <!--Phones -->
-    <section class="phones hidden" id="phones">
+    <section class="phones" id="phones">
       <div class="phones_triangle"></div>
       <h2 class="phones_title">
         Чтобы начать пользоваться системой надо открыть браузер на своем<br/>
@@ -94,89 +94,93 @@
         <div class="phones_btn ic-android __gray js-tab" data-cnt="#android"></div>
       </div>
 
-      <div class="phones_step-lst js-tab-cnt" id="ios">
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 1</h3>
-          <div class="phones_step-img">
-            <img src='@routes.Assets.at("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
+      <div class="js-tab-cnt" id="ios">
+        <div class="phones_step-lst js-ios-slider">
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 1</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите на адресную строку браузера,
+              внизу экрана появится панель...
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Нажмите на адресную строку браузера,
-            внизу экрана появится панель...
-          </p>
-        </div>
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 2</h3>
-          <div class="phones_step-img">
-            <img src='@routes.Assets.at("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 2</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку<br/>
+              На экран <span class="phones_step-major-text">«Домой»</span>
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Нажмите кнопку<br/>
-            На экран <span class="phones_step-major-text">«Домой»</span>
-          </p>
-        </div>
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 3</h3>
-          <div class="phones_step-img">
-            <img src='@routes.Assets.at("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 3</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку<br/>
+              <span class="phones_step-major-text">«добавить»</span>
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Нажмите кнопку<br/>
-            <span class="phones_step-major-text">«добавить»</span>
-          </p>
-        </div>
-        <div class="phones_step-i __last">
-          <h3 class="phones_step-t">Шаг 4</h3>
-          <div class="phones_step-img">
-            <img src='@routes.Assets.at("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
+          <div class="phones_step-i __last">
+            <h3 class="phones_step-t">Шаг 4</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Теперь вы можете заходить<br/>
+              в Suggest.io в один клик.
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Теперь вы можете заходить<br/>
-            в Suggest.io в один клик.
-          </p>
         </div>
       </div>
 
-      <div class="phones_step-lst js-tab-cnt hidden" id="android">
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 1</h3>
-          <div class="phones_step-img __big">
-            <img src='@routes.Assets.at("images/market/booklet/android-photo-1_retina.png")' width="211"/>
+      <div class="js-tab-cnt" id="android">
+        <div class="phones_step-lst js-android-slider">
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 1</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-1_retina.png")' width="211"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите на кнопку выбора инструментов
+              на устройстве андроид...
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Нажмите на кнопку выбора инструментов
-            на устройстве андроид...
-          </p>
-        </div>
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 2</h3>
-          <div class="phones_step-img __big">
-            <img src='@routes.Assets.at("images/market/booklet/android-photo-2_retina.png")' width="174"/>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 2</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-2_retina.png")' width="174"/>
+            </div>
+            <p class="phones_step-descr">
+              Выберите из появившегося меню<br/>
+              <span class="phones_step-major-text">«Добавить на главный экран»</span>
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Выберите из появившегося меню<br/>
-            <span class="phones_step-major-text">«Добавить на главный экран»</span>
-          </p>
-        </div>
-        <div class="phones_step-i">
-          <h3 class="phones_step-t">Шаг 3</h3>
-          <div class="phones_step-img __big">
-            <img src='@routes.Assets.at("images/market/booklet/android-photo-3_retina.png")' width="174" />
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 3</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-3_retina.png")' width="174" />
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку
+              <span class="phones_step-major-text">«добавить»</span>
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Нажмите кнопку
-            <span class="phones_step-major-text">«добавить»</span>
-          </p>
-        </div>
-        <div class="phones_step-i __last">
-          <h3 class="phones_step-t">Шаг 4</h3>
-          <div class="phones_step-img __big">
-            <img src='@routes.Assets.at("images/market/booklet/android-photo-4_retina.png")' width="174"/>
+          <div class="phones_step-i __last">
+            <h3 class="phones_step-t">Шаг 4</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-4_retina.png")' width="174"/>
+            </div>
+            <p class="phones_step-descr">
+              Теперь вы можете заходить<br/>
+              в Suggest.io в один клик.
+            </p>
           </div>
-          <p class="phones_step-descr">
-            Теперь вы можете заходить<br/>
-            в Suggest.io в один клик.
-          </p>
         </div>
       </div>
 
@@ -194,7 +198,7 @@
       <div class="price_white">
         <div class="price_cnt">
           <p class="price_text __major">
-            Поисковая выдача Suggest.io зависит от<br/>места, в котором находится<br/>пользователь
+            Поисковая выдача Suggest.io зависит от<br/> места, в котором находится<br/> пользователь
           </p>
           <p class="price_text">
             Пользователи Suggest.io ищут информацию о товарах и услугах в шаговой доступности, в своем районе, во всем Санкт-Петербурге и видят рекламу на экранах своих
@@ -257,8 +261,7 @@
       <div class="individual_footer-text">
         В зависимости от масштаба вашего бизнеса и характеристик вашей целевой аудитории вы можете разместить<br/>свою рекламу в геонацеленной поисковой выдаче Suggest.io в любой локации, в нескольких локациях или во<br/>всех локациях сразу.
       </div>
-    </section>Для размещения рекламы
-    свяжитесь с нашими специалистами
+    </section>
 
     <!-- Уровни размещения -->
     <section class="levels" id="levels">
@@ -292,8 +295,10 @@
           <h2 class="slide-1_t-2 title">
           Округа Москвы&nbsp;/&nbsp;районы Санкт-Петербурга
           </h2>
-          Москва – второй после Лондона, а Санкт-Петербург – третий после Москвы<br/>
-          и Лондона город Европы по численности населения.
+          <span class="phone-hidden">
+            Москва – второй после Лондона, а Санкт-Петербург – третий после Москвы<br/>
+            и Лондона город Европы по численности населения.
+          </span>
         </div>
         <div class="slide-1_white">
           <h3 class="slide-1_subtitle">
@@ -336,8 +341,8 @@
         </div>
         <div class="slide-2_color-bg">
           <h3 class="slide-2_border-title">
-            Ежедневный трафик посетителей 100 крупнейших торговых центров Москвы и Санкт-Петербурга<br/>
-            <span class="slide-2_border-title-major">не менее 2 000 000 чел. в день/60 000 000 чел. в месяц.</span>
+            Ежедневный трафик посетителей 100 крупнейших торговых центров Москвы и Санкт-Петербурга <br/>
+            <span class="slide-2_border-title-major">не менее 2&nbsp;000&nbsp;000 чел. в день&nbsp;/&nbsp;60&nbsp;000&nbsp;000 чел. в месяц.</span>
           </h3>
         </div>
         <p class="slide-2_text">
@@ -354,31 +359,44 @@
           <h2 class="slide-3_t title">
             Аэропорты
           </h2>
-          <h3 class="slide-3_subtitle">
-            Через залы отправления и прибытия международных аэропортов Москвы и Санкт-Петербурга, Шереметьево,<br/>
-            Домодедово, Внуково, Пулково и Центра бизнес авиации Пулково-3, проходит  <span class="slide-3_subtitle-major">более  85 млн</span> пассажиров<br/>
-            в год  ( <span class="slide-3_subtitle-major __small">более 7 млн</span> пассажиров в месяц ).
+          <h3 class="slide-3_subtitle phone-hidden">
+            Через залы отправления и прибытия международных аэропортов Москвы и Санкт-Петербурга, Шереметьево, <br/>
+            Домодедово, Внуково, Пулково и Центра бизнес авиации Пулково-3, проходит  <span class="slide-3_subtitle-major">более  85&nbsp;млн</span> пассажиров<br/>
+            в год  ( <span class="slide-3_subtitle-major __small">более 7&nbsp;млн</span> пассажиров в месяц ).
           </h3>
+          <p class="phone-visible">
+            Через залы отправления и прибытия международных аэропортов Москвы и Санкт-Петербурга, Шереметьево,
+            Домодедово, Внуково, Пулково и Центра бизнес авиации Пулково-3, проходит
+          </p>
         </div>
-        <p class="slide-3_text">
+        <p class="slide-3_gray phone-visible">
+          проходит  более   <span class="slide-3_subtitle-major">85&nbsp;млн</span>
+          пассажиров в год
+          <span class="slide-3_subtitle-major __small">более 7&nbsp;млн</span> пассажиров
+          в месяц.
+        </p>
+
+        <p class="slide-3_text slide-3_phone-green">
           С учетом аудитории встречающих  и провожающих эти цифры становятся еще выше.<br/>
           Характеристики основной аудитории:
         </p>
-        <p class="slide-3_text __major">
-          <span class="f-left">Возрастной сегмент:  15-45 лет.</span>
-          Уровень дохода: средний, высокий.
-          <span class="f-right">Образование: высшее.</span>
-        </p>
-        <p class="slide-3_text __major __centered">
-          <span class="f-left">
-            Служебное положение: профессионалы,<br/>
-            владельцы бизнеса.
-          </span>
-          <span class="f-right">
-            Высокая доля иностранных туристов<br/>
-            и бизнесменов.
-          </span>
-        </p>
+        <div class="slide-3_phone-border">
+          <p class="slide-3_text __major">
+            <span class="f-left">Возрастной сегмент:  15-45 лет.</span>
+            Уровень дохода: средний, высокий.
+            <span class="f-right">Образование: высшее.</span>
+          </p>
+          <p class="slide-3_text __major __centered">
+            <span class="f-left">
+              Служебное положение: профессионалы,<br/>
+              владельцы бизнеса.
+            </span>
+            <span class="f-right">
+              Высокая доля иностранных туристов<br/>
+              и бизнесменов.
+            </span>
+          </p>
+        </div>
         <p class="slide-3_text __size-S">
           Аудитория Suggest.io в международных аэропортах Москвы и Санкт-Петербурга является наиболее активным потребителем товаров<br/>
           и услуг в сферах брендовой одежды и аксессуаров, досуга и развлечений, туризма, спорта и отдыха, жилой и коммерческой<br/>
@@ -392,11 +410,23 @@
             Поиск по товарам<br/>
             и услугам
           </h2>
-          При быстром поиске через строку Live Search<br/>
-          в поисковой выдаче Suggest.io вне зависимости от местоположения пользователя<br/>
-          выводятся все рекламные предложения размещенные в собственных разделах рекламодателей и<br/>
-          соответствующие поисковому запросу.
+          <span class="phone-hidden">
+            При быстром поиске через строку Live Search<br/>
+            в поисковой выдаче Suggest.io вне зависимости от местоположения пользователя<br/>
+            выводятся все рекламные предложения размещенные в собственных разделах рекламодателей и<br/>
+            соответствующие поисковому запросу.
+          </span>
         </div>
+        <p class="slide-4_phone-gray phone-visible">
+          При быстром поиске через строку Live Search
+          в поисковой выдаче Suggest.io
+          вне зависимости от местоположения
+          пользователя
+          выводятся все рекламные предложения
+          размещенные в собственных разделах
+          рекламодателей
+          и соответствующие поисковому запросу.
+        </p>
         <div class="slide-4_ipad"></div>
       </div>
 

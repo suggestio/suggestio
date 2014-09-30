@@ -1,5 +1,19 @@
-$ document
-.scroll () ->
+$doc = $ document
+$win = $ window
+
+
+isTouchDevice = () ->
+  if document.ontouchstart != null
+    false
+  else
+    if navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+      false
+    else
+      true
+
+event = if isTouchDevice() then 'touchend' else 'click'
+
+$doc.scroll () ->
 
   $document = $ document
   $header = $ '#headerSlide'
@@ -14,10 +28,10 @@ $ document
 slideToElement = (selector)->
   HEADER_HEIGHT = 60
   $target = $ selector
-  targetScrollTop = $target.offset().top
+  scrollTop = $target.offset().top
 
-  if targetScrollTop > HEADER_HEIGHT
-    scrollTop = targetScrollTop - HEADER_HEIGHT
+  if $win.width() > 768 && scrollTop > HEADER_HEIGHT
+    scrollTop = scrollTop - HEADER_HEIGHT
 
   $ 'body, html'
   .animate(
@@ -26,8 +40,7 @@ slideToElement = (selector)->
   )
 
 
-$ document
-.on 'click', '.js-tab', (e) ->
+$doc.on event, '.js-tab', (e) ->
   $this = $ this
   selector = $this.attr 'data-cnt'
   $cnt = $ selector
@@ -44,8 +57,7 @@ $ document
   $cnt.show()
 
 
-$ document
-.on 'click', '.js-slide-btn', (e) ->
+$doc.on event, '.js-slide-btn', (e) ->
   $this = $ this
   selector = $this.attr 'data-slide'
   $slideElement = $ selector
@@ -53,8 +65,7 @@ $ document
   $slideElement.slideDown()
   slideToElement selector
 
-$ document
-.on 'click', '.js-slide-tab', (e) ->
+$doc.on event, '.js-slide-tab', (e) ->
   $this = $ this
   slideSelector = $this.attr 'data-slide'
   cntSelector = $this.attr 'data-cnt'
@@ -80,21 +91,53 @@ $ document
   slideToElement slideSelector
 
 
-$ document
-.on 'click', '.js-slide-to', (e) ->
+$doc.on event, '.js-slide-to', (e) ->
   e.preventDefault()
   $this = $ this
   targetSelector = $this.attr 'href'
   slideToElement targetSelector
 
-$doc = $ document
 
 $doc.ready ()->
 
-  $ '#slider'
+  sliderControls = true
+  windWidth = $win.width()
+
+  if windWidth < 768
+    $ 'br'
+    .remove()
+    sliderControls = false
+
+  $ '#sliderCOMMENTED'
   .bxSlider(
     auto: true,
-    pager: true,
+    pager: sliderControls,
+    controls: sliderControls,
     infiniteLoop: false,
     hideControlOnEnd: false
   )
+
+  if windWidth < 768
+    $ '.js-ios-slider'
+    .bxSlider(
+      auto: false,
+      pager: false,
+      controls: false,
+      infiniteLoop: false,
+      hideControlOnEnd: false
+    )
+
+    $ '.js-android-slider'
+    .bxSlider(
+      auto: false,
+      pager: false,
+      controls: false,
+      infiniteLoop: false,
+      hideControlOnEnd: false,
+      onSliderLoad: ()->
+        $ '#phones, #android'
+        .hide()
+    )
+  else
+    $ '#phones, #android'
+    .hide()
