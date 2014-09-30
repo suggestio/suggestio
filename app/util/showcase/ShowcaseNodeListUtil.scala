@@ -41,8 +41,8 @@ object ShowcaseNodeListUtil {
     Future.traverse(detectLevels) { case (lvl, prio) =>
       gsiOptFut.map { gsiOpt =>
         new NodeDetectArgsT {
-          override val geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, lvl) }
-          override val withGeoDistanceSort = geoMode.exactGeodata  // TODO Сделать обязательным м.б.?
+          override def geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, lvl) }
+          override def withGeoDistanceSort = geoMode.exactGeodata  // TODO Сделать обязательным м.б.?
           override def maxResults = 1
         }
       } flatMap { sargs =>
@@ -161,7 +161,7 @@ object ShowcaseNodeListUtil {
   /** Выдать все города,  */
   def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new NodeDetectArgsT {
-      override val shownTypeIds: Seq[String] = Seq(AdnShownTypes.TOWN.name)
+      override def shownTypeIds = Seq(AdnShownTypes.TOWN.name)
       override def withGeoDistanceSort = currGeoPoint
       override def withNameSort = currGeoPoint.isEmpty
       override def maxResults = MAX_TOWNS
@@ -297,6 +297,7 @@ object ShowcaseNodeListUtil {
           townsLayer     <- townsLayerFut
         } yield {
           Seq(districtsLayer, townsLayer)
+            .filter(_.nodes.nonEmpty)
         }
 
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
@@ -316,7 +317,9 @@ object ShowcaseNodeListUtil {
           var acc = buildingsLayers
           if (districtsLayerOpt.isDefined)
             acc ::= districtsLayerOpt.get
-          (townLayer :: acc).reverse
+          (townLayer :: acc)
+            .filter(_.nodes.nonEmpty)
+            .reverse
         }
 
       // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
@@ -337,7 +340,9 @@ object ShowcaseNodeListUtil {
           districtsLayer    <- districtsLayerFut
           buildingsLayers   <- buildingsLayersFut
         } yield {
-          (townLayer :: districtsLayer :: buildingsLayers).reverse
+          (townLayer :: districtsLayer :: buildingsLayers)
+            .filter(_.nodes.nonEmpty)
+            .reverse
         }
     }
   }
@@ -345,16 +350,21 @@ object ShowcaseNodeListUtil {
 }
 
 
-/** В рамках списка узлов выдачи всегда НЕ нужны отключённые и тестовые узлы. */
-sealed trait SmNodesSearchArgsT extends AdnNodesSearchArgs {
+/** общие аргументов для обоих целей. */
+sealed trait SmNodesSearchArgsCommonT extends AdnNodesSearchArgs {
   override def testNode = Some(false)
   override def isEnabled = Some(true)
+}
+
+/** В рамках списка узлов выдачи всегда НЕ нужны отключённые и тестовые узлы. */
+sealed trait SmNodesSearchArgsT extends SmNodesSearchArgsCommonT {
+  override def showInScNodeList = Some(true)
 }
 
 
 /** При детектирования текущего узла происходит поиск единственного продакшен-ресивера.
   * Тут -- common-аргументы, задающие это поведение при поиске узлов. */
-sealed trait NodeDetectArgsT extends SmNodesSearchArgsT {
+sealed trait NodeDetectArgsT extends SmNodesSearchArgsCommonT {
   override def withAdnRights = Seq(AdnRights.RECEIVER)
   override def maxResults = 1
   override def offset = 0

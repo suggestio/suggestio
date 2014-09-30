@@ -397,8 +397,12 @@ object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
           MAdnNodeCache.getById(parentAdnId).map { parentNodeOpt =>
             parentNodeOpt.get.geo.allParentIds
           }
-        }.map {
-          _.reduce(_ ++ _)
+        }.map { idsSets =>
+          if (idsSets.nonEmpty) {
+            idsSets.reduce(_ ++ _)
+          } else {
+            Set.empty
+          }
         }.flatMap { allParentIds0 =>
           val allParentIds = geo2.directParentIds ++ allParentIds0
           MAdnNode.tryUpdate(request.adnNode) { adnNode =>
