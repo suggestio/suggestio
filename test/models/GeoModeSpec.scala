@@ -35,9 +35,26 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuite {
       GeoMode(Some("ip"))  mustBe  theSameInstanceAs(GeoIp)
     }
 
-    "parse and bind qs lat,lon value" in {
+    "parse and bind qs 'lat,lon' value" in {
       GeoMode(Some("59.926185700000005,30.2333629"))   mustBe  GeoLocation(59.926185700000005, 30.2333629)
       GeoMode(Some("-66.245,30.2333629"))   mustBe  GeoLocation(-66.245, 30.2333629)
+    }
+
+    "parse stranger 'lat,lon' value" in {
+      GeoMode(Some("-66.,30"))    mustBe  GeoLocation(-66.0, 30.0)
+      GeoMode(Some("0,-0"))       mustBe  GeoLocation(0.0, 0.0)  // северный полюс.
+    }
+
+    // Для сбора статистики нужна инфа о точности.
+    "parse and bind qs 'lat,lon,accuracy' value" in {
+      GeoMode(Some("59.926185700000005,30.2333629,23.444444"))  mustBe  GeoLocation(59.926185700000005, 30.2333629, Some(23.444444))
+      GeoMode(Some("59.926185700000005,30.2333629,0"))          mustBe  GeoLocation(59.926185700000005, 30.2333629, Some(0.0))
+      GeoMode(Some("59.926185700000005,30.2333629,11"))         mustBe  GeoLocation(59.926185700000005, 30.2333629, Some(11.0))
+    }
+
+    "parse and bind qs 'lat,lon,accur' with invalid/missing accuracy" in {
+      GeoMode(Some("59.926185700000005,30.2333629,null"))       mustBe  GeoLocation(59.926185700000005, 30.2333629)
+      GeoMode(Some("59.926185700000005,30.2333629,"))           mustBe  GeoLocation(59.926185700000005, 30.2333629)
     }
 
   }

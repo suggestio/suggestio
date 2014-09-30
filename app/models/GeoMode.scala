@@ -11,6 +11,7 @@ import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.{Future, future}
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -19,24 +20,55 @@ import scala.concurrent.{Future, future}
  * Description: Режимы геолокации и утиль для них.
  */
 
-object GeoMode extends PlayLazyMacroLogsImpl {
+object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   import LOGGER._
 
+  val latLonNumberRe = """-?\d{1,3}(\.(\d{0,20})?)?""".r
+  val accurNumberRe = """[-+]?\d{1,5}(\.(\d{0,20})?)?""".r
+  val delimRe = "[,;]".r
+
+  /** Ленивый потоко-небезопасный (вроде бы) парсер координат из строки. */
+  def latLonAccurP: Parser[GeoLocation] = {
+    val doubleP = latLonNumberRe ^^ { _.toDouble }
+    val delimP: Parser[_] = delimRe
+    // Аккуратность в метрах -- может отсутствовать, может быть неправильной (null?)
+    val accurOptP: Parser[Option[Double]] = {
+      opt(
+        delimP ~> (accurNumberRe ^^ (s => Some(s.toDouble)) | ("(?i)[^,;]*".r ^^^ None))
+      ) ^^ {
+        _.flatten
+      }
+    }
+    ((doubleP <~ delimP) ~ doubleP ~ accurOptP) ^^ {
+      case lat ~ lon ~ accurOpt  =>  GeoLocation(lat = lat, lon = lon, accuracyMeters = accurOpt)
+    }
+  }
+
   /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
-  val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})""".r
+  val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})(,-?\d{1,3}\.\d{0,20})?""".r
 
   def maybeApply(raw: Option[String]): Option[GeoMode] = {
-    raw.flatMap {
-      case "ip"  => Some(GeoIp)
-      case LAT_LON_RE(latStr, lonStr) =>
-        val res = GeoLocation(latStr.toDouble, lonStr.toDouble)
-        Some(res)
-      case "" =>
-        Some(GeoNone)
-      case other =>
-        warn(s"apply(): Unknown .geo format: $other - fallback to None.")
+    // Сразу пытаемся распарсить координаты - так код проще получается.
+    val latLonParsed = raw.flatMap { raw =>
+      val pr = parse(latLonAccurP, raw)
+      if (pr.successful)
+        Some(pr.get)
+      else
         None
+    }
+    if (latLonParsed.isDefined) {
+      latLonParsed
+    } else {
+      raw.flatMap {
+        case "ip"  =>
+          Some(GeoIp)
+        case "" =>
+          Some(GeoNone)
+        case other =>
+          warn(s"apply(): Unknown .geo format: $other - fallback to None.")
+          None
+      }
     }
   }
 
@@ -226,8 +258,14 @@ object GeoLocation {
 }
 
 
-/** Геолокация с указанием географических координат. */
-final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
+/** Геолокация с указанием географических координат.
+  * @param lat Широта.
+  * @param lon Долгота.
+  * @param accuracyMeters Необязательная точность в метрах.
+  */
+final case class GeoLocation(lat: Double, lon: Double, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
+
+  // TODO Закинуть geopoint в аргументы.
   lazy val geopoint = GeoPoint(lat = lat, lon = lon)
 
   override def isWithGeo = true
