@@ -488,7 +488,6 @@ case class AdNetMemberInfo(
   supId           : Option[String] = None,
   advDelegate     : Option[String] = None,
   testNode        : Boolean = false,
-  // перемещено из mpub:
   showLevelsInfo  : AdnMemberShowLevels = AdnMemberShowLevels(),
   isEnabled       : Boolean = true,
   disableReason   : Option[String] = None,

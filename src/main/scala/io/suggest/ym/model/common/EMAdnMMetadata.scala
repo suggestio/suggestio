@@ -151,6 +151,9 @@ object AdnMMetadata {
   val SECTION_ESFN            = "section"
 
 
+  val DEFAULT = AdnMMetadata(name = "")
+
+
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
     FieldString(fn, include_in_all = iia, index = index)
   }
@@ -219,6 +222,7 @@ object AdnMMetadata {
  * @param welcomeAdId id карточки приветствия в [[io.suggest.ym.model.MWelcomeAd]].
  */
 case class AdnMMetadata(
+  // Класс обязательно immutable! Никаких var, ибо companion.DEFAULT.
   name          : String,
   nameShortOpt  : Option[String] = None,
   description   : Option[String] = None,
