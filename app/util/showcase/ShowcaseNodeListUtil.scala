@@ -219,9 +219,10 @@ object ShowcaseNodeListUtil {
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
       override def shownTypeIds = Seq(AdnShownTypes.TOWN_DISTRICT.name, AdnShownTypes.CITY_DISTRICT.name)
-      override def withNameSort = true
+      override def withNameSort = true  // Почему-то не срабатывает
     }
     MAdnNode.dynSearch(sargs)
+      .map { _.sortBy(_.meta.nameShort) }
   }
 
   def getDistrictsLayerForTown(townNode: MAdnNode)(implicit lang: Lang): Future[GeoNodesLayer] = {
