@@ -42,7 +42,8 @@ sealed class MUserImgMetaRecord extends CassandraTable[MUserImgMetaRecord, MUser
     val dt: DateTime = try {
       timestamp(row)
     } catch {
-      case ex: Exception => DateTime.now()
+      // Если нет таймштампа (старый формат ряда), то выставляем статический. Этого должно быть достаточно.
+      case ex: Exception => new DateTime(2014, 9, 30, 12, 12, 12)
     }
     MUserImgMeta2(md(row), q(row), id(row), dt)
   }
