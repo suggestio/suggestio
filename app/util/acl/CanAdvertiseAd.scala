@@ -88,12 +88,12 @@ trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
           case Some(req1) => block(req1)
           case None =>
             debug(s"invokeBlock(): maybeAllowed($pwOpt, mad=${mad.id.get}) -> false.")
-            onUnauth(request)
+            onUnauth(request, pwOpt)
         }
 
       case None =>
         debug("invokeBlock(): MAd not found: " + adId)
-        onUnauth(request)
+        onUnauth(request, pwOpt)
     }
   }
 }
