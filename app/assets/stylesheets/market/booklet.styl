@@ -106,14 +106,14 @@ body
 /********************************************************************************************************************/
 
 .header
-  position  fixed
+  position  absolute
   top       0
   left      0
-  right     0
+  width     100%
   z-index   1000
 
   min-width 1024px
-  height    50px
+  height    70px
 
   transition(all 0.4s linear 0s)
 
@@ -158,6 +158,48 @@ body
 
     &:hover
       background-color  rgba(255, 255, 255, 0.5)
+
+  &_btn-2
+    position  absolute
+    top       20px
+    right     0
+
+.header.__slide
+  position  fixed
+  top       -61px
+  right     0
+  z-index   10000
+
+  height            60px
+  border-bottom     1px solid #dadfe1
+
+  color             #b0babf
+  background-color  white
+  transition(0.5s all ease 0s)
+
+  .header_logo
+    top 15px
+
+  .header_nav
+    top 20px
+
+  .header_phone
+    top 20px
+
+  .header_btn-2
+    top 10px
+
+  .top-menu_i
+    color #b0babf
+
+  .top-menu_i:hover,
+  .top-menu_i.__js-act
+    color rgba(79, 89, 98, 0.75)
+
+.header.__slide.__visible
+  transform(translate3d(0, 61px, 0))
+
+
 
 .top-menu
   overflow hidden /* внутри элементы со свойством float */
@@ -678,9 +720,10 @@ body
     background-size   cover
 
   &_wood
-    float   left
-    width   50%
-    height  100%
+    position  relative
+    float     left
+    width     50%
+    height    100%
 
     background-image  url('/assets/images/market/booklet/wood_retina.jpg')
     background-size   cover
@@ -698,3 +741,17 @@ body
     background-repeat   no-repeat
     background-size     auto  449px
     background-position 0 20px
+
+  &_phone
+    position  absolute
+    bottom    100px
+    left      600px
+
+    text-align  left
+    font-size   18px
+    font-weight bold
+
+  &_btn
+    position  absolute
+    bottom    50px
+    left      600px

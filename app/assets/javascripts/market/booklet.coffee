@@ -2,13 +2,13 @@ $ document
 .scroll () ->
 
   $document = $ document
-  $header = $ '#header'
+  $header = $ '#headerSlide'
   scrollTop = $document.scrollTop()
 
-  if scrollTop > 50
-    $header.addClass '__js-dark'
+  if scrollTop > 600
+    $header.addClass '__visible'
   else
-    $header.removeClass '__js-dark'
+    $header.removeClass '__visible'
 
 
 slideToElement = (selector)->
