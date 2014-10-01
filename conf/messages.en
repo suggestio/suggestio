@@ -28,6 +28,8 @@ Town=Town
 Phone=Phone
 Photo=Photo
 Logo=Logo
+Other=Other
+Others=Others
 
 requisites=Payment details for withdrawal
 
@@ -65,6 +67,7 @@ amt.of.type.c=Town district
 amt.of.type.d=Town
 amt.of.type.e=Sport
 amt.of.type.f=Town area
+amt.of.type.g=Other building
 
 amts.of.type.s=Shops
 amts.of.type.m=Marts
@@ -76,6 +79,7 @@ amts.of.type.c=Town districts
 amts.of.type.d=Towns
 amts.of.type.e=Sports
 amts.of.type.f=Town areas
+amts.of.type.g=Others buildings
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit

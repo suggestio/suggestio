@@ -68,6 +68,12 @@ object AdnShownTypes extends Enumeration {
     override val pluralNoTown = "Areas"
     override val singularNoTown = "Area"
   }
+  
+  /** Другое здание. */
+  val OTHER_BUILDING: AdnShownType    = new Val("g", nglsBuilding) {
+    override def pluralNoTown = "Others"
+    override def singularNoTown = "Other"
+  }
 
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
