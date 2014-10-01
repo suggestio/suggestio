@@ -2220,7 +2220,7 @@ sm =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 170000
+    hide_timeout : 1700
     fadeout_transition_time : 700
 
     fit : ( image_dom, is_divided ) ->
