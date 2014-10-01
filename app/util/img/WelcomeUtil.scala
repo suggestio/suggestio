@@ -116,13 +116,12 @@ object WelcomeUtil {
           welcomeAdOpt  <- MWelcomeAd.getById(waId)
           bg1           <- bgFut
         } yield {
-          welcomeAdOpt.map { wad1 =>
-            new WelcomeRenderArgsT {
-              override def wad = wad1
-              override def bg = bg1
-              override def fgImage = wad.imgs.get(WELCOME_IMG_KEY)
-            }
+          val wra = new WelcomeRenderArgsT {
+            override def bg = bg1
+            override def fgImage = welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY))
+            override def fgText = Some(adnNode.meta.name)
           }
+          Some(wra)
         }
 
       case None => Future successful None

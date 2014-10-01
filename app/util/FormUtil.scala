@@ -334,8 +334,8 @@ object FormUtil {
         DateParseUtil.extractDates(raw)
           .headOption
       },
-      { ldOpt =>
-        ldOpt.fold(""){ ld => DateTimeUtil.simpleLocalDateFmt.print(ld) }
+      {ldOpt =>
+        ldOpt.fold(""){ DateTimeUtil.simpleLocalDateFmt.print }
       }
     )
     .verifying("error.required", _.isDefined)

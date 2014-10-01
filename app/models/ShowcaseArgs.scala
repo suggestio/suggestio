@@ -133,12 +133,12 @@ case class SMShowcaseRenderArgs(
 /** Данные по рендеру приветствия. */
 trait WelcomeRenderArgsT {
 
-  /** Карточка приветствия. */
-  def wad: MWelcomeAd
-
   /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
   def bg: Either[String, MImgInfoT]
 
   def fgImage: Option[MImgInfoT]
+
+  /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
+  def fgText: Option[String]
 }
 
