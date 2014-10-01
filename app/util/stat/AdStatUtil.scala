@@ -91,6 +91,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
           clTown      = gsiOpt.flatMap(_.cityName),
           clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
           clCountry   = gsiOpt.flatMap(_.countryIso2),
+          clLocAccur  = a.geo.asGeoLocation.flatMap(_.accuracyMeters).map(_.toInt),
           isLocalCl   = request.isSuperuser || gsiOpt.fold(false)(_.isLocalClient),
           clOSFamily  = agentOs.flatMap { os => Option(os.getFamilyName) },
           clAgent     = agent.flatMap { _agent => Option(_agent.getName) },

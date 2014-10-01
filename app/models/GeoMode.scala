@@ -122,6 +122,8 @@ sealed trait GeoMode {
 
   /** Уровни, по которым надо искать. */
   def nodeDetectLevels: Seq[NodeGeoLevel]
+
+  def asGeoLocation: Option[GeoLocation] = None
 }
 
 
@@ -299,4 +301,5 @@ final case class GeoLocation(lat: Double, lon: Double, accuracyMeters: Option[Do
 
   override def nodeDetectLevels = GeoLocation.NGLS_b2t
 
+  override def asGeoLocation: Option[GeoLocation] = Some(this)
 }
