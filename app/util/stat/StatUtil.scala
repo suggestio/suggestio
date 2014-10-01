@@ -136,15 +136,19 @@ object StatUtil extends PlayMacroLogsImpl {
       result
     } else {
       val statUid = mkUidCookieValue()
-      val statCookie = Cookie(
-        name = STAT_UID_COOKIE_NAME,
-        value = statUid,
-        maxAge = STAT_UID_COOKIE_MAXAGE_SECONDS,
-        httpOnly = true
-      )
-      trace(s"Adding statuid $statUid cookie for ${request.remoteAddress}")
-      result.withCookies(statCookie)
+      resultWithStatCookie(statUid)(result)
     }
+  }
+
+  /** Добавить указанную stat-куку в результат запроса. */
+  def resultWithStatCookie(statUid: String)(result: Result): Result = {
+    val statCookie = Cookie(
+      name = STAT_UID_COOKIE_NAME,
+      value = statUid,
+      maxAge = STAT_UID_COOKIE_MAXAGE_SECONDS,
+      httpOnly = true
+    )
+    result.withCookies(statCookie)
   }
 
 }
