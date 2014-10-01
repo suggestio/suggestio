@@ -54,6 +54,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val NODE_NAME_ESFN            = "nodeName"
   val COUNTRY_ESFN              = "country"
   val IS_LOCAL_CLIENT_ESFN      = "isLocalCl"
+  val CLIENT_LOC_ACCUR_ESFN     = "clLocAccur"
 
   val CL_OS_FAMILY_ESFN         = "osFamily"
   val CL_AGENT_ESFN             = "browser"
@@ -224,6 +225,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       clTown      = m.get(CLIENT_TOWN_ESFN).map(stringParser),
       clGeoLoc    = m.get(CLIENT_GEO_LOC_ESFN).flatMap(GeoPoint.deserializeOpt),
       clCountry   = m.get(COUNTRY_ESFN).map(stringParser),
+      clLocAccur  = m.get(CLIENT_LOC_ACCUR_ESFN).map(intParser),
       clOSFamily  = m.get(CL_OS_FAMILY_ESFN).map(stringParser),
       clAgent     = m.get(CL_AGENT_ESFN).map(stringParser),
       clDevice    = m.get(CL_DEVICE_ESFN).map(stringParser),
@@ -264,6 +266,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       FieldString(NODE_NAME_ESFN, index = not_analyzed, include_in_all = true),
       FieldString(COUNTRY_ESFN, index = not_analyzed, include_in_all = true),
       FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = not_analyzed, include_in_all = false),
+      FieldNumber(CLIENT_LOC_ACCUR_ESFN, index = not_analyzed, include_in_all = true, fieldType = DocFieldTypes.integer),
       FieldString(CL_OS_FAMILY_ESFN, index = not_analyzed, include_in_all = true),
       FieldString(CL_AGENT_ESFN, index = not_analyzed, include_in_all = true),
       FieldString(CL_DEVICE_ESFN, index = not_analyzed, include_in_all = true),
@@ -298,6 +301,7 @@ final class MAdStat(
   val clOSFamily  : Option[String]    = None,
   val clAgent     : Option[String]    = None,
   val clDevice    : Option[String]    = None,
+  val clLocAccur  : Option[Int]       = None,
   val clickedAdIds : Seq[String]      = Nil,
   val generation  : Option[Long]      = None,
   val clOsVsn     : Option[String]    = None,
@@ -344,6 +348,8 @@ final class MAdStat(
       acc1 ::= CLICKED_AD_ID_ESFN -> JsArray(clickedAdIds.map(JsString.apply))
     if (generation.isDefined)
       acc1 ::= GENERATION_ESFN -> JsNumber(generation.get)
+    if (clLocAccur.isDefined)
+      acc1 ::= CLIENT_LOC_ACCUR_ESFN -> JsNumber(clLocAccur.get)
     if (clOsVsn.isDefined)
       acc1 ::= CL_OS_VERSION_ESFN -> JsString(clOsVsn.get)
     if (clUid.isDefined)
