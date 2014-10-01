@@ -26,6 +26,9 @@ object ShowcaseNodeListUtil {
   /** Если включён вывод списка городов, то надо определить макс.длину этого списка. */
   val MAX_TOWNS: Int = configuration.getInt("showcase.nodes.towns.max") getOrElse 10
 
+  /** Использовать сортировку не по имени, а по расстоянию до узлов. */
+  val DISTANCE_SORT: Boolean = configuration.getBoolean("showcase.nodes.sort.distance") getOrElse false
+
 
   /**
    * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
@@ -290,8 +293,13 @@ object ShowcaseNodeListUtil {
    */
   def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)(implicit lang: Lang): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
-    val gravity0: Option[GeoPoint] = geoMode.exactGeodata
-    lazy val gravity1: Option[GeoPoint] = gravity0.orElse(currNode.geo.point)
+    val (gravity0, gravity1) = if (DISTANCE_SORT) {
+      val g0 = geoMode.exactGeodata
+      val g1 = g0.orElse(currNode.geo.point)
+      g0 -> g1
+    } else {
+      None -> None
+    }
     // В зависимости от ситуации, строим слои по разным технологиям.
     currNodeLayer match {
       // Это -- город.
