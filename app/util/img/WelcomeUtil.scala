@@ -96,35 +96,32 @@ object WelcomeUtil {
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
   def getWelcomeRenderArgs(adnNode: MAdnNode): Future[Option[WelcomeRenderArgsT]] = {
-    adnNode.meta.welcomeAdId match {
-      case Some(waId) =>
-        // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
-        val bgFut = adnNode.gallery
-          .headOption
-          .fold[Future[Either[String, MImgInfoT]]] {
-            Future successful colorBg(adnNode)
-          } { bgImgFilename =>
-            val oiik = OrigImgIdKey.apply(bgImgFilename)
-            oiik.getImageWH map {
-              case metaSome if metaSome.nonEmpty =>
-                Right(oiik.copy(meta = metaSome))
-              case _ => colorBg(adnNode)
-            }
-          }
-        // Получить карточку из базы.
-        for {
-          welcomeAdOpt  <- MWelcomeAd.getById(waId)
-          bg1           <- bgFut
-        } yield {
-          val wra = new WelcomeRenderArgsT {
-            override def bg = bg1
-            override def fgImage = welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY))
-            override def fgText = Some(adnNode.meta.name)
-          }
-          Some(wra)
+    val welcomeAdOptFut = adnNode.meta
+      .welcomeAdId
+      .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
+    // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
+    val bgFut = adnNode.gallery
+      .headOption
+      .fold[Future[Either[String, MImgInfoT]]] {
+        Future successful colorBg(adnNode)
+      } { bgImgFilename =>
+        val oiik = OrigImgIdKey.apply(bgImgFilename)
+        oiik.getImageWH map {
+          case metaSome if metaSome.nonEmpty =>
+            Right(oiik.copy(meta = metaSome))
+          case _ => colorBg(adnNode)
         }
-
-      case None => Future successful None
+      }
+    for {
+      welcomeAdOpt <- welcomeAdOptFut
+      bg1          <- bgFut
+    } yield {
+      val wra = new WelcomeRenderArgsT {
+        override def bg = bg1
+        override def fgImage = welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY))
+        override def fgText = Some(adnNode.meta.name)
+      }
+      Some(wra)
     }
   }
 
