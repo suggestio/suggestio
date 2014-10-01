@@ -40,8 +40,11 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
         _.flatten
       }
     }
-    ((doubleP <~ delimP) ~ doubleP ~ accurOptP) ^^ {
-      case lat ~ lon ~ accurOpt  =>  GeoLocation(lat = lat, lon = lon, accuracyMeters = accurOpt)
+    val latLonP = ((doubleP <~ delimP) ~ doubleP) ^^ {
+      case lat ~ lon  =>  GeoPoint(lat = lat, lon = lon)
+    }
+    (latLonP ~ accurOptP) ^^ {
+      case gp ~ accurOpt  =>  GeoLocation(gp, accuracyMeters = accurOpt)
     }
   }
 
@@ -261,27 +264,23 @@ object GeoLocation {
 
 
 /** Геолокация с указанием географических координат.
-  * @param lat Широта.
-  * @param lon Долгота.
+  * @param geoPoint Точка (координаты).
   * @param accuracyMeters Необязательная точность в метрах.
   */
-final case class GeoLocation(lat: Double, lon: Double, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
-
-  // TODO Закинуть geopoint в аргументы.
-  lazy val geopoint = GeoPoint(lat = lat, lon = lon)
+final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
 
   override def isWithGeo = true
-  override def toQsStringOpt = Some(s"$lat,$lon")
+  override def toQsStringOpt = Some(s"${geoPoint.lat},${geoPoint.lon}")
 
   override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     val result = new GeoSearchInfo {
-      override def geoPoint: geo.GeoPoint = gl.geopoint
+      override def geoPoint: geo.GeoPoint = gl.geoPoint
       override def geoDistanceQuery = GeoDistanceQuery(
-        center      = gl.geopoint,
+        center      = gl.geoPoint,
         distanceMin = None,
         distanceMax = GeoLocation.DISTANCE_DFLT
       )
-      override def exactGeopoint = Some(gl.geopoint)
+      override def exactGeopoint = Some(gl.geoPoint)
       lazy val ipGeoloc = {
         val ra = GeoIp.getRemoteAddr
         GeoIp.ip2rangeCity(ra)
@@ -296,7 +295,7 @@ final case class GeoLocation(lat: Double, lon: Double, accuracyMeters: Option[Do
     Future successful Some(result)
   }
 
-  override def exactGeodata = Some(geopoint)
+  override def exactGeodata = Some(geoPoint)
 
 
   override def nodeDetectLevels = GeoLocation.NGLS_b2t
