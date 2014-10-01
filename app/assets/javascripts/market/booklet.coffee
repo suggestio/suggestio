@@ -136,8 +136,8 @@ $doc.ready ()->
 
   $ '#slider'
   .bxSlider(
-    auto: true,
-    pager: sliderControls,
+    auto: false,
+    pager: true,
     controls: sliderControls,
     infiniteLoop: false,
     hideControlOnEnd: false,
