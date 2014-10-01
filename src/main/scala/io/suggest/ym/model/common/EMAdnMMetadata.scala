@@ -30,8 +30,11 @@ object EMAdnMMetadataStatic {
 
   private def fullFN(fn: String) = META_ESFN + "." + fn
 
-  def META_FLOOR_ESFN           = fullFN( AdnMMetadata.FLOOR_ESFN )
-  def META_WELCOME_AD_ID_ESFN   = fullFN( AdnMMetadata.WELCOME_AD_ID )
+  def META_FLOOR_ESFN             = fullFN( AdnMMetadata.FLOOR_ESFN )
+  def META_WELCOME_AD_ID_ESFN     = fullFN( AdnMMetadata.WELCOME_AD_ID )
+  def META_NAME_ESFN              = fullFN( AdnMMetadata.NAME_ESFN )
+  def META_NAME_SHORT_ESFN        = fullFN( AdnMMetadata.NAME_SHORT_ESFN )
+  def META_NAME_SHORT_NOTOK_ESFN  = fullFN( AdnMMetadata.NAME_SHORT_NOTOK_ESFN )
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -133,8 +136,12 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
 
 object AdnMMetadata {
 
+  // Название под-поля.
+  val NOT_TOKENIZED_SUBFIELD_SUF = "nt"
+
   val NAME_ESFN               = "name"
-  val NAME_SHORT_ESFN         = "ns"
+  val NAME_SHORT_ESFN         = "sn"    // до созданию multifield было имя "ns"
+  val NAME_SHORT_NOTOK_ESFN   = NAME_SHORT_ESFN + "." + NOT_TOKENIZED_SUBFIELD_SUF
   val TOWN_ESFN               = "town"
   val ADDRESS_ESFN            = "address"
   val DATE_CREATED_ESFN       = "dateCreated"
@@ -160,14 +167,19 @@ object AdnMMetadata {
 
   def generateMappingProps: List[DocField] = List(
     FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    // 2014.oct.01: Разделение поля на analyzed и not_analyzed. Последнее нужно для сортировки.
+    new FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true) with MultiFieldT {
+      override def fields = Seq(
+        FieldString(NOT_TOKENIZED_SUBFIELD_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      )
+    },
     fieldString(DESCRIPTION_ESFN, iia = true),
     FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal
-    fieldString(TOWN_ESFN, iia = true, index = FieldIndexingVariants.analyzed),
+    FieldString(TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     fieldString(ADDRESS_ESFN, iia = true),
     fieldString(PHONE_ESFN, iia = true),
-    fieldString(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
+    FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
     fieldString(SECTION_ESFN, iia = true),
     fieldString(SITE_URL_ESFN),
     // 2014.06.30: Рекламные характеристики узла.
@@ -186,7 +198,9 @@ object AdnMMetadata {
       import EsModel.stringParser
       AdnMMetadata(
         name        = stringParser(jmap get NAME_ESFN),
-        nameShortOpt = Option(jmap get NAME_SHORT_ESFN) map stringParser,
+        nameShortOpt = Option(jmap get NAME_SHORT_ESFN)
+          .orElse(Option(jmap get "ns"))    // 2014.oct.01: Переименовано поле: ns -> sn из-за изменения в маппинге.
+          .map(stringParser),
         description = Option(jmap get DESCRIPTION_ESFN) map stringParser,
         dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
         town        = Option(jmap get TOWN_ESFN) map stringParser,

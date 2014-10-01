@@ -173,7 +173,7 @@ object SioEsUtil extends MacroLogsImpl {
         debug(logPrefix + "Asking for random index name %s..." format firstEsShard)
         SioEsUtil.isIndexExist(firstEsShard) onComplete {
           case Success(true) =>
-            trace(logPrefix + "Index name '%s' is busy. Retrying." format firstEsShard)
+            trace(s"${logPrefix}Index name '$firstEsShard' is busy. Retrying.")
             freeIndexNameLookup(n + 1)
 
           case Success(false) =>
@@ -390,7 +390,7 @@ object SioEsUtil extends MacroLogsImpl {
 
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
   private def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
-    new FieldMultifield(name, fields = Seq(
+    new OldFieldMultiField(name, fields = Seq(
       FieldString(
         id = name,
         include_in_all = true,
@@ -1063,19 +1063,25 @@ case class FieldRouting(
 }
 
 
-/** Мультиполе multi_field. */
-case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends DocField {
-  
-  override def fieldType = DocFieldTypes.multi_field
+/** Трейт для сборки multi-поля. В новом синтаксисе ElasticSearch, это должно примешиваться
+  * к конкретной реализации поля: new StringField(...) with MultiFieldT {...}. */
+trait MultiFieldT extends JsonObject {
+  def fields: TraversableOnce[JsonObject]
 
-  override def fieldsBuilder(implicit b: XContentBuilder) {
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
     super.fieldsBuilder
     if (fields.nonEmpty) {
       b.startObject("fields")
-        fields map { _.builder }
+        fields foreach { _.builder }
       b.endObject()
     }
   }
+}
+
+
+/** Мультиполе multi_field. */
+case class OldFieldMultiField(id: String, fields: Seq[JsonObject]) extends DocField with MultiFieldT {
+  override def fieldType = DocFieldTypes.multi_field
 }
 
 trait FieldWithProperties extends Field {

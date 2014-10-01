@@ -416,7 +416,10 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
       srb1.addSort(sb)
     }
     if (withNameSort) {
-      srb1.addSort(AdnMMetadata.NAME_ESFN, SortOrder.ASC)
+      val sob = SortBuilders.fieldSort(EMAdnMMetadataStatic.META_NAME_SHORT_NOTOK_ESFN)
+        .order(SortOrder.ASC)
+        .ignoreUnmapped(true)
+      srb1 addSort sob
     }
     // Заливаем ключи роутинга, если он задан.
     if (withRouting.nonEmpty)
