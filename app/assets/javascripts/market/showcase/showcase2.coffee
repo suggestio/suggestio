@@ -2220,7 +2220,7 @@ sm =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 1700
+    hide_timeout : 170000
     fadeout_transition_time : 700
 
     fit : ( image_dom, is_divided ) ->
@@ -2247,6 +2247,10 @@ sm =
       image_dom.style.height = nh + 'px'
       image_dom.style.marginLeft = - nw / 2 + 'px'
       image_dom.style.marginTop = - nh / 2 + 'px'
+
+      if is_divided == true
+        console.log nh/2
+        sm.utils.ge('smWelcomeAdfgText').style.marginTop = nh/2 + 'px'
 
     hide : () ->
 

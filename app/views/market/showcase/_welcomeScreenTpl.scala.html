@@ -43,6 +43,16 @@
            data-height="@fgImage.meta.map(_.height)"
            src="@ctx.myAudienceUrl@routes.Img.getImg(fgImage.filename)"/>
     }
+    @* Рендерим покрывающую картинку (svg/png) *@
+    @wargs.fgText.map {  fgText =>
+      <div id="smWelcomeAdfgText" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
+        <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+          @fgText
+          <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
+          <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
+        </span>
+      </div>
+    }
 
   </div>
 }
