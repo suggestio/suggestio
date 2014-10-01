@@ -315,7 +315,8 @@ final class MAdStat(
   override def companion = MAdStat
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
+    var acc1: FieldsJsonAcc =
+      CLIENT_ADDR_ESFN      -> JsString(clientAddr) ::
       ACTION_ESFN           -> JsString(action.toString) ::
       AD_ID_ESFN            -> JsArray(adIds map JsString.apply) ::
       TIMESTAMP_ESFN        -> date2JsStr(timestamp) ::
