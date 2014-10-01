@@ -327,11 +327,16 @@ object FormUtil {
       { _.toString }
     )
 
-  // Даты
-  def localDate = text(maxLength = 32)
+  /** Form mapping для LocalDate. */
+  def localDateM = text(maxLength = 32)
     .transform[Option[LocalDate]](
-      DateParseUtil.extractDates(_).headOption,
-      { ldOpt => ldOpt.map(_.toString) getOrElse "" }
+      {raw =>
+        DateParseUtil.extractDates(raw)
+          .headOption
+      },
+      { ldOpt =>
+        ldOpt.fold(""){ ld => DateTimeUtil.simpleLocalDateFmt.print(ld) }
+      }
     )
     .verifying("error.required", _.isDefined)
     .transform[LocalDate](_.get, Some.apply)

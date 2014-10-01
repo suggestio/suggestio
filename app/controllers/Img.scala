@@ -126,7 +126,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       Ok(its.imgBytes)
         .withHeaders(
           CONTENT_TYPE  -> ct,
-          LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
+          LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(ts0),
           CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
         )
     }
@@ -155,7 +155,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         val f = mptmp.file
         Ok.sendFile(f, inline = true)
           .withHeaders(
-            LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
+            LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(f.lastModified),
             CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
           )
 

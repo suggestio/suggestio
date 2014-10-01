@@ -33,7 +33,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
 
   /** Внутренний маппинг для даты LocalDate. */
-  private def bDate = localDate
+  private def bDate = localDateM
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
 
   /** Маппинг для формы добавления/редактирования контракта. */

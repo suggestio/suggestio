@@ -168,7 +168,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       Cache.getOrElse(ck, expiration = NODE_ICON_JS_CACHE_TTL_SECONDS) {
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
-          LAST_MODIFIED -> DateTimeUtil.df.print(PROJECT_CODE_LAST_MODIFIED),
+          LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
           CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
         )
         if (request.adnNode.versionOpt.isDefined) {
