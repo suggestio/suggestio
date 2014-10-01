@@ -27,6 +27,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
   val latLonNumberRe = """-?\d{1,3}(\.(\d{0,20})?)?""".r
   val accurNumberRe = """[-+]?\d{1,5}(\.(\d{0,20})?)?""".r
   val delimRe = "[,;]".r
+  val ipModeRe = "(?i)ip".r
 
   /** Ленивый потоко-небезопасный (вроде бы) парсер координат из строки. */
   def latLonAccurP: Parser[GeoLocation] = {
@@ -51,26 +52,16 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
   /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
   val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})(,-?\d{1,3}\.\d{0,20})?""".r
 
-  def maybeApply(raw: Option[String]): Option[GeoMode] = {
-    // Сразу пытаемся распарсить координаты - так код проще получается.
-    val latLonParsed = raw.flatMap { raw =>
-      val pr = parse(latLonAccurP, raw)
-      if (pr.successful)
+  def maybeApply(rawOpt: Option[String]): Option[GeoMode] = {
+    rawOpt.flatMap { raw =>
+      val ipP = ipModeRe ^^^ GeoIp
+      val p: Parser[GeoMode] = ipP | latLonAccurP | ("" ^^^ GeoNone)
+      val pr = parse(p, raw)
+      if (pr.successful) {
         Some(pr.get)
-      else
+      } else {
+        warn(s"maybeApply(): Unknown .geo format: $raw - fallback to None.")
         None
-    }
-    if (latLonParsed.isDefined) {
-      latLonParsed
-    } else {
-      raw.flatMap {
-        case "ip"  =>
-          Some(GeoIp)
-        case "" =>
-          Some(GeoNone)
-        case other =>
-          warn(s"apply(): Unknown .geo format: $other - fallback to None.")
-          None
       }
     }
   }

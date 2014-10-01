@@ -37,6 +37,7 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuite {
 
     "parse and bind qs ip value" in {
       GeoMode(Some("ip"))  mustBe  theSameInstanceAs(GeoIp)
+      GeoMode(Some("IP"))  mustBe  theSameInstanceAs(GeoIp)
     }
 
     "parse and bind qs 'lat,lon' value" in {
@@ -50,7 +51,7 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuite {
     }
 
     // Для сбора статистики нужна инфа о точности.
-    "parse and bind qs 'lat,lon,accuracy' value" in {
+    "parse and bind qs 'lat,lon,accur' value" in {
       GeoMode(Some("59.926185700000005,30.2333629,23.444444"))  mustBe  GeoLocation(gp0, Some(23.444444))
       GeoMode(Some("59.926185700000005,30.2333629,0"))          mustBe  GeoLocation(gp0, Some(0.0))
       GeoMode(Some("59.926185700000005,30.2333629,11"))         mustBe  GeoLocation(gp0, Some(11.0))
