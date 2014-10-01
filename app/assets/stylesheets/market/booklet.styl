@@ -334,7 +334,7 @@ body
   margin-top      -25px
   padding-top     25px
   padding-bottom  60px
-  color           #adadad
+  color           #848484
   text-align      center
 
   &_triangle
@@ -354,6 +354,10 @@ body
     margin-bottom 30px
     font-size     18px
     color         #060606
+
+  &_subtitle
+    padding     20px 10px 0
+    line-height 16px
 
   &_btns
     margin      25px auto
@@ -454,7 +458,7 @@ body
     margin    0 auto
     width     1024px
     padding   40px
-    color     #b1b1b1
+    color     #848484
 
   &_fingers
     position    absolute
@@ -514,7 +518,7 @@ body
     &_cnt
       width       100%
       box-sizing  border-box
-      padding     10px
+      padding     10px 20px
 
     &_text
       padding 0
@@ -530,6 +534,8 @@ body
 
     &_map
       height              216px
+      margin-top          15px
+
       background-image    url('/assets/images/market/booklet/price-map_retina_phone.png')
       background-repeat   no-repeat
       background-size     100%
@@ -619,7 +625,7 @@ body
 
   &_footer-text
     margin-bottom 10px
-    color         #b1b1b1
+    color         #848484
     text-align    center
 
 @media screen768
@@ -630,10 +636,14 @@ body
       padding 10px 0
 
     &_red-inner
-      font-size 16px
+      padding-bottom  10px
+      font-size       16px
+      line-height     16px
 
       .title
-        font-size 26px
+        margin-top  15px
+        font-size   26px
+        line-height 26px
 
     &_cnt
       padding 0 10px
@@ -658,7 +668,8 @@ body
       background-position center
 
     &_footer-text
-      padding       0 10px
+      line-height   14px
+      padding       0 20px 20px
 /********************************************************************************************************************/
 /* Секция Уровни размещения */
 /********************************************************************************************************************/
@@ -836,6 +847,21 @@ body
 
 @media screen768
 
+  .bx-pager-link
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTQuNzVweCIgaGVpZ2h0PSIzNC4xMDlweCIgdmlld0JveD0iMCAwIDE0Ljc1IDM0LjEwOSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTQuNzUgMzQuMTA5IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGN4PSI3LjI2NSIgY3k9IjI2LjEwOCIgcj0iMy44NzMiLz4NCjxjaXJjbGUgZmlsbD0iI0ZGRkZGRiIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIGN4PSI3LjI2NSIgY3k9IjguMTA4IiByPSIzLjg3MyIvPg0KPC9zdmc+DQo=') !important
+    background-repeat   no-repeat !important
+    background-position 0 -3px !important
+    border-radius(0 !important)
+
+    &.active
+      background-position 0 -21px !important
+
+  .bx-controls
+    left        50%
+    margin-left -50px
+    position    absolute
+    top         115px
+
   .slider_i
     max-height  550px
     font-size   14px
@@ -846,18 +872,22 @@ body
       height  160px
 
     &_t
-      margin    15px 0
-      font-size 30px
+      margin      15px 0 10px
+      font-size   30px
+      line-height 30px
 
     &_t-2
       margin    0
-      font-size 20px
+      font-size 17px
 
     &_subtitle
       margin-top    5px
       display       inline-block
       border        2px solid #4a2868
       padding       5px 20px
+
+    &_subtitle-major
+      font-size 24px
 
     &_text-minor
       margin  10px 0
@@ -965,6 +995,9 @@ body
 
   .slide-3
 
+    .phone-visible
+      line-height 16px
+
     .f-left,
     .f-right
       float   none
@@ -983,6 +1016,9 @@ body
     &_t
       margin    10px 0
       font-size 30px
+
+    &_subtitle-major
+      font-size 14px
 
     &_gray
       color #787878
@@ -1061,6 +1097,7 @@ body
 
   &_color-bg
     height            325px
+    padding-bottom    10px
     overflow          hidden
     background-color  #9d8080
     text-align        center
@@ -1134,7 +1171,8 @@ body
   .advantages
 
     &_color-bg
-      height  auto
+      height          auto
+      padding-bottom  10px
 
     &_t
       margin    10px 0 15px
