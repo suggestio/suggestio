@@ -49,9 +49,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
     }
   }
 
-  /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
-  val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})(,-?\d{1,3}\.\d{0,20})?""".r
-
+  /** Логический аналог, Option[]. При проблемах возвращает None. */
   def maybeApply(rawOpt: Option[String]): Option[GeoMode] = {
     rawOpt.flatMap { raw =>
       val ipP = ipModeRe ^^^ GeoIp
