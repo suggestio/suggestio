@@ -213,21 +213,21 @@ object ShowcaseNodeListUtil {
    * @param townNodeId id узла-города.
    * @return Список узлов-районов.
    */
-  def getDistrictsForTown(townNodeId: String): Future[Seq[MAdnNode]] = {
+  def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def maxResults = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
       override def shownTypeIds = Seq(AdnShownTypes.TOWN_DISTRICT.name, AdnShownTypes.CITY_DISTRICT.name)
-      override def withNameSort = true  // Почему-то не срабатывает
+      override def withNameSort = gravity.isEmpty
+      override def withGeoDistanceSort = gravity
     }
     MAdnNode.dynSearch(sargs)
-      .map { _.sortBy(_.meta.nameShort) }
   }
 
-  def getDistrictsLayerForTown(townNode: MAdnNode)(implicit lang: Lang): Future[GeoNodesLayer] = {
+  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint])(implicit lang: Lang): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
-    getDistrictsForTown(townNodeId)
+    getDistrictsForTown(townNodeId, gravity)
       .map { districtNodes =>
         // 2014.sep.30: В Москве у нас "округа", а не "районы". Да и возможны иные вариации. Определяем код названия по найденным нодам.
         val nameL10n = districtNodes
@@ -248,12 +248,13 @@ object ShowcaseNodeListUtil {
    * @param districtAdnId id района.
    * @return Список узлов на раёне в алфавитном порядке.
    */
-  def getBuildingsOfDistrict(districtAdnId: String): Future[Seq[MAdnNode]] = {
+  def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def maxResults = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents = Seq(districtAdnId)
-      // Сортировать по имени не требуется, т.к. тут будет группировка.
+      override def withGeoDistanceSort = gravity
+      override def withNameSort = gravity.isEmpty
     }
     MAdnNode.dynSearch(sargs)
   }
@@ -263,8 +264,9 @@ object ShowcaseNodeListUtil {
    * @param districtAdnId id узла района.
    * @return Фьючерс со списком слоёв с узлами.
    */
-  def getBuildingsLayersOfDistrict(districtAdnId: String)(implicit lang: Lang): Future[List[GeoNodesLayer]] = {
-    getBuildingsOfDistrict(districtAdnId)
+  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint])
+                                  (implicit lang: Lang): Future[List[GeoNodesLayer]] = {
+    getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
         nodes.groupBy(_.adn.shownTypeId)
           .iterator
@@ -287,14 +289,17 @@ object ShowcaseNodeListUtil {
    * @return Фьючерс со слоями в порядке рендера (город внизу).
    */
   def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)(implicit lang: Lang): Future[Seq[GeoNodesLayer]] = {
+    // Задаём опорные геоточки для гео-сортировки и гео-поиска.
+    val gravity0: Option[GeoPoint] = geoMode.exactGeodata
+    lazy val gravity1: Option[GeoPoint] = gravity0.orElse(currNode.geo.point)
+    // В зависимости от ситуации, строим слои по разным технологиям.
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>
-        val districtsLayerFut = getDistrictsLayerForTown(currNode)
+        val districtsLayerFut = getDistrictsLayerForTown(currNode, gravity0)
         // 2014.sep.25: Нужно выдавать другие города в целях отладки. Это должно быть отлючаемо.
         val townsLayerFut: Future[GeoNodesLayer] = if (SHOW_ALL_TOWNS) {
-          val gpOpt = geoMode.exactGeodata.orElse(currNode.geo.point)
-          allTowns(gpOpt) map { townNodes =>
+          allTowns(gravity1) map { townNodes =>
             townsToLayer(townNodes)
           }
         } else {
@@ -311,12 +316,15 @@ object ShowcaseNodeListUtil {
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
       case NodeGeoLevels.NGL_TOWN_DISTRICT =>
         val townFut = getTownOfNode(currNode)
-        val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get)
+        val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get, gravity1)
         val districtsOptFut: Future[Option[GeoNodesLayer]] = {
           townFut flatMap { townNode =>
             currNode.geo.directParentIds.headOption match {
-              case Some(dparent)  => getDistrictsLayerForTown(townNode).map(Some.apply)
-              case None           => Future successful None
+              case Some(dparent) =>
+                getDistrictsLayerForTown(townNode, gravity0)
+                  .map(Some.apply)
+              case None =>
+                Future successful None
             }
           }
         }
@@ -337,13 +345,14 @@ object ShowcaseNodeListUtil {
       // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
       case NodeGeoLevels.NGL_BUILDING =>
         val townFut = getTownOfNode(currNode)
+        // Если нет текущей геолокации, то можно использовать геолокацию зданию. Или не стоит так делать?
         val districtsLayerFut = townFut flatMap { townNode =>
-          getDistrictsLayerForTown(townNode)
+          getDistrictsLayerForTown(townNode, gravity1)
         }
         val townLayerFut = townFut.map(town2layer)
         val buildingsLayersFut = {
           currNode.geo.directParentIds.headOption match {
-            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId)
+            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1)
             case None                 => Future successful Nil
           }
         }
