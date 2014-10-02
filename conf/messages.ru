@@ -81,6 +81,7 @@ amts.of.type.b=Станции метро
 amts.of.type.c=Городские районы
 amts.of.type.d=Города
 amts.of.type.e=Спорт
+amts.of.type.f=Округа мегаполисов
 amts.of.type.g=Другие здания
 
 editing.of.amt.profile.s=Редактирование профайла магазина

@@ -77,7 +77,6 @@ object AdnShownTypes extends Enumeration {
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
 
-
   /** Опциональный поиск в этом множестве. */
   def maybeWithName(n: String): Option[AdnShownType] = {
     values
@@ -91,4 +90,8 @@ object AdnShownTypes extends Enumeration {
   implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
 
   override val values = super.values
+
+  /** Все типы районов. */
+  def districts = Set(TOWN_DISTRICT, CITY_DISTRICT)
+  val districtNames = districts.iterator.map(_.name).toSeq
 }
