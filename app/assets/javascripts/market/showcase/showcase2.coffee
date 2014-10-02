@@ -2246,10 +2246,13 @@ sm =
       image_dom.style.width = nw + 'px'
       image_dom.style.height = nh + 'px'
       image_dom.style.marginLeft = - nw / 2 + 'px'
-      image_dom.style.marginTop = - nh / 2 + 'px'
 
       if is_divided == true
-        console.log nh/2
+        image_dom.style.marginTop = - (nh+50) / 2 + 'px'
+      else
+        image_dom.style.marginTop = - nh / 2 + 'px'
+
+      if is_divided == true
         sm.utils.ge('smWelcomeAdfgText').style.marginTop = nh/2 + 'px'
 
     hide : () ->
