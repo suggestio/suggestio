@@ -1,3 +1,4 @@
+import controllers.routes
 import io.suggest.model.geo
 import io.suggest.ym
 import io.suggest.ym.model.common
@@ -200,4 +201,6 @@ package object models {
   type BSvgColorName        = BSvgColorNames.BSvgColorName
   type BSvgColorMap         = BSvgColorsUtil.BSvgColorMap
 
+  /** Вызов на главную страницу. */
+  def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
 }

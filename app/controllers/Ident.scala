@@ -46,7 +46,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
    * @return Редирект на главную, ибо анонимусу идти больше некуда.
    */
   def logout = Action { implicit request =>
-    Redirect(routes.Application.index())
+    Redirect(MAIN_PAGE_CALL)
       .withNewSession
   }
 
@@ -60,10 +60,6 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     Forbidden(emailPwLoginFormTpl(lf, r))
   }
-
-
-  // TODO выставить нормальный routing тут
-  protected def rdrToAdmin = Redirect(routes.Application.index())
 
 
   // Восстановление пароля
