@@ -35,6 +35,8 @@ object ImOp extends PlayMacroLogsImpl {
         // в карте params может содержать посторонний мусор. Но она идёт в прямом порядке.
         try {
           val ops = params
+            .toSeq
+            .reverse
             .iterator
             .filter { _._1 startsWith keyDotted }
             // Попытаться распарсить код операции.
@@ -193,7 +195,7 @@ case class QualityOp(quality: Double) extends ImOp {
   }
   override def qsValue: String = {
     val df = new DecimalFormat("0.00")
-    df.format(quality)
+    df.format(quality).replace(",", ".")
   }
 }
 

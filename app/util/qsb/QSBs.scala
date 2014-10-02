@@ -78,7 +78,7 @@ object QSBs extends JavaTokenParsers {
 
 
   private val picSizeNumRe = "\\d{2,5}".r
-  private val picSizeDelimRe = "[xX]"
+  private val picSizeDelimRe = "[xX]".r
 
   private def sizeP: Parser[MImgInfoMeta] = {
     val sizeP: Parser[Int] = picSizeNumRe ^^ { _.toInt }

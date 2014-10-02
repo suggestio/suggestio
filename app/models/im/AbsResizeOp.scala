@@ -17,7 +17,7 @@ object AbsResizeOp extends JavaTokenParsers {
   val numRe = "\\d{2,4}".r
   val flagRe = {
     val flags = ImResizeFlags.values
-    val sb = new StringBuilder(flags.size + 2, "[")
+    val sb = new StringBuilder(flags.size + 6, "(?i)[")
     flags.foreach { flag =>
       sb append flag.urlSafeChar
     }
@@ -82,10 +82,10 @@ object ImResizeFlags extends Enumeration {
 
   type ImResizeFlag = Val
 
-  lazy val IgnoreAspectRatio: ImResizeFlag   = Val('!', 'a')
-  lazy val OnlyShrinkLarger: ImResizeFlag    = Val('>', 'b')
-  lazy val OnlyEnlargeSmaller: ImResizeFlag  = Val('<', 'c')
-  lazy val FillArea: ImResizeFlag            = Val('^', 'd')
+  val IgnoreAspectRatio: ImResizeFlag   = Val('!', 'a')
+  val OnlyShrinkLarger: ImResizeFlag    = Val('>', 'b')
+  val OnlyEnlargeSmaller: ImResizeFlag  = Val('<', 'c')
+  val FillArea: ImResizeFlag            = Val('^', 'd')
   // Другие режимы ресайза тут пока опущены, т.к. не подходят для AbsResize, а другой пока нет.
 
   implicit def value2val(x: Value): ImResizeFlag = x.asInstanceOf[ImResizeFlag]

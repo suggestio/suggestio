@@ -24,6 +24,8 @@ object WelcomeUtil {
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
   val BG_VIA_DYN_IMG = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
+  val BG_DYN_QUALITY = configuration.getInt("showcase.welcome.bg.quality") getOrElse 70
+
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
@@ -114,12 +116,8 @@ object WelcomeUtil {
       } { bgImgFilename =>
         val oiik = OrigImgIdKey.apply(bgImgFilename)
         oiik.getImageWH map {
-          case metaSome if metaSome.nonEmpty =>
-            val result = new ImgUrlInfoT {
-              override def call: Call = bgCallForScreen(oiik, screen)
-              override def meta = metaSome
-            }
-            Right(result)
+          case Some(meta) =>
+            Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
         }
       }
@@ -138,21 +136,31 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[MImgSizeT]): Call = {
-    // TODO Нужно запрещать ресайзить вверх картинку, если она маленькая.
+  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[MImgSizeT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
     screen
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { BasicScreenSizes.includesSize }
-      .fold [Call] {
-        routes.Img.getImg(oiik.filename)
+      // Нужно запрещать ресайзить вверх картинку, если она маленькая:
+      .filter { _ isSmallerThan origMeta }
+      .fold [ImgUrlInfoT] {
+        new ImgUrlInfoT {
+          override def call = routes.Img.getImg(oiik.filename)
+          override def meta = Some(origMeta)
+        }
       } { scrSz =>
+        val gravity = GravityOp(ImGravities.Center)
         val imOps: Seq[ImOp] = Seq(
+          gravity,
           AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
-          GravityOp(ImGravities.Center),
-          ExtentOp(scrSz)
+          gravity,
+          ExtentOp(scrSz),
+          QualityOp(BG_DYN_QUALITY)
         )
         val dynArgs = DynImgArgs(oiik, imOps)
-        routes.Img.dynImg(dynArgs)
+        new ImgUrlInfoT {
+          override def call = routes.Img.dynImg(dynArgs)
+          override def meta = Some(scrSz)
+        }
     }
   }
 

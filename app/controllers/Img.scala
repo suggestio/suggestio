@@ -317,7 +317,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     val rowKeyStr = oiik.data.rowKey
     val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
     val qualifier = args.imOpsToString.trim
-    if (!qualifier.isEmpty)
+    if (qualifier.isEmpty)
       throw new IllegalArgumentException("Args.imgOps produces empty qualifier. This should never happen.\n  args = " + args)
     val qOpt = Some(qualifier)
     val notModifiedFut: Future[Boolean] = {
