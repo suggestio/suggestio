@@ -2,10 +2,12 @@ package models.im
 
 import java.text.DecimalFormat
 
+import io.suggest.ym.model.common.MImgSizeT
 import org.im4java.core.IMOperation
 import models._
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsImpl
+import util.qsb.QSBs
 
 /**
  * Suggest.io
@@ -102,7 +104,11 @@ object ImOpCodes extends Enumeration {
     }
   }
   val AbsResize: ImOpCode = new Val("c") {
-    override def mkOp(vs: Seq[String]): ImOp = ???    // TODO
+    override def mkOp(vs: Seq[String]): ImOp = {
+      // TODO Нужен нормальный парсер, который понимает ещё и modifier. Пока тут лишь костыль.
+      val imeta = QSBs.parseWxH(vs.head).get
+      AbsResizeOp(width = imeta.width, height = imeta.height)
+    }
   }
   val Interlace: ImOpCode = new Val("d") {
     override def mkOp(vs: Seq[String]) = {
@@ -191,13 +197,19 @@ object ImResizeFlags extends Enumeration {
 
 
 /** Добавить -resize WxH */
-// TODO Не допилен. Потому и sealed, чтобы не трогали.
-sealed case class AbsResizeOp(width: Int, height: Int, modifier: Option[Char] = None) extends ImOp {
+case class AbsResizeOp(width: Int, height: Int, modifier: Option[Char] = None) extends ImOp with MImgSizeT {
   override def opCode = ImOpCodes.AbsResize
   override def addOperation(op: IMOperation): Unit = {
-    op.resize(width, height)
+    if (modifier.isDefined) {
+      op.resize(width, height, modifier.get)
+    } else {
+      op.resize(width, height)
+    }
   }
-  override def qsValue: String = ???
+  override def qsValue: String = {
+    // TODO Нужно отрабатывать modifier.
+    QSBs.unParseWxH(this)
+  }
 }
 
 

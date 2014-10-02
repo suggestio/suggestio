@@ -221,7 +221,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
   /** Рендер отображения выдачи узла. */
-  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
+  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None, screen: Option[MImgInfoMeta] = None)
+                                      (implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val spsr = AdSearch(
       levels      = List(AdShowLevels.LVL_START_PAGE),
       receiverIds = List(adnNode.id.get)
@@ -229,7 +230,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val oncloseHref: String = adnNode.meta.siteUrl
       .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
       .getOrElse { ONCLOSE_HREF_DFLT }
-    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo, geoListGoBack = geoListGoBack)
+    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo, geoListGoBack = geoListGoBack, screen = screen)
   }
 
   /** Выдача для продьюсера, который сейчас админят. */
@@ -243,7 +244,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean, geoListGoBack: Option[Boolean] = None)
+  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean,
+                                 geoListGoBack: Option[Boolean] = None, screen: Option[MImgInfoMeta] = None)
                                 (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = adnNode.id.get
     // TODO Вынести сборку списка prods в отдельный экшен.
@@ -261,7 +263,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         .toMap
     }
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
-    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode)
+    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)
     for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
@@ -301,7 +303,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
       gdrFut flatMap { gdr =>
         trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
-        renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest) )
+        renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest), screen = args.screen)
       } recoverWith {
         case ex: NoSuchElementException =>
           // Нету узлов, подходящих под запрос.

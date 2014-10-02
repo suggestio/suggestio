@@ -2,6 +2,7 @@ package util.qsb
 
 import java.util.UUID
 
+import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
 import util.img.ImgIdKey
@@ -85,6 +86,14 @@ object QSBs extends JavaTokenParsers {
       case w ~ h  =>  MImgInfoMeta(width = w, height = h)
     }
   }
+  
+  def parseWxH(wxh: String): ParseResult[MImgInfoMeta] = {
+    parse(sizeP, wxh)
+  }
+  
+  def unParseWxH(value: MImgSizeT): String = {
+    s"${value.width}x${value.height}"
+  }
 
   /** qsb для бинда значения длины*ширины из qs. */
   implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]) = {
@@ -92,7 +101,7 @@ object QSBs extends JavaTokenParsers {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
         strB.bind(key, params).map { maybeWxh =>
           maybeWxh.right.flatMap { wxh =>
-            val pr = parse(sizeP, wxh)
+            val pr = parseWxH(wxh)
             if (pr.successful)
               Right(pr.get)
             else
@@ -102,7 +111,7 @@ object QSBs extends JavaTokenParsers {
       }
 
       override def unbind(key: String, value: MImgInfoMeta): String = {
-        s"${value.width}x${value.height}"
+        unParseWxH(value)
       }
     }
   }

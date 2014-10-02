@@ -1,6 +1,7 @@
 package models
 
 import java.util.Currency
+import io.suggest.ym.model.common.MImgSizeT
 import org.joda.time.Period
 import play.api.i18n.{Lang, Messages}
 import play.api.data.Form
@@ -269,4 +270,14 @@ case class UmapTplArgs(
 
 }
 
+
+/** Исчерпывающая инфа по картинке, которую можно отрендерить в шаблоне ссылку. */
+trait ImgUrlInfoT {
+
+  /** call для получения ссылки на картинку. */
+  def call: Call
+
+  /** Метаданные для рендера тега img. */
+  def meta: Option[MImgSizeT]
+}
 

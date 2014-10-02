@@ -139,7 +139,7 @@ case class SMShowcaseRenderArgs(
 trait WelcomeRenderArgsT {
 
   /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
-  def bg: Either[String, MImgInfoT]
+  def bg: Either[String, ImgUrlInfoT]
 
   def fgImage: Option[MImgInfoT]
 

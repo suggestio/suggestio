@@ -1,7 +1,6 @@
 package util.img
 
-import controllers.MarketShowcase
-
+import controllers.{routes, MarketShowcase}
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -9,6 +8,7 @@ import ImgFormUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -17,6 +17,9 @@ import util.event.SiowebNotifier.Implicts.sn
  * Description: Утиль для картинки/карточки приветствия.
  */
 object WelcomeUtil {
+
+  /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
+  val BG_VIA_DYN_IMG = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse true
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -93,22 +96,27 @@ object WelcomeUtil {
   /**
    * Асинхронно собрать аргументы для рендера карточки приветствия.
    * @param adnNode Узел, для которого нужно подготовить настройки рендера приветствия.
+   * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[MImgInfoMeta]): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
     val bgFut = adnNode.gallery
       .headOption
-      .fold[Future[Either[String, MImgInfoT]]] {
+      .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
         val oiik = OrigImgIdKey.apply(bgImgFilename)
         oiik.getImageWH map {
           case metaSome if metaSome.nonEmpty =>
-            Right(oiik.copy(meta = metaSome))
+            val result = new ImgUrlInfoT {
+              override def call = routes.Img.getImg(oiik.filename)
+              override def meta = metaSome
+            }
+            Right(result)
           case _ => colorBg(adnNode)
         }
       }
