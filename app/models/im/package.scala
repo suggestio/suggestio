@@ -13,4 +13,6 @@ package object im {
   type ImResizeFlag         = ImResizeFlags.ImResizeFlag
   type ImInterlacing        = ImInterlace.ImInterlacing
   type ImOpCode             = ImOpCodes.ImOpCode
+
+  type BasicScreenSize      = BasicScreenSizes.BasicScreenSize
 }

@@ -105,9 +105,7 @@ object ImOpCodes extends Enumeration {
   }
   val AbsResize: ImOpCode = new Val("c") {
     override def mkOp(vs: Seq[String]): ImOp = {
-      // TODO Нужен нормальный парсер, который понимает ещё и modifier. Пока тут лишь костыль.
-      val imeta = QSBs.parseWxH(vs.head).get
-      AbsResizeOp(width = imeta.width, height = imeta.height)
+      AbsResizeOp(vs.head)
     }
   }
   val Interlace: ImOpCode = new Val("d") {
@@ -123,6 +121,12 @@ object ImOpCodes extends Enumeration {
   val Quality: ImOpCode = new Val("f") {
     override def mkOp(vs: Seq[String]): ImOp = {
       QualityOp(vs.head.toDouble)
+    }
+  }
+
+  val Extent: ImOpCode = new Val("g") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      ExtentOp(vs.head)
     }
   }
 
@@ -179,38 +183,6 @@ case class GravityOp(gravity: ImGravity) extends ImOp {
   override def qsValue: String = gravity.strId
 }
 
-
-/** Флаги для ресайза. */
-object ImResizeFlags extends Enumeration {
-  protected case class Val(imChar: Char, urlSafeChar: Char) extends super.Val(urlSafeChar.toString)
-
-  type ImResizeFlag = Val
-
-  lazy val IgnoreAspectRatio: ImResizeFlag   = Val('!', 'a')
-  lazy val OnlyShrinkLarger: ImResizeFlag    = Val('>', 'b')
-  lazy val OnlyEnlargeSmaller: ImResizeFlag  = Val('<', 'c')
-  lazy val FillArea: ImResizeFlag            = Val('^', 'd')
-  // Другие режимы ресайза тут пока опущены, т.к. не подходят для AbsResize, а другой пока нет.
-
-  implicit def valueval(x: Value): ImResizeFlag = x.asInstanceOf[ImResizeFlag]
-}
-
-
-/** Добавить -resize WxH */
-case class AbsResizeOp(width: Int, height: Int, modifier: Option[Char] = None) extends ImOp with MImgSizeT {
-  override def opCode = ImOpCodes.AbsResize
-  override def addOperation(op: IMOperation): Unit = {
-    if (modifier.isDefined) {
-      op.resize(width, height, modifier.get)
-    } else {
-      op.resize(width, height)
-    }
-  }
-  override def qsValue: String = {
-    // TODO Нужно отрабатывать modifier.
-    QSBs.unParseWxH(this)
-  }
-}
 
 
 /** quality для результата. */

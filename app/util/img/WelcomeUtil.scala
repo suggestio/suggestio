@@ -1,6 +1,9 @@
 package util.img
 
 import controllers.{routes, MarketShowcase}
+import io.suggest.ym.model.common.MImgSizeT
+import models.im._
+import play.api.mvc.Call
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -19,7 +22,7 @@ import play.api.Play.{current, configuration}
 object WelcomeUtil {
 
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
-  val BG_VIA_DYN_IMG = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse true
+  val BG_VIA_DYN_IMG = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -99,7 +102,7 @@ object WelcomeUtil {
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[MImgInfoMeta]): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[MImgSizeT]): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
@@ -113,7 +116,7 @@ object WelcomeUtil {
         oiik.getImageWH map {
           case metaSome if metaSome.nonEmpty =>
             val result = new ImgUrlInfoT {
-              override def call = routes.Img.getImg(oiik.filename)
+              override def call: Call = bgCallForScreen(oiik, screen)
               override def meta = metaSome
             }
             Right(result)
@@ -130,6 +133,26 @@ object WelcomeUtil {
         override def fgText = Some(adnNode.meta.name)
       }
       Some(wra)
+    }
+  }
+
+
+  /** Собрать ссылку на фоновую картинку. */
+  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[MImgSizeT]): Call = {
+    // TODO Нужно запрещать ресайзить вверх картинку, если она маленькая.
+    screen
+      .filter { _ => BG_VIA_DYN_IMG }
+      .flatMap { BasicScreenSizes.includesSize }
+      .fold [Call] {
+        routes.Img.getImg(oiik.filename)
+      } { scrSz =>
+        val imOps: Seq[ImOp] = Seq(
+          AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
+          GravityOp(ImGravities.Center),
+          ExtentOp(scrSz)
+        )
+        val dynArgs = DynImgArgs(oiik, imOps)
+        routes.Img.dynImg(dynArgs)
     }
   }
 
