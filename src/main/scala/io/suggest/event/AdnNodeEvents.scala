@@ -34,6 +34,8 @@ case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolea
     adnId = Option(adnId),
     isCreated = Some(isCreated)
   )
+
+  override def toString: String = s"""${getClass.getSimpleName}($adnId)"""
 }
 
 
@@ -55,6 +57,8 @@ case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEve
       isDeleted = Some(isDeleted)
     )
   }
+
+  override def toString: String = s"""${getClass.getSimpleName}($adnId, isDeleted=$isDeleted)"""
 }
 
 
@@ -73,6 +77,8 @@ case class AdnNodeOnOffEvent(adnId: String, isEnabled: Boolean) extends SioEvent
     adnId = Option(adnId),
     isEnabled = Some(isEnabled)
   )
+
+  override def toString: String = s"""${getClass.getSimpleName}($adnId, isEnabled=$isEnabled)"""
 }
 
 

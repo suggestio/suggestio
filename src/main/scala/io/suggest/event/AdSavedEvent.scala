@@ -24,6 +24,8 @@ case class AdSavedEvent(mad: MAd) extends SioEventT {
     producerId = Option(mad.producerId),
     id = mad.id
   )
+
+  override def toString: String = s"""${getClass.getSimpleName}(${mad.id.getOrElse("")})"""
 }
 
 
@@ -44,4 +46,6 @@ case class AdDeletedEvent(mad: MAd) extends SioEventT {
     producerId = Option(mad.producerId),
     id = mad.id
   )
+
+  override def toString: String = s"""${getClass.getSimpleName}(${mad.id.getOrElse("")})"""
 }
