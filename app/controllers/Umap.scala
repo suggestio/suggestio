@@ -123,7 +123,8 @@ object Umap extends SioController with PlayMacroLogsImpl {
                 "name"        -> JsString( adnNode.meta.name + " (центр)" ),
                 "description" -> JsString( routes.SysMarket.showAdnNode(adnNode.id.get).absoluteURL() )
               ))
-
+            ))
+          }
         }
       (centersFeaturesIter ++ shapeFeaturesIter)
         .toSeq
