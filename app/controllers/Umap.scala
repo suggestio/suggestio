@@ -2,6 +2,8 @@ package controllers
 
 import java.nio.file.Files
 
+import io.suggest.model.geo.{PointGs, GsTypes}
+import org.elasticsearch.action.bulk.BulkResponse
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
 import _root_.util.geo.umap._
@@ -99,7 +101,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MAdnNode],
                                    geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
     val features: Seq[JsObject] = {
-      UmapUtil.prepareDataLayerGeos(geos.iterator)
+      val shapeFeaturesIter = UmapUtil.prepareDataLayerGeos(geos.iterator)
         .map { geo =>
           JsObject(Seq(
             "type" -> JsString("Feature"),
@@ -110,6 +112,20 @@ object Umap extends SioController with PlayMacroLogsImpl {
             ))
           ))
         }
+      val centersFeaturesIter = nodesMap
+        .valuesIterator
+        .flatMap { adnNode =>
+          adnNode.geo.point.map { pt =>
+            JsObject(Seq(
+              "type" -> JsString("Feature"),
+              "geometry"   -> PointGs(pt).toPlayJson(geoJsonCompatible = true),
+              "properties" -> JsObject(Seq(
+                "name"        -> JsString( adnNode.meta.name + " (центр)" ),
+                "description" -> JsString( routes.SysMarket.showAdnNode(adnNode.id.get).absoluteURL() )
+              ))
+
+        }
+      (centersFeaturesIter ++ shapeFeaturesIter)
         .toSeq
     }
     val resp = JsObject(Seq(
@@ -175,17 +191,50 @@ object Umap extends SioController with PlayMacroLogsImpl {
       }
       val layerData = UmapUtil.deserializeFromBytes(jsonBytes).get
       // Собираем BulkRequest для сохранения данных.
-      val bulk = client.prepareBulk()
+      val bulkSave = client.prepareBulk()
       layerData.features
+        .iterator
+        .filter { _.geometry.shapeType == GsTypes.polygon }
         .foreach { feature =>
           val geo = MAdnNodeGeo(
             adnId = getAdnIdF(feature),
             glevel = ngl,
             shape = feature.geometry
           )
-          bulk.add(geo.indexRequestBuilder)
+          bulkSave.add(geo.indexRequestBuilder)
         }
-      // TODO Надо защиту на случай проблем.
+      // Точки отрабатываем как центры для узлов (MAdnNode.geo.point).
+      val centersUpdateMap: Map[String, Option[GeoPoint]] = {
+        layerData.features
+          .groupBy(getAdnIdF)
+          .mapValues { nodeFeatures =>
+          nodeFeatures
+            .iterator
+            .flatMap { f =>
+              f.geometry match {
+                case p: PointGs => List(p.coord)
+                case _          => Nil
+              }
+            }
+            .toStream
+            .headOption
+        }
+      }
+      val nodesCentersUpdateInfoFut: Future[Iterable[(MAdnNode, Option[GeoPoint])]] = {
+        Future.traverse( centersUpdateMap ) {
+          case (adnId, newCenterOpt) =>
+            MAdnNodeCache.getById(adnId).map {
+              _.map { _ -> newCenterOpt }
+            }
+        } map {
+          _.flatMap {
+            // Не надо обновлять узел, если точка не изменилась.
+            _.filter {
+              case (node, ncOpt)  =>  node.geo.point != ncOpt
+            }
+          }
+        }
+      }
       // Слой распарсился и готов к сохранению. Запускаем удаление исходных данных слоя.
       allRenderableFut.flatMap { all =>
         if (all.nonEmpty) {
@@ -198,9 +247,23 @@ object Umap extends SioController with PlayMacroLogsImpl {
         } else {
           Future successful None
         }
+
       } flatMap { bulkDelResultOpt =>
         trace(s"${logPrefix}Layer $ngl wiped: $bulkDelResultOpt ;; Starting to save new shapes...")
-        bulk.execute()
+        val layersSaveFut: Future[BulkResponse] = bulkSave.execute()
+        val nodesUpdFut = nodesCentersUpdateInfoFut.flatMap { data =>
+          Future.traverse(data) { case (node, newCenter) =>
+            MAdnNode.tryUpdate(node) { node0 =>
+              node0.copy(
+                geo = node0.geo.copy(
+                  point = newCenter
+                )
+              )
+            }
+          }
+        }
+        nodesUpdFut flatMap { _ => layersSaveFut }
+
       } map { br =>
         if (br.hasFailures) {
           warn("Layer saved with problems: " + br.buildFailureMessage())
@@ -209,21 +272,28 @@ object Umap extends SioController with PlayMacroLogsImpl {
         }
         val resp = layerJson(ngl, request2lang)
         Ok(resp)
+
       } recoverWith {
+        // При любом экзепшене откатываем все данные назад.
         case ex: Throwable =>
           error("Failed to update layer " + ngl, ex)
-          allRenderableFut flatMap { all =>
-            if (all.nonEmpty) {
-              val bulkReSave = client.prepareBulk()
-              all.foreach { geo =>
-                bulkReSave.add(geo.indexRequestBuilder)
-              }
-              bulkReSave.execute().map(Some.apply)
-            } else {
-              Future successful None
+          val bulkReSave = client.prepareBulk()
+          val rollbackNodesFut = nodesCentersUpdateInfoFut.map { data =>
+            data.foreach {
+              case (adnNode0, _)  =>  bulkReSave add adnNode0.indexRequestBuilder
             }
-          } map { bsrOpt =>
-            debug("Rollbacked deleted data: " + bsrOpt)
+          }
+          val rollbackLayersFut = allRenderableFut map { all =>
+            all.foreach { geo =>
+              bulkReSave add geo.indexRequestBuilder
+            }
+          }
+          for {
+            _       <- rollbackLayersFut
+            _       <- rollbackNodesFut
+            result  <- bulkReSave.execute()
+          } yield {
+            debug("Successfully rollbacked updated data. Result = " + result)
             InternalServerError("Failed to save. See logs.")
           }
       }
