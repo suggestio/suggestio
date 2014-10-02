@@ -2,6 +2,7 @@ package util
 
 import org.joda.time.{DateTimeZone, DateTime}
 import org.joda.time.format.{DateTimeFormatter, DateTimeFormat}
+import java.util.Locale
 
 /**
  * Suggest.io
@@ -17,19 +18,27 @@ object DateTimeUtil {
 
   private val timeZoneCode = "GMT"
 
-  //Dateformatter is immutable and threadsafe
-  val df: DateTimeFormatter = {
+  /** Форматирование RFC даты, пригодную для отправки/получения внутри http-заголовка. */
+  val rfcDtFmt: DateTimeFormatter = {
     DateTimeFormat
       .forPattern("EEE, dd MMM yyyy HH:mm:ss '" + timeZoneCode + "'")
       .withLocale(java.util.Locale.ENGLISH)
       .withZone(DateTimeZone.forID(timeZoneCode))
   }
 
-  //Dateformatter is immutable and threadsafe
-  val dfp: DateTimeFormatter = {
+  /** Аналог rfcDtFmt, но без таймзоны. */
+  val rfcDtNoTzFmt: DateTimeFormatter = {
     DateTimeFormat
       .forPattern("EEE, dd MMM yyyy HH:mm:ss")
       .withLocale(java.util.Locale.ENGLISH)
+      .withZone(DateTimeZone.forID(timeZoneCode))
+  }
+
+  /** Простое челове-читабельное форматирование значения LocalDate. */
+  val simpleLocalDateFmt: DateTimeFormatter = {
+    DateTimeFormat
+      .forPattern("dd MMM yyyy")
+      .withLocale(Locale.getDefault)
       .withZone(DateTimeZone.forID(timeZoneCode))
   }
 
@@ -38,7 +47,7 @@ object DateTimeUtil {
   def parseRfcDate(date: String): Option[DateTime] = {
     try {
       //jodatime does not parse timezones, so we handle that manually
-      val d = dfp.parseDateTime(date.replace(parsableTimezoneCode, ""))
+      val d = rfcDtNoTzFmt.parseDateTime(date.replace(parsableTimezoneCode, ""))
       Some(d)
 
     } catch {

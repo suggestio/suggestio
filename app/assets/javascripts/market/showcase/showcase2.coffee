@@ -486,7 +486,6 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
-
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
@@ -536,7 +535,15 @@ sm =
 
       sm.geo.location_requested = true
 
-      navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback
+      if typeof navigator.geolocation != 'undefined'
+        if sm.utils.is_webkit() == true
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000, maximumAge : 100 }
+        else
+          sm.geo.position_callback_fallback()
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback
+
+      else
+        sm.geo.position_callback_fallback()
 
     init_events : () ->
       _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
@@ -577,7 +584,7 @@ sm =
       sm.log 'open screen'
 
       siomart.utils.ge('smGeoScreenButton').style.display = 'none'
-      sm.geo.load_nodes( true )
+      sm.geo.load_nodes()
 
     close_screen : () ->
 
@@ -604,6 +611,10 @@ sm =
         "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
 
     load_nodes_and_reload_with_mart_id : () ->
+
+      if sm.utils.ge('smGeoLocationButtonIcon') != null
+        sm.utils.ge('smGeoLocationButtonIcon').style.display = 'block'
+        sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'none'
 
       cs = sm.states.cur_state()
       node_query_param = if typeof cs != 'undefined' && cs.mart_id then '&a.cai=' + cs.mart_id else ''
@@ -637,8 +648,12 @@ sm =
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
-      sm.welcome_ad.fit sm.welcome_ad.img_dom
+
+      sm.welcome_ad.fit sm.welcome_ad._bg_img_dom
+      sm.welcome_ad.fit sm.welcome_ad._fg_img_dom, true
       window.scrollTo(0,0)
+
+      sm.navigation_layer.adjust()
 
       if typeof sm.window_resize_timer != 'undefined'
         clearTimeout sm.window_resize_timer
@@ -693,8 +708,8 @@ sm =
       !!(window.history && history.pushState);
 
     navigate : ( state ) ->
-      sm.log 'navigate to : ' + state.state_index
-      sm.states.goto state.state_index
+      if state != null
+        sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
       history.pushState data, title, this.base_path + '#' + path
@@ -722,13 +737,18 @@ sm =
     this.write_log('error', message)
 
   write_log : ( fun, message ) ->
+    return false
     console[fun](message)
 
   utils :
     elts_cache : {}
     is_firefox : () ->
       navigator.userAgent.toLowerCase().indexOf('firefox') > -1
-
+    is_webkit : () ->
+      if typeof document.documentElement.style['WebkitAppearance'] == 'undefined'
+        return false
+      else
+        return true
     is_touch_device : () ->
       if document.ontouchstart != null
         false
@@ -779,10 +799,11 @@ sm =
       elts = []
 
       for child in childs
-        _className = if typeof child.className.baseVal != 'undefined' then child.className.baseVal else child.className
-        if typeof _className != 'undefined'
-          if sm.utils.is_array _className.match _class_match_regexp
-            elts.push child
+        if typeof child.className != 'undefined'
+          _className = if typeof child.className.baseVal != 'undefined' then child.className.baseVal else child.className
+          if typeof _className != 'undefined'
+            if sm.utils.is_array _className.match _class_match_regexp
+              elts.push child
 
       elts
 
@@ -1106,12 +1127,9 @@ sm =
         if sm.events.is_touch_locked
           return false
 
-        if typeof sm.geo.location_node == 'undefined'
-          sm.geo.get_current_position()
-        else
-          sm.states.add_state
-            mart_id : sm.geo.location_node._id
-            with_welcome_ad : false
+        sm.geo.location_requested = false
+        sm.geo.location_node = undefined
+        setTimeout sm.geo.get_current_position, 200
         return false
 
       ## Кнопка закрытия экрана geo
@@ -1618,6 +1636,11 @@ sm =
           cbca_grid.init(is_add = true)
 
         sm.styles.init()
+
+        if data.action == 'searchAds'
+          if cbca_grid.ww <= 400
+            sm.navigation_layer.close()
+            sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       else
 
@@ -2209,8 +2232,6 @@ sm =
       image_w = parseInt image_dom.getAttribute "data-width"
       image_h = parseInt image_dom.getAttribute "data-height"
 
-      console.log image_dom
-
       if is_divided == true
         nw = image_w/2
         nh = image_h/2
@@ -2225,7 +2246,14 @@ sm =
       image_dom.style.width = nw + 'px'
       image_dom.style.height = nh + 'px'
       image_dom.style.marginLeft = - nw / 2 + 'px'
-      image_dom.style.marginTop = - nh / 2 + 'px'
+
+      if is_divided == true
+        image_dom.style.marginTop = - (nh+50) / 2 + 'px'
+      else
+        image_dom.style.marginTop = - nh / 2 + 'px'
+
+      if is_divided == true
+        sm.utils.ge('smWelcomeAdfgText').style.marginTop = nh/2 + 'px'
 
     hide : () ->
 
@@ -2250,8 +2278,8 @@ sm =
         this._dom.style.display = 'none'
         return false
 
-      _bg_img_dom = siomart.utils.ge 'smWelcomeAdBgImage'
-      _fg_img_dom = siomart.utils.ge 'smWelcomeAdfgImage'
+      this._bg_img_dom = _bg_img_dom = siomart.utils.ge 'smWelcomeAdBgImage'
+      this._fg_img_dom = _fg_img_dom = siomart.utils.ge 'smWelcomeAdfgImage'
 
       this.fit _bg_img_dom
       this.fit _fg_img_dom, true
@@ -2455,7 +2483,8 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id else '/market/geo/index'
+    ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
+    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
 
     sm.log 'about to call index_action : ' + index_action
     this.request.perform index_action
@@ -2484,7 +2513,7 @@ sm =
 
     sm_id = window.siomart_id || undefined
 
-    console.warn 'initial mart_id : ' + sm_id
+    sm.warn 'initial mart_id : ' + sm_id
 
     ## Если еще не запрашивали координаты у юзера
     if sm.geo.location_requested == false

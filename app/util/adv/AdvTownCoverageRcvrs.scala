@@ -40,7 +40,7 @@ object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsIm
     val townDistrictsRcvrsMapFut = allRcvrsFut map { districtNodes =>
       val filtered = districtNodes
         .iterator
-        .filter { _.adn.shownTypeId  ==  AdnShownTypes.TOWN_DISTRICT.name }
+        .filter { adnNode  =>  AdnShownTypes.districtNames.contains(adnNode.adn.shownTypeId) }
       groupByDirectGeoParents(filtered)
     }
     // Рисуем карту узлов городов: townAdnId -> townNode
@@ -67,7 +67,7 @@ object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsIm
         val sargs = new AdnNodesSearchArgs {
           override def withDirectGeoParents = Seq(townAdnId)
           override def maxResults           = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
-          override def shownTypeIds         = Seq(AdnShownTypes.TOWN_DISTRICT.name)
+          override def shownTypeIds         = AdnShownTypes.districtNames
           override def onlyWithSinks        = Seq(AdnSinks.SINK_GEO)
         }
         MAdnNode.dynSearchIds(sargs) map { allTownDistrictsIds =>

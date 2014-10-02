@@ -23,6 +23,10 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuite {
     })
   )
 
+  // lazy, т.к. GeoPoint() дергает package, который дёргает другие модели, которые дёргают config.
+  // И тогда вылетает ExceptionInInitializerError: There is no started application.
+  private lazy val gp0 = GeoPoint(59.926185700000005, 30.2333629)
+
 
   "GeoMode" must {
 
@@ -33,11 +37,29 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuite {
 
     "parse and bind qs ip value" in {
       GeoMode(Some("ip"))  mustBe  theSameInstanceAs(GeoIp)
+      GeoMode(Some("IP"))  mustBe  theSameInstanceAs(GeoIp)
     }
 
-    "parse and bind qs lat,lon value" in {
-      GeoMode(Some("59.926185700000005,30.2333629"))   mustBe  GeoLocation(59.926185700000005, 30.2333629)
-      GeoMode(Some("-66.245,30.2333629"))   mustBe  GeoLocation(-66.245, 30.2333629)
+    "parse and bind qs 'lat,lon' value" in {
+      GeoMode(Some("59.926185700000005,30.2333629"))   mustBe  GeoLocation(gp0)
+      GeoMode(Some("-66.245,30.2333629"))   mustBe  GeoLocation(GeoPoint(-66.245, 30.2333629))
+    }
+
+    "parse stranger 'lat,lon' value" in {
+      GeoMode(Some("-66.,30"))    mustBe  GeoLocation(GeoPoint(-66.0, 30.0))
+      GeoMode(Some("0,-0"))       mustBe  GeoLocation(GeoPoint(0.0, 0.0))  // северный полюс.
+    }
+
+    // Для сбора статистики нужна инфа о точности.
+    "parse and bind qs 'lat,lon,accur' value" in {
+      GeoMode(Some("59.926185700000005,30.2333629,23.444444"))  mustBe  GeoLocation(gp0, Some(23.444444))
+      GeoMode(Some("59.926185700000005,30.2333629,0"))          mustBe  GeoLocation(gp0, Some(0.0))
+      GeoMode(Some("59.926185700000005,30.2333629,11"))         mustBe  GeoLocation(gp0, Some(11.0))
+    }
+
+    "parse and bind qs 'lat,lon,accur' with invalid/missing accuracy" in {
+      GeoMode(Some("59.926185700000005,30.2333629,null"))       mustBe  GeoLocation(gp0)
+      GeoMode(Some("59.926185700000005,30.2333629,"))           mustBe  GeoLocation(gp0)
     }
 
   }

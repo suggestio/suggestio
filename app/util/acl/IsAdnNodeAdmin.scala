@@ -8,7 +8,6 @@ import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
 import util.SiowebEsUtil.client
-import controllers.routes
 import play.api.mvc.Result
 
 /**
@@ -22,10 +21,11 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
   import LOGGER._
 
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
-  def onUnauth(req: RequestHeader): Future[Result] = {
-    Future.successful(
-      Results.Redirect(routes.Market.index())
-    )
+  def onUnauth(req: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+    pwOpt match {
+      case None => IsAuth.onUnauth(req)
+      case _ => Future successful Results.Forbidden("403 Forbiden")
+    }
   }
 
 
@@ -42,14 +42,17 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
   }
 
 
-  def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
+  def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
     adnNodeOptFut map {
-      checkAdnNodeCreds(_, pwOpt)
+      checkAdnNodeCreds(_, adnId, pwOpt)
     }
   }
 
-  def checkAdnNodeCreds(adnNodeOpt: Option[MAdnNode], pwOpt: PwOpt_t): Either[Option[MAdnNode], MAdnNode] = {
-    adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] (Left(None)) { adnNode =>
+  def checkAdnNodeCreds(adnNodeOpt: Option[MAdnNode], adnId: String, pwOpt: PwOpt_t): Either[Option[MAdnNode], MAdnNode] = {
+    adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] {
+      warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
+      Left(None)
+    } { adnNode =>
       val isAllowed = isAdnNodeAdminCheck(adnNode, pwOpt)
       if (isAllowed) {
         Right(adnNode)
@@ -61,8 +64,8 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
     }
   }
 
-  def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) map {
+  def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+    checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) map {
       case Right(adnNode) => Some(adnNode)
       case _ => None
     }
@@ -71,7 +74,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
   def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     val fut = MAdnNodeCache.getById(adnId)
-    checkAdnNodeCredsOpt(fut, pwOpt)
+    checkAdnNodeCredsOpt(fut, adnId, pwOpt)
   }
 
   def nodeNotFound(adnId: String)(implicit request: RequestHeader): Future[Result] = {
@@ -97,7 +100,7 @@ sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode]
 
       case _ =>
         LOGGER.debug(s"User $pwOpt has NO admin access to node $adnId")
-        onUnauth(request)
+        onUnauth(request, pwOpt)
     }
   }
 }
@@ -129,7 +132,7 @@ sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
           { Future successful Option.empty[MAdnNode] }
           { povAdnId => IsAdnNodeAdmin.isAdnNodeAdmin(povAdnId, pwOpt) }
         val adnNodeOptFut = MAdnNodeCache.getById(adnId)
-        IsAdnNodeAdmin.checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) flatMap {
+        IsAdnNodeAdmin.checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) flatMap {
           // Это админ текущего узла
           case Right(adnNode) =>
             SioReqMd.fromPwOptAdn(pwOpt, adnId) flatMap { srm =>

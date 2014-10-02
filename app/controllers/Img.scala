@@ -132,13 +132,13 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     }
   }
 
-  private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: Instant): Result = {
+  private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
     // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:
     val ct = Option( Magic.getMagicMatch(imgBytes) )
       .flatMap { mm => Option(mm.getMimeType) }
       // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
-      .map {
+     .map {
         case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
         case other => other
       }
@@ -146,7 +146,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     Ok(imgBytes)
       .withHeaders(
         CONTENT_TYPE  -> ct,
-        LAST_MODIFIED -> DateTimeUtil.df.print(modelInstant),
+        LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
   }
@@ -174,7 +174,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         val f = mptmp.file
         Ok.sendFile(f, inline = true)
           .withHeaders(
-            LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
+            LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(f.lastModified),
             CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
           )
 
@@ -357,7 +357,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
                 DynImgUtil.saveDynImgAsync(imgFile, rowKey, qualifier, saveDt)
                 Ok.sendFile(imgFile)
                   .withHeaders(
-                    LAST_MODIFIED -> DateTimeUtil.df.print(saveDt),
+                    LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(saveDt),
                     CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS"
                   )
               }.recover {

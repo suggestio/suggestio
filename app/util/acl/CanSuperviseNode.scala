@@ -33,9 +33,10 @@ object CanSuperviseNode {
 trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
-    MAdnNodeCache.getById(adnId) flatMap {
+    val nodeOptFut =  MAdnNodeCache.getById(adnId)
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    nodeOptFut flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
-        val pwOpt = PersonWrapper.getFromRequest(request)
         val supId = mslave.adn.supId.get
         val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
         IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
@@ -45,12 +46,12 @@ trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
               block(req1)
             }
 
-          case _ => onUnauth(request)
+          case _ => onUnauth(request, pwOpt)
         }
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-      case _ => onUnauth(request)
+      case _ => onUnauth(request, pwOpt)
     }
   }
 }
@@ -75,8 +76,9 @@ case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: R
 trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
+    val nodeOptFut = MAdnNodeCache.getById(adnId)
     val pwOpt = PersonWrapper.getFromRequest(request)
-    MAdnNodeCache.getById(adnId) flatMap {
+    nodeOptFut flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
         val supId = mslave.adn.supId.get
         val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
@@ -87,12 +89,12 @@ trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
               block(req1)
             }
 
-          case _ => onUnauth(request)
+          case _ => onUnauth(request, pwOpt)
         }
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-      case _ => onUnauth(request)
+      case _ => onUnauth(request, pwOpt)
     }
   }
 }
@@ -106,10 +108,11 @@ final case class CanViewSlave(adnId: String)
 trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
   def adId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
-    MAd.getById(adId) flatMap {
+    val adOptFut = MAd.getById(adId)
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    adOptFut flatMap {
       case Some(mad) =>
         val adnId = mad.producerId
-        val pwOpt = PersonWrapper.getFromRequest(request)
         MAdnNodeCache.getById(adnId) flatMap {
           case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
             val supId = mslave.adn.supId.get
@@ -121,15 +124,15 @@ trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
                   block(req1)
                 }
 
-              case _ => onUnauth(request)
+              case _ => onUnauth(request, pwOpt)
             }
 
           // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
           // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-          case _ => onUnauth(request)
+          case _ => onUnauth(request, pwOpt)
         }
 
-      case None => onUnauth(request)
+      case None => onUnauth(request, pwOpt)
     }
   }
 }
@@ -146,10 +149,11 @@ case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode
 trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
   def adId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
+    val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper.getFromRequest(request)
     // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MAd.getById(adId) flatMap {
+    madOptFut flatMap {
       case Some(mad) =>
         // TODO Наверное надо проверять права супервайзера этого узла над подчинённым узлов.
         MAdnNodeCache.getById(mad.producerId) flatMap { slaveNodeOpt =>
@@ -171,11 +175,11 @@ trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
                 )
                 block(req1)
               }
-            case _ => onUnauth(request)
+            case _ => onUnauth(request, pwOpt)
           }
         }
 
-      case _ => onUnauth(request)
+      case _ => onUnauth(request, pwOpt)
     }
   }
 }

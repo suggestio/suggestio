@@ -62,9 +62,6 @@ libraryDependencies ++= Seq(
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   // webjars
-  "org.webjars" % "leaflet" % "0.7.3",
-  "org.webjars" % "leaflet-markercluster" % "0.4.0",
-  "org.webjars" % "leaflet-plugins" % "1.1.2",
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
   "com.vividsolutions" % "jts" % "1.13",

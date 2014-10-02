@@ -14,14 +14,18 @@ import util.qsb.QsbUtil._
 object SMShowcaseReqArgs {
 
   /** routes-Биндер для параметров showcase'а. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]) = {
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], scrSzB: QueryStringBindable[Option[MImgInfoMeta]]) = {
     new QueryStringBindable[SMShowcaseReqArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SMShowcaseReqArgs]] = {
         for {
-          maybeGeo  <- strOptB.bind(key + ".geo", params)
+          maybeGeo        <- strOptB.bind(key + ".geo", params)
+          maybeScrSzOptB  <- scrSzB.bind(key + ".screen", params)
         } yield {
           Right(SMShowcaseReqArgs(
-            geo  = GeoMode.maybeApply(maybeGeo).filter(_.isWithGeo).getOrElse(GeoIp)
+            geo  = GeoMode.maybeApply(maybeGeo)
+              .filter(_.isWithGeo)
+              .getOrElse(GeoIp),
+            screen = maybeScrSzOptB     // Игнорим неверные размеры, ибо некритично.
           ))
         }
       }
@@ -35,7 +39,8 @@ object SMShowcaseReqArgs {
 }
 
 case class SMShowcaseReqArgs(
-  geo: GeoMode = GeoNone
+  geo: GeoMode = GeoNone,
+  screen: Option[MImgInfoMeta] = None
 ) {
   override def toString: String = s"${geo.toQsStringOpt.map { "geo=" + _ }}"
 }
@@ -133,12 +138,12 @@ case class SMShowcaseRenderArgs(
 /** Данные по рендеру приветствия. */
 trait WelcomeRenderArgsT {
 
-  /** Карточка приветствия. */
-  def wad: MWelcomeAd
-
   /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
   def bg: Either[String, MImgInfoT]
 
   def fgImage: Option[MImgInfoT]
+
+  /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
+  def fgText: Option[String]
 }
 

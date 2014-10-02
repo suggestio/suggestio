@@ -26,6 +26,9 @@ object ExpireSession extends PlayMacroLogsImpl {
     .getOrElse(10 minutes)
     .toSeconds
 
+  /** play-флаг session.secure. Нужно для защиты от передачи кук по голому http. */
+  val SECURE_SESSION = configuration.getBoolean("session.secure") getOrElse false
+
   /** Чтобы не делать лишних движений, фиксируем начало времён, вычитая его из всех timestamp'ов. */
   val TSAMP_SUBSTRACT = 1402927907242L
 
@@ -71,7 +74,8 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
   import LOGGER._
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block) map { result =>
+    val resultFut = super.invokeBlock(request, block)
+    resultFut map { result =>
       val session0 = result.session(request)
       if (session0.isEmpty) {
         // Не заниматься ковырянием сессии, если она пустая.

@@ -530,7 +530,10 @@ object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
-  override def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
+  override val MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = {
+    val kib = configuration.getInt("img.org.preserve.src.max.len.kib").getOrElse(90)
+    Some(kib * 1024L)
+  }
 
   /** Качество сжатия jpeg. */
   override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.orig.jpeg.quality") getOrElse 90.0
@@ -625,9 +628,6 @@ sealed case class DownsizeImageUtil(iim: MImgInfoMeta) extends SioImageUtilT wit
 
 /** Конвертор картинок в логотипы ТЦ. */
 object LogoImageUtil extends SqLogoImageUtil
-
-/** Конвертор картинок во вторичные логотипы на рекламных карточках. */
-object AdLogoImageUtil extends SqLogoImageUtil
 
 
 object ImgIdKey {

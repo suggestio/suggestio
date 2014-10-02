@@ -80,7 +80,12 @@ object AdvUtil extends PlayMacroLogsImpl {
         val extrasFuts = EXTRA_RCVRS_CALCS.map { src =>
           src.calcForDirectRcvrs(prodResults, mad.producerId)
         }
-        Future.reduce(prodResultFut :: extrasFuts) { AdReceiverInfo.mergeRcvrMaps(_, _) }
+        Future.reduce(prodResultFut :: extrasFuts) {
+          (rm1, rm2) =>
+            val result = AdReceiverInfo.mergeRcvrMaps(rm1, rm2)
+            //trace(s"Merging rcvr maps:\n  $rm1\n  + $rm2\n  = $result")
+            result
+        }
       }
 
     resultFut

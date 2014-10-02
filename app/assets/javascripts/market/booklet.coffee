@@ -1,104 +1,145 @@
-bookletScrollr = ''
-initMaxScroll = 0
-afterHideMaxScroll = 0
+$doc = $ document
+$win = $ window
 
-$ document
-.scroll () ->
+
+isTouchDevice = () ->
+  if document.ontouchstart != null
+    false
+  else
+    if navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+      false
+    else
+      true
+
+event = if isTouchDevice() then 'touchend' else 'click'
+
+$doc.scroll () ->
 
   $document = $ document
-  $header = $ '#header'
+  $header = $ '#headerSlide'
   scrollTop = $document.scrollTop()
 
-  if scrollTop > 50
-    $header.addClass '__js-dark'
+  if scrollTop > 600
+    $header.addClass '__visible'
   else
-    $header.removeClass '__js-dark'
+    $header.removeClass '__visible'
 
 
+slideToElement = (selector)->
+  HEADER_HEIGHT = 60
+  $target = $ selector
+  scrollTop = $target.offset().top
 
-$ document
-.on 'click', '.js-slide-btn', (e) ->
-  $this = $ this
-  slideSelector = $this.attr 'data-slide'
-  $slideElement = $ slideSelector
+  if $win.width() > 768 && scrollTop > HEADER_HEIGHT
+    scrollTop = scrollTop - HEADER_HEIGHT
 
-  $slideElement.slideToggle(
-    600
-    () ->
-      if bookletScrollr
-
-        if $slideElement.is ':visible'
-          bookletScrollr.setMaxScrollTop initMaxScroll
-        else
-          bookletScrollr.setMaxScrollTop afterHideMaxScroll
+  $ 'body, html'
+  .animate(
+    scrollTop: scrollTop,
+    800
   )
 
 
+$doc.on event, '.js-tab', (e) ->
+  $this = $ this
+  selector = $this.attr 'data-cnt'
+  $cnt = $ selector
 
-$ document
-.on 'click', '.js-slide-to', (e) ->
+  if $this.hasClass '__js-act'
+    return false
+
+  $ '.js-tab.__js-act'
+  .removeClass '__js-act'
+  $this.addClass '__js-act'
+
+  $ '.js-tab-cnt:visible'
+  .hide()
+  $cnt.show()
+
+
+$doc.on event, '.js-slide-btn', (e) ->
+  $this = $ this
+  selector = $this.attr 'data-slide'
+  $slideElement = $ selector
+
+  $slideElement.slideDown()
+  slideToElement selector
+
+$doc.on event, '.js-slide-tab', (e) ->
+  $this = $ this
+  slideSelector = $this.attr 'data-slide'
+  cntSelector = $this.attr 'data-cnt'
+  $slideElement = $ slideSelector
+
+  if !$slideElement.is ':visible'
+    $slideElement.slideDown()
+
+  $cnt = $ cntSelector
+
+  if !$cnt.is ':visible'
+    $slideElement
+    .find '.__js-act'
+    .removeClass '__js-act'
+    $slideElement
+    .find ".js-tab[data-cnt = #{cntSelector}]"
+    .addClass '__js-act'
+    $slideElement
+    .find '.js-tab-cnt'
+    .hide()
+    $cnt.show()
+
+  slideToElement slideSelector
+
+
+$doc.on event, '.js-slide-to', (e) ->
   e.preventDefault()
   $this = $ this
   targetSelector = $this.attr 'href'
-  $target = $ targetSelector
-  targetScrollTop = $target.offset().top
+  slideToElement targetSelector
 
-  if bookletScrollr
-    currentScrollTop = bookletScrollr.getScrollTop()
-    targetScrollTop = targetScrollTop + currentScrollTop
-    bookletScrollr.animateTo targetScrollTop
-  else
-    $ 'body, html'
-    .animate(
-      scrollTop: targetScrollTop,
-      800
+
+$doc.ready ()->
+
+  sliderControls = true
+  windWidth = $win.width()
+
+  if windWidth < 768
+    $ 'br'
+    .remove()
+    sliderControls = false
+
+  if windWidth < 768
+
+    $ '.js-ios-slider'
+    .bxSlider(
+      auto: false,
+      pager: false,
+      controls: false,
+      infiniteLoop: false,
+      hideControlOnEnd: false
     )
 
-
-initScrollr = () ->
-
-  $window = $ window
-  winWidth = $window.width()
-  $equipmentSlideCnt = $ '#equipment_slide-cnt'
-
-  if winWidth <= 1024
-
-    $equipmentSlideCnt.show()
-    if bookletScrollr
-
-      bookletScrollr.refresh()
-    else
-      skrollr.init(
-        smoothScrolling: false,
-        mobileDeceleration: 0.004,
-        render: (data) ->
-          $header = $ '#header'
-          if data.curTop > 50
-            $header.addClass '__js-dark'
-          else
-            $header.removeClass '__js-dark'
-      )
-
-      bookletScrollr = skrollr.get()
-
-    initMaxScroll = bookletScrollr.getMaxScrollTop()
-    $equipmentSlideCnt.hide()
-    afterHideMaxScroll = bookletScrollr.refresh().getMaxScrollTop()
-
+    $ '.js-android-slider'
+    .bxSlider(
+      auto: false,
+      pager: false,
+      controls: false,
+      infiniteLoop: false,
+      hideControlOnEnd: false,
+      onSliderLoad: ()->
+        $ '#phones, #android'
+        .hide()
+    )
   else
-    $equipmentSlideCnt.hide()
+    $ '#phones, #android'
+    .hide()
 
-
-$ document
-.ready () ->
-
-  initScrollr()
-
-$ window
-.resize () ->
-
-  window.setTimeout(
-    () ->
-      initScrollr()
-    100
+  $ '#slider'
+  .bxSlider(
+    auto: false,
+    pager: true,
+    controls: sliderControls,
+    infiniteLoop: false,
+    hideControlOnEnd: false,
+    adaptiveHeight: true
   )

@@ -11,6 +11,7 @@ import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.{Future, future}
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -19,24 +20,47 @@ import scala.concurrent.{Future, future}
  * Description: Режимы геолокации и утиль для них.
  */
 
-object GeoMode extends PlayLazyMacroLogsImpl {
+object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   import LOGGER._
 
-  /** Регэксп для извлечения координат из строки, переданной веб-мордой. */
-  val LAT_LON_RE = """(-?\d{1,3}\.\d{0,20})[,;](-?\d{1,3}\.\d{0,20})""".r
+  val latLonNumberRe = """-?\d{1,3}(\.(\d{0,20})?)?""".r
+  val accurNumberRe = """[-+]?\d{1,5}(\.(\d{0,20})?)?""".r
+  val delimRe = "[,;]".r
+  val ipModeRe = "(?i)ip".r
 
-  def maybeApply(raw: Option[String]): Option[GeoMode] = {
-    raw.flatMap {
-      case "ip"  => Some(GeoIp)
-      case LAT_LON_RE(latStr, lonStr) =>
-        val res = GeoLocation(latStr.toDouble, lonStr.toDouble)
-        Some(res)
-      case "" =>
-        Some(GeoNone)
-      case other =>
-        warn(s"apply(): Unknown .geo format: $other - fallback to None.")
+  /** Ленивый потоко-небезопасный (вроде бы) парсер координат из строки. */
+  def latLonAccurP: Parser[GeoLocation] = {
+    val doubleP = latLonNumberRe ^^ { _.toDouble }
+    val delimP: Parser[_] = delimRe
+    // Аккуратность в метрах -- может отсутствовать, может быть неправильной (null?)
+    val accurOptP: Parser[Option[Double]] = {
+      opt(
+        delimP ~> (accurNumberRe ^^ (s => Some(s.toDouble)) | ("(?i)[^,;]*".r ^^^ None))
+      ) ^^ {
+        _.flatten
+      }
+    }
+    val latLonP = ((doubleP <~ delimP) ~ doubleP) ^^ {
+      case lat ~ lon  =>  GeoPoint(lat = lat, lon = lon)
+    }
+    (latLonP ~ accurOptP) ^^ {
+      case gp ~ accurOpt  =>  GeoLocation(gp, accuracyMeters = accurOpt)
+    }
+  }
+
+  /** Логический аналог, Option[]. При проблемах возвращает None. */
+  def maybeApply(rawOpt: Option[String]): Option[GeoMode] = {
+    rawOpt.flatMap { raw =>
+      val ipP = ipModeRe ^^^ GeoIp
+      val p: Parser[GeoMode] = ipP | latLonAccurP | ("" ^^^ GeoNone)
+      val pr = parse(p, raw)
+      if (pr.successful) {
+        Some(pr.get)
+      } else {
+        warn(s"maybeApply(): Unknown .geo format: $raw - fallback to None.")
         None
+      }
     }
   }
 
@@ -90,6 +114,8 @@ sealed trait GeoMode {
 
   /** Уровни, по которым надо искать. */
   def nodeDetectLevels: Seq[NodeGeoLevel]
+
+  def asGeoLocation: Option[GeoLocation] = None
 }
 
 
@@ -226,22 +252,24 @@ object GeoLocation {
 }
 
 
-/** Геолокация с указанием географических координат. */
-final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
-  lazy val geopoint = GeoPoint(lat = lat, lon = lon)
+/** Геолокация с указанием географических координат.
+  * @param geoPoint Точка (координаты).
+  * @param accuracyMeters Необязательная точность в метрах.
+  */
+final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
 
   override def isWithGeo = true
-  override def toQsStringOpt = Some(s"$lat,$lon")
+  override def toQsStringOpt = Some(s"${geoPoint.lat},${geoPoint.lon}")
 
   override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
     val result = new GeoSearchInfo {
-      override def geoPoint: geo.GeoPoint = gl.geopoint
+      override def geoPoint: geo.GeoPoint = gl.geoPoint
       override def geoDistanceQuery = GeoDistanceQuery(
-        center      = gl.geopoint,
+        center      = gl.geoPoint,
         distanceMin = None,
         distanceMax = GeoLocation.DISTANCE_DFLT
       )
-      override def exactGeopoint = Some(gl.geopoint)
+      override def exactGeopoint = Some(gl.geoPoint)
       lazy val ipGeoloc = {
         val ra = GeoIp.getRemoteAddr
         GeoIp.ip2rangeCity(ra)
@@ -256,9 +284,10 @@ final case class GeoLocation(lat: Double, lon: Double) extends GeoMode { gl =>
     Future successful Some(result)
   }
 
-  override def exactGeodata = Some(geopoint)
+  override def exactGeodata = Some(geoPoint)
 
 
   override def nodeDetectLevels = GeoLocation.NGLS_b2t
 
+  override def asGeoLocation: Option[GeoLocation] = Some(this)
 }

@@ -11,7 +11,6 @@ import util.billing.MmpDailyBilling
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
-import io.suggest.ym.model.UsernamePw
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.Context
@@ -278,29 +277,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-  private def slsStrM: Mapping[LvlMap_t] = {
-    text(maxLength = 256)
-      .transform[LvlMap_t](
-        {raw =>
-          raw.split("\\s*,\\s*")
-            .toSeq
-            .map { one =>
-              val Array(slRaw, slMaxRaw) = one.split("\\s*=\\s*")
-              val sl: AdShowLevel = AdShowLevels.withName(slRaw)
-              sl -> slMaxRaw.toInt
-            }
-            .filter(_._2 > 0)
-            .toMap
-        },
-        {sls =>
-          val raws = sls.map {
-            case (sl, slMax)  =>  s"${sl.name} = $slMax"
-          }
-          raws.mkString(", ")
-        }
-      )
-  }
-
   private def adnSlInfoM: Mapping[AdnMemberShowLevels] = {
     val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
@@ -392,10 +368,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         { _.mkString(", ") }
       )
     mapping(
-      "withBlocks" -> default [Set[Int]] (intSetM, Set.empty),
-      "showcaseVoidFiller" -> optional(
-        text(maxLength = 255).transform(strTrimF, strIdentityF)
-      ).transform[Option[String]] (emptyStrOptToNone, identity)
+      "showInScNodeList"    -> boolean,
+      "withBlocks"          -> default [Set[Int]] (intSetM, Set.empty),
+      "showcaseVoidFiller"  -> {
+        optional(
+          text(maxLength = 255).transform(strTrimF, strIdentityF)
+        ).transform[Option[String]] (emptyStrOptToNone, identity)
+      }
     )
     { NodeConf.apply }
     { NodeConf.unapply }
@@ -442,19 +421,34 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       case None => Future successful None
     }
   }
-  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String])(implicit request: AbstractRequestWithPwOpt[_]) = {
+  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String], nodeFormM: Form[MAdnNode])(implicit request: AbstractRequestWithPwOpt[_]) = {
     val companiesFut = MCompany.getAll(maxResults = 100)
     for {
       supOpt    <- supOptFut
       companies <- companiesFut
     } yield {
-      createAdnNodeFormTpl(supOpt, adnNodeFormM, companies)
+      createAdnNodeFormTpl(supOpt, nodeFormM, companies)
     }
   }
 
   /** Страница с формой создания нового узла. */
   def createAdnNode(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
-    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt) map { Ok(_) }
+    // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
+    val dfltFormM = adnNodeFormM.fill(
+      MAdnNode(
+        companyId = "",
+        adn = AdNetMemberInfo(
+          memberType      = AdNetMemberTypes.MART,
+          rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
+          shownTypeIdOpt  = Some(AdnShownTypes.MART.name),
+          testNode        = false,
+          isEnabled       = true,
+          sinks           = Set(AdnSinks.SINK_GEO)
+        )
+      )
+    )
+    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt, dfltFormM)
+      .map { Ok(_) }
   }
 
   /** Сабмит формы создания нового узла. */
@@ -462,7 +456,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     val supOptFut = maybeSupOpt(supIdOpt)
     adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val renderFut = createAdnNodeRender(supOptFut, supIdOpt)
+        val renderFut = createAdnNodeRender(supOptFut, supIdOpt, formWithErrors)
         debug(s"createAdnNodeSubmit(supId=$supIdOpt): Failed to bind form: ${formatFormErrors(formWithErrors)}")
         renderFut map {
           NotAcceptable(_)
@@ -573,6 +567,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         sinks       = adnNode2.adn.sinks
       ),
       conf = adnNode.conf.copy(
+        showInScNodesList = adnNode2.conf.showInScNodesList,
         withBlocks = adnNode2.conf.withBlocks,
         showcaseVoidFiller = adnNode2.conf.showcaseVoidFiller
       )

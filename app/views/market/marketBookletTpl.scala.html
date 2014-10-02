@@ -8,649 +8,461 @@
 <html>
 
   <head>
-    <title>Приветствуем Вас в системе SioMarket</title>
+    <title>Геонацеленная поисковая система Suggest.io</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <meta name="format-detection" content="telephone=no">
 
 
-    <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
-
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.css")'/>
     <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
-    <style>
-      .parallax-image-wrapper {
-        position:fixed;
-        left:0;
-        width:100%;
-        overflow:hidden;
-      }
 
-      .parallax-image-wrapper-50 {
-        height:50%;
-        top:-50%;
-      }
-
-      .parallax-image-wrapper-100 {
-        height:100%;
-        top: -100%;
-      }
-
-      .parallax-image-wrapper-200 {
-        height:200%;
-        top: -300%;
-      }
-
-      .parallax-image {
-        position:absolute;
-        bottom:0;
-        left:0;
-        width:100%;
-        background-repeat:no-repeat;
-        background-position:center;
-        background-size:cover;
-      }
-
-      .parallax-image-50 {
-        height:200%;
-        top:-50%;
-      }
-
-      .parallax-image-100 {
-        height:100%;
-        top:0;
-      }
-
-      .parallax-image-200 {
-        height:100%;
-        top: 0%;
-      }
-
-
-      .parallax-image.skrollable-between {
-        display:block;
-      }
-
-      .no-skrollr .parallax-image-wrapper {
-        display:none !important;
-      }
-
-      #skrollr-body {
-        height: 100%;
-        position: relative;
-        -webkit-overflow-scrolling: touch;
-      }
-
-
-    </style>
 
   </head>
-  <body>
+  <body class="booklet">
 
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible ipad-visible"
-      data-anchor-target="#sio-market"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-100"
-        style="background-image:url('/assets/images/market/booklet/section-sio-market_bg.jpg')"
-        data-anchor-target="#sio-market"
-        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-50 ipad-visible"
-      data-anchor-target="#start"
-      data-bottom-top="transform:translate3d(0px, 300%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-50"
-        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
-        data-anchor-target="#start"
-        data-bottom-top="transform: translate3d(0px, -70%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 70%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-50 ipad-visible"
-      data-anchor-target="#you-notice"
-      data-bottom-top="transform:translate3d(0px, 300%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-50"
-        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
-        data-anchor-target="#you-notice"
-        data-bottom-top="transform: translate3d(0px, -70%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 70%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 ipad-visible phone-visible"
-      data-anchor-target="#how-it-works"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-100"
-        style="background-image:url('/assets/images/market/booklet/section-how-it-works_bg.jpg')"
-        data-anchor-target="#how-it-works"
-        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 ipad-visible"
-      data-anchor-target="#advantages"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-100"
-        style="background-image:url('/assets/images/market/booklet/section-advantages_bg.jpg')"
-        data-anchor-target="#advantages"
-        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-        ></div>
-    </div>
-
-    <!-- Iphone  -->
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible"
-      data-anchor-target="#start"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-      class="parallax-image parallax-image-100"
-      style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
-      data-anchor-target="#start"
-      data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-      data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-      ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible"
-      data-anchor-target="#you-notice"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-100"
-        style="background-image:url('/assets/images/market/booklet/section-2-4_bg.jpg')"
-        data-anchor-target="#you-notice"
-        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-200 phone-visible"
-      data-anchor-target="#advantages"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 50%, 0px)">
-
-      <div
-        class="parallax-image parallax-image-200"
-        style="background-image:url('/assets/images/market/booklet/section-advantages_bg.jpg'); background-size: auto 60%;"
-        data-anchor-target="#advantages"
-        data-bottom-top="transform: translate3d(0px, -80%, 0px);"
-        data-top-bottom="transform: translate3d(0px, 80%, 0px);"
-        ></div>
-    </div>
-
-    <div
-      class="parallax-image-wrapper parallax-image-wrapper-100 phone-visible"
-      data-anchor-target="#equipment"
-      data-bottom-top="transform:translate3d(0px, 200%, 0px)"
-      data-top-bottom="transform:translate3d(0px, 0%, 0px)">
-
-    </div>
-
-
-
-    <header class="header" id="header">
+    <header class="header">
       <div class="header_cnt">
-        <a class="header_logo link js-slide-to" href="#sio-market">
-          <span class="color-attention def-transition">Sio</span><span class="color-light default-transition">Market</span>
+        <a class="header_logo link js-slide-to" href="#yourAdv">
+          <img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTExcHgiIGhlaWdodD0iMjYuNjY3cHgiIHZpZXdCb3g9IjAgMCAxMTEgMjYuNjY3IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxMTEgMjYuNjY3IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xNS43MjMsNS42MzZjMC45MDksMCwxLjY1OCwwLjIyOSwyLjI0NywwLjY4MmMwLjU4OSwwLjQ1NSwwLjg4MiwxLjAzLDAuODgyLDEuNzI3DQoJYzAsMC4zOTktMC4xMzUsMC43NDItMC40MDksMS4wM2MtMC4yNzQsMC4yODctMC42MjgsMC40MzItMS4wNjMsMC40MzJjLTAuMzU0LDAtMC42NjctMC4xMDUtMC45NC0wLjMxNA0KCWMtMC4yNzItMC4yMDgtMC40MTItMC41MDctMC40MTItMC44OTZjMC0wLjE1OSwwLjA0NC0wLjMzNCwwLjEyOS0wLjUyOWMwLjA1Ny0wLjEzLDAuMDg1LTAuMjI4LDAuMDg1LTAuMjkzDQoJYzAtMC4zMjQtMC4yNDctMC40ODUtMC43MzgtMC40ODVjLTAuMzU0LDAtMC42NjksMC4xMjYtMC45NCwwLjM4MmMtMC4yNzYsMC4yNTQtMC40MTIsMC42MS0wLjQxMiwxLjA2Mw0KCWMwLDAuMzksMC4xMjYsMC43NTksMC4zNzYsMS4xMDdjMC4yNDksMC4zNDgsMC45MDksMC45MDcsMS45NzUsMS42NzZjMS4wMzEsMC43NDQsMS43NSwxLjQyOCwyLjE1NywyLjA1Mw0KCWMwLjQwOSwwLjYyNywwLjYxMiwxLjMzNCwwLjYxMiwyLjEyM2MwLDEuMjUtMC40MDIsMi4yMjUtMS4yMSwyLjkxNGMtMC44MDYsMC42OTEtMS43NjgsMS4wMzktMi44ODEsMS4wMzkNCgljLTEuMDU4LDAtMS45MTMtMC4yNTQtMi41NjgtMC43NmMtMC42NTMtMC41MDYtMC45NzktMS4xNS0wLjk3OS0xLjkyOGMwLTAuNDI4LDAuMTI5LTAuNzk1LDAuMzg5LTEuMTA1czAuNjM2LTAuNDY3LDEuMTI3LTAuNDY3DQoJYzAuODkyLDAsMS4zMzgsMC40MjIsMS4zMzgsMS4yNjhjMCwwLjEzOS0wLjAzLDAuMzE2LTAuMDg2LDAuNTQxYy0wLjA1OCwwLjIwNS0wLjA4NiwwLjM0OC0wLjA4NiwwLjQzMg0KCWMwLDAuNDU1LDAuMzI1LDAuNjgyLDAuOTc1LDAuNjgyYzAuNDk0LDAsMC45MDItMC4xNTQsMS4yMjctMC40NjVjMC4zMjYtMC4zMTEsMC40ODgtMC42NjYsMC40ODgtMS4wNjQNCgljMC0wLjQzOC0wLjE0My0wLjgzOC0wLjQyNC0xLjIwNWMtMC4yODMtMC4zNjctMC44MzgtMC44NjUtMS42NjQtMS40OTZjLTEuMTEzLTAuODU0LTEuODk3LTEuNTg5LTIuMzUyLTIuMjA2DQoJYy0wLjQ1Ni0wLjYxNi0wLjY4My0xLjM1Ni0wLjY4My0yLjIyYzAtMS4xMDQsMC4zOTEtMiwxLjE3LTIuNjg3UzE0LjcxOSw1LjYzNiwxNS43MjMsNS42MzYiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik02My45MjQsNS42MzZjMC45MDksMCwxLjY1NiwwLjIyOSwyLjI0NSwwLjY4MWMwLjU5LDAuNDU2LDAuODg1LDEuMDMsMC44ODUsMS43MjcNCgljMCwwLjM5OC0wLjEzOCwwLjc0LTAuNDEsMS4wMjhjLTAuMjc0LDAuMjg3LTAuNjI5LDAuNDMyLTEuMDYzLDAuNDMyYy0wLjM1MywwLTAuNjY1LTAuMTA1LTAuOTM5LTAuMzEzDQoJYy0wLjI3NC0wLjIwOS0wLjQwOS0wLjUwOC0wLjQwOS0wLjg5NmMwLTAuMTU5LDAuMDQyLTAuMzMzLDAuMTI3LTAuNTI5YzAuMDU2LTAuMTMsMC4wODItMC4yMjgsMC4wODItMC4yOTINCgljMC0wLjMyNC0wLjI0NC0wLjQ4NS0wLjczNy0wLjQ4NWMtMC4zNTMsMC0wLjY2NCwwLjEyNi0wLjkzOSwwLjM4MWMtMC4yNzMsMC4yNTUtMC40MTIsMC42MS0wLjQxMiwxLjA2NA0KCWMwLDAuMzg5LDAuMTI2LDAuNzU4LDAuMzc3LDEuMTA2YzAuMjUxLDAuMzQ3LDAuOTA4LDAuOTA1LDEuOTc1LDEuNjc0YzEuMDI4LDAuNzQzLDEuNzQ4LDEuNDI3LDIuMTU2LDIuMDUzDQoJYzAuNDA4LDAuNjI1LDAuNjEsMS4zMzIsMC42MSwyLjExOWMwLDEuMjUyLTAuNCwyLjIyNS0xLjIwOCwyLjkxNGMtMC44MDgsMC42OTEtMS43NjYsMS4wMzctMi44OCwxLjAzNw0KCWMtMS4wNTcsMC0xLjkxMy0wLjI1NC0yLjU2NC0wLjc2Yy0wLjY1NC0wLjUwNC0wLjk4LTEuMTQ4LTAuOTgtMS45MjZjMC0wLjQyNiwwLjEyOC0wLjc5NSwwLjM4OS0xLjEwNA0KCWMwLjI2LTAuMzExLDAuNjM1LTAuNDY3LDEuMTI2LTAuNDY3YzAuODkxLDAsMS4zMzUsMC40MjIsMS4zMzUsMS4yNjZjMCwwLjEzOS0wLjAyOCwwLjMxOC0wLjA4NCwwLjU0MQ0KCWMtMC4wNTksMC4yMDUtMC4wODQsMC4zNDgtMC4wODQsMC40MzJjMCwwLjQ1MywwLjMyMywwLjY4MiwwLjk3MywwLjY4MmMwLjQ5MSwwLDAuOS0wLjE1NCwxLjIyNS0wLjQ2NQ0KCWMwLjMyNy0wLjMxMSwwLjQ4OC0wLjY2NiwwLjQ4OC0xLjA2MmMwLTAuNDM4LTAuMTQxLTAuODQtMC40MjUtMS4yMDVjLTAuMjgxLTAuMzY3LTAuODM2LTAuODY1LTEuNjYyLTEuNDk2DQoJYy0xLjExMi0wLjg1NC0xLjg5Ni0xLjU4Ny0yLjM1MS0yLjIwNWMtMC40NTMtMC42MTUtMC42OC0xLjM1NS0wLjY4LTIuMjE3YzAtMS4xMDQsMC4zODktMS45OTksMS4xNjctMi42ODUNCglDNjIuMDMyLDUuOTc5LDYyLjkyMiw1LjYzNiw2My45MjQsNS42MzYiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik02OS42NDcsNy40NmgtMC40ODNjLTAuMjEzLDAtMC4zMTYtMC4wOTEtMC4zMTYtMC4yNzV2LTAuNjljMC0wLjE5MywwLjA5OS0wLjM2OCwwLjMwMy0wLjUyNQ0KCWMwLjI2OC0wLjE5MywwLjQzOC0wLjQxMSwwLjUxLTAuNjU3YzAuMDc0LTAuMjQyLDAuMTEzLTAuNjQyLDAuMTEzLTEuMTkzVjEuODU0YzAtMC4yMjIsMC4xNDYtMC4zNTIsMC40NC0wLjM4OGwxLjY4NS0wLjE4DQoJYzAuMTQ3LTAuMDE4LDAuMjQ1LTAuMDI3LDAuMjkxLTAuMDI3YzAuMTI4LDAsMC4xOTQsMC4xMSwwLjE5NCwwLjMzMnY0LjM3N2gxLjQwNmMwLjI3LDAsMC40MDEsMC4xMDcsMC40MDEsMC4zMTd2MC44NDMNCgljMCwwLjIyMi0wLjEwNSwwLjMzMS0wLjMxNiwwLjMzMWgtMS40OTF2OC4zOTdjMCwwLjkxMiwwLjI3OCwxLjA5LDAuODQxLDEuMDljMC4xMjksMCwwLjI2Ny0wLjAxOCwwLjQxNC0wLjA1Nw0KCWMwLjEwNC0wLjAyNSwwLjE4MS0wLjAzOSwwLjIzNi0wLjAzOWMwLjE2NCwwLDAuMjcxLDAuMDY0LDAuMzE2LDAuMTkzbDAuMjA3LDAuOTQxYzAuMDI3LDAuMDU1LDAuMDQyLDAuMDk2LDAuMDQyLDAuMTIzDQoJYzAsMC4yMDMtMC4zMDQsMC40NDktMC45MTIsMC43MzhjLTAuNjA5LDAuMjkxLTEuMTc5LDAuNDM2LTEuNzEyLDAuNDM2Yy0xLjQ0NywwLTIuMTY5LTAuODk2LTIuMTY5LTIuNjkzVjcuNDZ6Ii8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMjUuNjg4LDUuNjQ2Yy0wLjE3NiwwLTAuMjY1LDAuMDgyLTAuMjY1LDAuMjQ1djAuNjcxYzAsMC4wNzMsMC4wNywwLjE3NCwwLjIxMiwwLjMwMg0KCWMwLjIzOCwwLjIxOCwwLjM1NiwwLjQzMywwLjM1NiwwLjY0MWwwLjAwOCw0LjkxOGwwLDB2NC4wODNjMCwwLjU3Mi0wLjQ2NCwxLjAzNy0xLjAzNywxLjAzN2MtMC41NzIsMC0xLjAzNi0wLjQ2NS0xLjAzNi0xLjAzNw0KCXYtNC4wODNWOC4xNThWNS42MzdsLTMuMDIxLDAuMDA5Yy0wLjE4MywwLTAuMjc0LDAuMDgyLTAuMjc0LDAuMjQ1djAuNjcxYzAsMC4wNzMsMC4wNzMsMC4xNzQsMC4yMiwwLjMwMg0KCWMwLjI0NiwwLjIxOCwwLjM2OCwwLjQzMywwLjM2OCwwLjY0MXY0LjIxM3YwLjcwNXYzLjE3M2MwLDIuMDQxLDEuNjU1LDMuNjk1LDMuNjk2LDMuNjk1czMuNjk2LTEuNjU0LDMuNjk2LTMuNjk1di0zLjE3M3YtMC43MDUNCgl2LTYuMDhMMjUuNjg4LDUuNjQ2eiIvPg0KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTMzLjkxMiwxNi43MjZoLTEuMzU5bDAuNzUtMS44MDljMC40NjUsMC4wNzYsMC44NTQsMC4xMTUsMS4xNjksMC4xMTVjMC4xNzUsMCwwLjM0Mi0wLjAxMiwwLjUwNS0wLjAzMQ0KCWMwLjQ5MS0wLjAyNSwwLjk1NS0wLjE4MiwxLjM3NC0wLjQ0NWMwLjA0Ni0wLjAyNywwLjA5LTAuMDU3LDAuMTM1LTAuMDg2YzAuMDIxLTAuMDE2LDAuMDQyLTAuMDI5LDAuMDYyLTAuMDQ1DQoJYzAuMjcxLTAuMTkxLDAuNTE3LTAuNDIsMC43MzItMC43MDFjMC4wODYtMC4xMTMsMC4xNjYtMC4yMywwLjI0MS0wLjM1NGMwLjUyMy0wLjgxMiwwLjg0MS0xLjg2MiwwLjg0MS0zLjAxDQoJYzAtMS42Mi0wLjU3OC0yLjk3Ni0xLjUwNC0zLjc5M2wwLjYyMi0xLjUwNGMwLjEyLTAuMjkyLTAuMDU0LTAuNjQyLTAuMzg5LTAuNzhsLTAuMDc2LTAuMDMxYy0wLjMzNS0wLjEzOS0wLjcwNS0wLjAxNS0wLjgyNiwwLjI3Nw0KCWwtMC41NTYsMS4zNDVjLTAuMTM3LTAuMDQtMC4yNzctMC4wNzQtMC40MjItMC4wOTdjLTAuMjcyLTAuMDU1LTAuNTU4LTAuMDgyLTAuODU0LTAuMDgyYy0xLjMzLDAtMi4zMTksMC40NDMtMi45NjQsMS4zMzENCgljLTAuNjQ1LDAuODg3LTAuOTY4LDIuMDA5LTAuOTY4LDMuMzY2YzAsMS43MzUsMC41NTMsMy4wNjQsMS42NTUsMy45ODRsLTEuNjQsMy45NDNjLTAuMTQ5LDAuMzcxLTAuMjIzLDAuNjIzLTAuMjIzLDAuNzU0DQoJYzAsMC4xODIsMC4xNTgsMC4yNzEsMC40NzMsMC4yNzFjMC4xNjcsMCwwLjQyNC0wLjAxLDAuNzY5LTAuMDI3YzAuNjctMC4wMjksMS4yNDEtMC4wNDMsMS43MTQtMC4wNDMNCgljMi4zNDQsMCwzLjUxNiwwLjUxMiwzLjUxNiwxLjUzN2MwLDAuNDc1LTAuMjI5LDAuODcxLTAuNjg4LDEuMTk1Yy0wLjQ1NywwLjMyNC0xLjAwNywwLjQ4NC0xLjY0NSwwLjQ4NA0KCWMtMC41MDUsMC0wLjk5Mi0wLjEwOS0xLjQ2My0wLjMyNmMwLjEzNi0wLjI1OCwwLjIwNi0wLjQ4NiwwLjIwNi0wLjY4NGMwLTAuMzM0LTAuMTMxLTAuNjA5LTAuMzkzLTAuODI4DQoJYy0wLjI2LTAuMjE3LTAuNTgyLTAuMzI2LTAuOTY4LTAuMzI2Yy0wLjQxMywwLTAuNzQ4LDAuMTI1LTEuMDA1LDAuMzc3Yy0wLjI1NCwwLjI1Mi0wLjM4NSwwLjU2Ni0wLjM4NSwwLjk0Nw0KCWMwLDAuNjY0LDAuMzMzLDEuMTkxLDAuOTk5LDEuNThjMC42NjUsMC4zODksMS41NzgsMC41ODIsMi43NCwwLjU4MmMxLjQ1NiwwLDIuNjM2LTAuMzI4LDMuNTM4LTAuOTg4DQoJYzAuOTAxLTAuNjYsMS4zNTMtMS41NjgsMS4zNTMtMi43MjdDMzguOTgsMTcuODUxLDM3LjI5LDE2LjcyNiwzMy45MTIsMTYuNzI2eiBNMzMuMTg5LDguMTg2YzAtMC41ODIsMC40NzItMS4wNTQsMS4wNTQtMS4wNTQNCglzMS4wNTQsMC40NzIsMS4wNTQsMS4wNTR2NC4wOWMwLDAuNTgyLTAuNDcyLDEuMDU0LTEuMDU0LDEuMDU0cy0xLjA1NC0wLjQ3My0xLjA1NC0xLjA1NFY4LjE4NnoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00NC4xMzQsMTYuNzI2aC0xLjM2bDAuNzUxLTEuODA5YzAuNDY0LDAuMDc2LDAuODU0LDAuMTE1LDEuMTY5LDAuMTE1YzAuMTc1LDAsMC4zNDItMC4wMTIsMC41MDUtMC4wMzENCgljMC40OS0wLjAyNSwwLjk1NS0wLjE4MiwxLjM3NC0wLjQ0NWMwLjA0Ni0wLjAyNywwLjA5LTAuMDU3LDAuMTM0LTAuMDg2YzAuMDIxLTAuMDE2LDAuMDQyLTAuMDI5LDAuMDYzLTAuMDQ1DQoJYzAuMjctMC4xOTEsMC41MTctMC40MiwwLjczMS0wLjcwMWMwLjA4Ni0wLjExMywwLjE2Ny0wLjIzLDAuMjQyLTAuMzU0YzAuNTIyLTAuODEyLDAuODQtMS44NjIsMC44NC0zLjAxDQoJYzAtMS42Mi0wLjU3OC0yLjk3Ni0xLjUwNC0zLjc5M2wwLjYyMi0xLjUwNGMwLjEyMS0wLjI5Mi0wLjA1My0wLjY0Mi0wLjM4OS0wLjc4bC0wLjA3NS0wLjAzMQ0KCWMtMC4zMzYtMC4xMzktMC43MDUtMC4wMTUtMC44MjYsMC4yNzdsLTAuNTU3LDEuMzQ1Yy0wLjEzNy0wLjA0LTAuMjc2LTAuMDc0LTAuNDIxLTAuMDk3Yy0wLjI3My0wLjA1NS0wLjU1OS0wLjA4Mi0wLjg1NS0wLjA4Mg0KCWMtMS4zMywwLTIuMzE4LDAuNDQzLTIuOTYzLDEuMzMxYy0wLjY0NiwwLjg4Ny0wLjk2OSwyLjAwOS0wLjk2OSwzLjM2NmMwLDEuNzM1LDAuNTUzLDMuMDY0LDEuNjU1LDMuOTg0bC0xLjY0LDMuOTQzDQoJYy0wLjE0OCwwLjM3MS0wLjIyMiwwLjYyMy0wLjIyMiwwLjc1NGMwLDAuMTgyLDAuMTU3LDAuMjcxLDAuNDcyLDAuMjcxYzAuMTY4LDAsMC40MjQtMC4wMSwwLjc2OS0wLjAyNw0KCWMwLjY3MS0wLjAyOSwxLjI0MS0wLjA0MywxLjcxNC0wLjA0M2MyLjM0NCwwLDMuNTE3LDAuNTEyLDMuNTE3LDEuNTM3YzAsMC40NzUtMC4yMjksMC44NzEtMC42ODgsMS4xOTUNCgljLTAuNDU3LDAuMzI0LTEuMDA4LDAuNDg0LTEuNjQ2LDAuNDg0Yy0wLjUwNSwwLTAuOTkxLTAuMTA5LTEuNDYyLTAuMzI2YzAuMTM2LTAuMjU4LDAuMjA2LTAuNDg2LDAuMjA2LTAuNjg0DQoJYzAtMC4zMzQtMC4xMzEtMC42MDktMC4zOTQtMC44MjhjLTAuMjYtMC4yMTctMC41ODItMC4zMjYtMC45NjctMC4zMjZjLTAuNDEzLDAtMC43NDksMC4xMjUtMS4wMDUsMC4zNzcNCgljLTAuMjU1LDAuMjUyLTAuMzg1LDAuNTY2LTAuMzg1LDAuOTQ3YzAsMC42NjQsMC4zMzIsMS4xOTEsMC45OTgsMS41OGMwLjY2NSwwLjM4OSwxLjU3OSwwLjU4MiwyLjc0LDAuNTgyDQoJYzEuNDU3LDAsMi42MzctMC4zMjgsMy41MzktMC45ODhjMC45LTAuNjYsMS4zNTItMS41NjgsMS4zNTItMi43MjdDNDkuMjAxLDE3Ljg1MSw0Ny41MTIsMTYuNzI2LDQ0LjEzNCwxNi43MjZ6IE00My40MSw4LjE4Ng0KCWMwLTAuNTgyLDAuNDcyLTEuMDU0LDEuMDU0LTEuMDU0czEuMDU0LDAuNDcyLDEuMDU0LDEuMDU0djQuMDljMCwwLjU4Mi0wLjQ3MiwxLjA1NC0xLjA1NCwxLjA1NHMtMS4wNTQtMC40NzMtMS4wNTQtMS4wNTRWOC4xODZ6Ig0KCS8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTcuMDEsNy4wNzFjLTAuNjc4LTAuOTY4LTEuNTY5LTEuNDUyLTIuNjc0LTEuNDUyYy0xLjI0NSwwLTIuMjM2LDAuNjIyLTIuOTc2LDEuODcxDQoJYy0wLjczOCwxLjI0Ni0xLjEwNiwyLjk1OS0xLjEwNiw1LjEzNmMwLDIuMjQ1LDAuMzg5LDMuOTMsMS4xNyw1LjA1NWMwLjc4LDEuMTI3LDEuODM0LDEuNjkxLDMuMTYyLDEuNjkxDQoJYzIuMDA1LDAsMy4xMTQtMS4yMzQsMy4zMy0zLjcwMWwtMS40ODgtMC4yNTJjLTAuMjcsMS4zNjEtMC44NjgsMi4wMzUtMS41NzMsMi4wMzVjLTAuNjA0LDAtMS4xMDYtMC4zMzYtMS40MzktMS4wMDINCgljLTAuMzE5LTAuNjM3LTAuMzY0LTEuNjMzLTAuMzY0LTIuODkxdi0xLjE0NGg0LjYyN2MwLjIzMiwwLDAuMzUtMC4xMTIsMC4zNS0wLjMzNVYxMC45MUM1OC4wMjcsOS4zMTgsNTcuNjg4LDguMDM3LDU3LjAxLDcuMDcxeg0KCSBNNTUuMjgsMTAuNDMzYzAsMC40NjEtMC4zNzQsMC44MzQtMC44MzUsMC44MzRjLTAuNDYsMC0wLjgzNC0wLjM3My0wLjgzNC0wLjgzNFY4LjM1OWMwLTAuNDYxLDAuMzc0LTAuODM1LDAuODM0LTAuODM1DQoJYzAuNDYxLDAsMC44MzUsMC4zNzQsMC44MzUsMC44MzVWMTAuNDMzeiIvPg0KPHBhdGggZmlsbD0iI0ZGMzEzMSIgZD0iTTkzLjQyMiw1LjUzMmMtMS4xNzYsMC0yLjE0NiwwLjUzNi0yLjkxMiwxLjYwN2MtMC43NjcsMS4wNzEtMS4xNSwyLjc3NC0xLjE1LDUuMTA3DQoJYzAsMi4yMzUsMC4zNjgsMy45MTgsMS4xMDEsNS4wNTNjMC43MzUsMS4xMzUsMS43OCwxLjcwNSwzLjE0LDEuNzA1YzEuMzQxLDAsMi4zNjUtMC41OCwzLjA3OC0xLjczOA0KCWMwLjcxMS0xLjE1OCwxLjA2Ni0yLjgwMywxLjA2Ni00LjkzN0M5Ny43NDQsNy43OTcsOTYuMzAyLDUuNTMyLDkzLjQyMiw1LjUzMnogTTk0Ljc0MSwxNS43ODVjMCwwLjY0MS0wLjUyMSwxLjE2Mi0xLjE2MywxLjE2Mg0KCWMtMC42NDIsMC0xLjE2Mi0wLjUyMS0xLjE2Mi0xLjE2MlY4Ljc3MWMwLTAuNjQyLDAuNTIxLTEuMTYyLDEuMTYyLTEuMTYyYzAuNjQzLDAsMS4xNjMsMC41MjEsMS4xNjMsMS4xNjJWMTUuNzg1eiIvPg0KPHBhdGggZmlsbD0iI0ZGMzEzMSIgZD0iTTc5LjUyMywxNC41MTFjLTEuOTIxLDAtMy40NzgsMS41NTctMy40NzgsMy40NzdjMCwxLjkyMiwzLjQ3OCw2LjYwOSwzLjQ3OCw2LjYwOXMzLjQ3OS00LjY4OCwzLjQ3OS02LjYwOQ0KCUM4My4wMDIsMTYuMDY4LDgxLjQ0NCwxNC41MTEsNzkuNTIzLDE0LjUxMXogTTc5LjUyMywxOS4xNmMtMC43NDgsMC0xLjM1Ni0wLjYwNy0xLjM1Ni0xLjM1N3MwLjYwOC0xLjM1NywxLjM1Ni0xLjM1Nw0KCWMwLjc1LDAsMS4zNTcsMC42MDcsMS4zNTcsMS4zNTdTODAuMjczLDE5LjE2LDc5LjUyMywxOS4xNnoiLz4NCjxnPg0KCTxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik04OC4wNzcsMTYuNDFjLTAuNDM4LTAuMjA1LTAuNzIxLTAuNjQ4LTAuNzIxLTEuMTI5di0yLjgwOXYtMC42ODFWOS4zNTRjMC0wLjAxNy0wLjAwMi0wLjAzMi0wLjAwNS0wLjA0OA0KCQljMC4wMDItMC4wMzQsMC4wMDUtMC4wNjgsMC4wMDUtMC4xMDNjMC0xLjY1OS0xLjA3LTMuMDk4LTIuNjYyLTMuNTc3Yy0wLjAyNC0wLjAwOC0wLjA1LTAuMDExLTAuMDc1LTAuMDExDQoJCWMtMC4xMDMsMC0wLjE5OCwwLjA2MS0wLjIzOSwwLjE1OWwtMS4wNTEsMi41MzVjLTAuMDUzLDAuMTI4LDAuMDA0LDAuMjc0LDAuMTMsMC4zMzNjMC40MzgsMC4yMDQsMC43MjEsMC42NDYsMC43MjEsMS4xMjd2Mi4wMjENCgkJdjAuNzg5djIuNzQ4djAuMzcxYzAsMC4wMTYsMC4wMDEsMC4wMzEsMC4wMDQsMC4wNDdjLTAuMDAyLDAuMDM1LTAuMDA0LDAuMDY4LTAuMDA0LDAuMTA0YzAsMS42NTgsMS4wNjksMy4wOTYsMi42NjEsMy41NzYNCgkJYzAuMDI1LDAuMDA4LDAuMDUxLDAuMDEyLDAuMDc1LDAuMDEyYzAuMTAzLDAsMC4xOTgtMC4wNjIsMC4yMzktMC4xNmwxLjA1MS0yLjUzNUM4OC4yNTksMTYuNjEzLDg4LjIwMiwxNi40NjgsODguMDc3LDE2LjQxeiIvPg0KCTxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik04NS4yODYsMWMwLjQ3NSwwLDAuODcsMC4xNTksMS4xOTEsMC40NzhjMC4zMTcsMC4zMTksMC40NzgsMC43MDcsMC40NzgsMS4xNjINCgkJYzAsMC40NDgtMC4xNiwwLjgzMi0wLjQ3OCwxLjE0OWMtMC4zMjEsMC4zMTgtMC43MDQsMC40NzktMS4xNSwwLjQ3OWMtMC40NTcsMC0wLjg0NC0wLjE2MS0xLjE2My0wLjQ3OQ0KCQljLTAuMzE4LTAuMzE3LTAuNDc4LTAuNzAxLTAuNDc4LTEuMTQ5YzAtMC40NzMsMC4xNjYtMC44NjUsMC40OTktMS4xNzVDODQuNTE3LDEuMTUzLDg0Ljg4NCwxLDg1LjI4NiwxIi8+DQo8L2c+DQo8L3N2Zz4NCg==" />
         </a>
-
         <nav class="header_nav top-menu">
-          <a class="top-menu_i link def-transition js-slide-to" href="#about">О приложении</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-looks">Как выглядит?</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#how-it-works">Как работает?</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#price">О проекте</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#levels">Уровни локаций</a>
           <a class="top-menu_i link def-transition js-slide-to" href="#advantages">Преимущества</a>
-          <a class="top-menu_i link def-transition js-slide-to" href="#partnership">Партнерство</a>
         </nav>
+
+        <span class="header_phone">8 812 640 76 46</span>
+        <a class="header_btn btn __major __size-M" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
       </div>
-    </header><!-- header end -->
-    <div id="skrollr-body">
-      <section class="section-sio-market paralax" id="sio-market" >
+    </header>
 
-        <div class="section-sio-market_cnt section-cnt">
-          <h2 class="section-sio-market_title title">
-            <span class="color-attention">Sio</span>&nbsp;<span class="color-light">Market</span>
+    <header class="header __slide" id="headerSlide">
+      <div class="header_cnt">
+        <a class="header_logo link js-slide-to" href="#yourAdv">
+          <img alt="" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMTExcHgiIGhlaWdodD0iMjYuNjY3cHgiIHZpZXdCb3g9IjAgMCAxMTEgMjYuNjY3IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxMTEgMjYuNjY3IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xNS43MjMsNS42MzZjMC45MDksMCwxLjY1OCwwLjIyOSwyLjI0NywwLjY4MmMwLjU4OSwwLjQ1NSwwLjg4MiwxLjAzLDAuODgyLDEuNzI3DQoJYzAsMC4zOTktMC4xMzUsMC43NDItMC40MDksMS4wM2MtMC4yNzQsMC4yODctMC42MjgsMC40MzItMS4wNjMsMC40MzJjLTAuMzU0LDAtMC42NjctMC4xMDUtMC45NC0wLjMxNA0KCWMtMC4yNzItMC4yMDgtMC40MTItMC41MDctMC40MTItMC44OTZjMC0wLjE1OSwwLjA0NC0wLjMzNCwwLjEyOS0wLjUyOWMwLjA1Ny0wLjEzLDAuMDg1LTAuMjI4LDAuMDg1LTAuMjkzDQoJYzAtMC4zMjQtMC4yNDctMC40ODUtMC43MzgtMC40ODVjLTAuMzU0LDAtMC42NjksMC4xMjYtMC45NCwwLjM4MmMtMC4yNzYsMC4yNTQtMC40MTIsMC42MS0wLjQxMiwxLjA2Mw0KCWMwLDAuMzksMC4xMjYsMC43NTksMC4zNzYsMS4xMDdjMC4yNDksMC4zNDgsMC45MDksMC45MDcsMS45NzUsMS42NzZjMS4wMzEsMC43NDQsMS43NSwxLjQyOCwyLjE1NywyLjA1Mw0KCWMwLjQwOSwwLjYyNywwLjYxMiwxLjMzNCwwLjYxMiwyLjEyM2MwLDEuMjUtMC40MDIsMi4yMjUtMS4yMSwyLjkxNGMtMC44MDYsMC42OTEtMS43NjgsMS4wMzktMi44ODEsMS4wMzkNCgljLTEuMDU4LDAtMS45MTMtMC4yNTQtMi41NjgtMC43NmMtMC42NTMtMC41MDYtMC45NzktMS4xNS0wLjk3OS0xLjkyOGMwLTAuNDI4LDAuMTI5LTAuNzk1LDAuMzg5LTEuMTA1czAuNjM2LTAuNDY3LDEuMTI3LTAuNDY3DQoJYzAuODkyLDAsMS4zMzgsMC40MjIsMS4zMzgsMS4yNjhjMCwwLjEzOS0wLjAzLDAuMzE2LTAuMDg2LDAuNTQxYy0wLjA1OCwwLjIwNS0wLjA4NiwwLjM0OC0wLjA4NiwwLjQzMg0KCWMwLDAuNDU1LDAuMzI1LDAuNjgyLDAuOTc1LDAuNjgyYzAuNDk0LDAsMC45MDItMC4xNTQsMS4yMjctMC40NjVjMC4zMjYtMC4zMTEsMC40ODgtMC42NjYsMC40ODgtMS4wNjQNCgljMC0wLjQzOC0wLjE0My0wLjgzOC0wLjQyNC0xLjIwNWMtMC4yODMtMC4zNjctMC44MzgtMC44NjUtMS42NjQtMS40OTZjLTEuMTEzLTAuODU0LTEuODk3LTEuNTg5LTIuMzUyLTIuMjA2DQoJYy0wLjQ1Ni0wLjYxNi0wLjY4My0xLjM1Ni0wLjY4My0yLjIyYzAtMS4xMDQsMC4zOTEtMiwxLjE3LTIuNjg3UzE0LjcxOSw1LjYzNiwxNS43MjMsNS42MzYiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik02My45MjQsNS42MzZjMC45MDksMCwxLjY1NiwwLjIyOSwyLjI0NSwwLjY4MWMwLjU5LDAuNDU2LDAuODg1LDEuMDMsMC44ODUsMS43MjcNCgljMCwwLjM5OC0wLjEzOCwwLjc0LTAuNDEsMS4wMjhjLTAuMjc0LDAuMjg3LTAuNjI5LDAuNDMyLTEuMDYzLDAuNDMyYy0wLjM1MywwLTAuNjY1LTAuMTA1LTAuOTM5LTAuMzEzDQoJYy0wLjI3NC0wLjIwOS0wLjQwOS0wLjUwOC0wLjQwOS0wLjg5NmMwLTAuMTU5LDAuMDQyLTAuMzMzLDAuMTI3LTAuNTI5YzAuMDU2LTAuMTMsMC4wODItMC4yMjgsMC4wODItMC4yOTINCgljMC0wLjMyNC0wLjI0NC0wLjQ4NS0wLjczNy0wLjQ4NWMtMC4zNTMsMC0wLjY2NCwwLjEyNi0wLjkzOSwwLjM4MWMtMC4yNzMsMC4yNTUtMC40MTIsMC42MS0wLjQxMiwxLjA2NA0KCWMwLDAuMzg5LDAuMTI2LDAuNzU4LDAuMzc3LDEuMTA2YzAuMjUxLDAuMzQ3LDAuOTA4LDAuOTA1LDEuOTc1LDEuNjc0YzEuMDI4LDAuNzQzLDEuNzQ4LDEuNDI3LDIuMTU2LDIuMDUzDQoJYzAuNDA4LDAuNjI1LDAuNjEsMS4zMzIsMC42MSwyLjExOWMwLDEuMjUyLTAuNCwyLjIyNS0xLjIwOCwyLjkxNGMtMC44MDgsMC42OTEtMS43NjYsMS4wMzctMi44OCwxLjAzNw0KCWMtMS4wNTcsMC0xLjkxMy0wLjI1NC0yLjU2NC0wLjc2Yy0wLjY1NC0wLjUwNC0wLjk4LTEuMTQ4LTAuOTgtMS45MjZjMC0wLjQyNiwwLjEyOC0wLjc5NSwwLjM4OS0xLjEwNA0KCWMwLjI2LTAuMzExLDAuNjM1LTAuNDY3LDEuMTI2LTAuNDY3YzAuODkxLDAsMS4zMzUsMC40MjIsMS4zMzUsMS4yNjZjMCwwLjEzOS0wLjAyOCwwLjMxOC0wLjA4NCwwLjU0MQ0KCWMtMC4wNTksMC4yMDUtMC4wODQsMC4zNDgtMC4wODQsMC40MzJjMCwwLjQ1MywwLjMyMywwLjY4MiwwLjk3MywwLjY4MmMwLjQ5MSwwLDAuOS0wLjE1NCwxLjIyNS0wLjQ2NQ0KCWMwLjMyNy0wLjMxMSwwLjQ4OC0wLjY2NiwwLjQ4OC0xLjA2MmMwLTAuNDM4LTAuMTQxLTAuODQtMC40MjUtMS4yMDVjLTAuMjgxLTAuMzY3LTAuODM2LTAuODY1LTEuNjYyLTEuNDk2DQoJYy0xLjExMi0wLjg1NC0xLjg5Ni0xLjU4Ny0yLjM1MS0yLjIwNWMtMC40NTMtMC42MTUtMC42OC0xLjM1NS0wLjY4LTIuMjE3YzAtMS4xMDQsMC4zODktMS45OTksMS4xNjctMi42ODUNCglDNjIuMDMyLDUuOTc5LDYyLjkyMiw1LjYzNiw2My45MjQsNS42MzYiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik02OS42NDcsNy40NmgtMC40ODNjLTAuMjEzLDAtMC4zMTYtMC4wOTEtMC4zMTYtMC4yNzV2LTAuNjljMC0wLjE5MywwLjA5OS0wLjM2OCwwLjMwMy0wLjUyNQ0KCWMwLjI2OC0wLjE5MywwLjQzOC0wLjQxMSwwLjUxLTAuNjU3YzAuMDc0LTAuMjQyLDAuMTEzLTAuNjQyLDAuMTEzLTEuMTkzVjEuODU0YzAtMC4yMjIsMC4xNDYtMC4zNTIsMC40NC0wLjM4OGwxLjY4NS0wLjE4DQoJYzAuMTQ3LTAuMDE4LDAuMjQ1LTAuMDI3LDAuMjkxLTAuMDI3YzAuMTI4LDAsMC4xOTQsMC4xMSwwLjE5NCwwLjMzMnY0LjM3N2gxLjQwNmMwLjI3LDAsMC40MDEsMC4xMDcsMC40MDEsMC4zMTd2MC44NDMNCgljMCwwLjIyMi0wLjEwNSwwLjMzMS0wLjMxNiwwLjMzMWgtMS40OTF2OC4zOTdjMCwwLjkxMiwwLjI3OCwxLjA5LDAuODQxLDEuMDljMC4xMjksMCwwLjI2Ny0wLjAxOCwwLjQxNC0wLjA1Nw0KCWMwLjEwNC0wLjAyNSwwLjE4MS0wLjAzOSwwLjIzNi0wLjAzOWMwLjE2NCwwLDAuMjcxLDAuMDY0LDAuMzE2LDAuMTkzbDAuMjA3LDAuOTQxYzAuMDI3LDAuMDU1LDAuMDQyLDAuMDk2LDAuMDQyLDAuMTIzDQoJYzAsMC4yMDMtMC4zMDQsMC40NDktMC45MTIsMC43MzhjLTAuNjA5LDAuMjkxLTEuMTc5LDAuNDM2LTEuNzEyLDAuNDM2Yy0xLjQ0NywwLTIuMTY5LTAuODk2LTIuMTY5LTIuNjkzVjcuNDZ6Ii8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMjUuNjg4LDUuNjQ2Yy0wLjE3NiwwLTAuMjY1LDAuMDgyLTAuMjY1LDAuMjQ1djAuNjcxYzAsMC4wNzMsMC4wNywwLjE3NCwwLjIxMiwwLjMwMg0KCWMwLjIzOCwwLjIxOCwwLjM1NiwwLjQzMywwLjM1NiwwLjY0MWwwLjAwOCw0LjkxOGwwLDB2NC4wODNjMCwwLjU3Mi0wLjQ2NCwxLjAzNy0xLjAzNywxLjAzN2MtMC41NzIsMC0xLjAzNi0wLjQ2NS0xLjAzNi0xLjAzNw0KCXYtNC4wODNWOC4xNThWNS42MzdsLTMuMDIxLDAuMDA5Yy0wLjE4MywwLTAuMjc0LDAuMDgyLTAuMjc0LDAuMjQ1djAuNjcxYzAsMC4wNzMsMC4wNzMsMC4xNzQsMC4yMiwwLjMwMg0KCWMwLjI0NiwwLjIxOCwwLjM2OCwwLjQzMywwLjM2OCwwLjY0MXY0LjIxM3YwLjcwNXYzLjE3M2MwLDIuMDQxLDEuNjU1LDMuNjk1LDMuNjk2LDMuNjk1czMuNjk2LTEuNjU0LDMuNjk2LTMuNjk1di0zLjE3M3YtMC43MDUNCgl2LTYuMDhMMjUuNjg4LDUuNjQ2eiIvPg0KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTMzLjkxMiwxNi43MjZoLTEuMzU5bDAuNzUtMS44MDljMC40NjUsMC4wNzYsMC44NTQsMC4xMTUsMS4xNjksMC4xMTVjMC4xNzUsMCwwLjM0Mi0wLjAxMiwwLjUwNS0wLjAzMQ0KCWMwLjQ5MS0wLjAyNSwwLjk1NS0wLjE4MiwxLjM3NC0wLjQ0NWMwLjA0Ni0wLjAyNywwLjA5LTAuMDU3LDAuMTM1LTAuMDg2YzAuMDIxLTAuMDE2LDAuMDQyLTAuMDI5LDAuMDYyLTAuMDQ1DQoJYzAuMjcxLTAuMTkxLDAuNTE3LTAuNDIsMC43MzItMC43MDFjMC4wODYtMC4xMTMsMC4xNjYtMC4yMywwLjI0MS0wLjM1NGMwLjUyMy0wLjgxMiwwLjg0MS0xLjg2MiwwLjg0MS0zLjAxDQoJYzAtMS42Mi0wLjU3OC0yLjk3Ni0xLjUwNC0zLjc5M2wwLjYyMi0xLjUwNGMwLjEyLTAuMjkyLTAuMDU0LTAuNjQyLTAuMzg5LTAuNzhsLTAuMDc2LTAuMDMxYy0wLjMzNS0wLjEzOS0wLjcwNS0wLjAxNS0wLjgyNiwwLjI3Nw0KCWwtMC41NTYsMS4zNDVjLTAuMTM3LTAuMDQtMC4yNzctMC4wNzQtMC40MjItMC4wOTdjLTAuMjcyLTAuMDU1LTAuNTU4LTAuMDgyLTAuODU0LTAuMDgyYy0xLjMzLDAtMi4zMTksMC40NDMtMi45NjQsMS4zMzENCgljLTAuNjQ1LDAuODg3LTAuOTY4LDIuMDA5LTAuOTY4LDMuMzY2YzAsMS43MzUsMC41NTMsMy4wNjQsMS42NTUsMy45ODRsLTEuNjQsMy45NDNjLTAuMTQ5LDAuMzcxLTAuMjIzLDAuNjIzLTAuMjIzLDAuNzU0DQoJYzAsMC4xODIsMC4xNTgsMC4yNzEsMC40NzMsMC4yNzFjMC4xNjcsMCwwLjQyNC0wLjAxLDAuNzY5LTAuMDI3YzAuNjctMC4wMjksMS4yNDEtMC4wNDMsMS43MTQtMC4wNDMNCgljMi4zNDQsMCwzLjUxNiwwLjUxMiwzLjUxNiwxLjUzN2MwLDAuNDc1LTAuMjI5LDAuODcxLTAuNjg4LDEuMTk1Yy0wLjQ1NywwLjMyNC0xLjAwNywwLjQ4NC0xLjY0NSwwLjQ4NA0KCWMtMC41MDUsMC0wLjk5Mi0wLjEwOS0xLjQ2My0wLjMyNmMwLjEzNi0wLjI1OCwwLjIwNi0wLjQ4NiwwLjIwNi0wLjY4NGMwLTAuMzM0LTAuMTMxLTAuNjA5LTAuMzkzLTAuODI4DQoJYy0wLjI2LTAuMjE3LTAuNTgyLTAuMzI2LTAuOTY4LTAuMzI2Yy0wLjQxMywwLTAuNzQ4LDAuMTI1LTEuMDA1LDAuMzc3Yy0wLjI1NCwwLjI1Mi0wLjM4NSwwLjU2Ni0wLjM4NSwwLjk0Nw0KCWMwLDAuNjY0LDAuMzMzLDEuMTkxLDAuOTk5LDEuNThjMC42NjUsMC4zODksMS41NzgsMC41ODIsMi43NCwwLjU4MmMxLjQ1NiwwLDIuNjM2LTAuMzI4LDMuNTM4LTAuOTg4DQoJYzAuOTAxLTAuNjYsMS4zNTMtMS41NjgsMS4zNTMtMi43MjdDMzguOTgsMTcuODUxLDM3LjI5LDE2LjcyNiwzMy45MTIsMTYuNzI2eiBNMzMuMTg5LDguMTg2YzAtMC41ODIsMC40NzItMS4wNTQsMS4wNTQtMS4wNTQNCglzMS4wNTQsMC40NzIsMS4wNTQsMS4wNTR2NC4wOWMwLDAuNTgyLTAuNDcyLDEuMDU0LTEuMDU0LDEuMDU0cy0xLjA1NC0wLjQ3My0xLjA1NC0xLjA1NFY4LjE4NnoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00NC4xMzQsMTYuNzI2aC0xLjM2bDAuNzUxLTEuODA5YzAuNDY0LDAuMDc2LDAuODU0LDAuMTE1LDEuMTY5LDAuMTE1YzAuMTc1LDAsMC4zNDItMC4wMTIsMC41MDUtMC4wMzENCgljMC40OS0wLjAyNSwwLjk1NS0wLjE4MiwxLjM3NC0wLjQ0NWMwLjA0Ni0wLjAyNywwLjA5LTAuMDU3LDAuMTM0LTAuMDg2YzAuMDIxLTAuMDE2LDAuMDQyLTAuMDI5LDAuMDYzLTAuMDQ1DQoJYzAuMjctMC4xOTEsMC41MTctMC40MiwwLjczMS0wLjcwMWMwLjA4Ni0wLjExMywwLjE2Ny0wLjIzLDAuMjQyLTAuMzU0YzAuNTIyLTAuODEyLDAuODQtMS44NjIsMC44NC0zLjAxDQoJYzAtMS42Mi0wLjU3OC0yLjk3Ni0xLjUwNC0zLjc5M2wwLjYyMi0xLjUwNGMwLjEyMS0wLjI5Mi0wLjA1My0wLjY0Mi0wLjM4OS0wLjc4bC0wLjA3NS0wLjAzMQ0KCWMtMC4zMzYtMC4xMzktMC43MDUtMC4wMTUtMC44MjYsMC4yNzdsLTAuNTU3LDEuMzQ1Yy0wLjEzNy0wLjA0LTAuMjc2LTAuMDc0LTAuNDIxLTAuMDk3Yy0wLjI3My0wLjA1NS0wLjU1OS0wLjA4Mi0wLjg1NS0wLjA4Mg0KCWMtMS4zMywwLTIuMzE4LDAuNDQzLTIuOTYzLDEuMzMxYy0wLjY0NiwwLjg4Ny0wLjk2OSwyLjAwOS0wLjk2OSwzLjM2NmMwLDEuNzM1LDAuNTUzLDMuMDY0LDEuNjU1LDMuOTg0bC0xLjY0LDMuOTQzDQoJYy0wLjE0OCwwLjM3MS0wLjIyMiwwLjYyMy0wLjIyMiwwLjc1NGMwLDAuMTgyLDAuMTU3LDAuMjcxLDAuNDcyLDAuMjcxYzAuMTY4LDAsMC40MjQtMC4wMSwwLjc2OS0wLjAyNw0KCWMwLjY3MS0wLjAyOSwxLjI0MS0wLjA0MywxLjcxNC0wLjA0M2MyLjM0NCwwLDMuNTE3LDAuNTEyLDMuNTE3LDEuNTM3YzAsMC40NzUtMC4yMjksMC44NzEtMC42ODgsMS4xOTUNCgljLTAuNDU3LDAuMzI0LTEuMDA4LDAuNDg0LTEuNjQ2LDAuNDg0Yy0wLjUwNSwwLTAuOTkxLTAuMTA5LTEuNDYyLTAuMzI2YzAuMTM2LTAuMjU4LDAuMjA2LTAuNDg2LDAuMjA2LTAuNjg0DQoJYzAtMC4zMzQtMC4xMzEtMC42MDktMC4zOTQtMC44MjhjLTAuMjYtMC4yMTctMC41ODItMC4zMjYtMC45NjctMC4zMjZjLTAuNDEzLDAtMC43NDksMC4xMjUtMS4wMDUsMC4zNzcNCgljLTAuMjU1LDAuMjUyLTAuMzg1LDAuNTY2LTAuMzg1LDAuOTQ3YzAsMC42NjQsMC4zMzIsMS4xOTEsMC45OTgsMS41OGMwLjY2NSwwLjM4OSwxLjU3OSwwLjU4MiwyLjc0LDAuNTgyDQoJYzEuNDU3LDAsMi42MzctMC4zMjgsMy41MzktMC45ODhjMC45LTAuNjYsMS4zNTItMS41NjgsMS4zNTItMi43MjdDNDkuMjAxLDE3Ljg1MSw0Ny41MTIsMTYuNzI2LDQ0LjEzNCwxNi43MjZ6IE00My40MSw4LjE4Ng0KCWMwLTAuNTgyLDAuNDcyLTEuMDU0LDEuMDU0LTEuMDU0czEuMDU0LDAuNDcyLDEuMDU0LDEuMDU0djQuMDljMCwwLjU4Mi0wLjQ3MiwxLjA1NC0xLjA1NCwxLjA1NHMtMS4wNTQtMC40NzMtMS4wNTQtMS4wNTRWOC4xODZ6Ig0KCS8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTcuMDEsNy4wNzFjLTAuNjc4LTAuOTY4LTEuNTY5LTEuNDUyLTIuNjc0LTEuNDUyYy0xLjI0NSwwLTIuMjM2LDAuNjIyLTIuOTc2LDEuODcxDQoJYy0wLjczOCwxLjI0Ni0xLjEwNiwyLjk1OS0xLjEwNiw1LjEzNmMwLDIuMjQ1LDAuMzg5LDMuOTMsMS4xNyw1LjA1NWMwLjc4LDEuMTI3LDEuODM0LDEuNjkxLDMuMTYyLDEuNjkxDQoJYzIuMDA1LDAsMy4xMTQtMS4yMzQsMy4zMy0zLjcwMWwtMS40ODgtMC4yNTJjLTAuMjcsMS4zNjEtMC44NjgsMi4wMzUtMS41NzMsMi4wMzVjLTAuNjA0LDAtMS4xMDYtMC4zMzYtMS40MzktMS4wMDINCgljLTAuMzE5LTAuNjM3LTAuMzY0LTEuNjMzLTAuMzY0LTIuODkxdi0xLjE0NGg0LjYyN2MwLjIzMiwwLDAuMzUtMC4xMTIsMC4zNS0wLjMzNVYxMC45MUM1OC4wMjcsOS4zMTgsNTcuNjg4LDguMDM3LDU3LjAxLDcuMDcxeg0KCSBNNTUuMjgsMTAuNDMzYzAsMC40NjEtMC4zNzQsMC44MzQtMC44MzUsMC44MzRjLTAuNDYsMC0wLjgzNC0wLjM3My0wLjgzNC0wLjgzNFY4LjM1OWMwLTAuNDYxLDAuMzc0LTAuODM1LDAuODM0LTAuODM1DQoJYzAuNDYxLDAsMC44MzUsMC4zNzQsMC44MzUsMC44MzVWMTAuNDMzeiIvPg0KPHBhdGggZmlsbD0iI0ZGMzEzMSIgZD0iTTkzLjQyMiw1LjUzMmMtMS4xNzYsMC0yLjE0NiwwLjUzNi0yLjkxMiwxLjYwN2MtMC43NjcsMS4wNzEtMS4xNSwyLjc3NC0xLjE1LDUuMTA3DQoJYzAsMi4yMzUsMC4zNjgsMy45MTgsMS4xMDEsNS4wNTNjMC43MzUsMS4xMzUsMS43OCwxLjcwNSwzLjE0LDEuNzA1YzEuMzQxLDAsMi4zNjUtMC41OCwzLjA3OC0xLjczOA0KCWMwLjcxMS0xLjE1OCwxLjA2Ni0yLjgwMywxLjA2Ni00LjkzN0M5Ny43NDQsNy43OTcsOTYuMzAyLDUuNTMyLDkzLjQyMiw1LjUzMnogTTk0Ljc0MSwxNS43ODVjMCwwLjY0MS0wLjUyMSwxLjE2Mi0xLjE2MywxLjE2Mg0KCWMtMC42NDIsMC0xLjE2Mi0wLjUyMS0xLjE2Mi0xLjE2MlY4Ljc3MWMwLTAuNjQyLDAuNTIxLTEuMTYyLDEuMTYyLTEuMTYyYzAuNjQzLDAsMS4xNjMsMC41MjEsMS4xNjMsMS4xNjJWMTUuNzg1eiIvPg0KPHBhdGggZmlsbD0iI0ZGMzEzMSIgZD0iTTc5LjUyMywxNC41MTFjLTEuOTIxLDAtMy40NzgsMS41NTctMy40NzgsMy40NzdjMCwxLjkyMiwzLjQ3OCw2LjYwOSwzLjQ3OCw2LjYwOXMzLjQ3OS00LjY4OCwzLjQ3OS02LjYwOQ0KCUM4My4wMDIsMTYuMDY4LDgxLjQ0NCwxNC41MTEsNzkuNTIzLDE0LjUxMXogTTc5LjUyMywxOS4xNmMtMC43NDgsMC0xLjM1Ni0wLjYwNy0xLjM1Ni0xLjM1N3MwLjYwOC0xLjM1NywxLjM1Ni0xLjM1Nw0KCWMwLjc1LDAsMS4zNTcsMC42MDcsMS4zNTcsMS4zNTdTODAuMjczLDE5LjE2LDc5LjUyMywxOS4xNnoiLz4NCjxnPg0KCTxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik04OC4wNzcsMTYuNDFjLTAuNDM4LTAuMjA1LTAuNzIxLTAuNjQ4LTAuNzIxLTEuMTI5di0yLjgwOXYtMC42ODFWOS4zNTRjMC0wLjAxNy0wLjAwMi0wLjAzMi0wLjAwNS0wLjA0OA0KCQljMC4wMDItMC4wMzQsMC4wMDUtMC4wNjgsMC4wMDUtMC4xMDNjMC0xLjY1OS0xLjA3LTMuMDk4LTIuNjYyLTMuNTc3Yy0wLjAyNC0wLjAwOC0wLjA1LTAuMDExLTAuMDc1LTAuMDExDQoJCWMtMC4xMDMsMC0wLjE5OCwwLjA2MS0wLjIzOSwwLjE1OWwtMS4wNTEsMi41MzVjLTAuMDUzLDAuMTI4LDAuMDA0LDAuMjc0LDAuMTMsMC4zMzNjMC40MzgsMC4yMDQsMC43MjEsMC42NDYsMC43MjEsMS4xMjd2Mi4wMjENCgkJdjAuNzg5djIuNzQ4djAuMzcxYzAsMC4wMTYsMC4wMDEsMC4wMzEsMC4wMDQsMC4wNDdjLTAuMDAyLDAuMDM1LTAuMDA0LDAuMDY4LTAuMDA0LDAuMTA0YzAsMS42NTgsMS4wNjksMy4wOTYsMi42NjEsMy41NzYNCgkJYzAuMDI1LDAuMDA4LDAuMDUxLDAuMDEyLDAuMDc1LDAuMDEyYzAuMTAzLDAsMC4xOTgtMC4wNjIsMC4yMzktMC4xNmwxLjA1MS0yLjUzNUM4OC4yNTksMTYuNjEzLDg4LjIwMiwxNi40NjgsODguMDc3LDE2LjQxeiIvPg0KCTxwYXRoIGZpbGw9IiNGRjMxMzEiIGQ9Ik04NS4yODYsMWMwLjQ3NSwwLDAuODcsMC4xNTksMS4xOTEsMC40NzhjMC4zMTcsMC4zMTksMC40NzgsMC43MDcsMC40NzgsMS4xNjINCgkJYzAsMC40NDgtMC4xNiwwLjgzMi0wLjQ3OCwxLjE0OWMtMC4zMjEsMC4zMTgtMC43MDQsMC40NzktMS4xNSwwLjQ3OWMtMC40NTcsMC0wLjg0NC0wLjE2MS0xLjE2My0wLjQ3OQ0KCQljLTAuMzE4LTAuMzE3LTAuNDc4LTAuNzAxLTAuNDc4LTEuMTQ5YzAtMC40NzMsMC4xNjYtMC44NjUsMC40OTktMS4xNzVDODQuNTE3LDEuMTUzLDg0Ljg4NCwxLDg1LjI4NiwxIi8+DQo8L2c+DQo8L3N2Zz4NCg==" />
+        </a>
+          <nav class="header_nav top-menu">
+          <a class="top-menu_i link def-transition js-slide-to" href="#price">О проекте</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#levels">Уровни локаций</a>
+          <a class="top-menu_i link def-transition js-slide-to" href="#advantages">Преимущества</a>
+        </nav>
+
+        <span class="header_phone">8 812 640 76 46</span>
+        <a class="header_btn-2 btn __major __size-M" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
+      </div>
+    </header>
+
+    <!-- Ваша реклама -->
+    <section class="your-adv" id="yourAdv">
+      <div class="your-adv_cnt">
+        <h2 class="your-adv_t title">Ваша реклама</h2>
+        в геонацеленной поисковой системе
+        Suggest.io
+      </div>
+      <div class="your-adv_geo"></div>
+      <div class="your-adv_text">
+        <p class="your-adv_text-major">Поставить иконку на рабочий стол</p>
+        быстрый доступ к suggest.io
+      </div>
+      <div class="your-adv_suggest-btn">
+        <a class="ic-suggestio js-slide-btn" id="slideBtn" data-slide="#phones"></a>
+      </div>
+      <div class="your-adv_btns">
+        <a class="btn __helper-white __size-M ic-ios __white js-slide-tab" data-cnt="#ios" data-slide="#phones">&nbsp;</a>
+        <a class="btn __helper-white __size-M __list ic-android __white js-slide-tab" data-cnt="#android" data-slide="#phones">&nbsp;</a>
+
+      </div>
+      <div class="your-adv_footer-text">
+        Suggest.io – браузерное решение. Никаких загрузок&nbsp;/&nbsp;инсталляций не требуется. 
+      </div>
+    </section>
+
+    <!--Phones -->
+    <section class="phones" id="phones">
+      <div class="phones_triangle"></div>
+      <h2 class="phones_title">
+        Чтобы начать пользоваться системой надо открыть браузер на своем <br/>
+        мобильном коммуникаторе и набрать адрес сайта suggest.io. <br/>
+        На этом все!
+      </h2>
+      <p class="phones_subtitle">
+        Если вы хотите пользоваться Suggest.io постоянно, мы рекомендуем поставить иконку <br/>системы на рабочий стол.
+      </p>
+      <div class="phones_btns">
+        <div class="phones_btn __js-act ic-ios __gray js-tab" data-cnt="#ios"></div>
+        <div class="phones_btn ic-android __gray js-tab" data-cnt="#android"></div>
+      </div>
+
+      <div class="js-tab-cnt" id="ios">
+        <div class="phones_step-lst js-ios-slider">
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 1</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите на адресную строку браузера,
+              внизу экрана появится панель...
+            </p>
+          </div>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 2</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку <br/>
+              На экран <span class="phones_step-major-text">«Домой».</span>
+            </p>
+          </div>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 3</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку<br/>
+              <span class="phones_step-major-text">«Добавить».</span>
+            </p>
+          </div>
+          <div class="phones_step-i __last">
+            <h3 class="phones_step-t">Шаг 4</h3>
+            <div class="phones_step-img">
+              <img src='@routes.Assets.at("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
+            </div>
+            <p class="phones_step-descr">
+              Теперь вы можете заходить <br/>
+              в Suggest.io в один клик.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="js-tab-cnt" id="android">
+        <div class="phones_step-lst js-android-slider">
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 1</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-1_retina.png")' width="211"/>
+            </div>
+            <p class="phones_step-descr">
+              Нажмите на кнопку выбора инструментов
+              на устройстве андроид...
+            </p>
+          </div>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 2</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-2_retina.png")' width="174"/>
+            </div>
+            <p class="phones_step-descr">
+              Выберите из появившегося меню <br/>
+              <span class="phones_step-major-text">«Добавить на главный экран».</span>
+            </p>
+          </div>
+          <div class="phones_step-i">
+            <h3 class="phones_step-t">Шаг 3</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-3_retina.png")' width="174" />
+            </div>
+            <p class="phones_step-descr">
+              Нажмите кнопку
+              <span class="phones_step-major-text">«Добавить».</span>
+            </p>
+          </div>
+          <div class="phones_step-i __last">
+            <h3 class="phones_step-t">Шаг 4</h3>
+            <div class="phones_step-img __big">
+              <img src='@routes.Assets.at("images/market/booklet/android-photo-4_retina.png")' width="174"/>
+            </div>
+            <p class="phones_step-descr">
+              Теперь вы можете заходить <br/>
+              в Suggest.io в один клик.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+    </section>
+
+    <!-- Цена -->
+    <section class="price" id="price">
+      <div class="price_green">
+        <div class="price_t">
+          Стоимость размещения рекламы в Suggest.io начинается
+          <div class="title">от 100 руб.&nbsp;/&nbsp;месяц</div>
+        </div>
+      </div>
+      <div class="price_white">
+        <div class="price_cnt">
+          <p class="price_text __major">
+            Поисковая выдача Suggest.io зависит от<br/> места, в котором находится<br/> пользователь.
+          </p>
+          <p class="price_text">
+            Пользователи Suggest.io ищут информацию о товарах и услугах в шаговой доступности, в своем районе, во всей Москве или Санкт-Петербурге и видят рекламу на экранах своих
+            мобильных коммуникаторов.
+          </p>
+        </div>
+        <div class="price_fingers"></div>
+        <div class="price_map">
+          <div class="price_map-inner">
+            <p class="price_map-text">
+              Рекламная выдача<br/>
+              в заданных локациях
+            </p>
+            <a class="btn __helper-green __size-M js-slide-to" href="#levels">Подробнее</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Индивидуальная формировка -->
+    <section class="individual" id="individual">
+      <div class="individual_red">
+        <div class="individual_red-inner">
+          В настоящее время<br/>
+          геонацеленная поисковая выдача Suggest.io
+          <h2 class="title">
+            может формироваться индивидуально<br/>
+            по следующим локациям:
           </h2>
-
-          <a class="link" href="@routes.Market.index">
-            <img class="section-sio-market_logo not-retina" src='@routes.Assets.at("images/market/booklet/section-sio-market_logo.png")' width="50"/>
-            <img class="section-sio-market_logo retina" src='@routes.Assets.at("images/market/booklet/retina/section-sio-market_logo.png")' width="50"/>
-          </a>
-
-          <div class="section-sio-market_text">
-            <p class="ft-S">
-              Автоматизированная платформа для управления рекламой.
+        </div>
+      </div>
+      <div class="individual_white">
+        <div class="individual_cnt">
+          <div class="individual_text-i">
+            <p class="individual_text">
+              Для всех административных округов Москвы<br/>
+              и для всех районов Санкт-Петербурга.
             </p>
-            <p class="w __margin-L ft-S">
-              Мы предлагаем лучшее на сегодняшний день программное решение для монетизации<br/>
-              трафика  пользователей сетей<br/>
-              <span class="section-sio-market_wifi">WiFi Free</span>
+          </div>
+          <div class="individual_text-i">
+            <p class="individual_text">
+              Для 100 крупнейших торговых<br/>
+              комплексов Москвы и Санкт-Петербурга.
+            </p>
+          </div>
+          <div class="individual_text-i">
+            <p class="individual_text">
+              Для международных аэропортов Москвы и<br/> Санкт-Петербурга: Шереметьево, Домодедово,<br/> Внуково, Пулково и Центра бизнес-авиации<br/> Пулково-3.
+            </p>
+          </div>
+          <div class="individual_text-i">
+            <p class="individual_text">
+              А так же во многих других локациях, которые появятся<br/>в системе.
             </p>
           </div>
 
         </div>
+        <div class="individual_ipad"></div>
+      </div>
+      <div class="individual_footer-text">
+        В зависимости от масштаба вашего бизнеса и характеристик вашей целевой аудитории вы можете разместить<br/>свою рекламу в геонацеленной поисковой выдаче Suggest.io в любой локации, в нескольких локациях или во<br/>всех локациях сразу.
+      </div>
+    </section>
 
-        <div class="start-work-btn-w section-sio-market_btn">
-          @DEMO_ADN_ID_OPT.map { demoAdnId =>
-          <a class="demo-btn link def-transition" href="@routes.MarketShowcase.demoShowcase()" target="_blank">
-            ДЕМО
-          </a>
-          }
+    <!-- Уровни размещения -->
+    <section class="levels" id="levels">
+      <div class="levels_blue">
+        <h2 class="title">Suggest.io предлагает<br/>несколько уровней размещения рекламы
+        </h2>
+        для каждой локации.
+      </div>
+      <div class="levels_white">
+        <div class="levels_phone">
+          <span class="levels_phone-text __left">Каталог&nbsp;/&nbsp;рубрикатор</span>
+          <span class="levels_phone-text __right">Собственный раздел<br/>рекламодателя со всеми<br/>товарными предложениями</span>
+          <span class="levels_phone-text __bottom">Первый экран</span>
         </div>
+        <div class="levels_cnt">
+          <span class="levels_text">Строка <span class="levels_link">Live Search</span> дает возможность быстрого поиска товаров и услуг.</span>
+          <div class="levels_btn">
+            <a class="btn __helper-green __size-M" href="/">Попробовать</a>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <a class="section-sio-market_go-bottom-btn js-slide-to" href="#about"></a>
-
-      </section><!-- section-sio-market end -->
-
-      <section class="section-about" id="about">
-        <div class="section-about_cnt section-cnt">
-          <h2 class="section-about_title title">
-            <span class="color-attention">О</span> системе
+    <!-- Slider -->
+    <section class="slider" id="slider">
+      <div class="slider_i slide-1">
+        <div class="slide-1_bg">
+          <h2 class="slide-1_t title">
+            Кто увидит мою рекламу?
           </h2>
+          <h2 class="slide-1_t-2 title">
+          Округа Москвы&nbsp;/&nbsp;районы Санкт-Петербурга
+          </h2>
+          <span class="phone-hidden">
+            Москва – второй после Лондона, а Санкт-Петербург – третий после Москвы<br/>
+            и Лондона город Европы по численности населения.
+          </span>
+        </div>
+        <div class="slide-1_white">
+          <h3 class="slide-1_subtitle">
+            В Москве проживает <span class="slide-1_subtitle-major">12.1 млн</span> чел, в Санкт-Петербурге – более <span class="slide-1_subtitle-major">5 млн.</span>
+          </h3>
+          <p class="slide-1_text-minor">
+            Ежегодно Москву посещает более <span class="slide-1_text-green">5 млн</span>, Санкт-Петербург – более <span class="slide-1_text-green">2.5 млн</span> иностранных туристов.
+          </p>
+          <p>
+            Геонацеленная реклама на административные округа Москвы
+            <br>
+            и районы
+            Санкт-Петербурга может быть эффективным средством продвижения
+            <br>
+            самых разнообразных
+            торговых марок –
+            <br>
+            от мировых брендов и фешенебельных заведений в центре
+            <br>
+            до товаров и услуг
+            шаговой доступности в спальных районах.
+          </p>
+        </div>
+      </div>
 
-          <div class="section-about_wifi-title">
-            <span class="color-attention">WiFi Free</span>&nbsp;&#8211;&nbsp;современный тренд
+      <div class="slider_i slide-2">
+        <div class="slide-2_bg">
+          <h2 class="slide-2_t title">
+            Торговые центры
+          </h2>
+          Реклама, размещенная в локациях торговых центров,
+          <br>
+          доступна для
+          просмотров пользователей,
+          <br>
+          которые находятся на территории данного ТЦ.
+        </div>
+        <div class="slide-2_color-bg">
+          <h3 class="slide-2_border-title">
+            Ежедневный трафик посетителей 100 крупнейших торговых центров Москвы и Санкт-Петербурга <br/>
+            <span class="slide-2_border-title-major">2&nbsp;000&nbsp;000 чел. в день&nbsp;/&nbsp;60&nbsp;000&nbsp;000 чел. в месяц.</span>
+          </h3>
+        </div>
+        <p class="slide-2_text">
+          Это молодая, активная публика, настроенная на покупки. Их интересы: одежда, современная электроника,
+          <br>
+          косметика, парфюмерия, спорт, отдых, развлечения.
+        </p>
+      </div>
+
+      <div class="slider_i slide-3">
+        <div class="slide-3_bg">
+          <h2 class="slide-3_t title">
+            Аэропорты
+          </h2>
+          <h3 class="slide-3_subtitle phone-hidden">
+            Через залы отправления и прибытия международных аэропортов Москвы и Санкт-Петербурга &mdash; Шереметьево, <br/>
+            Домодедово, Внуково, Пулково и Центра бизнес-авиации Пулково-3 &mdash; проходит  <span class="slide-3_subtitle-major">более  85&nbsp;млн</span> пассажиров<br/>
+            в год  ( <span class="slide-3_subtitle-major __small">более 7&nbsp;млн</span> пассажиров в месяц ).
+          </h3>
+          <p class="phone-visible">
+            Через залы отправления и прибытия международных аэропортов Москвы и Санкт-Петербурга проходит
+            проходит  более   <span class="slide-3_subtitle-major">85&nbsp;млн</span>
+            пассажиров в год.
+          </p>
+        </div>
+        <p class="slide-3_text slide-3_phone-green">
+          С учетом аудитории встречающих  и провожающих эти цифры становятся еще выше.<br/>
+          Характеристики основной аудитории:
+        </p>
+        <div class="slide-3_phone-border">
+          <p class="slide-3_text __major">
+            <span class="f-left">Возрастной сегмент:  15-45 лет.</span>
+            Уровень дохода: средний, высокий.
+            <span class="f-right">Образование: высшее.</span>
+          </p>
+          <p class="slide-3_text __major __centered">
+            <span class="f-left">
+              Служебное положение: профессионалы,<br/>
+              владельцы бизнеса.
+            </span>
+            <span class="f-right">
+              Высокая доля иностранных туристов<br/>
+              и бизнесменов.
+            </span>
+          </p>
+        </div>
+        <p class="slide-3_text __size-S phone-hidden">
+          Аудитория Suggest.io в международных аэропортах Москвы и Санкт-Петербурга является наиболее активным потребителем товаров<br/>
+          и услуг в сферах брендовой одежды и аксессуаров, досуга и развлечений, туризма, спорта и отдыха, жилой и коммерческой<br/>
+          недвижимости, медицинских услуг высокого качества, автомобильных сервисов и автомобилей и др.
+        </p>
+      </div>
+
+      <div class="slider_i slide-4">
+        <div class="slide-4_bg">
+          <h2 class="slide-4_t title">
+            Поиск по товарам<br/>
+            и услугам
+          </h2>
+          <span class="phone-hidden">
+            При быстром поиске через строку Live Search<br/>
+            в поисковой выдаче Suggest.io вне зависимости от местоположения пользователя<br/>
+            выводятся все рекламные предложения размещенные в собственных разделах рекламодателей и<br/>
+            соответствующие поисковому запросу.
+          </span>
+        </div>
+        <p class="slide-4_phone-gray phone-visible">
+          При быстром поиске через строку Live Search
+          в поисковой выдаче Suggest.io
+          вне зависимости от местоположения
+          пользователя
+          выводятся все рекламные предложения
+          размещенные в собственных разделах
+          рекламодателей
+          и соответствующие поисковому запросу.
+        </p>
+        <div class="slide-4_ipad"></div>
+      </div>
+
+    </section>
+
+    <!--  Преимущества -->
+    <section class="advantages" id="advantages">
+      <div class="advantages_color-bg">
+        <h2 class="advantages_t title">
+          Преимущества
+        </h2>
+        <div class="advantages_column-lst">
+          <div class="advantages_column">
+            Эффективная геонацеленная<br/>
+            реклама в местах с высоким<br/>
+            трафиком посетителей.
           </div>
-          <div class="section-about_wifi-text">
-            Бесплатный доступ в Интернет сегодня есть едва ли не в каждом публичном месте,
-            владельцы которого заинтересованы в привлечении посетителей.
+          <div class="advantages_column">
+            Возможность геонацеливания<br/>
+            рекламы на те территории, где<br/>
+            расположены точки продаж<br/>
+            рекламодателя.
           </div>
-
-          <div class="section-about_icons-title">Мы предлагаем</div>
-          <div class="section-about_offers">
-
-            <div class="section-about-offer __offer-1">
-              <div class="section-about-offer_icon __icon-1"></div>
-              <div class="section-about-offer_text">
-                Лучшее на сегодняшний день программное решение
-                для монетизации трафика пользователей
-                сетей WiFi Free
-              </div>
-            </div>
-
-            <div class="section-about-offer __offer-2">
-              <div class="section-about-offer_icon __icon-2"></div>
-              <div class="section-about-offer_text">
-                Автоматизированная платформа
-                для управления рекламой.
-
-              </div>
-            </div>
-
-            <div class="section-about-offer __offer-3">
-              <div class="section-about-offer_icon __icon-3"></div>
-              <div class="section-about-offer_text">
-                Ни одно из конкурирующих программных решений не даёт тех возможностей,
-                которые уже сегодня воплощены в Sio/M.
-              </div>
-            </div>
-
-          </div>
-
-          <div class="start-work-btn-w" id="how-it-looks">
-            <a class="start-work-btn __attention link def-transition js-slide-to" href="#partnership">
-              Начать работу с Sio
-            </a>
-          </div>
-
-          <div class="section-about_bottom-title title">
-            <span class="color-attention">Как</span>&nbsp;<span class="color-dark">выглядит?</span>
+          <div class="advantages_column">
+            Реклама работает на тех покупателей
+            находятся в поиске<br/>товаров и услуг.
           </div>
         </div>
-      </section><!-- section-about end -->
+      </div>
+      <div class="advantages_bottom">
+        <div class="advantages_map"></div>
+        <div class="advantages_wood"></div>
 
-      <section class="section-start paralax" id="start">
-        <div class="bg-paralax section-start_bg-paralax"></div>
-
-        <div class="section-start_cnt section-cnt">
-          <div class="section-start_icon"></div>
-
-          <div class="section-start_descr">
-            <div class="section-start_title title">Start</div>
-            <div class="section-start_text">
-              Запускается при подключении мобильного коммуникатора посетителя
-              к сетям WiFi Free в публичных местах:
-              <p class="w __margin-L">
-                торговых комплексах, ресторанах, банках и т.д.
-              </p>
-            </div>
-            <div class="start-work-btn-w section-start_btn">
-              @DEMO_ADN_ID_OPT.map { demoAdnId =>
-                <a class="demo-btn link def-transition" href="@routes.MarketShowcase.demoShowcase()" target="_blank">
-                  ДЕМО
-                </a>
-              }
-            </div>
-            <div class="browsers phone-hidden">
-              <div class="browsers_i __icon-1"></div>
-              <div class="browsers_i __icon-2 __list"></div>
-              <div class="browsers_i __icon-3 __list"></div>
-            </div>
-          </div>
-
+        <div class="advantages_gadgets">
+          <strong class="advantages_phone">8 812 640 76 46</strong>
+          <a class="advantages_btn btn __major __size-M" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
         </div>
-
-      </section><!-- section-start end -->
-
-      <section class="section-i-can">
-        <div class="section-i-can_cnt section-cnt">
-
-          <div class="section-i-can_descr">
-            <div class="section-i-can_title title">Я МОГУ!</div>
-            <div class="section-i-can_text">
-              Выдаёт информацию о товарах, скидках, акциях, предложениях, хитах продаж.
-              <p class="w __margin-L">
-                В рекламную выдачу может включаться как собственная информация владельца сети WiFi Free,
-                так и реклама арендаторов или сторонних рекламодателей.
-              </p>
-            </div>
-          </div>
-          <div class="section-i-can_icon"></div>
-
-        </div>
-      </section><!-- section-i-can end -->
-
-      <section class="section-you-notice paralax" id="you-notice">
-        <div class="bg-paralax section-you-notice_bg-paralax"></div>
-
-        <div class="section-you-notice_cnt section-cnt">
-          <div class="section-you-notice_icon"></div>
-
-          <div class="section-you-notice_descr">
-            <div class="section-you-notice_title title">
-              Вас заметят
-            </div>
-            <div class="section-you-notice_text">
-              Несколько уровней размещения рекламы:
-              первый экран, каталог, собственный раздел рекламодателя
-              со всеми товарными предложениями.
-              <p class="w __margin-L">
-                Возможность быстрого поиска информации через поисковую строку.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section><!-- section-you-notice end -->
-
-      <section class="section-so-easy">
-
-        <div class="section-so-easy_cnt section-cnt">
-          <div class="section-so-easy_descr">
-            <div class="section-so-easy_title title">Так просто</div>
-            <div class="section-so-easy_text">
-              Пользователь может свернуть окно выдачи рекламы и начать пользоваться интернетом,
-              значок системы будет отображаться в левом верхнем углу браузера.
-            </div>
-          </div>
-          <div class="section-so-easy_icon"></div>
-
-          <div class="start-work-btn-w section-so-easy_btn">
-            <a class="start-work-btn __attention link def-transition js-slide-to" href="#partnership">
-              Начать работу с Sio
-            </a>
-          </div>
-        </div>
-
-      </section><!-- section-so-easy end -->
-
-      <section class="section-how-it-works paralax" id="how-it-works">
-        <div class="bg-paralax section-how-it-works_bg-paralax"></div>
-
-        <div class="section-how-it-works_title title">
-          <span class="color-attention">Как</span>&nbsp;<span class="color-light">это работает?</span>
-        </div>
-
-        <div class="section-how-it-works_cnt section-cnt">
-
-          <div class="section-how-it-works_icon"></div>
-
-          <div class="section-how-it-works_text">
-            <p class="color-light">
-              Размещение своей рекламы в своих сетях Wi-Fi производится бесплатно.
-            </p>
-            <p class="w __margin-L">
-              Управление всей рекламой сетевых компаний, объединяющих множество точек продаж/обслуживания и сетей Wi-Fi
-              может производиться одним менеджером из одного личного кабинета.
-            </p>
-          </div>
-
-          <div class="section-how-it-works_place-icon"></div>
-
-          <div class="start-work-btn-w">
-            @DEMO_ADN_ID_OPT.map { demoAdnId =>
-            <a class="demo-btn link def-transition" href="@routes.MarketShowcase.demoShowcase()" target="_blank">
-              ДЕМО
-            </a>
-            }
-          </div>
-        </div>
-
-      </section><!-- section-how-it-works end -->
-
-      <section class="section-only-you">
-        <div class="section-only-you_cnt">
-
-          <div class="ovh">
-            <div class="only-you-block">
-              <div class="only-you-block_icon __block-1"></div>
-              <p class="only-you-block_text">
-                Пользователь системы (ресторан, торговый центр или др.) может на платной основе размещать
-                свою рекламу в сетях Wi-Fi других пользователей.
-              </p>
-            </div>
-            <div class="only-you-block">
-              <div class="only-you-block_icon __block-2"></div>
-              <p class="only-you-block_text">
-                Личный кабинет содержит мощный графический редактор. Удобный интерфейс позволяет
-                создавать яркую, современную рекламу.
-              </p>
-            </div>
-          </div>
-
-          <div class="section-only-you_text">
-            <div class="section-only-you_title-w">
-              <div class="section-only-you_title title">
-                <span class="color-dark">Только</span>&nbsp;<span class="color-attention">вы</span>
-              </div>
-              <div class="section-only-you_title-border"></div>
-            </div>
-            <p class="ft-L">
-              Владелец сети Wi-Fi
-            </p>
-            <p class="w __margin-L">
-              (ресторана, торгового центра или др.)<br/>
-              может запрещать показы сторонней рекламы в своей сети.
-            </p>
-          </div>
-
-          <div class="ovh">
-            <div class="only-you-block">
-              <div class="only-you-block_icon __block-3"></div>
-              <p class="only-you-block_text">
-                Рекламодатель самостоятельно выбирает места (рестораны, торговые центра или др.) для размещения
-                своей рекламы, а также даты начала и окончания показов рекламы. Справочная информация содержит сведения
-                о выбранных местах показов рекламы: посещаемость, характеристика аудитории,
-                фотографии фасадов и интерьеров и др.
-              </p>
-            </div>
-            <div class="only-you-block">
-              <div class="only-you-block_icon __block-4"></div>
-              <p class="only-you-block_text">
-                Все расчеты за размещение рекламы абсолютно прозрачны.
-                Стоимость рекламы объективно связана с проходимостью и престижностью места показов рекламы.
-                Состояние расчетов постоянно отображаются в личном кабинете.
-              </p>
-            </div>
-          </div>
-
-          <div class="start-work-btn-w">
-            <a class="start-work-btn __attention __section-only-you link def-transition js-slide-to" href="#partnership">
-              Начать работу с Sio
-            </a>
-          </div>
-
-        </div>
-      </section><!-- section-only-you end -->
-
-      <section class="section-advantages paralax" id="advantages">
-        <div class="bg-paralax section-advantages_bg-paralax"></div>
-
-        <div class="section-advantages_cnt section-cnt">
-          <div class="title section-advantages_title">ПРЕИМУЩЕСТВА</div>
-
-          <div class="section-advantages_plus">+</div>
-
-          <div class="section-advantages_block">
-            <span class="ft-L color-light">Эффективная реклама в месте продаж</span>
-            <p class="w __margin-L">
-              в местах с высоким потоком посетителей которую, в отличие от лайтбокса,
-              рекламного буклета или др. рекламных носителей можно менять как угодно часто.
-            </p>
-          </div>
-
-          <div class="section-advantages_block">
-            <span class="ft-L color-light">Навигационно-поисковая система</span>
-            <p class="w __margin-L">
-              дополняющая логистику крупных торговых комплексов
-              и облегчающая поиск товара. Реклама арендаторов работает именно
-              на тех покупателей, которые находятся в поиске товара.
-            </p>
-          </div>
-
-          <div class="section-advantages_block">
-            <span class="ft-L color-light">Расширяются возможности системы. </span>
-            <p class="w __margin-L">
-              Над развитием Sio/M работает команда квалифицированных специалистов.
-              Отрабатываются новые технологии рекламных визуализации.
-              На очереди – введение возможности трансляции рекламных баннеров
-              и видео-рекламы на экранах, подключаемых к Sio/M.
-            </p>
-          </div>
-
-          <div class="section-advantages_block">
-            <a class="start-work-btn section-advantages_btn link def-transition js-slide-to" href="#partnership">
-              Начать работу с Sio
-            </a>
-          </div>
-
-        </div>
-      </section><!-- section-advantages end -->
-
-      <section class="section-equipment" id="equipment">
-
-        <div class="section-equipment_btn-w">
-          <a class="section-equipment_btn js-slide-btn" data-slide="#equipment_slide-cnt"></a>
-        </div>
-
-        <div class="section-equipment_slide" id="equipment_slide-cnt">
-          <div class="section-equipment_angle"></div>
-          <div class="section-equipment_cnt-w">
-
-
-            <div class="section-equipment_cnt">
-              <div class="title section-equipment_title">Оборудование</div>
-
-              <div class="ovh">
-                <div class="equipment-block">
-                  <div class="equipment-block_icon">1</div>
-                  <div class="equipment-block_text">
-                    Главное требование к оборудованию - наличие поддержки функции
-                    HotSpot и сервер проксирования трафика.
-                  </div>
-                </div>
-
-                <div class="equipment-block">
-                  <div class="equipment-block_icon">2</div>
-                  <div class="equipment-block_text">
-                    При необходимости весь цикл монтажно-подготовительных работ
-                    (подключение к интернету, установка и настройка оборудования WiFi и др.)
-                    может быть выполнен сотрудниками компании CBCA.
-                    <p class="w __margin-L">
-                      Стоимость подготовительных работ определяется соответствующими сметами.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="equipment-block">
-                  <div class="equipment-block_icon">3</div>
-                  <div class="equipment-block_text">
-                    При развертывании S-Market мы отдаем предпочтение
-                    оборудованию компании Mikrotik, которое считаем
-                    наиболее удачным компромиссом между ценой и качеством.
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </section><!-- section-equipment end -->
-
-      <section class="section-partnership" id="partnership">
-
-        <div class="section-partnership_cnt section-cnt">
-          <div class="section-partnership_title title">Партнерство</div>
-
-          <div class="section-partnership_text">
-            Мы работаем как непосредственно с рекламодателями и/или владельцами сетей WiFi Free,
-            так и с рекламными агентствами, представляющими рекламодателей.
-          </div>
-          <div class="section-partnership_text">
-            Доход наших партнеров – 70% от сборов за размещение рекламы.
-          </div>
-          <div class="section-partnership_text">
-            В абсолютном выражении этот доход растет вместе в развитием системы,
-            с подключением дополнительных сетей Wi-Fi Free и дополнительных
-            возможностей для показов рекламы.﻿
-          </div>
-          <div class="section-partnership_btns">
-            <a class="section-partnership_phone" href="tel:88126407646">
-              8&nbsp;812&nbsp;640&nbsp;76&nbsp;46
-            </a>
-            <a class="section-partnership_mail" href="@routes.MarketJoin.joinAdvRequest">
-              Запросить инвайт
-            </a>
-          </div>
-        </div>
-
-      </section><!-- section-partnership end -->
-    </div>
+      </div>
+    </section>
 
 
 
+    <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
+    <script src="@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+    <script src='@routes.Assets.at("javascripts/market/booklet.js")'></script>
 
-    <script src="@routes.Assets.at("javascripts/lib/skrollr/src/skrollr.js")"></script>
-    <script src="@routes.Assets.at("javascripts/market/booklet.js")"></script>
 
   </body>
 </html>

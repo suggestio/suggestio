@@ -7,7 +7,7 @@
   @* Нету карточки приветствия. *@
   <div id="smWelcomeAd" class="sm-welcome-ad" style="background: #@args.bgColor;">
       <span class="sm-welcome-ad_helper"></span>
-      <img height="60" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
+      <img height="30" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
   </div>
 
 } { wargs =>
@@ -42,6 +42,16 @@
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
            src="@ctx.myAudienceUrl@routes.Img.getImg(fgImage.filename)"/>
+    }
+    @* Рендерим покрывающую картинку (svg/png) *@
+    @wargs.fgText.map {  fgText =>
+      <div id="smWelcomeAdfgText" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
+        <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+          @fgText
+          <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
+          <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
+        </span>
+      </div>
     }
 
   </div>
