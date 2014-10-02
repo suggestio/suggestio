@@ -1,4 +1,5 @@
 @(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+@import util.TplDataFormatUtil._
 
 @stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
 
@@ -16,10 +17,9 @@
     background-repeat: repeat-x;
   }
 
-  @*
   .sm-grid-ads,
   .sm-grid-ads_loader-spinner{
-    background: url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="3px" height="3px" viewBox="0 0 3 3" enable-background="new 0 0 3 3" xml:space="preserve"><rect x="2" width="1" height="1" fill="#@args.bgColor" fill-opacity="0.1"/><rect x="1" y="1" width="1" height="1" fill="#@args.bgColor" fill-opacity="0.1"/><rect y="2" width="1" height="1" fill="#@args.bgColor" fill-opacity="0.1"/></svg>');
-  }*@
+    background-color: rgba(@{colorHex2rgb(args.bgColor).mkString(",")}, 0.1);
+  }
 
 </style>
