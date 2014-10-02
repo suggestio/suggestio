@@ -20,7 +20,6 @@ object ShowcaseUtil {
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
-
   def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
   /**

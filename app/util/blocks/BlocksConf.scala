@@ -491,7 +491,7 @@ object BlocksConf extends Enumeration {
 
   /** Блок-ссылка. Изначально создавался для пиара sioM. */
   sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
-    override def isShown = false
+    override def isShown = true
     override def template = _block26Tpl
     override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(

@@ -142,6 +142,12 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
+  /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
+  def rdrToGeoSite = Action { implicit request =>
+    val call = routes.MarketShowcase.geoSite().url
+    MovedPermanently(call)
+  }
+
 
   /** Кеш-ключ для nodeIconJs. */
   private def nodeIconJsCacheKey(adnId: String) = adnId + ".nodeIconJs"
