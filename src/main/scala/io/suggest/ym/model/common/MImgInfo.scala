@@ -90,7 +90,27 @@ object MImgInfoMeta {
 
 import MImgInfoMeta._
 
-case class MImgInfoMeta(height: Int, width: Int) {
+trait MImgSizeT {
+  def height: Int
+  def width: Int
+
+  def isSmallerThan(sz: MImgSizeT): Boolean = {
+    height < sz.height  &&  width < sz.width
+  }
+
+  def isIncudesSz(sz: MImgSizeT): Boolean = {
+    height >= sz.height  &&  width >= sz.width
+  }
+
+  def isLargerThan(sz: MImgSizeT): Boolean = {
+    height > sz.height  &&  width > sz.width
+  }
+
+  def isVertical = height > width
+  def isHorizontal = width > height
+}
+
+case class MImgInfoMeta(height: Int, width: Int) extends MImgSizeT {
 
   @JsonIgnore
   def toPlayJson = {
