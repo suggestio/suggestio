@@ -3,6 +3,8 @@ package util.qsb
 import play.api.mvc.QueryStringBindable
 import models._
 
+import scala.util.parsing.combinator.JavaTokenParsers
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,7 +21,7 @@ object QsbUtil {
 }
 
 
-object QSBs {
+object QSBs extends JavaTokenParsers {
 
   private def companyNameSuf = ".meta.name"
 
@@ -66,6 +68,38 @@ object QSBs {
 
       override def unbind(key: String, value: NodeGeoLevel): String = {
         intB.unbind(key, value.id)
+      }
+    }
+  }
+
+
+  private val picSizeNumRe = "\\d{2,5}".r
+  private val picSizeDelimRe = "[xX]"
+
+  private def sizeP: Parser[MImgInfoMeta] = {
+    val sizeP: Parser[Int] = picSizeNumRe ^^ { _.toInt }
+    sizeP ~ (picSizeDelimRe ~> sizeP) ^^ {
+      case w ~ h  =>  MImgInfoMeta(width = w, height = h)
+    }
+  }
+
+  /** qsb для бинда значения длины*ширины из qs. */
+  implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]) = {
+    new QueryStringBindable[MImgInfoMeta] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
+        strB.bind(key, params).map { maybeWxh =>
+          maybeWxh.right.flatMap { wxh =>
+            val pr = parse(sizeP, wxh)
+            if (pr.successful)
+              Right(pr.get)
+            else
+              Left("Unsupported screen size format.")
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MImgInfoMeta): String = {
+        s"${value.width}x${value.height}"
       }
     }
   }

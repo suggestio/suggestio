@@ -28,6 +28,8 @@ Town=Город
 Phone=Телефон
 Photo=Фото
 Logo=Лого
+Other=Другой
+Others=Другие
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -68,6 +70,7 @@ amt.of.type.c=Район города
 amt.of.type.d=Город
 amt.of.type.e=Спорт
 amt.of.type.f=Округ мегаполиса
+amt.of.type.g=Другое здание
 
 amts.of.type.s=Магазины
 amts.of.type.m=Торговые центры
@@ -78,7 +81,7 @@ amts.of.type.b=Станции метро
 amts.of.type.c=Городские районы
 amts.of.type.d=Города
 amts.of.type.e=Спорт
-amts.of.type.f=Округа мегаполиса
+amts.of.type.g=Другие здания
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ

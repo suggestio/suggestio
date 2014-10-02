@@ -68,19 +68,27 @@ object AdnShownTypes extends Enumeration {
     override val pluralNoTown = "Areas"
     override val singularNoTown = "Area"
   }
-
+  
+  /** Другое здание. */
+  val OTHER_BUILDING: AdnShownType    = new Val("g", nglsBuilding) {
+    override def pluralNoTown = "Others"
+    override def singularNoTown = "Other"
+  }
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
+
+
+  /** Опциональный поиск в этом множестве. */
   def maybeWithName(n: String): Option[AdnShownType] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: Exception => None
-    }
+    values
+      .find(_.name == n)
+      .asInstanceOf[Option[AdnShownType]]
   }
 
   implicit def value2val(x: Value): AdnShownType = x.asInstanceOf[AdnShownType]
 
   implicit def adnInfo2val(adnInfo: AdNetMemberInfo): AdnShownType = shownTypeId2val(adnInfo.shownTypeId)
   implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
+
+  override val values = super.values
 }

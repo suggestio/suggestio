@@ -10,6 +10,7 @@ import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
+import util.acl.ExpireSession
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CaptchaUtil
 
@@ -58,7 +59,7 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
   def createCaptchaImg(ctext: String): Array[Byte]
 
   val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds") getOrElse 1800
-  val COOKIE_FLAG_SECURE = configuration.getBoolean("session.secure") getOrElse false
+  def COOKIE_FLAG_SECURE = ExpireSession.SECURE_SESSION
 
   protected def _getCaptchaImg(captchaId: String, ctext: String)(implicit request: RequestHeader): Result = {
     val ctextCrypt = CaptchaUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
