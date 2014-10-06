@@ -2519,9 +2519,13 @@ sm =
 
     sm.warn 'initial mart_id : ' + sm_id
 
-    ## Если еще не запрашивали координаты у юзера
-    if sm.geo.location_requested == false
-      sm.geo.get_current_position()
+    if window.with_geo == true
+      ## Если еще не запрашивали координаты у юзера
+      if sm.geo.location_requested == false
+        sm.geo.get_current_position()
+    else
+      sm.states.add_state
+        mart_id : sm_id
 
 
 window.sm = window.siomart = sm
