@@ -23,7 +23,7 @@ object WelcomeUtil {
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
   val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
-  val BG_DYN_QUALITY: Int = configuration.getInt("showcase.welcome.bg.quality") getOrElse 50
+  val BG_DYN_QUALITY: Int = configuration.getInt("showcase.welcome.bg.quality") getOrElse 55
 
   val GAUSS_BLUR: Double = configuration.getDouble("showcase.welcome.bg.blur.gauss") getOrElse 0.05
 
@@ -149,24 +149,32 @@ object WelcomeUtil {
           override def meta = Some(origMeta)
         }
       } { scrSz =>
-        val gravity = GravityOp(ImGravities.Center)
-        val imOps: Seq[ImOp] = Seq(
-          StripOp,
-          GaussBlurOp(GAUSS_BLUR),
-          gravity,
-          AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
-          gravity,
-          ExtentOp(scrSz),
-          FilterOp(ImFilters.Lanczos),
-          QualityOp(BG_DYN_QUALITY),
-          InterlacingOp(ImInterlace.Plane)
-        )
+        val imOps = imConvertArgs(scrSz)
         val dynArgs = DynImgArgs(oiik, imOps)
         new ImgUrlInfoT {
           override def call = routes.Img.dynImg(dynArgs)
           override def meta = Some(scrSz)
         }
       }
+  }
+
+  /** Сгенерить аргументы для генерации dyn-img ссылки. По сути, тут список параметров для вызова convert.
+    * @param scrSz Размер конечной картинки.
+    * @return Список ImOp в прямом порядке.
+    */
+  def imConvertArgs(scrSz: BasicScreenSize): Seq[ImOp] = {
+    val gravity = GravityOp(ImGravities.Center)
+    Seq(
+      StripOp,
+      GaussBlurOp(GAUSS_BLUR),
+      gravity,
+      AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
+      gravity,
+      ExtentOp(scrSz),
+      FilterOp(ImFilters.Lanczos),
+      QualityOp(BG_DYN_QUALITY),
+      InterlacingOp(ImInterlace.Plane)
+    )
   }
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */

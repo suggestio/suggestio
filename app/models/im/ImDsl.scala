@@ -19,6 +19,8 @@ object ImOp extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  val OP_ORDERING_RE = "\\[(\\d+)\\]$".r
+
   /** qsb для биндинга списка трансформаций картинки (последовательности ImOp). */
   implicit def qsbSeq = {
     new QueryStringBindable[Seq[ImOp]] {
@@ -30,13 +32,26 @@ object ImOp extends PlayMacroLogsImpl {
        * @return
        */
       override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
-        // в карте params может содержать посторонний мусор. Но она идёт в прямом порядке.
         try {
           val ops = params
-            .toSeq
-            .reverse
             .iterator
+            // в карте params содержит также всякий посторонний мусор. Он нам неинтересен.
             .filter { _._1 startsWith keyDotted }
+            // Извлечь порядковый номер из ключа.
+            .flatMap { case (k, v) =>
+              k.split("[\\[\\]]+") match {
+                case Array(k2, iStr) =>
+                  val i = iStr.toInt
+                  Seq( ((k2, v), i) )
+                case _ => Seq.empty
+              }
+            }
+            // Восстановить исходный порядок.
+            .toSeq
+            .sortBy(_._2)
+            // Распарсить команды.
+            .iterator
+            .map(_._1)
             // Попытаться распарсить код операции.
             .flatMap { case (k, vs) =>
               val opCodeStr = k.substring(keyDotted.length)
@@ -60,14 +75,19 @@ object ImOp extends PlayMacroLogsImpl {
       }
 
       override def unbind(keyDotted: String, value: Seq[ImOp]): String = {
-        val sb = new StringBuilder(value.size * 14)
-        value.foreach { imOp =>
-          sb.append(keyDotted)
-            .append(imOp.opCode.strId)
-            .append('=')
-            .append(imOp.qsValue)
-            .append('&')
-        }
+        val sb = new StringBuilder(value.size + 32)
+        value
+          // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
+          .iterator
+          .zipWithIndex
+          .foreach { case (imOp, i) =>
+            sb.append(keyDotted)
+              .append(imOp.opCode.strId)
+              .append('[').append(i).append(']')
+              .append('=')
+              .append(imOp.qsValue)
+              .append('&')
+          }
         // Убрать последний '&'
         if (value.nonEmpty)
           sb.setLength(sb.length - 1)
