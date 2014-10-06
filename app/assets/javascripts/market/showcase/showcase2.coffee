@@ -1101,6 +1101,10 @@ sm =
       #if sm.events.is_touch_locked
       #  return false
 
+      t = sm.events.target_lookup( event.target, 'className', 'js-exit-button' )
+      if t != null
+        window.location = t.getAttribute 'data-url'
+        return false
       ## Обработка событий для открытия / закрытия экрана выхода
       if sm.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         sm.utils.ge('smCloseScreen').style.display = 'block'
