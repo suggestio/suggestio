@@ -7,7 +7,7 @@ import io.suggest.ym.model.common.MImgSizeT
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.10.14 12:27
  * Description: Базовые размеры экранов.
- * @see [[http://en.wikipedia.org/wiki/Comparison_of_Android_devices]]
+ * @see [[http://en.wikipedia.org/wiki/Comparison_of_Android_devices]].
  */
 object BasicScreenSizes extends Enumeration {
 
@@ -49,6 +49,4 @@ object BasicScreenSizes extends Enumeration {
       .getOrElse { if (sz.isHorizontal) HD1080_H else HD1080_V }
   }
 
-  /** Отсортированное неизменяемое множество значений этого перечисления. */
-  override val values = super.values
 }

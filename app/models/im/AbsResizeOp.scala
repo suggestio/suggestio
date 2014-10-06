@@ -100,5 +100,4 @@ object ImResizeFlags extends Enumeration {
       .asInstanceOf[Option[ImResizeFlag]]
   }
 
-  override val values = super.values
 }

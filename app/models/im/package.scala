@@ -18,4 +18,6 @@ package object im {
 
   type ImFilter             = ImFilters.ImFilter
 
+  type DevPixelRatio        = DevPixelRatios.DevPixelRatio
+
 }

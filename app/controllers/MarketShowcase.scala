@@ -5,6 +5,7 @@ import java.util.NoSuchElementException
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.img.{WelcomeUtil, ImgFormUtil, OrigImgIdKey}
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
+import models.im.DevScreenT
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -228,7 +229,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
   /** Рендер отображения выдачи узла. */
-  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None, screen: Option[MImgInfoMeta] = None)
+  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None, screen: Option[DevScreenT] = None)
                                       (implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val spsr = AdSearch(
       levels      = List(AdShowLevels.LVL_START_PAGE),
@@ -252,7 +253,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Рендер страницы-интерфейса поисковой выдачи. */
   private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean,
-                                 geoListGoBack: Option[Boolean] = None, screen: Option[MImgInfoMeta] = None)
+                                 geoListGoBack: Option[Boolean] = None, screen: Option[DevScreenT] = None)
                                 (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = adnNode.id.get
     // TODO Вынести сборку списка prods в отдельный экшен.

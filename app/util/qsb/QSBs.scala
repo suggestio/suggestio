@@ -5,7 +5,7 @@ import java.util.UUID
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
-import util.img.ImgIdKey
+import util.img.{PicSzParsers, ImgIdKey}
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -25,7 +25,7 @@ object QsbUtil {
 }
 
 
-object QSBs extends JavaTokenParsers {
+object QSBs extends JavaTokenParsers with PicSzParsers {
 
   private def companyNameSuf = ".meta.name"
 
@@ -77,12 +77,8 @@ object QSBs extends JavaTokenParsers {
   }
 
 
-  private val picSizeNumRe = "\\d{2,5}".r
-  private val picSizeDelimRe = "[xX]".r
-
-  private def sizeP: Parser[MImgInfoMeta] = {
-    val sizeP: Parser[Int] = picSizeNumRe ^^ { _.toInt }
-    sizeP ~ (picSizeDelimRe ~> sizeP) ^^ {
+  def sizeP: Parser[MImgInfoMeta] = {
+    resolutionRawP ^^ {
       case w ~ h  =>  MImgInfoMeta(width = w, height = h)
     }
   }
@@ -90,7 +86,7 @@ object QSBs extends JavaTokenParsers {
   def parseWxH(wxh: String): ParseResult[MImgInfoMeta] = {
     parse(sizeP, wxh)
   }
-  
+
   def unParseWxH(value: MImgSizeT): String = {
     s"${value.width}x${value.height}"
   }

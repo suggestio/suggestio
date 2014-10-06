@@ -2,6 +2,7 @@ package models
 
 import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
+import models.im.{DevScreen, DevScreenT}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
 
@@ -14,18 +15,18 @@ import util.qsb.QsbUtil._
 object SMShowcaseReqArgs {
 
   /** routes-Биндер для параметров showcase'а. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], scrSzB: QueryStringBindable[Option[MImgInfoMeta]]) = {
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], devScreenB: QueryStringBindable[Option[DevScreen]]) = {
     new QueryStringBindable[SMShowcaseReqArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SMShowcaseReqArgs]] = {
         for {
           maybeGeo        <- strOptB.bind(key + ".geo", params)
-          maybeScrSzOptB  <- scrSzB.bind(key + ".screen", params)
+          maybeDevScreen  <- devScreenB.bind(key + ".screen", params)
         } yield {
           Right(SMShowcaseReqArgs(
             geo  = GeoMode.maybeApply(maybeGeo)
               .filter(_.isWithGeo)
               .getOrElse(GeoIp),
-            screen = maybeScrSzOptB     // Игнорим неверные размеры, ибо некритично.
+            screen = maybeDevScreen     // Игнорим неверные размеры, ибо некритично.
           ))
         }
       }
@@ -42,7 +43,7 @@ object SMShowcaseReqArgs {
 
 case class SMShowcaseReqArgs(
   geo: GeoMode = GeoNone,
-  screen: Option[MImgInfoMeta] = None
+  screen: Option[DevScreenT] = None
 ) {
   override def toString: String = s"${geo.toQsStringOpt.map { "geo=" + _ }}"
 }
@@ -91,18 +92,18 @@ import SMShowcaseRenderArgs._
  * @param welcomeOpt Приветствие, если есть.
  */
 case class SMShowcaseRenderArgs(
-  bgColor: String,
-  fgColor: String,
-  name: String,
-  mmcats: Seq[MMartCategory],
-  catsStats: Map[String, Long],
-  spsr: AdSearch,
-  oncloseHref: String,
-  geoListGoBack: Option[Boolean] = None,
-  logoImgOpt: Option[MImgInfoT] = None,
-  shops: Map[String, MAdnNode] = Map.empty,
+  bgColor       : String,
+  fgColor       : String,
+  name          : String,
+  mmcats        : Seq[MMartCategory],
+  catsStats     : Map[String, Long],
+  spsr          : AdSearch,
+  oncloseHref   : String,
+  geoListGoBack : Option[Boolean] = None,
+  logoImgOpt    : Option[MImgInfoT] = None,
+  shops         : Map[String, MAdnNode] = Map.empty,
   welcomeOpt    : Option[WelcomeRenderArgsT] = None,
-  searchInAdnId: Option[String] = None
+  searchInAdnId : Option[String] = None
 ) extends LogoImgOptI {
 
   /** Генерация списка групп рекламодателей по первым буквам. */

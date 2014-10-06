@@ -105,7 +105,7 @@ object WelcomeUtil {
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[MImgSizeT]): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT]): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
@@ -137,23 +137,23 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[MImgSizeT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
     screen
       .filter { _ => BG_VIA_DYN_IMG }
-      .flatMap { BasicScreenSizes.includesSize }
+      .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
       // Нужно запрещать ресайзить вверх картинку, если она маленькая:
-      .filter { _ isSmallerThan origMeta }
+      .filter { case (bss, _) => bss isSmallerThan origMeta } // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
           override def call = routes.Img.getImg(oiik.filename)
           override def meta = Some(origMeta)
         }
-      } { scrSz =>
-        val imOps = imConvertArgs(scrSz)
+      } { case (bss, screen) =>
+        val imOps = imConvertArgs(bss, screen)
         val dynArgs = DynImgArgs(oiik, imOps)
         new ImgUrlInfoT {
           override def call = routes.Img.dynImg(dynArgs)
-          override def meta = Some(scrSz)
+          override def meta = Some(bss)
         }
       }
   }
@@ -162,7 +162,7 @@ object WelcomeUtil {
     * @param scrSz Размер конечной картинки.
     * @return Список ImOp в прямом порядке.
     */
-  def imConvertArgs(scrSz: BasicScreenSize): Seq[ImOp] = {
+  def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
     val gravity = GravityOp(ImGravities.Center)
     Seq(
       StripOp,
@@ -172,7 +172,7 @@ object WelcomeUtil {
       gravity,
       ExtentOp(scrSz),
       FilterOp(ImFilters.Lanczos),
-      QualityOp(BG_DYN_QUALITY),
+      screen.pixelRatio.imQualityOp,
       InterlacingOp(ImInterlace.Plane)
     )
   }
