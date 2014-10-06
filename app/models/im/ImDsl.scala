@@ -2,12 +2,10 @@ package models.im
 
 import java.text.DecimalFormat
 
-import io.suggest.ym.model.common.MImgSizeT
 import org.im4java.core.IMOperation
 import models._
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsImpl
-import util.qsb.QSBs
 
 /**
  * Suggest.io
@@ -78,6 +76,15 @@ object ImOp extends PlayMacroLogsImpl {
     }
   }
 
+  def doubleFormat: DecimalFormat = {
+    val df = new DecimalFormat("0.00")
+    val dcs = df.getDecimalFormatSymbols
+    dcs.setDecimalSeparator('.')
+    dcs.setMinusSign('-')
+    df.setDecimalFormatSymbols(dcs)
+    df
+  }
+
 }
 
 /** Действие, запрограммирование в аргументах. */
@@ -125,10 +132,19 @@ object ImOpCodes extends Enumeration {
       QualityOp(vs.head.toDouble)
     }
   }
-
   val Extent: ImOpCode = new Val("g") {
     override def mkOp(vs: Seq[String]): ImOp = {
       ExtentOp(vs.head)
+    }
+  }
+  val Strip: ImOpCode = new Val("h") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      StripOp
+    }
+  }
+  val Filter: ImOpCode = new Val("i") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      FilterOp(vs)
     }
   }
 
@@ -194,8 +210,18 @@ case class QualityOp(quality: Double) extends ImOp {
     op.quality(quality)
   }
   override def qsValue: String = {
-    val df = new DecimalFormat("0.00")
-    df.format(quality).replace(",", ".")
+    ImOp.doubleFormat
+      .format(quality)
+  }
+}
+
+
+/** strip для урезания картинки. */
+case object StripOp extends ImOp {
+  override def opCode = ImOpCodes.Strip
+  override def qsValue = ""
+  override def addOperation(op: IMOperation): Unit = {
+    op.strip()
   }
 }
 
@@ -233,8 +259,8 @@ case class GaussBlurOp(blur: Double) extends ImOp {
     op.gaussianBlur(blur)
   }
   override def qsValue: String = {
-    val df = new DecimalFormat("0.00")
-    df.format(blur)
+    ImOp.doubleFormat
+      .format(blur)
   }
 }
 

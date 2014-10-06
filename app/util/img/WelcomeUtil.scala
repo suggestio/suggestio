@@ -3,7 +3,6 @@ package util.img
 import controllers.{routes, MarketShowcase}
 import io.suggest.ym.model.common.MImgSizeT
 import models.im._
-import play.api.mvc.Call
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -22,9 +21,11 @@ import play.api.Play.{current, configuration}
 object WelcomeUtil {
 
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
-  val BG_VIA_DYN_IMG = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
+  val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
-  val BG_DYN_QUALITY = configuration.getInt("showcase.welcome.bg.quality") getOrElse 70
+  val BG_DYN_QUALITY: Int = configuration.getInt("showcase.welcome.bg.quality") getOrElse 50
+
+  val GAUSS_BLUR: Double = configuration.getDouble("showcase.welcome.bg.blur.gauss") getOrElse 0.05
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -150,21 +151,28 @@ object WelcomeUtil {
       } { scrSz =>
         val gravity = GravityOp(ImGravities.Center)
         val imOps: Seq[ImOp] = Seq(
+          StripOp,
+          GaussBlurOp(GAUSS_BLUR),
           gravity,
           AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
           gravity,
           ExtentOp(scrSz),
-          QualityOp(BG_DYN_QUALITY)
+          FilterOp(ImFilters.Lanczos),
+          QualityOp(BG_DYN_QUALITY),
+          InterlacingOp(ImInterlace.Plane)
         )
         val dynArgs = DynImgArgs(oiik, imOps)
         new ImgUrlInfoT {
           override def call = routes.Img.dynImg(dynArgs)
           override def meta = Some(scrSz)
         }
-    }
+      }
   }
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
-  private def colorBg(adnNode: MAdnNode) = Left(adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT))
+  private def colorBg(adnNode: MAdnNode) = {
+    val bgColor = adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT)
+    Left(bgColor)
+  }
 
 }

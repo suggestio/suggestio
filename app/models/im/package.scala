@@ -15,4 +15,7 @@ package object im {
   type ImOpCode             = ImOpCodes.ImOpCode
 
   type BasicScreenSize      = BasicScreenSizes.BasicScreenSize
+
+  type ImFilter             = ImFilters.ImFilter
+
 }

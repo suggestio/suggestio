@@ -216,12 +216,13 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
 
   /** Базовая выдача для rcvr-узла sio-market. */
-  def showcase(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+  def showcase(adnId: String, args: SMShowcaseReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1).flatMap { geos =>
       renderNodeShowcaseSimple(
         adnNode = request.adnNode,
         isGeo = false,  // Оксюморон с названием парамера. Все запросы гео-выдачи приходят в этот экшен, а геолокация отключена.
-        geoListGoBack = geos.headOption.map(_.glevel.isLowest)
+        geoListGoBack = geos.headOption.map(_.glevel.isLowest),
+        screen = args.screen
       )
     }
   }

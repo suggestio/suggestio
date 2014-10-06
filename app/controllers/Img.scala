@@ -355,10 +355,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
                 val saveDt = newModelInstant.toDateTime
                 // В фоне запускаем сохранение полученной картинки в базу.
                 DynImgUtil.saveDynImgAsync(imgFile, rowKey, qualifier, saveDt)
-                Ok.sendFile(imgFile)
+                Ok.sendFile(imgFile, inline = true)
                   .withHeaders(
-                    LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(saveDt),
-                    CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS"
+                    LAST_MODIFIED         -> DateTimeUtil.rfcDtFmt.print(saveDt),
+                    CACHE_CONTROL         -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS"
                   )
               }.recover {
                 case ex: NoSuchElementException =>

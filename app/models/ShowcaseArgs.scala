@@ -36,6 +36,8 @@ object SMShowcaseReqArgs {
     }
   }
 
+  val empty = SMShowcaseReqArgs()
+
 }
 
 case class SMShowcaseReqArgs(

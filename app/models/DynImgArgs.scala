@@ -61,7 +61,7 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
     new QueryStringBindable[DynImgArgs] {
 
       /** Создать подписывалку для qs. */
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key.$SIGN_SUF")
+      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$SIGN_SUF")
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, DynImgArgs]] = {
         // Собираем результат
