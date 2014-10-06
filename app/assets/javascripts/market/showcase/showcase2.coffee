@@ -675,6 +675,7 @@ sm =
       sm.window_resize_timer = setTimeout grid_resize, 300
 
     this.utils.add_single_listener window, 'resize', resize_cb
+    this.utils.add_single_listener window, 'orientationchange', resize_cb
 
   styles :
 
