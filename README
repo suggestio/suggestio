@@ -2,6 +2,10 @@ sioweb2
 =====================================
 Вёб-морда для suggest.io на базе play 2+.
 
+Для имитации геолокации в выдаче, можно использовать это:
+sm.geo.geo_position_obj = {};
+sm.geo.geo_position_obj.coords = {latitude : 59.9, longitude : 11.1, accuracy: 20 }
+
 
 Deploy
 =====================================

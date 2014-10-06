@@ -13,7 +13,7 @@
 <div class="sm-focused-ads" id="smFocusedAds"></div>
 
 @* Хидер главного экрана *@
-<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )" data-gl-go-back="@if(args.geoListGoBack.exists(identity)){true}else{false}">
+<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )" data-gl-go-back="@args.geoListGoBack.exists(identity)">
 
   <span id="smRootProducerHeaderButtons">
 
