@@ -23,9 +23,9 @@ GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /logout2                           controllers.Ident.logout
+GET  /ident/login2/email_pw             controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /ident/login2/email_pw             controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /ident/logout2                     controllers.Ident.logout
 # ident: Восстановление пароля.
 GET  /ident/pw/r                        controllers.Ident.recoverPwForm
 POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
@@ -90,8 +90,8 @@ GET  /market/booklet                    controllers.Market.marketBooklet
 GET  /market/adn/:adnId/popup           controllers.Market.adnNodePopup(adnId)
 
 # Входы в личные кабинеты
-POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /m/lk                              controllers.MarketLk.lkList
+POST /m/lk/login                        controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /m/lk/list                         controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
@@ -148,8 +148,8 @@ GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeM
 
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
-GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
-GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
+GET  /m/lk/c/usr/o/:ownerId/top         controllers.MarketCategory.topCatsOf(ownerId)
+GET  /m/lk/c/usr/c/:catId/dc            controllers.MarketCategory.directSubcatsOf(catId)
 
 # Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
@@ -173,8 +173,8 @@ GET  /market/demo                       controllers.MarketShowcase.demoShowcase
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
 
-GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adnId)
-GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase(adnId)
+GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
+GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   controllers.MarketShowcase.rdrToGeoSite
 GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)

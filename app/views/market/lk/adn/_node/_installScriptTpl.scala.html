@@ -1,8 +1,8 @@
-@(adnNodeId: Option[String])(implicit ctx: util.Context)
+@(adnNodeId: Option[String])(implicit ctx: Context)
 
 (function(){
   window.siomart_id='@adnNodeId';
-  window.siomart_host='@ctx.myAudienceUrl';
+  window.siomart_host='@ctx.currAudienceUrl';
   var _siom=document.createElement("script");
   _siom.type="text/javascript";
   _siom.async=true;

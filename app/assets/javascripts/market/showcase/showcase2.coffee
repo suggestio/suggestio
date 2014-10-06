@@ -486,10 +486,12 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+      console.log 'position_callback'
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+      console.log 'fallback'
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -537,11 +539,10 @@ sm =
 
       if typeof navigator.geolocation != 'undefined'
         if sm.utils.is_webkit() == true
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {timeout : 5000, maximumAge : 100 }
+          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
         else
           sm.geo.position_callback_fallback()
           navigator.geolocation.getCurrentPosition sm.geo.position_callback
-
       else
         sm.geo.position_callback_fallback()
 
@@ -608,7 +609,7 @@ sm =
       if typeof sm.geo.geo_position_obj == 'undefined'
         "a.geo=ip"
       else
-        "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
+        "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude + "," + this.geo_position_obj.coords.accuracy
 
     load_nodes_and_reload_with_mart_id : () ->
 
@@ -675,6 +676,7 @@ sm =
       sm.window_resize_timer = setTimeout grid_resize, 300
 
     this.utils.add_single_listener window, 'resize', resize_cb
+    this.utils.add_single_listener window, 'orientationchange', resize_cb
 
   styles :
 
@@ -1101,6 +1103,10 @@ sm =
       #if sm.events.is_touch_locked
       #  return false
 
+      t = sm.events.target_lookup( event.target, 'className', 'js-exit-button' )
+      if t != null
+        window.location = t.getAttribute 'data-url'
+        return false
       ## Обработка событий для открытия / закрытия экрана выхода
       if sm.events.target_lookup( event.target, 'id', 'smExitButton' ) != null
         sm.utils.ge('smCloseScreen').style.display = 'block'
@@ -2516,9 +2522,13 @@ sm =
 
     sm.warn 'initial mart_id : ' + sm_id
 
-    ## Если еще не запрашивали координаты у юзера
-    if sm.geo.location_requested == false
-      sm.geo.get_current_position()
+    if window.with_geo == true
+      ## Если еще не запрашивали координаты у юзера
+      if sm.geo.location_requested == false
+        sm.geo.get_current_position()
+    else
+      sm.states.add_state
+        mart_id : sm_id
 
 
 window.sm = window.siomart = sm

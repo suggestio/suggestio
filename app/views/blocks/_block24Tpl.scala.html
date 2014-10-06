@@ -19,7 +19,7 @@
   }
 
   <div class="info">
-    <img class="logo" src="@ctx.myAudienceUrl@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
+    <img class="logo" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
         <div @_aovfStyleTpl(text1, bc.titleBf, "title")>

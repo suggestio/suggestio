@@ -3,12 +3,9 @@ package util
 import controllers.routes
 import org.joda.time.DateTime
 import play.api.i18n.Lang
-import play.api.mvc.{RequestHeader, Request}
-import play.api.Play.current
+import play.api.mvc.RequestHeader
+import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
-import io.suggest.util.UrlUtil
-import java.sql.Connection
-import models.MBillBalance
 import play.api.http.HeaderNames
 import scala.util.Random
 
@@ -25,7 +22,7 @@ object Context {
 
   /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
     * то же время, на мастере только https. */
-  val SIO_PROTO_DFLT = current.configuration.getString("sio.proto.dflt") getOrElse "https"
+  val SIO_PROTO_DFLT: String = configuration.getString("sio.proto.dflt") getOrElse "https"
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
 
@@ -33,6 +30,9 @@ object Context {
   val isIphoneRe = "iPhone".r.unanchored
 
   val MY_AUDIENCE_URL = controllers.Ident.AUDIENCE_URL
+
+  val MY_HOST = configuration.getString("sio.hostport.dflt") getOrElse "suggest.io"
+
 }
 
 
@@ -68,7 +68,14 @@ trait Context {
   def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)
   def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
 
-  def myProto = Context.SIO_PROTO_DFLT
+  lazy val myProto: String = {
+    request.headers
+      .get(HeaderNames.X_FORWARDED_PROTO)
+      .getOrElse(Context.SIO_PROTO_DFLT)
+  }
+
+  lazy val currAudienceUrl: String = myProto + "://" + Context.MY_HOST
+
   def myAudienceUrl = Context.MY_AUDIENCE_URL
 
   implicit lazy val now : DateTime = DateTime.now
