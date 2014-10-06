@@ -608,7 +608,7 @@ sm =
       if typeof sm.geo.geo_position_obj == 'undefined'
         "a.geo=ip"
       else
-        "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude
+        "a.geo=" + this.geo_position_obj.coords.latitude + "," + this.geo_position_obj.coords.longitude + "," + this.geo_position_obj.coords.accuracy
 
     load_nodes_and_reload_with_mart_id : () ->
 
