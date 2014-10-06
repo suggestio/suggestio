@@ -31,7 +31,7 @@
         <img id="smWelcomeAdBgImage" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
              data-width="@imgInfo.meta.map(_.width)"
              data-height="@imgInfo.meta.map(_.height)"
-             src="@ctx.myAudienceUrl@routes.Img.getImg(imgInfo.filename)"/>
+             src="@routes.Img.getImg(imgInfo.filename)"/>
       }
     }
 
@@ -41,7 +41,7 @@
       <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
-           src="@ctx.myAudienceUrl@routes.Img.getImg(fgImage.filename)"/>
+           src="@routes.Img.getImg(fgImage.filename)"/>
     }
     @* Рендерим покрывающую картинку (svg/png) *@
     @wargs.fgText.map {  fgText =>

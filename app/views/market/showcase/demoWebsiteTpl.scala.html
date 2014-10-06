@@ -1,4 +1,4 @@
-@(args: SMDemoSiteArgs)(implicit ctx: util.Context)
+@(args: SMDemoSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -28,7 +28,6 @@
    window.with_geo = @args.withGeo;
 </script>
 
-<!-- a.gen = @ctx.PRNG.nextLong   a.size=20   a.offset=0 (20, 40, 60, 80, ...)  -->
 </body>
 
 </html>

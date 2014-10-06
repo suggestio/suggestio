@@ -8,7 +8,7 @@
 
   @if(image) {
     <img @cssClass.map { _cssClass => class="@_cssClass" }
-      src="@ctx.myAudienceUrl@image"
+      src="@image"
       @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
         @if(iBgColorOpt.isDefined || style.isDefined) {
           style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
