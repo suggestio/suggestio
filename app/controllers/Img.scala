@@ -316,7 +316,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
     val rowKeyStr = oiik.data.rowKey
     val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
-    val qualifier = args.imOpsToString.trim
+    val qualifier = args.imOpsToStringLossy.trim
     if (qualifier.isEmpty)
       throw new IllegalArgumentException("Args.imgOps produces empty qualifier. This should never happen.\n  args = " + args)
     val qOpt = Some(qualifier)

@@ -17,84 +17,10 @@ import util.PlayMacroLogsImpl
 
 object ImOp extends PlayMacroLogsImpl {
 
-  import LOGGER._
-
-  val OP_ORDERING_RE = "\\[(\\d+)\\]$".r
+  val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 
   /** qsb для биндинга списка трансформаций картинки (последовательности ImOp). */
-  implicit def qsbSeq = {
-    new QueryStringBindable[Seq[ImOp]] {
-
-      /**
-       * Забиндить список операций, ранее сериализованный в qs.
-       * @param keyDotted Ключ-префикс вместе с точкой. Может быть и пустой строкой.
-       * @param params ListMap с параметрами.
-       * @return
-       */
-      override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
-        try {
-          val ops = params
-            .iterator
-            // в карте params содержит также всякий посторонний мусор. Он нам неинтересен.
-            .filter { _._1 startsWith keyDotted }
-            // Извлечь порядковый номер из ключа.
-            .flatMap { case (k, v) =>
-              k.split("[\\[\\]]+") match {
-                case Array(k2, iStr) =>
-                  val i = iStr.toInt
-                  Seq( ((k2, v), i) )
-                case _ => Seq.empty
-              }
-            }
-            // Восстановить исходный порядок.
-            .toSeq
-            .sortBy(_._2)
-            // Распарсить команды.
-            .iterator
-            .map(_._1)
-            // Попытаться распарсить код операции.
-            .flatMap { case (k, vs) =>
-              val opCodeStr = k.substring(keyDotted.length)
-              ImOpCodes.maybeWithName(opCodeStr)
-                .map { _ -> vs }
-            }
-            // Попытаться сгенерить результат
-            .map { case (opCode, vs)  =>  opCode.mkOp(vs) }
-            .toSeq
-          if (ops.isEmpty) {
-            None
-          } else {
-            Some(Right(ops))
-          }
-        } catch {
-          case ex: Throwable =>
-            // Should not happen, if unbind() written ok:
-            error(s"Failed to parse IM Ops\n  keyDotted=$keyDotted:\n  params = ${params.mkString(", ")}", ex)
-            Some(Left("Failed to parse query string."))
-        }
-      }
-
-      override def unbind(keyDotted: String, value: Seq[ImOp]): String = {
-        val sb = new StringBuilder(value.size + 32)
-        value
-          // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
-          .iterator
-          .zipWithIndex
-          .foreach { case (imOp, i) =>
-            sb.append(keyDotted)
-              .append(imOp.opCode.strId)
-              .append('[').append(i).append(']')
-              .append('=')
-              .append(imOp.qsValue)
-              .append('&')
-          }
-        // Убрать последний '&'
-        if (value.nonEmpty)
-          sb.setLength(sb.length - 1)
-        sb.toString()
-      }
-    }
-  }
+  implicit def qsbSeq = new ImOpsQsb
 
   def doubleFormat: DecimalFormat = {
     val df = new DecimalFormat("0.00")
@@ -105,7 +31,102 @@ object ImOp extends PlayMacroLogsImpl {
     df
   }
 
+
+  /**
+   * Для разных вариантов unbind'а используется этот метод
+   * @param keyDotted Префикс ключа.
+   * @param value Значения (im-операции).
+   * @param withOrderInx Добавлять ли индексы операций? true если нужен будет вызов bind() над результатом.
+   * @return Строка im-операций.
+   */
+  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean): String = {
+    val sb = new StringBuilder(value.size + 32)
+    value
+      // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
+      .iterator
+      .zipWithIndex
+      .foreach { case (imOp, i) =>
+        sb.append(keyDotted)
+          .append(imOp.opCode.strId)
+        if (withOrderInx) {
+          sb.append('[').append(i).append(']')
+        }
+        sb
+          .append('=')
+          .append(imOp.qsValue)
+          .append('&')
+      }
+    // Убрать последний '&'
+    if (value.nonEmpty)
+      sb.setLength(sb.length - 1)
+    sb.toString()
+  }
+
 }
+
+
+import ImOp._
+
+
+/** qsb-биндер. */
+class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
+
+  import LOGGER._
+
+  /**
+   * Забиндить список операций, ранее сериализованный в qs.
+   * @param keyDotted Ключ-префикс вместе с точкой. Может быть и пустой строкой.
+   * @param params ListMap с параметрами.
+   */
+  override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
+    try {
+      val ops = params
+        .iterator
+        // в карте params содержит также всякий посторонний мусор. Он нам неинтересен.
+        .filter { _._1 startsWith keyDotted }
+        // Извлечь порядковый номер из ключа.
+        .flatMap { case (k, v) =>
+          SPLIT_ON_BRACKETS_RE.split(k) match {
+            case Array(k2, iStr) =>
+              val i = iStr.toInt
+              Seq( ((k2, v), i) )
+            case _ => Seq.empty
+          }
+        }
+        // Восстановить исходный порядок.
+        .toSeq
+        .sortBy(_._2)
+        // Распарсить команды.
+        .iterator
+        .map(_._1)
+        // Попытаться распарсить код операции.
+        .flatMap { case (k, vs) =>
+          val opCodeStr = k.substring(keyDotted.length)
+          ImOpCodes.maybeWithName(opCodeStr)
+            .map { _ -> vs }
+        }
+        // Попытаться сгенерить результат
+        .map { case (opCode, vs)  =>  opCode.mkOp(vs) }
+        .toSeq
+      if (ops.isEmpty) {
+        None
+      } else {
+        Some(Right(ops))
+      }
+    } catch {
+      case ex: Throwable =>
+        // Should not happen, if unbind() written ok:
+        error(s"Failed to parse IM Ops\n  keyDotted=$keyDotted:\n  params = ${params.mkString(", ")}", ex)
+        Some(Left("Failed to parse query string."))
+    }
+  }
+
+  override def unbind(keyDotted: String, value: Seq[ImOp]): String = {
+    unbindImOps(keyDotted, value, withOrderInx = true)
+  }
+
+}
+
 
 /** Действие, запрограммирование в аргументах. */
 trait ImOp {
@@ -230,7 +251,7 @@ case class QualityOp(quality: Double) extends ImOp {
     op.quality(quality)
   }
   override def qsValue: String = {
-    ImOp.doubleFormat
+    doubleFormat
       .format(quality)
   }
 }
@@ -279,7 +300,7 @@ case class GaussBlurOp(blur: Double) extends ImOp {
     op.gaussianBlur(blur)
   }
   override def qsValue: String = {
-    ImOp.doubleFormat
+    doubleFormat
       .format(blur)
   }
 }

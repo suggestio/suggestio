@@ -108,8 +108,8 @@ case class DynImgArgs(
   imOps       : Seq[ImOp]
 ) {
 
-  def imOpsToString: String = {
-    ImOp.qsbSeq.unbind("", imOps)
+  def imOpsToStringLossy: String = {
+    ImOp.unbindImOps("", imOps, withOrderInx = false)
   }
 
 }
