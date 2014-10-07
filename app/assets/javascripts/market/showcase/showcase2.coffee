@@ -474,6 +474,10 @@ sm =
     producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
+  request_context :
+    screen_param : () ->
+    if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
+
   geo :
     loaded : false
     location_requested : false
@@ -2197,7 +2201,7 @@ sm =
     cs = sm.states.cur_state()
     a_rcvr = '&a.rcvr=' + cs.mart_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + sm.request_context.screen_param()
 
     sm.focused_ads.curl = url
 
@@ -2217,7 +2221,7 @@ sm =
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
-    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param()
+    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param() + sm.request_context.screen_param()
     sm.request.perform url
 
   ########################################
@@ -2474,7 +2478,7 @@ sm =
       ## 5. Search
       if typeof state.search_request != 'undefined'
         a_rcvr = '&a.rcvr=' + state.mart_id
-        url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param()
+        url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + sm.request_context.screen_param()
         sm.request.perform url
 
   ############################
@@ -2488,8 +2492,8 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
-    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
+
+    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + sm.request_context.screen_param()
 
     sm.log 'about to call index_action : ' + index_action
     this.request.perform index_action
