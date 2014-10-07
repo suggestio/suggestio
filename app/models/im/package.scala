@@ -20,4 +20,6 @@ package object im {
 
   type DevPixelRatio        = DevPixelRatios.DevPixelRatio
 
+  type ImSamplingFactor     = ImSamplingFactors.ImSamplingFactor
+
 }

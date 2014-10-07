@@ -14,7 +14,7 @@ object DevPixelRatios extends Enumeration {
    * @param name Название семейства экранов.
    * @param pixelRatio Значение плотности пикселей.
    */
-  protected sealed case class Val(name: String, pixelRatio: Float, imQualityInt: Int, imBlur: Option[Float] = None)
+  protected sealed case class Val(name: String, pixelRatio: Float, imQualityInt: Int, chromaSubSampling: ImSamplingFactor, imBlur: Option[Float] = None)
     extends super.Val(name)
   {
     /** Значение quality. */
@@ -36,11 +36,11 @@ object DevPixelRatios extends Enumeration {
   type DevPixelRatio = Val
 
 
-  val MDPI: DevPixelRatio     = Val("MDPI",   1.0F, imQualityInt = 75, imBlur = Some(0.05F))
+  val MDPI: DevPixelRatio     = Val("MDPI",   1.0F, 65, ImSamplingFactors.SF_2x1, imBlur = Some(0.05F))
   // DPR=1.3 слишком дробное, и не нашло популярности на рынке устройств.
-  val HDPI: DevPixelRatio     = Val("HDPI",   1.5F, imQualityInt = 61)
-  val XHDPI: DevPixelRatio    = Val("XHDPI",  2.0F, imQualityInt = 50)
-  val DPR3: DevPixelRatio     = Val("DPR3",   3.0F, imQualityInt = 37)
+  val HDPI: DevPixelRatio     = Val("HDPI",   1.5F, 55, ImSamplingFactors.SF_2x1)
+  val XHDPI: DevPixelRatio    = Val("XHDPI",  2.0F, 45, ImSamplingFactors.SF_2x2)
+  val DPR3: DevPixelRatio     = Val("DPR3",   3.0F, 37, ImSamplingFactors.SF_2x2)
 
   implicit def value2val(x: Value): DevPixelRatio = x.asInstanceOf[DevPixelRatio]
 

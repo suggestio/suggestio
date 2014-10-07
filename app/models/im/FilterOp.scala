@@ -9,45 +9,27 @@ import org.im4java.core.IMOperation
  * Description: Фильтрация картинки.
  */
 
-object FilterOp {
-  def apply(vs: Seq[String]): FilterOp = {
-    apply(vs.head)
-  }
-
-  def apply(v: String): FilterOp = {
-    val filter: ImFilter = ImFilters.withName(v)
-    FilterOp(filter)
-  }
-}
-
-/**
- * Экземпляр операция фильтра.
- * @param filter Фильтр, который будет отрендерен в строку вызова convert.
- */
-case class FilterOp(filter: ImFilter) extends ImOp {
-  override def opCode = ImOpCodes.Filter
-
-  override def qsValue = filter.strId
-
-  override def addOperation(op: IMOperation): Unit = {
-    op.filter(filter.imName)
-  }
-}
-
-
-/** Допустимые фильтры. */
 object ImFilters extends Enumeration {
 
   /**
    * Класс значения этого перечисления.
-   * @param strId короткий id фильтра, который рендерится юзеру в ссылке.
+   * @param qsValue короткий id фильтра, который рендерится юзеру в ссылке.
    * @param imName название фильтра, которое передаётся в convert -filter.
    */
-  protected sealed case class Val(strId: String, imName: String) extends super.Val(strId)
+  protected sealed case class Val(qsValue: String, imName: String) extends super.Val(qsValue) with ImOp {
+    override def opCode = ImOpCodes.Filter
+
+    override def addOperation(op: IMOperation): Unit = {
+      op.filter(imName)
+    }
+  }
 
   type ImFilter = Val
 
   val Lanczos: ImFilter = Val("a", "Lanczos")
 
   implicit def value2val(x: Value): ImFilter = x.asInstanceOf[ImFilter]
+
+  def apply(vs: Seq[String]): ImFilter = apply(vs.head)
+  def apply(v: String): ImFilter = ImFilters.withName(v)
 }

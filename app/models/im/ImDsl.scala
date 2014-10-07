@@ -22,8 +22,17 @@ object ImOp extends PlayMacroLogsImpl {
   /** qsb для биндинга списка трансформаций картинки (последовательности ImOp). */
   implicit def qsbSeq = new ImOpsQsb
 
-  def doubleFormat: DecimalFormat = {
+  def twoFracZeroesFormat: DecimalFormat = {
     val df = new DecimalFormat("0.00")
+    qsDoubleFormat(df)
+  }
+
+  def optFracZeroesFormat: DecimalFormat = {
+    val df = new DecimalFormat("0.##")
+    qsDoubleFormat(df)
+  }
+
+  private def qsDoubleFormat(df: DecimalFormat): DecimalFormat = {
     val dcs = df.getDecimalFormatSymbols
     dcs.setDecimalSeparator('.')
     dcs.setMinusSign('-')
@@ -160,7 +169,7 @@ object ImOpCodes extends Enumeration {
   }
   val Interlace: ImOpCode = new Val("d") {
     override def mkOp(vs: Seq[String]) = {
-      InterlacingOp( ImInterlace.withName(vs.head) )
+      ImInterlace(vs)
     }
   }
   val GaussBlur: ImOpCode = new Val("e") {
@@ -185,7 +194,12 @@ object ImOpCodes extends Enumeration {
   }
   val Filter: ImOpCode = new Val("i") {
     override def mkOp(vs: Seq[String]): ImOp = {
-      FilterOp(vs)
+      ImFilters(vs)
+    }
+  }
+  val SamplingFactor: ImOpCode = new Val("j") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      ImSamplingFactors.withName( vs.head )
     }
   }
 
@@ -251,7 +265,7 @@ case class QualityOp(quality: Double) extends ImOp {
     op.quality(quality)
   }
   override def qsValue: String = {
-    doubleFormat
+    optFracZeroesFormat
       .format(quality)
   }
 }
@@ -268,29 +282,29 @@ case object StripOp extends ImOp {
 
 
 object ImInterlace extends Enumeration {
-  protected case class Val(strId: String, imName: String) extends super.Val(strId)
+  protected case class Val(qsValue: String, imName: String) extends super.Val(qsValue) with ImOp {
+    override def opCode = ImOpCodes.Interlace
+    override def addOperation(op: IMOperation): Unit = {
+      op.interlace(imName)
+    }
+  }
 
   type ImInterlacing = Val
 
   val Plane: ImInterlacing            = Val("a", "Plane")
   lazy val None: ImInterlacing        = Val("0", "None")
   lazy val Line: ImInterlacing        = Val("l", "Line")
-  val Jpeg: ImInterlacing             = Val("j", "JPEG")
+  lazy val Jpeg: ImInterlacing        = Val("j", "JPEG")
   lazy val Gif: ImInterlacing         = Val("g", "GIF")
   lazy val Png: ImInterlacing         = Val("p", "PNG")
   lazy val Partition: ImInterlacing   = Val("r", "Partition")
 
   implicit def value2val(x: Value): ImInterlacing = x.asInstanceOf[ImInterlacing]
+
+  def apply(vs: Seq[String]): ImInterlacing = apply(vs.head)
+  def apply(v: String): ImInterlacing = withName(v)
 }
 
-/** Черезсточность. */
-case class InterlacingOp(interlacing: ImInterlacing) extends ImOp {
-  override def opCode = ImOpCodes.Interlace
-  override def addOperation(op: IMOperation): Unit = {
-    op.interlace(interlacing.imName)
-  }
-  override def qsValue: String = interlacing.strId
-}
 
 
 /** Размывка по гауссу. */
@@ -300,7 +314,7 @@ case class GaussBlurOp(blur: Double) extends ImOp {
     op.gaussianBlur(blur)
   }
   override def qsValue: String = {
-    doubleFormat
+    twoFracZeroesFormat
       .format(blur)
   }
 }

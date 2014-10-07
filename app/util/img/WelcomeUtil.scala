@@ -137,8 +137,8 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screen: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
-    screen
+  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
+    screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
       // Нужно запрещать ресайзить вверх картинку, если она маленькая:
@@ -171,9 +171,10 @@ object WelcomeUtil {
       AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
       gravity,
       ExtentOp(scrSz),
-      FilterOp(ImFilters.Lanczos),
+      ImFilters.Lanczos,
       screen.pixelRatio.imQualityOp,
-      InterlacingOp(ImInterlace.Plane)
+      ImInterlace.Plane,
+      screen.pixelRatio.chromaSubSampling
     )
   }
 
