@@ -486,12 +486,10 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
-      console.log 'position_callback'
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
-      console.log 'fallback'
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -553,9 +551,15 @@ sm =
 
     load_for_node_id : ( node_id ) ->
       sm.warn 'load_for_node_id'
-      cs = sm.geo.cur_state
-      sm.states.add_state
-        mart_id : node_id
+      cs = sm.states.cur_state()
+
+      if typeof cs != 'undefined'
+        sm.states.add_state
+          mart_id : node_id
+          geo_screen : cs.geo_screen
+      else
+        sm.states.add_state
+          mart_id : node_id
 
     adjust : () ->
 
@@ -1164,6 +1168,9 @@ sm =
             with_welcome_ad : false
             geo_screen :
               is_opened : true
+
+        console.log 'transform state'
+
         return false
 
       ## Юзер нажал на ноду в списке
@@ -1217,17 +1224,11 @@ sm =
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !sm.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
 
-          if cbca_grid.ww <= 400
-            ns =
-              cat_screen :
-                is_opened :false
-              cat_id : cat_id
-              cat_class : cat_class
-          else
-            ns =
-              cat_id : cat_id
-              cat_class : cat_class
-
+          ns =
+            cat_screen :
+              is_opened :false
+            cat_id : cat_id
+            cat_class : cat_class
           sm.states.transform_state ns
 
       #######################
@@ -1663,9 +1664,6 @@ sm =
       smGeoLabel = sm.utils.ge('smGeoLocationLabel')
 
       if sm.geo.location_requested == true
-
-        sm.warn 'sm.geo.location_node : ' + sm.geo.location_node
-
         if typeof sm.geo.location_node == 'undefined'
 
           sm.geo.location_node = data.first_node
@@ -2439,6 +2437,7 @@ sm =
       if state.geo_screen.is_opened == true
         sm.geo.open_screen()
 
+      console.log state
       if state.geo_screen.is_opened == false
         sm.geo.close_screen()
 
