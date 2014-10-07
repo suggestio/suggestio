@@ -35,12 +35,13 @@ object DevPixelRatios extends Enumeration {
 
   type DevPixelRatio = Val
 
+  private val Some005: Option[Float] = Some(0.05F)
 
-  val MDPI: DevPixelRatio     = Val("MDPI",   1.0F, 65, ImSamplingFactors.SF_2x1, imBlur = Some(0.05F))
+  val MDPI: DevPixelRatio     = Val("MDPI",   1.0F, 75, ImSamplingFactors.SF_2x1, imBlur = Some005)
   // DPR=1.3 слишком дробное, и не нашло популярности на рынке устройств.
-  val HDPI: DevPixelRatio     = Val("HDPI",   1.5F, 55, ImSamplingFactors.SF_2x1)
-  val XHDPI: DevPixelRatio    = Val("XHDPI",  2.0F, 45, ImSamplingFactors.SF_2x2)
-  val DPR3: DevPixelRatio     = Val("DPR3",   3.0F, 37, ImSamplingFactors.SF_2x2)
+  val HDPI: DevPixelRatio     = Val("HDPI",   1.5F, 75, ImSamplingFactors.SF_2x1, imBlur = Some005)
+  val XHDPI: DevPixelRatio    = Val("XHDPI",  2.0F, 65, ImSamplingFactors.SF_2x2, imBlur = Some005)
+  val DPR3: DevPixelRatio     = Val("DPR3",   3.0F, 55, ImSamplingFactors.SF_2x2, imBlur = Some005)
 
   implicit def value2val(x: Value): DevPixelRatio = x.asInstanceOf[DevPixelRatio]
 
@@ -56,7 +57,7 @@ object DevPixelRatios extends Enumeration {
     values
       .find { v =>
         val dpi: DevPixelRatio = v
-        (dpi.pixelRatio <= ratio) || (dpi.pixelRatio * 1.05 < ratio)
+        (dpi.pixelRatio >= ratio) || (dpi.pixelRatio * 1.05 > ratio)
       }
       .fold [DevPixelRatio] { values.last } { v => v }
   }

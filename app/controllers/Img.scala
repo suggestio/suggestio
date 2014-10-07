@@ -6,7 +6,7 @@ import play.api.mvc._
 import util.{PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.joda.time.{ReadableInstant, DateTime, Instant}
-import play.api.Play.{current, configuration}
+import play.api.Play, Play.{current, configuration}
 import util.acl._
 import util.img._
 import play.api.libs.json._
@@ -36,16 +36,24 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   /** Сколько времени кешировать temp-картинки на клиенте. */
   val TEMP_IMG_CACHE_SECONDS = {
-    val cacheMinutes = configuration.getInt("img.temp.cache.client.minutes") getOrElse 10
-    val cacheDuration = cacheMinutes.minutes
-    cacheDuration.toSeconds.toInt
+    if (Play.isProd) {
+      val cacheMinutes = configuration.getInt("img.temp.cache.client.minutes") getOrElse 10
+      val cacheDuration = cacheMinutes.minutes
+      cacheDuration.toSeconds.toInt
+    } else {
+      5
+    }
   }
 
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
-    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse 2.days
-    cacheDuration.toSeconds.toInt
+    if (Play.isProd) {
+      val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse 2.days
+      cacheDuration.toSeconds.toInt
+    } else {
+      5
+    }
   }
 
   /**
@@ -312,6 +320,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** dyn-img-экшен, в котором картинка точно отрабатывается с модификациями относительно оригинала,
     * т.е. список args.imOps не пустой. */
   private def _dynImg(args: DynImgArgs) = Action.async { implicit request =>
+    trace("_dynImg(): " + request.rawQueryString)
     val oiik = args.imgId.asInstanceOf[OrigImgIdKey]
     // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
     val rowKeyStr = oiik.data.rowKey

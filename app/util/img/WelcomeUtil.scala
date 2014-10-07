@@ -25,8 +25,6 @@ object WelcomeUtil {
 
   val BG_DYN_QUALITY: Int = configuration.getInt("showcase.welcome.bg.quality") getOrElse 55
 
-  val GAUSS_BLUR: Double = configuration.getDouble("showcase.welcome.bg.blur.gauss") getOrElse 0.05
-
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
@@ -164,18 +162,19 @@ object WelcomeUtil {
     */
   def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
     val gravity = GravityOp(ImGravities.Center)
-    Seq(
-      StripOp,
-      GaussBlurOp(GAUSS_BLUR),
-      gravity,
-      AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)),
-      gravity,
-      ExtentOp(scrSz),
-      ImFilters.Lanczos,
-      screen.pixelRatio.imQualityOp,
-      ImInterlace.Plane,
-      screen.pixelRatio.chromaSubSampling
-    )
+    val acc0: List[ImOp] = Nil
+    val acc1 = gravity ::
+      AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
+      gravity ::
+      ExtentOp(scrSz) ::
+      StripOp ::
+      screen.pixelRatio.imQualityOp ::
+      ImInterlace.Plane ::
+      screen.pixelRatio.chromaSubSampling ::
+      acc0
+    screen.pixelRatio
+      .imGaussBlurOp
+      .fold(acc1)(_ :: acc1)
   }
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */

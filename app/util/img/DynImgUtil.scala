@@ -60,6 +60,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
     val cmd = new ConvertCmd()
     trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
     cmd run op
+    trace("convert(): Result is " + out.length + " bytes")
   }
 
 
