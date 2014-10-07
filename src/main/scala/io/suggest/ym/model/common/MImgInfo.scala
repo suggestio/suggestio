@@ -90,6 +90,7 @@ object MImgInfoMeta {
 
 import MImgInfoMeta._
 
+/** Интерфейс для класса, который будет хранить размер картинки. */
 trait MImgSizeT {
   def height: Int
   def width: Int
