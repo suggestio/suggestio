@@ -3,7 +3,7 @@ package controllers
 import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
-import _root_.util.img.{WelcomeUtil, ImgFormUtil, OrigImgIdKey}
+import _root_.util.img.WelcomeUtil
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
@@ -25,7 +25,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc._
-import play.api.Play.{current, configuration}
+import play.api.Play, Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -59,12 +59,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
-  val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = {
-    if (play.api.Play.isProd) {
-      configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse 60
-    } else {
-      6
-    }
+  val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse {
+    if (Play.isProd)  60  else  6
   }
 
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
@@ -83,6 +79,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Сколько нод максимум накидывать к списку нод в качестве соседних нод. */
   val NEIGH_NODES_MAX = configuration.getInt("market.showcase.nodes.neigh.max") getOrElse 20
+
+  /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
+  val FIND_NODES_CACHE_SECONDS: Int = configuration.getInt("market.showcase.nodes.find.result.cache.seconds") getOrElse {
+    if (Play.isProd)  120  else  10
+  }
 
   /** Кеш на клиенте для короткоживующих данных. */
   private def cacheControlShort(result: Result): Result = {
@@ -587,6 +588,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       ))
       // Без кеша, ибо timestamp.
       Ok( Jsonp(JSONP_CB_FUN, json) )
+        .withHeaders(
+          CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
+        )
     }
   }
 
