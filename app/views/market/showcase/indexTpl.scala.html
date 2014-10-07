@@ -13,7 +13,7 @@
 <div class="sm-focused-ads" id="smFocusedAds"></div>
 
 @* Хидер главного экрана *@
-<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )" data-gl-go-back="@args.geoListGoBack.exists(identity)">
+<div id="smRootProducerHeader" class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )" data-gl-go-back="@if(args.geoListGoBack.exists(identity)){true}else{false}">
 
   <span id="smRootProducerHeaderButtons">
 
@@ -30,7 +30,7 @@
     </div>
 
     <div class="sm-producer-header_search-button sm-button sm-producer-header_btn __right-aligned abs" id="smNavigationLayerButton">
-      @svg._searchButtonTpl( args.fgColor )
+      @svg._navLayerButtonTpl( args.fgColor )
     </div>
 
   </span>
