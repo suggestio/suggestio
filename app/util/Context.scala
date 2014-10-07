@@ -1,6 +1,7 @@
 package util
 
 import controllers.routes
+import models.im.DevScreen
 import org.joda.time.DateTime
 import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
@@ -33,6 +34,8 @@ object Context {
 
   val MY_HOST = configuration.getString("sio.hostport.dflt") getOrElse "suggest.io"
 
+  /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
+  val SCREEN_ARG_NAME_RE = "a\\.screen".r
 }
 
 
@@ -80,7 +83,7 @@ trait Context {
 
   implicit lazy val now : DateTime = DateTime.now
 
-  def isAuth:  Boolean = pwOpt.isDefined
+  def isAuth: Boolean = pwOpt.isDefined
   def isSuperuser: Boolean = PersonWrapper.isSuperuser(pwOpt)
 
   def flashMap = request.flash.data
@@ -122,6 +125,25 @@ trait Context {
       case Some(adnId) => routes.MarketLkSupport.supportFormNode(adnId, r)
       case None        => routes.MarketLkSupport.supportForm(r)
     }
+  }
+
+  /** Параметры экрана клиентского устройства. Эти данные можно обнаружить внутри query string. */
+  lazy val deviceScreenOpt: Option[DevScreen] = {
+    request.headers
+      .toMap
+      .iterator
+      .filter {
+        case (k, _)  =>  Context.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
+      }
+      .flatMap {
+        case kv @ (k, vs) =>
+          DevScreen.qsb
+            .bind(k, Map(kv))
+            .filter(_.isRight)
+            .map(_.right.get)
+      }
+      .toStream
+      .headOption
   }
 
 }

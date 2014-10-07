@@ -164,16 +164,17 @@ object WelcomeUtil {
   def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
     val gravity = GravityOp(ImGravities.Center)
     val acc0: List[ImOp] = Nil
+    val bgc = screen.pixelRatio.bgCompression
     val acc1 = gravity ::
       AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
       gravity ::
       ExtentOp(scrSz) ::
       StripOp ::
-      screen.pixelRatio.imQualityOp ::
+      bgc.imQualityOp ::
       ImInterlace.Plane ::
-      screen.pixelRatio.chromaSubSampling ::
+      bgc.chromaSubSampling ::
       acc0
-    screen.pixelRatio
+    bgc
       .imGaussBlurOp
       .fold(acc1)(_ :: acc1)
   }

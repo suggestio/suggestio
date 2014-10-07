@@ -2,7 +2,7 @@ package models
 
 import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
-import models.im.{DevScreen, DevScreenT}
+import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
 

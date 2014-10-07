@@ -1,11 +1,14 @@
 package util.blocks
 
+import controllers.routes
+import io.suggest.ym.model.common.MImgInfoT
+import play.api.mvc.Call
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
-import models.{MImgInfoMeta, Imgs_t}
+import models.{Context, MImgInfoMeta, Imgs_t}
 import play.api.Play.{current, configuration}
 
 /**
@@ -46,6 +49,7 @@ trait ISaveImgs {
   }
 
   def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
+
 }
 
 
@@ -105,7 +109,17 @@ trait SaveBgImgI extends ISaveImgs {
   override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]]  = {
     bim.get(BG_IMG_FN)
   }
+
+  def bgImgCall(imgInfo: MImgInfoT)(implicit ctx: Context): Call = {
+    ctx.deviceScreenOpt.fold [Call] {
+      routes.Img.getImg(imgInfo.filename)
+    } { screen =>
+      // TODO тут нужна ссылка на dynImg
+      routes.Img.getImg(imgInfo.filename)
+    }
+  }
 }
+
 trait BgImg extends ValT with SaveBgImgI {
   // Константы можно легко переопределить т.к. trait и early initializers.
   def BG_IMG_FN = BgImg.BG_IMG_FN
