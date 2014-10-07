@@ -2,13 +2,14 @@ package util.blocks
 
 import controllers.routes
 import io.suggest.ym.model.common.MImgInfoT
+import models.im._
 import play.api.mvc.Call
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
-import models.{Context, MImgInfoMeta, Imgs_t}
+import models._
 import play.api.Play.{current, configuration}
 
 /**
@@ -101,8 +102,8 @@ object BgImg {
   val FINAL_DOWNSIZE_SIDE_REL = configuration.getDouble("blocks.img.bg.downsize.final.side.rel") getOrElse 2.00000000
 }
 
-/** Функционал для сохранения фоновой (основной) картинки блока. */
-trait SaveBgImgI extends ISaveImgs {
+/** Функционал для сохранения фоновой (основной) картинки блока. ValT нужен для доступа к blockWidth. */
+trait SaveBgImgI extends ISaveImgs with ValT {
   def BG_IMG_FN: String
   def bgImgBf: BfImage
 
@@ -110,14 +111,51 @@ trait SaveBgImgI extends ISaveImgs {
     bim.get(BG_IMG_FN)
   }
 
-  def bgImgCall(imgInfo: MImgInfoT)(implicit ctx: Context): Call = {
+  /** Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
+    * @param imgInfo Инфа о картинке, используемой в качестве фона.
+    * @param height высота блока (и картинки, соответственно).
+    * @param ctx Контекст рендера.
+    * @return Экземпляр Call, пригодный для рендера в ссылку.
+    */
+  def bgImgCall(imgInfo: MImgInfoT, height: Int)(implicit ctx: Context): Call = {
     ctx.deviceScreenOpt.fold [Call] {
+      // TODO Может надо просто генерить дефолтовый devPxRatio?
       routes.Img.getImg(imgInfo.filename)
     } { screen =>
-      // TODO тут нужна ссылка на dynImg
-      routes.Img.getImg(imgInfo.filename)
+      ImgIdKey(imgInfo.filename) match {
+        // Отрабатываем картинку из постоянного хранилища.
+        case oiik: OrigImgIdKey =>
+          val devPxRatio = screen.pixelRatio
+          val fgc = devPxRatio.fgCompression
+          var imOpsAcc: List[ImOp] = List(
+            ImInterlace.Plane,
+            fgc.chromaSubSampling,
+            fgc.imQualityOp
+          )
+
+          // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
+          imOpsAcc ::= AbsResizeOp(MImgInfoMeta(
+            height = (height * devPxRatio.pixelRatio).toInt,
+            width  = (blockWidth * devPxRatio.pixelRatio).toInt
+          ))
+
+          // Если картинка была сохранена откропанной, то надо откропать исходник заново.
+          if (oiik.cropOpt.isDefined)
+            imOpsAcc ::= CropOp( oiik.cropOpt.get )
+          // Генерим финальную ссыль на картинку:
+          val dargs = DynImgArgs(
+            imgId = oiik,
+            imOps = imOpsAcc
+          )
+          routes.Img.dynImg(dargs)
+
+        // tmp-картинки пока игнорим.
+        case tiik: TmpImgIdKey  =>
+          routes.Img.getImg(imgInfo.filename)
+      }
     }
   }
+
 }
 
 trait BgImg extends ValT with SaveBgImgI {
