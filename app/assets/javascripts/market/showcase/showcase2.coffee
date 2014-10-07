@@ -1955,7 +1955,7 @@ sm =
       delete sm.shop_load_locked
 
     cursor :
-      offset : -2
+      offset : -20
       init : () ->
         if sm.utils.is_touch_device()
           return false
