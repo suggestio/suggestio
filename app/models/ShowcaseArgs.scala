@@ -32,7 +32,12 @@ object SMShowcaseReqArgs {
       }
 
       override def unbind(key: String, value: SMShowcaseReqArgs): String = {
-        strOptB.unbind(key + ".geo", value.geo.toQsStringOpt)
+        List(
+          strOptB.unbind(key + ".geo", value.geo.toQsStringOpt),
+          devScreenB.unbind(key + ".screen", value.screen)
+        )
+          .filter { us => !us.isEmpty }
+          .mkString("&")
       }
     }
   }
@@ -43,7 +48,7 @@ object SMShowcaseReqArgs {
 
 case class SMShowcaseReqArgs(
   geo: GeoMode = GeoNone,
-  screen: Option[DevScreenT] = None
+  screen: Option[DevScreen] = None
 ) {
   override def toString: String = s"${geo.toQsStringOpt.map { "geo=" + _ }}"
 }
