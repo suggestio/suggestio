@@ -39,7 +39,6 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
   }
 
 
-
   case class RelResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,
                            gsType: GsType, allMemberIds: Seq[Long] = Nil)
 

@@ -1,6 +1,5 @@
 package models
 
-
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT

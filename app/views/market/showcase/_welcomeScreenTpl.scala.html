@@ -31,7 +31,7 @@
         <img id="smWelcomeAdBgImage" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
              data-width="@imgInfo.meta.map(_.width)"
              data-height="@imgInfo.meta.map(_.height)"
-             src="@routes.Img.getImg(imgInfo.filename)"/>
+             src="@imgInfo.call"/>
       }
     }
 
@@ -43,8 +43,9 @@
            data-height="@fgImage.meta.map(_.height)"
            src="@routes.Img.getImg(fgImage.filename)"/>
     }
+
     @* Рендерим покрывающую картинку (svg/png) *@
-    @wargs.fgText.map {  fgText =>
+    @wargs.fgText.map { fgText =>
       <div id="smWelcomeAdfgText" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
         <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
           @fgText

@@ -476,7 +476,8 @@ sm =
 
   request_context :
     screen_param : () ->
-    if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
+      pixel_ratio = if window.devicePixelRatio then ',' + window.devicePixelRatio else ''
+      if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh + pixel_ratio else ''
 
   geo :
     loaded : false
@@ -2492,8 +2493,8 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + sm.request_context.screen_param()
+    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
 
     sm.log 'about to call index_action : ' + index_action
     this.request.perform index_action

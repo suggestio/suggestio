@@ -4,6 +4,9 @@ import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.util.UuidUtil
+import net.sf.jmimemagic.Magic
+import org.im4java.core.Info
+import play.api.mvc.QueryStringBindable
 import util.{PlayLazyMacroLogsImpl, FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
@@ -375,15 +378,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
     val imgMetaFut: Future[MImgInfoMeta] = {
       // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
-      val w = identifyResult.getImageWidth
-      val h = identifyResult.getImageHeight
-      val savedMeta = Map(
-        IMETA_WIDTH  -> w.toString,
-        IMETA_HEIGHT -> h.toString
-      )
-      MUserImgMeta2(id = rowkey, md = savedMeta, q = q)
+      val md = identifyInfo2md(identifyResult)
+      MUserImgMeta2(id = rowkey, md = md, q = q)
         .save
-        .map { _ => MImgInfoMeta(height = h,  width = w) }
+        .map { _ => MImgInfoMeta(height = identifyResult.getImageHeight,  width = identifyResult.getImageWidth) }
     }
     imgMetaFut onComplete {
       case Success(result) => trace(logPrefix + "Img metadata saved ok: " + result)
@@ -426,6 +424,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
 
+
+  def identifyInfo2md(info: Info): Map[String, String] = {
+    Map(
+      IMETA_WIDTH  -> info.getImageWidth.toString,
+      IMETA_HEIGHT -> info.getImageHeight.toString
+    )
+  }
 
   /**
    * Т.к. updateOrigImg() возвращает список результатов, хотя подразумевается только один, то надо
@@ -635,6 +640,30 @@ object ImgIdKey {
   }
 
   def origQualifier(cropOpt: Option[ImgCrop]) = cropOpt.fold(MPict.Q_USER_IMG_ORIG) { _.toCropStr }
+
+
+  /** QSB для id картинки. */
+  implicit def iikQsb(implicit strB: QueryStringBindable[String]) = {
+    new QueryStringBindable[ImgIdKey] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ImgIdKey]] = {
+        strB.bind(key, params) map {
+          _.right.flatMap { rawIik =>
+            try {
+              Right(ImgIdKey.apply(rawIik))
+            } catch {
+              case ex: Throwable =>
+                Left("Img id is invalid.")
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: ImgIdKey): String = {
+        strB.unbind(key, value.filename)
+      }
+    }
+  }
+
 }
 
 sealed trait ImgIdKey {
@@ -646,6 +675,12 @@ sealed trait ImgIdKey {
   def cropOpt: Option[ImgCrop]
   def getBaseImageWH: Future[Option[MImgInfoMeta]]
   def getImageWH: Future[Option[MImgInfoMeta]]
+
+  /** Выдать во временный файл MPictureTmp. */
+  def toTempPict: Future[MPictureTmp]
+
+  /** Выдать оригинал во временный файл MPictureTmp. */
+  def toTempPictOrig: Future[MPictureTmp]
 
   // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
   def origQualifierOpt = cropOpt.map { _.toCropStr }
@@ -716,6 +751,14 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
     } else {
       this
     }
+  }
+
+  override def toTempPict: Future[MPictureTmp] = {
+    Future successful mptmp
+  }
+
+  override def toTempPictOrig: Future[MPictureTmp] = {
+    Future successful uncropped.mptmp
   }
 }
 
@@ -826,6 +869,27 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta], data: Orig
       this
     }
   }
+
+  protected def _toTempPict(qOpt: Option[String]) = {
+    // Нужно выкачать из модели оригинальную картинку во временный файл.
+    MUserImg2.getByStrId(this.data.rowKey, qOpt) map { oimgOpt =>
+      val oimg = oimgOpt.get
+      val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
+      val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
+      val mptmp = MPictureTmp.mkNew(None, cropOpt = None, oif)
+      mptmp.writeIntoFile(oimg.imgBytes)
+      mptmp
+    }
+  }
+
+  override def toTempPict: Future[MPictureTmp] = {
+    _toTempPict(origQualifierOpt)
+  }
+
+  override def toTempPictOrig: Future[MPictureTmp] = {
+    _toTempPict(None)
+  }
+
 }
 
 
