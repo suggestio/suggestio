@@ -1,7 +1,8 @@
 package util.img
 
-import controllers.MarketShowcase
-
+import controllers.{routes, MarketShowcase}
+import io.suggest.ym.model.common.MImgSizeT
+import models.im._
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -9,6 +10,7 @@ import ImgFormUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -17,6 +19,9 @@ import util.event.SiowebNotifier.Implicts.sn
  * Description: Утиль для картинки/карточки приветствия.
  */
 object WelcomeUtil {
+
+  /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
+  val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -93,22 +98,23 @@ object WelcomeUtil {
   /**
    * Асинхронно собрать аргументы для рендера карточки приветствия.
    * @param adnNode Узел, для которого нужно подготовить настройки рендера приветствия.
+   * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT]): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
     val bgFut = adnNode.gallery
       .headOption
-      .fold[Future[Either[String, MImgInfoT]]] {
+      .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
         val oiik = OrigImgIdKey.apply(bgImgFilename)
         oiik.getImageWH map {
-          case metaSome if metaSome.nonEmpty =>
-            Right(oiik.copy(meta = metaSome))
+          case Some(meta) =>
+            Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
         }
       }
@@ -125,7 +131,57 @@ object WelcomeUtil {
     }
   }
 
+
+  /** Собрать ссылку на фоновую картинку. */
+  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
+    screenOpt
+      .filter { _ => BG_VIA_DYN_IMG }
+      .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
+      // Нужно запрещать ресайзить вверх картинку, если она маленькая:
+      .filter {
+        // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
+        case (bss, _) => bss isSmallerThan origMeta
+      }
+      .fold [ImgUrlInfoT] {
+        new ImgUrlInfoT {
+          override def call = routes.Img.getImg(oiik.filename)
+          override def meta = Some(origMeta)
+        }
+      } { case (bss, screen) =>
+        val imOps = imConvertArgs(bss, screen)
+        val dynArgs = DynImgArgs(oiik, imOps)
+        new ImgUrlInfoT {
+          override def call = routes.Img.dynImg(dynArgs)
+          override def meta = Some(bss)
+        }
+      }
+  }
+
+  /** Сгенерить аргументы для генерации dyn-img ссылки. По сути, тут список параметров для вызова convert.
+    * @param scrSz Размер конечной картинки.
+    * @return Список ImOp в прямом порядке.
+    */
+  def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
+    val gravity = GravityOp(ImGravities.Center)
+    val acc0: List[ImOp] = Nil
+    val acc1 = gravity ::
+      AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
+      gravity ::
+      ExtentOp(scrSz) ::
+      StripOp ::
+      screen.pixelRatio.imQualityOp ::
+      ImInterlace.Plane ::
+      screen.pixelRatio.chromaSubSampling ::
+      acc0
+    screen.pixelRatio
+      .imGaussBlurOp
+      .fold(acc1)(_ :: acc1)
+  }
+
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
-  private def colorBg(adnNode: MAdnNode) = Left(adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT))
+  private def colorBg(adnNode: MAdnNode) = {
+    val bgColor = adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT)
+    Left(bgColor)
+  }
 
 }

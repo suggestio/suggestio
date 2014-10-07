@@ -2488,7 +2488,8 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh else ''
+    pixel_ratio = if window.devicePixelRatio then ',' + window.devicePixelRatio else ''
+    ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh + pixel_ratio else ''
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
 
     sm.log 'about to call index_action : ' + index_action

@@ -89,7 +89,6 @@ object AdnShownTypes extends Enumeration {
   implicit def adnInfo2val(adnInfo: AdNetMemberInfo): AdnShownType = shownTypeId2val(adnInfo.shownTypeId)
   implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
 
-  override val values = super.values
 
   /** Все типы районов. */
   def districts = Set(TOWN_DISTRICT, CITY_DISTRICT)

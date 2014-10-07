@@ -164,19 +164,20 @@ GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
+GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
 
 
 # Витрина market'а и её экшены
 GET  /b/svg/:svgTpl                     controllers.MarketShowcase.blockSvg(svgTpl: BlockSvg, c: BSvgColorMap)
 GET  /market/demo                       controllers.MarketShowcase.demoShowcase
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId)
+GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
 
 GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
 GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   controllers.MarketShowcase.rdrToGeoSite
-GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs())
+GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
 
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
