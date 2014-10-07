@@ -36,25 +36,28 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   /** Сколько времени кешировать temp-картинки на клиенте. */
   val TEMP_IMG_CACHE_SECONDS = {
-    if (Play.isProd) {
-      val cacheMinutes = configuration.getInt("img.temp.cache.client.minutes") getOrElse 10
-      val cacheDuration = cacheMinutes.minutes
-      cacheDuration.toSeconds.toInt
-    } else {
-      5
+    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_ minutes) getOrElse {
+      if (Play.isProd) {
+        10 minutes
+      } else {
+        30 seconds
+      }
     }
+    cacheDuration.toSeconds.toInt
   }
-
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
-    if (Play.isProd) {
-      val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse 2.days
-      cacheDuration.toSeconds.toInt
-    } else {
-      5
+    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse {
+      if (Play.isProd) {
+        2 days
+      } else {
+        30 seconds
+      }
     }
+    cacheDuration.toSeconds.toInt
   }
+
 
   /**
    * Выдать картинку из HDFS. Используется для визуализации выдачи.
@@ -122,7 +125,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    */
   private def isModifiedSinceCached(modelTstampMs: ReadableInstant)(implicit request: RequestHeader): Boolean = {
     request.headers.get(IF_MODIFIED_SINCE)
-      .flatMap { DateTimeUtil.parseRfcDate }
+      .fold(false)(isModifiedSinceCached(modelTstampMs, _))
+  }
+  private def isModifiedSinceCached(modelTstampMs: ReadableInstant, ims: String): Boolean = {
+    DateTimeUtil.parseRfcDate(ims)
       .exists { dt => !(modelTstampMs isAfter dt) }
   }
 
@@ -335,7 +341,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
           MUserImgMeta2.getById(rowKey, qOpt) map {
             case Some(imeta) =>
               val newModelInstant = withoutMs(imeta.timestamp.getMillis)
-              isModifiedSinceCached(newModelInstant)
+              isModifiedSinceCached(newModelInstant, ims)
             case None =>
               false
           }

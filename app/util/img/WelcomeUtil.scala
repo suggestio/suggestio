@@ -23,8 +23,6 @@ object WelcomeUtil {
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
   val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
 
-  val BG_DYN_QUALITY: Int = configuration.getInt("showcase.welcome.bg.quality") getOrElse 55
-
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
@@ -140,7 +138,10 @@ object WelcomeUtil {
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
       // Нужно запрещать ресайзить вверх картинку, если она маленькая:
-      .filter { case (bss, _) => bss isSmallerThan origMeta } // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
+      .filter {
+        // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
+        case (bss, _) => bss isSmallerThan origMeta
+      }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
           override def call = routes.Img.getImg(oiik.filename)
