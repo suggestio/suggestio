@@ -1,5 +1,6 @@
 package io.suggest.img
 
+import io.suggest.ym.model.common.MImgSizeT
 import org.im4java.core.{Info, ConvertCmd, IMOperation}
 import java.io.{FileInputStream, File}
 import java.nio.file.Files
@@ -173,7 +174,7 @@ trait SioImageUtilT {
     // Кроп, задаваемый юзером: портирован из альтерраши.
     if (crop.isDefined) {
       val c = crop.get
-      op.crop(c.w, c.h, c.offX, c.offY)
+      op.crop(c.width, c.height, c.offX, c.offY)
     }
     mode match {
       case ConvertModes.STRIP  => op.strip()
@@ -213,7 +214,7 @@ object ImgCrop {
     val offIntP: Parser[Int] = "[+-_]\\d+".r ^^ { parseOffInt }
     (whP ~ ("[xX]".r ~> whP) ~ offIntP ~ offIntP) ^^ {
       case w ~ h ~ offX ~ offY =>
-        ImgCrop(w=w, h=h, offX=offX, offY=offY)
+        ImgCrop(width=w, height=h, offX=offX, offY=offY)
     }
   }
 
@@ -249,7 +250,7 @@ object ImgCrop {
   }
 }
 
-case class ImgCrop(w:Int, h:Int, offX:Int, offY:Int) {
+case class ImgCrop(width: Int, height: Int, offX: Int, offY: Int) extends MImgSizeT {
   import ImgCrop.optSign
 
   /**
@@ -265,12 +266,22 @@ case class ImgCrop(w:Int, h:Int, offX:Int, offY:Int) {
   def toUrlSafeStr: String = toStr('_')
 
   /** Хелпер для сериализации экземпляра класса. */
-  def toStr(posSign: Char): String = {
-    val sb = new StringBuilder
-    sb.append(w).append('x').append(h)
+  def toStr(posSign: Char, szArgSuf: Option[Char] = None): String = {
+    val sb = new StringBuilder(32)
+    sb.append(width)
+    szArgSuf foreach sb.append
+    sb.append('x').append(height)
+    szArgSuf foreach sb.append
     optSign(offX, posSign, sb)
     optSign(offY, posSign, sb)
     sb.toString()
   }
+
+  /**
+   * IM допускает задание размеров по отношению к текущим размерам изображения.
+   * @return Строка вида 50%x60%+40+0
+   */
+  def toRelSzCropStr: String = toStr('+', Some('%'))
+
 }
 
