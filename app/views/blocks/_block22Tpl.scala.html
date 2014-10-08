@@ -7,7 +7,7 @@
 @blockBase(args, mad, bc) {
 @defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) )  { borderColor =>
 
-  @bgImgTpl(mad, bc,
+  @bgImgTpl(mad, bc, args,
     cssClass = Some("bg abs"),
     dfltImg = Some("images/market/blocks/tpl22-bg.jpg")
   )

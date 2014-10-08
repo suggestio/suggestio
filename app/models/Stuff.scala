@@ -287,6 +287,7 @@ object BlockRenderArgs {
   /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
   val DEFAULT = BlockRenderArgs()
 
+  val DOUBLE_SIZED_ARGS = BlockRenderArgs(canRenderDoubleSize = true)
 }
 
 /**
@@ -295,6 +296,7 @@ object BlockRenderArgs {
  * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
  */
 case class BlockRenderArgs(
-  isStandalone: Boolean = false
+  isStandalone          : Boolean = false,
+  canRenderDoubleSize   : Boolean = false
 )
 

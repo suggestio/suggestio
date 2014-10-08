@@ -9,7 +9,7 @@
   <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
   <div class="sale-mask abs"></div>
 
-  @bgImgTpl(mad, bc,
+  @bgImgTpl(mad, bc, args,
     dfltImg = Some("images/market/blocks/tpl11-bg.jpg"),
     cssClass = Some("photo")
   )

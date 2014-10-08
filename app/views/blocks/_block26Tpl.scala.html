@@ -11,14 +11,14 @@
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
 
   @mad.offers.headOption.fold {
-    @bgImgTpl(mad, bc)
+    @bgImgTpl(mad, bc, args)
   } { offer =>
 
     @offer.href.map { href =>
       <a href="@href" target="_blank">
     }
 
-    @bgImgTpl(mad, bc)
+    @bgImgTpl(mad, bc, args)
     @mad.offers.map { offer =>
       <div class="info el-@{offer.n + 1}">
         @offer.text1.map { text1 =>

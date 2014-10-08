@@ -4,7 +4,7 @@
 
 @blockBase(args, mad, bc) {
 
-  @bgImgTpl(mad, bc, dfltImg = Some("images/market/blocks/tpl4-bg.jpg"), cssClass = Some("bg"))
+  @bgImgTpl(mad, bc, args, dfltImg = Some("images/market/blocks/tpl4-bg.jpg"), cssClass = Some("bg"))
 
   <div class="inner" style="border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue);"></div>
 
