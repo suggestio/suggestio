@@ -1,11 +1,11 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import svg._
 @import common._
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.{Block23 => bc}
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   <img class="mask abs" src="@routes.MarketShowcase.blockSvg(BlocksSvg.mask23, Map.empty)" alt="" />
 

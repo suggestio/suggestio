@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import svg._
@@ -7,7 +7,7 @@
 @import BSvgColorNames._
 
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @bgImgTpl(mad, bc,
     dfltImg = Some("images/market/blocks/tpl5-bg.jpg"),

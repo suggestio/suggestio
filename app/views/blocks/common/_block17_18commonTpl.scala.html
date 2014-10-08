@@ -1,10 +1,10 @@
-@(mad: MAdT, isStandalone: Boolean, bc: util.blocks.BlocksConf.CommonBlock17_18)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs, bc: util.blocks.BlocksConf.CommonBlock17_18)(implicit ctx: Context)
 
 @import blocks.svg._
 @import util.TplDataFormatUtil._
 @import BSvgColorNames._
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { bgColor =>
 

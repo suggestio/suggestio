@@ -1,9 +1,9 @@
-@(mad: MAdT, isStandalone: Boolean, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: Context)
 
 @import blocks.svg._
 @import BSvgColorNames._
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
     @defining( mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue) ) { fillColor =>

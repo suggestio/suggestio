@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @* Первый блок верстки. *@
 @import ctx._
@@ -7,7 +7,7 @@
 @import common._
 @import util.blocks.BlocksConf.{Block1 => bc}
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
   @bgImgTpl(
     mad      = mad,
     bc       = bc,

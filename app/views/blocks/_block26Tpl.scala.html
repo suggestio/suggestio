@@ -1,11 +1,11 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.blocks.BlocksConf.{Block26 => bc}
 
 @* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@

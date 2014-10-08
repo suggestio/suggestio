@@ -1,9 +1,9 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.blocks.BlocksConf.{Block11 => bc}
 
-@blockBase(isStandalone, mad, bc,
+@blockBase(args, mad, bc,
   style = mad.colors.get(bc.saleMaskColorBf.name).map(saleColor => s"border-color: #$saleColor;")
 ) {
   <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>

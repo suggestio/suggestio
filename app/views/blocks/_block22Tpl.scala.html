@@ -1,10 +1,10 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.{Block22 => bc}
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 @defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) )  { borderColor =>
 
   @bgImgTpl(mad, bc,

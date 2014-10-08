@@ -1,9 +1,9 @@
-@(mad: MAdT, isWithAction : Boolean = false)(implicit ctx: Context)
+@(mad: MAdT, isWithAction : Boolean = false, args: BlockRenderArgs = BlockRenderArgs.DEFAULT)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 @import util.blocks._
 
 <div @if( isWithAction && !BlocksConf(mad.blockMeta.blockId).hrefBlock ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
-@BlocksConf(mad.blockMeta.blockId).renderBlock(mad, isStandalone = false)
+@BlocksConf(mad.blockMeta.blockId).renderBlock(mad, args)
 </div>

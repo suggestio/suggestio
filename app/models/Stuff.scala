@@ -280,3 +280,21 @@ trait ImgUrlInfoT {
   def meta: Option[MImgSizeT]
 }
 
+
+/** Статический рендер блоков. */
+object BlockRenderArgs {
+
+  /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
+  val DEFAULT = BlockRenderArgs()
+
+}
+
+/**
+ * Параметры рендера блока.
+ * Всегда immutable класс!
+ * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
+ */
+case class BlockRenderArgs(
+  isStandalone: Boolean = false
+)
+

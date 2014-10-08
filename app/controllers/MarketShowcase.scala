@@ -530,7 +530,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val bc: BlockConf = BlocksConf(mad.blockMeta.blockId)
         // TODO Проверять карточку на опубликованность?
         cacheControlShort {
-          Ok( bc.renderBlock(mad, isStandalone = true) )
+          Ok( bc.renderBlock(mad, BlockRenderArgs(isStandalone = true)) )
         }
 
       case None =>

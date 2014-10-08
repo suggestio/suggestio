@@ -1,8 +1,8 @@
-@(isStandalone: Boolean, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None, headAfter: Option[Html] = None, cssClass: Option[String] = None, style: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(args: BlockRenderArgs, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None, headAfter: Option[Html] = None, cssClass: Option[String] = None, style: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* База для шаблонов блоков. *@
 
-@if(isStandalone) {
+@if(args.isStandalone) {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
 <head>
@@ -37,7 +37,7 @@
   @content
 </div>
 
-@if(isStandalone) {
+@if(args.isStandalone) {
 </body>
 </html>
 }
