@@ -136,12 +136,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  def updateOrigImgId(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgIds: Iterable[String]): Future[List[MImgInfoT]] = {
+  def updateOrigImgId(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgIds: Iterable[String]): Future[List[OrigImgIdKey]] = {
     updateOrigImgFull(needImgs, oldImgIds.map(MImgInfo(_)))
   }
 
   /** Комбо из updateOrigImgFull() и miiPreferFirstCropped(). */
-  def updateOrigImg(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[Option[MImgInfoT]] = {
+  def updateOrigImg(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[Option[OrigImgIdKey]] = {
     updateOrigImgFull(needImgs, oldImgs)
       .map { miiPreferFirstCropped }
   }
@@ -153,7 +153,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
+  def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[OrigImgIdKey]] = {
     // Защита от какой-либо деятельности в случае полного отсутствия входных данных.
     if (needImgs.isEmpty && oldImgs.isEmpty) {
       Future successful Nil
@@ -161,7 +161,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       updateOrigImgFullDo(needImgs, oldImgs = oldImgs)
     }
   }
-  private def updateOrigImgFullDo(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
+  private def updateOrigImgFullDo(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[OrigImgIdKey]] = {
     // newTmpImgs - это одноразовый итератор, содержит исходные индексы и списки картинок для сохранения.
     val newTmpImgs = needImgs
       .iterator
@@ -171,39 +171,23 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
       .map { case (ii4sRaw, i) =>
         val ti4s = ii4sRaw.asInstanceOf[ImgInfo4Save[TmpImgIdKey]]
-        lazy val idOpt: Option[String] = {
-          val id = UUID.randomUUID()
-          val idStr = UuidUtil.uuidToBase64(id)
-          Some(idStr)
-        }
-        val results = if (ti4s.iik.isCropped) {
-          // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
-          List(
-            ti4s.copy(withId = idOpt),
-            // Восстанавливать связи между исходными orig-картинками и need tmp пока нет удобной возможности, поэтому тут по сути идёт пересохранение orig-картинки под новым id с параллельным удаление старой.
-            // TODO Надо сделать так, чтобы откадрированные оригиналы сохранялись под исходными id, при этом исходники не пересохранялись.
-            ti4s.copy(iik = ti4s.iik.uncropped, withId = idOpt, withDownsize = None)
-          )
-        } else {
-          // Это картинка без кадрирования. Скорее всего она деформирована, но суть одна - надо бы сохранить оригинал про запас.
-          if (ti4s.withDownsize.isDefined) {
-            // Нужно сохранить ~оригинал без downsize
-            List(
-              ti4s.copy(withId = idOpt),
-              ti4s.copy(withId = idOpt, withDownsize = None)
-            )
-          } else {
-            // downsize отключён - в топку
-            List(ti4s)
-          }
-        }
+        val results = List(ti4s)
         results -> i
       }
     // Запустить сохранение tmp-картинок.
     val savedTmpImgsFut = Future.traverse(newTmpImgs) { case (tiis, i) =>
       Future.traverse(tiis) { tii =>
-        val fut = handleTmpImageForStoring(tii)
-          .map { sti => Some(sti -> i) }
+        // 08.oct.2014: На сохранение отправляем только некропанные оригиналы.
+        //              TODO Нужно вынести работу с кропом куда-то за пределы этого метода.
+        val tiiUncropped = tii.copy(iik = tii.iik.uncropped)
+        val fut = handleTmpImageForStoring(tiiUncropped)
+          .map { sti0 =>
+            // Восстановить кроп
+            val sti1 = sti0.copy(
+              tii4s = tii
+            )
+            Some(sti1 -> i)
+          }
         fut onComplete { case tryResult =>
           tii.iik.mptmp.file.delete()
           tmpMetaCacheInvalidate(tii.iik)
@@ -219,33 +203,52 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       savedTmpImgsOrNull
         .flatten // Разворачиваем list'ы сохранённых tmp-картинок в разных размерах
         .flatten // Развернуть Option'ы, которые подавляют ошибки сохранения.
-        .map { case (savedImg, i) => savedImg.toMImgInfo -> i}
+        .map { case (savedImg, i) =>
+          // 2014.oct.08: Вписываем исходный cropOpt, которого в сохранённых по сути нет.
+          // Это нужно, чтобы вернуть данные о картинке назад без потерь данных о ней.
+          // TODO Этот метод с кропом вообще не связан теперь (2014.oct.08), надо как-то вынести это всё за его пределы.
+          val oiik0 = savedImg.oiik
+          val odata1 = oiik0.data.copy(
+            cropOpt = savedImg.tii4s.iik.cropOpt
+          )
+          val oiik1 = OrigImgIdKey(odata1, oiik0.meta)
+          oiik1 -> i
+        }
         .toList
     }
     // Какие картинки надо оставить с прошлого раза и отфорвардить в результаты
     val needOrigImgs1 = needImgs
       .iterator
       .zipWithIndex
-      .filter { case (ii4s, i) => ii4s.iik.isInstanceOf[OrigImgIdKey] }
+      .flatMap { case v @ (ii4s, i) =>
+        if (ii4s.iik.isInstanceOf[OrigImgIdKey])
+          Seq( v.asInstanceOf[(ImgInfo4Save[OrigImgIdKey], Int)] )  // TODO Стрёмная оптимизация, т.к. asInstanceOf неизбежен. Но может есть метод лучше?
+        else
+          Nil
+      }
       // Из старых картинок выбрать подходящую уже сохранённую, если она там есть.
-      .flatMap { case (ti4s, i) => oldImgs.find { oii => ti4s.iik == oii }.map { _ -> i } }
+      .flatMap {
+        case (ti4s, i) =>
+          oldImgs.find { oii => ti4s.iik == oii }
+            .map { _ -> i }
+      }
+      .map { case (miit, i)  =>  (miit: OrigImgIdKey) -> i }
       .toList
 
     // 2014.09.18: Из-за бага с удалением ненужных картинок, была введена валидация уже сохранённых orig img, подлежащих повторному сохранению.
     // Это нужно будет отключить, когда "дырки" в галереях карточек и узлов исчезнут. Валидация уже сохранённых картинок сильно замедляет сохранение.
     val needOrigImgsFilteredFut = if (REVALIDATE_ALREADY_SAVED_IMGS) {
-      Future.traverse(needOrigImgs1) { case v @ (miit, _) =>
+      Future.traverse(needOrigImgs1) { case v @ (oiit, _) =>
         try {
-          val oid: OrigImgIdKey = miit
-          MUserImgMeta2.getByStrId(oid.data.rowKey, oid.origQualifierOpt)
+          MUserImgMeta2.getByStrId(oiit.data.rowKey, oiit.origQualifierOpt)
             .map {
               // Всё ок, картинка скорее всего есть в базе, пропускаем.
               case Some(_) =>
                 Some(v)
               // Ревалидация выявила проблему: картинки нет в базе. Затираем весь ряд для надежности.
               case None =>
-                eraseOiik(oid)
-                warn("Revalidate: Found invalid orig img reference: " + oid + " -- Reerasing it and forgetting.")
+                eraseOiik(oiit)
+                warn("Revalidate: Found invalid orig img reference: " + oiit + " -- Reerasing it and forgetting.")
                 None
             }
         } catch {
@@ -265,14 +268,14 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     } yield {
       // 2014.sep.19: Бывает ситуация, когда картинка была сохранена оригиналом, а потом откропана и снова сохранена под тем же rowkey. Нужно устранять дубликаты.
       val needOrigImgs3 = needOrigImgs2
-        .filter { case (miit, _) =>
-          val oiit: OrigImgIdKey = miit
+        .filter { case (oiit, _) =>
           !newSavedImgs.exists {
             case (miitNew, _) =>
               miitNew.data.rowKey == oiit.data.rowKey
           }
         }
-      (newSavedImgs ++ needOrigImgs3)
+      (newSavedImgs.iterator ++ needOrigImgs3.iterator)
+        .toStream
         // Вышеуказанная проблема всё равно присутствует...
         .groupBy(_._1.data.rowKey)
         // Отфильтровываем orig-картинку при наличии кропаной версии.
@@ -317,14 +320,14 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /**
    * В контроллер приходит сабмит по картинкам. Для tmp-картинок надо отправить их целиком в orig-хранилище.
    * Для любых картинок надо обновить нарезку, применив crop и отправив в хранилище.
-   * @param tii Исходная tmp-картинка.
+   * @param tii4s Исходная tmp-картинка.
    * @return Фьючерс, содержащий imgId в виде строки.
    */
-  def handleTmpImageForStoring(tii: ImgInfo4Save[TmpImgIdKey]): Future[SavedTmpImg] = {
-    import tii.iik.mptmp
-    lazy val logPrefix = s"handleTmpImageForStoring(${tii.iik.filename}): "
-    trace(s"${logPrefix}Starting: crop=${tii.iik.cropOpt}, withThumb=${tii.withThumb} withId=${tii.withId}")
-    val (rowkeyStr, rowkey) = tii.withId match {
+  def handleTmpImageForStoring(tii4s: ImgInfo4Save[TmpImgIdKey]): Future[SavedTmpImg] = {
+    import tii4s.iik.mptmp
+    lazy val logPrefix = s"handleTmpImageForStoring(${tii4s.iik.filename}): "
+    trace(s"${logPrefix}Starting: crop=${tii4s.iik.cropOpt}, withThumb=${tii4s.withThumb} withId=${tii4s.withId}")
+    val (rowkeyStr, rowkey) = tii4s.withId match {
       case Some(_rowkeyStr) =>
         _rowkeyStr -> UuidUtil.base64ToUuid(_rowkeyStr)
       case None =>
@@ -332,45 +335,20 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         val _rowkeyStr = UuidUtil.uuidToBase64(_rowkey)
         _rowkeyStr -> _rowkey
     }
-    // 26.sep.2014: Костыли для поддержки svg.
-    val isVectorImage = mptmp.file.getName.endsWith(".svg")
-    // qualifier для сохранения картинки и её метаданных
-    // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в модель.
-    val mptmp4save: MPictureTmp = tii.withDownsize
-      .filter { _ => !isVectorImage }   // svg не имеют фактического размера, делать downsize нельзя.
-      .fold(mptmp) { iim =>
-        val dsImgUtil = DownsizeImageUtil(iim)
-        val mptmpNew = MPictureTmp.mkNew(cropOpt = tii.iik.cropOpt, outFmt = OutImgFmts.JPEG)
-        dsImgUtil.convert(fileOld = mptmp.file, fileNew = mptmpNew.file)
-        mptmpNew
-      }
-    // Запускаем сборку данных по финальной сохраняемой картинке
+    // Запускаем сбор данных по финальной сохраняемой картинке
     // 26.sep.2014: TODO svg-картинки не имеют размера, но identify как-то его определяет.
-    val identifyResult = OrigImageUtil.identify(mptmp4save.file)
+    val identifyResult = OrigImageUtil.identify(mptmp.file)
     // Параметр кропа отображаем на выходной размер фотки.
-    val crop4nameOpt: Option[ImgCrop] = if (isVectorImage) {
-      None
-    } else {
-      val crop4name0 = tii.iik.cropOpt
-      tii.withDownsize.fold { crop4name0 } { wds =>
-        crop4name0.map {
-          _.copy(height = identifyResult.getImageHeight, width = identifyResult.getImageWidth)
-        } orElse {
-          // Кропа нема, но задан downsize. надо бы указать в имени, что что-то типа кропа присутствует.
-          val pseudoCrop = ImgCrop(height = identifyResult.getImageHeight, width = identifyResult.getImageWidth, offX = 0, offY = 0)
-          Some(pseudoCrop)
-        }
-      }
-    }
+    val crop4nameOpt: Option[ImgCrop] = None
+    // qualifier для сохранения картинки и её метаданных
     val q = ImgIdKey.origQualifier(crop4nameOpt)
-    val saveOrigFut = future {
-      OrigImageUtil.maybeReadFromFile(mptmp4save.file)
+    val saveOrigFut: Future[OrigImgData] = future {
+      OrigImageUtil.maybeReadFromFile(mptmp.file)
     } flatMap { imgBytes =>
       MUserImg2(id = rowkey, img = ByteBuffer.wrap(imgBytes), q = q)
         .save
         .map { _ =>
-          val savedFilename = OrigImgData(rowkeyStr, cropOpt = crop4nameOpt).toFilename
-          mptmp4save.file -> savedFilename
+          OrigImgData(rowkeyStr, cropOpt = crop4nameOpt)
         }
     }
     saveOrigFut onComplete {
@@ -390,7 +368,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       case Failure(ex)     => error(logPrefix + "Failed to save img metadata.", ex)
     }
     // Если указано withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
-    val saveThumbFut = if (tii.withThumb) {
+    val saveThumbFut: Future[_] = if (tii4s.withThumb) {
       val stFut = future {
         val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
         val thumbBytes = try {
@@ -418,11 +396,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
     // Связываем все асинхронные задачи воедино
     for {
-      _ <- saveThumbFut
-      (tmpFile, idStr) <- saveOrigFut
-      imgMeta <- imgMetaFut
+      _          <- saveThumbFut
+      origData   <- saveOrigFut
+      imgMeta    <- imgMetaFut
     } yield {
-      SavedTmpImg(idStr, tmpFile, imgMeta, tii.iik.cropOpt)
+      SavedTmpImg(origData, tii4s, imgMeta)
     }
   }
 
@@ -441,15 +419,15 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param l Выхлоп updateOrigImg()
    * @return Опционально выбранная картинка.
    */
-  def miiPreferFirstCropped(l: List[MImgInfoT]): Option[MImgInfoT] = {
-    l.reduceOption { (mii1, mii2) =>
-      val oiik1: OrigImgIdKey = mii1
-      val oiik2: OrigImgIdKey = mii2
+  // TODO 08.oct.2014: Возможно, этот метод больше не нужен, т.к. crop отрабатывается через dynImg,
+  //      а update...() метод не возвращает множеств результатов, как это было ранее.
+  private def miiPreferFirstCropped(l: List[OrigImgIdKey]): Option[OrigImgIdKey] = {
+    l.reduceOption { (oiik1, oiik2) =>
       (oiik1.isCropped, oiik2.isCropped) match {
         case (true, false) =>
-          mii1
+          oiik1
         case (false, true) =>
-          mii2
+          oiik2
         // Внезапно обе откропленные картинки. Выбираем ту, что имеет название по-длинее
         case _ =>
           trace(s"miiPreferFirstCropped($l): reduce(): Both imgs are cropped/uncropped. Selecting one with longest filename...")
@@ -616,17 +594,6 @@ trait SqLogoImageUtil  extends SioImageUtilT with PlayMacroLogsImpl {
 
 }
 
-/** Внутренняя экранизация sio image util для нужд ресайза с переменным размером. */
-sealed case class DownsizeImageUtil(iim: MImgInfoMeta) extends SioImageUtilT with PlayLazyMacroLogsImpl {
-  override def DOWNSIZE_VERT_PX: Integer = iim.height
-  override def DOWNSIZE_HORIZ_PX: Integer = iim.width
-  override def MAX_OUT_FILE_SIZE_BYTES = None
-  override def MAX_SOURCE_JPEG_NORSZ_BYTES = None
-  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override def MIN_SZ_PX: Int = 256
-  override def JPEG_QUALITY_PC: Double = 0.95
-}
-
 
 /** Конвертор картинок в логотипы ТЦ. */
 object LogoImageUtil extends SqLogoImageUtil
@@ -708,7 +675,7 @@ object TmpImgIdKey {
   }
 }
 
-case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends ImgIdKey {
+case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends ImgIdKey with MImgInfoT {
 
   @JsonIgnore
   override def cropOpt = mptmp.data.cropOpt
@@ -727,6 +694,9 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
     // TODO Нужно считать размер для неоткропанной картинки, если текущая уже откропана.
     getImageWH
   }
+
+  @JsonIgnore
+  override def meta: Option[MImgInfoMeta] = None
 
   override def getImageWH: Future[Option[MImgInfoMeta]] = {
     val result = try {
@@ -796,6 +766,9 @@ object OrigImgIdKey {
     apply(filename, meta = None, data = data)
   }
 
+  def apply(filename: String, meta: Option[MImgInfoMeta], data: OrigImgData): OrigImgIdKey = {
+    new OrigImgIdKey(filename, meta, data)
+  }
 
   /** Прочитать ширину-длину хранимой orig-картинки по модели MUserImgMetadata.
     * Метод довольно статичен, но private чтобы не допускать логических ошибок при передаче параметров
@@ -819,6 +792,7 @@ object OrigImgIdKey {
 
 }
 
+// TODO cropOpt нужно убрать отсюда, т.к. кропы старого формата больше не хранятся.
 case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
   def toFilename: String = {
     var sbSz: Int = rowKey.length
@@ -831,7 +805,14 @@ case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
   }
 }
 
-case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta], data: OrigImgData)
+/**
+ * Экземпляр ключа картинки, которая лежит в хранилище на постоянном хранении.
+ * 2014.oct.08: отключен case-class, т.к. вызов copy() приводил к противоречиям в состоянии класса.
+ * @param filename Имя файла. Описывает содержимое data.
+ * @param meta Метаданные
+ * @param data Данные хранения. Ключ ряда например.
+ */
+class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val data: OrigImgData)
   extends MImgInfoT with ImgIdKey
 {
   @JsonIgnore
@@ -927,18 +908,18 @@ object OutImgFmts extends Enumeration {
  * @param iik Указатель на картинку.
  * @param withThumb Генерить ли превьюшку? (она будет сохранена рядом).
  * @param withId Использовать указанный id. Если None, то будет сгенерен новый рандомный id.
- * @param withDownsize Дополнительно уменьшить картинку вниз перед сохранением. Нужно для того, чтобы не сохранять
- *                     большую картинку для маленького блока.
  * @tparam T Реальный тип iik.
  */
 case class ImgInfo4Save[+T <: ImgIdKey](
   iik       : T,
   withThumb : Boolean = true,
-  withId    : Option[String] = None,
-  withDownsize : Option[MImgInfoMeta] = None
+  withId    : Option[String] = None
 )
 
 
-case class SavedTmpImg(idStr:String, tmpImgFile:File, meta: MImgInfoMeta, cropOpt: Option[ImgCrop] = None) {
-  def toMImgInfo = MImgInfo(idStr, Some(meta))
+case class SavedTmpImg(origData: OrigImgData, tii4s: ImgInfo4Save[TmpImgIdKey], meta: MImgInfoMeta) {
+  def idStr: String = origData.toFilename
+  def oiik = OrigImgIdKey(origData, Some(meta))
+
+  def tmpImgFile = tii4s.iik.mptmp.file
 }

@@ -202,7 +202,6 @@ object ImOpCodes extends Enumeration {
       ImSamplingFactors.withName( vs.head )
     }
   }
-
   val RelSzCrop: ImOpCode = new Val("k") {
     override def mkOp(vs: Seq[String]): ImOp = {
       RelSzCropOp(ImgCrop(vs.head))

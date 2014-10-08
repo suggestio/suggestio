@@ -10,7 +10,6 @@ import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
 import models._
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -38,6 +37,7 @@ trait ISaveImgs {
       val oldImgsAbandoned = oldImgs
         .filterKeys(abandonedOldImgAliases contains)
       if (oldImgsAbandoned.nonEmpty) {
+        // Удаляем связанные orig-картинки с помощью updateOrigImg()
         ImgFormUtil.updateOrigImg(needImgs = Seq.empty, oldImgs = oldImgsAbandoned.values)
       }
     }
@@ -57,12 +57,8 @@ trait ISaveImgs {
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
 object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
-  def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t],
-                     withDownsize: Option[MImgInfoMeta]): Future[Imgs_t] = {
-    val needImgsThis0 = newImgs.get(fn)
-    val needImgsThis = needImgsThis0.map {
-      _.copy(withDownsize = withDownsize)
-    }
+  def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
+    val needImgsThis = newImgs.get(fn)
     val oldImgsThis = oldImgs.get(fn)
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
@@ -94,12 +90,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
 
 object BgImg {
+
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
-  /** Размерность финальной стороны картинки вычисляется на основе соотв. стороны блока.
-    * Ширина или высота блока увеличивается на это число, чтобы получить макс.размерность сохраняемой картинки. */
-  val FINAL_DOWNSIZE_SIDE_REL = configuration.getDouble("blocks.img.bg.downsize.final.side.rel") getOrElse 2.00000000
 }
 
 /** Функционал для сохранения фоновой (основной) картинки блока. ValT нужен для доступа к blockWidth. */
@@ -124,7 +118,7 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         // Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
         // В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
         iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
-          val oldFormat = crop.height == blockHeight && crop.width == blockWidth
+          val oldFormat  =  crop.height == blockHeight  ||  crop.width == blockWidth
           !oldFormat
         }
       }
@@ -133,18 +127,13 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         case oiik: OrigImgIdKey => Some(oiik)
         case _ => None
       }
-      .flatMap { oiik =>
-        // dynImg зависит от параметров экрана клиентского устройства.
-        // TODO Отработать screen-less доступ, дабы не раздавать голые оригиналы.
-        ctx.deviceScreenOpt
-          .map { oiik -> _ }
-      }
       .fold [Call] {
         // Пропускаем картинку, ибо данные для этого дела были отброшены.
         routes.Img.getImg(imgInfo.filename)
-      } { case (oiik, screen) =>
+      } { oiik =>
+        val devPxRatio = ctx.deviceScreenOpt
+          .fold(DevPixelRatios.MDPI)(_.pixelRatio)
         // Генерим dynImg-ссылку на картинку.
-        val devPxRatio = screen.pixelRatio
         val fgc = devPxRatio.fgCompression
         // Настройки сохранения результирующей картинки.
         var imOpsAcc: List[ImOp] = List(
@@ -178,14 +167,12 @@ trait BgImg extends ValT with SaveBgImgI {
   def bgImgBf = BgImg.bgImgBf
 
   override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    import BgImg.{FINAL_DOWNSIZE_SIDE_REL => c}
     val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
       fn = BG_IMG_FN,
       newImgs = newImgs,
       oldImgs = oldImgs,
-      supImgsFut = supImgsFut,
-      withDownsize = Some(MImgInfoMeta(height = (c*blockHeight).toInt, width = (c*blockWidth).toInt))
+      supImgsFut = supImgsFut
     )
   }
 
@@ -233,8 +220,7 @@ trait LogoImg extends ValT with ISaveImgs {
       fn = LOGO_IMG_FN,
       newImgs = newImgs,
       oldImgs = oldImgs,
-      supImgsFut = supImgsFut,
-      withDownsize = None
+      supImgsFut = supImgsFut
     )
   }
 

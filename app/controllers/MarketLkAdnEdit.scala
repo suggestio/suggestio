@@ -167,6 +167,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         }
       },
       {fmr =>
+        // В фоне обновляем картинку карточки-приветствия.
+        val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImg(
@@ -178,8 +180,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
           needImgs = gallery4s(fmr.gallery),
           oldImgIds = adnNode.gallery
         )
-        // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
         for {
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
