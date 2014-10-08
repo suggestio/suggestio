@@ -2200,7 +2200,7 @@ sm =
     cs = sm.states.cur_state()
     a_rcvr = '&a.rcvr=' + cs.mart_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&'s + sm.request_context.screen_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
     sm.focused_ads.curl = url
 
