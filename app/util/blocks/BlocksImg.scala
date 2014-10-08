@@ -4,6 +4,7 @@ import controllers.routes
 import io.suggest.ym.model.common.MImgInfoT
 import models.im._
 import play.api.mvc.Call
+import util.PlayLazyMacroLogsImpl
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
@@ -89,7 +90,7 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 }
 
 
-object BgImg {
+object BgImg extends PlayLazyMacroLogsImpl {
 
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
@@ -98,6 +99,9 @@ object BgImg {
 
 /** Функционал для сохранения фоновой (основной) картинки блока. ValT нужен для доступа к blockWidth. */
 trait SaveBgImgI extends ISaveImgs with ValT {
+
+  import BgImg.LOGGER._
+
   def BG_IMG_FN: String
   def bgImgBf: BfImage
 
@@ -142,7 +146,10 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         // Проверка допустимости использования флага canRenderDoubleSize с учётом экрана устройства.
         val willRenderDoubleSize: Boolean = {
           canRenderDoubleSize && {
-            val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse MImgInfoMeta(width = 1024, height = 768)
+            val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse {
+              warn(s"bgImgCall($imgInfo, bh=$blockHeight, canDouble=$canRenderDoubleSize): width=$blockWidth Missing client screen size! Will use standard VGA (1024х768)!")
+              MImgInfoMeta(width = 1024, height = 768)
+            }
             blockWidth * 2 <= devScrSize.width
           }
         }
