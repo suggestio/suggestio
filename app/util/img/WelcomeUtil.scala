@@ -136,8 +136,9 @@ object WelcomeUtil {
   def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
-      .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
-      // Нужно запрещать ресайзить вверх картинку, если она маленькая:
+      .flatMap { scr =>
+        scr.maybeBasicScreenSize.map(_ -> scr)
+      }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
           override def call = routes.Img.getImg(oiik.filename)
