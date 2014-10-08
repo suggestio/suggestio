@@ -474,6 +474,11 @@ sm =
     producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
+  request_context :
+    screen_param : () ->
+      pixel_ratio = if window.devicePixelRatio then ',' + window.devicePixelRatio else ''
+      if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh + pixel_ratio else ''
+
   geo :
     loaded : false
     location_requested : false
@@ -1169,8 +1174,6 @@ sm =
             geo_screen :
               is_opened : true
 
-        console.log 'transform state'
-
         return false
 
       ## Юзер нажал на ноду в списке
@@ -1439,7 +1442,7 @@ sm =
         sm.grid_ads.multiplier = sm.grid_ads.multiplier / 10
 
       url = url.replace '&a.geo=ip', ''
-      sm.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + sm.geo.request_query_param()
+      sm.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
@@ -1952,7 +1955,7 @@ sm =
       delete sm.shop_load_locked
 
     cursor :
-      offset : -2
+      offset : -20
       init : () ->
         if sm.utils.is_touch_device()
           return false
@@ -2197,7 +2200,7 @@ sm =
     cs = sm.states.cur_state()
     a_rcvr = '&a.rcvr=' + cs.mart_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + sm.request_context.screen_param()
 
     sm.focused_ads.curl = url
 
@@ -2217,7 +2220,10 @@ sm =
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
-    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param()
+    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+
+    console.log 'about to call ' + url
+
     sm.request.perform url
 
   ########################################
@@ -2437,7 +2443,6 @@ sm =
       if state.geo_screen.is_opened == true
         sm.geo.open_screen()
 
-      console.log state
       if state.geo_screen.is_opened == false
         sm.geo.close_screen()
 
@@ -2474,7 +2479,7 @@ sm =
       ## 5. Search
       if typeof state.search_request != 'undefined'
         a_rcvr = '&a.rcvr=' + state.mart_id
-        url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param()
+        url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
         sm.request.perform url
 
   ############################
@@ -2488,9 +2493,7 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    pixel_ratio = if window.devicePixelRatio then ',' + window.devicePixelRatio else ''
-    ww_param = if cbca_grid.ww then 'a.screen=' + cbca_grid.ww + 'x' + cbca_grid.wh + pixel_ratio else ''
-    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + ww_param else '/market/geo/index' + '?' + ww_param
+    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
 
     sm.log 'about to call index_action : ' + index_action
     this.request.perform index_action
