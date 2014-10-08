@@ -101,17 +101,20 @@ trait SaveBgImgI extends ISaveImgs with ValT {
   def BG_IMG_FN: String
   def bgImgBf: BfImage
 
-  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]]  = {
+  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = {
     bim.get(BG_IMG_FN)
   }
 
   /** Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
     * @param imgInfo Инфа о картинке, используемой в качестве фона.
     * @param blockHeight высота блока (и картинки, соответственно).
-    * @param ctx Контекст рендера.
+    * @param canRenderDoubleSize Можно ли рендерить в двойном размере? Если да и если экран позволяет,
+    *                           будет создана ссылка на картинку в двойном разрешении.
+    *                           Такое полезно при focusedAds(), превьюшках редактора карточек и т.д.
+    * @param ctx Контекст рендера шаблонов.
     * @return Экземпляр Call, пригодный для рендера в ссылку.
     */
-  def bgImgCall(imgInfo: MImgInfoT, blockHeight: Int)(implicit ctx: Context): Call = {
+  def bgImgCall(imgInfo: MImgInfoT, blockHeight: Int, canRenderDoubleSize: Boolean)(implicit ctx: Context): Call = {
     Some( ImgIdKey(imgInfo.filename) )
       .filter { iik =>
         // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
@@ -135,23 +138,39 @@ trait SaveBgImgI extends ISaveImgs with ValT {
           .fold(DevPixelRatios.MDPI)(_.pixelRatio)
         // Генерим dynImg-ссылку на картинку.
         val fgc = devPxRatio.fgCompression
-        // Настройки сохранения результирующей картинки.
+
+        // Проверка допустимости использования флага canRenderDoubleSize с учётом экрана устройства.
+        val willRenderDoubleSize: Boolean = {
+          canRenderDoubleSize && {
+            val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse MImgInfoMeta(width = 1024, height = 768)
+            blockWidth * 2 <= devScrSize.width
+          }
+        }
+
+        // Настройки сохранения результирующей картинки (аккамулятор).
         var imOpsAcc: List[ImOp] = List(
           ImInterlace.Plane,
           fgc.chromaSubSampling,
           fgc.imQualityOp
         )
 
+        // Мультипликатор размера (разрешения) картинки на основе doubleSize-флага.
+        val sizeMult: Int = if (willRenderDoubleSize) 2 else 1
+
+        // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
+        // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет 6-кратное разрешение блока /O_o/
+        val imgResMult = devPxRatio.pixelRatio * sizeMult
+
         // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
         imOpsAcc ::= AbsResizeOp(MImgInfoMeta(
-          height = (blockHeight * devPxRatio.pixelRatio).toInt,
-          width  = (blockWidth * devPxRatio.pixelRatio).toInt
+          height = (blockHeight * imgResMult).toInt,
+          width  = (blockWidth * imgResMult).toInt
         ))
 
         // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
         if (oiik.cropOpt.isDefined) {
           val crop = oiik.cropOpt.get
-          imOpsAcc = AbsCropOp(crop) :: imOpsAcc
+          imOpsAcc ::= AbsCropOp(crop)
         }
         // Генерим финальную ссыль на картинку:
         val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)

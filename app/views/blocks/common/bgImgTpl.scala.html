@@ -13,7 +13,7 @@
 } { imgInfo =>
   @* Есть картинка в карточке. Рендерим img-тег: *@
   <img @cssClass.map { _cssClass => class="@_cssClass" }
-    src="@bc.bgImgCall(imgInfo, mad.blockMeta.height)"
+    src="@bc.bgImgCall(imgInfo, mad.blockMeta.height, args.canRenderDoubleSize)"
     @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
       @if(iBgColorOpt.isDefined || style.isDefined) {
         style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
