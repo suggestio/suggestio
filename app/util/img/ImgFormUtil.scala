@@ -171,9 +171,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
       .map { case (ii4sRaw, i) =>
         val ti4s = ii4sRaw.asInstanceOf[ImgInfo4Save[TmpImgIdKey]]
-        val id = UUID.randomUUID()
-        val idStr = UuidUtil.uuidToBase64(id)
-        val idOpt = Some(idStr)
+        lazy val idOpt: Option[String] = {
+          val id = UUID.randomUUID()
+          val idStr = UuidUtil.uuidToBase64(id)
+          Some(idStr)
+        }
         val results = if (ti4s.iik.isCropped) {
           // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
           List(
@@ -352,10 +354,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       val crop4name0 = tii.iik.cropOpt
       tii.withDownsize.fold { crop4name0 } { wds =>
         crop4name0.map {
-          _.copy(h = identifyResult.getImageHeight, w = identifyResult.getImageWidth)
+          _.copy(height = identifyResult.getImageHeight, width = identifyResult.getImageWidth)
         } orElse {
           // Кропа нема, но задан downsize. надо бы указать в имени, что что-то типа кропа присутствует.
-          val pseudoCrop = ImgCrop(h = identifyResult.getImageHeight, w = identifyResult.getImageWidth, offX = 0, offY = 0)
+          val pseudoCrop = ImgCrop(height = identifyResult.getImageHeight, width = identifyResult.getImageWidth, offX = 0, offY = 0)
           Some(pseudoCrop)
         }
       }

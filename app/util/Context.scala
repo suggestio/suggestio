@@ -129,8 +129,7 @@ trait Context {
 
   /** Параметры экрана клиентского устройства. Эти данные можно обнаружить внутри query string. */
   lazy val deviceScreenOpt: Option[DevScreen] = {
-    request.headers
-      .toMap
+    request.queryString
       .iterator
       .filter {
         case (k, _)  =>  Context.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()

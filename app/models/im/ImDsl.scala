@@ -152,9 +152,9 @@ object ImOpCodes extends Enumeration {
 
   type ImOpCode = Val
 
-  val Crop: ImOpCode = new Val("a") {
+  val AbsCrop: ImOpCode = new Val("a") {
     override def mkOp(vs: Seq[String]) = {
-      CropOp(ImgCrop(vs.head))
+      AbsCropOp(ImgCrop(vs.head))
     }
   }
   val Gravity: ImOpCode = new Val("b") {
@@ -203,6 +203,12 @@ object ImOpCodes extends Enumeration {
     }
   }
 
+  val RelSzCrop: ImOpCode = new Val("k") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      RelSzCropOp(ImgCrop(vs.head))
+    }
+  }
+
   implicit def value2val(x: Value): ImOpCode = x.asInstanceOf[ImOpCode]
 
   def maybeWithName(n: String): Option[ImOpCode] = {
@@ -212,20 +218,6 @@ object ImOpCodes extends Enumeration {
   }
 }
 
-
-/**
- * Операция кропа изображения.
- * @param crop инфа о кропе.
- */
-case class CropOp(crop: ImgCrop) extends ImOp {
-  override def opCode = ImOpCodes.Crop
-
-  override def addOperation(op: IMOperation): Unit = {
-    op.crop(crop.w, crop.h, crop.offX, crop.offY)
-  }
-
-  override def qsValue: String = crop.toUrlSafeStr
-}
 
 
 object ImGravities extends Enumeration {

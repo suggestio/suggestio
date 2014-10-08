@@ -46,10 +46,15 @@ object AbsResizeOp extends JavaTokenParsers {
     parse(aroParser, raw).get
   }
 
+  def apply(sz: MImgSizeT, flag: ImResizeFlag): AbsResizeOp = {
+    AbsResizeOp(sz, Seq(flag))
+  }
+
 }
 
 
 case class AbsResizeOp(sz: MImgSizeT, flags: Seq[ImResizeFlag] = Nil) extends ImOp {
+
   override def opCode = ImOpCodes.AbsResize
 
   override def addOperation(op: IMOperation): Unit = {

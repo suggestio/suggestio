@@ -113,47 +113,61 @@ trait SaveBgImgI extends ISaveImgs with ValT {
 
   /** Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
     * @param imgInfo Инфа о картинке, используемой в качестве фона.
-    * @param height высота блока (и картинки, соответственно).
+    * @param blockHeight высота блока (и картинки, соответственно).
     * @param ctx Контекст рендера.
     * @return Экземпляр Call, пригодный для рендера в ссылку.
     */
-  def bgImgCall(imgInfo: MImgInfoT, height: Int)(implicit ctx: Context): Call = {
-    ctx.deviceScreenOpt.fold [Call] {
-      // TODO Может надо просто генерить дефолтовый devPxRatio?
-      routes.Img.getImg(imgInfo.filename)
-    } { screen =>
-      ImgIdKey(imgInfo.filename) match {
-        // Отрабатываем картинку из постоянного хранилища.
-        case oiik: OrigImgIdKey =>
-          val devPxRatio = screen.pixelRatio
-          val fgc = devPxRatio.fgCompression
-          var imOpsAcc: List[ImOp] = List(
-            ImInterlace.Plane,
-            fgc.chromaSubSampling,
-            fgc.imQualityOp
-          )
-
-          // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-          imOpsAcc ::= AbsResizeOp(MImgInfoMeta(
-            height = (height * devPxRatio.pixelRatio).toInt,
-            width  = (blockWidth * devPxRatio.pixelRatio).toInt
-          ))
-
-          // Если картинка была сохранена откропанной, то надо откропать исходник заново.
-          if (oiik.cropOpt.isDefined)
-            imOpsAcc ::= CropOp( oiik.cropOpt.get )
-          // Генерим финальную ссыль на картинку:
-          val dargs = DynImgArgs(
-            imgId = oiik,
-            imOps = imOpsAcc
-          )
-          routes.Img.dynImg(dargs)
-
-        // tmp-картинки пока игнорим.
-        case tiik: TmpImgIdKey  =>
-          routes.Img.getImg(imgInfo.filename)
+  def bgImgCall(imgInfo: MImgInfoT, blockHeight: Int)(implicit ctx: Context): Call = {
+    Some( ImgIdKey(imgInfo.filename) )
+      .filter { iik =>
+        // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
+        // Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
+        // В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
+        iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
+          val oldFormat = crop.height == blockHeight && crop.width == blockWidth
+          !oldFormat
+        }
       }
-    }
+      .flatMap {
+        // dynImg принимает только orig-картинки.
+        case oiik: OrigImgIdKey => Some(oiik)
+        case _ => None
+      }
+      .flatMap { oiik =>
+        // dynImg зависит от параметров экрана клиентского устройства.
+        // TODO Отработать screen-less доступ, дабы не раздавать голые оригиналы.
+        ctx.deviceScreenOpt
+          .map { oiik -> _ }
+      }
+      .fold [Call] {
+        // Пропускаем картинку, ибо данные для этого дела были отброшены.
+        routes.Img.getImg(imgInfo.filename)
+      } { case (oiik, screen) =>
+        // Генерим dynImg-ссылку на картинку.
+        val devPxRatio = screen.pixelRatio
+        val fgc = devPxRatio.fgCompression
+        // Настройки сохранения результирующей картинки.
+        var imOpsAcc: List[ImOp] = List(
+          ImInterlace.Plane,
+          fgc.chromaSubSampling,
+          fgc.imQualityOp
+        )
+
+        // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
+        imOpsAcc ::= AbsResizeOp(MImgInfoMeta(
+          height = (blockHeight * devPxRatio.pixelRatio).toInt,
+          width  = (blockWidth * devPxRatio.pixelRatio).toInt
+        ))
+
+        // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
+        if (oiik.cropOpt.isDefined) {
+          val crop = oiik.cropOpt.get
+          imOpsAcc = AbsCropOp(crop) :: imOpsAcc
+        }
+        // Генерим финальную ссыль на картинку:
+        val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)
+        routes.Img.dynImg(dargs)
+      }
   }
 
 }
