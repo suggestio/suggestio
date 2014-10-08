@@ -3,6 +3,7 @@ package util
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
+import io.suggest.ym.model.common.MImgSizeT
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -599,6 +600,21 @@ object FormUtil {
           raws.mkString(", ")
         }
       )
+  }
+
+  /** Маппер размеров, заданные через width и height. Например, размеры картинки. */
+  def whSizeM: Mapping[MImgSizeT] = {
+    val sideM = number(min = 10, max = 2048)
+    mapping(
+      "height" -> sideM,
+      "width"  -> sideM
+    )
+    {(height, width) =>
+      MImgInfoMeta(height = height, width = width)  : MImgSizeT
+    }
+    {mim =>
+      Some((mim.height, mim.height))
+    }
   }
 
 }

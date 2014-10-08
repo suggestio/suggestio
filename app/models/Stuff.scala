@@ -1,7 +1,6 @@
 package models
 
 import java.util.Currency
-import io.suggest.ym.model.common.MImgSizeT
 import org.joda.time.Period
 import play.api.i18n.{Lang, Messages}
 import play.api.data.Form

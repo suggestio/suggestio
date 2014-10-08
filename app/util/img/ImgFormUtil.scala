@@ -7,10 +7,10 @@ import io.suggest.util.UuidUtil
 import net.sf.jmimemagic.Magic
 import org.im4java.core.Info
 import play.api.mvc.QueryStringBindable
-import util.{PlayLazyMacroLogsImpl, FormUtil, PlayMacroLogsImpl}
+import util.{FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
-import io.suggest.model.{MUserImgMetadata, MUserImgOrig, MPict}
+import io.suggest.model.MPict
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.io.{File, FileNotFoundException}
@@ -20,7 +20,7 @@ import java.lang
 import com.fasterxml.jackson.annotation.JsonIgnore
 import models._
 import play.api.cache.Cache
-import io.suggest.ym.model.common.MImgInfoT
+import io.suggest.ym.model.common.{MImgSizeT, MImgInfoT}
 import play.api.Logger
 
 /**
@@ -122,13 +122,38 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     LOGO_IMG_ID_K -> optional(logoImgInfoM)
   }
 
-  /** Маппинг обязательного параметра кропа на реальность. */
-  val imgCropM: Mapping[ImgCrop] = nonEmptyText(minLength = 4, maxLength = 16)
-    .transform[Option[ImgCrop]] (ImgCrop.maybeApply, _.map(_.toCropStr).getOrElse(""))
-    .verifying("crop.invalid", _.isDefined)
-    .transform[ImgCrop](_.get, Some.apply)
 
-  val imgCropOptM: Mapping[Option[ImgCrop]] = {
+  // Валидация значений crop'а.
+  /** Минимальный размер откропанной стороны. */
+  private val CROP_SIDE_MIN_PX = configuration.getInt("img.crop.side.max") getOrElse 10
+  /** Максимальный размер откропанной стороны. */
+  private val CROP_SIDE_MAX_PX = configuration.getInt("img.crop.side.max") getOrElse 2048
+  /** Максимальный размер сдвига относительно левого верхнего узла. */
+  private val CROP_OFFSET_MAX_PX = configuration.getInt("img.crop.offset.max") getOrElse 4096
+
+  /** Проверка одной стороны кропа на соотвествие критериям. */
+  private def isCropSideValid(sideVal: Int): Boolean = {
+    sideVal >= CROP_SIDE_MIN_PX  &&  sideVal <= CROP_SIDE_MAX_PX
+  }
+  /** Проверка одного параметра сдвига кропа на соотвествие критериям. */
+  private def isCropOffsetValid(offsetVal: Int): Boolean = {
+    offsetVal >= 0 && offsetVal <= CROP_OFFSET_MAX_PX
+  }
+
+  /** Маппинг обязательного параметра кропа на реальность. */
+  def imgCropM: Mapping[ImgCrop] = {
+    nonEmptyText(minLength = 4, maxLength = 16)
+      .transform[Option[ImgCrop]] (ImgCrop.maybeApply, _.map(_.toCropStr).getOrElse(""))
+      .verifying("crop.invalid", _.isDefined)
+      .transform[ImgCrop](_.get, Some.apply)
+      .verifying("crop.height.invalid",   {crop => isCropSideValid(crop.height)} )
+      .verifying("crop.width.invalid",    {crop => isCropSideValid(crop.width)} )
+      .verifying("crop.offset.x.invalid", {crop => isCropOffsetValid(crop.offX)} )
+      .verifying("crop.offset.y.invalid", {crop => isCropOffsetValid(crop.offY)} )
+  }
+
+
+  def imgCropOptM: Mapping[Option[ImgCrop]] = {
     val txtM = text(maxLength = 16).transform(FormUtil.strTrimSanitizeLowerF, FormUtil.strIdentityF)
     optional(txtM)
       .transform[Option[String]] (_.filter(!_.isEmpty), identity)
@@ -405,6 +430,26 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Проверить и уточнить значение кропа картинки.
+   * До 2014.oct.08 была замечена проблема с присылаемым на сервер кропом, а после dyn-img это обрушивало всю красоту системы.
+   * Баг был в том, что кроп уходил за пределы картинки.
+   * @param crop Кроп.
+   * @param targetSz Целевой размер картинки.
+   * @param srcSz Исходный размер картинки.
+   * @return Пофикшенный crop.
+   */
+  def repairCrop(crop: ImgCrop, targetSz: MImgSizeT, srcSz: MImgSizeT): ImgCrop = {
+    var newCrop = crop
+    // Пофиксить offset'ы кропа. Кроп может по сдвигу уезжать за пределы допустимой ширины/длины.
+    if (crop.offX + crop.width > srcSz.width)
+      newCrop = crop.copy(offX = srcSz.width - crop.width)
+    if (crop.offY + crop.height > srcSz.height)
+      newCrop = crop.copy(offY = srcSz.height - crop.height)
+    newCrop
+  }
+
+
   def identifyInfo2md(info: Info): Map[String, String] = {
     Map(
       IMETA_WIDTH  -> info.getImageWidth.toString,
@@ -497,11 +542,15 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         OrigImgIdKey(m.filename, m.meta)
     }
   }
+
 }
+
+/** Базовый трейт для sioweb-реализаций image util. */
+sealed trait SiowebImageUtilT extends SioImageUtilT with PlayMacroLogsImpl
 
 
 /** Резайзилка картинок, используемая для генерация "оригиналов", т.е. картинок, которые затем будут кадрироваться. */
-object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+object OrigImageUtil extends SiowebImageUtilT {
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
@@ -527,7 +576,7 @@ object OrigImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 }
 
 
-object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+object ThumbImageUtil extends SiowebImageUtilT {
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
   val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.thumb.maxsize.h.px") getOrElse 256)
@@ -549,7 +598,7 @@ object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 
 
 /** Обработка логотипов. */
-object AdnLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+object AdnLogoImageUtil extends SiowebImageUtilT {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
@@ -572,7 +621,7 @@ object AdnLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 
 
 /** Там, где допустимы квалратные логотипы, используем этот трайт. */
-trait SqLogoImageUtil  extends SioImageUtilT with PlayMacroLogsImpl {
+trait SqLogoImageUtil extends SiowebImageUtilT {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
