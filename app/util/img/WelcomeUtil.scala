@@ -138,10 +138,6 @@ object WelcomeUtil {
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
       // Нужно запрещать ресайзить вверх картинку, если она маленькая:
-      .filter {
-        // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
-        case (bss, _) => bss isSmallerThan origMeta
-      }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
           override def call = routes.Img.getImg(oiik.filename)
@@ -149,7 +145,7 @@ object WelcomeUtil {
         }
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = DynImgArgs(oiik, imOps)
+        val dynArgs = DynImgArgs(oiik.uncropped, imOps)
         new ImgUrlInfoT {
           override def call = routes.Img.dynImg(dynArgs)
           override def meta = Some(bss)
