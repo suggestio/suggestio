@@ -281,3 +281,15 @@ trait ImgUrlInfoT {
   def meta: Option[MImgSizeT]
 }
 
+
+/**
+ * Объект хранит вызов к внешнему серверу.
+ * Это полезно при работе через CDN.
+ * @param url Ссылка для вызова.
+ * @param method - Обычно "GET", который по умолчанию и есть.
+ */
+class ExternalCall(
+  url: String,
+  method: String = "GET"
+) extends Call(method = method, url = url)
+

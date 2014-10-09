@@ -22,7 +22,7 @@ object Context {
 
   /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
     * то же время, на мастере только https. */
-  val SIO_PROTO_DFLT: String = configuration.getString("sio.proto.dflt") getOrElse "https"
+  val SIO_PROTO_DFLT: String = configuration.getString("sio.proto.dflt") getOrElse "http"
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
 
