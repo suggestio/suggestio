@@ -1,7 +1,6 @@
 package util.img
 
 import controllers.{routes, MarketShowcase}
-import io.suggest.ym.model.common.MImgSizeT
 import models.im._
 import scala.concurrent.Future
 import models._
