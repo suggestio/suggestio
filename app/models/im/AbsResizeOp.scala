@@ -57,9 +57,10 @@ case class AbsResizeOp(sz: MImgSizeT, flags: Seq[ImResizeFlag] = Nil) extends Im
 
   override def opCode = ImOpCodes.AbsResize
 
+  def flagsStr = flags.iterator.map(_.imChar).mkString("")
+
   override def addOperation(op: IMOperation): Unit = {
     if (flags.nonEmpty) {
-      val flagsStr = flags.iterator.map(_.imChar).mkString("")
       op.resize(sz.width, sz.height, flagsStr)
     } else {
       op.resize(sz.width, sz.height)
