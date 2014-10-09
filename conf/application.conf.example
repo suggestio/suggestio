@@ -220,26 +220,26 @@ ipgeobase.import.enabled = true
 ###############################################################################
 ## Настройки сжатия динамических картинок.
 ## device pixel ratio ~ 1.0
-dpr.MDPI.bg.quality = 75
-dpr.MDPI.bg.chroma.ss = a
+dpr.MDPI.bg.quality = 70
+dpr.MDPI.bg.chroma.ss = b
 #dpr.MDPI.bg.blur.gauss = 0.05
 
-dpr.MDPI.fg.quality = 89
+dpr.MDPI.fg.quality = 80
 dpr.MDPI.fg.chroma.ss = a
 #dpr.MDPI.fg.blur.gauss = 0.05
 
 ## device pixel ratio ~ 1.5
-dpr.HDPI.bg.quality = 70
-dpr.HDPI.fg.quality = 75
-dpr.HDPI.fg.chroma.ss = a
+dpr.HDPI.bg.quality = 60
+dpr.HDPI.fg.quality = 65
+dpr.HDPI.fg.chroma.ss = c
 
 ## device pixel ratio ~ 2.0
-dpr.XHDPI.bg.quality = 64
-dpr.XHDPI.fg.quality = 70
-dpr.XHDPI.fg.chroma.ss = a
+dpr.XHDPI.bg.quality = 45
+dpr.XHDPI.fg.quality = 50
+dpr.XHDPI.fg.chroma.ss = c
 
 ## device pixel ratio ~ 3.0
-dpr.DPR3.bg.quality = 55
-dpr.DPR3.fg.quality = 65
-dpr.DPR3.fg.chroma.ss = a
+dpr.DPR3.bg.quality = 35
+dpr.DPR3.fg.quality = 40
+dpr.DPR3.fg.chroma.ss = d
 
