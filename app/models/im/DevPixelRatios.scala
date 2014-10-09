@@ -60,7 +60,8 @@ object DevPixelRatios extends Enumeration {
     override val fgCompression = ImCompression(
       name = name,
       mode = "fg",
-      qDflt = 75
+      qDflt = 75,
+      chromaSsDflt = ImSamplingFactors.SF_1x1
     )
   }
 
@@ -76,7 +77,8 @@ object DevPixelRatios extends Enumeration {
     override val fgCompression = ImCompression(
       name = name,
       mode = "fg",
-      qDflt = 70
+      qDflt = 70,
+      chromaSsDflt = ImSamplingFactors.SF_1x1
     )
   }
 
@@ -92,7 +94,8 @@ object DevPixelRatios extends Enumeration {
     override val fgCompression = ImCompression(
       name = name,
       mode = "fg",
-      qDflt = 65
+      qDflt = 65,
+      chromaSsDflt = ImSamplingFactors.SF_1x1
     )
   }
 
@@ -132,13 +135,15 @@ object ImCompression {
    */
   def apply(name: String, mode: String, qDflt: Int, chromaSsDflt: ImSamplingFactor = ImSamplingFactors.SF_2x2,
             imBlurDflt: Option[Float] = None): ImCompression = {
+    // Пытаемся получить параметры сжатия из конфига
     ImCompression(
-      imQualityInt      = configuration.getInt(s"dpr.$name.$mode.quality")
+      imQualityInt = configuration.getInt(s"dpr.$name.$mode.quality")
         .getOrElse(qDflt),
       chromaSubSampling = configuration.getString(s"dpr.$name.$mode.chroma.ss")
         .fold(chromaSsDflt)(ImSamplingFactors.withName),
-      imBlur            = configuration.getDouble(s"dpr.$name.$mode.blur.gauss")
+      imBlur = configuration.getDouble(s"dpr.$name.$mode.blur.gauss")
         .map(_.toFloat)
+        .orElse(imBlurDflt)
     )
   }
 

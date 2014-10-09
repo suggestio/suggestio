@@ -231,12 +231,15 @@ dpr.MDPI.fg.chroma.ss = a
 ## device pixel ratio ~ 1.5
 dpr.HDPI.bg.quality = 70
 dpr.HDPI.fg.quality = 75
+dpr.HDPI.fg.chroma.ss = a
 
 ## device pixel ratio ~ 2.0
 dpr.XHDPI.bg.quality = 64
 dpr.XHDPI.fg.quality = 70
+dpr.XHDPI.fg.chroma.ss = a
 
 ## device pixel ratio ~ 3.0
 dpr.DPR3.bg.quality = 55
 dpr.DPR3.fg.quality = 65
+dpr.DPR3.fg.chroma.ss = a
 

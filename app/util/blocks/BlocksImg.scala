@@ -156,6 +156,7 @@ trait SaveBgImgI extends ISaveImgs with ValT {
 
         // Настройки сохранения результирующей картинки (аккамулятор).
         var imOpsAcc: List[ImOp] = List(
+          StripOp,
           ImInterlace.Plane,
           fgc.chromaSubSampling,
           fgc.imQualityOp
