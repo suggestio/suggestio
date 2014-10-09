@@ -111,7 +111,7 @@ object WelcomeUtil {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
         val oiik = OrigImgIdKey.apply(bgImgFilename)
-        oiik.getImageWH map {
+        oiik.getBaseImageWH map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
