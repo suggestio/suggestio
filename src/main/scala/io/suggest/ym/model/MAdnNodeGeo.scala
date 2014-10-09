@@ -11,6 +11,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
+import io.suggest.util.MyConfig.CONFIG
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import org.elasticsearch.action.search.SearchResponse
@@ -20,7 +21,6 @@ import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilde
 import org.joda.time.DateTime
 import play.api.libs.json._
 
-import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -435,6 +435,9 @@ object NodeGeoLevels extends Enumeration(1) {
 
     /** Предлагаемый масштаб osm-карты при отображении объекта на ней в полный рост. */
     def osmMapScale: Int
+
+    /** Точность в метрах, в рамках которой имеет смысл детектить что-либо на этом уровне. */
+    def accuracyMetersMax: Option[Int] = CONFIG.getInt(s"geo.node.level.$esfn.accuracy.max.meters")
   }
 
   type NodeGeoLevel = Val
@@ -447,6 +450,7 @@ object NodeGeoLevels extends Enumeration(1) {
     override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
     override def precision = "50m"
     override def osmMapScale = 16
+    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(400) }
   }
 
   val NGL_TOWN_DISTRICT: NodeGeoLevel = new Val("td") {
@@ -458,6 +462,7 @@ object NodeGeoLevels extends Enumeration(1) {
     /** У "Районов города" есть короткое название - "Районы" */
     override val l10nSingularShort = "District"
     override val l10nPluralShort = l10nSingularShort + "s"
+    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(3000) }
   }
 
   val NGL_TOWN: NodeGeoLevel = new Val("to") {
@@ -466,6 +471,7 @@ object NodeGeoLevels extends Enumeration(1) {
     override def precision = "5km"
     override def isHighest = true
     override def osmMapScale = 10
+    override def accuracyMetersMax: Option[Int] = None
   }
 
   def default = NGL_BUILDING
