@@ -337,7 +337,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** dyn-img-экшен, в котором картинка точно отрабатывается с модификациями относительно оригинала,
     * т.е. список args.imOps не пустой. */
   private def _dynImg(args: DynImgArgs) = Action.async { implicit request =>
-    trace("_dynImg(): " + request.rawQueryString)
+    //trace("_dynImg(): " + request.rawQueryString)
     val oiik = args.imgId.asInstanceOf[OrigImgIdKey]
     // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
     val rowKeyStr = oiik.data.rowKey
