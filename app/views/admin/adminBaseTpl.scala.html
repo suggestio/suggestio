@@ -1,10 +1,12 @@
-@(title:String = "Admin", headAfter:Option[Html] = None)(content: Html)(implicit c:util.Context)
+@(title:String = "Admin", headAfter:Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@import util.cdn.CdnUtil
 
 @headAfter1 = {
-  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_base.css")"/>
+  <link rel="stylesheet" type="text/css" href="@CdnUtil.asset("stylesheets/admin_base.css")" />
   @headAfter
 }
 
-@main(title, headAfter=Some(headAfter1), withHeadCommon=false, withAnalytics=false) {
+@main(title, headAfter=Some(headAfter1), withHeadCommon=false) {
   @content
 }

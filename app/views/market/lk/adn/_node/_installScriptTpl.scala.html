@@ -1,4 +1,12 @@
-@(adnNodeId: Option[String])(implicit ctx: Context)
+@(adnNodeId: Option[String], mkPermanent: Boolean)(implicit ctx: Context)
+
+@* Генерация JS'а для запуска выдачи sio-market.
+   - mkPermanent = true означает, что сгенеренный результат может долго жить в неизменном виде,
+     например, встроен в неподконтрольный сайт. Тут нужно быть аккуратнее с кешированием.
+     false значит, что этот скрипт одноразовый, и можно выкрутить кеширование и прочие оптимизации трафика на максимум.
+*@
+
+@import util.showcase.ShowcaseUtil
 
 (function(){
   window.siomart_id='@adnNodeId';
@@ -6,7 +14,7 @@
   var _siom=document.createElement("script");
   _siom.type="text/javascript";
   _siom.async=true;
-  _siom.src=window.siomart_host + "@routes.Assets.at("javascripts/market/showcase/showcase2.js?v=1")";
+  _siom.src="@ShowcaseUtil.showcaseJsAbsUrl(mkPermanent)";
   var _sh=document.getElementsByTagName("head")[0];
   _sh.appendChild(_siom);
 })();

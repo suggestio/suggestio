@@ -3,7 +3,7 @@ package controllers
 import io.suggest.model.ImgWithTimestamp
 import io.suggest.util.UuidUtil
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, DateTimeUtil}
+import _root_.util.{FormUtil, PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.joda.time.{ReadableInstant, DateTime, Instant}
 import play.api.Play, Play.{current, configuration}
@@ -275,10 +275,12 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   }
 
 
-  private val imgCropFormM = Form(tuple(
+  /** Маппинг данных кропа картинки. */
+  private def imgCropFormM = Form(tuple(
     "imgId"  -> ImgFormUtil.imgIdM,
     "crop"   -> ImgFormUtil.imgCropM,
-    "marker" -> optional(text(maxLength = 32))
+    "marker" -> optional(text(maxLength = 32)),
+    "target" -> FormUtil.whSizeM
   ))
 
   /** Сабмит запроса на кадрирование картинки. В сабмите данные по исходной картинке и данные по кропу. */
@@ -288,11 +290,20 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
         NotAcceptable("crop request parse failed")
       },
-      {case (iik0, icrop, markerOpt) =>
-        // В будущем уже есть на руках исходная картинка. Надо запустить кроп.
-        iik0.toTempPictOrig map { origMptmp =>
-          // TODO Нужно дополнительно провалидировать значение icrop, чтобы не было попыток DoS-атаки через 100000000x100000000+10000000...
-          val cropOpt = Some(icrop)
+      {case (iik0, icrop, markerOpt, targetSz) =>
+        // Запрашиваем исходную картинку:
+        val preparedTmpImgFut = iik0.toTempPictOrig
+        // 2014.oct.08 Нужно чинить кроп, т.к. форма может засабмиттить его с ошибками.
+        val crop2Fut = iik0.getBaseImageWH.map { whOpt =>
+          whOpt.fold(icrop) { wh =>
+            ImgFormUtil.repairCrop(icrop, targetSz = targetSz, srcSz = wh)
+          }
+        }
+        for {
+          origMptmp <- preparedTmpImgFut
+          crop2     <- crop2Fut
+        } yield {
+          val cropOpt = Some(crop2)
           val croppedMptmpData = origMptmp.data.copy(cropOpt = cropOpt)
           val croppedMptmp = MPictureTmp(data = croppedMptmpData)
           OrigImageUtil.convert(
@@ -326,7 +337,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** dyn-img-экшен, в котором картинка точно отрабатывается с модификациями относительно оригинала,
     * т.е. список args.imOps не пустой. */
   private def _dynImg(args: DynImgArgs) = Action.async { implicit request =>
-    trace("_dynImg(): " + request.rawQueryString)
+    //trace("_dynImg(): " + request.rawQueryString)
     val oiik = args.imgId.asInstanceOf[OrigImgIdKey]
     // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
     val rowKeyStr = oiik.data.rowKey

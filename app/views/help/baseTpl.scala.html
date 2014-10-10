@@ -3,9 +3,10 @@
 @import stuff._
 @import c.lang
 @import crawl._
+@import util.cdn.CdnUtil
 
 @headAfter1 = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.css")"/>
+    <link rel="stylesheet" type="text/css" href="@CdnUtil.asset("stylesheets/help_base.css")"/>
     @headAfter
 }
 
@@ -21,7 +22,7 @@
 	<div class="header"></div>
 
 	<div class="main-layout">
-		<a class="logo" href="/"></a>
+		<a class="logo" href="@MAIN_PAGE_CALL"></a>
 		<div class="help-layout">
 			@* тут ссылки меню помощи *@
 			<div class="help-topics">

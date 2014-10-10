@@ -1,10 +1,10 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import common._
 @import util.blocks.BlocksConf.{Block7 => bc}
 
-@blockBase(isStandalone, mad, bc,
+@blockBase(args, mad, bc,
   style = mad.colors.get(bc.saleMaskColorBf.name).map(bgc => s"border-color: #$bgc;")
 ) {
 

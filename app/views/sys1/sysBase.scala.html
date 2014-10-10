@@ -1,4 +1,5 @@
 @(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
 @import stuff._
 
 @* base-шаблон для системной панели suggest.io. *@
@@ -8,8 +9,8 @@
   <head>
     <title>@title | system | s.io</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/sys.css")'/>
+    <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/sys.css")'/>
     @headAfter
   </head>
 
@@ -19,7 +20,7 @@
 
         <div class="header_cnt">
           <a class="siom-logo-def" href="@routes.Sys.index">
-            <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+            <img src='@routes.Assets.versioned("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
           </a>
           @ctx.usernameOpt.map { username =>
 
@@ -64,9 +65,9 @@
     </div>
 
 
-    <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
-    <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
-    <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/market/lk/mx_dev.js")"></script>
 
 
     </body>

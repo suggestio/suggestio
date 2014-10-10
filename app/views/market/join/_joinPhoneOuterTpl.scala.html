@@ -2,8 +2,10 @@
 
 @* Обрамляющая верстка в /m, отображаемая только на телефоне. *@
 
+@import util.cdn.CdnUtil
+
 <a class="index-page_logo-link" href="@routes.Market.index" >
-  <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+  <img class="index-page_logo-image" src='@CdnUtil.asset("images/market/index/logo_retina.png")'/>
 </a>
 
 @content

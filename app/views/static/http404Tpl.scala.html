@@ -1,9 +1,12 @@
 @()(implicit c:util.Context)
+
+@import util.cdn.CdnUtil
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Suggest.io | Page not found</title>
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_http404.css")"/>
+    <link rel="stylesheet" type="text/css" href="@CdnUtil.asset("stylesheets/static_http404.css")"/>
 </head>
 <body>
 	

@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: util.Context)
 
 @import ctx._
 @import util.blocks.BlocksUtil._
@@ -8,7 +8,7 @@
 @import util.blocks.BlocksConf.{Block2 => bc}
 @import BSvgColorNames._
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @mad.offers.headOption.map { offer =>
     @offer.discount.map { discount =>
@@ -27,7 +27,7 @@
 
       <!--<div class="mask"></div>-->
       <div class="bg">
-        @bgImgTpl(mad,  bc,  dfltImg = Some("images/market/blocks/tpl2-bg.jpg"),  style = Some("height: auto;"))
+        @bgImgTpl(mad,  bc,  args,  dfltImg = Some("images/market/blocks/tpl2-bg.jpg"),  style = Some("height: auto;"))
       </div>
     </div>
 

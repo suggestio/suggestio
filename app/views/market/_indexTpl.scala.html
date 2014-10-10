@@ -3,6 +3,7 @@
 @import ctx._
 @import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
+@import util.cdn.CdnUtil
 
 
 <div class="body __responsive index-page_cnt">
@@ -10,7 +11,7 @@
   <div class="body_cnt __responsive" id="centerContent">
 
     <a class="index-page_logo-link" href="@routes.Market.index" >
-      <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+      <img class="index-page_logo-image" src='@routes.Assets.versioned("images/market/index/logo_retina.png")'/>
     </a>
 
     <div class="index-page_adv-btn">
@@ -50,7 +51,7 @@
             <div class="wifi-points_i-w js-wifi-point">
               <a class="wifi-points_i js-card-btn" data-href="@routes.Market.adnNodePopup(node.id.get)" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);" title="@node.meta.name / @node.meta.town">
                 <!--В nodes ожидаются только узлы с загруженными логотипами, поэтому проверок дополнительных не делаем:-->
-                <img src='@node.logoImgOpt.map { img =>@routes.Img.getImg(img.filename)}' alt="@node.meta.name"/>
+                <img src='@node.logoImgOpt.map { img =>@CdnUtil.getImg(img.filename)}' alt="@node.meta.name"/>
               </a>
             </div>
           }

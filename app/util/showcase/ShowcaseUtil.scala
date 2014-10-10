@@ -1,10 +1,12 @@
 package util.showcase
 
+import controllers.routes
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
-import models.{AdSearch, BlockConf, MMartCategory}
+import models._
 import util.blocks.BlocksConf
 import play.api.Play.{current, configuration}
+import util.cdn.CdnUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -19,6 +21,9 @@ object ShowcaseUtil {
 
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
+
+  /** Путь до ассета со скриптом выдачи. */
+  val SHOWCASE_JS_ASSET = configuration.getString("showcase.js.asset.path") getOrElse "javascripts/market/showcase/showcase2.js"
 
   def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
@@ -96,6 +101,30 @@ object ShowcaseUtil {
       }
     }
     (catsStatsFut, mmcatsFut)
+  }
+
+
+  /** Генерация абсолютной ссылки на скрипт showcase2.js.
+    * @param mkPermanentUrl Создавать постоянную ссылку. Такая ссылка может быть встроена на другие сайты.
+    *                       У неё проблемы с геоэффективным кешированием, но она не будет изменятся во времени.
+    * @param ctx Контекст рендера шаблонов.
+    * @return Строка абсолютной ссылки (URL).
+    */
+  def showcaseJsAbsUrl(mkPermanentUrl: Boolean)(implicit ctx: Context): String = {
+    if (mkPermanentUrl) {
+      // Генерим ссылку на скрипт, которой потом можно будет поделится с другим сайтом.
+      ctx.currAudienceUrl + routes.Assets.at(SHOWCASE_JS_ASSET).url
+    } else {
+      // Генерим постоянную ссылку на ассет с бешеным кешированием и возможностью загона в CDN.
+      val call1 = CdnUtil.asset(SHOWCASE_JS_ASSET)
+      if(call1.isInstanceOf[ExternalCall]) {
+        // У нас тут ссылка на CDN.
+        call1.url
+      } else {
+        // Поддержка CDN невозможна. Допиливаем адрес до абсолютной ссылки.
+        ctx.currAudienceUrl + call1.url
+      }
+    }
   }
 
 }

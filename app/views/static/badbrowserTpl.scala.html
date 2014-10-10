@@ -3,9 +3,10 @@
 @* Сообщение о проблеме с браузером (js отключен) *@
 
 @import c.lang
+@import util.cdn.CdnUtil
 
 @headAfter = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/badbrowser.css")"/>
+    <link rel="stylesheet" type="text/css" href="@CdnUtil.asset("stylesheets/badbrowser.css")"/>
 }
 
 @browserCheck = {

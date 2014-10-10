@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import common._
@@ -9,7 +9,7 @@
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 @defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) ) { borderColor =>
 
-  @blockBase(isStandalone, mad, bc, style = Some(s"background: #$fillColor;")) {
+  @blockBase(args, mad, bc, style = Some(s"background: #$fillColor;")) {
 
     @defining( Map(Fill -> "ffffff", Border -> borderColor) ) { colorsMap =>
       <img class="left-border abs" alt=""
@@ -19,7 +19,7 @@
            src="@routes.MarketShowcase.blockSvg(BlocksSvg.block6RightBorder, colorsMap)" />
     }
 
-    @bgImgTpl(mad, bc,
+    @bgImgTpl(mad, bc, args,
       dfltImg  = Some("images/market/blocks/tpl6-bg.jpg"),
       cssClass = Some("bg abs")
     )

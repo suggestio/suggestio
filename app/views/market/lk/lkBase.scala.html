@@ -15,18 +15,18 @@
   <title>@title | market | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/lightbox/css/lightbox.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/common.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase_previews.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/lightbox/css/lightbox.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk_new-design/lk.css")'/>
 
-  <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
+  <script src='@routes.Assets.versioned("javascripts/jquery.min.js")'></script>
   @headAfter
 </head>
 
@@ -34,13 +34,13 @@
 
     <header class="header">
       <a class="header_logo-link" href="@routes.Market.index()">
-        <img class="header_logo-image" src='@routes.Assets.at("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
+        <img class="header_logo-image" src='@routes.Assets.versioned("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
       </a>
 
       <div class="header_cnt">
 
         @if(nodeOpt.isEmpty) {
-          <img class="header_logo-text" src='@routes.Assets.at("images/market/index/logo_retina.png")' width="101" height="26"/>
+          <img class="header_logo-text" src='@routes.Assets.versioned("images/market/index/logo_retina.png")' width="101" height="26"/>
         } else {
           @nodeOpt.map { node =>
             <span class="header_logo-text">@node.meta.name</span>
@@ -109,14 +109,14 @@
   </div>*@
 
 
-  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
-  <script src="@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
-  <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
-  <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
-  <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
-  <script src="@routes.Assets.at("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
-  <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
-  <script src='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
+  <script src='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 
 </body>
 </html>

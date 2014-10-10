@@ -3,6 +3,8 @@
 @* Рендер страницы приветствия, если таковая имеется.
    Она может отсутствовать, иметь фон цвета или фон картинки. *@
 
+@import util.cdn.CdnUtil
+
 @args.welcomeOpt.fold {
   @* Нету карточки приветствия. *@
   <div id="smWelcomeAd" class="sm-welcome-ad" style="background: #@args.bgColor;">
@@ -41,7 +43,7 @@
       <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
-           src="@routes.Img.getImg(fgImage.filename)"/>
+           src="@CdnUtil.getImg(fgImage.filename)"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@

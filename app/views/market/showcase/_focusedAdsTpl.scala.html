@@ -1,7 +1,9 @@
-@(mads: Seq[MAd], adSearch: AdSearch, producer: MAdnNode, bgColor: String, adsCount: Int, startIndex: Int = 0)(implicit ctx: util.Context)
+@(mads: Seq[MAd], adSearch: AdSearch, producer: MAdnNode, bgColor: String, adsCount: Int, startIndex: Int = 0)(implicit ctx: Context)
 
 @* Рендер под-выдачи для просмотра развёрных карточек.
-Появляется поверх при клике по какой-то карточке в общей плитке. *@
+   Появляется поверх при клике по какой-то карточке в общей плитке. *@
+
+@import util.cdn.CdnUtil
 
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
 @* Список карточек указанного продюссера *@
@@ -12,7 +14,7 @@
   </div>
 
   @producer.logoImgOpt.map { logoImg =>
-    <img class="sm-producer-header_logo" height="30" src="@routes.Img.getImg(logoImg.filename)"/>
+    <img class="sm-producer-header_logo" height="30" src="@CdnUtil.getImg(logoImg.filename)"/>
   }
 
 </div>
