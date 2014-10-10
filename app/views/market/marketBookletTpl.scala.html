@@ -1,6 +1,7 @@
 @()(implicit ctx: Context)
 
 @import controllers.MarketShowcase.DEMO_ADN_ID_OPT
+@import util.cdn.CdnUtil
 
 @* Страница с вертикальной презенташкой sio market. *@
 
@@ -14,8 +15,8 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.css")'/>
-    <link href='@routes.Assets.at("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+    <link href='@CdnUtil.asset("stylesheets/market/booklet.css")' rel="stylesheet" type="text/css" />
 
 
 
@@ -100,7 +101,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 1</h3>
             <div class="phones_step-img">
-              <img src='@routes.Assets.at("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
+              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Нажмите на адресную строку браузера,
@@ -110,7 +111,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 2</h3>
             <div class="phones_step-img">
-              <img src='@routes.Assets.at("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
+              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку <br/>
@@ -120,7 +121,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 3</h3>
             <div class="phones_step-img">
-              <img src='@routes.Assets.at("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
+              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку<br/>
@@ -130,7 +131,7 @@
           <div class="phones_step-i __last">
             <h3 class="phones_step-t">Шаг 4</h3>
             <div class="phones_step-img">
-              <img src='@routes.Assets.at("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
+              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Теперь вы можете заходить <br/>
@@ -145,7 +146,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 1</h3>
             <div class="phones_step-img __big">
-              <img src='@routes.Assets.at("images/market/booklet/android-photo-1_retina.png")' width="211"/>
+              <img src='@CdnUtil.asset("images/market/booklet/android-photo-1_retina.png")' width="211"/>
             </div>
             <p class="phones_step-descr">
               Нажмите на кнопку выбора инструментов
@@ -155,7 +156,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 2</h3>
             <div class="phones_step-img __big">
-              <img src='@routes.Assets.at("images/market/booklet/android-photo-2_retina.png")' width="174"/>
+              <img src='@CdnUtil.asset("images/market/booklet/android-photo-2_retina.png")' width="174"/>
             </div>
             <p class="phones_step-descr">
               Выберите из появившегося меню <br/>
@@ -165,7 +166,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 3</h3>
             <div class="phones_step-img __big">
-              <img src='@routes.Assets.at("images/market/booklet/android-photo-3_retina.png")' width="174" />
+              <img src='@CdnUtil.asset("images/market/booklet/android-photo-3_retina.png")' width="174" />
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку
@@ -175,7 +176,7 @@
           <div class="phones_step-i __last">
             <h3 class="phones_step-t">Шаг 4</h3>
             <div class="phones_step-img __big">
-              <img src='@routes.Assets.at("images/market/booklet/android-photo-4_retina.png")' width="174"/>
+              <img src='@CdnUtil.asset("images/market/booklet/android-photo-4_retina.png")' width="174"/>
             </div>
             <p class="phones_step-descr">
               Теперь вы можете заходить <br/>
@@ -280,7 +281,7 @@
         <div class="levels_cnt">
           <span class="levels_text">Строка <span class="levels_link">Live Search</span> дает возможность быстрого поиска товаров и услуг.</span>
           <div class="levels_btn">
-            <a class="btn __helper-green __size-M" href="/">Попробовать</a>
+            <a class="btn __helper-green __size-M" href="@MAIN_PAGE_CALL">Попробовать</a>
           </div>
         </div>
       </div>
@@ -459,9 +460,9 @@
 
 
 
-    <script src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
-    <script src="@routes.Assets.at("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
-    <script src='@routes.Assets.at("javascripts/market/booklet.js")'></script>
+    <script src='@CdnUtil.asset("javascripts/jquery.min.js")'></script>
+    <script src="@CdnUtil.asset("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+    <script src='@CdnUtil.asset("javascripts/market/booklet.js")'></script>
 
 
   </body>

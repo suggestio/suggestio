@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import common._
@@ -8,7 +8,7 @@
 
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 @defining( mad.colors.get(bc.saleMaskColorBf.name) ) { saleColorOpt =>
-@blockBase(isStandalone, mad, bc,
+@blockBase(args, mad, bc,
   style = Some(s"background: #$fillColor; ${saleColorOpt.map(sc => "border-color: #@sc;")}")
 ) {
     <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>

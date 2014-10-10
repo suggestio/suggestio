@@ -47,6 +47,15 @@ siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
 
 
 ###############################################################################
+## CDN
+###############################################################################
+## Что приписывать перед ссылкой на CDN-барахло?
+#cdn.protocols   = ["http", "https"]
+#cdn.hosts.http  = ["localhost:9000"]
+#cdn.hosts.https = ["vasya.cdnvideo.ru"]
+
+
+###############################################################################
 ## EMAIL
 ###############################################################################
 smtp.host="192.168.101.9"
@@ -213,4 +222,33 @@ radius.server.tiny.enabled = true
 
 ## Включать ли периодический импорт ipgeobase? Первая итерация при старте, потом по таймеру. [false]
 ipgeobase.import.enabled = true
+
+
+###############################################################################
+## DynImg: настройки отображаемых картинок под экраны
+###############################################################################
+## Настройки сжатия динамических картинок.
+## device pixel ratio ~ 1.0
+dpr.MDPI.bg.quality = 70
+dpr.MDPI.bg.chroma.ss = b
+#dpr.MDPI.bg.blur.gauss = 0.05
+
+dpr.MDPI.fg.quality = 80
+dpr.MDPI.fg.chroma.ss = a
+#dpr.MDPI.fg.blur.gauss = 0.05
+
+## device pixel ratio ~ 1.5
+dpr.HDPI.bg.quality = 70
+dpr.HDPI.fg.quality = 72
+dpr.HDPI.fg.chroma.ss = c
+
+## device pixel ratio ~ 2.0
+dpr.XHDPI.bg.quality = 55
+dpr.XHDPI.fg.quality = 60
+dpr.XHDPI.fg.chroma.ss = a
+
+## device pixel ratio ~ 3.0
+dpr.DPR3.bg.quality = 50
+dpr.DPR3.fg.quality = 55
+dpr.DPR3.fg.chroma.ss = d
 

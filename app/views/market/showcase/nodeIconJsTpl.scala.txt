@@ -1,5 +1,6 @@
 @(adnNode: MAdnNode)(implicit ctx: util.Context)
 @import util.CoffeeScriptTemplate._
+@import util.cdn.CdnUtil
 @coffee{
 
 ########################################
@@ -10,7 +11,7 @@ siom =
     sm_trigger_class : 'sio-mart-trigger'
     node_color : '@adnNode.meta.color'
     @adnNode.logoImgOpt.map { logoImg =>
-    logo_src : '@routes.Img.getImg(logoImg.filename)'
+    logo_src : '@CdnUtil.getImg(logoImg.filename)'
     }
   utils :
     elts_cache : {}

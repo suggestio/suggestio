@@ -1,8 +1,8 @@
 package util.img
 
 import controllers.{routes, MarketShowcase}
-import io.suggest.ym.model.common.MImgSizeT
 import models.im._
+import util.cdn.CdnUtil
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -101,7 +101,7 @@ object WelcomeUtil {
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT]): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
@@ -112,7 +112,7 @@ object WelcomeUtil {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
         val oiik = OrigImgIdKey.apply(bgImgFilename)
-        oiik.getImageWH map {
+        oiik.getBaseImageWH map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
@@ -133,25 +133,23 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+    val oiik2 = oiik.uncropped
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
-      .flatMap { scr => scr.maybeBasicScreenSize.map(_ -> scr) }
-      // Нужно запрещать ресайзить вверх картинку, если она маленькая:
-      .filter {
-        // TODO orig может быть жирноват по размеру, несмотря на малое разрешение.
-        case (bss, _) => bss isSmallerThan origMeta
+      .flatMap { scr =>
+        scr.maybeBasicScreenSize.map(_ -> scr)
       }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
-          override def call = routes.Img.getImg(oiik.filename)
+          override def call = CdnUtil.getImg(oiik2.filename)
           override def meta = Some(origMeta)
         }
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = DynImgArgs(oiik, imOps)
+        val dynArgs = DynImgArgs(oiik2, imOps)
         new ImgUrlInfoT {
-          override def call = routes.Img.dynImg(dynArgs)
+          override def call = CdnUtil.dynImg(dynArgs)
           override def meta = Some(bss)
         }
       }
@@ -164,16 +162,17 @@ object WelcomeUtil {
   def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
     val gravity = GravityOp(ImGravities.Center)
     val acc0: List[ImOp] = Nil
+    val bgc = screen.pixelRatio.bgCompression
     val acc1 = gravity ::
       AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
       gravity ::
       ExtentOp(scrSz) ::
       StripOp ::
-      screen.pixelRatio.imQualityOp ::
+      bgc.imQualityOp ::
       ImInterlace.Plane ::
-      screen.pixelRatio.chromaSubSampling ::
+      bgc.chromaSubSampling ::
       acc0
-    screen.pixelRatio
+    bgc
       .imGaussBlurOp
       .fold(acc1)(_ :: acc1)
   }

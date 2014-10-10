@@ -1,24 +1,24 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.blocks.BlocksConf.{Block26 => bc}
 
 @* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
 
   @mad.offers.headOption.fold {
-    @bgImgTpl(mad, bc)
+    @bgImgTpl(mad, bc, args)
   } { offer =>
 
     @offer.href.map { href =>
       <a href="@href" target="_blank">
     }
 
-    @bgImgTpl(mad, bc)
+    @bgImgTpl(mad, bc, args)
     @mad.offers.map { offer =>
       <div class="info el-@{offer.n + 1}">
         @offer.text1.map { text1 =>

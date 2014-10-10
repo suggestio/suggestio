@@ -1,11 +1,11 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.blocks.BlocksConf.{Block20 => bc}
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
-  @bgImgTpl(mad, bc,
+  @bgImgTpl(mad, bc, args,
     cssClass = Some("bg"),
     dfltImg = Some("images/market/blocks/tpl20-bg.jpg")
   )

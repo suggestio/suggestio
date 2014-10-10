@@ -1,9 +1,10 @@
-@(mad: MAdT, isStandalone: Boolean, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: Context)
 
 @import blocks.svg._
 @import BSvgColorNames._
+@import util.cdn.CdnUtil
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
     @defining( mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue) ) { fillColor =>
@@ -19,9 +20,7 @@
     <div class="bottom-bg abs" style="background: #@lineColor"></div>
   }
 
-
-
-  <img class="logo abs" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
+  <img class="logo abs" src="@bc.logoImgCdnCall(mad, Some("images/market/blocks/tpl5-logo.jpg"))" />
 
   @mad.offers.headOption.map { offer =>
     <div class="info abs">

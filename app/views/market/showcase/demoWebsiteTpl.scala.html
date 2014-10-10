@@ -2,6 +2,8 @@
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
+@import util.cdn.CdnUtil
+@import market.lk.adn._node._installScriptTpl
 
 <html>
 <head>
@@ -13,17 +15,17 @@
   }
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui">
-  <link rel="apple-touch-icon" href="/assets/images/market/app-logo.png"/>
+  <link rel="apple-touch-icon" href="@CdnUtil.asset("images/market/app-logo.png")"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <link type="text/css" rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/market/showcase.css")"/>
+  <link type="text/css" rel="stylesheet" media="screen" href="@CdnUtil.asset("stylesheets/market/showcase.css")"/>
 
 </head>
 
 <body class="sm-body">
 
 <script type="text/javascript">
-   @market.lk.adn._node._installScriptTpl( args.adnId );
+   @_installScriptTpl(args.adnId, mkPermanent = false);
    window.siomart_index = '@args.showcaseCall';
    window.with_geo = @args.withGeo;
 </script>

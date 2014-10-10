@@ -2,15 +2,16 @@
 
 @* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
 
-
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
+@import util.img.GalleryUtil
+
 
 @if(adnNode.gallery.nonEmpty) {
   <div class="tariff_photo-lst">
     <div class="js-photo-slider">
       @adnNode.gallery.map { imgId =>
-        <img class="tariff_photo-i" src="@routes.Img.getImg(imgId)">
+        <img class="tariff_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
       }
     </div>
   </div>
@@ -21,7 +22,6 @@
 }
 
 <div class="ovh">
-
 
   @adnNode.meta.address.map { address =>
     @market.lk.lkProp(){ Адрес } {

@@ -14,7 +14,7 @@ import util.img.{PicSzParsers, DevScreenParsers}
 object DevScreen extends DevScreenParsers {
 
   /** Биндер для отработки значения screen из ссылки. */
-  implicit def qsb = {
+  implicit val qsb = {
     new QueryStringBindable[DevScreen] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, DevScreen]] = {
         params.get(key)

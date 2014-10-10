@@ -9,6 +9,7 @@
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
 @import _node._
+@import util.img.GalleryUtil
 
 
 @content = {
@@ -62,15 +63,11 @@
         <p class="prop_name __block">Фотографии объекта:</p>
         <div class="profile_photo-lst">
           <div class="js-photo-slider">
-            @node.gallery.zipWithIndex.map { case (imgId, i) =>
 
-              <img class="profile_photo-i" src="@routes.Img.getImg(imgId)" />
-
-              @*<div class="image __size-M f-left @if(i % 4 == 0){ __first-in-line }">
-                <img class="image_src" src="@routes.Img.getThumb(imgId)" />
-                <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="image_remove-btn">Увеличить</a>
-              </div>*@
+            @node.gallery.map { imgId =>
+              <img class="profile_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
             }
+
           </div>
         </div>
       </div>
@@ -119,7 +116,7 @@
     }
 
     @if(isRcvr) {
-    <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
+      <a class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right js-btn" href="#installScriptPopup">СКРИПТ на САЙТ</a>
     }
 
   </div>

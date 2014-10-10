@@ -111,11 +111,8 @@ object AdStatUtil extends PlayMacroLogsImpl {
       }
     }
     // Вешаем логгирование результатов на запущенный реквест.
-    resultFut onComplete {
-      case Success(adStatId) =>
-        trace(s"saveStats(): Saved successful: id = $adStatId for $adsCount ads.")
-      case Failure(ex) =>
-        error(s"saveStats(): Failed to save statistics for $adsCount ads", ex)
+    resultFut onFailure { case ex =>
+      error(s"saveStats(): Failed to save statistics for $adsCount ads", ex)
     }
     // Возвращаем фьючерс.
     resultFut

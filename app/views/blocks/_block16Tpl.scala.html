@@ -1,11 +1,11 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import svg._
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.{Block16 => bc}
 @import common._
 
-@blockBase(isStandalone, mad, bc,
+@blockBase(args, mad, bc,
   style = Some(s"background: #${mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue)};")
 ) {
 

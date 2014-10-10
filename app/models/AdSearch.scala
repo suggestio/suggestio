@@ -1,5 +1,6 @@
 package models
 
+import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
@@ -21,7 +22,12 @@ object AdSearch {
   val MAX_RESULTS_DFLT = configuration.getInt("market.search.ad.results.count.dflt") getOrElse 20
 
   /** Макс.кол-во сдвигов в страницах. */
-  val MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
+  def MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
+
+  /** Максимальный абсолютный сдвиг в выдаче. */
+  val MAX_OFFSET: Int = MAX_PAGE_OFFSET * MAX_RESULTS_PER_RESPONSE
+
+
 
   private implicit def eitherOpt2list[T](e: Either[_, Option[T]]): List[T] = {
     e match {
@@ -34,7 +40,8 @@ object AdSearch {
   implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
                                  intOptB: QueryStringBindable[Option[Int]],
                                  longOptB: QueryStringBindable[Option[Long]],
-                                 geoModeB: QueryStringBindable[GeoMode]) = {
+                                 geoModeB: QueryStringBindable[GeoMode],
+                                 devScreenB: QueryStringBindable[Option[DevScreen]] ) = {
     new QueryStringBindable[AdSearch] {
 
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
@@ -49,8 +56,12 @@ object AdSearch {
           maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
           maybeGen       <- longOptB.bind(key + ".gen", params)
           maybeGeo       <- geoModeB.bind(key + ".geo", params)
+          maybeDevScreen <- devScreenB.bind(key + ".screen", params)
 
         } yield {
+          val maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
+            Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+          }
           Right(
             AdSearch(
               receiverIds = maybeRcvrIdOpt,
@@ -58,11 +69,9 @@ object AdSearch {
               catIds      = maybeCatIdOpt,
               levels      = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
               qOpt        = maybeQOpt,
-              maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
-                Math.min(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
-              },
+              maxResultsOpt = maxResultsOpt,
               offsetOpt   = eitherOpt2option(maybeOffsetOpt) map { offset =>
-                Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
+                Math.max(0,  Math.min(offset,  MAX_OFFSET))
               },
               forceFirstIds = maybeFirstId,
               generation  = maybeGen,
@@ -83,7 +92,8 @@ object AdSearch {
           intOptB.unbind(key + ".offset", value.offsetOpt),
           strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
           longOptB.unbind(key + ".gen", value.generation),
-          strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt)
+          strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt),
+          devScreenB.unbind(key + ".screen", value.screen)
         ) .filter(!_.isEmpty)
           .mkString("&")
       }
@@ -104,7 +114,8 @@ case class AdSearch(
   forceFirstIds : List[String] = Nil,
   generation    : Option[Long] = None,
   withoutIds    : List[String] = Nil,
-  geo           : GeoMode = GeoNone
+  geo           : GeoMode = GeoNone,
+  screen        : Option[DevScreen] = None
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

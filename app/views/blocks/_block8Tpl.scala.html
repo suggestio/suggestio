@@ -1,15 +1,15 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@(mad: MAdT, args: BlockRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import common._
 @import util.blocks.BlocksConf.{Block8 => bc}
 
-@blockBase(isStandalone, mad, bc) {
+@blockBase(args, mad, bc) {
 
   <div class="left-border abs"></div>
   <div class="right-border abs"></div>
 
-  @bgImgTpl(mad, bc,
+  @bgImgTpl(mad, bc, args,
     dfltImg = Some("images/market/blocks/tpl6-bg.jpg"),
     cssClass = Some("bg abs")
   )

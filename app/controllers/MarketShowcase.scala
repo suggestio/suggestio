@@ -209,7 +209,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.adnNode.id))
+    Ok(_installScriptTpl(request.adnNode.id, mkPermanent = true))
       .withHeaders(
         CONTENT_TYPE  -> "text/javascript; charset=utf-8",
         CACHE_CONTROL -> "public, max-age=36000"
@@ -272,7 +272,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         .toMap
     }
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
-    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)
+    val ctx = implicitly[Context]
+    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
     for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
@@ -280,7 +281,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       mmcats    <- mmcatsFut
     } yield {
       val args = SMShowcaseRenderArgs(
-        searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds).headOption.orElse(adnNode.geo.directParentIds.headOption).orElse(adnNode.id),
+        searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+          .headOption
+          .orElse(adnNode.geo.directParentIds.headOption)
+          .orElse(adnNode.id),
         bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
         fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
         name        = adnNode.meta.name,
@@ -293,7 +297,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         geoListGoBack = geoListGoBack,
         welcomeOpt  = waOpt
       )
-      renderShowcase(args, isGeo, adnNode.id)
+      renderShowcase(args, isGeo, adnNode.id)(ctx)
     }
   }
 
@@ -348,8 +352,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Готовы данные для рендера showcase indexTpl. Сделать это и прочие сопутствующие операции. */
   private def renderShowcase(args: SMShowcaseRenderArgs, isGeo: Boolean, currAdnId: Option[String])
-                            (implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
-    val html = indexTpl(args)
+                            (implicit ctx: Context): Result = {
+    import ctx.request
+    val html = indexTpl(args)(ctx)
     val jsonArgs: FieldsJsonAcc = List(
       "is_geo"      -> JsBoolean(isGeo),
       "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
@@ -407,7 +412,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "findAds" -> adsearch3
     }
     val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
-      trace(logPrefix + " Starting ads search using " + adSearch2)
       MAd.dynSearch(adSearch2)
     }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
@@ -420,7 +424,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
-      trace(s"$logPrefix Found ${mads.size} ads.")
       adSearch2Fut onSuccess { case adSearch2 =>
         AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
       }
@@ -530,7 +533,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val bc: BlockConf = BlocksConf(mad.blockMeta.blockId)
         // TODO Проверять карточку на опубликованность?
         cacheControlShort {
-          Ok( bc.renderBlock(mad, isStandalone = true) )
+          Ok( bc.renderBlock(mad, BlockRenderArgs(isStandalone = true)) )
         }
 
       case None =>

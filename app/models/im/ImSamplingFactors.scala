@@ -41,6 +41,9 @@ object ImSamplingFactors extends Enumeration {
   /** 4:2:2 (1/2 chroma horiz). */
   val SF_2x1: ImSamplingFactor     = Val("b", 2, 1)
 
+  /** 4:2:2 (1/2 chroma vert). */
+  val SF_1x2: ImSamplingFactor     = Val("c", 1, 2)
+
   /** 4:2:0 (1/2 chroma horiz, 1/2 chroma vert). */
   val SF_2x2: ImSamplingFactor     = Val("d", 2, 2)
 

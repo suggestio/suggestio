@@ -519,7 +519,7 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
         }
         madUpdFut onComplete {
           case Success(_) =>
-            debug(s"${logPrefix}Successfully updated rcvrs map for ad[$adId] for advs = ${advsOk.mkString(", ")}")
+            debug(s"${logPrefix}Successfully updated rcvrs map for ad[$adId] for advs = ${advsOk.iterator.flatMap(_.id).mkString(", ")}")
 
           case Failure(ex) =>
             error(s"${logPrefix}Failed to update ad[$adId] rcvrs. Rollbacking advOks update txn...", ex)
