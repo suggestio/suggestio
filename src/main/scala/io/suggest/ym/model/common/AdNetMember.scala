@@ -129,11 +129,15 @@ object AdnSinks extends Enumeration {
   def default = SINK_WIFI
 
   def maybeWithName(n: String): Option[AdnSink] = {
-    try {
-      Some( withName(n) )
-    } catch {
-      case ex: NoSuchElementException => None
-    }
+    values
+      .find(_.name == n)
+      .asInstanceOf[Option[AdnSink]]
+  }
+
+  def maybeWithLongName(ln: String): Option[AdnSink] = {
+    values
+      .find(_.longName == ln)
+      .asInstanceOf[Option[AdnSink]]
   }
 }
 

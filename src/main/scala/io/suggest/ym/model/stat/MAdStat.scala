@@ -6,6 +6,8 @@ import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.model.geo.GeoPoint
+import io.suggest.ym.model.common.AdnSinks
+import io.suggest.ym.model.common.AdnSinks.AdnSink
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTimeZone, DateTime}
@@ -63,6 +65,12 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val GENERATION_ESFN           = "gen"
   val CL_OS_VERSION_ESFN        = "osVsn"
   val CL_UID_ESFN               = "clUID"
+
+  val SCREEN_ORIENTATION_ESFN   = "scrOrient"
+  val SCREEN_RES_CHOOSEN_ESFN   = "scrResChoosen"
+  val PX_RATIO_CHOOSEN_ESFN     = "pxRatioChoosen"
+  val VIEWPORT_DECLARED_ESFN    = "viewportDecl"
+  val SHOWCASE_SINK_ESFN        = "scSink"
 
 
   /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */
@@ -214,26 +222,31 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
           case other => Seq(stringParser(other))
         }
       },
-      adsRendered = m.get(ADS_RENDERED_ESFN).fold(0)(intParser),
-      isLocalCl   = m.get(IS_LOCAL_CLIENT_ESFN).fold(false)(booleanParser),
-      onNodeIdOpt = m.get(ON_NODE_ID_ESFN).map(stringParser),
-      ua          = m.get(UA_ESFN).map(stringParser),
-      nodeName    = m.get(NODE_NAME_ESFN).map(stringParser),
-      personId    = m.get(PERSON_ID_ESFN).map(stringParser),
-      timestamp   = m.get(TIMESTAMP_ESFN).fold(new DateTime(1970,0,0))(dateTimeParser),
-      clIpGeo     = m.get(CLIENT_IP_GEO_EFSN).flatMap(GeoPoint.deserializeOpt),
-      clTown      = m.get(CLIENT_TOWN_ESFN).map(stringParser),
-      clGeoLoc    = m.get(CLIENT_GEO_LOC_ESFN).flatMap(GeoPoint.deserializeOpt),
-      clCountry   = m.get(COUNTRY_ESFN).map(stringParser),
-      clLocAccur  = m.get(CLIENT_LOC_ACCUR_ESFN).map(intParser),
-      clOSFamily  = m.get(CL_OS_FAMILY_ESFN).map(stringParser),
-      clAgent     = m.get(CL_AGENT_ESFN).map(stringParser),
-      clDevice    = m.get(CL_DEVICE_ESFN).map(stringParser),
-      clickedAdIds = m.get(CLICKED_AD_ID_ESFN).fold(Seq.empty[String])(strListParser),
-      generation  = m.get(GENERATION_ESFN).map(longParser),
-      clOsVsn     = m.get(CL_OS_VERSION_ESFN).map(stringParser),
-      clUid       = m.get(CL_UID_ESFN).map(stringParser),
-      id          = id
+      adsRendered     = m.get(ADS_RENDERED_ESFN).fold(0)(intParser),
+      isLocalCl       = m.get(IS_LOCAL_CLIENT_ESFN).fold(false)(booleanParser),
+      onNodeIdOpt     = m.get(ON_NODE_ID_ESFN).map(stringParser),
+      ua              = m.get(UA_ESFN).map(stringParser),
+      nodeName        = m.get(NODE_NAME_ESFN).map(stringParser),
+      personId        = m.get(PERSON_ID_ESFN).map(stringParser),
+      timestamp       = m.get(TIMESTAMP_ESFN).fold(new DateTime(1970,0,0))(dateTimeParser),
+      clIpGeo         = m.get(CLIENT_IP_GEO_EFSN).flatMap(GeoPoint.deserializeOpt),
+      clTown          = m.get(CLIENT_TOWN_ESFN).map(stringParser),
+      clGeoLoc        = m.get(CLIENT_GEO_LOC_ESFN).flatMap(GeoPoint.deserializeOpt),
+      clCountry       = m.get(COUNTRY_ESFN).map(stringParser),
+      clLocAccur      = m.get(CLIENT_LOC_ACCUR_ESFN).map(intParser),
+      clOSFamily      = m.get(CL_OS_FAMILY_ESFN).map(stringParser),
+      clAgent         = m.get(CL_AGENT_ESFN).map(stringParser),
+      clDevice        = m.get(CL_DEVICE_ESFN).map(stringParser),
+      clickedAdIds    = m.get(CLICKED_AD_ID_ESFN).fold(Seq.empty[String])(strListParser),
+      generation      = m.get(GENERATION_ESFN).map(longParser),
+      clOsVsn         = m.get(CL_OS_VERSION_ESFN).map(stringParser),
+      clUid           = m.get(CL_UID_ESFN).map(stringParser),
+      scrOrient       = m.get(SCREEN_ORIENTATION_ESFN).map(stringParser),
+      scrResChoosen   = m.get(SCREEN_RES_CHOOSEN_ESFN).map(stringParser),
+      pxRatioChoosen  = m.get(PX_RATIO_CHOOSEN_ESFN).map(intParser).map(v => v.toFloat / 10F),
+      viewportDecl    = m.get(VIEWPORT_DECLARED_ESFN).map(stringParser),
+      scSink          = m.get(SHOWCASE_SINK_ESFN).map(stringParser).flatMap(AdnSinks.maybeWithLongName),
+      id              = id
     )
   }
 
@@ -273,7 +286,12 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       FieldString(CLICKED_AD_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldNumber(GENERATION_ESFN, fieldType = long, index = analyzed, include_in_all = false),
       FieldString(CL_OS_VERSION_ESFN, index = not_analyzed, include_in_all = true),
-      FieldString(CL_UID_ESFN, index = not_analyzed, include_in_all = false)
+      FieldString(CL_UID_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(SCREEN_ORIENTATION_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(SCREEN_RES_CHOOSEN_ESFN, index = not_analyzed, include_in_all = true),
+      FieldNumber(PX_RATIO_CHOOSEN_ESFN, index = not_analyzed, include_in_all = false, fieldType = DocFieldTypes.integer),
+      FieldString(VIEWPORT_DECLARED_ESFN, index = no, include_in_all = false),
+      FieldString(SHOWCASE_SINK_ESFN, index = not_analyzed, include_in_all = true)
     )
   }
 
@@ -284,29 +302,34 @@ import MAdStat._
 
 
 final class MAdStat(
-  val clientAddr  : String,
-  val action      : AdStatAction,
-  val adIds       : Seq[String],
-  val adsRendered : Int,
-  val isLocalCl   : Boolean,
-  val onNodeIdOpt : Option[String],
-  val ua          : Option[String],
-  val nodeName    : Option[String]    = None,
-  val personId    : Option[String]    = None,
-  val timestamp   : DateTime          = new DateTime,
-  val clIpGeo     : Option[GeoPoint]  = None,
-  val clTown      : Option[String]    = None,
-  val clGeoLoc    : Option[GeoPoint]  = None,
-  val clCountry   : Option[String]    = None,
-  val clOSFamily  : Option[String]    = None,
-  val clAgent     : Option[String]    = None,
-  val clDevice    : Option[String]    = None,
-  val clLocAccur  : Option[Int]       = None,
-  val clickedAdIds : Seq[String]      = Nil,
-  val generation  : Option[Long]      = None,
-  val clOsVsn     : Option[String]    = None,
-  val clUid       : Option[String]    = None,
-  val id          : Option[String]    = None
+  val clientAddr          : String,
+  val action              : AdStatAction,
+  val adIds               : Seq[String],
+  val adsRendered         : Int,
+  val isLocalCl           : Boolean,
+  val onNodeIdOpt         : Option[String],
+  val ua                  : Option[String],
+  val nodeName            : Option[String]    = None,
+  val personId            : Option[String]    = None,
+  val timestamp           : DateTime          = new DateTime,
+  val clIpGeo             : Option[GeoPoint]  = None,
+  val clTown              : Option[String]    = None,
+  val clGeoLoc            : Option[GeoPoint]  = None,
+  val clCountry           : Option[String]    = None,
+  val clOSFamily          : Option[String]    = None,
+  val clAgent             : Option[String]    = None,
+  val clDevice            : Option[String]    = None,
+  val clLocAccur          : Option[Int]       = None,
+  val clickedAdIds        : Seq[String]       = Nil,
+  val generation          : Option[Long]      = None,   // запрошенный generation выдачи.
+  val clOsVsn             : Option[String]    = None,   // версия OS девайса клиента.
+  val clUid               : Option[String]    = None,   // UID клиента, выставленное через transient cookie.
+  val scrOrient           : Option[String]    = None,   // Ориентация экрана.
+  val scrResChoosen       : Option[String]    = None,   // Выбранное s.io сервером разрешение экрана (viewport'а)
+  val pxRatioChoosen      : Option[Float]     = None,   // Выбранный s.io сервером pixel ratio
+  val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
+  val scSink              : Option[AdnSink]   = None,   // sink выдачи: wifi, geo
+  val id                  : Option[String]    = None
 ) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MAdStat
@@ -355,6 +378,17 @@ final class MAdStat(
       acc1 ::= CL_OS_VERSION_ESFN -> JsString(clOsVsn.get)
     if (clUid.isDefined)
       acc1 ::= CL_UID_ESFN -> JsString(clUid.get)
+    if (scrOrient.isDefined)
+      acc1 ::= SCREEN_ORIENTATION_ESFN -> JsString(scrOrient.get)
+    if (scrResChoosen.isDefined)
+      acc1 ::= SCREEN_RES_CHOOSEN_ESFN -> JsString(scrResChoosen.get)
+    // Храним и индексируем через 10 x int, чтобы избежать лишней нагрузки на индекс из-за неточности float.
+    if (pxRatioChoosen.isDefined)
+      acc1 ::= PX_RATIO_CHOOSEN_ESFN -> JsNumber((pxRatioChoosen.get * 10F).toInt)
+    if (viewportDecl.isDefined)
+      acc1 ::= VIEWPORT_DECLARED_ESFN -> JsString(viewportDecl.get)
+    if (scSink.isDefined)
+      acc1 ::= SHOWCASE_SINK_ESFN -> JsString(scSink.get.longName)
     acc1
   }
 
@@ -363,10 +397,21 @@ final class MAdStat(
 
 
 object AdStatActions extends Enumeration {
+
   type AdStatAction = Value
 
-  val View = Value("v")
-  val Click = Value("c")
+  /** Просмотр плитки выдачи. */
+  val View: AdStatAction  = Value("v")
+
+  /** Юзер открывает карточку, вызывая focusedAds() на сервере. */
+  val Click: AdStatAction = Value("c")
+
+  /** Запрос к "сайту" выдачи, т.е. к странице, с которой начинается рендер выдачи. */
+  val Site: AdStatAction  = Value("site")
+
+  /** Запрос к showcase/index, т.е. к верстке выдачи узла какого-то например. */
+  val Index: AdStatAction = Value("index")
+
 }
 
 
