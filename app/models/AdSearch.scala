@@ -59,7 +59,7 @@ object AdSearch {
               levels      = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
               qOpt        = maybeQOpt,
               maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
-                Math.max(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+                Math.min(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
               },
               offsetOpt   = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))

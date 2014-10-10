@@ -142,10 +142,10 @@ ad.stat.action.c=Click
 mir.type.a=Advertiser
 mir.type.w=Wi-Fi AP owner
 
-lk.sl.enable_ad=Enable ad
-lk.sl.d=Show on start page
-lk.sl.h=Show in common catalog
-lk.sl.m=Show in my catalog
+lk.sl.enable_ad=Display ad
+lk.sl.d=First page
+lk.sl.h=Categorizator
+lk.sl.m=My catalog
 
 nth.floor={0}th floor
 
