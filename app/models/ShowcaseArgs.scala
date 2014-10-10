@@ -4,6 +4,7 @@ import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
+import util.cdn.CdnUtil
 import util.qsb.QsbUtil._
 
 /**
@@ -131,11 +132,11 @@ case class SMShowcaseRenderArgs(
   }
 
   /** Абсолютная ссылка на логотип для рендера. */
-  lazy val logoImgUrl: String = {
+  def logoImgUrl(implicit ctx: Context): String = {
     val path = logoImgOpt.fold {
-      routes.Assets.at("images/market/showcase-logo.png")
+      CdnUtil.asset("images/market/showcase-logo.png")
     } { logoImg =>
-      routes.Img.getImg(logoImg.filename)
+      CdnUtil.getImg(logoImg.filename)
     }
     util.Context.MY_AUDIENCE_URL + path
   }

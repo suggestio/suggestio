@@ -134,6 +134,7 @@ object WelcomeUtil {
 
   /** Собрать ссылку на фоновую картинку. */
   def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+    val oiik2 = oiik.uncropped
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr =>
@@ -141,12 +142,12 @@ object WelcomeUtil {
       }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
-          override def call = routes.Img.getImg(oiik.filename)
+          override def call = CdnUtil.getImg(oiik2.filename)
           override def meta = Some(origMeta)
         }
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = DynImgArgs(oiik.uncropped, imOps)
+        val dynArgs = DynImgArgs(oiik2, imOps)
         new ImgUrlInfoT {
           override def call = CdnUtil.dynImg(dynArgs)
           override def meta = Some(bss)

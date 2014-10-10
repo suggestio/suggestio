@@ -137,7 +137,7 @@ trait SaveBgImgI extends ISaveImgs with ValT {
       }
       .fold [Call] {
         // Пропускаем картинку, ибо данные для этого дела были отброшены.
-        routes.Img.getImg(imgInfo.filename)
+        CdnUtil.getImg(imgInfo.filename)
       } { oiik =>
         val devPxRatio = ctx.deviceScreenOpt
           .fold(DevPixelRatios.MDPI)(_.pixelRatio)
@@ -296,7 +296,7 @@ trait LogoImg extends ValT with ISaveImgs {
     mad.imgs
       .get(LOGO_IMG_FN)
       .map {
-        logoImgInfo  =>  routes.Img.getImg(logoImgInfo.filename)
+        logoImgInfo  =>  CdnUtil.getImg(logoImgInfo.filename)
       }
       .orElse {
         default.map { routes.Assets.versioned(_) }

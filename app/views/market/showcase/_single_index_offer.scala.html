@@ -1,10 +1,14 @@
 @(mad: MAdT, isHidden: Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
+@import util.cdn.CdnUtil
 
 <div class="sm-index-offer">
   @* Какую картинку тут надо рисовать, если их несколько? *@
   @mad.imgs.headOption.map { case (_, img) =>
-  <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@routes.Img.getImg(img.filename)"/>
+    <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)"
+         data-height="@img.meta.map(_.height).getOrElse(1181)"
+         src="@CdnUtil.getImg(img.filename)"
+    />
   }
 </div>

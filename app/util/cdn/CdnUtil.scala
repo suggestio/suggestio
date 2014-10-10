@@ -66,4 +66,9 @@ object CdnUtil {
     forCall( routes.Img.dynImg(dargs) )
   }
 
+  /** Вызов за оригиналом картинки. */
+  def getImg(filename: String)(implicit ctx: Context) = {
+    forCall( routes.Img.getImg(filename) )
+  }
+
 }
