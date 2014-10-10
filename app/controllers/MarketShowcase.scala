@@ -281,7 +281,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       mmcats    <- mmcatsFut
     } yield {
       val args = SMShowcaseRenderArgs(
-        searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds).headOption.orElse(adnNode.geo.directParentIds.headOption).orElse(adnNode.id),
+        searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+          .headOption
+          .orElse(adnNode.geo.directParentIds.headOption)
+          .orElse(adnNode.id),
         bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
         fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
         name        = adnNode.meta.name,
