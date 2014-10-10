@@ -286,8 +286,16 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
   override def exactGeodata = Some(geoPoint)
 
-
-  override def nodeDetectLevels = GeoLocation.NGLS_b2t
+  /** Список уровней для детектирования в порядке употребления. Тут они выстраиваются с учётом точности. */
+  override lazy val nodeDetectLevels: Seq[NodeGeoLevel] = {
+    val v0 = GeoLocation.NGLS_b2t
+    accuracyMeters.fold(v0) { am =>
+      val amInt = am.toInt
+      v0.filter { ngl =>
+        ngl.accuracyMetersMax.isEmpty || ngl.accuracyMetersMax.exists(amInt <= _)
+      }
+    }
+  }
 
   override def asGeoLocation: Option[GeoLocation] = Some(this)
 }
