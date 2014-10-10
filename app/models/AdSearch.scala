@@ -22,7 +22,11 @@ object AdSearch {
   val MAX_RESULTS_DFLT = configuration.getInt("market.search.ad.results.count.dflt") getOrElse 20
 
   /** Макс.кол-во сдвигов в страницах. */
-  val MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
+  def MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
+
+  /** Максимальный абсолютный сдвиг в выдаче. */
+  val MAX_OFFSET: Int = MAX_PAGE_OFFSET * MAX_RESULTS_PER_RESPONSE
+
 
 
   private implicit def eitherOpt2list[T](e: Either[_, Option[T]]): List[T] = {
@@ -55,6 +59,9 @@ object AdSearch {
           maybeDevScreen <- devScreenB.bind(key + ".screen", params)
 
         } yield {
+          val maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
+            Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+          }
           Right(
             AdSearch(
               receiverIds = maybeRcvrIdOpt,
@@ -62,11 +69,9 @@ object AdSearch {
               catIds      = maybeCatIdOpt,
               levels      = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
               qOpt        = maybeQOpt,
-              maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
-                Math.max(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
-              },
+              maxResultsOpt = maxResultsOpt,
               offsetOpt   = eitherOpt2option(maybeOffsetOpt) map { offset =>
-                Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
+                Math.max(0,  Math.min(offset,  MAX_OFFSET))
               },
               forceFirstIds = maybeFirstId,
               generation  = maybeGen,
