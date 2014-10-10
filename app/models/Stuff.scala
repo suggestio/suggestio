@@ -5,8 +5,9 @@ import org.joda.time.Period
 import play.api.i18n.{Lang, Messages}
 import play.api.data.Form
 import play.api.libs.json._
-import play.api.mvc.Call
+import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
+import play.mvc.Http.Request
 import scala.collection.JavaConversions._
 /**
  * Suggest.io
@@ -310,5 +311,12 @@ case class BlockRenderArgs(
 class ExternalCall(
   url: String,
   method: String = "GET"
-) extends Call(method = method, url = url)
+) extends Call(method = method, url = url) {
+
+  override def absoluteURL(secure: Boolean)(implicit request: RequestHeader): String = url
+  override def absoluteURL(request: Request): String = url
+  override def absoluteURL(request: Request, secure: Boolean): String = url
+  override def absoluteURL(secure: Boolean, host: String): String = url
+
+}
 

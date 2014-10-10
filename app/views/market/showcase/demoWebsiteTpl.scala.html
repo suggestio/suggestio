@@ -3,6 +3,7 @@
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
 @import util.cdn.CdnUtil
+@import market.lk.adn._node._installScriptTpl
 
 <html>
 <head>
@@ -24,7 +25,7 @@
 <body class="sm-body">
 
 <script type="text/javascript">
-   @market.lk.adn._node._installScriptTpl( args.adnId );
+   @_installScriptTpl(args.adnId, mkPermanent = false);
    window.siomart_index = '@args.showcaseCall';
    window.with_geo = @args.withGeo;
 </script>

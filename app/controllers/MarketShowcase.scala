@@ -209,7 +209,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.adnNode.id))
+    Ok(_installScriptTpl(request.adnNode.id, mkPermanent = true))
       .withHeaders(
         CONTENT_TYPE  -> "text/javascript; charset=utf-8",
         CACHE_CONTROL -> "public, max-age=36000"
