@@ -1,10 +1,11 @@
 package util.blocks
 
 import controllers.routes
-import io.suggest.ym.model.common.MImgInfoT
+import io.suggest.ym.model.common.{Imgs, MImgInfoT}
 import models.im._
 import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
+import util.cdn.CdnUtil
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
@@ -186,7 +187,7 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         imOpsAcc ::= ImFilters.Lanczos
         // Генерим финальную ссыль на картинку:
         val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)
-        routes.Img.dynImg(dargs)
+        CdnUtil.dynImg(dargs)
       }
   }
 
@@ -240,6 +241,7 @@ object LogoImg {
   val LOGO_IMG_FN = "logo"
   val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
 }
+
 /** Функционал для сохранения вторичного логотипа рекламной карточки. */
 trait LogoImg extends ValT with ISaveImgs {
   def LOGO_IMG_FN = LogoImg.LOGO_IMG_FN
@@ -281,5 +283,37 @@ trait LogoImg extends ValT with ISaveImgs {
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
+
+
+  /**
+   * Собрать Call к картинке логотипа.
+   * @param mad Рекламная карточка.
+   * @param default Строка дефолтового путя к ассету.
+   * @param ctx Контекст рендера шаблонов.
+   * @return Экземпляр Call, пригодный для обращения в ссылку.
+   */
+  def logoImgCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
+    mad.imgs
+      .get(LOGO_IMG_FN)
+      .map {
+        logoImgInfo  =>  routes.Img.getImg(logoImgInfo.filename)
+      }
+      .orElse {
+        default.map { routes.Assets.versioned(_) }
+      }
+  }
+
+  /**
+   * Собрать Call к картинке логотипа, но по возможности через CDN.
+   * @param mad Рекламная карточка.
+   * @param default Дефолтовый путь до ассета, если в карточке нет логотипа.
+   * @param ctx Контекст рендера шаблона.
+   * @return Экземпляр Call.
+   */
+  def logoImgCdnCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
+    logoImgCall(mad, default)
+      .map { CdnUtil.forCall }
+  }
+
 }
 

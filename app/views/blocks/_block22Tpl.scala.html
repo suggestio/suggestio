@@ -13,7 +13,7 @@
   )
 
   <div class="logo-wrap abs">
-    <img class="logo" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.versioned("images/market/blocks/tpl22-logo.jpg"))" />
+    <img class="logo" src="@bc.logoImgCdnCall(mad, Some("images/market/blocks/tpl22-logo.jpg"))" />
   </div>
 
   <div class="outer-border" style="border-color: #@borderColor;">
@@ -23,18 +23,18 @@
       @mad.offers.headOption.map { offer =>
 
       @offer.text1.map { text1 =>
-      <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
-        <div class="title">
-        @Html(text1.value)
+        <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+          <div class="title">
+          @Html(text1.value)
+          </div>
         </div>
-      </div>
-      @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 24  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 24  )
       }
 
       <div class="info abs">
 
           @offer.text2.map { text2 =>
-            <div class="descr" style="background-color: rgba(@{colorHex2rgb(borderColor).mkString(",")}, 0.7);)">
+            <div class="descr" style='background-color: rgba(@colorHex2rgb(borderColor).mkString(","), 0.7);)'>
               @Html(text2.value)
             </div>
             @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr", left = 0, top = 0, false  )

@@ -20,9 +20,7 @@
     <div class="bottom-bg abs" style="background: #@lineColor"></div>
   }
 
-
-
-  <img class="logo abs" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(CdnUtil.asset("images/market/blocks/tpl5-logo.jpg"))" />
+  <img class="logo abs" src="@bc.logoImgCdnCall(mad, Some("images/market/blocks/tpl5-logo.jpg"))" />
 
   @mad.offers.headOption.map { offer =>
     <div class="info abs">

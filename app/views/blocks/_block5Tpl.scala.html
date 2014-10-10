@@ -23,8 +23,8 @@
   }
 
   <div class="info">
-    @mad.imgs.get(bc.LOGO_IMG_FN).map { logoImg =>
-      <img class="logo" src="@routes.Img.getImg(logoImg.filename)" />
+    @bc.logoImgCdnCall(mad).map { logoImgCall =>
+      <img class="logo" src="logoImgCall" alt=""/>
     }
 
     @mad.offers.headOption.map { offer =>
