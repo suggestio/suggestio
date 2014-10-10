@@ -1,9 +1,10 @@
-@()(implicit ctx:util.Context)
+@()(implicit ctx: Context)
 
 @* Тут отображение главной страницы, в которой можно добавить сайт в кравлинг. *@
 
 @import ctx._
 @import stuff._
+@import util.cdn.CdnUtil
 
 @main( title="" ) {
 
@@ -16,9 +17,9 @@
     <div class="col-sm-12">
       
       <div class="sio-slogo" style="position: relative;">
-        <img id="slogoImage" class="img-responsive" width="418" src="@routes.Assets.at("images/sio-slogo-en.jpg")"/>
+        <img id="slogoImage" class="img-responsive" width="418" src="@CdnUtil.asset("images/sio-slogo-en.jpg")"/>
 
-        <a class="index-mart-link" href="/m">
+        <a class="index-mart-link" href="@routes.Market.index()">
         </a>
 
       </div>
@@ -99,7 +100,7 @@
 
 <script type="text/javascript">
   
-  $('#slogoImage').attr("src", "@routes.Assets.at("images/sio-slogo-en-retina.jpg")");
+  $('#slogoImage').attr("src", "@routes.Assets.versioned("images/sio-slogo-en-retina.jpg")");
   
   $(document).ready(function(){
     sio.index.init();

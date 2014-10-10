@@ -1,41 +1,43 @@
-@(title: String, headAfter: Option[Html] = None, browserCheck:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
+@(title: String, headAfter: Option[Html] = None, browserCheck:Option[Html] = None, withHeadCommon:Boolean = true)(content: Html)(implicit ctx: Context)
 
 @import stuff._
 @import ident._
+@import util.cdn.CdnUtil
 
 <!DOCTYPE html>
 <html class="suggestio-cap">
   <head>
-    
+
     <title>@if(!title.isEmpty) { @title — }Suggest.io</title>
-    
+
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
     <meta name="format-detection" content="telephone=no">
     
-    <link href="@routes.Assets.at("stylesheets/bootstrap.css")" rel="stylesheet" media="screen">
+    <link href="@CdnUtil.asset("stylesheets/bootstrap.css")" rel="stylesheet" media="screen">
+
     @* HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries *@
     <!--[if lt IE 9]>
-      <script src="@routes.Assets.at("javascripts/bootstrap/html5shiv.js")"></script>
-      <script src="@routes.Assets.at("javascripts/bootstrap/respond.js")"></script>
+      <script src="@CdnUtil.asset("javascripts/bootstrap/html5shiv.js")"></script>
+      <script src="@CdnUtil.asset("javascripts/bootstrap/respond.js")"></script>
     <![endif]-->
-    
+
     @if(!browserCheck.isDefined) {
-      <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
+      <noscript><meta http-equiv="refresh" content="0; URL=@routes.Static.badbrowser()"></noscript>
     } else {
       @browserCheck.get
     }
 
-    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-    <script src="@routes.Assets.at("javascripts/common.js")"></script>
-    
+    <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
+    <script src="@CdnUtil.asset("javascripts/common.js")"></script>
+
     @if(withHeadCommon) {
-      <link href="@routes.Assets.at("stylesheets/main.css")" rel="stylesheet" media="screen">
-      <link href="@routes.Assets.at("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
+      <link href="@CdnUtil.asset("stylesheets/main.css")" rel="stylesheet" media="screen">
+      <link href="@CdnUtil.asset("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
     }
-    
+
     @headAfter
-    
+
   </head>
 
   <body class="suggestio-cap">
@@ -44,17 +46,11 @@
     <div class="suggestio-cap_bg_mobile"></div>
     <div class="suggestio-cap_footer">
       <div class="suggestio-cap_footer-text">
-        © 2012-2014 <a class="suggestio-cap_link" href="/">Suggest.io</a>. Все права защищены
+        © 2012-@ctx.now.getYear
+	<a class="suggestio-cap_link" href="@MAIN_PAGE_CALL">Suggest.io</a>.
+	Все права защищены
       </div>
     </div>
-
-    @*content
-    
-    @_footerTpl()
-    
-    @if(withAnalytics) {
-      @_analyticsTpl()
-    }*@
 
   </body>
 </html>

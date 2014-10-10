@@ -23,12 +23,15 @@ object CdnUtil {
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
     configuration.getStringList("cdn.protocols")
-      .fold [TraversableOnce[String]] (Seq("http", "https")) (_.iterator().toIterator)
+      .fold [TraversableOnce[String]] (Seq("http", "https"))  { _.iterator().toIterator.map(_.toLowerCase) }
       .toIterator
       .map { proto => proto -> getCdnHostsForProto(proto) }
       .filter { _._2.nonEmpty }
       .toMap
   }
+
+  val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
+
 
   /** Выбрать подходящий CDN-хост для указанного протокола. */
   def chooseHostForProto(protoLc: String): Option[String] = {
@@ -37,8 +40,8 @@ object CdnUtil {
   }
 
   /** Генератор вызовов к CDN или внутренних. */
-  private def ec(c: Call)(implicit ctx: Context): Call = {
-    if (c.isInstanceOf[ExternalCall] || CDN_PROTO_HOSTS.isEmpty) {
+  def forCall(c: Call)(implicit ctx: Context): Call = {
+    if (HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
       c
     } else {
       val protoLc = ctx.myProto.toLowerCase
@@ -55,12 +58,12 @@ object CdnUtil {
 
   /** Вызов на asset через CDN. */
   def asset(file: String)(implicit ctx: Context) = {
-    ec( routes.Assets.versioned(file) )
+    forCall( routes.Assets.versioned(file) )
   }
 
   /** Вызов к dynImg через CDN. */
   def dynImg(dargs: DynImgArgs)(implicit ctx: Context) = {
-    ec( routes.Img.dynImg(dargs) )
+    forCall( routes.Img.dynImg(dargs) )
   }
 
 }

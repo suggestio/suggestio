@@ -272,7 +272,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         .toMap
     }
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
-    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)
+    val ctx = implicitly[Context]
+    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
     for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
@@ -293,7 +294,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         geoListGoBack = geoListGoBack,
         welcomeOpt  = waOpt
       )
-      renderShowcase(args, isGeo, adnNode.id)
+      renderShowcase(args, isGeo, adnNode.id)(ctx)
     }
   }
 
@@ -348,8 +349,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Готовы данные для рендера showcase indexTpl. Сделать это и прочие сопутствующие операции. */
   private def renderShowcase(args: SMShowcaseRenderArgs, isGeo: Boolean, currAdnId: Option[String])
-                            (implicit request: AbstractRequestWithPwOpt[AnyContent]): Result = {
-    val html = indexTpl(args)
+                            (implicit ctx: Context): Result = {
+    import ctx.request
+    val html = indexTpl(args)(ctx)
     val jsonArgs: FieldsJsonAcc = List(
       "is_geo"      -> JsBoolean(isGeo),
       "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }

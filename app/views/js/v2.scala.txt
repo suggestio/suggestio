@@ -39,13 +39,14 @@ TODO:
 @import uSettings.renderer
 @import util.CoffeeScriptTemplate._
 @import views.txt.js._
+@import util.cdn.CdnUtil
 
 @coffee{
 
 sio =
   config :
     host : "http://@request.host"
-    css_href : "/assets/stylesheets/sio.v8.css"
+    css_href : "@CdnUtil.asset("stylesheets/sio.v8.css")"
     searchRequestDelay : 500
     search_field_dom_depth : 3
     debug_hash : 'sio_debug'
