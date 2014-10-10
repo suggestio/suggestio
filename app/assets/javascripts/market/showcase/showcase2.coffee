@@ -1597,6 +1597,8 @@ sm =
     ##########################################################
     producer_ads : ( data ) ->
 
+      console.log data.blocks.length
+
       siomart.utils.ge('fsLoaded').style.display = 'none'
 
       if sm.focused_ads.load_more_ads_requested == true
