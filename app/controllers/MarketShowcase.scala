@@ -412,7 +412,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       "findAds" -> adsearch3
     }
     val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
-      trace(logPrefix + " Starting ads search using " + adSearch2)
       MAd.dynSearch(adSearch2)
     }
     // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
@@ -425,7 +424,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
-      trace(s"$logPrefix Found ${mads.size} ads.")
       adSearch2Fut onSuccess { case adSearch2 =>
         AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
       }
