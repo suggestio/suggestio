@@ -1,6 +1,7 @@
 @()(implicit ctx: Context)
 
 @import controllers.MarketShowcase.DEMO_ADN_ID_OPT
+@import util.cdn.CdnUtil
 
 @* Статическая success-страничка, которая сообщает юзеру, что его запрос принят к рассмотрению. *@
 
@@ -11,8 +12,8 @@
 
     <div class="body_cnt __responsive" id="centerContent">
 
-        <a href="/m" class="index-page_logo-link">
-          <img src="/assets/images/market/index/logo_retina.png" class="index-page_logo-image">
+        <a href="@routes.Market.index()" class="index-page_logo-link">
+          <img src="@CdnUtil.asset("images/market/index/logo_retina.png")" class="index-page_logo-image">
         </a>
 
 

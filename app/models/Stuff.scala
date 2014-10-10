@@ -300,3 +300,15 @@ case class BlockRenderArgs(
   canRenderDoubleSize   : Boolean = false
 )
 
+
+/**
+ * Экземпляр хранит вызов к внешнему серверу. Кроме как для индикации этого факта, класс ни для чего
+ * больше не используется.
+ * @param url Ссылка для вызова.
+ * @param method - Обычно "GET", который по умолчанию и есть.
+ */
+class ExternalCall(
+  url: String,
+  method: String = "GET"
+) extends Call(method = method, url = url)
+

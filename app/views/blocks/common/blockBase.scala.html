@@ -2,6 +2,8 @@
 
 @* База для шаблонов блоков. *@
 
+@import util.cdn.CdnUtil
+
 @if(args.isStandalone) {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
@@ -15,15 +17,15 @@
   <meta name="viewport" content="@if(ctx.isIpad) {width=640, initial-scale = 1} else {width=320,initial-scale = 1},user-scalable=no"/>
 
   @* Тут надо логотип узла рекламной сети? *@
-  <link rel="shortcut icon" type="image/png" href="/static/images/favicon.ico">
+  <link rel="shortcut icon" type="image/png" href="@CdnUtil.asset("images/favicon.ico")">
 
   @headAfter
-  <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
-  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
-  <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
-  <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase.css")'/>
+  <script src="@CdnUtil.asset("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
 
 
 </head>

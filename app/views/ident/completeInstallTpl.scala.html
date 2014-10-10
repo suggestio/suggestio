@@ -5,7 +5,7 @@
 
 
 @headAfter = {
-	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/person_complete_install.css")"/>
+	<link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/person_complete_install.css")"/>
 }
 
 @main(title=Messages("i.ci.login"), headAfter=Some(headAfter)) {
@@ -16,7 +16,7 @@
 	<div class="header"></div>
 	
 	<div class="main-layout">
-		<a class="logo" href="/"></a>
+		<a class="logo" href="@MAIN_PAGE_CALL"></a>
 		
 		<div class="complete-install-layout">
 			@* Регистрация и вход в личный кабинет *@

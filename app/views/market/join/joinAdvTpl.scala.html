@@ -4,6 +4,7 @@
 
 @import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
+@import util.cdn.CdnUtil
 
 @joinBase("Разместить рекламу") {
 
@@ -35,7 +36,7 @@
 
         <div class="adv-req-page_left">
           <a class="index-page_logo-link" href="@routes.Market.index" >
-            <img class="index-page_logo-image" src='@routes.Assets.at("images/market/index/logo_retina.png")'/>
+            <img class="index-page_logo-image" src='@CdnUtil.asset("images/market/index/logo_retina.png")'/>
           </a>
 
 

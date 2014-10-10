@@ -2,6 +2,7 @@ package util.img
 
 import controllers.{routes, MarketShowcase}
 import models.im._
+import util.cdn.CdnUtil
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
@@ -100,7 +101,7 @@ object WelcomeUtil {
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT]): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
@@ -132,7 +133,7 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr =>
@@ -147,7 +148,7 @@ object WelcomeUtil {
         val imOps = imConvertArgs(bss, screen)
         val dynArgs = DynImgArgs(oiik.uncropped, imOps)
         new ImgUrlInfoT {
-          override def call = routes.Img.dynImg(dynArgs)
+          override def call = CdnUtil.dynImg(dynArgs)
           override def meta = Some(bss)
         }
       }

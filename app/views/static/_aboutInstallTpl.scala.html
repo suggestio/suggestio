@@ -1,5 +1,7 @@
 @()(implicit c:util.Context)
+
 @import c.lang
+@import util.cdn.CdnUtil
 
 @lcc ={
 <h1>@Messages("s.a.install")</h1>
@@ -10,7 +12,7 @@
 }
 
 @rcc = {
-  <img class="img-responsive" src="/assets/images/sio_new_about_second_slide.png"/>
+  <img class="img-responsive" src="@CdnUtil.asset("images/sio_new_about_second_slide.png")" />
 
   <div class="more-trigger">
     <div class="static"></div>

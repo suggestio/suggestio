@@ -2,6 +2,7 @@
 
 @import blocks.svg._
 @import BSvgColorNames._
+@import util.cdn.CdnUtil
 
 @blockBase(args, mad, bc) {
 
@@ -21,7 +22,7 @@
 
 
 
-  <img class="logo abs" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
+  <img class="logo abs" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(CdnUtil.asset("images/market/blocks/tpl5-logo.jpg"))" />
 
   @mad.offers.headOption.map { offer =>
     <div class="info abs">
