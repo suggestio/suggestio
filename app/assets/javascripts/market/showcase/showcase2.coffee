@@ -1597,8 +1597,6 @@ sm =
     ##########################################################
     producer_ads : ( data ) ->
 
-      console.log data.blocks.length
-
       siomart.utils.ge('fsLoaded').style.display = 'none'
 
       if sm.focused_ads.load_more_ads_requested == true
@@ -1653,9 +1651,7 @@ sm =
           if cbca_grid.ww <= 400
             sm.navigation_layer.close()
             sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
-
       else
-
         if data.action == 'searchAds'
           sm.search.error_message 'ничего не найдено!'
 
@@ -2223,8 +2219,6 @@ sm =
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
     url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
-
-    console.log 'about to call ' + url
 
     sm.request.perform url
 
