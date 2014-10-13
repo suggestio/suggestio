@@ -9,6 +9,7 @@ import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 import play.api.Play.{current, configuration}
+import util.acl.SioRequestHeader
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.{Future, future}
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -108,7 +109,7 @@ sealed trait GeoMode {
    * @param request Текущий реквест.
    * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
    */
-  def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]]
+  def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]]
 
   def exactGeodata: Option[geo.GeoPoint]
 
@@ -141,7 +142,7 @@ trait GeoSearchInfo {
 case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
-  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     Future successful None
   }
   override def exactGeodata = None
@@ -166,7 +167,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
-  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
     future {
       val ra = getRemoteAddr
@@ -192,7 +193,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
 
-  def getRemoteAddr(implicit request: RequestHeader): String = {
+  def getRemoteAddr(implicit request: SioRequestHeader): String = {
     val ra0 = request.remoteAddress
     // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
     val inetAddr = InetAddress.getByName(ra0)
@@ -261,7 +262,7 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
   override def isWithGeo = true
   override def toQsStringOpt = Some(s"${geoPoint.lat},${geoPoint.lon}")
 
-  override def geoSearchInfoOpt(implicit request: RequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     val result = new GeoSearchInfo {
       override def geoPoint: geo.GeoPoint = gl.geoPoint
       override def geoDistanceQuery = GeoDistanceQuery(

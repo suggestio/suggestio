@@ -11,6 +11,7 @@ import play.api.cache.Cache
 import play.api.mvc._
 import play.twirl.api.{TxtFormat, HtmlFormat}
 import util._
+import util.acl.SioRequestHeader
 import scala.concurrent.{Promise, Future}
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
@@ -163,7 +164,7 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
   val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl") getOrElse 40
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  def bruteForceProtected(f: => Future[Result])(implicit request: RequestHeader): Future[Result] = {
+  def bruteForceProtected(f: => Future[Result])(implicit request: SioRequestHeader): Future[Result] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val raddr = request.remoteAddress
     val ck = BRUTEFORCE_CACHE_PREFIX + raddr
@@ -196,7 +197,7 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
   }
 
   /** Если нет возможности использовать implicit request, тут явная версия: */
-  def bruteForceProtectedNoimpl(request: RequestHeader)(f: => Future[Result]): Future[Result] = {
+  def bruteForceProtectedNoimpl(request: SioRequestHeader)(f: => Future[Result]): Future[Result] = {
     bruteForceProtected(f)(request)
   }
 

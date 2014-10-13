@@ -17,12 +17,37 @@ import play.api.Play.current
 
 
 abstract class AbstractRequestWithPwOpt[A](request: Request[A])
-  extends WrappedRequest(request) {
+  extends WrappedRequest(request) with SioRequestHeader {
   def pwOpt: PwOpt_t
   def sioReqMd: SioReqMd
   def isSuperuser = PersonWrapper isSuperuser pwOpt
   def isAuth = pwOpt.isDefined
+
 }
+
+
+/** Расширение play RequestHeader функциями S.io. */
+trait SioRequestHeader extends RequestHeader {
+
+  /**
+   * remote address может содержать несколько адресов через ", ". Например, если клиент послал своё
+   * значение X_FORWARDED_FOR, то nginx допишет через запятую новый адрес и прокинет сюда.
+   * Тут мы это исправляем, чтобы не было проблем в будущем.
+   */
+  abstract override lazy val remoteAddress: String = {
+    super.remoteAddress
+      .split(",\\s*")
+      .last
+  }
+
+}
+
+object SioRequestHeader {
+  implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
+    new WrappedRequest(request) with SioRequestHeader
+  }
+}
+
 
 /**
  * Wrapped-реквест для передачи pwOpt.
