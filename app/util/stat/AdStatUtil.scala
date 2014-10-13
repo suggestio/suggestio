@@ -59,7 +59,6 @@ object AdStatUtil extends PlayMacroLogsImpl {
       }
     }
     val personId = request.pwOpt.map(_.personId)
-    val ra = request.remoteAddress
     val now = DateTime.now()
     val adIds = mads.flatMap(_.id)
     val adsCount = adIds.size
@@ -75,11 +74,11 @@ object AdStatUtil extends PlayMacroLogsImpl {
     }
     val clUidOpt = StatUtil.getFromRequest
       .map { UuidUtil.uuidToBase64 }
+    val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
     val resultFut = gsiFut flatMap { gsiOpt =>
       adnNodeOptFut flatMap { adnNodeOpt =>
-        val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
         val adStat = new MAdStat(
-          clientAddr  = ra,
+          clientAddr  = request.remoteAddress,
           action      = statAction.toString,
           adIds       = adIds,
           adsRendered = adsCount,
