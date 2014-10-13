@@ -15,14 +15,16 @@ import play.api.Play.current
   Это поможет генерить контексты одной и той же функцией.
  */
 
+/** Экранизация WrappedRequest[A] с примесями нужд s.io. */
+class SioWrappedRequest[A](request: Request[A]) extends WrappedRequest(request) with SioRequestHeader
 
+/** Абстрактный реквест, в рамках которого содержится инфа о текущем sio-юзере. */
 abstract class AbstractRequestWithPwOpt[A](request: Request[A])
-  extends WrappedRequest(request) with SioRequestHeader {
+  extends SioWrappedRequest(request) {
   def pwOpt: PwOpt_t
   def sioReqMd: SioReqMd
   def isSuperuser = PersonWrapper isSuperuser pwOpt
   def isAuth = pwOpt.isDefined
-
 }
 
 
@@ -44,7 +46,7 @@ trait SioRequestHeader extends RequestHeader {
 
 object SioRequestHeader {
   implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
-    new WrappedRequest(request) with SioRequestHeader
+    new SioWrappedRequest(request)
   }
 }
 
