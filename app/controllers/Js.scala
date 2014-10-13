@@ -363,7 +363,7 @@ object Js extends SioController with Logs {
   private def firstCheckUrl(dkey: String) = "http://" + dkey + "/"
 
 
-  private def maybeHandleReferrer(dkey: String)(implicit req: RequestHeader) {
+  private def maybeHandleReferrer(dkey: String)(implicit req: SioRequestHeader) {
     req.headers.get(REFERER).foreach { refUrl =>
       // Есть реферрер. Нужно бегло проверить его на профпригодность и отправить в сторону кравлера
       try {

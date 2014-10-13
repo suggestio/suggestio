@@ -1,9 +1,8 @@
 package models
 
-import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
-import play.api.mvc.QueryStringBindable
+import play.api.mvc.{Call, QueryStringBindable}
 import util.cdn.CdnUtil
 import util.qsb.QsbUtil._
 
@@ -155,4 +154,24 @@ trait WelcomeRenderArgsT {
   /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
   def fgText: Option[String]
 }
+
+
+
+/**
+ * Набор аргументов для передачи в demoWebSiteTpl.
+ * @param bgColor Цвет оформления.
+ * @param showcaseCall Адрес для showcase
+ * @param title Заголовок.
+ * @param adnId id узла, в рамках которого орудуем.
+ */
+case class SMDemoSiteArgs(
+  bgColor: String,
+  showcaseCall: Call,
+  title: Option[String] = None,
+  adnId: Option[String]
+) {
+  // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
+  def withGeo = adnId.isEmpty
+}
+
 

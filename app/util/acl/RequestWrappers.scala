@@ -15,14 +15,47 @@ import play.api.Play.current
   Это поможет генерить контексты одной и той же функцией.
  */
 
+/** Экранизация WrappedRequest[A] с примесями нужд s.io. */
+class SioWrappedRequest[A](request: Request[A]) extends WrappedRequest(request) with SioRequestHeader
 
+/** Абстрактный реквест, в рамках которого содержится инфа о текущем sio-юзере. */
 abstract class AbstractRequestWithPwOpt[A](request: Request[A])
-  extends WrappedRequest(request) {
+  extends SioWrappedRequest(request) {
   def pwOpt: PwOpt_t
   def sioReqMd: SioReqMd
   def isSuperuser = PersonWrapper isSuperuser pwOpt
   def isAuth = pwOpt.isDefined
 }
+
+
+
+object SioRequestHeader {
+
+  /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
+  val X_FW_FOR_SPLITTER_RE = ",\\s*".r
+
+  implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
+    new SioWrappedRequest(request)
+  }
+}
+
+/** Расширение play RequestHeader функциями S.io. */
+trait SioRequestHeader extends RequestHeader {
+  import SioRequestHeader.X_FW_FOR_SPLITTER_RE
+
+  /**
+   * remote address может содержать несколько адресов через ", ". Например, если клиент послал своё
+   * значение X_FORWARDED_FOR, то nginx допишет через запятую новый адрес и прокинет сюда.
+   * Тут мы это исправляем, чтобы не было проблем в будущем.
+   */
+  abstract override lazy val remoteAddress: String = {
+    val ra0 = super.remoteAddress
+    X_FW_FOR_SPLITTER_RE.split(ra0)
+      .last
+  }
+
+}
+
 
 /**
  * Wrapped-реквест для передачи pwOpt.

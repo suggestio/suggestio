@@ -1,7 +1,8 @@
 package models
 
+import util.acl.SioRequestHeader
 import io.suggest.model.geo.GeoShapeQueryData
-import play.api.mvc.{RequestHeader, QueryStringBindable}
+import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsImpl
 import util.qsb.QsbUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -29,7 +30,7 @@ case class SimpleNodesSearchArgs(
 
   private def maxResultsDflt = snsa.maxResults getOrElse SimpleNodesSearchArgs.MAX_RESULTS_DFLT
 
-  def toSearchArgs(glevelOpt: Option[NodeGeoLevel], maxResults2: Int = maxResultsDflt)(implicit request: RequestHeader): Future[AdnNodesSearchArgsT] = {
+  def toSearchArgs(glevelOpt: Option[NodeGeoLevel], maxResults2: Int = maxResultsDflt)(implicit request: SioRequestHeader): Future[AdnNodesSearchArgsT] = {
     geoMode.geoSearchInfoOpt.map { gsiOpt =>
       new AdnNodesSearchArgs {
         override def qStr = snsa.qStr
