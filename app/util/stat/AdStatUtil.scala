@@ -36,7 +36,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
     */
   def saveAdStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction,
                   gsi: Option[Future[Option[GeoSearchInfo]]] = None, withHeadAd: Boolean = false)
-                (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+                 (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     // Запускаем асинхронные задачи:
     val gsiFut = gsi getOrElse GeoIp.geoSearchInfoOpt

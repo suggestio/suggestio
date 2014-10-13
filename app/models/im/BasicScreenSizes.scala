@@ -11,9 +11,26 @@ import io.suggest.ym.model.common.MImgSizeT
  */
 object BasicScreenSizes extends Enumeration {
 
-  protected case class Val(width: Int, height: Int) extends super.Val with MImgSizeT
+  protected case class Val(width: Int, height: Int) extends super.Val with MImgSizeT {
+
+    /**
+     * Ориентация экрана.
+     * @return Экземпляр DevScreenOrientation.
+     */
+    def orientation: DevScreenOrientation = {
+      if (isVertical)
+        DevScreenOrientations.VERTICAL
+      else if (isHorizontal)
+        DevScreenOrientations.HORIZONTAL
+      else
+        DevScreenOrientations.SQUARE
+    }
+
+  }
+
 
   type BasicScreenSize = Val
+
 
   val QVGA_V: BasicScreenSize     = Val(width = 240, height = 320)
   val QVGA_H: BasicScreenSize     = Val(width = 320, height = 240)

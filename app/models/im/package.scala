@@ -22,4 +22,5 @@ package object im {
 
   type ImSamplingFactor     = ImSamplingFactors.ImSamplingFactor
 
+  type DevScreenOrientation = DevScreenOrientations.DevScreenOrientation
 }
