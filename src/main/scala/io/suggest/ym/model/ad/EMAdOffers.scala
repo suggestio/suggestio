@@ -518,7 +518,15 @@ object Coords2D {
   }
 }
 
-case class Coords2D(x: Int, y: Int) {
+
+/** Интерфейс для 2D-координат. */
+trait ICoords2D {
+  def x: Int
+  def y: Int
+}
+
+case class Coords2D(x: Int, y: Int) extends ICoords2D {
+
   import Coords2D._
 
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
@@ -528,5 +536,6 @@ case class Coords2D(x: Int, y: Int) {
     ))
     COORDS_ESFN -> obj :: acc0
   }
+
 }
 
