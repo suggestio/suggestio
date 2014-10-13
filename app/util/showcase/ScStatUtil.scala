@@ -1,6 +1,5 @@
 package util.showcase
 
-import io.suggest.ym.model.ad.AdsSearchArgsT
 import models.im.DevScreenT
 import models.{GeoSearchInfo, AdSearch}
 import util.PlayMacroLogsImpl
@@ -8,13 +7,11 @@ import util.acl.AbstractRequestWithPwOpt
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.http.HeaderNames.USER_AGENT
 
-import io.suggest.model.OptStrId
 import io.suggest.util.UuidUtil
 import models.stat.{ScStatActions, ScStatAction}
 import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import util._
-import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
@@ -259,4 +256,22 @@ case class ScSiteStat(
   override def scSinkOpt = Some(scSink)
 }
 
+
+/**
+ * Записывалка статистики для обращения к findNode() экшену.
+ * @param args Данные запроса поиска узлов.
+ * @param gsiFut Асинхронные геоданные запроса.
+ * @param request HTTP-Реквест.
+ */
+case class ScNodeListingStat(
+  args: SimpleNodesSearchArgs,
+  gsiFut: Future[Option[GeoSearchInfo]]
+)(
+  implicit val request: AbstractRequestWithPwOpt[_]
+)
+  extends ScStatUtilT with ScStatNoAds
+{
+  override def statAction = ScStatActions.Nodes
+  override lazy val onNodeIdOpt: Option[String] = args.currAdnId
+}
 

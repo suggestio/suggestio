@@ -611,7 +611,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val nextNodeWithLayerFut = ShowcaseNodeListUtil.nextNodeWithLvlOptFut(nextNodeSwitchFut, nextNodeFut)
 
     // Когда все данные будут собраны, нужно отрендерить результат в виде json.
-    for {
+    val resultFut = for {
       nextNodeGdr <- nextNodeWithLayerFut
       nodesLays5  <- ShowcaseNodeListUtil.collectLayers(args.geoMode, nextNodeGdr.node, nextNodeGdr.ngl)
     } yield {
@@ -644,6 +644,16 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
         )
     }
+
+    // Одновременно собираем статистику по запросу:
+    ScNodeListingStat(args, gsiOptFut)
+      .saveStats
+      .onFailure { case ex =>
+        warn(logPrefix + "Failed to save stats", ex)
+      }
+
+    // Вернуть асинхронный результат.
+    resultFut
   }
 
 
