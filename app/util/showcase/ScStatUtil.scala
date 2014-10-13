@@ -1,6 +1,7 @@
 package util.showcase
 
 import io.suggest.ym.model.ad.AdsSearchArgsT
+import models.im.DevScreenT
 import models.{GeoSearchInfo, AdSearch}
 import util.PlayMacroLogsImpl
 import util.acl.AbstractRequestWithPwOpt
@@ -97,7 +98,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
 
   def scSinkOpt: Option[AdnSink] = None
 
-  def screenOpt = adSearchOpt.flatMap(_.screen)
+  def screenOpt: Option[DevScreenT] = adSearchOpt.flatMap(_.screen)
 
   def adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
 
@@ -144,8 +145,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
             .flatMap(_.maybeBasicScreenSize)
             .map(_.toString()),
           pxRatioChoosen = screenOpt
-            .flatMap(_.pixelRatioOpt)
-            .map(_.pixelRatio),
+            .map(_.pixelRatio.pixelRatio),
           viewportDecl = screenOpt
             .map(_.toString),
           scSink = scSinkOpt
@@ -200,5 +200,31 @@ case class ScFocusedAdsStatUtil(
 
   override val adSearchOpt = Some(adSearch)
   override def statAction = ScStatActions.Opened
+}
+
+
+/**
+ * Записывалка статистики по обращению к разным showcase/index. Такая статистика позволяет отследить
+ * перемещение юзера по узлам.
+ * @param scSink sink выдачи: geo/wifi
+ * @param gsiFut Асинхронный поиск геоданых по текущему запросу.
+ * @param screenOpt данные по экрану.
+ * @param request
+ */
+case class ScIndexStatUtil(
+  scSink: AdnSink,
+  gsiFut: Future[Option[GeoSearchInfo]],
+  override val screenOpt: Option[DevScreenT],
+  nodeOpt: Option[MAdnNode]
+)(
+  implicit val request: AbstractRequestWithPwOpt[_]
+)
+  extends ScStatUtilT
+{
+  override def madIds: Seq[String] = Seq.empty
+  override def adSearchOpt: Option[AdSearch] = None
+  override def statAction = ScStatActions.Index
+  override lazy val onNodeIdOpt = nodeOpt.flatMap(_.id)
+  override def adnNodeOptFut = Future successful nodeOpt
 }
 

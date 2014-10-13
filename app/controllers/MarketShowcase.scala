@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.img.WelcomeUtil
-import _root_.util.showcase.{ScFocusedAdsStatUtil, ScTilesStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
+import _root_.util.showcase._
 import models.im.DevScreenT
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
@@ -274,7 +274,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
     val ctx = implicitly[Context]
     val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
-    for {
+    val resultFut = for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
       prods     <- prodsFut
@@ -299,6 +299,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       )
       renderShowcase(args, isGeo, adnNode.id)(ctx)
     }
+    // собираем статистику, пока идёт подготовка результата
+    val stat = ScIndexStatUtil(
+      scSink = if (isGeo) AdnSinks.SINK_GEO else AdnSinks.SINK_WIFI,
+      gsiFut = spsr.geo.geoSearchInfoOpt,
+      screenOpt = spsr.screen,
+      nodeOpt = Some(adnNode)
+    )
+    stat.saveStats onFailure { case ex =>
+      warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $spsr, isGeo=$isGeo", ex)
+    }
+    // Возвращаем асинхронный результат.
+    resultFut
   }
 
 
@@ -311,22 +323,37 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"geoShowcase(${System.currentTimeMillis}): "
     trace(logPrefix + "Starting, args = " + args)
-    if (args.geo.isWithGeo) {
-      val gsiOptFut = args.geo.geoSearchInfoOpt
+    val gsiOptFut = args.geo.geoSearchInfoOpt
+    val resultFut = if (args.geo.isWithGeo) {
       val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
       gdrFut flatMap { gdr =>
         trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
         renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest), screen = args.screen)
+          .map { _ -> Some(gdr.node) }
       } recoverWith {
         case ex: NoSuchElementException =>
           // Нету узлов, подходящих под запрос.
           debug(logPrefix + "No nodes found nearby " + args.geo)
           renderGeoShowcase(args)
+            .map { _ -> None }
       }
     } else {
       renderGeoShowcase(args)
+        .map { _ -> None }
     }
+    // Собираем статистику асинхронно
+    resultFut onSuccess { case (result, nodeOpt) =>
+      ScIndexStatUtil(AdnSinks.SINK_GEO, gsiOptFut, args.screen, nodeOpt)
+        .saveStats
+        .onFailure { case ex =>
+          warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
+        }
+    }
+    // Возвращаем асинхронный результат
+    resultFut
+      .map { _._1 }
   }
+
   private def renderGeoShowcase(reqArgs: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val (catsStatsFut, mmcatsFut) = getCats(None)
     for {
