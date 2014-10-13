@@ -28,8 +28,20 @@ abstract class AbstractRequestWithPwOpt[A](request: Request[A])
 }
 
 
+
+object SioRequestHeader {
+
+  /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
+  val X_FW_FOR_SPLITTER_RE = ",\\s*".r
+
+  implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
+    new SioWrappedRequest(request)
+  }
+}
+
 /** Расширение play RequestHeader функциями S.io. */
 trait SioRequestHeader extends RequestHeader {
+  import SioRequestHeader.X_FW_FOR_SPLITTER_RE
 
   /**
    * remote address может содержать несколько адресов через ", ". Например, если клиент послал своё
@@ -37,17 +49,11 @@ trait SioRequestHeader extends RequestHeader {
    * Тут мы это исправляем, чтобы не было проблем в будущем.
    */
   abstract override lazy val remoteAddress: String = {
-    super.remoteAddress
-      .split(",\\s*")
+    val ra0 = super.remoteAddress
+    X_FW_FOR_SPLITTER_RE.split(ra0)
       .last
   }
 
-}
-
-object SioRequestHeader {
-  implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
-    new SioWrappedRequest(request)
-  }
 }
 
 
