@@ -76,7 +76,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */
   val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 3650
 
-  type AdFreqs_t = Map[String, Map[AdStatAction, Long]]
+  type AdFreqs_t = Map[String, Map[String, Long]]
   type DateHistAds_t = Seq[(EsDateTime, Long)]
 
   def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(ON_NODE_ID_ESFN, adOwnerId)
@@ -100,10 +100,9 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
         searchResp.getAggregations
           .get[Terms](aggName)
           .getBuckets
-          .foldLeft[List[(String, (AdStatAction, Long))]] (Nil) { (acc, bucket) =>
+          .foldLeft[List[(String, (String, Long))]] (Nil) { (acc, bucket) =>
             val Array(adId, statActionRaw) = bucket.getKey.split('.')
-            val statAction = AdStatActions.withName(statActionRaw)
-            val e1 = (adId, (statAction, bucket.getDocCount))
+            val e1 = (adId, (statActionRaw, bucket.getDocCount))
             e1 :: acc
           }
           .groupBy(_._1)
@@ -123,7 +122,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
    */
   def dateHistogramFor(adOwnerIdOpt: Option[String], interval: DateHistogram.Interval,
                        dateBoundsOpt: Option[(EsDateTime, EsDateTime)] = None,
-                       actionOpt: Option[AdStatAction] = None, withZeroes: Boolean = false
+                       actionOpt: Option[String] = None, withZeroes: Boolean = false
                       )(implicit ec: ExecutionContext, client: Client): Future[DateHistAds_t] = {
     // Собираем поисковый запрос. Надо бы избавится от лишних типов и точек, но почему-то сразу всё становится красным.
     var query: QueryBuilder = adOwnerIdOpt.map[QueryBuilder] { adOwnerId =>
@@ -215,7 +214,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T = {
     new MAdStat(
       clientAddr  = m.get(CLIENT_ADDR_ESFN).fold("127.0.0.1")(stringParser),
-      action      = m.get(ACTION_ESFN).fold(AdStatActions.View) { asaRaw => AdStatActions.withName(stringParser(asaRaw)) },
+      action      = m.get(ACTION_ESFN).fold("v")(stringParser),
       adIds       = {
         m.get(AD_ID_ESFN).fold (Seq.empty[String]) {
           case adIdsRaw: jl.Iterable[_] => strListParser(adIdsRaw)
@@ -303,7 +302,7 @@ import MAdStat._
 
 final class MAdStat(
   val clientAddr          : String,
-  val action              : AdStatAction,
+  val action              : String,
   val adIds               : Seq[String],
   val adsRendered         : Int,
   val isLocalCl           : Boolean,
@@ -393,25 +392,6 @@ final class MAdStat(
   }
 
   override def versionOpt = None
-}
-
-
-object AdStatActions extends Enumeration {
-
-  type AdStatAction = Value
-
-  /** Просмотр плитки выдачи. */
-  val View: AdStatAction  = Value("v")
-
-  /** Юзер открывает карточку, вызывая focusedAds() на сервере. */
-  val Click: AdStatAction = Value("c")
-
-  /** Запрос к "сайту" выдачи, т.е. к странице, с которой начинается рендер выдачи. */
-  val Site: AdStatAction  = Value("site")
-
-  /** Запрос к showcase/index, т.е. к верстке выдачи узла какого-то например. */
-  val Index: AdStatAction = Value("index")
-
 }
 
 
