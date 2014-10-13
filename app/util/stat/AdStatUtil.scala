@@ -2,6 +2,7 @@ package util.stat
 
 import io.suggest.model.OptStrId
 import io.suggest.util.UuidUtil
+import models.stat.ScStatAction
 import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import util._
@@ -34,7 +35,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
     * @param request Инстанс текущего реквеста.
     * @return Фьючерс для синхронизации. Сохранение идёт асинхронно.
     */
-  def saveAdStats(a: AdSearch, mads: Seq[OptStrId], statAction: AdStatAction,
+  def saveAdStats(a: AdSearch, mads: Seq[OptStrId], statAction: ScStatAction,
                   gsi: Option[Future[Option[GeoSearchInfo]]] = None, withHeadAd: Boolean = false)
                  (implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
@@ -79,7 +80,7 @@ object AdStatUtil extends PlayMacroLogsImpl {
         val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
         val adStat = new MAdStat(
           clientAddr  = ra,
-          action      = statAction,
+          action      = statAction.toString,
           adIds       = adIds,
           adsRendered = adsCount,
           onNodeIdOpt = onNodeIdOpt,

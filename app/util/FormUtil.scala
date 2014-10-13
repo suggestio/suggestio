@@ -4,6 +4,7 @@ import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
+import models.stat.{ScStatActions, ScStatAction}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -529,9 +530,9 @@ object FormUtil {
     .transform [AdNetMemberType] (_.get, Some.apply)
 
 
-  def adStatActionM: Mapping[AdStatAction] = {
+  def adStatActionM: Mapping[ScStatAction] = {
     nonEmptyText(maxLength = 1)
-      .transform[AdStatAction](AdStatActions.withName, _.toString)
+      .transform[ScStatAction](ScStatActions.withName, _.toString)
   }
 
   def currencyCodeM: Mapping[String] = {

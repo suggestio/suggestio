@@ -6,6 +6,7 @@ import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.img.WelcomeUtil
 import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
 import models.im.DevScreenT
+import models.stat.ScStatActions
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -425,7 +426,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
       adSearch2Fut onSuccess { case adSearch2 =>
-        AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
+        AdStatUtil.saveAdStats(adSearch2, mads, ScStatActions.Tiles, Some(gsiFut))
       }
     }
     // Асинхронно рендерим результат.
@@ -484,7 +485,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Когда поступят карточки, нужно сохранить по ним статистику.
     mads2Fut onSuccess { case mads =>
-      AdStatUtil.saveAdStats(adSearch, mads, AdStatActions.Click, withHeadAd = h)
+      AdStatUtil.saveAdStats(adSearch, mads, ScStatActions.Opened, withHeadAd = h)
     }
     // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>

@@ -1,6 +1,7 @@
 package util.billing
 
 import akka.actor._
+import models.stat.ScStatAction
 import util.{SiowebSup, PlayMacroLogsImpl}
 import models._
 import play.api.Play.{current, configuration}
@@ -38,7 +39,7 @@ object StatBillingQueueActor extends PlayMacroLogsImpl {
   def actorSelection = Akka.system.actorSelection(ACTOR_PATH)
  
   /** Асинхронно отправить новую статистику актору. */
-  def sendNewStats(rcvrId: String, mad: MAdT, action: AdStatAction) {
+  def sendNewStats(rcvrId: String, mad: MAdT, action: ScStatAction) {
     actorSelection ! NewStats(rcvrId, mad, action)
   }
   
@@ -161,7 +162,7 @@ class StatBillingQueueActor extends Actor {
     case FlushTimer =>
       trace(s"FlushTimer occured. There are ${acc.size} items to tarifficate.")
       // Крайне невероятно, что в этой проверке вообще есть какой-то смысл, т.к. flush-таймер запускается только когда появляются элементы.
-      if (!acc.isEmpty) {
+      if (acc.nonEmpty) {
         val readyAcc = acc
         future {
           flushAcc(readyAcc)
@@ -191,4 +192,4 @@ class StatBillingQueueActor extends Actor {
 }
 
 
-sealed case class NewStats(rcvrId: String, mad: MAdT, action: AdStatAction)
+sealed case class NewStats(rcvrId: String, mad: MAdT, action: ScStatAction)
