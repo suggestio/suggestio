@@ -321,7 +321,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val stat = ScIndexStatUtil(
       scSinkOpt = if (isGeo) Some(AdnSinks.SINK_GEO) else None,
       gsiFut    = spsr.geo.geoSearchInfoOpt,
-      screenOpt = spsr.screen,
+      screenOpt = screen,
       nodeOpt   = Some(adnNode)
     )
     stat.saveStats onFailure { case ex =>
