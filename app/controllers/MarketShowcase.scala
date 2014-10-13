@@ -301,10 +301,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // собираем статистику, пока идёт подготовка результата
     val stat = ScIndexStatUtil(
-      scSink = if (isGeo) AdnSinks.SINK_GEO else AdnSinks.SINK_WIFI,
-      gsiFut = spsr.geo.geoSearchInfoOpt,
+      scSinkOpt = if (isGeo) Some(AdnSinks.SINK_GEO) else None,
+      gsiFut    = spsr.geo.geoSearchInfoOpt,
       screenOpt = spsr.screen,
-      nodeOpt = Some(adnNode)
+      nodeOpt   = Some(adnNode)
     )
     stat.saveStats onFailure { case ex =>
       warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $spsr, isGeo=$isGeo", ex)
@@ -343,7 +343,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Собираем статистику асинхронно
     resultFut onSuccess { case (result, nodeOpt) =>
-      ScIndexStatUtil(AdnSinks.SINK_GEO, gsiOptFut, args.screen, nodeOpt)
+      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), gsiOptFut, args.screen, nodeOpt)
         .saveStats
         .onFailure { case ex =>
           warn("geoShowcase(): Failed to save statistics: args = " + args, ex)

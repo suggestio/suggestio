@@ -206,13 +206,13 @@ case class ScFocusedAdsStatUtil(
 /**
  * Записывалка статистики по обращению к разным showcase/index. Такая статистика позволяет отследить
  * перемещение юзера по узлам.
- * @param scSink sink выдачи: geo/wifi
+ * @param scSinkOpt sink выдачи, если известен.
  * @param gsiFut Асинхронный поиск геоданых по текущему запросу.
  * @param screenOpt данные по экрану.
  * @param request
  */
 case class ScIndexStatUtil(
-  scSink: AdnSink,
+  override val scSinkOpt: Option[AdnSink],
   gsiFut: Future[Option[GeoSearchInfo]],
   override val screenOpt: Option[DevScreenT],
   nodeOpt: Option[MAdnNode]
