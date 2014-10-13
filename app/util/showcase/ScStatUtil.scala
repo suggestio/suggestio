@@ -33,21 +33,23 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
   import LOGGER._
 
   implicit def request: AbstractRequestWithPwOpt[_]
+
   def gsiFut: Future[Option[GeoSearchInfo]]
   def madIds: Seq[String]
 
-  def adSearch: Option[AdsSearchArgsT]
+  def adSearchOpt: Option[AdSearch]
 
   def statAction: ScStatAction
 
-  val uaOpt = {
+  lazy val uaOpt = {
     request
       .headers
       .get(USER_AGENT)
+      .map(_.trim)
       .filter(!_.isEmpty)
   }
 
-  val agent = uaOpt.flatMap { ua =>
+  lazy val agent = uaOpt.flatMap { ua =>
     // try-catch для самозащиты от возможных багов в православной либе uadetector.
     try {
       val uaParser = UADetectorServiceFactory.getResourceModuleParser
@@ -61,9 +63,9 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
 
   def withHeadAd: Boolean = false
 
-  def forceFirstMadIds: Seq[String] = adSearch.fold(Seq.empty[String])(_.forceFirstIds)
+  def forceFirstMadIds: Seq[String] = adSearchOpt.fold(Seq.empty[String])(_.forceFirstIds)
 
-  val clickedAdIds = {
+  def clickedAdIds = {
     if (withHeadAd && forceFirstMadIds.nonEmpty) {
       forceFirstMadIds
         .find { madIds.contains }
@@ -73,19 +75,19 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
     }
   }
 
-  val clUidOpt = StatUtil.getFromRequest
+  def clUidOpt = StatUtil.getFromRequest
     .map { UuidUtil.uuidToBase64 }
 
   val now = DateTime.now()
 
-  val personId = request.pwOpt.map(_.personId)
+  def personId = request.pwOpt.map(_.personId)
 
-  val adsCount = madIds.size
+  def adsCount = madIds.size
 
-  val agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
+  def agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
 
-  val onNodeIdOpt: Option[String] = {
-    adSearch.flatMap { a =>
+  lazy val onNodeIdOpt: Option[String] = {
+    adSearchOpt.flatMap { a =>
       a.receiverIds
         .headOption
         // Если задано много ресиверов, то не ясно, где именно оно было отражено.
@@ -93,14 +95,20 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
     }
   }
 
-  val adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
+  def scSinkOpt: Option[AdnSink] = None
 
-  def saveStats(a: AdSearch) : Future[_] = {
+  def screenOpt = adSearchOpt.flatMap(_.screen)
+
+  def adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
+
+  def saveStats: Future[_] = {
+    val screenOpt = this.screenOpt
+    val agentOs = this.agentOs
     gsiFut flatMap { gsiOpt =>
       adnNodeOptFut flatMap { adnNodeOpt =>
         val adStat = new MAdStat(
           clientAddr  = request.remoteAddress,
-          action      = statAction.toString,
+          action      = statAction.toString(),
           adIds       = madIds,
           adsRendered = adsCount,
           onNodeIdOpt = onNodeIdOpt,
@@ -112,20 +120,35 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
           clTown      = gsiOpt.flatMap(_.cityName),
           clGeoLoc    = gsiOpt.flatMap(_.exactGeopoint),
           clCountry   = gsiOpt.flatMap(_.countryIso2),
-          clLocAccur  = a.geo.asGeoLocation.flatMap(_.accuracyMeters).map(_.toInt),
-          isLocalCl   = request.isSuperuser || gsiOpt.fold(false)(_.isLocalClient),
-          clOSFamily  = agentOs.flatMap { os => Option(os.getFamilyName) },
-          clAgent     = agent.flatMap { _agent => Option(_agent.getName) },
+          clLocAccur  = adSearchOpt
+            .flatMap { a => a.geo.asGeoLocation.flatMap(_.accuracyMeters).map(_.toInt) },
+          isLocalCl   = request
+            .isSuperuser || gsiOpt.fold(false)(_.isLocalClient),
+          clOSFamily  = agentOs
+            .flatMap { os => Option(os.getFamilyName) },
+          clAgent     = agent
+            .flatMap { _agent => Option(_agent.getName) },
           clDevice    = agent
             .flatMap { _agent => Option(_agent.getDeviceCategory) }
             .flatMap { dc => Option(dc.getName) },
           clickedAdIds = clickedAdIds,
-          generation  = a.generation,
+          generation  = adSearchOpt.flatMap(_.generation),
           clOsVsn     = agentOs
             .flatMap { os => Option(os.getVersionNumber) }
             .flatMap { vsn => Option(vsn.getMajor) }
             .filter(!_.isEmpty),
-          clUid       = clUidOpt
+          clUid       = clUidOpt,
+          scrOrient   = screenOpt
+            .map(_.orientation.name),
+          scrResChoosen = screenOpt
+            .flatMap(_.maybeBasicScreenSize)
+            .map(_.toString()),
+          pxRatioChoosen = screenOpt
+            .flatMap(_.pixelRatioOpt)
+            .map(_.pixelRatio),
+          viewportDecl = screenOpt
+            .map(_.toString),
+          scSink = scSinkOpt
         )
         //trace(s"Saving MAdStat with: clOsVsn=${adStat.clOsVsn} clUid=${adStat.clUid}")
         adStat.save
@@ -141,7 +164,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
  * @param adSearch Запрошеный поиск рекламных карточек.
  * @param madIds id возвращаемых рекламных карточек.
  * @param gsiFut Данные о геолокации обычно доступны на уровне выдачи.
- * @param request
+ * @param request Данные запроса.
  */
 case class ScTilesStatUtil(
   adSearch: AdSearch,
@@ -151,6 +174,31 @@ case class ScTilesStatUtil(
   extends ScStatUtilT
 {
   override def statAction = ScStatActions.Tiles
+  override val adSearchOpt = Some(adSearch)
 }
 
+
+/**
+ * Записывалка статистики для раскрытых рекламных карточек.
+ * @param adSearch Запрошенный поиск рекламных карточек.
+ * @param madIds ids возвращаемых рекламных карточек.
+ * @param withHeadAd Испрользуется ли заглавная рекламная карточка?
+ * @param request Данные запроса.
+ */
+case class ScFocusedAdsStatUtil(
+  adSearch: AdSearch,
+  madIds: Seq[String],
+  override val withHeadAd: Boolean
+)(
+  implicit val request: AbstractRequestWithPwOpt[_]
+)
+  extends ScStatUtilT
+{
+  override def gsiFut: Future[Option[GeoSearchInfo]] = {
+    GeoIp.geoSearchInfoOpt
+  }
+
+  override val adSearchOpt = Some(adSearch)
+  override def statAction = ScStatActions.Opened
+}
 
