@@ -110,9 +110,6 @@ package object models {
   type MAdStat              = ym.model.stat.MAdStat
   type AdFreqs_t            = MAdStat.AdFreqs_t
 
-  val  AdStatActions        = ym.model.stat.AdStatActions
-  type AdStatAction         = ym.model.stat.AdStatAction
-
   type CollectMMCatsAcc_t   = MMartCategory.CollectMMCatsAcc_t
 
   type BTariffType          = BTariffTypes.BTariffType

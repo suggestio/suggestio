@@ -13,6 +13,8 @@ import util.img.{PicSzParsers, DevScreenParsers}
 
 object DevScreen extends DevScreenParsers {
 
+  def maybeFromString(s: String) = parse(devScreenP, s)
+
   /** Биндер для отработки значения screen из ссылки. */
   implicit val qsb = {
     new QueryStringBindable[DevScreen] {
@@ -20,7 +22,7 @@ object DevScreen extends DevScreenParsers {
         params.get(key)
           .flatMap(_.headOption)
           .map { v =>
-            val pr = parse(devScreenP, v)
+            val pr = maybeFromString(v)
             if (pr.successful) {
               Right(pr.get)
             } else {
@@ -30,15 +32,7 @@ object DevScreen extends DevScreenParsers {
       }
 
       override def unbind(key: String, value: DevScreen): String = {
-        val sb = new StringBuilder(32)
-        sb.append( value.width )
-          .append( 'x' )
-          .append( value.height )
-        value.pixelRatioOpt.foreach { dpr =>
-          sb.append( PicSzParsers.IMG_RES_DPR_DELIM )
-            .append( dpr.pixelRatio )
-        }
-        sb.toString()
+        value.toString
       }
     }
   }
@@ -47,7 +41,7 @@ object DevScreen extends DevScreenParsers {
 
 
 /** Интерфейс модели. Для большинства случаев его достаточно. */
-trait DevScreenT extends MImgSizeT {
+trait DevScreenT extends MImgSizeT with ImgOrientationT {
 
   /** Пиксельная плотность экрана. */
   def pixelRatio: DevPixelRatio
@@ -58,9 +52,9 @@ trait DevScreenT extends MImgSizeT {
 
 
 case class DevScreen(
-  width: Int,
-  height: Int,
-  pixelRatioOpt: Option[DevPixelRatio]
+  width         : Int,
+  height        : Int,
+  pixelRatioOpt : Option[DevPixelRatio]
 )
   extends DevScreenT
 {
@@ -69,4 +63,18 @@ case class DevScreen(
     pixelRatioOpt getOrElse DevPixelRatios.default
   }
 
+  /** Найти базовое разрешение окна по соотв.модели. */
+  override val maybeBasicScreenSize = super.maybeBasicScreenSize
+
+  override def toString: String = {
+    val sb = new StringBuilder(32)
+    sb.append( width )
+      .append( 'x' )
+      .append( height )
+    pixelRatioOpt.foreach { dpr =>
+      sb.append( PicSzParsers.IMG_RES_DPR_DELIM )
+        .append( dpr.pixelRatio )
+    }
+    sb.toString()
+  }
 }

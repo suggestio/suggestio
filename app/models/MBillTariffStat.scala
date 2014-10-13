@@ -1,6 +1,7 @@
 package models
 
 import anorm._
+import models.stat.{ScStatAction, ScStatActions}
 import org.joda.time.DateTime
 import util.anorm.AnormJodaTime
 import AnormJodaTime._
@@ -22,7 +23,7 @@ object MBillTariffStat extends FindByContract with TariffsAllEnabled {
   override val TABLE_NAME = "bill_tariff_stat"
 
   val debitForParser = get[String]("debit_for") map {
-    AdStatActions.withName
+    ScStatActions.withName
   }
 
   override val rowParser: RowParser[MBillTariffStat] = {
@@ -64,20 +65,20 @@ object MBillTariffStat extends FindByContract with TariffsAllEnabled {
 final case class MBillTariffStat(
   id              : Option[Int] = None,
   contractId      : Int,
-  name        : String,
-  debitFor    : AdStatAction,
-  debitAmount : Float,
+  name            : String,
+  debitFor        : ScStatAction,
+  debitAmount     : Float,
   ttype           : BTariffType = BTariffTypes.Stat,
-  isEnabled   : Boolean,
-  dateFirst   : DateTime,
+  isEnabled       : Boolean,
+  dateFirst       : DateTime,
   dateCreated     : DateTime = DateTime.now,
-  dateModified: Option[DateTime] = None,
+  dateModified    : Option[DateTime] = None,
   dateLast        : Option[DateTime] = None,
-  dateStatus  : DateTime = DateTime.now,
+  dateStatus      : DateTime = DateTime.now,
   generation      : Int = 0,
   debitCount      : Int = 0,
   debitedTotal    : Float = 0F,
-  currencyCode: String = "RUB"
+  currencyCode    : String = "RUB"
 ) extends SqlModelSave[MBillTariffStat] with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffStat._
 

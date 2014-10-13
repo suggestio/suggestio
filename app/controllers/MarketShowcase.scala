@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.img.WelcomeUtil
-import _root_.util.showcase.{ShowcaseNodeListUtil, ShowcaseUtil}
+import _root_.util.showcase._
 import models.im.DevScreenT
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
@@ -24,7 +24,7 @@ import play.api.libs.Jsonp
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 import play.api.mvc._
 import play.api.Play, Play.{current, configuration}
 
@@ -123,6 +123,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+    // Собираем статистику. Тут скорее всего wifi
+    future {
+      ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
+        .saveStats
+        .onFailure {
+          case ex => warn(s"demoWebSite($adnId): Failed to save stats", ex)
+        }
+    }
+    // Рендерим результат в текущем потоке.
     adnNodeDemoWebsite( routes.MarketShowcase.showcase( adnId ) )
   }
 
@@ -134,6 +143,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite = MaybeAuth { implicit request =>
+    // Запускаем сбор статистики в фоне.
+    future {
+      ScSiteStat(AdnSinks.SINK_GEO)
+        .saveStats
+        .onFailure {
+          case ex => warn("geoSite(): Failed to save statistics", ex)
+        }
+    }
+    // Запускаем рендер результата синхронно в текущем потоке.
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,
@@ -274,7 +292,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
     val ctx = implicitly[Context]
     val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
-    for {
+    val resultFut = for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
       prods     <- prodsFut
@@ -299,6 +317,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       )
       renderShowcase(args, isGeo, adnNode.id)(ctx)
     }
+    // собираем статистику, пока идёт подготовка результата
+    val stat = ScIndexStatUtil(
+      scSinkOpt = if (isGeo) Some(AdnSinks.SINK_GEO) else None,
+      gsiFut    = spsr.geo.geoSearchInfoOpt,
+      screenOpt = spsr.screen,
+      nodeOpt   = Some(adnNode)
+    )
+    stat.saveStats onFailure { case ex =>
+      warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $spsr, isGeo=$isGeo", ex)
+    }
+    // Возвращаем асинхронный результат.
+    resultFut
   }
 
 
@@ -311,22 +341,37 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"geoShowcase(${System.currentTimeMillis}): "
     trace(logPrefix + "Starting, args = " + args)
-    if (args.geo.isWithGeo) {
-      val gsiOptFut = args.geo.geoSearchInfoOpt
+    val gsiOptFut = args.geo.geoSearchInfoOpt
+    val resultFut = if (args.geo.isWithGeo) {
       val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
       gdrFut flatMap { gdr =>
         trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
         renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest), screen = args.screen)
+          .map { _ -> Some(gdr.node) }
       } recoverWith {
         case ex: NoSuchElementException =>
           // Нету узлов, подходящих под запрос.
           debug(logPrefix + "No nodes found nearby " + args.geo)
           renderGeoShowcase(args)
+            .map { _ -> None }
       }
     } else {
       renderGeoShowcase(args)
+        .map { _ -> None }
     }
+    // Собираем статистику асинхронно
+    resultFut onSuccess { case (result, nodeOpt) =>
+      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), gsiOptFut, args.screen, nodeOpt)
+        .saveStats
+        .onFailure { case ex =>
+          warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
+        }
+    }
+    // Возвращаем асинхронный результат
+    resultFut
+      .map { _._1 }
   }
+
   private def renderGeoShowcase(reqArgs: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
     val (catsStatsFut, mmcatsFut) = getCats(None)
     for {
@@ -425,7 +470,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
     madsFut onSuccess { case mads =>
       adSearch2Fut onSuccess { case adSearch2 =>
-        AdStatUtil.saveAdStats(adSearch2, mads, AdStatActions.View, Some(gsiFut))
+        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), gsiFut).saveStats
       }
     }
     // Асинхронно рендерим результат.
@@ -484,7 +529,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
     // Когда поступят карточки, нужно сохранить по ним статистику.
     mads2Fut onSuccess { case mads =>
-      AdStatUtil.saveAdStats(adSearch, mads, AdStatActions.Click, withHeadAd = h)
+      ScFocusedAdsStatUtil(adSearch, mads.flatMap(_.id), withHeadAd = h).saveStats
     }
     // Запустить рендер, когда карточки поступят.
     madsCountFut flatMap { madsCount =>
@@ -566,7 +611,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val nextNodeWithLayerFut = ShowcaseNodeListUtil.nextNodeWithLvlOptFut(nextNodeSwitchFut, nextNodeFut)
 
     // Когда все данные будут собраны, нужно отрендерить результат в виде json.
-    for {
+    val resultFut = for {
       nextNodeGdr <- nextNodeWithLayerFut
       nodesLays5  <- ShowcaseNodeListUtil.collectLayers(args.geoMode, nextNodeGdr.node, nextNodeGdr.ngl)
     } yield {
@@ -599,6 +644,16 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
         )
     }
+
+    // Одновременно собираем статистику по запросу:
+    ScNodeListingStat(args, gsiOptFut)
+      .saveStats
+      .onFailure { case ex =>
+        warn(logPrefix + "Failed to save stats", ex)
+      }
+
+    // Вернуть асинхронный результат.
+    resultFut
   }
 
 
