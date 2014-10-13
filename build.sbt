@@ -5,7 +5,7 @@ organization := "io.suggest"
 version := "1.8.0-SNAPSHOT"
 
 scalaVersion := "2.10.4"
-//scalaVersion := "2.11.1"
+//scalaVersion := "2.11.2"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 

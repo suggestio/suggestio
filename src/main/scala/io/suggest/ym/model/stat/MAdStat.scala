@@ -340,11 +340,13 @@ final class MAdStat(
     var acc1: FieldsJsonAcc =
       CLIENT_ADDR_ESFN      -> JsString(clientAddr) ::
       ACTION_ESFN           -> JsString(action.toString) ::
-      AD_ID_ESFN            -> JsArray(adIds map JsString.apply) ::
       TIMESTAMP_ESFN        -> date2JsStr(timestamp) ::
-      ADS_RENDERED_ESFN     -> JsNumber(adsRendered) ::
       IS_LOCAL_CLIENT_ESFN  -> JsBoolean(isLocalCl) ::
       acc
+    if (adIds.nonEmpty)
+      acc1 ::= AD_ID_ESFN -> JsArray(adIds map JsString.apply)
+    if (adsRendered > 0)
+      acc1 ::= ADS_RENDERED_ESFN -> JsNumber(adsRendered)
     if (ua.isDefined)
       acc1 ::= UA_ESFN -> JsString(ua.get)
     if (personId.isDefined)
