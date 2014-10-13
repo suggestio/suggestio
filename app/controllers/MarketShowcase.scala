@@ -24,7 +24,7 @@ import play.api.libs.Jsonp
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 import play.api.mvc._
 import play.api.Play, Play.{current, configuration}
 
@@ -123,6 +123,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+    // Собираем статистику. Тут скорее всего wifi
+    future {
+      ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
+        .saveStats
+        .onFailure {
+          case ex => warn(s"demoWebSite($adnId): Failed to save stats", ex)
+        }
+    }
+    // Рендерим результат в текущем потоке.
     adnNodeDemoWebsite( routes.MarketShowcase.showcase( adnId ) )
   }
 
@@ -134,6 +143,15 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite = MaybeAuth { implicit request =>
+    // Запускаем сбор статистики в фоне.
+    future {
+      ScSiteStat(AdnSinks.SINK_GEO)
+        .saveStats
+        .onFailure {
+          case ex => warn("geoSite(): Failed to save statistics", ex)
+        }
+    }
+    // Запускаем рендер результата синхронно в текущем потоке.
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,

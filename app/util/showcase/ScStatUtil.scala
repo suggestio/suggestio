@@ -203,6 +203,21 @@ case class ScFocusedAdsStatUtil(
 }
 
 
+/** Эта статистика касается указанного узла. */
+trait ScStatNode extends ScStatUtilT {
+  val nodeOpt: Option[MAdnNode]
+  override lazy val onNodeIdOpt = nodeOpt.flatMap(_.id)
+  override def adnNodeOptFut = Future successful nodeOpt
+}
+
+
+/** Указываем, что тут рекламных карточек нет и не должно быть. */
+trait ScStatNoAds extends ScStatUtilT {
+  override def madIds: Seq[String] = Seq.empty
+  override def adSearchOpt: Option[AdSearch] = None
+}
+
+
 /**
  * Записывалка статистики по обращению к разным showcase/index. Такая статистика позволяет отследить
  * перемещение юзера по узлам.
@@ -219,12 +234,29 @@ case class ScIndexStatUtil(
 )(
   implicit val request: AbstractRequestWithPwOpt[_]
 )
-  extends ScStatUtilT
+  extends ScStatUtilT with ScStatNode with ScStatNoAds
 {
-  override def madIds: Seq[String] = Seq.empty
-  override def adSearchOpt: Option[AdSearch] = None
   override def statAction = ScStatActions.Index
-  override lazy val onNodeIdOpt = nodeOpt.flatMap(_.id)
-  override def adnNodeOptFut = Future successful nodeOpt
 }
+
+
+/**
+ * Записывалка статистики для обращения к demoWebSite-производным.
+ * @param scSink Запрашиваемый синк выдачи.
+ * @param nodeOpt Узел, если есть.
+ * @param request HTTP-реквест.
+ */
+case class ScSiteStat(
+  scSink: AdnSink,
+  nodeOpt: Option[MAdnNode] = None
+)(
+  implicit val request: AbstractRequestWithPwOpt[_]
+)
+  extends ScStatUtilT with ScStatNode with ScStatNoAds
+{
+  override def gsiFut = GeoIp.geoSearchInfoOpt
+  override def statAction = ScStatActions.Site
+  override def scSinkOpt = Some(scSink)
+}
+
 
