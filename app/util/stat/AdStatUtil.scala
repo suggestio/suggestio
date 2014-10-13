@@ -12,7 +12,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.Play.{current, configuration}
-import controllers.Application.USER_AGENT
+import play.api.http.HeaderNames.USER_AGENT
 import scala.util.{Failure, Success}
 import util.event.SiowebNotifier.Implicts.sn
 
