@@ -159,24 +159,6 @@ case class MLkSupportRequest(
 )
 
 
-/**
- * Набор аргументов для передачи в demoWebSiteTpl.
- * @param bgColor Цвет оформления.
- * @param showcaseCall Адрес для showcase
- * @param title Заголовок.
- * @param adnId id узла, в рамках которого орудуем.
- */
-case class SMDemoSiteArgs(
-  bgColor: String,
-  showcaseCall: Call,
-  title: Option[String] = None,
-  adnId: Option[String]
-) {
-  // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
-  def withGeo = adnId.isEmpty
-}
-
-
 /** Доступные интервалы размещения рекламных карточек. Отображаются в select'е вариантов adv-формы. */
 object QuickAdvPeriods extends Enumeration {
 
@@ -234,41 +216,6 @@ object LkLeftPanelLinks extends Enumeration {
   val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
 }
 
-
-
-
-object UmapTplArgs {
-
-  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit lang: Lang): JsArray = {
-    val lvls = ngls.map { ngl =>
-      JsObject(Seq(
-        "displayOnLoad" -> JsBoolean(true),
-        "name"          -> JsString( Messages("ngls." + ngl.esfn) ),
-        "id"            -> JsNumber(ngl.id)
-      ))
-    }
-    JsArray(lvls)
-  }
-
-}
-
-/**
- * Набор аргументов для рендера шаблоны с картой Umap.
- * @param nodesMap Карта узлов по категориям. Если пусто, то значит работа идёт в рамках одного узла.
- * @param dlUpdateUrl Заготовка ссылки, которая будет делать сабмит для сохранения слоя.
- *                    На месте вставки id слоя надо использовать шаблон "{pk}".
- */
-case class UmapTplArgs(
-  dlUpdateUrl: String,
-  dlGetUrl: String,
-  nodesMap: Map[AdnShownType, Seq[MAdnNode]],
-  editAllowed: Boolean = true,
-  title: String,
-  ngls: Seq[NodeGeoLevel]
-) {
-  def nglsJson(implicit lang: Lang) = UmapTplArgs.nodeGeoLevelsJson(ngls)
-
-}
 
 
 /** Исчерпывающая инфа по картинке, которую можно отрендерить в шаблоне ссылку. */
