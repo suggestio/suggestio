@@ -13,8 +13,7 @@
     bc       = bc,
     args     = args,
     dfltImg  = Some("images/block-ad-sample-image.jpg"),
-    cssClass = Some("bg"),
-    alt      = Some("SALE")
+    cssClass = Some("bg")
   )
 
   @mad.offers.headOption.map { offer =>
@@ -26,7 +25,7 @@
     }
 
     @offer.text2.map { descr =>
-      <div class="js-mvbl mvbl-description" data-connected-input="ad.offer.descr" style="">
+      <div class="js-mvbl mvbl-description" data-connected-input="ad.offer.descr">
         <div class="description">@Html(descr.value)</div>
       </div>
       @_blockStyleTpl( mad.id, descr, bc.descrBf, "description", left = 18, top = 52 )
