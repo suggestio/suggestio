@@ -194,7 +194,7 @@ case class ScFocusedAdsStatUtil(
 )
   extends ScStatUtilT
 {
-  override def gsiFut = GeoIp.geoSearchInfoOpt
+  override def gsiFut = adSearch.geo.geoSearchInfoOpt
   override val adSearchOpt = Some(adSearch)
   override def statAction = ScStatActions.Opened
 }
