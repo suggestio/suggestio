@@ -106,50 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait CommonBlock17_18 extends BgImg with BgColor with SaveBgImgI with CircleFillColor with Title
-  with Discount with DiscoIconColor with DiscoBorderColor {
-    override def bgColorBf = super.bgColorBf.copy(
-      defaultValue = Some("FFFFFF")
-    )
-    override def discoIconColorBf = super.discoIconColorBf.copy(
-      defaultValue = Some("ce2222")
-    )
-    override def circleFillColorBf = super.circleFillColorBf.copy(
-      defaultValue = Some("f9daac")
-    )
-  }
-
-  sealed trait Block17t extends Height with CommonBlock17_18 {
-    override def isShown = false
-    override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
-    )
-    // Добавляем в начало формы поле высоты.
-    override def blockFields: List[BlockFieldT] = heightBf :: super.blockFields
-    override def template = _block17Tpl
-  }
-  val Block17 = new Val(17) with Block17t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block17Wrapper(key = newKey)
-  }
-  sealed case class Block17Wrapper(key: String) extends ValTWrapper(Block17) with ValTEmpty with Block17t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
-  sealed trait Block18t extends CommonBlock17_18 {
-    override def blockWidth: Int = BLOCK_WIDTH_NARROW_PX
-    override def isShown = false
-    override def template = _block18Tpl
-  }
-  val Block18 = new Val(18) with Block18t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block18Wrapper(key = newKey)
-  }
-  sealed case class Block18Wrapper(key: String) extends ValTWrapper(Block18) with ValTEmpty with Block18t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
-
   sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
     override def borderColorBf = super.borderColorBf.copy(
       defaultValue = Some("444444")

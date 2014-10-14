@@ -23,11 +23,8 @@ object BlocksSvg extends Enumeration {
 
   // Перечисление шаблонов и зацепок к ним.
   val bg19                = Val("bg19", _bg19Tpl)
-  val circles17           = Val("c17",  _circles17)
   val mask23              = Val("m23",  _mask23)
   val mask24              = Val("m24",  _mask24)
-  val saleIcon13          = Val("si13", _saleIcon13Tpl)
-  val saleIconMask13      = Val("sim13", _saleIconMask13Tpl)
 
   implicit def value2val(x: Value): BlockSvg = x.asInstanceOf[BlockSvg]
 
