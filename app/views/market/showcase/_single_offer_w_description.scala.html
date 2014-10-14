@@ -1,10 +1,11 @@
-@(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0)(implicit ctx: Context)
+@(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0,
+  args: BlockRenderArgs = BlockRenderArgs.DOUBLE_SIZED_ARGS)(implicit ctx: Context)
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
 
 <div class="focused-ad_offer">
-  @_single_offer(mad, isWithAction = false, BlockRenderArgs.DOUBLE_SIZED_ARGS)
+  @_single_offer(mad, isWithAction = false, args)
 </div>
 
 @* Информация о магазине *@

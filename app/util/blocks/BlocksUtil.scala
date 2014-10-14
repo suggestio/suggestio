@@ -221,7 +221,7 @@ object BfHeight {
   val HEIGHT_460 = 460
   val HEIGHT_620 = 620
 
-  val HEIGHTS_AVAILABLE_DFLT = Set(HEIGHT_300, HEIGHT_460, HEIGHT_620)
+  val HEIGHTS_AVAILABLE_DFLT = Set(HEIGHT_140, HEIGHT_300, HEIGHT_460, HEIGHT_620)
 }
 
 /** Поле для какой-то цифры. */

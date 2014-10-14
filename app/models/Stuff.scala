@@ -218,6 +218,7 @@ object BlockRenderArgs {
  * @param szMult Мультипликатор размера (и относительных координат).
  */
 case class BlockRenderArgs(
+  withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
   szMult        : Int = 1
 ) {

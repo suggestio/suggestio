@@ -106,12 +106,12 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
+  /** Базовый трейт новых блоков. */
+  sealed trait CommonBlock2T extends Height with BgImg with TitleDescrListBlockT
+
+  sealed trait Block20t extends CommonBlock2T {
     override def ordering = 1000
     override def template = _block20Tpl
-    override def heightBf = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
-    )
   }
   val Block20 = new Val(20) with Block20t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
@@ -121,12 +121,9 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
 
-  sealed trait Block25t extends Height with BgImg with TitleDescrListBlockT {
+  sealed trait Block25t extends CommonBlock2T {
     override def ordering = 1100
     override def template = _block25Tpl
-    override def heightBf = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
-    )
     override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block25 = new Val(25) with Block25t with EmptyKey {
@@ -138,13 +135,9 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
 
   /** Блок-ссылка. Изначально создавался для пиара sioM. */
-  sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
+  sealed trait Block26t extends CommonBlock2T with Href {
     override def isShown = true
     override def template = _block26Tpl
-    override def offersCount: Int = 3
-    override def heightBf = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
-    )
   }
   val Block26 = new Val(26) with Block26t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
