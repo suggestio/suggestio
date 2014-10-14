@@ -37,7 +37,7 @@ object ShowcaseUtil {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
         val blockId = e.blockMeta.blockId
-        val bc: BlockConf = BlocksConf(blockId)
+        val bc = BlocksConf applyOrDefault blockId
         if (bc.isNarrow) {
           enOpt match {
             case Some(en) =>

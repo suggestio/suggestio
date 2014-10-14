@@ -14,7 +14,7 @@
     af = af,
     call = routes.MarketAd.editAdSubmit(mad.id.get),
     mmcats = mmcats,
-    withBC  = Some(BlocksConf(mad.blockMeta.blockId)),
+    withBC  = Some(BlocksConf applyOrDefault mad.blockMeta.blockId),
     adnNode = adnNode,
     allBlocks = allBlocks
   )

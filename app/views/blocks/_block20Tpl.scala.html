@@ -5,10 +5,7 @@
 
 @blockBase(args, mad, bc) {
 
-  @bgImgTpl(mad, bc, args,
-    cssClass = Some("bg"),
-    dfltImg = Some("images/market/blocks/tpl20-bg.jpg")
-  )
+  @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
 
   @mad.offers.map { offer =>
 
