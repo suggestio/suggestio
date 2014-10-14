@@ -217,6 +217,7 @@ object BlockRenderArgs {
  * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
  */
 case class BlockRenderArgs(
+  withEdit              : Boolean = false,
   isStandalone          : Boolean = false,
   canRenderDoubleSize   : Boolean = false
 )

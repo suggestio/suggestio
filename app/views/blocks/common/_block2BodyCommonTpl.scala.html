@@ -7,7 +7,7 @@
 @mad.offers.map { offer =>
   <div class="info el-@{offer.n + 1}">
     @offer.text1.map { text1 =>
-      <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+      <div class="@if(args.withEdit){js-mvbl }mvbl-title-@offer.n" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offer.n}].title"}>
         <div class="title title-@offer.n">
           @Html(text1.value)
         </div>
@@ -16,7 +16,7 @@
     }
 
     @offer.text2.map { text2 =>
-      <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
+      <div class="@if(args.withEdit){js-mvbl }mvbl-descr mvbl-descr-@offer.n" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offer.n}].descr"}>
         <div class="descr descr-@offer.n">
           @Html(text2.value)
         </div>

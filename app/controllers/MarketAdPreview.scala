@@ -51,7 +51,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def maybeGetAdPreviewFormM(adnNode: MAdnNode, reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
     // TODO adModes пора выпиливать. И этот Either заодно.
-    val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
+    val adModes = reqBody.getOrElse("ad.offer.mode", Nil)
     adModes.headOption.flatMap { adModeStr =>
       AdOfferTypes.maybeWithName(adModeStr)
     }.fold[Either[AdFormM, (BlockConf, AdFormM)]] {
@@ -103,9 +103,11 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
             } yield {
               mad.imgs = imgs
               val render = if (isFull) {
-                _single_offer_w_description(mad, producer = request.adnNode)
+                val args = BlockRenderArgs(withEdit = true, isStandalone = false, canRenderDoubleSize = true)
+                _single_offer_w_description(mad, producer = request.adnNode, args = args)
               } else {
-                _single_offer(mad)
+                val args = BlockRenderArgs(withEdit = true, isStandalone = false, canRenderDoubleSize = false)
+                _single_offer(mad, args = args)
               }
               Ok(render)
             }
