@@ -47,16 +47,11 @@ object MAd
 
   override val ES_TYPE_NAME = "ad"
 
-  protected[model] val blockMetaDflt = BlockMeta(height = 140, blockId = 1)  // TODO Убрать после окончания миграции всех карточек на blocks.
-
   override protected[model] def dummy(id: Option[String], version: Option[Long]) = {
     MAd(
-      producerId = null,
-      blockMeta = blockMetaDflt,
-      offers = Nil,
-      imgs = Map.empty,
-      id = id,
-      versionOpt = version
+      producerId  = null,
+      id          = id,
+      versionOpt  = version
     )
   }
 
@@ -153,9 +148,9 @@ object MAd
 
 final case class MAd(
   var producerId    : String,
-  var offers        : List[AOBlock],
-  var imgs          : Imgs_t,
-  var blockMeta     : BlockMeta,
+  var offers        : List[AOBlock] = Nil,
+  var imgs          : Imgs_t = Map.empty,
+  var blockMeta     : BlockMeta = BlockMeta.DEFAULT,
   var receivers     : Receivers_t = Map.empty,
   var prio          : Option[Int] = None,
   var id            : Option[String] = None,

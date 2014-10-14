@@ -71,7 +71,7 @@ final case class MWelcomeAd(
   @JsonIgnore override def prio = None
   @JsonIgnore override def userCatId = None
   @JsonIgnore override def receivers = Map.empty
-  @JsonIgnore override def blockMeta = MAd.blockMetaDflt
+  @JsonIgnore override def blockMeta = BlockMeta.DEFAULT    // TODO Блоки вообще не относятся к карточкам приветствия. Нужно это спилить.
   @JsonIgnore override def colors = Map.empty
   @JsonIgnore override def disableReason = Nil
   @JsonIgnore override def richDescrOpt = None
