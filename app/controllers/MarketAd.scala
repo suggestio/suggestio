@@ -248,7 +248,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editAd(adId: String) = CanEditAd(adId).async { implicit request =>
     import request.mad
-    val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
+    val blockConf: BlockConf = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
     val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
     val bim = mad.imgs.mapValues { mii =>
       val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)

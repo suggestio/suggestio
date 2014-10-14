@@ -4,6 +4,8 @@
 @import AdNetMemberTypes.MART
 @import util.blocks._
 
-<div @if( isWithAction && !BlocksConf(mad.blockMeta.blockId).hrefBlock ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
-  @BlocksConf.applyOrDefault(mad.blockMeta.blockId).renderBlock(mad, args)
-</div>
+@defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
+  <div @if( isWithAction && !bc.hrefBlock ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
+    @bc.renderBlock(mad, args)
+  </div>
+}

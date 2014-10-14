@@ -87,7 +87,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
   /** Дефолтовый блок, если возникают сомнения. */
-  def DEFAULT: BlockConf = Block25
+  def DEFAULT: BlockConf = Block20
 
   /**
    * Аналог apply, но вызывает DEFAULT(), если нет блока с необходимым id.

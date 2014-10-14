@@ -3,7 +3,7 @@
 @import util.blocks._, BlocksUtil._
 
 @defining( "ad.offer" ) { nameBase =>
-@defining(  withBC.getOrElse( BlocksConf(1) )  ) { bc =>
+@defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
 
 <div class="ad-block-editor">
   @for(bf <- bc.blockFields) {
