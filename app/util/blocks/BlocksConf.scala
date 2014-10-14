@@ -79,9 +79,11 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   /** Найти опционально по имени. */
   def maybeWithName(n: String): Option[BlockConf] = {
-    values
-      .find(_.id == n)
-      .asInstanceOf[Option[BlockConf]]
+    try {
+      Some(withName(n))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
   }
 
   /** Дефолтовый блок, если возникают сомнения. */
@@ -103,21 +105,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
   // Начало значений
-
-  /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
-  sealed trait Block5t extends BgImg with Height with MaskColor with LogoImg with Title with Price with OldPrice {
-    override def maskColorBf: BfColor = super.maskColorBf.copy(
-      defaultValue = Some("d5c864")
-    )
-    override def template = _block5Tpl
-  }
-  val Block5 = new Val(5) with Block5t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block5Wrapper(key = newKey)
-  }
-  sealed case class Block5Wrapper(key: String) extends ValTWrapper(Block5) with ValTEmpty with Block5t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed with FillColor with BorderColor {
