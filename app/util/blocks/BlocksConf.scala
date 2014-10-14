@@ -106,24 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Title with Descr {
-    override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
-    )
-    override def discoIconColorBf: BfColor = super.discoIconColorBf.copy(
-      defaultValue = Some("828fa0")
-    )
-    override def template = _block13Tpl
-  }
-  val Block13 = new Val(13) with Block13t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block13Wrapper(key = newKey)
-  }
-  sealed case class Block13Wrapper(key: String) extends ValTWrapper(Block13) with ValTEmpty with Block13t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
-
   sealed trait CommonBlock145 extends TopColor with LogoImg with BottomColor with LineColor with Title with Descr {
     override def topColorBf: BfColor = super.topColorBf.copy(
       defaultValue = Some("000000")
