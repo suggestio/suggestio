@@ -37,10 +37,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     * Такие проблемы возникают при конфликте версий. */
   val SAVE_AD_RETRIES_MAX = configuration.getInt("ad.save.retries.max") getOrElse 7
 
-  /** Дефолтовый блок, используемый редакторами форм. */
-  protected[controllers] def dfltBlock = BlocksConf.Block1
-
-
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
 
@@ -122,7 +118,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getSaveAdFormM(adnNode.adn.memberType, dfltBlock.strictMapping),
+      af = getSaveAdFormM(adnNode.adn.memberType, BlocksConf.DEFAULT.strictMapping),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))

@@ -5,5 +5,5 @@
 @import util.blocks._
 
 <div @if( isWithAction && !BlocksConf(mad.blockMeta.blockId).hrefBlock ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
-@BlocksConf(mad.blockMeta.blockId).renderBlock(mad, args)
+  @BlocksConf.applyOrDefault(mad.blockMeta.blockId).renderBlock(mad, args)
 </div>
