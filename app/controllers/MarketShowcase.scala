@@ -715,30 +715,5 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
-
-  /** Значение заголовка Cache-Control для svg-картинок блока. */
-  private val BLOCK_SVG_CACHE_CONTROL = s"public, max-age=$BLOCK_SVG_CACHE_SECONDS"
-
-  /** Рендер svg-шаблона картинки блока. */
-  def blockSvg(svgTpl: BlockSvg, colors: BSvgColorMap) = Action { implicit request =>
-    val newEtag = svgTpl.template.hashCode().toString
-    val isNotModified = request.headers.get(IF_NONE_MATCH) match {
-      case Some(etag) => etag == newEtag
-      case None => false
-    }
-    val cch = CACHE_CONTROL -> BLOCK_SVG_CACHE_CONTROL
-    if (isNotModified) {
-      NotModified
-        .withHeaders(cch)
-    } else {
-      Ok(svgTpl.render(colors))
-        .withHeaders(
-          cch,
-          CONTENT_TYPE  -> "image/svg+xml; charset=utf8",
-          ETAG          -> svgTpl.template.hashCode.toString
-        )
-    }
-  }
-
 }
 
