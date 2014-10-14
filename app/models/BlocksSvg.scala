@@ -23,8 +23,6 @@ object BlocksSvg extends Enumeration {
 
   // Перечисление шаблонов и зацепок к ним.
   val bg19                = Val("bg19", _bg19Tpl)
-  val bottom145           = Val("b145", _bottom145)
-  val top145              = Val("t145", _top145)
   val circles17           = Val("c17",  _circles17)
   val mask23              = Val("m23",  _mask23)
   val mask24              = Val("m24",  _mask24)

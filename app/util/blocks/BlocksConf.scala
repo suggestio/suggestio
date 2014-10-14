@@ -106,45 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait CommonBlock145 extends TopColor with LogoImg with BottomColor with LineColor with Title with Descr {
-    override def topColorBf: BfColor = super.topColorBf.copy(
-      defaultValue = Some("000000")
-    )
-    override def bottomColorBf: BfColor = super.bottomColorBf.copy(
-      defaultValue = Some("bf6a6a")
-    )
-    override def lineColorBf: BfColor = super.lineColorBf.copy(
-      defaultValue = Some("B35151")
-    )
-  }
-
-  sealed trait Block14t extends Height with CommonBlock145 {
-    override def template = _block14Tpl
-    override def isShown = false
-    override def heightBf = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
-    )
-  }
-  val Block14 = new Val(14) with Block14t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block14Wrapper(key = newKey)
-  }
-  sealed case class Block14Wrapper(key: String) extends ValTWrapper(Block14) with ValTEmpty with Block14t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-  sealed trait Block15t extends CommonBlock145 {
-    override def template = _block15Tpl
-    override def isShown = false
-    override def blockWidth = BLOCK_WIDTH_NARROW_PX
-  }
-  val Block15 = new Val(15) with Block15t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block15Wrapper(key = newKey)
-  }
-  sealed case class Block15Wrapper(key: String) extends ValTWrapper(Block15) with ValTEmpty with Block15t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block16t extends Height with BgColor with BorderColor with Title with Descr with Price {
     override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("e1cea1")
