@@ -104,26 +104,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait CommonBlock4_9 extends ValT with BgImg with HeightFixed
-  with Title with Price with Descr with BgColor with BorderColor {
-    override def bgColorBf: BfColor = super.bgColorBf.copy(
-      defaultValue = Some("0F2841")
-    )
-  }
-
-
-  /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
-  sealed trait Block4t extends CommonBlock4_9 {
-    override def template = _block4Tpl
-  }
-  val Block4 = new Val(4) with Block4t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block4Wrapper(key = newKey)
-  }
-  sealed case class Block4Wrapper(key: String) extends ValTWrapper(Block4) with ValTEmpty with Block4t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
   sealed trait Block5t extends BgImg with Height with MaskColor with LogoImg with Title with Price with OldPrice {
     override def maskColorBf: BfColor = super.maskColorBf.copy(
@@ -179,18 +159,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
 
-  sealed trait Block9t extends CommonBlock4_9 {
-    override def blockWidth = BLOCK_WIDTH_NARROW_PX
-    override def template = _block9Tpl
-  }
-  val Block9 = new Val(9) with Block9t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block9Wrapper(key = newKey)
-  }
-  sealed case class Block9Wrapper(key: String) extends ValTWrapper(Block9) with ValTEmpty with Block9t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block10t extends BgImg with Title with OldPrice with Price with HeightFixed {
     override def template = _block10Tpl
     override def isShown = false
@@ -199,7 +167,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   val Block10 = new Val(10) with Block10t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block10Wrapper(key = newKey)
   }
-  sealed case class Block10Wrapper(key: String) extends ValTWrapper(Block9) with ValTEmpty with Block10t {
+  sealed case class Block10Wrapper(key: String) extends ValTWrapper(Block10) with ValTEmpty with Block10t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
