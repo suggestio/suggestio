@@ -56,7 +56,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
       AdOfferTypes.maybeWithName(adModeStr)
     }.fold[Either[AdFormM, (BlockConf, AdFormM)]] {
       warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-      val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
+      val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
         .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
       Left(form)
     } {
@@ -70,7 +70,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
           .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
             // Задан пустой или скрытый/неправильный block_id.
             warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
-            val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
+            val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
               .withGlobalError("ad.blockId.undefined.or.invalid")
             Left(form)
           } { blockConf =>

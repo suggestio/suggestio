@@ -104,27 +104,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
-  sealed trait Block1t extends Height with BgImg with Title with Descr with OldPrice with Price {
-    override def titleBf = super.titleBf.copy(
-      fontSizeDflt = Some(26)
-    )
-    override def priceBf = super.priceBf.copy(
-      fontSizeDflt = Some(70)
-    )
-    override def oldPriceBf = super.oldPriceBf.copy(
-      fontSizeDflt = Some(46)
-    )
-    override def template = _block1Tpl
-  }
-  val Block1 = new Val(1) with Block1t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block1Wrapper(key = newKey)
-  }
-  sealed case class Block1Wrapper(key: String) extends ValTWrapper(Block1) with ValTEmpty with Block1t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   /** Блок с тремя ценами в первом дизайне. */
   sealed trait Block3t extends Height with BgImg with TitlePriceListBlockT {
     override def template = _block3Tpl
