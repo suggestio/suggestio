@@ -21,8 +21,12 @@ object BlocksSvg extends Enumeration {
 
   type BlockSvg = Val
 
+
   // Перечисление шаблонов и зацепок к ним.
-  val mask24              = Val("m24",  _mask24)
+  // TODO 2014.oct.14: Удалены неиспользуемые блоки, и в этом enum'е не осталось svg'шек.
+  //      Этот файл тоже надо будет удалить, если он не используется.
+  //val mask24              = Val("m24",  _mask24)
+
 
   implicit def value2val(x: Value): BlockSvg = x.asInstanceOf[BlockSvg]
 
