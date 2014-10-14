@@ -106,18 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
-  sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed with FillColor with BorderColor {
-    override def template = _block6Tpl
-  }
-  val Block6 = new Val(6) with Block6t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block6Wrapper(key = newKey)
-  }
-  sealed case class Block6Wrapper(key: String) extends ValTWrapper(Block6) with ValTEmpty with Block6t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   /** Блок, отображающий скидочную цену на товар или услугу. */
   sealed trait Block7t extends HeightFixed with SaleMaskColor with Discount with Title with Price {
     override def isShown = false
