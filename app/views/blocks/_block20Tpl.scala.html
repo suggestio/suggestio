@@ -3,4 +3,24 @@
 @import common._
 @import util.blocks.BlocksConf.{Block20 => bc}
 
-@_block2CommonTpl(mad, args, bc)
+@blockBase(args, mad, bc) {
+
+  @* Картинка рендерится в пределах ссылки оффера, если та существует.
+     Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
+
+  @mad.offers.headOption.fold {
+    @bgImgTpl(mad, bc, args)
+  } { offer =>
+
+    @offer.href.map { href =>
+      <a href="@href" target="_blank">
+    }
+
+    @_block2BodyCommonTpl(mad, args, bc)
+
+    @if(offer.href.isDefined) {
+      </a>
+    }
+  }
+
+}

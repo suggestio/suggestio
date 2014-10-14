@@ -100,7 +100,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
       apply(n)
     } catch {
       case ex: NoSuchElementException =>
-        warn(s"BlockId is unknown: $n. Looks like, current MAd is deprecated.", ex)
+        warn(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
         DEFAULT
     }
   }
@@ -108,8 +108,9 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   // Начало значений
 
   /** Базовый трейт новых блоков. */
-  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT
+  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT with Href
 
+  /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait Block20t extends CommonBlock2T {
     override def ordering = 1000
     override def template = _block20Tpl
@@ -122,29 +123,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
 
-  sealed trait Block25t extends CommonBlock2T {
-    override def ordering = 1100
-    override def template = _block25Tpl
-  }
-  val Block25 = new Val(25) with Block25t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block25Wrapper(key = newKey)
-  }
-  sealed case class Block25Wrapper(key: String) extends ValTWrapper(Block25) with ValTEmpty with Block25t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
-  /** Блок-ссылка. Изначально создавался для пиара sioM. */
-  sealed trait Block26t extends CommonBlock2T with Href {
-    override def isShown = true
-    override def template = _block26Tpl
-  }
-  val Block26 = new Val(26) with Block26t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
-  }
-  sealed case class Block26Wrapper(key: String) extends ValTWrapper(Block26) with ValTEmpty with Block26t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
+  // Конец значений. Уже. А ведь когда-то их было 26...
 
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
