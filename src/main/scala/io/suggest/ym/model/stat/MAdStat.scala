@@ -71,8 +71,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val PX_RATIO_CHOOSEN_ESFN     = "pxRatioChoosen"
   val VIEWPORT_DECLARED_ESFN    = "viewportDecl"
   val SHOWCASE_SINK_ESFN        = "scSink"
-  
-  val REQUEST_URI_ESFN         = "uri"
+
+  val REQUEST_URI_ESFN          = "uri"
 
 
   /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */

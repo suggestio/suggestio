@@ -219,39 +219,21 @@ object AOBlock {
   def deserializeBody(jsObject: Any, n: Int) = {
     jsObject match {
       case m: java.util.Map[_,_] =>
-        val acc = AOBlock(n)
-        m foreach { case (k, v) =>
-          k match {
-            // Десериализация текстовых полей.
-            case fn @ (TEXT1_ESFN | TEXT2_ESFN) =>
-              val result = AOStringField.deserializeOpt(v)
-              fn match {
-                case TEXT1_ESFN => acc.text1 = result
-                case TEXT2_ESFN => acc.text2 = result
-              }
-
-            // Десериализация float-полей.
-            case DISCOUNT_ESFN =>
-              acc.discount = AOFloatField.deserializeOpt(v)
-
-            // Десериализация price-полей.
-            case fn @ (PRICE_ESFN | OLD_PRICE_ESFN) =>
-              val result = AOPriceField.deserializeOpt(v)
-              fn match {
-                case PRICE_ESFN     => acc.price = result
-                case OLD_PRICE_ESFN => acc.oldPrice = result
-              }
-
-            // Десериализация ссылки.
-            case HREF_ESFN =>
-              acc.href = Option(v).map(EsModel.stringParser)
-
-            // Есть проблемы с десериализацией
-            case other =>
-              println("AOBlock.deserializeBody: Skipping unknown field: " + other + " = " + v)
-          }
-        }
-        acc
+        AOBlock(
+          n = n,
+          text1 = Option(m get TEXT1_ESFN)
+            .flatMap(AOStringField.deserializeOpt),
+          text2 = Option(m get TEXT2_ESFN)
+            .flatMap(AOStringField.deserializeOpt),
+          discount = Option(m get DISCOUNT_ESFN)
+            .flatMap(AOFloatField.deserializeOpt),
+          price = Option(m get PRICE_ESFN)
+            .flatMap(AOPriceField.deserializeOpt),
+          oldPrice = Option(m get OLD_PRICE_ESFN)
+            .flatMap(AOPriceField.deserializeOpt),
+          href = Option(m get HREF_ESFN)
+            .map(EsModel.stringParser)
+        )
     }
   }
 
@@ -259,13 +241,13 @@ object AOBlock {
 
 
 case class AOBlock(
-  var n: Int,
-  var text1: Option[AOStringField] = None,
-  var text2: Option[AOStringField] = None,
-  var discount: Option[AOFloatField] = None,
-  var price: Option[AOPriceField]  = None,
-  var oldPrice: Option[AOPriceField] = None,
-  var href: Option[String] = None
+  n             : Int,
+  var text1     : Option[AOStringField] = None,
+  var text2     : Option[AOStringField] = None,
+  var discount  : Option[AOFloatField] = None,
+  var price     : Option[AOPriceField]  = None,
+  var oldPrice  : Option[AOPriceField] = None,
+  var href      : Option[String] = None
 ) extends AdOfferT {
   @JsonIgnore
   override def offerType = AdOfferTypes.BLOCK
@@ -318,7 +300,8 @@ sealed trait AOValueField {
 
 object AOStringField {
   def getAndDeserializeValue(jm: ju.Map[_,_]): String = {
-    Option(jm.get(VALUE_ESFN)).fold("")(EsModel.stringParser)
+    Option(jm.get(VALUE_ESFN))
+      .fold("")(EsModel.stringParser)
   }
   
   val deserializeOpt: PartialFunction[Any, Option[AOStringField]] = {
@@ -336,9 +319,7 @@ object AOStringField {
       }
   }
 }
-case class AOStringField(value:String, font: AOFieldFont, var coords: Option[Coords2D] = None) extends AOValueField {
-  if (coords == null)
-    coords = None
+case class AOStringField(value:String, font: AOFieldFont, coords: Option[Coords2D] = None) extends AOValueField {
 
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     (VALUE_ESFN, JsString(value)) :: acc0
@@ -375,10 +356,7 @@ object AOFloatField {
       }
   }
 }
-case class AOFloatField(value: Float, font: AOFieldFont, var coords: Option[Coords2D] = None) extends AOFloatFieldT {
-  if (coords == null)
-    coords = None
-}
+case class AOFloatField(value: Float, font: AOFieldFont, coords: Option[Coords2D] = None) extends AOFloatFieldT
 
 
 /** Список допустимых значений для выравнивания текста. */
@@ -415,11 +393,17 @@ object AOFieldFont {
   val deserialize: PartialFunction[Any, AOFieldFont] = {
     case jm: ju.Map[_,_] =>
       AOFieldFont(
-        color  = Option(jm.get(COLOR_ESFN)).fold(FONT_COLOR_DFLT)(EsModel.stringParser),
-        size   = Option(jm.get(SIZE_ESFN)).map(EsModel.intParser),
-        align  = Option(jm.get(ALIGN_ESFN)).map(EsModel.stringParser).flatMap(TextAligns.maybeWithName),
-        family = Option(jm.get(FAMILY_ESFN)).map(EsModel.stringParser),
-        lineHeight = Option(jm.get(LINE_HEIGHT_ESFN)).map(EsModel.intParser)
+        color  = Option(jm.get(COLOR_ESFN))
+          .fold(FONT_COLOR_DFLT)(EsModel.stringParser),
+        size   = Option(jm.get(SIZE_ESFN))
+          .map(EsModel.intParser),
+        align  = Option(jm.get(ALIGN_ESFN))
+          .map(EsModel.stringParser)
+          .flatMap(TextAligns.maybeWithName),
+        family = Option(jm.get(FAMILY_ESFN))
+          .map(EsModel.stringParser),
+        lineHeight = Option(jm.get(LINE_HEIGHT_ESFN))
+          .map(EsModel.intParser)
       )
   }
 }
@@ -430,17 +414,12 @@ object AOFieldFont {
  * @param size Необязательный размер шрифта.
  */
 case class AOFieldFont(
-  color: String,
-  size: Option[Int] = None,
-  var align: Option[TextAlign] = None,
-  var family: Option[String] = None,
-  var lineHeight: Option[Int] = None
+  color       : String,
+  size        : Option[Int] = None,
+  align       : Option[TextAlign] = None,
+  family      : Option[String] = None,
+  lineHeight  : Option[Int] = None
 ) {
-  if (align == null)
-    align = None
-  if (lineHeight == null)
-    lineHeight = None
-
   def renderPlayJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var fieldsAcc: FieldsJsonAcc = List(
       COLOR_ESFN -> JsString(color)
@@ -468,8 +447,10 @@ object AOPriceField {
       } else {
         val result = AOPriceField(
           value = AOFloatField.getAndDeserializeValue(jm),
-          currencyCode = Option(jm.get(CURRENCY_CODE_ESFN)).fold("RUB")(EsModel.stringParser),
-          orig = Option(jm.get(ORIG_ESFN)).fold("")(EsModel.stringParser),
+          currencyCode = Option(jm.get(CURRENCY_CODE_ESFN))
+            .fold("RUB")(EsModel.stringParser),
+          orig = Option(jm.get(ORIG_ESFN))
+            .fold("")(EsModel.stringParser),
           font = AOValueField.getAndDeserializeFont(jm),
           coords = AOValueField.getAndDeserializeCoords(jm)
         )
@@ -480,18 +461,15 @@ object AOPriceField {
 
 /** Поле, содержащее цену. */
 case class AOPriceField(
-  value: Float,
+  value   : Float,
   currencyCode: String,
-  orig: String,
-  font: AOFieldFont,
-  var coords: Option[Coords2D] = None
+  orig    : String,
+  font    : AOFieldFont,
+  coords  : Option[Coords2D] = None
 )
   extends AOFloatFieldT {
   @JsonIgnore
   lazy val currency = Currency.getInstance(currencyCode)
-
-  if (coords == null)
-    coords = None
 
   override def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     (CURRENCY_CODE_ESFN, JsString(currencyCode)) ::
