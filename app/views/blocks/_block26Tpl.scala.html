@@ -18,28 +18,7 @@
       <a href="@href" target="_blank">
     }
 
-    @bgImgTpl(mad, bc, args)
-    @mad.offers.map { offer =>
-      <div class="info el-@{offer.n + 1}">
-        @offer.text1.map { text1 =>
-          <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
-            <div class="title title-@offer.n">
-              @Html(text1.value)
-            </div>
-          </div>
-          @_blockStyleTpl( mad.id, text1, bc.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
-        }
-
-        @offer.text2.map { text2 =>
-          <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
-            <div class="descr descr-@offer.n">
-              @Html(text2.value)
-            </div>
-          </div>
-          @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
-        }
-        </div>
-      }
+    @_block2BodyCommonTpl(mad, args, bc)
 
     @if(offer.href.isDefined) {
       </a>
