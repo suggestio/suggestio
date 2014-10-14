@@ -71,6 +71,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val PX_RATIO_CHOOSEN_ESFN     = "pxRatioChoosen"
   val VIEWPORT_DECLARED_ESFN    = "viewportDecl"
   val SHOWCASE_SINK_ESFN        = "scSink"
+  
+  val REQUEST_URI_ESFN         = "uri"
 
 
   /** Через сколько времени удалять записи статистики. По дефолту - 10 лет. */
@@ -245,6 +247,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       pxRatioChoosen  = m.get(PX_RATIO_CHOOSEN_ESFN).map(intParser).map(v => v.toFloat / 10F),
       viewportDecl    = m.get(VIEWPORT_DECLARED_ESFN).map(stringParser),
       scSink          = m.get(SHOWCASE_SINK_ESFN).map(stringParser).flatMap(AdnSinks.maybeWithLongName),
+      reqUri          = m.get(REQUEST_URI_ESFN).map(stringParser),
       id              = id
     )
   }
@@ -290,7 +293,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       FieldString(SCREEN_RES_CHOOSEN_ESFN, index = not_analyzed, include_in_all = true),
       FieldNumber(PX_RATIO_CHOOSEN_ESFN, index = not_analyzed, include_in_all = false, fieldType = DocFieldTypes.integer),
       FieldString(VIEWPORT_DECLARED_ESFN, index = no, include_in_all = false),
-      FieldString(SHOWCASE_SINK_ESFN, index = not_analyzed, include_in_all = true)
+      FieldString(SHOWCASE_SINK_ESFN, index = not_analyzed, include_in_all = true),
+      FieldString(REQUEST_URI_ESFN, index = no, include_in_all = false)
     )
   }
 
@@ -328,6 +332,7 @@ final class MAdStat(
   val pxRatioChoosen      : Option[Float]     = None,   // Выбранный s.io сервером pixel ratio
   val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
   val scSink              : Option[AdnSink]   = None,   // sink выдачи: wifi, geo
+  val reqUri              : Option[String]    = None,   // Исходный путь запроса вместе с qs (для отладки и др.)
   val id                  : Option[String]    = None
 ) extends EsModelPlayJsonT with EsModelT {
 
@@ -388,6 +393,8 @@ final class MAdStat(
       acc1 ::= PX_RATIO_CHOOSEN_ESFN -> JsNumber((pxRatioChoosen.get * 10F).toInt)
     if (viewportDecl.isDefined)
       acc1 ::= VIEWPORT_DECLARED_ESFN -> JsString(viewportDecl.get)
+    if (reqUri.isDefined)
+      acc1 ::= REQUEST_URI_ESFN -> JsString(reqUri.get)
     if (scSink.isDefined)
       acc1 ::= SHOWCASE_SINK_ESFN -> JsString(scSink.get.longName)
     acc1
