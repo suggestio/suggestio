@@ -2,6 +2,7 @@ package util.blocks
 
 import play.api.data._
 import BlocksUtil._
+import util.PlayMacroLogsImpl
 import views.html.blocks._
 import models._
 import io.suggest.ym.model.common.BlockMeta
@@ -52,7 +53,9 @@ import play.twirl.api.{HtmlFormat, Template3}
  *   Разработка враппера: копируем код враппера соседнего блока, заменив нужные числа на текущий номер блока.
  */
 
-object BlocksConf extends Enumeration {
+object BlocksConf extends Enumeration with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
   protected abstract class Val(id: Int) extends super.Val(id, "Block" + id) with ValTEmpty {
@@ -62,10 +65,10 @@ object BlocksConf extends Enumeration {
      * @param bk исходный BK_-идентификатор
      * @return идентификатор, пригодный для резолва через Messages().
       */
-    def i18nLabelOf(bk: String) = I18N_PREFIX + bk
+    override def i18nLabelOf(bk: String) = I18N_PREFIX + bk
 
     /** Отрендерить редактор. */
-    def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable = {
+    override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable = {
       editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
     }
   }
@@ -74,15 +77,30 @@ object BlocksConf extends Enumeration {
   type BlockConf = Val
   implicit def value2val(x: Value): BlockConf = x.asInstanceOf[BlockConf]
 
-  // Хелперы
+  /** Найти опционально по имени. */
   def maybeWithName(n: String): Option[BlockConf] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: NoSuchElementException => None
-    }
+    values
+      .find(_.id == n)
+      .asInstanceOf[Option[BlockConf]]
   }
 
+  /** Дефолтовый блок, если возникают сомнения. */
+  def DEFAULT: BlockConf = Block25
+
+  /**
+   * Аналог apply, но вызывает DEFAULT(), если нет блока с необходимым id.
+   * @param n id искомого блока.
+   * @return Экземпляр BlocksConf.
+   */
+  def applyOrDefault(n: Int): BlockConf = {
+    try {
+      apply(n)
+    } catch {
+      case ex: NoSuchElementException =>
+        warn(s"BlockId is unknown: $n. Looks like, current MAd is deprecated.", ex)
+        DEFAULT
+    }
+  }
 
   // Начало значений
 
@@ -103,27 +121,6 @@ object BlocksConf extends Enumeration {
     override def mappingWithNewKey(newKey: String) = Block1Wrapper(key = newKey)
   }
   sealed case class Block1Wrapper(key: String) extends ValTWrapper(Block1) with ValTEmpty with Block1t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
-  /** Блок картинки с двумя текстами. */
-  sealed trait Block2t extends BgImg with Height with Title with Descr with FillColor with BorderColor with Discount {
-    override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
-    )
-    override def fillColorBf: BfColor = super.fillColorBf.copy(
-      defaultValue = Some("ffffff")
-    )
-    override def borderColorBf: BfColor = super.borderColorBf.copy(
-      defaultValue = Some("000000")
-    )
-    override def template = _block2Tpl
-  }
-  val Block2 = new Val(2) with Block2t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block2Wrapper(key = newKey)
-  }
-  sealed case class Block2Wrapper(key: String) extends ValTWrapper(Block2) with ValTEmpty with Block2t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
