@@ -104,18 +104,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  /** Блок с тремя ценами в первом дизайне. */
-  sealed trait Block3t extends Height with BgImg with TitlePriceListBlockT {
-    override def template = _block3Tpl
-  }
-  val Block3 = new Val(3) with EmptyKey with Block3t {
-    override def mappingWithNewKey(newKey: String) = Block3Wrapper(key = newKey)
-  }
-  sealed case class Block3Wrapper(key: String) extends ValTWrapper(Block3) with ValTEmpty with Block3t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait CommonBlock4_9 extends ValT with BgImg with HeightFixed
   with Title with Price with Descr with BgColor with BorderColor {
     override def bgColorBf: BfColor = super.bgColorBf.copy(
