@@ -11,23 +11,10 @@ import io.suggest.ym.model.common.MImgSizeT
  */
 object BasicScreenSizes extends Enumeration {
 
-  protected case class Val(width: Int, height: Int) extends super.Val with MImgSizeT {
-
-    /**
-     * Ориентация экрана.
-     * @return Экземпляр DevScreenOrientation.
-     */
-    def orientation: DevScreenOrientation = {
-      if (isVertical)
-        DevScreenOrientations.VERTICAL
-      else if (isHorizontal)
-        DevScreenOrientations.HORIZONTAL
-      else
-        DevScreenOrientations.SQUARE
-    }
-
-  }
-
+  protected case class Val(width: Int, height: Int)
+    extends super.Val(s"${width}x$height")
+    with MImgSizeT
+    with ImgOrientationT
 
   type BasicScreenSize = Val
 

@@ -196,13 +196,20 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   def getRemoteAddr(implicit request: SioRequestHeader): String = {
     val ra0 = request.remoteAddress
     // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
-    val inetAddr = InetAddress.getByName(ra0)
-    if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
-      val ra1 = REPLACE_LOCALHOST_IP_WITH
-      debug(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
-      ra1
-    } else {
-      ra0
+    // Обёрнуто в try чтобы подавлять сюрпризы содержимого remoteAddress.
+    try {
+      val inetAddr = InetAddress.getByName(ra0)
+      if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
+        val ra1 = REPLACE_LOCALHOST_IP_WITH
+        debug(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
+        ra1
+      } else {
+        ra0
+      }
+    } catch {
+      case ex: Exception =>
+        error("getRemoteAddr(): Failed to parse remote address from " + ra0, ex)
+        ra0
     }
   }
 

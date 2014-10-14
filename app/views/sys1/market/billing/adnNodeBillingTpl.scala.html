@@ -6,7 +6,7 @@
 @import stuff._
 @import args._
 @import util.TplDataFormatUtil._
-@import AdStatActionsTpl._
+@import models.stat.AdStatActionsTpl._
 
 @billingBase("Биллинг", Some(adnNode)) {
 
@@ -181,7 +181,7 @@
                       <td>@tariff.isEnabled</td>
                       <td>@tariff.name</td>
                       <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
-                      <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(adStatActionI18N(tariff.debitFor))}</td>
+                      <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(tariff.debitFor.i18nCode)}</td>
                       <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
                       <td>
                         <a class="blue-link" href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>

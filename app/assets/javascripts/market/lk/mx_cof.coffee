@@ -2164,42 +2164,8 @@ market =
 
         return false
 
-      tinymce.init(
-        selector:'textarea.js-tinymce',
-        width: 615,
-        height: 300,
-        menubar: false,
-        statusbar : false,
-        plugins: 'link, textcolor, paste, colorpicker',
-        toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
-        content_css: '/assets/stylesheets/market/descr.css',
-        fontsize_formats: '10px 12px 14px 16px 18px 22px 26px 30px 34px 38px 42px 46px 50px 54px 58px 62px 66px 70px 74px 80px 84px',
 
-        style_formats: [
-          {title: 'Favorit Light Cond C Regular', inline: 'span', styles: { 'font-family':'favoritlightcondcregular'}},
-          {title: 'Favorit Cond C Bold', inline: 'span', styles: { 'font-family':'favoritcondc-bold-webfont'}},
-          {title: 'Helios Thin', inline: 'span', styles: { 'font-family':'heliosthin'}},
-          {title: 'Helios Cond Light', inline: 'span', styles: { 'font-family':'helioscondlight-webfont'}},
-          {title: 'Helios Ext Black', inline: 'span', styles: { 'font-family':'HeliosExtBlack'}},
-          {title: 'PF Din Text Comp Pro Medium', inline: 'span', styles: { 'font-family':'PFDinTextCompPro-Medium'}},
-          {title: 'Futur Fut C', inline: 'span', styles: { 'font-family':'futurfutc-webfont'}},
-          {title: 'Pharmadin Condensed Light', inline: 'span', styles: { 'font-family':'PharmadinCondensedLight'}},
-          {title: 'Newspaper Sans', inline: 'span', styles: { 'font-family':'newspsan-webfont'}},
-          {title: 'Rex Bold', inline: 'span', styles: { 'font-family':'rex_bold-webfont'}},
-          {title: 'Perforama', inline: 'span', styles: { 'font-family':'perforama-webfont'}},
-          {title: 'Decor C', inline: 'span', styles: { 'font-family':'decorc-webfont'}},
-          {title: 'BlocExt Cond', inline: 'span', styles: { 'font-family':'blocextconc-webfont'}},
-          {title: 'Bodon Conc', inline: 'span', styles: { 'font-family':'bodonconc-webfont'}},
-          {title: 'Confic', inline: 'span', styles: { 'font-family':'confic-webfont'}}
-        ],
 
-        language: 'RU_ru'
-
-        font_size_style_values : '1px,2px',
-        setup: (editor) ->
-          editor.on 'init', (e) ->
-            market.ad_form.set_descr_editor_bg()
-      )
 
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->

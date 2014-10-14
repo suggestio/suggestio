@@ -1,5 +1,6 @@
 package controllers
 
+import models.stat.{ScStatAction, ScStatActions}
 import play.twirl.api.HtmlFormat
 import util.billing.StatBillingQueueActor
 import util._
@@ -8,7 +9,6 @@ import views.html.market._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
-import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 import play.api.Play.{current, configuration}
 
 /**
@@ -46,7 +46,7 @@ object Market extends SioController {
 
   /** Кем-то просмотрена одна рекламная карточка. */
   def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.apply { implicit request =>
-    val action = AdStatActions.withName(actionRaw)
+    val action: ScStatAction = ScStatActions.withName(actionRaw)
     MAd.getById(adId).map { madOpt =>
       madOpt.filter { mad =>
         mad.receivers.valuesIterator.exists(_.receiverId == martId)
@@ -54,7 +54,7 @@ object Market extends SioController {
         StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
         val adStat = new MAdStat(
           clientAddr  = request.remoteAddress,
-          action      = action,
+          action      = action.toString,
           ua          = request.headers.get(USER_AGENT),
           adIds       = Seq(adId),
           onNodeIdOpt = Some(martId),
