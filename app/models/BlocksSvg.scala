@@ -28,7 +28,6 @@ object BlocksSvg extends Enumeration {
   val bottom145           = Val("b145", _bottom145)
   val top145              = Val("t145", _top145)
   val circles17           = Val("c17",  _circles17)
-  val mask2               = Val("m2",   _mask2)
   val mask23              = Val("m23",  _mask23)
   val mask24              = Val("m24",  _mask24)
   val saleIcon13          = Val("si13", _saleIcon13Tpl)
