@@ -33,7 +33,7 @@
 
 @* Тут постоянный div блока выдачи. Сюда рендерится блок. *@
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id @cssClass"
-     data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id"
+     data-width="@mad.blockMeta.width" data-height="@mad.blockMeta.height" data-mad-id="@mad.id"
      @style.map { _style => style="@_style" }>
   @content
 </div>

@@ -1,5 +1,6 @@
 package util.blocks
 
+import models.blk.{BlockWidths, BlockHeights}
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -49,11 +50,6 @@ object BlocksUtil {
 
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
 
-  // Допустимые ширины блоков.
-  // TODO Нужно зафиксировать допустимые значения ширины через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
-  val BLOCK_WIDTH_NORMAL_PX = 300
-  val BLOCK_WIDTH_NARROW_PX = 140
-
   /** Линейка размеров шрифтов. */
   val FONT_SIZES_DFLT: List[FontSize] = List(
     FontSize(10, 8), FontSize(12, 10), FontSize(14, 12), FontSize(16, 14),
@@ -62,6 +58,7 @@ object BlocksUtil {
     FontSize(66, 62), FontSize(70, 66), FontSize(74, 70), FontSize(80, 76), FontSize(84, 80)
   )
 }
+
 
 import BlocksUtil._
 
@@ -82,11 +79,17 @@ object BlocksEditorFields extends Enumeration {
     type T = AOStringField
     type BFT = BfText
   }
-  
+
   protected trait HeightVal {
     type T = Int
     type BFT = BfHeight
   }
+
+  protected trait WidthVal {
+    type T = Int
+    type BFT = BfWidth
+  }
+
   
   protected trait PriceVal {
     type T = AOPriceField
@@ -115,6 +118,7 @@ object BlocksEditorFields extends Enumeration {
 
   type BlockEditorField   = Val
   type BefHeight          = BlockEditorField with HeightVal
+  type BefWidth           = BlockEditorField with WidthVal
   type BefDiscount        = BlockEditorField with DiscountVal
   type BefPrice           = BlockEditorField with PriceVal
   type BefText            = BlockEditorField with TextVal
@@ -130,6 +134,10 @@ object BlocksEditorFields extends Enumeration {
   val Height: BefHeight = new Val("height") with HeightVal {
     override def fieldTemplate = _heightTpl
   }
+  val Width: BefWidth = new Val("width") with WidthVal {
+    override def fieldTemplate = _widthTpl
+  } 
+ 
 
   /** input text с указанием цвета. */
   val InputText: BefText = new Val("inputText") with TextVal {
@@ -212,36 +220,51 @@ trait BlockAOValueFieldT extends BlockFieldT {
 }
 
 
+/** Хелпер для полей ширины и высоты. */
+sealed trait IntBlockSizeBf extends BlockFieldT {
+  override type T = Int
+  override def offerNopt: Option[Int] = None
+  def availableVals: Set[Int]
+
+  override def mappingBase = number
+    .verifying("error.invalid", { availableVals.contains(_) })
+}
+
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
 object BfHeight {
-  val HEIGHT_DFLT = Some(300)
-
-  val HEIGHT_140 = 140
-  val HEIGHT_300 = 300
-  val HEIGHT_460 = 460
-  val HEIGHT_620 = 620
-
-  val HEIGHTS_AVAILABLE_DFLT = Set(HEIGHT_140, HEIGHT_300, HEIGHT_460, HEIGHT_620)
+  def HEIGHT_DFLT = BlockHeights.default.heightPx
+  val SOME_HEIGHT_DFLT = Some(BlockHeights.default.heightPx)
+  val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.heightPx)
 }
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
   name: String,
-  defaultValue: Option[Int] = BfHeight.HEIGHT_DFLT,
+  defaultValue: Option[Int] = BfHeight.SOME_HEIGHT_DFLT,
   availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
-) extends BlockFieldT {
-  override type T = Int
+) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Height
-  override def offerNopt: Option[Int] = None
-
-  override def fallbackValue: T = 140
-
-  override def mappingBase = number
-    .verifying("error.invalid", { availableVals.contains(_) })
+  override def fallbackValue: T = BlockHeights.H140.heightPx
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
+}
+
+object BfWidth {
+  val WIDTH_DFLT = Some( BlockWidths.default.widthPx )
+  val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.widthPx)
+}
+case class BfWidth(
+  name: String,
+  defaultValue: Option[Int] = BfWidth.WIDTH_DFLT,
+  availableVals: Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
+) extends IntBlockSizeBf {
+  override def field = BlocksEditorFields.Width
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+  override def fallbackValue = BlockWidths.default.widthPx
 }
 
 

@@ -1,6 +1,5 @@
 package util.blocks
 
-import io.suggest.ym.model.common.BlockMeta
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -64,12 +63,3 @@ trait Height extends ValT with HeightI {
     (ms ++ cms) -> (fes ++ cfes)
   }
 }
-
-
-/** Бывает, что блок имеет фиксированную высоту. Тут хелпер, немного экономящий время.
-  * Высоту можно переопределить. */
-trait HeightFixed extends ValT {
-  val HEIGHT = BfHeight.HEIGHT_300
-  def getBlockMeta: BlockMeta = getBlockMeta(HEIGHT)
-}
-

@@ -120,6 +120,7 @@ error.captcha=Неверный код проверки.
 blocks.field.price=Цена
 blocks.field.oldPrice=Старая цена
 blocks.field.height=Высота блока
+blocks.field.width=Ширина блока
 blocks.field.title=Заголовок
 blocks.field.bgImg=Фоновое изображение
 blocks.field.text1=Текст 1

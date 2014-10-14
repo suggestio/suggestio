@@ -1,5 +1,6 @@
 package util.blocks
 
+import models.blk.{BlockHeights, BlockWidths}
 import play.api.data._
 import BlocksUtil._
 import util.PlayMacroLogsImpl
@@ -107,7 +108,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   // Начало значений
 
   /** Базовый трейт новых блоков. */
-  sealed trait CommonBlock2T extends Height with BgImg with TitleDescrListBlockT
+  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT
 
   sealed trait Block20t extends CommonBlock2T {
     override def ordering = 1000
@@ -124,7 +125,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   sealed trait Block25t extends CommonBlock2T {
     override def ordering = 1100
     override def template = _block25Tpl
-    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block25 = new Val(25) with Block25t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block25Wrapper(key = newKey)
@@ -176,10 +176,6 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
 
   def ordering: Int = 10000
 
-  /** Ширина блока. Используется при дублировании блоков. */
-  def blockWidth: Int = BLOCK_WIDTH_NORMAL_PX
-  def isNarrow = blockWidth <= BLOCK_WIDTH_NARROW_PX
-
   def isShown = true
 
   /** Флаг того, что на блок не стоит навешивать скрипты, отрабатывающие клик по нему. */
@@ -215,8 +211,6 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
     blockFields.find(_.name equalsIgnoreCase n)
   }
 
-  def getBlockMeta(height: Int) = BlockMeta(blockId = id, height = height)
-
   /** Отрендерить редактор. */
   def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable
 
@@ -225,13 +219,15 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   override val mappings = mappingsAcc
 
   override val constraints: Seq[Constraint[BlockMapperResult]] = Nil
-  override def verifying(constraints: Constraint[BlockMapperResult]*): Mapping[BlockMapperResult] = ???
+  override def verifying(constraints: Constraint[BlockMapperResult]*): Mapping[BlockMapperResult] = {
+    throw new UnsupportedOperationException("verifying() never implemented for BlockConf.")
+  }
 
   def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc]
   override def bind(data: Map[String, String]): Either[Seq[FormError], BlockMapperResult] = {
     // Собрать BindAcc и сконвертить в BlockMapperResult
     bindAcc(data).right.map { bindAcc =>
-      val blockMeta = BlockMeta(blockId = id, height = bindAcc.height)
+      val blockMeta = BlockMeta(blockId = id, height = bindAcc.height, width = bindAcc.width)
       val bd = BlockDataImpl(blockMeta,
         offers = bindAcc.offers,
         colors = bindAcc.colors.toMap
@@ -246,10 +242,11 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
 
 
 case class BindAcc(
-  var colors: List[(String, String)] = Nil,
-  var offers: List[AOBlock] = Nil,
-  var height: Int = 300,
-  var bim: List[(String, ImgInfo4Save[ImgIdKey])] = Nil
+  var colors  : List[(String, String)] = Nil,
+  var offers  : List[AOBlock] = Nil,
+  var height  : Int = BlockHeights.default.heightPx,
+  var width   : Int = BlockWidths.default.widthPx,
+  var bim     : List[(String, ImgInfo4Save[ImgIdKey])] = Nil
 )
 
 

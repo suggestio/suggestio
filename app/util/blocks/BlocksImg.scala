@@ -119,14 +119,15 @@ trait SaveBgImgI extends ISaveImgs with ValT {
     * @param ctx Контекст рендера шаблонов.
     * @return Экземпляр Call, пригодный для рендера в ссылку.
     */
-  def bgImgCall(imgInfo: MImgInfoT, blockHeight: Int, canRenderDoubleSize: Boolean)(implicit ctx: Context): Call = {
+  def bgImgCall(imgInfo: MImgInfoT, blockSize: MImgSizeT, canRenderDoubleSize: Boolean)(implicit ctx: Context): Call = {
+
     Some( ImgIdKey(imgInfo.filename) )
       .filter { iik =>
         // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
         // Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
         // В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
         iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
-          val oldFormat  =  crop.height == blockHeight  ||  crop.width == blockWidth
+          val oldFormat  =  crop.height == blockSize.height  ||  crop.width == blockSize.width
           !oldFormat
         }
       }
@@ -148,10 +149,10 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         val willRenderDoubleSize: Boolean = {
           canRenderDoubleSize && {
             val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse {
-              warn(s"bgImgCall($imgInfo, bh=$blockHeight, canDouble=$canRenderDoubleSize): width=$blockWidth Missing client screen size! Will use standard VGA (1024х768)!")
+              warn(s"bgImgCall($imgInfo, bh=${blockSize.height}, canDouble=$canRenderDoubleSize): width=${blockSize.width} Missing client screen size! Will use standard VGA (1024х768)!")
               MImgInfoMeta(width = 1024, height = 768)
             }
-            blockWidth * 2 <= devScrSize.width
+            blockSize.width * 2 <= devScrSize.width
           }
         }
 
@@ -173,8 +174,8 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
         imOpsAcc ::= {
           val sz = MImgInfoMeta(
-            height = (blockHeight * imgResMult).toInt,
-            width  = (blockWidth * imgResMult).toInt
+            height = (blockSize.height * imgResMult).toInt,
+            width  = (blockSize.width * imgResMult).toInt
           )
           AbsResizeOp(sz)
         }
