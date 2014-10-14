@@ -121,17 +121,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
 
-  sealed trait Block22t extends Height with LogoImg with BorderColor with BgImg with Title with Descr {
-    override def template = _block22Tpl
-  }
-  val Block22 = new Val(22) with Block22t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block22Wrapper(key = newKey)
-  }
-  sealed case class Block22Wrapper(key: String) extends ValTWrapper(Block22) with ValTEmpty with Block22t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block23t extends BgImg with Title with Descr with Price with HeightFixed {
     override def template = _block23Tpl
   }
