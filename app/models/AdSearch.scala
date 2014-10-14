@@ -75,7 +75,8 @@ object AdSearch {
               },
               forceFirstIds = maybeFirstId,
               generation  = maybeGen,
-              geo         = maybeGeo
+              geo         = maybeGeo,
+              screen      = maybeDevScreen
             )
           )
         }

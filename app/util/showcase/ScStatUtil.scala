@@ -99,6 +99,8 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
 
   def adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
 
+  def reqPath: Option[String] = Some(request.uri)
+
   def saveStats: Future[_] = {
     val screenOpt = this.screenOpt
     val agentOs = this.agentOs
@@ -145,6 +147,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
             .map(_.pixelRatio.pixelRatio),
           viewportDecl = screenOpt
             .map(_.toString),
+          reqUri = reqPath,
           scSink = scSinkOpt
         )
         //trace(s"Saving MAdStat with: clOsVsn=${adStat.clOsVsn} clUid=${adStat.clUid}")
@@ -191,10 +194,7 @@ case class ScFocusedAdsStatUtil(
 )
   extends ScStatUtilT
 {
-  override def gsiFut: Future[Option[GeoSearchInfo]] = {
-    GeoIp.geoSearchInfoOpt
-  }
-
+  override def gsiFut = GeoIp.geoSearchInfoOpt
   override val adSearchOpt = Some(adSearch)
   override def statAction = ScStatActions.Opened
 }
@@ -221,7 +221,7 @@ trait ScStatNoAds extends ScStatUtilT {
  * @param scSinkOpt sink выдачи, если известен.
  * @param gsiFut Асинхронный поиск геоданых по текущему запросу.
  * @param screenOpt данные по экрану.
- * @param request
+ * @param request Текущий HTTP-реквест.
  */
 case class ScIndexStatUtil(
   override val scSinkOpt: Option[AdnSink],
