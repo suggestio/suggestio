@@ -474,6 +474,11 @@ sm =
     producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
+  global_error_handler : (errorMsg, url, lineNumber) ->
+    console.log 'errorMsg : ' + errorMsg
+    console.log 'url : ' + url
+    console.log 'lineNumber : ' + lineNumber
+
   request_context :
     screen_param : () ->
       pixel_ratio = if window.devicePixelRatio then ',' + window.devicePixelRatio else ''
@@ -2528,6 +2533,7 @@ sm =
       sm.states.add_state
         mart_id : sm_id
 
-
 window.sm = window.siomart = sm
 sm.init()
+
+window.onerror = sm.global_error_handler
