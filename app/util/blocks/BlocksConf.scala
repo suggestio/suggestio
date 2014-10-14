@@ -106,22 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait Block11t extends SaleMaskColor with BgImg with HeightFixed with Title with Descr {
-    override def isShown = false
-    override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
-      defaultValue = Some("AAAAAA")
-    )
-    override def template = _block11Tpl
-    override def blockWidth = BLOCK_WIDTH_NARROW_PX
-  }
-  val Block11 = new Val(11) with Block11t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block11Wrapper(key = newKey)
-  }
-  sealed case class Block11Wrapper(key: String) extends ValTWrapper(Block11) with ValTEmpty with Block11t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block12t extends HeightFixed with SaleMaskColor with Discount with Title with Descr with FillColor {
     override def isShown = false
     override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
