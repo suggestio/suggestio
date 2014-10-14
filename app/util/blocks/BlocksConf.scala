@@ -106,19 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait Block10t extends BgImg with Title with OldPrice with Price with HeightFixed {
-    override def template = _block10Tpl
-    override def isShown = false
-    override def blockWidth = BLOCK_WIDTH_NARROW_PX
-  }
-  val Block10 = new Val(10) with Block10t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block10Wrapper(key = newKey)
-  }
-  sealed case class Block10Wrapper(key: String) extends ValTWrapper(Block10) with ValTEmpty with Block10t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block11t extends SaleMaskColor with BgImg with HeightFixed with Title with Descr {
     override def isShown = false
     override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
@@ -130,7 +117,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   val Block11 = new Val(11) with Block11t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block11Wrapper(key = newKey)
   }
-  sealed case class Block11Wrapper(key: String) extends ValTWrapper(Block10) with ValTEmpty with Block11t {
+  sealed case class Block11Wrapper(key: String) extends ValTWrapper(Block11) with ValTEmpty with Block11t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
