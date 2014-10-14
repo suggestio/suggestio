@@ -106,25 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
-    override def borderColorBf = super.borderColorBf.copy(
-      defaultValue = Some("444444")
-    )
-    override def bgColorBf = super.bgColorBf.copy(
-      defaultValue = Some("000000")
-    )
-    override def fillColorBf = super.fillColorBf.copy(
-      defaultValue = Some("666666")
-    )
-    override def template = _block19Tpl
-  }
-  val Block19 = new Val(19) with Block19t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block19Wrapper(key = newKey)
-  }
-  sealed case class Block19Wrapper(key: String) extends ValTWrapper(Block19) with ValTEmpty with Block19t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
   sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1000
     override def template = _block20Tpl
