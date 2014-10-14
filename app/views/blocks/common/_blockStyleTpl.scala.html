@@ -1,14 +1,14 @@
-@( bid:Option[String], aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", left : Int = 0, top : Int = 0, isMvbl:Boolean=true )
+@(bid:Option[String],  aovf: AOValueField,  bf: BlockAOValueFieldT,  className: String = "",  xy: ICoords2D,  isMvbl: Boolean = true)
 <code>
   @if( isMvbl == true ){
-  .sm-block@bid .mvbl-@className
-  {
-    @_coordsStyleTpl(aovf, left, top)
-  }
-  .sm-block@{bid}.double-size .mvbl-@className
-  {
-    @_coordsStyleTpl(aovf, left, top, isDouble=true)
-  }
+    .sm-block@bid .mvbl-@className
+    {
+      @_coordsStyleTpl(aovf, xy)
+    }
+      .sm-block@{bid}.double-size .mvbl-@className
+    {
+      @_coordsStyleTpl(aovf, xy, isDouble=true)
+    }
   }
   .sm-block@bid .@{className} {
     @_aovfStyleTpl(aovf, bf, className)

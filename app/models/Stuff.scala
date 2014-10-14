@@ -208,18 +208,23 @@ object BlockRenderArgs {
   /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
   val DEFAULT = BlockRenderArgs()
 
-  val DOUBLE_SIZED_ARGS = BlockRenderArgs(canRenderDoubleSize = true)
+  val DOUBLE_SIZED_ARGS = BlockRenderArgs(szMult = 2)
 }
 
 /**
  * Параметры рендера блока.
  * Всегда immutable класс!
  * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
+ * @param szMult Мультипликатор размера (и относительных координат).
  */
 case class BlockRenderArgs(
-  isStandalone          : Boolean = false,
-  canRenderDoubleSize   : Boolean = false
-)
+  isStandalone  : Boolean = false,
+  szMult        : Int = 1
+) {
+
+  @deprecated("Use szMult instead", "2014/oct/14")
+  def canRenderDoubleSize = szMult == 2
+}
 
 
 /**

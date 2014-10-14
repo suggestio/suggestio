@@ -8,6 +8,7 @@
 @import util.blocks.BlocksConf.{Block1 => bc}
 
 @blockBase(args, mad, bc) {
+
   @bgImgTpl(
     mad      = mad,
     bc       = bc,
@@ -21,28 +22,28 @@
       <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
         <div class="title">@Html(title.value)</div>
       </div>
-      @_blockStyleTpl( mad.id, title, bc.titleBf, "title", left = 18, top = 24  )
+      @_blockStyleTpl( mad.id, title, bc.titleBf, "title", Coords2D(18, 24)  )
     }
 
     @offer.text2.map { descr =>
       <div class="js-mvbl mvbl-description" data-connected-input="ad.offer.descr">
         <div class="description">@Html(descr.value)</div>
       </div>
-      @_blockStyleTpl( mad.id, descr, bc.descrBf, "description", left = 18, top = 52 )
+      @_blockStyleTpl( mad.id, descr, bc.descrBf, "description", Coords2D(18, 52) )
     }
 
     @offer.oldPrice.map { oldPrice =>
       <div class="js-mvbl mvbl-old-price" data-connected-input="ad.offer.oldPrice">
         <div class="old-price">@formatPrice(oldPrice.value, oldPrice.currency)</div>
       </div>
-      @_blockStyleTpl( mad.id, oldPrice, bc.oldPriceBf, "old-price", left = 18, top = 164 )
+      @_blockStyleTpl( mad.id, oldPrice, bc.oldPriceBf, "old-price", Coords2D(18, 164) )
     }
 
     @offer.price.map { price =>
       <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
         <div class="price">@formatPrice(price.value, price.currency)</div>
       </div>
-      @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 14, top = 226 )
+      @_blockStyleTpl( mad.id, price, bc.priceBf, "price", Coords2D(14, 226) )
     }
   }
 

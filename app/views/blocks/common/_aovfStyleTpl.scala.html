@@ -1,9 +1,9 @@
 @(aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", styleStr: String = "", isDouble: Boolean = false)
 color: #@aovf.font.color!important;
-@if( isDouble == true ){
+@if( isDouble == true ) {
   @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*2}px!important;}
   @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*2}px!important;}
-}else{
+} else {
   @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz}px!important;}
   @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh}px!important;}
 }
