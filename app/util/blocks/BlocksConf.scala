@@ -106,22 +106,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  /** Блок, отображающий скидочную цену на товар или услугу. */
-  sealed trait Block7t extends HeightFixed with SaleMaskColor with Discount with Title with Price {
-    override def isShown = false
-    override def template = _block7Tpl
-    override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
-      defaultValue = Some("00ff1a")
-    )
-  }
-  val Block7 = new Val(7) with Block7t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block7Wrapper(key = newKey)
-  }
-  sealed case class Block7Wrapper(key: String) extends ValTWrapper(Block7) with ValTEmpty with Block7t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
-
-
   sealed trait Block8t extends BgImg with Title with Price with HeightFixed {
     override def template = _block8Tpl
     override def blockWidth = BLOCK_WIDTH_NARROW_PX
