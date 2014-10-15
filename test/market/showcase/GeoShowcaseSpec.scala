@@ -17,9 +17,11 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
   override implicit lazy val app: FakeApplication = {
     new FakeApplication(
       additionalConfiguration = Map(
-        "persona.audience.url" -> s"http://localhost:$port",
-        "radius.server.tiny.enabled" -> false,
-        "cats.install.mart.allowed" -> false
+        "persona.audience.url"        -> s"http://localhost:$port",
+        "sio.proto.dflt"              -> "http",
+        "sio.hostport.dflt"           -> s"localhost:$port",
+        "radius.server.tiny.enabled"  -> false,
+        "cats.install.mart.allowed"   -> false
       )
     )
   }
@@ -42,3 +44,4 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
 }
 
 class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
+//class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO scalatest виснет, запустив firefox.
