@@ -16,10 +16,11 @@
 
 @* _aovfStyleTpl заинлайнен сюда: *@
 .sm-block@bid .@{className} .__size-@{args.szMult} {
+  color: #@aovf.font.color!important;
   @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*args.szMult}px!important;}
   @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*args.szMult}px!important;}
+  @aovf.font.family.map {ff =>font-family: @ff!important;}
+  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
 }
-@aovf.font.family.map {ff =>font-family: @ff!important;}
-@aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
 
 </code>
