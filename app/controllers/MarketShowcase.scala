@@ -543,27 +543,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
           val mads4renderAsArray = if (h) mads.tail else mads   // Caused by: java.lang.UnsupportedOperationException: tail of empty list
           val ctx = implicitly[Context]
-          val brArgs = BlockRenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
-          lazy val brArgs4 = brArgs.copy(szMult = 4)
-          // Самые мелкие карточки в фулл-скрине надо увеличивать в 4 раза, а не в 2.
-          def brArgsFor(mad: IBlockMeta): BlockRenderArgs = {
-            val bm = mad.blockMeta
-            if (bm.wide  &&  BlockHeights.H140.heightPx == bm.height)
-              brArgs4
-            else
-              brArgs
-          }
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
             (mad, index) =>
-              _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgsFor(mad))(ctx)
+              val brArgs = ShowcaseUtil.focusedBrArgsFor(mad)
+              _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
           val htmlOpt = if (h) {
             val madsHead = mads.headOption
             val firstMads = madsHead.toList
             val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
-            val brArgsN = madsHead.fold(brArgs)(brArgsFor)
+            val brArgsN = madsHead.fold(ShowcaseUtil.FOCUSED_AD_BR_ARGS)(ShowcaseUtil.focusedBrArgsFor)
             val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
             Some(JsString(html))
           } else {
