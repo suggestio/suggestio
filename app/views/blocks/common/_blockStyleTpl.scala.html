@@ -5,7 +5,7 @@
 <code>
 
 @* _coordsStyleTpl заинлайнен сюда: *@
-.sm-block@bid .mvbl-@className .__size-@{args.szMult} {
+.sm-block@{bid}.__size-@{args.szMult} .mvbl-@{className} {
   position: absolute;
   @defining(aovf.coords getOrElse xy) { c =>
     left: @{c.x * args.szMult}px@if(args.szMult > 1) {!important};
@@ -15,7 +15,7 @@
 
 
 @* _aovfStyleTpl заинлайнен сюда: *@
-.sm-block@bid .@{className} .__size-@{args.szMult} {
+.sm-block@{bid}.__size-@{args.szMult} .@{className} {
   color: #@aovf.font.color!important;
   @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*args.szMult}px!important;}
   @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*args.szMult}px!important;}
