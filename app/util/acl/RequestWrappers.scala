@@ -15,6 +15,12 @@ import play.api.Play.current
   Это поможет генерить контексты одной и той же функцией.
  */
 
+object SioWrappedRequest {
+  implicit def request2sio[A](request: Request[A]): SioWrappedRequest[A] = {
+    new SioWrappedRequest[A](request)
+  }
+}
+
 /** Экранизация WrappedRequest[A] с примесями нужд s.io. */
 class SioWrappedRequest[A](request: Request[A]) extends WrappedRequest(request) with SioRequestHeader
 
@@ -35,7 +41,7 @@ object SioRequestHeader {
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
 
   implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
-    new SioWrappedRequest(request)
+    SioWrappedRequest.request2sio(request)
   }
 }
 

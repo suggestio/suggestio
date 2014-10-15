@@ -1,11 +1,11 @@
 package controllers
 
-import models.MRemoteError
+import models.{GeoIp, MRemoteError}
 import play.api.data._, Forms._
-import play.api.mvc.Action
 import util.PlayMacroLogsImpl
 import util.FormUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.acl.SioAction
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 
@@ -20,20 +20,26 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
 
   import LOGGER._
 
-  def errorFormM: Form[MRemoteError] = {
+  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT: Int = 10
+
+  /** Маппинг для вычитывания результата из тела POST. */
+  private def errorFormM: Form[MRemoteError] = {
     Form(
       mapping(
         "msg" -> nonEmptyText(minLength = 1, maxLength = 1024)
           .transform[String](strTrimF, strIdentityF),
-        "url" -> nonEmptyText(minLength = 8, maxLength = 512)
-          .transform[String](strTrimF, strIdentityF)
+        "url" -> {
+          val m = text(minLength = 8, maxLength = 512)
+          toStrOptM(m, strTrimF)
+        }
       )
-      {(msg, url) =>
+      {(msg, urlOpt) =>
+        val strEmpty = ""
         MRemoteError(
-          msg = msg,
-          url = url,
-          clientAddr = "",
-          ua = ""
+          msg         = msg,
+          url         = urlOpt,
+          clientAddr  = strEmpty,
+          ua          = strEmpty
         )
       }
       {merr =>
@@ -43,25 +49,40 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
   }
 
   /**
-   * Реакция на ошибку в showcase (в выдаче).
+   * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleShowcaseError = Action.async { implicit request =>
-    errorFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("handleError(): Request data bind failed:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable("Failed to parse response. See server logs.")
-      },
-      {merr0 =>
-        val merr1 = merr0.copy(
-          ua = request.headers.get(USER_AGENT).get,
-          clientAddr = request.remoteAddress
-        )
-        merr1.save.map { merrId =>
-          NoContent
+  def handleShowcaseError = SioAction.async { implicit request =>
+    bruteForceProtected {
+      errorFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("handleError(): Request body bind failed:\n " + formatFormErrors(formWithErrors))
+          NotAcceptable("Failed to parse response. See server logs.")
+        },
+        {merr0 =>
+          GeoIp.geoSearchInfoOpt
+            .recover {
+              // Should never happen. Подавляем возможную ошибку получения геоданных запроса.
+              case ex: Exception =>
+                warn("Suppressing exception for gsiOpt", ex)
+                None
+            }
+            .flatMap { gsiOpt =>
+              // Сохраняем в базу отчёт об ошибке.
+              val merr1 = merr0.copy(
+                ua          = request.headers.get(USER_AGENT).get,
+                clientAddr  = request.remoteAddress,
+                clIpGeo     = gsiOpt.map(_.geoPoint),
+                clTown      = gsiOpt.flatMap(_.cityName),
+                country     = gsiOpt.flatMap(_.countryIso2)
+              )
+              merr1.save.map { merrId =>
+                NoContent
+              }
+            }
         }
-      }
-    )
+      )
+    }
   }
 
 }
