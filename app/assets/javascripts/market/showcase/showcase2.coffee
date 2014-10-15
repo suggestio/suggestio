@@ -1172,6 +1172,9 @@ sm =
 
       ## Логотип-кнока
       if ( sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null ) || ( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null )
+        ## Данная функция работает, только если выдача работает в гео-режиме
+        if window.with_geo == false
+          return false
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
