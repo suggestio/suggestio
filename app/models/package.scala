@@ -201,6 +201,8 @@ package object models {
   type BSvgColorName        = BSvgColorNames.BSvgColorName
   type BSvgColorMap         = BSvgColorsUtil.BSvgColorMap
 
+  type RemoteErrorType      = RemoteErrorTypes.RemoteErrorType
+
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
 }
