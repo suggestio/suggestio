@@ -109,9 +109,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
     if (szMult <= 1) {
       1
     } else if (blockSz.width * szMult <= screenSz.width) {
-      detectMaxSzMult(szMult / 2, blockSz, screenSz)
-    } else {
       szMult
+    } else {
+      detectMaxSzMult(szMult / 2, blockSz, screenSz)
     }
   }
 
