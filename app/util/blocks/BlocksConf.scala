@@ -161,13 +161,13 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def hrefBlock = false
 
   /** Шаблон для рендера. */
-  def template: Template3[MAdT, BlockRenderArgs, Context, HtmlFormat.Appendable]
+  def template: Template3[MAdT, blk.RenderArgs, Context, HtmlFormat.Appendable]
 
   /** Набор маппингов для обработки данных от формы. */
   def strictMapping: Mapping[BlockMapperResult] = this
 
   /** Более удобный интерфейс для метода template.render(). */
-  def renderBlock(mad: MAdT, args: BlockRenderArgs = BlockRenderArgs.DEFAULT)(implicit ctx: Context) = {
+  def renderBlock(mad: MAdT, args: blk.RenderArgs = blk.RenderArgs.DEFAULT)(implicit ctx: Context) = {
     template.render(mad, args, ctx)
   }
 

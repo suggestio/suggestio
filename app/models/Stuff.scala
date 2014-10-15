@@ -202,34 +202,6 @@ trait ImgUrlInfoT {
 }
 
 
-/** Статический рендер блоков. */
-object BlockRenderArgs {
-
-  /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
-  val DEFAULT = BlockRenderArgs()
-
-  val DOUBLE_SIZED_ARGS = BlockRenderArgs(szMult = 2)
-}
-
-/**
- * Параметры рендера блока.
- * Всегда immutable класс!
- * @param withEdit Рендерим в редакторе.
- * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
- * @param szMult Мультипликатор размера (и относительных координат).
- * @param fullScreen Рендерим во весь рост. Такое бывает, когда юзер просматривает карточку.
- */
-case class BlockRenderArgs(
-  withEdit      : Boolean = false,
-  isStandalone  : Boolean = false,
-  szMult        : Int = 1,
-  fullScreen    : Boolean = false
-) {
-
-  @deprecated("Use szMult instead", "2014/oct/14")
-  def canRenderDoubleSize = szMult == 2
-}
-
 
 /**
  * Экземпляр хранит вызов к внешнему серверу. Кроме как для индикации этого факта, класс ни для чего

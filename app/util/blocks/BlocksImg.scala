@@ -136,7 +136,7 @@ trait SaveBgImgI extends ISaveImgs with ValT {
     * @param ctx Контекст рендера шаблонов.
     * @return Экземпляр Call, пригодный для рендера в ссылку.
     */
-  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: BlockRenderArgs)(implicit ctx: Context): Call = {
+  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
     Some( ImgIdKey(imgInfo.filename) )
       .filter { iik =>
         // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
@@ -179,7 +179,8 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         val sizeMult = BgImg.detectMaxSzMult(brArgs.szMult, blockMeta, screenSz = devScrSize)
 
         // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
-        // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет 6-кратное разрешение блока /O_o/
+        // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет
+        //     6-кратное разрешение блока /O_o/ Памяти на девайсе может не хватить.
         val imgResMult = devPxRatio.pixelRatio * sizeMult
 
         // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.

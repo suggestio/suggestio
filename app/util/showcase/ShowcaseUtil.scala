@@ -129,15 +129,15 @@ object ShowcaseUtil {
 
 
   /** Настройки рендера раскрытой карточки. */
-  val FOCUSED_AD_BR_ARGS = BlockRenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
+  val FOCUSED_AD_BR_ARGS = blk.RenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
   /** Настройки рендера маленькой карточки. Такую карточку надо распахивать в 4 раза, когда wide включён. */
   val FOCUSED_SMALL_AD_BR_ARGS = FOCUSED_AD_BR_ARGS.copy(szMult = 4)
 
   /** Аргументы для рендера блока, когда карточка открыта. */
-  def focusedBrArgsFor(mad: IBlockMeta): BlockRenderArgs = {
+  def focusedBrArgsFor(mad: IBlockMeta): blk.RenderArgs = {
     focusedBrArgsFor(mad.blockMeta)
   }
-  def focusedBrArgsFor(bm: BlockMeta): BlockRenderArgs = {
+  def focusedBrArgsFor(bm: BlockMeta): blk.RenderArgs = {
     if (bm.wide  &&  BlockHeights.H140.heightPx == bm.height)
       FOCUSED_SMALL_AD_BR_ARGS
     else

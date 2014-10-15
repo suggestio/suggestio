@@ -1,4 +1,4 @@
-@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int, brArgs: BlockRenderArgs)(implicit ctx: Context)
+@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int, brArgs: blk.RenderArgs)(implicit ctx: Context)
 
 @defining( mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
 @stuff.scrollableContainerTpl( "focused-ad", "focusedAd" + index, "background-color: #" + rfBgColor ){
