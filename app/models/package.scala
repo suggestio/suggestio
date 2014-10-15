@@ -198,6 +198,8 @@ package object models {
   type MUserImg2            = io.suggest.model.MUserImg2
   val  MUserImg2            = io.suggest.model.MUserImg2
 
+  type RemoteErrorType      = RemoteErrorTypes.RemoteErrorType
+
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
 }

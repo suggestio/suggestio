@@ -148,6 +148,7 @@ GET  /m/lk/bill/adn/:adnId/pay/bank     controllers.MarketLkBilling.paymentRequs
 GET  /m/lk/bill/adn/:adnId/mbmds        controllers.MarketLkBilling._renderNodeMbmds(adnId)
 GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
 
+POST  /error/occured/in/showcase        controllers.RemoteError.handleShowcaseError
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/lk/c/usr/o/:ownerId/top         controllers.MarketCategory.topCatsOf(ownerId)

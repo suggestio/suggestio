@@ -465,6 +465,7 @@ window.cbca_grid = cbca_grid
 ###############################
 sm =
   config :
+    showcase_error_handler : '/error/occured/in/showcase'
     whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sm-showcase'
@@ -473,6 +474,22 @@ sm =
     ads_per_load : 30
     producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
+
+  showcase_error_handler : (error_msg, url, lineNumber) ->
+
+    ## data
+    if typeof JSON == 'object' && typeof JSON.parse == 'function'
+      state = JSON.stringify sm.states.cur_state()
+    else
+      state = 'nojson'
+    url = window.location.hash
+
+    xhr = new XMLHttpRequest()
+    xhr.open 'POST', sm.config.showcase_error_handler, true
+    xhr.setRequestHeader 'Content-type', 'application/x-www-form-urlencoded'
+    xhr.onload = () ->
+      sm.log 'error message sent to server'
+    xhr.send 'msg=' + error_msg  + '&url=' + url + ',' + state
 
   request_context :
     screen_param : () ->
@@ -2397,6 +2414,7 @@ sm =
       this.push ns
 
     push : ( state ) ->
+
       this.process_state state
 
       this.list = this.list.slice 0, this.cur_state_index+1
@@ -2528,6 +2546,7 @@ sm =
       sm.states.add_state
         mart_id : sm_id
 
-
 window.sm = window.siomart = sm
 sm.init()
+
+window.onerror = sm.showcase_error_handler
