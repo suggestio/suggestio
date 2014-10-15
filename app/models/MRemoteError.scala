@@ -71,21 +71,23 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
    * @return Экземпляр модели.
    */
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    def parseStr(fn: String) = m.get(fn).fold("")(EsModel.stringParser)
+    import EsModel.{stringParser, dateTimeParser}
+    def parseStr(fn: String) = m.get(fn).fold("")(stringParser)
     MRemoteError(
       msg         = parseStr(MSG_ESFN),
       clientAddr  = parseStr(CLIENT_ADDR_ESFN),
-      ua          = parseStr(UA_ESFN),
+      ua          = m.get(UA_ESFN)
+        .map(stringParser),
       url         = m.get(URL_ESFN)
-        .map(EsModel.stringParser),
+        .map(stringParser),
       timestamp   = m.get(TIMESTAMP_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser),
+        .fold(DateTime.now)(dateTimeParser),
       clIpGeo     = m.get(CLIENT_IP_GEO_EFSN)
         .flatMap(GeoPoint.deserializeOpt),
       clTown      = m.get(CLIENT_TOWN_ESFN)
-        .map(EsModel.stringParser),
+        .map(stringParser),
       country     = m.get(COUNTRY_ESFN)
-        .map(EsModel.stringParser),
+        .map(stringParser),
       id          = id
     )
   }
@@ -111,7 +113,7 @@ import MRemoteError._
 case class MRemoteError(
   msg         : String,
   clientAddr  : String,
-  ua          : String,
+  ua          : Option[String]    = None,
   timestamp   : DateTime          = DateTime.now,
   url         : Option[String]    = None,
   clIpGeo     : Option[GeoPoint]  = None,
@@ -129,8 +131,9 @@ case class MRemoteError(
       MSG_ESFN            -> JsString(msg) ::
       TIMESTAMP_ESFN    -> EsModel.date2JsStr(timestamp) ::
       CLIENT_ADDR_ESFN  -> JsString(clientAddr) ::
-      UA_ESFN           -> JsString(ua) ::
       acc0
+    if (ua.isDefined)
+      acc ::= UA_ESFN -> JsString(ua.get)
     if (url.isDefined)
       acc ::= URL_ESFN -> JsString(url.get)
     if (clIpGeo.isDefined)

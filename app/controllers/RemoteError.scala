@@ -34,12 +34,10 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       )
       {(msg, urlOpt) =>
-        val strEmpty = ""
         MRemoteError(
           msg         = msg,
           url         = urlOpt,
-          clientAddr  = strEmpty,
-          ua          = strEmpty
+          clientAddr  = ""
         )
       }
       {merr =>
@@ -70,7 +68,7 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
             .flatMap { gsiOpt =>
               // Сохраняем в базу отчёт об ошибке.
               val merr1 = merr0.copy(
-                ua          = request.headers.get(USER_AGENT).get,
+                ua          = request.headers.get(USER_AGENT).map(strTrimF),
                 clientAddr  = request.remoteAddress,
                 clIpGeo     = gsiOpt.map(_.geoPoint),
                 clTown      = gsiOpt.flatMap(_.cityName),
