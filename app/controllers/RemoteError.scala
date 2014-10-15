@@ -26,23 +26,30 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
   private def errorFormM: Form[MRemoteError] = {
     Form(
       mapping(
-        "msg" -> nonEmptyText(minLength = 1, maxLength = 1024)
-          .transform[String](strTrimF, strIdentityF),
+        "msg" -> {
+          nonEmptyText(minLength = 1, maxLength = 1024)
+            .transform[String](strTrimF, strIdentityF)
+        },
         "url" -> {
-          val m = text(minLength = 8, maxLength = 512)
-          toStrOptM(m, strTrimF)
+          optional( text(minLength = 8, maxLength = 512) )
+            .transform[Option[String]](emptyStrOptToNone, identity)
+        },
+        "state" -> {
+          optional(text(maxLength = 1024))
+            .transform[Option[String]](emptyStrOptToNone, identity)
         }
       )
-      {(msg, urlOpt) =>
+      {(msg, urlOpt, state) =>
         MRemoteError(
           errorType   = RemoteErrorTypes.Showcase,
           msg         = msg,
           url         = urlOpt,
+          state       = state,
           clientAddr  = ""
         )
       }
       {merr =>
-        Some((merr.msg, merr.url))
+        Some((merr.msg, merr.url, merr.state))
       }
     )
   }
@@ -73,7 +80,8 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
                 clientAddr  = request.remoteAddress,
                 clIpGeo     = gsiOpt.map(_.geoPoint),
                 clTown      = gsiOpt.flatMap(_.cityName),
-                country     = gsiOpt.flatMap(_.countryIso2)
+                country     = gsiOpt.flatMap(_.countryIso2),
+                isLocalCl   = gsiOpt.map(_.isLocalClient)
               )
               merr1.save.map { merrId =>
                 NoContent

@@ -27,7 +27,8 @@ object SiowebEsModel {
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq(
-      MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar
+      MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
+      MRemoteError
     )
   }
 

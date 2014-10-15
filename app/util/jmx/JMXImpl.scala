@@ -43,6 +43,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MInviteRequestJmx,
     new MAdnNodeGeoJmx,
     new SiowebEsModelJmx,
+    new MRemoteErrorJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,
