@@ -5,6 +5,8 @@ import java.util.NoSuchElementException
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.img.WelcomeUtil
 import _root_.util.showcase._
+import io.suggest.ym.model.common.{IBlockMeta, EMBlockMetaI}
+import models.blk.BlockHeights
 import models.im.DevScreenT
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
@@ -481,6 +483,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
+
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.
     * @param h true означает, что нужна начальная страница с html.
@@ -540,15 +543,28 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
           val mads4renderAsArray = if (h) mads.tail else mads   // Caused by: java.lang.UnsupportedOperationException: tail of empty list
           val ctx = implicitly[Context]
+          val brArgs = BlockRenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
+          lazy val brArgs4 = brArgs.copy(szMult = 4)
+          // Самые мелкие карточки в фулл-скрине надо увеличивать в 4 раза, а не в 2.
+          def brArgsFor(mad: IBlockMeta): BlockRenderArgs = {
+            val bm = mad.blockMeta
+            if (bm.wide  &&  BlockHeights.H140.heightPx == bm.height)
+              brArgs4
+            else
+              brArgs
+          }
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
-            (mad, index) => _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt)(ctx)
+            (mad, index) =>
+              _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgsFor(mad))(ctx)
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
           val htmlOpt = if (h) {
-            val firstMads = mads.headOption.toList
+            val madsHead = mads.headOption
+            val firstMads = madsHead.toList
             val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
-            val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor,  adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
+            val brArgsN = madsHead.fold(brArgs)(brArgsFor)
+            val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
             Some(JsString(html))
           } else {
             None

@@ -214,13 +214,16 @@ object BlockRenderArgs {
 /**
  * Параметры рендера блока.
  * Всегда immutable класс!
+ * @param withEdit Рендерим в редакторе.
  * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
  * @param szMult Мультипликатор размера (и относительных координат).
+ * @param fullScreen Рендерим во весь рост. Такое бывает, когда юзер просматривает карточку.
  */
 case class BlockRenderArgs(
   withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
-  szMult        : Int = 1
+  szMult        : Int = 1,
+  fullScreen    : Boolean = false
 ) {
 
   @deprecated("Use szMult instead", "2014/oct/14")

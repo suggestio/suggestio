@@ -1,13 +1,14 @@
 package util.blocks
 
 import controllers.routes
-import io.suggest.ym.model.common.{Imgs, MImgInfoT}
+import io.suggest.ym.model.common.{BlockMeta, Imgs, MImgInfoT}
 import models.im._
 import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
 import util.cdn.CdnUtil
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
@@ -96,6 +97,24 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
+  /**
+   * Определить максимальный разумный множитель размера картинки для указанного экрана.
+   * Если рендер с указанным множителем не оправдан, то будет попытка с множитель в 2 раза меньшим.
+   * @param szMult Текущий (исходный) желаемый множитель размера. Т.е. максимальный допустимый (запрошенный).
+   * @param blockSz Размер блока.
+   * @param screenSz Размер экрана.
+   * @return Множитель.
+   */
+  @tailrec final def detectMaxSzMult(szMult: Int, blockSz: MImgSizeT, screenSz: MImgSizeT): Int = {
+    if (szMult <= 1) {
+      1
+    } else if (blockSz.width * szMult <= screenSz.width) {
+      detectMaxSzMult(szMult / 2, blockSz, screenSz)
+    } else {
+      szMult
+    }
+  }
+
 }
 
 /** Функционал для сохранения фоновой (основной) картинки блока. ValT нужен для доступа к blockWidth. */
@@ -112,22 +131,19 @@ trait SaveBgImgI extends ISaveImgs with ValT {
 
   /** Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
     * @param imgInfo Инфа о картинке, используемой в качестве фона.
-    * @param blockHeight высота блока (и картинки, соответственно).
-    * @param canRenderDoubleSize Можно ли рендерить в двойном размере? Если да и если экран позволяет,
-    *                           будет создана ссылка на картинку в двойном разрешении.
-    *                           Такое полезно при focusedAds(), превьюшках редактора карточек и т.д.
+    * @param blockMeta Метаданные блока (и картинки, соответственно).
+    * @param brArgs Параметры рендера блока.
     * @param ctx Контекст рендера шаблонов.
     * @return Экземпляр Call, пригодный для рендера в ссылку.
     */
-  def bgImgCall(imgInfo: MImgInfoT, blockSize: MImgSizeT, canRenderDoubleSize: Boolean)(implicit ctx: Context): Call = {
-
+  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: BlockRenderArgs)(implicit ctx: Context): Call = {
     Some( ImgIdKey(imgInfo.filename) )
       .filter { iik =>
         // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
         // Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
         // В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
         iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
-          val oldFormat  =  crop.height == blockSize.height  ||  crop.width == blockSize.width
+          val oldFormat  =  crop.height == blockMeta.height  ||  crop.width == blockMeta.width
           !oldFormat
         }
       }
@@ -145,15 +161,10 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         // Генерим dynImg-ссылку на картинку.
         val fgc = devPxRatio.fgCompression
 
-        // Проверка допустимости использования флага canRenderDoubleSize с учётом экрана устройства.
-        val willRenderDoubleSize: Boolean = {
-          canRenderDoubleSize && {
-            val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse {
-              warn(s"bgImgCall($imgInfo, bh=${blockSize.height}, canDouble=$canRenderDoubleSize): width=${blockSize.width} Missing client screen size! Will use standard VGA (1024х768)!")
-              MImgInfoMeta(width = 1024, height = 768)
-            }
-            blockSize.width * 2 <= devScrSize.width
-          }
+        // Определить максимальный мультипликатор размера картинки, сложив запрошенный мультипликатор и размеры экрана.
+        val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse {
+          warn(s"bgImgCall($imgInfo, bh=${blockMeta.height}): width=${blockMeta.width} Missing client screen size! Will use standard VGA (1024х768)!")
+          MImgInfoMeta(width = 1024, height = 768)
         }
 
         // Настройки сохранения результирующей картинки (аккамулятор).
@@ -164,8 +175,8 @@ trait SaveBgImgI extends ISaveImgs with ValT {
           fgc.imQualityOp
         )
 
-        // Мультипликатор размера (разрешения) картинки на основе doubleSize-флага.
-        val sizeMult: Int = if (willRenderDoubleSize) 2 else 1
+        // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
+        val sizeMult = BgImg.detectMaxSzMult(brArgs.szMult, blockMeta, screenSz = devScrSize)
 
         // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
         // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет 6-кратное разрешение блока /O_o/
@@ -174,8 +185,8 @@ trait SaveBgImgI extends ISaveImgs with ValT {
         // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
         imOpsAcc ::= {
           val sz = MImgInfoMeta(
-            height = (blockSize.height * imgResMult).toInt,
-            width  = (blockSize.width * imgResMult).toInt
+            height = (blockMeta.height * imgResMult).toInt,
+            width  = (blockMeta.width * imgResMult).toInt
           )
           AbsResizeOp(sz)
         }

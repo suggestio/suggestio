@@ -2,9 +2,9 @@ package util.showcase
 
 import controllers.routes
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
+import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
 import models._
-import models.blk.{BlockWidth, BlockWidths}
+import models.blk.{BlockWidth, BlockHeights, BlockWidths}
 import util.blocks.BlocksConf
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
@@ -16,7 +16,7 @@ import util.SiowebEsUtil.client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.07.14 14:10
- * Description:
+ * Description: Всякая статическая утиль для выдачи.
  */
 object ShowcaseUtil {
 
@@ -37,7 +37,6 @@ object ShowcaseUtil {
   def groupNarrowAds[T <: IBlockMeta](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
-        val blockId = e.blockMeta.blockId
         val bwidth: BlockWidth = BlockWidths(e.blockMeta.width)
         if (bwidth.isNarrow) {
           enOpt match {
@@ -126,6 +125,23 @@ object ShowcaseUtil {
         ctx.currAudienceUrl + call1.url
       }
     }
+  }
+
+
+  /** Настройки рендера раскрытой карточки. */
+  val FOCUSED_AD_BR_ARGS = BlockRenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
+  /** Настройки рендера маленькой карточки. Такую карточку надо распахивать в 4 раза, когда wide включён. */
+  val FOCUSED_SMALL_AD_BR_ARGS = FOCUSED_AD_BR_ARGS.copy(szMult = 4)
+
+  /** Аргументы для рендера блока, когда карточка открыта. */
+  def focusedBrArgsFor(mad: IBlockMeta): BlockRenderArgs = {
+    focusedBrArgsFor(mad.blockMeta)
+  }
+  def focusedBrArgsFor(bm: BlockMeta): BlockRenderArgs = {
+    if (bm.wide  &&  BlockHeights.H140.heightPx == bm.height)
+      FOCUSED_SMALL_AD_BR_ARGS
+    else
+      FOCUSED_AD_BR_ARGS
   }
 
 }

@@ -1,17 +1,18 @@
-@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int)(implicit ctx: Context)
+@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int, brArgs: BlockRenderArgs)(implicit ctx: Context)
 
 @defining( mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
 @stuff.scrollableContainerTpl( "focused-ad", "focusedAd" + index, "background-color: #" + rfBgColor ){
   <div style="margin: 0px auto;">
-  <div class="focused-ad_top-offset"></div>
-  @_single_offer_w_description(
-    mad = mad,
-    isWithAction = false,
-    producer = producer,
-    adIndex = index + 1,
-    adsCount = adsCount
-  )
-  <div class="focused-ad_bottom-offset"></div>
+    <div class="focused-ad_top-offset"></div>
+    @_single_offer_w_description(
+      mad         = mad,
+      isWithAction = false,
+      producer    = producer,
+      adIndex     = index + 1,
+      adsCount    = adsCount,
+      args        = brArgs
+    )
+    <div class="focused-ad_bottom-offset"></div>
   </div>
 }
 }
