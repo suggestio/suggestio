@@ -34,6 +34,8 @@
               ("decorc-webfont", "Decor C"),
               ("blocextconc-webfont", "BlocExt Cond"),
               ("bodonconc-webfont", "Bodon Conc"),
+              ("aa_higherup-webfont", "Higherup"),
+              ("Georgia", "Georgia"),
               ("confic-webfont", "Confic")
             ).zipWithIndex.map { case ((vl,nm), i) =>
               <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>@nm</option>
