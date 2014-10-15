@@ -31,8 +31,8 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
             .transform[String](strTrimF, strIdentityF)
         },
         "url" -> {
-          val m = text(minLength = 8, maxLength = 512)
-          toStrOptM(m, strTrimF)
+          optional( text(minLength = 8, maxLength = 512) )
+            .transform[Option[String]](emptyStrOptToNone, identity)
         },
         "state" -> {
           optional(text(maxLength = 1024))
