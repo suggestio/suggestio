@@ -1,6 +1,0 @@
-@(v: AOValueField, xy: ICoords2D, mult: Int)
-position: absolute;
-@defining(v.coords getOrElse xy) { c =>
-  left: @{c.x * mult}px@if(mult > 1) {!important};
-  top:  @{c.y * mult}px@if(mult > 1) {!important};
-}

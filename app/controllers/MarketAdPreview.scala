@@ -103,10 +103,10 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
             } yield {
               mad.imgs = imgs
               val render = if (isFull) {
-                val args = BlockRenderArgs(withEdit = true, isStandalone = false, canRenderDoubleSize = true)
+                val args = BlockRenderArgs(withEdit = true, isStandalone = false, szMult = 2)
                 _single_offer_w_description(mad, producer = request.adnNode, args = args)
               } else {
-                val args = BlockRenderArgs(withEdit = true, isStandalone = false, canRenderDoubleSize = false)
+                val args = BlockRenderArgs(withEdit = true, isStandalone = false, szMult = 1)
                 _single_offer(mad, args = args)
               }
               Ok(render)

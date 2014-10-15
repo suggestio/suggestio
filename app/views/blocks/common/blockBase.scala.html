@@ -33,7 +33,7 @@
 
 @* Тут постоянный div блока выдачи. Сюда рендерится блок. *@
 @* TODO добавить класс __size-"args.szMult *@
-<div class="sm-block height-@mad.blockMeta.height width-@mad.blockMeta.width sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id @cssClass"
+<div class="sm-block height-@mad.blockMeta.height width-@mad.blockMeta.width sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id @cssClass __size-@args.szMult"
      data-width="@mad.blockMeta.width" data-height="@mad.blockMeta.height" data-mad-id="@mad.id"
      @style.map { _style => style="@_style" }>
   @content
