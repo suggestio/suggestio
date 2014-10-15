@@ -482,7 +482,8 @@ sm =
       state = JSON.stringify sm.states.cur_state()
     else
       state = 'nojson'
-    url = window.location.hash
+
+    url = window.location.href
 
     xhr = new XMLHttpRequest()
     xhr.open 'POST', sm.config.showcase_error_handler, true
