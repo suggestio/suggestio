@@ -4,6 +4,7 @@ import controllers.routes
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
+import models.blk.{BlockWidth, BlockWidths}
 import util.blocks.BlocksConf
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
@@ -37,8 +38,8 @@ object ShowcaseUtil {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
         val blockId = e.blockMeta.blockId
-        val bc = BlocksConf applyOrDefault blockId
-        if (bc.isNarrow) {
+        val bwidth: BlockWidth = BlockWidths(e.blockMeta.width)
+        if (bwidth.isNarrow) {
           enOpt match {
             case Some(en) =>
               (None, en :: e :: acc)

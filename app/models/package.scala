@@ -131,6 +131,7 @@ package object models {
   type BlockFieldT          = util.blocks.BlockFieldT
   type BlockAOValueFieldT   = util.blocks.BlockAOValueFieldT
   type BfHeight             = util.blocks.BfHeight
+  type BfWidth              = util.blocks.BfWidth
   type BfDiscount           = util.blocks.BfDiscount
   type BfText               = util.blocks.BfText
   type BfPrice              = util.blocks.BfPrice

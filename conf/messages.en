@@ -117,6 +117,7 @@ error.captcha=Invalid human-check code
 blocks.field.price=Price
 blocks.field.oldPrice=Old price
 blocks.field.height=Block height
+blocks.field.width=Block width
 blocks.field.title=Title
 blocks.field.text1=Text 1
 blocks.field.text2=Text 2

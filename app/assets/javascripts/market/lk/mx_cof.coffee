@@ -2137,6 +2137,39 @@ market =
 
         market.ad_form.queue_block_preview_request request_delay=10
 
+      $('.js-block-width-editor-button').bind 'click', () ->
+
+        _cell_size = 140
+        _cell_padding = 20
+
+        _direction = $(this).attr 'data-change-direction'
+
+        _p = $(this).parent()
+        _value_dom = _p.find('input')
+
+        _cur_value = parseInt _value_dom.val()
+        _min_value = parseInt _value_dom.attr 'data-min-value'
+        _max_value = parseInt _value_dom.attr 'data-max-value'
+
+        _cur_cells_value = Math.floor _cur_value / _cell_size
+
+        if _direction == 'decrease'
+          _cur_cells_value--
+        else
+          _cur_cells_value++
+
+        _new_value = _cur_cells_value * _cell_size + ( _cur_cells_value - 1 ) * _cell_padding
+
+        if _new_value > _max_value
+          _new_value = _max_value
+
+        if _new_value < _min_value
+          _new_value = _min_value
+
+        _value_dom.val _new_value
+
+        market.ad_form.queue_block_preview_request request_delay=10
+
     set_descr_editor_bg : () ->
       hex = '#' + $('#ad_descr_bgColor').val()
       $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
