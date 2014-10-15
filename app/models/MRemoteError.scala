@@ -24,6 +24,8 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "rerr"
 
   // Имена полей. По возможности должны совпадать с названиями в MAdStat.
+  val ERROR_TYPE_ESFN     = "errType"
+
   val MSG_ESFN            = "msg"
   val URL_ESFN            = "url"
   val TIMESTAMP_ESFN      = "timestamp"
@@ -52,6 +54,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
    */
   override def generateMappingProps: List[DocField] = {
     List(
+      FieldString(ERROR_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(MSG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = true),
@@ -74,6 +77,10 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
     import EsModel.{stringParser, dateTimeParser}
     def parseStr(fn: String) = m.get(fn).fold("")(stringParser)
     MRemoteError(
+      errorType   = m.get(ERROR_TYPE_ESFN)
+        .map(stringParser)
+        .flatMap(RemoteErrorTypes.maybeWithName)
+        .getOrElse(RemoteErrorTypes.values.head),
       msg         = parseStr(MSG_ESFN),
       clientAddr  = parseStr(CLIENT_ADDR_ESFN),
       ua          = m.get(UA_ESFN)
@@ -111,6 +118,7 @@ import MRemoteError._
  * @param id id документа.
  */
 case class MRemoteError(
+  errorType   : RemoteErrorType,
   msg         : String,
   clientAddr  : String,
   ua          : Option[String]    = None,
@@ -128,7 +136,8 @@ case class MRemoteError(
 
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc =
-      MSG_ESFN            -> JsString(msg) ::
+      ERROR_TYPE_ESFN   -> JsString(errorType.toString) ::
+      MSG_ESFN          -> JsString(msg) ::
       TIMESTAMP_ESFN    -> EsModel.date2JsStr(timestamp) ::
       CLIENT_ADDR_ESFN  -> JsString(clientAddr) ::
       acc0
@@ -147,5 +156,16 @@ case class MRemoteError(
 
   /** Версия тут не нужна, т.к. модель write-only, и читается через kibana. */
   override def versionOpt: Option[Long] = None
+}
+
+
+/** Типы присылаемых ошибок. */
+object RemoteErrorTypes extends Enumeration {
+  type RemoteErrorType = Value
+  val Showcase = Value : RemoteErrorType
+
+  def maybeWithName(x: String): Option[RemoteErrorType] = {
+    values.find(_.toString == x)
+  }
 }
 

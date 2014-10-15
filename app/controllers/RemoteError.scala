@@ -1,6 +1,6 @@
 package controllers
 
-import models.{GeoIp, MRemoteError}
+import models.{RemoteErrorTypes, GeoIp, MRemoteError}
 import play.api.data._, Forms._
 import util.PlayMacroLogsImpl
 import util.FormUtil._
@@ -35,6 +35,7 @@ object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceP
       )
       {(msg, urlOpt) =>
         MRemoteError(
+          errorType   = RemoteErrorTypes.Showcase,
           msg         = msg,
           url         = urlOpt,
           clientAddr  = ""
