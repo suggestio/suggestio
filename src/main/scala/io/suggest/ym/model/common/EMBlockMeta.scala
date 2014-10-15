@@ -3,7 +3,7 @@ package io.suggest.ym.model.common
 import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
-import play.api.libs.json.{JsObject, JsNumber}
+import play.api.libs.json.{JsBoolean, JsObject, JsNumber}
 import io.suggest.util.MyConfig.CONFIG
 
 /**
@@ -68,6 +68,7 @@ object BlockMeta {
   val BLOCK_ID_ESFN = "blockId"
   val HEIGHT_ESFN   = "height"
   val WIDTH_ESFN    = "width"
+  val WIDE_ESFN     = "wide"
 
   /** Поле ширины долго жило в настройках блока, а когда пришло время переезжать, возникла проблема с дефолтовым значением. */
   val WIDTH_DFLT = CONFIG.getInt("block.meta.width.dflt.px") getOrElse 300
@@ -79,7 +80,8 @@ object BlockMeta {
         BlockMeta(
           blockId = EsModel.intParser(m get BLOCK_ID_ESFN),
           height  = EsModel.intParser(m get HEIGHT_ESFN),
-          width   = Option(m get WIDTH_ESFN).fold(WIDTH_DFLT)(EsModel.intParser)
+          width   = Option(m get WIDTH_ESFN).fold(WIDTH_DFLT)(EsModel.intParser),
+          wide    = Option(m get WIDE_ESFN).fold(false)(EsModel.booleanParser)
         )
     }
   }
@@ -92,7 +94,8 @@ object BlockMeta {
     List(
       fint(BLOCK_ID_ESFN),
       fint(HEIGHT_ESFN),
-      fint(WIDTH_ESFN)
+      fint(WIDTH_ESFN),
+      FieldBoolean(WIDE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
     )
   }
 
@@ -112,13 +115,15 @@ import BlockMeta._
 case class BlockMeta(
   blockId : Int,
   height  : Int,
-  width   : Int
+  width   : Int,
+  wide    : Boolean = false
 ) extends MImgSizeT {
   /** Сериализация экземпляра этого класса в json-объект. */
   def toPlayJson = JsObject(Seq(
     BLOCK_ID_ESFN -> JsNumber(blockId),
     HEIGHT_ESFN   -> JsNumber(height),
-    WIDTH_ESFN    -> JsNumber(width)
+    WIDTH_ESFN    -> JsNumber(width),
+    WIDE_ESFN     -> JsBoolean(wide)
   ))
 }
 
