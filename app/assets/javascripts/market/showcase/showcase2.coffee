@@ -476,12 +476,20 @@ sm =
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   showcase_error_handler : (error_msg, url, lineNumber) ->
+
+    ## data
+    if typeof JSON == 'object' && typeof JSON.parse == 'function'
+      state = JSON.stringify sm.states.cur_state()
+    else
+      state = 'nojson'
+    url = window.location.hash
+
     xhr = new XMLHttpRequest()
     xhr.open 'POST', sm.config.showcase_error_handler, true
     xhr.setRequestHeader 'Content-type', 'application/x-www-form-urlencoded'
     xhr.onload = () ->
       sm.log 'error message sent to server'
-    xhr.send 'msg=' + error_msg  + '&url=' + window.location.hash
+    xhr.send 'msg=' + error_msg  + '&url=' + url + ',' + state
 
   request_context :
     screen_param : () ->
@@ -2406,6 +2414,7 @@ sm =
       this.push ns
 
     push : ( state ) ->
+
       this.process_state state
 
       this.list = this.list.slice 0, this.cur_state_index+1
