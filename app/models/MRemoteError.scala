@@ -1,14 +1,17 @@
 package models
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModel, EsModelStaticT}
+import io.suggest.model._
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
 import play.api.Play.{current, configuration}
 
 import scala.collection.Map
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -24,17 +27,19 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "rerr"
 
   // Имена полей. По возможности должны совпадать с названиями в MAdStat.
-  val ERROR_TYPE_ESFN     = "errType"
+  val ERROR_TYPE_ESFN           = "errType"
 
-  val MSG_ESFN            = "msg"
-  val URL_ESFN            = "url"
-  val TIMESTAMP_ESFN      = "timestamp"
-  val CLIENT_ADDR_ESFN    = "clientAddr"
-  val UA_ESFN             = "ua"
+  val MSG_ESFN                  = "msg"
+  val URL_ESFN                  = "url"
+  val TIMESTAMP_ESFN            = "timestamp"
+  val CLIENT_ADDR_ESFN          = "clientAddr"
+  val UA_ESFN                   = "ua"
 
-  val CLIENT_IP_GEO_EFSN  = "clIpGeo"
-  val CLIENT_TOWN_ESFN    = "clIpTown"
-  val COUNTRY_ESFN        = "country"
+  val CLIENT_IP_GEO_EFSN        = "clIpGeo"
+  val CLIENT_TOWN_ESFN          = "clIpTown"
+  val COUNTRY_ESFN              = "country"
+  val IS_LOCAL_CLIENT_ESFN      = "isLocalCl"
+  val STATE_ESFN                = "state"
 
   /** Время хранения данных в модели. */
   val TTL_DAYS = configuration.getInt("model.remote.error.store.ttl.days") getOrElse 30
@@ -63,7 +68,9 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
       FieldGeoPoint(CLIENT_IP_GEO_EFSN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
         fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "5km")),
       FieldString(CLIENT_TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(STATE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
     )
   }
 
@@ -74,7 +81,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
    * @return Экземпляр модели.
    */
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import EsModel.{stringParser, dateTimeParser}
+    import EsModel.{stringParser, dateTimeParser, booleanParser}
     def parseStr(fn: String) = m.get(fn).fold("")(stringParser)
     MRemoteError(
       errorType   = m.get(ERROR_TYPE_ESFN)
@@ -94,6 +101,10 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
       clTown      = m.get(CLIENT_TOWN_ESFN)
         .map(stringParser),
       country     = m.get(COUNTRY_ESFN)
+        .map(stringParser),
+      isLocalCl   = m.get(IS_LOCAL_CLIENT_ESFN)
+        .map(booleanParser),
+      state       = m.get(STATE_ESFN)
         .map(stringParser),
       id          = id
     )
@@ -127,6 +138,8 @@ case class MRemoteError(
   clIpGeo     : Option[GeoPoint]  = None,
   clTown      : Option[String]    = None,
   country     : Option[String]    = None,
+  isLocalCl   : Option[Boolean]   = None,
+  state       : Option[String]    = None,
   id          : Option[String]    = None
 ) extends EsModelT with EsModelPlayJsonT {
 
@@ -151,6 +164,10 @@ case class MRemoteError(
       acc ::= CLIENT_TOWN_ESFN -> JsString(clTown.get)
     if (country.isDefined)
       acc ::= COUNTRY_ESFN -> JsString(country.get)
+    if (isLocalCl.isDefined)
+      acc ::= IS_LOCAL_CLIENT_ESFN -> JsBoolean(isLocalCl.get)
+    if (state.isDefined)
+      acc ::= STATE_ESFN -> JsString(state.get)
     acc
   }
 
@@ -167,5 +184,15 @@ object RemoteErrorTypes extends Enumeration {
   def maybeWithName(x: String): Option[RemoteErrorType] = {
     values.find(_.toString == x)
   }
+}
+
+
+// JMX-утиль
+
+trait MRemoteErrorJmxMBean extends EsModelJMXMBeanI
+final class MRemoteErrorJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MRemoteErrorJmxMBean {
+
+  override def companion = MRemoteError
 }
 
