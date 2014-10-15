@@ -6,11 +6,10 @@ import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.cache.Cache
 import play.api.db.DB
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{QueryStringBindable, RequestHeader}
+import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
-import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
+import util.{AsyncUtil, PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.{Future, future}
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -188,7 +187,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           override def isLocalClient = ra == REPLACE_LOCALHOST_IP_WITH
         }
       }
-    }     // future()
+    }(AsyncUtil.jdbcExecutionContext)     // future()
   }
 
   case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
