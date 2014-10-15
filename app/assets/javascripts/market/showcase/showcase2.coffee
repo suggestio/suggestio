@@ -481,8 +481,7 @@ sm =
     xhr.setRequestHeader 'Content-type', 'application/x-www-form-urlencoded'
     xhr.onload = () ->
       sm.log 'error message sent to server'
-    xhr.send 'msg=' + error_msg  + '&url=' + url
-
+    xhr.send 'msg=' + error_msg  + '&url=' + window.location.hash
 
   request_context :
     screen_param : () ->
