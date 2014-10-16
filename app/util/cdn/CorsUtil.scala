@@ -1,6 +1,7 @@
 package util.cdn
 
 import play.api.mvc.{Results, Result, RequestHeader, Filter}
+import util.Context
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
 import play.api.Play.{current, configuration}
@@ -24,27 +25,9 @@ object CorsUtil {
     r.method.equalsIgnoreCase("OPTIONS") && r.headers.get("Access-Control-Request-Method").nonEmpty
   }
 
-  def allowOrigins: String = {
-    configuration.getStringList("cors.allow.origins")
-      .map { _.mkString(" ") }
-      .getOrElse {
-        val sb = new StringBuilder
-        CdnUtil.CDN_PROTO_HOSTS
-          .iterator
-          .filter(_._2.nonEmpty)
-          .foreach { case (proto, hosts) =>
-          hosts.foreach { host =>
-            sb.append(proto)
-              .append("://")
-              .append(host)
-              .append(' ')
-          }
-        }
-        // Удалить лишний разделитель в конце строки.
-        if (sb.nonEmpty)
-          sb.setLength(sb.length - 1)
-        sb.toString()
-      }
+  val allowOrigins: String = {
+    // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
+    configuration.getString("cors.allow.origin") getOrElse "*"
   }
 
   def allowMethods = {
@@ -54,15 +37,12 @@ object CorsUtil {
 
   def allowHeaders = {
     configuration.getStringList("cors.allow.headers")
-      .fold("") { _.mkString(", ") }
+      .fold(Option.empty[String]) { hs => Some( hs.mkString(", ") ) }
   }
 
-  def allowCreds = {
-    configuration.getBoolean("cors.allow.credentials")
-      .fold("false") { _.toString }
-  }
+  def allowCreds = configuration.getBoolean("cors.allow.credentials")
 
-  val CORS_HEADERS: Seq[(String, String)] = {
+  lazy val PREFLIGHT_CORS_HEADERS: Seq[(String, String)] = {
     var acc: List[(String, String)] = Nil
     val ao = allowOrigins
     if (!ao.isEmpty) {
@@ -71,18 +51,22 @@ object CorsUtil {
       if (!am.isEmpty)
         acc ::= ACCESS_CONTROL_ALLOW_METHODS -> am
       val ah = allowHeaders
-      if (!ah.isEmpty)
-        acc ::= ACCESS_CONTROL_ALLOW_HEADERS -> ah
+      if (ah.isDefined)
+        acc ::= ACCESS_CONTROL_ALLOW_HEADERS -> ah.get
       val ac = allowCreds
-      if (!ac.isEmpty)
-        acc ::= ACCESS_CONTROL_ALLOW_CREDENTIALS -> ac
+      if (ac.nonEmpty)
+        acc ::= ACCESS_CONTROL_ALLOW_CREDENTIALS -> ac.get.toString
     }
     acc
   }
 
-  /** Добавить CORS-заголовки к ответу. */
-  def withCorsHeaders(res: Result): Result = {
-    res.withHeaders(CORS_HEADERS : _*)
+  val SIMPLE_CORS_HEADERS: Seq[(String, String)] = {
+    var acc: List[(String, String)] = Nil
+    val ao = allowOrigins
+    if (!ao.isEmpty) {
+      acc ::= ACCESS_CONTROL_ALLOW_ORIGIN -> ao
+    }
+    acc
   }
 
 }
@@ -95,16 +79,20 @@ import CorsUtil._
 object CorsFilter extends Filter {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    if (isPreFlight(rh)) {
+    if (CORS_PREFLIGHT_ALLOWED && isPreFlight(rh)) {
       val result = if (CORS_PREFLIGHT_ALLOWED) {
-        withCorsHeaders(Results.Ok)
+        Results.Ok.withHeaders(PREFLIGHT_CORS_HEADERS : _*)
       } else {
         Results.NotFound
       }
       Future successful result
     } else {
-      f(rh)
-        .map { withCorsHeaders }
+      val fut = f(rh)
+      val hs = SIMPLE_CORS_HEADERS
+      if (hs.nonEmpty)
+        fut.map { _.withHeaders(hs : _*) }
+      else
+        fut
     }
   }
 

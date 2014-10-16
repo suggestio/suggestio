@@ -32,6 +32,11 @@ object Application extends SioController with PlayMacroLogsImpl {
     Ok(xdServerTpl())
   }
 
+  /** Раздача содержимого robots.txt. */
+  def robotsTxt = Action { implicit request =>
+    Ok(views.txt.static.robotsTxtTpl())
+  }
+
   /** Запрос смены языка UI. */
   def change_locale(locale: String) = MaybeAuth.async { implicit request =>
     val referrer = request.headers.get(REFERER).getOrElse("/")

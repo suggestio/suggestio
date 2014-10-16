@@ -9,6 +9,7 @@ import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames
 import scala.util.Random
+import SioRequestHeader.lastForwarded
 
 /**
  * Suggest.io
@@ -74,6 +75,7 @@ trait Context {
   lazy val myProto: String = {
     request.headers
       .get(HeaderNames.X_FORWARDED_PROTO)
+      .map { lastForwarded }
       .getOrElse(Context.SIO_PROTO_DFLT)
   }
 

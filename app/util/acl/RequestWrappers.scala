@@ -39,6 +39,8 @@ object SioRequestHeader {
 
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
+  
+  def lastForwarded(raw: String) = X_FW_FOR_SPLITTER_RE.split(raw).last
 
   implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
     SioWrappedRequest.request2sio(request)
@@ -47,7 +49,7 @@ object SioRequestHeader {
 
 /** Расширение play RequestHeader функциями S.io. */
 trait SioRequestHeader extends RequestHeader {
-  import SioRequestHeader.X_FW_FOR_SPLITTER_RE
+  import SioRequestHeader._
 
   /**
    * remote address может содержать несколько адресов через ", ". Например, если клиент послал своё
@@ -56,8 +58,7 @@ trait SioRequestHeader extends RequestHeader {
    */
   abstract override lazy val remoteAddress: String = {
     val ra0 = super.remoteAddress
-    X_FW_FOR_SPLITTER_RE.split(ra0)
-      .last
+    lastForwarded(ra0)
   }
 
 }
