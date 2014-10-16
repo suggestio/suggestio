@@ -139,7 +139,7 @@ includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
-pipelineStages := Seq(rjs, digest, gzip)
+pipelineStages := Seq(rjs, digest, simpleUrlUpdate, digest, gzip)
 
 testOptions in Test += Tests.Argument("-oF")
 
