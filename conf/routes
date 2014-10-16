@@ -371,3 +371,6 @@ GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
+# Cross-Origin resource sharing: preflight request.
+OPTIONS /*path                           controllers.Application.corsPreflight(path)
+

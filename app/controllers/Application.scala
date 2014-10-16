@@ -3,10 +3,11 @@ package controllers
 import play.api.mvc._
 import util.PlayMacroLogsImpl
 import util.acl._
+import util.cdn.CorsUtil
 import views.html.crawl._
 import views.html.stuff._
 import play.api.i18n.Lang
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -72,5 +73,17 @@ object Application extends SioController with PlayMacroLogsImpl {
 
   /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
   def http404Fut(implicit request: RequestHeader): Future[Result] = http404AdHoc
+
+  /**
+   * Реакция на options-запрос, хидеры выставит CORS-фильтр, подключенный в Global.
+   * @param path Путь, к которому запрошены опшыны.
+   * @return
+   */
+  def corsPreflight(path: String) = Action {
+    if (CorsUtil.CORS_PREFLIGHT_ALLOWED)
+      Ok
+    else
+      NotFound
+  }
 
 }

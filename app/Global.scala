@@ -5,6 +5,7 @@ import io.suggest.util.SioEsUtil
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
+import util.cdn.CorsFilter
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import scala.concurrent.{Await, Future, future}
@@ -27,7 +28,7 @@ import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
  */
 
 //object Global extends GlobalSettings {
-object Global extends WithFilters(SioHTMLCompressorFilter()) {
+object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
