@@ -546,7 +546,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
             (mad, index) =>
-              val brArgs = ShowcaseUtil.focusedBrArgsFor(mad)
+              val brArgs = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
               _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
@@ -554,7 +554,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
             val madsHead = mads.headOption
             val firstMads = madsHead.toList
             val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
-            val brArgsN = madsHead.fold(ShowcaseUtil.FOCUSED_AD_BR_ARGS)(ShowcaseUtil.focusedBrArgsFor)
+            val brArgsN = madsHead.fold(ShowcaseUtil.focusedBrArgsDflt) { ShowcaseUtil.focusedBrArgsFor(_)(ctx) }
             val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
             Some(JsString(html))
           } else {

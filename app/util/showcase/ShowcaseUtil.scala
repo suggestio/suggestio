@@ -2,10 +2,10 @@ package util.showcase
 
 import controllers.routes
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
+import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{BlockWidth, BlockHeights, BlockWidths}
-import util.blocks.BlocksConf
+import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
 import scala.concurrent.Future
@@ -128,20 +128,43 @@ object ShowcaseUtil {
   }
 
 
-  /** Настройки рендера раскрытой карточки. */
-  val FOCUSED_AD_BR_ARGS = blk.RenderArgs(withEdit = false, isStandalone = false, szMult = 2, fullScreen = true)
-  /** Настройки рендера маленькой карточки. Такую карточку надо распахивать в 4 раза, когда wide включён. */
-  val FOCUSED_SMALL_AD_BR_ARGS = FOCUSED_AD_BR_ARGS.copy(szMult = 4)
+  /** Дефолтовый мультипликатор размера для блоков, отображаемых через focusedAds(). */
+  def FOCUSED_SZ_MULT = 2
 
-  /** Аргументы для рендера блока, когда карточка открыта. */
-  def focusedBrArgsFor(mad: IBlockMeta): blk.RenderArgs = {
-    focusedBrArgsFor(mad.blockMeta)
-  }
-  def focusedBrArgsFor(bm: BlockMeta): blk.RenderArgs = {
-    if (bm.wide  &&  BlockHeights.H140.heightPx == bm.height)
-      FOCUSED_SMALL_AD_BR_ARGS
-    else
-      FOCUSED_AD_BR_ARGS
+  /** Дефолтовые аргументы рендера на черный день. Обычно не важно, что там написано в полях. */
+  def focusedBrArgsDflt = blk.RenderArgs(szMult = FOCUSED_SZ_MULT)
+
+  /**
+   * Аргументы для рендера блока, когда карточка открыта.
+   * @param mad Рекламная карточка.
+   * @return Аргументы для рендера.
+   */
+  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): blk.RenderArgs = {
+    // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
+    val willWideBg: Boolean = mad.blockMeta.wide && {
+      ctx.deviceScreenOpt.exists { devScr =>
+        // Считаем целевое разрешение фоновой картинки карточки:
+        val nonWideImgRenderSz = BgImg.getRenderSz(
+          szMult    = FOCUSED_SZ_MULT,
+          blockMeta = mad.blockMeta,
+          devScreen = devScr
+        )
+        // Если ширина экрана намекает, то рендерим на широкую.
+        nonWideImgRenderSz.width  >=  1.5 * devScr.width
+      }
+    }
+    // Очень маленькие карточки нужно масштабировать в 4 раза, но только если wide включен.
+    val szMult = if (willWideBg  &&  BlockHeights.H140.heightPx <= mad.blockMeta.height) {
+      4
+    } else {
+      FOCUSED_SZ_MULT
+    }
+    blk.RenderArgs(
+      withEdit      = false,
+      isStandalone  = false,
+      szMult        = szMult,
+      wideBg        = willWideBg
+    )
   }
 
 }

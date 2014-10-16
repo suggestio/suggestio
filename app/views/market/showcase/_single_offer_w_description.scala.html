@@ -1,12 +1,23 @@
 @(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0,
   args: blk.RenderArgs = blk.RenderArgs.DOUBLE_SIZED_ARGS)(implicit ctx: Context)
 
-@defining( producer.meta.color.getOrElse("") ) { pBgColor =>
-@defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
+
+@* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
+@if( args.wideBg ) {
+  @defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
+    @bc.getMadBgImg(mad).map { bgImgInfo =>
+      <img src="@bc.wideBgImgCallCdn(bgImgInfo, args)" alt=""/>
+    }
+  }
+}
 
 <div class="focused-ad_offer">
   @_single_offer(mad, isWithAction = false, args)
 </div>
+
+
+@defining( producer.meta.color.getOrElse("") ) { pBgColor =>
+@defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
 
 @* Информация о магазине *@
 <div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}; color: #@pFgColor">

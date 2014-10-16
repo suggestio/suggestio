@@ -75,7 +75,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
 
-  type BlockConf = Val
+  type BlockConf = ValT
   implicit def value2val(x: Value): BlockConf = x.asInstanceOf[BlockConf]
 
   /** Найти опционально по имени. */
@@ -88,16 +88,16 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   }
 
   /** Дефолтовый блок, если возникают сомнения. */
-  def DEFAULT: BlockConf = Block20
+  def DEFAULT: CommonBlock2T = Block20
 
   /**
    * Аналог apply, но вызывает DEFAULT(), если нет блока с необходимым id.
    * @param n id искомого блока.
    * @return Экземпляр BlocksConf.
    */
-  def applyOrDefault(n: Int): BlockConf = {
+  def applyOrDefault(n: Int): CommonBlock2T = {
     try {
-      apply(n)
+      apply(n).asInstanceOf[CommonBlock2T]
     } catch {
       case ex: NoSuchElementException =>
         warn(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
@@ -107,7 +107,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   // Начало значений
 
-  /** Базовый трейт новых блоков. */
+  /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT with Href
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
@@ -167,7 +167,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def strictMapping: Mapping[BlockMapperResult] = this
 
   /** Более удобный интерфейс для метода template.render(). */
-  def renderBlock(mad: MAdT, args: blk.RenderArgs = blk.RenderArgs.DEFAULT)(implicit ctx: Context) = {
+  def renderBlock(mad: MAdT, args: blk.RenderArgs)(implicit ctx: Context) = {
     template.render(mad, args, ctx)
   }
 
