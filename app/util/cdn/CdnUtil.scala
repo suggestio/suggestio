@@ -4,6 +4,7 @@ import controllers.routes
 import models.{Context, DynImgArgs, ExternalCall}
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
+import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
 
 /**
@@ -12,7 +13,9 @@ import scala.collection.JavaConversions._
  * Created: 09.10.14 18:31
  * Description: Утииль для работы с CDN.
  */
-object CdnUtil {
+object CdnUtil extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
   private def getCdnHostsForProto(proto: String): List[String] = {
@@ -28,6 +31,22 @@ object CdnUtil {
       .map { proto => proto -> getCdnHostsForProto(proto) }
       .filter { _._2.nonEmpty }
       .toMap
+  }
+
+  // Печатаем карту в консоль при запуске.
+  info {
+    val sb = new StringBuilder("CDNs map (proto -> hosts...) is:")
+    CDN_PROTO_HOSTS
+      .foreach { case (proto, hosts) =>
+        sb.append("\n  ")
+          .append(proto)
+          .append(": ")
+        hosts foreach { host =>
+          sb.append(host)
+            .append(", ")
+        }
+      }
+    sb.toString()
   }
 
   val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
