@@ -60,7 +60,7 @@ object CdnUtil extends PlayMacroLogsImpl {
 
   /** Генератор вызовов к CDN или внутренних. */
   def forCall(c: Call)(implicit ctx: Context): Call = {
-    if (HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
+    if (!HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
       c
     } else {
       val protoLc = ctx.myProto.toLowerCase
