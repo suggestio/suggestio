@@ -1,12 +1,15 @@
 package util.acl
 
+import java.net.InetAddress
+
+import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -35,12 +38,37 @@ abstract class AbstractRequestWithPwOpt[A](request: Request[A])
 
 
 
-object SioRequestHeader {
+object SioRequestHeader extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
-  
-  def lastForwarded(raw: String) = X_FW_FOR_SPLITTER_RE.split(raw).last
+
+  /** Последний из списка форвардов. Там обычно содержится оригинальный ip, если клиент не докинул туда свой. */
+  def lastForwarded(raw: String): String = {
+    lazy val logPrefix = s"lastForwarded($raw)"
+    val splitsIter = X_FW_FOR_SPLITTER_RE.split(raw)
+      .toSeq
+      .reverse
+      .iterator
+      .filter { addr =>
+        try {
+          InetAddress.getByName(addr)
+          true
+        } catch {
+          case ex: Throwable =>
+            warn(logPrefix + "Invalid forwarded address: " + addr)
+            false
+        }
+      }
+    if (splitsIter.hasNext) {
+      splitsIter.next()
+    } else {
+      warn(logPrefix + "No more forwarding tokens. Returning raw value.")
+      raw
+    }
+  }
 
   implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
     SioWrappedRequest.request2sio(request)
