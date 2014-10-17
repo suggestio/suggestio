@@ -25,7 +25,7 @@ object ScStatSaver {
 
   /** Используемый backend для сохранения статистики. */
   val BACKEND: ScStatSaverBackend = {
-    configuration.getString("sc.stat.saver", Some(Set("bp", "bulk", "", "plain")))
+    configuration.getString("sc.stat.saver.type", Some(Set("bp", "bulk", "", "plain")))
       .fold [ScStatSaverBackend] (new PlainSaverBackend) { raw =>
         raw.trim.toLowerCase match {
           case "plain" | ""     => new PlainSaverBackend

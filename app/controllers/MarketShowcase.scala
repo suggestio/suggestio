@@ -237,7 +237,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: SMShowcaseReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1).flatMap { geos =>
+    val resultFut = MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1).flatMap { geos =>
       renderNodeShowcaseSimple(
         adnNode = request.adnNode,
         isGeo = false,  // Оксюморон с названием парамера. Все запросы гео-выдачи приходят в этот экшен, а геолокация отключена.
@@ -245,6 +245,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         screen = args.screen
       )
     }
+    // собираем статистику, пока идёт подготовка результата
+    val stat = ScIndexStatUtil(
+      scSinkOpt = None,
+      gsiFut    = args.geo.geoSearchInfoOpt,
+      screenOpt = args.screen,
+      nodeOpt   = Some(request.adnNode)
+    )
+    stat.saveStats onFailure { case ex =>
+      warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $args", ex)
+    }
+    // Возвращаем результат основного действа.
+    resultFut
   }
 
   /** Рендер отображения выдачи узла. */
@@ -316,16 +328,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         welcomeOpt  = waOpt
       )
       renderShowcase(args, isGeo, adnNode.id)(ctx)
-    }
-    // собираем статистику, пока идёт подготовка результата
-    val stat = ScIndexStatUtil(
-      scSinkOpt = if (isGeo) Some(AdnSinks.SINK_GEO) else None,
-      gsiFut    = spsr.geo.geoSearchInfoOpt,
-      screenOpt = screen,
-      nodeOpt   = Some(adnNode)
-    )
-    stat.saveStats onFailure { case ex =>
-      warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $spsr, isGeo=$isGeo", ex)
     }
     // Возвращаем асинхронный результат.
     resultFut
