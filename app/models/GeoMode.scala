@@ -117,6 +117,8 @@ sealed trait GeoMode {
   def nodeDetectLevels: Seq[NodeGeoLevel]
 
   def asGeoLocation: Option[GeoLocation] = None
+
+  def isExact: Boolean
 }
 
 
@@ -149,6 +151,8 @@ case object GeoNone extends GeoMode {
 
   /** Отсутвие геолокации означает отсутсвие уровней оной. */
   override def nodeDetectLevels = Nil
+
+  override def isExact: Boolean = false
 }
 
 
@@ -199,6 +203,8 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
       }
     }(AsyncUtil.jdbcExecutionContext)     // future()
   }
+
+  override def isExact: Boolean = false
 
   case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
 
@@ -300,6 +306,8 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
     }
     Future successful Some(result)
   }
+
+  override def isExact: Boolean = true
 
   override def exactGeodata = Some(geoPoint)
 

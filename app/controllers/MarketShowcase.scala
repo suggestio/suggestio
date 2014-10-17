@@ -86,6 +86,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     if (Play.isProd)  120  else  10
   }
 
+  /** Кеш ответа showcase(adnId) на клиенте. */
+  val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
+
+
   /** Кеш на клиенте для короткоживующих данных. */
   private def cacheControlShort(result: Result): Result = {
     if (play.api.Play.isProd) {
@@ -151,15 +155,16 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           case ex => warn("geoSite(): Failed to save statistics", ex)
         }
     }
-    // Запускаем рендер результата синхронно в текущем потоке.
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
     )
-    cacheControlLong {
+    val resultFut = cacheControlLong {
       Ok(demoWebsiteTpl(args))
     }
+
+    resultFut
   }
 
   /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
@@ -255,8 +260,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     stat.saveStats onFailure { case ex =>
       warn(s"showcase($adnId): failed to save stats, args = $args", ex)
     }
-    // Возвращаем результат основного действа.
-    resultFut
+    // Возвращаем результат основного действа. Результат вполне кешируем по идее.
+    resultFut map { res =>
+      res.withHeaders(CACHE_CONTROL -> s"public, max-age=$SC_INDEX_CACHE_SECONDS")
+    }
   }
 
   /** Рендер отображения выдачи узла. */
@@ -304,7 +311,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
     val ctx = implicitly[Context]
     val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
-    val resultFut = for {
+    for {
       waOpt     <- waOptFut
       catsStats <- catsStatsFut
       prods     <- prodsFut
@@ -329,8 +336,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       )
       renderShowcase(args, isGeo, adnNode.id)(ctx)
     }
-    // Возвращаем асинхронный результат.
-    resultFut
   }
 
 
@@ -369,9 +374,17 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
         }
     }
-    // Возвращаем асинхронный результат
+    // Готовим настройки кеширования. Если геолокация по ip, то значит возможно только private-кеширование на клиенте.
+    val (cacheControlMode, hdrs0) = if (!args.geo.isExact)
+      "private" -> List(VARY -> X_FORWARDED_FOR)
+    else
+      "public" -> Nil
+    val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
+    // Возвращаем асинхронный результат, добавив в него клиентский кеш.
     resultFut
-      .map { _._1 }
+      .map { case (result, _) =>
+        result.withHeaders(hdrs1 : _*)
+      }
   }
 
   private def renderGeoShowcase(reqArgs: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
@@ -422,7 +435,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
     trace(s"$logPrefix ${request.path}?${request.rawQueryString}")
-    lazy val gsiFut = adSearch.geo.geoSearchInfoOpt
+    // Геоданные нужны для собирания статистики.
+    val gsiFut = adSearch.geo.geoSearchInfoOpt
     val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> Future.successful(adSearch)
     } else {
@@ -436,6 +450,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         val result = adSearch.copy(levels = lvls1)
         Future successful result
       } else if (adSearch.geo.isWithGeo) {
+        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
         // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
         ShowcaseNodeListUtil.detectCurrentNode(adSearch.geo, adSearch.geo.geoSearchInfoOpt)
           .map { gdr => Some(gdr.node) }
@@ -712,6 +727,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     DEMO_ADN_ID_OPT match {
       case Some(adnId) =>
         Redirect(routes.MarketShowcase.demoWebSite(adnId))
+          .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
       case None =>
         http404AdHoc
     }

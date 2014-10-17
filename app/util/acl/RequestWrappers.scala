@@ -45,12 +45,18 @@ object SioRequestHeader extends PlayMacroLogsImpl {
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
 
+  def firstForwarded(raw: String): String = {
+    val splits = X_FW_FOR_SPLITTER_RE.split(raw)
+    if (splits.length == 0)
+      raw
+    else
+      splits.head
+  }
+
   /** Последний из списка форвардов. Там обычно содержится оригинальный ip, если клиент не докинул туда свой. */
-  def lastForwarded(raw: String): String = {
-    lazy val logPrefix = s"lastForwarded($raw)"
+  def firstForwardedAddr(raw: String): String = {
+    lazy val logPrefix = s"firstForwardedAddr($raw): "
     val splitsIter = X_FW_FOR_SPLITTER_RE.split(raw)
-      .toSeq
-      .reverse
       .iterator
       .filter { addr =>
         try {
@@ -86,7 +92,7 @@ trait SioRequestHeader extends RequestHeader {
    */
   abstract override lazy val remoteAddress: String = {
     val ra0 = super.remoteAddress
-    lastForwarded(ra0)
+    firstForwardedAddr(ra0)
   }
 
 }
