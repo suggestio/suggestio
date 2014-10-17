@@ -92,7 +92,7 @@ class BulkProcessorSaveBackend extends ScStatSaverBackend with PlayMacroLogsImpl
 
   /** ExecutionContext. При добавлении элементов в BulkProcessor наступает полная синхронизация,
     * поэтому нет смысла держать больше одного потока. */
-  protected val ec = AsyncUtil.mkEc("sc.stat.saver.bulk.ec", EcParInfo(1.0F, 1))
+  protected val ec = AsyncUtil.mkEc("sc.stat.saver.bp.ec", EcParInfo(1.0F, 1))
 
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
