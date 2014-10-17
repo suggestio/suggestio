@@ -177,7 +177,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
           ttl    = if(isLocalClient) Some(LOCAL_STAT_TTL) else None
         )
         // Отправляем на сохранение через соотв.подсистему.
-        trace(s"Saving stats: ${adStat.action} remote=${adStat.clientAddr} node=${adStat.onNodeIdOpt} ttl=${adStat.ttl}")
+        //trace(s"Saving stats: ${adStat.action} remote=${adStat.clientAddr} node=${adStat.onNodeIdOpt} ttl=${adStat.ttl}")
         ScStatSaver.BACKEND.save(adStat)
       }
     }
