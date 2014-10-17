@@ -5,10 +5,10 @@
 font-face( name )
   @font-face
     font-family: name
-    src: url('/assets/fonts/market/' + name + '.eot')
-    src: url('/assets/fonts/market/' + name + '.eot?#iefix') format('embedded-opentype'),
-         url('/assets/fonts/market/' + name + '.woff') format('woff'),
-         url('/assets/fonts/market/' + name + '.ttf') format('truetype')
+    src: url('/vassets/fonts/market/' + name + '.eot')
+    src: url('/vassets/fonts/market/' + name + '.eot?#iefix') format('embedded-opentype'),
+         url('/vassets/fonts/market/' + name + '.woff') format('woff'),
+         url('/vassets/fonts/market/' + name + '.ttf') format('truetype')
     font-weight: normal
     font-style: normal
 
@@ -151,9 +151,24 @@ body
 
   &_phone
     position    absolute
-    top         30px
+    top         20px
     right       210px
     font-family 'opensans-bold'
+
+    border-bottom 1px solid white
+
+  &_mail
+    position    absolute
+    top         40px
+    right       212px
+
+    color           white
+    text-decoration none
+
+    transition(all 0.2s ease-in-out 0s)
+
+    &:hover
+      color #d5d5d5
 
   &_btn
     position  absolute
@@ -184,7 +199,10 @@ body
     top 20px
 
   .header_phone
-    top 20px
+    top 10px
+
+  .header_mail
+    top 30px
 
   .header_btn-2
     top 10px
@@ -254,7 +272,7 @@ body
 
   &_cnt
     margin      0 auto
-    max-width   500px
+    max-width   510px
     padding-top 150px
 
     font-family 'heliosthin'
@@ -733,12 +751,12 @@ body
 
 .bx-controls-direction
   position    absolute
-  bottom      40px
+  top         190px
   left        50%
-  margin-left -175px
+  margin-left -512px
 
   display     block
-  width       350px
+  width       1024px
 
 .bx-prev
   width             40px !important
@@ -748,12 +766,12 @@ body
   opacity           1 !important
   background-color  transparent !important
 
-  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNDBweCIgaGVpZ2h0PSI5Mi41cHgiIHZpZXdCb3g9IjAgMCA0MCA5Mi41IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA0MCA5Mi41IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0iIzAwQjk5NCIgY3g9IjIwLjUiIGN5PSI3Mi4yNSIgcj0iMTYuNSIvPg0KPHBvbHlsaW5lIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgcG9pbnRzPSINCgkyMy4zMzQsNjMuNzkyIDE0Ljg5Niw3Mi4yMjkgMjMuNzEsODEuMDQyICIvPg0KPGc+DQoJPHBhdGggZmlsbD0iIzAwQjk5NCIgZD0iTTIwLjUsNS42NjljNy45OTUsMCwxNC41LDYuNTA1LDE0LjUsMTQuNXMtNi41MDUsMTQuNS0xNC41LDE0LjVTNiwyOC4xNjUsNiwyMC4xNjkNCgkJUzEyLjUwNSw1LjY2OSwyMC41LDUuNjY5IE0yMC41LDMuNjY5Yy05LjExMywwLTE2LjUsNy4zODctMTYuNSwxNi41czcuMzg3LDE2LjUsMTYuNSwxNi41YzkuMTEzLDAsMTYuNS03LjM4NywxNi41LTE2LjUNCgkJUzI5LjYxMywzLjY2OSwyMC41LDMuNjY5TDIwLjUsMy42Njl6Ii8+DQo8L2c+DQo8cG9seWxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBCOTk0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludHM9Ig0KCTIzLjMzNCwxMS43MTEgMTQuODk2LDIwLjE0OCAyMy43MSwyOC45NjEgIi8+DQo8L3N2Zz4NCg==')
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNS4wLjIsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMzMuMDE2cHgiIGhlaWdodD0iMTE2cHgiIHZpZXdCb3g9Ii0wLjUxNiAtMC41IDMzLjAxNiAxMTYiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgLTAuNTE2IC0wLjUgMzMuMDE2IDExNiINCgkgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8Y2lyY2xlIGZpbGw9IiNGRkZGRkYiIGN4PSIxNiIgY3k9Ijk5IiByPSIxNi41Ii8+DQoJPHBvbHlnb24gZmlsbD0iIzZENTc1NiIgcG9pbnRzPSIxOC41LDEwOC41IDIwLjUsMTA2LjczNSAxMy4wMjksOTguNDQxIDIwLjU1OSw5MS41IDE4LjUsODkuNSA5LjQ0MSw5OC41NTkgCSIvPg0KPC9nPg0KPGc+DQoJPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTE1Ljk4NC0wLjVjLTkuMDk4LDAtMTYuNSw3LjQwMi0xNi41LDE2LjVzNy40MDIsMTYuNSwxNi41LDE2LjVzMTYuNS03LjQwMiwxNi41LTE2LjUNCgkJUzI1LjA4My0wLjUsMTUuOTg0LTAuNXogTTE1Ljk4NCwzMC41Yy03Ljk5NSwwLTE0LjUtNi41MDUtMTQuNS0xNC41czYuNTA1LTE0LjUsMTQuNS0xNC41czE0LjUsNi41MDUsMTQuNSwxNC41DQoJCVMyMy45NzksMzAuNSwxNS45ODQsMzAuNXoiLz4NCgk8cG9seWdvbiBmaWxsPSIjRkZGRkZGIiBwb2ludHM9IjE4LjQ4NCw2LjUgOS40MjYsMTUuNTU5IDE4LjQ4NCwyNS41IDIwLjQ4NCwyMy43MzUgMTMuMDE0LDE1LjQ0MSAyMC41NDMsOC41IAkiLz4NCjwvZz4NCjwvc3ZnPg0K')
   background-repeat   no-repeat !important
   background-position 0 2px !important
 
   &:hover
-    background-position 0 -50px !important
+    background-position 0 -81px !important
 
 .bx-next
   width             40px !important
@@ -763,12 +781,12 @@ body
   opacity           1 !important
   background-color  transparent !important
 
-  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNDBweCIgaGVpZ2h0PSI5Mi41cHgiIHZpZXdCb3g9IjAgMCA0MCA5Mi41IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA0MCA5Mi41IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0iIzAwQjk5NCIgY3g9IjIwLjUiIGN5PSI3MS41IiByPSIxNi41Ii8+DQo8cG9seWxpbmUgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBwb2ludHM9Ig0KCTE3LjY2Niw2My4wNDIgMjYuMTA0LDcxLjQ3OSAxNy4yOSw4MC4yOTIgIi8+DQo8Zz4NCgk8cGF0aCBmaWxsPSIjMDBCOTk0IiBkPSJNMjAuNSw1Ljc1N2M3Ljk5NSwwLDE0LjUsNi41MDUsMTQuNSwxNC41cy02LjUwNSwxNC41LTE0LjUsMTQuNVM2LDI4LjI1Miw2LDIwLjI1Nw0KCQlTMTIuNTA1LDUuNzU3LDIwLjUsNS43NTcgTTIwLjUsMy43NTdjLTkuMTEzLDAtMTYuNSw3LjM4Ny0xNi41LDE2LjVzNy4zODcsMTYuNSwxNi41LDE2LjVjOS4xMTMsMCwxNi41LTcuMzg3LDE2LjUtMTYuNQ0KCQlTMjkuNjEzLDMuNzU3LDIwLjUsMy43NTdMMjAuNSwzLjc1N3oiLz4NCjwvZz4NCjxwb2x5bGluZSBmaWxsPSJub25lIiBzdHJva2U9IiMwMEI5OTQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHBvaW50cz0iDQoJMTcuNjY2LDExLjc5OSAyNi4xMDQsMjAuMjM2IDE3LjI5LDI5LjA0OSAiLz4NCjwvc3ZnPg0K')
+  background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNS4wLjIsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMzMuMDE2cHgiIGhlaWdodD0iMTE2cHgiIHZpZXdCb3g9Ii0wLjUxNiAtMC41IDMzLjAxNiAxMTYiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgLTAuNTE2IC0wLjUgMzMuMDE2IDExNiINCgkgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8Y2lyY2xlIGZpbGw9IiNGRkZGRkYiIGN4PSIxNiIgY3k9Ijk5IiByPSIxNi41Ii8+DQoJPHBvbHlnb24gZmlsbD0iIzZENTc1NiIgcG9pbnRzPSIxMy41LDEwOC41IDExLjUsMTA2LjczNSAxOC45NzEsOTguNDQxIDExLjQ0MSw5MS41IDEzLjUsODkuNSAyMi41NTksOTguNTU5IAkiLz4NCjwvZz4NCjxnPg0KCTxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0tMC41MTYsMTZjMCw5LjA5OCw3LjQwMiwxNi41LDE2LjUsMTYuNXMxNi41LTcuNDAyLDE2LjUtMTYuNXMtNy40MDItMTYuNS0xNi41LTE2LjUNCgkJUy0wLjUxNiw2LjkwMi0wLjUxNiwxNnogTTEuNDg0LDE2YzAtNy45OTUsNi41MDUtMTQuNSwxNC41LTE0LjVzMTQuNSw2LjUwNSwxNC41LDE0LjVzLTYuNTA1LDE0LjUtMTQuNSwxNC41DQoJCVMxLjQ4NCwyMy45OTUsMS40ODQsMTZ6Ii8+DQoJPHBvbHlnb24gZmlsbD0iI0ZGRkZGRiIgcG9pbnRzPSIxMy40ODQsNi41IDIyLjU0MywxNS41NTkgMTMuNDg0LDI1LjUgMTEuNDg0LDIzLjczNSAxOC45NTUsMTUuNDQxIDExLjQyNiw4LjUgCSIvPg0KPC9nPg0KPC9zdmc+DQo=')
   background-repeat   no-repeat !important
   background-position 0 2px !important
 
   &:hover
-    background-position 0 -50px !important
+    background-position 0 -81px !important
 
 .slider
 
@@ -1115,16 +1133,34 @@ body
 
   &_phone
     position  absolute
-    bottom    100px
+    bottom    115px
     left      600px
+
+    border-bottom 1px solid white
 
     text-align  left
     font-size   18px
     font-weight bold
 
+  &_mail
+    position  absolute
+    bottom    90px
+    left      606px
+
+    color white
+
+    text-align      left
+    font-size       18px
+    text-decoration none
+
+    transition(all 0.2s ease-in-out 0s)
+
+    &:hover
+      color #00b994
+
   &_btn
     position  absolute
-    bottom    50px
+    bottom    30px
     left      600px
 
 @media screen768

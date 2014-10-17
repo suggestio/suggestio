@@ -4,7 +4,6 @@ import models.im.DevScreenT
 import models.{GeoSearchInfo, AdSearch}
 import util.PlayMacroLogsImpl
 import util.acl.AbstractRequestWithPwOpt
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.http.HeaderNames.USER_AGENT
 
 import io.suggest.util.UuidUtil
@@ -17,6 +16,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import util.stat.StatUtil
 import scala.concurrent.Future
+import play.api.Play.{current, configuration}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -26,6 +27,27 @@ import scala.concurrent.Future
  * Этот велосипед возник из-за необъятности модели MAdStat и необходимости заполнять её немного по-разному
  * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
  */
+object ScStatUtil {
+
+  /** Локальных клиентов нет смысла долго хранить. Время их хранения тут. */
+  val LOCAL_STAT_TTL = {
+    val d = configuration.getInt("sc.stat.local.ttl.days").getOrElse(7)
+    d days
+  }
+
+  /** Является ли указанная строка мусорной? */
+  def isStrGarbage(str: String): Boolean = {
+    str == null || str.isEmpty || (str equalsIgnoreCase "null") || (str equalsIgnoreCase "undefined") || (str equalsIgnoreCase "unknown")
+  }
+
+  def isStrUseful(str: String) = !isStrGarbage(str)
+
+}
+
+
+import ScStatUtil._
+
+
 trait ScStatUtilT extends PlayMacroLogsImpl {
 
   import LOGGER._
@@ -105,6 +127,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
     val screenOpt = this.screenOpt
     val agentOs = this.agentOs
     gsiFut flatMap { gsiOpt =>
+      val isLocalClient = request.isSuperuser || gsiOpt.fold(false)(_.isLocalClient)
       adnNodeOptFut flatMap { adnNodeOpt =>
         val adStat = new MAdStat(
           clientAddr  = request.remoteAddress,
@@ -122,21 +145,23 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
           clCountry   = gsiOpt.flatMap(_.countryIso2),
           clLocAccur  = adSearchOpt
             .flatMap { a => a.geo.asGeoLocation.flatMap(_.accuracyMeters).map(_.toInt) },
-          isLocalCl   = request
-            .isSuperuser || gsiOpt.fold(false)(_.isLocalClient),
+          isLocalCl   = isLocalClient,
           clOSFamily  = agentOs
-            .flatMap { os => Option(os.getFamilyName) },
+            .flatMap { os => Option(os.getFamilyName) }
+            .filter(isStrUseful),
           clAgent     = agent
-            .flatMap { _agent => Option(_agent.getName) },
+            .flatMap { _agent => Option(_agent.getName) }
+            .filter(isStrUseful),
           clDevice    = agent
             .flatMap { _agent => Option(_agent.getDeviceCategory) }
-            .flatMap { dc => Option(dc.getName) },
+            .flatMap { dc => Option(dc.getName) }
+            .filter(isStrUseful),
           clickedAdIds = clickedAdIds,
           generation  = adSearchOpt.flatMap(_.generation),
           clOsVsn     = agentOs
             .flatMap { os => Option(os.getVersionNumber) }
             .flatMap { vsn => Option(vsn.getMajor) }
-            .filter(!_.isEmpty),
+            .filter(isStrUseful),
           clUid       = clUidOpt,
           scrOrient   = screenOpt
             .map(_.orientation.name),
@@ -148,10 +173,12 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
           viewportDecl = screenOpt
             .map(_.toString),
           reqUri = reqPath,
-          scSink = scSinkOpt
+          scSink = scSinkOpt,
+          ttl    = if(isLocalClient) Some(LOCAL_STAT_TTL) else None
         )
-        //trace(s"Saving MAdStat with: clOsVsn=${adStat.clOsVsn} clUid=${adStat.clUid}")
-        adStat.save
+        // Отправляем на сохранение через соотв.подсистему.
+        //trace(s"Saving stats: ${adStat.action} remote=${adStat.clientAddr} node=${adStat.onNodeIdOpt} ttl=${adStat.ttl}")
+        ScStatSaver.BACKEND.save(adStat)
       }
     }
   }

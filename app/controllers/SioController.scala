@@ -135,6 +135,16 @@ trait SioController extends Controller with ContextT {
       .fold { dflt.map(_.url) }  { Future successful }
       .map { r => Results.Redirect(r) }
   }
+
+  /** Бывает нужно просто впендюрить кеш для результата, но только когда продакшен. */
+  def cacheControlShort(r: Result): Result = {
+    val v = if (play.api.Play.isProd) {
+      "public, max-age=600"
+    } else {
+      "no-cache"
+    }
+    r.withHeaders(CACHE_CONTROL -> v)
+  }
 }
 
 

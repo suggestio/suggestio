@@ -1,12 +1,15 @@
 package util.acl
 
+import java.net.InetAddress
+
+import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -35,10 +38,43 @@ abstract class AbstractRequestWithPwOpt[A](request: Request[A])
 
 
 
-object SioRequestHeader {
+object SioRequestHeader extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
+
+  def firstForwarded(raw: String): String = {
+    val splits = X_FW_FOR_SPLITTER_RE.split(raw)
+    if (splits.length == 0)
+      raw
+    else
+      splits.head
+  }
+
+  /** Последний из списка форвардов. Там обычно содержится оригинальный ip, если клиент не докинул туда свой. */
+  def firstForwardedAddr(raw: String): String = {
+    lazy val logPrefix = s"firstForwardedAddr($raw): "
+    val splitsIter = X_FW_FOR_SPLITTER_RE.split(raw)
+      .iterator
+      .filter { addr =>
+        try {
+          InetAddress.getByName(addr)
+          true
+        } catch {
+          case ex: Throwable =>
+            warn(logPrefix + "Invalid forwarded address: " + addr)
+            false
+        }
+      }
+    if (splitsIter.hasNext) {
+      splitsIter.next()
+    } else {
+      warn(logPrefix + "No more forwarding tokens. Returning raw value.")
+      raw
+    }
+  }
 
   implicit def request2sio[A](request: Request[A]): SioRequestHeader = {
     SioWrappedRequest.request2sio(request)
@@ -47,7 +83,7 @@ object SioRequestHeader {
 
 /** Расширение play RequestHeader функциями S.io. */
 trait SioRequestHeader extends RequestHeader {
-  import SioRequestHeader.X_FW_FOR_SPLITTER_RE
+  import SioRequestHeader._
 
   /**
    * remote address может содержать несколько адресов через ", ". Например, если клиент послал своё
@@ -56,8 +92,7 @@ trait SioRequestHeader extends RequestHeader {
    */
   abstract override lazy val remoteAddress: String = {
     val ra0 = super.remoteAddress
-    X_FW_FOR_SPLITTER_RE.split(ra0)
-      .last
+    firstForwardedAddr(ra0)
   }
 
 }

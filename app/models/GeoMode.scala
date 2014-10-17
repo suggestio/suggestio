@@ -6,6 +6,7 @@ import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.cache.Cache
 import play.api.db.DB
+import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
@@ -116,6 +117,8 @@ sealed trait GeoMode {
   def nodeDetectLevels: Seq[NodeGeoLevel]
 
   def asGeoLocation: Option[GeoLocation] = None
+
+  def isExact: Boolean
 }
 
 
@@ -148,6 +151,8 @@ case object GeoNone extends GeoMode {
 
   /** Отсутвие геолокации означает отсутсвие уровней оной. */
   override def nodeDetectLevels = Nil
+
+  override def isExact: Boolean = false
 }
 
 
@@ -163,6 +168,9 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   def DISTANCE_DFLT = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
 
   val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
+
+  /** Выставлять флаг local client, если User-Agent содержит подстроку, подходящую под этот регэксп. */
+  val LOCAL_CL_UA_RE = "(?i)(NCDN|ngenix)".r
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
@@ -184,11 +192,19 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           override def countryIso2 = Option(result.range.countryIso2)
           override def exactGeopoint = None
           override def ipGeopoint = Option(geoPoint)
-          override def isLocalClient = ra == REPLACE_LOCALHOST_IP_WITH
+          override lazy val isLocalClient = {
+            ra == REPLACE_LOCALHOST_IP_WITH || {
+              request.headers
+                .get(HeaderNames.USER_AGENT)
+                .exists { LOCAL_CL_UA_RE.pattern.matcher(_).find() }
+            }
+          }
         }
       }
     }(AsyncUtil.jdbcExecutionContext)     // future()
   }
+
+  override def isExact: Boolean = false
 
   case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
 
@@ -198,7 +214,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     // Обёрнуто в try чтобы подавлять сюрпризы содержимого remoteAddress.
     try {
       val inetAddr = InetAddress.getByName(ra0)
-      if (inetAddr.isAnyLocalAddress || inetAddr.isLoopbackAddress) {
+      if (inetAddr.isAnyLocalAddress || inetAddr.isSiteLocalAddress || inetAddr.isLoopbackAddress) {
         val ra1 = REPLACE_LOCALHOST_IP_WITH
         debug(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
         ra1
@@ -290,6 +306,8 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
     }
     Future successful Some(result)
   }
+
+  override def isExact: Boolean = true
 
   override def exactGeodata = Some(geoPoint)
 

@@ -4,25 +4,26 @@
 
 @import ctx._
 @import stuff._
+@import util.cdn.CdnUtil
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>@title | market | Suggest.io</title>
+  <title>@title</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
   <meta name="format-detection" content="telephone=no">
 
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("svgfonts/icomoon/style.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk_new-design/svg-icons.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase_previews.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("svgfonts/icomoon/style.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk/common.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/svg-icons.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase_previews.css")'/>
 
-  <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
 
 </head>
 
@@ -92,11 +93,11 @@
     </div>
   </div>
 
-  <script src="@routes.Assets.versioned("javascripts/lib/maskedinput/maskedInput.min.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/market/lk/mx_dev.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/lib/maskedinput/maskedInput.min.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/jquery-ui.custom.min.js")"></script>
 
 
 </body>

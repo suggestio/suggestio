@@ -26,13 +26,23 @@ object Market extends SioController {
 
   /** Юзер заходит в /m (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
     * Если юзер уже залогинен и у него есть магазины/тц, то его надо переправить в ЛК. */
-  def index = MarketIndexAccess { implicit request =>
+  /*def index = MarketIndexAccess { implicit request =>
     // Надо найти узлы, которые стоит отобразить на странице как точки для размещения рекламы.
     // Это должны быть не-тестовые ресиверы, имеющие логотипы.
     Ok(indexTpl(
       lf    = Some(Ident.emailPwLoginFormM),
       nodes = request.displayNodes
     ))
+      .withHeaders(CACHE_CONTROL -> "public, max-age=300")
+  }*/
+  // Пока всё отключено - тут всё тоже отключено.
+  def index = MaybeAuth { implicit request =>
+    cacheControlShort {
+      Ok(indexTpl(
+        lf = None,
+        nodes = Nil
+      ))
+    }
   }
 
   /** Рендер верстки popup'а для отображения инфы по узлу. */
@@ -97,17 +107,23 @@ object Market extends SioController {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>
-    Ok(aboutTpl())
+    cacheControlShort {
+      Ok(aboutTpl())
+    }
   }
 
   /** Статическая страничка, описывающая суть sio market для рекламодателей. */
   def aboutForAdMakers = MaybeAuth { implicit request =>
-    Ok(aboutForAdMakersTpl())
+    cacheControlShort {
+      Ok(aboutForAdMakersTpl())
+    }
   }
 
   /** Выдать страницу с вертикальной страницой-презенташкой sio-маркета. */
   def marketBooklet = MaybeAuth { implicit request =>
-    Ok(marketBookletTpl())
+    cacheControlShort {
+      Ok(marketBookletTpl())
+    }
   }
 
 }

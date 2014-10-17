@@ -9,6 +9,7 @@ import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames
 import scala.util.Random
+import SioRequestHeader.firstForwarded
 
 /**
  * Suggest.io
@@ -71,13 +72,19 @@ trait Context {
   def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)
   def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
 
+  /** Используемый протокол. */
   lazy val myProto: String = {
     request.headers
       .get(HeaderNames.X_FORWARDED_PROTO)
+      .filter(!_.isEmpty)
+      .map { firstForwarded }
       .getOrElse(Context.SIO_PROTO_DFLT)
   }
 
-  lazy val currAudienceUrl: String = myProto + "://" + Context.MY_HOST
+  /** Если порт указан, то будет вместе с портом. Значение задаётся в конфиге. */
+  def myHost = Context.MY_HOST
+
+  lazy val currAudienceUrl: String = myProto + "://" + myHost
 
   def myAudienceUrl = Context.MY_AUDIENCE_URL
 

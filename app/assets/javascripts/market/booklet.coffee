@@ -140,6 +140,6 @@ $doc.ready ()->
     pager: true,
     controls: sliderControls,
     infiniteLoop: false,
-    hideControlOnEnd: false,
+    hideControlOnEnd: true,
     adaptiveHeight: true
   )
