@@ -9,12 +9,14 @@ import io.suggest.model.geo.GeoPoint
 import io.suggest.ym.model.common.AdnSinks
 import io.suggest.ym.model.common.AdnSinks.AdnSink
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
+import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTimeZone, DateTime}
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.MyConfig.CONFIG
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
@@ -333,7 +335,8 @@ final class MAdStat(
   val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
   val scSink              : Option[AdnSink]   = None,   // sink выдачи: wifi, geo
   val reqUri              : Option[String]    = None,   // Исходный путь запроса вместе с qs (для отладки и др.)
-  val id                  : Option[String]    = None
+  val id                  : Option[String]    = None,
+  val ttl                 : Option[FiniteDuration] = None    // Макс.жизни экземпляра в хранилище.
 ) extends EsModelPlayJsonT with EsModelT {
 
   override type T = MAdStat
@@ -398,6 +401,13 @@ final class MAdStat(
     if (scSink.isDefined)
       acc1 ::= SHOWCASE_SINK_ESFN -> JsString(scSink.get.longName)
     acc1
+  }
+
+  override def prepareIndex(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.indexRequestBuilder
+    if (ttl.isDefined)
+      irb.setTTL(ttl.get.toMillis)
+    irb
   }
 
   override def versionOpt = None
