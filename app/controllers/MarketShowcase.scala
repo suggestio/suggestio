@@ -253,7 +253,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       nodeOpt   = Some(request.adnNode)
     )
     stat.saveStats onFailure { case ex =>
-      warn(s"nodeShowcaseRender($adnId): failed to save stats, args = $args", ex)
+      warn(s"showcase($adnId): failed to save stats, args = $args", ex)
     }
     // Возвращаем результат основного действа.
     resultFut
