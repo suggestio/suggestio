@@ -6,6 +6,7 @@ import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.cache.Cache
 import play.api.db.DB
+import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
@@ -164,6 +165,9 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
 
+  /** Выставлять флаг local client, если User-Agent содержит подстроку, подходящую под этот регэксп. */
+  val LOCAL_CL_UA_RE = "\b(NCDN|ngenix)\b".r
+
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
@@ -184,7 +188,13 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           override def countryIso2 = Option(result.range.countryIso2)
           override def exactGeopoint = None
           override def ipGeopoint = Option(geoPoint)
-          override def isLocalClient = ra == REPLACE_LOCALHOST_IP_WITH
+          override lazy val isLocalClient = {
+            ra == REPLACE_LOCALHOST_IP_WITH || {
+              request.headers
+                .get(HeaderNames.USER_AGENT)
+                .exists { LOCAL_CL_UA_RE.pattern.matcher(_).find() }
+            }
+          }
         }
       }
     }(AsyncUtil.jdbcExecutionContext)     // future()

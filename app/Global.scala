@@ -8,6 +8,7 @@ import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.cdn.CorsFilter
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
+import util.showcase.ScStatSaver
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -103,6 +104,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter) {
    * @param app Экщемпляр класса Application.
    */
   override def onStop(app: Application) {
+    ScStatSaver.BACKEND.close()
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.session.closeAsync()
       .flatMap { _ => SioCassandraClient.cluster.closeAsync() }

@@ -17,13 +17,13 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
   import LOGGER._
 
   /** Т.к. контекст может быть не настроен в конфиге, то нужно рендерить сообщение о проблеме в консоль. */
-  private def fallbackContext(ck: String, ex: ConfigurationException): ExecutionContext = {
+  def fallbackContext(ck: String, ex: Throwable, dfltPar: EcParInfo): ExecutionContext = {
     warn(
       s"""Failed to create execution context. Please add something like this into application.conf:
         |$ck {
         |  fork-join-executor {
-        |    parallelism-factor = 10.0
-        |    parallelism-max = 2
+        |    parallelism-factor = ${dfltPar.parFactor}
+        |    parallelism-max = ${dfltPar.parMax}
         |  }
         |}
       """.stripMargin,
@@ -32,15 +32,26 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
     Implicits.defaultContext
   }
 
-  /** thread-pool для синхронных запросов к postgres'у. Это позволяет избежать блокировок основного пула. */
-  implicit val jdbcExecutionContext: ExecutionContext = {
-    val ck = "async.ec.jdbc"
-    try {
-      Akka.system.dispatchers.lookup(ck)
-    } catch {
-      case ex: ConfigurationException =>
-        fallbackContext(ck, ex)
+  /** Собрать контекст, откатившись при ошибке на дефолтовый play-context. */
+  def mkEc(name: String, dfltPar: => EcParInfo = EcParInfo(10.0F, 2)): ExecutionContext = {
+    mkEcOrFallback(name) { ex =>
+      fallbackContext(name, ex, dfltPar)
     }
   }
 
+  /** Собрать execution context. При ошибке вызвать функцию fallbackF. */
+  def mkEcOrFallback(name: String)(fallbackF: Throwable => ExecutionContext): ExecutionContext = {
+    try {
+      Akka.system.dispatchers.lookup(name)
+    } catch {
+      case ex: ConfigurationException =>
+        fallbackF(ex)
+    }
+  }
+
+  /** thread-pool для синхронных запросов к postgres'у. Это позволяет избежать блокировок основного пула. */
+  implicit val jdbcExecutionContext = mkEc("async.ec.jdbc")
+
 }
+
+case class EcParInfo(parFactor: Float, parMax: Int)
