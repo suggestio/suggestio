@@ -166,7 +166,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
 
   /** Выставлять флаг local client, если User-Agent содержит подстроку, подходящую под этот регэксп. */
-  val LOCAL_CL_UA_RE = "\b(NCDN|ngenix)\b".r
+  val LOCAL_CL_UA_RE = "(?i)(NCDN|ngenix)".r
 
   override def isWithGeo = true
   override def toQsStringOpt = Some("ip")
