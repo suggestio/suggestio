@@ -73,7 +73,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
   /** Рендер страницы с формой обратного звонка. */
   def callbackRequest = MaybeAuth { implicit request =>
-    Ok(callbackRequestTpl(callbackRequestFormM))
+    cacheControlShort {
+      Ok(callbackRequestTpl(callbackRequestFormM))
+    }
   }
 
   /**
@@ -286,7 +288,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
   def joinAdvRequest = MaybeAuth { implicit request =>
-    Ok(joinAdvTpl(advJoinFormM))
+    cacheControlShort {
+      Ok(joinAdvTpl(advJoinFormM))
+    }
   }
 
   /**

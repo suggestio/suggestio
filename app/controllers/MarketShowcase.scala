@@ -90,16 +90,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
 
 
-  /** Кеш на клиенте для короткоживующих данных. */
-  private def cacheControlShort(result: Result): Result = {
-    if (play.api.Play.isProd) {
-      result
-        .withHeaders(CACHE_CONTROL -> "public, max-age=600")
-    } else {
-      result
-    }
-  }
-
   /** Кеш на клиенте для редкоизмеяющихся данных выдачи. */
   private def cacheControlLong(result: Result): Result = {
     result
