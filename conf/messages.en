@@ -114,6 +114,7 @@ ngls.to=Towns
 Input.text.from.picture=Input text from the picture
 error.captcha=Invalid human-check code
 
+blocks.field.isWide=Display wide?
 blocks.field.price=Price
 blocks.field.oldPrice=Old price
 blocks.field.height=Block height

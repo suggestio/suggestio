@@ -98,7 +98,7 @@ object BlocksEditorFields extends Enumeration {
     override def fieldTemplate = _widthTpl
   } 
  
-
+  /** Ввод голой строки. */
   val InputString = new Val("inputStr") {
     override type VT = String
     override type BFT = BfString
@@ -136,6 +136,12 @@ object BlocksEditorFields extends Enumeration {
     override type VT = String
     override type BFT = BfColor
     override def fieldTemplate = _colorTpl
+  }
+  
+  val Checkbox = new Val("checkbox") {
+    override type VT = Boolean
+    override type BFT = BfCheckbox
+    override def fieldTemplate = _checkboxTpl
   }
 }
 
@@ -467,6 +473,21 @@ case class BfColor(
 
   override def field = BlocksEditorFields.Color
 
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+}
+
+
+case class BfCheckbox(
+  name: String,
+  defaultValue: Option[Boolean] = None,
+  fallbackValue: Boolean = false,
+  offerNopt: Option[Int] = None
+) extends BlockFieldT {
+  override type T = Boolean
+  override def field = Checkbox
+  override def mappingBase: Mapping[T] = boolean
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }

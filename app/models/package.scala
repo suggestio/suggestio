@@ -138,6 +138,7 @@ package object models {
   type BfString             = util.blocks.BfString
   type BfImage              = util.blocks.BfImage
   type BfColor              = util.blocks.BfColor
+  type BfCheckbox           = util.blocks.BfCheckbox
 
   type ICoords2D            = ym.model.ad.ICoords2D
   type Coords2D             = ym.model.ad.Coords2D

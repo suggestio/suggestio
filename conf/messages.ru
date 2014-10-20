@@ -117,6 +117,7 @@ ngls.to=Города
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
 
+blocks.field.isWide=Отображать на широкую?
 blocks.field.price=Цена
 blocks.field.oldPrice=Старая цена
 blocks.field.height=Высота блока

@@ -3,13 +3,13 @@
 <div class="lk-text-field">
   <label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
   <div>
-  @defining( af(bfNameBase) ) { sf =>
-    <input name="@sf.name"
-           type="text"
-           value="@sf.value.orElse(bf.defaultValue)"
-           class="js-input-w-block-preview"
-           maxlength="@bf.maxLen"
-    />
-  }
-</div>
+    @defining( af(bfNameBase) ) { sf =>
+      <input name="@sf.name"
+             type="text"
+             value="@sf.value.orElse(bf.defaultValue)"
+             class="js-input-w-block-preview"
+             maxlength="@bf.maxLen"
+      />
+    }
+  </div>
 </div>

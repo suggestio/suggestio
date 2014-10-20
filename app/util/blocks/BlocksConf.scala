@@ -108,7 +108,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   // Начало значений
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT with Href
+  sealed trait CommonBlock2T extends Height with Width with BgImg with IsWideBg with TitleDescrListBlockT with Href
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait Block20t extends CommonBlock2T {
@@ -206,8 +206,8 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   override def bind(data: Map[String, String]): Either[Seq[FormError], BlockMapperResult] = {
     // Собрать BindAcc и сконвертить в BlockMapperResult
     bindAcc(data).right.map { bindAcc =>
-      val blockMeta = BlockMeta(blockId = id, height = bindAcc.height, width = bindAcc.width)
-      val bd = BlockDataImpl(blockMeta,
+      val bd = BlockDataImpl(
+        blockMeta = bindAcc.toBlockMeta(id),
         offers = bindAcc.offers,
         colors = bindAcc.colors.toMap
       )
@@ -225,8 +225,18 @@ case class BindAcc(
   var offers  : List[AOBlock] = Nil,
   var height  : Int = BlockHeights.default.heightPx,
   var width   : Int = BlockWidths.default.widthPx,
+  var isWide  : Boolean = false,
   var bim     : List[(String, ImgInfo4Save[ImgIdKey])] = Nil
-)
+) {
+
+  /**
+   * Данные этого аккб, относящиеся к метаданным блока, скомпилить в экземпляр BlockMeta.
+   * @param blockId id блока.
+   * @return Неизменяемый экземпляр BlockMeta.
+   */
+  def toBlockMeta(blockId: Int) = BlockMeta(blockId = blockId, height = height, width = width, wide = isWide)
+
+}
 
 
 abstract class ValTWrapper(v: ValT) extends ValT {
