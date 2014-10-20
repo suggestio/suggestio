@@ -17,9 +17,19 @@
   @if(!ctx.isIpad) {
     <meta name="apple-mobile-web-app-capable" content="yes">
   }
+
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui">
-  <link rel="apple-touch-icon" href="@CdnUtil.asset("images/market/app-logo.png")"/>
+
+  <!--[if IE]>
+  <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
+  <![endif]-->
+  <link href="@CdnUtil.asset("images/icons/57.png")" rel="apple-touch-icon" sizes="57x57" type="image/png" />
+  <link href="@CdnUtil.asset("images/icons/72.png")" rel="apple-touch-icon" sizes="72x72" type="image/png" />
+  <link href="@CdnUtil.asset("images/icons/114.png")" rel="apple-touch-icon" sizes="114x114" type="image/png" />
+  <link href="@CdnUtil.asset("images/icons/144.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
+  <link href="@CdnUtil.asset("images/icons/228.png")" rel="icon" sizes="228x228" type="image/png" />
+
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <link type="text/css" rel="stylesheet" media="screen" href="@CdnUtil.asset("stylesheets/market/showcase.css")"/>
