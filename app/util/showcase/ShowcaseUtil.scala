@@ -5,6 +5,7 @@ import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{BlockWidth, BlockHeights, BlockWidths}
+import models.im.DevPixelRatios
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
@@ -145,12 +146,13 @@ object ShowcaseUtil {
       ctx.deviceScreenOpt.exists { devScr =>
         // Считаем целевое разрешение фоновой картинки карточки:
         val nonWideImgRenderSz = BgImg.getRenderSz(
-          szMult    = FOCUSED_SZ_MULT,
-          blockMeta = mad.blockMeta,
-          devScreen = devScr
+          szMult      = FOCUSED_SZ_MULT,
+          blockMeta   = mad.blockMeta,
+          devScreenSz = devScr,
+          pxRatioOpt  = Some(DevPixelRatios.MDPI)   // Узнаём реально отображаемое разрешение в css-пикселях.
         )
         // Если ширина экрана намекает, то рендерим на широкую.
-        nonWideImgRenderSz.width  >=  1.5 * devScr.width
+        nonWideImgRenderSz.width  <  devScr.width
       }
     }
     // Очень маленькие карточки нужно масштабировать в 4 раза, но только если wide включен.

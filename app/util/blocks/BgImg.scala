@@ -208,11 +208,12 @@ trait SaveBgImgI extends ISaveImgs {
         // Нужно узнать размеры wide-версии оригинала. Размер должен быть отнормирован по BasicScreenSize экрана.
         val bss = ctx.deviceScreenOpt
           .flatMap(_.maybeBasicScreenSize)
-          .getOrElse(BasicScreenSizes.XGA_H)
+          .getOrElse(BasicScreenSizes.WSVGA_H)
         val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
         val bgc = pxRatio.bgCompression
         // Настройки сохранения результирующей картинки (аккамулятор).
         val imOpsAcc = List[ImOp](
+          ImFilters.Lanczos,
           AbsResizeOp(bss, ImResizeFlags.FillArea),
           StripOp,
           ImInterlace.Plane,
