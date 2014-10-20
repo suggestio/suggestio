@@ -7,7 +7,7 @@ import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import util.adv.AdvUtil
 import scala.annotation.tailrec
-import util.blocks.{BfHeight, BlocksUtil, BlocksConf}
+import util.blocks.BlocksConf
 import util.PlayMacroLogsImpl
 import play.api.db.DB
 import play.api.Play.{current, configuration}

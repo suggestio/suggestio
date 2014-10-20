@@ -199,6 +199,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         }
         // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
         // TODO Добавить поддержку gzip надо бы.
+        // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
         Ok(nodeIconJsTpl(request.adnNode))
           .withHeaders(cacheHeaders : _*)
       }

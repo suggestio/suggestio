@@ -13,7 +13,7 @@ import models._
 object ListBlock {
 
   def mkBfText(bfName: String, offerNopt: Option[Int]): BfText = {
-    BfText(bfName, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
+    BfText(bfName, maxLen = 128, offerNopt = offerNopt)
   }
 
   val OFFERS_COUNT_DFLT = 3
