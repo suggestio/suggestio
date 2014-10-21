@@ -234,20 +234,22 @@ trait SaveBgImgI extends ISaveImgs {
     // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
     val cropWidth = ctx.deviceScreenOpt
       .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
-    // TODO Нужно брать отн. середины только когда нет исходного кропа. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOpsAcc = List[ImOp](
-      // В общих чертах вписать изображение в примерно необходимые размеры:
-      AbsResizeOp(MImgInfoMeta(height = 0,  width = cropWidth), ImResizeFlags.OnlyShrinkLarger),
-      // Вырезать из середины необходимый кусок:
-      GravityOp(ImGravities.Center),
-      AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)),
-      // Сжать картинку по-лучше
+    val imOps0 = List[ImOp](
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
       bgc.chromaSubSampling,
       bgc.imQualityOp
     )
+    // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
+    val imOpsAcc: List[ImOp] =
+      // В общих чертах вписать изображение в примерно необходимые размеры:
+      AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
+        // Вырезать из середины необходимый кусок:
+        ImGravities.Center ::
+        AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
+        // Сжать картинку по-лучше
+        imOps0
     val dargs = DynImgArgs(iik.uncropped, imOpsAcc)
     routes.Img.dynImg(dargs)
   }

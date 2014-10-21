@@ -7,7 +7,7 @@ import io.suggest.util.UuidUtil
 import net.sf.jmimemagic.Magic
 import org.im4java.core.Info
 import play.api.mvc.QueryStringBindable
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.{AsyncUtil, FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
 import io.suggest.model.MPict
@@ -22,6 +22,7 @@ import models._
 import play.api.cache.Cache
 import io.suggest.ym.model.common.{MImgSizeT, MImgInfoT}
 import play.api.Logger
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -714,6 +715,9 @@ sealed trait ImgIdKey {
 
 
 object TmpImgIdKey {
+
+  val GET_IMAGE_WH_CACHE_DURATION = configuration.getInt("tiik.getImageWH.cache.minutes").getOrElse(1).minutes
+
   def apply(filename: String): TmpImgIdKey = {
     val mptmp = MPictureTmp(filename)
     TmpImgIdKey(filename, mptmp)
@@ -722,6 +726,7 @@ object TmpImgIdKey {
     val filename = mptmp.filename
     TmpImgIdKey(filename, mptmp)
   }
+
 }
 
 case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends ImgIdKey with MImgInfoT {
@@ -748,19 +753,24 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
   override def meta: Option[MImgInfoMeta] = None
 
   override def getImageWH: Future[Option[MImgInfoMeta]] = {
-    val result = try {
-      val info = OrigImageUtil.identify(mptmp.file)
-      val imeta = MImgInfoMeta(
-        height = info.getImageHeight,
-        width = info.getImageWidth
-      )
-      Some(imeta)
-    } catch {
-      case ex: org.im4java.core.InfoException =>
-        Logger(getClass).info("getImageWH(): Unable to identity image " + filename, ex)
-        None
+    // Кеширование позволяет избежать замеров размеров картинки.
+    Cache.getOrElse("gIWH." + filename, expiration = TmpImgIdKey.GET_IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
+      // Для синхронного вызова identify() используем отдельный поток в отдельном пуле.
+      // Распараллеливание заодно поможет сразу закинуть в кеш данный фьючерс.
+      val identifyFut = Future {
+        val info = OrigImageUtil.identify(mptmp.file)
+        val imeta = MImgInfoMeta(
+          height = info.getImageHeight,
+          width = info.getImageWidth
+        )
+        Some(imeta)
+      }(AsyncUtil.jdbcExecutionContext)
+      identifyFut recover {
+        case ex: org.im4java.core.InfoException =>
+          Logger(getClass).info("getImageWH(): Unable to identity image " + filename, ex)
+          None
+      }
     }
-    Future successful result
   }
 
   @JsonIgnore
@@ -795,6 +805,8 @@ object OrigImgIdKey {
     }
   }
 
+  val IMAGE_WH_CACHE_DURATION = configuration.getInt("oiik.getImageWH.cache.minutes").getOrElse(1).minutes
+
   def parseFilename(filename: String) = parse(FILENAME_PARSER, filename)
 
   def apply(filename: String): OrigImgIdKey = {
@@ -826,17 +838,20 @@ object OrigImgIdKey {
     * @return Асинхронные метаданные по ширине-высоте картинки.
     */
   private def getOrigImageWH(rowKey: String, qOpt: Option[String] = None): Future[Option[MImgInfoMeta]] = {
-    MUserImgMeta2.getByStrId(rowKey, qOpt)
-      .map { imetaOpt =>
-        for {
-          imeta     <- imetaOpt
-          widthStr  <- imeta.md.get(IMETA_WIDTH)
-          heightStr <- imeta.md.get(IMETA_HEIGHT)
-        } yield {
-          MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
+    // Кеширование сильно ускоряет получение параметров картинки из базы на параллельных и последовательных запросах.
+    Cache.getOrElse("gOIWH." + rowKey + qOpt.getOrElse(""),  expiration = IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
+      MUserImgMeta2.getByStrId(rowKey, qOpt)
+        .map { imetaOpt =>
+          for {
+            imeta     <- imetaOpt
+            widthStr  <- imeta.md.get(IMETA_WIDTH)
+            heightStr <- imeta.md.get(IMETA_HEIGHT)
+          } yield {
+            MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
+          }
         }
-      }
-      // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.
+        // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.
+    }
   }
 
 }
@@ -902,15 +917,32 @@ class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val dat
     }
   }
 
-  protected def _toTempPict(qOpt: Option[String]) = {
-    // Нужно выкачать из модели оригинальную картинку во временный файл.
-    MUserImg2.getByStrId(this.data.rowKey, qOpt) map { oimgOpt =>
-      val oimg = oimgOpt.get
-      val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
-      val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
-      val mptmp = MPictureTmp.mkNew(None, cropOpt = None, oif)
-      mptmp.writeIntoFile(oimg.imgBytes)
-      mptmp
+  protected def _toTempPict(qOpt: Option[String]): Future[MPictureTmp] = {
+    // Кеширование позволяет не выкачивать одну и ту же картинку снова, когда она уже лежит на диске.
+    // TODO Следует использовать кеш прямо на диске, имена файлов должны состоять из rowKeyStr и qOpt.
+    //      Это разгрузит RAM ценой небольшого iowait. В остальном всё должно быть также, как и с mptmp.
+    val ck = filename + ".tTP"
+    Cache.getAs[Future[MPictureTmp]](ck) match {
+      case Some(resultFut) =>
+        // При чтении из кеша можно делать touch на файле и продлевать ttl кеша.
+        resultFut onSuccess { case mptmp =>
+          mptmp.touch()
+          Cache.set(ck, resultFut, expiration = MPictureTmp.DELETE_AFTER)
+        }
+        resultFut
+
+      case None =>
+        // Нужно выкачать из модели оригинальную картинку во временный файл.
+        val resultFut = MUserImg2.getByStrId(this.data.rowKey, qOpt) map { oimgOpt =>
+          val oimg = oimgOpt.get
+          val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
+          val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
+          val mptmp = MPictureTmp.mkNew(None, cropOpt = None, oif)
+          mptmp.writeIntoFile(oimg.imgBytes)
+          mptmp
+        }
+        Cache.set(ck, resultFut, expiration = MPictureTmp.DELETE_AFTER)
+        resultFut
     }
   }
 

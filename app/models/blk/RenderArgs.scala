@@ -1,5 +1,7 @@
 package models.blk
 
+import io.suggest.ym.model.common.MImgSizeT
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -28,9 +30,17 @@ case class RenderArgs(
   withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
   szMult        : Int = 1,
-  wideBg        : Boolean = false
-) {
+  wideBg        : Option[WideBgRenderCtx] = None
+)
 
-  @deprecated("Use szMult instead", "2014/oct/14")
-  def canRenderDoubleSize = szMult == 2
-}
+
+/**
+ * При рендере bg по-широкому в шаблоне нужны данные по этой широкой картинке.
+ * Эти параметры приходят из контроллера, т.к. для их сборки требуется асинхронный контекст (ибо работа с кассандрой).
+ * @param height Высота картинки.
+ * @param width Ширина картинки.
+ */
+case class WideBgRenderCtx(
+  height: Int,
+  width: Int
+) extends MImgSizeT

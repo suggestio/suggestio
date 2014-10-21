@@ -140,7 +140,7 @@ object ShowcaseUtil {
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): blk.RenderArgs = {
+  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
     // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
     val willWideBg: Boolean = mad.blockMeta.wide && {
       ctx.deviceScreenOpt.exists { devScr =>
@@ -160,12 +160,13 @@ object ShowcaseUtil {
     } else {
       1
     }
-    blk.RenderArgs(
+    val args = blk.RenderArgs(
       withEdit      = false,
       isStandalone  = false,
       szMult        = szMult,
       wideBg        = willWideBg
     )
+    Future successful args
   }
 
 }

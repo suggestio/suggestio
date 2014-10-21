@@ -27,7 +27,8 @@ object MPictureTmp {
     * (от io.suggest.model.MUserImgOrig в частности) */
   val KEY_PREFIX = "itmp-"
 
-  private val deleteTmpAfterMs = configuration.getInt("picture.temp.delete_after_minutes").getOrElse(60).minutes.toMillis
+  /** Через сколько времени произойдёт удаление файла из временного хранилища модели. */
+  val DELETE_AFTER = configuration.getInt("picture.temp.delete_after_minutes").getOrElse(60).minutes
 
   private val GET_RND_RE = "([0-9]{16,22})".r
 
@@ -99,9 +100,9 @@ object MPictureTmp {
 
 
 
-  /** Удалить файлы, которые старше deleteTmpAfterMs. Обычно вызывается из util.Cron по таймеру. */
+  /** Удалить файлы, которые старше DELETE_AFTER_MS. Обычно вызывается из util.Cron по таймеру. */
   def cleanupOld() {
-    val epoch = System.currentTimeMillis() - deleteTmpAfterMs
+    val epoch = System.currentTimeMillis() - DELETE_AFTER.toMillis
     TEMP_DIR.listFiles().foreach { f =>
       if (f.isFile && f.lastModified() <= epoch)
         f.delete()
@@ -157,6 +158,8 @@ final case class MPictureTmp(filename: String, data: MPictureTmpData) {
   val file = {
     new File(TEMP_DIR, filename)
   }
+
+  def touch(newLastMod: Long = System.currentTimeMillis()) = file.setLastModified(newLastMod)
 
   def isExist = file.isFile
 

@@ -159,7 +159,7 @@ object ImOpCodes extends Enumeration {
   }
   val Gravity: ImOpCode = new Val("b") {
     override def mkOp(vs: Seq[String]) = {
-      GravityOp( ImGravities.withName(vs.head) )
+      ImGravities.withName(vs.head)
     }
   }
   val AbsResize: ImOpCode = new Val("c") {
@@ -221,7 +221,14 @@ object ImOpCodes extends Enumeration {
 
 
 object ImGravities extends Enumeration {
-  protected case class Val(strId: String, imName: String) extends super.Val(strId)
+
+  protected case class Val(strId: String, imName: String) extends super.Val(strId) with ImOp {
+    override def opCode = ImOpCodes.Gravity
+    override def addOperation(op: IMOperation): Unit = {
+      op.gravity(imName)
+    }
+    override def qsValue: String = strId
+  }
 
   type ImGravity = Val
 
@@ -237,17 +244,6 @@ object ImGravities extends Enumeration {
   implicit def value2val(x: Value): ImGravity = x.asInstanceOf[ImGravity]
 
 }
-
-/** Добавить -gravity South. */
-case class GravityOp(gravity: ImGravity) extends ImOp {
-  override def opCode = ImOpCodes.Gravity
-  override def addOperation(op: IMOperation): Unit = {
-    op.gravity(gravity.imName)
-  }
-
-  override def qsValue: String = gravity.strId
-}
-
 
 
 /** quality для результата. */

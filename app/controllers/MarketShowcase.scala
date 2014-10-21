@@ -473,8 +473,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     val madsRenderedFut = madsFut flatMap { mads0 =>
       val mads1 = groupNarrowAds(mads0)
       val ctx = implicitly[Context]
-      parRenderBlocks(mads1) {
-        (mad, index)  =>  _single_offer(mad, isWithAction = true)(ctx)
+      parRenderBlocks(mads1) { (mad, index) =>
+        Future {
+          _single_offer(mad, isWithAction = true)(ctx)
+        }
       }
     }
     // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
@@ -554,22 +556,28 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
             (mad, index) =>
-              val brArgs = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
-              _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
+              ShowcaseUtil.focusedBrArgsFor(mad)(ctx) map { brArgs =>
+                _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
+              }
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
-          val htmlOpt = if (h) {
+          val htmlOptFut = if (h) {
             val madsHead = mads.headOption
             val firstMads = madsHead.toList
             val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
-            val brArgsN = madsHead.fold(ShowcaseUtil.focusedBrArgsDflt) { ShowcaseUtil.focusedBrArgsFor(_)(ctx) }
-            val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
-            Some(JsString(html))
+            val brArgsNFut = madsHead.fold
+              { Future successful ShowcaseUtil.focusedBrArgsDflt }
+              { ShowcaseUtil.focusedBrArgsFor(_)(ctx) }
+            brArgsNFut map { brArgsN =>
+              val html = _focusedAdsTpl(firstMads, adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
+              Some(JsString(html))
+            }
           } else {
-            None
+            Future successful  None
           }
           for {
-            blocks <- blocksHtmlsFut
+            blocks  <- blocksHtmlsFut
+            htmlOpt <- htmlOptFut
           } yield {
             cacheControlShort {
               jsonOk("producerAds", htmlOpt, blocks)
@@ -678,11 +686,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     * @param r функция-рендерер, зависимая от контекста.
     * @return Фьючерс с результатом. Внутри список отрендеренных карточек в исходном порядке.
     */
-  private def parRenderBlocks(mads: Seq[MAd], startIndex: Int = 0)(r: (MAd, Int) => HtmlFormat.Appendable): Future[Seq[JsString]] = {
+  private def parRenderBlocks(mads: Seq[MAd], startIndex: Int = 0)(r: (MAd, Int) => Future[HtmlFormat.Appendable]): Future[Seq[JsString]] = {
     val mads1 = mads.zipWithIndex
     Future.traverse(mads1) { case (mad, index) =>
-      Future {
-        index -> JsString(r(mad, startIndex + index))
+      r(mad, startIndex + index) map { result =>
+        index -> JsString(result)
       }
     } map {
       _.sortBy(_._1).map(_._2)

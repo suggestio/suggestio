@@ -160,7 +160,7 @@ object WelcomeUtil {
     * @return Список ImOp в прямом порядке.
     */
   def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
-    val gravity = GravityOp(ImGravities.Center)
+    val gravity = ImGravities.Center
     val acc0: List[ImOp] = Nil
     val bgc = screen.pixelRatio.bgCompression
     val acc1 = gravity ::
