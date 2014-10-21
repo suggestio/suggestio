@@ -64,7 +64,7 @@ case class DevScreen(
   }
 
   /** Найти базовое разрешение окна по соотв.модели. */
-  override val maybeBasicScreenSize = super.maybeBasicScreenSize
+  override def maybeBasicScreenSize = super.maybeBasicScreenSize
 
   override def toString: String = {
     val sb = new StringBuilder(32)

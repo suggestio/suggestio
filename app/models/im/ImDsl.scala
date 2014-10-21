@@ -208,6 +208,7 @@ object ImOpCodes extends Enumeration {
     }
   }
 
+
   implicit def value2val(x: Value): ImOpCode = x.asInstanceOf[ImOpCode]
 
   def maybeWithName(n: String): Option[ImOpCode] = {

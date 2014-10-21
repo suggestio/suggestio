@@ -155,16 +155,10 @@ object ShowcaseUtil {
         nonWideImgRenderSz.width  <  devScr.width
       }
     }
-    // Очень маленькие карточки нужно масштабировать в 4 раза, но только если wide включен.
-    val szMult = if (willWideBg  &&  BlockHeights.H140.heightPx <= mad.blockMeta.height) {
-      4
-    } else {
-      FOCUSED_SZ_MULT
-    }
     blk.RenderArgs(
       withEdit      = false,
       isStandalone  = false,
-      szMult        = szMult,
+      szMult        = FOCUSED_SZ_MULT,
       wideBg        = willWideBg
     )
   }

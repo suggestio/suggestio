@@ -29,6 +29,17 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
+  /** Желаемые ширИны широкого бэкграунда. */
+  val WIDE_WIDTHS_PX: List[Int] = {
+    configuration.getIntSeq("blocks.bg.wide.widths.px")
+      .map(_.toList.map(_.intValue))
+      .getOrElse {
+        // TODO Цифры взяты с потолка. Стоило бы навести в них какую-то логику...
+        List(200, 300, 400, 600, 850, 950, 1100, 1250, 1600, 2048)
+      }
+      .sorted
+  }
+
   /**
    * Определить максимальный разумный множитель размера картинки для указанного экрана.
    * Если рендер с указанным множителем не оправдан, то будет попытка с множитель в 2 раза меньшим.
@@ -37,6 +48,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @param screenSz Размер экрана.
    * @return Множитель.
    */
+  // TODO Вероятно, этот метод не нужен. Мнение контроллера по вопросам рендера не должно "корректироваться" на нижнем уровне.
   @tailrec def detectMaxSzMult(szMult: Int, blockSz: MImgSizeT, screenSz: MImgSizeT): Int = {
     if (szMult <= 1) {
       1
@@ -66,19 +78,29 @@ object BgImg extends PlayLazyMacroLogsImpl {
     getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatioOpt)
   }
   def getRenderSz(szMult: Int, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): MImgInfoMeta = {
-    val pxRatio = pxRatioDefaulted(pxRatioOpt)
-    // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
-    val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
-
-    // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
-    // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет
-    //     6-кратное разрешение блока /O_o/ Памяти на девайсе может не хватить.
-    val imgResMult = pxRatio.pixelRatio * sizeMult
-
+    val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatioOpt)
     MImgInfoMeta(
       height = (blockMeta.height * imgResMult).toInt,
       width  = (blockMeta.width * imgResMult).toInt
     )
+  }
+
+  /**
+   * Определить мультипликатор размеров сторон картинки. по сути - комбинация pxRatioDefaulted() и detectMaxSzMult().
+   * @param szMult Мультипликатор размера, желаемый контроллером.
+   * @param blockMeta Целевой размер картинки.
+   * @param devScreenSz Экран устройства.
+   * @param pxRatioOpt Плотность пикселей устройства.
+   * @return Мультипликатор, на который надо домножать пиксельный размер стороны картинки.
+   */
+  def getImgResMult(szMult: Int, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): Float = {
+    val pxRatio = pxRatioDefaulted(pxRatioOpt)
+    // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
+    val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
+    // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
+    // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет
+    //      6-кратное разрешение блока /O_o/ Памяти на девайсе может не хватить.
+    pxRatio.pixelRatio * sizeMult
   }
 
   /**
@@ -93,9 +115,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
     }
   }
 
-  /** Высота широкой карточки. */
-  val WIDE_IMG_BASE_HEIGHT_PX = configuration.getInt("blocks.img.bg.wide.height.px") getOrElse {
-    ShowcaseUtil.FOCUSED_SZ_MULT * BlockHeights.H300.heightPx
+  /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
+  @tailrec def normWideBgWidth(minWidth: Int,  acc: Int = WIDE_WIDTHS_PX.head,  variants: List[Int] = WIDE_WIDTHS_PX.tail): Int = {
+    if (acc < minWidth && variants.nonEmpty) {
+      normWideBgWidth(minWidth, variants.head, variants.tail)
+    } else {
+      acc
+    }
   }
 
 }
@@ -196,38 +222,39 @@ trait SaveBgImgI extends ISaveImgs {
    * @param ctx Контекст рендера шаблонов.
    * @return Экземпляр Call для генерации картинки.
    */
-  def wideBgImgCall(bgImgInfo: MImgInfoT, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
+  def wideBgImgCall(bgImgInfo: MImgInfoT, bm: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
     val iik = ImgIdKey( bgImgInfo.filename )
-    iik match {
-      case tiik: TmpImgIdKey =>
-        // TODO Нужна нормальна поддержка этого, т.к. нужно смотреть превьюшки полноэкранные в редакторе.
-        // Для этого нужно ctl.Img.dynImg() допилить поддержкой tmp-картинок.
-        routes.Img.getImg(tiik.filename)
-
-      case oiik: OrigImgIdKey =>
-        // Нужно узнать размеры wide-версии оригинала. Размер должен быть отнормирован по BasicScreenSize экрана.
-        val bss = ctx.deviceScreenOpt
-          .flatMap(_.maybeBasicScreenSize)
-          .getOrElse(BasicScreenSizes.WSVGA_H)
-        val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
-        val bgc = pxRatio.bgCompression
-        // Настройки сохранения результирующей картинки (аккамулятор).
-        val imOpsAcc = List[ImOp](
-          ImFilters.Lanczos,
-          AbsResizeOp(bss, ImResizeFlags.FillArea),
-          StripOp,
-          ImInterlace.Plane,
-          bgc.chromaSubSampling,
-          bgc.imQualityOp
-        )
-        val dargs = DynImgArgs(oiik.uncropped, imOpsAcc)
-        routes.Img.dynImg(dargs)
-    }
+    // Собираем хвост параметров сжатия.
+    val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
+    val bgc = pxRatio.bgCompression
+    var imOpsAcc: List[ImOp] = List(
+      StripOp,
+      ImInterlace.Plane,
+      bgc.chromaSubSampling,
+      bgc.imQualityOp
+    )
+    // Нужно вычислить размеры wide-версии оригинала.
+    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
+    val imgResMult = brArgs.szMult * pxRatio.pixelRatio
+    val tgtHeightReal = (bm.height * imgResMult).toInt
+    val rszOp = AbsResizeOp(MImgInfoMeta(height = tgtHeightReal,  width = 0))
+    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
+    val cropWidth = ctx.deviceScreenOpt
+      .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
+    // TODO Нужно брать отн. середины только когда нет исходного кропа. Иначе надо транслировать исходный пользовательский кроп в этот.
+    imOpsAcc =
+      GravityOp(ImGravities.Center) ::
+      AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
+      ImFilters.Lanczos ::
+      rszOp ::
+      imOpsAcc
+    val dargs = DynImgArgs(iik.uncropped, imOpsAcc)
+    routes.Img.dynImg(dargs)
   }
 
   /** Аналог wideBgImgCall(), но ссылка по возможности пролегает через CDN. */
-  def wideBgImgCallCdn(bgImgInfo: MImgInfoT, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    val call = wideBgImgCall(bgImgInfo, brArgs)
+  def wideBgImgCallCdn(bgImgInfo: MImgInfoT, bm: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
+    val call = wideBgImgCall(bgImgInfo, bm, brArgs)
     CdnUtil.forCall(call)
   }
 

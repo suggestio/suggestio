@@ -6,7 +6,7 @@
 @if( args.wideBg ) {
   @defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
     @bc.getMadBgImg(mad).map { bgImgInfo =>
-      <img src="@bc.wideBgImgCallCdn(bgImgInfo, args)" alt=""/>
+      <img src="@bc.wideBgImgCallCdn(bgImgInfo, mad.blockMeta, args)" alt=""/>
     }
   }
 }

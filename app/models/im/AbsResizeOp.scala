@@ -14,7 +14,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
 
 object AbsResizeOp extends JavaTokenParsers {
   
-  val numRe = "\\d{2,4}".r
+  val numRe = "\\d{1,4}".r
   val flagRe = {
     val flags = ImResizeFlags.values
     val sb = new StringBuilder(flags.size + 6, "(?i)[")
@@ -50,6 +50,12 @@ object AbsResizeOp extends JavaTokenParsers {
     AbsResizeOp(sz, Seq(flag))
   }
 
+  /** im4java может принимать null-значения в качестве ширины/длины. Это означает опущенное значение, которое
+    * im должна додумать автоматом на основе остальных данных. */
+  private def sizeIntg(sz: Int): Integer = {
+    if (sz > 0) sz else null
+  }
+
 }
 
 
@@ -60,10 +66,15 @@ case class AbsResizeOp(sz: MImgSizeT, flags: Seq[ImResizeFlag] = Nil) extends Im
   def flagsStr = flags.iterator.map(_.imChar).mkString("")
 
   override def addOperation(op: IMOperation): Unit = {
-    if (flags.nonEmpty) {
-      op.resize(sz.width, sz.height, flagsStr)
+    // 2014.oct.21: Поддержка автоматически-выставляемых размеров ресайза. Типа "300x" или "x200".
+    val w: Integer = AbsResizeOp.sizeIntg(sz.width)
+    val h: Integer = AbsResizeOp.sizeIntg(sz.height)
+    if (flags.isEmpty) {
+      op.resize(w, h)
+    } else if (flags.size == 1) {
+      op.resize(w, h, flags.head.imChar)
     } else {
-      op.resize(sz.width, sz.height)
+      op.resize(w, h, flagsStr)
     }
   }
 
@@ -107,3 +118,4 @@ object ImResizeFlags extends Enumeration {
   }
 
 }
+
