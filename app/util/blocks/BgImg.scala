@@ -35,7 +35,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
       .map(_.toList.map(_.intValue))
       .getOrElse {
         // TODO Цифры взяты с потолка. Стоило бы навести в них какую-то логику...
-        List(200, 300, 400, 600, 850, 950, 1100, 1250, 1600, 2048)
+        List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048)
       }
       .sorted
   }
@@ -227,27 +227,27 @@ trait SaveBgImgI extends ISaveImgs {
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     val bgc = pxRatio.bgCompression
-    var imOpsAcc: List[ImOp] = List(
+    // Нужно вычислить размеры wide-версии оригинала.
+    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
+    val imgResMult = brArgs.szMult * pxRatio.pixelRatio
+    val tgtHeightReal = (bm.height * imgResMult).toInt
+    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
+    val cropWidth = ctx.deviceScreenOpt
+      .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
+    // TODO Нужно брать отн. середины только когда нет исходного кропа. Иначе надо транслировать исходный пользовательский кроп в этот.
+    val imOpsAcc = List[ImOp](
+      // В общих чертах вписать изображение в примерно необходимые размеры:
+      AbsResizeOp(MImgInfoMeta(height = 0,  width = cropWidth), ImResizeFlags.OnlyShrinkLarger),
+      // Вырезать из середины необходимый кусок:
+      GravityOp(ImGravities.Center),
+      AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)),
+      // Сжать картинку по-лучше
+      ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
       bgc.chromaSubSampling,
       bgc.imQualityOp
     )
-    // Нужно вычислить размеры wide-версии оригинала.
-    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
-    val imgResMult = brArgs.szMult * pxRatio.pixelRatio
-    val tgtHeightReal = (bm.height * imgResMult).toInt
-    val rszOp = AbsResizeOp(MImgInfoMeta(height = tgtHeightReal,  width = 0))
-    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-    val cropWidth = ctx.deviceScreenOpt
-      .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
-    // TODO Нужно брать отн. середины только когда нет исходного кропа. Иначе надо транслировать исходный пользовательский кроп в этот.
-    imOpsAcc =
-      GravityOp(ImGravities.Center) ::
-      AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
-      ImFilters.Lanczos ::
-      rszOp ::
-      imOpsAcc
     val dargs = DynImgArgs(iik.uncropped, imOpsAcc)
     routes.Img.dynImg(dargs)
   }

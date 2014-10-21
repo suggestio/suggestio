@@ -155,10 +155,15 @@ object ShowcaseUtil {
         nonWideImgRenderSz.width  <  devScr.width
       }
     }
+    val szMult = if (mad.blockMeta.height == BlockHeights.H140.heightPx) {
+      2
+    } else {
+      1
+    }
     blk.RenderArgs(
       withEdit      = false,
       isStandalone  = false,
-      szMult        = FOCUSED_SZ_MULT,
+      szMult        = szMult,
       wideBg        = willWideBg
     )
   }
