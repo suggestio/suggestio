@@ -5,11 +5,13 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.util.UUID
 
+import controllers.routes
 import io.suggest.util.UuidUtil
 import models._
 import models.im.ImOp
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
+import play.api.mvc.Call
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.JavaConversions._
@@ -27,6 +29,15 @@ import scala.util.{Failure, Success}
 object DynImgUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /**
+   * Враппер для вызова routes.Img.dynImg(). Нужен чтобы навешивать сайд-эффекты и трансформировать результат вызова.
+   * @param dargs Аргументы генерации картинки.
+   * @return Экземпляр Call, пригодный к употреблению.
+   */
+  def imgCall(dargs: DynImgArgs): Call = {
+    routes.Img.dynImg(dargs)
+  }
 
   /**
    * Найти в базе готовую картинку, ранее уже отработанную, и сохранить её в файл.

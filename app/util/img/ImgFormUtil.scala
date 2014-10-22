@@ -924,6 +924,7 @@ class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val dat
     val ck = filename + ".tTP"
     Cache.getAs[Future[MPictureTmp]](ck) match {
       case Some(resultFut) =>
+        // TODO Следует ли отрабатывать ситуацию, когда приходит неправильный фьючерс (файл внезапно уже удалён)?
         // При чтении из кеша можно делать touch на файле и продлевать ttl кеша.
         resultFut onSuccess { case mptmp =>
           mptmp.touch()

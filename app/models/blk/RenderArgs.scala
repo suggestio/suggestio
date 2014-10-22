@@ -1,6 +1,9 @@
 package models.blk
 
 import io.suggest.ym.model.common.MImgSizeT
+import models.DynImgArgs
+import play.api.mvc.Call
+import util.img.DynImgUtil
 
 /**
  * Suggest.io
@@ -41,6 +44,11 @@ case class RenderArgs(
  * @param width Ширина картинки.
  */
 case class WideBgRenderCtx(
-  height: Int,
-  width: Int
-) extends MImgSizeT
+  height        : Int,
+  width         : Int,
+  dynCallArgs   : DynImgArgs
+) extends MImgSizeT {
+
+  def dynImgCall: Call = DynImgUtil.imgCall(dynCallArgs)
+
+}

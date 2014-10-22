@@ -1,7 +1,7 @@
 package util.blocks
 
 import controllers.routes
-import io.suggest.ym.model.common.{Imgs, BlockMeta, MImgInfoT}
+import io.suggest.ym.model.common.{IBlockMeta, Imgs, BlockMeta, MImgInfoT}
 import models.blk.BlockHeights
 import models.im._
 import play.api.mvc.Call
@@ -204,7 +204,7 @@ trait SaveBgImgI extends ISaveImgs {
         imOpsAcc ::= ImFilters.Lanczos
         // Генерим финальную ссыль на картинку:
         val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)
-        routes.Img.dynImg(dargs)
+        DynImgUtil.imgCall(dargs)
       }
   }
 
@@ -216,48 +216,50 @@ trait SaveBgImgI extends ISaveImgs {
 
 
   /**
-   * Генерация ссылки на wide-версию оригинала фона.
-   * @param bgImgInfo Инфа о картинки, сохранённая в карточке.
-   * @param brArgs Параметры рендера блока.
-   * @param ctx Контекст рендера шаблонов.
-   * @return Экземпляр Call для генерации картинки.
+   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана возможной
+   * необходимостью получения данных о размерах исходной картинки.
+   * @param mad рекламная карточка или что-то совместимое с Imgs и IBlockMeta.
+   * @param szMult Требуемый мультипликатор размера картинки.
+   * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def wideBgImgCall(bgImgInfo: MImgInfoT, bm: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    val iik = ImgIdKey( bgImgInfo.filename )
-    // Собираем хвост параметров сжатия.
-    val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
-    val bgc = pxRatio.bgCompression
-    // Нужно вычислить размеры wide-версии оригинала.
-    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
-    val imgResMult = brArgs.szMult * pxRatio.pixelRatio
-    val tgtHeightReal = (bm.height * imgResMult).toInt
-    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-    val cropWidth = ctx.deviceScreenOpt
-      .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
-    val imOps0 = List[ImOp](
-      ImFilters.Lanczos,
-      StripOp,
-      ImInterlace.Plane,
-      bgc.chromaSubSampling,
-      bgc.imQualityOp
-    )
-    // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOpsAcc: List[ImOp] =
-      // В общих чертах вписать изображение в примерно необходимые размеры:
-      AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
-        // Вырезать из середины необходимый кусок:
-        ImGravities.Center ::
-        AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
-        // Сжать картинку по-лучше
-        imOps0
-    val dargs = DynImgArgs(iik.uncropped, imOpsAcc)
-    routes.Img.dynImg(dargs)
-  }
-
-  /** Аналог wideBgImgCall(), но ссылка по возможности пролегает через CDN. */
-  def wideBgImgCallCdn(bgImgInfo: MImgInfoT, bm: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    val call = wideBgImgCall(bgImgInfo, bm, brArgs)
-    CdnUtil.forCall(call)
+  def wideBgImgArgs(mad: Imgs with IBlockMeta, szMult: Int)(implicit ctx: Context): Future[Option[blk.WideBgRenderCtx]] = {
+    getMadBgImg(mad).fold {
+      Future successful Option.empty[blk.WideBgRenderCtx]
+    } { bgImgInfo =>
+      val iik = ImgIdKey( bgImgInfo.filename )
+      // Собираем хвост параметров сжатия.
+      val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
+      val bgc = pxRatio.bgCompression
+      // Нужно вычислить размеры wide-версии оригинала.
+      // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
+      val imgResMult = szMult * pxRatio.pixelRatio
+      val tgtHeightReal = (mad.blockMeta.height * imgResMult).toInt
+      // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
+      val cropWidth = ctx.deviceScreenOpt
+        .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
+      val imOps0 = List[ImOp](
+        ImFilters.Lanczos,
+        StripOp,
+        ImInterlace.Plane,
+        bgc.chromaSubSampling,
+        bgc.imQualityOp
+      )
+      // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
+      val imOpsAcc: List[ImOp] =
+        // В общих чертах вписать изображение в примерно необходимые размеры:
+        AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
+          // Вырезать из середины необходимый кусок:
+          ImGravities.Center ::
+          AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
+          // Сжать картинку по-лучше
+          imOps0
+      val wideArgs = blk.WideBgRenderCtx(
+        width       = cropWidth,
+        height      = tgtHeightReal,
+        dynCallArgs = DynImgArgs(iik.uncropped, imOpsAcc)
+      )
+      Future successful Some(wideArgs)
+    }
   }
 
 }

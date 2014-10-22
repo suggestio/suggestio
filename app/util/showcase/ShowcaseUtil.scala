@@ -160,13 +160,23 @@ object ShowcaseUtil {
     } else {
       1
     }
-    val args = blk.RenderArgs(
-      withEdit      = false,
-      isStandalone  = false,
-      szMult        = szMult,
-      wideBg        = willWideBg
-    )
-    Future successful args
+    val wideBgCtxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
+      if (willWideBg) {
+        // Нужно получить данные для рендера широкой карточки.
+        val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
+        bc.wideBgImgArgs(mad, szMult)
+      } else {
+        Future successful None
+      }
+    }
+    wideBgCtxOptFut map { wideBgCtxOpt =>
+      blk.RenderArgs(
+        withEdit      = false,
+        isStandalone  = false,
+        szMult        = szMult,
+        wideBg        = wideBgCtxOpt
+      )
+    }
   }
 
 }

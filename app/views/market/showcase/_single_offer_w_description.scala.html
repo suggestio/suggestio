@@ -4,16 +4,12 @@
 @import util.blocks.BlocksUtil.IMG_BG_COLOR_FN
 
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
-@if( args.wideBg ) {
-  @defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
-    @bc.getMadBgImg(mad).map { bgImgInfo =>
-      <img src="@bc.wideBgImgCallCdn(bgImgInfo, mad.blockMeta, args)"
-           class="bg"
-           style="@mad.colors.get(IMG_BG_COLOR_FN).map { ibgCol =>background-color:#@ibgCol;}"
-           alt=""
-      />
-    }
-  }
+@args.wideBg.map { wideBg =>
+  <img src="@wideBg.dynImgCall"
+       class="bg" alt=""
+       style="@mad.colors.get(IMG_BG_COLOR_FN).map { ibgCol =>background-color:#@ibgCol;}"
+       data-width="@wideBg.width" data-height="@wideBg.height"
+  />
 }
 
 <div class="focused-ad_offer">
