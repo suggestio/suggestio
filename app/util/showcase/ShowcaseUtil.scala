@@ -141,10 +141,9 @@ object ShowcaseUtil {
    * @return Аргументы для рендера.
    */
   def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
-    // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
-    val willWideBg: Boolean = mad.blockMeta.wide && {
+    // Считаем целевое разрешение фоновой картинки карточки:
+    val preferDoubleSize: Boolean = {
       ctx.deviceScreenOpt.exists { devScr =>
-        // Считаем целевое разрешение фоновой картинки карточки:
         val nonWideImgRenderSz = BgImg.getRenderSz(
           szMult      = FOCUSED_SZ_MULT,
           blockMeta   = mad.blockMeta,
@@ -155,7 +154,9 @@ object ShowcaseUtil {
         nonWideImgRenderSz.width  <  devScr.width
       }
     }
-    val szMult = if (mad.blockMeta.height == BlockHeights.H140.heightPx) {
+    // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
+    val willWideBg: Boolean = mad.blockMeta.wide
+    val szMult = if (preferDoubleSize || mad.blockMeta.height == BlockHeights.H140.heightPx) {
       2
     } else {
       1

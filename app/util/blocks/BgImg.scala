@@ -2,19 +2,18 @@ package util.blocks
 
 import controllers.routes
 import io.suggest.ym.model.common.{IBlockMeta, Imgs, BlockMeta, MImgInfoT}
-import models.blk.BlockHeights
 import models.im._
 import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
 import util.cdn.CdnUtil
 import util.img._
-import util.showcase.ShowcaseUtil
 import scala.annotation.tailrec
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
 import models._
 import play.api.Play.{current, configuration}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -124,6 +123,32 @@ object BgImg extends PlayLazyMacroLogsImpl {
     }
   }
 
+  /**
+   * В одномерном пространстве (на одной оси, начинающийся с 0 и заканчивающейся length) определить начало отрезка,
+   * центр которого будет как можно ближе к указанной координате центра, и иметь длину length.
+   * @param centerCoord Координата желаемого центра отрезка.
+   * @param segLen Длина отрезка.
+   * @param axLen Длина оси.
+   * @return Координата начала отрезка.
+   *         Конец отрезка можно получить, сложив координату начала с length.
+   */
+  def centerNearestLineSeg1D(centerCoord: Int, segLen: Int, axLen: Int): Int = {
+    // Координата середины оси:
+    val axCenter = axLen / 2.0F
+    // Половинная длина желаемого отрезка:
+    val segSemiLen = segLen / 2.0F
+    val resRaw = if (centerCoord == axCenter) {
+      // Желаемый центр находится на середине оси. Вычитаем полудлину отрезка от координаты центра.
+      (centerCoord - segSemiLen).toInt
+    } else {
+      // Центры не совпадают. В таком случае можно легко вычислить координату конца отрезка.
+      val rightSegCoord = Math.min(centerCoord + segSemiLen, axLen)
+      // Координата начала отрезка получается, если из координаты конца вычесть полную длину отрезку.
+      (rightSegCoord - segLen).toInt
+    }
+    Math.max(0, resRaw)
+  }
+
 }
 
 
@@ -216,7 +241,7 @@ trait SaveBgImgI extends ISaveImgs {
 
 
   /**
-   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана возможной
+   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
    * необходимостью получения данных о размерах исходной картинки.
    * @param mad рекламная карточка или что-то совместимое с Imgs и IBlockMeta.
    * @param szMult Требуемый мультипликатор размера картинки.
@@ -227,6 +252,9 @@ trait SaveBgImgI extends ISaveImgs {
       Future successful Option.empty[blk.WideBgRenderCtx]
     } { bgImgInfo =>
       val iik = ImgIdKey( bgImgInfo.filename )
+      // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
+      lazy val origWhFut = iik.getBaseImageWH
+        .map(_.get)   // Будет Future.failed при проблеме - так и надо.
       // Собираем хвост параметров сжатия.
       val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
       val bgc = pxRatio.bgCompression
@@ -244,21 +272,43 @@ trait SaveBgImgI extends ISaveImgs {
         bgc.chromaSubSampling,
         bgc.imQualityOp
       )
-      // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-      val imOpsAcc: List[ImOp] =
-        // В общих чертах вписать изображение в примерно необходимые размеры:
-        AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
-          // Вырезать из середины необходимый кусок:
+      val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
+        Future failed new NoSuchElementException("No default crop is here.")
+      } { crop0 =>
+        origWhFut
+          .map { origWh =>
+            // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа,
+            // а не к центру картинки. Нужно исходный кроп аккуратно расширить до размеров целевого кропа,
+            // используя центр исходного crop'а и кое-какие математические операции по обеим осям координат.
+            val crop1 = ImgCrop(
+              width = cropWidth,
+              height = tgtHeightReal,
+              offX = centerNearestLineSeg1D(centerCoord = crop0.offX + crop0.width / 2,  segLen = cropWidth,  axLen = origWh.width),
+              offY = centerNearestLineSeg1D(centerCoord = crop0.offY + crop0.height / 2,  segLen = tgtHeightReal,  axLen = origWh.height)
+            )
+            AbsCropOp(crop1) :: imOps0
+          }
+      }.recover {
+        case ex: Exception =>
+          // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
           ImGravities.Center ::
           AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
-          // Сжать картинку по-лучше
           imOps0
-      val wideArgs = blk.WideBgRenderCtx(
-        width       = cropWidth,
-        height      = tgtHeightReal,
-        dynCallArgs = DynImgArgs(iik.uncropped, imOpsAcc)
-      )
-      Future successful Some(wideArgs)
+      }
+
+      imOps2Fut map { imOps2 =>
+        // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
+        val imOpsAcc: List[ImOp] =
+          // В общих чертах вписать изображение в примерно необходимые размеры:
+          AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
+          imOps2
+        val wideArgs = blk.WideBgRenderCtx(
+          width       = cropWidth,
+          height      = tgtHeightReal,
+          dynCallArgs = DynImgArgs(iik.uncropped, imOpsAcc)
+        )
+        Some(wideArgs)
+      }
     }
   }
 

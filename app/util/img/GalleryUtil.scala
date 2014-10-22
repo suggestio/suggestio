@@ -1,6 +1,5 @@
 package util.img
 
-import controllers.routes
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.{DynImgArgs, Context, MImgInfoT}
@@ -67,7 +66,7 @@ object GalleryUtil {
       imOps ::= AbsCropOp(crop)
     }
     val dynArgs = DynImgArgs(oiik.uncropped, imOps)
-    routes.Img.dynImg(dynArgs)
+    DynImgUtil.imgCall(dynArgs)
   }
 
 }

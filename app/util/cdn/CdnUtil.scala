@@ -5,6 +5,7 @@ import models.{Context, DynImgArgs, ExternalCall}
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
+import util.img.DynImgUtil
 import scala.collection.JavaConversions._
 
 /**
@@ -82,7 +83,7 @@ object CdnUtil extends PlayMacroLogsImpl {
 
   /** Вызов к dynImg через CDN. */
   def dynImg(dargs: DynImgArgs)(implicit ctx: Context) = {
-    forCall( routes.Img.dynImg(dargs) )
+    forCall( DynImgUtil.imgCall(dargs) )
   }
 
   /** Вызов за оригиналом картинки. */
