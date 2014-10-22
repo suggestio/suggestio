@@ -118,7 +118,8 @@ resourceGenerators in Compile <+= Def.task {
     if (!xlsFile.exists) {
       // xls-файл ещё не скачан. Нужно вызвать download сначала
       // Ссылка взята из http://help.yandex.ru/partnermarket/guides/clothes.xml
-      val xlsUrl = "http://help.yandex.ru/partnermarket/docs/market_categories.xls" 
+      //val xlsUrl = "http://help.yandex.ru/partnermarket/docs/market_categories.xls"
+      val xlsUrl = "http://help.yandex.ru/help.yandex.ru/partnermarket/docs/market_categories.xls"
       println("Downloading " + xlsUrl + " ...")
       IO.download(new URL(xlsUrl), xlsFile)
       println("Downloaded " + xlsFile.toString + " OK")
