@@ -29,13 +29,12 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
   /** Желаемые ширИны широкого бэкграунда. */
-  val WIDE_WIDTHS_PX: List[Int] = {
-    configuration.getIntSeq("blocks.bg.wide.widths.px")
-      .map(_.toList.map(_.intValue))
-      .getOrElse {
-        // TODO Цифры взяты с потолка. Стоило бы навести в них какую-то логику...
-        List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048)
-      }
+  val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
+  val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(240, 360, 540, 640, 800, 1080, 1200, 1440, 1600, 2048) )
+
+  private def getConfSzsRow(confKeyPart: String, default: => List[Int]): List[Int] = {
+    configuration.getIntSeq(s"blocks.bg.wide.$confKeyPart.px")
+      .fold(default) { _.toList.map(_.intValue) }
       .sorted
   }
 
@@ -115,9 +114,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
-  @tailrec def normWideBgWidth(minWidth: Int,  acc: Int = WIDE_WIDTHS_PX.head,  variants: List[Int] = WIDE_WIDTHS_PX.tail): Int = {
+  @tailrec def normWideBgSz(minWidth: Int,  acc: Int,  variants: List[Int]): Int = {
     if (acc < minWidth && variants.nonEmpty) {
-      normWideBgWidth(minWidth, variants.head, variants.tail)
+      normWideBgSz(minWidth, variants.head, variants.tail)
     } else {
       acc
     }
@@ -257,14 +256,21 @@ trait SaveBgImgI extends ISaveImgs {
         .map(_.get)   // Будет Future.failed при проблеме - так и надо.
       // Собираем хвост параметров сжатия.
       val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
-      val bgc = pxRatio.bgCompression
       // Нужно вычислить размеры wide-версии оригинала.
       // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
       val imgResMult = szMult * pxRatio.pixelRatio
-      val tgtHeightReal = (mad.blockMeta.height * imgResMult).toInt
+      val tgtHeightReal = ctx.deviceScreenOpt
+        .fold[Int] ( (mad.blockMeta.height * imgResMult).toInt ) { ds =>
+          val cssHeight = normWideBgSz(ds.height, acc = WIDE_HEIGHTS_PX.head, variants = WIDE_HEIGHTS_PX.tail)
+          (pxRatio.pixelRatio * cssHeight).toInt
+        }
       // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
       val cropWidth = ctx.deviceScreenOpt
-        .fold(WIDE_WIDTHS_PX.last) { ds => normWideBgWidth(ds.width) }
+        .fold[Int] (WIDE_WIDTHS_PX.last) { ds =>
+          val cssWidth = normWideBgSz(ds.width, acc = WIDE_WIDTHS_PX.head, variants = WIDE_WIDTHS_PX.tail)
+          (pxRatio.pixelRatio * cssWidth).toInt
+        }
+      val bgc = pxRatio.bgCompression
       val imOps0 = List[ImOp](
         ImFilters.Lanczos,
         StripOp,
@@ -272,6 +278,7 @@ trait SaveBgImgI extends ISaveImgs {
         bgc.chromaSubSampling,
         bgc.imQualityOp
       )
+      // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
       val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
         Future failed new NoSuchElementException("No default crop is here.")
       } { crop0 =>
@@ -297,11 +304,14 @@ trait SaveBgImgI extends ISaveImgs {
       }
 
       imOps2Fut map { imOps2 =>
-        // TODO Нужно брать отн. середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-        val imOpsAcc: List[ImOp] =
+        val imOpsAcc: List[ImOp] = {
           // В общих чертах вписать изображение в примерно необходимые размеры:
-          AbsResizeOp(MImgInfoMeta(height = tgtHeightReal, width = cropWidth), Seq(ImResizeFlags.OnlyShrinkLarger, ImResizeFlags.FillArea)) ::
-          imOps2
+          val rszOp = AbsResizeOp(
+            MImgInfoMeta(height = 0, width = cropWidth),
+            Seq(ImResizeFlags.FillArea, ImResizeFlags.OnlyShrinkLarger)
+          )
+          rszOp :: imOps2
+        }
         val wideArgs = blk.WideBgRenderCtx(
           width       = cropWidth,
           height      = tgtHeightReal,
