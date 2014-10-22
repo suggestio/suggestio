@@ -1,7 +1,6 @@
 @(nodes: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @import ctx._
-@import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import util.cdn.CdnUtil
 
@@ -28,6 +27,10 @@
         </a>
       *@
 
+      <a class="siom-new-btn __size-L __color-1 __vertical-first js-btn" href="#emailPwLoginForm">
+        Войти в систему
+      </a>
+
       @* <a class="siom-new-btn __size-L __color-1 __vertical-first js-card-btn"  >
           Локации для рекламы
         </a>*@
@@ -35,7 +38,7 @@
     </div>
 
     <div class="index-page_how-it-works-btn">
-      <a class="siom-new-btn __size-L __color-1 __border" href="@routes.Market.marketBooklet" >
+      <a class="siom-new-btn __size-L __color-1 __vertical-last" href="@routes.Market.marketBooklet" >
         Как это работает?
       </a>
     </div>

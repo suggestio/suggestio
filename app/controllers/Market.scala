@@ -107,15 +107,15 @@ object Market extends SioController {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>
-    cacheControlShort {
-      Ok(aboutTpl())
-    }
+    // 2014.oct.22: Удаление старого about'а, который уже постарел совсем и потерял актуальность.
+    //              Буклет о sio-маркете лежит по новой ссылке.
+    MovedPermanently( routes.Market.marketBooklet().url )
   }
 
   /** Статическая страничка, описывающая суть sio market для рекламодателей. */
   def aboutForAdMakers = MaybeAuth { implicit request =>
     cacheControlShort {
-      Ok(aboutForAdMakersTpl())
+      Redirect(routes.Market.marketBooklet().url)
     }
   }
 

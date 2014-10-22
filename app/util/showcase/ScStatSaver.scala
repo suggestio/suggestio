@@ -3,6 +3,7 @@ package util.showcase
 import io.suggest.ym.model.stat.MAdStat
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
+import play.api.Logger
 import util.{EcParInfo, AsyncUtil, PlayMacroLogsImpl}
 
 import scala.concurrent.{Future, future}
@@ -23,13 +24,25 @@ import play.api.Play.{current, configuration}
  */
 object ScStatSaver {
 
+  private def LOGGER = Logger(getClass)
+
+  private def defaultBackend = new BulkProcessorSaveBackend
+
   /** Используемый backend для сохранения статистики. */
   val BACKEND: ScStatSaverBackend = {
-    configuration.getString("sc.stat.saver.type", Some(Set("bp", "bulk", "", "plain")))
-      .fold [ScStatSaverBackend] (new PlainSaverBackend) { raw =>
+    val ck = "sc.stat.saver.type"
+    configuration.getString(ck)
+      .fold [ScStatSaverBackend] (defaultBackend) { raw =>
         raw.trim.toLowerCase match {
           case "plain" | ""     => new PlainSaverBackend
           case "bp"    | "bulk" => new BulkProcessorSaveBackend
+          case "dummy" | "null" =>
+            LOGGER.warn("BACKEND: dummy save backend enabled. All stats will be saved to /dev/null!")
+            new DummySaverBackend
+          case other =>
+            val backend = defaultBackend
+            LOGGER.warn(s"BACKEND: Unknown value '$other' for conf key '$ck'. Please check your application.conf. Fallbacking to default backend: ${backend.getClass.getSimpleName}")
+            backend
         }
       }
   }
@@ -47,6 +60,21 @@ trait ScStatSaverBackend {
 
   /** Завершение работы backend'a. */
   def close(): Unit
+}
+
+
+/** Бэкэнд сохранения статистики, который сохраняет всё в /dev/null. */
+class DummySaverBackend extends ScStatSaverBackend {
+  /** Сохранение. Бэкэнд может отправлять в свою очередь или в хранилище. */
+  override def save(stat: MAdStat): Future[_] = {
+    Future successful Nil
+  }
+
+  /** Сброс накопленной очереди, если такая имеется. */
+  override def flush(): Unit = {}
+
+  /** Завершение работы backend'a. */
+  override def close(): Unit = {}
 }
 
 
