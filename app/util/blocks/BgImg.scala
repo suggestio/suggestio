@@ -261,7 +261,7 @@ trait SaveBgImgI extends ISaveImgs {
     } { bgImgInfo =>
       val iik = ImgIdKey( bgImgInfo.filename )
       // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-      lazy val origWhFut = iik.getBaseImageWH
+      val origWhFut = iik.getBaseImageWH
         .map(_.get)   // Будет Future.failed при проблеме - так и надо.
       // Собираем хвост параметров сжатия.
       val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
