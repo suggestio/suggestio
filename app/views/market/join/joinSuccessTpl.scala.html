@@ -1,12 +1,10 @@
 @()(implicit ctx: Context)
 
-@import controllers.MarketShowcase.DEMO_ADN_ID_OPT
 @import util.cdn.CdnUtil
 
 @* Статическая success-страничка, которая сообщает юзеру, что его запрос принят к рассмотрению. *@
 
 @joinBase("Запрос на подключение принят") {
-
 
   <div class="body __responsive index-page_cnt">
 
@@ -26,11 +24,8 @@
           </p>
 
           <p class="block __margin-M">
-            Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бета версия.
+            Пока можно посмотреть выдачу всех рекламных карточек<br/> <a href="@MAIN_PAGE_CALL">на нашем сайте</a>.
             <br/>
-            @DEMO_ADN_ID_OPT.map { demoAdnId =>
-              <a class="link" target="_blank" href="@routes.MarketShowcase.demoShowcase()">Смотреть →</a>
-            }
           </p>
         </div>
 

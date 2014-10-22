@@ -172,7 +172,6 @@ GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
 
 # Витрина market'а и её экшены
 GET  /b/svg/:svgTpl                     controllers.MarketShowcase.blockSvg(svgTpl: BlockSvg, c: BSvgColorMap)
-GET  /market/demo                       controllers.MarketShowcase.demoShowcase
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
 

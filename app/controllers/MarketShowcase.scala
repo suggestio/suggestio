@@ -75,9 +75,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
   val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
 
-  /** id узла для демо-выдачи. */
-  val DEMO_ADN_ID_OPT = configuration.getString("market.demo.adn.id")
-
   /** Сколько нод максимум накидывать к списку нод в качестве соседних нод. */
   val NEIGH_NODES_MAX = configuration.getInt("market.showcase.nodes.neigh.max") getOrElse 20
 
@@ -706,21 +703,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Cache.remove(ck)
     }
     Seq(classifier -> Seq(subscriber))
-  }
-
-
-  /**
-   * Постоянная ссылка на demo-выдачу, если она есть.
-   * @return Редирект, если есть adn_id. 404 Если нет демо выдачи.
-   */
-  def demoShowcase = MaybeAuth { implicit request =>
-    DEMO_ADN_ID_OPT match {
-      case Some(adnId) =>
-        Redirect(routes.MarketShowcase.demoWebSite(adnId))
-          .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
-      case None =>
-        http404AdHoc
-    }
   }
 
 
