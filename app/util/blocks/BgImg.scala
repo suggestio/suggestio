@@ -131,7 +131,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @return Координата начала отрезка.
    *         Конец отрезка можно получить, сложив координату начала с length.
    */
-  def centerNearestLineSeg1D(centerCoord: Int, segLen: Int, axLen: Int): Int = {
+  def centerNearestLineSeg1D(centerCoord: Float, segLen: Float, axLen: Float): Float = {
     // Координата середины оси:
     val axCenter = axLen / 2.0F
     // Половинная длина желаемого отрезка:
@@ -146,6 +146,15 @@ object BgImg extends PlayLazyMacroLogsImpl {
       (rightSegCoord - segLen).toInt
     }
     Math.max(0, resRaw)
+  }
+
+  def translatedCropOffset(ocOffCoord: Int, ocSz: Int, targetSz: Int, oiSz: Int, rszRatio: Float): Int = {
+    val newCoordFloat = centerNearestLineSeg1D(
+      centerCoord = (ocOffCoord + ocSz / 2) / rszRatio,
+      segLen = targetSz.toFloat,
+      axLen = oiSz / rszRatio
+    )
+    newCoordFloat.toInt
   }
 
 }
@@ -284,14 +293,14 @@ trait SaveBgImgI extends ISaveImgs {
       } { crop0 =>
         origWhFut
           .map { origWh =>
-            // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа,
-            // а не к центру картинки. Нужно исходный кроп аккуратно расширить до размеров целевого кропа,
-            // используя центр исходного crop'а и кое-какие математические операции по обеим осям координат.
+            // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
+            // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
+            val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
             val crop1 = ImgCrop(
               width = cropWidth,
               height = tgtHeightReal,
-              offX = centerNearestLineSeg1D(centerCoord = crop0.offX + crop0.width / 2,  segLen = cropWidth,  axLen = origWh.width),
-              offY = centerNearestLineSeg1D(centerCoord = crop0.offY + crop0.height / 2,  segLen = tgtHeightReal,  axLen = origWh.height)
+              offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
+              offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
             )
             AbsCropOp(crop1) :: imOps0
           }
@@ -304,18 +313,18 @@ trait SaveBgImgI extends ISaveImgs {
       }
 
       imOps2Fut map { imOps2 =>
-        val imOpsAcc: List[ImOp] = {
+        val imOps: List[ImOp] = {
           // В общих чертах вписать изображение в примерно необходимые размеры:
           val rszOp = AbsResizeOp(
-            MImgInfoMeta(height = 0, width = cropWidth),
-            Seq(ImResizeFlags.FillArea, ImResizeFlags.OnlyShrinkLarger)
+            MImgInfoMeta(height = tgtHeightReal, width = 0),
+            Seq(ImResizeFlags.FillArea)
           )
           rszOp :: imOps2
         }
         val wideArgs = blk.WideBgRenderCtx(
           width       = cropWidth,
           height      = tgtHeightReal,
-          dynCallArgs = DynImgArgs(iik.uncropped, imOpsAcc)
+          dynCallArgs = DynImgArgs(iik.uncropped, imOps)
         )
         Some(wideArgs)
       }
