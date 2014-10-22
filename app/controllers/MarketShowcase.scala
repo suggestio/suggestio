@@ -114,16 +114,26 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    // Собираем статистику. Тут скорее всего wifi
-    future {
-      ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
-        .saveStats
-        .onFailure {
+    val nodeEnabled = request.adnNode.adn.isEnabled
+    val isReceiver = request.adnNode.adn.isReceiver
+    if (nodeEnabled && isReceiver || request.isMyNode) {
+      // Собираем статистику. Тут скорее всего wifi
+      future {
+        ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
+          .saveStats
+          .onFailure {
           case ex => warn(s"demoWebSite($adnId): Failed to save stats", ex)
         }
+      }
+      // Рендерим результат в текущем потоке.
+      adnNodeDemoWebsite(
+        showcaseCall = routes.MarketShowcase.showcase(adnId)
+      )
+
+    } else {
+      debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled ; isRcvr=$isReceiver")
+      http404AdHoc
     }
-    // Рендерим результат в текущем потоке.
-    adnNodeDemoWebsite( routes.MarketShowcase.showcase( adnId ) )
   }
 
   /** Рендер страницы внутренней выдачи для указанного продьюсера.
