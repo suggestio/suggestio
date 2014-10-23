@@ -2,10 +2,10 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.9.0-SNAPSHOT"
+version := "1.9.1-SNAPSHOT"
 
 scalaVersion := "2.10.4"
-//scalaVersion := "2.11.2"
+//scalaVersion := "2.11.3"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -25,11 +25,11 @@ libraryDependencies ++= {
   val esVsn         = "1.3.2"
   val hadoopVsn     = "2.4.1"
   val hbaseVsn      = "0.98.5-hadoop2"
-  val akkaVsn       = "2.3.3"
+  val akkaVsn       = "2.3.4"
   val jacksonVsn    = "2.4.+"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
-  val playVsn       = "2.3.3"
+  val playVsn       = "2.3.4"
   val morphVsn      = "1.3-SNAPSHOT"
   val bcVsn         = "1.46"
   val phantomVersion = "1.2.8"
