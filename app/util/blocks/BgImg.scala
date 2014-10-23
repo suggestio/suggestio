@@ -39,6 +39,87 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
   /**
+   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
+   * необходимостью получения данных о размерах исходной картинки.
+   * @param bgImgInfo Данные о фоновой картинке карточки.
+   * @param bm Метаданные блока карточки.
+   * @param szMult Множитель размера, запрошенный контроллером.
+   * @param ctx Контекст рендера шаблона.
+   * @return Фьючерс с данными по рендеру широкой фоновой картинки.
+   */
+  def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: Int)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
+    val iik = ImgIdKey( bgImgInfo.filename )
+    // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
+    val origWhFut = iik.getBaseImageWH
+      .map(_.get)   // Будет Future.failed при проблеме - так и надо.
+    // Собираем хвост параметров сжатия.
+    val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
+    // Нужно вычислить размеры wide-версии оригинала.
+    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
+    val imgResMult = szMult * pxRatio.pixelRatio
+    val tgtHeightReal = ctx.deviceScreenOpt
+      .fold[Int] ( (bm.height * imgResMult).toInt ) { ds =>
+        val cssHeight = normWideBgSz(ds.height, acc = WIDE_HEIGHTS_PX.head, variants = WIDE_HEIGHTS_PX.tail)
+        (pxRatio.pixelRatio * cssHeight).toInt
+      }
+    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
+    val cropWidth = ctx.deviceScreenOpt
+      .fold[Int] (WIDE_WIDTHS_PX.last) { ds =>
+        val cssWidth = normWideBgSz(ds.width, acc = WIDE_WIDTHS_PX.head, variants = WIDE_WIDTHS_PX.tail)
+        (pxRatio.pixelRatio * cssWidth).toInt
+      }
+    val bgc = pxRatio.bgCompression
+    val imOps0 = List[ImOp](
+      ImFilters.Lanczos,
+      StripOp,
+      ImInterlace.Plane,
+      bgc.chromaSubSampling,
+      bgc.imQualityOp
+    )
+    // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
+    val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
+      Future failed new NoSuchElementException("No default crop is here.")
+    } { crop0 =>
+      origWhFut
+        .map { origWh =>
+          // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
+          // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
+          val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
+          val crop1 = ImgCrop(
+            width = cropWidth,
+            height = tgtHeightReal,
+            offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
+            offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
+          )
+          AbsCropOp(crop1) :: imOps0
+        }
+    }.recover {
+      case ex: Exception =>
+        // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
+        ImGravities.Center ::
+        AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
+        imOps0
+    }
+
+    imOps2Fut map { imOps2 =>
+      val imOps: List[ImOp] = {
+        // В общих чертах вписать изображение в примерно необходимые размеры:
+        val rszOp = AbsResizeOp(
+          MImgInfoMeta(height = tgtHeightReal, width = 0),
+          Seq(ImResizeFlags.FillArea)
+        )
+        rszOp :: imOps2
+      }
+      blk.WideBgRenderCtx(
+        width       = cropWidth,
+        height      = tgtHeightReal,
+        dynCallArgs = DynImgArgs(iik.uncropped, imOps)
+      )
+    }
+  }
+
+
+  /**
    * Определить максимальный разумный множитель размера картинки для указанного экрана.
    * Если рендер с указанным множителем не оправдан, то будет попытка с множитель в 2 раза меньшим.
    * @param szMult Текущий (исходный) желаемый множитель размера. Т.е. максимальный допустимый (запрошенный).
@@ -256,78 +337,12 @@ trait SaveBgImgI extends ISaveImgs {
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
   def wideBgImgArgs(mad: Imgs with IBlockMeta, szMult: Int)(implicit ctx: Context): Future[Option[blk.WideBgRenderCtx]] = {
-    getMadBgImg(mad).fold {
-      Future successful Option.empty[blk.WideBgRenderCtx]
-    } { bgImgInfo =>
-      val iik = ImgIdKey( bgImgInfo.filename )
-      // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-      val origWhFut = iik.getBaseImageWH
-        .map(_.get)   // Будет Future.failed при проблеме - так и надо.
-      // Собираем хвост параметров сжатия.
-      val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
-      // Нужно вычислить размеры wide-версии оригинала.
-      // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
-      val imgResMult = szMult * pxRatio.pixelRatio
-      val tgtHeightReal = ctx.deviceScreenOpt
-        .fold[Int] ( (mad.blockMeta.height * imgResMult).toInt ) { ds =>
-          val cssHeight = normWideBgSz(ds.height, acc = WIDE_HEIGHTS_PX.head, variants = WIDE_HEIGHTS_PX.tail)
-          (pxRatio.pixelRatio * cssHeight).toInt
-        }
-      // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-      val cropWidth = ctx.deviceScreenOpt
-        .fold[Int] (WIDE_WIDTHS_PX.last) { ds =>
-          val cssWidth = normWideBgSz(ds.width, acc = WIDE_WIDTHS_PX.head, variants = WIDE_WIDTHS_PX.tail)
-          (pxRatio.pixelRatio * cssWidth).toInt
-        }
-      val bgc = pxRatio.bgCompression
-      val imOps0 = List[ImOp](
-        ImFilters.Lanczos,
-        StripOp,
-        ImInterlace.Plane,
-        bgc.chromaSubSampling,
-        bgc.imQualityOp
-      )
-      // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-      val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
-        Future failed new NoSuchElementException("No default crop is here.")
-      } { crop0 =>
-        origWhFut
-          .map { origWh =>
-            // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
-            // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
-            val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
-            val crop1 = ImgCrop(
-              width = cropWidth,
-              height = tgtHeightReal,
-              offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
-              offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
-            )
-            AbsCropOp(crop1) :: imOps0
-          }
-      }.recover {
-        case ex: Exception =>
-          // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
-          ImGravities.Center ::
-          AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
-          imOps0
-      }
-
-      imOps2Fut map { imOps2 =>
-        val imOps: List[ImOp] = {
-          // В общих чертах вписать изображение в примерно необходимые размеры:
-          val rszOp = AbsResizeOp(
-            MImgInfoMeta(height = tgtHeightReal, width = 0),
-            Seq(ImResizeFlags.FillArea)
-          )
-          rszOp :: imOps2
-        }
-        val wideArgs = blk.WideBgRenderCtx(
-          width       = cropWidth,
-          height      = tgtHeightReal,
-          dynCallArgs = DynImgArgs(iik.uncropped, imOps)
-        )
-        Some(wideArgs)
-      }
+    getMadBgImg(mad) match {
+      case Some(bgImgInfo) =>
+        BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)
+          .map(Some.apply)
+      case None =>
+        Future successful Option.empty[blk.WideBgRenderCtx]
     }
   }
 
