@@ -7,7 +7,7 @@ import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
-import play.api.http.HeaderNames
+import play.api.http.HeaderNames._
 import scala.util.Random
 import SioRequestHeader.firstForwarded
 
@@ -37,6 +37,10 @@ object Context {
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
   val SCREEN_ARG_NAME_RE = "a\\.screen".r
+
+  /** Доверять ли заголовку Host: ? Обычно нет, т.к. nginx туда втыкает localhost.
+    * Имеет смысл выставлять true на локалхостах разработчиков s.io. */
+  val TRUST_HOST_HDR = configuration.getBoolean("sio.req.headers.host.trust") getOrElse false
 }
 
 
@@ -75,14 +79,32 @@ trait Context {
   /** Используемый протокол. */
   lazy val myProto: String = {
     request.headers
-      .get(HeaderNames.X_FORWARDED_PROTO)
+      .get(X_FORWARDED_PROTO)
       .filter(!_.isEmpty)
       .map { firstForwarded }
       .getOrElse(Context.SIO_PROTO_DFLT)
   }
 
   /** Если порт указан, то будет вместе с портом. Значение задаётся в конфиге. */
-  def myHost = Context.MY_HOST
+  lazy val myHost: String = {
+    // Извлечь запрошенный хостнейм из данных форварда.
+    var maybeHost = request.headers
+      .get(X_FORWARDED_HOST)        // TODO Желательно ещё отрабатывать нестандартные порты.
+      .map(_.trim)
+      .filter(!_.isEmpty)
+      .map { firstForwarded }
+    // Если форвард не найден, а конфиг разрешает доверять Host: заголовку, то дергаем его.
+    if (maybeHost.isEmpty && Context.TRUST_HOST_HDR) {
+      maybeHost = request.headers
+        .get(HOST)
+        .filter(!_.isEmpty)
+    }
+    // Нередко, тут недосягаемый код:
+    if (maybeHost.isEmpty)
+      Context.MY_HOST
+    else
+      maybeHost.get
+  }
 
   lazy val currAudienceUrl: String = myProto + "://" + myHost
 
@@ -95,7 +117,7 @@ trait Context {
 
   def flashMap = request.flash.data
 
-  def userAgent: Option[String] = request.headers.get(HeaderNames.USER_AGENT)
+  def userAgent: Option[String] = request.headers.get(USER_AGENT)
 
   lazy val isMobile : Boolean = {
     userAgent.exists { x =>
