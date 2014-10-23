@@ -9,7 +9,7 @@ import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
 import scala.util.Random
-import SioRequestHeader.firstForwarded
+import SioRequestHeader.{firstForwarded, lastForwarded}
 
 /**
  * Suggest.io
@@ -41,6 +41,8 @@ object Context {
   /** Доверять ли заголовку Host: ? Обычно нет, т.к. nginx туда втыкает localhost.
     * Имеет смысл выставлять true на локалхостах разработчиков s.io. */
   val TRUST_HOST_HDR = configuration.getBoolean("sio.req.headers.host.trust") getOrElse false
+  
+  val BACKEND_HOST_RE = "^backend\\.".r
 }
 
 
@@ -92,7 +94,11 @@ trait Context {
       .get(X_FORWARDED_HOST)        // TODO Желательно ещё отрабатывать нестандартные порты.
       .map(_.trim)
       .filter(!_.isEmpty)
-      .map { firstForwarded }
+      .map { raw => 
+        val h = lastForwarded(raw)
+        // Если входящий запрос на backend, то нужно отобразить его на www.
+        Context.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
+      }
     // Если форвард не найден, а конфиг разрешает доверять Host: заголовку, то дергаем его.
     if (maybeHost.isEmpty && Context.TRUST_HOST_HDR) {
       maybeHost = request.headers

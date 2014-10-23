@@ -157,7 +157,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
     )
-    val resultFut = cacheControlLong {
+    val resultFut = cacheControlShort {
       Ok(demoWebsiteTpl(args))
     }
 
