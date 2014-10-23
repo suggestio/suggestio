@@ -77,7 +77,7 @@ libraryDependencies ++= Seq(
   // svg
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test
-  "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+  "org.scalatestplus" %% "play" % "1.2.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
 play.Play.projectSettings

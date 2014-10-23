@@ -44,4 +44,5 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
 }
 
 class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
+class GeoShowcaseSpecHU extends GeoShowcaseSpecT with HtmlUnitFactory
 //class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO scalatest виснет, запустив firefox.
