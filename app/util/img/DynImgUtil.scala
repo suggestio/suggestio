@@ -12,11 +12,11 @@ import models.im.ImOp
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
 import play.api.mvc.Call
-import util.PlayMacroLogsImpl
+import util.{AsyncUtil, PlayMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.JavaConversions._
 
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
@@ -46,12 +46,14 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @return Файл, содержащий результирующую картинку.
    */
   def mkReadyImgToFile(args: DynImgArgs): Future[File] = {
-    args.imgId.toTempPictOrig map { mptmp =>
-      // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
-      val newImgFile = File.createTempFile(getClass.getSimpleName, ".jpeg")
-      convert(mptmp.file, newImgFile, args.imOps)
-      newImgFile
-    }
+    args.imgId
+      .toTempPictOrig
+      .map { mptmp =>
+        // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
+        val newImgFile = File.createTempFile(getClass.getSimpleName, ".jpeg")
+        convert(mptmp.file, newImgFile, args.imOps)
+        newImgFile
+      }(AsyncUtil.jdbcExecutionContext)
   }
 
 
@@ -116,11 +118,12 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param saveDt Сохранить этой датой.
    * @return Фьючерс для синхронизации.
    */
-  // TODO Нужно использовать другой thread-pool, а не штатные play'евские.
   def saveDynImgAsync(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
-    future {
+    val futFut = Future {
       saveDynImg(imgFile, rowKey, qualifier, saveDt)
-    } flatMap identity
+    }(AsyncUtil.jdbcExecutionContext)
+    // Распрямить вложенный фьючерс.
+    futFut flatMap identity
   }
 
 }

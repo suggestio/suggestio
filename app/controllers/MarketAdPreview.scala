@@ -149,7 +149,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
           .getOrElse {
             request.body
               .mapValues(_.headOption)
-              .filter(!_._2.isEmpty)
+              .filter(_._2.isDefined)
               .mapValues(_.get)
             }
         val oldBindResultOpt = request.body.get("ad.offer.oldBlockId")
