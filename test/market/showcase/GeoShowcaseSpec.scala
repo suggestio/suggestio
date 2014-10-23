@@ -34,9 +34,11 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
         click on find(id("smGeoScreenButton")).value
       }
       eventually {
-        find(id("smGeoLocationLabel")).value.toString()
+        click on find(id("smGeoLocationLabel")).value
       }
-      click on find(id("smGeoScreenCloseButton")).value
+      eventually {
+        click on find(id("smGeoScreenCloseButton")).value
+      }
       click on find(id("smNavigationLayerButton")).value
       click on find(id("smShopsTab")).value
     }
@@ -45,4 +47,4 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
 
 class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
 class GeoShowcaseSpecHU extends GeoShowcaseSpecT with HtmlUnitFactory
-//class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO scalatest виснет, запустив firefox.
+//class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO Починить. Что-то астральное.

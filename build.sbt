@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "2.3.3-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.3.4-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -54,7 +54,7 @@ libraryDependencies ++= Seq(
   // for domain validation:
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
-  "com.google.guava" % "guava" % "17.+",
+  "com.google.guava" % "guava" % "18.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.4.+",
@@ -77,6 +77,13 @@ libraryDependencies ++= Seq(
   // svg
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test
+  // play-2.3.x: Устарел selenium
+  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2",
+  "org.fluentlenium" % "fluentlenium-core" % "0.10.2",
+  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1",
+  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
+  // play-2.3+:
   "org.scalatestplus" %% "play" % "1.2.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
