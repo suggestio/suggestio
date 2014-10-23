@@ -574,7 +574,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
     blockFields.find(_.name equalsIgnoreCase n)
   }
 
-  def getBlockMeta(height: Int) = BlockMeta(blockId = id, height = height)
+  def getBlockMeta(height: Int) = BlockMeta(blockId = id, height = height, width = blockWidth)
 
   /** Отрендерить редактор. */
   def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable
@@ -590,7 +590,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   override def bind(data: Map[String, String]): Either[Seq[FormError], BlockMapperResult] = {
     // Собрать BindAcc и сконвертить в BlockMapperResult
     bindAcc(data).right.map { bindAcc =>
-      val blockMeta = BlockMeta(blockId = id, height = bindAcc.height)
+      val blockMeta = getBlockMeta(bindAcc.height)
       val bd = BlockDataImpl(blockMeta,
         offers = bindAcc.offers,
         colors = bindAcc.colors.toMap
