@@ -89,13 +89,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
 
 
-  /** Кеш на клиенте для редкоизмеяющихся данных выдачи. */
-  private def cacheControlLong(result: Result): Result = {
-    result
-      .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
-  }
-
-
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
    * @param showcaseCall Call для обращения за indexTpl.
@@ -159,7 +152,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
     )
-    val resultFut = cacheControlLong {
+    val resultFut = cacheControlShort {
       Ok(demoWebsiteTpl(args))
     }
 

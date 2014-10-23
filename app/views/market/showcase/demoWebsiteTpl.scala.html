@@ -15,11 +15,10 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   @if(!ctx.isIpad) {
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
   }
 
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui">
+  <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
   <!--[if IE]>
   <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
@@ -33,7 +32,15 @@
   <link href="@CdnUtil.asset("images/icons/144.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
   <link href="@CdnUtil.asset("images/icons/228.png")" rel="icon" sizes="228x228" type="image/png" />
 
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+  @* windows 8+ metro: *@
+  <meta name="msapplication-TileImage" content="@CdnUtil.asset("images/icons/144.png")" />
+
+  @* fb, vk, pinterest, ff-android home-screen, etc.
+     TODO: У OSM.org стоит тут 120х120px. Надо разобраться, какой размер сюда стоит втыкать.
+     + og:image допускает несколько размеров. *@
+  <meta property="og:image" content="@CdnUtil.asset("images/icons/228.png")" />
 
   <link type="text/css" rel="stylesheet" media="screen" href="@CdnUtil.asset("stylesheets/market/showcase.css")"/>
 

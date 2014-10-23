@@ -4,7 +4,7 @@ import java.io.File
 import play.api.Play.{current, configuration}
 import concurrent.duration._
 import util.img.OutImgFmts, OutImgFmts.OutImgFmt
-import util.FormUtil
+import util.{CronTasksProvider, FormUtil}
 import org.apache.commons.io.FileUtils
 
 /**
@@ -14,7 +14,8 @@ import org.apache.commons.io.FileUtils
  * Description: Временные картинки лежат тут. Сюда попадают промежуточные/сырые картинки, которые подлежат кадрированию
  * или иной дальнейшей обработке. В качестве хранилища используется локальная ФС.
  */
-object MPictureTmp {
+object MPictureTmp extends CronTasksProvider {
+
   // Нельзя тут дергать напрямую JavaTokenParsers из-за необходимой совместимости с парсерами ImgCrop.
   // Поэтому тут используется внешняя реализация парсеров.
   import io.suggest.img.ImgUtilParsers._
@@ -53,6 +54,12 @@ object MPictureTmp {
 
   TEMP_DIR.mkdirs()
 
+  override def cronTasks = {
+    val task = CronTask(startDelay = 7 seconds, every = 5 minutes, displayName = "cleanupOld()") {
+      cleanupOld()
+    }
+    Seq(task)
+  }
 
   def mkTmpFileSuffix(markerOpt: Option[String] = None,
                       cropOpt: Option[ImgCrop] = None,

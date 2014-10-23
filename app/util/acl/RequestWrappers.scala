@@ -45,6 +45,15 @@ object SioRequestHeader extends PlayMacroLogsImpl {
   /** Скомпиленный регэксп для сплиттинга значения X_FORWARDED_FOR. */
   val X_FW_FOR_SPLITTER_RE = ",\\s*".r
 
+
+  def lastForwarded(raw: String): String = {
+    val splits = X_FW_FOR_SPLITTER_RE.split(raw)
+    if (splits.length == 0)
+      raw
+    else
+      splits.last
+  }
+
   def firstForwarded(raw: String): String = {
     val splits = X_FW_FOR_SPLITTER_RE.split(raw)
     if (splits.length == 0)

@@ -9,6 +9,8 @@ import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.FiniteDuration
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -219,5 +221,28 @@ class ExternalCall(
   override def absoluteURL(request: Request, secure: Boolean): String = url
   override def absoluteURL(secure: Boolean, host: String): String = url
 
+}
+
+
+/** Интерфейс cron-задачи. */
+trait ICronTask extends Runnable {
+  def startDelay: FiniteDuration
+  def every: FiniteDuration
+  def displayName: String
+}
+
+/**
+ * Описание задача для Cron.
+ * @param startDelay Задержка после старта перед первым исполнением задачи.
+ * @param every Интервал повторения задачи.
+ * @param displayName Отображаемое название задачи. Обычно, название вызываемого метода.
+ * @param actionF Тело задачи.
+ */
+case class CronTask(
+  startDelay: FiniteDuration,
+  every: FiniteDuration,
+  displayName: String
+)(actionF: => Unit) extends ICronTask {
+  def run(): Unit = actionF
 }
 

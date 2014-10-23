@@ -34,6 +34,12 @@ object CdnUtil extends PlayMacroLogsImpl {
       .toMap
   }
 
+  /** Отключено использование CDN на хостах: */
+  val DISABLED_ON_HOSTS: Set[String] = {
+    configuration.getStringList("cdn.disabled.on.hosts")
+      .fold (Set.empty[String]) (_.toSet)
+  }
+
   // Печатаем карту в консоль при запуске.
   info {
     val sb = new StringBuilder("CDNs map (proto -> hosts...) is:")
@@ -50,6 +56,10 @@ object CdnUtil extends PlayMacroLogsImpl {
     sb.toString()
   }
 
+  if (DISABLED_ON_HOSTS.nonEmpty) {
+    info(s"CDNs disabled on hosts: " + DISABLED_ON_HOSTS.mkString(", "))
+  }
+
   val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
 
 
@@ -64,9 +74,16 @@ object CdnUtil extends PlayMacroLogsImpl {
     if (!HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
       c
     } else {
-      val protoLc = ctx.myProto.toLowerCase
-      val urlPrefixOpt = chooseHostForProto(protoLc)
-        .map { host  =>  protoLc + "://" + host }
+      val reqHost = ctx.myHost
+      val urlPrefixOpt: Option[String] = if (DISABLED_ON_HOSTS contains reqHost) {
+        None
+      } else {
+        val protoLc = ctx.myProto.toLowerCase
+        chooseHostForProto(protoLc)
+          .filter { _ => !DISABLED_ON_HOSTS.contains(ctx.myHost) }
+          .filter { cdnHost => !(cdnHost equalsIgnoreCase ctx.myHost) }
+          .map { host  =>  protoLc + "://" + host }
+      }
       urlPrefixOpt match {
         case None =>
           c
