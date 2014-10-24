@@ -2,77 +2,35 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
-# Без этого костыля, запрос html'ки просто подвисает.
+## Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
+## Без этого костыля, запрос html'ки просто подвисает.
 GET  /assets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/index.html  controllers.Static.tinymceColorpicker
 
-# Map static resources from the /public folder to the /assets URL path
+## Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
-
-# Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
-GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
-
-# Home page
+## Home page
 GET  /                                  controllers.MarketShowcase.geoSite
-GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
-GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
-GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
-GET  /search/site                       controllers.Search.siteSearchGET
+## Генераторы капч
+GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
+GET  /captcha/digital/:captchaId        controllers.Captcha.getDigitalCaptcha(captchaId)
 
-# ident: логины/логауты
-GET  /ident/login2/email_pw             controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /ident/login2/email_pw             controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /ident/logout2                     controllers.Ident.logout
-# ident: Восстановление пароля.
-GET  /ident/pw/r                        controllers.Ident.recoverPwForm
-POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
-GET  /ident/pw/r/ok                     controllers.Ident.recoverPwAccepted(email: String)
-GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId)
-POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
-# ident: Сменить пароль
-GET  /ident/pw/change                   controllers.Ident.changePassword
-POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
-GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
-
-## Callback'и инсталляторов и валидаторов сайтов.
-POST /js/add_domain                             controllers.Js.addDomain
-POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
-GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
-POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
-
-## compat
-## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
-GET     /about                          controllers.Static.about
-GET     /showcase                       controllers.Static.showcase
-## help редиректит на буклет.
-GET     /help                           controllers.Static.help
-GET     /help/:page                     controllers.Static.helpPage(page)
-## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
-GET     /blog                           controllers.Static.blogIndex
-GET     /blog/:path                     controllers.Static.blogPage(path)
-GET     /badbrowser                     controllers.Static.badbrowser
-
-# Генераторы капч
-GET     /captcha/get/:captchaId         controllers.Captcha.getCaptcha(captchaId)
-GET     /captcha/digital/:captchaId     controllers.Captcha.getDigitalCaptcha(captchaId)
-
-
-# Обратная связь.
+## Обратная связь.
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
-# Главная страница маркета
+## Главная страница маркета (и сайта тоже).
 GET  /m                                 controllers.Market.index
-# Разные заманушные статические странички.
+
+## Разные заманушные статические странички.
 GET  /market/about                      controllers.Market.aboutMarket
 GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
 GET  /market/booklet                    controllers.Market.marketBooklet
 GET  /market/adn/:adnId/popup           controllers.Market.adnNodePopup(adnId)
 
-# Входы в личные кабинеты
+## Входы в личные кабинеты
 POST /m/lk/login                        controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /m/lk/list                         controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
@@ -80,33 +38,33 @@ GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnI
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /m/adn/logo/prepare                controllers.MarketLkAdnEdit.handleTempLogo
-# Базовый супервайзинг узлов
+## Базовый супервайзинг узлов
 GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
 GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
 GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
 POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
-# Принятие приглашения на управления узлом.
+## Принятие приглашения на управления узлом.
 GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
-# Редактирования профиля юзера из личного кабинета узла.
+## Редактирования профиля юзера из личного кабинета узла.
 GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
-# Супервайзинг рекламных карточек на подчинённых узлах
+## Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
 GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlaveAds(adnId)
-# Супервайзинг узлов: публикация рекламы на подчинённых узлах.
+## Супервайзинг узлов: публикация рекламы на подчинённых узлах.
 GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
-# Адвертайзинг: размещение рекламы на узлах-получателях
+## Адвертайзинг: размещение рекламы на узлах-получателях
 GET  /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
 POST /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
 POST /m/lk/xadv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
 GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
-# Размещение рекламы: обработка запросов размещения.
+## Размещение рекламы: обработка запросов размещения.
 POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
 POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 
@@ -149,6 +107,8 @@ GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
 GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
+## thumb в основном используется в рамках draft sio-v1. Для sioM лучше использовать dynImg.
+GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
 
 
 # Витрина market'а и её экшены
@@ -351,7 +311,52 @@ GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
-# Cross-Origin resource sharing: preflight request.
+## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 
 GET  /robots.txt                         controllers.Application.robotsTxt
+
+
+## ident: логины/логауты
+GET  /ident/login2/email_pw             controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /ident/login2/email_pw             controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /ident/logout2                     controllers.Ident.logout
+## ident: Восстановление пароля.
+GET  /ident/pw/r                        controllers.Ident.recoverPwForm
+POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
+GET  /ident/pw/r/ok                     controllers.Ident.recoverPwAccepted(email: String)
+GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId)
+POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
+## ident: Сменить пароль
+GET  /ident/pw/change                   controllers.Ident.changePassword
+POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
+GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
+
+
+
+### Барахло от Sio-v1 (не работает, в основном):
+# Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
+GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
+GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
+GET  /app/session/keepalive             controllers.Application.keepAliveSession
+
+GET  /search/site                       controllers.Search.siteSearchGET
+
+## Callback'и инсталляторов и валидаторов сайтов.
+POST /js/add_domain                             controllers.Js.addDomain
+POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
+GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
+POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
+
+## compat
+## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
+GET     /about                          controllers.Static.about
+GET     /showcase                       controllers.Static.showcase
+## help редиректит на буклет.
+GET     /help                           controllers.Static.help
+GET     /help/:page                     controllers.Static.helpPage(page)
+## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
+GET     /blog                           controllers.Static.blogIndex
+GET     /blog/:path                     controllers.Static.blogPage(path)
+GET     /badbrowser                     controllers.Static.badbrowser
+
