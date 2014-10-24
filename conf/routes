@@ -16,7 +16,6 @@ GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
 # Home page
 GET  /                                  controllers.MarketShowcase.geoSite
-GET  /xd_server                         controllers.Application.xd_server
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
