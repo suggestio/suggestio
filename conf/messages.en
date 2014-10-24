@@ -253,31 +253,13 @@ hostname_prohibited=Hostname prohibited
 zuck=Mark, is that you?
 durov=Pavel, is that you?
 
-your_domains=Your websites
-domain_admin_title=Search preferences
-delete_domain=Delete websites
 invalid_url=Invalid url
-no_domains_yet=No sites yet
-admin_add_new=Add website
-last_reindexed=Last reindexed
-if_show_images=Show images in search results
-show_content_text=Show search results text
 
 Yes=Yes
 No=No
 
-customize_design_description=You can easily manage design of the search widget on your website. Just press &laquo;Customize&raquo; button and you will be redirected to your website, where all tools will be available.
-type_in_your_website=Type in your website url
-website=Website
-not_verified_yet=is not verified yet
 
-download_verification_file=Download verification file
-follow_instructions=and follow instructions
-
-if_no_image=If no image
 please=Please
-upload_verification_file=Put downloaded verification file to the root directory of your website. Than click &laquo;Check&raquo; button, or reload current page
-after_add=When you submit new domain, you will be asked to verify domain rights.
 
 reindex_launched=Indexation launched
 reindex_try_later=Over limit. Please, try later.
@@ -285,7 +267,6 @@ reindex_try_later=Over limit. Please, try later.
 saved_successfully=Settings saved
 img_site_preferences=Site configuration
 overloaded_message=Temporarily overloaded. Try again later.
-recheck=Recheck
 
 copy_js_code_to_your_site=Copy the following JavaScript code and paste in into your site pages
 custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
@@ -303,15 +284,6 @@ mappers.url.invalid_url=Invalid URL.
 mappers.url.only_http_https_allowed=Only HTTP and HTTPS protocols are allowed.
 mappers.url.hostname_prohibited=This site cannot be indexed.
 
-
-a.in.images_site_tweaks_title=How to set up my site to work with search images?
-a.in.images_you_need_add_head_tag=Just add tag <meta property="og:image"/> into <head> section of all your pages:
-a.in.images_after_tag_info=After that press "Reindex" button.
-
-a.in.intro_message=To start with search preferences, choose one of your websites in the left part of the window. If you don't have websites yet, please,
-a.in.site_add_form_title=add one now
-
-a.in.site_not_installed_yet=Site not in db yet. Please, copy code below and paste it to your website.
 
 f.feedback_sent_success=Thank you! Your message is sent to suggest.io developers.
 send=Send

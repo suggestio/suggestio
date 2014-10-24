@@ -59,15 +59,6 @@ GET     /badbrowser                     controllers.Static.badbrowser
 GET     /captcha/get/:captchaId         controllers.Captcha.getCaptcha(captchaId)
 GET     /captcha/digital/:captchaId     controllers.Captcha.getDigitalCaptcha(captchaId)
 
-# Админка. Адресация первого sioweb почти сохранена.
-GET  /admin                             controllers.Admin.index
-GET  /admin/ws/:timestampMs             controllers.Admin.ws(timestampMs:Long)
-POST /admin/add_domain                  controllers.Admin.addDomain
-POST /admin/delete_domain               controllers.Admin.deleteDomain
-GET  /admin/get_validation_file/:domain controllers.Admin.getValidationFile(domain)
-GET  /admin/domain_settings/:domain     controllers.Admin.domainSettings(domain)
-POST /admin/domain_settings/:domain     controllers.Admin.domainSettingsFormSubmit(domain)
-POST /admin/apply_ds/:domain            controllers.Admin.applyDomainSettings(domain)
 
 # Обратная связь.
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
