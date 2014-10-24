@@ -29,7 +29,6 @@ import java.{util => ju}
  * Created: 18.04.14 9:51
  * Description: Биллинг: SQL-модель для работы со списком договоров.
  */
-// TODO Модель синхронная. Надо бы её рассинхронизировать, когда в asynchbase переедут на netty 4.x.
 object MBillContract extends SqlModelStatic with FromJson {
   import SqlParser._
 
