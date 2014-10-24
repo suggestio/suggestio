@@ -45,10 +45,9 @@ POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain
 GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
 POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
 
-# compat: Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
+## compat
+## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
 GET     /about                          controllers.Static.about
-
-# Пункт меню "Вживую"
 GET     /showcase                       controllers.Static.showcase
 
 GET     /badbrowser                     controllers.Static.badbrowser

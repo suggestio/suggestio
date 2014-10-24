@@ -17,15 +17,16 @@ import Application.http404AdHoc
 
 object Static extends Controller with ContextT {
 
-  // Страница /about.
+  private def rdr2booklet = MovedPermanently( routes.Market.marketBooklet().url )
+
+  /** Страница /about. Раньше там были слайд-презентация s.io live search. */
   def about = Action { implicit request =>
-    // 2014.oct.24: Удалёна страница about live search. Теперь sio-market.
-    MovedPermanently( routes.Market.marketBooklet().url )
+    rdr2booklet
   }
 
-
-  def showcase = MaybeAuth { implicit request =>
-    Ok(showcaseTpl())
+  /** Страница /showcase. Там была плитка из превьюшек сайтов, которые используют s.io live search. */
+  def showcase = Action { implicit request =>
+    rdr2booklet
   }
 
 
