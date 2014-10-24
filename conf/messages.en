@@ -311,13 +311,6 @@ h.ds.choose_format=Look at the block «Domain settings». Select search results 
 h.ds.push_settings_btn=In the block «Design settings» click «Setup» button. Suggest.io will redirect you into your site in setting-edit mode. Suggest.io setting widget will be atop your site.
 h.ds.save=After making necessary changes, click «Save» button. Now, your site search appearance setting is saved in suggest.io database.
 
-h.is.title=Adding pictures into search results
-h.is.choose_one_of_two_methods=You need to point suggest.io crawler to the rigth picture for page. There are two methods to do it (choose one):
-h.is.add_og_to_head=Add into your site's pages <head> the following tag
-h.is.add_og_set_content="content" attribute (blue font) must point to real picture URL.
-h.is.add_sio_class=In other way, you can add class="sio-search-image" into main-image <img> tags of pages. 
-h.is.do_changes_in_templates=Please note: You need only to modify site templates. No need to change every tag on every page of site.
-
 h.is.go_to_admin_and_choose_site=Go to suggest.io <a href="{0}">search administation system</a>. Choose site in the left list.
 h.is.enable_images_checkbox=Check the checkbox "Show images".
 h.is.press_save=Press "save" button.
