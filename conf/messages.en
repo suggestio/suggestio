@@ -303,48 +303,8 @@ b.a.edit_blog_record=Edit blog record
 
 help=Help
 
-h.ds.search_apperance_settings=Search window appearance
-h.ds.search_hit_apperance_settings=Search hit appearance 
-
-h.ds.choose_site=In {0}your personal cabinet{1} choose the site you want to tweak. After click on site address, site settings menu appears.
-h.ds.choose_format=Look at the block «Domain settings». Select search results format: with images, with descriptions or without any. (For enabling pictures in search results, {0}see corresponding chapter of this instruction{1}). Click «Save».
-h.ds.push_settings_btn=In the block «Design settings» click «Setup» button. Suggest.io will redirect you into your site in setting-edit mode. Suggest.io setting widget will be atop your site.
-h.ds.save=After making necessary changes, click «Save» button. Now, your site search appearance setting is saved in suggest.io database.
-
-h.is.go_to_admin_and_choose_site=Go to suggest.io <a href="{0}">search administation system</a>. Choose site in the left list.
-h.is.enable_images_checkbox=Check the checkbox "Show images".
-h.is.press_save=Press "save" button.
-h.is.reindex_if_templates_changed=If on setup {0} you've changed something in your templates, press «REINDEX» link to start site reindexing. Images in search results will appear by the time of reindexing progress.
-
-please_note=Please note
-h.is.if_og_image_present_reindexing_is_useless=If your site already has og:image-tags (see step {0}), you do NOT need reindexing: just only enable image checkbox.
-h.is.sio_refuses_too_many_reindexings=Suggest.io may refuse reindexing request if there are too often previous reindexings. In such case, try again later.
-
-
-h.ix.sio_developed_for_fast_search_on_the_site=Suggest.io web-service is developed and used for rapid organization of quick live site-level search. Suggest.io can:
-h.ix.connection_site_to_the_system_for_search_needs=Join new web-sites to the search system simple, rapidly and without any server-side logic changes.
-h.ix.indexing_sites_and_searching=Perform real-time site indexing and live searc by any user request.
-h.ix.search_appearance=Create and change search and appearance settings on the fly.
-h.ix.easy_install_and_about_this_doc=Suggest.io setup is very simple and does not need any special expirience. This documentation contains all information, needed for interaction with the service.
-h.ix.sio_develop_in_progress_notice=Suggest.io team continuosly developming the service. Some steps may be slightly differ from information in instruction. In case of any problems feel free to email us to <a href="mailto:{0}">{0}</a>.
-
 and=and
 or=or
-
-
-h.sp.search_setup=Search setup
-h.sp.search_setup_does_not_need_registering_in_following_seq=Search setup does not require creating a user account and execution in following sequence
-h.sp.open_service_main_page=Open service main page
-h.sp.type_site_address_into_field=Type your site address into field «{0}».
-h.sp.press_add_site_btn_near_field=Press button «{0}» right from field «{1}». With button pressing:
-h.sp.sio_generating_js_code_into_field=System replying some javascript code for your site into text field «{0}».
-h.sp.copy_paste_code_to_site=Copy code from field «{0}». Insert this code into your site templates right before closing </body> tag.
-h.sp.open_your_site_and_follow_installation_steps_shown=Open your site and finish installating using windown shown.
-h.sp.setup_finished_with_default_settings=Search setup finished. Suggest.io search settings are set to defaults.
-h.sp.next=Next
-h.sp.sio_going_to_index_site=Suggest.io is started to index your site. Indexing progress is displayed inside special window in {0}admin{1}. Full indexing time depends on site content volume, site speed and suggest.io system load.
-h.sp.if_inputText_exist_sio_will_use_it=If site pages already contains search field, suggest.io will attach to it.
-h.sp.if_no_inputText_then_sio_icon_appears_on_the_corner=If site has no search field, suggest.io will create corner icon. Icon will be converted into search field after click.
 
 i.ci.login=Login
 i.ci.register_and_private_office=Account registration and private office

@@ -12,8 +12,6 @@ import play.api.mvc._
 import util.ContextT
 import util.acl._
 import views.html.static._
-import views.html.help._
-import Application.http404AdHoc
 
 object Static extends Controller with ContextT {
 
@@ -40,15 +38,12 @@ object Static extends Controller with ContextT {
     Redirect(booklet)
   }
 
-
+  /** Тематические страницы помощи. Пока рендерим буклет, т.к. другой инфы нет. */
   def helpPage(page:String) = MaybeAuth { implicit request =>
     // 2014.oct.24: в sio1 live search тут были страницы: "registration", "search_settings", "images_settings", "design_settings", "setup".
-    page match {
-      case "design_settings"  => Ok(designSettingsTpl())
-      case "setup"            => Ok(setupTpl())
-      case _                  => http404AdHoc
-    }
+    Redirect(booklet)
   }
+
 
   /**
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
