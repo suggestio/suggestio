@@ -38,7 +38,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new EmailPwIdentJmx,
     new MozillaPersonaIdentJmx,
     new MPersonJmx,
-    new MBlogJmx,
     new MCompanyJmx,
     new MCalendarJmx,
     new MInviteRequestJmx,

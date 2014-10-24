@@ -198,7 +198,6 @@ constraint.maxLength=Maximum length: {0}
 constraint.email=Email
 
 stuff.menu.ABOUT=ABOUT
-stuff.menu.BLOG=BLOG
 stuff.menu.HELP=HELP
 stuff.menu.LIVE=LIVE
 stuff.menu.CONTACTS=CONTACTS
@@ -211,7 +210,6 @@ site_indexation_caption_initial=LAUNCHING INDEXATION
 site_indexation_caption=INDEXATION IN PROGRESS
 all_rights_reserved=All rights reserved
 locale=en_US
-blog=BLOG
 about_link=ABOUT
 feedback_link=CONTACTS
 undefined_event=undefined event
@@ -297,10 +295,6 @@ c.i.go_to_your_site_after_install=After code copy-paste, visit your site for fin
 custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
 
 blog=Blog
-b.a.record_id=Record id (id)
-b.a.new_blog_record=New blog record
-b.a.edit_blog_record=Edit blog record
-
 help=Help
 
 and=and

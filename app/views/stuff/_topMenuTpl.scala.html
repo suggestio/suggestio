@@ -14,16 +14,6 @@
 
 	<div class="delimiter"></div>
 
-	@defining(Messages("stuff.menu.BLOG")) { blog_str =>
-		@if(activeLink == "blog") {
-		<span class="active-link">@blog_str</span>
-		} else {
-			<a class="menu-link" href="@routes.Blog.recordList">@blog_str</a>
-		}
-	}
-
-	<div class="delimiter"></div>
-
 	@defining(Messages("stuff.menu.HELP")) { help_msg =>
 		@if(activeLink == "help") {
 		<span class="active-link">@help_msg</span>

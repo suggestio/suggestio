@@ -49,20 +49,11 @@ POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessio
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
 GET     /about                          controllers.Static.about
 GET     /showcase                       controllers.Static.showcase
-
-GET     /badbrowser                     controllers.Static.badbrowser
-
-# Пункт меню "Блог"
-GET     /blog                           controllers.Blog.recordList
-GET     /blog/:id                       controllers.Blog.readOne(id:String)
-GET     /blog/delete/:id                controllers.Blog.deleteRecAdmin(id:String)
-GET     /blog/new/                      controllers.Blog.newRec
-POST    /blog/new                       controllers.Blog.newRecSubmit
-GET     /blog/edit/:id                  controllers.Blog.editRec(id:String)
-POST    /blog/edit/:id                  controllers.Blog.editRecSubmit(id:String)
-
+## help редиректит на буклет.
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page)
+
+GET     /badbrowser                     controllers.Static.badbrowser
 
 # Генераторы капч
 GET     /captcha/get/:captchaId         controllers.Captcha.getCaptcha(captchaId)

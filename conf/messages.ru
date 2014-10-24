@@ -202,7 +202,6 @@ constraint.maxLength=Максимальная длина: {0}
 constraint.email=Email
 
 stuff.menu.ABOUT=О ПРОЕКТЕ
-stuff.menu.BLOG=БЛОГ
 stuff.menu.HELP=ПОМОЩЬ
 stuff.menu.LIVE=ВЖИВУЮ
 stuff.menu.CONTACTS=КОНТАКТЫ
@@ -218,7 +217,6 @@ if_no_image=Только если нет картинки
 
 locale=ru_RU
 
-blog=БЛОГ
 about_link=О ПРОЕКТЕ
 feedback_link=КОНТАКТЫ
 
@@ -307,10 +305,6 @@ c.i.go_to_your_site_after_install=После установки кода, зай
 custom_search_solutions_br=разработка<br/>индивидуальных<br/>поисковых<br/>решений.
 
 blog=Blog
-b.a.record_id=Идентификатор записи (id)
-b.a.new_blog_record=Создание записи блога
-b.a.edit_blog_record=Редактирование записи блога
-
 help=Помощь
 
 and=и
