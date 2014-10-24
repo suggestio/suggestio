@@ -10,10 +10,10 @@ package controllers
 
 import play.api.mvc._
 import util.ContextT
-import util.acl._
+import util.acl.MaybeAuth
 import views.html.static._
 
-object Static extends Controller with ContextT {
+object Static extends SioController with ContextT {
 
   private def booklet = routes.Market.marketBooklet().url
 
@@ -29,20 +29,35 @@ object Static extends Controller with ContextT {
 
 
   def badbrowser = MaybeAuth { implicit request =>
-    Ok(badbrowserTpl())
+    cacheControlShort {
+      Ok(badbrowserTpl())
+    }
   }
 
 
   /** Страница /help. Пока редирект на буклет. Когда помощь появится, то её корень лучше всего сделать тут. */
-  def help = MaybeAuth { implicit request =>
-    Redirect(booklet)
+  def help = Action { implicit request =>
+    cacheControlShort {
+      Redirect(booklet)
+    }
   }
 
   /** Тематические страницы помощи. Пока рендерим буклет, т.к. другой инфы нет. */
-  def helpPage(page:String) = MaybeAuth { implicit request =>
+  def helpPage(page:String) = Action { implicit request =>
     // 2014.oct.24: в sio1 live search тут были страницы: "registration", "search_settings", "images_settings", "design_settings", "setup".
-    Redirect(booklet)
+    cacheControlShort {
+      Redirect(booklet)
+    }
   }
+
+  /** Удаление blog-контроллера привело к тому, что часть ссылок в поисковиках накрылась медным тазом.
+    * Тут -- compat-костыль для редиректа обращений к блогу на буклет. */
+  def blogIndex = Action { implicit request =>
+    cacheControlShort {
+      Redirect(booklet)
+    }
+  }
+  def blogPage(path: String) = blogIndex
 
 
   /**

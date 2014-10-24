@@ -52,7 +52,9 @@ GET     /showcase                       controllers.Static.showcase
 ## help редиректит на буклет.
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page)
-
+## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
+GET     /blog                           controllers.Static.blogIndex
+GET     /blog/:path                     controllers.Static.blogPage(path)
 GET     /badbrowser                     controllers.Static.badbrowser
 
 # Генераторы капч
