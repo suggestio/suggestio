@@ -302,11 +302,6 @@ b.a.new_blog_record=New blog record
 b.a.edit_blog_record=Edit blog record
 
 help=Help
-h.m.setup=Quick install
-h.m.registration=Register
-h.m.search_settings=Search settings
-h.m.images_settings=Images in the search results
-h.m.design_settings=Design settings
 
 h.ds.search_apperance_settings=Search window appearance
 h.ds.search_hit_apperance_settings=Search hit appearance 
@@ -333,7 +328,6 @@ h.is.if_og_image_present_reindexing_is_useless=If your site already has og:image
 h.is.sio_refuses_too_many_reindexings=Suggest.io may refuse reindexing request if there are too often previous reindexings. In such case, try again later.
 
 
-h.ix.brief_info=General information
 h.ix.sio_developed_for_fast_search_on_the_site=Suggest.io web-service is developed and used for rapid organization of quick live site-level search. Suggest.io can:
 h.ix.connection_site_to_the_system_for_search_needs=Join new web-sites to the search system simple, rapidly and without any server-side logic changes.
 h.ix.indexing_sites_and_searching=Perform real-time site indexing and live searc by any user request.
@@ -344,27 +338,6 @@ h.ix.sio_develop_in_progress_notice=Suggest.io team continuosly developming the 
 and=and
 or=or
 
-
-h.r.create_account_and_verify_site=Create account and verify site
-h.r.creating_account=Creating account
-h.r.creating_account_takes_ability_to=Creating account takes abilities to
-h.r.connect_new_sites_from_lk=connect new sites to suggest.io system from your personal account form
-h.r.tweak_appearance_and_behaviour=alter search appearance and behaviour settings on verified sites
-h.r.sio_supports_mpersona=Suggest.io supports Mozilla Persona authentication technique. Creating new user account takes place in the following sequence
-h.r.press_login_in_the_corner=Press login icon in top right corner on suggest.io main page.
-h.r.mpersona_type_email_password_register=In the opened window, type your email and password. If you not used Mozilla Person earlier, you need to pass the simple signup procedure.
-h.r.add_verify_sites=Sites addition and validation
-h.r.press_add_site_in_lk=Proceed to {0}your personal account panel{1} and press «Add site» button.
-h.r.type_site_addr_in_field=Type your site address in appeared field «{0}».
-h.r.after_addr_shown_next_copy_txt_file=After proceeding point {0}: site address appeared in your sites list. Suggest.io offers you to download validation file (further - "txt-file") to ensure, that you have rights to control the site selected
-h.r.download_validation_txt=Download txt-file from opened window «{0}».
-h.r.save_txt_to_site_root=Upload this txt-file to the your site as root-level resource.
-h.r.for_eg_download_and_save_file=For example: You have added site «{0}», and suggest.io offered you to download file «{1}». To pass the verification, you need to make this file globally available via http://{0}/{1} link (or any similar links with «https» and/or «www» prefixes).
-h.r.press_recheck_in_lk=In {0}admin{1} click on «Recheck» button.
-h.r.sio_robo_will_recheck_v_flag_appers=Suggest.io system will verify the file on your site. After verification, address will be marked with «V» sign in your site list.
-h.r.register_and_verify_done_settings_available=Creating an account and site verification are finished. In {0}admin page{1} all search settings become available.
-h.r.removing_txt_will_remove_validation=If someone will remove txt-file from your site in future, all user rights will be revoked in a half of hour.
-h.r.use_other_fmt_if_txt_unavailable=txt-file contains comments and some code. Suggest.io system expects to see at least this code in the validation URL response. If you cannot just copy-paste txt-file as-is, you can always create some html-page or other plain-text file and copy-paste verification code into it.
 
 h.ss.search_settings=Search settings
 multilingual_site=Multilingual site
