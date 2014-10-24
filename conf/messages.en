@@ -300,13 +300,6 @@ help=Help
 and=and
 or=or
 
-i.ci.login=Login
-i.ci.register_and_private_office=Account registration and private office
-i.ci.to_access_settings_register=To gain access to search and appearance settings you need to login into system. If your account not yet exist, it will be created.
-i.ci.your_site_will_be_added_to_priv_office=Your site will be linked to your account automatically.
-i.ci.we_are_using_mozilla_persona=We using Mozilla Persona as simple and secure authentication mechanism.
-i.ci.login_into=Login into system
-
 s.bb.title=Browser check
 
 

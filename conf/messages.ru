@@ -310,13 +310,6 @@ help=Помощь
 and=и
 or=или
 
-i.ci.login=Вход в систему
-i.ci.register_and_private_office=Регистрация и вход в личный кабинет
-i.ci.to_access_settings_register=Чтобы иметь постоянный доступ к настройкам поиска на вашем сайте, пройдите процесс быстрой регистрации.
-i.ci.your_site_will_be_added_to_priv_office=Ваш сайт будет автоматически добавлен в личный кабинет.
-i.ci.we_are_using_mozilla_persona=Для простой и безопасной аутентификации пользователей мы используем Mozilla Persona.
-i.ci.login_into=Войти на сайт
-
 s.bb.title=Настройка браузера
 
 mappers.url.invalid_url=Некорректный URL.
