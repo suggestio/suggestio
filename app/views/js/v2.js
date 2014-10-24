@@ -119,12 +119,12 @@
 			if( is_retina() == true )
 			{
 				var _dms = _sf_o.gen_params['ds_retina'].split('x');
-				return '.sio-custom-icon { width: ' + _dms[0]/2 + 'px!important; height: ' + _dms[1]/2 + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '-retina.png?v=1\') no-repeat!important; background-size: ' + _dms[0]/2 + 'px ' + _dms[1]/2 + 'px!important; }';
+				return '.sio-custom-icon { width: ' + _dms[0]/2 + 'px!important; height: ' + _dms[1]/2 + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '-retina.png\') no-repeat!important; background-size: ' + _dms[0]/2 + 'px ' + _dms[1]/2 + 'px!important; }';
 			}
 			else
 			{
 				var _dms = _sf_o.gen_params['ds'].split('x');
-				return '.sio-custom-icon { width: ' + _dms[0] + 'px!important; height: ' + _dms[1] + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '.png?v=1\') no-repeat!important; }';
+				return '.sio-custom-icon { width: ' + _dms[0] + 'px!important; height: ' + _dms[1] + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '.png\') no-repeat!important; }';
 			}
 				
 		},
