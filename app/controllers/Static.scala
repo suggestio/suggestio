@@ -5,6 +5,7 @@ package controllers
  * Date: 16.05.13
  * Time: 13:34
  * Статика всякая.
+ * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
  */
 
 import play.api.mvc._
@@ -16,8 +17,10 @@ import Application.http404AdHoc
 
 object Static extends Controller with ContextT {
 
-  def about = MaybeAuth { implicit request =>
-    Ok(aboutTpl())
+  // Страница /about.
+  def about = Action { implicit request =>
+    // 2014.oct.24: Удалёна страница about live search. Теперь sio-market.
+    MovedPermanently( routes.Market.marketBooklet().url )
   }
 
 
@@ -28,7 +31,6 @@ object Static extends Controller with ContextT {
 
   def badbrowser = MaybeAuth { implicit request =>
     Ok(badbrowserTpl())
-
   }
 
 
