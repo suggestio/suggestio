@@ -23,11 +23,6 @@ object Application extends SioController with PlayMacroLogsImpl {
     Ok(indexTpl())
   }
 
-  /** Форма быстрого поиска на произвольном сайте. Используется в служебных целях в основном, в /sys/. */
-  def search = MaybeAuth { implicit request =>
-    Ok(searchTpl())
-  }
-
   def xd_server  = MaybeAuth { implicit request =>
     Ok(xdServerTpl())
   }

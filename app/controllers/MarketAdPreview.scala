@@ -129,7 +129,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
         oiik.getBaseImageWH
           .recover {
             case ex: Exception =>
-              error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
+              error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from storage", ex)
               None
           }
     }

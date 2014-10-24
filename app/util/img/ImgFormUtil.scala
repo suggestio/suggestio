@@ -700,7 +700,7 @@ sealed trait ImgIdKey {
   /** Выдать оригинал во временный файл MPictureTmp. */
   def toTempPictOrig: Future[MPictureTmp]
 
-  // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
+  // Определение column qualifier для сохранения/чтения картинки по этому ключу.
   def origQualifierOpt = cropOpt.map { _.toCropStr }
   def origQualifier = ImgIdKey.origQualifier(cropOpt)
 
