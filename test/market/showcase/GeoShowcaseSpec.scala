@@ -1,6 +1,7 @@
 package market.showcase
 
 import controllers.routes
+import functional._
 import org.scalatestplus.play._
 import play.api.test.FakeApplication
 
@@ -45,6 +46,15 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
   }
 }
 
+// Тесты для реальных браузеров:
 class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
-class GeoShowcaseSpecHU extends GeoShowcaseSpecT with HtmlUnitFactory
 //class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO Починить. Что-то астральное.
+
+// HtmlUnit-тесты:
+class GeoShowcaseSpecHuIe8 extends GeoShowcaseSpecT with HtmlUnitIE8Factory
+class GeoShowcaseSpecHuIe9 extends GeoShowcaseSpecT with HtmlUnitIE9Factory
+class GeoShowcaseSpecHuIe11 extends GeoShowcaseSpecT with HtmlUnitIE11Factory
+class GeoShowcaseSpecHuFF17 extends GeoShowcaseSpecT with HtmlUnitFF17Factory
+class GeoShowcaseSpecHuFF24 extends GeoShowcaseSpecT with HtmlUnitFF24Factory
+class GeoShowcaseSpecHuChrome extends GeoShowcaseSpecT with HtmlUnitChromeFactory
+
