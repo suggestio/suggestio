@@ -4,7 +4,6 @@ import play.api.mvc._
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.cdn.CorsUtil
-import views.html.crawl._
 import views.html.stuff._
 import play.api.i18n.Lang
 import play.api.Play.{current, configuration}
@@ -15,13 +14,6 @@ import util.SiowebEsUtil.client
 object Application extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
-
-  /**
-   * Выдача главной страницы
-   */
-  def index = MaybeAuth { implicit request =>
-    Ok(indexTpl())
-  }
 
   def xd_server  = MaybeAuth { implicit request =>
     Ok(xdServerTpl())

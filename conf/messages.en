@@ -204,8 +204,6 @@ stuff.menu.CONTACTS=CONTACTS
 
 
 live_search_for_your_website=Live search for your website
-c.i.provide_site_url_to_init_search=Type in your website address to join search system
-c.i.copy_js_to_your_site=Copy this JavaScript code into your site
 site_indexation_caption_initial=LAUNCHING INDEXATION
 site_indexation_caption=INDEXATION IN PROGRESS
 all_rights_reserved=All rights reserved
@@ -290,8 +288,6 @@ overloaded_message=Temporarily overloaded. Try again later.
 recheck=Recheck
 
 copy_js_code_to_your_site=Copy the following JavaScript code and paste in into your site pages
-c.i.code_must_be_on_all_site_pages=Ensure that code present on all pages of your site.
-c.i.go_to_your_site_after_install=After code copy-paste, visit your site for finishing installation and accessing search settings.
 custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
 
 blog=Blog
