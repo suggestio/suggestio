@@ -44,7 +44,6 @@ object Static extends Controller with ContextT {
   def helpPage(page:String) = MaybeAuth { implicit request =>
     // 2014.oct.24: в sio1 live search тут были страницы: "registration", "search_settings", "images_settings", "design_settings", "setup".
     page match {
-      case "search_settings"  => Ok(searchSettingsTpl())
       case "images_settings"  => Ok(imagesSettingsTpl())
       case "design_settings"  => Ok(designSettingsTpl())
       case "setup"            => Ok(setupTpl())
