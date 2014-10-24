@@ -45,10 +45,9 @@ POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain
 GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
 POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
 
-# Пункт меню "О проекте"
+## compat
+## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
 GET     /about                          controllers.Static.about
-
-# Пункт меню "Вживую"
 GET     /showcase                       controllers.Static.showcase
 
 GET     /badbrowser                     controllers.Static.badbrowser
@@ -172,7 +171,6 @@ GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
 
 # Витрина market'а и её экшены
 GET  /b/svg/:svgTpl                     controllers.MarketShowcase.blockSvg(svgTpl: BlockSvg, c: BSvgColorMap)
-GET  /market/demo                       controllers.MarketShowcase.demoShowcase
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
 

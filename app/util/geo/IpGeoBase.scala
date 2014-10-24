@@ -4,17 +4,18 @@ import java.io._
 import java.net.{URL, InetAddress}
 import java.sql.Connection
 import java.util.Comparator
-import models.{IpGeoBaseCity, IpGeoBaseRange}
+import models.{CronTask, IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
 import play.api.db.{HasInternalConnection, DB}
-import util.PlayMacroLogsImpl
+import util.{CronTasksProvider, PlayMacroLogsImpl}
 
 import scala.annotation.tailrec
 import scala.io.Source
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
+import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
 import dispatch._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -25,7 +26,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 11.08.14 14:03
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
-object IpGeoBaseImport extends PlayMacroLogsImpl {
+object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
 
   import LOGGER._
 
@@ -55,6 +56,22 @@ object IpGeoBaseImport extends PlayMacroLogsImpl {
   /** Кодировка содержимого файла городов. */
   def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding") getOrElse IP_RANGES_FILE_ENCODING
 
+
+  override def cronTasks: TraversableOnce[CronTask] = {
+    if (IS_ENABLED) {
+      // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
+      val task = CronTask(
+        startDelay = 20 seconds,
+        every = 1 day,
+        displayName = "updateIpBase()"
+      ) {
+        updateIpBase()
+      }
+      Seq(task)
+    } else {
+      Nil
+    }
+  }
 
   /** Скачать файл с дампом базы в tmp. */
   def download(): Future[File] = {

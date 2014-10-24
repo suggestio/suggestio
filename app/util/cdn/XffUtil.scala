@@ -21,7 +21,7 @@ object XffUtil {
   lazy val DUMP_HEADER_NAMES: Seq[String] = {
     configuration.getStringList("xff.dump.headers.names")
       .map(_.toSeq)
-      .getOrElse { Seq(X_FORWARDED_FOR, "X-Client-Ip", "X-Real-Ip") }
+      .getOrElse { Seq(X_FORWARDED_FOR, "X-Client-Ip", "X-Real-Ip", X_FORWARDED_PROTO, X_FORWARDED_HOST) }
   }
 
 }

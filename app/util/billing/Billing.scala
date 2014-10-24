@@ -7,7 +7,7 @@ import play.api.db.DB
 import org.joda.time.{Period, DateTime}
 import util.anorm.AnormPgInterval
 import scala.concurrent.duration._
-import util.PlayMacroLogsImpl
+import util.{CronTasksProvider, PlayMacroLogsImpl}
 import AnormPgInterval._
 
 /**
@@ -16,14 +16,31 @@ import AnormPgInterval._
  * Created: 18.04.14 12:09
  * Description: Утиль для работы с биллингом, с финансовыми транзакциями.
  */
-object Billing extends PlayMacroLogsImpl {
+object Billing extends PlayMacroLogsImpl with CronTasksProvider {
 
   import LOGGER._
 
+  /** Включено ли периодическое списание денег по крону? */
+  def CRON_FEE_CHECK_ENABLED: Boolean = configuration.getBoolean("tariff.apply.every.enabled") getOrElse true
+
   /** Запускать тарификацию каждые n времени. */
-  val TARIFFICATION_EVERY_MINUTES: Int = configuration.getInt("tariff.apply.every.minutes").getOrElse(20)
+  def TARIFFICATION_EVERY_MINUTES: Int = configuration.getInt("tariff.apply.every.minutes").getOrElse(20)
   val TARIFFICATION_PERIOD = new Period(0, TARIFFICATION_EVERY_MINUTES, 0, 0)
   def SCHED_TARIFFICATION_DURATION = TARIFFICATION_EVERY_MINUTES minutes
+
+
+  /** Набор периодических задач для крона. */
+  override def cronTasks = {
+    if (CRON_FEE_CHECK_ENABLED) {
+      val task = CronTask(startDelay = 10 seconds, every = SCHED_TARIFFICATION_DURATION, displayName = "processFeeTarificationAll()") {
+        processFeeTarificationAll()
+      }
+      Seq(task)
+    } else {
+      Nil
+    }
+  }
+
 
   /** Инициализировать биллинг на узле. */
   def maybeInitializeNodeBilling(adnId: String) {
@@ -97,7 +114,7 @@ object Billing extends PlayMacroLogsImpl {
       MBillTariffFee.findAllNonDebitedContractActive
     }
     // Есть на руках раскладка по тарифам. Пора пройтись по активным тарифам и попытаться выполнить списания.
-    if (!feeTariffs.isEmpty) {
+    if (feeTariffs.nonEmpty) {
       debug(s"processFeeTarificationAll(): There are ${feeTariffs.size} fee-tariffs to process...")
       val contracts = DB.withConnection { implicit c =>
         MBillContract.findAllActive

@@ -7,7 +7,7 @@ import org.joda.time.DateTimeConstants._
 import util.adv.AdvUtil
 import scala.annotation.tailrec
 import util.blocks.{BfHeight, BlocksUtil, BlocksConf}
-import util.PlayMacroLogsImpl
+import util.{CronTasksProvider, PlayMacroLogsImpl}
 import play.api.db.DB
 import play.api.Play.{current, configuration}
 import io.suggest.ym.parsers.Price
@@ -30,9 +30,12 @@ import scala.collection.JavaConversions._
  * Created: 28.05.14 19:04
  * Description: Утиль для работы с биллингом, где имеют вес площади и расценки получателя рекламы.
  */
-object MmpDailyBilling extends PlayMacroLogsImpl {
+object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
 
   import LOGGER._
+
+  /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
+  def CRON_BILLING_CHECK_ENABLED: Boolean = configuration.getBoolean("mmp.daily.check.enabled") getOrElse true
 
   /** Сколько раз пытаться повторять сохранение обновлённого списка ресиверов. */
   val UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX = configuration.getInt("mmp.daily.save.update.rcvrs.onConflict.try.max") getOrElse 5
@@ -41,7 +44,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
-  val CHECK_ADVS_OK_DURATION: FiniteDuration = configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
+  def CHECK_ADVS_OK_DURATION: FiniteDuration = configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
     .getOrElse(120)
     .seconds
 
@@ -62,6 +65,38 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     HolidayManager.getInstance(
       new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
     )
+  }
+
+
+  override def cronTasks = {
+    if (CRON_BILLING_CHECK_ENABLED) {
+      val every = CHECK_ADVS_OK_DURATION
+      val applyOldReqs = CronTask(
+        startDelay = 3 seconds,
+        every = every,
+        displayName = "autoApplyOldAdvReqs()"
+      ) {
+        autoApplyOldAdvReqs()
+      }
+      val depubExpired = CronTask(
+        startDelay = 10 seconds,
+        every = every,
+        displayName = "depublishExpiredAdvs()"
+      ) {
+        depublishExpiredAdvs()
+      }
+      val advOfflineAdvs = CronTask(
+        startDelay = 30 seconds,
+        every = every,
+        displayName = "advertiseOfflineAds()"
+      ) {
+        advertiseOfflineAds()
+      }
+      List(applyOldReqs, depubExpired, advOfflineAdvs)
+
+    } else {
+      Nil
+    }
   }
 
   /**

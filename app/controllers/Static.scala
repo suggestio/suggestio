@@ -5,48 +5,45 @@ package controllers
  * Date: 16.05.13
  * Time: 13:34
  * Статика всякая.
+ * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
  */
 
 import play.api.mvc._
 import util.ContextT
 import util.acl._
 import views.html.static._
-import views.html.help._
-import Application.http404AdHoc
 
 object Static extends Controller with ContextT {
 
-  def about = MaybeAuth { implicit request =>
-    Ok(aboutTpl())
+  private def booklet = routes.Market.marketBooklet().url
+
+  /** Страница /about. Раньше там были слайд-презентация s.io live search. */
+  def about = Action { implicit request =>
+    MovedPermanently(booklet)
   }
 
-
-  def showcase = MaybeAuth { implicit request =>
-    Ok(showcaseTpl())
+  /** Страница /showcase. Там была плитка из превьюшек сайтов, которые используют s.io live search. */
+  def showcase = Action { implicit request =>
+    MovedPermanently(booklet)
   }
 
 
   def badbrowser = MaybeAuth { implicit request =>
     Ok(badbrowserTpl())
-
   }
 
 
+  /** Страница /help. Пока редирект на буклет. Когда помощь появится, то её корень лучше всего сделать тут. */
   def help = MaybeAuth { implicit request =>
-    Ok(indexTpl())
+    Redirect(booklet)
   }
 
-
+  /** Тематические страницы помощи. Пока рендерим буклет, т.к. другой инфы нет. */
   def helpPage(page:String) = MaybeAuth { implicit request =>
-    page match {
-      case "registration"     => Ok(registrationTpl())
-      case "search_settings"  => Ok(searchSettingsTpl())
-      case "images_settings"  => Ok(imagesSettingsTpl())
-      case "design_settings"  => Ok(designSettingsTpl())
-      case "setup"            => Ok(setupTpl())
-      case _                  => http404AdHoc
-    }
+    // 2014.oct.24: в sio1 live search тут были страницы: "registration", "search_settings", "images_settings", "design_settings", "setup".
+    Redirect(booklet)
   }
+
 
   /**
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
