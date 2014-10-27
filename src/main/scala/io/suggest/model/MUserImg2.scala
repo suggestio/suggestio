@@ -25,6 +25,7 @@ case class MUserImg2(
 
   def save = MUserImg2.insertImg(this)
   def delete = MUserImg2.deleteById(id)
+  def isExists = MUserImg2.isExists(id, Some(q))
 }
 
 
@@ -51,6 +52,14 @@ sealed class MUserImgRecord extends CassandraTable[MUserImgRecord, MUserImg2] {
 object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord, MUserImg2] with DeleteByStrId {
 
   override val tableName = "i2"
+
+  def isExists(id: UUID, q: Option[String] = None): Future[Boolean] = {
+    count
+      .where(_.id eqs id)
+      .limit(1)
+      .one()
+      .map { _.exists(_ > 0L) }
+  }
 
   def getByStrId(idStr: String, q: Option[String] = None): Future[Option[MUserImg2]] = {
     val id = UuidUtil.base64ToUuid(idStr)
