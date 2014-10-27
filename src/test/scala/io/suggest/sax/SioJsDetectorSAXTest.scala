@@ -120,7 +120,9 @@ class SioJsDetectorSAXTest extends FlatSpec with Matchers {
 
   // Сами тесты сайтов начинаются тут
   "testUrl() detector" should "see v2 in LDPR.RU" in {
-    testUrl("http://ldpr.ru/") should equal (List(SioJsV2("ldpr.ru", "fbeCwnu6")))
+    // 2014.oct.27: Старый s.io live search был дропнут.
+    //testUrl("http://ldpr.ru/") should equal(List(SioJsV2("ldpr.ru", "fbeCwnu6")))
+    pending
   }
 
   it should "see v2 in aversimage.ru" in {

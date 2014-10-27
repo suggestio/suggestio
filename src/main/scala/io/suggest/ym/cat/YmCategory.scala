@@ -90,12 +90,13 @@ object YmCategory {
   /** Совместимое дерево категорий без "Всех товаров". */
   val CAT_TREE_CORE = {
     val headCat = CAT_TREE.cats.head
-    headCat._2.subcatsOpt match {
-      case Some(x) => YmCategoryRoot(x)
+    val treeMap = headCat._2.subcatsOpt match {
+      case Some(x) => x
       case None =>
         println("Unexpected headCat in CAT_TREE:\n " + headCat)
-        ???
+        CAT_TREE.cats
     }
+    YmCategoryRoot(treeMap)
   }
 
 

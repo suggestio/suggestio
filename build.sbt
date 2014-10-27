@@ -106,14 +106,13 @@ libraryDependencies ++= {
   )
 }
 
-// Нужно генерить текстовое дерево категорий на основе xls-списка категорий яндекс-маркета.
-// Для этого надо скачать и распарсить xls-файл. Для работы нужна xls2csv.
-resourceGenerators in Compile <+= Def.task {
-  // Подготовка к созданию csv-файла
-  val csvFileDir = (resourceManaged in Compile).value / "ym" / "cat"
-  val csvFile = csvFileDir / "market_category.csv"
-  if (!csvFile.exists) {
-    val xlsFilename = "market_categories.xls"
+// Скачивание файла с категориями яндекс.маркета и его парсинг доступен по команде из консоли updateMarketCategoriesCsv.
+// Это перезапишет файл категорий в src/main/resources.
+lazy val updateMarketCategoriesCsv = taskKey[Int]("Download and parse market_categories.xml into resource_managed.")
+
+updateMarketCategoriesCsv := {
+  val mcCsvFileName = "market_category.csv"
+  val xlsFilename = "market_categories.xls"
     val xlsFile = target.value / xlsFilename
     if (!xlsFile.exists) {
       // xls-файл ещё не скачан. Нужно вызвать download сначала
@@ -124,6 +123,8 @@ resourceGenerators in Compile <+= Def.task {
       IO.download(new URL(xlsUrl), xlsFile)
       println("Downloaded " + xlsFile.toString + " OK")
     }
+    val csvFileDir = (resourceDirectory in Compile).value / "ym" / "cat"
+    val csvFile = csvFileDir / mcCsvFileName
     // Сгенерить на основе вендового xls-файла хороший годный csv-ресурс
     if (!csvFileDir.isDirectory) {
       csvFileDir.mkdirs()
@@ -136,7 +137,5 @@ resourceGenerators in Compile <+= Def.task {
     // 2014.02.28: Яндекс поменял формат своей доки. Теперь всё добро свалено в одном столбце, и появилась корневая категория "Все товары".
     val cmd1 = List("sed", "-e", "s@ / @/@g", "-e", "s/^\"//", "-e", "s/\"$//", "-i", csvFile.toString)
     cmd1 !
-  }
-  Seq(csvFile)
 }
 
