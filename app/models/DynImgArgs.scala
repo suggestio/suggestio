@@ -19,6 +19,7 @@ import scala.util.Random
  * чтобы избежать модификации аргументов на клиенте.
  * Контроллер, получая эти аргументы, должен выдать картинку, или произвести её на основе оригинала.
  */
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 object DynImgArgs extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
@@ -27,7 +28,7 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
   private val IMG_ID_SUF = ".id"
 
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
-  private val SIGN_SECRET: String = {
+  private[models] val SIGN_SECRET: String = {
     val confKey = "dynimg.sign.key"
     configuration.getString(confKey) getOrElse {
       if (play.api.Play.isProd) {
@@ -103,6 +104,7 @@ object DynImgArgs extends PlayLazyMacroLogsImpl {
  * @param imgId ID (rowkey) картинки, производную от которой надо получить.
  * @param imOps трансформации, которые необходимо сделать.
  */
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 case class DynImgArgs(
   imgId       : ImgIdKey,
   imOps       : Seq[ImOp]

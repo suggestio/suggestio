@@ -7,11 +7,15 @@ import io.suggest.util.UuidUtil
 import models.{ImgMetaI, MImgInfoMeta}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.QueryStringBindable
+import util.qsb.QsbSigner
 import util.{PlayLazyMacroLogsImpl, AsyncUtil}
 import play.api.Play.{current, configuration}
 import util.img.ImgFormUtil
 
+import scala.annotation.tailrec
 import scala.concurrent.Future
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -24,9 +28,84 @@ import scala.concurrent.Future
  * которые не понимали dynImg-синтаксис.
  * Все данные картинок хранятся в локальной ненадежной кеширующей модели и в постояной моделях (cassandra и др.).
  */
-object MImg {
+object MImg extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   val ORIG_META_CACHE_SECONDS: Int = configuration.getInt("m.img.org.meta.cache.ttl.seconds") getOrElse 60
+
+  val SIGN_SUF   = ".sig"
+  val IMG_ID_SUF = ".id"
+
+
+  /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
+  private[models] val SIGN_SECRET: String = {
+    val confKey = "dynimg.sign.key"
+    configuration.getString(confKey) getOrElse {
+      if (play.api.Play.isProd) {
+        // В продакшене без ключа нельзя. Генерить его и в логи писать его тоже писать не стоит наверное.
+        throw new IllegalStateException(s"""Production mode without dyn-img signature key defined is impossible. Please define '$confKey = ' like 'application.secret' property with 64 length.""")
+      } else {
+        // В devel/test-режимах допускается использование рандомного ключа.
+        val rnd = new Random()
+        val len = 64
+        val sb = new StringBuilder(len)
+        // Избегаем двойной ковычи в ключе, дабы не нарываться на проблемы при копипасте ключа в конфиг.
+        @tailrec def nextPrintableCharNonQuote: Char = {
+          val next = rnd.nextPrintableChar()
+          if (next == '"' || next == '\\')
+            nextPrintableCharNonQuote
+          else
+            next
+        }
+        for(i <- 1 to len) {
+          sb append nextPrintableCharNonQuote
+        }
+        val result = sb.toString()
+        warn(s"""Please define secret key for dyn-img cryto-signing in application.conf:\n  $confKey = "$result" """)
+        result
+      }
+    }
+  }
+
+  /** routes-биндер для query-string. */
+  implicit def qsb(implicit uuidB: QueryStringBindable[UUID],  imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
+    new QueryStringBindable[MImg] {
+
+      /** Создать подписывалку для qs. */
+      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$SIGN_SUF")
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImg]] = {
+        // Собираем результат
+        val keyDotted = s"$key."
+        for {
+          // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
+          params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
+          maybeImgId      <- uuidB.bind(key + IMG_ID_SUF, params2)
+          maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
+        } yield {
+          maybeImgId.right.flatMap { imgId =>
+            maybeImOpsOpt.right.map { imOpsOpt =>
+              val imOps = imOpsOpt.getOrElse(Nil)
+              MImg(imgId, imOps)
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MImg): String = {
+        val imgIdRaw = uuidB.unbind(key + IMG_ID_SUF, value.rowKey)
+        val imgOpsOpt = if (value.hasImgOps) Some(value.dynImgOps) else None
+        val imOpsUnbinded = imOpsOptB.unbind(s"$key.", imgOpsOpt)
+        val unsignedResult = if (imOpsUnbinded.isEmpty) {
+          imgIdRaw
+        } else {
+          imgIdRaw + "&" + imOpsUnbinded
+        }
+        getQsbSigner(key).mkSigned(key, unsignedResult)
+      }
+    }
+  }
 
 }
 
@@ -102,13 +181,19 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends ImgFilename with Dyn
         }
       val localInst = toLocalInstance
       if (localInst.isExists) {
-        val localFut = localInst.metadata recoverWith {
-          case ex: Exception =>
-            warn(s"Failed to read local img metadata from ${localInst.filename}", ex)
-            mimg2Fut
-        }
-        val futures = Seq(mimg2Fut, localFut)
-        Future firstCompletedOf futures
+        val localFut = localInst.metadata
+        mimg2Fut
+          .filter(_.isDefined)
+          .recoverWith {
+            case ex: Exception =>
+              warn("Unable to read img info meta from remote storage: " + filename, ex)
+              localFut
+          }
+          .recover {
+            case ex: Exception =>
+              warn("Unable to read img info meta from all models: " + filename, ex)
+              None
+          }
       } else {
         mimg2Fut
       }

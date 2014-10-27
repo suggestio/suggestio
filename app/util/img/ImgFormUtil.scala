@@ -649,6 +649,7 @@ trait SqLogoImageUtil extends SiowebImageUtilT {
 object LogoImageUtil extends SqLogoImageUtil
 
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 object ImgIdKey {
   def apply(key: String): ImgIdKey = {
     if (key startsWith MPictureTmp.KEY_PREFIX) {
@@ -685,6 +686,7 @@ object ImgIdKey {
 
 }
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 sealed trait ImgIdKey {
   def filename: String
   def isExists: Future[Boolean]
@@ -717,6 +719,7 @@ sealed trait ImgIdKey {
 }
 
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 object TmpImgIdKey {
 
   val GET_IMAGE_WH_CACHE_DURATION = configuration.getInt("tiik.getImageWH.cache.minutes").getOrElse(1).minutes
@@ -732,6 +735,7 @@ object TmpImgIdKey {
 
 }
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends ImgIdKey with MImgInfoT {
 
   @JsonIgnore
@@ -820,6 +824,7 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
 }
 
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 object OrigImgIdKey {
   import io.suggest.img.ImgUtilParsers._
   import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
@@ -887,6 +892,7 @@ object OrigImgIdKey {
 }
 
 // TODO cropOpt нужно убрать отсюда, т.к. кропы старого формата больше не хранятся.
+@deprecated("Use Seq[ImOp] instead", "2014.oct.27")
 case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
   def toFilename: String = {
     var sbSz: Int = rowKey.length
@@ -906,6 +912,7 @@ case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
  * @param meta Метаданные
  * @param data Данные хранения. Ключ ряда например.
  */
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val data: OrigImgData)
   extends MImgInfoT with ImgIdKey
 {
