@@ -1,15 +1,17 @@
 package models.im
 
+import java.nio.ByteBuffer
 import java.util.UUID
 
-import io.suggest.model.{MUserImgMeta2, MUserImg2}
+import io.suggest.model.{MPict, MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
 import models.{ImgMetaI, MImgInfoMeta}
+import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
-import util.{PlayLazyMacroLogsImpl, AsyncUtil}
+import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl, AsyncUtil}
 import play.api.Play.{current, configuration}
 import util.img.ImgFormUtil
 
@@ -113,7 +115,7 @@ object MImg extends PlayLazyMacroLogsImpl {
 import MImg._
 
 
-case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends ImgFilename with DynImgOpsString with PlayLazyMacroLogsImpl {
+case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
@@ -121,10 +123,11 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends ImgFilename with Dyn
 
   lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
 
-  lazy val qOpt: Option[String] = {
+  override lazy val dynImgOpsString = super.dynImgOpsString
+
+  def qOpt: Option[String] = {
     if (dynImgOps.nonEmpty) {
-      val q = ImOp.unbindImOps("", dynImgOps, withOrderInx = false)
-      Some(q)
+      Some( dynImgOpsString )
     } else {
       None
     }
@@ -146,7 +149,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends ImgFilename with Dyn
   override lazy val filename: String = super.filename
 
   /** Прочитать картинку из реального хранилища в файл, если ещё не прочитана. */
-  lazy val toLocalPic: Future[Option[MLocalImg]] = {
+  lazy val toLocalImg: Future[Option[MLocalImg]] = {
     val inst = toLocalInstance
     if (inst.isExists) {
       Future successful Some(inst)
@@ -161,43 +164,126 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends ImgFilename with Dyn
     }
   }
 
+  /** Закешированный результат чтения метаданных из постоянного хранилища. */
+  lazy val permMetaCached: Future[Option[MUserImgMeta2]] = {
+    Cache.getOrElse(filename + ".giwh", expiration = ORIG_META_CACHE_SECONDS) {
+      MUserImgMeta2.getById(rowKey, qOpt)
+    }
+  }
 
   /**
    * Узнать параметры изображения, описываемого экземпляром этой модели.
    * @return Фьючерс с пиксельным размером картинки.
    */
   lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
-    Cache.getOrElse(filename + ".giwh", expiration = ORIG_META_CACHE_SECONDS) {
-      // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
-      val mimg2Fut = MUserImgMeta2.getById(rowKey, qOpt)
-        .map { imetaOpt =>
-          for {
-            imeta     <- imetaOpt
-            widthStr  <- imeta.md.get(ImgFormUtil.IMETA_WIDTH)
-            heightStr <- imeta.md.get(ImgFormUtil.IMETA_HEIGHT)
-          } yield {
-            MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-          }
+    // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
+    val mimg2Fut = permMetaCached
+      .map { imetaOpt =>
+        for {
+          imeta     <- imetaOpt
+          widthStr  <- imeta.md.get(ImgFormUtil.IMETA_WIDTH)
+          heightStr <- imeta.md.get(ImgFormUtil.IMETA_HEIGHT)
+        } yield {
+          MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
         }
-      val localInst = toLocalInstance
-      if (localInst.isExists) {
-        val localFut = localInst.metadata
-        mimg2Fut
-          .filter(_.isDefined)
-          .recoverWith {
-            case ex: Exception =>
-              warn("Unable to read img info meta from remote storage: " + filename, ex)
-              localFut
-          }
-          .recover {
-            case ex: Exception =>
-              warn("Unable to read img info meta from all models: " + filename, ex)
-              None
-          }
-      } else {
-        mimg2Fut
       }
+    val localInst = toLocalInstance
+    if (localInst.isExists) {
+      val localFut = localInst.getImageWH
+      mimg2Fut
+        .filter(_.isDefined)
+        .recoverWith {
+          case ex: Exception =>
+            warn("Unable to read img info meta from remote storage: " + filename, ex)
+            localFut
+        }
+        .recover {
+          case ex: Exception =>
+            warn("Unable to read img info meta from all models: " + filename, ex)
+            None
+        }
+    } else {
+      mimg2Fut
     }
   }
 
+  /** Отправить лежащее в файле на диске в постоянное хранилище. */
+  def saveToPermanent: Future[Boolean] = {
+    val loc = toLocalInstance
+    if (loc.isExists) {
+      val mui2 = MUserImg2(
+        id  = rowKey,
+        q   = qOpt.getOrElse(MPict.Q_USER_IMG_ORIG),
+        img = ByteBuffer.wrap(loc.imgBytes),
+        timestamp = new DateTime(loc.timestampMs)
+      )
+      mui2.save
+        .map { _ => true }
+    } else {
+      Future successful false
+    }
+  }
+
+  override def toWrappedImg = this
+
+  override def rawImgMeta: Future[Option[ImgMetaI]] = {
+    permMetaCached
+      .filter(_.isDefined)
+      .recoverWith {
+        // Пытаемся прочитать эти метаданные из модели MLocalImg.
+        case ex: Exception  =>  toLocalInstance.rawImgMeta
+      }
+  }
+}
+
+
+
+/** Поле filename для класса. */
+trait ImgFilename {
+  def rowKeyStr: String
+  def hasImgOps: Boolean
+  def dynImgOpsString: String
+
+  def filename: String = {
+    val sb = new StringBuilder(rowKeyStr)
+    if (hasImgOps)
+      sb.append('?').append(dynImgOpsString)
+    sb.toString()
+  }
+}
+
+
+/** Поле минимально-сериализованных dynImg-аргументов для класса. */
+trait DynImgOpsString {
+  def dynImgOps: Seq[ImOp]
+
+  def dynImgOpsString: String = {
+    ImOp.unbindImOps(
+      keyDotted = "",
+      value = dynImgOps,
+      withOrderInx = false
+    )
+  }
+}
+
+
+/** Интерфейс, объединяющий MImg и MLocalImg. */
+trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
+
+  /** Ключ ряда картинок, id для оригинала и всех производных. */
+  def rowKey: UUID
+
+  /** Вернуть локальный инстанс модели с файлом на диске. */
+  def toLocalImg: Future[Option[MLocalImgT]]
+
+  /** Вернуть инстанс над-модели MImg. */
+  def toWrappedImg: MImg
+
+  /** Получить ширину и длину картинки. */
+  def getImageWH: Future[Option[MImgInfoMeta]]
+
+  /** Инстанс для доступа к картинке без изменений. */
+  def original: MAnyImgT
+
+  def rawImgMeta: Future[Option[ImgMetaI]]
 }

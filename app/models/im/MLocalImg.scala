@@ -7,8 +7,10 @@ import java.util.UUID
 import io.suggest.model.ImgWithTimestamp
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
+import models.ImgMetaI
 import org.apache.commons.io.FileUtils
 import play.api.Play.{current, configuration}
+import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI, AsyncUtil}
 import util.img.{ImgFormUtil, OrigImageUtil}
@@ -37,6 +39,9 @@ object MLocalImg extends MLocalImgParsers {
 
   /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
   val DIR = current.getFile(DIR_REL)
+
+  /** Сколько модель должна кешировать в голове результат вызова identify. */
+  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds") getOrElse 120
 
   DIR.mkdirs()
 
@@ -80,9 +85,7 @@ import MLocalImg._
 
 
 /** Трейт, выносящий часть функционала экземпляра, на случай дальнейших расширений и разделений. */
-trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with ImgFilename with DynImgOpsString {
-
-  def rowKey: UUID
+trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with PlayLazyMacroLogsImpl {
 
   def file = new File(DIR, filename)
 
@@ -101,9 +104,8 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with ImgFilename w
 
   override def imgBytes: Array[Byte] = Files.readAllBytes(file.toPath)
 
-  /** Асинхронно получить метаданные по этой картинке. */
-  def metadata: Future[Option[MImgInfoMeta]] = {
-    val identifyFut = Future {
+  def identify = {
+    Future {
       val info = OrigImageUtil.identify(file)
       val imeta = MImgInfoMeta(
         height = info.getImageHeight,
@@ -111,7 +113,17 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with ImgFilename w
       )
       Some(imeta)
     }(AsyncUtil.jdbcExecutionContext)
-    identifyFut recover {
+  }
+
+  lazy val identifyCached = {
+    Cache.getOrElse(filename + ".iC", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
+      identify
+    }
+  }
+
+  /** Асинхронно получить метаданные по этой картинке. */
+  lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
+    identifyCached recover {
       case ex: org.im4java.core.InfoException =>
         LOGGER.info("getImageWH(): Unable to identity image " + filename, ex)
         None
@@ -119,7 +131,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with ImgFilename w
   }
 
   def imgMdMap: Future[Option[Map[String, String]]] = {
-    metadata map { metaOpt =>
+    getImageWH map { metaOpt =>
       metaOpt map { meta =>
         Map(
           ImgFormUtil.IMETA_HEIGHT -> meta.height.toString,
@@ -129,35 +141,6 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with ImgFilename w
     }
   }
 
-}
-
-
-/** Поле filename для класса. */
-trait ImgFilename {
-  def rowKeyStr: String
-  def hasImgOps: Boolean
-  def dynImgOpsString: String
-
-  def filename: String = {
-    val sb = new StringBuilder(rowKeyStr)
-    if (hasImgOps)
-      sb.append('?').append(dynImgOpsString)
-    sb.toString()
-  }
-}
-
-
-/** Поле минимально-сериализованных dynImg-аргументов для класса. */
-trait DynImgOpsString {
-  def dynImgOps: Seq[ImOp]
-
-  def dynImgOpsString: String = {
-    ImOp.unbindImOps(
-      keyDotted = "",
-      value = dynImgOps,
-      withOrderInx = false
-    )
-  }
 }
 
 
@@ -180,4 +163,33 @@ case class MLocalImg(
 
   override lazy val filename = super.filename
   override lazy val file = super.file
+
+  override def toLocalImg: Future[Option[MLocalImgT]] = {
+    val result = if (isExists)
+      Some(this)
+    else
+      None
+    Future successful result
+  }
+
+  override def original = copy(dynImgOps = Nil)
+
+  override def toWrappedImg = MImg(rowKey, dynImgOps)
+
+  override def rawImgMeta: Future[Option[ImgMetaI]] = {
+    if (isExists) {
+      imgMdMap.map { mdMapOpt =>
+        mdMapOpt.map { mdMap =>
+          new ImgMetaI {
+            override lazy val md = mdMap
+            override lazy val timestampMs = file.lastModified
+          }
+        }
+      }
+    } else {
+      Future successful None
+    }
+  }
+
 }
+
