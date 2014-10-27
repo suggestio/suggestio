@@ -152,6 +152,11 @@ trait CassandraImgWithTimestamp extends ImgWithTimestamp {
 }
 
 
+trait CassandraImgMeta extends ImgMetaI {
+  def timestamp: DateTime
+  override def timestampMs: Long = timestamp.getMillis
+}
+
 /** Общий JMX-интерфейс для cassandra-моделей. */
 trait CassandraModelJxmMBeanI {
 

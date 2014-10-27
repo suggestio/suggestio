@@ -135,6 +135,11 @@ trait ImgWithTimestamp {
   def timestampMs: Long
 }
 
+trait ImgMetaI {
+  def md: Map[String, String]
+  def timestampMs: Long
+}
+
 
 /** JMX MBean интерфейс */
 trait MPictJmxMBean extends HBaseModelJMXBeanCommon

@@ -22,7 +22,7 @@ case class MUserImgMeta2(
   q: String,
   id: UUID = UUID.randomUUID(),
   timestamp: DateTime = DateTime.now()
-) extends UuidIdStr {
+) extends UuidIdStr with CassandraImgMeta {
 
   def save = MUserImgMeta2.insertMd(this)
   def delete = MUserImgMeta2.deleteById(id)
