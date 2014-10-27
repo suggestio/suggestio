@@ -349,9 +349,9 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
         case Some(ims) =>
-          MUserImgMeta2.getById(rowKey, qOpt) map {
+          args.imgId.getImageMeta map {
             case Some(imeta) =>
-              val newModelInstant = withoutMs(imeta.timestamp.getMillis)
+              val newModelInstant = withoutMs(imeta.timestampMs)
               isModifiedSinceCached(newModelInstant, ims)
             case None =>
               false

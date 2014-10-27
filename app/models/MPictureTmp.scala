@@ -13,7 +13,14 @@ import org.apache.commons.io.FileUtils
  * Created: 21.02.14 15:25
  * Description: Временные картинки лежат тут. Сюда попадают промежуточные/сырые картинки, которые подлежат кадрированию
  * или иной дальнейшей обработке. В качестве хранилища используется локальная ФС.
+ *
+ * 2014.oct.27: tmp-сущность модели сдвинута в сторону прослойки для системы orig-картинок, уже сохранённых
+ * либо планируемых к сохранению в постоянном хранилище. Также, произведена замена значения crop на цельный DynImgArgs.
+ * Маркер выкинут на помойку, т.к. в подмене картинок нет смысла при использовании DynImg-подсистемы.
+ * Имя файла картинки теперь имеет вид, очень похожий на ссылку:
+ * .../picture/tmp/aASDqefa4345szfvsedV_se4t-3?a=b&c=1123x543&....jpg
  */
+@deprecated("Use models.im.MLocalImg instead.", "2014.oct.27")
 object MPictureTmp extends CronTasksProvider {
 
   // Нельзя тут дергать напрямую JavaTokenParsers из-за необходимой совместимости с парсерами ImgCrop.
@@ -84,7 +91,9 @@ object MPictureTmp extends CronTasksProvider {
 
 
   /** Источник идентификаторов в модели. */
-  private def getKeyFromUploadedTmpfileName(fn: String) = GET_RND_RE.findFirstIn(fn).get
+  private def getKeyFromUploadedTmpfileName(fn: String): String = {
+    GET_RND_RE.findFirstIn(fn).get
+  }
 
   /** Дефолтовый формат картинки. */
   def fmtDflt = OutImgFmts.JPEG
@@ -158,6 +167,7 @@ object MPictureTmp extends CronTasksProvider {
 import MPictureTmp._
 
 
+@deprecated("Use models.im.MLocalImg instead.", "2014.oct.27")
 final case class MPictureTmp(filename: String, data: MPictureTmpData) {
   def this(filename: String) = this(filename, parseFilename(filename).get)
   def this(data: MPictureTmpData) = this(data.toFilename, data)
@@ -176,6 +186,7 @@ final case class MPictureTmp(filename: String, data: MPictureTmpData) {
 }
 
 
+@deprecated("Use models.im.MLocalImg instead.", "2014.oct.27")
 final case class MPictureTmpData(key: String, markerOpt: Option[String], fmt: OutImgFmt, cropOpt: Option[ImgCrop]) {
   /** Сериализовать всё добро в имя файла. */
   def toFilename: String = {

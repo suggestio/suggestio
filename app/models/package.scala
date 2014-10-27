@@ -203,4 +203,7 @@ package object models {
 
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
+
+  type ImgMetaI             = io.suggest.model.ImgMetaI
+
 }

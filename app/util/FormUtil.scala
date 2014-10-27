@@ -618,6 +618,25 @@ object FormUtil {
     }
   }
 
+
+  /** Копипаст из FormUrlEncodedParser. Распарсить строку qs-аргументов в последовательность. */
+  def parseToPairs(data: String, encoding: String = "utf-8"): Iterator[(String, String)] = {
+    import java.net._
+    // Generate all the pairs, with potentially redundant key values, by parsing the body content.
+    data.split('&')
+      .iterator
+      .flatMap { param =>
+        if (param.contains("=") && !param.startsWith("=")) {
+          val parts = param.split("=")
+          val key = URLDecoder.decode(parts.head, encoding)
+          val value = URLDecoder.decode(parts.tail.headOption.getOrElse(""), encoding)
+          Seq(key -> value)
+        } else {
+          Nil
+        }
+      }
+  }
+
 }
 
 

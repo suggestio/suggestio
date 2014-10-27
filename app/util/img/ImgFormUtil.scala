@@ -695,6 +695,9 @@ sealed trait ImgIdKey {
   def getBaseImageWH: Future[Option[MImgInfoMeta]]
   def getImageWH: Future[Option[MImgInfoMeta]]
 
+  /** Метаданные картинки в некотором очевидном виде. */
+  def getImageMeta: Future[Option[ImgMetaI]]
+
   /** Выдать во временный файл MPictureTmp. */
   def toTempPict: Future[MPictureTmp]
 
@@ -752,9 +755,10 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
   @JsonIgnore
   override def meta: Option[MImgInfoMeta] = None
 
+  @JsonIgnore
   override def getImageWH: Future[Option[MImgInfoMeta]] = {
     // Кеширование позволяет избежать замеров размеров картинки.
-    Cache.getOrElse("gIWH." + filename, expiration = TmpImgIdKey.GET_IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
+    Cache.getOrElse(filename + ".tgIWH", expiration = TmpImgIdKey.GET_IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
       // Для синхронного вызова identify() используем отдельный поток в отдельном пуле.
       // Распараллеливание заодно поможет сразу закинуть в кеш данный фьючерс.
       val identifyFut = Future {
@@ -773,6 +777,26 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
     }
   }
 
+  /** Метаданные картинки в некотором очевидном виде. */
+  override def getImageMeta: Future[Option[ImgMetaI]] = {
+    val whOptFut = getImageWH
+    val timestamp = mptmp.file.lastModified()
+    whOptFut map { whOpt =>
+      whOpt map { wh =>
+        new ImgMetaI {
+          override lazy val md: Map[String, String] = {
+            Map(
+              ImgFormUtil.IMETA_WIDTH  ->  wh.width.toString,
+              ImgFormUtil.IMETA_HEIGHT ->  wh.height.toString
+            )
+          }
+
+          override val timestampMs: Long = timestamp
+        }
+      }
+    }
+  }
+
   @JsonIgnore
   override def uncropped: TmpImgIdKey = {
     if (isCropped) {
@@ -784,10 +808,12 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
     }
   }
 
+  @JsonIgnore
   override def toTempPict: Future[MPictureTmp] = {
     Future successful mptmp
   }
 
+  @JsonIgnore
   override def toTempPictOrig: Future[MPictureTmp] = {
     Future successful uncropped.mptmp
   }
@@ -831,27 +857,31 @@ object OrigImgIdKey {
     new OrigImgIdKey(filename, meta, data)
   }
 
+  def getOrigImageMetaCache(rowKey: String, qOpt: Option[String] = None): Future[Option[MUserImgMeta2]] = {
+    // Кеширование сильно ускоряет получение параметров картинки из базы на параллельных и последовательных запросах.
+    Cache.getOrElse("gOIWH." + rowKey + qOpt.getOrElse(""),  expiration = IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
+      MUserImgMeta2.getByStrId(rowKey, qOpt)
+    }
+  }
+
   /** Прочитать ширину-длину хранимой orig-картинки по модели MUserImgMetadata.
     * Метод довольно статичен, но private чтобы не допускать логических ошибок при передаче параметров
     * (ведь можно ошибочно передать [[OrigImgIdKey.filename]] например -- функция будет вести себя ошибочно при crop).
     * @param rowKey Чистый ключ картинки. Доступен через [[OrigImgIdKey.data.rowKey]].
     * @return Асинхронные метаданные по ширине-высоте картинки.
     */
-  private def getOrigImageWH(rowKey: String, qOpt: Option[String] = None): Future[Option[MImgInfoMeta]] = {
-    // Кеширование сильно ускоряет получение параметров картинки из базы на параллельных и последовательных запросах.
-    Cache.getOrElse("gOIWH." + rowKey + qOpt.getOrElse(""),  expiration = IMAGE_WH_CACHE_DURATION.toSeconds.toInt) {
-      MUserImgMeta2.getByStrId(rowKey, qOpt)
-        .map { imetaOpt =>
-          for {
-            imeta     <- imetaOpt
-            widthStr  <- imeta.md.get(IMETA_WIDTH)
-            heightStr <- imeta.md.get(IMETA_HEIGHT)
-          } yield {
-            MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-          }
+  def getOrigImageWH(rowKey: String, qOpt: Option[String] = None): Future[Option[MImgInfoMeta]] = {
+    getOrigImageMetaCache(rowKey, qOpt)
+      .map { imetaOpt =>
+        for {
+          imeta     <- imetaOpt
+          widthStr  <- imeta.md.get(IMETA_WIDTH)
+          heightStr <- imeta.md.get(IMETA_HEIGHT)
+        } yield {
+          MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
         }
-        // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.
-    }
+      }
+      // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.
   }
 
 }
@@ -898,6 +928,9 @@ class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val dat
       case _ => false
     }
   }
+
+  /** Метаданные картинки в некотором очевидном виде. */
+  override def getImageMeta = OrigImgIdKey.getOrigImageMetaCache(data.rowKey, origQualifierOpt)
 
   @JsonIgnore
   override def cropOpt = data.cropOpt

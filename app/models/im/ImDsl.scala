@@ -5,7 +5,10 @@ import java.text.DecimalFormat
 import org.im4java.core.IMOperation
 import models._
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsImpl
+import play.core.parsers.FormUrlEncodedParser
+import util.{FormUtil, PlayMacroLogsImpl}
+
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -15,7 +18,7 @@ import util.PlayMacroLogsImpl
  * Что-то подобное было в зотонике, где список qs биндился в список im-действий над картинкой.
  */
 
-object ImOp extends PlayMacroLogsImpl {
+object ImOp extends PlayMacroLogsImpl with JavaTokenParsers {
 
   val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 
@@ -71,6 +74,27 @@ object ImOp extends PlayMacroLogsImpl {
     sb.toString()
   }
 
+  /** Забиндить распарсенное по итератору. */
+  def bindImOps(keyDotted: String, rawOps: Iterator[(String, Seq[String])]): Iterator[ImOp] = {
+    rawOps
+      .flatMap { case (k, vs) =>
+        val opCodeStr = k.substring(keyDotted.length)
+        ImOpCodes.maybeWithName(opCodeStr)
+          .map { _ -> vs }
+      }
+      // Попытаться сгенерить результат
+      .map {
+        case (opCode, vs)  =>  opCode.mkOp(vs)
+      }
+  }
+
+  /** Забиндить исходную qs-строку, предварительно протокенизировав. */
+  def bindImOps(keyDotted: String, raw: String): Iterator[ImOp] = {
+    val iter0 = FormUtil.parseToPairs(raw)
+      .map { case (k, v)  =>  k -> List(v) }
+    bindImOps(keyDotted, iter0)
+  }
+
 }
 
 
@@ -89,7 +113,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
    */
   override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
     try {
-      val ops = params
+      val ops0 = params
         .iterator
         // в карте params содержит также всякий посторонний мусор. Он нам неинтересен.
         .filter { _._1 startsWith keyDotted }
@@ -108,14 +132,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
         // Распарсить команды.
         .iterator
         .map(_._1)
-        // Попытаться распарсить код операции.
-        .flatMap { case (k, vs) =>
-          val opCodeStr = k.substring(keyDotted.length)
-          ImOpCodes.maybeWithName(opCodeStr)
-            .map { _ -> vs }
-        }
-        // Попытаться сгенерить результат
-        .map { case (opCode, vs)  =>  opCode.mkOp(vs) }
+      val ops = ImOp.bindImOps(keyDotted, ops0)
         .toSeq
       if (ops.isEmpty) {
         None
