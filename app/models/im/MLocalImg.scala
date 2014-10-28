@@ -46,11 +46,11 @@ object MLocalImg extends ImgFileNameParsers {
   DIR.mkdirs()
 
   def apply(filename: String): MLocalImg = {
-    parseAll(filename2mliP, filename).get
+    parseAll(fileName2mliP, filename).get
   }
 
   /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
-  def filename2mliP: Parser[MLocalImg] = {
+  def fileName2mliP: Parser[MLocalImg] = {
     fileNameP ^^ {
       case uuid ~ dynArgs =>
         MLocalImg(uuid, dynArgs)

@@ -201,7 +201,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
       val bc: BlockConf = BlocksConf(blockId)
       bc.blockFieldForName(fn) match {
         case Some(bfi: BfImage) =>
-          _handleTempImg(bfi.imgUtil, Some(bfi.marker), preserveFmt = bfi.preserveFmt)
+          _handleTempImg(preserveUnknownFmt = false)
 
         case _ => NotFound
       }

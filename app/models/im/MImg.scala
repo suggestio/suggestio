@@ -112,7 +112,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
     }
   }
 
-  def filename2miP: Parser[MImg] = {
+  def fileName2miP: Parser[MImg] = {
     fileNameP ^^ {
       case uuid ~ imOps =>
         MImg(uuid, imOps)
@@ -120,7 +120,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
   }
 
   def apply(filename: String): MImg = {
-    parseAll(filename2miP, filename).get
+    parseAll(fileName2miP, filename).get
   }
 
 }

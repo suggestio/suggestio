@@ -43,7 +43,7 @@ object MPictureTmp extends CronTasksProvider with ImgCropParsers {
   val FMT_PARSER: Parser[OutImgFmt] = {
     OutImgFmts.values
       .iterator
-      .map { oif  =>  ("(?i)" + oif).r ^^^ oif }
+      .map { oif  =>  ("(?i)" + oif).r ^^^ { oif : OutImgFmt } }
       .reduceLeft { _ | _ }
   }
 

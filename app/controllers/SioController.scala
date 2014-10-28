@@ -255,68 +255,6 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
 
 
 
-/** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI {
-
-  /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)
-                              (implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
-    try {
-      request.body.file("picture") match {
-        case Some(pictureFile) =>
-          val fileRef = pictureFile.ref
-          val srcFile = fileRef.file
-          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-          // Отрабатываем svg: не надо конвертить.
-          val srcMime = srcMagicMatch.getMimeType
-          if (SvgUtil maybeSvgMime srcMime) {
-            // Это svg?
-            if (SvgUtil isSvgFileValid srcFile) {
-              // Это svg. Надо его сжать и переместить в tmp-хранилище.
-              val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
-              val mptmp = MPictureTmp.getForTempFile(srcFile, OutImgFmts.SVG, marker)
-              FileUtils.writeStringToFile(mptmp.file, newSvg)
-              Ok(Img.jsonTempOk(mptmp.filename))
-            } else {
-              val reply = Img.jsonImgError("SVG format invalid or not supported.")
-              NotAcceptable(reply)
-            }
-
-          } else {
-            // Это наверное растровая картинка.
-            val outFmt = if (preserveFmt) {
-              OutImgFmts.forImageMime(srcMime)
-            } else {
-              OutImgFmts.JPEG
-            }
-            try {
-              val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
-              imageUtil.convert(srcFile, mptmp.file)
-              Ok(Img.jsonTempOk(mptmp.filename))
-            } catch {
-              case ex: Throwable =>
-                LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-                val reply = Img.jsonImgError("Unsupported picture format.")
-                NotAcceptable(reply)
-            }
-          }
-
-        // В реквесте не найдена именованая часть, содержащая картинку.
-        case None =>
-          val reply = Img.jsonImgError("picture part not found in request.")
-          NotAcceptable(reply)
-      }
-
-    } finally {
-      // Удалить все файлы, которые были приняты в реквесте.
-      request.body.files.foreach { f =>
-        f.ref.file.delete()
-      }
-    }
-  }
-
-}
-
 
 /** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.
   * После унификации в web21 этот контроллер наверное уже не будет нужен. */

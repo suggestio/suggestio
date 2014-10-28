@@ -976,7 +976,7 @@ class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val dat
         val resultFut = MUserImg2.getByStrId(this.data.rowKey, qOpt) map { oimgOpt =>
           val oimg = oimgOpt.get
           val magicMatch = Magic.getMagicMatch(oimg.imgBytes)
-          val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
+          val oif = OutImgFmts.forImageMime(magicMatch.getMimeType).get
           val mptmp = MPictureTmp.mkNew(None, cropOpt = None, oif)
           mptmp.writeIntoFile(oimg.imgBytes)
           mptmp
@@ -999,28 +999,29 @@ class OrigImgIdKey(val filename: String, val meta: Option[MImgInfoMeta], val dat
 
 /** Выходные форматы картинок. */
 object OutImgFmts extends Enumeration {
-  type OutImgFmt = Value
-  val JPEG = Value("jpeg")
-  val PNG  = Value("png")
-  val GIF  = Value("gif")
-  val SVG  = Value("svg")
+
+  protected class Val(val name: String, val mime: String) extends super.Val(name)
+
+  type OutImgFmt = Val
+
+  val JPEG: OutImgFmt = new Val("jpeg", "image/jpeg")
+  val PNG: OutImgFmt  = new Val("png", "image/png")
+  val GIF: OutImgFmt  = new Val("gif", "image/gif")
+  val SVG: OutImgFmt  = new Val("svg", "image/svg+xml")
+
+  implicit def value2val(x: Value): OutImgFmt = x.asInstanceOf[OutImgFmt]
 
   /**
    * Предложить формат для mime-типа.
    * @param mime Строка mime-типа.
    * @return OutImgFmt. Если не-image тип, то будет IllegalArgumentException.
    */
-  def forImageMime(mime: String): OutImgFmt = {
-    if (mime equalsIgnoreCase "image/png") {
-      PNG
-    } else if (mime equalsIgnoreCase "image/gif") {
-      GIF
-    } else if (mime startsWith "image/") {
-      JPEG
-    } else {
-      throw new IllegalArgumentException("Unknown/unsupported MIME type: " + mime)
-    }
+  def forImageMime(mime: String): Option[OutImgFmt] = {
+    values
+      .find(_.mime equalsIgnoreCase mime)
+      .asInstanceOf[Option[OutImgFmt]]
   }
+
 }
 
 
