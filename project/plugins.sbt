@@ -39,7 +39,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.2")
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.1")
 
 // stylus assets
-addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2sio2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
 
