@@ -16,7 +16,6 @@ import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI, AsyncUtil}
 import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
 
 import scala.concurrent.Future
-import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -45,6 +44,14 @@ object MLocalImg extends ImgFileNameParsers {
 
   DIR.mkdirs()
 
+  def getFsImgDir(rowKeyStr: String): File = new File(DIR, rowKeyStr)
+  def getFsImgDir(rowKey: UUID): File = getFsImgDir( UuidUtil.uuidToBase64(rowKey) )
+
+  /**
+   * Получить экземпляр MLocalImg из img filename, в котором сериализована вся инфа по картинке.
+   * @param filename Строка img filename.
+   * @return Экземпляр MLocalImg или экзепшен.
+   */
   def apply(filename: String): MLocalImg = {
     parseAll(fileName2mliP, filename).get
   }
@@ -57,6 +64,28 @@ object MLocalImg extends ImgFileNameParsers {
     }
   }
 
+  /**
+   * Стереть из файловой системы все упоминания картинок с указанным id.
+   * На деле будет удалена директория с указанным именем.
+   * @param rowKey id картинок.
+   */
+  def deleteAllSyncFor(rowKey: UUID): Unit = {
+    val dir = getFsImgDir(rowKey)
+    FileUtils.deleteDirectory(dir)
+  }
+
+  /**
+   * Асинхронно стереть все картинки, у которых указанный id.
+   * По сути неблокирующий враппер над deleteAllSyncFor().
+   * @param rowKey id картинок.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteAllFor(rowKey: UUID): Future[_] = {
+    Future {
+      deleteAllSyncFor(rowKey)
+    }(AsyncUtil.jdbcExecutionContext)
+  }
+
 }
 
 
@@ -65,19 +94,40 @@ import MLocalImg._
 
 /** Трейт, выносящий часть функционала экземпляра, на случай дальнейших расширений и разделений. */
 trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with PlayLazyMacroLogsImpl {
+  
+  // Для организации хранения файлов используется rowKey/qs-структура.
+  lazy val fsImgDir = getFsImgDir(rowKeyStr)
 
-  def file = new File(DIR, filename)
+  lazy val fsFileName: String = {
+    if (hasImgOps) {
+      dynImgOpsString
+    } else {
+      "__ORIG__"
+    }
+  }
+  
+  lazy val file = new File(fsImgDir, fsFileName)
 
   def touch(newLastMod: Long = System.currentTimeMillis()) = {
     file.setLastModified(newLastMod)
   }
 
   def writeIntoFile(imgBytes: Array[Byte]) {
+    if (!fsImgDir.isDirectory)
+      fsImgDir.delete()
+    if (!fsImgDir.exists())
+      fsImgDir.mkdirs()
     FileUtils.writeByteArrayToFile(file, imgBytes)
   }
 
   def isExists: Boolean = file.exists()
-  def delete: Boolean = file.delete()
+  def deleteSync: Boolean = file.delete()
+
+  override def delete: Future[_] = {
+    Future {
+      deleteSync
+    }(AsyncUtil.jdbcExecutionContext)
+  }
 
   override def timestampMs: Long = file.lastModified
 
@@ -95,7 +145,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   }
 
   lazy val identifyCached = {
-    Cache.getOrElse(filename + ".iC", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
+    Cache.getOrElse(fileName + ".iC", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
       identify
     }
   }
@@ -104,7 +154,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   override lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
     identifyCached recover {
       case ex: org.im4java.core.InfoException =>
-        LOGGER.info("getImageWH(): Unable to identity image " + filename, ex)
+        LOGGER.info("getImageWH(): Unable to identity image " + fileName, ex)
         None
     }
   }
@@ -140,8 +190,7 @@ case class MLocalImg(
 
   override lazy val dynImgOpsString: String = super.dynImgOpsString
 
-  override lazy val filename = super.filename
-  override lazy val file = super.file
+  override lazy val fileName = super.fileName
 
   override def toLocalImg: Future[Option[MLocalImgT]] = {
     val result = if (isExists)

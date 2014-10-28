@@ -112,6 +112,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
     }
   }
 
+  /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
   def fileName2miP: Parser[MImg] = {
     fileNameP ^^ {
       case uuid ~ imOps =>
@@ -119,8 +120,30 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
     }
   }
 
+  /**
+   * Распарсить filename, в котором сериализованы данные о картинке.
+   * @param filename filename картинки.
+   * @return Экземпляр MImg, содержащий все данные из filename'а.
+   */
   def apply(filename: String): MImg = {
     parseAll(fileName2miP, filename).get
+  }
+
+  /**
+   * Стереть отовсюду все картинки, которые расположены во всех известных моделях и имеющих указанный id.
+   * Т.е. будет удалён оригинал и вся производная нарезка картинок отовсюду.
+   * После выполнения метода картинку уже нельзя восстановить.
+   * @param rowKey картинок.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteAllFor(rowKey: UUID): Future[_] = {
+    val permDelFut = MUserImg2.deleteById(rowKey)
+    val permMetaDelFut = MUserImgMeta2.deleteById(rowKey)
+    MLocalImg.deleteAllFor(rowKey) flatMap { _ =>
+      permDelFut flatMap { _ =>
+        permMetaDelFut
+      }
+    }
   }
 
 }
@@ -160,7 +183,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   override def hasImgOps: Boolean = dynImgOps.nonEmpty
 
   /** Имя файла картинки. Испрользуется как сериализованное представление данных по картинке. */
-  override lazy val filename: String = super.filename
+  override lazy val fileName: String = super.fileName
 
   /** Прочитать картинку из реального хранилища в файл, если ещё не прочитана. */
   override lazy val toLocalImg: Future[Option[MLocalImg]] = {
@@ -180,7 +203,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
   lazy val permMetaCached: Future[Option[MUserImgMeta2]] = {
-    Cache.getOrElse(filename + ".giwh", expiration = ORIG_META_CACHE_SECONDS) {
+    Cache.getOrElse(fileName + ".giwh", expiration = ORIG_META_CACHE_SECONDS) {
       MUserImgMeta2.getById(rowKey, qOpt)
     }
   }
@@ -208,12 +231,12 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
         .filter(_.isDefined)
         .recoverWith {
           case ex: Exception =>
-            warn("Unable to read img info meta from remote storage: " + filename, ex)
+            warn("Unable to read img info meta from remote storage: " + fileName, ex)
             localFut
         }
         .recover {
           case ex: Exception =>
-            warn("Unable to read img info meta from all models: " + filename, ex)
+            warn("Unable to read img info meta from all models: " + fileName, ex)
             None
         }
     } else {
@@ -250,6 +273,21 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   }
 
   override lazy val cropOpt = super.cropOpt
+
+  /** Удаление текущей картинки отовсюду вообще. Родственные картинки (др.размеры/нарезки) не удаляются. */
+  override def delete: Future[_] = {
+    val _qOpt = qOpt
+    // Удаляем из permanent-хранилища.
+    val permDelFut = MUserImg2.deleteOne(rowKey, _qOpt)
+    val permMetaDelFut = MUserImgMeta2.deleteOne(rowKey, _qOpt)
+    // Удаляем с локалхоста и объединяем с остальными фьючерсами удаления.
+    toLocalInstance.delete flatMap { _ =>
+      permDelFut flatMap { _ =>
+        permMetaDelFut
+      }
+    }
+  }
+
 }
 
 
@@ -260,7 +298,7 @@ trait ImgFilename {
   def hasImgOps: Boolean
   def dynImgOpsString: String
 
-  def filename: String = {
+  def fileName: String = {
     val sb = new StringBuilder(rowKeyStr)
     if (hasImgOps)
       sb.append('?').append(dynImgOpsString)
@@ -321,6 +359,8 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
     dynImgOps
       .exists { _.isInstanceOf[ImCropOpT] }
   }
+
+  def delete: Future[_]
 
 }
 

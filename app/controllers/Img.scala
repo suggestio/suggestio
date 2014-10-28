@@ -439,7 +439,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
               val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
               val mptmp = MLocalImg()
               FileUtils.writeStringToFile(mptmp.file, newSvg)
-              Ok( Img.jsonTempOk(mptmp.filename, routes.Img.getImg(mptmp.filename)) )
+              Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.getImg(mptmp.fileName)) )
             } else {
               val reply = Img.jsonImgError("SVG format invalid or not supported.")
               NotAcceptable(reply)
@@ -467,7 +467,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
               )
               val im = MImg(mptmp.rowKey, imOps)
               imgPrepareFut map { _ =>
-                Ok( Img.jsonTempOk(mptmp.filename, DynImgUtil.imgCall(im)) )
+                Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
               }
             } catch {
               case ex: Throwable =>
