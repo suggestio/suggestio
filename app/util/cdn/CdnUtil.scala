@@ -1,6 +1,7 @@
 package util.cdn
 
 import controllers.routes
+import models.im.MImg
 import models.{Context, DynImgArgs, ExternalCall}
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
@@ -99,7 +100,7 @@ object CdnUtil extends PlayMacroLogsImpl {
   }
 
   /** Вызов к dynImg через CDN. */
-  def dynImg(dargs: DynImgArgs)(implicit ctx: Context) = {
+  def dynImg(dargs: MImg)(implicit ctx: Context) = {
     forCall( DynImgUtil.imgCall(dargs) )
   }
 

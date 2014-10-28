@@ -13,7 +13,7 @@ import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI, AsyncUtil}
-import util.img.{ImgFormUtil, OrigImageUtil}
+import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
 
 import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -32,7 +32,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * В итоге, получилась эта модель.
  */
 
-object MLocalImg extends MLocalImgParsers {
+object MLocalImg extends ImgFileNameParsers {
 
   /** Адрес img-директории, который используется для хранилища. */
   def DIR_REL = configuration.getString("m.local.img.dir.rel") getOrElse "picture/local"
@@ -46,35 +46,14 @@ object MLocalImg extends MLocalImgParsers {
   DIR.mkdirs()
 
   def apply(filename: String): MLocalImg = {
-    parseAll(filenameP, filename).get
+    parseAll(filename2mliP, filename).get
   }
 
-}
-
-
-/** Набор парсеров для нужд декодирования модели. */
-trait MLocalImgParsers extends JavaTokenParsers {
-
-  /** Парсер rowKey из filename: */
-  def uuidStrP: Parser[String] = "[a-zA-Z0-9_-]{21,25}".r
-  def uuidP: Parser[UUID] = {
-    uuidStrP ^^ UuidUtil.base64ToUuid
-  }
-
-  /** Парсер списка dynImg-аргументов, сериализованного в виде qs-строки. */
-  def dynImgArgsP: Parser[List[ImOp]] = {
-    "[^/?]+".r ^^ { qsStr =>
-      ImOp.bindImOps("", qsStr)
-        .toList
-    }
-  }
-
-  /** Парсер filename'а. */
-  def filenameP: Parser[MLocalImg] = {
-    val p = uuidP ~ opt("?" ~> dynImgArgsP)
-    p ^^ {
+  /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
+  def filename2mliP: Parser[MLocalImg] = {
+    fileNameP ^^ {
       case uuid ~ dynArgs =>
-        MLocalImg(uuid, dynArgs getOrElse Nil)
+        MLocalImg(uuid, dynArgs)
     }
   }
 
@@ -172,11 +151,16 @@ case class MLocalImg(
     Future successful result
   }
 
-  override def original = copy(dynImgOps = Nil)
+  override def original = {
+    if (dynImgOps.nonEmpty)
+      copy(dynImgOps = Nil)
+    else
+      this
+  }
 
-  override def toWrappedImg = MImg(rowKey, dynImgOps)
+  override lazy val toWrappedImg = MImg(rowKey, dynImgOps)
 
-  override def rawImgMeta: Future[Option[ImgMetaI]] = {
+  override lazy val rawImgMeta: Future[Option[ImgMetaI]] = {
     if (isExists) {
       imgMdMap.map { mdMapOpt =>
         mdMapOpt.map { mdMap =>
@@ -191,5 +175,6 @@ case class MLocalImg(
     }
   }
 
+  override lazy val cropOpt = super.cropOpt
 }
 

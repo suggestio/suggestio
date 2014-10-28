@@ -25,6 +25,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 object BgImg extends PlayLazyMacroLogsImpl {
 
+  import LOGGER._
+
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
@@ -48,9 +50,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @return Фьючерс с данными по рендеру широкой фоновой картинки.
    */
   def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: Int)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
-    val iik = ImgIdKey( bgImgInfo.filename )
+    val iik = MImg( bgImgInfo.filename )
     // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-    val origWhFut = iik.getBaseImageWH
+    val origWhFut = iik.original.getImageWH
       .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
@@ -113,7 +115,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
       blk.WideBgRenderCtx(
         width       = cropWidth,
         height      = tgtHeightReal,
-        dynCallArgs = DynImgArgs(iik.uncropped, imOps)
+        dynCallArgs = iik.copy(dynImgOps = imOps)
       )
     }
   }
@@ -182,17 +184,6 @@ object BgImg extends PlayLazyMacroLogsImpl {
     pxRatio.pixelRatio * sizeMult
   }
 
-  /**
-   * В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
-   * Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
-   * В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
-   */
-  def canRenderDyn(iik: ImgIdKey, blockMeta: MImgSizeT): Boolean = {
-    iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
-      val oldFormat  =  crop.height == blockMeta.height  ||  crop.width == blockMeta.width
-      !oldFormat
-    }
-  }
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
   @tailrec def normWideBgSz(minWidth: Int,  acc: Int,  variants: List[Int]): Int = {
@@ -238,14 +229,60 @@ object BgImg extends PlayLazyMacroLogsImpl {
     newCoordFloat.toInt
   }
 
+
+  /**
+   * Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
+   * @param imgInfo Инфа о картинке, используемой в качестве фона.
+   * @param blockMeta Метаданные блока (и картинки, соответственно).
+   * @param brArgs Параметры рендера блока.
+   * @param ctx Контекст рендера шаблонов.
+   * @return Экземпляр Call, пригодный для рендера в ссылку.
+   */
+  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
+    val oiik = MImg(imgInfo.filename)
+    val devScreen = ctx.deviceScreenOpt getOrElse {
+      warn(s"bgImgCall($imgInfo, bh=${blockMeta.height}): width=${blockMeta.width} Missing client screen size! Will use standard VGA (1024х768)!")
+      DevScreen(
+        width = 1024,
+        height = 768,
+        pixelRatioOpt = None
+      )
+    }
+    val devPxRatio = pxRatioDefaulted( devScreen.pixelRatioOpt )
+    // Генерим dynImg-ссылку на картинку.
+    val fgc = devPxRatio.fgCompression
+
+    // Настройки сохранения результирующей картинки (аккамулятор).
+    var imOpsAcc: List[ImOp] = List(
+      StripOp,
+      ImInterlace.Plane,
+      fgc.chromaSubSampling,
+      fgc.imQualityOp
+    )
+
+    // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
+    imOpsAcc ::= {
+      val sz = getRenderSz(brArgs.szMult, blockMeta = blockMeta, devScreen)
+      // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
+      AbsResizeOp(sz, ImResizeFlags.IgnoreAspectRatio)
+    }
+
+    // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
+    if (oiik.cropOpt.isDefined) {
+      val crop = oiik.cropOpt.get
+      imOpsAcc ::= AbsCropOp(crop)
+    }
+    imOpsAcc ::= ImFilters.Lanczos
+    // Генерим финальную ссыль на картинку:
+    val dargs = oiik.copy(dynImgOps = imOpsAcc)
+    DynImgUtil.imgCall(dargs)
+  }
+
 }
 
 
 /** Функционал для сохранения фоновой (основной) картинки блока. */
 trait SaveBgImgI extends ISaveImgs {
-
-  import BgImg._
-  import BgImg.LOGGER._
 
   def BG_IMG_FN: String
   def bgImgBf: BfImage
@@ -260,66 +297,8 @@ trait SaveBgImgI extends ISaveImgs {
     mad.imgs.get(BG_IMG_FN)
   }
 
-
-  /**
-   * Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
-   * @param imgInfo Инфа о картинке, используемой в качестве фона.
-   * @param blockMeta Метаданные блока (и картинки, соответственно).
-   * @param brArgs Параметры рендера блока.
-   * @param ctx Контекст рендера шаблонов.
-   * @return Экземпляр Call, пригодный для рендера в ссылку.
-   */
   def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    Some( ImgIdKey(imgInfo.filename) )
-      .filter { iik =>
-        canRenderDyn(iik, blockMeta)
-      }
-      .flatMap {
-        // dynImg принимает только orig-картинки.
-        case oiik: OrigImgIdKey => Some(oiik)
-        case _ => None
-      }
-      .fold [Call] {
-        // Пропускаем картинку, ибо данные для этого дела были отброшены.
-        routes.Img.getImg(imgInfo.filename)
-      } { oiik =>
-        val devScreen = ctx.deviceScreenOpt getOrElse {
-          warn(s"bgImgCall($imgInfo, bh=${blockMeta.height}): width=${blockMeta.width} Missing client screen size! Will use standard VGA (1024х768)!")
-          DevScreen(
-            width = 1024,
-            height = 768,
-            pixelRatioOpt = None
-          )
-        }
-        val devPxRatio = pxRatioDefaulted( devScreen.pixelRatioOpt )
-        // Генерим dynImg-ссылку на картинку.
-        val fgc = devPxRatio.fgCompression
-
-        // Настройки сохранения результирующей картинки (аккамулятор).
-        var imOpsAcc: List[ImOp] = List(
-          StripOp,
-          ImInterlace.Plane,
-          fgc.chromaSubSampling,
-          fgc.imQualityOp
-        )
-
-        // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-        imOpsAcc ::= {
-          val sz = getRenderSz(brArgs.szMult, blockMeta = blockMeta, devScreen)
-          // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
-          AbsResizeOp(sz, ImResizeFlags.IgnoreAspectRatio)
-        }
-
-        // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
-        if (oiik.cropOpt.isDefined) {
-          val crop = oiik.cropOpt.get
-          imOpsAcc ::= AbsCropOp(crop)
-        }
-        imOpsAcc ::= ImFilters.Lanczos
-        // Генерим финальную ссыль на картинку:
-        val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)
-        DynImgUtil.imgCall(dargs)
-      }
+    BgImg.bgImgCall(imgInfo, blockMeta, brArgs)
   }
 
   /** Аналог bgImgCall, но метод пытается сгенерить ссылку на картинку, пролегающую через CDN (если настроено). */

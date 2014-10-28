@@ -8,7 +8,7 @@ import java.util.UUID
 import controllers.routes
 import io.suggest.util.UuidUtil
 import models._
-import models.im.ImOp
+import models.im.{MLocalImg, MImg, ImOp}
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -35,7 +35,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param dargs Аргументы генерации картинки.
    * @return Экземпляр Call, пригодный к употреблению.
    */
-  def imgCall(dargs: DynImgArgs): Call = {
+  def imgCall(dargs: MImg): Call = {
     routes.Img.dynImg(dargs)
   }
 
@@ -45,14 +45,15 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param args Данные запроса картинки. Ожидается, что набор параметров не пустой, и подходящей картинки нет в хранилище.
    * @return Файл, содержащий результирующую картинку.
    */
-  def mkReadyImgToFile(args: DynImgArgs): Future[File] = {
-    args.imgId
-      .toTempPictOrig
-      .map { mptmp =>
+  def mkReadyImgToFile(args: MImg): Future[MLocalImg] = {
+    args
+      .original
+      .toLocalImg
+      .map { localImg =>
         // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
-        val newImgFile = File.createTempFile(getClass.getSimpleName, ".jpeg")
-        convert(mptmp.file, newImgFile, args.imOps)
-        newImgFile
+        val newLocalImg = args.toLocalInstance
+        convert(localImg.get.file, newLocalImg.file, args.dynImgOps)
+        newLocalImg
       }(AsyncUtil.jdbcExecutionContext)
   }
 

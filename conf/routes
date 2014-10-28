@@ -106,7 +106,7 @@ GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
-GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
+GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
 ## thumb в основном используется в рамках draft sio-v1. Для sioM лучше использовать dynImg.
 GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
 

@@ -45,7 +45,7 @@ object GalleryUtil {
    * @return Экземпляр Call, пригодный для заворачивания в ссылку.
    */
   def dynLkBigCall(imgId: String)(implicit ctx: Context): Call = {
-    val oiik = OrigImgIdKey(imgId)
+    val oiik = MImg(imgId)
     val devPixelRatio = ctx.deviceScreenOpt
       .fold(DevPixelRatios.default)(_.pixelRatio)
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
@@ -65,7 +65,7 @@ object GalleryUtil {
       val crop = oiik.cropOpt.get
       imOps ::= AbsCropOp(crop)
     }
-    val dynArgs = DynImgArgs(oiik.uncropped, imOps)
+    val dynArgs = oiik.copy(dynImgOps = imOps)
     DynImgUtil.imgCall(dynArgs)
   }
 

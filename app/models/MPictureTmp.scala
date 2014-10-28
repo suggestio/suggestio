@@ -1,6 +1,7 @@
 package models
 
 import java.io.File
+import io.suggest.img.ImgCropParsers
 import play.api.Play.{current, configuration}
 import concurrent.duration._
 import util.img.OutImgFmts, OutImgFmts.OutImgFmt
@@ -21,11 +22,10 @@ import org.apache.commons.io.FileUtils
  * .../picture/tmp/aASDqefa4345szfvsedV_se4t-3?a=b&c=1123x543&....jpg
  */
 @deprecated("Use models.im.MLocalImg instead.", "2014.oct.27")
-object MPictureTmp extends CronTasksProvider {
+object MPictureTmp extends CronTasksProvider with ImgCropParsers {
 
   // Нельзя тут дергать напрямую JavaTokenParsers из-за необходимой совместимости с парсерами ImgCrop.
   // Поэтому тут используется внешняя реализация парсеров.
-  import io.suggest.img.ImgUtilParsers._
 
   // Директория для складывания файлов, приготовленных для кадрирования
   val TEMP_DIR_REL = "picture/tmp"
@@ -53,7 +53,7 @@ object MPictureTmp extends CronTasksProvider {
   }
 
   val FILENAME_PARSER: Parser[MPictureTmpData] = {
-    (KEY_PREFIX ~> GET_RND_RE) ~ MARKER_OPT_PARSER ~ opt("~" ~> ImgCrop.CROP_STR_PARSER) ~ ("." ~> FMT_PARSER) ^^ {
+    (KEY_PREFIX ~> GET_RND_RE) ~ MARKER_OPT_PARSER ~ opt("~" ~> cropStrP) ~ ("." ~> FMT_PARSER) ^^ {
       case key ~ markerOpt ~ cropOpt ~ fmt =>
         MPictureTmpData(key, markerOpt, fmt, cropOpt)
     }

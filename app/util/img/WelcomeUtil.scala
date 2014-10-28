@@ -111,8 +111,8 @@ object WelcomeUtil {
       .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
-        val oiik = OrigImgIdKey.apply(bgImgFilename)
-        oiik.getBaseImageWH map {
+        val oiik = MImg(bgImgFilename)
+        oiik.original.getImageWH map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
@@ -133,8 +133,8 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
-    val oiik2 = oiik.uncropped
+  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+    val oiik2 = oiik.original
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr =>
@@ -147,7 +147,7 @@ object WelcomeUtil {
         }
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = DynImgArgs(oiik2, imOps)
+        val dynArgs = oiik2.copy(dynImgOps = imOps)
         new ImgUrlInfoT {
           override def call = CdnUtil.dynImg(dynArgs)
           override def meta = Some(bss)

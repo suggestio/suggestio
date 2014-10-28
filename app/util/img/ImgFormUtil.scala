@@ -8,7 +8,7 @@ import net.sf.jmimemagic.Magic
 import org.im4java.core.Info
 import play.api.mvc.QueryStringBindable
 import util.{AsyncUtil, FormUtil, PlayMacroLogsImpl}
-import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
+import io.suggest.img.{ImgCropParsers, ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
 import io.suggest.model.MPict
 import scala.concurrent.{Future, future}
@@ -825,12 +825,11 @@ case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends
 
 
 @deprecated("Use models.im.MImg instead", "2014.oct.27")
-object OrigImgIdKey {
-  import io.suggest.img.ImgUtilParsers._
+object OrigImgIdKey extends ImgCropParsers {
   import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
 
   val FILENAME_PARSER: Parser[OrigImgData] = {
-    "(?i)[0-9a-z_-]+".r ~ opt("~" ~> ImgCrop.CROP_STR_PARSER) ^^ {
+    "(?i)[0-9a-z_-]+".r ~ opt("~" ~> cropStrP) ^^ {
       case rowKey ~ cropOpt =>
         OrigImgData(rowKey, cropOpt)
     }

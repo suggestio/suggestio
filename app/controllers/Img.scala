@@ -1,7 +1,10 @@
 package controllers
 
+import java.io.File
+
 import io.suggest.model.ImgWithTimestamp
 import io.suggest.util.UuidUtil
+import models.im.MImg
 import play.api.mvc._
 import _root_.util.{FormUtil, PlayMacroLogsImpl, DateTimeUtil}
 import play.api.libs.concurrent.Execution.Implicits._
@@ -12,12 +15,14 @@ import util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
 import models._
-import net.sf.jmimemagic.Magic
+import net.sf.jmimemagic.{MagicMatch, Magic}
 import scala.concurrent.Future
 import views.html.img._
 import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
 import io.suggest.ym.model.common.MImgInfoMeta
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -148,16 +153,34 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
-    // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:
-    val ct = Option( Magic.getMagicMatch(imgBytes) )
+    serveImg(
+      resultRaw = Ok(imgBytes),
+      mm        = Magic.getMagicMatch(imgBytes),
+      cacheSeconds = cacheSeconds,
+      modelInstant = modelInstant
+    )
+  }
+
+  private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
+    trace(s"serveImgFromFile($file): 200 OK, file size = ${file.length} bytes.")
+    serveImg(
+      resultRaw     = Ok.sendFile(file),
+      mm            = Magic.getMagicMatch(file, false, true),
+      cacheSeconds  = cacheSeconds,
+      modelInstant  = modelInstant
+    )
+  }
+
+  private def serveImg(resultRaw: Result, mm: MagicMatch, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
+    val ct = Option(mm)
       .flatMap { mm => Option(mm.getMimeType) }
       // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
-     .map {
+      .map {
         case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
         case other => other
       }
       .getOrElse("image/unknown")   // Should never happen
-    Ok(imgBytes)
+    resultRaw
       .withHeaders(
         CONTENT_TYPE  -> ct,
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
@@ -325,31 +348,14 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    * @param args Данные по желаемой картинке.
    * @return Картинки или 304 Not modified.
    */
-  def dynImg(args: DynImgArgs) = {
-    if (args.imOps.isEmpty) {
-      _getImg(args.imgId)
-    } else {
-      _dynImg(args)
-    }
-  }
-
-
-  /** dyn-img-экшен, в котором картинка точно отрабатывается с модификациями относительно оригинала,
-    * т.е. список args.imOps не пустой. */
-  private def _dynImg(args: DynImgArgs) = Action.async { implicit request =>
-    //trace("_dynImg(): " + request.rawQueryString)
-    val oiik = args.imgId.asInstanceOf[OrigImgIdKey]
+  def dynImg(args: MImg) = Action.async { implicit request =>
     // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
-    val rowKeyStr = oiik.data.rowKey
-    val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
-    val qualifier = args.imOpsToStringLossy.trim
-    if (qualifier.isEmpty)
-      throw new IllegalArgumentException("Args.imgOps produces empty qualifier. This should never happen.\n  args = " + args)
-    val qOpt = Some(qualifier)
+    val rowKeyStr = args.rowKeyStr
+    val rowKey = args.rowKey
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
         case Some(ims) =>
-          args.imgId.getImageMeta map {
+          args.rawImgMeta map {
             case Some(imeta) =>
               val newModelInstant = withoutMs(imeta.timestampMs)
               isModifiedSinceCached(newModelInstant, ims)
@@ -367,31 +373,31 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
-        MUserImg2.getById(rowKey, qOpt) flatMap {
+        args.toLocalImg flatMap {
           case Some(img) =>
-            val modelInstant = withoutMs(img.timestamp.getMillis)
-            serveImgBytes(img.imgBytes, CACHE_ORIG_CLIENT_SECONDS, modelInstant)
+            val modelInstant = withoutMs(img.file.lastModified)
+            serveImgFromFile(img.file, CACHE_ORIG_CLIENT_SECONDS, modelInstant)
 
           // Картинки в указанном виде нету. Нужно сделать из оригинала.
           case None =>
             DynImgUtil.mkReadyImgToFile(args)
-              .map { imgFile =>
+              .map { localImg2 =>
                 val msRaw = DateTime.now.getMillis
                 val newModelInstant = withoutMs(msRaw)
                 val saveDt = newModelInstant.toDateTime
                 // В фоне запускаем сохранение полученной картинки в базу.
-                DynImgUtil.saveDynImgAsync(imgFile, rowKey, qualifier, saveDt)
-                Ok.sendFile(imgFile, inline = true)
-                  .withHeaders(
-                    LAST_MODIFIED         -> DateTimeUtil.rfcDtFmt.print(saveDt),
-                    CACHE_CONTROL         -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS"
-                  )
+                localImg2.toWrappedImg.saveToPermanent onComplete {
+                  case Success(false) => warn(s"Image not saved into permanent image storage: $args / file = ${localImg2.file}")
+                  case Failure(ex)    => error(s"Failed to save image $localImg2 into permanent storage", ex)
+                }
+                serveImgFromFile(localImg2.file, cacheSeconds = CACHE_ORIG_CLIENT_SECONDS, modelInstant = saveDt)
+
               }.recover {
                 case ex: NoSuchElementException =>
                   warn(s"Orig unmodified image not found: id[$rowKeyStr]")
                   imgNotFound
                 case ex: Throwable =>
-                  error(s"Unknown exception occured during fetchg/processing of source image id[$rowKey] newQu=$qualifier\n  args = $args", ex)
+                  error(s"Unknown exception occured during fetchg/processing of source image id[$rowKey]\n  args = $args", ex)
                   imgNotFound
               }
         }

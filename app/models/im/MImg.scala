@@ -3,9 +3,10 @@ package models.im
 import java.nio.ByteBuffer
 import java.util.UUID
 
+import io.suggest.img.ImgCropParsers
 import io.suggest.model.{MPict, MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
-import models.{ImgMetaI, MImgInfoMeta}
+import models.{ImgCrop, ImgMetaI, MImgInfoMeta}
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -13,7 +14,7 @@ import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
 import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl, AsyncUtil}
 import play.api.Play.{current, configuration}
-import util.img.ImgFormUtil
+import util.img.{ImgFileNameParsers, ImgFormUtil}
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -30,7 +31,9 @@ import scala.util.Random
  * которые не понимали dynImg-синтаксис.
  * Все данные картинок хранятся в локальной ненадежной кеширующей модели и в постояной моделях (cassandra и др.).
  */
-object MImg extends PlayLazyMacroLogsImpl {
+
+
+object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
 
   import LOGGER._
 
@@ -109,6 +112,17 @@ object MImg extends PlayLazyMacroLogsImpl {
     }
   }
 
+  def filename2miP: Parser[MImg] = {
+    fileNameP ^^ {
+      case uuid ~ imOps =>
+        MImg(uuid, imOps)
+    }
+  }
+
+  def apply(filename: String): MImg = {
+    parseAll(filename2miP, filename).get
+  }
+
 }
 
 
@@ -119,7 +133,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
 
   import LOGGER._
 
-  protected def toLocalInstance = MLocalImg(rowKey, dynImgOps)
+  lazy val toLocalInstance = MLocalImg(rowKey, dynImgOps)
 
   lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
 
@@ -226,7 +240,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
 
   override def toWrappedImg = this
 
-  override def rawImgMeta: Future[Option[ImgMetaI]] = {
+  override lazy val rawImgMeta: Future[Option[ImgMetaI]] = {
     permMetaCached
       .filter(_.isDefined)
       .recoverWith {
@@ -234,6 +248,8 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
         case ex: Exception  =>  toLocalInstance.rawImgMeta
       }
   }
+
+  override lazy val cropOpt = super.cropOpt
 }
 
 
@@ -286,4 +302,25 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
   def original: MAnyImgT
 
   def rawImgMeta: Future[Option[ImgMetaI]]
+
+  /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
+  def cropOpt: Option[ImgCrop] = {
+    val iter = dynImgOps
+      .iterator
+      .flatMap {
+        case AbsCropOp(crop) => Seq(crop)
+        case _ => Nil
+      }
+    if (iter.hasNext)
+      Some(iter.next())
+    else
+      None
+  }
+
+  def isCropped: Boolean = {
+    dynImgOps
+      .exists { _.isInstanceOf[ImCropOpT] }
+  }
+
 }
+
