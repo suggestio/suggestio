@@ -79,7 +79,7 @@ object MImg extends PlayLazyMacroLogsImpl {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImg]] = {
         // Собираем результат
-        val keyDotted = s"$key."
+        val keyDotted = if (!key.isEmpty) s"$key." else key
         for {
           // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
           params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
@@ -149,7 +149,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   override lazy val filename: String = super.filename
 
   /** Прочитать картинку из реального хранилища в файл, если ещё не прочитана. */
-  lazy val toLocalImg: Future[Option[MLocalImg]] = {
+  override lazy val toLocalImg: Future[Option[MLocalImg]] = {
     val inst = toLocalInstance
     if (inst.isExists) {
       Future successful Some(inst)
@@ -175,7 +175,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
    * Узнать параметры изображения, описываемого экземпляром этой модели.
    * @return Фьючерс с пиксельным размером картинки.
    */
-  lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
+  override lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
     // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
     val mimg2Fut = permMetaCached
       .map { imetaOpt =>

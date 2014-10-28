@@ -122,7 +122,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   }
 
   /** Асинхронно получить метаданные по этой картинке. */
-  lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
+  override lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
     identifyCached recover {
       case ex: org.im4java.core.InfoException =>
         LOGGER.info("getImageWH(): Unable to identity image " + filename, ex)
