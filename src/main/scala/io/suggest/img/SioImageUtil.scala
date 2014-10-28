@@ -201,25 +201,27 @@ object ConvertModes extends Enumeration {
   val STRIP, THUMB, RESIZE = Value
 }
 
-/** Комбо-парсеры для img-части. */
-object ImgUtilParsers extends JavaTokenParsers
 
+/** Утиль для парсинга значений кропа. */
+trait ImgCropParsers extends JavaTokenParsers {
 
-/** Статическая часть ImgCrop, описывающего кадрирование картинки. */
-object ImgCrop {
-  import ImgUtilParsers._
-
-  val CROP_STR_PARSER: Parser[ImgCrop] = {
+  /** Сгенерить парсер, который будет заниматься десериализацией кропа. */
+  def cropStrP: Parser[ImgCrop] = {
     val whP: Parser[Int] = "\\d+".r ^^ { Integer.parseInt }
-    val offIntP: Parser[Int] = "[+-_]\\d+".r ^^ { parseOffInt }
+    val offIntP: Parser[Int] = "[+-_]\\d+".r ^^ { ImgCrop.parseOffInt }
     (whP ~ ("[xX]".r ~> whP) ~ offIntP ~ offIntP) ^^ {
       case w ~ h ~ offX ~ offY =>
         ImgCrop(width=w, height=h, offX=offX, offY=offY)
     }
   }
+}
+
+
+/** Статическая часть ImgCrop, описывающего кадрирование картинки. */
+object ImgCrop extends ImgCropParsers {
 
   /** Метод для парсинга offset-чисел, которые всегда знаковые. */
-  private def parseOffInt(offStr: String): Int = {
+  def parseOffInt(offStr: String): Int = {
     // При URL_SAFE-кодировании используется _ вместо +. Этот символ нужно отбросить.
     val offStr1 = if (offStr.charAt(0) == '_') {
       offStr.substring(1)
@@ -229,7 +231,7 @@ object ImgCrop {
     Integer.parseInt(offStr1)
   }
 
-  private def parseCropStr(cropStr: String) = parse(CROP_STR_PARSER, cropStr)
+  private def parseCropStr(cropStr: String) = parse(cropStrP, cropStr)
 
   def apply(cropStr: String): ImgCrop = parseCropStr(cropStr).get
 

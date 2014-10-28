@@ -78,6 +78,13 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
 
   def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
+  def deleteOne(id: UUID, q: Option[String] = None): Future[_] = {
+    val q1 = MUserImg2.qOpt2q(q)
+    delete
+      .where(_.id eqs id)
+      .and(_.q eqs q1)
+      .future()
+  }
 
   /**
    * 2014.09.30: добавлялка поля timestamp. Потом надо удалить это отсюда и из jmx.
