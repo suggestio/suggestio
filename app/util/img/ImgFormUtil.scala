@@ -1032,6 +1032,7 @@ object OutImgFmts extends Enumeration {
  * @param withId Использовать указанный id. Если None, то будет сгенерен новый рандомный id.
  * @tparam T Реальный тип iik.
  */
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 case class ImgInfo4Save[+T <: ImgIdKey](
   iik       : T,
   withThumb : Boolean = true,
@@ -1039,6 +1040,7 @@ case class ImgInfo4Save[+T <: ImgIdKey](
 )
 
 
+@deprecated("Use models.im.MImg instead", "2014.oct.27")
 case class SavedTmpImg(origData: OrigImgData, tii4s: ImgInfo4Save[TmpImgIdKey], meta: MImgInfoMeta) {
   def idStr: String = origData.toFilename
   def oiik = OrigImgIdKey(origData, Some(meta))

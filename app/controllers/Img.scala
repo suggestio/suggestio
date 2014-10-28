@@ -423,7 +423,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
     * @return Экземпляр Result, хранящий json с данными результата.
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false)
-                    (implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+                    (implicit request: Request[MultipartFormData[TemporaryFile]]): Future[Result] = {
     try {
       request.body.file("picture") match {
         case Some(pictureFile) =>
@@ -448,19 +448,27 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
           } else {
             try {
               val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
-              // TODO Вызывать jpegtran или другие вещи для lossless-обработки.
               // Конвертим в JPEG всякие левые форматы.
-              if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
-                FileUtils.moveFile(srcFile, mptmp.file)
-              } else {
-                OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
-              }
-              // Генерим уменьшенную превьюшку для отображения на экране.
+              val imgPrepareFut: Future[_] = Future {
+                if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
+                  // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
+                  FileUtils.moveFile(srcFile, mptmp.file)
+                } else {
+                  // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
+                  OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
+                }
+              }(AsyncUtil.jdbcExecutionContext)
+              // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
               val imOps = List(
-                AbsResizeOp(MImgInfoMeta(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX), ImResizeFlags.OnlyShrinkLarger)
+                AbsResizeOp(
+                  MImgInfoMeta(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX),
+                  ImResizeFlags.OnlyShrinkLarger
+                )
               )
               val im = MImg(mptmp.rowKey, imOps)
-              Ok( Img.jsonTempOk(mptmp.filename, DynImgUtil.imgCall(im)) )
+              imgPrepareFut map { _ =>
+                Ok( Img.jsonTempOk(mptmp.filename, DynImgUtil.imgCall(im)) )
+              }
             } catch {
               case ex: Throwable =>
                 LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
