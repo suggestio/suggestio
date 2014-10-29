@@ -60,6 +60,7 @@ object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord
   def isExists(id: UUID, q: Option[String] = None): Future[Boolean] = {
     count
       .where(_.id eqs id)
+      .and(_.q eqs qOpt2q(q))
       .limit(1)
       .one()
       .map { _.exists(_ > 0L) }
@@ -71,8 +72,10 @@ object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord
   }
 
   def getById(id: UUID, q: Option[String] = None): Future[Option[MUserImg2]] = {
-    val q1 = qOpt2q(q)
-    select.where(_.id eqs id).and(_.q eqs q1).one()
+    select
+      .where(_.id eqs id)
+      .and(_.q eqs qOpt2q(q))
+      .one()
   }
 
   def insertImg(m: MUserImg2) = {
@@ -91,10 +94,9 @@ object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord
   }
 
   def deleteOne(id: UUID, q: Option[String] = None): Future[_] = {
-    val q1 = qOpt2q(q)
     delete
       .where(_.id eqs id)
-      .and(_.q eqs q1)
+      .and(_.q eqs qOpt2q(q))
       .future()
   }
 }

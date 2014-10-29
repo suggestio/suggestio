@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import MPict.Q_USER_IMG_ORIG
 import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
+import MUserImg2.qOpt2q
 
 /**
  * Suggest.io
@@ -63,8 +64,10 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
   }
 
   def getById(id: UUID, q: Option[String] = None): Future[Option[MUserImgMeta2]] = {
-    val q1 = q.getOrElse(Q_USER_IMG_ORIG)
-    select.where(_.id eqs id).and(_.q eqs q1).one()
+    select
+      .where(_.id eqs id)
+      .and(_.q eqs qOpt2q(q))
+      .one()
   }
 
   def insertMd(m: MUserImgMeta2) = {
@@ -76,13 +79,21 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
       .future()
   }
 
+  def isExists(id: UUID, q: Option[String] = None): Future[Boolean] = {
+    count
+      .where(_.id eqs id)
+      .and(_.q eqs qOpt2q(q))
+      .limit(1)
+      .one()
+      .map { _.exists(_ > 0L) }
+  }
+
   def deleteById(id: UUID) = delete.where(_.id eqs id).future()
 
   def deleteOne(id: UUID, q: Option[String] = None): Future[_] = {
-    val q1 = MUserImg2.qOpt2q(q)
     delete
       .where(_.id eqs id)
-      .and(_.q eqs q1)
+      .and(_.q eqs qOpt2q(q))
       .future()
   }
 

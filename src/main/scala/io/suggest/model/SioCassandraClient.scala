@@ -177,6 +177,7 @@ trait DeleteByStrId {
   def deleteByStrId(id: String) = deleteById(UuidUtil.base64ToUuid(id))
 }
 
+
 /** Реализация общих JXM-методов cassandra-моделей. */
 trait CassandraModelJmxMBeanImpl extends CassandraJmxBase with CassandraModelJxmMBeanI {
 
