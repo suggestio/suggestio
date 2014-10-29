@@ -2,6 +2,7 @@ package util.blocks
 
 import controllers.routes
 import io.suggest.ym.model.common.Imgs
+import models.im.MImg
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img._
@@ -35,10 +36,13 @@ trait ISaveImgs {
       // Картинка оставалась в хранилище, но на неё терялись все указатели.
       val abandonedOldImgAliases = oldImgs.keySet -- newImgs2.keySet
       val oldImgsAbandoned = oldImgs
-        .filterKeys(abandonedOldImgAliases contains)
+        .iterator
+        .filter(kv  =>  abandonedOldImgAliases contains kv._1)
+        .map { case (k, v)  =>  MImg(v.filename) }
+        .toIterable
       if (oldImgsAbandoned.nonEmpty) {
         // Удаляем связанные orig-картинки с помощью updateOrigImg()
-        ImgFormUtil.updateOrigImg(needImgs = Seq.empty, oldImgs = oldImgsAbandoned.values)
+        ImgFormUtil.updateOrigImgFull(needImgs = Seq.empty, oldImgs = oldImgsAbandoned)
       }
     }
     resultFut
@@ -49,7 +53,7 @@ trait ISaveImgs {
     Future successful Map.empty
   }
 
-  def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
+  def getBgImg(bim: BlockImgMap): Option[MImg] = None
 }
 
 
@@ -59,20 +63,24 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
   def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
     val needImgsThis = newImgs.get(fn)
     val oldImgsThis = oldImgs.get(fn)
+      .map { i => MImg(i.filename) }
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgFut = ImgFormUtil.updateOrigImg(
-        needImgs = needImgsThis.toSeq,
-        oldImgs  = oldImgsThis.toIterable
-      )
+      val saveBgImgFut = ImgFormUtil.updateOrigImgFull(
+          needImgs = needImgsThis.toSeq,
+          oldImgs  = oldImgsThis.toIterable
+        )
+        .map(_.headOption)
+      val imgInfoOptFut = saveBgImgFut.flatMap { savedBgImg =>
+        ImgFormUtil.optImg2OptImgInfo(savedBgImg)
+      }
       for {
-        savedBgImg <- saveBgImgFut
+        imgInfoOpt  <- imgInfoOptFut
         supSavedMap <- supImgsFut
       } yield {
-        savedBgImg.fold(supSavedMap) {
-          savedBgImg =>
-            supSavedMap + (fn -> savedBgImg)
+        imgInfoOpt.fold(supSavedMap) {
+          imgInfo =>  supSavedMap + (fn -> imgInfo)
         }
       }
     } else {

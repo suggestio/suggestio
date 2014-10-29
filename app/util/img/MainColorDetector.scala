@@ -138,54 +138,49 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * @param oldColors Старый набор цветов. Может содержать старое значение фона.
    * @param newBim Новый набор картинок.
    * @param bc Конфиг блока.
+   * @param mayAlreadySaved Возможна ли ситуация, когда цвет уже был определён ранее?
+   *                        false немного ускоряет работу для 100% tmp картинок.
+   *                        true устраняет ре-калькуляцию цвета, если картинка есть в permanent-хранилище.
    * @return Фьючерс с действием по обновлению карты цветов рекламной карточки.
    */
-  def adPrepareUpdateBgColors(newBim: BlockImgMap, bc: BlockConf, oldColors: Map[String, String] = Map.empty): Future[ImgBgColorUpdateAction] = {
+  def adPrepareUpdateBgColors(newBim: BlockImgMap, bc: BlockConf, mayAlreadySaved: Boolean, oldColors: Map[String, String] = Map.empty): Future[ImgBgColorUpdateAction] = {
     lazy val logPrefix = "adPrepareUpdateBgColors(): "
     bc.getBgImg(newBim).fold [Future[ImgBgColorUpdateAction]] {
       trace(s"${logPrefix}No background image - nothing to do.")
       Future successful Remove    // TODO Возвращать Keep?
     } { bgImg4s =>
       trace(s"${logPrefix}Starting color detecting bc=${bc.id}  oldColors = ${oldColors.filterKeys(_ == IMG_BG_COLOR_FN)}  newBim = $bgImg4s")
-      bgImg4s.iik match {
-        // Если есть новая tmp-картинка фона, то нужно запустить определение цвета для неё и вернуть новый цвет фона.
-        case tiik: TmpImgIdKey =>
-          future {
-            val heOpt = detectFileMainColor(tiik.mptmp.file, suppressErrors = true)
-            val result = he2updateAction(heOpt)
-            trace(s"${logPrefix}Detected color info for tmp img: $result")
-            result
+      // Бывают разные ситуации: осталась старая картинка и есть старый цвет. Нужно этот цвет портануть в новую карту.
+      // А бывает, что есть старая картинка, а цвета нет. Нужно выкачать картинку из модели в tmp, определить цвет и дропнуть картинку.
+      val alreadyHasColor: Future[Option[String]] = {
+        if (mayAlreadySaved) {
+          bgImg4s.existsInPermanent map {
+            case true  => oldColors.get(IMG_BG_COLOR_FN)
+            case false => None
           }
-        // Бывают разные ситуации: осталась старая картинка и есть старый цвет. Нужно этот цвет портануть в новую карту.
-        // А бывает, что есть старая картинка, а цвета нет. Нужно выкачать картинку из модели в tmp, определить цвет и дропнуть картинку.
-        case oiik: OrigImgIdKey =>
-          oldColors.get(IMG_BG_COLOR_FN).fold [Future[ImgBgColorUpdateAction]] {
-            // Старая картинка в базе, а цвета нет. Такое бывает сразу после апдейта до новой версии SIO-market.
-            MUserImg2.getByStrId(oiik.data.rowKey, oiik.origQualifierOpt) map {
-              case Some(oimg) =>
-                val fileSuffix = {
-                  val e1 = FilenameUtils.getExtension(oiik.filename)
-                  if (e1.isEmpty) ".jpg" else "." + e1
-                }
-                val tempImg = File.createTempFile("adPrepareUpdateBgColors", fileSuffix)
-                try {
-                  FileUtils.writeByteArrayToFile(tempImg, oimg.imgBytes)
-                  val heOpt = detectFileMainColor(tempImg, suppressErrors = true)
-                  val result = he2updateAction(heOpt)
-                  trace(s"${logPrefix}Detected color info for already saved orig img: $result")
-                  result
-                } finally {
-                  tempImg.delete()
-                }
-              case None =>
-                warn(s"${logPrefix}Failed to fetch ${oiik.filename} from orig model: 404.")
-                Keep
-            }
-          } { oldBgColor =>
-            // Сохранить старый цвет для старой картинки.
-            trace(s"${logPrefix}Keeping color of original color: $oldBgColor")
-            Future successful Keep
+        } else {
+          Future successful None
+        }
+      }
+      // В зависимости от наличия/отсутствия цвета решаем, что делать дальше:
+      alreadyHasColor flatMap {
+        case None =>
+          bgImg4s.toLocalImg.map {
+            case Some(localImg) =>
+              // TODO Может тут надо использовать изолированный thread-pool, а не общак?
+              val heOpt = detectFileMainColor(localImg.file, suppressErrors = true)
+              val result = he2updateAction(heOpt)
+              trace(s"${logPrefix}Detected color info for already saved orig img: $result")
+              result
+
+            case None =>
+              warn(s"${logPrefix}Img not found anywhere.")
+              Keep
           }
+
+        case Some(oldBgColor) =>
+          trace(s"${logPrefix}Keeping color of original color: $oldBgColor")
+          Future successful Keep
       }
     }
   }

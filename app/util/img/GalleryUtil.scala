@@ -2,10 +2,13 @@ package util.img
 
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
-import models.{DynImgArgs, Context, MImgInfoT}
+import models.Context
 import play.api.data.Forms._
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -26,15 +29,29 @@ object GalleryUtil {
     .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
 
   def gallery2iiks(gallery: List[String]) = {
-    gallery.map { OrigImgIdKey.apply }
+    gallery.map { MImg.apply }
   }
 
-  def gallery4s(gallery: List[ImgIdKey]) = {
-    gallery.map { iik => ImgInfo4Save(iik, withThumb = true) }
-  }
 
-  def gallery2filenames(gallery: List[MImgInfoT]) = {
-    gallery.map(_.filename)
+  /**
+   * Асинхронное обновление галереи. Входы и выходы в форматах, удобных для работы.
+   * @param newGallery Новая галерея (результат бинда формы).
+   * @param oldGallery Старое содержимое галереи.
+   * @return Фьючерс с новой галереи в формате старой галереи.
+   */
+  def updateGallery(newGallery: Seq[MImg], oldGallery: Seq[String]): Future[List[String]] = {
+    ImgFormUtil.updateOrigImgId(needImgs = newGallery, oldImgIds = oldGallery)
+      .flatMap { mimgs =>
+        Future.traverse(mimgs.zipWithIndex) { case (mimg, i) =>
+          ImgFormUtil.img2imgInfo(mimg)
+            .map { _ -> i }
+        } map { res =>
+          res.sortBy(_._2)
+            .iterator
+            .map(_._1.filename)
+            .toList
+        }
+      }
   }
 
 

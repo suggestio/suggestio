@@ -306,7 +306,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       },
       {case (mir, logoOpt) =>
         assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs = Nil)
+        val savedLogoFut = ImgFormUtil.updateOrigImgFull(logoOpt.toSeq, oldImgs = Nil)
+          .flatMap { vs => ImgFormUtil.optImg2OptImgInfo(vs.headOption) }
         savedLogoFut flatMap { savedLogoOpt =>
           val mir2 = mir.copy(
             adnNode = mir.adnNode.map {

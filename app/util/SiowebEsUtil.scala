@@ -1,5 +1,6 @@
 package util
 
+import _root_.util.img.DynImgUtil
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.SearchHit
@@ -262,7 +263,7 @@ object SiowebEsUtil extends SioEsClient {
       hit.getFields.foreach {
         case (FIELD_IMAGE_ID, field) =>
           val imageId = field.getValue[String]
-          resultMap(FIELD_THUMB_REL_URL) = routes.Img.getThumb(imageId).toString()
+          resultMap(FIELD_THUMB_REL_URL) = DynImgUtil.thumb256Call(imageId).toString()
 
         case (FIELD_PAGE_TAGS, fieldValue) =>
           val pageTags = fieldValue.getValue[java.util.List[String]]

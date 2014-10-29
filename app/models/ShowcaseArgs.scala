@@ -135,7 +135,7 @@ case class SMShowcaseRenderArgs(
     val path = logoImgOpt.fold {
       CdnUtil.asset("images/market/showcase-logo.png")
     } { logoImg =>
-      CdnUtil.getImg(logoImg.filename)
+      CdnUtil.dynImg(logoImg.filename)
     }
     util.Context.MY_AUDIENCE_URL + path
   }

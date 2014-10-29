@@ -3,7 +3,7 @@ package controllers
 import java.io.File
 
 import io.suggest.model.ImgWithTimestamp
-import models.im.{ImResizeFlags, AbsResizeOp, MLocalImg, MImg}
+import models.im._
 import org.apache.commons.io.FileUtils
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
@@ -15,7 +15,6 @@ import util.acl._
 import util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
-import models._
 import net.sf.jmimemagic.{MagicMatch, Magic}
 import scala.concurrent.Future
 import views.html.img._
@@ -23,7 +22,7 @@ import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
 import io.suggest.ym.model.common.MImgInfoMeta
 
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 /**
  * Suggest.io
@@ -64,59 +63,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     cacheDuration.toSeconds.toInt
   }
 
-
-  /**
-   * Выдать картинку из HDFS. Используется для визуализации выдачи.
-   * Валидность параметров проверяется в роутере регэкспами.
-   * @param imageId Хеш-ключ картинки в хранилище домена.
-   * @return 200 Ok и картинка.
-   *         404 Not Found.
-   */
-  def getThumb(imageId: String) = Action.async { implicit request =>
-    suppressQsFlood(routes.Img.getThumb(imageId)) {
-      // Thumb'ы у нас [пока] только не кропаные, поэтому надо срезать crop-суффикс из imageId.
-      ImgIdKey(imageId) match {
-        case oiik: OrigImgIdKey =>
-          MImgThumb2.getThumbByStrId(oiik.data.rowKey) map {
-            case Some(its) =>
-              serveImgMaybeCached(its, CACHE_THUMB_CLIENT_SECONDS)
-
-            case None =>
-              info(s"getThumb($imageId): 404 Not found")
-              imgNotFound
-          }
-
-        // Если запрос идёт за itmp, то надо вернуть соответсвующий itmp, т.к. thumb'ов для них не предусмотрено.
-        case tiik: TmpImgIdKey =>
-          _getTempImg(tiik.filename)
-      }
-    }
-  }
-
-
-  /**
-   * Раздача оригиналов сохраненных в HBase картинок.
-   * @param filename id картинки.
-   * @return Оригинал картинки.
-   */
-  def getOrig(filename: String) = {
-    val oiik = OrigImgIdKey(filename)
-    getOrigIik(oiik)
-  }
-
-  def getOrigIik(oiik: OrigImgIdKey) = Action.async { implicit request =>
-    import oiik.filename
-    suppressQsFlood(routes.Img.getOrig(filename)) {
-      MUserImg2.getByStrId(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
-        case Some(its) =>
-          serveImgMaybeCached(its, CACHE_ORIG_CLIENT_SECONDS)
-
-        case None =>
-          info(s"getOrig($filename): 404")
-          imgNotFound
-      }
-    }
-  }
 
   /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
   private def withoutMs(timestampMs: Long): Instant = {
@@ -199,52 +145,18 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
     }
   }
 
-  /** Раздавалка картинок, созданных в [[handleTempImg]]. */
-  // TODO Тут надо бы IsAuth, но он мешает работать программистам из-за использования audience_url в ряде случаев.
-  def getTempImg(filename: String) = Action.async { implicit request =>
-    suppressQsFlood(routes.Img.getTempImg(filename)) {
-      _getTempImg(filename)
-    }
-  }
-
-  private def _getTempImg(filename: String): Result = {
-    // Надо бы добавить сюда поддержку if-modifier-since...
-    MPictureTmp.find(filename) match {
-      case Some(mptmp) =>
-        val f = mptmp.file
-        Ok.sendFile(f, inline = true)
-          .withHeaders(
-            LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(f.lastModified),
-            CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
-          )
-
-      case None => imgNotFound
-    }
-  }
-
   /**
    * Раздача произвольных картинок без проверки прав.
    * @param imgId ключ картинки
    * @return Один из различных экшенов обработки.
    */
+  @deprecated("Use dynImg() instead.", "2014.oct.29")
   def getImg(imgId: String): Action[AnyContent] = {
-    val iik = ImgIdKey(imgId)
-    _getImg(iik)
+    val img = MImg(imgId)
+      .copy(dynImgOps = Nil)
+    dynImg(img)
   }
 
-  def _getImg(iik: ImgIdKey) = {
-    if (iik.isValid) {
-      iik match {
-        case tiik: TmpImgIdKey  => getTempImg(iik.filename)
-        case oiik: OrigImgIdKey => getOrigIik(oiik)
-      }
-    } else {
-      trace(s"invalid img id: " + iik)
-      actionImgNotFound
-    }
-  }
-
-  private def actionImgNotFound = Action { imgNotFound }
   private def imgNotFound = NotFound("No such image")
 
   /**
@@ -318,28 +230,34 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       },
       {case (iik0, icrop, markerOpt, targetSz) =>
         // Запрашиваем исходную картинку:
-        val preparedTmpImgFut = iik0.toTempPictOrig
+        val preparedTmpImgFut = iik0.toLocalImg
         // 2014.oct.08 Нужно чинить кроп, т.к. форма может засабмиттить его с ошибками.
-        val crop2Fut = iik0.getBaseImageWH.map { whOpt =>
+        val crop2Fut = iik0.getImageWH.map { whOpt =>
           whOpt.fold(icrop) { wh =>
             ImgFormUtil.repairCrop(icrop, targetSz = targetSz, srcSz = wh)
           }
         }
-        for {
-          origMptmp <- preparedTmpImgFut
-          crop2     <- crop2Fut
-        } yield {
-          val cropOpt = Some(crop2)
-          val croppedMptmpData = origMptmp.data.copy(cropOpt = cropOpt)
-          val croppedMptmp = MPictureTmp(data = croppedMptmpData)
-          OrigImageUtil.convert(
-            fileOld = origMptmp.file,
-            fileNew = croppedMptmp.file,
-            crop = cropOpt,
-            mode = ConvertModes.STRIP
-          )
-          // TODO Нужно использовать dynImg.
-          Ok(jsonTempOk(croppedMptmp.filename, routes.Img.getImg(croppedMptmp.filename)))
+        preparedTmpImgFut flatMap {
+          case Some(localImg) =>
+            crop2Fut map { crop2 =>
+              // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
+              val cropOp = AbsCropOp(crop2)
+              val croppedImgFileName = {
+                val imOps = List(cropOp)
+                MImg(localImg.rowKey, imOps).fileName
+              }
+              // Сгенерить новую dyn-ссылку на картинку. Откропать согласно запросу.
+              // Т.к. это редактор, имеет смысл отресайзить оригинал до превьюшки.
+              val previewCall = {
+                val imOps = List(cropOp, _imgRszPreviewOp)
+                val img = MImg(localImg.rowKey, imOps)
+                DynImgUtil.imgCall(img)
+              }
+              Ok( Img.jsonTempOk(croppedImgFileName, previewCall) )
+            }
+
+          case None =>
+            NotFound("img does not exist: " + iik0.fileName)
         }
       }
     )
@@ -353,7 +271,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    * @return Картинки или 304 Not modified.
    */
   def dynImg(args: MImg) = Action.async { implicit request =>
-    // TODO Нужна поддержка tmp img? Пока нет -- тут экзепшены.
     val rowKey = args.rowKey
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
@@ -390,7 +307,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
                 val saveDt = newModelInstant.toDateTime
                 // В фоне запускаем сохранение полученной картинки в базу.
                 localImg2.toWrappedImg.saveToPermanent onComplete {
-                  case Success(false) => warn(s"Image not saved into permanent image storage: $args / file = ${localImg2.file}")
                   case Failure(ex)    => error(s"Failed to save image $localImg2 into permanent storage", ex)
                   case _              => // do nothing - об успехах сообщать не нужно.
                 }
@@ -459,12 +375,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
                 }
               }(AsyncUtil.jdbcExecutionContext)
               // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
-              val imOps = List(
-                AbsResizeOp(
-                  MImgInfoMeta(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX),
-                  ImResizeFlags.OnlyShrinkLarger
-                )
-              )
+              val imOps = List(_imgRszPreviewOp)
               val im = MImg(mptmp.rowKey, imOps)
               imgPrepareFut map { _ =>
                 Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
@@ -489,6 +400,15 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
         f.ref.file.delete()
       }
     }
+  }
+
+
+  /** IM Resize-операция по генерации превьюшки для картинки в редакторе. */
+  def _imgRszPreviewOp = {
+    AbsResizeOp(
+      MImgInfoMeta(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX),
+      ImResizeFlags.OnlyShrinkLarger
+    )
   }
 
 }

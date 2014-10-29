@@ -43,7 +43,7 @@
       <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
-           src="@CdnUtil.getImg(fgImage.filename)"/>
+           src="@CdnUtil.dynImg(fgImage.filename)"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@

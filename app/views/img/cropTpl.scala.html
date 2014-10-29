@@ -2,6 +2,7 @@
 
 @import ctx._
 @import helper._
+@import util.img.DynImgUtil
 
 <div class="popup __size-M js-popup" id="imgCropTool" data-width="@width" data-height="@height">
 
@@ -15,10 +16,9 @@
 
     <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
 
+      @* Рендер превьшки, но с реальными размерами. *@
       <div>
-      @* Здесь у нас загружается исходное изображение, которое js-ом ресайзится до размеров родительского контейнера *@
-      @* TODO: аттрибуты data-width и data-height надо заменить на реальные значения *@
-      <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@routes.Img.getImg(imgId)" />
+        <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@DynImgUtil.thumb256Call(imgId)" />
       </div>
 
     </div>

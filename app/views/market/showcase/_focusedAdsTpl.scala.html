@@ -14,7 +14,8 @@
   </div>
 
   @producer.logoImgOpt.map { logoImg =>
-    <img class="sm-producer-header_logo" height="30" src="@CdnUtil.getImg(logoImg.filename)"/>
+    @* TODO Нужно ссылку на логотип генерить исходя из экрана клиента, а не с потолка. *@
+    <img class="sm-producer-header_logo" height="30" src="@CdnUtil.dynImg(logoImg.filename)"/>
   }
 
 </div>

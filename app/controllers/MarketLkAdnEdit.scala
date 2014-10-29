@@ -1,8 +1,10 @@
 package controllers
 
+import models.im.MImg
 import play.api.mvc.Action
+import util.img.LogoUtil.LogoOpt_t
 import util.img._
-import util.img.ImgFormUtil.{LogoOpt_t, imgInfo2imgKey}
+import util.img.ImgFormUtil.imgInfo2imgKey
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -15,6 +17,8 @@ import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -140,14 +144,13 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     val waOptFut = getWelcomeAdOpt(adnNode)
-    val martLogoOpt = adnNode.logoImgOpt.map { img =>
-      ImgInfo4Save(imgInfo2imgKey(img))
-    }
+    val nodeLogoOpt = adnNode.logoImgOpt
+      .map { img => MImg(img.filename) }
     val gallerryIks = gallery2iiks( adnNode.gallery )
     val formNotFilled = nodeFormM(adnNode.adn)
     waOptFut map { welcomeAdOpt =>
       val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
-      val fmr = FormMapResult(adnNode.meta, martLogoOpt, welcomeImgKey, gallerryIks)
+      val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
       val formFilled = formNotFilled fill fmr
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
@@ -169,17 +172,11 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
-        trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
-        // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(
-          needImgs = fmr.logoOpt.toSeq,
-          oldImgs  = adnNode.logoImgOpt.toIterable
-        )
+        trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
+        // В фоне обновляем логотип узла
+        val savedLogoFut = LogoUtil.updateLogo(fmr.logoOpt, adnNode.logoImgOpt)
         // Запускаем апдейт галереи.
-        val galleryUpdFut = ImgFormUtil.updateOrigImgId(
-          needImgs = gallery4s(fmr.gallery),
-          oldImgIds = adnNode.gallery
-        )
+        val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
         for {
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
@@ -201,7 +198,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
   private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: AdnMMetadata, waIdOpt: Option[String],
-                               newLogo: Option[MImgInfoT], newImgGallery: List[MImgInfoT]): MAdnNode = {
+                               newLogo: Option[MImgInfoT], newImgGallery: List[String]): MAdnNode = {
     adnNode.copy(
       meta = adnNode.meta.copy(
         // сохраняем метаданные
@@ -221,7 +218,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       ),
       // сохраняем логотип
       logoImgOpt = newLogo,
-      gallery = gallery2filenames(newImgGallery)
+      gallery = newImgGallery
     )
   }
 
@@ -241,8 +238,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   sealed case class FormMapResult(
     meta: AdnMMetadata,
     logoOpt: LogoOpt_t,
-    waImgIdOpt: Option[ImgIdKey] = None,
-    gallery: List[ImgIdKey] = Nil
+    waImgIdOpt: Option[MImg] = None,
+    gallery: List[MImg] = Nil
   )
 }
 

@@ -37,16 +37,20 @@ object WelcomeUtil {
     getWelcomeAdOpt( node.meta.welcomeAdId )
   }
 
-  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[ImgIdKey]) = {
-    ImgFormUtil.updateOrigImg(
-      needImgs = newWaImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
-      oldImgs = waOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
+  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImg]) = {
+    val saveAllFut = ImgFormUtil.updateOrigImgFull(
+      needImgs = newWaImgOpt.toSeq,
+      oldImgs = waOpt
+        .flatMap(_.imgs.headOption)
+        .map { kv => MImg(kv._2.filename) }
+        .toIterable
     )
+    saveAllFut map { _.headOption }
   }
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
-  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
+  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[MImg]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
       updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
@@ -58,10 +62,12 @@ object WelcomeUtil {
               { waId => MWelcomeAd.deleteById(waId).map { _ => None } }
 
         // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-        case newImgInfoOpt @ Some(newImgInfo) =>
-          val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
-          newWelcomeAd.save
-            .map { Some.apply }
+        case Some(newImg) =>
+          ImgFormUtil.img2imgInfo(newImg) flatMap { newImgInfo =>
+            val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
+            newWelcomeAd.save
+              .map { Some.apply }
+          }
       }
     }
   }
@@ -91,7 +97,7 @@ object WelcomeUtil {
   def welcomeAd2iik(waOpt: Option[MWelcomeAd]) = {
     waOpt
       .flatMap { _.imgs.headOption }
-      .map[OrigImgIdKey] { img => img._2 }
+      .map[MImg] { img => MImg(img._2.filename) }
   }
 
 

@@ -3,15 +3,11 @@ package controllers
 import util.{FormDataSerializer, PlayMacroLogsImpl}
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
-import util.SiowebEsUtil.client
 import util.FormUtil._
 import play.api.data._
 import util.acl._
-import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
-import play.api.Play.current
-import io.suggest.ym.parsers.Price
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
@@ -80,6 +76,12 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
     }
   }
 
+  /** Сабмит формы редактирования карточки для генерации превьюшки.
+    * @param adnId id узла, в рамках которого происходит работа.
+    * @param isFull true - надо полноэкранную преьюшку, false - нужен обычный размер.
+    * @return 200 Ok с рендером.
+    *         406 Not Acceptable при ошибочной форме.
+    */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm(request.adnNode) match {
       case Right((bc, adFormM)) =>
@@ -91,8 +93,8 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
           {case (mad, bim) =>
             val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
               case (k, i4s) =>
-                previewPrepareImgMeta(i4s.iik) map {
-                  imgMetaOpt  =>  k -> MImgInfo(i4s.iik.filename, meta = imgMetaOpt)
+                i4s.getImageWH map {
+                  imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt)
                 }
             } map {
               _.toMap
@@ -116,24 +118,6 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
       case Left(formWithGlobalError) =>
         NotAcceptable("Form mode invalid")
-    }
-  }
-
-  /** Награбить метаданные по картинке для генерации превьюшки. */
-  private def previewPrepareImgMeta(iik: ImgIdKey): Future[Option[MImgInfoMeta]] = {
-    iik match {
-      case tiik: TmpImgIdKey =>
-        Future successful ImgFormUtil.getMetaForTmpImgCached(tiik)
-      case oiik: OrigImgIdKey if oiik.meta.isDefined =>
-        Future successful oiik.meta
-      case oiik: OrigImgIdKey =>
-        // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        oiik.getBaseImageWH
-          .recover {
-            case ex: Exception =>
-              error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from storage", ex)
-              None
-          }
     }
   }
 

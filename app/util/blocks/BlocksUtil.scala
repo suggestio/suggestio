@@ -1,6 +1,7 @@
 package util.blocks
 
 import models.blk.{BlockWidths, BlockHeights}
+import models.im.MImg
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -25,7 +26,8 @@ import play.twirl.api.{HtmlFormat, Template5}
 
 object BlocksUtil {
 
-  type BlockImgMap = Map[String, ImgInfo4Save[ImgIdKey]]
+  type BlockImgEntry = (String, MImg)
+  type BlockImgMap = Map[String, MImg]
 
   val BLOCK_ID_FN = "blockId"
 
@@ -241,25 +243,6 @@ case class BfWidth(
 }
 
 
-/** Поле для переключения энтерпрайза. */
-case class BfWIsWideBg(
-  name: String,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[Boolean] = Some(false)
-) extends BlockFieldT {
-
-  override type T = Boolean
-
-  override def field = ???
-
-  override def mappingBase: Mapping[T] = boolean
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = ???
-
-  override def fallbackValue: T = false
-}
-
-
 case class BfPrice(
   name: String,
   offerNopt: Option[Int] = None,
@@ -379,8 +362,7 @@ case class BfImage(
   imgUtil: SioImageUtilT,
   defaultValue: Option[BlockImgMap] = None,
   offerNopt: Option[Int] = None,
-  preserveFmt: Boolean = false,
-  saveWithThumb: Boolean = false
+  preserveFmt: Boolean = false
 ) extends BlockFieldT {
   override type T = BlockImgMap
 
@@ -388,19 +370,19 @@ case class BfImage(
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = {
-    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
-    val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
-    Map(name -> i4s)
+    //val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
+    //val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
+    //Map(name -> i4s)
+    // TODO Нужно fallback-картинку запилить и чтобы на неё была ссылка? Возможно, этот метод никогда не вызывается.
+    Map.empty
   }
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
     ImgFormUtil.imgIdOptM
       .transform[BlockImgMap] (
-        { _.map { iik => ImgInfo4Save(iik, withThumb = saveWithThumb) }
-           .fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) }
-        },
-        { _.get(name).map(_.iik) }
+        { _.fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) } },
+        { _.get(name) }
       )
   }
 

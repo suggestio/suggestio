@@ -8,7 +8,7 @@ import java.util.UUID
 import controllers.routes
 import io.suggest.util.UuidUtil
 import models._
-import models.im.{MLocalImg, MImg, ImOp}
+import models.im.{AbsResizeOp, MLocalImg, MImg, ImOp}
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
 import play.api.mvc.Call
@@ -37,6 +37,10 @@ object DynImgUtil extends PlayMacroLogsImpl {
    */
   def imgCall(dargs: MImg): Call = {
     routes.Img.dynImg(dargs)
+  }
+  def imgCall(filename: String): Call = {
+    val img = MImg(filename)
+    imgCall(img)
   }
 
   /**
@@ -125,6 +129,19 @@ object DynImgUtil extends PlayMacroLogsImpl {
     }(AsyncUtil.jdbcExecutionContext)
     // Распрямить вложенный фьючерс.
     futFut flatMap identity
+  }
+
+
+  /** Сгенерить превьюшку размера не более 256х256. */
+  def thumb256Call(fileName: String): Call = {
+    val img = MImg(fileName)
+    thumb256Call(img)
+  }
+  def thumb256Call(img: MImg): Call = {
+    val imgThumb = img.copy(
+      dynImgOps = img.dynImgOps ++ Seq(AbsResizeOp(MImgInfoMeta(256, 256)))
+    )
+    imgCall(imgThumb)
   }
 
 }

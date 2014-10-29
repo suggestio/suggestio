@@ -1,5 +1,6 @@
 package controllers
 
+import models.im.MImg
 import util.PlayMacroLogsImpl
 import views.html.market.lk.ad._
 import models._
@@ -16,7 +17,7 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
-import util.img.{MainColorDetector, ImgInfo4Save, OrigImgIdKey}
+import util.img.{MainColorDetector, ImgInfo4Save}
 import io.suggest.ym.model.common.Texts4Search
 
 /**
@@ -156,7 +157,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Асинхронно обрабатываем всякие прочие данные.
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
             val t4s2Fut = newTexts4search(mad, request.adnNode)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc)
+            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mayAlreadySaved = false)
             // Когда всё готово, сохраняем саму карточку.
             for {
               t4s2      <- t4s2Fut
@@ -251,8 +252,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val blockConf = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
     val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
     val bim = mad.imgs.mapValues { mii =>
-      val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
-      ImgInfo4Save(oiik)
+      MImg(mii.filename)
     }
     val formFilled = form0 fill ((mad, bim))
     renderEditFormWith(formFilled)
@@ -275,7 +275,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2, request.producer)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mad.colors)
+            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mayAlreadySaved = true, mad.colors)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
             val saveImgsFut = bc.saveImgs(

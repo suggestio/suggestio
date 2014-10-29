@@ -100,8 +100,12 @@ object CdnUtil extends PlayMacroLogsImpl {
   }
 
   /** Вызов к dynImg через CDN. */
-  def dynImg(dargs: MImg)(implicit ctx: Context) = {
+  def dynImg(dargs: MImg)(implicit ctx: Context): Call = {
     forCall( DynImgUtil.imgCall(dargs) )
+  }
+  def dynImg(filename: String)(implicit ctx: Context): Call = {
+    val img = MImg(filename)
+    dynImg(img)
   }
 
   /** Вызов за оригиналом картинки. */

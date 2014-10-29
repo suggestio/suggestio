@@ -1,6 +1,7 @@
 package util.blocks
 
 import models.blk.{BlockHeights, BlockWidths}
+import models.im.MImg
 import play.api.data._
 import BlocksUtil._
 import util.PlayMacroLogsImpl
@@ -226,7 +227,7 @@ case class BindAcc(
   var height  : Int = BlockHeights.default.heightPx,
   var width   : Int = BlockWidths.default.widthPx,
   var isWide  : Boolean = false,
-  var bim     : List[(String, ImgInfo4Save[ImgIdKey])] = Nil
+  var bim     : List[BlockImgEntry] = Nil
 ) {
 
   /**

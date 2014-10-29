@@ -1,5 +1,6 @@
 package models.im
 
+import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import java.util.UUID
 
@@ -245,19 +246,47 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   }
 
   /** Отправить лежащее в файле на диске в постоянное хранилище. */
-  def saveToPermanent: Future[Boolean] = {
+  def saveToPermanent: Future[_] = {
     val loc = toLocalInstance
     if (loc.isExists) {
+      // Собираем и сохраняем метаданные картинки:
+      val q1 = MUserImg2.qOpt2q(qOpt)
+      val metaSaveFut = loc.rawImgMeta flatMap { imdOpt =>
+        val imd = imdOpt.get
+        val mui2meta = MUserImgMeta2(
+          id = rowKey,
+          q = q1,
+          md = imd.md,
+          timestamp = new DateTime(imd.timestampMs)
+        )
+        mui2meta.save
+      }
+      // Сохраняем содержимое картинки:
       val mui2 = MUserImg2(
         id  = rowKey,
-        q   = qOpt.getOrElse(MPict.Q_USER_IMG_ORIG),
+        q   = q1,
         img = ByteBuffer.wrap(loc.imgBytes),
         timestamp = new DateTime(loc.timestampMs)
       )
-      mui2.save
-        .map { _ => true }
+      val mui2saveFut = mui2.save
+      // Объединяем фьючерсы
+      mui2saveFut flatMap { _ =>
+        metaSaveFut
+      }
     } else {
-      Future successful false
+      Future failed new FileNotFoundException("Img file not exists localy - unable to save into permanent storage: " + loc.file.getAbsolutePath)
+    }
+  }
+
+  /** Сохранена ли текущая картинка в постоянном хранилище?
+    * Метод просто проверяет наличие любых записей с указанным ключом в cassandra-моделях. */
+  def existsInPermanent: Future[Boolean] = {
+    val dataExistsFut = MUserImg2.isExists(rowKey, qOpt)
+    for {
+      metaExists <- MUserImgMeta2.isExists(rowKey, qOpt)
+      dataExists <- dataExistsFut
+    } yield {
+      dataExists && metaExists
     }
   }
 

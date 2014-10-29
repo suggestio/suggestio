@@ -1,6 +1,5 @@
 package util.blocks
 
-import controllers.routes
 import io.suggest.ym.model.common.{IBlockMeta, Imgs, BlockMeta, MImgInfoT}
 import models.im._
 import play.api.mvc.Call
@@ -288,7 +287,7 @@ trait SaveBgImgI extends ISaveImgs {
   def bgImgBf: BfImage
 
   /** Прочитать инфу о сохраняемой картинке из карты картинок создаваемого блока. */
-  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = {
+  override def getBgImg(bim: BlockImgMap): Option[MImg] = {
     bim.get(BG_IMG_FN)
   }
 

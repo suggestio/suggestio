@@ -3,6 +3,7 @@
 @import util.TplDataFormatUtil._
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
+@import util.img.DynImgUtil
 
 
   <div class="flex @if(ctx.isIpad || ctx.isIphone){ overflow-scrolling }" >
@@ -15,16 +16,11 @@
 
         <div class="card_photo-w">
           @adnNode.gallery.headOption.map { filename =>
-            <div class="card_photo" style="background-image: url(@routes.Img.getImg(filename));"></div>
+            <div class="card_photo" style="background-image: url(@DynImgUtil.thumb256Call(filename));"></div>
           }
           <div class="card_location location-contour">
             локация
           </div>
-          @*<div class="card_logo-w">
-            <a class="card_logo" style="background-color: #@adnNode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);">
-              <img src='@adnNode.logoImgOpt.map { img =>@routes.Img.getImg(img.filename))}' alt="@Messages("Logo")"/>
-            </a>
-          </div>*@
         </div>
 
         <h2 class="card_title">@adnNode.meta.name</h2>
