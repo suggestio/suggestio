@@ -38,7 +38,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
 
-  val IIK_MAXLEN = 80
+  private val IIK_MAXLEN = 80
 
   // Ключи в карте MUserImgMeta, которые хранят данные о картинке.
   val IMETA_WIDTH  = "w"
@@ -46,41 +46,45 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
     * появившиеся в ходе ошибочной логики. */
-  val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
+  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
 
 
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
-  val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
-    .transform[ImgIdKey](ImgIdKey.apply, _.filename)
-    .verifying("img.id.invalid.", { _.isValid })
+  val imgIdM: Mapping[ImgIdKey] = {
+    nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
+      .transform[ImgIdKey](ImgIdKey.apply, _.filename)
+      .verifying("img.id.invalid.", { _.isValid })
+  }
 
   /** маппер для поля с id картинки, который может отсутствовать. */
-  val imgIdOptM: Mapping[Option[ImgIdKey]] = optional(text(maxLength = IIK_MAXLEN))
-    .transform[Option[ImgIdKey]](
-       {txtOpt =>
-         try {
-           txtOpt
-             .filter(_.length >= 8)
-             .map(ImgIdKey.apply)
-         } catch {
-           case ex: Exception =>
-             debug("imgIdOptM.apply: Cannot parse img id key: " + txtOpt, ex)
-             None
-         }
-       },
-       { _.map(_.filename) }
-    )
+  val imgIdOptM: Mapping[Option[ImgIdKey]] = {
+    optional(text(maxLength = IIK_MAXLEN))
+      .transform[Option[ImgIdKey]](
+        {txtOpt =>
+          try {
+            txtOpt
+              .filter(_.length >= 8)
+              .map(ImgIdKey.apply)
+          } catch {
+            case ex: Exception =>
+              debug("imgIdOptM.apply: Cannot parse img id key: " + txtOpt, ex)
+              None
+          }
+        },
+        { _.map(_.filename) }
+      )
+  }
 
 
   /** Маппер для поля с id картинки-логотипа, но результат конвертируется в ImgInfo. */
-  def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
+  private def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
     .transform(
       { ImgInfo4Save(_, withThumb = false) },
       { ii: ImgInfo4Save[ImgIdKey] => ii.iik }
     )
 
   /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
-  val imgIdJpegM = imgIdM
+  private val imgIdJpegM = imgIdM
     .verifying("img.fmt.invalid", { iik => iik match {
       case tiik: TmpImgIdKey =>
         tiik.mptmp.data.fmt == OutImgFmts.JPEG
@@ -88,11 +92,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         true
     }})
 
-  val LOGO_IMG_ID_K = "logoImgId"
+  private val LOGO_IMG_ID_K = "logoImgId"
 
 
   /** Синхронно проверить переданный img id key насколько это возможно. */
-  def checkIIK(iik: ImgIdKey, marker: String): Boolean = {
+  private def checkIIK(iik: ImgIdKey, marker: String): Boolean = {
     iik match {
       case tiik: TmpImgIdKey =>
         tiik.mptmp
@@ -104,12 +108,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** Собрать маппинг для id изображения, промаркированного известным маркером, либо уже сохранённый orig. */
-  def imgIdMarkedM(errorMsg: String, marker: String): Mapping[ImgIdKey] = {
+  private def imgIdMarkedM(errorMsg: String, marker: String): Mapping[ImgIdKey] = {
     imgIdM.verifying(errorMsg, checkIIK(_, marker))
   }
 
   /** Аналог [[imgIdMarkedM]], но функция толерантна к ошибкам, и без ошибок отсеивает некорректные img id. */
-  def imgIdMarkedOptM(marker: String): Mapping[Option[ImgIdKey]] = {
+  private def imgIdMarkedOptM(marker: String): Mapping[Option[ImgIdKey]] = {
     imgIdOptM.transform[Option[ImgIdKey]](
       { _.filter(checkIIK(_, marker)) },
       { identity }
@@ -154,7 +158,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  def imgCropOptM: Mapping[Option[ImgCrop]] = {
+  private def imgCropOptM: Mapping[Option[ImgCrop]] = {
     val txtM = text(maxLength = 16).transform(FormUtil.strTrimSanitizeLowerF, FormUtil.strIdentityF)
     optional(txtM)
       .transform[Option[String]] (_.filter(!_.isEmpty), identity)
@@ -179,7 +183,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[OrigImgIdKey]] = {
+  private def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[OrigImgIdKey]] = {
     // Защита от какой-либо деятельности в случае полного отсутствия входных данных.
     if (needImgs.isEmpty && oldImgs.isEmpty) {
       Future successful Nil

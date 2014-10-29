@@ -395,7 +395,7 @@ case class BfImage(
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
-    ImgFormUtil.imgIdMarkedOptM(marker = marker)
+    ImgFormUtil.imgIdOptM
       .transform[BlockImgMap] (
         { _.map { iik => ImgInfo4Save(iik, withThumb = saveWithThumb) }
            .fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) }

@@ -22,7 +22,7 @@ object GalleryUtil {
   /** Максимально кол-во картинок в галереи. */
   val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
-  val galleryKM = "gallery" -> list(ImgFormUtil.imgIdJpegM)
+  val galleryKM = "gallery" -> list(ImgFormUtil.imgIdM)
     .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
 
   def gallery2iiks(gallery: List[String]) = {
