@@ -34,7 +34,7 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
 
   /** Парсер qs-хвоста имени файла. */
   def dynImgArgsQsP: Parser[List[ImOp]] = {
-    "?" ~> dynImgArgsP
+    "[~?]".r ~> dynImgArgsP
   }
 
   /** Старый формат хранимого filename'а состоял из id оригинала и оригинального кропа в абсолютных пикселях.

@@ -204,7 +204,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // Готовим список картинок для отправки в хранилище:
       val imgs4s = m.getOrElse(false, Nil)
         .filter { v =>
-          val filterResult = v._1.toLocalInstance.isExists
+          val filterResult = v._1
+            .toLocalInstance
+            .original
+            .isExists
           if (!filterResult)
             warn("Request to save totally inexisting img: " + v._1.fileName)
           filterResult
@@ -212,6 +215,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // Сохраняем все картинки параллельно:
       Future.traverse(imgs4s) { v =>
         v._1
+          .original
           .saveToPermanent
           .map { _ => v }
       }

@@ -240,7 +240,6 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
     val oiik = MImg(imgInfo.filename)
     val devScreen = ctx.deviceScreenOpt getOrElse {
-      warn(s"bgImgCall($imgInfo, bh=${blockMeta.height}): width=${blockMeta.width} Missing client screen size! Will use standard VGA (1024х768)!")
       DevScreen(
         width = 1024,
         height = 768,

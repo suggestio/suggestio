@@ -4,8 +4,7 @@ import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import java.util.UUID
 
-import io.suggest.img.ImgCropParsers
-import io.suggest.model.{MPict, MUserImgMeta2, MUserImg2}
+import io.suggest.model.{MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
 import models.{ImgCrop, ImgMetaI, MImgInfoMeta}
 import org.joda.time.DateTime
@@ -74,8 +73,33 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
     }
   }
 
+  /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
+  def rowKeyB(implicit strB: QueryStringBindable[String]) = {
+    new QueryStringBindable[UUID] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, UUID]] = {
+        strB.bind(key, params).map {
+          _.right.flatMap { raw =>
+            try {
+              Right( UuidUtil.base64ToUuid(raw) )
+            } catch {
+              case ex: Exception =>
+                val msg = "img id missing or invalid: "
+                warn( s"bind($key) $msg: $raw" )
+                Left(msg)
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: UUID): String = {
+        val uuid64 = UuidUtil.uuidToBase64(value)
+        strB.unbind(key, uuid64)
+      }
+    }
+  }
+
   /** routes-биндер для query-string. */
-  implicit def qsb(implicit uuidB: QueryStringBindable[UUID],  imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
+  implicit def qsb(implicit strB: QueryStringBindable[String], imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
     new QueryStringBindable[MImg] {
 
       /** Создать подписывалку для qs. */
@@ -87,7 +111,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
         for {
           // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
           params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeImgId      <- uuidB.bind(key + IMG_ID_SUF, params2)
+          maybeImgId      <- rowKeyB.bind(key + IMG_ID_SUF, params2)
           maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
         } yield {
           maybeImgId.right.flatMap { imgId =>
@@ -100,7 +124,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
       }
 
       override def unbind(key: String, value: MImg): String = {
-        val imgIdRaw = uuidB.unbind(key + IMG_ID_SUF, value.rowKey)
+        val imgIdRaw = rowKeyB.unbind(key + IMG_ID_SUF, value.rowKey)
         val imgOpsOpt = if (value.hasImgOps) Some(value.dynImgOps) else None
         val imOpsUnbinded = imOpsOptB.unbind(s"$key.", imgOpsOpt)
         val unsignedResult = if (imOpsUnbinded.isEmpty) {
@@ -232,12 +256,13 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
         .filter(_.isDefined)
         .recoverWith {
           case ex: Exception =>
-            warn("Unable to read img info meta from remote storage: " + fileName, ex)
+            if (!ex.isInstanceOf[NoSuchElementException])
+              warn("getImageWH(): Unable to read img info from PERMANENT models: " + fileName, ex)
             localFut
         }
         .recover {
           case ex: Exception =>
-            warn("Unable to read img info meta from all models: " + fileName, ex)
+            warn("getImageWH(): Unable to read img info meta from all models: " + fileName, ex)
             None
         }
     } else {
@@ -330,7 +355,7 @@ trait ImgFilename {
   def fileName: String = {
     val sb = new StringBuilder(rowKeyStr)
     if (hasImgOps)
-      sb.append('?').append(dynImgOpsString)
+      sb.append('~').append(dynImgOpsString)
     sb.toString()
   }
 }

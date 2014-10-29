@@ -199,15 +199,14 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
     IsAuth.async { implicit request =>
-      val iik0 = ImgIdKey(imgId)
-      val iik = iik0.uncropped
-      iik.getBaseImageWH map { imetaOpt =>
+      val iik = MImg(imgId).original
+      iik.getImageWH map { imetaOpt =>
         val imeta: MImgInfoMeta = imetaOpt getOrElse {
           val stub = MImgInfoMeta(640, 480)
           warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
           stub
         }
-        Ok(cropTpl(iik.filename, width, height, markerOpt, imeta, iik0.cropOpt))
+        Ok(cropTpl(iik.fileName, width, height, markerOpt, imeta, iik.cropOpt))
       }
     }
   }
@@ -340,66 +339,68 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false)
                     (implicit request: Request[MultipartFormData[TemporaryFile]]): Future[Result] = {
-    try {
-      request.body.file("picture") match {
-        case Some(pictureFile) =>
-          val fileRef = pictureFile.ref
-          val srcFile = fileRef.file
-          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-          // Отрабатываем svg: не надо конвертить.
-          val srcMime = srcMagicMatch.getMimeType
-          if (SvgUtil maybeSvgMime srcMime) {
-            // Это svg?
-            if (SvgUtil isSvgFileValid srcFile) {
-              // Это svg. Надо его сжать и переместить в tmp-хранилище.
-              val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
-              val mptmp = MLocalImg()
-              FileUtils.writeStringToFile(mptmp.file, newSvg)
-              Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.getImg(mptmp.fileName)) )
-            } else {
-              val reply = Img.jsonImgError("SVG format invalid or not supported.")
-              NotAcceptable(reply)
-            }
-
+    // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
+    val resultFut: Future[Result] = request.body.file("picture") match {
+      case Some(pictureFile) =>
+        val fileRef = pictureFile.ref
+        val srcFile = fileRef.file
+        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+        // Отрабатываем svg: не надо конвертить.
+        val srcMime = srcMagicMatch.getMimeType
+        if (SvgUtil maybeSvgMime srcMime) {
+          // Это svg?
+          if (SvgUtil isSvgFileValid srcFile) {
+            // Это svg. Надо его сжать и переместить в tmp-хранилище.
+            val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
+            val mptmp = MLocalImg()
+            FileUtils.writeStringToFile(mptmp.file, newSvg)
+            Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.getImg(mptmp.fileName)) )
           } else {
-            try {
-              val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
-              // Конвертим в JPEG всякие левые форматы.
-              val imgPrepareFut: Future[_] = Future {
-                if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
-                  // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
-                  FileUtils.moveFile(srcFile, mptmp.file)
-                } else {
-                  // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
-                  OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
-                }
-              }(AsyncUtil.jdbcExecutionContext)
-              // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
-              val imOps = List(_imgRszPreviewOp)
-              val im = MImg(mptmp.rowKey, imOps)
-              imgPrepareFut map { _ =>
-                Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
-              }
-            } catch {
-              case ex: Throwable =>
-                LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-                val reply = Img.jsonImgError("Unsupported picture format.")
-                NotAcceptable(reply)
-            }
+            val reply = Img.jsonImgError("SVG format invalid or not supported.")
+            NotAcceptable(reply)
           }
 
-        // В реквесте не найдена именованая часть, содержащая картинку.
-        case None =>
-          val reply = Img.jsonImgError("picture part not found in request.")
-          NotAcceptable(reply)
-      }
+        } else {
+          try {
+            val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
+            // Конвертим в JPEG всякие левые форматы.
+            val imgPrepareFut: Future[_] = Future {
+              if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
+                // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
+                FileUtils.moveFile(srcFile, mptmp.file)
+              } else {
+                // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
+                OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
+              }
+            }(AsyncUtil.jdbcExecutionContext)
+            // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
+            val imOps = List(_imgRszPreviewOp)
+            val im = MImg(mptmp.rowKey, imOps)
+            imgPrepareFut map { _ =>
+              Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
+            }
+          } catch {
+            case ex: Throwable =>
+              LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+              val reply = Img.jsonImgError("Unsupported picture format.")
+              NotAcceptable(reply)
+          }
+        }
 
-    } finally {
+      // В реквесте не найдена именованая часть, содержащая картинку.
+      case None =>
+        val reply = Img.jsonImgError("picture part not found in request.")
+        NotAcceptable(reply)
+    }
+
+    resultFut onComplete { case _ =>
       // Удалить все файлы, которые были приняты в реквесте.
       request.body.files.foreach { f =>
         f.ref.file.delete()
       }
     }
+
+    resultFut
   }
 
 

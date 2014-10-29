@@ -1,11 +1,9 @@
 package util.qsb
 
-import java.util.UUID
-
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
-import util.img.{PicSzParsers, ImgIdKey}
+import util.img.PicSzParsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
