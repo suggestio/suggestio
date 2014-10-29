@@ -165,7 +165,14 @@ object MainColorDetector extends PlayMacroLogsImpl {
       // В зависимости от наличия/отсутствия цвета решаем, что делать дальше:
       alreadyHasColor flatMap {
         case None =>
-          bgImg4s.toLocalImg.map {
+          // TODO toLocalImg в момент сабмита формы может всё ещё не существовать если кроп активен. Надо бы это как-то по-лучше отрабатывать.
+          val localImg2Fut = bgImg4s.toLocalImg
+            .filter(_.exists(_.isExists))
+            .recoverWith {
+              case ex: NoSuchElementException =>
+                bgImg4s.original.toLocalImg
+            }
+          localImg2Fut.map {
             case Some(localImg) =>
               // TODO Может тут надо использовать изолированный thread-pool, а не общак?
               val heOpt = detectFileMainColor(localImg.file, suppressErrors = true)
@@ -174,7 +181,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
               result
 
             case None =>
-              warn(s"${logPrefix}Img not found anywhere.")
+              warn(s"${logPrefix}Img not found anywhere: ${bgImg4s.fileName}")
               Keep
           }
 
