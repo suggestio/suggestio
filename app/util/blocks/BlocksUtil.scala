@@ -357,12 +357,12 @@ case class BfString(
 
 
 case class BfImage(
-  name: String,
-  marker: String,
-  imgUtil: SioImageUtilT,
-  defaultValue: Option[BlockImgMap] = None,
-  offerNopt: Option[Int] = None,
-  preserveFmt: Boolean = false
+  name                : String,
+  marker              : String,
+  defaultValue        : Option[BlockImgMap] = None,
+  offerNopt           : Option[Int] = None,
+  preDetectMainColor  : Boolean = false,
+  preserveFmt         : Boolean = false
 ) extends BlockFieldT {
   override type T = BlockImgMap
 

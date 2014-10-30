@@ -1,7 +1,5 @@
 package util.img
 
-import java.util.UUID
-
 import io.suggest.img.ImgCrop
 import io.suggest.util.UuidUtil.base64ToUuid
 import models._
@@ -29,6 +27,7 @@ class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNa
 
   /** Для тестирования парсера с удобным выводом ошибок лучше использовать сие: */
   private def parseFileName(f: CharSequence) = parseExpr(fileNameP, f)
+
 
   "Parser 'fileNameP'" must {
 
@@ -91,6 +90,7 @@ class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNa
         QualityOp(80.0)
       )
     }
+
   }
 
 

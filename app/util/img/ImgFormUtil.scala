@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.util.UuidUtil
-import models.im.MImg
+import models.im.{MAnyImgT, MImg}
 import net.sf.jmimemagic.Magic
 import org.im4java.core.Info
 import play.api.mvc.QueryStringBindable
@@ -153,7 +153,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // Разделяем на картинки, которые уже были, и которые затребованы для отправки в хранилище:
     val newOldImgsMapFut = {
       Future.traverse(needImgsIndexed) { case a @ (img, i) =>
-        img.existsInPermanent map { existsInPermanent =>
+        img.original.existsInPermanent map { existsInPermanent =>
           (a, existsInPermanent)
         }
       } map { results =>
@@ -163,11 +163,18 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       }
     }
 
-    // Готовим список картинок, которые не надо пересохранять:
-    val oldImgIdsSet = oldImgs
-      .iterator
-      .map(_.rowKey)
-      .toSet
+    // Готовим список картинок, которые НЕ надо пересохранять:
+    val oldImgIdsSet = mimgs2rkSet(oldImgs)
+
+    // В списке old-картинок могут быть картинки, которые отсутствуют в new-выборке. Нужно их найти и удалить:
+    val newImgIdsSet = mimgs2rkSet(needImgs)
+    val imgIds4del = oldImgIdsSet -- newImgIdsSet     //oldImgs.filter { img => !(newImgIdsSet contains img.rowKey) }
+    val delOldUnusedFut = Future.traverse(imgIds4del) { mimg =>
+      val fut = MImg.deleteAllFor(mimg)
+      info("updateOrigImgFullDo(): delOldUnusedImgs: deleting img " + UuidUtil.uuidToBase64(mimg))
+      fut
+    }
+
     var imgsKeepFut: Future[Seq[(MImg, Int)]] = newOldImgsMapFut.map { m =>
       m.getOrElse(true, Nil)
         // Ксакеп Вася попытается подставить id уже сохраненной где-то картинки. А потом честно запросить удаление этой картинки.
@@ -176,6 +183,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
           val filterResult = oldImgIdsSet contains v._1.rowKey
           if (!filterResult)
             warn("Tried to keep image, that does not exists in previous imgs: " + v._1.rowKeyStr)
+          else
+            trace(s"Keeping old img[${v._2}]: ${v._1.rowKeyStr}")
           filterResult
         }
     }
@@ -185,12 +194,18 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       imgsKeepFut = imgsKeepFut flatMap { res =>
         Future.traverse(res) { v =>
           v._1
+            .original
             .toLocalImg
             .map { localOpt =>
-            localOpt
-              .filter(_.isExists)
-              .map(_ => v)
-            }
+              localOpt
+                .filter { loc =>
+                  val filterResult = loc.isExists
+                  if (!filterResult)
+                    warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.fileName)
+                  filterResult
+                }
+                .map(_ => v)
+              }
         } map {
           _.flatten
         }
@@ -210,6 +225,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             .isExists
           if (!filterResult)
             warn("Request to save totally inexisting img: " + v._1.fileName)
+          else
+            trace(s"Saving new img[${v._2}]: ${v._1.rowKeyStr}")
           filterResult
         }
       // Сохраняем все картинки параллельно:
@@ -221,8 +238,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       }
     }
 
-    // Объединяем фьючерсы, восстанавливаем исходный порядок картинок:
-    for {
+    // Объединяем фьючерсы сохранения, восстанавливаем исходный порядок картинок:
+    val resultFut = for {
       imgsKeeped <- imgsKeepFut
       imgsSaved  <- imgsSaveFut
     } yield {
@@ -230,8 +247,23 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         .sortBy(_._2)
         .map(_._1)
     }
+
+    // Дожидаемся завершения удаления ненужных картинок:
+    delOldUnusedFut flatMap { _ =>
+      resultFut
+    }
   }
 
+  /** Из коллекции MImg-указателей сделать множество uuid картинок.
+    * @param imgs Коллекция mimg или итератор.
+    * @return
+    */
+  private def mimgs2rkSet(imgs: TraversableOnce[MAnyImgT]): Set[UUID] = {
+    imgs
+      .toIterator
+      .map(_.rowKey)
+      .toSet
+  }
 
   def img2imgInfo(mimg: MImg): Future[MImgInfo] = {
     mimg.getImageWH map { wh =>

@@ -5,7 +5,8 @@ import org.apache.commons.io.{FilenameUtils, FileUtils}
 import org.scalatestplus.play._
 import play.api
 import play.api.GlobalSettings
-import play.api.test.FakeApplication
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits, FakeApplication}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -17,29 +18,25 @@ import play.api.test.FakeApplication
 class HistogramParsersSpec extends PlaySpec {
   import HistogramParsers._
 
+  private val parsedSubstr = "] parsed: "
+
+  private def parseLine(l: String, resultExpected: HistogramEntry): Unit = {
+    val pr = parseAll(LINE_PARSER, l)
+    pr.toString   must include (parsedSubstr)
+    pr.get        mustBe resultExpected
+  }
+
+
   "LINE_PARSER" must {
     s"parse into ${HistogramEntry.getClass.getSimpleName} every histogram line" in {
       // используем include вместо pr.successful mustBe true, чтобы на экран напечаталось сообщение об ошибке, а не просто экзепшен.
-      val parsedSubstr = "] parsed: "
-      var pr = parseAll(LINE_PARSER, "    104654: (252,220, 29) #FCDC1D srgb(252,220,29)")
-      pr.toString must include (parsedSubstr)
-      pr.get mustBe HistogramEntry(104654L, "FCDC1D", RGB(252, 220, 29))
+      parseLine("    104654: (252,220, 29) #FCDC1D srgb(252,220,29)",     HistogramEntry(104654L, "FCDC1D", RGB(252, 220, 29)) )
+      parseLine("    231983: (170,162, 95) #AAA25F srgb(170,162,95)\n",   HistogramEntry(231983L, "AAA25F", RGB(170, 162, 95)) )
+      parseLine("         1: ( 94, 70, 60) #5E463C srgb(94,70,60)",       HistogramEntry(1L, "5E463C", RGB(94, 70, 60)) )
+      parseLine("    16272: (249,232,199) #F9E8C7 srgb(249,232,199)",     HistogramEntry(16272, "F9E8C7", RGB(249, 232, 199)) )
+      parseLine("      1136: ( 17, 24,  9) #111809 srgb(17,24,9)",        HistogramEntry(1136, "111809", RGB(17, 24, 9)) )
 
-      pr = parseAll(LINE_PARSER, "    231983: (170,162, 95) #AAA25F srgb(170,162,95)\n")
-      pr.toString must include (parsedSubstr)
-      pr.get mustBe HistogramEntry(231983L, "AAA25F", RGB(170, 162, 95))
-
-      pr = parse(LINE_PARSER, "         1: ( 94, 70, 60) #5E463C srgb(94,70,60)")
-      pr.toString must include (parsedSubstr)
-      pr.get mustBe HistogramEntry(1L, "5E463C", RGB(94, 70, 60))
-
-      pr = parse(LINE_PARSER, "    16272: (249,232,199) #F9E8C7 srgb(249,232,199)")
-      pr.toString must include (parsedSubstr)
-      pr.get mustBe HistogramEntry(16272, "F9E8C7", RGB(249, 232, 199))
-
-      pr = parse(LINE_PARSER, "      1136: ( 17, 24,  9) #111809 srgb(17,24,9)")
-      pr.toString must include (parsedSubstr)
-      pr.get mustBe HistogramEntry(1136, "111809", RGB(17, 24, 9))
+      parseLine("    1: (  0, 64,193,  0) #0040C100 srgba(0,64,193,0)",   HistogramEntry(1, "0040C1", RGB(0, 64, 193)) )
     }
   }
 
@@ -104,7 +101,7 @@ class HistogramParsersSpec extends PlaySpec {
  * Для определения цвета используются картинки с явным преобладанием какого-то цвета.
  * При тесте измеряется дистанция от найденного цвета до желаемых цветов.
  */
-class MainColorDetectorSpec extends PlaySpec with OneAppPerSuite {
+class MainColorDetectorSpec extends PlaySpec with OneAppPerSuite with FutureAwaits with DefaultAwaitTimeout {
   import MainColorDetector._
 
   /** Путь к ресурсом в рамках classpath. Ресурсы лежат внутри sioweb21/test/resources/. */
@@ -121,6 +118,7 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuite {
 
 
   "detectFileMainColor()" must {
+
     "detect color pallette of simple test files" in {
       IMGS.foreach { case (filename, mainColorsHex) =>
         // Копируем файл из jar classpath в /tmp/. Так картинка станет гарантированно доступна для внешней IM.
@@ -129,12 +127,12 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuite {
         val fileExt = FilenameUtils.getExtension(filename)    // взято из http://stackoverflow.com/a/16202288
         val rscUrl = getClass.getResource(rscFilepath)
         val tmpImgFile = File.createTempFile(classOf[MainColorDetectorSpec].getSimpleName, "." + fileExt)
-        val detectResult = try {
-          FileUtils.copyURLToFile(rscUrl, tmpImgFile)
-          detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
-        } finally {
+        FileUtils.copyURLToFile(rscUrl, tmpImgFile)
+        val detectResultFut = detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
+        detectResultFut onComplete { case _ =>
           tmpImgFile.delete()
         }
+        val detectResult = await(detectResultFut)
         detectResult.nonEmpty  mustBe  true
         val dmchRgb = detectResult.get.rgb
         mainColorsHex foreach { mch =>

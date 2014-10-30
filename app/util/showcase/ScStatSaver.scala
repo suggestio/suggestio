@@ -126,7 +126,7 @@ class BulkProcessorSaveBackend extends ScStatSaverBackend with PlayMacroLogsImpl
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     future {
       bp add stat.prepareIndex.request()
-    }(ec)
+    }(AsyncUtil.singleThreadBlockingContext)
   }
 
   override def flush(): Unit = {

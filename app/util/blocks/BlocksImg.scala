@@ -99,7 +99,7 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
 object LogoImg {
   val LOGO_IMG_FN = "logo"
-  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
+  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
 }
 
 /** Функционал для сохранения вторичного логотипа рекламной карточки. */

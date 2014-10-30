@@ -83,7 +83,7 @@ object MLocalImg extends ImgFileNameParsers {
   def deleteAllFor(rowKey: UUID): Future[_] = {
     Future {
       deleteAllSyncFor(rowKey)
-    }(AsyncUtil.jdbcExecutionContext)
+    }(AsyncUtil.singleThreadBlockingContext)
   }
 
 }
@@ -126,7 +126,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   override def delete: Future[_] = {
     Future {
       deleteSync
-    }(AsyncUtil.jdbcExecutionContext)
+    }(AsyncUtil.singleThreadBlockingContext)
   }
 
   override def timestampMs: Long = file.lastModified
@@ -141,7 +141,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
         width = info.getImageWidth
       )
       Some(imeta)
-    }(AsyncUtil.jdbcExecutionContext)
+    }(AsyncUtil.extCpuHeavyContext)
   }
 
   lazy val identifyCached = {

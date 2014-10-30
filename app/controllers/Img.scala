@@ -296,6 +296,9 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
             modelInstant = new DateTime(localImg.file.lastModified)
           )
         } recover {
+          case ex: NoSuchElementException =>
+            debug("Img not found anywhere: " + args.fileName)
+            NotFound("No such image.")
           case ex: Throwable =>
             error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
             InternalServerError("Internal error occured during fetching/creating an image.")
@@ -314,10 +317,11 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
+    * @param runEarlyColorDetector Запускать ли фоновый детектор цвета для этой картинки?
     * @param request HTTP-реквест.
     * @return Экземпляр Result, хранящий json с данными результата.
     */
-  def _handleTempImg(preserveUnknownFmt: Boolean = false)
+  def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false)
                     (implicit request: Request[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
@@ -352,13 +356,22 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
                 // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
                 OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
               }
-            }(AsyncUtil.jdbcExecutionContext)
+            }(AsyncUtil.extCpuHeavyContext)
             // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
             val imOps = List(_imgRszPreviewOp)
             val im = MImg(mptmp.rowKey, imOps)
-            imgPrepareFut map { _ =>
+            val res2Fut = imgPrepareFut map { _ =>
               Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
             }
+            // Запускаем в фоне детектор цвета картинки. При сабмите результат будет извелечен из кеша.
+            imgPrepareFut onSuccess { case _ =>
+              MainColorDetector.detectColorCachedFor(im) onFailure {
+                case ex: Throwable =>
+                  LOGGER.warn(s"Failed to execute color detector on tmp img " + im.fileName, ex)
+              }
+            }
+            // Возвращаем ожидаемый результат:
+            res2Fut
           } catch {
             case ex: Throwable =>
               LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)

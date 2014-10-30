@@ -2,6 +2,8 @@ package controllers
 
 import models.im.MImg
 import util.PlayMacroLogsImpl
+import util.blocks.BlocksUtil.BlockImgMap
+import util.img.MainColorDetector.{Remove, ImgBgColorUpdateAction}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -157,7 +159,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Асинхронно обрабатываем всякие прочие данные.
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
             val t4s2Fut = newTexts4search(mad, request.adnNode)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mayAlreadySaved = false)
+            val ibgcUpdFut = adPrepareUpdateBgColors(bim, bc)
             // Когда всё готово, сохраняем саму карточку.
             for {
               t4s2      <- t4s2Fut
@@ -275,7 +277,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2, request.producer)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mayAlreadySaved = true, mad.colors)
+            val ibgcUpdFut = adPrepareUpdateBgColors(bim, bc)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
             val saveImgsFut = bc.saveImgs(
@@ -507,6 +509,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             upCats
         }
       }
+  }
+
+  /**
+   * Выполнить действия, связанные с определением цвета фона и возвращение промежуточного результата для MAd.
+   * @param newBim Новый набор картинок.
+   * @param bc Конфиг блока.
+   * @return Фьючерс с действием по обновлению карты цветов рекламной карточки.
+   */
+  private def adPrepareUpdateBgColors(newBim: BlockImgMap, bc: BlockConf): Future[ImgBgColorUpdateAction] = {
+    bc.getBgImg(newBim).fold [Future[ImgBgColorUpdateAction]] {
+      trace(s"adPrepareUpdateBgColors(): No background image - nothing to do.")
+      Future successful Remove    // TODO Возвращать Keep?
+    } { bgImg4s =>
+      MainColorDetector.detectColorCachedFor(bgImg4s)
+    }
   }
 
 }

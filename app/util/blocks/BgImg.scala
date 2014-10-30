@@ -27,7 +27,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
   import LOGGER._
 
   val BG_IMG_FN = "bgImg"
-  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
+  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
   /** Желаемые ширИны широкого бэкграунда. */
   val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )

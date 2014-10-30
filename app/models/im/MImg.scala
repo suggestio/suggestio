@@ -222,7 +222,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
           inst.touch(mimg2.timestampMs)
           inst
         }
-      }(AsyncUtil.jdbcExecutionContext)
+      }(AsyncUtil.singleThreadBlockingContext)
     }
   }
 

@@ -52,6 +52,13 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
   /** thread-pool для синхронных запросов к postgres'у. Это позволяет избежать блокировок основного пула. */
   implicit val jdbcExecutionContext = mkEc("async.ec.jdbc")
 
+  /** thread-pool из одного треда для блокирующих операций, обычно есть какая-то внутренняя синхронизация. */
+  implicit val singleThreadBlockingContext = mkEc("async.ec.single", EcParInfo(1.0F, 1))
+
+  /** thread-pool с малым кол-вом тредов для CPU-hungry блокирующих внешних вызовов.
+    * Например какой-то тяжелый вызов к convert() типа рассчета гистограммы. */
+  implicit def extCpuHeavyContext = singleThreadBlockingContext  //mkEc("async.ec.heavyblk", EcParInfo(1.0F, 2))
+
 }
 
 case class EcParInfo(parFactor: Float, parMax: Int)

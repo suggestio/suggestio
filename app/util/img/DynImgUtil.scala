@@ -8,7 +8,7 @@ import java.util.UUID
 import controllers.routes
 import io.suggest.util.UuidUtil
 import models._
-import models.im.{AbsResizeOp, MLocalImg, MImg, ImOp}
+import models.im._
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
 import play.api.cache.Cache
@@ -73,18 +73,21 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * Найти в базе готовую картинку, ранее уже отработанную, и сохранить её в файл.
    * Затем накатить на неё необходимые параметры, пересжав необходимым образом.
    * @param args Данные запроса картинки. Ожидается, что набор параметров не пустой, и подходящей картинки нет в хранилище.
-   * @return Файл, содержащий результирующую картинку.
+   * @return Фьючерс с файлом, содержащий результирующую картинку.
+   *         Фьючерс с NoSuchElementException, если нет исходной картинки.
+   *         Фьючерс с Throwable при иных ошибках.
    */
   def mkReadyImgToFile(args: MImg): Future[MLocalImg] = {
     args
       .original
       .toLocalImg
-      .map { localImg =>
+      .flatMap { localImg =>
         // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
         val newLocalImg = args.toLocalInstance
-        convert(localImg.get.file, newLocalImg.file, args.dynImgOps)
-        newLocalImg
-      }(AsyncUtil.jdbcExecutionContext)
+        convert(localImg.get.file, newLocalImg.file, args.dynImgOps) map { _ =>
+          newLocalImg
+        }
+      }
   }
 
 
@@ -95,10 +98,11 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param cacheResult Сохранять ли в кеш незакешированный результат этого действия?
    *                    true когда это опережающий запрос подготовки картинки.
    *                    Иначе надо false.
+   * @param saveToPermanent Переопределить значение настройки [[SAVE_DERIVATIVES_TO_PERMANENT]].
    * @return Фьючерс с экземпляром MLocalImg или экзепшеном получения картинки.
    *         Throwable, если не удалось начать обработку. Такое возможно, если какой-то баг в коде.
    */
-  def ensureImgReady(args: MImg, cacheResult: Boolean): Future[MLocalImg] = {
+  def ensureImgReady(args: MImg, cacheResult: Boolean, saveToPermanent: Boolean = SAVE_DERIVATIVES_TO_PERMANENT): Future[MLocalImg] = {
     // Используем StringBuilder для сборки ключа, т.к. обычно на момент вызова этого метода fileName ещё не собран.
     val resultP = Promise[MLocalImg]()
     val resultFut = resultP.future
@@ -120,8 +124,8 @@ object DynImgUtil extends PlayMacroLogsImpl {
           // Картинки в указанном виде нету. Нужно сделать её из оригинала:
           case Success(None) =>
             val localResultFut = DynImgUtil.mkReadyImgToFile(args)
-            // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено в настройках):
-            if (SAVE_DERIVATIVES_TO_PERMANENT) {
+            // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
+            if (saveToPermanent) {
               localResultFut onSuccess { case localImg2 =>
                 localImg2.toWrappedImg
                   .saveToPermanent
@@ -148,7 +152,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param out Файл для конечного изображения.
    * @param imOps Список инструкций, описывающий трансформацию исходной картинки.
    */
-  def convert(in: File, out: File, imOps: Seq[ImOp]): Unit = {
+  def convert(in: File, out: File, imOps: Seq[ImOp]): Future[_] = {
     val op = new IMOperation
     op.addImage(in.getAbsolutePath + "[0]")
     imOps.foreach { imOp =>
@@ -156,9 +160,13 @@ object DynImgUtil extends PlayMacroLogsImpl {
     }
     op.addImage(out.getAbsolutePath)
     val cmd = new ConvertCmd()
+    cmd.setAsyncMode(true)
+    val listener = new Im4jAsyncSuccessProcessListener
+    cmd.addProcessEventListener(listener)
     trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
     cmd run op
     trace("convert(): Result is " + out.length + " bytes")
+    listener.future
   }
 
 
@@ -172,6 +180,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @return Фьючерс для синхронизации.
    */
   def saveDynImg(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
+    // TODO Отделить толстые внешние операции от остальных чтобы улучшить распараллеливание:
     val imgBytes = Files.readAllBytes(imgFile.toPath)
     // Запускаем сохранение исходной картинки
     val mui2 = MUserImg2(id = rowKey, q = qualifier, img = ByteBuffer.wrap(imgBytes), timestamp = saveDt)
@@ -206,7 +215,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
   def saveDynImgAsync(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
     val futFut = Future {
       saveDynImg(imgFile, rowKey, qualifier, saveDt)
-    }(AsyncUtil.jdbcExecutionContext)
+    }(AsyncUtil.extCpuHeavyContext)
     // Распрямить вложенный фьючерс.
     futFut flatMap identity
   }
