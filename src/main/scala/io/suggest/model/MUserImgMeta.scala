@@ -80,12 +80,11 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
   }
 
   def isExists(id: UUID, q: Option[String] = None): Future[Boolean] = {
-    count
+    select(_.timestamp)
       .where(_.id eqs id)
       .and(_.q eqs qOpt2q(q))
-      .limit(1)
       .one()
-      .map { _.exists(_ > 0L) }
+      .map { _.isDefined }
   }
 
   def deleteById(id: UUID) = delete.where(_.id eqs id).future()
