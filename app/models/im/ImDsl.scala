@@ -44,15 +44,22 @@ object ImOp extends PlayMacroLogsImpl with JavaTokenParsers {
   }
 
 
+  /** Дефолтовый StringBuilder для unbind-методов. */
+  def unbindSbDflt = new StringBuilder(64)
+
   /**
    * Для разных вариантов unbind'а используется этот метод
    * @param keyDotted Префикс ключа.
    * @param value Значения (im-операции).
    * @param withOrderInx Добавлять ли индексы операций? true если нужен будет вызов bind() над результатом.
+   * @param sb Используемый для работы StrinbBuilder. По умолчанию - создавать новый.
    * @return Строка im-операций.
    */
-  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean): String = {
-    val sb = new StringBuilder(value.size + 32)
+  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): String = {
+    unbindImOpsSb(keyDotted, value, withOrderInx, sb)
+      .toString()
+  }
+  def unbindImOpsSb(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): StringBuilder = {
     value
       // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
       .iterator
@@ -71,7 +78,7 @@ object ImOp extends PlayMacroLogsImpl with JavaTokenParsers {
     // Убрать последний '&'
     if (value.nonEmpty)
       sb.setLength(sb.length - 1)
-    sb.toString()
+    sb
   }
 
   /** Забиндить распарсенное по итератору. */

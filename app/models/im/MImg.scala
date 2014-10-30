@@ -350,13 +350,22 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
 trait ImgFilename {
   def rowKeyStr: String
   def hasImgOps: Boolean
-  def dynImgOpsString: String
+  def dynImgOpsStringSb(sb: StringBuilder): StringBuilder
 
-  def fileName: String = {
-    val sb = new StringBuilder(rowKeyStr)
-    if (hasImgOps)
-      sb.append('~').append(dynImgOpsString)
-    sb.toString()
+  def fileName: String = fileNameSb().toString()
+
+  /**
+   * Билдер filename-строки
+   * @param sb Исходный StringBuilder.
+   * @return StringBuilder.
+   */
+  def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
+    sb.append(rowKeyStr)
+    if (hasImgOps) {
+      sb.append('~')
+      dynImgOpsStringSb(sb)
+    }
+    sb
   }
 }
 
@@ -365,12 +374,16 @@ trait ImgFilename {
 trait DynImgOpsString {
   def dynImgOps: Seq[ImOp]
 
-  def dynImgOpsString: String = {
-    ImOp.unbindImOps(
+  def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
+    ImOp.unbindImOpsSb(
       keyDotted = "",
       value = dynImgOps,
-      withOrderInx = false
+      withOrderInx = false,
+      sb = sb
     )
+  }
+  def dynImgOpsString: String = {
+    dynImgOpsStringSb().toString()
   }
 }
 

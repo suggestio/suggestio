@@ -110,7 +110,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
-    val iteeResult = Ok.sendFile(file)
+    val iteeResult = Ok.sendFile(file, inline = true)
     trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
     serveImg(
       resultRaw     = iteeResult,
@@ -156,8 +156,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       .copy(dynImgOps = Nil)
     dynImg(img)
   }
-
-  private def imgNotFound = NotFound("No such image")
 
   /**
    * Для подавления http get flood атаки через запросы с приписыванием рандомных qs
@@ -270,7 +268,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
    * @return Картинки или 304 Not modified.
    */
   def dynImg(args: MImg) = Action.async { implicit request =>
-    val rowKey = args.rowKey
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
         case Some(ims) =>
@@ -292,33 +289,16 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
-        args.toLocalImg flatMap {
-          case Some(img) =>
-            val modelInstant = withoutMs(img.file.lastModified)
-            serveImgFromFile(img.file, CACHE_ORIG_CLIENT_SECONDS, modelInstant)
-
-          // Картинки в указанном виде нету. Нужно сделать из оригинала.
-          case None =>
-            DynImgUtil.mkReadyImgToFile(args)
-              .map { localImg2 =>
-                val msRaw = DateTime.now.getMillis
-                val newModelInstant = withoutMs(msRaw)
-                val saveDt = newModelInstant.toDateTime
-                // В фоне запускаем сохранение полученной картинки в базу.
-                localImg2.toWrappedImg.saveToPermanent onComplete {
-                  case Failure(ex)    => error(s"Failed to save image $localImg2 into permanent storage", ex)
-                  case _              => // do nothing - об успехах сообщать не нужно.
-                }
-                serveImgFromFile(localImg2.file, cacheSeconds = CACHE_ORIG_CLIENT_SECONDS, modelInstant = saveDt)
-
-              }.recover {
-                case ex: NoSuchElementException =>
-                  warn(s"Orig unmodified image not found: id[${args.rowKeyStr}]")
-                  imgNotFound
-                case ex: Throwable =>
-                  error(s"Unknown exception occured during fetchg/processing of source image id[$rowKey]\n  args = $args", ex)
-                  imgNotFound
-              }
+        DynImgUtil.ensureImgReady(args, cacheResult = false) map { localImg =>
+          serveImgFromFile(
+            file = localImg.file,
+            cacheSeconds = CACHE_ORIG_CLIENT_SECONDS,
+            modelInstant = new DateTime(localImg.file.lastModified)
+          )
+        } recover {
+          case ex: Throwable =>
+            error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
+            InternalServerError("Internal error occured during fetching/creating an image.")
         }
     }
   }

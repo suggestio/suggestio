@@ -11,12 +11,14 @@ import models._
 import models.im.{AbsResizeOp, MLocalImg, MImg, ImOp}
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
+import play.api.cache.Cache
 import play.api.mvc.Call
+import play.api.Play.{current, configuration}
 import util.{AsyncUtil, PlayMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.JavaConversions._
 
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -30,12 +32,36 @@ object DynImgUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Сколько времени кешировать результат подготовки картинки?
+    * Кеш используется для подавления параллельных запросов. */
+  val ENSURE_DYN_CACHE_TTL_SECONDS = configuration.getInt("img.dyn.ensure.cache.ttl.seconds") getOrElse 10
+
+  /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
+    * Если false, то производные будут только на локалхосте. */
+  val SAVE_DERIVATIVES_TO_PERMANENT = configuration.getBoolean("img.dyn.derivative.save.to.permanent.enabled") getOrElse true
+
+  /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
+    * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
+  val PREFETCH_ENABLED = configuration.getBoolean("img.dyn.prefetch.enabled") getOrElse true
+
+  info(s"DynImgUtil: esnureCache=$ENSURE_DYN_CACHE_TTL_SECONDS sec, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
+
   /**
    * Враппер для вызова routes.Img.dynImg(). Нужен чтобы навешивать сайд-эффекты и трансформировать результат вызова.
    * @param dargs Аргументы генерации картинки.
    * @return Экземпляр Call, пригодный к употреблению.
    */
   def imgCall(dargs: MImg): Call = {
+    if (PREFETCH_ENABLED) {
+      Future {
+        val fut = ensureImgReady(dargs, cacheResult = true)
+        //trace("Prefetching dyn.img: " + dargs.fileName)
+        fut
+      } .flatMap(identity)
+        .onFailure { case ex =>
+          error("Failed to prefetch dyn.image: " + dargs.fileName, ex)
+        }
+    }
     routes.Img.dynImg(dargs)
   }
   def imgCall(filename: String): Call = {
@@ -59,6 +85,60 @@ object DynImgUtil extends PlayMacroLogsImpl {
         convert(localImg.get.file, newLocalImg.file, args.dynImgOps)
         newLocalImg
       }(AsyncUtil.jdbcExecutionContext)
+  }
+
+
+  /**
+   * Убедиться, что картинка доступна локально для раздачи клиентам.
+   * Для подавления параллельных запросов используется play.Cache, кеширующий фьючерсы результатов.
+   * @param args Запрашиваемая картинка.
+   * @param cacheResult Сохранять ли в кеш незакешированный результат этого действия?
+   *                    true когда это опережающий запрос подготовки картинки.
+   *                    Иначе надо false.
+   * @return Фьючерс с экземпляром MLocalImg или экзепшеном получения картинки.
+   *         Throwable, если не удалось начать обработку. Такое возможно, если какой-то баг в коде.
+   */
+  def ensureImgReady(args: MImg, cacheResult: Boolean): Future[MLocalImg] = {
+    // Используем StringBuilder для сборки ключа, т.к. обычно на момент вызова этого метода fileName ещё не собран.
+    val resultP = Promise[MLocalImg]()
+    val resultFut = resultP.future
+    val ck = args.fileNameSb()
+      .append(":eIR")
+      .toString()
+    Cache.getAs[Future[MLocalImg]](ck) match {
+      // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
+      case None =>
+        val localImgResult = args.toLocalImg
+        // Если настроено, фьючерс результата работы сразу кешируем, не дожидаясь результатов:
+        if (cacheResult)
+          Cache.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL_SECONDS)
+        // Готовим асинхронный результат работы:
+        localImgResult onComplete {
+          case Success(Some(img)) =>
+            resultP success img
+
+          // Картинки в указанном виде нету. Нужно сделать её из оригинала:
+          case Success(None) =>
+            val localResultFut = DynImgUtil.mkReadyImgToFile(args)
+            // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено в настройках):
+            if (SAVE_DERIVATIVES_TO_PERMANENT) {
+              localResultFut onSuccess { case localImg2 =>
+                localImg2.toWrappedImg
+                  .saveToPermanent
+              }
+            }
+            // Заполняем результат, который уже в кеше:
+            resultP completeWith localResultFut
+
+          case Failure(ex) =>
+            resultP failure ex
+        }
+
+      case Some(cachedResFut) =>
+        resultP completeWith cachedResFut
+        //trace(s"ensureImgReady(): cache HIT for $ck -> $cachedResFut")
+    }
+    resultFut
   }
 
 
@@ -145,5 +225,4 @@ object DynImgUtil extends PlayMacroLogsImpl {
   }
 
 }
-
 
