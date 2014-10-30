@@ -1,9 +1,12 @@
 package io.suggest.ym.model.common
 
+import java.util.UUID
+
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.{MPict, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model._
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.util.UuidUtil
 import org.elasticsearch.client.Client
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -31,12 +34,34 @@ object EMImg {
 
   type Imgs_t = Map[String, MImgInfoT]
 
+  /**
+   * Удалить картинку из всех моделей кассандры.
+   * @param imgId filename картинки.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteFullyFromCassandra(imgId: String)(implicit ec: ExecutionContext): Future[_] = {
+    // Нужно извлечь uuid из id
+    val rowKey = UuidUtil.base64ToUuid(imgId)
+    deleteFullyFromCassandra(rowKey)
+  }
+  def deleteFullyFromCassandra(rowKey: UUID)(implicit ec: ExecutionContext): Future[_] = {
+    val delImgFut = MUserImg2.deleteById(rowKey)
+    val delMetaFut = MUserImgMeta2.deleteById(rowKey)
+    val delThumbFut = MImgThumb2.deleteById(rowKey)
+    delImgFut flatMap { _ =>
+      delMetaFut flatMap { _ =>
+        delThumbFut
+      }
+    }
+  }
+
   /** Стереть картинку, указанную в поле imgOpt, если она там есть. */
   def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {
-    Future.traverse(imgs) { case (_, img) =>
-      val imgId = img.filename
-      lazy val logPrefix = s"eraseLinkedImage($img): "
-      MPict.deleteFully(imgId) andThen {
+    Future.traverse(imgs) { case (imgId, imgInfo) =>
+      val imgId = imgInfo.filename
+      lazy val logPrefix = s"eraseLinkedImage($imgId): "
+      // Раньше тут был MPict.deleteFully(), который удалял из кассандры.
+      deleteFullyFromCassandra(imgId) andThen {
         case Success(_)  => LOGGER.trace(logPrefix + "Successfuly erased main picture: " + imgId)
         case Failure(ex) => LOGGER.error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
       }

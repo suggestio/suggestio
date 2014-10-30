@@ -30,6 +30,9 @@ class UuidUtilTest extends FlatSpec with Matchers {
     times(ed)
   }
 
+  it should "deserialize garbaged id" in {
+    base64ToUuid("onhyBuwLQX-o0wb54EnAHA/c=0x1200d&a=1600x1200_431_0&i=a&h=&d=a&j=b&f=70") shouldEqual base64ToUuid("onhyBuwLQX-o0wb54EnAHA")
+  }
 
   private def times(f: => Any, t: Int = 100): Unit = {
     for(i <- 0 to t) {
