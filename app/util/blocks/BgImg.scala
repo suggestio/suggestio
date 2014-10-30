@@ -264,15 +264,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
       // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
       AbsResizeOp(sz, ImResizeFlags.IgnoreAspectRatio)
     }
-
-    // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
-    if (oiik.cropOpt.isDefined) {
-      val crop = oiik.cropOpt.get
-      imOpsAcc ::= AbsCropOp(crop)
-    }
     imOpsAcc ::= ImFilters.Lanczos
-    // Генерим финальную ссыль на картинку:
-    val dargs = oiik.copy(dynImgOps = imOpsAcc)
+
+    // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
+    val dargs = oiik.copy(dynImgOps = oiik.dynImgOps ++ imOpsAcc)
     DynImgUtil.imgCall(dargs)
   }
 

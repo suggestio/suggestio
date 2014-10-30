@@ -26,7 +26,7 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
 
   /** Парсер списка dynImg-аргументов, сериализованного в виде qs-строки. */
   def dynImgArgsP: Parser[List[ImOp]] = {
-    "[^/?]+".r ^^ { qsStr =>
+    "[^/?]*".r ^^ { qsStr =>
       ImOp.bindImOps("", qsStr)
         .toList
     }
@@ -52,7 +52,7 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
     ("?" | "") ^^^ Nil
   }
 
-  /** Парсер filename'а. */
-  def fileNameP = uuidP ~ (dynImgArgsQsP | compatCropSuf2ImArgsP | dynImgArgsQsEmptyP)
+  /** Парсер filename'а. Порядок имеет значение. compat, пока нужен, не должен конфликтовать с dynImgArgsQsP. */
+  def fileNameP = uuidP ~ (compatCropSuf2ImArgsP | dynImgArgsQsP  | dynImgArgsQsEmptyP)
 
 }
