@@ -25,9 +25,6 @@ package object models {
   type MShopPriceList       = ym.model.MShopPriceList
   val  MShopPriceList       = ym.model.MShopPriceList
 
-  type MShopPromoOffer      = ym.model.MShopPromoOffer
-  val  MShopPromoOffer      = ym.model.MShopPromoOffer
-
   type MYmCategory          = ym.model.MYmCategory
   val  MYmCategory          = ym.model.MYmCategory
 

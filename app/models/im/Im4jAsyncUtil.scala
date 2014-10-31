@@ -2,7 +2,7 @@ package models.im
 
 import org.im4java.process.{ProcessEvent, ProcessEventListener}
 
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Promise
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
