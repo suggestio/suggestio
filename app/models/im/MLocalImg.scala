@@ -284,7 +284,7 @@ trait DeleteOnIm2FullyDeletedEvent extends SNStaticSubscriber with SnClassSubscr
   * Внутри, для работы с ФС, используется java.nio. */
 trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI {
 
-  val DIR: File
+  def DIR: File
   
   protected val EDD_CONF_PREFIX = "m.img.local.edd"
 
@@ -361,7 +361,7 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
   * а в permanent ещё/уже нет картинок с данным id. */
 trait PeriodicallyDeleteNotExistingInPermanent extends CronTasksProvider with PlayMacroLogsI {
 
-  val DIR: File
+  def DIR: File
 
   protected val DNEIP_CONF_PREFIX = "m.img.local.dneip"
 
@@ -377,7 +377,7 @@ trait PeriodicallyDeleteNotExistingInPermanent extends CronTasksProvider with Pl
   def DNEIP_EVERY = configuration.getInt(DNEIP_CONF_PREFIX + ".every.minutes")
     .fold[FiniteDuration] (3 hours)(_ minutes)
 
-  val DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
+  def DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
     .fold(2 hours)(_ minutes)
     .toMillis
 
