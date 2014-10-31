@@ -53,11 +53,10 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
   implicit val jdbcExecutionContext = mkEc("async.ec.jdbc")
 
   /** thread-pool из одного треда для блокирующих операций, обычно есть какая-то внутренняя синхронизация. */
-  implicit val singleThreadBlockingContext = mkEc("async.ec.single", EcParInfo(1.0F, 1))
+  implicit val singleThreadIoContext = mkEc("async.ec.iosingle", EcParInfo(1.0F, 1))
 
-  /** thread-pool с малым кол-вом тредов для CPU-hungry блокирующих внешних вызовов.
-    * Например какой-то тяжелый вызов к convert() типа рассчета гистограммы. */
-  implicit def extCpuHeavyContext = singleThreadBlockingContext  //mkEc("async.ec.heavyblk", EcParInfo(1.0F, 2))
+  /** thread-pool из для внешних cpu-тяжелых операций. */
+  implicit val singleThreadCpuContext = mkEc("async.ec.cpusingle", EcParInfo(1.0F, 2))
 
 }
 

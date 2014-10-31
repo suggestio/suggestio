@@ -1,6 +1,7 @@
 package util.event
 
 import io.suggest.event._
+import models.im.MLocalImg
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
@@ -45,7 +46,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     controllers.MarketShowcase,
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
-    new MBillContract.DelContractsWhenAdnNodeDeleted
+    new MBillContract.DelContractsWhenAdnNodeDeleted,
+    MLocalImg
   )
 
   /** SiowebSup собирается запустить сие. */

@@ -348,15 +348,19 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
           try {
             val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
             // Конвертим в JPEG всякие левые форматы.
-            val imgPrepareFut: Future[_] = Future {
+            val imgPrepareFut: Future[_] = {
               if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
-                FileUtils.moveFile(srcFile, mptmp.file)
+                Future {
+                  FileUtils.moveFile(srcFile, mptmp.file)
+                }(AsyncUtil.singleThreadIoContext)
               } else {
-                // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
-                OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
+                Future {
+                  // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
+                  OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
+                }(AsyncUtil.singleThreadCpuContext)
               }
-            }(AsyncUtil.extCpuHeavyContext)
+            }
             // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
             val imOps = List(_imgRszPreviewOp)
             val im = MImg(mptmp.rowKey, imOps)

@@ -1,19 +1,25 @@
 package models.im
 
-import java.io.File
-import java.nio.file.Files
+import java.io.{FileFilter, File}
+import java.nio.file.{Path, Files}
 import java.util.UUID
 
-import io.suggest.model.ImgWithTimestamp
+import akka.actor.ActorContext
+import io.suggest.event.SNStaticSubscriber
+import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
+import io.suggest.event.subscriber.SnClassSubscriber
+import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.ImgMetaI
+import models.{CronTask, ICronTask, ImgMetaI}
 import org.apache.commons.io.FileUtils
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI, AsyncUtil}
+import util._
 import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
+import scala.concurrent.duration._
+import scala.collection.JavaConversions._
 
 import scala.concurrent.Future
 
@@ -31,7 +37,13 @@ import scala.concurrent.Future
  * В итоге, получилась эта модель.
  */
 
-object MLocalImg extends ImgFileNameParsers {
+object MLocalImg
+  extends ImgFileNameParsers
+  with PlayLazyMacroLogsImpl
+  with DeleteOnIm2FullyDeletedEvent
+  with CronTasksProviderEmpty
+  with PeriodicallyDeleteEmptyDirs
+{
 
   /** Адрес img-директории, который используется для хранилища. */
   def DIR_REL = configuration.getString("m.local.img.dir.rel") getOrElse "picture/local"
@@ -41,6 +53,7 @@ object MLocalImg extends ImgFileNameParsers {
 
   /** Сколько модель должна кешировать в голове результат вызова identify. */
   val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds") getOrElse 120
+
 
   DIR.mkdirs()
 
@@ -83,18 +96,19 @@ object MLocalImg extends ImgFileNameParsers {
   def deleteAllFor(rowKey: UUID): Future[_] = {
     Future {
       deleteAllSyncFor(rowKey)
-    }(AsyncUtil.singleThreadBlockingContext)
+    }(AsyncUtil.singleThreadIoContext)
   }
 
 }
 
 
-import MLocalImg._
 
 
 /** Трейт, выносящий часть функционала экземпляра, на случай дальнейших расширений и разделений. */
-trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with PlayLazyMacroLogsImpl {
-  
+trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
+
+  import MLocalImg._
+
   // Для организации хранения файлов используется rowKey/qs-структура.
   lazy val fsImgDir = getFsImgDir(rowKeyStr)
 
@@ -108,8 +122,16 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   
   lazy val file = new File(fsImgDir, fsFileName)
 
-  def touch(newLastMod: Long = System.currentTimeMillis()) = {
-    file.setLastModified(newLastMod)
+  /** 
+   * Принудительно в фоне обновляем file last modified time.
+   * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
+   * @param newMtime Новое время доступа к картинке.
+   * @return Фьючерс для синхронизации.
+   */
+  def touchAsync(newMtime: Long = System.currentTimeMillis()): Future[_] = {
+    Future {
+      file.setLastModified(newMtime)
+    }(AsyncUtil.singleThreadIoContext)
   }
 
   def writeIntoFile(imgBytes: Array[Byte]) {
@@ -126,7 +148,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
   override def delete: Future[_] = {
     Future {
       deleteSync
-    }(AsyncUtil.singleThreadBlockingContext)
+    }(AsyncUtil.singleThreadIoContext)
   }
 
   override def timestampMs: Long = file.lastModified
@@ -141,7 +163,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT with
         width = info.getImageWidth
       )
       Some(imeta)
-    }(AsyncUtil.extCpuHeavyContext)
+    }(AsyncUtil.singleThreadCpuContext)
   }
 
   lazy val identifyCached = {
@@ -226,4 +248,112 @@ case class MLocalImg(
 
   override lazy val cropOpt = super.cropOpt
 }
+
+
+/** Статический аддон для добавления поддержки удаления локальных картинок по событию удаления картинки
+  * из permanent-хранилища. */
+trait DeleteOnIm2FullyDeletedEvent extends SNStaticSubscriber with SnClassSubscriber with PlayMacroLogsI {
+
+  val DIR: File
+  def deleteAllFor(rowKey: UUID): Future[_]
+
+  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+    List(Img2FullyDeletedEvent.getClassifier() -> Seq(this))
+  }
+
+  override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
+    event match {
+      case e @ Img2FullyDeletedEvent(rowKey) =>
+        deleteAllFor(rowKey) onFailure {
+          case ex =>
+            LOGGER.error(classOf[DeleteOnIm2FullyDeletedEvent].getSimpleName +
+              ": Failed to delete locel img with key " + e.rowKeyStr, ex)
+        }
+
+      case other =>
+        LOGGER.warn("Unexpected event received: " + other)
+    }
+  }
+
+}
+
+
+/** Периодически стирать пустые директории через Cron. Это статический аддон к object MLocalImg.
+  * Внутри, для работы с ФС, используется java.nio. */
+trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI {
+
+  val DIR: File
+  
+  protected val EDD_CONF_PREFIX = "m.img.local.edd"
+
+  /** Включено ли периодическое удаление пустых директорий из под картинок? */
+  def DELETE_EMPTY_DIRS_ENABLED = configuration.getBoolean(EDD_CONF_PREFIX + ".enabled") getOrElse true
+
+  /** Как часто инициировать проверку? */
+  def DELETE_EMPTY_DIRS_EVERY = configuration.getInt(EDD_CONF_PREFIX + ".every.minutes")
+    .fold [FiniteDuration] (12 hours) (_ minutes)
+
+  /** На сколько отодвигать старт проверки. */
+  def DELETE_EMPTY_DIRS_START_DELAY = configuration.getInt(EDD_CONF_PREFIX + ".start.delay.seconds")
+    .getOrElse(30)
+    .seconds
+
+  /** Список задач, которые надо вызывать по таймеру. */
+  abstract override def cronTasks: TraversableOnce[ICronTask] = {
+    val cts1 = super.cronTasks
+    if (DELETE_EMPTY_DIRS_ENABLED) {
+      val ct2 = CronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
+        findAndDeleteEmptyDirsAsync onFailure { case ex =>
+          LOGGER.warn("Failed to findAndDeleteEmptyDirs()", ex)
+        }
+      }
+      List(ct2).iterator ++ cts1.toIterator
+    } else {
+      cts1
+    }
+  }
+
+  /** Выполнить в фоне всё необходимое. */
+  def findAndDeleteEmptyDirsAsync: Future[_] = {
+    Future {
+      findAndDeleteEmptyDirs
+    }(AsyncUtil.singleThreadIoContext)
+  }
+
+  /** Пройтись по списку img-директорий, немножко заглянуть в каждую из них. */
+  def findAndDeleteEmptyDirs: Unit = {
+    val dirStream = Files.newDirectoryStream(DIR.toPath)
+    try {
+      dirStream.iterator()
+        .foreach { imgDirPath =>
+          if (imgDirPath.toFile.isDirectory)
+            maybeDeleteDirIfEmpty(imgDirPath)
+        }
+    } finally {
+      dirStream.close()
+    }
+  }
+
+  /** Удалить указанную директорию, если она пуста. */
+  def maybeDeleteDirIfEmpty(dirPath: Path): Unit = {
+    val dirStream = Files.newDirectoryStream(dirPath)
+    val dirEmpty = try {
+      dirStream.iterator().isEmpty
+    } finally {
+      dirStream.close()
+    }
+    if (dirEmpty) {
+      try {
+        LOGGER.debug("Deleting empty img-directory: " + dirPath)
+        Files.delete(dirPath)
+      } catch {
+        case ex: Exception => LOGGER.warn("Unable to delete empty img directory: "  + dirPath, ex)
+      }
+    }
+  }
+
+}
+
+
+
 

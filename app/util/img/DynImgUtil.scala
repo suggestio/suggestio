@@ -215,7 +215,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
   def saveDynImgAsync(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
     val futFut = Future {
       saveDynImg(imgFile, rowKey, qualifier, saveDt)
-    }(AsyncUtil.extCpuHeavyContext)
+    }(AsyncUtil.singleThreadCpuContext)
     // Распрямить вложенный фьючерс.
     futFut flatMap identity
   }

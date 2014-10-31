@@ -12,7 +12,7 @@ import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
-import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl, AsyncUtil}
+import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
 import play.api.Play.{current, configuration}
 import util.img.{ImgFileNameParsers, ImgFormUtil}
 
@@ -214,15 +214,15 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   override lazy val toLocalImg: Future[Option[MLocalImg]] = {
     val inst = toLocalInstance
     if (inst.isExists) {
+      inst.touchAsync()
       Future successful Some(inst)
     } else {
       MUserImg2.getById(rowKey, qOpt).map { img2Opt =>
         img2Opt.map { mimg2 =>
           inst.writeIntoFile(mimg2.imgBytes)
-          inst.touch(mimg2.timestampMs)
           inst
         }
-      }(AsyncUtil.singleThreadBlockingContext)
+      }
     }
   }
 
