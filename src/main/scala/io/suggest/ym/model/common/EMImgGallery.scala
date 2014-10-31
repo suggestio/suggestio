@@ -63,7 +63,7 @@ trait EMImgGallery extends EsModelPlayJsonT {
 
   override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val fut = super.eraseResources
-    Future.traverse(gallery) { MPict.deleteFully }
+    Future.traverse(gallery) { MImg2Util.deleteFully }
       .flatMap { _ => fut }
   }
 }

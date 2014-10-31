@@ -61,7 +61,7 @@ trait EMLogoImg extends EMLogoImgI {
   override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val fut = super.eraseResources
     logoImgOpt.fold(fut) { img =>
-      MPict.deleteFully(img.filename)
+      MImg2Util.deleteFully(img.filename)
         .flatMap { _ => fut }
     }
   }

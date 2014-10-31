@@ -1271,12 +1271,15 @@ trait OptStrId {
   def id: Option[String]
 }
 
+
+/** Интерфейс для стирания данных, относящихся только к текущему экземпляру модели, но хранящимися в других моделях. */
 trait EraseResources {
-  /** Стирание ресурсов, относящихся к этой модели. */
-  @JsonIgnore
+
+  /** Стирание ресурсов, относящихся к этой модели. Например, картинок, на которые ссылкаются поля этой модели. */
   def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     Future successful None
   }
+
 }
 
 
