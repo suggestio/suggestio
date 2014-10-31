@@ -1,6 +1,6 @@
 package models.im
 
-import java.io.{FileFilter, File}
+import java.io.File
 import java.nio.file.{Path, Files}
 import java.util.UUID
 
