@@ -1,7 +1,7 @@
 package io.suggest.util
 
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.common.settings.{Settings, ImmutableSettings}
 import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
@@ -218,6 +218,7 @@ object SioEsUtil extends MacroLogsImpl {
    */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
     val settingsBuilder = ImmutableSettings.settingsBuilder()
+      .classLoader(classOf[Settings].getClassLoader)
       .put("cluster.name", clusterName)
     clusterName match {
       case Some(clusterName) =>

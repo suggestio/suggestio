@@ -54,8 +54,11 @@ object Img2FullyDeletedEvent {
 
 case class Img2FullyDeletedEvent(rowKey: UUID) extends Event {
 
+  lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
+
   override def getClassifier: Classifier = {
     Img2FullyDeletedEvent.getClassifier(Some(rowKey))
   }
 
+  override def toString: String = s"${getClass.getSimpleName}($rowKeyStr)"
 }
