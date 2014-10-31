@@ -24,7 +24,6 @@ import scala.collection.JavaConversions._
  * 2014.may.08: MImgInfo -> MImgInfoT.
  */
 
-
 object EMImg {
   val IMG_ESFN = "img"
   def esMappingField = FieldObject(IMG_ESFN, enabled = false, properties = Nil)
@@ -32,7 +31,7 @@ object EMImg {
   type Imgs_t = Map[String, MImgInfoT]
 
   /** Стереть картинку, указанную в поле imgOpt, если она там есть. */
-  def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {
+  def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext, sn: SioNotifierStaticClientI): Future[_] = {
     Future.traverse(imgs) { case (imgId, imgInfo) =>
       val imgId = imgInfo.filename
       lazy val logPrefix = s"eraseLinkedImage($imgId): "
@@ -62,21 +61,13 @@ trait EMImgStatic extends EsModelStaticMutAkvT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (IMG_ESFN, value: ju.Map[_,_]) =>
-        // TODO 2014.apr.30: Карта может быть в старом формате. Удалить этот код миграции с проверками после публичного запуска.
-        acc.imgs = if (MImgInfo.testSerialized(value)) {
-          import scala.concurrent.ExecutionContext.Implicits.global
-          // Это старый формат. Нужно удалить картинку в фоне и вернуть, что картинок нет.
-          val img = MImgInfo.convertFrom(value)
-          EMImg.eraseImgs(Map("" -> img))
-          Map.empty
-        } else {
-          // Новый формат. Этот код должен остаться после удаления чистки старого формата.
-          value.foldLeft [List[(String, MImgInfo)]] (Nil) {
-            case (mapAcc, (k, v)) =>
-              k.toString -> MImgInfo.convertFrom(v) :: mapAcc
-          }.toMap
-        }
+        // 2014.oct.31: Код обработки старого формата (<2014.apr.30) удалён.
+        acc.imgs = value.foldLeft [List[(String, MImgInfo)]] (Nil) {
+          case (mapAcc, (k, v)) =>
+            k.toString -> MImgInfo.convertFrom(v) :: mapAcc
+        }.toMap
     }
+
   }
 
 }

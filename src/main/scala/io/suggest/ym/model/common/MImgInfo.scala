@@ -33,19 +33,6 @@ object MImgInfo {
     }
   }
 
-  /**
-   * Проверить, являются ли указанные сериализованные данные результатом сериализации MImgInfo.
-   * @param v выхлоп jackson'а.
-   * @return true, если можно это отправлять в convertFrom(). Иначе false.
-   */
-  def testSerialized(v: Any): Boolean = {
-    v match {
-      case m: ju.Map[_,_] =>
-        m.containsKey(FILENAME_ESFN) && m.containsKey(META_ESFN) && m.size() == 2
-
-      case _ => false
-    }
-  }
 }
 
 import MImgInfo._

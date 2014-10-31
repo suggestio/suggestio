@@ -2,6 +2,8 @@ package io.suggest.model
 
 import java.util.UUID
 
+import io.suggest.event.SioNotifier.{Classifier, Event}
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.UuidUtil
 
 import scala.concurrent.{Future, ExecutionContext}
@@ -20,13 +22,16 @@ object MImg2Util {
    * @param imgId filename картинки.
    * @return Фьючерс для синхронизации.
    */
-  def deleteFully(imgId: String)(implicit ec: ExecutionContext): Future[_] = {
+  def deleteFully(imgId: String)(implicit ec: ExecutionContext, sn: SioNotifierStaticClientI): Future[_] = {
     // Нужно извлечь uuid из id
     val rowKey = UuidUtil.base64ToUuid(imgId)
     deleteFully(rowKey)
   }
-  def deleteFully(rowKey: UUID)(implicit ec: ExecutionContext): Future[_] = {
+  def deleteFully(rowKey: UUID)(implicit ec: ExecutionContext, sn: SioNotifierStaticClientI): Future[_] = {
     val delImgFut = MUserImg2.deleteById(rowKey)
+    delImgFut onSuccess { case _ =>
+      sn publish Img2FullyDeletedEvent(rowKey)
+    }
     val delMetaFut = MUserImgMeta2.deleteById(rowKey)
     val delThumbFut = MImgThumb2.deleteById(rowKey)
     delImgFut flatMap { _ =>
@@ -34,6 +39,23 @@ object MImg2Util {
         delThumbFut
       }
     }
+  }
+
+}
+
+
+object Img2FullyDeletedEvent {
+
+  def getClassifier(rowKey: Option[UUID] = None): Classifier = {
+    List(Some(getClass.getSimpleName), rowKey)
+  }
+
+}
+
+case class Img2FullyDeletedEvent(rowKey: UUID) extends Event {
+
+  override def getClassifier: Classifier = {
+    Img2FullyDeletedEvent.getClassifier(Some(rowKey))
   }
 
 }
