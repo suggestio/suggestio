@@ -22,6 +22,7 @@ import scala.concurrent.duration._
 import scala.collection.JavaConversions._
 
 import scala.concurrent.Future
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -43,6 +44,7 @@ object MLocalImg
   with DeleteOnIm2FullyDeletedEvent
   with CronTasksProviderEmpty
   with PeriodicallyDeleteEmptyDirs
+  with PeriodicallyDeleteNotExistingInPermanent
 {
 
   /** Адрес img-директории, который используется для хранилища. */
@@ -295,7 +297,7 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
 
   /** На сколько отодвигать старт проверки. */
   def DELETE_EMPTY_DIRS_START_DELAY = configuration.getInt(EDD_CONF_PREFIX + ".start.delay.seconds")
-    .getOrElse(30)
+    .getOrElse(60)
     .seconds
 
   /** Список задач, которые надо вызывать по таймеру. */
@@ -349,6 +351,84 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
       } catch {
         case ex: Exception => LOGGER.warn("Unable to delete empty img directory: "  + dirPath, ex)
       }
+    }
+  }
+
+}
+
+
+/** Надо периодичеки удалять директории с картинками, если они долго лежат,
+  * а в permanent ещё/уже нет картинок с данным id. */
+trait PeriodicallyDeleteNotExistingInPermanent extends CronTasksProvider with PlayMacroLogsI {
+
+  val DIR: File
+
+  protected val DNEIP_CONF_PREFIX = "m.img.local.dneip"
+
+  /** Включено ли автоудаление директорий? */
+  def DNEIP_ENABLED = configuration.getBoolean(DNEIP_CONF_PREFIX + ".enabled") getOrElse true
+
+  /** Задержка первого запуска после старта play. */
+  def DNEIP_START_DELAY = configuration.getInt(DNEIP_CONF_PREFIX + ".start.delay.seconds")
+    .getOrElse(15)
+    .seconds
+
+  /** Как часто проводить проверки? */
+  def DNEIP_EVERY = configuration.getInt(DNEIP_CONF_PREFIX + ".every.minutes")
+    .fold[FiniteDuration] (3 hours)(_ minutes)
+
+  val DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
+    .fold(2 hours)(_ minutes)
+    .toMillis
+
+  /** Список задач, которые надо вызывать по таймеру. */
+  abstract override def cronTasks: TraversableOnce[ICronTask] = {
+    val cts0 = super.cronTasks
+    if (DNEIP_ENABLED) {
+      val task = CronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
+        dneipFindAndDeleteAsync() onFailure { case ex =>
+          LOGGER.error("DNEIP: Clean-up failed.", ex)
+        }
+      }
+      Seq(task).iterator ++ cts0.toIterator
+    } else {
+      cts0
+    }
+  }
+
+  def dneipFindAndDeleteAsync(): Future[_] = {
+    Future {
+      dneipFindAndDelete()
+    }
+  }
+
+  def dneipFindAndDelete(): Unit = {
+    val dirStream = Files.newDirectoryStream(DIR.toPath)
+    try {
+      val oldNow = System.currentTimeMillis() - DNEIP_OLD_DIR_AGE_MS
+      dirStream.iterator()
+        .map(_.toFile)
+        // TODO Частые проверки должны отрабатывать только свежие директории. Редкие - все директории.
+        .filter { f  =>  f.isDirectory && f.lastModified() < oldNow }
+        .foreach { currDir =>
+          val rowKeyStr = currDir.getName
+          val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
+          MLocalImg(rowKey).toWrappedImg
+            .existsInPermanent
+            .filter(!_)
+            .andThen { case _: Success[_] =>
+              LOGGER.debug("Deleting permanent-less img-dir: " + currDir)
+              FileUtils.deleteDirectory(currDir)
+            }(AsyncUtil.singleThreadIoContext)
+            .onFailure {
+              case ex: NoSuchElementException =>
+                // do nothing
+              case ex =>
+                LOGGER.error("DNEIP: Failed to process directory " + currDir, ex)
+            }
+        }
+    } finally {
+      dirStream.close()
     }
   }
 

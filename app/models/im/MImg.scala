@@ -306,13 +306,8 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   /** Сохранена ли текущая картинка в постоянном хранилище?
     * Метод просто проверяет наличие любых записей с указанным ключом в cassandra-моделях. */
   def existsInPermanent: Future[Boolean] = {
-    val dataExistsFut = MUserImg2.isExists(rowKey, qOpt)
-    for {
-      metaExists <- MUserImgMeta2.isExists(rowKey, qOpt)
-      dataExists <- dataExistsFut
-    } yield {
-      dataExists && metaExists
-    }
+    // Наличие метаданных не проверяет, т.к. там проблемы какие-то с isExists().
+    MUserImg2.isExists(rowKey, qOpt)
   }
 
   override def toWrappedImg = this
