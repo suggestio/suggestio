@@ -1,6 +1,7 @@
 package controllers
 
 import models.im.MImg
+import play.api.libs.json.JsValue
 import util.PlayMacroLogsImpl
 import util.blocks.BlocksUtil.BlockImgMap
 import util.img.MainColorDetector.{Remove, ImgBgColorUpdateAction}
@@ -12,13 +13,13 @@ import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.Future
-import play.api.mvc.Request
+import play.api.mvc.{WebSocket, Request}
 import play.api.Play.{current, configuration}
 import MMartCategory.CollectMMCatsAcc_t
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import util.blocks.BlockMapperResult
+import util.blocks.{LkEditorWsActor, BlockMapperResult}
 import util.img.{MainColorDetector, ImgInfo4Save}
 import io.suggest.ym.model.common.Texts4Search
 
@@ -466,6 +467,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       rcvrId -> AdReceiverInfo(rcvrId)
     }.toMap
     Future successful result
+  }
+
+
+  /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
+  def ws(wsId: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
+    // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
+    val auth = PersonWrapper.getFromRequest.isDefined
+    Future.successful(
+      if (auth) {
+        Right(LkEditorWsActor.props(_, wsId))
+      } else {
+        val result = Forbidden("Unathorized")
+        Left(result)
+      }
+    )
   }
 
 

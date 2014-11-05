@@ -3,6 +3,7 @@ package util
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import akka.actor._
+import util.ws.WsDispatcherActor
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy._
 import concurrent.Await
@@ -79,6 +80,7 @@ class SiowebSup extends Actor with Logs {
     SiowebNotifier.startLink(context)
     SeedUrlsSupplier.startLink(context)
     billing.StatBillingQueueActor.startLink(context)
+    WsDispatcherActor.startLink(context)
   }
 
 

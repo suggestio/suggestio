@@ -20,6 +20,14 @@
   <!-- TODO вынести инициализацию tiny в отдельный модуль -->
   <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
   <script>
+
+    @* Сразу открываем веб-сокет в фоне. Он нужен для получения задетекченного цвета картинки. *@
+    var ws = new WebSocket("@ctx.wsUrlPrefix@routes.MarketAd.ws(ctx.ctxIdStr)");
+    ws.onmessage = function (evt) {
+      var received_msg = evt.data;
+      alert("WS message is received: " + received_msg);
+    };
+
     tinymce.init({
       selector: 'textarea.js-tinymce',
       width: 615,

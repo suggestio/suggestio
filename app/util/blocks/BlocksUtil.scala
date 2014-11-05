@@ -214,9 +214,9 @@ object BfHeight {
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
-  name: String,
-  defaultValue: Option[Int] = BfHeight.SOME_HEIGHT_DFLT,
-  availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
+  name          : String,
+  defaultValue  : Option[Int] = BfHeight.SOME_HEIGHT_DFLT,
+  availableVals : Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
 ) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Height
   override def fallbackValue: T = BlockHeights.H140.heightPx
@@ -231,9 +231,9 @@ object BfWidth {
   val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.widthPx)
 }
 case class BfWidth(
-  name: String,
-  defaultValue: Option[Int] = BfWidth.WIDTH_DFLT,
-  availableVals: Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
+  name          : String,
+  defaultValue  : Option[Int] = BfWidth.WIDTH_DFLT,
+  availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
 ) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Width
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
@@ -244,16 +244,16 @@ case class BfWidth(
 
 
 case class BfPrice(
-  name: String,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[AOPriceField] = None,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
-  dfltFontSize: Option[Int] = None,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = true,
-  withCoords: Boolean = true,
-  withTextAlign: Boolean = false
+  name            : String,
+  offerNopt       : Option[Int] = None,
+  defaultValue    : Option[AOPriceField] = None,
+  withFontColor   : Boolean = true,
+  withFontSizes   : List[FontSize] = FONT_SIZES_DFLT,
+  dfltFontSize    : Option[Int] = None,
+  fontSizeDflt    : Option[Int] = None,
+  withFontFamily  : Boolean = true,
+  withCoords      : Boolean = true,
+  withTextAlign   : Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOPriceField
 
@@ -280,17 +280,17 @@ case class BfPrice(
 
 
 case class BfText(
-  name: String,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[AOStringField] = None,
-  minLen: Int = 0,
-  maxLen: Int = 16000,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = true,
-  withCoords: Boolean = true,
-  withTextAlign: Boolean = true
+  name            : String,
+  offerNopt       : Option[Int] = None,
+  defaultValue    : Option[AOStringField] = None,
+  minLen          : Int = 0,
+  maxLen          : Int = 16000,
+  withFontColor   : Boolean = true,
+  withFontSizes   : List[FontSize] = FONT_SIZES_DFLT,
+  fontSizeDflt    : Option[Int] = None,
+  withFontFamily  : Boolean = true,
+  withCoords      : Boolean = true,
+  withTextAlign   : Boolean = true
 ) extends BlockAOValueFieldT {
   override type T = AOStringField
 
@@ -323,15 +323,15 @@ case class BfText(
 
 /** Поля для строки. */
 case class BfString(
-  name: String,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[String] = None,
-  withFontColor: Boolean = true,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
-  withTextAlign: Boolean = false,
-  minLen: Int = 0,
-  maxLen: Int = 16000
+  name            : String,
+  offerNopt       : Option[Int] = None,
+  defaultValue    : Option[String] = None,
+  withFontColor   : Boolean = true,
+  withFontFamily  : Boolean = false,
+  withCoords      : Boolean = false,
+  withTextAlign   : Boolean = false,
+  minLen          : Int = 0,
+  maxLen          : Int = 16000
 ) extends BlockFieldT {
   def fallbackValue = "example"
 
@@ -399,17 +399,17 @@ object BfDiscount {
 
 /** Поле для ввода скидки в процентах. Кто-то хочет положительную скидку задавать, кто-то отрицательную. */
 case class BfDiscount(
-  name: String,
-  defaultValue: Option[AOFloatField] = BfDiscount.DFLT,
-  offerNopt: Option[Int] = None,
-  min: Float = -99F,
-  max: Float = 100F,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = Nil,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
-  withTextAlign: Boolean = false
+  name            : String,
+  defaultValue    : Option[AOFloatField] = BfDiscount.DFLT,
+  offerNopt       : Option[Int] = None,
+  min             : Float = -99F,
+  max             : Float = 100F,
+  withFontColor   : Boolean = true,
+  withFontSizes   : List[FontSize] = Nil,
+  fontSizeDflt    : Option[Int] = None,
+  withFontFamily  : Boolean = false,
+  withCoords      : Boolean = false,
+  withTextAlign   : Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOFloatField
   val discoFloatM = getTolerantDiscountPercentM(
@@ -462,10 +462,10 @@ case class BfColor(
 
 
 case class BfCheckbox(
-  name: String,
-  defaultValue: Option[Boolean] = None,
-  fallbackValue: Boolean = false,
-  offerNopt: Option[Int] = None
+  name          : String,
+  defaultValue  : Option[Boolean] = None,
+  fallbackValue : Boolean = false,
+  offerNopt     : Option[Int] = None
 ) extends BlockFieldT {
   override type T = Boolean
   override def field = Checkbox
@@ -478,9 +478,9 @@ case class BfCheckbox(
 
 /** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
 case class BlockDataImpl(
-  blockMeta: BlockMeta,
-  offers: List[AOBlock],
-  colors: Map[String, String] = Map.empty
+  blockMeta   : BlockMeta,
+  offers      : List[AOBlock],
+  colors      : Map[String, String] = Map.empty
 )
   extends IBlockMeta
   with IOffers

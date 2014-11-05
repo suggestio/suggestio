@@ -2,6 +2,7 @@ package controllers
 
 import java.io.File
 
+import _root_.util.ws.WsDispatcherActor
 import io.suggest.model.ImgWithTimestamp
 import models.im._
 import org.apache.commons.io.FileUtils
@@ -22,7 +23,7 @@ import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
 import io.suggest.ym.model.common.MImgInfoMeta
 
-import scala.util.Failure
+import scala.util.{Success, Failure}
 
 /**
  * Suggest.io
@@ -317,11 +318,10 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
-    * @param runEarlyColorDetector Запускать ли фоновый детектор цвета для этой картинки?
     * @param request HTTP-реквест.
     * @return Экземпляр Result, хранящий json с данными результата.
     */
-  def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false)
+  def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false, wsId: Option[String] = None)
                     (implicit request: Request[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
@@ -368,10 +368,24 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
               Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
             }
             // Запускаем в фоне детектор цвета картинки. При сабмите результат будет извелечен из кеша.
-            imgPrepareFut onSuccess { case _ =>
-              MainColorDetector.detectColorCachedFor(im) onFailure {
-                case ex: Throwable =>
-                  LOGGER.warn(s"Failed to execute color detector on tmp img " + im.fileName, ex)
+            if (runEarlyColorDetector) {
+              imgPrepareFut onSuccess { case _ =>
+                MainColorDetector.detectColorCachedFor(im) onComplete {
+                  case Success(result) =>
+                    wsId.foreach { _wsId =>
+                      WsDispatcherActor.getForWsId(_wsId)
+                        .onComplete {
+                          case Success(Some(wsActorRef)) =>
+                            wsActorRef ! result
+                          case Success(None) =>
+                            LOGGER.debug("Ws actor not exists: " + wsId)
+                          case Failure(ex) =>
+                            LOGGER.warn("Failed to get ws actor info from dispatcher.", ex)
+                        }
+                    }
+                  case Failure(ex) =>
+                    LOGGER.warn(s"Failed to execute color detector on tmp img " + im.fileName, ex)
+                }
               }
             }
             // Возвращаем ожидаемый результат:

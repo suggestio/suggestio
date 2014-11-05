@@ -1,6 +1,9 @@
 package util
 
+import java.util.UUID
+
 import controllers.routes
+import io.suggest.util.UuidUtil
 import models.im.DevScreen
 import org.joda.time.DateTime
 import play.api.i18n.Lang
@@ -85,7 +88,11 @@ trait Context {
       .filter(!_.isEmpty)
       .map { firstForwarded }
       .getOrElse(Context.SIO_PROTO_DFLT)
+      .toLowerCase
   }
+
+  /** Является ли текущий коннекшен шифрованным? */
+  lazy val isSecure: Boolean = myProto == "https"
 
   /** Если порт указан, то будет вместе с портом. Значение задаётся в конфиге. */
   lazy val myHost: String = {
@@ -152,6 +159,21 @@ trait Context {
 
   /** Локальный ГСЧ, иногда нужен. */
   lazy val PRNG = new Random(System.currentTimeMillis())
+
+  /** Рандомный id, существующий в рамках контекста.
+    * Использутся, когда необходимо как-то индентифицировать весь текущий рендер (вебсокеты, например). */
+  lazy val ctxId = UUID.randomUUID()
+  lazy val ctxIdStr = UuidUtil.uuidToBase64(ctxId)
+
+  /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
+  lazy val wsUrlPrefix: String = {
+    val sb = new StringBuilder("ws")
+    if (isSecure)
+      sb.append('s')
+    sb.append("://")
+      .append(myHost)
+      .toString()
+  }
 
   /** Пользователю может потребоваться помощь на любой странице. Нужны генератор ссылок в зависимости от обстоятельств. */
   def supportFormCall(adnIdOpt: Option[String] = None) = {

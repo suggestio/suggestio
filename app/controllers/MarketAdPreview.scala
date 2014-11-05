@@ -180,12 +180,16 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(blockId: Int, fn: String) = IsAuth.async(parse.multipartFormData) { implicit request =>
+  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = IsAuth.async(parse.multipartFormData) { implicit request =>
     bruteForceProtected {
       val bc: BlockConf = BlocksConf(blockId)
       bc.blockFieldForName(fn) match {
         case Some(bfi: BfImage) =>
-          val resultFut = _handleTempImg(preserveUnknownFmt = false)
+          val resultFut = _handleTempImg(
+            preserveUnknownFmt = false,
+            runEarlyColorDetector = bfi.preDetectMainColor,
+            wsId = wsId
+          )
           resultFut
 
         case _ => NotFound
