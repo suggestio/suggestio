@@ -1,6 +1,7 @@
 package util.blocks
 
 import io.suggest.ym.model.common.{IBlockMeta, Imgs, BlockMeta, MImgInfoT}
+import models.blk.SzMult_t
 import models.im._
 import play.api.mvc.Call
 import util.PlayLazyMacroLogsImpl
@@ -29,9 +30,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
+  /** Целевая высота широкой картинки. */
+  val WIDE_TARGET_HEIGHT_PX = configuration.getInt("blocks.bg.wide.height.target.px") getOrElse 700
+
   /** Желаемые ширИны широкого бэкграунда. */
   val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
-  val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(240, 360, 540, 640, 800, 1080, 1200, 1440, 1600, 2048) )
+  val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(240, 360, 540, WIDE_TARGET_HEIGHT_PX) )
+
 
   private def getConfSzsRow(confKeyPart: String, default: => List[Int]): List[Int] = {
     configuration.getIntSeq(s"blocks.bg.wide.$confKeyPart.px")
@@ -40,15 +45,34 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
   /**
+   * Дедубликация кода подгонки размера стороны
+   * @param cssQuants Допустимые наборы значений в css-пикселях.
+   * @param minValueF Извлекатель минимального значения из dev screen.
+   * @param defaultCssPx Генерация дефолтового размера стророны, если экрана нет.
+   * @param pxRatio Данные о плотности пикселей экрана.
+   * @param ctx Контекст рендера.
+   * @return Int со значением целевой ширины/высоты.
+   */
+  private def calculateWideSidePx(cssQuants: Iterable[Int], minValueF: DevScreen => Int, defaultCssPx: => Int,
+                                  pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
+    val cssHeight = ctx.deviceScreenOpt
+      .fold[Int] ( defaultCssPx ) { ds =>
+        normWideBgSz(minValueF(ds), acc = cssQuants.head, variants = cssQuants.tail)
+      }
+    (cssHeight * pxRatio.pixelRatio).toInt
+  }
+
+  /**
    * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
    * необходимостью получения данных о размерах исходной картинки.
    * @param bgImgInfo Данные о фоновой картинке карточки.
    * @param bm Метаданные блока карточки.
-   * @param szMult Множитель размера, запрошенный контроллером.
+   * @param szMult Множитель размера, заданный на верхнем уровне (контроллером или чем-то в той области).
+   *               2014.nov.05: Не используется, а надо бы. Пока высота прибивается к лимиту экрана или системы.
    * @param ctx Контекст рендера шаблона.
    * @return Фьючерс с данными по рендеру широкой фоновой картинки.
    */
-  def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: Int)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
+  def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
     val iik = MImg( bgImgInfo.filename )
     // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
     val origWhFut = iik.original.getImageWH
@@ -56,19 +80,14 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     // Нужно вычислить размеры wide-версии оригинала.
-    // Размер по высоте ограничиваем через высоту карточки (с учетом pixel ratio).
-    val imgResMult = szMult * pxRatio.pixelRatio
-    val tgtHeightReal = ctx.deviceScreenOpt
-      .fold[Int] ( (bm.height * imgResMult).toInt ) { ds =>
-        val cssHeight = normWideBgSz(ds.height, acc = WIDE_HEIGHTS_PX.head, variants = WIDE_HEIGHTS_PX.tail)
-        (pxRatio.pixelRatio * cssHeight).toInt
-      }
+    // 2014.nov.05: Размер по высоте ограничиваем через высоту экрана и константу макс.высоты (с учетом pixel ratio).
+    // До bb15fc0a9ad5 включительно wide-картинка пыталась отресайзится на весь экран устройства, что было слегка неправильно.
+    // TODO Нужно учитывать (bm.height * szMult). Тогда точно не будет расхождений с контроллером в будущем.
+    //      Сейчас для упрощения испрользуется такая логика: если вызов пришел сюда, то значит точно wide и скалинг карточки до максимума.
+    val tgtHeightReal: Int = calculateWideSidePx(WIDE_HEIGHTS_PX, _.height, WIDE_TARGET_HEIGHT_PX, pxRatio)
     // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-    val cropWidth = ctx.deviceScreenOpt
-      .fold[Int] (WIDE_WIDTHS_PX.last) { ds =>
-        val cssWidth = normWideBgSz(ds.width, acc = WIDE_WIDTHS_PX.head, variants = WIDE_WIDTHS_PX.tail)
-        (pxRatio.pixelRatio * cssWidth).toInt
-      }
+    val cropWidth: Int = calculateWideSidePx(WIDE_WIDTHS_PX, _.width, WIDE_WIDTHS_PX.last, pxRatio)
+    // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
       ImFilters.Lanczos,
@@ -129,13 +148,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @return Множитель.
    */
   // TODO Вероятно, этот метод не нужен. Мнение контроллера по вопросам рендера не должно "корректироваться" на нижнем уровне.
-  @tailrec def detectMaxSzMult(szMult: Int, blockSz: MImgSizeT, screenSz: MImgSizeT): Int = {
-    if (szMult <= 1) {
-      1
+  @tailrec def detectMaxSzMult(szMult: SzMult_t, blockSz: MImgSizeT, screenSz: MImgSizeT): SzMult_t = {
+    if (szMult <= 1F) {
+      1F
     } else if (blockSz.width * szMult <= screenSz.width) {
       szMult
     } else {
-      detectMaxSzMult(szMult / 2, blockSz, screenSz)
+      detectMaxSzMult(szMult / 2F, blockSz, screenSz)
     }
   }
 
@@ -154,10 +173,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @param devScreen Данные по экрану устройства.
    * @return Параметры для картинки.
    */
-  def getRenderSz(szMult: Int, blockMeta: MImgSizeT, devScreen: DevScreen): MImgInfoMeta = {
+  def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreen: DevScreen): MImgInfoMeta = {
     getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatioOpt)
   }
-  def getRenderSz(szMult: Int, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): MImgInfoMeta = {
+  def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): MImgInfoMeta = {
     val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatioOpt)
     MImgInfoMeta(
       height = (blockMeta.height * imgResMult).toInt,
@@ -173,7 +192,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @param pxRatioOpt Плотность пикселей устройства.
    * @return Мультипликатор, на который надо домножать пиксельный размер стороны картинки.
    */
-  def getImgResMult(szMult: Int, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): Float = {
+  def getImgResMult(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): Float = {
     val pxRatio = pxRatioDefaulted(pxRatioOpt)
     // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
     val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
@@ -185,7 +204,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
 
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
-  @tailrec def normWideBgSz(minWidth: Int,  acc: Int,  variants: List[Int]): Int = {
+  @tailrec def normWideBgSz(minWidth: Int,  acc: Int,  variants: Iterable[Int]): Int = {
     if (acc < minWidth && variants.nonEmpty) {
       normWideBgSz(minWidth, variants.head, variants.tail)
     } else {
@@ -308,7 +327,7 @@ trait SaveBgImgI extends ISaveImgs {
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def wideBgImgArgs(mad: Imgs with IBlockMeta, szMult: Int)(implicit ctx: Context): Future[Option[blk.WideBgRenderCtx]] = {
+  def wideBgImgArgs(mad: Imgs with IBlockMeta, szMult: SzMult_t)(implicit ctx: Context): Future[Option[blk.WideBgRenderCtx]] = {
     getMadBgImg(mad) match {
       case Some(bgImgInfo) =>
         BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)

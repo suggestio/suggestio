@@ -17,7 +17,7 @@ object RenderArgs {
   /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
   val DEFAULT = RenderArgs()
 
-  def DOUBLE_SIZED_ARGS = RenderArgs(szMult = 2)
+  def DOUBLE_SIZED_ARGS = RenderArgs(szMult = 2F)
 }
 
 /**
@@ -32,7 +32,7 @@ object RenderArgs {
 case class RenderArgs(
   withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
-  szMult        : Int = 1,
+  szMult        : Float = 1.0F,
   wideBg        : Option[WideBgRenderCtx] = None
 )
 

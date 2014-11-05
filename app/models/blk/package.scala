@@ -11,4 +11,5 @@ package object blk {
   type BlockWidth  = BlockWidths.BlockWidth
   type BlockHeight = BlockHeights.BlockHeight
 
+  type SzMult_t    = Float
 }

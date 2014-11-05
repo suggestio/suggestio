@@ -4,7 +4,7 @@ import controllers.routes
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
-import models.blk.{BlockWidth, BlockHeights, BlockWidths}
+import models.blk.{SzMult_t, BlockWidth, BlockHeights, BlockWidths}
 import models.im.DevPixelRatios
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
@@ -130,7 +130,7 @@ object ShowcaseUtil {
 
 
   /** Дефолтовый мультипликатор размера для блоков, отображаемых через focusedAds(). */
-  def FOCUSED_SZ_MULT = 2
+  def FOCUSED_SZ_MULT: SzMult_t = 2.0F
 
   /** Дефолтовые аргументы рендера на черный день. Обычно не важно, что там написано в полях. */
   def focusedBrArgsDflt = blk.RenderArgs(szMult = FOCUSED_SZ_MULT)
@@ -141,42 +141,50 @@ object ShowcaseUtil {
    * @return Аргументы для рендера.
    */
   def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
-    // Считаем целевое разрешение фоновой картинки карточки:
-    val preferDoubleSize: Boolean = {
-      ctx.deviceScreenOpt.exists { devScr =>
-        val nonWideImgRenderSz = BgImg.getRenderSz(
-          szMult      = FOCUSED_SZ_MULT,
-          blockMeta   = mad.blockMeta,
-          devScreenSz = devScr,
-          pxRatioOpt  = Some(DevPixelRatios.MDPI)   // Узнаём реально отображаемое разрешение в css-пикселях.
+    if (mad.blockMeta.wide) {
+      // мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
+      val szMult: SzMult_t = BgImg.WIDE_TARGET_HEIGHT_PX.toFloat / mad.blockMeta.height.toFloat
+      // Нужно получить данные для рендера широкой карточки.
+      val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
+      val wideBgCtxOptFut = bc.wideBgImgArgs(mad, szMult)
+      wideBgCtxOptFut map { wideBgCtxOpt =>
+        blk.RenderArgs(
+          withEdit      = false,
+          isStandalone  = false,
+          szMult        = szMult,
+          wideBg        = wideBgCtxOpt
         )
-        // Если ширина экрана намекает, то рендерим на широкую.
-        nonWideImgRenderSz.width  <  devScr.width
       }
-    }
-    // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
-    val willWideBg: Boolean = mad.blockMeta.wide
-    val szMult = if (preferDoubleSize || mad.blockMeta.height == BlockHeights.H140.heightPx) {
-      2
+
     } else {
-      1
-    }
-    val wideBgCtxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
-      if (willWideBg) {
-        // Нужно получить данные для рендера широкой карточки.
-        val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
-        bc.wideBgImgArgs(mad, szMult)
-      } else {
-        Future successful None
+
+      // Если ширина экрана позволяет, то нужно отрендерить в увеличенном размере:
+      val devScrHasDoubleWidth: Boolean = {
+        ctx.deviceScreenOpt.exists { devScr =>
+          val nonWideImgRenderSz = BgImg.getRenderSz(
+            szMult      = FOCUSED_SZ_MULT,
+            blockMeta   = mad.blockMeta,
+            devScreenSz = devScr,
+            pxRatioOpt  = Some(DevPixelRatios.MDPI)   // Узнаём реально отображаемое разрешение в css-пикселях.
+          )
+          // Если ширина экрана намекает, то рендерим на широкую.
+          nonWideImgRenderSz.width  <  devScr.width
+        }
       }
-    }
-    wideBgCtxOptFut map { wideBgCtxOpt =>
-      blk.RenderArgs(
+      // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
+      val szMult: SzMult_t = if (devScrHasDoubleWidth || mad.blockMeta.height == BlockHeights.H140.heightPx) {
+        FOCUSED_SZ_MULT
+      } else {
+        1F
+      }
+      // Возвращаем результат
+      val bra = blk.RenderArgs(
         withEdit      = false,
         isStandalone  = false,
         szMult        = szMult,
-        wideBg        = wideBgCtxOpt
+        wideBg        = None
       )
+      Future successful bra
     }
   }
 
