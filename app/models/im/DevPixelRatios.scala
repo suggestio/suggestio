@@ -56,7 +56,7 @@ object DevPixelRatios extends Enumeration {
       name = name,
       mode = "bg",
       qDflt = 83,
-      chromaSsDflt = ImSamplingFactors.SF_1x2
+      chromaSsDflt = ImSamplingFactors.SF_1x1
     )
     override val fgCompression = ImCompression(
       name = name,
@@ -74,7 +74,7 @@ object DevPixelRatios extends Enumeration {
       name = name,
       mode = "bg",
       qDflt = 70,
-      chromaSsDflt = ImSamplingFactors.SF_1x2
+      chromaSsDflt = ImSamplingFactors.SF_1x1
     )
     override val fgCompression = ImCompression(
       name = name,
@@ -91,7 +91,8 @@ object DevPixelRatios extends Enumeration {
     override val bgCompression = ImCompression(
       name = name,
       mode = "bg",
-      qDflt = 64
+      qDflt = 64,
+      chromaSsDflt = ImSamplingFactors.SF_1x2
     )
     override val fgCompression = ImCompression(
       name = name,
