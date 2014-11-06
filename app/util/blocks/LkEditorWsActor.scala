@@ -43,7 +43,7 @@ class LkEditorWsActor(out: ActorRef, wsId: String) extends Actor {
 
     // Пришло сообщение, что успешно выявлен цвет картинки
     case MainColorDetector.Update(newColorHex) =>
-      trace(s"Sending detected $newColorHex color to client via ws...")
+      //trace(s"Sending detected $newColorHex color to client via ws...")
       val respJson = JsObject(Seq(
         TYPE_FN     -> JsString("imgColor"),
         PAYLOAD_FN  -> JsString(newColorHex)

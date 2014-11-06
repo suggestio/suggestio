@@ -312,7 +312,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI {
+trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs {
 
   val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt("ctl.img.temp.preview.side.px") getOrElse 620
 
@@ -373,15 +373,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI {
                 MainColorDetector.detectColorCachedFor(im) onComplete {
                   case Success(result) =>
                     wsId.foreach { _wsId =>
-                      WsDispatcherActor.getForWsId(_wsId)
-                        .onComplete {
-                          case Success(Some(wsActorRef)) =>
-                            wsActorRef ! result
-                          case Success(None) =>
-                            LOGGER.debug("Ws actor not exists: " + wsId)
-                          case Failure(ex) =>
-                            LOGGER.warn("Failed to get ws actor info from dispatcher.", ex)
-                        }
+                      _notifyWs(_wsId, result)
                     }
                   case Failure(ex) =>
                     LOGGER.warn(s"Failed to execute color detector on tmp img " + im.fileName, ex)

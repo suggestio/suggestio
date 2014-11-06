@@ -38,6 +38,9 @@ object WsDispatcherActor {
 }
 
 
+/** Актор, управляющий картой веб-сокетов.
+  * ws-акторы запускаются и живут полностью асинхронно и довольно изолированно, поэтому нужна система связи с ними.
+  * Карта с ключами wsId позволяет наладить связь между wsId на клиенте и актором тут. */
 class WsDispatcherActor extends Actor with PlayMacroLogsImpl {
 
   import LOGGER._
