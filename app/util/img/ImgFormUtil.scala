@@ -1,30 +1,19 @@
 package util.img
 
-import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.util.UuidUtil
 import models.im.{MAnyImgT, MImg}
-import net.sf.jmimemagic.Magic
 import org.im4java.core.Info
-import play.api.mvc.QueryStringBindable
 import util.img.LogoUtil.LogoOpt_t
-import util.{AsyncUtil, FormUtil, PlayMacroLogsImpl}
-import io.suggest.img.{ImgCropParsers, ConvertModes, ImgCrop, SioImageUtilT}
+import util.{FormUtil, PlayMacroLogsImpl}
+import io.suggest.img.{ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
-import io.suggest.model.MPict
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import java.io.{File, FileNotFoundException}
-import org.apache.commons.io.FileUtils
-import scala.util.{Failure, Success}
 import java.lang
-import com.fasterxml.jackson.annotation.JsonIgnore
 import models._
-import play.api.cache.Cache
-import io.suggest.ym.model.common.{MImgSizeT, MImgInfoT}
-import play.api.Logger
-import scala.concurrent.duration._
+import io.suggest.ym.model.common.MImgSizeT
 
 /**
  * Suggest.io
