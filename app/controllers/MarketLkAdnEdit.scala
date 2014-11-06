@@ -1,10 +1,8 @@
 package controllers
 
 import models.im.MImg
-import play.api.mvc.Action
 import util.img.LogoUtil.LogoOpt_t
 import util.img._
-import util.img.ImgFormUtil.imgInfo2imgKey
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -17,8 +15,6 @@ import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io

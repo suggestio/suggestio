@@ -1,7 +1,6 @@
 package util.blocks
 
 import models.blk.{BlockHeights, BlockWidths}
-import models.im.MImg
 import play.api.data._
 import BlocksUtil._
 import util.PlayMacroLogsImpl
@@ -10,7 +9,6 @@ import models._
 import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
-import util.img.{ImgIdKey, ImgInfo4Save}
 import play.twirl.api.{HtmlFormat, Template3}
 
 /**

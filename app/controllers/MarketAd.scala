@@ -20,7 +20,7 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.{LkEditorWsActor, BlockMapperResult}
-import util.img.{MainColorDetector, ImgInfo4Save}
+import util.img.MainColorDetector
 import io.suggest.ym.model.common.Texts4Search
 
 /**

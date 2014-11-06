@@ -11,9 +11,6 @@ import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
-import controllers.MarketAdPreview.PreviewFormDefaults
-import io.suggest.img.SioImageUtilT
-import util.img.ImgInfo4Save
 import util.FormUtil
 import play.twirl.api.{HtmlFormat, Template5}
 

@@ -2,7 +2,7 @@ package util.cdn
 
 import controllers.routes
 import models.im.MImg
-import models.{Context, DynImgArgs, ExternalCall}
+import models.{Context, ExternalCall}
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
