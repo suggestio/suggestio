@@ -3,11 +3,12 @@ package controllers
 import java.util.NoSuchElementException
 
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import _root_.util.cdn.CdnUtil
 import _root_.util.img.WelcomeUtil
 import _root_.util.showcase._
 import io.suggest.ym.model.common.{IBlockMeta, EMBlockMetaI}
 import models.blk.BlockHeights
-import models.im.DevScreenT
+import models.im.{MImg, DevScreenT}
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -210,7 +211,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
     val node = request.adnNode
     val logoSrcOpt = node.logoImgOpt map { logo_src =>
-      val call = routes.Img.getImg(logo_src.filename)
+      val call = CdnUtil.dynImg(logo_src.filename)
       JsString(call.url)
     }
     val json = JsObject(Seq(

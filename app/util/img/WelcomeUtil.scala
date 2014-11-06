@@ -148,7 +148,7 @@ object WelcomeUtil {
       }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
-          override def call = CdnUtil.getImg(oiik2.fileName)
+          override def call = CdnUtil.dynImg(oiik2.fileName)
           override def meta = Some(origMeta)
         }
       } { case (bss, screen) =>

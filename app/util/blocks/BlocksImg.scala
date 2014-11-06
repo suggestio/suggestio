@@ -144,36 +144,5 @@ trait LogoImg extends ValT with ISaveImgs {
     (ms ++ cms) -> (fes ++ cfes)
   }
 
-
-  /**
-   * Собрать Call к картинке логотипа.
-   * @param mad Рекламная карточка.
-   * @param default Строка дефолтового путя к ассету.
-   * @param ctx Контекст рендера шаблонов.
-   * @return Экземпляр Call, пригодный для обращения в ссылку.
-   */
-  def logoImgCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
-    mad.imgs
-      .get(LOGO_IMG_FN)
-      .map {
-        logoImgInfo  =>  CdnUtil.getImg(logoImgInfo.filename)
-      }
-      .orElse {
-        default.map { routes.Assets.versioned(_) }
-      }
-  }
-
-  /**
-   * Собрать Call к картинке логотипа, но по возможности через CDN.
-   * @param mad Рекламная карточка.
-   * @param default Дефолтовый путь до ассета, если в карточке нет логотипа.
-   * @param ctx Контекст рендера шаблона.
-   * @return Экземпляр Call.
-   */
-  def logoImgCdnCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
-    logoImgCall(mad, default)
-      .map { CdnUtil.forCall }
-  }
-
 }
 

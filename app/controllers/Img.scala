@@ -147,18 +147,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   }
 
   /**
-   * Раздача произвольных картинок без проверки прав.
-   * @param imgId ключ картинки
-   * @return Один из различных экшенов обработки.
-   */
-  @deprecated("Use dynImg() instead.", "2014.oct.29")
-  def getImg(imgId: String): Action[AnyContent] = {
-    val img = MImg(imgId)
-      .copy(dynImgOps = Nil)
-    dynImg(img)
-  }
-
-  /**
    * Для подавления http get flood атаки через запросы с приписыванием рандомных qs
    * и передачи ссылок публичным http-фетчерам.
    * @param onSuccess Если реквест прошел проверку, то тут генерация результата.
@@ -338,7 +326,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs {
             val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
             val mptmp = MLocalImg()
             FileUtils.writeStringToFile(mptmp.file, newSvg)
-            Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.getImg(mptmp.fileName)) )
+            Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg)) )
           } else {
             val reply = Img.jsonImgError("SVG format invalid or not supported.")
             NotAcceptable(reply)

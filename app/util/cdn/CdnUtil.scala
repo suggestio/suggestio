@@ -108,9 +108,4 @@ object CdnUtil extends PlayMacroLogsImpl {
     dynImg(img)
   }
 
-  /** Вызов за оригиналом картинки. */
-  def getImg(filename: String)(implicit ctx: Context) = {
-    forCall( routes.Img.getImg(filename) )
-  }
-
 }
