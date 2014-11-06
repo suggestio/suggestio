@@ -305,6 +305,12 @@ GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
+## Галереи картинок
+GET  /sys/gals/all                       controllers.SysGallery.showList(page: Int ?= 0)
+POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
+GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
+GET  /sys/gals/new                       controllers.SysGallery.createGal
+
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 

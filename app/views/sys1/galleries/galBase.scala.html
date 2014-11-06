@@ -1,0 +1,17 @@
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для sys-шаблонов управления галереями. *@
+
+@import sys1._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@sysBase(
+  title      = title,
+  hPathAfter = Some(hPathAfter1),
+  headAfter  = headAfter
+)(content)

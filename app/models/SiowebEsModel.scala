@@ -1,14 +1,14 @@
 package models
 
-import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel, EsModelStaticT}
+import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
+import models.im.MGallery
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future
 import org.elasticsearch.client.Client
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import org.slf4j.LoggerFactory
-import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
@@ -30,12 +30,16 @@ object SiowebEsModel extends PlayLazyMacroLogsImpl {
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq(
       MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
-      MRemoteError
+      MRemoteError, MGallery
     )
   }
 
+  if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
+    EsModel.errorIfIncorrectModels(ES_MODELS)
+
+  /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(implicit client: Client): Future[Boolean] = {
-    val ignoreExist = current.configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
+    val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
     LoggerFactory.getLogger(getClass).trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModel.putAllMappings(ES_MODELS, ignoreExist)
   }

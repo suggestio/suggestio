@@ -1,0 +1,19 @@
+@(gf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Форма создания/редактирования галереи. *@
+
+@import ctx._
+@import helper._
+
+@form(submitCall) {
+
+  @inputText(gf("name"), '_label -> "Идентификатор *", 'title -> "Допустимые символы: a-z 0-9 - и _")
+
+  @textarea(gf("descr"), '_label -> "Описание", 'title -> "Необязательно. Произвольный текст.")
+
+  @* TODO Нужна асинхронная загрузка картинок.
+     Сабмит для отправки картинки: routes.SysGallery.uploadImg(ctx.ctxIdStr)
+     Название полей в теле POST: imgs[0], imgs[1] и т.д. Цифры должны отражать порядок картинок в галерее. *@
+
+  <input type="submit" value="@btnText" />
+}
