@@ -897,6 +897,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
       .flatMap { searchResp2RtMultiget(_, acc0) }
   }
 
+  /** Генератор реквеста для генерации запроса для getAll(). */
+  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)(implicit client: Client) = {
+    prepareSearch
+      .setQuery(QueryBuilders.matchAllQuery())
+      .setSize(maxResults)
+      .setFrom(offset)
+      .setVersion(withVsn)
+  }
 
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
@@ -906,12 +914,13 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @return Список магазинов в порядке их создания.
    */
   def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    val req = prepareSearch
-      .setQuery(QueryBuilders.matchAllQuery())
-      .setSize(maxResults)
-      .setFrom(offset)
-      .setVersion(withVsn)
-    runSearch(req)
+    runSearch(
+      getAllReq(
+        maxResults = maxResults,
+        offset = offset,
+        withVsn = withVsn
+      )
+    )
   }
 
 
