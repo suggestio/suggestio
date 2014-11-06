@@ -263,12 +263,21 @@ object EsModel extends MacroLogsImpl {
     case ri: ReadableInstant => new DateTime(ri)
   }
 
-  val strListParser: PartialFunction[Any, List[String]] = {
-    case null => Nil
+  /** Парсер json-массивов. */
+  val iteratorParser: PartialFunction[Any, Iterator[Any]] = {
+    case null =>
+      Iterator.empty
     case l: jl.Iterable[_] =>
-      l.foldLeft (List.empty[String]) {
+      l.iterator()
+  }
+
+  /** Парсер список строк. */
+  val strListParser: PartialFunction[Any, List[String]] = {
+    iteratorParser andThen { iter =>
+      iter.foldLeft( List.empty[String] ) {
         (acc,e) => EsModel.stringParser(e) :: acc
       }.reverse
+    }
   }
   
   
