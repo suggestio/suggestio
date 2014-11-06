@@ -52,6 +52,30 @@ object EsModel extends MacroLogsImpl {
     Seq(MCompany, MWelcomeAd, MShopPriceList, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo)
   }
 
+  private def esModelId(esModel: EsModelCommonStaticT): String = {
+    s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
+  }
+
+  /** Сгенерить InternalError, если хотя бы две es-модели испрользуют одно и тоже хранилище для данных.
+    * В сообщении экзепшена будут перечислены конфликтующие модели. */
+  def errorIfIncorrectModels(allModels: Iterable[EsModelCommonStaticT]): Unit = {
+    // Запускаем проверку, что в моделях не используются одинаковые типы в одинаковых индексах.
+    val uniqModelsCnt = allModels.iterator
+      .map(esModelId)
+      .toSet
+      .size
+    if (uniqModelsCnt < allModels.size) {
+      // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
+      val errModelsStr = allModels
+        .map { m => esModelId(m) -> m.getClass.getName }
+        .groupBy(_._1)
+        .valuesIterator
+        .filter { _.size > 1 }
+        .map { _.mkString(", ") }
+        .mkString("\n")
+      throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
+    }
+  }
 
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
