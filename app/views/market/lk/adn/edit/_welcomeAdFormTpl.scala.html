@@ -19,7 +19,7 @@
         @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
           <div class="image __size-M js-preview">
             <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
-            <img class="image_src" src="@DynImgUtil.thumb256Call(imgId)" />
+            <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
             <a class="image_remove-btn js-remove-image" title="Удалить">
               <span></span>
             </a>

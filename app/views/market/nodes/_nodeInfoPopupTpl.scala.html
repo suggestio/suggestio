@@ -16,7 +16,7 @@
 
         <div class="card_photo-w">
           @adnNode.gallery.headOption.map { filename =>
-            <div class="card_photo" style="background-image: url(@DynImgUtil.thumb256Call(filename));"></div>
+            <div class="card_photo" style="background-image: url(@DynImgUtil.thumb256Call(filename, fillArea = true));"></div>
           }
           <div class="card_location location-contour">
             локация

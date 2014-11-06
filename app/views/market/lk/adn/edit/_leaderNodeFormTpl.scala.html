@@ -123,7 +123,7 @@
               @mf(gfn).value.map { imgId =>
                 <div class="image __size-M f-left js-preview">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
-                  <img class="image_src" src="@DynImgUtil.thumb256Call(imgId)" />
+                  <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
                   <a class="image_edit-btn js-crop-image-btn" title="Удалить">
                     <span></span>
                   </a>

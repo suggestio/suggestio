@@ -347,58 +347,6 @@ object OrigImageUtil extends SiowebImageUtilT {
 }
 
 
-/** Обработка логотипов. */
-object AdnLogoImageUtil extends SiowebImageUtilT {
-
-  /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
-    * прямоугольник с указанныыми сторонами). */
-  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.logo.shop.maxsize.h.px") getOrElse 512)
-  val DOWNSIZE_VERT_PX: Integer  = Integer valueOf (configuration.getInt("img.logo.shop.maxsize.v.px") getOrElse 128)
-
-  /** Качество сжатия jpeg. */
-  val JPEG_QUALITY_PC: Double = configuration.getDouble("img.logo.shop.jpeg.quality") getOrElse 0.95
-
-  /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
-    * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
-  def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
-
-  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  val MIN_SZ_PX: Int = configuration.getInt("img.logo.shop.side.min.px") getOrElse 30
-
-  /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
-  def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
-}
-
-
-/** Там, где допустимы квалратные логотипы, используем этот трайт. */
-trait SqLogoImageUtil extends SiowebImageUtilT {
-
-  /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
-    * прямоугольник с указанныыми сторонами). */
-  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (configuration.getInt("img.logo.mart.maxsize.h.px") getOrElse 512)
-  val DOWNSIZE_VERT_PX: Integer  = configuration.getInt("img.logo.mart.maxsize.v.px").map(Integer valueOf) getOrElse DOWNSIZE_HORIZ_PX
-
-  /** Качество сжатия jpeg. */
-  val JPEG_QUALITY_PC: Double = configuration.getDouble("img.logo.mart.jpeg.quality") getOrElse 0.95
-
-  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  val MIN_SZ_PX: Int = configuration.getInt("img.logo.mart.side.min.px") getOrElse 70
-
-  /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
-  val MAX_OUT_FILE_SIZE_BYTES: Option[Int] = configuration.getInt("img.logo.mart.result.size.max")
-
-  /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
-    * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
-  def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
-
-}
-
-
-/** Конвертор картинок в логотипы ТЦ. */
-object LogoImageUtil extends SqLogoImageUtil
-
-
-
 /** Выходные форматы картинок. */
 object OutImgFmts extends Enumeration {
 

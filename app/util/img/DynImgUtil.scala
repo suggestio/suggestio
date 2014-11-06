@@ -165,8 +165,11 @@ object DynImgUtil extends PlayMacroLogsImpl {
     cmd.addProcessEventListener(listener)
     trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
     cmd run op
-    trace("convert(): Result is " + out.length + " bytes")
-    listener.future
+    val resFut = listener.future
+    resFut onSuccess { case _ =>
+      trace("convert(): Result is " + out.length + " bytes")
+    }
+    resFut
   }
 
 
@@ -222,13 +225,15 @@ object DynImgUtil extends PlayMacroLogsImpl {
 
 
   /** Сгенерить превьюшку размера не более 256х256. */
-  def thumb256Call(fileName: String): Call = {
+  def thumb256Call(fileName: String, fillArea: Boolean): Call = {
     val img = MImg(fileName)
-    thumb256Call(img)
+    thumb256Call(img, fillArea)
   }
-  def thumb256Call(img: MImg): Call = {
+  def thumb256Call(img: MImg, fillArea: Boolean): Call = {
+    val flags = if (fillArea) Seq(ImResizeFlags.FillArea) else Nil
+    val op = AbsResizeOp(MImgInfoMeta(256, 256), flags)
     val imgThumb = img.copy(
-      dynImgOps = img.dynImgOps ++ Seq(AbsResizeOp(MImgInfoMeta(256, 256)))
+      dynImgOps = img.dynImgOps ++ Seq(op)
     )
     imgCall(imgThumb)
   }
