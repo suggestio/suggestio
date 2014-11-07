@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
   cache,
   json,
   ws,
-  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.0",
+  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.1",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "2.3.4-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.4.0-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -195,4 +195,7 @@ ProguardKeys.options in Proguard ++= Seq(
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
 
 javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
+
+// play-2.4
+//routesGenerator := InjectedRoutesGenerator
 
