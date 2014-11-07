@@ -66,15 +66,13 @@ object MAd
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def deleteById(id: String, ignoreResources: Boolean = false)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val adOptFut = getById(id)
     adOptFut flatMap {
       case Some(ad) =>
         lazy val logPrefix = s"deleteById($id): "
-        // Удаляем картинки, привязанные к этой рекламе.
-        ad.eraseResources
         // Одновременно удаляем саму рекламную карточку из хранилища
-        val resultFut = super.deleteById(id)
+        val resultFut = super.deleteById(id, ignoreResources)
         // Когда всё будет удалено ок, то надо породить событие.
         resultFut onSuccess {
           case true  => sn publish AdDeletedEvent(ad)

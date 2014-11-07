@@ -42,11 +42,12 @@ object MCompany
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def deleteById(id: String, ignoreResources: Boolean = false)
+                         (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val adnsCountFut = MAdnNode.countByCompanyId(id)
     adnsCountFut flatMap {
       case 0L =>
-        super.deleteById(id)
+        super.deleteById(id, ignoreResources)
 
       case adnsCount =>
         Future failed new ForeignKeyException(s"Cannot delete company with $adnsCount marts/shops or other AdnMembers.")

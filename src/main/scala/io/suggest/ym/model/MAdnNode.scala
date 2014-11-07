@@ -60,8 +60,8 @@ object MAdnNode
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val delFut = super.deleteById(id)
+  override def deleteById(id: String, ignoreResources: Boolean = false)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    val delFut = super.deleteById(id, ignoreResources)
     delFut onSuccess { case isDeleted =>
       sn publish AdnNodeDeletedEvent(id, isDeleted)
     }

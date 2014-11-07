@@ -579,6 +579,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   def SCROLL_SIZE_DFLT = EsModel.SCROLL_SIZE_DFLT
   def BULK_PROCESSOR_BULK_SIZE_DFLT = EsModel.BULK_PROCESSOR_BULK_SIZE_DFLT
 
+  def HAS_RESOURCES: Boolean = false
+
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     * @param idOrNull id или null, если id отсутствует.
     * @return None если routing не требуется, иначе Some(String).
@@ -634,6 +636,25 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   /** Прочитать маппинг текущей ES-модели из ES. */
   def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
     EsModel.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
+  }
+
+  /**
+   * При удаление инстанса модели бывает нужно стирать связанные ресурсы (связанные модели).
+   * Тут общий код логики необязательного стирания ресурсов.
+   * @param ignoreResources Флаг запрета каких-либо стираний. Полезно, если всё уже стёрто.
+   * @getF Функция получения фьючерса с возможным инстансом модели.
+   * @return Фьючерс для синхронизации.
+   */
+  def maybeEraseResources(ignoreResources: Boolean, getF: => Future[Option[EsModelCommonT]])
+                         (implicit client: Client, ec: ExecutionContext, sn: SioNotifierStaticClientI): Future[_] = {
+    if (!ignoreResources && HAS_RESOURCES) {
+      getF flatMap {
+        case Some(mInts) => mInts.eraseResources
+        case None        => Future successful None
+      }
+    } else {
+      Future successful None
+    }
   }
 
   /**
@@ -1190,10 +1211,14 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    deleteRequestBuilder(id)
-      .execute()
-      .map { _.isFound }
+  def deleteById(id: String, ignoreResources: Boolean = false)
+                (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    val delResFut = maybeEraseResources(ignoreResources, getById(id))
+    delResFut flatMap { _ =>
+      deleteRequestBuilder(id)
+        .execute()
+        .map { _.isFound }
+    }
   }
 
 
@@ -1263,12 +1288,18 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   /**
    * Удалить документ по id.
    * @param id id документа.
+   * @param parentId id родительского документа, чтобы es мог вычислить шарду.
+   * @param ignoreResources Не пытаться удалять ресурсы модели. true, если ресурсы уже удалены.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def delete(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    prepareDelete(id, parentId)
-      .execute()
-      .map { _.isFound }
+  def delete(id: String, parentId: String, ignoreResources: Boolean = false)
+            (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    val delResFut = maybeEraseResources(ignoreResources, get(id, parentId))
+    delResFut flatMap { _ =>
+      prepareDelete(id, parentId)
+        .execute()
+        .map { _.isFound }
+    }
   }
 
   def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
@@ -1379,14 +1410,18 @@ trait EsModelCommonT extends OptStrId with EraseResources {
     }
   }
 
-  def companionDelete(_id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
+  def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
 
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.
     */
-  def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = id match {
-    case Some(_id)  => companionDelete(_id)
-    case None       => Future failed new IllegalStateException("id is not set")
+  def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    eraseResources flatMap { _ =>
+      id match {
+        case Some(_id)  => companionDelete(_id, ignoreResources = true)
+        case None       => Future failed new IllegalStateException("id is not set")
+      }
+    }
   }
 
   def prepareDelete(implicit client: Client): DeleteRequestBuilder
@@ -1421,8 +1456,8 @@ trait EsModelT extends EsModelCommonT {
   /** Узнать routing key для текущего экземпляра. */
   def getRoutingKey = companion.getRoutingKey(idOrNull)
 
-  override def companionDelete(_id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    companion.deleteById(_id)
+  override def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    companion.deleteById(_id, ignoreResources)
   }
 
   override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get)
@@ -1445,8 +1480,8 @@ trait EsChildModelT extends EsModelCommonT {
     super.indexRequestBuilder.setParent(parentId)
   }
 
-  override def companionDelete(_id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    companion.delete(_id, parentId)
+  override def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    companion.delete(_id, parentId, ignoreResources)
   }
 
   override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get, parentId)
