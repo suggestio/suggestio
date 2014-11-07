@@ -184,6 +184,11 @@ object SysGallery extends SioController with PlayMacroLogsImpl with TempImgSuppo
   }
 
 
+  /**
+   * POST запрос удаления галерии вместе со всеми картинками.
+   * @param galId id удаляемой галереи.
+   * @return Редирект в список оставшихся галерей.
+   */
   def deleteGallerySubmit(galId: String) = IsSuperuserGallery(galId).async { implicit request =>
     request.gallery.delete map { isDeleted =>
       val flash = if (isDeleted)
