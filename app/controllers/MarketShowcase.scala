@@ -6,9 +6,8 @@ import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import _root_.util.cdn.CdnUtil
 import _root_.util.img.WelcomeUtil
 import _root_.util.showcase._
-import io.suggest.ym.model.common.{IBlockMeta, EMBlockMetaI}
-import models.blk.BlockHeights
-import models.im.{MImg, DevScreenT}
+import controllers.sc._
+import models.im.DevScreenT
 import util.stat._
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
@@ -27,7 +26,7 @@ import play.api.libs.Jsonp
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.mvc._
 import play.api.Play, Play.{current, configuration}
 
@@ -37,7 +36,7 @@ import play.api.Play, Play.{current, configuration}
  * Created: 02.07.14 14:07
  * Description: Контроллер выдачи sio-market.
  */
-object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriber {
+object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriber with ScSite with ScController {
 
   import LOGGER._
 
@@ -46,10 +45,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
-  // сбор категорий перенесён в ShowcaseUtil.
-
-  /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
 
   /** Дефолтовый цвет элементов переднего плана. */
   val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
@@ -75,7 +70,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   val ONCLOSE_HREF_USE_NODE_SITE = configuration.getBoolean("market.showcase.onclose.href.use.node.siteurl") getOrElse true
 
   /** Цвет для выдачи, которая вне узла. */
-  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
   val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
 
   /** Сколько нод максимум накидывать к списку нод в качестве соседних нод. */
@@ -88,83 +82,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
-
-
-  /**
-   * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
-   * @param showcaseCall Call для обращения за indexTpl.
-   * @param request Исходный реквест, содержащий в себе необходимый узел adn.
-   * @return 200 OK с рендером подложки выдачи.
-   */
-  private def adnNodeDemoWebsite(showcaseCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
-    val args = SMDemoSiteArgs(
-      showcaseCall  = showcaseCall,
-      bgColor       = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-      title         = Some(request.adnNode.meta.name),
-      adnId         = request.adnNode.id
-    )
-    cacheControlShort {
-      Ok(demoWebsiteTpl(args))
-    }
-  }
-
-  /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
-  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    val nodeEnabled = request.adnNode.adn.isEnabled
-    val isReceiver = request.adnNode.adn.isReceiver
-    if (nodeEnabled && isReceiver || request.isMyNode) {
-      // Собираем статистику. Тут скорее всего wifi
-      future {
-        ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
-          .saveStats
-          .onFailure {
-          case ex => warn(s"demoWebSite($adnId): Failed to save stats", ex)
-        }
-      }
-      // Рендерим результат в текущем потоке.
-      adnNodeDemoWebsite(
-        showcaseCall = routes.MarketShowcase.showcase(adnId)
-      )
-
-    } else {
-      debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled ; isRcvr=$isReceiver")
-      http404AdHoc
-    }
-  }
-
-  /** Рендер страницы внутренней выдачи для указанного продьюсера.
-    * Например, рекламодатель хочет посмотреть, как выглядят его карточки в выдаче. */
-  def myAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    adnNodeDemoWebsite( routes.MarketShowcase.myAdsShowcase(adnId) )
-  }
-
-  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite = MaybeAuth { implicit request =>
-    // Запускаем сбор статистики в фоне.
-    future {
-      ScSiteStat(AdnSinks.SINK_GEO)
-        .saveStats
-        .onFailure {
-          case ex => warn("geoSite(): Failed to save statistics", ex)
-        }
-    }
-    val args = SMDemoSiteArgs(
-      showcaseCall = routes.MarketShowcase.geoShowcase(),
-      bgColor = SITE_BGCOLOR_GEO,
-      adnId = None
-    )
-    val resultFut = cacheControlShort {
-      Ok(demoWebsiteTpl(args))
-    }
-
-    resultFut
-  }
-
-  /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
-  def rdrToGeoSite = Action { implicit request =>
-    val call = routes.MarketShowcase.geoSite().url
-    MovedPermanently(call)
-  }
 
 
   /** Кеш-ключ для nodeIconJs. */
@@ -699,19 +616,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   }
 
 
-  /** Метод для генерации json-ответа с html внутри. */
-  private def jsonOk(action: String, html: Option[JsString] = None, blocks: Seq[JsString] = Nil, acc0: FieldsJsonAcc = Nil) = {
-    var acc: FieldsJsonAcc = acc0
-    if (html.isDefined)
-      acc ::= "html" -> html.get
-    if (blocks.nonEmpty)
-      acc ::= "blocks" -> JsArray(blocks)
-    // action добавляем в начало списка
-    acc ::= "action" -> JsString(action)
-    val json = JsObject(acc)
-    Ok( Jsonp(JSONP_CB_FUN, json) )
-  }
-
   /** Карта статической подписки контроллера на некоторые события:
     * - Уборка из кеша рендера nodeIconJs. */
   override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
@@ -723,6 +627,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
         Cache.remove(ck)
     }
     Seq(classifier -> Seq(subscriber))
+  }
+
+
+  /** Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния. */
+  def _syncSite(scState: JsShowCaseState): Future[Result] = {
+    // TODO Нужно рендерить indexTpl, вставляя результат в siteTpl().
+    // TODO Потом надо рендерить открытую рекламную карточку (параллельно с indexTpl) и вставлять fads container.
+    ???
   }
 
 }
