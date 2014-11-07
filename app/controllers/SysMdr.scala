@@ -2,8 +2,7 @@ package controllers
 
 import io.suggest.ym.model.ad.FreeAdvStatus
 import org.elasticsearch.index.engine.VersionConflictEngineException
-import play.api.mvc.Result
-import play.api.templates.HtmlFormat
+import play.twirl.api.HtmlFormat
 import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
 import scala.concurrent.ExecutionContext.Implicits.global

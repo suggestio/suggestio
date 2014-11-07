@@ -21,7 +21,7 @@ import io.suggest.proto.bixo.CrawlersSupProto.MaybeBootstrapDkey
  */
 object SiobixClient extends SiobixClientWrapperT with SNStaticSubscriber {
 
-  val URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
+  lazy val URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
 
   /** Сгенерить селектор относительно akka-корня siobix.
     * @param actorPath Полный путь до siobix-актора.
