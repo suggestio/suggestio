@@ -1,4 +1,4 @@
-@(gf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+@(gf: Form[_], submitCall: Call, btnText: String, galNameDisabled: Option[String] = None)(implicit ctx: Context)
 
 @* Форма создания/редактирования галереи. *@
 
@@ -7,13 +7,28 @@
 
 @form(submitCall) {
 
-  @inputText(gf("name"), '_label -> "Идентификатор *", 'title -> "Допустимые символы: a-z 0-9 - и _")
+  @galNameDisabled.fold {
+    @* Можно менять имя галереи. *@
+    @inputText(
+      gf("name"),
+      '_label -> "Идентификатор *",
+      'title -> "Допустимые символы: a-z 0-9 - и _"
+    )
+  } { galName =>
+    @* Название отключенной галереи. *@
+    <input type="text" disabled value="@galName" title="Нельзя менять идентификатор уже существующей галереи."/>
+  }
 
-  @textarea(gf("descr"), '_label -> "Описание", 'title -> "Необязательно. Произвольный текст.")
+  @textarea(
+    gf("descr"),
+    '_label -> "Описание",
+    'title -> "Необязательно. Произвольный текст."
+  )
 
   @* TODO Нужна асинхронная загрузка картинок.
      Сабмит для отправки картинки: routes.SysGallery.uploadImg(ctx.ctxIdStr)
-     Название полей в теле POST: imgs[0], imgs[1] и т.д. Цифры должны отражать порядок картинок в галерее. *@
+     Название полей в теле POST: imgs[0], imgs[1] и т.д. Цифры-индексы должны отражать порядок картинок в галерее,
+     но им не обязательно идти по порядку. *@
 
   <input type="submit" value="@btnText" />
 }

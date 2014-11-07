@@ -2,7 +2,7 @@ package util.blocks
 
 import akka.actor.{Actor, ActorRef, Props}
 import play.api.libs.json.{JsString, JsObject}
-import util.PlayMacroLogsImpl
+import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import util.img.MainColorDetector
 import util.img.MainColorDetector.ImgBgColorUpdateAction
 import util.ws._
@@ -13,7 +13,7 @@ import util.ws._
  * Created: 05.11.14 18:32
  * Description: Актор, обслуживающий WebSocket-интерфейс редактора блоков.
  */
-object LkEditorWsActor extends PlayMacroLogsImpl {
+object LkEditorWsActor {
   
   def props(out: ActorRef, wsId: String) = Props(LkEditorWsActor(out, wsId))
 
@@ -28,8 +28,5 @@ object LkEditorWsActor extends PlayMacroLogsImpl {
 case class LkEditorWsActor(out: ActorRef, wsId: String)
   extends WsActorDummy
   with SubscribeToWsDispatcher
-  with ColorDetectedWsNotifyActor {
-
-  def LOGGER = LkEditorWsActor.LOGGER
-
-}
+  with ColorDetectedWsNotifyActor
+  with PlayLazyMacroLogsImpl

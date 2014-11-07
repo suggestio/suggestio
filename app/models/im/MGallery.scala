@@ -1,5 +1,6 @@
 package models.im
 
+import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.{SortOrder, FieldSortBuilder, SortBuilder}
@@ -12,6 +13,7 @@ import org.joda.time.DateTime
 import play.api.libs.json._
 
 import scala.collection.Map
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -89,6 +91,8 @@ object MGallery extends EsModelStaticT with PlayMacroLogsImpl {
       .addSort(NAME_ESFN, SortOrder.ASC)
   }
 
+
+
 }
 
 
@@ -128,6 +132,24 @@ case class MGallery(
     if (dateModified.nonEmpty)
       acc ::= DATE_MODIFIED_ESFN -> EsModel.date2JsStr(dateModified.get)
     acc
+  }
+
+  /** Стирание ресурсов, относящихся к этой модели. Т.е. картинок, на которые ссылкается эта модель. */
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val eraseImgsFut = Future.traverse(imgs) { img =>
+      MImg.deleteAllFor(img.rowKey)
+    }
+    super.eraseResources
+      .flatMap { _ => eraseImgsFut }
+  }
+
+  /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
+    * @return true - всё ок, false - документ не найден.
+    */
+  override def delete(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    eraseResources flatMap { _ =>
+      super.delete
+    }
   }
 
 }

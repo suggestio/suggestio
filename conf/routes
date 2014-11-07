@@ -310,6 +310,10 @@ GET  /sys/gals/all                       controllers.SysGallery.showList(page: I
 POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
 GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
 GET  /sys/gals/new                       controllers.SysGallery.createGal
+POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
+GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
+GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
+POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
 
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
