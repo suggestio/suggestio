@@ -2,6 +2,7 @@ package util.acl
 
 import java.net.InetAddress
 
+import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
@@ -102,6 +103,40 @@ trait SioRequestHeader extends RequestHeader {
   abstract override lazy val remoteAddress: String = {
     val ra0 = super.remoteAddress
     firstForwardedAddr(ra0)
+  }
+
+  /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */
+  lazy val ajaxEscapedFragment: Option[String] = {
+    queryString
+      .get("_escaped_fragment_")
+      .flatMap(_.headOption)
+      // TODO Нужно делать URL unescape тут?
+  }
+
+  /** Переданное js-состояние скрипта выдачи, закинутое в ajax escaped_fragment. */
+  lazy val ajaxJsScState: Option[JsShowCaseState] = {
+    ajaxEscapedFragment
+      .flatMap { raw =>
+        try {
+          val r = FormUrlEncodedParser.parseNotPreservingOrder(raw)
+          Some(r)
+        } catch {
+          case ex: Exception =>
+            LOGGER.debug("Failed to parse ajax-escaped fragment.", ex)
+            None
+        }
+      }
+      .flatMap { aefMap =>
+        val qsb = JsShowCaseState.qsbStandalone
+        qsb.bind("", aefMap)
+      }
+      .flatMap {
+        case Right(res) =>
+          Some(res)
+        case Left(errMsg) =>
+          LOGGER.warn(s"_geoSiteResult(): Failed to bind ajax escaped_fragment '$ajaxEscapedFragment' from '$remoteAddress': $errMsg")
+          None
+      }
   }
 
 }

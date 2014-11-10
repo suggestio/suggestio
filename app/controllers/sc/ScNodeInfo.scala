@@ -13,7 +13,6 @@ import util.cdn.CdnUtil
 import views.html.market.lk.adn._node._installScriptTpl
 import views.txt.market.showcase._
 import play.api.libs.json._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io

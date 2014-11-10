@@ -15,11 +15,70 @@ import play.api.Play.{current, configuration}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 07.11.14 19:42
- * Description: Экшены для рендера "сайта" выдачи, т.е. полноценной html-страницы.
+ * Description: Трейты с экшенами для рендера "сайтов" выдачи, т.е. html-страниц, возвращаемых при непоср.реквестах.
  * Бывает рендер через geo, который ищет подходящий узел, и рендер напрямую.
  */
 
-trait ScSite extends SioController with PlayMacroLogsI with ScSiteConstants {
+/** Поддержка гео-сайта. */
+trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
+
+  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
+  def geoSite = MaybeAuth.async { implicit request =>
+    _geoSite
+  }
+
+  /**
+   * Тело экшена _geoSite задаётся здесь, чтобы его можно было переопределять при необходимости.
+   * @param request Экземпляр реквеста.
+   * @return Результат работы экшена.
+   */
+  protected def _geoSite(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    // Запускаем сбор статистики в фоне.
+    _geoSiteStats
+    // Запускаем выдачу результата запроса:
+    _geoSiteResult
+  }
+
+  /** Фоновый сбор статистики. Можно переназначать. */
+  protected def _geoSiteStats(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+    val fut = Future {
+      ScSiteStat(AdnSinks.SINK_GEO)
+    }.flatMap {
+      _.saveStats
+    }
+    fut.onFailure {
+      case ex => LOGGER.warn("geoSite(): Failed to save statistics", ex)
+    }
+    fut
+  }
+
+  /**
+   * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
+   * @param request Реквест.
+   */
+  protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    val args = SMDemoSiteArgs(
+      showcaseCall = routes.MarketShowcase.geoShowcase(),
+      bgColor = SITE_BGCOLOR_GEO,
+      adnId = None
+    )
+    cacheControlShort {
+      Ok(demoWebsiteTpl(args))
+    }
+  }
+
+
+  /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
+  def rdrToGeoSite = Action { implicit request =>
+    val call = routes.MarketShowcase.geoSite().url
+    MovedPermanently(call)
+  }
+
+}
+
+
+/** Поддержка node-сайтов. */
+trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants {
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
@@ -49,8 +108,8 @@ trait ScSite extends SioController with PlayMacroLogsI with ScSiteConstants {
         ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
           .saveStats
           .onFailure {
-          case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)
-        }
+            case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)
+          }
       }
       // Рендерим результат в текущем потоке.
       adnNodeDemoWebsite(
@@ -69,39 +128,10 @@ trait ScSite extends SioController with PlayMacroLogsI with ScSiteConstants {
     adnNodeDemoWebsite( routes.MarketShowcase.myAdsShowcase(adnId) )
   }
 
-  /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite = MaybeAuth { implicit request =>
-    // Запускаем сбор статистики в фоне.
-    Future {
-      ScSiteStat(AdnSinks.SINK_GEO)
-        .saveStats
-        .onFailure {
-          case ex => LOGGER.warn("geoSite(): Failed to save statistics", ex)
-        }
-    }
-    val args = SMDemoSiteArgs(
-      showcaseCall = routes.MarketShowcase.geoShowcase(),
-      bgColor = SITE_BGCOLOR_GEO,
-      adnId = None
-    )
-    val resultFut = cacheControlShort {
-      Ok(demoWebsiteTpl(args))
-    }
-
-    resultFut
-  }
-
-
-  /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
-  def rdrToGeoSite = Action { implicit request =>
-    val call = routes.MarketShowcase.geoSite().url
-    MovedPermanently(call)
-  }
-
 }
 
 
-/** Константы лдя site-функционала. Используются и в других трейтах. */
+/** Константы лдя site-функционала. Используются и в разных трейтах. */
 trait ScSiteConstants {
 
   /** Дефолтовое имя ноды. */

@@ -1,7 +1,5 @@
 package controllers.sc
 
-import java.util.NoSuchElementException
-
 import _root_.util.{Context, PlayMacroLogsI}
 import models.Context
 import util.img.WelcomeUtil
@@ -10,7 +8,6 @@ import util.stat._
 import util.acl._
 import util.SiowebEsUtil.client
 import controllers.routes
-import models.im.DevScreenT
 import io.suggest.model.EsModel.FieldsJsonAcc
 import ShowcaseUtil._
 import views.html.market.showcase._
@@ -27,7 +24,9 @@ import play.api.Play, Play.{current, configuration}
  * Created: 10.11.14 12:12
  * Description: Экшены, генерирующие indexTpl выдачи для узлов вынесены сюда.
  */
-trait ScIndex extends ScController with PlayMacroLogsI with ScSiteConstants {
+
+/** Константы, используемые в рамках этого куска контроллера. */
+trait ScIndexConstants {
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
@@ -39,17 +38,157 @@ trait ScIndex extends ScController with PlayMacroLogsI with ScSiteConstants {
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
 
+}
+
+
+
+/** Общая утиль, испрользуемая в контроллере. */
+trait ScIndexCommon extends ScController with PlayMacroLogsI with ScSiteConstants {
+
+  /** Базовый трейт для написания генератора производных indexTpl и ответов. */
+  trait ScIndexHelperBase {
+    def renderArgsFut: Future[SMShowcaseRenderArgs]
+    def isGeo: Boolean
+    def currAdnIdFut: Future[Option[String]]
+    implicit def _request: AbstractRequestWithPwOpt[_]
+    lazy val ctx: Context = implicitly[Context]
+
+    def respHtmlFut = {
+      renderArgsFut
+        .map { indexTpl(_)(ctx) }
+    }
+
+    def respJsonArgsFut: Future[FieldsJsonAcc] = {
+      currAdnIdFut map { currAdnId =>
+        List(
+          "is_geo"      -> JsBoolean(isGeo),
+          "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
+        )
+      }
+    }
+
+    def result: Future[Result] = {
+      for {
+        html      <- respHtmlFut
+        jsonArgs  <- respJsonArgsFut
+      } yield {
+        // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
+        // произошло какое-то другое изменение
+        StatUtil.resultWithStatCookie {
+          jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
+        }(ctx.request)
+      }
+    }
+
+  }
+
+}
+
+
+
+/** Вспомогательная утиль для рендера indexTpl на нодах. */
+trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
+
+  trait ScIndexNodeHelper extends ScIndexHelperBase {
+    def adnNodeFut        : Future[MAdnNode]
+    def spsrFut           : Future[AdSearch]
+    def onCloseHrefFut    : Future[String]
+    def geoListGoBackFut  : Future[Option[Boolean]]
+    override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
+
+    override def renderArgsFut: Future[SMShowcaseRenderArgs] = {
+      val prodsStatsFut = adnNodeFut.flatMap { adnNode =>
+        MAd.findProducerIdsForReceiver(adnNode.id.get)
+      }
+      // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
+      val prodsFut = prodsStatsFut flatMap { prodsStats =>
+        val prodIds = prodsStats
+          .iterator
+          .filter { _._2 > 0 }
+          .map { _._1 }
+        MAdnNodeCache.multiGet(prodIds)
+      } map { prodNodes =>
+        prodNodes
+          .map { adnNode => adnNode.id.get -> adnNode }
+          .toMap
+      }
+      val (catsStatsFut, mmcatsFut) = {
+        val f1 = adnNodeFut
+          .map { adnNode => getCats(adnNode.id) }
+        f1.flatMap(_._1) -> f1.flatMap(_._2)
+      }
+      val waOptFut = adnNodeFut
+        .flatMap { adnNode => WelcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx) }
+      for {
+        waOpt           <- waOptFut
+        catsStats       <- catsStatsFut
+        prods           <- prodsFut
+        mmcats          <- mmcatsFut
+        adnNode         <- adnNodeFut
+        spsr            <- spsrFut
+        onCloseHref     <- onCloseHrefFut
+        geoListGoBack   <- geoListGoBackFut
+      } yield {
+        SMShowcaseRenderArgs(
+          searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+            .headOption
+            .orElse(adnNode.geo.directParentIds.headOption)
+            .orElse(adnNode.id),
+          bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
+          fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
+          name        = adnNode.meta.name,
+          mmcats      = mmcats,
+          catsStats   = catsStats,
+          spsr        = spsr,
+          oncloseHref = onCloseHref,
+          logoImgOpt  = adnNode.logoImgOpt,
+          shops       = prods,
+          geoListGoBack = geoListGoBack,
+          welcomeOpt  = waOpt
+        )
+      }
+    }
+
+  }
+
+  trait ScIndexNodeSimpleHelper extends ScIndexNodeHelper {
+    override def spsrFut = adnNodeFut map { adnNode =>
+      AdSearch(
+        levels      = List(AdShowLevels.LVL_START_PAGE),
+        receiverIds = List(adnNode.id.get)
+      )
+    }
+
+    override def onCloseHrefFut: Future[String] = adnNodeFut.map { adnNode =>
+      adnNode.meta.siteUrl
+        .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
+        .getOrElse { ONCLOSE_HREF_DFLT }
+    }
+  }
+
+}
+
+
+/** Экшены для рендера indexTpl нод. */
+trait ScIndexNode extends ScIndexNodeCommon {
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: SMShowcaseReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val resultFut = MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1).flatMap { geos =>
-      renderNodeShowcaseSimple(
-        adnNode = request.adnNode,
-        isGeo = false,  // Оксюморон с названием парамера. Все запросы гео-выдачи приходят в этот экшен, а геолокация отключена.
-        geoListGoBack = geos.headOption.map(_.glevel.isLowest),
-        screen = args.screen
-      )
+    val helper = new ScIndexNodeSimpleHelper {
+      override val geoListGoBackFut: Future[Option[Boolean]] = {
+        MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1)
+          .map { geos =>
+            geos.headOption.map(_.glevel.isLowest)
+          }
+      }
+
+      override val adnNodeFut = Future successful request.adnNode
+
+      override def isGeo = false
+
+      override implicit val _request = request
     }
+    val resultFut = helper.result
     // собираем статистику, пока идёт подготовка результата
     val stat = ScIndexStatUtil(
       scSinkOpt = None,
@@ -66,164 +205,25 @@ trait ScIndex extends ScController with PlayMacroLogsI with ScSiteConstants {
     }
   }
 
-  /** Рендер отображения выдачи узла. */
-  private def renderNodeShowcaseSimple(adnNode: MAdnNode, isGeo: Boolean, geoListGoBack: Option[Boolean] = None, screen: Option[DevScreenT] = None)
-                                      (implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
-    val spsr = AdSearch(
-      levels      = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(adnNode.id.get)
-    )
-    val oncloseHref: String = adnNode.meta.siteUrl
-      .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
-      .getOrElse { ONCLOSE_HREF_DFLT }
-    nodeShowcaseRender(adnNode, spsr, oncloseHref, isGeo, geoListGoBack = geoListGoBack, screen = screen)
-  }
-
   /** Выдача для продьюсера, который сейчас админят. */
   def myAdsShowcase(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val spsr = AdSearch(
-      producerIds = List(adnId)
-    )
-    // При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет.
-    val oncloseHref = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
-    nodeShowcaseRender(request.adnNode, spsr, oncloseHref, isGeo = false)
-  }
+    val helper = new ScIndexNodeHelper {
+      // Тупо скопипасчено. Может быть тут ошибка:
+      override def geoListGoBackFut = Future successful None
 
-  /** Рендер страницы-интерфейса поисковой выдачи. */
-  private def nodeShowcaseRender(adnNode: MAdnNode, spsr: AdSearch, oncloseHref: String, isGeo: Boolean,
-                                 geoListGoBack: Option[Boolean] = None, screen: Option[DevScreenT] = None)
-                                (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
-    val adnId = adnNode.id.get
-    // TODO Вынести сборку списка prods в отдельный экшен.
-    // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
-    val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-    val prodsFut = prodsStatsFut flatMap { prodsStats =>
-      val prodIds = prodsStats
-        .iterator
-        .filter { _._2 > 0 }
-        .map { _._1 }
-      MAdnNodeCache.multiGet(prodIds)
-    } map { prodNodes =>
-      prodNodes
-        .map { adnNode => adnNode.id.get -> adnNode }
-        .toMap
-    }
-    val (catsStatsFut, mmcatsFut) = getCats(adnNode.id)
-    val ctx = implicitly[Context]
-    val waOptFut = WelcomeUtil.getWelcomeRenderArgs(adnNode, screen)(ctx)
-    for {
-      waOpt     <- waOptFut
-      catsStats <- catsStatsFut
-      prods     <- prodsFut
-      mmcats    <- mmcatsFut
-    } yield {
-      val args = SMShowcaseRenderArgs(
-        searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
-          .headOption
-          .orElse(adnNode.geo.directParentIds.headOption)
-          .orElse(adnNode.id),
-        bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-        fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
-        name        = adnNode.meta.name,
-        mmcats      = mmcats,
-        catsStats   = catsStats,
-        spsr        = spsr,
-        oncloseHref = oncloseHref,
-        logoImgOpt  = adnNode.logoImgOpt,
-        shops       = prods,
-        geoListGoBack = geoListGoBack,
-        welcomeOpt  = waOpt
-      )
-      renderShowcase(args, isGeo, adnNode.id)(ctx)
-    }
-  }
-
-
-  /**
-   * indexTpl для выдачи, отвязанной от конкретного узла.
-   * Этот экшен на основе параметров думает на тему того, что нужно отрендерить. Может отрендерится showcase узла,
-   * либо geoShowcase на дефолтовых параметрах.
-   * @param args Аргументы.
-   */
-  def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
-    lazy val logPrefix = s"geoShowcase(${System.currentTimeMillis}): "
-    LOGGER.trace(logPrefix + "Starting, args = " + args)
-    val gsiOptFut = args.geo.geoSearchInfoOpt
-    val resultFut = if (args.geo.isWithGeo) {
-      val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
-      gdrFut flatMap { gdr =>
-        LOGGER.trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
-        renderNodeShowcaseSimple(gdr.node,  isGeo = true,  geoListGoBack = Some(gdr.ngl.isLowest), screen = args.screen)
-          .map { _ -> Some(gdr.node) }
-      } recoverWith {
-        case ex: NoSuchElementException =>
-          // Нету узлов, подходящих под запрос.
-          LOGGER.debug(logPrefix + "No nodes found nearby " + args.geo)
-          renderGeoShowcase(args)
-            .map { _ -> None }
+      /** При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет. */
+      override val onCloseHrefFut = {
+        val url = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
+        Future successful url
       }
-    } else {
-      renderGeoShowcase(args)
-        .map { _ -> None }
-    }
-    // Собираем статистику асинхронно
-    resultFut onSuccess { case (result, nodeOpt) =>
-      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), gsiOptFut, args.screen, nodeOpt)
-        .saveStats
-        .onFailure { case ex =>
-          LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
-        }
-    }
-    // Готовим настройки кеширования. Если геолокация по ip, то значит возможно только private-кеширование на клиенте.
-    val (cacheControlMode, hdrs0) = if (!args.geo.isExact)
-      "private" -> List(VARY -> X_FORWARDED_FOR)
-    else
-      "public" -> Nil
-    val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
-    // Возвращаем асинхронный результат, добавив в него клиентский кеш.
-    resultFut
-      .map { case (result, _) =>
-        result.withHeaders(hdrs1 : _*)
-      }
-  }
 
-  private def renderGeoShowcase(reqArgs: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[AnyContent]) = {
-    val (catsStatsFut, mmcatsFut) = getCats(None)
-    for {
-      mmcats    <- mmcatsFut
-      catsStats <- catsStatsFut
-    } yield {
-      val renderArgs = SMShowcaseRenderArgs(
-        bgColor = SITE_BGCOLOR_GEO,
-        fgColor = SITE_FGCOLOR_GEO,
-        name = SITE_NAME_GEO,
-        mmcats  = mmcats,
-        catsStats = catsStats,
-        spsr = AdSearch(
-          levels = List(AdShowLevels.LVL_START_PAGE),
-          geo    = GeoIp
-        ),
-        oncloseHref = ONCLOSE_HREF_DFLT
-      )
-      renderShowcase(renderArgs, isGeo = true, currAdnId = None)
+      override val spsrFut = Future successful AdSearch( producerIds = List(adnId) )
+      override def adnNodeFut = Future successful request.adnNode
+      override def isGeo = false
+      override implicit def _request = request
     }
-  }
-
-
-  /** Готовы данные для рендера showcase indexTpl. Сделать это и прочие сопутствующие операции. */
-  private def renderShowcase(args: SMShowcaseRenderArgs, isGeo: Boolean, currAdnId: Option[String])
-                            (implicit ctx: Context): Result = {
-    import ctx.request
-    val html = indexTpl(args)(ctx)
-    val jsonArgs: FieldsJsonAcc = List(
-      "is_geo"      -> JsBoolean(isGeo),
-      "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
-    )
-    // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
-    // произошло какое-то другое изменение
-    StatUtil.resultWithStatCookie {
-      jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
-    }
+    helper.result
   }
 
 }
+

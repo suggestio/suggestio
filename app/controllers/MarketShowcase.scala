@@ -26,8 +26,8 @@ import play.api.Play, Play.{current, configuration}
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy with ScSite
-with ScNodeInfo with ScIndex
+object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy
+with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
 {
 
   import LOGGER._
@@ -326,15 +326,6 @@ with ScNodeInfo with ScIndex
     } map {
       _.sortBy(_._1).map(_._2)
     }
-  }
-
-
-
-  /** Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния. */
-  def _syncSite(scState: JsShowCaseState): Future[Result] = {
-    // TODO Нужно рендерить indexTpl, вставляя результат в siteTpl().
-    // TODO Потом надо рендерить открытую рекламную карточку (параллельно с indexTpl) и вставлять fads container.
-    ???
   }
 
 }

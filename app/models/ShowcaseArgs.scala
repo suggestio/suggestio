@@ -165,10 +165,10 @@ trait WelcomeRenderArgsT {
  * @param adnId id узла, в рамках которого орудуем.
  */
 case class SMDemoSiteArgs(
-  bgColor: String,
-  showcaseCall: Call,
-  title: Option[String] = None,
-  adnId: Option[String]
+  bgColor       : String,
+  showcaseCall  : Call,
+  adnId         : Option[String],
+  title         : Option[String] = None
 ) {
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def withGeo = adnId.isEmpty
@@ -183,20 +183,25 @@ object JsShowCaseState {
   val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
   val FADS_SCREEN_OPENED_FN   = "fads.is_opened"
 
-  implicit def qsb(strB: QueryStringBindable[String], boolOptB: QueryStringBindable[Option[Boolean]]) = {
+  def qsbStandalone: QueryStringBindable[JsShowCaseState] = {
+    import QueryStringBindable._
+    qsb
+  }
+
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], boolOptB: QueryStringBindable[Option[Boolean]]) = {
     new QueryStringBindable[JsShowCaseState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, JsShowCaseState]] = {
         for {
-          maybeAdnId            <- strB.bind(ADN_ID_FN, params)
+          maybeAdnId            <- strOptB.bind(ADN_ID_FN, params)
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
           maybeFadsOpened       <- boolOptB.bind(FADS_SCREEN_OPENED_FN, params)
         } yield {
           val res = JsShowCaseState(
-            adnId = maybeAdnId.right.get,
-            catScreenOpened = maybeCatScreenOpened.getOrElse(false),
-            geoScreenOpened = maybeGeoScreenOpened.getOrElse(false),
-            fadsOpened = maybeFadsOpened.getOrElse(false)
+            adnId               = maybeAdnId,
+            catScreenOpenedOpt  = maybeCatScreenOpened,
+            geoScreenOpenedOpt  = maybeGeoScreenOpened,
+            fadsOpenedOpt       = maybeFadsOpened
           )
           Right(res)
         }
@@ -204,7 +209,7 @@ object JsShowCaseState {
 
       override def unbind(key: String, value: JsShowCaseState): String = {
         List(
-          strB.unbind(ADN_ID_FN, value.adnId),
+          strOptB.unbind(ADN_ID_FN, value.adnId),
           boolOptB.unbind(CAT_SCR_OPENED_FN, Some(value.catScreenOpened)),
           boolOptB.unbind(GEO_SCR_OPENED_FN, Some(value.geoScreenOpened)),
           boolOptB.unbind(FADS_SCREEN_OPENED_FN, Some(value.fadsOpened))
@@ -215,13 +220,30 @@ object JsShowCaseState {
     }
   }
 
+
+  implicit private def orFalse(boolOpt: Option[Boolean]): Boolean = {
+    if (boolOpt.isDefined)
+      boolOpt.get
+    else
+      false
+  }
+
 }
+
 
 /** Класс, отражающий состояние js-выдачи на клиенте. */
 case class JsShowCaseState(
-  adnId           : String,
-  catScreenOpened : Boolean,
-  geoScreenOpened : Boolean,
-  fadsOpened      : Boolean
-)
+  adnId              : Option[String]  = None,
+  catScreenOpenedOpt : Option[Boolean] = None,
+  geoScreenOpenedOpt : Option[Boolean] = None,
+  fadsOpenedOpt      : Option[Boolean] = None
+) {
+
+  import JsShowCaseState.orFalse
+
+  def catScreenOpened : Boolean = catScreenOpenedOpt
+  def geoScreenOpened : Boolean = geoScreenOpenedOpt
+  def fadsOpened      : Boolean = fadsOpenedOpt
+
+}
 
