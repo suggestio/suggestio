@@ -287,7 +287,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   /** Подписчик на события удаления узла. Нужно чистить модель при удалении узла. */
   class CleanUpOnAdnNodeDelete(implicit ec: ExecutionContext, client: Client) extends SNStaticSubscriber with SnClassSubscriber {
-    override def snMap: Seq[(Classifier, Seq[Subscriber])] = List(
+    override def snMap = List(
       AdnNodeDeletedEvent.getClassifier() -> Seq(this)
     )
 

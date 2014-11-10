@@ -94,8 +94,8 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
   import LOGGER._
 
   /** Карта подписчиков вместе с содержимым подписчика. */
-  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Seq[(Classifier, Seq[Subscriber])] = {
-    Seq(
+  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
+    List(
       AdnNodeDeletedEvent.getClassifier() -> Seq(SnFunSubscriber {
         case ande: AdnNodeDeletedEvent =>
           val producerId = ande.adnId

@@ -157,8 +157,14 @@ trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
 /** Бывает, что необходимо задействовать статическую подписку на события для текущего объекта. (Допустим, дергать
   * какой-либо статический метод объекта при событии). Это подобие #sn_info{} в прошлом suggest.io. */
 trait SNStaticSubscriber {
-  def snMap: Seq[(Classifier, Seq[Subscriber])]
+  def snMap: List[(Classifier, Seq[Subscriber])]
 }
+
+/** Пустая реализация трейта [[SNStaticSubscriber]]. Нужна при использовании stackable-trait'ов, реализующих snMap(). */
+trait SNStaticSubscriberDummy extends SNStaticSubscriber {
+  override def snMap: List[(Classifier, Seq[Subscriber])] = Nil
+}
+
 
 /** Когда нужно выполнить подписание/отписание всех статических подписчиков, можно подмешать этот код и
   * оформить соотв. вызов в preStart() */
