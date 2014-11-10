@@ -18,13 +18,8 @@ import play.api.Play.{current, configuration}
  * Description: Экшены для рендера "сайта" выдачи, т.е. полноценной html-страницы.
  * Бывает рендер через geo, который ищет подходящий узел, и рендер напрямую.
  */
-trait ScSite extends SioController with PlayMacroLogsI {
 
-  /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
-
-  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
-
+trait ScSite extends SioController with PlayMacroLogsI with ScSiteConstants {
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
@@ -104,3 +99,25 @@ trait ScSite extends SioController with PlayMacroLogsI {
   }
 
 }
+
+
+/** Константы лдя site-функционала. Используются и в других трейтах. */
+trait ScSiteConstants {
+
+  /** Дефолтовое имя ноды. */
+  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+
+  /** Дефолтовый цвет выдачи, если нет ничего. */
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
+
+  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+
+
+  /** Дефолтовый цвет элементов переднего плана. */
+  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
+
+  /** Цвет для выдачи, которая вне узла. */
+  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
+
+}
+

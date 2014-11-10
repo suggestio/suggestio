@@ -4,7 +4,6 @@ import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import play.api.Play, Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.Jsonp
