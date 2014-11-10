@@ -301,6 +301,7 @@ object ShowcaseNodeListUtil {
       None -> None
     }
     // В зависимости от ситуации, строим слои по разным технологиям.
+    // На scala < 2.11.2 тут вылетает warning: match may not be exhausive. См. https://issues.scala-lang.org/browse/SI-8708
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>

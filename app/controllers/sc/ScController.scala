@@ -9,13 +9,13 @@ import play.api.libs.json._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 07.11.14 19:57
- * Description:
+ * Description: Всякая базисная утиль для сборки MarketShowcase-контроллера.
  */
 trait ScController extends SioController {
 
   val JSONP_CB_FUN: String
 
-  /** Метод для генерации json-ответа с html внутри. */
+  /** Метод для генерации json-ответа с необязательным html и версткой-блоков внутри. */
   protected def jsonOk(action: String, html: Option[JsString] = None, blocks: Seq[JsString] = Nil, acc0: FieldsJsonAcc = Nil) = {
     var acc: FieldsJsonAcc = acc0
     if (html.isDefined)

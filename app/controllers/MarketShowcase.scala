@@ -2,25 +2,18 @@ package controllers
 
 import java.util.NoSuchElementException
 
-import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
-import _root_.util.cdn.CdnUtil
 import _root_.util.img.WelcomeUtil
 import _root_.util.showcase._
 import controllers.sc._
 import models.im.DevScreenT
 import util.stat._
-import io.suggest.event.subscriber.SnFunSubscriber
-import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.event.SNStaticSubscriberDummy
 import io.suggest.model.EsModel.FieldsJsonAcc
-import play.api.cache.Cache
 import play.twirl.api.HtmlFormat
 import ShowcaseUtil._
 import util._
 import util.acl._
 import views.html.market.showcase._
-import views.txt.market.showcase.nodeIconJsTpl
-import views.html.market.lk.adn._node._installScriptTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models._
@@ -35,8 +28,11 @@ import play.api.Play, Play.{current, configuration}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.07.14 14:07
  * Description: Контроллер выдачи sio-market.
+ * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriber with ScSite with ScController {
+object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy with ScSite
+with ScNodeInfo
+{
 
   import LOGGER._
 
@@ -55,12 +51,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
   /** Сколько секунд следует кешировать переменную svg-картинку блока карточки. */
   def BLOCK_SVG_CACHE_SECONDS = configuration.getInt("market.showcase.blocks.svg.cache.seconds") getOrElse 700
 
-
-  /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
-  val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
-  val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse {
-    if (Play.isProd)  60  else  6
-  }
 
   /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
   val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
@@ -82,73 +72,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
-
-
-  /** Кеш-ключ для nodeIconJs. */
-  private def nodeIconJsCacheKey(adnId: String) = adnId + ".nodeIconJs"
-
-  /** Экшн, который рендерит скрипт с иконкой. Используется кеширование на клиенте и на сервере. */
-  def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    // Проверяем ETag
-    val isCachedEtag = request.adnNode.versionOpt
-      .flatMap { vsn =>
-        request.headers.get(IF_NONE_MATCH)
-          .filter { etag  =>  vsn.toString == etag }
-      }
-      .nonEmpty
-    // Проверяем Last-Modified, если ETag верен.
-    val isCached = isCachedEtag && {
-      request.headers.get(IF_MODIFIED_SINCE)
-        .flatMap { DateTimeUtil.parseRfcDate }
-        .exists { dt => !(PROJECT_CODE_LAST_MODIFIED isAfter dt)}
-    }
-    if (isCached) {
-      NotModified
-    } else {
-      val ck = nodeIconJsCacheKey(adnId)
-      Cache.getOrElse(ck, expiration = NODE_ICON_JS_CACHE_TTL_SECONDS) {
-        var cacheHeaders: List[(String, String)] = List(
-          CONTENT_TYPE  -> "text/javascript; charset=utf-8",
-          LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
-          CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
-        )
-        if (request.adnNode.versionOpt.isDefined) {
-          cacheHeaders  ::=  ETAG -> request.adnNode.versionOpt.get.toString
-        }
-        // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
-        // TODO Добавить поддержку gzip надо бы.
-        // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
-        Ok(nodeIconJsTpl(request.adnNode))
-          .withHeaders(cacheHeaders : _*)
-      }
-    }
-  }
-
-  /** Экшн, который выдает базовую инфу о ноде */
-  def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    val node = request.adnNode
-    val logoSrcOpt = node.logoImgOpt map { logo_src =>
-      val call = CdnUtil.dynImg(logo_src.filename)
-      JsString(call.url)
-    }
-    val json = JsObject(Seq(
-      "action"   -> JsString("setData"),
-      "color"    -> node.meta.color.fold [JsValue] (JsNull) (JsString.apply),
-      "logo_src" -> (logoSrcOpt getOrElse JsNull)
-    ))
-    cacheControlShort {
-      Ok(Jsonp(JSONP_CB_FUN, json))
-    }
-  }
-
-  /** Рендер скрипта выдачи для указанного узла. */
-  def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.adnNode.id, mkPermanent = true))
-      .withHeaders(
-        CONTENT_TYPE  -> "text/javascript; charset=utf-8",
-        CACHE_CONTROL -> "public, max-age=36000"
-      )
-  }
 
 
   /** Базовая выдача для rcvr-узла sio-market. */
@@ -615,19 +538,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStatic
     }
   }
 
-
-  /** Карта статической подписки контроллера на некоторые события:
-    * - Уборка из кеша рендера nodeIconJs. */
-  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
-    // Нужно чистить кеш nodeIconJs при обновлении узлов.
-    val classifier = AdnNodeSavedEvent.getClassifier(isCreated = Some(false))
-    val subscriber = SnFunSubscriber {
-      case anse: AdnNodeSavedEvent =>
-        val ck = nodeIconJsCacheKey(anse.adnId)
-        Cache.remove(ck)
-    }
-    Seq(classifier -> Seq(subscriber))
-  }
 
 
   /** Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния. */
