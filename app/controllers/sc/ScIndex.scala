@@ -136,23 +136,23 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       } yield {
         new ScRenderArgs with ScReqArgsWrapper {
           override def reqArgsUnderlying = _reqArgs
-          override val searchInAdnId = {
+          override val searchInAdnId  = {
             (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
               .headOption
               .orElse(adnNode.geo.directParentIds.headOption)
               .orElse(adnNode.id)
           }
-          override val bgColor  = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
-          override val fgColor  = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
-          override def name     = adnNode.meta.name
-          override def mmcats   = _mmcats
-          override def catsStats = _catsStats
-          override def spsr     = _spsr
-          override val onCloseHref = _onCloseHref
-          override def logoImgOpt = adnNode.logoImgOpt
-          override def shops    = prods
-          override def geoListGoBack = _geoListGoBack
-          override def welcomeOpt = waOpt
+          override val bgColor        = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+          override val fgColor        = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+          override def name           = adnNode.meta.name
+          override def mmcats         = _mmcats
+          override def catsStats      = _catsStats
+          override def spsr           = _spsr
+          override val onCloseHref    = _onCloseHref
+          override def logoImgOpt     = adnNode.logoImgOpt
+          override def shops          = prods
+          override def geoListGoBack  = _geoListGoBack
+          override def welcomeOpt     = waOpt
         }
       }
     }

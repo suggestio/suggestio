@@ -176,6 +176,30 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
     util.Context.MY_AUDIENCE_URL + path
   }
 
+  override def toString: String = {
+    val sb = new StringBuilder(256, "req:")
+    sb.append( super.toString )
+      .append( ";render:" )
+      .append("bgColor=").append(bgColor).append('&')
+      .append("fgColor=").append(fgColor).append('&')
+      .append("name=").append(name).append('&')
+      .append("mmcats=[").append(mmcats.size).append(']').append('&')
+      .append("catsStats=[").append(catsStats.size).append(']').append('&')
+      .append("spsr=").append(spsr.toString).append('&')
+      .append("onCloseHref='").append(onCloseHref).append('\'').append('&')
+      .append("geoListGoBack").append(geoListGoBack.toString).append('&')
+      .append("shops=[").append(shops.size).append(']').append('&')
+    val _lio = logoImgOpt
+    if (_lio.isDefined)
+      sb.append("logoImg=").append(_lio.get.filename).append('&')
+    val _waOpt = welcomeOpt
+    if (_waOpt.isDefined)
+      sb.append("welcome=").append(_waOpt.get.toString).append('&')
+    val _searchInAdnId = searchInAdnId
+    if (_searchInAdnId.isDefined)
+      sb.append("searchInAdnId=").append(_searchInAdnId.get)
+    sb.toString()
+  }
 }
 
 
@@ -189,6 +213,22 @@ trait WelcomeRenderArgsT {
 
   /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
   def fgText: Option[String]
+
+  override def toString: String = {
+    val sb = new StringBuilder(64, "bg=")
+    bg match {
+      case Right(ii) => sb.append(ii.call.url)
+      case Left(color) => sb.append(color)
+    }
+    sb.append('&')
+    val _fgi = fgImage
+    if (_fgi.isDefined)
+      sb.append("fgImage='").append(_fgi.get.filename).append('\'').append('&')
+    val _fgt = fgText
+    if (_fgt.isDefined)
+      sb.append("fgText='").append(_fgt.get).append('\'')
+    sb.toString()
+  }
 }
 
 

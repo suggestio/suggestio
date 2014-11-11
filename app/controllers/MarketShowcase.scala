@@ -27,7 +27,7 @@ import play.api.Play, Play.{current, configuration}
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy
-with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
+with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode with ScSyncSiteGeo
 {
 
   import LOGGER._
