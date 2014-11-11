@@ -1,7 +1,7 @@
 package controllers.sc
 
 import controllers.SioController
-import models.{ScReqArgs, ScJsState}
+import models.{ScReqArgsDflt, ScJsState}
 import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.acl.AbstractRequestWithPwOpt
@@ -43,7 +43,10 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo {
   protected def _syncGeoSite(scState: ScJsState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO рендерить плитку синхронно (findAds)
     // TODO рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
-    val indexRenderArgs = ScReqArgs(scState.geo)   // TODO нужно и screen наверное выставлять?
+    val indexRenderArgs = new ScReqArgsDflt {
+      // TODO нужно и screen наверное выставлять по-нормальному?
+      override def geo = scState.geo
+    }
     val indexHtmlFut = _geoShowCaseHtml(indexRenderArgs)
     val args1Fut = for {
       siteRenderArgs <- _getSiteRenderArgs

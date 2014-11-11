@@ -28,19 +28,22 @@ object ScReqArgs {
     new QueryStringBindable[ScReqArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
         for {
-          maybeGeo        <- strOptB.bind(key + GEO_SUF, params)
-          maybeDevScreen  <- devScreenB.bind(key + SCREEN_SUF, params)
+          maybeGeo                <- strOptB.bind(key + GEO_SUF, params)
+          maybeDevScreen          <- devScreenB.bind(key + SCREEN_SUF, params)
           maybeNodesScreenOpened  <- boolOptB.bind(key + NODES_SCR_OPENED_SUF, params)
           maybeSearchScreenOpened <- boolOptB.bind(key + SEARCH_SCR_OPENED_SUF, params)
         } yield {
-          Right(ScReqArgs(
-            geo  = GeoMode.maybeApply(maybeGeo)
-              .filter(_.isWithGeo)
-              .getOrElse(GeoIp),
-            screen = maybeDevScreen,     // Игнорим неверные размеры, ибо некритично.
-            nodesScreenOpened = maybeNodesScreenOpened.getOrElse(false),
-            searchScreenOpened = maybeSearchScreenOpened.getOrElse(false)
-          ))
+          Right(new ScReqArgs {
+            override val geo = {
+              GeoMode.maybeApply(maybeGeo)
+                .filter(_.isWithGeo)
+                .getOrElse(GeoIp)
+            }
+            // Игнорим неверные размеры, ибо некритично.
+            override lazy val screen: Option[DevScreen] = maybeDevScreen
+            override val nodesScreenOpened = maybeNodesScreenOpened.getOrElse(false)
+            override val searchScreenOpened = maybeSearchScreenOpened.getOrElse(false)
+          })
         }
       }
 
@@ -57,23 +60,36 @@ object ScReqArgs {
     }
   }
 
-  val empty = ScReqArgs()
+  def empty: ScReqArgs = new ScReqArgsDflt {}
 
 }
 
 
-case class ScReqArgs(
-  geo                 : GeoMode = GeoNone,
-  screen              : Option[DevScreen] = None,
-  nodesScreenOpened   : Boolean = false,
-  searchScreenOpened  : Boolean = false
-) {
+trait ScReqArgs {
+  def geo                 : GeoMode
+  def screen              : Option[DevScreen]
+  def nodesScreenOpened   : Boolean
+  def searchScreenOpened  : Boolean
+
   override def toString: String = {
     import QueryStringBindable._
     ScReqArgs.qsb.unbind("a", this)
   }
 }
-
+trait ScReqArgsDflt extends ScReqArgs {
+  override def geo                  : GeoMode = GeoNone
+  override def screen               : Option[DevScreen] = None
+  override def nodesScreenOpened    = false
+  override def searchScreenOpened   = false
+}
+/** Враппер [[ScReqArgs]] для имитации вызова copy(). */
+trait ScReqArgsWrapper extends ScReqArgs {
+  def reqArgsUnderlying: ScReqArgs
+  override def geo                  = reqArgsUnderlying.geo
+  override def screen               = reqArgsUnderlying.screen
+  override def nodesScreenOpened    = reqArgsUnderlying.nodesScreenOpened
+  override def searchScreenOpened   = reqArgsUnderlying.searchScreenOpened
+}
 
 
 /** Статическая утиль для аргументов рендера showcase-шаблонов. */

@@ -50,6 +50,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI with ScSiteConstant
     def renderArgsFut: Future[ScRenderArgs]
     def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
+    def _reqArgs: ScReqArgs = ScReqArgs.empty
     implicit def _request: AbstractRequestWithPwOpt[_]
     lazy val ctx: Context = implicitly[Context]
 
@@ -185,11 +186,9 @@ trait ScIndexNode extends ScIndexNodeCommon {
             geos.headOption.map(_.glevel.isLowest)
           }
       }
-
+      override def _reqArgs = args
       override val adnNodeFut = Future successful request.adnNode
-
       override def isGeo = false
-
       override implicit val _request = request
     }
     val resultFut = helper.result

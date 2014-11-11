@@ -70,10 +70,11 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
       "public" -> Nil
     val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
     // Возвращаем асинхронный результат, добавив в него клиентский кеш.
-    resultFut
-      .map { logRes =>
-        logRes.result.withHeaders(hdrs1 : _*)
-      }
+    resultFut map { logRes =>
+      logRes
+        .result
+        .withHeaders(hdrs1 : _*)
+    }
   }
 
 
@@ -196,6 +197,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
 
     trait ScIndexHelperAddon extends ScIndexHelperBase {
       override implicit def _request = that2._request
+      override def _reqArgs = that2._reqArgs
     }
   }
 
