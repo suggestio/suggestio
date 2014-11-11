@@ -2,8 +2,6 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import util.PlayMacroLogsI
-import com.typesafe.scalalogging.slf4j.Logger
 import util.showcase._
 import util.acl._
 import ShowcaseUtil._
@@ -19,80 +17,8 @@ import play.api.mvc._
  * Description: Поддержка гео-выдачи в showcase-контроллере.
  */
 
-/** Хелпер для написания кода экшенов, рендерящих indexTpl в зав-ти от результатов определения местоположения. */
-abstract sealed class GeoScHelper[T](args: SMShowcaseReqArgs)(implicit request: SioRequestHeader) extends PlayMacroLogsI {
-
-  def gsiOptFut = args.geo.geoSearchInfoOpt
-
-  def apply(): Future[T] = {
-    lazy val logPrefix = s"ScIndexGeo.apply(${System.currentTimeMillis}): "
-    LOGGER.trace(logPrefix + "Starting, args = " + args)
-    if (args.geo.isWithGeo) {
-      val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(args.geo, gsiOptFut)
-      gdrFut flatMap { gdr =>
-        LOGGER.trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
-        nodeFound(gdr)
-      } recoverWith {
-        case ex: NoSuchElementException =>
-          // Нету узлов, подходящих под запрос.
-          LOGGER.debug(logPrefix + "No nodes found nearby " + args.geo)
-          nodeNotDetected()
-      }
-    } else {
-      nodeNotDetected()
-    }
-  }
-  /** Нет ноды. */
-  def nodeNotDetected(): Future[T]
-
-  /** Нода найдена с помощью геолокации. */
-  def nodeFound(gdr: GeoDetectResult): Future[T]
-}
-
-
-/** Гео-indexTpl, дающий выдачу вне явно-заданного узла. */
+/** Аддон для контроллера, добавляющий экшены от гео-indexTpl, которые представляют выдачу вне явно-заданного узла. */
 trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCommon { that =>
-
-  protected type _GScHT = (Result, Option[MAdnNode])
-  protected def _geoShowCase(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[_GScHT] = {
-    /** Собираем хелпер-класс с логикой обработки реквеста. */
-    val helper = new GeoScHelper[_GScHT](args) {
-      override def LOGGER: Logger = that.LOGGER
-
-      /** gsiOptFut в любом случае понадобится, поэтому делаем его val'ом */
-      override val gsiOptFut = super.gsiOptFut
-
-      /** Нет ноды. */
-      override def nodeNotDetected(): Future[_GScHT] = {
-        new ScIndexGeoHelper {
-          override implicit def _request = request
-        }
-          .result
-          .map { _ -> None }
-      }
-
-      /** Нода найдена с помощью геолокации. */
-      override def nodeFound(gdr: GeoDetectResult): Future[_GScHT] = {
-        val _helper = new ScIndexNodeGeoHelper {
-          override val gdrFut = Future successful gdr
-          override implicit def _request = request
-        }
-        _helper.result
-          .map { _ -> Some(gdr.node) }
-      }
-    }
-    val resultFut = helper()
-    // Собираем статистику асинхронно
-    resultFut onSuccess { case (result, nodeOpt) =>
-      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), helper.gsiOptFut, args.screen, nodeOpt)
-        .saveStats
-        .onFailure { case ex =>
-          LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
-        }
-    }
-    resultFut
-  }
-
 
   /**
    * indexTpl для выдачи, отвязанной от конкретного узла.
@@ -101,7 +27,40 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
    * @param args Аргументы.
    */
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
-    val resultFut = _geoShowCase(args)
+    // Собираем хелпер, который займётся выстраиванием результата работы.
+    val ghelper = new GeoIndexLogic {
+      type T = (Result, Option[MAdnNode])
+      override def _reqArgs = args
+      override implicit def _request = request
+      // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.
+      override val gsiOptFut = super.gsiOptFut
+
+      /** Нет ноды. */
+      override def nodeNotDetected(): Future[T] = {
+        nodeNotDetectedHelperFut().flatMap { _helper =>
+          _helper.result
+            .map { _ -> None }
+        }
+      }
+
+      /** Нода найдена с помощью геолокации. */
+      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+        nodeFoundHelperFut(gdr).flatMap { _helper =>
+          _helper.result
+            .map { _ -> Some(gdr.node) }
+        }
+      }
+    }
+    // Запускаем хелпер на генерацию асинхронного результата:
+    val resultFut = ghelper()
+    // Собираем статистику асинхронно
+    resultFut onSuccess { case (result, nodeOpt) =>
+      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), ghelper.gsiOptFut, args.screen, nodeOpt)
+        .saveStats
+        .onFailure { case ex =>
+          LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
+        }
+    }
     // Готовим настройки кеширования. Если геолокация по ip, то значит возможно только private-кеширование на клиенте.
     val (cacheControlMode, hdrs0) = if (!args.geo.isExact)
       "private" -> List(VARY -> X_FORWARDED_FOR)
@@ -149,13 +108,86 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   trait ScIndexNodeGeoHelper extends ScIndexNodeSimpleHelper {
     def gdrFut: Future[GeoDetectResult]
 
-    override val adnNodeFut = gdrFut.map(_.node)
+    override def adnNodeFut = gdrFut.map(_.node)
 
-    override val geoListGoBackFut: Future[Option[Boolean]] = {
+    override def geoListGoBackFut: Future[Option[Boolean]] = {
       gdrFut.map { gdr => Some(gdr.ngl.isLowest) }
     }
 
     override def isGeo: Boolean = true
+  }
+
+
+  trait GeoIndexLogicBase { that2 =>
+    /** Тип возвращаемого значения в методах этого хелпера. */
+    type T
+
+    // Типы возвращаемых хелперов в соотв.методах.
+    type NndHelper_t <: ScIndexHelperBase
+    type NfHelper_t <: ScIndexNodeHelper
+
+    def _reqArgs: SMShowcaseReqArgs
+    implicit def _request: AbstractRequestWithPwOpt[_]
+
+    def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
+
+    /** Запуск логики, которая раньше лежала в geoShowcase()-экшене. */
+    def apply(): Future[T] = {
+      lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
+      LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
+      if (_reqArgs.geo.isWithGeo) {
+        val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
+        gdrFut flatMap { gdr =>
+          LOGGER.trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
+          nodeFound(gdr)
+        } recoverWith {
+          case ex: NoSuchElementException =>
+            // Нету узлов, подходящих под запрос.
+            LOGGER.debug(logPrefix + "No nodes found nearby " + _reqArgs.geo)
+            nodeNotDetected()
+        }
+      } else {
+        nodeNotDetected()
+      }
+    }
+
+    def nodeNotDetectedHelperFut(): Future[NndHelper_t]
+
+    /** Нет ноды. */
+    def nodeNotDetected(): Future[T]
+
+    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t]
+
+    /** Нода найдена с помощью геолокации. */
+    def nodeFound(gdr: GeoDetectResult): Future[T]
+
+    trait ScIndexHelperAddon extends ScIndexHelperBase {
+      override implicit def _request = that2._request
+    }
+  }
+
+
+  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации.
+    * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты
+    * в рамках логики работы geoShowcase-экшена.
+    * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply(). */
+  trait GeoIndexLogic extends GeoIndexLogicBase { that2 =>
+
+    override type NndHelper_t = ScIndexGeoHelper
+    override type NfHelper_t = ScIndexNodeGeoHelper
+
+    def nodeNotDetectedHelperFut(): Future[NndHelper_t] = {
+      val res = new ScIndexGeoHelper with ScIndexHelperAddon
+      Future successful res
+    }
+
+    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
+      val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
+        override val gdrFut = Future successful gdr
+      }
+      Future successful helper
+    }
+
   }
 
 }

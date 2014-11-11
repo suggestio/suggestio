@@ -97,7 +97,8 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
     override def renderArgsFut: Future[SMShowcaseRenderArgs] = {
-      val prodsStatsFut = adnNodeFut.flatMap { adnNode =>
+      val _adnNodeFut = adnNodeFut
+      val prodsStatsFut = _adnNodeFut.flatMap { adnNode =>
         MAd.findProducerIdsForReceiver(adnNode.id.get)
       }
       // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
@@ -113,21 +114,24 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
           .toMap
       }
       val (catsStatsFut, mmcatsFut) = {
-        val f1 = adnNodeFut
+        val f1 = _adnNodeFut
           .map { adnNode => getCats(adnNode.id) }
         f1.flatMap(_._1) -> f1.flatMap(_._2)
       }
-      val waOptFut = adnNodeFut
+      val waOptFut = _adnNodeFut
         .flatMap { adnNode => WelcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx) }
+      val _onCloseHrefFut = onCloseHrefFut
+      val _geoListGoBackFut = geoListGoBackFut
+      val _spsrFut = spsrFut
       for {
         waOpt           <- waOptFut
         catsStats       <- catsStatsFut
         prods           <- prodsFut
         mmcats          <- mmcatsFut
-        adnNode         <- adnNodeFut
-        spsr            <- spsrFut
-        onCloseHref     <- onCloseHrefFut
-        geoListGoBack   <- geoListGoBackFut
+        adnNode         <- _adnNodeFut
+        spsr            <- _spsrFut
+        onCloseHref     <- _onCloseHrefFut
+        geoListGoBack   <- _geoListGoBackFut
       } yield {
         SMShowcaseRenderArgs(
           searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
@@ -212,12 +216,12 @@ trait ScIndexNode extends ScIndexNodeCommon {
       override def geoListGoBackFut = Future successful None
 
       /** При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет. */
-      override val onCloseHrefFut = {
+      override def onCloseHrefFut = {
         val url = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
         Future successful url
       }
 
-      override val spsrFut = Future successful AdSearch( producerIds = List(adnId) )
+      override def spsrFut = Future successful AdSearch( producerIds = List(adnId) )
       override def adnNodeFut = Future successful request.adnNode
       override def isGeo = false
       override implicit def _request = request
