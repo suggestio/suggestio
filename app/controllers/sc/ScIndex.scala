@@ -134,7 +134,8 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _onCloseHref    <- _onCloseHrefFut
         _geoListGoBack  <- _geoListGoBackFut
       } yield {
-        new ScRenderArgs {
+        new ScRenderArgs with ScReqArgsWrapper {
+          override def reqArgsUnderlying = _reqArgs
           override val searchInAdnId = {
             (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
               .headOption

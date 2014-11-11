@@ -116,7 +116,8 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
         _mmcats    <- mmcatsFut
         _catsStats <- catsStatsFut
       } yield {
-        new ScRenderArgs {
+        new ScRenderArgs with ScReqArgsWrapper {
+          override def reqArgsUnderlying = _reqArgs
           override def bgColor   = SITE_BGCOLOR_GEO
           override def fgColor   = SITE_FGCOLOR_GEO
           override def name      = SITE_NAME_GEO

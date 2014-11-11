@@ -125,7 +125,7 @@ import ScRenderArgs._
  * Аргументы для рендера market/showcase/indexTpl.
  * Экстендим LogoImgOptI чтобы компилятор был в курсе изменений API полей логотипов в sioutil.
  */
-trait ScRenderArgs extends LogoImgOptI {
+trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   /** bgColor Используемый цвет выдачи. */
   def bgColor       : String
   def fgColor       : String

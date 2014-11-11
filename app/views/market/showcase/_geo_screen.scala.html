@@ -1,7 +1,7 @@
 @(args: ScRenderArgs)(implicit ctx:util.Context)
 @import util.TplDataFormatUtil._
 
-<div class="sm-geo-screen" id="smGeoScreen">
+<div class="sm-geo-screen" id="smGeoScreen" @if(args.nodesScreenOpened) {style="display: block;"} >
 
   <div class="sm-geo-screen_header">
     <div class="sm-button sm-producer-header_btn __left-aligned abs" id="smGeoScreenCloseButton">
