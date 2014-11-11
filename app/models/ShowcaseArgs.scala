@@ -124,29 +124,28 @@ import ScRenderArgs._
 /**
  * Аргументы для рендера market/showcase/indexTpl.
  * Экстендим LogoImgOptI чтобы компилятор был в курсе изменений API полей логотипов в sioutil.
- * @param bgColor Используемый цвет выдачи.
- * @param mmcats Категории для отображения.
- * @param catsStats Статистика по категориям.
- * @param spsr Поисковый запрос.
- * @param oncloseHref Абсолютный URL перехода при закрытии выдачи.
- * @param logoImgOpt Логотип, если есть.
- * @param shops Список магазинов в торговом центре.
- * @param welcomeOpt Приветствие, если есть.
  */
-case class ScRenderArgs(
-  bgColor       : String,
-  fgColor       : String,
-  name          : String,
-  mmcats        : Seq[MMartCategory],
-  catsStats     : Map[String, Long],
-  spsr          : AdSearch,
-  oncloseHref   : String,
-  geoListGoBack : Option[Boolean] = None,
-  logoImgOpt    : Option[MImgInfoT] = None,
-  shops         : Map[String, MAdnNode] = Map.empty,
-  welcomeOpt    : Option[WelcomeRenderArgsT] = None,
-  searchInAdnId : Option[String] = None
-) extends LogoImgOptI {
+trait ScRenderArgs extends LogoImgOptI {
+  /** bgColor Используемый цвет выдачи. */
+  def bgColor       : String
+  def fgColor       : String
+  def name          : String
+  /** Категории для отображения. */
+  def mmcats        : Seq[MMartCategory]
+  /** Статистика по категориям. */
+  def catsStats     : Map[String, Long]
+  /** Поисковый запрос. */
+  def spsr          : AdSearch
+  /** Абсолютный URL для выхода из выдачи через кнопку. */
+  def onCloseHref   : String
+  def geoListGoBack : Option[Boolean] = None
+  /** Логотип, если есть. */
+  def logoImgOpt    : Option[MImgInfoT] = None
+  /** Список магазинов в торговом центре. */
+  def shops         : Map[String, MAdnNode] = Map.empty
+  /** Приветствие, если есть. */
+  def welcomeOpt    : Option[WelcomeRenderArgsT] = None
+  def searchInAdnId : Option[String] = None
 
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {

@@ -126,31 +126,33 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       val _spsrFut = spsrFut
       for {
         waOpt           <- waOptFut
-        catsStats       <- catsStatsFut
+        _catsStats      <- catsStatsFut
         prods           <- prodsFut
-        mmcats          <- mmcatsFut
+        _mmcats         <- mmcatsFut
         adnNode         <- _adnNodeFut
-        spsr            <- _spsrFut
-        onCloseHref     <- _onCloseHrefFut
-        geoListGoBack   <- _geoListGoBackFut
+        _spsr           <- _spsrFut
+        _onCloseHref    <- _onCloseHrefFut
+        _geoListGoBack  <- _geoListGoBackFut
       } yield {
-        ScRenderArgs(
-          searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
-            .headOption
-            .orElse(adnNode.geo.directParentIds.headOption)
-            .orElse(adnNode.id),
-          bgColor     = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-          fgColor     = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT,
-          name        = adnNode.meta.name,
-          mmcats      = mmcats,
-          catsStats   = catsStats,
-          spsr        = spsr,
-          oncloseHref = onCloseHref,
-          logoImgOpt  = adnNode.logoImgOpt,
-          shops       = prods,
-          geoListGoBack = geoListGoBack,
-          welcomeOpt  = waOpt
-        )
+        new ScRenderArgs {
+          override val searchInAdnId = {
+            (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+              .headOption
+              .orElse(adnNode.geo.directParentIds.headOption)
+              .orElse(adnNode.id)
+          }
+          override val bgColor  = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+          override val fgColor  = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+          override def name     = adnNode.meta.name
+          override def mmcats   = _mmcats
+          override def catsStats = _catsStats
+          override def spsr     = _spsr
+          override val onCloseHref = _onCloseHref
+          override def logoImgOpt = adnNode.logoImgOpt
+          override def shops    = prods
+          override def geoListGoBack = _geoListGoBack
+          override def welcomeOpt = waOpt
+        }
       }
     }
 

@@ -113,21 +113,21 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     override def renderArgsFut: Future[ScRenderArgs] = {
       val (catsStatsFut, mmcatsFut) = getCats(None)
       for {
-        mmcats    <- mmcatsFut
-        catsStats <- catsStatsFut
+        _mmcats    <- mmcatsFut
+        _catsStats <- catsStatsFut
       } yield {
-        ScRenderArgs(
-          bgColor   = SITE_BGCOLOR_GEO,
-          fgColor   = SITE_FGCOLOR_GEO,
-          name      = SITE_NAME_GEO,
-          mmcats    = mmcats,
-          catsStats = catsStats,
-          spsr = AdSearch(
+        new ScRenderArgs {
+          override def bgColor   = SITE_BGCOLOR_GEO
+          override def fgColor   = SITE_FGCOLOR_GEO
+          override def name      = SITE_NAME_GEO
+          override def mmcats    = _mmcats
+          override def catsStats = _catsStats
+          override lazy val spsr = AdSearch(
             levels = List(AdShowLevels.LVL_START_PAGE),
             geo = GeoIp
-          ),
-          oncloseHref = ONCLOSE_HREF_DFLT
-        )
+          )
+          override def onCloseHref = ONCLOSE_HREF_DFLT
+        }
       }
     }
   }
