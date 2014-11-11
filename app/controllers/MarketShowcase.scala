@@ -5,8 +5,6 @@ import java.util.NoSuchElementException
 import _root_.util.showcase._
 import controllers.sc._
 import io.suggest.event.SNStaticSubscriberDummy
-import play.twirl.api.HtmlFormat
-import ShowcaseUtil._
 import util._
 import util.acl._
 import views.html.market.showcase._
@@ -16,7 +14,6 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc._
 import play.api.Play, Play.{current, configuration}
 
 /**
@@ -28,6 +25,7 @@ import play.api.Play, Play.{current, configuration}
  */
 object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy
 with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode with ScSyncSiteGeo
+with ScAdsTile
 {
 
   import LOGGER._
@@ -50,79 +48,6 @@ with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode 
     if (Play.isProd)  120  else  10
   }
 
-
-  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
-    * @param adSearch Поисковый запрос.
-    * @return JSONP с рекламными карточками для рендера в выдаче.
-    */
-  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
-    trace(s"$logPrefix ${request.path}?${request.rawQueryString}")
-    // Геоданные нужны для собирания статистики.
-    val gsiFut = adSearch.geo.geoSearchInfoOpt
-    val (jsAction, adSearch2Fut) = if (adSearch.qOpt.isDefined) {
-      "searchAds" -> Future.successful(adSearch)
-    } else {
-      // При поиске по категориям надо искать только если есть указанный show level.
-      val adsearch3: Future[AdSearch] = if (adSearch.catIds.nonEmpty) {
-        val result = adSearch.copy(levels = AdShowLevels.LVL_CATS :: adSearch.levels)
-        Future successful result
-      } else if (adSearch.receiverIds.nonEmpty) {
-        // TODO Можно спилить этот костыль?
-        val lvls1 = (AdShowLevels.LVL_START_PAGE :: adSearch.levels).distinct
-        val result = adSearch.copy(levels = lvls1)
-        Future successful result
-      } else if (adSearch.geo.isWithGeo) {
-        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
-        // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
-        ShowcaseNodeListUtil.detectCurrentNode(adSearch.geo, adSearch.geo.geoSearchInfoOpt)
-          .map { gdr => Some(gdr.node) }
-          .recover { case ex: NoSuchElementException => None }
-          .map {
-            case Some(adnNode) =>
-              adSearch.copy(receiverIds = List(adnNode.id.get), geo = GeoNone)
-            case None =>
-              adSearch
-          }
-          .recover {
-            // Допустима работа без геолокации при возникновении внутренней ошибки.
-            case ex: Throwable =>
-              error(logPrefix + " Failed to get geoip info for " + request.remoteAddress, ex)
-              adSearch
-          }
-      } else {
-        // Слегка неожиданные параметры запроса.
-        warn(logPrefix + " Strange search request: " + adSearch)
-        Future successful adSearch
-      }
-      "findAds" -> adsearch3
-    }
-    val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
-      MAd.dynSearch(adSearch2)
-    }
-    // Асинхронно вешаем параллельный рендер на найденные рекламные карточки.
-    val madsRenderedFut = madsFut flatMap { mads0 =>
-      val mads1 = groupNarrowAds(mads0)
-      val ctx = implicitly[Context]
-      parRenderBlocks(mads1) { (mad, index) =>
-        Future {
-          _single_offer(mad, isWithAction = true)(ctx)
-        }
-      }
-    }
-    // Отрендеренные рекламные карточки нужно учитывать через статистику просмотров.
-    madsFut onSuccess { case mads =>
-      adSearch2Fut onSuccess { case adSearch2 =>
-        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), gsiFut).saveStats
-      }
-    }
-    // Асинхронно рендерим результат.
-    madsRenderedFut map { madsRendered =>
-      cacheControlShort {
-        jsonOk(jsAction, blocks = madsRendered)
-      }
-    }
-  }
 
 
   /** Экшен для рендера горизонтальной выдачи карточек.
@@ -185,10 +110,11 @@ with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode 
           val mads4renderAsArray = if (h) mads.tail else mads   // Caused by: java.lang.UnsupportedOperationException: tail of empty list
           val ctx = implicitly[Context]
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
-          val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
+          val blocksHtmlsFut = parTraverseOrdered(mads4renderAsArray, startIndex = adSearch.offset) {
             (mad, index) =>
               ShowcaseUtil.focusedBrArgsFor(mad)(ctx) map { brArgs =>
-                _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
+                val res = _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
+                JsString(res)
               }
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
@@ -308,24 +234,6 @@ with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode 
 
     // Вернуть асинхронный результат.
     resultFut
-  }
-
-
-
-  /** Параллельный рендер scala-списка блоков на основе списка рекламных карточек.
-    * @param mads список рекламных карточек.
-    * @param r функция-рендерер, зависимая от контекста.
-    * @return Фьючерс с результатом. Внутри список отрендеренных карточек в исходном порядке.
-    */
-  private def parRenderBlocks(mads: Seq[MAd], startIndex: Int = 0)(r: (MAd, Int) => Future[HtmlFormat.Appendable]): Future[Seq[JsString]] = {
-    val mads1 = mads.zipWithIndex
-    Future.traverse(mads1) { case (mad, index) =>
-      r(mad, startIndex + index) map { result =>
-        index -> JsString(result)
-      }
-    } map {
-      _.sortBy(_._1).map(_._2)
-    }
   }
 
 }

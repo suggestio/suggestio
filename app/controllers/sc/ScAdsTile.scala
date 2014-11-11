@@ -1,0 +1,140 @@
+package controllers.sc
+
+import java.util.NoSuchElementException
+
+import _root_.util.showcase._
+import ShowcaseUtil._
+import play.twirl.api.HtmlFormat
+import util._
+import util.acl._
+import views.html.market.showcase._
+import play.api.libs.json._
+import models._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import SiowebEsUtil.client
+import scala.concurrent.Future
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 11.11.14 16:47
+ * Description: Поддержка плитки в контроллере: экшен и прочая логика.
+ */
+trait ScAdsTile extends ScController with PlayMacroLogsI {
+
+  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
+    * @param adSearch Поисковый запрос.
+    * @return JSONP с рекламными карточками для рендера в выдаче.
+    */
+  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    val logic = new TileAdsLogic {
+      override type T = JsString
+      override implicit def _request = request
+      override def _adSearch: AdSearch = adSearch
+      override def renderMadAsync(mad: MAd): Future[T] = {
+        Future {
+          renderMad2html(mad)
+        }
+      }
+    }
+    // Запускаем асинхронную сборку ответа.
+    val resultFut = logic.madsRenderedFut map { madsRendered =>
+      cacheControlShort {
+        jsonOk(logic.jsAction, blocks = madsRendered)
+      }
+    }
+    // В фоне собираем статистику
+    logic.madsFut onSuccess { case mads =>
+      logic.adSearch2Fut onSuccess { case adSearch2 =>
+        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), logic.gsiFut)
+          .saveStats
+      }
+    }
+    // Возвращаем собираемый результат
+    resultFut
+  }
+
+
+  /** Логика экшена, занимающегося обработкой запроса тут. */
+  trait TileAdsLogic {
+    
+    type T
+    implicit def _request: AbstractRequestWithPwOpt[_]
+    def _adSearch: AdSearch
+
+    lazy val ctx = implicitly[Context]
+
+    def renderMad2html(mad: MAd): HtmlFormat.Appendable = {
+      _single_offer(mad, isWithAction = true)(ctx)
+    }
+
+    def renderMadAsync(mad: MAd): Future[T]
+
+    lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
+    lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
+
+    val catsRequested = _adSearch.catIds.nonEmpty
+
+    lazy val jsAction: String = {
+      if (catsRequested) {
+        "searchAds"
+      } else {
+        "findAds"
+      }
+    }
+
+    lazy val adSearch2Fut: Future[AdSearch] = {
+      if (catsRequested) {
+        Future.successful(_adSearch)
+      } else {
+        // При поиске по категориям надо искать только если есть указанный show level.
+        if (_adSearch.catIds.nonEmpty) {
+          val result = _adSearch.copy(levels = AdShowLevels.LVL_CATS :: _adSearch.levels)
+          Future successful result
+        } else if (_adSearch.receiverIds.nonEmpty) {
+          // TODO Можно спилить этот костыль?
+          val lvls1 = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels).distinct
+          val result = _adSearch.copy(levels = lvls1)
+          Future successful result
+        } else if (_adSearch.geo.isWithGeo) {
+          // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
+          // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
+          ShowcaseNodeListUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
+            .map { gdr => Some(gdr.node) }
+            .recover { case ex: NoSuchElementException => None }
+            .map {
+              case Some(adnNode) =>
+                _adSearch.copy(receiverIds = List(adnNode.id.get), geo = GeoNone)
+              case None =>
+                _adSearch
+            }
+            .recover {
+              // Допустима работа без геолокации при возникновении внутренней ошибки.
+              case ex: Throwable =>
+                LOGGER.error(logPrefix + " Failed to get geoip info for " + _request.remoteAddress, ex)
+                _adSearch
+            }
+        } else {
+          // Слегка неожиданные параметры запроса.
+          LOGGER.warn(logPrefix + " Strange search request: " + _adSearch)
+          Future successful _adSearch
+        }
+      }
+    }
+
+    lazy val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
+      MAd.dynSearch(adSearch2)
+    }
+    lazy val madsGroupedFut = madsFut.map { groupNarrowAds }
+
+    lazy val madsRenderedFut: Future[Seq[T]] = {
+      madsGroupedFut flatMap { mads1 =>
+        parTraverseOrdered(mads1) { (mad, index) =>
+          renderMadAsync(mad)
+        }
+      }
+    }
+
+  }
+
+}

@@ -4,6 +4,9 @@ import controllers.SioController
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.Jsonp
 import play.api.libs.json._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -26,6 +29,23 @@ trait ScController extends SioController {
     acc ::= "action" -> JsString(action)
     val json = JsObject(acc)
     Ok( Jsonp(JSONP_CB_FUN, json) )
+  }
+
+
+  /** Параллельный маппинг scala-коллекции. Отмаппленных в результатах явно восстанавливается исходный порядок.
+    * @param vs Исходная коллекция.
+    * @param r функция-маппер.
+    * @return Фьючерс с отмапленной коллекцией в исходном порядке.
+    */
+  protected def parTraverseOrdered[T, V](vs: Seq[V], startIndex: Int = 0)(r: (V, Int) => Future[T]): Future[Seq[T]] = {
+    val vs1 = vs.zipWithIndex
+    Future.traverse(vs1) { case (mad, index) =>
+      r(mad, startIndex + index)
+        .map { index -> _ }
+    } map {
+      _.sortBy(_._1)
+        .map(_._2)
+    }
   }
 
 }
