@@ -114,7 +114,7 @@ trait SioRequestHeader extends RequestHeader {
   }
 
   /** Переданное js-состояние скрипта выдачи, закинутое в ajax escaped_fragment. */
-  lazy val ajaxJsScState: Option[JsShowCaseState] = {
+  lazy val ajaxJsScState: Option[ScJsState] = {
     ajaxEscapedFragment
       .flatMap { raw =>
         try {
@@ -127,7 +127,7 @@ trait SioRequestHeader extends RequestHeader {
         }
       }
       .flatMap { aefMap =>
-        val qsb = JsShowCaseState.qsbStandalone
+        val qsb = ScJsState.qsbStandalone
         qsb.bind("", aefMap)
       }
       .flatMap {

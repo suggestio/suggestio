@@ -1,4 +1,4 @@
-@(args: SMDemoSiteArgs)(implicit ctx: Context)
+@(args: ScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -20,6 +20,7 @@
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
+  @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
   <!--[if IE]>
   <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
   <![endif]-->
@@ -47,14 +48,18 @@
 
 </head>
 
+
 <body class="sm-body">
 
-<script type="text/javascript">
-   @_installScriptTpl(args.adnId, mkPermanent = false);
-   window.siomart_index = '@args.showcaseCall';
-   window.with_geo = @args.withGeo;
-</script>
+  @if(args.withJsSc) {
+    <script type="text/javascript">
+@_installScriptTpl(args.adnId, mkPermanent = false);
+window.siomart_index = '@args.showcaseCall';
+window.with_geo = @args.withGeo;
+    </script>
+  }
 
+  @args.inlineIndex
 </body>
 
 </html>

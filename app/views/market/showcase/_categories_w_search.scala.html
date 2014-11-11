@@ -1,8 +1,8 @@
-@(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+@(args: ScRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-categories-screen __initial" id="smCategoriesScreen">
+<div class="sm-categories-screen __initial" id="smCategoriesScreen" @*if(args.searchScreenOpened) {style="display: block;"}*@ >
 
   <div class="sm-categories-screen_header">
 

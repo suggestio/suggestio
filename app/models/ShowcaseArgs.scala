@@ -12,30 +12,44 @@ import util.qsb.QsbUtil._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 18.08.14 14:22
  * Description: Контейнеры для аргументов, передаваемых в компоненты showcase.
+ * 2014.nov.11: "Showcase" и "SMShowcase" в названиях классов сокращены до "Sc"
  */
-object SMShowcaseReqArgs {
+object ScReqArgs {
+
+  val GEO_SUF               = ".geo"
+  val SCREEN_SUF            = ".screen"
+  val NODES_SCR_OPENED_SUF  = ".nodesScrOpened"
+  val SEARCH_SCR_OPENED_SUF = ".searchScrOpened"
 
   /** routes-Биндер для параметров showcase'а. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], devScreenB: QueryStringBindable[Option[DevScreen]]) = {
-    new QueryStringBindable[SMShowcaseReqArgs] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SMShowcaseReqArgs]] = {
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
+                   devScreenB: QueryStringBindable[Option[DevScreen]],
+                   boolOptB: QueryStringBindable[Option[Boolean]] ) = {
+    new QueryStringBindable[ScReqArgs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
         for {
-          maybeGeo        <- strOptB.bind(key + ".geo", params)
-          maybeDevScreen  <- devScreenB.bind(key + ".screen", params)
+          maybeGeo        <- strOptB.bind(key + GEO_SUF, params)
+          maybeDevScreen  <- devScreenB.bind(key + SCREEN_SUF, params)
+          maybeNodesScreenOpened  <- boolOptB.bind(key + NODES_SCR_OPENED_SUF, params)
+          maybeSearchScreenOpened <- boolOptB.bind(key + SEARCH_SCR_OPENED_SUF, params)
         } yield {
-          Right(SMShowcaseReqArgs(
+          Right(ScReqArgs(
             geo  = GeoMode.maybeApply(maybeGeo)
               .filter(_.isWithGeo)
               .getOrElse(GeoIp),
-            screen = maybeDevScreen     // Игнорим неверные размеры, ибо некритично.
+            screen = maybeDevScreen,     // Игнорим неверные размеры, ибо некритично.
+            nodesScreenOpened = maybeNodesScreenOpened.getOrElse(false),
+            searchScreenOpened = maybeSearchScreenOpened.getOrElse(false)
           ))
         }
       }
 
-      override def unbind(key: String, value: SMShowcaseReqArgs): String = {
+      override def unbind(key: String, value: ScReqArgs): String = {
         List(
-          strOptB.unbind(key + ".geo", value.geo.toQsStringOpt),
-          devScreenB.unbind(key + ".screen", value.screen)
+          strOptB.unbind(key + GEO_SUF, value.geo.toQsStringOpt),
+          devScreenB.unbind(key + SCREEN_SUF, value.screen),
+          boolOptB.unbind(key + NODES_SCR_OPENED_SUF, Some(value.nodesScreenOpened).filter(identity)),
+          boolOptB.unbind(key + SEARCH_SCR_OPENED_SUF, Some(value.searchScreenOpened).filter(identity))
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
@@ -43,21 +57,27 @@ object SMShowcaseReqArgs {
     }
   }
 
-  val empty = SMShowcaseReqArgs()
+  val empty = ScReqArgs()
 
 }
 
-case class SMShowcaseReqArgs(
-  geo: GeoMode = GeoNone,
-  screen: Option[DevScreen] = None
+
+case class ScReqArgs(
+  geo                 : GeoMode = GeoNone,
+  screen              : Option[DevScreen] = None,
+  nodesScreenOpened   : Boolean = false,
+  searchScreenOpened  : Boolean = false
 ) {
-  override def toString: String = s"${geo.toQsStringOpt.map { "geo=" + _ }}"
+  override def toString: String = {
+    import QueryStringBindable._
+    ScReqArgs.qsb.unbind("a", this)
+  }
 }
 
 
 
 /** Статическая утиль для аргументов рендера showcase-шаблонов. */
-object SMShowcaseRenderArgs {
+object ScRenderArgs {
 
   /** Регэксп для нахождения первого словесного символа в строке. */
   val NON_PUNCTUATION_CHAR = "(?U)\\w".r
@@ -83,7 +103,7 @@ object SMShowcaseRenderArgs {
 
 }
 
-import SMShowcaseRenderArgs._
+import ScRenderArgs._
 
 /**
  * Аргументы для рендера market/showcase/indexTpl.
@@ -97,7 +117,7 @@ import SMShowcaseRenderArgs._
  * @param shops Список магазинов в торговом центре.
  * @param welcomeOpt Приветствие, если есть.
  */
-case class SMShowcaseRenderArgs(
+case class ScRenderArgs(
   bgColor       : String,
   fgColor       : String,
   name          : String,
@@ -166,11 +186,12 @@ trait WelcomeRenderArgsT {
  * @param adnId id узла, в рамках которого орудуем.
  * @param inlineIndex Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML.
  */
-case class SMDemoSiteArgs(
+case class ScSiteArgs(
   bgColor       : String,
   showcaseCall  : Call,
   adnId         : Option[String],
   title         : Option[String] = None,
+  withJsSc      : Boolean = true,
   inlineIndex   : Option[HtmlFormat.Appendable] = None
 ) {
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
@@ -179,28 +200,28 @@ case class SMDemoSiteArgs(
 
 
 
-object JsShowCaseState {
+object ScJsState {
   
   val ADN_ID_FN               = "mart_id"
   val CAT_SCR_OPENED_FN       = "cat_screen.is_opened"
   val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
   val FADS_SCREEN_OPENED_FN   = "fads.is_opened"
 
-  def qsbStandalone: QueryStringBindable[JsShowCaseState] = {
+  def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     qsb
   }
 
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], boolOptB: QueryStringBindable[Option[Boolean]]) = {
-    new QueryStringBindable[JsShowCaseState] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, JsShowCaseState]] = {
+    new QueryStringBindable[ScJsState] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
           maybeAdnId            <- strOptB.bind(ADN_ID_FN, params)
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
           maybeFadsOpened       <- boolOptB.bind(FADS_SCREEN_OPENED_FN, params)
         } yield {
-          val res = JsShowCaseState(
+          val res = ScJsState(
             adnId               = maybeAdnId,
             catScreenOpenedOpt  = maybeCatScreenOpened,
             geoScreenOpenedOpt  = maybeGeoScreenOpened,
@@ -210,7 +231,7 @@ object JsShowCaseState {
         }
       }
 
-      override def unbind(key: String, value: JsShowCaseState): String = {
+      override def unbind(key: String, value: ScJsState): String = {
         List(
           strOptB.unbind(ADN_ID_FN, value.adnId),
           boolOptB.unbind(CAT_SCR_OPENED_FN, Some(value.catScreenOpened)),
@@ -235,14 +256,14 @@ object JsShowCaseState {
 
 
 /** Класс, отражающий состояние js-выдачи на клиенте. */
-case class JsShowCaseState(
+case class ScJsState(
   adnId              : Option[String]  = None,
   catScreenOpenedOpt : Option[Boolean] = None,
   geoScreenOpenedOpt : Option[Boolean] = None,
   fadsOpenedOpt      : Option[Boolean] = None
 ) {
 
-  import JsShowCaseState.orFalse
+  import ScJsState.orFalse
 
   def catScreenOpened : Boolean = catScreenOpenedOpt
   def geoScreenOpened : Boolean = geoScreenOpenedOpt

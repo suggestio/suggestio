@@ -52,8 +52,8 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
     fut
   }
 
-  protected def _getSiteRenderArgs(implicit request: AbstractRequestWithPwOpt[_]): Future[SMDemoSiteArgs] = {
-    val args = SMDemoSiteArgs(
+  protected def _getSiteRenderArgs(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
+    val args = ScSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
@@ -93,7 +93,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
    * @return 200 OK с рендером подложки выдачи.
    */
   protected def adnNodeDemoWebsite(showcaseCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
-    val args = SMDemoSiteArgs(
+    val args = ScSiteArgs(
       showcaseCall  = showcaseCall,
       bgColor       = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
       title         = Some(request.adnNode.meta.name),

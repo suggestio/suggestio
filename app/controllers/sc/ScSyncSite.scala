@@ -1,7 +1,7 @@
 package controllers.sc
 
 import controllers.SioController
-import models.{SMShowcaseReqArgs, JsShowCaseState}
+import models.{ScReqArgs, ScJsState}
 import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.acl.AbstractRequestWithPwOpt
@@ -40,11 +40,10 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo {
    * Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния.
    * @param scState Состояние js-выдачи.
    */
-  protected def _syncGeoSite(scState: JsShowCaseState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    // TODO Нужно рендерить indexTpl, вставляя результат в siteTpl().
+  protected def _syncGeoSite(scState: ScJsState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO рендерить плитку синхронно (findAds)
-    // TODO Потом надо рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
-    val indexRenderArgs = SMShowcaseReqArgs(scState.geo)   // TODO нужно и screen наверное выставлять?
+    // TODO рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
+    val indexRenderArgs = ScReqArgs(scState.geo)   // TODO нужно и screen наверное выставлять?
     val indexHtmlFut = _geoShowCaseHtml(indexRenderArgs)
     val args1Fut = for {
       siteRenderArgs <- _getSiteRenderArgs

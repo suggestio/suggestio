@@ -47,7 +47,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI with ScSiteConstant
 
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
   trait ScIndexHelperBase {
-    def renderArgsFut: Future[SMShowcaseRenderArgs]
+    def renderArgsFut: Future[ScRenderArgs]
     def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
     implicit def _request: AbstractRequestWithPwOpt[_]
@@ -96,7 +96,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
-    override def renderArgsFut: Future[SMShowcaseRenderArgs] = {
+    override def renderArgsFut: Future[ScRenderArgs] = {
       val _adnNodeFut = adnNodeFut
       val prodsStatsFut = _adnNodeFut.flatMap { adnNode =>
         MAd.findProducerIdsForReceiver(adnNode.id.get)
@@ -133,7 +133,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         onCloseHref     <- _onCloseHrefFut
         geoListGoBack   <- _geoListGoBackFut
       } yield {
-        SMShowcaseRenderArgs(
+        ScRenderArgs(
           searchInAdnId = (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
             .headOption
             .orElse(adnNode.geo.directParentIds.headOption)
@@ -177,7 +177,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 trait ScIndexNode extends ScIndexNodeCommon {
 
   /** Базовая выдача для rcvr-узла sio-market. */
-  def showcase(adnId: String, args: SMShowcaseReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+  def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val helper = new ScIndexNodeSimpleHelper {
       override val geoListGoBackFut: Future[Option[Boolean]] = {
         MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1)
@@ -197,7 +197,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
     val stat = ScIndexStatUtil(
       scSinkOpt = None,
       gsiFut    = args.geo.geoSearchInfoOpt,
-      screenOpt = args.screen,
+      screenOpt = helper.ctx.deviceScreenOpt,
       nodeOpt   = Some(request.adnNode)
     )
     stat.saveStats onFailure { case ex =>

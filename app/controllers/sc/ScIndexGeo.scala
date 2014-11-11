@@ -27,10 +27,11 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
    * либо geoShowcase на дефолтовых параметрах.
    * @param args Аргументы.
    */
-  def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
+  def geoShowcase(args: ScReqArgs) = MaybeAuth.async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
+    case class LogicResult(result: Result, nodeOpt: Option[MAdnNode], helper: ScIndexHelperBase)
     val logic = new GeoIndexLogic {
-      type T = (Result, Option[MAdnNode])
+      type T = LogicResult
       override def _reqArgs = args
       override implicit def _request = request
       // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.
@@ -40,7 +41,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
       override def nodeNotDetected(): Future[T] = {
         nodeNotDetectedHelperFut().flatMap { _helper =>
           _helper.result
-            .map { _ -> None }
+            .map { result => LogicResult(result, None, _helper) }
         }
       }
 
@@ -48,15 +49,15 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
       override def nodeFound(gdr: GeoDetectResult): Future[T] = {
         nodeFoundHelperFut(gdr).flatMap { _helper =>
           _helper.result
-            .map { _ -> Some(gdr.node) }
+            .map { result => LogicResult(result, Some(gdr.node), _helper) }
         }
       }
     }
     // Запускаем хелпер на генерацию асинхронного результата:
     val resultFut = logic()
     // Собираем статистику асинхронно
-    resultFut onSuccess { case (result, nodeOpt) =>
-      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), logic.gsiOptFut, args.screen, nodeOpt)
+    resultFut onSuccess { case logRes =>
+      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), logic.gsiOptFut, logRes.helper.ctx.deviceScreenOpt, logRes.nodeOpt)
         .saveStats
         .onFailure { case ex =>
           LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
@@ -70,18 +71,18 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
     // Возвращаем асинхронный результат, добавив в него клиентский кеш.
     resultFut
-      .map { case (result, _) =>
-        result.withHeaders(hdrs1 : _*)
+      .map { logRes =>
+        logRes.result.withHeaders(hdrs1 : _*)
       }
   }
 
 
   /** Только голый рендер содержимого indexTpl, подходящего под запрос. */
-  protected def _geoShowCaseHtml(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
+  protected def _geoShowCaseHtml(args: ScReqArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
     val logic = new GeoIndexLogic {
       override type T = HtmlFormat.Appendable
 
-      override def _reqArgs: SMShowcaseReqArgs = args
+      override def _reqArgs: ScReqArgs = args
       override implicit def _request = request
 
       implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
@@ -108,13 +109,13 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
 
     override def currAdnIdFut = Future successful None
 
-    override def renderArgsFut: Future[SMShowcaseRenderArgs] = {
+    override def renderArgsFut: Future[ScRenderArgs] = {
       val (catsStatsFut, mmcatsFut) = getCats(None)
       for {
         mmcats    <- mmcatsFut
         catsStats <- catsStatsFut
       } yield {
-        SMShowcaseRenderArgs(
+        ScRenderArgs(
           bgColor   = SITE_BGCOLOR_GEO,
           fgColor   = SITE_FGCOLOR_GEO,
           name      = SITE_NAME_GEO,
@@ -158,7 +159,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     type NndHelper_t <: ScIndexHelperBase
     type NfHelper_t <: ScIndexNodeHelper
 
-    def _reqArgs: SMShowcaseReqArgs
+    def _reqArgs: ScReqArgs
     implicit def _request: AbstractRequestWithPwOpt[_]
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
