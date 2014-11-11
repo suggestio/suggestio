@@ -3,6 +3,7 @@ package models
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
+import play.twirl.api.HtmlFormat
 import util.cdn.CdnUtil
 import util.qsb.QsbUtil._
 
@@ -163,12 +164,14 @@ trait WelcomeRenderArgsT {
  * @param showcaseCall Адрес для showcase
  * @param title Заголовок.
  * @param adnId id узла, в рамках которого орудуем.
+ * @param inlineIndex Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML.
  */
 case class SMDemoSiteArgs(
   bgColor       : String,
   showcaseCall  : Call,
   adnId         : Option[String],
-  title         : Option[String] = None
+  title         : Option[String] = None,
+  inlineIndex   : Option[HtmlFormat.Appendable] = None
 ) {
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def withGeo = adnId.isEmpty
@@ -244,6 +247,9 @@ case class JsShowCaseState(
   def catScreenOpened : Boolean = catScreenOpenedOpt
   def geoScreenOpened : Boolean = geoScreenOpenedOpt
   def fadsOpened      : Boolean = fadsOpenedOpt
+
+  // TODO Нужно считывания geo-состояния из qs.
+  def geo: GeoMode = GeoNone
 
 }
 

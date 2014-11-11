@@ -1,10 +1,12 @@
 package controllers.sc
 
 import controllers.SioController
-import models.JsShowCaseState
+import models.{SMShowcaseReqArgs, JsShowCaseState}
 import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.acl.AbstractRequestWithPwOpt
+import views.html.market.showcase.demoWebsiteTpl
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
@@ -15,12 +17,11 @@ import scala.concurrent.Future
  * Description: Синхронная выдача. Т.е. выдача. которая работает без JS на клиенте.
  * Это нужно для для кравлеров и пользователей, у которых JS отключен или проблематичен.
  */
-trait ScSyncSite extends SioController with PlayMacroLogsI {
+trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
-}
-
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo {
+/** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo {
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
@@ -31,7 +32,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo {
       case None =>
         super._geoSiteResult
       case Some(jsState) =>
-        _syncSite(jsState)
+        _syncGeoSite(jsState)
     }
   }
 
@@ -39,10 +40,23 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo {
    * Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния.
    * @param scState Состояние js-выдачи.
    */
-  def _syncSite(scState: JsShowCaseState): Future[Result] = {
+  protected def _syncGeoSite(scState: JsShowCaseState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO Нужно рендерить indexTpl, вставляя результат в siteTpl().
-    // TODO Потом надо рендерить открытую рекламную карточку (параллельно с indexTpl) и вставлять fads container.
-    ???
+    // TODO рендерить плитку синхронно (findAds)
+    // TODO Потом надо рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
+    val indexRenderArgs = SMShowcaseReqArgs(scState.geo)   // TODO нужно и screen наверное выставлять?
+    val indexHtmlFut = _geoShowCaseHtml(indexRenderArgs)
+    val args1Fut = for {
+      siteRenderArgs <- _getSiteRenderArgs
+      indexHtml      <- indexHtmlFut
+    } yield {
+      siteRenderArgs.copy(
+        inlineIndex = Some(indexHtml)
+      )
+    }
+    args1Fut map { args1 =>
+      Ok(demoWebsiteTpl(args1))
+    }
   }
 
 }

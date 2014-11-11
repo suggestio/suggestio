@@ -2,6 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
+import play.twirl.api.HtmlFormat
 import util.showcase._
 import util.acl._
 import ShowcaseUtil._
@@ -28,7 +29,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
    */
   def geoShowcase(args: SMShowcaseReqArgs) = MaybeAuth.async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
-    val ghelper = new GeoIndexLogic {
+    val logic = new GeoIndexLogic {
       type T = (Result, Option[MAdnNode])
       override def _reqArgs = args
       override implicit def _request = request
@@ -52,10 +53,10 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
       }
     }
     // Запускаем хелпер на генерацию асинхронного результата:
-    val resultFut = ghelper()
+    val resultFut = logic()
     // Собираем статистику асинхронно
     resultFut onSuccess { case (result, nodeOpt) =>
-      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), ghelper.gsiOptFut, args.screen, nodeOpt)
+      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), logic.gsiOptFut, args.screen, nodeOpt)
         .saveStats
         .onFailure { case ex =>
           LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
@@ -72,6 +73,32 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
       .map { case (result, _) =>
         result.withHeaders(hdrs1 : _*)
       }
+  }
+
+
+  /** Только голый рендер содержимого indexTpl, подходящего под запрос. */
+  protected def _geoShowCaseHtml(args: SMShowcaseReqArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
+    val logic = new GeoIndexLogic {
+      override type T = HtmlFormat.Appendable
+
+      override def _reqArgs: SMShowcaseReqArgs = args
+      override implicit def _request = request
+
+      implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
+        h.flatMap(_.respHtmlFut)
+      }
+
+      /** Нет ноды. */
+      override def nodeNotDetected(): Future[T] = {
+        nodeNotDetectedHelperFut()
+      }
+
+      /** Нода найдена с помощью геолокации. */
+      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+        nodeFoundHelperFut(gdr)
+      }
+    }
+    logic.apply()
   }
 
 
@@ -118,6 +145,11 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   }
 
 
+  /**
+   * Совсем абстрактная логика работы из экшена geoShowCase() тут.
+   * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты.
+   * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply().
+   */
   trait GeoIndexLogicBase { that2 =>
     /** Тип возвращаемого значения в методах этого хелпера. */
     type T
@@ -167,11 +199,8 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   }
 
 
-  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации.
-    * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты
-    * в рамках логики работы geoShowcase-экшена.
-    * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply(). */
-  trait GeoIndexLogic extends GeoIndexLogicBase { that2 =>
+  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации. */
+  trait GeoIndexLogic extends GeoIndexLogicBase {
 
     override type NndHelper_t = ScIndexGeoHelper
     override type NfHelper_t = ScIndexNodeGeoHelper

@@ -52,18 +52,24 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
     fut
   }
 
-  /**
-   * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
-   * @param request Реквест.
-   */
-  protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _getSiteRenderArgs(implicit request: AbstractRequestWithPwOpt[_]): Future[SMDemoSiteArgs] = {
     val args = SMDemoSiteArgs(
       showcaseCall = routes.MarketShowcase.geoShowcase(),
       bgColor = SITE_BGCOLOR_GEO,
       adnId = None
     )
-    cacheControlShort {
-      Ok(demoWebsiteTpl(args))
+    Future successful args
+  }
+
+  /**
+   * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
+   * @param request Реквест.
+   */
+  protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    _getSiteRenderArgs map { args =>
+      cacheControlShort {
+        Ok(demoWebsiteTpl(args))
+      }
     }
   }
 
