@@ -3,7 +3,12 @@
 
 @stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
 
-  <div class="sm-grid-ads_container" id="smGridAdsContainer" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"></div>
+  <div class="sm-grid-ads_container" id="smGridAdsContainer" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)">
+    @* Заинлайненные рекламные карточки при синхронном рендере. *@
+    @for(tile <- args.inlineTiles) {
+      @tile
+    }
+  </div>
   <div class="sm-grid-ads_loader hidden" id="smGridAdsLoader">
     <div class="sm-grid-ads_loader-spinner"><div class="sm-grid-ads_loader-spinner-inner">@svg._spinnerTpl(args.bgColor)</div></div>
   </div>

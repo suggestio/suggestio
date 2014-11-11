@@ -33,7 +33,7 @@ object ScReqArgs {
           maybeNodesScreenOpened  <- boolOptB.bind(key + NODES_SCR_OPENED_SUF, params)
           maybeSearchScreenOpened <- boolOptB.bind(key + SEARCH_SCR_OPENED_SUF, params)
         } yield {
-          Right(new ScReqArgs {
+          Right(new ScReqArgsDflt {
             override val geo = {
               GeoMode.maybeApply(maybeGeo)
                 .filter(_.isWithGeo)
@@ -70,6 +70,8 @@ trait ScReqArgs {
   def screen              : Option[DevScreen]
   def nodesScreenOpened   : Boolean
   def searchScreenOpened  : Boolean
+  /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
+  def inlineTiles         : Seq[HtmlFormat.Appendable]
 
   override def toString: String = {
     import QueryStringBindable._
@@ -81,6 +83,7 @@ trait ScReqArgsDflt extends ScReqArgs {
   override def screen               : Option[DevScreen] = None
   override def nodesScreenOpened    = false
   override def searchScreenOpened   = false
+  override def inlineTiles: Seq[HtmlFormat.Appendable] = Nil
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
@@ -89,6 +92,7 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def screen               = reqArgsUnderlying.screen
   override def nodesScreenOpened    = reqArgsUnderlying.nodesScreenOpened
   override def searchScreenOpened   = reqArgsUnderlying.searchScreenOpened
+  override def inlineTiles          = reqArgsUnderlying.inlineTiles
 }
 
 
@@ -261,13 +265,16 @@ object ScJsState {
   val CAT_SCR_OPENED_FN       = "cat_screen.is_opened"
   val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
   val FADS_SCREEN_OPENED_FN   = "fads.is_opened"
+  val GENERATION_FN           = "generation"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     qsb
   }
 
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]], boolOptB: QueryStringBindable[Option[Boolean]]) = {
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
+                   boolOptB: QueryStringBindable[Option[Boolean]],
+                   longOptB: QueryStringBindable[Option[Long]] ) = {
     new QueryStringBindable[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
@@ -275,12 +282,14 @@ object ScJsState {
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
           maybeFadsOpened       <- boolOptB.bind(FADS_SCREEN_OPENED_FN, params)
+          maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
         } yield {
           val res = ScJsState(
             adnId               = maybeAdnId,
             catScreenOpenedOpt  = maybeCatScreenOpened,
             geoScreenOpenedOpt  = maybeGeoScreenOpened,
-            fadsOpenedOpt       = maybeFadsOpened
+            fadsOpenedOpt       = maybeFadsOpened,
+            generationOpt       = maybeGeneration
           )
           Right(res)
         }
@@ -289,9 +298,10 @@ object ScJsState {
       override def unbind(key: String, value: ScJsState): String = {
         List(
           strOptB.unbind(ADN_ID_FN, value.adnId),
-          boolOptB.unbind(CAT_SCR_OPENED_FN, Some(value.catScreenOpened)),
-          boolOptB.unbind(GEO_SCR_OPENED_FN, Some(value.geoScreenOpened)),
-          boolOptB.unbind(FADS_SCREEN_OPENED_FN, Some(value.fadsOpened))
+          boolOptB.unbind(CAT_SCR_OPENED_FN, value.catScreenOpenedOpt),
+          boolOptB.unbind(GEO_SCR_OPENED_FN, value.geoScreenOpenedOpt),
+          boolOptB.unbind(FADS_SCREEN_OPENED_FN, value.fadsOpenedOpt),
+          longOptB.unbind(GENERATION_FN, value.generationOpt)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -315,7 +325,8 @@ case class ScJsState(
   adnId              : Option[String]  = None,
   catScreenOpenedOpt : Option[Boolean] = None,
   geoScreenOpenedOpt : Option[Boolean] = None,
-  fadsOpenedOpt      : Option[Boolean] = None
+  fadsOpenedOpt      : Option[Boolean] = None,
+  generationOpt      : Option[Long] = None
 ) {
 
   import ScJsState.orFalse
@@ -323,6 +334,8 @@ case class ScJsState(
   def catScreenOpened : Boolean = catScreenOpenedOpt
   def geoScreenOpened : Boolean = geoScreenOpenedOpt
   def fadsOpened      : Boolean = fadsOpenedOpt
+
+  def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
   // TODO Нужно считывания geo-состояния из qs.
   def geo: GeoMode = GeoNone
