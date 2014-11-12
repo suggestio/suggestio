@@ -1,7 +1,7 @@
 package controllers.sc
 
 import controllers.SioController
-import models.{MAd, AdSearch, ScReqArgsDflt, ScJsState}
+import models._
 import play.api.mvc.Result
 import play.twirl.api.HtmlFormat
 import util.PlayMacroLogsI
@@ -95,15 +95,16 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def indexHtmlFut = indexRenderArgs.flatMap(_geoShowCaseHtml)
     
     // Рендерим site.html, т.е. базовый шаблон выдачи.
-    def siteArgsFut = {
+    def siteArgsFut: Future[ScSiteArgs] = {
       val _indexHtmlFut = indexHtmlFut
       for {
         siteRenderArgs <- _getSiteRenderArgs
         indexHtml      <- _indexHtmlFut
       } yield {
-        siteRenderArgs.copy(
-          inlineIndex = Some(indexHtml)
-        )
+        new ScSiteArgsWrapper {
+          override def _scSiteArgs = siteRenderArgs
+          override def inlineIndex = Some(indexHtml)
+        }
       }
     }
     

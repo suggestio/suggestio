@@ -53,11 +53,11 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
   }
 
   protected def _getSiteRenderArgs(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
-    val args = ScSiteArgs(
-      showcaseCall = routes.MarketShowcase.geoShowcase(),
-      bgColor = SITE_BGCOLOR_GEO,
-      adnId = None
-    )
+    val args = new ScSiteArgs {
+      override def showcaseCall = routes.MarketShowcase.geoShowcase()
+      override def bgColor = SITE_BGCOLOR_GEO
+      override def adnId = None
+    }
     Future successful args
   }
 
@@ -88,17 +88,17 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
-   * @param showcaseCall Call для обращения за indexTpl.
+   * @param scCall Call для обращения за indexTpl.
    * @param request Исходный реквест, содержащий в себе необходимый узел adn.
    * @return 200 OK с рендером подложки выдачи.
    */
-  protected def adnNodeDemoWebsite(showcaseCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
-    val args = ScSiteArgs(
-      showcaseCall  = showcaseCall,
-      bgColor       = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-      title         = Some(request.adnNode.meta.name),
-      adnId         = request.adnNode.id
-    )
+  protected def adnNodeDemoWebsite(scCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
+    val args = new ScSiteArgs {
+      override def showcaseCall = scCall
+      override val bgColor = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+      override def title = Some(request.adnNode.meta.name)
+      override def adnId = request.adnNode.id
+    }
     cacheControlShort {
       Ok(demoWebsiteTpl(args))
     }
@@ -119,7 +119,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
       }
       // Рендерим результат в текущем потоке.
       adnNodeDemoWebsite(
-        showcaseCall = routes.MarketShowcase.showcase(adnId)
+        scCall = routes.MarketShowcase.showcase(adnId)
       )
 
     } else {

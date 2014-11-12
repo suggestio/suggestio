@@ -237,24 +237,49 @@ trait WelcomeRenderArgsT {
 
 
 
-/**
- * Набор аргументов для передачи в demoWebSiteTpl.
- * @param bgColor Цвет оформления.
- * @param showcaseCall Адрес для showcase
- * @param title Заголовок.
- * @param adnId id узла, в рамках которого орудуем.
- * @param inlineIndex Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML.
- */
-case class ScSiteArgs(
-  bgColor       : String,
-  showcaseCall  : Call,
-  adnId         : Option[String],
-  title         : Option[String] = None,
-  withJsSc      : Boolean = true,
-  inlineIndex   : Option[HtmlFormat.Appendable] = None
-) {
+/** Контейнер для аргументов, передаваемых в demoWebSiteTpl. */
+trait ScSiteArgs {
+  /** Цвет оформления. */
+  def bgColor       : String
+  /** Адрес для showcase */
+  def showcaseCall  : Call
+  /** id узла, в рамках которого орудуем. */
+  def adnId         : Option[String]
+  /** Отображаемый заголовок. */
+  def title         : Option[String] = None
+  def withJsSc      : Boolean = true
+  /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
+  def inlineIndex   : Option[HtmlFormat.Appendable] = None
+
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def withGeo = adnId.isEmpty
+
+  override def toString: String = {
+    val sb = new StringBuilder(64)
+    sb.append("bgColor=").append(bgColor).append('&')
+      .append("showcaseCall=").append(showcaseCall).append('&')
+      .append("title=").append(title).append('&')
+      .append("withJsSc").append(withJsSc)
+    if (adnId.isDefined)
+      sb.append('&').append("adnId=").append(adnId)
+    if (inlineIndex.isDefined)
+      sb.append('&').append("inlineIndex=yes")
+    sb.toString()
+  }
+}
+/** Враппер для аргументов рендера "сайта" выдачи. */
+trait ScSiteArgsWrapper extends ScSiteArgs {
+  def _scSiteArgs: ScSiteArgs
+
+  override def bgColor = _scSiteArgs.bgColor
+  override def adnId = _scSiteArgs.adnId
+  override def showcaseCall = _scSiteArgs.showcaseCall
+  override def title = _scSiteArgs.title
+  override def withJsSc = _scSiteArgs.withJsSc
+  override def inlineIndex = _scSiteArgs.inlineIndex
+
+  override def withGeo = _scSiteArgs.withGeo
+  override def toString: String = _scSiteArgs.toString
 }
 
 
@@ -284,13 +309,13 @@ object ScJsState {
           maybeFadsOpened       <- boolOptB.bind(FADS_SCREEN_OPENED_FN, params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
         } yield {
-          val res = ScJsState(
-            adnId               = maybeAdnId,
-            catScreenOpenedOpt  = maybeCatScreenOpened,
-            geoScreenOpenedOpt  = maybeGeoScreenOpened,
-            fadsOpenedOpt       = maybeFadsOpened,
-            generationOpt       = maybeGeneration
-          )
+          val res = new ScJsState {
+            override def adnId = maybeAdnId
+            override def searchScrOpenedOpt = maybeCatScreenOpened
+            override def navScrOpenedOpt = maybeGeoScreenOpened
+            override def fadsOpenedOpt = maybeFadsOpened
+            override def generationOpt = maybeGeneration
+          }
           Right(res)
         }
       }
@@ -298,8 +323,8 @@ object ScJsState {
       override def unbind(key: String, value: ScJsState): String = {
         List(
           strOptB.unbind(ADN_ID_FN, value.adnId),
-          boolOptB.unbind(CAT_SCR_OPENED_FN, value.catScreenOpenedOpt),
-          boolOptB.unbind(GEO_SCR_OPENED_FN, value.geoScreenOpenedOpt),
+          boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
+          boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
           boolOptB.unbind(FADS_SCREEN_OPENED_FN, value.fadsOpenedOpt),
           longOptB.unbind(GENERATION_FN, value.generationOpt)
         )
@@ -309,31 +334,29 @@ object ScJsState {
     }
   }
 
+}
 
-  implicit private def orFalse(boolOpt: Option[Boolean]): Boolean = {
+
+/** Класс, отражающий состояние js-выдачи на клиенте. */
+trait ScJsState {
+
+  implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     if (boolOpt.isDefined)
       boolOpt.get
     else
       false
   }
 
-}
+  def adnId               : Option[String]   = None
+  def searchScrOpenedOpt  : Option[Boolean]  = None
+  def navScrOpenedOpt     : Option[Boolean]  = None
+  def fadsOpenedOpt       : Option[Boolean]  = None
+  def generationOpt       : Option[Long]     = None
 
 
-/** Класс, отражающий состояние js-выдачи на клиенте. */
-case class ScJsState(
-  adnId              : Option[String]  = None,
-  catScreenOpenedOpt : Option[Boolean] = None,
-  geoScreenOpenedOpt : Option[Boolean] = None,
-  fadsOpenedOpt      : Option[Boolean] = None,
-  generationOpt      : Option[Long] = None
-) {
-
-  import ScJsState.orFalse
-
-  def catScreenOpened : Boolean = catScreenOpenedOpt
-  def geoScreenOpened : Boolean = geoScreenOpenedOpt
-  def fadsOpened      : Boolean = fadsOpenedOpt
+  def isSearchScrOpened : Boolean = searchScrOpenedOpt
+  def isNavScrOpened    : Boolean = navScrOpenedOpt
+  def isFadsOpened      : Boolean = fadsOpenedOpt
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
