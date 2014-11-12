@@ -73,7 +73,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
-    val catsRequested = _adSearch.catIds.nonEmpty
+    def catsRequested = _adSearch.catIds.nonEmpty
 
     lazy val jsAction: String = {
       if (catsRequested) {

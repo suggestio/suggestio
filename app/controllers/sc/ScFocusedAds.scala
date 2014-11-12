@@ -1,0 +1,151 @@
+package controllers.sc
+
+import play.api.mvc.Result
+import util.showcase._
+import util.SiowebEsUtil.client
+import util.PlayMacroLogsI
+import util.acl._
+import views.html.market.showcase._
+import play.api.libs.json._
+import models._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.Future
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 12.11.14 19:38
+ * Description: Поддержка открытых рекламных карточек.
+ */
+trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants {
+
+  /** Экшен для рендера горизонтальной выдачи карточек.
+    * @param adSearch Поисковый запрос.
+    * @param withHeadAd true означает, что нужна начальная страница с html.
+    *          false - возвращать только json-массив с отрендеренными блоками, без html-страницы с первой карточкой.
+    * @return JSONP с отрендеренными карточками.
+    */
+  def focusedAds(adSearch: AdSearch, withHeadAd: Boolean) = MaybeAuth.async { implicit request =>
+    val logic = new FocusedAdsLogic {
+      override def _withHeadAd = withHeadAd
+      override def _adSearch = adSearch
+      override implicit def _request = request
+    }
+    // Когда поступят карточки, нужно сохранить по ним статистику.
+    logic.mads2Fut onSuccess { case mads =>
+      ScFocusedAdsStatUtil(adSearch, mads.flatMap(_.id), withHeadAd = withHeadAd).saveStats
+    }
+    logic.resultFut
+  }
+
+
+  /** Логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
+  trait FocusedAdsLogic {
+
+    // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
+    // TODO Выставлять offset для поиска с учётом firstIds?
+
+    def _adSearch: AdSearch
+    def _withHeadAd: Boolean
+    implicit def _request: AbstractRequestWithPwOpt[_]
+
+    // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
+    // TODO Выставлять offset для поиска с учётом firstIds?
+    val mads1Fut: Future[Seq[MAd]] = {
+      // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
+      val adSearch2 = if (_adSearch.forceFirstIds.isEmpty) {
+        _adSearch
+      } else {
+        _adSearch.copy(forceFirstIds = Nil, withoutIds = _adSearch.forceFirstIds)
+      }
+      MAd.dynSearch(adSearch2)
+    }
+
+    /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
+    val madsCountFut: Future[Long] = {
+      MAd.dynCount(_adSearch)
+    }
+
+    val producersFut: Future[Seq[MAdnNode]] = {
+      MAdnNodeCache.multiGet(_adSearch.producerIds)
+    }
+
+    // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
+    val mads2Fut: Future[Seq[MAd]] = {
+      if (_adSearch.forceFirstIds.nonEmpty) {
+        // Если заданы firstIds и offset == 0, то нужно получить из модели указанные рекламные карточки.
+        val firstAdsFut = if (_adSearch.offset <= 0) {
+          MAd.multiGet(_adSearch.forceFirstIds)
+            .map { _.filter {
+            mad => _adSearch.producerIds contains mad.producerId
+          } }
+        } else {
+          Future successful Nil
+        }
+        // Замёржить полученные first-карточки в основной список карточек.
+        for {
+          mads      <- mads1Fut
+          firstAds  <- firstAdsFut
+        } yield {
+          // Нано-оптимизация.
+          if (firstAds.nonEmpty)
+            firstAds ++ mads
+          else
+            mads
+        }
+      } else {
+        // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
+        mads1Fut
+      }
+    }
+
+    // TODO Распилить сие, абстрагировать аргументы финального jsonOk от вызова самого jsonOk()
+    // Запустить рендер, когда карточки поступят.
+    lazy val resultFut: Future[Result] = {
+      madsCountFut flatMap { madsCount =>
+        val madsCountInt = madsCount.toInt
+        producersFut flatMap { producers =>
+          val producer = producers.head
+          mads2Fut flatMap { mads =>
+            // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
+            val mads4renderAsArray = if (_withHeadAd) mads.tail else mads   // Caused by: java.lang.UnsupportedOperationException: tail of empty list
+            val ctx = implicitly[Context]
+            // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
+            val blocksHtmlsFut = parTraverseOrdered(mads4renderAsArray, startIndex = _adSearch.offset) {
+              (mad, index) =>
+                ShowcaseUtil.focusedBrArgsFor(mad)(ctx) map { brArgs =>
+                  val res = _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(ctx)
+                  JsString(res)
+                }
+            }
+            // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
+            val htmlOptFut = if (_withHeadAd) {
+              val madsHead = mads.headOption
+              val firstMads = madsHead.toList
+              val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
+              val brArgsNFut = madsHead.fold
+              { Future successful ShowcaseUtil.focusedBrArgsDflt }
+              { ShowcaseUtil.focusedBrArgsFor(_)(ctx) }
+              brArgsNFut map { brArgsN =>
+                val html = _focusedAdsTpl(firstMads, _adSearch, producer, bgColor, brArgs = brArgsN, adsCount = madsCountInt,  startIndex = _adSearch.offset)(ctx)
+                Some(JsString(html))
+              }
+            } else {
+              Future successful  None
+            }
+            for {
+              blocks  <- blocksHtmlsFut
+              htmlOpt <- htmlOptFut
+            } yield {
+              cacheControlShort {
+                jsonOk("producerAds", htmlOpt, blocks)
+              }
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+}
