@@ -289,7 +289,7 @@ object ScJsState {
   val ADN_ID_FN               = "mart_id"
   val CAT_SCR_OPENED_FN       = "cat_screen.is_opened"
   val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
-  val FADS_SCREEN_OPENED_FN   = "fads.is_opened"
+  val FADS_CURRENT_AD_ID_FN       = "fads.current_ad_id"
   val GENERATION_FN           = "generation"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
@@ -306,7 +306,7 @@ object ScJsState {
           maybeAdnId            <- strOptB.bind(ADN_ID_FN, params)
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
-          maybeFadsOpened       <- boolOptB.bind(FADS_SCREEN_OPENED_FN, params)
+          maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
         } yield {
           val res = new ScJsState {
@@ -325,7 +325,7 @@ object ScJsState {
           strOptB.unbind(ADN_ID_FN, value.adnId),
           boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
           boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
-          boolOptB.unbind(FADS_SCREEN_OPENED_FN, value.fadsOpenedOpt),
+          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
           longOptB.unbind(GENERATION_FN, value.generationOpt)
         )
           .filter(!_.isEmpty)
@@ -350,13 +350,13 @@ trait ScJsState {
   def adnId               : Option[String]   = None
   def searchScrOpenedOpt  : Option[Boolean]  = None
   def navScrOpenedOpt     : Option[Boolean]  = None
-  def fadsOpenedOpt       : Option[Boolean]  = None
+  def fadsOpenedOpt       : Option[String]   = None
   def generationOpt       : Option[Long]     = None
 
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
-  def isFadsOpened      : Boolean = fadsOpenedOpt
+  def isFadsOpened      : Boolean = fadsOpenedOpt.isDefined
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 

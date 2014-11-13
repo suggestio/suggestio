@@ -1,4 +1,5 @@
-@(mads: Seq[MAd], adSearch: AdSearch, producer: MAdnNode, bgColor: String, brArgs: blk.RenderArgs, adsCount: Int, startIndex: Int = 0)(implicit ctx: Context)
+@(mad: MAd, adSearch: AdSearch, producer: MAdnNode, bgColor: String, brArgs: blk.RenderArgs,
+  adsCount: Int, startIndex: Int)(implicit ctx: Context)
 
 @* Рендер под-выдачи для просмотра развёрных карточек.
    Появляется поверх при клике по какой-то карточке в общей плитке. *@
@@ -6,6 +7,7 @@
 @import util.cdn.CdnUtil
 
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
+
 @* Список карточек указанного продюссера *@
 <div class="sm-producer-header abs" style="@stuff._bgcolor( bgColor )">
 
@@ -20,18 +22,19 @@
 
 </div>
 
+
 <div class="sm-focused-ads_arrow-label fad-arrow-label" id="smFocusedAdsArrowLabel" style="background-color: #@bgColor;">
   <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(fgColor)</div>
   <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(fgColor)</div>
 </div>
 
+
 @* Контейнер с прокручивающимися офферами *@
 <div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@adsCount">
   <span id="ads0">
-  @mads.zipWithIndex.map { case (mad, index) =>
-    @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount, brArgs = brArgs)
-  }
+    @_focusedAdTpl(mad,  startIndex + 0,  producer,  adsCount = adsCount, brArgs = brArgs)
   </span>
   @_focusedAdLoaderTpl(bgColor)
 </div>
-}
+
+} @* defining *@
