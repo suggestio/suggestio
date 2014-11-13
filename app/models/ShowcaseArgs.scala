@@ -3,7 +3,7 @@ package models
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.{Html, HtmlFormat}
 import util.cdn.CdnUtil
 import util.qsb.QsbUtil._
 
@@ -71,7 +71,8 @@ trait ScReqArgs {
   def nodesScreenOpened   : Boolean
   def searchScreenOpened  : Boolean
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
-  def inlineTiles         : Seq[HtmlFormat.Appendable]
+  def inlineTiles         : Seq[Html]
+  def focusedContent      : Option[Html]
 
   override def toString: String = {
     import QueryStringBindable._
@@ -83,7 +84,8 @@ trait ScReqArgsDflt extends ScReqArgs {
   override def screen               : Option[DevScreen] = None
   override def nodesScreenOpened    = false
   override def searchScreenOpened   = false
-  override def inlineTiles: Seq[HtmlFormat.Appendable] = Nil
+  override def inlineTiles          : Seq[Html] = Nil
+  override def focusedContent       : Option[Html] = None
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
@@ -93,6 +95,7 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def nodesScreenOpened    = reqArgsUnderlying.nodesScreenOpened
   override def searchScreenOpened   = reqArgsUnderlying.searchScreenOpened
   override def inlineTiles          = reqArgsUnderlying.inlineTiles
+  override def focusedContent       = reqArgsUnderlying.focusedContent
 }
 
 
@@ -289,7 +292,8 @@ object ScJsState {
   val ADN_ID_FN               = "mart_id"
   val CAT_SCR_OPENED_FN       = "cat_screen.is_opened"
   val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
-  val FADS_CURRENT_AD_ID_FN       = "fads.current_ad_id"
+  val FADS_CURRENT_AD_ID_FN   = "fads.current_ad_id"
+  val FADS_OFFSET_FN          = "fads.offset"
   val GENERATION_FN           = "generation"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
@@ -299,22 +303,25 @@ object ScJsState {
 
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
                    boolOptB: QueryStringBindable[Option[Boolean]],
-                   longOptB: QueryStringBindable[Option[Long]] ) = {
+                   longOptB: QueryStringBindable[Option[Long]],
+                   intOptB: QueryStringBindable[Option[Int]] ) = {
     new QueryStringBindable[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
           maybeAdnId            <- strOptB.bind(ADN_ID_FN, params)
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
-          maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
+          maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
+          maybeFadsOffset       <- intOptB.bind(FADS_OFFSET_FN, params)
         } yield {
           val res = new ScJsState {
             override def adnId = maybeAdnId
             override def searchScrOpenedOpt = maybeCatScreenOpened
             override def navScrOpenedOpt = maybeGeoScreenOpened
-            override def fadsOpenedOpt = maybeFadsOpened
             override def generationOpt = maybeGeneration
+            override def fadsOpenedOpt = maybeFadsOpened
+            override def fadsOffsetOpt = maybeFadsOffset
           }
           Right(res)
         }
@@ -326,7 +333,8 @@ object ScJsState {
           boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
           boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
           strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
-          longOptB.unbind(GENERATION_FN, value.generationOpt)
+          longOptB.unbind(GENERATION_FN, value.generationOpt),
+          intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -341,22 +349,25 @@ object ScJsState {
 trait ScJsState {
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
-    if (boolOpt.isDefined)
-      boolOpt.get
-    else
-      false
+    boolOpt.isDefined && boolOpt.get
+  }
+
+  implicit protected def orZero(intOpt: Option[Int]): Int = {
+    if (intOpt.isDefined)  intOpt.get  else  0
   }
 
   def adnId               : Option[String]   = None
   def searchScrOpenedOpt  : Option[Boolean]  = None
   def navScrOpenedOpt     : Option[Boolean]  = None
-  def fadsOpenedOpt       : Option[String]   = None
   def generationOpt       : Option[Long]     = None
 
+  def fadsOpenedOpt       : Option[String]   = None
+  def fadsOffsetOpt       : Option[Int]      = None
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
   def isFadsOpened      : Boolean = fadsOpenedOpt.isDefined
+  def fadsOffset        : Int = fadsOffsetOpt
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 

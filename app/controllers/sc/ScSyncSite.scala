@@ -3,7 +3,7 @@ package controllers.sc
 import controllers.SioController
 import models._
 import play.api.mvc.Result
-import play.twirl.api.HtmlFormat
+import play.twirl.api.{Html, HtmlFormat}
 import util.PlayMacroLogsI
 import util.acl.AbstractRequestWithPwOpt
 import views.html.market.showcase.demoWebsiteTpl
@@ -22,7 +22,7 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile {
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds {
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
@@ -56,45 +56,79 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     implicit def _request: AbstractRequestWithPwOpt[_]
     
     // Рендерим плитку (findAds)
-    def tileLogic = {
-      new TileAdsLogic {
-        override type T = HtmlFormat.Appendable
-        override implicit def _request = that._request
+    def tileLogic = new TileAdsLogic {
+      override type T = HtmlFormat.Appendable
+      override implicit def _request = that._request
 
-        override val _adSearch = AdSearch(
-          // TODO Прокачать сюда остальные куски состояния, по мере расширения js-состояния.
-          receiverIds = _scState.adnId.toList,
-          generation = _scState.generationOpt,
-          geo = _scState.geo
-        )
+      override val _adSearch = AdSearch(
+        // TODO Прокачать сюда остальные куски состояния, по мере расширения js-состояния.
+        receiverIds = _scState.adnId.toList,
+        generation = _scState.generationOpt,
+        geo = _scState.geo
+      )
 
-        override def renderMadAsync(mad: MAd): Future[T] = {
-          Future {
-            renderMad2html(mad)
-          }
+      override def renderMadAsync(mad: MAd): Future[T] = {
+        Future {
+          renderMad2html(mad)
         }
       }
     }
-    
+
+    /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
+    def focusedLogic = new FocusedAdsLogic {
+      override type OBT = Html
+      override implicit def _request = that._request
+
+      /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
+      override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, mad = mad, index = index, producer = producer)
+      }
+
+      override def _withHeadAd: Boolean = true
+
+      override def _adSearch: AdSearch = {
+        AdSearch(
+          forceFirstIds = _scState.fadsOpenedOpt.toList,
+          maxResultsOpt = Some(1),
+          generation    = _scState.generationOpt,
+          receiverIds   = _scState.adnId.toList,
+          offsetOpt     = _scState.fadsOffsetOpt
+        )
+      }
+    }
+
+    def maybeFocusedContent: Future[Option[Html]] = {
+      if (_scState.fadsOffsetOpt.isDefined) {
+         focusedLogic.focAdHtmlOptFut
+      } else {
+        Future successful None
+      }
+    }
+
     def tilesRenderFut = tileLogic.madsRenderedFut
-    
+
     // Рендерим indexTpl.
     // TODO рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
     def indexRenderArgs = {
+      val _tilesRenderFut = tilesRenderFut
       for {
-        _inlineTiles <- tilesRenderFut
+        _focusedContentOpt  <- maybeFocusedContent
+        _inlineTiles        <- _tilesRenderFut
       } yield {
         new ScReqArgsDflt {
           // TODO нужно и screen наверное выставлять по-нормальному?
           override def geo = _scState.geo
           override def inlineTiles = _inlineTiles
+          override def focusedContent = _focusedContentOpt
         }
       }
     }
-    
+
     def indexHtmlFut = indexRenderArgs.flatMap(_geoShowCaseHtml)
-    
+
+
     // Рендерим site.html, т.е. базовый шаблон выдачи.
+    /** Готовим аргументы базового шаблона выдачи. */
     def siteArgsFut: Future[ScSiteArgs] = {
       val _indexHtmlFut = indexHtmlFut
       for {
@@ -107,7 +141,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         }
       }
     }
-    
+
     def resultFut = siteArgsFut map { args1 =>
       Ok(demoWebsiteTpl(args1))
     }
