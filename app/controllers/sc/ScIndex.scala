@@ -97,6 +97,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
+    // TODO Распилить на поля трейта.
     override def renderArgsFut: Future[ScRenderArgs] = {
       val _adnNodeFut = adnNodeFut
       val prodsStatsFut = _adnNodeFut.flatMap { adnNode =>
@@ -148,7 +149,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
           override def mmcats         = _mmcats
           override def catsStats      = _catsStats
           override def spsr           = _spsr
-          override val onCloseHref    = _onCloseHref
+          override def onCloseHref    = _onCloseHref
           override def logoImgOpt     = adnNode.logoImgOpt
           override def shops          = prods
           override def geoListGoBack  = _geoListGoBack

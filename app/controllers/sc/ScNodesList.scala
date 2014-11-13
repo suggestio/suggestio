@@ -91,7 +91,7 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
     def _nsArgs: SimpleNodesSearchArgs
     implicit def _request: AbstractRequestWithPwOpt[_]
 
-    val gsiOptFut = _nsArgs.geoMode.geoSearchInfoOpt
+    lazy val gsiOptFut = _nsArgs.geoMode.geoSearchInfoOpt
 
     // Запуск детектора текущей ноды, если необходимо. Асинхронно возвращает (lvl, node) или экзепшен.
     // Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.

@@ -65,7 +65,15 @@ object ScReqArgs {
 }
 
 
-trait ScReqArgs {
+trait SyncRenderFlag {
+  def syncRender: Boolean
+}
+trait SyncRenderFlagDflt extends SyncRenderFlag {
+  override def syncRender = false
+}
+
+
+trait ScReqArgs extends SyncRenderFlag {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def nodesScreenOpened   : Boolean
@@ -73,19 +81,24 @@ trait ScReqArgs {
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[Html]
   def focusedContent      : Option[Html]
+  def inlineNodesList     : Option[Html]
+  /** Текущая нода согласно геоопределению, если есть. */
+  def adnNodeCurrentGeo   : Option[MAdnNode]
 
   override def toString: String = {
     import QueryStringBindable._
     ScReqArgs.qsb.unbind("a", this)
   }
 }
-trait ScReqArgsDflt extends ScReqArgs {
+trait ScReqArgsDflt extends ScReqArgs with SyncRenderFlagDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
   override def nodesScreenOpened    = false
   override def searchScreenOpened   = false
   override def inlineTiles          : Seq[Html] = Nil
   override def focusedContent       : Option[Html] = None
+  override def inlineNodesList      : Option[Html] = None
+  override def adnNodeCurrentGeo    : Option[MAdnNode] = None
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
@@ -96,6 +109,9 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def searchScreenOpened   = reqArgsUnderlying.searchScreenOpened
   override def inlineTiles          = reqArgsUnderlying.inlineTiles
   override def focusedContent       = reqArgsUnderlying.focusedContent
+  override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
+  override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
+  override def syncRender           = reqArgsUnderlying.syncRender
 }
 
 
@@ -154,6 +170,7 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
   def searchInAdnId : Option[String] = None
 
+
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {
     shops
@@ -196,6 +213,7 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
       .append("onCloseHref='").append(onCloseHref).append('\'').append('&')
       .append("geoListGoBack").append(geoListGoBack.toString).append('&')
       .append("shops=[").append(shops.size).append(']').append('&')
+      .append("syncRender=").append(syncRender).append('&')
     val _lio = logoImgOpt
     if (_lio.isDefined)
       sb.append("logoImg=").append(_lio.get.filename).append('&')
@@ -241,7 +259,7 @@ trait WelcomeRenderArgsT {
 
 
 /** Контейнер для аргументов, передаваемых в demoWebSiteTpl. */
-trait ScSiteArgs {
+trait ScSiteArgs extends SyncRenderFlagDflt {
   /** Цвет оформления. */
   def bgColor       : String
   /** Адрес для showcase */
@@ -263,6 +281,7 @@ trait ScSiteArgs {
       .append("showcaseCall=").append(showcaseCall).append('&')
       .append("title=").append(title).append('&')
       .append("withJsSc").append(withJsSc)
+      .append("syncRender=").append(syncRender).append('&')
     if (adnId.isDefined)
       sb.append('&').append("adnId=").append(adnId)
     if (inlineIndex.isDefined)
@@ -274,15 +293,16 @@ trait ScSiteArgs {
 trait ScSiteArgsWrapper extends ScSiteArgs {
   def _scSiteArgs: ScSiteArgs
 
-  override def bgColor = _scSiteArgs.bgColor
-  override def adnId = _scSiteArgs.adnId
+  override def bgColor      = _scSiteArgs.bgColor
+  override def adnId        = _scSiteArgs.adnId
   override def showcaseCall = _scSiteArgs.showcaseCall
-  override def title = _scSiteArgs.title
-  override def withJsSc = _scSiteArgs.withJsSc
-  override def inlineIndex = _scSiteArgs.inlineIndex
+  override def title        = _scSiteArgs.title
+  override def withJsSc     = _scSiteArgs.withJsSc
+  override def inlineIndex  = _scSiteArgs.inlineIndex
 
-  override def withGeo = _scSiteArgs.withGeo
-  override def toString: String = _scSiteArgs.toString
+  override def withGeo      = _scSiteArgs.withGeo
+  override def toString     = _scSiteArgs.toString
+  override def syncRender   = _scSiteArgs.syncRender
 }
 
 
@@ -341,6 +361,8 @@ object ScJsState {
       }
     }
   }
+
+  def apply() = new ScJsState {}
 
 }
 

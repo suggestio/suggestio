@@ -5,7 +5,7 @@ import models._
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
 import util.PlayMacroLogsI
-import util.acl.AbstractRequestWithPwOpt
+import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
 import views.html.market.showcase.demoWebsiteTpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -22,7 +22,7 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds {
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds with ScNodesList {
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
@@ -37,13 +37,18 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
   }
 
+  /** Прямой доступ к синхронному сайту выдачи. */
+  def syncGeoSite(scState: ScJsState) = MaybeAuth.async { implicit request =>
+    _syncGeoSite(scState)
+  }
+
   /**
    * Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния.
    * @param scState Состояние js-выдачи.
    */
   protected def _syncGeoSite(scState: ScJsState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val logic = new ScSyncSiteLogic {
-      override def _scState: ScJsState = scState
+      override def _scState = scState
       override implicit def _request = request
     }
     logic.resultFut
@@ -86,7 +91,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
       override def _withHeadAd: Boolean = true
 
-      override def _adSearch: AdSearch = {
+      override val _adSearch: AdSearch = {
         new AdSearch {
           override def forceFirstIds = _scState.fadsOpenedOpt.toList
           override def maxResultsOpt = Some(1)
@@ -105,21 +110,63 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       }
     }
 
+    /** Логика отработки списка узлов (панели навигации). */
+    lazy val nodesListLogic = new FindNodesLogic {
+      override implicit def _request = that._request
+      override val _nsArgs = SimpleNodesSearchArgs(
+        currAdnId = _scState.adnId,
+        geoMode = _scState.geo
+      )
+    }
+
+    def maybeNodesListHtmlFut: Future[Option[Html]] = {
+      if (_scState.isNavScrOpened) {
+        nodesListLogic.nodesListRenderedFut
+          .map(Some.apply)
+      } else {
+        Future successful None
+      }
+    }
+
+    def maybeGeoDetectResultFut: Future[Option[GeoDetectResult]] = {
+      if (_scState.isNavScrOpened) {
+        nodesListLogic.nextNodeWithLayerFut
+          .map(Some.apply)
+      } else {
+        Future successful None
+      }
+    }
+
+    def currNodeGeoOptFut: Future[Option[MAdnNode]] = {
+      maybeGeoDetectResultFut.map {
+        _.map { gdr =>
+          gdr.node
+        }
+      }
+    }
+
     def tilesRenderFut = tileLogic.madsRenderedFut
 
     // Рендерим indexTpl
     /** Готовим контейнер с аргументами рендера indexTpl. */
-    def indexRenderArgs = {
+    def indexRenderArgs: Future[ScReqArgs] = {
       val _tilesRenderFut = tilesRenderFut
+      val _focusedContentOptFut = maybeFocusedContent
+      val _maybeNodesListHtmlFut = maybeNodesListHtmlFut
       for {
-        _focusedContentOpt  <- maybeFocusedContent
+        _currNodeGeoOpt     <- currNodeGeoOptFut
+        _focusedContentOpt  <- _focusedContentOptFut
         _inlineTiles        <- _tilesRenderFut
+        _nodesListHtmlOpt   <- _maybeNodesListHtmlFut
       } yield {
         new ScReqArgsDflt {
           // TODO нужно и screen наверное выставлять по-нормальному?
           override def geo = _scState.geo
           override def inlineTiles = _inlineTiles
           override def focusedContent = _focusedContentOpt
+          override def inlineNodesList = _nodesListHtmlOpt
+          override def adnNodeCurrentGeo = _currNodeGeoOpt
+          override def syncRender = true
         }
       }
     }
@@ -138,6 +185,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         new ScSiteArgsWrapper {
           override def _scSiteArgs = siteRenderArgs
           override def inlineIndex = Some(indexHtml)
+          override def syncRender = true
         }
       }
     }
