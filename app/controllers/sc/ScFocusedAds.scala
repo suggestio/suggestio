@@ -79,7 +79,11 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       val adSearch2 = if (_adSearch.forceFirstIds.isEmpty) {
         _adSearch
       } else {
-        _adSearch.copy(forceFirstIds = Nil, withoutIds = _adSearch.forceFirstIds)
+        new AdSearchWrapper {
+          override def _adsSearchArgsUnderlying: AdSearch = _adSearch
+          override def forceFirstIds = Nil
+          override def withoutIds = forceFirstIds
+        }
       }
       MAd.dynSearch(adSearch2)
     }

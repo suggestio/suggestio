@@ -3,7 +3,7 @@ package models
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
-import io.suggest.ym.model.ad.AdsSearchArgsT
+import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
 import util.qsb.QsbUtil._
 
 /**
@@ -59,25 +59,25 @@ object AdSearch {
           maybeDevScreen <- devScreenB.bind(key + ".screen", params)
 
         } yield {
-          val maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
+          val _maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
             Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
           }
           Right(
-            AdSearch(
-              receiverIds = maybeRcvrIdOpt,
-              producerIds = maybeProdIdOpt,
-              catIds      = maybeCatIdOpt,
-              levels      = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
-              qOpt        = maybeQOpt,
-              maxResultsOpt = maxResultsOpt,
-              offsetOpt   = eitherOpt2option(maybeOffsetOpt) map { offset =>
-                Math.max(0,  Math.min(offset,  MAX_OFFSET))
-              },
-              forceFirstIds = maybeFirstId,
-              generation  = maybeGen,
-              geo         = maybeGeo,
-              screen      = maybeDevScreen
-            )
+            new AdSearch {
+              override def receiverIds = maybeRcvrIdOpt
+              override def producerIds = maybeProdIdOpt
+              override def catIds = maybeCatIdOpt
+              override def levels = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName)
+              override def qOpt = maybeQOpt
+              override def maxResultsOpt = _maxResultsOpt
+              override lazy val offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
+                Math.max(0, Math.min(offset, MAX_OFFSET))
+              }
+              override def forceFirstIds = maybeFirstId
+              override def generation = maybeGen
+              override def geo = maybeGeo
+              override def screen = maybeDevScreen
+            }
           )
         }
       }
@@ -104,26 +104,60 @@ object AdSearch {
 }
 
 
-case class AdSearch(
-  receiverIds   : List[String] = Nil,
-  producerIds   : List[String] = Nil,
-  catIds        : List[String] = Nil,
-  levels        : List[AdShowLevel] = Nil,
-  qOpt          : Option[String] = None,
-  maxResultsOpt : Option[Int] = None,
-  offsetOpt     : Option[Int] = None,
-  forceFirstIds : List[String] = Nil,
-  generation    : Option[Long] = None,
-  withoutIds    : List[String] = Nil,
-  geo           : GeoMode = GeoNone,
-  screen        : Option[DevScreen] = None
-) extends AdsSearchArgsT {
+trait AdSearch extends AdsSearchArgsDflt {
+
+  /** Опциональное значение обязательного maxResults. Удобно при query-string. */
+  def maxResultsOpt : Option[Int] = None
+
+  /** Опциональное значение обязательного сдвига в результатах. */
+  def offsetOpt     : Option[Int] = None
+
+  /** Географическая информация, присланная клиентом. */
+  def geo       : GeoMode = GeoNone
+
+  /** Данные по экрану, присланные клиентом. */
+  def screen    : Option[DevScreen] = None
+
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
-  def offset: Int = if (offsetOpt.isDefined) offsetOpt.get else 0
+  override def offset: Int = {
+    if (offsetOpt.isDefined) offsetOpt.get else super.offset
+  }
 
   /** Макс.кол-во результатов. */
-  def maxResults: Int = maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
+  override def maxResults: Int = {
+    maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
+  }
 
+  // Утиль для удобства работы в шаблонах, привыкших к вызову copy().
+  /** Без оффсета */
+  def withoutOffset: AdSearch = new AdSearchWrapper {
+    override def _adsSearchArgsUnderlying = this
+    override def offsetOpt: Option[Int] = None
+  }
+
+  /** Вычесть указанное число элементов из offset'а, отфильтровать неположительные значения. */
+  def minusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
+    override def _adsSearchArgsUnderlying = this
+    override def offsetOpt = super.offsetOpt.map(_ - count).filter(_ > 0)
+  }
+
+  /** Инкрементить offset на указанное кол-во элементов. */
+  def plusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
+    override def _adsSearchArgsUnderlying = this
+    override def offsetOpt: Option[Int] = Some( super.offsetOpt.fold(count)(_ + count) )
+  }
+
+}
+
+/** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
+trait AdSearchWrapper extends AdSearch with AdsSearchArgsWrapper {
+  /** Значение, которое скрывает этот враппер. */
+  override def _adsSearchArgsUnderlying: AdSearch
+
+  override def maxResultsOpt  = _adsSearchArgsUnderlying.maxResultsOpt
+  override def offsetOpt      = _adsSearchArgsUnderlying.offsetOpt
+  override def geo            = _adsSearchArgsUnderlying.geo
+  override def screen         = _adsSearchArgsUnderlying.screen
 }
 

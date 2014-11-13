@@ -60,12 +60,12 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override type T = HtmlFormat.Appendable
       override implicit def _request = that._request
 
-      override val _adSearch = AdSearch(
+      override val _adSearch = new AdSearch {
         // TODO Прокачать сюда остальные куски состояния, по мере расширения js-состояния.
-        receiverIds = _scState.adnId.toList,
-        generation = _scState.generationOpt,
-        geo = _scState.geo
-      )
+        override def receiverIds = _scState.adnId.toList
+        override def generation = _scState.generationOpt
+        override def geo = _scState.geo
+      }
 
       override def renderMadAsync(mad: MAd): Future[T] = {
         Future {
@@ -87,13 +87,13 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override def _withHeadAd: Boolean = true
 
       override def _adSearch: AdSearch = {
-        AdSearch(
-          forceFirstIds = _scState.fadsOpenedOpt.toList,
-          maxResultsOpt = Some(1),
-          generation    = _scState.generationOpt,
-          receiverIds   = _scState.adnId.toList,
-          offsetOpt     = _scState.fadsOffsetOpt
-        )
+        new AdSearch {
+          override def forceFirstIds = _scState.fadsOpenedOpt.toList
+          override def maxResultsOpt = Some(1)
+          override def generation = _scState.generationOpt
+          override def receiverIds = _scState.adnId.toList
+          override def offsetOpt = _scState.fadsOffsetOpt
+        }
       }
     }
 
@@ -107,8 +107,8 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
     def tilesRenderFut = tileLogic.madsRenderedFut
 
-    // Рендерим indexTpl.
-    // TODO рендерить открытую рекламную карточку (focusedAds) и вставлять в fads container.
+    // Рендерим indexTpl
+    /** Готовим контейнер с аргументами рендера indexTpl. */
     def indexRenderArgs = {
       val _tilesRenderFut = tilesRenderFut
       for {

@@ -161,10 +161,10 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
   trait ScIndexNodeSimpleHelper extends ScIndexNodeHelper {
     override def spsrFut = adnNodeFut map { adnNode =>
-      AdSearch(
-        levels      = List(AdShowLevels.LVL_START_PAGE),
-        receiverIds = List(adnNode.id.get)
-      )
+      new AdSearch {
+        override def levels = List(AdShowLevels.LVL_START_PAGE)
+        override def receiverIds = List(adnNode.id.get)
+      }
     }
 
     override def onCloseHrefFut: Future[String] = adnNodeFut.map { adnNode =>
@@ -223,7 +223,12 @@ trait ScIndexNode extends ScIndexNodeCommon {
         Future successful url
       }
 
-      override def spsrFut = Future successful AdSearch( producerIds = List(adnId) )
+      override def spsrFut = {
+        val spsr = new AdSearch {
+          override def producerIds = List(adnId)
+        }
+        Future successful spsr
+      }
       override def adnNodeFut = Future successful request.adnNode
       override def isGeo = false
       override implicit def _request = request

@@ -4,15 +4,17 @@ import java.util.NoSuchElementException
 
 import _root_.util.showcase._
 import ShowcaseUtil._
+import io.suggest.ym.model.ad.{AdsSearchArgsT, AdsSearchArgsWrapper}
+import io.suggest.ym.model.common.SlNameTokenStr
 import play.twirl.api.HtmlFormat
 import util._
 import util.acl._
 import views.html.market.showcase._
 import play.api.libs.json._
-import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
+import models._
 
 /**
  * Suggest.io
@@ -89,12 +91,17 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       } else {
         // При поиске по категориям надо искать только если есть указанный show level.
         if (_adSearch.catIds.nonEmpty) {
-          val result = _adSearch.copy(levels = AdShowLevels.LVL_CATS :: _adSearch.levels)
+          val result = new AdSearchWrapper {
+            override def _adsSearchArgsUnderlying = _adSearch
+            override def levels: Seq[SlNameTokenStr] = AdShowLevels.LVL_CATS :: super.levels.toList
+          }
           Future successful result
         } else if (_adSearch.receiverIds.nonEmpty) {
           // TODO Можно спилить этот костыль?
-          val lvls1 = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels).distinct
-          val result = _adSearch.copy(levels = lvls1)
+          val result = new AdSearchWrapper {
+            override def _adsSearchArgsUnderlying = _adSearch
+            override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
+          }
           Future successful result
         } else if (_adSearch.geo.isWithGeo) {
           // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
@@ -104,7 +111,11 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
             .recover { case ex: NoSuchElementException => None }
             .map {
               case Some(adnNode) =>
-                _adSearch.copy(receiverIds = List(adnNode.id.get), geo = GeoNone)
+                new AdSearchWrapper {
+                  override def _adsSearchArgsUnderlying = _adSearch
+                  override def receiverIds = List(adnNode.id.get)
+                  override def geo: GeoMode = GeoNone
+                }
               case None =>
                 _adSearch
             }

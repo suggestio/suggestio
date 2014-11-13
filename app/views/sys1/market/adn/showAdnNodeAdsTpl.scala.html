@@ -98,14 +98,20 @@
 
   <br/><br/>
 
+
   @* Рендерим переключение страниц. *@
   Страницы:
+
   @if( a.offsetOpt.exists(_ > 0) ) {
-    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds(a.copy(offsetOpt = None))">Первая</a>
+    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds(a.withoutOffset)">Первая</a>
   }
+
   @if(a.offsetOpt.isDefined) {
-    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = a.offsetOpt.map {_ - a.maxResults}) )">Предыдущая</a>
+    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.minusOffset() )">Предыдущая</a>
   }
+
   <strong class="color-strong">@(a.offset / a.maxResults)</strong>
-  <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = Some(a.offsetOpt.getOrElse(0) + a.maxResults) ))">Следующая</a>
+
+  <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.plusOffset() )">Следующая</a>
+
 }

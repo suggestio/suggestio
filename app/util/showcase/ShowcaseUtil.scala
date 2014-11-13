@@ -64,11 +64,11 @@ object ShowcaseUtil {
    * @return Кортеж из фьючерса с картой статистики категорий и списком отображаемых категорий.
    */
   def getCats(adnIdOpt: Option[String]) = {
-    val catAdsSearch = AdSearch(
-      receiverIds   = adnIdOpt.toList,
-      maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_CATS)
-    )
+    val catAdsSearch = new AdSearch {
+      override def receiverIds    = adnIdOpt.toList
+      override def maxResultsOpt  = Some(100)
+      override def levels         = List(AdShowLevels.LVL_CATS)
+    }
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
       .map { _.toMap }

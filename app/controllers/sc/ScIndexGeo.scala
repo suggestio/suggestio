@@ -123,10 +123,10 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
           override def name      = SITE_NAME_GEO
           override def mmcats    = _mmcats
           override def catsStats = _catsStats
-          override lazy val spsr = AdSearch(
-            levels = List(AdShowLevels.LVL_START_PAGE),
-            geo = GeoIp
-          )
+          override lazy val spsr = new AdSearch {
+            override def levels = List(AdShowLevels.LVL_START_PAGE)
+            override def geo = GeoIp
+          }
           override def onCloseHref = ONCLOSE_HREF_DFLT
         }
       }
