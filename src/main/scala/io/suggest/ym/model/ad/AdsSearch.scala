@@ -9,7 +9,7 @@ import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.model.EsModelStaticT
-import io.suggest.ym.model.common.{SlNameTokenStr, DynSearchArgs, EsDynSearchStatic, EMReceivers}
+import io.suggest.ym.model.common._
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -195,6 +195,35 @@ trait AdsSearchArgsT extends DynSearchArgs {
   def generation: Option[Long]
 
   override def toEsQuery = AdsSearch.prepareEsQuery(this)
+}
+
+/** Дефолтовые значения аргументов поиска рекламных карточек. */
+trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt {
+  override def receiverIds: Seq[String] = Nil
+  override def producerIds: Seq[String] = Nil
+  override def forceFirstIds: Seq[String] = Nil
+  override def levels: Seq[SlNameTokenStr] = Nil
+  override def withoutIds: Seq[String] = Nil
+  override def qOpt: Option[String] = None
+  override def generation: Option[Long] = None
+  override def catIds: Seq[String] = Nil
+}
+
+/** Враппер для аргументов поиска рекламных карточек. */
+trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper {
+  /** Значение, которое скрывает этот враппер. */
+  def _adsSearchArgsUnderlying: AdsSearchArgsT
+
+  override def _dsArgsUnderlying: DynSearchArgs = _adsSearchArgsUnderlying
+
+  override def receiverIds    = _adsSearchArgsUnderlying.receiverIds
+  override def producerIds    = _adsSearchArgsUnderlying.producerIds
+  override def forceFirstIds  = _adsSearchArgsUnderlying.forceFirstIds
+  override def levels         = _adsSearchArgsUnderlying.levels
+  override def withoutIds     = _adsSearchArgsUnderlying.withoutIds
+  override def qOpt           = _adsSearchArgsUnderlying.qOpt
+  override def generation     = _adsSearchArgsUnderlying.generation
+  override def catIds         = _adsSearchArgsUnderlying.catIds
 }
 
 

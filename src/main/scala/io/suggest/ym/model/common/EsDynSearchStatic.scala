@@ -104,3 +104,17 @@ trait DynSearchArgs {
 
 }
 
+/** Дефолтовые значения базовых параметров dyn-поиска. */
+trait DynSearchArgsDflt extends DynSearchArgs {
+  override def offset: Int = 0
+  override def maxResults: Int = 10
+}
+
+/** Враппер для контейнера аргументов dyn-поиска. */
+trait DynSearchArgsWrapper extends DynSearchArgs {
+  def _dsArgsUnderlying: DynSearchArgs
+
+  override def maxResults = _dsArgsUnderlying.maxResults
+  override def offset     = _dsArgsUnderlying.offset
+  override def toEsQuery  = _dsArgsUnderlying.toEsQuery
+}
