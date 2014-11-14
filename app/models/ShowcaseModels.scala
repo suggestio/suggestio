@@ -1,5 +1,7 @@
 package models
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,4 +21,36 @@ case class GeoDetectResult(ngl: NodeGeoLevel, node: MAdnNode)
 case class GeoNodesLayer(
   nodes: Seq[MAdnNode],
   nameOpt: Option[String] = None
+)
+
+
+/**
+ * Контейнер неготовых асинхронных результатов работы [[util.showcase.ShowcaseUtil.getCats()]].
+ * @param catsStatsFut Фьючерс со статистиками категорий.
+ * @param catsFut Фьючерс со списком категорий
+ */
+case class GetCatsResult(
+  catsStatsFut  : Future[Map[String, Long]],
+  catsFut       : Future[Seq[MMartCategory]]
+) {
+
+  def future(implicit ec: ExecutionContext): Future[GetCatsSyncResult] = {
+    for {
+      catsStats <- catsStatsFut
+      cats      <- catsFut
+    } yield {
+      GetCatsSyncResult(catsStats, cats)
+    }
+  }
+
+}
+
+/**
+ * Контейнер только готовых результатов работы [[util.showcase.ShowcaseUtil.getCats()]].
+ * @param catsStats Статистики категорий.
+ * @param cats Список категорий.
+ */
+case class GetCatsSyncResult(
+  catsStats  : Map[String, Long],
+  cats       : Seq[MMartCategory]
 )

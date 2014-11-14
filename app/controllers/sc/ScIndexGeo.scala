@@ -111,10 +111,9 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     override def currAdnIdFut = Future successful None
 
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val (catsStatsFut, mmcatsFut) = getCats(None)
+      val gcr = getCats(None)
       for {
-        _mmcats    <- mmcatsFut
-        _catsStats <- catsStatsFut
+        GetCatsSyncResult(_catsStats, _mmcats) <- gcr.future
       } yield {
         new ScRenderArgs with ScReqArgsWrapper {
           override def reqArgsUnderlying = _reqArgs
@@ -138,7 +137,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   trait ScIndexNodeGeoHelper extends ScIndexNodeSimpleHelper {
     def gdrFut: Future[GeoDetectResult]
 
-    override def adnNodeFut = gdrFut.map(_.node)
+    override val adnNodeFut = gdrFut.map(_.node)
 
     override def geoListGoBackFut: Future[Option[Boolean]] = {
       gdrFut.map { gdr => Some(gdr.ngl.isLowest) }

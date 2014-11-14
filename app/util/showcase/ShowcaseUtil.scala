@@ -63,7 +63,7 @@ object ShowcaseUtil {
    * @param adnIdOpt id узла, если есть.
    * @return Кортеж из фьючерса с картой статистики категорий и списком отображаемых категорий.
    */
-  def getCats(adnIdOpt: Option[String]) = {
+  def getCats(adnIdOpt: Option[String]): GetCatsResult = {
     val catAdsSearch = new AdSearch {
       override def receiverIds    = adnIdOpt.toList
       override def maxResultsOpt  = Some(100)
@@ -101,7 +101,7 @@ object ShowcaseUtil {
           .map { _.sortBy(MMartCategory.sortByMmcat) }
       }
     }
-    (catsStatsFut, mmcatsFut)
+    GetCatsResult(catsStatsFut, mmcatsFut)
   }
 
 
