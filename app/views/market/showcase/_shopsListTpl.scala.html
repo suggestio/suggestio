@@ -1,31 +1,41 @@
 @(args: ScRenderArgs)(implicit ctx:util.Context)
 @import util.TplDataFormatUtil._
 
-@stuff.scrollableContainerTpl( "sm-shops", "smShops", style = Some(stuff._bgcolor( args.bgColor, false ).toString) ){
+@stuff.scrollableContainerTpl( "sm-shops", "smShops", style = Some(stuff._bgcolor( args.bgColor, false ).toString + "display: block;") ){
 <div class="shops-list">
+
   @args.shopsLetterGrouped.map { case ((letter, mshops), i) =>
 
-      <div class="shops-list_row @*if(i%2 == 0){__odd}*@" style="@stuff._bgcolor( args.bgColor ); opacity: 0.8; color: #@args.fgColor;">
-        <div class="shops-list_letter" style="border-color: #@args.fgColor;">@letter</div>
-      </div>
+    <div class="shops-list_row @*if(i%2 == 0){__odd}*@" style="@stuff._bgcolor( args.bgColor ); opacity: 0.8; color: #@args.fgColor;">
+      <div class="shops-list_letter" style="border-color: #@args.fgColor;">@letter</div>
+    </div>
 
-      @mshops.zipWithIndex.map { case (mshop,si) =>
+    @* Рендер списка магазинов или иных рекламодателей. *@
+    @mshops.zipWithIndex.map { case (mshop, si) =>
+      @args.jsStateOpt.map { jsState =>
+        <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(producerAdnIdOpt = mshop.id) )">
+      }
       <div class="shops-list_row @if((si)%2 == 0){__odd} js-shop-link" data-producer-id="@mshop.id">
         @mshop.meta.name
       </div>
+      @if( args.jsStateOpt ) {
+        </a>
       }
+    }
+
   }
 
+
+  @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
   <style type="text/css">
-    @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
     .shops-list_row {
       color:#@args.fgColor;
     }
     .shops-list_row.__odd {
       background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
     }
-    }
   </style>
+  }
 
 </div>
 }

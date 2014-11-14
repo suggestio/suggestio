@@ -99,6 +99,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override def generation = _scState.generationOpt
           override def receiverIds = _scState.adnId.toList
           override def offsetOpt = _scState.fadsOffsetOpt
+          override def producerIds = _scState.producerAdnIdOpt.toList
         }
       }
     }

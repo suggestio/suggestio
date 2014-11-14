@@ -294,17 +294,22 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
 
 object ScJsState {
   
-  val ADN_ID_FN               = "mart_id"
-  val CAT_SCR_OPENED_FN       = "cat_screen.is_opened"
-  val GEO_SCR_OPENED_FN       = "geo_screen.is_opened"
-  val FADS_CURRENT_AD_ID_FN   = "fads.current_ad_id"
+  val ADN_ID_FN               = "rcvr"
+  val CAT_SCR_OPENED_FN       = "search.opened"
+  val GEO_SCR_OPENED_FN       = "nav.opened"
+  val FADS_CURRENT_AD_ID_FN   = "fads.current.ad_id"
   val FADS_OFFSET_FN          = "fads.offset"
-  val GENERATION_FN           = "generation"
+  val GENERATION_FN           = "gen"
+  val SEARCH_TAB_FN           = "search.tab"
+  val PRODUCER_ADN_ID_FN      = "prod"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     qsb
   }
+
+  private def noFalse(boolOpt: Option[Boolean]) = boolOpt.filter(identity)
+  private def strNonEmpty(strOpt: Option[String]) = strOpt.filter(!_.isEmpty)
 
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
                    boolOptB: QueryStringBindable[Option[Boolean]],
@@ -319,14 +324,18 @@ object ScJsState {
           maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
           maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
           maybeFadsOffset       <- intOptB.bind(FADS_OFFSET_FN, params)
+          maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN, params)
+          maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
         } yield {
           val res = ScJsState(
-            adnId               = maybeAdnId,
-            searchScrOpenedOpt  = maybeCatScreenOpened,
-            navScrOpenedOpt     = maybeGeoScreenOpened,
+            adnId               = strNonEmpty( maybeAdnId ),
+            searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
+            navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
             generationOpt       = maybeGeneration,
-            fadsOpenedOpt       = maybeFadsOpened,
-            fadsOffsetOpt       = maybeFadsOffset
+            fadsOpenedOpt       = strNonEmpty( maybeFadsOpened ),
+            fadsOffsetOpt       = maybeFadsOffset,
+            searchTabListOpt    = noFalse( maybeSearchTab ),
+            producerAdnIdOpt    = strNonEmpty( maybeProducerAdnId )
           )
           Right(res)
         }
@@ -337,9 +346,11 @@ object ScJsState {
           strOptB.unbind(ADN_ID_FN, value.adnId),
           boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
           boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
-          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
           longOptB.unbind(GENERATION_FN, value.generationOpt),
-          intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt)
+          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
+          intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt),
+          boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
+          strOptB.unbind(PRODUCER_ADN_ID_FN, value.producerAdnIdOpt)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -357,7 +368,9 @@ case class ScJsState(
   navScrOpenedOpt     : Option[Boolean]  = None,
   generationOpt       : Option[Long]     = None,
   fadsOpenedOpt       : Option[String]   = None,
-  fadsOffsetOpt       : Option[Int]      = None
+  fadsOffsetOpt       : Option[Int]      = None,
+  searchTabListOpt    : Option[Boolean]  = None,
+  producerAdnIdOpt    : Option[String]   = None
 ) {
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
@@ -378,6 +391,9 @@ case class ScJsState(
   def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
   def isFadsOpened      : Boolean = fadsOpenedOpt.isDefined
   def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
+
+  def isSearchTabList   : Boolean = searchTabListOpt.exists(identity)
+  def isSearchTabCats   : Boolean = !isSearchTabList
 
   def fadsOffset        : Int = fadsOffsetOpt
 
