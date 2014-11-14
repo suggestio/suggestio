@@ -43,7 +43,7 @@ trait ScIndexConstants {
 
 
 /** Общая утиль, испрользуемая в контроллере. */
-trait ScIndexCommon extends ScController with PlayMacroLogsI with ScSiteConstants {
+trait ScIndexCommon extends ScController with PlayMacroLogsI {
 
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
   trait ScIndexHelperBase {
@@ -90,7 +90,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI with ScSiteConstant
 /** Вспомогательная утиль для рендера indexTpl на нодах. */
 trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
-  trait ScIndexNodeHelper extends ScIndexHelperBase {
+  trait ScIndexNodeHelper extends ScIndexHelperBase with ScSiteConstants {
     val adnNodeFut        : Future[MAdnNode]
     def spsrFut           : Future[AdSearch]
     def onCloseHrefFut    : Future[String]

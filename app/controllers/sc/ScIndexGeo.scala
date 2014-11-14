@@ -78,34 +78,28 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   }
 
 
-  /** Только голый рендер содержимого indexTpl, подходящего под запрос. */
-  protected def _geoShowCaseHtml(args: ScReqArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
-    val logic = new GeoIndexLogic {
-      override type T = HtmlFormat.Appendable
 
-      override def _reqArgs: ScReqArgs = args
-      override implicit def _request = request
+  trait HtmlGeoIndexLogic extends GeoIndexLogic {
+    override type T = HtmlFormat.Appendable
 
-      implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
-        h.flatMap(_.respHtmlFut)
-      }
-
-      /** Нет ноды. */
-      override def nodeNotDetected(): Future[T] = {
-        nodeNotDetectedHelperFut()
-      }
-
-      /** Нода найдена с помощью геолокации. */
-      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
-        nodeFoundHelperFut(gdr)
-      }
+    implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
+      h.flatMap(_.respHtmlFut)
     }
-    logic.apply()
+
+    /** Нет ноды. */
+    override def nodeNotDetected(): Future[T] = {
+      nodeNotDetectedHelperFut()
+    }
+
+    /** Нода найдена с помощью геолокации. */
+    override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+      nodeFoundHelperFut(gdr)
+    }
   }
 
 
   /** Хелпер для рендера голой выдачи (вне ноды). Вероятно, этот код никогда не вызывается. */
-  trait ScIndexGeoHelper extends ScIndexHelperBase {
+  trait ScIndexGeoHelper extends ScIndexHelperBase with ScSiteConstants {
     override def isGeo = true
 
     override def currAdnIdFut = Future successful None
@@ -137,7 +131,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   trait ScIndexNodeGeoHelper extends ScIndexNodeSimpleHelper {
     def gdrFut: Future[GeoDetectResult]
 
-    override val adnNodeFut = gdrFut.map(_.node)
+    override lazy val adnNodeFut = gdrFut.map(_.node)
 
     override def geoListGoBackFut: Future[Option[Boolean]] = {
       gdrFut.map { gdr => Some(gdr.ngl.isLowest) }

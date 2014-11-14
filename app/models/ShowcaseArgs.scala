@@ -18,8 +18,6 @@ object ScReqArgs {
 
   val GEO_SUF               = ".geo"
   val SCREEN_SUF            = ".screen"
-  val NODES_SCR_OPENED_SUF  = ".nodesScrOpened"
-  val SEARCH_SCR_OPENED_SUF = ".searchScrOpened"
 
   /** routes-Биндер для параметров showcase'а. */
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
@@ -30,8 +28,6 @@ object ScReqArgs {
         for {
           maybeGeo                <- strOptB.bind(key + GEO_SUF, params)
           maybeDevScreen          <- devScreenB.bind(key + SCREEN_SUF, params)
-          maybeNodesScreenOpened  <- boolOptB.bind(key + NODES_SCR_OPENED_SUF, params)
-          maybeSearchScreenOpened <- boolOptB.bind(key + SEARCH_SCR_OPENED_SUF, params)
         } yield {
           Right(new ScReqArgsDflt {
             override val geo = {
@@ -41,8 +37,6 @@ object ScReqArgs {
             }
             // Игнорим неверные размеры, ибо некритично.
             override lazy val screen: Option[DevScreen] = maybeDevScreen
-            override val nodesScreenOpened = maybeNodesScreenOpened.getOrElse(false)
-            override val searchScreenOpened = maybeSearchScreenOpened.getOrElse(false)
           })
         }
       }
@@ -50,9 +44,7 @@ object ScReqArgs {
       override def unbind(key: String, value: ScReqArgs): String = {
         List(
           strOptB.unbind(key + GEO_SUF, value.geo.toQsStringOpt),
-          devScreenB.unbind(key + SCREEN_SUF, value.screen),
-          boolOptB.unbind(key + NODES_SCR_OPENED_SUF, Some(value.nodesScreenOpened).filter(identity)),
-          boolOptB.unbind(key + SEARCH_SCR_OPENED_SUF, Some(value.searchScreenOpened).filter(identity))
+          devScreenB.unbind(key + SCREEN_SUF, value.screen)
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
@@ -65,19 +57,18 @@ object ScReqArgs {
 }
 
 
-trait SyncRenderFlag {
-  def syncRender: Boolean
+trait SyncRenderInfo {
+  def jsStateOpt: Option[ScJsState]
+  def syncRender: Boolean = jsStateOpt.isDefined
 }
-trait SyncRenderFlagDflt extends SyncRenderFlag {
-  override def syncRender = false
+trait SyncRenderInfoDflt extends SyncRenderInfo {
+  override def jsStateOpt: Option[ScJsState] = None
 }
 
 
-trait ScReqArgs extends SyncRenderFlag {
+trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
-  def nodesScreenOpened   : Boolean
-  def searchScreenOpened  : Boolean
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[Html]
   def focusedContent      : Option[Html]
@@ -90,11 +81,9 @@ trait ScReqArgs extends SyncRenderFlag {
     ScReqArgs.qsb.unbind("a", this)
   }
 }
-trait ScReqArgsDflt extends ScReqArgs with SyncRenderFlagDflt {
+trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
-  override def nodesScreenOpened    = false
-  override def searchScreenOpened   = false
   override def inlineTiles          : Seq[Html] = Nil
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
@@ -105,13 +94,12 @@ trait ScReqArgsWrapper extends ScReqArgs {
   def reqArgsUnderlying: ScReqArgs
   override def geo                  = reqArgsUnderlying.geo
   override def screen               = reqArgsUnderlying.screen
-  override def nodesScreenOpened    = reqArgsUnderlying.nodesScreenOpened
-  override def searchScreenOpened   = reqArgsUnderlying.searchScreenOpened
   override def inlineTiles          = reqArgsUnderlying.inlineTiles
   override def focusedContent       = reqArgsUnderlying.focusedContent
   override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
   override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
-  override def syncRender           = reqArgsUnderlying.syncRender
+
+  override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
 }
 
 
@@ -259,7 +247,7 @@ trait WelcomeRenderArgsT {
 
 
 /** Контейнер для аргументов, передаваемых в demoWebSiteTpl. */
-trait ScSiteArgs extends SyncRenderFlagDflt {
+trait ScSiteArgs extends SyncRenderInfoDflt {
   /** Цвет оформления. */
   def bgColor       : String
   /** Адрес для showcase */
@@ -268,7 +256,6 @@ trait ScSiteArgs extends SyncRenderFlagDflt {
   def adnId         : Option[String]
   /** Отображаемый заголовок. */
   def title         : Option[String] = None
-  def withJsSc      : Boolean = true
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
   def inlineIndex   : Option[HtmlFormat.Appendable] = None
 
@@ -280,7 +267,6 @@ trait ScSiteArgs extends SyncRenderFlagDflt {
     sb.append("bgColor=").append(bgColor).append('&')
       .append("showcaseCall=").append(showcaseCall).append('&')
       .append("title=").append(title).append('&')
-      .append("withJsSc").append(withJsSc)
       .append("syncRender=").append(syncRender).append('&')
     if (adnId.isDefined)
       sb.append('&').append("adnId=").append(adnId)
@@ -297,7 +283,6 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
   override def adnId        = _scSiteArgs.adnId
   override def showcaseCall = _scSiteArgs.showcaseCall
   override def title        = _scSiteArgs.title
-  override def withJsSc     = _scSiteArgs.withJsSc
   override def inlineIndex  = _scSiteArgs.inlineIndex
 
   override def withGeo      = _scSiteArgs.withGeo
@@ -335,14 +320,14 @@ object ScJsState {
           maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
           maybeFadsOffset       <- intOptB.bind(FADS_OFFSET_FN, params)
         } yield {
-          val res = new ScJsState {
-            override def adnId = maybeAdnId
-            override def searchScrOpenedOpt = maybeCatScreenOpened
-            override def navScrOpenedOpt = maybeGeoScreenOpened
-            override def generationOpt = maybeGeneration
-            override def fadsOpenedOpt = maybeFadsOpened
-            override def fadsOffsetOpt = maybeFadsOffset
-          }
+          val res = ScJsState(
+            adnId               = maybeAdnId,
+            searchScrOpenedOpt  = maybeCatScreenOpened,
+            navScrOpenedOpt     = maybeGeoScreenOpened,
+            generationOpt       = maybeGeneration,
+            fadsOpenedOpt       = maybeFadsOpened,
+            fadsOffsetOpt       = maybeFadsOffset
+          )
           Right(res)
         }
       }
@@ -362,13 +347,18 @@ object ScJsState {
     }
   }
 
-  def apply() = new ScJsState {}
-
 }
 
 
 /** Класс, отражающий состояние js-выдачи на клиенте. */
-trait ScJsState {
+case class ScJsState(
+  adnId               : Option[String]   = None,
+  searchScrOpenedOpt  : Option[Boolean]  = None,
+  navScrOpenedOpt     : Option[Boolean]  = None,
+  generationOpt       : Option[Long]     = None,
+  fadsOpenedOpt       : Option[String]   = None,
+  fadsOffsetOpt       : Option[Int]      = None
+) {
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     boolOpt.isDefined && boolOpt.get
@@ -378,13 +368,6 @@ trait ScJsState {
     if (intOpt.isDefined)  intOpt.get  else  0
   }
 
-  def adnId               : Option[String]   = None
-  def searchScrOpenedOpt  : Option[Boolean]  = None
-  def navScrOpenedOpt     : Option[Boolean]  = None
-  def generationOpt       : Option[Long]     = None
-
-  def fadsOpenedOpt       : Option[String]   = None
-  def fadsOffsetOpt       : Option[Int]      = None
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
@@ -393,8 +376,14 @@ trait ScJsState {
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
-  // TODO Нужно считывания geo-состояния из qs.
-  def geo: GeoMode = GeoNone
+  // Пока что считывание geo-состояния из qs не нужно, т.к. HTML5 Geolocation доступно только в js-выдаче.
+  def geo: GeoMode = GeoIp
 
+  def toggleNavScreen: ScJsState = {
+    val nextNavState = !isNavScrOpened
+    copy(
+      navScrOpenedOpt = if (nextNavState) Some(nextNavState) else None
+    )
+  }
 }
 

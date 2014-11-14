@@ -1,12 +1,21 @@
 @(args: ScRenderArgs)(implicit ctx:util.Context)
 @import util.TplDataFormatUtil._
 
-<div class="sm-geo-screen" id="smGeoScreen" @if(args.nodesScreenOpened) {style="display: block;"} >
+<div class="sm-geo-screen" id="smGeoScreen" @if(args.jsStateOpt.exists(_.isNavScrOpened)) {style="display: block;"} >
 
   <div class="sm-geo-screen_header">
+
+    @* В синхронном режиме рендерим кнопку ссылкой. *@
+    @args.jsStateOpt.map { jsState =>
+      <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleNavScreen)">
+    }
     <div class="sm-button sm-producer-header_btn __left-aligned abs" id="smGeoScreenCloseButton">
       @svg._backArrowLeft( args.fgColor )
     </div>
+    @if(args.jsStateOpt) {
+      </a>
+    }
+
   </div>
 
   <div class="sm-geo-screen_current-location" id="smGeoLocationButton" style="@stuff._bgcolor( args.bgColor, true );">

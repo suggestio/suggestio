@@ -55,6 +55,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
   }
 
 
+
   /** Логика работы синхронного сайта описывается этим трейтом и связями в нём. */
   trait ScSyncSiteLogic { that =>
     def _scState: ScJsState
@@ -149,7 +150,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
     // Рендерим indexTpl
     /** Готовим контейнер с аргументами рендера indexTpl. */
-    def indexRenderArgs: Future[ScReqArgs] = {
+    def indexRenderArgsFut: Future[ScReqArgs] = {
       val _tilesRenderFut = tilesRenderFut
       val _focusedContentOptFut = maybeFocusedContent
       val _maybeNodesListHtmlFut = maybeNodesListHtmlFut
@@ -166,12 +167,31 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override def focusedContent = _focusedContentOpt
           override def inlineNodesList = _nodesListHtmlOpt
           override def adnNodeCurrentGeo = _currNodeGeoOpt
-          override def syncRender = true
+          override def jsStateOpt = Some(_scState)
         }
       }
     }
 
-    def indexHtmlFut = indexRenderArgs.flatMap(_geoShowCaseHtml)
+    def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
+      indexRenderArgsFut.map { indexRenderArgs =>
+        new HtmlGeoIndexLogic {
+          override def _reqArgs: ScReqArgs = indexRenderArgs
+          override implicit def _request = that._request
+
+          override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
+            val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
+              override val gdrFut = Future successful gdr
+              override def welcomeAdOptFut = Future successful None
+            }
+            Future successful helper
+          }
+        }
+      }
+    }
+
+    def indexHtmlFut: Future[Html] = {
+      indexHtmlLogicFut.flatMap(_.apply())
+    }
 
 
     // Рендерим site.html, т.е. базовый шаблон выдачи.

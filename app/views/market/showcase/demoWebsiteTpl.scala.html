@@ -51,7 +51,7 @@
 
 <body class="sm-body">
 
-  @if(args.withJsSc) {
+  @if(!args.syncRender) {
     <script type="text/javascript">
 @_installScriptTpl(args.adnId, mkPermanent = false);
 window.siomart_index = '@args.showcaseCall';
