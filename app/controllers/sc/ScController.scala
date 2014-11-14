@@ -2,9 +2,11 @@ package controllers.sc
 
 import controllers.SioController
 import io.suggest.model.EsModel.FieldsJsonAcc
+import models.ScJsState
 import play.api.libs.Jsonp
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.twirl.api.Html
 
 import scala.concurrent.Future
 
@@ -46,6 +48,17 @@ trait ScController extends SioController {
       _.sortBy(_._1)
         .map(_._2)
     }
+  }
+
+
+  /** Некоторые асинхронные шаблоны выдачи при синхронном рендере требуют для себя js-состояние. */
+  trait JsStateRenderWrapper {
+    /**
+     * Запустить синхронный рендер шаблона используя указанное js-состояние выдачи.
+     * @param jsStateOpt None - происходит асинхронный рендер. Some() - идёт синхронный рендер с указанным состоянием.
+     * @return Отрендеренный HTML.
+     */
+    def apply(jsStateOpt: Option[ScJsState] = None): Html
   }
 
 }

@@ -45,6 +45,7 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
 
     // Запускаем получение  результатов из nodelist-логики
     val renderedFut = logic.nodesListRenderedFut
+      .map(_()) // Рендерим без js-состояния
     val nextNodeJsonFut = logic.nextNodeWithLayerFut map { nextNodeGdr =>
       val nn = nextNodeGdr.node
       JsObject(Seq(
@@ -130,13 +131,17 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
     }
 
     /** Асинхронный результат рендера списка узлов. */
-    def nodesListRenderedFut: Future[Html] = {
+    def nodesListRenderedFut: Future[JsStateRenderWrapper] = {
       val _gnls4RenderFut = gnls4RenderFut
       for {
         nextNodeGdr <- nextNodeWithLayerFut
         gnls4Render <- _gnls4RenderFut
       } yield {
-        _geoNodesListTpl(gnls4Render, Some(nextNodeGdr.node))
+        new JsStateRenderWrapper {
+          override def apply(jsStateOpt: Option[ScJsState]): Html = {
+            _geoNodesListTpl(gnls4Render, Some(nextNodeGdr.node), jsStateOpt)
+          }
+        }
       }
     }
 

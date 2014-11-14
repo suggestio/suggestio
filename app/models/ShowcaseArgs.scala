@@ -379,11 +379,16 @@ case class ScJsState(
   // Пока что считывание geo-состояния из qs не нужно, т.к. HTML5 Geolocation доступно только в js-выдаче.
   def geo: GeoMode = GeoIp
 
+  /**
+   * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
+   * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
+   */
   def toggleNavScreen: ScJsState = {
     val nextNavState = !isNavScrOpened
     copy(
       navScrOpenedOpt = if (nextNavState) Some(nextNavState) else None
     )
   }
+
 }
 

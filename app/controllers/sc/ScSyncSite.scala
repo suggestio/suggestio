@@ -123,7 +123,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def maybeNodesListHtmlFut: Future[Option[Html]] = {
       if (_scState.isNavScrOpened) {
         nodesListLogic.nodesListRenderedFut
-          .map(Some.apply)
+          .map { rnl => Some(rnl(Some(_scState))) }   // Рендерим, пробрасывая js-состояние внутрь шаблона.
       } else {
         Future successful None
       }
