@@ -74,7 +74,7 @@ object AdSearch {
                 Math.max(0, Math.min(offset, MAX_OFFSET))
               }
               override def forceFirstIds = maybeFirstId
-              override def generation = maybeGen
+              override def generationOpt = maybeGen
               override def geo = maybeGeo
               override def screen = maybeDevScreen
             }
@@ -92,7 +92,7 @@ object AdSearch {
           intOptB.unbind(key + ".size", value.maxResultsOpt),
           intOptB.unbind(key + ".offset", value.offsetOpt),
           strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
-          longOptB.unbind(key + ".gen", value.generation),
+          longOptB.unbind(key + ".gen", value.generationOpt),
           strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt),
           devScreenB.unbind(key + ".screen", value.screen)
         ) .filter(!_.isEmpty)

@@ -69,7 +69,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override val _adSearch = new AdSearch {
         // TODO Прокачать сюда остальные куски состояния, по мере расширения js-состояния.
         override def receiverIds = _scState.adnId.toList
-        override def generation = _scState.generationOpt
+        override def generationOpt = _scState.generationOpt
         override def geo = _scState.geo
       }
 
@@ -96,7 +96,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         new AdSearch {
           override def forceFirstIds = _scState.fadsOpenedOpt.toList
           override def maxResultsOpt = Some(1)
-          override def generation = _scState.generationOpt
+          override def generationOpt = _scState.generationOpt
           override def receiverIds = _scState.adnId.toList
           override def offsetOpt = _scState.fadsOffsetOpt
           override def producerIds = _scState.producerAdnIdOpt.toList
