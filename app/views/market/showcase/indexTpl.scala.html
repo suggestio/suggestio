@@ -4,6 +4,31 @@
 
 @import util.TplDataFormatUtil._
 
+@* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
+@toggleNavScrAnchor()(content: Option[ScJsState] => Html) = {
+  @defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
+    @jsStateOpt.map { jsState =>
+      <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleNavScreen)">
+    }
+    @content(jsStateOpt)
+    @if(jsStateOpt) {
+      </a>
+    }
+  }
+}
+
+
+@* Завернуть произвольный html в ссылку переключения правой поисковой панели. *@
+@toggleSearchScrAnchor()(content: Html) = {
+  @args.jsStateOpt.map { jsState =>
+    <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleSearchScreen)">
+  }
+  @content
+  @if(args.jsStateOpt) {
+    </a>
+  }
+}
+
 
 @* Картинка-приветствие для первого экрана *@
 @if(!args.syncRender) {
@@ -18,44 +43,49 @@
 
   <span id="smRootProducerHeaderButtons">
 
+    @* кнопка выхода (крест) слева наверху. *@
     @if(!args.syncRender) {
       <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="smExitButton">
         @svg._exitButtonTpl( args.fgColor )
       </div>
     }
 
-    @* Кнопка доступа к гео-панели. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
-    @defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
-      @jsStateOpt.map { jsState =>
-        <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleNavScreen)">
-      }
-      <div class="sm-producer-header_geo-button sm-button sm-producer-header_btn __left-aligned abs @if(!args.syncRender || !jsStateOpt) {hidden}" id="smGeoScreenButton">
-        @svg._geoFillTpl( args.fgColor )
-      </div>
-      @if(jsStateOpt) {
-        </a>
+    @* Кнопка доступа к панели навигации по узлам сети. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
+    @if(!args.syncRender || !args.jsStateOpt.exists(_.isSomethingOpened)) {
+      @toggleNavScrAnchor() { jsStateOpt =>
+        <div class="sm-producer-header_geo-button sm-button sm-producer-header_btn __left-aligned abs @if(!args.syncRender || !jsStateOpt) {hidden}" id="smGeoScreenButton">
+          @svg._geoFillTpl( args.fgColor )
+        </div>
       }
     }
 
-    <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
-      @svg._indexAdsButtonTpl( args.fgColor )
-    </div>
+    @* Два прямоугольника слева. Вроде бы закрывают панель поиска справа. Нужно срезать её при синхронном рендере, если правая панель закрыта. *@
+    @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
+      @toggleSearchScrAnchor() {
+        <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
+          @svg._indexAdsButtonTpl( args.fgColor )
+        </div>
+      }
+    }
 
-    <div class="sm-producer-header_search-button sm-button sm-producer-header_btn __right-aligned abs" id="smNavigationLayerButton">
-      @svg._navLayerButtonTpl( args.fgColor )
-    </div>
+    @* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
+    @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
+      @toggleSearchScrAnchor() {
+        <div class="sm-producer-header_search-button sm-button sm-producer-header_btn __right-aligned abs" id="smNavigationLayerButton">
+          @svg._navLayerButtonTpl( args.fgColor )
+        </div>
+      }
+    }
 
   </span>
 
-  <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
-    @args.name
-    <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
-    <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
-  </span>
-
-  @*
-  <img class="sm-producer-header_logo" height="30" src="@args.logoImgUrl"/>
-  *@
+  @toggleNavScrAnchor() { jsStateOpt =>
+    <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+      @args.name
+      <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
+      <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
+    </span>
+  }
 
   <div class="sm-producer-header_icon">
     @svg._catHeaderIcon( args.fgColor )
@@ -67,7 +97,9 @@
 @_gridAdsTpl(args)
 
 @* Окно с выбором категорий *@
-@_categories_w_search(args)
+@if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
+  @_categories_w_search(args)
+}
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @_exit_screen(args)

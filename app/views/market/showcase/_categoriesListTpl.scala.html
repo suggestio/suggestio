@@ -1,6 +1,6 @@
 @(args: ScRenderArgs)(implicit ctx: Context)
 
-@stuff.scrollableContainerTpl( "sm-categories", "smCategories",  stuff._bgcolor( args.bgColor, false ).toString ){
+@stuff.scrollableContainerTpl( "sm-categories", "smCategories",  style = Some(stuff._bgcolor( args.bgColor, false ).toString + "height: 83%;") ){
 
   <div class="categories-list">
   @args.mmcats.zipWithIndex.map { case (mmcat, index) =>

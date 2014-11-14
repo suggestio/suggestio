@@ -368,10 +368,17 @@ case class ScJsState(
     if (intOpt.isDefined)  intOpt.get  else  0
   }
 
+  protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
+    if (bool) Some(bool) else None
+  }
+
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
+  def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
   def isFadsOpened      : Boolean = fadsOpenedOpt.isDefined
+  def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
+
   def fadsOffset        : Int = fadsOffsetOpt
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
@@ -383,12 +390,9 @@ case class ScJsState(
    * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
    * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
    */
-  def toggleNavScreen: ScJsState = {
-    val nextNavState = !isNavScrOpened
-    copy(
-      navScrOpenedOpt = if (nextNavState) Some(nextNavState) else None
-    )
-  }
+  def toggleNavScreen = copy( navScrOpenedOpt = bool2boolOpt(!isNavScrOpened) )
+
+  def toggleSearchScreen = copy( searchScrOpenedOpt = bool2boolOpt(!isSearchScrOpened) )
 
 }
 

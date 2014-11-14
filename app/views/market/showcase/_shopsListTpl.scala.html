@@ -1,7 +1,7 @@
 @(args: ScRenderArgs)(implicit ctx:util.Context)
 @import util.TplDataFormatUtil._
 
-@stuff.scrollableContainerTpl( "sm-shops", "smShops", stuff._bgcolor( args.bgColor, false ).toString ){
+@stuff.scrollableContainerTpl( "sm-shops", "smShops", style = Some(stuff._bgcolor( args.bgColor, false ).toString) ){
 <div class="shops-list">
   @args.shopsLetterGrouped.map { case ((letter, mshops), i) =>
 
