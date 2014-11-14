@@ -138,10 +138,10 @@ object AdsSearch {
       val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
       QueryBuilders.filteredQuery(q0, nf)
     }
-    if (adSearch.generation.isDefined && adSearch.qOpt.isEmpty) {
+    if (adSearch.generationOpt.isDefined && adSearch.qOpt.isEmpty) {
       // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
       val scoreFun = ScoreFunctionBuilders.scriptFunction(GENTS_SORTER_MVEL, "mvel")
-        .param("generation", java.lang.Long.valueOf( Math.abs(adSearch.generation.get) ))
+        .param("generation", java.lang.Long.valueOf( Math.abs(adSearch.generationOpt.get) ))
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
@@ -192,21 +192,21 @@ trait AdsSearchArgsT extends DynSearchArgs {
   def withoutIds: Seq[String]
 
   /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
-  def generation: Option[Long]
+  def generationOpt: Option[Long]
 
   override def toEsQuery = AdsSearch.prepareEsQuery(this)
 }
 
 /** Дефолтовые значения аргументов поиска рекламных карточек. */
 trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt {
-  override def receiverIds: Seq[String] = Nil
-  override def producerIds: Seq[String] = Nil
-  override def forceFirstIds: Seq[String] = Nil
-  override def levels: Seq[SlNameTokenStr] = Nil
-  override def withoutIds: Seq[String] = Nil
-  override def qOpt: Option[String] = None
-  override def generation: Option[Long] = None
-  override def catIds: Seq[String] = Nil
+  override def receiverIds    : Seq[String] = Nil
+  override def producerIds    : Seq[String] = Nil
+  override def forceFirstIds  : Seq[String] = Nil
+  override def levels         : Seq[SlNameTokenStr] = Nil
+  override def withoutIds     : Seq[String] = Nil
+  override def qOpt           : Option[String] = None
+  override def generationOpt     : Option[Long] = None
+  override def catIds         : Seq[String] = Nil
 }
 
 /** Враппер для аргументов поиска рекламных карточек. */
@@ -222,7 +222,7 @@ trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper {
   override def levels         = _adsSearchArgsUnderlying.levels
   override def withoutIds     = _adsSearchArgsUnderlying.withoutIds
   override def qOpt           = _adsSearchArgsUnderlying.qOpt
-  override def generation     = _adsSearchArgsUnderlying.generation
+  override def generationOpt     = _adsSearchArgsUnderlying.generationOpt
   override def catIds         = _adsSearchArgsUnderlying.catIds
 }
 
@@ -258,7 +258,7 @@ trait AdsSimpleSearchT extends EsDynSearchStatic[AdsSearchArgsT] {
     // Необходимо выкинуть из запроса ненужные части.
     val adSearch2 = new AdsSearchArgsWrapper {
       override def _adsSearchArgsUnderlying: AdsSearchArgsT = adSearch
-      override def generation = None
+      override def generationOpt = None
       override def forceFirstIds = Nil
     }
     super.dynCount(adSearch2)

@@ -226,7 +226,7 @@ final class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn
       override def producerIds = Nil
       override def qOpt = None
       override def forceFirstIds = Nil
-      override def generation = None
+      override def generationOpt = None
       override def withoutIds = Nil
     }
     MAd.dynSearch(searchArgs).map {
