@@ -205,7 +205,7 @@ trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt {
   override def levels         : Seq[SlNameTokenStr] = Nil
   override def withoutIds     : Seq[String] = Nil
   override def qOpt           : Option[String] = None
-  override def generationOpt     : Option[Long] = None
+  override def generationOpt  : Option[Long] = None
   override def catIds         : Seq[String] = Nil
 }
 
@@ -222,7 +222,7 @@ trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper {
   override def levels         = _adsSearchArgsUnderlying.levels
   override def withoutIds     = _adsSearchArgsUnderlying.withoutIds
   override def qOpt           = _adsSearchArgsUnderlying.qOpt
-  override def generationOpt     = _adsSearchArgsUnderlying.generationOpt
+  override def generationOpt  = _adsSearchArgsUnderlying.generationOpt
   override def catIds         = _adsSearchArgsUnderlying.catIds
 }
 
