@@ -113,10 +113,10 @@ trait AdSearch extends AdsSearchArgsDflt {
   def offsetOpt     : Option[Int] = None
 
   /** Географическая информация, присланная клиентом. */
-  def geo       : GeoMode = GeoNone
+  def geo           : GeoMode = GeoNone
 
   /** Данные по экрану, присланные клиентом. */
-  def screen    : Option[DevScreen] = None
+  def screen        : Option[DevScreen] = None
 
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

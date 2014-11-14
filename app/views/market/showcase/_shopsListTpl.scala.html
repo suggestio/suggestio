@@ -13,7 +13,7 @@
     @* Рендер списка магазинов или иных рекламодателей. *@
     @mshops.zipWithIndex.map { case (mshop, si) =>
       @args.jsStateOpt.map { jsState =>
-        <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(producerAdnIdOpt = mshop.id) )">
+        <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(fadsProdIdOpt = mshop.id) )">
       }
       <div class="shops-list_row @if((si)%2 == 0){__odd} js-shop-link" data-producer-id="@mshop.id">
         @mshop.meta.name

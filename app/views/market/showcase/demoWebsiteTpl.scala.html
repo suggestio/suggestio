@@ -20,6 +20,8 @@
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
+  @* TODO Когда будет готово !#-навигация, надо задать тег <link rel="canonical" href="..."/> *@
+
   @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
   <!--[if IE]>
   <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
@@ -58,6 +60,8 @@ window.siomart_index = '@args.showcaseCall';
 window.with_geo = @args.withGeo;
     </script>
   }
+  @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново
+          выглядеть и работать. Но не для кравлеров. *@
 
   @args.inlineIndex
 </body>

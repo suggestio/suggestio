@@ -65,13 +65,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def tileLogic = new TileAdsLogic {
       override type T = HtmlFormat.Appendable
       override implicit def _request = that._request
-
-      override val _adSearch = new AdSearch {
-        // TODO Прокачать сюда остальные куски состояния, по мере расширения js-состояния.
-        override def receiverIds = _scState.adnId.toList
-        override def generationOpt = _scState.generationOpt
-        override def geo = _scState.geo
-      }
+      override val _adSearch = _scState.tilesAdSearch()
 
       override def renderMadAsync(mad: MAd): Future[T] = {
         Future {
@@ -89,19 +83,10 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
         renderBlockHtml(madsCountInt = madsCountInt, mad = mad, index = index, producer = producer)
       }
-
       override def _withHeadAd: Boolean = true
-
-      override val _adSearch: AdSearch = {
-        new AdSearch {
-          override def forceFirstIds = _scState.fadsOpenedOpt.toList
-          override def maxResultsOpt = Some(1)
-          override def generationOpt = _scState.generationOpt
-          override def receiverIds = _scState.adnId.toList
-          override def offsetOpt = _scState.fadsOffsetOpt
-          override def producerIds = _scState.producerAdnIdOpt.toList
-        }
-      }
+      override val _adSearch = _scState.focusedAdSearch(
+        _maxResultsOpt = Some(1)
+      )
     }
 
     def maybeFocusedContent: Future[Option[Html]] = {

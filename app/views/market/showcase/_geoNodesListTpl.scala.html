@@ -7,7 +7,7 @@
 @* Функция оборачивая верстки ноды в ссылку с версткой этой ноды, если используется синхронный режим работы. *@
 @nodeSyncUrl(mnode: MAdnNode)(content: Html) = {
   @jsStateOpt.map { jsState =>
-    <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(adnId = mnode.id, navScrOpenedOpt = None, fadsOpenedOpt = None, fadsOffsetOpt = None) )">
+    <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(adnId = mnode.id, navScrOpenedOpt = None, fadsOpenedOpt = None, fadsOffsetOpt = None, tilesCatIdOpt = None) )">
   }
   @content
   @if(jsStateOpt) {

@@ -293,15 +293,18 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
 
 
 object ScJsState {
-  
-  val ADN_ID_FN               = "rcvr"
-  val CAT_SCR_OPENED_FN       = "search.opened"
-  val GEO_SCR_OPENED_FN       = "nav.opened"
-  val FADS_CURRENT_AD_ID_FN   = "fads.current.ad_id"
-  val FADS_OFFSET_FN          = "fads.offset"
+
+  // Название qs-параметров, отражающих состояние выдачи.
+  // r = receiver, p = producer, s = search, n = navigation, f = focused ads
+  val ADN_ID_FN               = "r.id"
+  val CAT_SCR_OPENED_FN       = "s.open"
+  val GEO_SCR_OPENED_FN       = "n.open"
+  val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
+  val FADS_OFFSET_FN          = "f.off"
   val GENERATION_FN           = "gen"
-  val SEARCH_TAB_FN           = "search.tab"
-  val PRODUCER_ADN_ID_FN      = "prod"
+  val SEARCH_TAB_FN           = "s.tab"
+  val PRODUCER_ADN_ID_FN      = "p.id"
+  val TILES_CAT_ID_FN         = "t.cat"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
@@ -326,6 +329,7 @@ object ScJsState {
           maybeFadsOffset       <- intOptB.bind(FADS_OFFSET_FN, params)
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN, params)
           maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
+          maybeTileCatId        <- strOptB.bind(TILES_CAT_ID_FN, params)
         } yield {
           val res = ScJsState(
             adnId               = strNonEmpty( maybeAdnId ),
@@ -335,7 +339,8 @@ object ScJsState {
             fadsOpenedOpt       = strNonEmpty( maybeFadsOpened ),
             fadsOffsetOpt       = maybeFadsOffset,
             searchTabListOpt    = noFalse( maybeSearchTab ),
-            producerAdnIdOpt    = strNonEmpty( maybeProducerAdnId )
+            fadsProdIdOpt    = strNonEmpty( maybeProducerAdnId ),
+            tilesCatIdOpt       = strNonEmpty( maybeTileCatId )
           )
           Right(res)
         }
@@ -350,7 +355,8 @@ object ScJsState {
           strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
           intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt),
           boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
-          strOptB.unbind(PRODUCER_ADN_ID_FN, value.producerAdnIdOpt)
+          strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
+          strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -370,8 +376,9 @@ case class ScJsState(
   fadsOpenedOpt       : Option[String]   = None,
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
-  producerAdnIdOpt    : Option[String]   = None
-) {
+  fadsProdIdOpt       : Option[String]   = None,
+  tilesCatIdOpt       : Option[String]   = None
+) { that =>
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     boolOpt.isDefined && boolOpt.get
@@ -381,10 +388,29 @@ case class ScJsState(
     if (intOpt.isDefined)  intOpt.get  else  0
   }
 
-  protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
+  implicit protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
     if (bool) Some(bool) else None
   }
 
+  // Пока что считывание geo-состояния из qs не нужно, т.к. HTML5 Geolocation доступно только в js-выдаче.
+  def geo: GeoMode = GeoIp
+
+  /** Экземпляр AdSearch для поиска карточек, отображаемых в плитке. */
+  def tilesAdSearch(): AdSearch = new AdSearch {
+    override def receiverIds    = that.adnId.toList
+    override def generationOpt  = that.generationOpt
+    override def geo            = that.geo
+  }
+
+  /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
+  def focusedAdSearch(_maxResultsOpt: Option[Int]): AdSearch = new AdSearch {
+    override def forceFirstIds  = that.fadsOpenedOpt.toList
+    override def maxResultsOpt  = _maxResultsOpt
+    override def generationOpt  = that.generationOpt
+    override def receiverIds    = that.adnId.toList
+    override def offsetOpt      = that.fadsOffsetOpt
+    override def producerIds    = that.fadsProdIdOpt.toList
+  }
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
@@ -399,16 +425,14 @@ case class ScJsState(
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
-  // Пока что считывание geo-состояния из qs не нужно, т.к. HTML5 Geolocation доступно только в js-выдаче.
-  def geo: GeoMode = GeoIp
 
   /**
    * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
    * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
    */
-  def toggleNavScreen = copy( navScrOpenedOpt = bool2boolOpt(!isNavScrOpened) )
+  def toggleNavScreen = copy( navScrOpenedOpt = !isNavScrOpened )
 
-  def toggleSearchScreen = copy( searchScrOpenedOpt = bool2boolOpt(!isSearchScrOpened) )
+  def toggleSearchScreen = copy( searchScrOpenedOpt = !isSearchScrOpened )
 
 }
 

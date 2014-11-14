@@ -18,18 +18,6 @@
 }
 
 
-@* Завернуть произвольный html в ссылку переключения правой поисковой панели. *@
-@toggleSearchScrAnchor()(content: Html) = {
-  @args.jsStateOpt.map { jsState =>
-    <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleSearchScreen)">
-  }
-  @content
-  @if(args.jsStateOpt) {
-    </a>
-  }
-}
-
-
 @* Картинка-приветствие для первого экрана *@
 @if(!args.syncRender) {
   @_welcomeScreenTpl(args)
@@ -61,19 +49,27 @@
 
     @* Два прямоугольника слева. Вроде бы закрывают панель поиска справа. Нужно срезать её при синхронном рендере, если правая панель закрыта. *@
     @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
-      @toggleSearchScrAnchor() {
-        <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
-          @svg._indexAdsButtonTpl( args.fgColor )
-        </div>
+      @args.jsStateOpt.map { jsState =>
+        <a href="@routes.MarketShowcase.syncGeoSite(jsState.copy(searchScrOpenedOpt = None))">
+      }
+      <div class="sm-producer-header_index-button sm-button sm-producer-header_btn __left-aligned abs" id="smIndexButton">
+        @svg._indexAdsButtonTpl( args.fgColor )
+      </div>
+      @if(args.jsStateOpt) {
+        </a>
       }
     }
 
     @* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
     @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
-      @toggleSearchScrAnchor() {
-        <div class="sm-producer-header_search-button sm-button sm-producer-header_btn __right-aligned abs" id="smNavigationLayerButton">
-          @svg._navLayerButtonTpl( args.fgColor )
-        </div>
+      @args.jsStateOpt.map { jsState =>
+        <a href="@routes.MarketShowcase.syncGeoSite(jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, tilesCatIdOpt = None))">
+      }
+      <div class="sm-producer-header_search-button sm-button sm-producer-header_btn __right-aligned abs" id="smNavigationLayerButton">
+        @svg._navLayerButtonTpl( args.fgColor )
+      </div>
+      @if(args.jsStateOpt) {
+       </a>
       }
     }
 
