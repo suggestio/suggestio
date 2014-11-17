@@ -159,14 +159,14 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
 
+    def gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
+
     /** Запуск логики, которая раньше лежала в geoShowcase()-экшене. */
     def apply(): Future[T] = {
       lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
       LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
       if (_reqArgs.geo.isWithGeo) {
-        val gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
         gdrFut flatMap { gdr =>
-          LOGGER.trace(logPrefix + "Choosen adn node according to geo is " + gdr.node.id.get)
           nodeFound(gdr)
         } recoverWith {
           case ex: NoSuchElementException =>

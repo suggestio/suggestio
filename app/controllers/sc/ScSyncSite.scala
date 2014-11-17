@@ -1,5 +1,7 @@
 package controllers.sc
 
+import java.util.NoSuchElementException
+
 import controllers.SioController
 import models._
 import play.api.mvc.Result
@@ -8,6 +10,7 @@ import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
 import views.html.market.showcase.demoWebsiteTpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 
@@ -60,16 +63,41 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
   trait ScSyncSiteLogic { that =>
     def _scState: ScJsState
     implicit def _request: AbstractRequestWithPwOpt[_]
-    
-    // Рендерим плитку (findAds)
-    def tileLogic = new TileAdsLogic {
-      override type T = HtmlFormat.Appendable
-      override implicit def _request = that._request
-      override val _adSearch = _scState.tilesAdSearch()
 
-      override def renderMadAsync(mad: MAd): Future[T] = {
-        Future {
-          renderMad2html(mad)
+    /** Есть ли какая-либо необходимость в рендере плитки карточек? */
+    def needRenderTiles: Boolean = {
+      _scState.fadOpenedIdOpt.isEmpty
+    }
+    
+    /** Подготовка к рендеру плитки (findAds). Наличие focusedAds перекрывает это, поэтому тут есть выбор. */
+    def tileLogic: TileAdsLogic { type T = RenderedAdBlock } = {
+      if (needRenderTiles) {
+        // Рендерим плитку, как этого требует needRenderTiles().
+        new TileAdsLogic {
+          override type T = RenderedAdBlock
+          override implicit def _request = that._request
+          override val _adSearch = _scState.tilesAdSearch()
+          override def renderMadAsync(mad: MAd): Future[T] = {
+            Future {
+              renderMad2html(mad)
+            } map { rendered =>
+              RenderedAdBlockImpl(mad, rendered)
+            }
+          }
+        }
+
+      } else {
+        // Нет надобности печатать плитку. Просто генерим заглушку логики рендера плитки:
+        new TileAdsLogic {
+          override type T = RenderedAdBlock
+          override implicit def _request = that._request
+          override def _adSearch = new AdSearch {
+            override def maxResultsOpt: Option[Int] = Some(0)
+          }
+          override def renderMadAsync(mad: MAd): Future[T] = Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
+          override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
+          override lazy val madsGroupedFut: Future[Seq[MAd]] = Future successful Nil
+          override lazy val madsFut: Future[Seq[MAd]] = Future successful Nil
         }
       }
     }
@@ -78,6 +106,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def focusedLogic = new FocusedAdsLogic {
       override type OBT = Html
       override implicit def _request = that._request
+      override def _scStateOpt = Some(_scState)
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
       override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
@@ -90,7 +119,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
 
     def maybeFocusedContent: Future[Option[Html]] = {
-      if (_scState.fadsOffsetOpt.isDefined) {
+      if (_scState.fadOpenedIdOpt.nonEmpty || _scState.fadsOffsetOpt.isDefined) {
          focusedLogic.focAdHtmlOptFut
       } else {
         Future successful None
@@ -163,6 +192,29 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         new HtmlGeoIndexLogic {
           override def _reqArgs: ScReqArgs = indexRenderArgs
           override implicit def _request = that._request
+
+          /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */
+          override def gdrFut: Future[GeoDetectResult] = {
+            val nodeIdOpt = _scState.adnId
+            MAdnNodeCache.maybeGetByIdCached( nodeIdOpt )
+              .flatMap {
+                case Some(node) =>
+                  // Нужно привести найденный узел к GeoDetectResult:
+                  val ngl: AdnShownType = AdnShownTypes.withName( node.adn.shownTypeId )
+                  val gdr = GeoDetectResult(ngl.ngls.head, node)
+                  Future successful gdr
+                case None =>
+                  // Имитируем экзепшен, чтобы перехватить его в Future.recover():
+                  Future failed new NoSuchElementException("Receiver node not exists or undefined: " + nodeIdOpt)
+              }
+              // Если нет возможности использовать заданный узел, пытаемся определить через метод супер-класса.
+              .recoverWith {
+                case ex: Exception =>
+                  if (!ex.isInstanceOf[NoSuchElementException])
+                    LOGGER.error("Unable to make node search. nodeIdOpt = " + nodeIdOpt, ex)
+                  super.gdrFut
+              }
+          }
 
           override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
             val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {

@@ -66,11 +66,18 @@ trait SyncRenderInfoDflt extends SyncRenderInfo {
 }
 
 
+/** Экземпляр отрендернной рекламной карточки*/
+trait RenderedAdBlock {
+  def mad: MAd
+  def rendered: Html
+}
+case class RenderedAdBlockImpl(mad: MAd, rendered: Html) extends RenderedAdBlock
+
 trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
-  def inlineTiles         : Seq[Html]
+  def inlineTiles         : Seq[RenderedAdBlock]
   def focusedContent      : Option[Html]
   def inlineNodesList     : Option[Html]
   /** Текущая нода согласно геоопределению, если есть. */
@@ -84,7 +91,7 @@ trait ScReqArgs extends SyncRenderInfo {
 trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
-  override def inlineTiles          : Seq[Html] = Nil
+  override def inlineTiles          : Seq[RenderedAdBlock] = Nil
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
   override def adnNodeCurrentGeo    : Option[MAdnNode] = None
@@ -336,7 +343,7 @@ object ScJsState {
             searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
             navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
             generationOpt       = maybeGeneration,
-            fadsOpenedOpt       = strNonEmpty( maybeFadsOpened ),
+            fadOpenedIdOpt       = strNonEmpty( maybeFadsOpened ),
             fadsOffsetOpt       = maybeFadsOffset,
             searchTabListOpt    = noFalse( maybeSearchTab ),
             fadsProdIdOpt    = strNonEmpty( maybeProducerAdnId ),
@@ -352,7 +359,7 @@ object ScJsState {
           boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
           boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
           longOptB.unbind(GENERATION_FN, value.generationOpt),
-          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadsOpenedOpt),
+          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
           intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt),
           boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
           strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
@@ -373,7 +380,7 @@ case class ScJsState(
   searchScrOpenedOpt  : Option[Boolean]  = None,
   navScrOpenedOpt     : Option[Boolean]  = None,
   generationOpt       : Option[Long]     = None,
-  fadsOpenedOpt       : Option[String]   = None,
+  fadOpenedIdOpt      : Option[String]   = None,
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
@@ -404,7 +411,7 @@ case class ScJsState(
 
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
   def focusedAdSearch(_maxResultsOpt: Option[Int]): AdSearch = new AdSearch {
-    override def forceFirstIds  = that.fadsOpenedOpt.toList
+    override def forceFirstIds  = that.fadOpenedIdOpt.toList
     override def maxResultsOpt  = _maxResultsOpt
     override def generationOpt  = that.generationOpt
     override def receiverIds    = that.adnId.toList
@@ -415,7 +422,7 @@ case class ScJsState(
   def isSearchScrOpened : Boolean = searchScrOpenedOpt
   def isNavScrOpened    : Boolean = navScrOpenedOpt
   def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
-  def isFadsOpened      : Boolean = fadsOpenedOpt.isDefined
+  def isFadsOpened      : Boolean = fadOpenedIdOpt.isDefined
   def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
 
   def isSearchTabList   : Boolean = searchTabListOpt.exists(identity)
@@ -435,4 +442,23 @@ case class ScJsState(
   def toggleSearchScreen = copy( searchScrOpenedOpt = !isSearchScrOpened )
 
 }
+
+
+trait FocusedArgsBase extends SyncRenderInfo {
+  def adsCount: Int
+  def startIndex: Int
+  def producer: MAdnNode
+  def brArgs: blk.RenderArgs
+}
+
+/** Параметры для вызова showcase-шаблона focusedAdsTpl. */
+case class FocusedAdsTplArgs(
+  mad         : MAd,
+  producer    : MAdnNode,
+  bgColor     : String,
+  brArgs      : blk.RenderArgs,
+  adsCount    : Int,
+  startIndex  : Int,
+  jsStateOpt  : Option[ScJsState]
+) extends FocusedArgsBase
 

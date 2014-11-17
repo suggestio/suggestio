@@ -6,7 +6,13 @@
   <div class="sm-grid-ads_container" id="smGridAdsContainer" @if(!args.syncRender) {data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"} >
     @* Заинлайненные рекламные карточки при синхронном рендере. *@
     @for(tile <- args.inlineTiles) {
-      @tile
+      @args.jsStateOpt.map { jsState =>
+        <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(fadOpenedIdOpt = tile.mad.id, navScrOpenedOpt = None, searchScrOpenedOpt = None) )">
+      }
+      @tile.rendered
+      @if(args.jsStateOpt) {
+        </a>
+      }
     }
   </div>
 

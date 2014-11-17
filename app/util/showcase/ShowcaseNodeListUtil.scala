@@ -220,7 +220,7 @@ object ShowcaseNodeListUtil {
     val sargs = new SmNodesSearchArgsT {
       override def maxResults = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
-      override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
+      override def withDirectGeoParents = Seq(townNodeId)
       override def shownTypeIds = AdnShownTypes.districtNames
       override def withNameSort = gravity.isEmpty
       override def withGeoDistanceSort = gravity

@@ -33,6 +33,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       override def _withHeadAd = withHeadAd
       override def _adSearch = adSearch
       override implicit def _request = request
+      override def _scStateOpt = None
 
       /** Рендер заэкранного блока. Тут нужен JsString. */
       override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
@@ -69,6 +70,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     // TODO Выставлять offset для поиска с учётом firstIds?
 
     def _adSearch: AdSearch
+    def _scStateOpt: Option[ScJsState]
     def _withHeadAd: Boolean
     implicit def _request: AbstractRequestWithPwOpt[_]
 
@@ -219,10 +221,8 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
-    /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
-      * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение [[_withHeadAd]].
-      * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
-    def focAdHtmlFut: Future[Html] = {
+    /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
+    def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
       val _producerFut = focAdProducerOptFut.map(_.get)
       val _madsHeadFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
@@ -232,8 +232,24 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         madsHead      <- _madsHeadFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        val bgColor = producer.meta.color getOrElse SITE_BGCOLOR_DFLT
-        _focusedAdsTpl(madsHead, _adSearch, producer, bgColor, brArgs = brArgs, adsCount = madsCountInt,  startIndex = _adSearch.offset)(ctx)
+        FocusedAdsTplArgs(
+          mad         = madsHead,
+          producer    = producer,
+          bgColor     = producer.meta.color getOrElse SITE_BGCOLOR_DFLT,
+          brArgs      = brArgs,
+          adsCount    = madsCountInt,
+          startIndex  = _adSearch.offset,
+          jsStateOpt  = _scStateOpt
+        )
+      }
+    }
+
+    /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
+      * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение [[_withHeadAd]].
+      * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
+    def focAdHtmlFut: Future[Html] = {
+      focAdsHtmlArgsFut map { args =>
+        _focusedAdsTpl(args)(ctx)
       }
     }
 
