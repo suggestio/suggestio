@@ -28,3 +28,4 @@ picture
 *.zip
 *.rar
 *.gz
+conf/elasticsearch.yml
