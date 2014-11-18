@@ -722,7 +722,7 @@ sm =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
-      sm.utils.ge_tag('head')[0].appendChild(style_dom)
+      sm.utils.ge_tag('body')[0].appendChild(style_dom)
       this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
