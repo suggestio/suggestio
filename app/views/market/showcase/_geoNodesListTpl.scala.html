@@ -23,19 +23,29 @@
 
     @* Если true, то рендерить селектор "районы", "города" и т.д. *@
     @if(nl.nameOpt.isDefined) {
-      @* Есть заголовок геослоя. *@
-      <div class="geo-nodes-list_layer js-gnlayer" data-index="@i" id="geoLayer@i">
-        <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
-          @nl.nameOpt
-          <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
+      @defining( jsStateOpt.fold(nl.expanded)(_.nglExpanded(nl)) ) { showExpanded =>
+        @* Есть заголовок геослоя. Рендерим его: *@
+        @jsStateOpt.map { jsState =>
+          <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
+        }
+        <div class="geo-nodes-list_layer js-gnlayer @if(showExpanded) {__active}" data-index="@i" id="geoLayer@i">
+          <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
+            @nl.nameOpt
+            <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
+          </div>
         </div>
-      </div>
-      @stuff.scrollableContainerTpl( "__hidden geo-nodes-list_rows", "geoLayerNodes" + i ) {
-        @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
-          @nodeSyncUrl(mnode) {
-            <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border} @if(si%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
-              @mnode.meta.nameShort
-            </div>
+        @if(jsStateOpt) {
+          </a>
+        }
+
+        @* Рендер содержимого гео-слоя (узлы): *@
+        @stuff.scrollableContainerTpl( (if(showExpanded) "" else "__hidden ") + "geo-nodes-list_rows", "geoLayerNodes" + i ) {
+          @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
+            @nodeSyncUrl(mnode) {
+              <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border} @if(si%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
+                @mnode.meta.nameShort
+              </div>
+            }
           }
         }
       }

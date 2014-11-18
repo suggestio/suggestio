@@ -5,6 +5,7 @@ import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
 import play.twirl.api.{Html, HtmlFormat}
 import util.cdn.CdnUtil
+import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
 
 /**
@@ -312,9 +313,11 @@ object ScJsState {
   val SEARCH_TAB_FN           = "s.tab"
   val PRODUCER_ADN_ID_FN      = "p.id"
   val TILES_CAT_ID_FN         = "t.cat"
+  val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
 
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
+    import util.qsb.QSBs._
     qsb
   }
 
@@ -324,7 +327,8 @@ object ScJsState {
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
                    boolOptB: QueryStringBindable[Option[Boolean]],
                    longOptB: QueryStringBindable[Option[Long]],
-                   intOptB: QueryStringBindable[Option[Int]] ) = {
+                   intOptB: QueryStringBindable[Option[Int]],
+                   nglsMapB: QueryStringBindable[Option[NglsStateMap_t]] ) = {
     new QueryStringBindable[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
@@ -337,17 +341,19 @@ object ScJsState {
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN, params)
           maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
           maybeTileCatId        <- strOptB.bind(TILES_CAT_ID_FN, params)
+          maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
         } yield {
           val res = ScJsState(
             adnId               = strNonEmpty( maybeAdnId ),
             searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
             navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
             generationOpt       = maybeGeneration,
-            fadOpenedIdOpt       = strNonEmpty( maybeFadsOpened ),
+            fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
             fadsOffsetOpt       = maybeFadsOffset,
             searchTabListOpt    = noFalse( maybeSearchTab ),
-            fadsProdIdOpt    = strNonEmpty( maybeProducerAdnId ),
-            tilesCatIdOpt       = strNonEmpty( maybeTileCatId )
+            fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
+            tilesCatIdOpt       = strNonEmpty( maybeTileCatId ),
+            navNglsMap          = maybeNglsMap getOrElse Map.empty
           )
           Right(res)
         }
@@ -363,7 +369,8 @@ object ScJsState {
           intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt),
           boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
           strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
-          strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt)
+          strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt),
+          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -384,7 +391,8 @@ case class ScJsState(
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
-  tilesCatIdOpt       : Option[String]   = None
+  tilesCatIdOpt       : Option[String]   = None,
+  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty  // Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
 ) { that =>
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
@@ -432,6 +440,10 @@ case class ScJsState(
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
+  /** Уточнить значение состояния развернутости nav. гео-слоя. В синхронной выдаче возможны варианты. */
+  def nglExpanded(gnl: GeoNodesLayer): Boolean = {
+    navNglsMap.getOrElse(gnl.ngl, gnl.expanded)
+  }
 
   /**
    * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.

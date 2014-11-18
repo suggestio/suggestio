@@ -3,6 +3,7 @@ package util.qsb
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
+import util.PlayLazyMacroLogsImpl
 import util.img.PicSzParsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -106,6 +107,44 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
 
       override def unbind(key: String, value: MImgInfoMeta): String = {
         unParseWxH(value)
+      }
+    }
+  }
+
+
+  type NglsStateMap_t = Map[NodeGeoLevel, Boolean]
+
+  implicit def nglsMapQsb = {
+    new QueryStringBindable[NglsStateMap_t] with PlayLazyMacroLogsImpl {
+      import LOGGER._
+
+      def vP: Parser[Boolean] = opt("_" ^^^ false) ^^ { _ getOrElse true }
+      def kP: Parser[NodeGeoLevel] = "[a-z]{2}".r ^^ NodeGeoLevels.withName
+      def kvP = (kP ~ vP) ^^ { case k ~ v => (k, v) }
+      def mapP = rep(kvP) ^^ { _.toMap }
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NglsStateMap_t]] = {
+        params.get(key)
+          .flatMap(_.find(!_.isEmpty))
+          .flatMap { raw =>
+            parseAll(mapP, raw) match {
+              case Success(s, _) =>
+                Some(Right(s))
+              case noSuccess =>
+                warn(s"Suppressed failure during parsing of ngls map passed: $raw ;; $noSuccess")
+                None
+            }
+          }
+      }
+
+      override def unbind(key: String, value: NglsStateMap_t): String = {
+        val sb = new StringBuilder(key).append('=')
+        value.foreach { case (ngl, flag) =>
+          sb.append(ngl.esfn)
+          if (!flag)
+            sb.append('_')
+        }
+        sb.toString()
       }
     }
   }
