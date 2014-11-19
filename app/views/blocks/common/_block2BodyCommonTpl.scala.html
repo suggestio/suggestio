@@ -2,6 +2,9 @@
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
+@* если true, то нужно рендерить стили инлайново. Иначе -- ссылкой на css.
+   defining( mad.id.isEmpty || args.withEdit ) { isStylesInline => *@
+
 @* Отрендерить одно строковое значение оффера. *@
 @renderText(aosfOpt: Option[AOStringField], id: String, bf: BfText, yoff: Int, offerN: Int) = {
   @aosfOpt.map { aosf =>

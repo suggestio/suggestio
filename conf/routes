@@ -109,7 +109,7 @@ GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
 # Витрина market'а и её экшены
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
-
+GET  /blk/css/:szMult/*adIds            controllers.MarketShowcase.serveBlockCss(szMult: Float, adIds)
 GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
 GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
 

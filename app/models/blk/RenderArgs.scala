@@ -1,6 +1,7 @@
 package models.blk
 
 import io.suggest.ym.model.common.MImgSizeT
+import models._
 import models.im.MImg
 import play.api.mvc.Call
 import util.img.DynImgUtil
@@ -52,3 +53,45 @@ case class WideBgRenderCtx(
   def dynImgCall: Call = DynImgUtil.imgCall(dynCallArgs)
 
 }
+
+
+/** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
+trait CssRenderArgsT {
+  def madId     : Option[String]
+  def aovf      : AOValueField
+  def bf        : BlockAOValueFieldT
+  def szMult    : Float
+  def cssClass  : String
+  def xy        : ICoords2D
+}
+
+case class CssRenderArgs(
+  madId     : Option[String],
+  aovf      : AOValueField,
+  bf        : BlockAOValueFieldT,
+  szMult    : Float,
+  cssClass  : String,
+  xy        : ICoords2D
+) extends CssRenderArgsT
+
+/**
+ * Контейнер параметров рендера css-стиля блока.
+ * @param madId id рекламной карточки, если есть.
+ * @param bf Экземпляр BlockField
+ * @param offerN порядкой номер оффера в карточке.
+ * @param yoff Сдвиг по оси y.
+ * @param fid title либо descr обычно.
+ */
+case class CssRenderArgs2(
+  madId   : Option[String],
+  aovf    : AOStringField,
+  bf      : BfText,
+  offerN  : Int,
+  yoff    : Int,
+  szMult  : Float,
+  fid     : String
+) extends CssRenderArgsT {
+  override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)
+  override val cssClass: String = s"$fid-$offerN"
+}
+

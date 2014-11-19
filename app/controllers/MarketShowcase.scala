@@ -37,7 +37,7 @@ import play.api.Play, Play.{current, configuration}
  * Created: 02.07.14 14:07
  * Description: Контроллер выдачи sio-market.
  */
-object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriber {
+object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriber with sc.ScBlockCss {
 
   import LOGGER._
 
