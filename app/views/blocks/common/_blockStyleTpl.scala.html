@@ -1,26 +1,19 @@
-@(bid:Option[String],  aovf: AOValueField,  bf: BlockAOValueFieldT,  args: blk.RenderArgs,  className: String,  xy: ICoords2D)
+@(madId: Option[String],  aovf: AOValueField,  bf: BlockAOValueFieldT,  args: blk.RenderArgs,  className: String,  xy: ICoords2D)
 
 @* Генерация динамического стиля для одного блока. *@
 
-<code>
+@import views.txt.blocks.common._
 
-@* _coordsStyleTpl заинлайнен сюда: *@
-.sm-block@{bid}.__size-@{args.szMult} .mvbl-@{className} {
-  position: absolute;
-  @defining(aovf.coords getOrElse xy) { c =>
-    left: @{c.x * args.szMult}px@if(args.szMult > 1) {!important};
-    top:  @{c.y * args.szMult}px@if(args.szMult > 1) {!important};
-  }
-}
+<style>
 
+@* TODO Временный костыль. *@
+@Html(_blockStyleCss(blk.CssRenderArgs(
+  madId = madId,
+  aovf = aovf,
+  bf = bf,
+  szMult = args.szMult,
+  cssClass = className,
+  xy = xy
+)).toString)
 
-@* _aovfStyleTpl заинлайнен сюда: *@
-.sm-block@{bid}.__size-@{args.szMult} .@{className} {
-  color: #@aovf.font.color!important;
-  @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*args.szMult}px!important;}
-  @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*args.szMult}px!important;}
-  @aovf.font.family.map {ff =>font-family: @ff!important;}
-  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
-}
-
-</code>
+</style>

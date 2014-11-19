@@ -722,7 +722,7 @@ sm =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
-      sm.utils.ge_tag('head')[0].appendChild(style_dom)
+      sm.utils.ge_tag('body')[0].appendChild(style_dom)
       this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
@@ -1928,9 +1928,18 @@ sm =
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
+
+        _block_wideBg = _b.getAttribute("data-wide-bg")
+        # если карточка растягивается на ширину устройства
+        if _block_wideBg
+          _b.parentNode.parentNode.parentNode.style.overflow = "hidden"
+        else
+          _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
         sm.utils.addClass _b, '__rel'
+
+        #console.log cbca_grid.ww
+        #console.log cbca_grid.wh
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
