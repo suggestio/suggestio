@@ -2,26 +2,21 @@
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
+@* Отрендерить одно строковое значение оффера. *@
+@renderText(aosfOpt: Option[AOStringField], id: String, bf: BfText, yoff: Int, offerN: Int) = {
+  @aosfOpt.map { aosf =>
+    <div class="@if(args.withEdit){js-mvbl} mvbl-@id mvbl-@id-@offerN" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offerN}].@id"}>
+      <div class="@id @id-@offerN">@Html(aosf.value)</div>
+    </div>
+    @_blockStyleTpl( mad.id, aosf, bf, args, s"$id-$offerN", xy = Coords2D(38, 70*( offerN + 1) + yoff) )
+  }
+}
+
 @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
 
 @mad.offers.map { offer =>
   <div class="info el-@{offer.n + 1}">
-    @offer.text1.map { text1 =>
-      <div class="@if(args.withEdit){js-mvbl }mvbl-title-@offer.n" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offer.n}].title"}>
-        <div class="title title-@offer.n">
-          @Html(text1.value)
-        </div>
-      </div>
-      @_blockStyleTpl( mad.id, text1, bc.titleBf, args, "title-" + offer.n, xy = Coords2D(38, 70*( offer.n + 1 )) )
-    }
-
-    @offer.text2.map { text2 =>
-      <div class="@if(args.withEdit){js-mvbl }mvbl-descr mvbl-descr-@offer.n" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offer.n}].descr"}>
-        <div class="descr descr-@offer.n">
-          @Html(text2.value)
-        </div>
-      </div>
-      @_blockStyleTpl( mad.id, text2, bc.descrBf, args, "descr-" + offer.n, xy = Coords2D(38, 70*( offer.n + 1 )+25) )
-    }
+    @renderText(offer.text1, "title", bc.titleBf, yoff = 0, offerN = offer.n)
+    @renderText(offer.text2, "descr", bc.descrBf, yoff = 25, offerN = offer.n)
   </div>
 }
