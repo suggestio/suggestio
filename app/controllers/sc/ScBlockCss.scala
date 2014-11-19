@@ -28,10 +28,11 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
 
   /**
    * Экшен раздачи css'ок.
-   * @param adIds Список id карточек, для которых надо вернуть css.
+   * @param adIdsRaw Список id карточек, для которых надо вернуть css.
    * @return 200 Ok с отрендеренным css в неопределённом порядке.
    */
-  def serveBlockCss(szMult: Float, adIds: String*) = Action.async { implicit request =>
+  def serveBlockCss(szMult: Float, adIdsRaw: String) = Action.async { implicit request =>
+    val adIds = adIdsRaw.split("[/,]+")
     // TODO Надо переписать это дело через асинхронные enumerator'ы
     val resFut = MAd.multiGet(adIds).map { mads =>
       val txts = mads.iterator.flatMap { mad =>

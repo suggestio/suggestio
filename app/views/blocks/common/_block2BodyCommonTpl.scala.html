@@ -2,24 +2,31 @@
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
-@* если true, то нужно рендерить стили инлайново. Иначе -- ссылкой на css.
-   defining( mad.id.isEmpty || args.withEdit ) { isStylesInline => *@
-
+@* если true, то нужно рендерить стили инлайново. Иначе -- ссылкой на css. *@
 @* Отрендерить одно строковое значение оффера. *@
-@renderText(aosfOpt: Option[AOStringField], id: String, bf: BfText, yoff: Int, offerN: Int) = {
+@renderText(aosfOpt: Option[AOStringField], id: String, bf: BfText, yoff: Int, offerN: Int, withStyle: Boolean) = {
   @aosfOpt.map { aosf =>
     <div class="@if(args.withEdit){js-mvbl} mvbl-@id mvbl-@id-@offerN" @if(args.withEdit) {data-connected-input="ad.offer.offer[@{offerN}].@id"}>
       <div class="@id @id-@offerN">@Html(aosf.value)</div>
     </div>
-    @_blockStyleTpl( mad.id, aosf, bf, args, s"$id-$offerN", xy = Coords2D(38, 70*( offerN + 1) + yoff) )
+    @if(withStyle) {
+      @_blockStyleTpl( mad.id, aosf, bf, args, s"$id-$offerN", xy = Coords2D(38, 70*( offerN + 1) + yoff) )
+    }
   }
+}
+
+@defining( mad.id.isEmpty || args.withEdit ) { isStylesInline =>
+
+@if(!isStylesInline) {
+  <link type="text/css" rel="stylesheet" href="@routes.MarketShowcase.serveBlockCss(args.szMult, mad.id.mkString(","))" />
 }
 
 @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
 
 @mad.offers.map { offer =>
   <div class="info el-@{offer.n + 1}">
-    @renderText(offer.text1, "title", bc.titleBf, yoff = 0, offerN = offer.n)
-    @renderText(offer.text2, "descr", bc.descrBf, yoff = 25, offerN = offer.n)
+    @renderText(offer.text1, "title", bc.titleBf, yoff = 0, offerN = offer.n, withStyle = isStylesInline)
+    @renderText(offer.text2, "descr", bc.descrBf, yoff = 25, offerN = offer.n, withStyle = isStylesInline)
   </div>
+}
 }
