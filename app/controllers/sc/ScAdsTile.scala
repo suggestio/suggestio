@@ -50,9 +50,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       SmRcvResp(resp)
     }
     // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-    val cssAppendFut = logic.adIdsFut.map { adIds =>
-      val szMult = logic.brArgs.szMult
-      val args = adIds.map { adId => AdCssArgs(adId, szMult) }
+    val cssAppendFut = logic.adsCssFut.map { args =>
       jsAppendAdsCss(args)(logic.ctx)
     }
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
@@ -154,7 +152,12 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
     /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
       * @return id карточек в неопределённом порядке. */
-    override lazy val adIdsFut: Future[Seq[String]] = madsFut2ids(madsFut)
+    override def adsCssFut = madsFut.map { mads =>
+      val szMult = brArgs.szMult
+      mads
+        .flatMap(_.id)
+        .map { adId => AdCssArgs(adId, szMult) }
+    }
 
     lazy val madsGroupedFut = madsFut.map { groupNarrowAds }
 

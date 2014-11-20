@@ -190,8 +190,14 @@ trait AdsCssQsbUtil {
       override def unbind(key: String, value: Seq[AdCssArgs]): String = {
         val sb = new StringBuilder(30 * value.size)
         value.foreach { aca =>
-          sb.append(aca.adId).append(AdCssArgs.SEP_RE).append(aca.szMult)
+          sb.append(key).append('=')
+            .append(aca.adId).append(AdCssArgs.SEP_RE).append(aca.szMult)
+            .append('&')
         }
+        // Убрать финальный & из ссылки
+        if (value.nonEmpty)
+          sb.setLength(sb.length - 1)
+        // Вернуть подписанный результат
         val res = sb.toString()
         getSigner.mkSigned(key, res)
       }

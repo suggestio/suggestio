@@ -68,7 +68,9 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def needRenderTiles: Boolean = {
       _scState.fadOpenedIdOpt.isEmpty
     }
-    
+
+    // TODO В logic'ах наверное надо дедублицировать lazy val ctx.
+
     /** Подготовка к рендеру плитки (findAds). Наличие focusedAds перекрывает это, поэтому тут есть выбор. */
     lazy val tileLogic: TileAdsLogic { type T = RenderedAdBlock } = {
       if (needRenderTiles) {
@@ -109,9 +111,10 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override def _scStateOpt = Some(_scState)
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-      override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, mad = mad, index = index, producer = producer)
+      override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, madAndArgs = madAndArgs, index = index, producer = producer)
       }
+
       override def _withHeadAd: Boolean = true
       override val _adSearch = _scState.focusedAdSearch(
         _maxResultsOpt = Some(1)

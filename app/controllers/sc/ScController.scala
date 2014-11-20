@@ -1,12 +1,12 @@
 package controllers.sc
 
 import controllers.{routes, SioController}
-import models.{AdCssArgs, Context, ScJsState, MAdT}
+import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.twirl.api.Html
 import util.cdn.CdnUtil
-import util.jsa.JqAppend
+import util.jsa.JsAppendByTagName
 
 import scala.concurrent.Future
 
@@ -34,11 +34,11 @@ trait ScController extends SioController {
     }
   }
 
-  protected def jsAppendAdsCss(args: Seq[AdCssArgs])(implicit ctx: Context): JqAppend = {
+  protected def jsAppendAdsCss(args: Seq[AdCssArgs])(implicit ctx: Context) = {
     val call = routes.MarketShowcase.serveBlockCss(args)
     val call1 = CdnUtil.forCall(call)
     val html = s"""<link rel="stylesheet" type="text/css" href="${call1.url}" />"""
-    JqAppend("head", JsString(html))
+    JsAppendByTagName("head", JsString(html))
   }
 
   /** Некоторые асинхронные шаблоны выдачи при синхронном рендере требуют для себя js-состояние. */
@@ -60,13 +60,8 @@ trait AdIdsFut {
 
   /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
     * @return id карточек в неопределённом порядке. */
-  def adIdsFut: Future[Iterable[String]]
+  def adsCssFut: Future[Seq[AdCssArgs]]
 
-  /** Вспомогательный метод для приведения списка карточек к списку id карточек. */
-  // TODO Следует отвязать её от абстрактного Iterable через задействование CanBuildFrom[T].
-  protected def madsFut2ids(madsFut: Future[Seq[MAdT]]): Future[Seq[String]] = {
-    madsFut.map { mads =>
-      mads.flatMap(_.id)
-    }
-  }
 }
+
+case class AdAndBrArgs(mad: MAd, brArgs: blk.RenderArgs)

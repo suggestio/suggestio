@@ -21,3 +21,11 @@ case class JqAppend(target: String, html: JsString) extends JsAction {
   }
 
 }
+
+
+case class JsAppendByTagName(tagName: String, html: JsString) extends JsAction {
+  override def renderJsAction(sb: StringBuilder): StringBuilder = {
+    sb.append("document.getElementsByTagName('").append(tagName)
+      .append("')[0].insertAdjacentHTML('beforeend', '").append(html.toString()).append("');")
+  }
+}

@@ -38,20 +38,30 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       override def _scStateOpt = None
 
       /** Рендер заэкранного блока. Тут нужен JsString. */
-      override def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, mad = mad, index = index, producer = producer)
+      override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, madAndArgs = madAndArgs, index = index, producer = producer)
           .map { html => JsString(html) }
       }
     }
     // Запускаем сборку ответа:
     val focAdHtmlOptFut = logic.focAdHtmlOptFut
       .map(_.map(JsString(_)))
-    val resultFut = for {
+    val smRcvRespFut = for {
       outerBlocksRendered <- logic.blocksHtmlsFut
       focAdHtmlOpt        <- focAdHtmlOptFut
     } yield {
+      SmRcvResp(ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered))
+    }
+    // Запуск сборки css-инжекции в <head> клиента:
+    val cssInjectFut = logic.adsCssFut
+      .map { jsAppendAdsCss }
+    // Итоговый результат выполнения запроса собирается тут.
+    val resultFut = for {
+      smRcvResp <- smRcvRespFut
+      cssInject <- cssInjectFut
+    } yield {
       cacheControlShort {
-        Ok( Js(10000, SmRcvResp(ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered))) )
+        Ok( Js(10000, cssInject, smRcvResp) )
       }
     }
     // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:
@@ -129,10 +139,6 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
-    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
-      * @return id карточек в неопределённом порядке. */
-    override lazy val adIdsFut: Future[Seq[String]] = madsFut2ids(mads2Fut)
-
     lazy val mads2ProducersFut: Future[Map[String, MAdnNode]] = {
       mads2Fut.flatMap { mads2 =>
         val producerIds = mads2.iterator.map(_.producerId)
@@ -145,8 +151,23 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
+    lazy val mads2andBrArgsFut: Future[Seq[AdAndBrArgs]] = {
+      mads2Fut flatMap { mads =>
+        val _ctx = ctx
+        Future.traverse(mads.zipWithIndex) { case (mad, i) =>
+          ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
+            .map { brArgs => AdAndBrArgs(mad, brArgs) -> i }
+        } map { resUnsorted =>
+          // Восстановить исходный порядок:
+          resUnsorted
+            .sortBy(_._2)
+            .map(_._1)
+        }
+      }
+    }
 
-    def mads4blkRenderFut = mads2Fut.map { mads =>
+
+    def mads4blkRenderFut = mads2andBrArgsFut.map { mads =>
       if (_withHeadAd) mads.tail else mads // Caused by: java.lang.UnsupportedOperationException: tail of empty list
     }
 
@@ -166,32 +187,31 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
     
-    def renderBlocks(madsCountInt: Int, mads4blkRender: Seq[MAd], producersMap: Map[String, MAdnNode]): Future[Seq[OBT]] = {
+    def renderBlocks(madsCountInt: Int, mads4blkRender: Seq[AdAndBrArgs], producersMap: Map[String, MAdnNode]): Future[Seq[OBT]] = {
       parTraverseOrdered(mads4blkRender, startIndex = _adSearch.offset) {
-        (mad, index) =>
+        (madAndArgs, index) =>
           renderOuterBlock(
             madsCountInt  = madsCountInt,
-            mad           = mad,
+            madAndArgs    = madAndArgs,
             index         = index,
             // TODO Нужно parTraverseOrdered() реализовать как flatMap (а не map), и тут можно добавить обработку отсутсвующего продьюсера.
-            producer      = producersMap(mad.producerId)
+            producer      = producersMap(madAndArgs.mad.producerId)
           )
       }
     }
     
-    def renderBlockHtml(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[Html] = {
-      val _ctx = ctx
-      ShowcaseUtil.focusedBrArgsFor(mad)(_ctx) map { brArgs =>
-        _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt, brArgs = brArgs)(_ctx)
+    def renderBlockHtml(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[Html] = {
+      Future {
+        _focusedAdTpl(madAndArgs.mad, index + 1, producer, adsCount = madsCountInt, brArgs = madAndArgs.brArgs)(ctx)
       }
     }
     
     /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    def renderOuterBlock(madsCountInt: Int, mad: MAd, index: Int, producer: MAdnNode): Future[OBT]
+    def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT]
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
-    lazy val focAdOptFut: Future[Option[MAd]] = {
-      mads2Fut.map(_.headOption)
+    lazy val focAdOptFut: Future[Option[AdAndBrArgs]] = {
+      mads2andBrArgsFut.map(_.headOption)
     }
 
     /** Фьючерс продьюсера, относящегося к текущей карточке. */
@@ -200,7 +220,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       focAdOptFut flatMap {
         case Some(focMad) =>
           _prodsMapFut map { prodsMap =>
-            prodsMap.get(focMad.producerId)
+            prodsMap.get(focMad.mad.producerId)
           }
         case None =>
           Future successful None
@@ -209,21 +229,14 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
 
     /** Узнать продьюсера отображаемой рекламной карточки. */
     def focMadProducerOptFut: Future[Option[MAdnNode]] = {
-      focAdOptFut flatMap { madProducerOptFut }
+      focAdOptFut flatMap { madAndArgsOpt =>
+        madProducerOptFut(madAndArgsOpt.map(_.mad))
+      }
     }
 
     def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MAdnNode]] = {
       val prodIdOpt = madOpt.map(_.producerId)
       MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
-    }
-
-    /** Аргументы рендера отфокусированной карточки. */
-    def focAdRenderArgsFut: Future[blk.RenderArgs] = {
-      focAdOptFut.flatMap { madsHeadOpt =>
-        madsHeadOpt.fold
-          { Future successful ShowcaseUtil.focusedBrArgsDflt }
-          { ShowcaseUtil.focusedBrArgsFor(_)(ctx) }
-      }
     }
 
     /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
@@ -232,20 +245,30 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       val _madsHeadFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
       for {
-        brArgs        <- focAdRenderArgsFut
         producer      <- _producerFut
         madsHead      <- _madsHeadFut
         madsCountInt  <- _madsCountIntFut
       } yield {
         FocusedAdsTplArgs(
-          mad         = madsHead,
+          mad         = madsHead.mad,
           producer    = producer,
           bgColor     = producer.meta.color getOrElse SITE_BGCOLOR_DFLT,
-          brArgs      = brArgs,
+          brArgs      = madsHead.brArgs,
           adsCount    = madsCountInt,
           startIndex  = _adSearch.offset,
           jsStateOpt  = _scStateOpt
         )
+      }
+    }
+
+
+    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
+      * @return id карточек в неопределённом порядке. */
+    override def adsCssFut: Future[Seq[AdCssArgs]] = {
+      mads2andBrArgsFut.map { mbas =>
+        mbas.map { mba =>
+          AdCssArgs(mba.mad.id.get, mba.brArgs.szMult)
+        }
       }
     }
 
