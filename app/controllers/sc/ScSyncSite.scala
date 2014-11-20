@@ -63,6 +63,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
   trait ScSyncSiteLogic { that =>
     def _scState: ScJsState
     implicit def _request: AbstractRequestWithPwOpt[_]
+    lazy val ctx = implicitly[Context]
 
     /** Есть ли какая-либо необходимость в рендере плитки карточек? */
     def needRenderTiles: Boolean = {
@@ -79,6 +80,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override type T = RenderedAdBlock
           override implicit def _request = that._request
           override val _adSearch = _scState.tilesAdSearch()
+          override lazy val ctx = that.ctx
           override def renderMadAsync(mad: MAd): Future[T] = {
             Future {
               renderMad2html(mad)
@@ -93,6 +95,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         new TileAdsLogic {
           override type T = RenderedAdBlock
           override implicit def _request = that._request
+          override lazy val ctx = that.ctx
           override def _adSearch = new AdSearch {
             override def maxResultsOpt: Option[Int] = Some(0)
           }
@@ -100,6 +103,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
           override lazy val madsGroupedFut: Future[Seq[MAd]] = Future successful Nil
           override lazy val madsFut: Future[Seq[MAd]] = Future successful Nil
+          override def adsCssFut: Future[Seq[AdCssArgs]] = Future successful Nil
         }
       }
     }
@@ -109,6 +113,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override type OBT = Html
       override implicit def _request = that._request
       override def _scStateOpt = Some(_scState)
+      override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
       override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
@@ -243,19 +248,38 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       indexHtmlLogicFut.flatMap(_.apply())
     }
 
+    /** Логики, которые относятся к генерирующим карточки рекламные. */
+    def madsLogics: Seq[AdIdsFut] = Seq(tileLogic) ++ maybeFocusedLogic
+
+    def headAfterFut: Future[Option[Html]] = {
+      Future.traverse(madsLogics) { ml =>
+        ml.adsCssFut
+      } map { mls =>
+        if (mls.isEmpty) {
+          None
+        } else {
+          val args = mls.flatten
+          val html = htmlAdsCss(args)(ctx)
+          Some(html)
+        }
+      }
+    }
 
     // Рендерим site.html, т.е. базовый шаблон выдачи.
     /** Готовим аргументы базового шаблона выдачи. */
     def siteArgsFut: Future[ScSiteArgs] = {
       val _indexHtmlFut = indexHtmlFut
+      val _headAfterFut = headAfterFut
       for {
         siteRenderArgs <- _getSiteRenderArgs
         indexHtml      <- _indexHtmlFut
+        _headAfter     <- _headAfterFut
       } yield {
         new ScSiteArgsWrapper {
           override def _scSiteArgs = siteRenderArgs
           override def inlineIndex = Some(indexHtml)
-          override def syncRender = true
+          override def syncRender  = true
+          override def headAfter   = _headAfter
         }
       }
     }

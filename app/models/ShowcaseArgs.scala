@@ -265,7 +265,9 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   /** Отображаемый заголовок. */
   def title         : Option[String] = None
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
-  def inlineIndex   : Option[HtmlFormat.Appendable] = None
+  def inlineIndex   : Option[Html] = None
+  /** Закинуть сие в конец тега head. */
+  def headAfter     : Option[Html] = None
 
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def withGeo = adnId.isEmpty
@@ -292,6 +294,7 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
   override def showcaseCall = _scSiteArgs.showcaseCall
   override def title        = _scSiteArgs.title
   override def inlineIndex  = _scSiteArgs.inlineIndex
+  override def headAfter    = _scSiteArgs.headAfter
 
   override def withGeo      = _scSiteArgs.withGeo
   override def toString     = _scSiteArgs.toString

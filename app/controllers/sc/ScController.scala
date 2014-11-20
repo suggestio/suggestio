@@ -34,10 +34,13 @@ trait ScController extends SioController {
     }
   }
 
-  protected def jsAppendAdsCss(args: Seq[AdCssArgs])(implicit ctx: Context) = {
+  protected def htmlAdsCss(args: Seq[AdCssArgs])(implicit ctx: Context): Html = {
     val call = routes.MarketShowcase.serveBlockCss(args)
     val call1 = CdnUtil.forCall(call)
-    val html = s"""<link rel="stylesheet" type="text/css" href="${call1.url}" />"""
+    views.html.market.showcase.stuff._cssLinkTpl(call1)
+  }
+  protected def jsAppendAdsCss(args: Seq[AdCssArgs])(implicit ctx: Context) = {
+    val html = htmlAdsCss(args)
     JsAppendByTagName("head", JsString(html))
   }
 
