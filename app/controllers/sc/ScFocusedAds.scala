@@ -63,7 +63,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
 
 
   /** Логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  trait FocusedAdsLogic {
+  trait FocusedAdsLogic extends AdIdsFut {
     
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
@@ -129,6 +129,9 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
+    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
+      * @return id карточек в неопределённом порядке. */
+    override lazy val adIdsFut: Future[Seq[String]] = madsFut2ids(mads2Fut)
 
     lazy val mads2ProducersFut: Future[Map[String, MAdnNode]] = {
       mads2Fut.flatMap { mads2 =>

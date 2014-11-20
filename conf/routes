@@ -110,7 +110,7 @@ GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
 
-GET  /blk/css/:szMult/*adIds            controllers.MarketShowcase.serveBlockCss(szMult: Float, adIds)
+GET  /blk/css                           controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
 
 GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
 GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)

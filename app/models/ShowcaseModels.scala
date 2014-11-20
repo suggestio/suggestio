@@ -1,5 +1,8 @@
 package models
 
+import models.blk.SzMult_t
+import play.api.mvc.QueryStringBindable
+
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -57,3 +60,30 @@ case class GetCatsSyncResult(
   catsStats  : Map[String, Long],
   cats       : Seq[MMartCategory]
 )
+
+
+/**
+ * Для URL css'ки, относящейся к конкретной карточке, нужно передать эти параметры:
+ * @param adId id рекламной карточки.
+ * @param szMult Мульпликатор размера.
+ */
+case class AdCssArgs(
+  adId    : String,
+  szMult  : SzMult_t
+) {
+  override def toString: String = {
+    // TODO Нужно укорачивать szMult: 1.0 -> 1
+    adId + AdCssArgs.SEP_RE + szMult
+  }
+}
+
+object AdCssArgs {
+
+  val SEP_RE = ",".r
+
+  def fromString(s: String) = {
+    val Array(adId, szMultStr) = SEP_RE.split(s)
+    AdCssArgs(adId, szMultStr.toFloat)
+  }
+
+}

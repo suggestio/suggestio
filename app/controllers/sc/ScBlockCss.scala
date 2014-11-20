@@ -2,19 +2,14 @@ package controllers.sc
 
 import controllers.SioController
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.ad.Coords2D
-import models.blk
-import play.api.libs.iteratee.Enumerator
+import models.{AdCssArgs, blk}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.blocks.BlocksConf
-import util.blocks.BlocksConf.BlockConf
 import views.txt.blocks.common._
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,20 +23,24 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
 
   /**
    * Экшен раздачи css'ок.
-   * @param adIdsRaw Список id карточек, для которых надо вернуть css.
+   * @param args Список id карточек, для которых надо вернуть css и параметры их рендера.
    * @return 200 Ok с отрендеренным css в неопределённом порядке.
    */
-  def serveBlockCss(szMult: Float, adIdsRaw: String) = Action.async { implicit request =>
-    val adIds = adIdsRaw.split("[/,]+")
+  def serveBlockCss(args: Seq[AdCssArgs]) = Action.async { implicit request =>
     // TODO Надо переписать это дело через асинхронные enumerator'ы
-    val resFut = MAd.multiGet(adIds).map { mads =>
+    val madsFut = MAd.multiGet( args.iterator.map(_.adId) )
+    val argsMap = args.iterator
+      .map(arg => arg.adId -> arg)
+      .toMap
+    val resFut = madsFut.map { mads =>
       val txts = mads.iterator.flatMap { mad =>
+        val arg = argsMap(mad.id.get)
         val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
         mad.offers
           .iterator
           .flatMap { offer =>
-            val t1r = offer.text1.map { t1 => blk.CssRenderArgs2(mad.id, t1, bc.titleBf, offer.n, yoff = 0,  szMult, "title") }
-            val t2r = offer.text2.map { t2 => blk.CssRenderArgs2(mad.id, t2, bc.descrBf, offer.n, yoff = 25, szMult, "descr") }
+            val t1r = offer.text1.map { t1 => blk.CssRenderArgs2(mad.id, t1, bc.titleBf, offer.n, yoff = 0,  arg.szMult, "title") }
+            val t2r = offer.text2.map { t2 => blk.CssRenderArgs2(mad.id, t2, bc.descrBf, offer.n, yoff = 25, arg.szMult, "descr") }
             t1r ++ t2r
           }
           .map { cssRenderArgs =>

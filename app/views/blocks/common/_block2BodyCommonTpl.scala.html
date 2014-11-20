@@ -17,9 +17,10 @@
 
 @defining( mad.id.isEmpty || args.withEdit ) { isStylesInline =>
 
-@if(!isStylesInline) {
+@* 2014.nov.20 Закомменчено в надежде, что общего css хватит всем. *@
+@*if(!isStylesInline) {
   <link type="text/css" rel="stylesheet" href="@routes.MarketShowcase.serveBlockCss(args.szMult, mad.id.mkString(","))" />
-}
+}*@
 
 @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
 

@@ -70,7 +70,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
     
     /** Подготовка к рендеру плитки (findAds). Наличие focusedAds перекрывает это, поэтому тут есть выбор. */
-    def tileLogic: TileAdsLogic { type T = RenderedAdBlock } = {
+    lazy val tileLogic: TileAdsLogic { type T = RenderedAdBlock } = {
       if (needRenderTiles) {
         // Рендерим плитку, как этого требует needRenderTiles().
         new TileAdsLogic {
@@ -118,11 +118,20 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       )
     }
 
-    def maybeFocusedContent: Future[Option[Html]] = {
-      if (_scState.fadOpenedIdOpt.nonEmpty || _scState.fadsOffsetOpt.isDefined) {
-         focusedLogic.focAdHtmlOptFut
+    lazy val maybeFocusedLogic: Option[FocusedAdsLogic { type OBT = Html }] = {
+      if (_scState.fadOpenedIdOpt.nonEmpty) {
+        Some(focusedLogic)
       } else {
-        Future successful None
+        None
+      }
+    }
+
+    def maybeFocusedContent: Future[Option[Html]] = {
+      maybeFocusedLogic match {
+        case Some(fl) =>
+          fl.focAdHtmlOptFut
+        case None =>
+          Future successful None
       }
     }
 

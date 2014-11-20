@@ -5,9 +5,8 @@ import java.util.NoSuchElementException
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.showcase._
 import ShowcaseUtil._
-import io.suggest.ym.model.ad.{AdsSearchArgsT, AdsSearchArgsWrapper}
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.jsm.{FindAdsResp, SearchAdsResp, TileAdsResp}
+import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
 import util.acl._
@@ -42,14 +41,27 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       }
     }
     // Запускаем асинхронную сборку ответа.
-    val resultFut = logic.madsRenderedFut map { madsRendered =>
+    val smRcvRespFut = logic.madsRenderedFut map { madsRendered =>
       val resp = if (logic.catsRequested) {
         SearchAdsResp(madsRendered)
       } else {
         FindAdsResp(madsRendered)
       }
+      SmRcvResp(resp)
+    }
+    // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
+    val cssAppendFut = logic.adIdsFut.map { adIds =>
+      val szMult = logic.brArgs.szMult
+      val args = adIds.map { adId => AdCssArgs(adId, szMult) }
+      jsAppendAdsCss(args)(logic.ctx)
+    }
+    // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
+    val resultFut = for {
+      smRcvResp <- smRcvRespFut
+      cssAppend <- cssAppendFut
+    } yield {
       cacheControlShort {
-        Ok(Js(8192, SmRcvResp(resp)) )
+        Ok( Js(8192, cssAppend, smRcvResp) )
       }
     }
     // В фоне собираем статистику
@@ -65,7 +77,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
 
   /** Логика экшена, занимающегося обработкой запроса тут. */
-  trait TileAdsLogic {
+  trait TileAdsLogic extends AdIdsFut {
     
     type T
     implicit def _request: AbstractRequestWithPwOpt[_]
@@ -73,8 +85,11 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
     lazy val ctx = implicitly[Context]
 
+    // TODO Нужно тут что-то решать бы.
+    def brArgs = blk.RenderArgs.DEFAULT
+
     def renderMad2html(mad: MAd): HtmlFormat.Appendable = {
-      _single_offer(mad, isWithAction = true)(ctx)
+      _single_offer(mad, args = brArgs, isWithAction = true)(ctx)
     }
 
     def renderMadAsync(mad: MAd): Future[T]
@@ -135,6 +150,12 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     lazy val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
       MAd.dynSearch(adSearch2)
     }
+
+
+    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
+      * @return id карточек в неопределённом порядке. */
+    override lazy val adIdsFut: Future[Seq[String]] = madsFut2ids(madsFut)
+
     lazy val madsGroupedFut = madsFut.map { groupNarrowAds }
 
     lazy val madsRenderedFut: Future[Seq[T]] = {

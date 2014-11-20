@@ -8,13 +8,11 @@ import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import models.jsm.NodeDataResp
 import play.api.Play, Play.{current, configuration}
 import play.api.cache.Cache
-import play.api.libs.Jsonp
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.CdnUtil
 import views.html.market.lk.adn._node._installScriptTpl
 import views.txt.market.showcase._
-import play.api.libs.json._
 
 /**
  * Suggest.io
