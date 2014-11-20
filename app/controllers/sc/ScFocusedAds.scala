@@ -1,5 +1,7 @@
 package controllers.sc
 
+import _root_.util.jsa.{SmRcvResp, Js}
+import models.jsm.ProducerAdsResp
 import play.twirl.api.Html
 import util.showcase._
 import util.SiowebEsUtil.client
@@ -49,7 +51,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       focAdHtmlOpt        <- focAdHtmlOptFut
     } yield {
       cacheControlShort {
-        jsonOk("producerAds", focAdHtmlOpt, outerBlocksRendered)
+        Ok( Js(10000, SmRcvResp(ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered))) )
       }
     }
     // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:

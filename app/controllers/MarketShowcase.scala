@@ -23,9 +23,6 @@ with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss
 
   import LOGGER._
 
-  val JSONP_CB_FUN = "siomart.receive_response"
-
-
   /**
    * Отрендерить одну указанную карточку как веб-страницу.
    * @param adId id рекламной карточки.

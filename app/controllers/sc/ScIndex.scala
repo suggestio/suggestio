@@ -1,7 +1,9 @@
 package controllers.sc
 
+import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.{Context, PlayMacroLogsI}
 import models.Context
+import models.jsm.ScIndexResp
 import util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
@@ -58,25 +60,26 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
       renderArgsFut
         .map { indexTpl(_)(ctx) }
     }
+    def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
-    def respJsonArgsFut: Future[FieldsJsonAcc] = {
-      currAdnIdFut map { currAdnId =>
-        List(
-          "is_geo"      -> JsBoolean(isGeo),
-          "curr_adn_id" -> currAdnId.fold[JsValue](JsNull){ JsString.apply }
-        )
+    def respArgsFut: Future[ScIndexResp] = {
+      val _currAdnIdOptFut = currAdnIdFut
+      for {
+        html          <- respHtmlJsFut
+        currAdnIdOpt  <- _currAdnIdOptFut
+      } yield {
+        ScIndexResp(html, isGeo, currAdnIdOpt)
       }
     }
-
+    
     def result: Future[Result] = {
       for {
-        html      <- respHtmlFut
-        jsonArgs  <- respJsonArgsFut
+        args      <- respArgsFut
       } yield {
         // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
         // произошло какое-то другое изменение
         StatUtil.resultWithStatCookie {
-          jsonOk("showcaseIndex", Some(html), acc0 = jsonArgs)
+          Ok(Js(65536, SmRcvResp(args)))
         }(ctx.request)
       }
     }

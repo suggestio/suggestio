@@ -1,6 +1,8 @@
 package controllers.sc
 
 import java.util.NoSuchElementException
+import _root_.util.jsa.{Js, SmRcvResp}
+import models.jsm.NodeListResp
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.SiowebEsUtil.client
@@ -45,29 +47,25 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
 
     // Запускаем получение  результатов из nodelist-логики
     val renderedFut = logic.nodesListRenderedFut
-      .map(_()) // Рендерим без js-состояния
-    val nextNodeJsonFut = logic.nextNodeWithLayerFut map { nextNodeGdr =>
-      val nn = nextNodeGdr.node
-      JsObject(Seq(
-        "name"  -> JsString(nn.meta.name),
-        "_id"   -> JsString(nn.id getOrElse "")
-      ))
+      .map { r => JsString(r()) }
+
+    val respArgsFut: Future[NodeListResp] = for {
+      nextNodeLay <- logic.nextNodeWithLayerFut
+      rendered    <- renderedFut
+    } yield {
+      NodeListResp(
+        status        = "ok",
+        adnNode       = nextNodeLay.node,
+        nodesListHtml = rendered,
+        timestamp     = tstamp
+      )
     }
 
     // заворачиваем в json результаты работы логики.
     val resultFut = for {
-      nextNodeJson <- nextNodeJsonFut
-      rendered     <- renderedFut
+      respArgs  <- respArgsFut
     } yield {
-      val json = JsObject(Seq(
-        "action"      -> JsString("findNodes"),
-        "status"      -> JsString("ok"),
-        "first_node"  -> nextNodeJson,
-        "nodes"       -> rendered,
-        "timestamp"   -> JsNumber(tstamp)
-      ))
-      // Без кеша, ибо timestamp.
-      Ok( Jsonp(JSONP_CB_FUN, json) )
+      Ok( Js(8192, SmRcvResp(respArgs)) )
         .withHeaders(
           CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
         )

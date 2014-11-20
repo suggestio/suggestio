@@ -1,9 +1,11 @@
 package controllers.sc
 
+import _root_.util.jsa.{Js, SmRcvResp}
 import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
+import models.jsm.NodeDataResp
 import play.api.Play, Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.Jsonp
@@ -72,16 +74,11 @@ trait ScNodeInfo extends ScController with SNStaticSubscriber {
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
     val node = request.adnNode
     val logoSrcOpt = node.logoImgOpt map { logo_src =>
-      val call = CdnUtil.dynImg(logo_src.filename)
-      JsString(call.url)
+      CdnUtil.dynImg(logo_src.filename)
     }
-    val json = JsObject(Seq(
-      "action"   -> JsString("setData"),
-      "color"    -> node.meta.color.fold [JsValue] (JsNull) (JsString.apply),
-      "logo_src" -> (logoSrcOpt getOrElse JsNull)
-    ))
+    val resp = NodeDataResp(colorOpt = node.meta.color, logoUrlOpt = logoSrcOpt)
     cacheControlShort {
-      Ok(Jsonp(JSONP_CB_FUN, json))
+      Ok( Js(SmRcvResp(resp)) )
     }
   }
 

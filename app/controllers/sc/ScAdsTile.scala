@@ -2,10 +2,12 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
+import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.ad.{AdsSearchArgsT, AdsSearchArgsWrapper}
 import io.suggest.ym.model.common.SlNameTokenStr
+import models.jsm.{FindAdsResp, SearchAdsResp, TileAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
 import util.acl._
@@ -41,8 +43,13 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     }
     // Запускаем асинхронную сборку ответа.
     val resultFut = logic.madsRenderedFut map { madsRendered =>
+      val resp = if (logic.catsRequested) {
+        SearchAdsResp(madsRendered)
+      } else {
+        FindAdsResp(madsRendered)
+      }
       cacheControlShort {
-        jsonOk(logic.jsAction, blocks = madsRendered)
+        Ok(Js(8192, SmRcvResp(resp)) )
       }
     }
     // В фоне собираем статистику
@@ -76,14 +83,6 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
     def catsRequested = _adSearch.catIds.nonEmpty
-
-    lazy val jsAction: String = {
-      if (catsRequested) {
-        "searchAds"
-      } else {
-        "findAds"
-      }
-    }
 
     lazy val adSearch2Fut: Future[AdSearch] = {
       if (catsRequested) {
