@@ -28,6 +28,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
   "io.suggest" %% "util" % "1.10.4-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")

@@ -15,17 +15,42 @@ case class JqAppend(target: String, html: JsString) extends JsAction {
 
   override def renderJsAction(sb: StringBuilder): StringBuilder = {
     // TODO Возможно, в target надо экранировать ковычки.
-    sb.append("$('").append(target).append("').append('")
+    sb.append("$('").append(target).append("').append(")
       .append(html.toString())
-      .append("');")
+      .append(");")
   }
 
 }
 
-
-case class JsAppendByTagName(tagName: String, html: JsString) extends JsAction {
+/** Дописать вызов .insertAdjacentHtml() к билдеру. */
+trait JsInsertAdjacentHtmlBeforeEnd extends JsAction {
+  def html: JsString
   override def renderJsAction(sb: StringBuilder): StringBuilder = {
-    sb.append("document.getElementsByTagName('").append(tagName)
-      .append("')[0].insertAdjacentHTML('beforeend', '").append(html.toString()).append("');")
+    sb.append(".insertAdjacentHTML('beforeend',")
+      .append(html.toString())
+      .append(')')
+    super.renderJsAction(sb)
+  }
+}
+
+/** Дописать в тело первого указанного тега. */
+case class JsAppendByTagName(tagName: String, html: JsString) extends JsInsertAdjacentHtmlBeforeEnd {
+  override def renderJsAction(sb: StringBuilder): StringBuilder = {
+    sb.append("document.getElementsByTagName('")
+      .append(tagName)
+      .append("')[0]")
+    super.renderJsAction(sb)
+      .append(';')
+  }
+}
+
+/** Дописать в тело тега с указанным id. */
+case class JsAppendById(id: String, html: JsString) extends JsInsertAdjacentHtmlBeforeEnd {
+  override def renderJsAction(sb: StringBuilder): StringBuilder = {
+    sb.append("document.getElementById('")
+      .append(id)
+      .append("')")
+    super.renderJsAction(sb)
+      .append(';')
   }
 }

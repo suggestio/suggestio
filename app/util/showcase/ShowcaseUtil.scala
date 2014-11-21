@@ -138,9 +138,10 @@ object ShowcaseUtil {
   /**
    * Аргументы для рендера блока, когда карточка открыта.
    * @param mad Рекламная карточка.
+   * @param inlineStyles Значение поля RenderArgs.inlineStyles в экземпляре результата.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
+  def focusedBrArgsFor(mad: MAdT, inlineStyles: Boolean = true)(implicit ctx: Context): Future[blk.RenderArgs] = {
     if (mad.blockMeta.wide) {
       // мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
       val szMult: SzMult_t = BgImg.WIDE_TARGET_HEIGHT_PX.toFloat / mad.blockMeta.height.toFloat
@@ -152,7 +153,8 @@ object ShowcaseUtil {
           withEdit      = false,
           isStandalone  = false,
           szMult        = szMult,
-          wideBg        = wideBgCtxOpt
+          wideBg        = wideBgCtxOpt,
+          inlineStyles  = inlineStyles
         )
       }
 
@@ -182,7 +184,8 @@ object ShowcaseUtil {
         withEdit      = false,
         isStandalone  = false,
         szMult        = szMult,
-        wideBg        = None
+        wideBg        = None,
+        inlineStyles  = inlineStyles
       )
       Future successful bra
     }

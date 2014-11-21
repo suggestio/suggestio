@@ -29,12 +29,14 @@ object RenderArgs {
  * @param szMult Мультипликатор размера (и относительных координат).
  * @param wideBg Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
  *               вне блока, широким, а тело блока сдвинуто согласно кропу.
+ * @param inlineStyles Рендерить стили инлайново?
  */
 case class RenderArgs(
   withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
   szMult        : Float = 1.0F,
-  wideBg        : Option[WideBgRenderCtx] = None
+  wideBg        : Option[WideBgRenderCtx] = None,
+  inlineStyles  : Boolean = true
 )
 
 

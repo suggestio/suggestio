@@ -1,21 +1,17 @@
 @(args: blk.CssRenderArgsT)
-
 @import args._
 
-@* _coordsStyleTpl заинлайнен сюда: *@
 .sm-block@{madId}.__size-@szMult .mvbl-@{cssClass} {
-  position: absolute;
-  @defining(aovf.coords getOrElse xy) { c =>
-    left: @{c.x * szMult}px@if(szMult > 1) {!important};
-    top:  @{c.y * szMult}px@if(szMult > 1) {!important};
-  }
-}
+position: absolute;
+@defining(aovf.coords getOrElse xy) { c =>
+left:@{c.x * szMult}px@if(szMult > 1) {!important};
+top:@{c.y * szMult}px@if(szMult > 1) {!important};
+}}
 
-@* _aovfStyleTpl заинлайнен сюда: *@
 .sm-block@{madId}.__size-@szMult .@{cssClass} {
-  color: #@aovf.font.color!important;
-  @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*szMult}px!important;}
-  @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*szMult}px!important;}
-  @aovf.font.family.map {ff =>font-family: @ff!important;}
-  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
+color: #@aovf.font.color!important;
+@aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*szMult}px!important;}
+@aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*szMult}px!important;}
+@aovf.font.family.map {ff =>font-family: @ff!important;}
+@aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
 }

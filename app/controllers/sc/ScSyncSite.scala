@@ -103,7 +103,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
           override lazy val madsGroupedFut: Future[Seq[MAd]] = Future successful Nil
           override lazy val madsFut: Future[Seq[MAd]] = Future successful Nil
-          override def adsCssFut: Future[Seq[AdCssArgs]] = Future successful Nil
+          override def adsCssExternalFut: Future[Seq[AdCssArgs]] = Future successful Nil
         }
       }
     }
@@ -249,17 +249,17 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
 
     /** Логики, которые относятся к генерирующим карточки рекламные. */
-    def madsLogics: Seq[AdIdsFut] = Seq(tileLogic) ++ maybeFocusedLogic
+    def madsLogics: Seq[AdCssRenderArgs] = Seq(tileLogic) ++ maybeFocusedLogic
 
     def headAfterFut: Future[Option[Html]] = {
       Future.traverse(madsLogics) { ml =>
-        ml.adsCssFut
+        ml.adsCssExternalFut
       } map { mls =>
         if (mls.isEmpty) {
           None
         } else {
           val args = mls.flatten
-          val html = htmlAdsCss(args)(ctx)
+          val html = htmlAdsCssLink(args)(ctx)
           Some(html)
         }
       }

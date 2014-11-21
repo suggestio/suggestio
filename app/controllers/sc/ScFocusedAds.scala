@@ -1,6 +1,7 @@
 package controllers.sc
 
 import _root_.util.jsa.{SmRcvResp, Js}
+import models.blk.CssRenderArgsT
 import models.jsm.ProducerAdsResp
 import play.twirl.api.Html
 import util.showcase._
@@ -53,8 +54,9 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       SmRcvResp(ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered))
     }
     // Запуск сборки css-инжекции в <head> клиента:
-    val cssInjectFut = logic.adsCssFut
-      .map { jsAppendAdsCss }
+    val cssInjectFut = logic.adsCssInternalFut.flatMap { args =>
+      jsAppendAdsCss(args)(logic.ctx)
+    }
     // Итоговый результат выполнения запроса собирается тут.
     val resultFut = for {
       smRcvResp <- smRcvRespFut
@@ -73,7 +75,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
 
 
   /** Логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  trait FocusedAdsLogic extends AdIdsFut {
+  trait FocusedAdsLogic extends AdCssRenderArgs {
     
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
@@ -155,7 +157,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       mads2Fut flatMap { mads =>
         val _ctx = ctx
         Future.traverse(mads.zipWithIndex) { case (mad, i) =>
-          ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
+          ShowcaseUtil.focusedBrArgsFor(mad, inlineStyles = false)(_ctx)
             .map { brArgs => AdAndBrArgs(mad, brArgs) -> i }
         } map { resUnsorted =>
           // Восстановить исходный порядок:
@@ -261,16 +263,23 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
-
-    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
-      * @return id карточек в неопределённом порядке. */
-    override def adsCssFut: Future[Seq[AdCssArgs]] = {
+    override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.map { mba =>
           AdCssArgs(mba.mad.id.get, mba.brArgs.szMult)
         }
       }
     }
+
+    override def adsCssInternalFut: Future[Seq[CssRenderArgsT]] = {
+      mads2andBrArgsFut.map { mbas =>
+        mbas.iterator.flatMap { mba =>
+          mad2craIter(mba.mad, mba.brArgs.szMult)
+        }
+          .toSeq
+      }
+    }
+
 
     /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
       * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение [[_withHeadAd]].

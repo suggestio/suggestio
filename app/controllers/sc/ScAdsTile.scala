@@ -6,6 +6,7 @@ import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
+import models.blk.CssRenderArgsT
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
@@ -50,7 +51,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       SmRcvResp(resp)
     }
     // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-    val cssAppendFut = logic.adsCssFut.map { args =>
+    val cssAppendFut = logic.adsCssInternalFut.flatMap { args =>
       jsAppendAdsCss(args)(logic.ctx)
     }
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
@@ -75,7 +76,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
 
   /** Логика экшена, занимающегося обработкой запроса тут. */
-  trait TileAdsLogic extends AdIdsFut {
+  trait TileAdsLogic extends AdCssRenderArgs {
     
     type T
     implicit def _request: AbstractRequestWithPwOpt[_]
@@ -84,7 +85,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     lazy val ctx = implicitly[Context]
 
     // TODO Нужно тут что-то решать бы.
-    def brArgs = blk.RenderArgs.DEFAULT
+    lazy val brArgs = blk.RenderArgs.DEFAULT.copy(inlineStyles = false)
 
     def renderMad2html(mad: MAd): HtmlFormat.Appendable = {
       _single_offer(mad, args = brArgs, isWithAction = true)(ctx)
@@ -150,14 +151,22 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     }
 
 
-    /** Вернуть id рекламных карточек, которые будут в итоге отправлены клиенту.
-      * @return id карточек в неопределённом порядке. */
-    override def adsCssFut = madsFut.map { mads =>
+    override def adsCssExternalFut = madsFut.map { mads =>
       val szMult = brArgs.szMult
       mads
         .flatMap(_.id)
         .map { adId => AdCssArgs(adId, szMult) }
     }
+
+    override def adsCssInternalFut: Future[Seq[CssRenderArgsT]] = {
+      madsFut.map { mads =>
+        val szMult = brArgs.szMult
+        mads.iterator.flatMap { mad =>
+          mad2craIter(mad, szMult)
+        }.toSeq
+      }
+    }
+
 
     lazy val madsGroupedFut = madsFut.map { groupNarrowAds }
 

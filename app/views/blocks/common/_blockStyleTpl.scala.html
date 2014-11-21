@@ -1,19 +1,8 @@
-@(madId: Option[String],  aovf: AOValueField,  bf: BlockAOValueFieldT,  args: blk.RenderArgs,  className: String,  xy: ICoords2D)
+@(args: blk.CssRenderArgsT)
 
 @* Генерация динамического стиля для одного блока. *@
 
 @import views.txt.blocks.common._
 
-<style>
-
-@* TODO Временный костыль. *@
-@Html(_blockStyleCss(blk.CssRenderArgs(
-  madId = madId,
-  aovf = aovf,
-  bf = bf,
-  szMult = args.szMult,
-  cssClass = className,
-  xy = xy
-)).toString)
-
-</style>
+@* TODO Quick-and-dirty решение вопроса с txt-шаблоном стиля. Возможно, есть решение оптимальнее. *@
+<style>@Html(_blockStyleCss(args).toString.trim)</style>
