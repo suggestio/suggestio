@@ -51,9 +51,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       SmRcvResp(resp)
     }
     // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-    val cssAppendFut = logic.adsCssInternalFut.flatMap { args =>
-      jsAppendAdsCss(args)(logic.ctx)
-    }
+    val cssAppendFut = logic.jsAppendAdsCss
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
     val resultFut = for {
       smRcvResp <- smRcvRespFut

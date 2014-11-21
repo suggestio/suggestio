@@ -35,23 +35,19 @@ trait ScController extends SioController {
     }
   }
 
+  /**
+   * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.
+   * Она работает с данными от разных logic'ов, наследующих [[AdCssRenderArgs]].
+   * @param args Данные по карточкам и их рендеру.
+   * @param ctx Контекст.
+   * @return Отрендеренный Html: link rel css.
+   */
   protected def htmlAdsCssLink(args: Seq[AdCssArgs])(implicit ctx: Context): Html = {
     val call = routes.MarketShowcase.serveBlockCss(args)
     val call1 = CdnUtil.forCall(call)
     views.html.market.showcase.stuff._cssLinkTpl(call1)
   }
-  protected def jsAppendAdsCss(args: Seq[CssRenderArgsT])(implicit ctx: Context): Future[JsAppendByTagName] = {
-    // TODO Нужно обрать из выхлопа лишнии пробелы и пустые строки. Это сократит выхлоп до 10%.
-    Future.traverse(args) { cssRenderArgs =>
-      Future {
-        views.txt.blocks.common._blockStyleCss(cssRenderArgs)
-      }
-    } map { renders =>
-      val styleTxt = new Txt(renders.toList)
-      val html = List(new Txt("<style>"), styleTxt, new Txt("</style>"))
-      JsAppendByTagName("head", JsString(new Txt(html)))
-    }
-  }
+
 
   /** Некоторые асинхронные шаблоны выдачи при синхронном рендере требуют для себя js-состояние. */
   trait JsStateRenderWrapper {
@@ -63,42 +59,58 @@ trait ScController extends SioController {
     def apply(jsStateOpt: Option[ScJsState] = None): Html
   }
 
-}
 
+  /** Для унифицированного сбора данных для рендера css блоков, тут интерфейс. */
+  trait AdCssRenderArgs {
 
-/** Для унифицированного сбора данных для рендера css блоков, тут интерфейс. */
-trait AdCssRenderArgs {
+    /** Вернуть данные по рендеру css для случая внешнего рендера, т.е. когда клиент получает
+      * css отдельным запросом.
+      * @return последовательность аргументов для генерации ссылки на css. */
+    def adsCssExternalFut: Future[Seq[AdCssArgs]]
 
-  /** Вернуть данные по рендеру css для случая внешнего рендера, т.е. когда клиент получает
-    * css отдельным запросом.
-    * @return последовательность аргументов для генерации ссылки на css. */
-  def adsCssExternalFut: Future[Seq[AdCssArgs]]
+    /**
+     * Вернуть данные по пакетному рендеру css блоков одновременно с текущим запросом.
+     * @return последовательность аргументов для вызова рендера как можно скорее.
+     */
+    def adsCssInternalFut: Future[Seq[CssRenderArgsT]]
 
-  /**
-   * Вернуть данные по пакетному рендеру css блоков одновременно с текущим запросом.
-   * @return последовательность аргументов для вызова рендера как можно скорее.
-   */
-  def adsCssInternalFut: Future[Seq[CssRenderArgsT]]
-
-  /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-  protected def mad2craIter(mad: MAd, szMult: SzMult_t): Iterator[CssRenderArgsT] = {
-    val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-    mad.offers.iterator.flatMap { offer =>
-      val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
-      val t2 = offer.text2.map { text2 => ("descr", text2, bc.descrBf, 25) }
-      val fields = t1 ++ t2
-      fields.iterator.map { case (fid, aosf, bf, yoff) =>
-        blk.CssRenderArgs2(
-          madId   = mad.id,
-          aovf    = aosf,
-          bf      = bf,
-          szMult  = szMult,
-          offerN  = offer.n,
-          yoff    = yoff,
-          fid     = fid
-        )
+    /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
+    protected def mad2craIter(mad: MAd, szMult: SzMult_t): Iterator[CssRenderArgsT] = {
+      val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+      mad.offers.iterator.flatMap { offer =>
+        val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
+        val t2 = offer.text2.map { text2 => ("descr", text2, bc.descrBf, 25) }
+        val fields = t1 ++ t2
+        fields.iterator.map { case (fid, aosf, bf, yoff) =>
+          blk.CssRenderArgs2(
+            madId   = mad.id,
+            aovf    = aosf,
+            bf      = bf,
+            szMult  = szMult,
+            offerN  = offer.n,
+            yoff    = yoff,
+            fid     = fid
+          )
+        }
       }
     }
+
+    /** Отрендерить css для блоков, данные по котором лежат в addCssInternalFut(). */
+    def jsAppendAdsCss: Future[JsAppendByTagName] = {
+      adsCssInternalFut flatMap { args =>
+        // TODO Нужно обрать из выхлопа лишнии пробелы и пустые строки. Это сократит выхлоп до 10%.
+        Future.traverse(args) { cssRenderArgs =>
+          Future {
+            views.txt.blocks.common._blockStyleCss(cssRenderArgs)
+          }
+        }
+      } map { renders =>
+        val styleTxt = new Txt(renders.toList)
+        val html = List(new Txt("<style>"), styleTxt, new Txt("</style>"))
+        JsAppendByTagName("head", JsString(new Txt(html)))
+      }
+    }
+
   }
 
 }

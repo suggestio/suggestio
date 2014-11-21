@@ -54,9 +54,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       SmRcvResp(ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered))
     }
     // Запуск сборки css-инжекции в <head> клиента:
-    val cssInjectFut = logic.adsCssInternalFut.flatMap { args =>
-      jsAppendAdsCss(args)(logic.ctx)
-    }
+    val cssInjectFut = logic.jsAppendAdsCss
     // Итоговый результат выполнения запроса собирается тут.
     val resultFut = for {
       smRcvResp <- smRcvRespFut
