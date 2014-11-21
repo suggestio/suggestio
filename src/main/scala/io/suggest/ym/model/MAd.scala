@@ -215,19 +215,12 @@ final class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn
   def companion = MAd
 
   override def searchForReceiverAtPubLevel(receiverId: String, level: String): String = {
-    val searchArgs = new AdsSearchArgsT {
+    val searchArgs = new AdsSearchArgsDflt {
       override def levels = List(level.trim)
         .filter(!_.isEmpty)
         .flatMap(SinkShowLevels.maybeWithName)
       override def receiverIds = List(receiverId.trim).filter(!_.isEmpty)
       override def maxResults = 100
-      override def offset = 0
-      override def catIds = Nil
-      override def producerIds = Nil
-      override def qOpt = None
-      override def forceFirstIds = Nil
-      override def generationOpt = None
-      override def withoutIds = Nil
     }
     MAd.dynSearch(searchArgs).map {
       _.map(_.toJsonPretty)

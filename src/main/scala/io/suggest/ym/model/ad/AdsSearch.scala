@@ -159,6 +159,28 @@ object AdsSearch {
       )
       query3 = QueryBuilders.filteredQuery(query3, idsFilter)
     }
+    // Если задан anyReceiverId, то нужно добавить exists/missing-фильтр для проверки состояния значений в rcvrs.id
+    if (anyReceiverId.isDefined) {
+      val fn = EMReceivers.RCVRS_RECEIVER_ID_ESFN
+      val f = if (anyReceiverId.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query3 = QueryBuilders.filteredQuery(query3, nf)
+    }
+    // Если задан anyLevel, то нужно добавиль фильтр по аналогии с anyReceiverId.
+    if (anyLevel.isDefined) {
+      val fn = EMReceivers.RCVRS_SLS_ESFN
+      val f = if(anyLevel.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query3 = QueryBuilders.filteredQuery(query3, nf)
+    }
     // Возвращаем собранный запрос.
     query3
   }
@@ -173,6 +195,9 @@ trait AdsSearchArgsT extends DynSearchArgs {
   /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
   def receiverIds: Seq[String]
 
+  /** Добавить exists или missing фильтр на выходе, который будет убеждаться, что в индексе есть или нет id ресиверов. */
+  def anyReceiverId: Option[Boolean]
+
   /** Необязательный id владельца рекламы. Полезно при поиске в рамках магазина. */
   def producerIds: Seq[String]
 
@@ -181,6 +206,9 @@ trait AdsSearchArgsT extends DynSearchArgs {
 
   /** Какого уровня требуются карточки. */
   def levels: Seq[SlNameTokenStr]
+
+  /** Добавить exists/missing фильтр на выходе, который будет убеждаться, что уровни присуствуют или отсутствуют. */
+  def anyLevel: Option[Boolean]
 
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]
@@ -207,6 +235,8 @@ trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt {
   override def qOpt           : Option[String] = None
   override def generationOpt  : Option[Long] = None
   override def catIds         : Seq[String] = Nil
+  override def anyReceiverId  : Option[Boolean] = None
+  override def anyLevel       : Option[Boolean] = None
 }
 
 /** Враппер для аргументов поиска рекламных карточек. */
@@ -224,6 +254,8 @@ trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper {
   override def qOpt           = _adsSearchArgsUnderlying.qOpt
   override def generationOpt  = _adsSearchArgsUnderlying.generationOpt
   override def catIds         = _adsSearchArgsUnderlying.catIds
+  override def anyReceiverId  = _adsSearchArgsUnderlying.anyReceiverId
+  override def anyLevel       = _adsSearchArgsUnderlying.anyLevel
 }
 
 

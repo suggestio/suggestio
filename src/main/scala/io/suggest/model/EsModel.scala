@@ -379,7 +379,6 @@ object EsModel extends MacroLogsImpl {
     JsArray(strSeq)
   }
 
-
   /**
    * Собрать указанные значения id'шников в аккамулятор-множество.
    * @param searchResp Экземпляр searchResponse.
@@ -624,8 +623,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   }
 
   def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client) = {
-    prepareSearch.setSearchType(SearchType.SCAN).setScroll(keepAlive)
+  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client): SearchRequestBuilder = {
+    prepareScrollFor(prepareSearch, keepAlive)
+  }
+  def prepareScrollFor(srb: SearchRequestBuilder, keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT): SearchRequestBuilder = {
+    srb.setSearchType(SearchType.SCAN).setScroll(keepAlive)
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
@@ -642,7 +644,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * При удаление инстанса модели бывает нужно стирать связанные ресурсы (связанные модели).
    * Тут общий код логики необязательного стирания ресурсов.
    * @param ignoreResources Флаг запрета каких-либо стираний. Полезно, если всё уже стёрто.
-   * @getF Функция получения фьючерса с возможным инстансом модели.
+   * @param getF Функция получения фьючерса с возможным инстансом модели.
    * @return Фьючерс для синхронизации.
    */
   def maybeEraseResources(ignoreResources: Boolean, getF: => Future[Option[EsModelCommonT]])
