@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.10.4-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.10.5-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")

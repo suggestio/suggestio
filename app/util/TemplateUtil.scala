@@ -176,6 +176,10 @@ object TplDataFormatUtil {
   def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
   def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
 
+  private val w3cDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+  def w3cDate(d: ReadablePartial) = w3cDateFormat.print(d)
+  def w3cDate(dt: ReadableInstant) = w3cDateFormat.print(dt)
+
   private val numericDtFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   // TODO Нужно прикрутить поддержку timezone, используя context
   def numericDt(dt: ReadableInstant)(implicit ctx: Context) = numericDtFormat.print(dt)

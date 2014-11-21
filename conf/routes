@@ -312,6 +312,7 @@ POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnI
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 
 GET  /robots.txt                         controllers.Application.robotsTxt
+GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты

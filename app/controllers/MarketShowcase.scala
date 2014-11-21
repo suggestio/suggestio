@@ -18,7 +18,7 @@ import SiowebEsUtil.client
  */
 object MarketShowcase extends SioController with PlayMacroLogsImpl with SNStaticSubscriberDummy
 with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode with ScSyncSiteGeo
-with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss
+with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScSitemapsXml
 {
 
   import LOGGER._

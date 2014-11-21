@@ -1,6 +1,10 @@
 package controllers
 
+import models.Context
+import models.crawl.SiteMapUrlT
+import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.cdn.CorsUtil
@@ -9,6 +13,7 @@ import play.api.Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
+import views.html.static.sitemap._
 
 object Application extends SioController with PlayMacroLogsImpl {
 
@@ -73,4 +78,31 @@ object Application extends SioController with PlayMacroLogsImpl {
       NotFound
   }
 
+  /**
+   * Раздача сайт-мапы.
+   * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
+   */
+  def siteMapXml = MaybeAuth { implicit request =>
+    implicit val ctx = getContext2
+    val srcs: Seq[SiteMapXmlCtl] = Seq(MarketShowcase)
+    val enums = srcs.map(_.siteMapXmlEnumerator(ctx))
+    val urls = Enumerator.interleave(enums)
+      .map { _urlTpl(_) }
+    // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:
+    val sxPrefix = Enumerator( beforeUrlsTpl()(ctx) )
+    val respBody = sxPrefix
+      .andThen(urls)
+      // TODO Далее нужен асинхронный рендер. Эти штуки рендерятся слишком рано и висят в памяти без дела:
+      .andThen( Enumerator( afterUrlsTpl()(ctx) ) )
+      .andThen( Enumerator.eof )
+    Ok.feed(respBody)
+      .as("text/xml")
+  }
+
+}
+
+/** Интерфейс для контроллеров, которые раздают страницы, подлежащие публикации в sitemap.xml. */
+trait SiteMapXmlCtl {
+  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
+  def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT]
 }
