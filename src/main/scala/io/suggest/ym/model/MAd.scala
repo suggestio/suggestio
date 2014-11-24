@@ -32,6 +32,7 @@ object MAd
   with EMPrioOptStatic
   with EMUserCatIdStatic
   with EMDateCreatedStatic
+  with EMDateEditedStatic
   with EMText4SearchStatic
   with AdsSimpleSearchT
   with EMColorsStatic
@@ -158,6 +159,7 @@ final case class MAd(
   var disableReason : List[DisableReason] = Nil,
   var richDescrOpt  : Option[RichDescr] = None,
   var dateCreated   : DateTime = DateTime.now,
+  var dateEdited    : Option[DateTime] = None,
   var moderation    : ModerationInfo = ModerationInfo(),
   var versionOpt    : Option[Long] = None
 )
@@ -172,6 +174,7 @@ final case class MAd(
   with EMPrioOptMut
   with EMUserCatIdMut
   with EMDateCreatedMut
+  with EMDateEditedMut
   with EMTexts4Search
   with EMColorsMut
   with EMDisableReasonMut
