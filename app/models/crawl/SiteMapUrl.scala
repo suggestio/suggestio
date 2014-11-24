@@ -26,6 +26,6 @@ case class SiteMapUrl(
 /** Изменяемость страниц. */
 object ChangeFreqs extends Enumeration {
   type ChangeFreq = Value
-  // TODO Большинство элементов можно закинуть в lazy val или удалить, т.к. они не нужны.
-  val always, hourly, daily, weekly, monthly, yearly, never = Value
+  val hourly, daily = Value
+  lazy val always, weekly, monthly, yearly, never = Value
 }

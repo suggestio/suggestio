@@ -1,6 +1,7 @@
 package controllers
 
 import models.im.MImg
+import org.joda.time.DateTime
 import play.api.libs.json.JsValue
 import util.PlayMacroLogsImpl
 import util.blocks.BlocksUtil.BlockImgMap
@@ -305,7 +306,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                   prio          = mad2.prio,
                   userCatId     = mad2.userCatId,
                   blockMeta     = mad2.blockMeta,
-                  richDescrOpt  = mad2.richDescrOpt
+                  richDescrOpt  = mad2.richDescrOpt,
+                  dateEdited    = Some(DateTime.now)
                 )
               }
             } yield {

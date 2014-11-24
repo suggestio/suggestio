@@ -4,8 +4,9 @@ import controllers.{routes, SiteMapXmlCtl}
 import io.suggest.model.EsModel
 import io.suggest.ym.model.MAd
 import models.{ScJsState, AdSearch, Context}
-import models.crawl.{SiteMapUrl, SiteMapUrlT}
+import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import org.elasticsearch.common.unit.TimeValue
+import org.joda.time.{DateTime, LocalDate}
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -17,7 +18,10 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
  * Created: 21.11.14 17:37
  * Description: Выдача - основная составляющая sitemap'a. Тут система сбора карточек и отображения
  * карточек на sitemap'у.
- */
+ * Вычисление значений changefreq проходит по направлению оптимального кравлинга:
+ * - Если изменялось сегодня, то hourly. Это простимулирует кравлер просмотреть документ сегодня.
+ * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
+*/
 trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
 
   /**
@@ -34,6 +38,7 @@ trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
     }
     var reqb = MAd.dynSearchReqBuilder(adSearch)
     reqb = MAd.prepareScrollFor(reqb)
+    val today = LocalDate.now()
     val erFut = reqb.execute().map { searchResp0 =>
       // Пришел ответ без результатов с начальным scrollId.
       Enumerator.unfoldM(searchResp0.getScrollId) { scrollId0 =>
@@ -52,21 +57,32 @@ trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
       }.flatMap { mads =>
         // Из списка mads делаем Enumerator, который поочерёдно запиливает каждую карточку в элемент sitemap.xml.
         Enumerator(mads : _*)
-          .map { mad2sxu }
+          .map[SiteMapUrlT] { mad2sxu(_, today) }
       }
     }
     Enumerator.flatten(erFut)
   }
 
-  /** Приведение рекламной карточки к элементу sitemap.xml. */
-  protected def mad2sxu(mad: MAd)(implicit ctx: Context): SiteMapUrlT = {
+  /**
+   * Приведение рекламной карточки к элементу sitemap.xml.
+   * @param mad Экземпляр рекламной карточки.
+   * @param today Дата сегодняшнего дня.
+   * @param ctx Контекст.
+   * @return Экземпляр SiteMapUrl.
+   */
+  protected def mad2sxu(mad: MAd, today: LocalDate)(implicit ctx: Context): SiteMapUrl = {
     val jsState = ScJsState(
       adnId = mad.receivers.headOption.map(_._1),
       fadOpenedIdOpt = mad.id
     )
     val call = routes.MarketShowcase.syncGeoSite(jsState)
+    val lastDt = mad.dateEdited.getOrElse(mad.dateCreated)
+    val lastDate = lastDt.toLocalDate
     SiteMapUrl(
-      loc = ctx.currAudienceUrl + call.url
+      // TODO Нужно здесь перейти на #!-адресацию, когда появится поддержка этого чуда в js выдаче.
+      loc = ctx.currAudienceUrl + call.url,
+      lastMod = Some( lastDate ),
+      changeFreq = Some( if (lastDate isBefore today) ChangeFreqs.daily else ChangeFreqs.hourly )
     )
   }
 
