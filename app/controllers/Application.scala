@@ -4,12 +4,11 @@ import models.Context
 import models.crawl.SiteMapUrlT
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
-import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.cdn.CorsUtil
 import play.api.i18n.Lang
-import play.api.Play.{current, configuration}
+import play.api.Play, Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -19,9 +18,24 @@ object Application extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Время кеширования /robots.txt ответа на клиенте. */
+  private val ROBOTS_TXT_CACHE_TTL_SECONDS = configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {
+    if (Play.isDev) 5 else 120
+  }
+
+  /** Время кеширования /sitemap.xml ответа на клиенте. */
+  private val SITEMAP_XML_CACHE_TTL_SECONDS = configuration.getInt("sitemap.xml.cache.ttl.seconds") getOrElse {
+    if (Play.isDev) 1 else 60
+  }
+
+
   /** Раздача содержимого robots.txt. */
   def robotsTxt = Action { implicit request =>
     Ok(views.txt.static.robotsTxtTpl())
+      .withHeaders(
+        CONTENT_TYPE  -> "text/plain; charset=utf-8",
+        CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
+      )
   }
 
   /** Запрос смены языка UI. */
@@ -100,7 +114,10 @@ object Application extends SioController with PlayMacroLogsImpl {
       .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем асинхронный рендер через map()
       .andThen( Enumerator.eof )
     Ok.feed(respBody)
-      .as("text/xml")
+      .withHeaders(
+        CONTENT_TYPE  -> "text/xml",
+        CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
+      )
   }
 
 }
