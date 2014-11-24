@@ -20,6 +20,7 @@
 
   @if(!ctx.isIpad) {
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   }
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
@@ -39,8 +40,6 @@
   <link href="@CdnUtil.asset("images/icons/144_ios.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
 
   <link href="@CdnUtil.asset("images/icons/228.png")" rel="icon" sizes="228x228" type="image/png" />
-
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 
   @* windows 8+ metro: *@
   <meta name="msapplication-TileImage" content="@CdnUtil.asset("images/icons/144.png")" />
