@@ -1,23 +1,24 @@
-@(adnNode: MAdnNode, eAct: EmailActivation)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, eAct: EmailActivation)(implicit ctx: Context)
 
-@* Шаблон HTML-письма с приглашением на управление торговым центром. *@
+@* Шаблон HTML-письма с приглашением на управление узлом. Для ссылок используем только домен ЛК (my.suggest.io),
+   чтобы избежать атак на почтовый клиент по нешифрованным картинкам из письма. *@
 
 <table border="0" cellpadding="0" cellspacing="0" style="width: 540px;">
   <tr>
     <td>
       <a href="https://suggest.io" style="display: block; width: 120px; height: 124px; margin: 0 auto;
-      text-decoration: none; background: url('@ctx.myAudienceUrl@routes.Assets.at("images/market/mail/logo.png")') no-repeat center center">&nbsp;</a>
+      text-decoration: none; background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/logo.png")') no-repeat center center">&nbsp;</a>
     </td>
   </tr>
   <tr>
     <td style="padding: 20px 0; border-bottom: 1px solid #9A9B9B; text-align: center; background: #EFEFEF;">
-      <div style="background: url('@ctx.myAudienceUrl@routes.Assets.at("images/market/mail/title.png")') no-repeat center center;
+      <div style="background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/title.png")') no-repeat center center;
       display: inline-block; width: 262px; height: 25px;">&nbsp;</div>
     </td>
   </tr>
   <tr>
     <td style="background: #E1E1E1;">
-      <div style="padding-left: 82px; background: url('@ctx.myAudienceUrl@routes.Assets.at("images/market/mail/ok.png")') no-repeat 25px center;
+      <div style="padding-left: 82px; background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/ok.png")') no-repeat 25px center;
       font-family: 'Arial'; font-size: 18px; color: #48ab38; text-shadow: 1px 1px 1px #FFFFFF;
       padding-top: 30px; padding-bottom: 30px;">
         Добро пожаловать.
@@ -28,7 +29,8 @@
     <td style="background: #E1E1E1;">
       <div style="padding-left: 90px; padding-bottom: 30px; font-size: 14px; color: #232323; font-family: 'Arial'; ">
         Для подтверждения регистрации в качестве участника рекламной сети используйте
-        <a style="color: #4f88a9; text-decoration: none;" target="_blank" href="@ctx.myAudienceUrl@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(adnNode.id.get, eaId = eAct.id.get)">эту ссылку</a>.
+        <a style="color: #4f88a9; text-decoration: none;" target="_blank"
+           href="@ctx.LK_URL_PREFIX@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(adnNode.id.get, eaId = eAct.id.get)">эту ссылку</a>.
       </div>
     </td>
   </tr>
@@ -43,7 +45,7 @@
   <tr>
     <td>
       <div style="padding-left: 90px; padding-top: 20px; font-size: 10px; font-family: 'Arial'; color: #a3a3a3;">
-        © 2011-2014 Suggest.io. Все права защищены
+        © 2011-@ctx.now.getYear Suggest.io. Все права защищены
       </div>
     </td>
   </tr>

@@ -3,7 +3,7 @@ package models
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
-import play.twirl.api.{Html, HtmlFormat}
+import play.twirl.api.Html
 import util.cdn.CdnUtil
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
@@ -193,7 +193,7 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
     } { logoImg =>
       CdnUtil.dynImg(logoImg.filename)
     }
-    util.Context.MY_AUDIENCE_URL + path
+    Context.SC_URL_PREFIX + path
   }
 
   override def toString: String = {

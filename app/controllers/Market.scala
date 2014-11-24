@@ -135,7 +135,7 @@ object Market extends SioController with SiteMapXmlCtl {
       routes.Market.marketBooklet()
     ) map { call =>
       SiteMapUrl(
-        loc = ctx.currAudienceUrl + call.url,
+        loc = ctx.SC_URL_PREFIX + call.url,
         lastMod = Some( SioControllerUtil.PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
         changeFreq = Some( ChangeFreqs.weekly )
       )

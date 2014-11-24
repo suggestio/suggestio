@@ -80,7 +80,9 @@ object Application extends SioController with PlayMacroLogsImpl {
 
 
   /** Источники для наполнения sitemap.xml */
-  private def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = Seq(MarketShowcase, Market)
+  private def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = {
+    Seq(MarketShowcase, Market, MarketJoin)
+  }
 
   /**
    * Раздача сайт-мапы.

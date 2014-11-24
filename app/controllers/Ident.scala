@@ -30,9 +30,6 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
   import LOGGER._
 
-  // URL, используемый для person'a. Если сие запущено на локалхосте, то надо менять этот адресок.
-  val AUDIENCE_URL = current.configuration.getString("persona.audience.url").get
-
   type EmailPwLoginForm_t = Form[(String, String)]
 
   /** Форма логина по email и паролю. */

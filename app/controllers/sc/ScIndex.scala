@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.jsa.{SmRcvResp, Js}
-import _root_.util.{Context, PlayMacroLogsI}
+import _root_.util.PlayMacroLogsI
 import models.Context
 import models.jsm.ScIndexResp
 import util.img.WelcomeUtil
@@ -10,8 +10,6 @@ import util.stat._
 import util.acl._
 import util.SiowebEsUtil.client
 import controllers.routes
-import io.suggest.model.EsModel.FieldsJsonAcc
-import ShowcaseUtil._
 import views.html.market.showcase._
 import play.api.libs.json._
 import models._
@@ -235,7 +233,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
 
       /** При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет. */
       override def onCloseHrefFut = {
-        val url = Context.MY_AUDIENCE_URL + routes.MarketLkAdn.showAdnNode(adnId).url
+        val url = Context.LK_URL_PREFIX + routes.MarketLkAdn.showAdnNode(adnId).url
         Future successful url
       }
 

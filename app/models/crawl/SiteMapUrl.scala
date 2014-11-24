@@ -27,5 +27,5 @@ case class SiteMapUrl(
 object ChangeFreqs extends Enumeration {
   type ChangeFreq = Value
   val hourly, daily, weekly = Value
-  lazy val always, monthly, yearly, never = Value
+  //lazy val always, monthly, yearly, never = Value
 }

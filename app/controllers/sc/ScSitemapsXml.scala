@@ -80,7 +80,7 @@ trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
     val lastDate = lastDt.toLocalDate
     SiteMapUrl(
       // TODO Нужно здесь перейти на #!-адресацию, когда появится поддержка этого чуда в js выдаче.
-      loc = ctx.currAudienceUrl + call.url,
+      loc = ctx.SC_URL_PREFIX + call.url,
       lastMod = Some( lastDate ),
       changeFreq = Some( if (lastDate isBefore today) ChangeFreqs.daily else ChangeFreqs.hourly )
     )
