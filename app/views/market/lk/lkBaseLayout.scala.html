@@ -1,14 +1,14 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None, headAfter:Option[Html] = None,
-  backHref: Option[String] = None, rightBar: Option[Html] = None, povAdnId: Option[String] = None, popupContent:Option[Html] = None
-)(content: Html)(implicit ctx: util.Context)
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None,
+  headAfter:Option[Html] = None, backHref: Option[String] = None, rightBar: Option[Html] = None,
+  povAdnId: Option[String] = None, popupContent:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @lkBase(
-  title = title,
-  nodeOpt = nodeOpt,
-  headAfter = headAfter,
-  popupContent = popupContent,
-  povAdnId = povAdnId,
-  leftCurrEl = leftCurrEl
+  title         = title,
+  nodeOpt       = nodeOpt,
+  headAfter     = headAfter,
+  popupContent  = popupContent,
+  povAdnId      = povAdnId,
+  leftCurrEl    = leftCurrEl
 ) {
 
   <aside class="right-bar">
@@ -18,9 +18,7 @@
   <div class="viewport">
 
     <article class="page_cnt">
-      <h1 class="page_title">
-        @title
-      </h1>
+      <h1 class="page_title">@title</h1>
       @content
     </article>
 

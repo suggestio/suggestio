@@ -1,4 +1,4 @@
-@(title: String, adnNode: MAdnNode)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnNode: MAdnNode)(content: Html)(implicit ctx: Context)
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
@@ -17,8 +17,7 @@
 
   @content
 
-  <!-- TODO вынести инициализацию tiny в отдельный модуль -->
-  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
   <script>
 
     @* Сразу открываем веб-сокет в фоне. Он нужен для получения задетекченного цвета картинки. *@
@@ -36,7 +35,7 @@
       statusbar: false,
       plugins: 'link, textcolor, paste, colorpicker',
       toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat"],
-      content_css: '/assets/stylesheets/market/descr.css',
+      content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '10px 12px 14px 16px 18px 22px 26px 30px 34px 38px 42px 46px 50px 54px 58px 62px 66px 70px 74px 80px 84px',
       style_formats: [
         {

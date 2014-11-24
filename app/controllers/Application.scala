@@ -108,10 +108,9 @@ object Application extends SioController with PlayMacroLogsImpl {
     val urls = Enumerator.interleave(enums)
       .map { _urlTpl(_) }
     // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:
-    val sxPrefix = Enumerator( beforeUrlsTpl()(ctx) )
-    val respBody = sxPrefix
+    val respBody = Enumerator( beforeUrlsTpl()(ctx) )
       .andThen(urls)
-      .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем асинхронный рендер через map()
+      .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем отложенный рендер футера через map()
       .andThen( Enumerator.eof )
     Ok.feed(respBody)
       .withHeaders(
