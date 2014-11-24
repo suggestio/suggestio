@@ -260,24 +260,24 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   def bgColor       : String
   /** Адрес для showcase */
   def showcaseCall  : Call
-  /** id узла, в рамках которого орудуем. */
-  def adnId         : Option[String]
-  /** Отображаемый заголовок. */
-  def title         : Option[String] = None
+  /** Текущая нода. Создавалась для генерации заголовка в head.title. */
+  def nodeOpt       : Option[MAdnNode] = None
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
   def inlineIndex   : Option[Html] = None
   /** Закинуть сие в конец тега head. */
   def headAfter     : Option[Html] = None
 
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
+  def adnId   = nodeOpt.flatMap(_.id)
   def withGeo = adnId.isEmpty
 
   override def toString: String = {
     val sb = new StringBuilder(64)
     sb.append("bgColor=").append(bgColor).append('&')
       .append("showcaseCall=").append(showcaseCall).append('&')
-      .append("title=").append(title).append('&')
       .append("syncRender=").append(syncRender).append('&')
+    if (nodeOpt.isDefined)
+      sb.append("node=").append(nodeOpt.get.idOrNull).append('&')
     if (adnId.isDefined)
       sb.append('&').append("adnId=").append(adnId)
     if (inlineIndex.isDefined)
@@ -290,9 +290,8 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
   def _scSiteArgs: ScSiteArgs
 
   override def bgColor      = _scSiteArgs.bgColor
-  override def adnId        = _scSiteArgs.adnId
   override def showcaseCall = _scSiteArgs.showcaseCall
-  override def title        = _scSiteArgs.title
+  override def nodeOpt      = _scSiteArgs.nodeOpt
   override def inlineIndex  = _scSiteArgs.inlineIndex
   override def headAfter    = _scSiteArgs.headAfter
 

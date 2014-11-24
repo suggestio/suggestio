@@ -7,19 +7,14 @@
 @import ctx._
 @import stuff._
 @import LkLeftPanelLinks._
-@import AdnShownTypes._
 
 <!DOCTYPE html>
 <html>
 <head>
   <title>
     @title
-    @nodeOpt.map { node =>
-      | @node.meta.name
-      @if(node.meta.town && node.adn.showWithTown) {
-        (@node.meta.town)
-      }
-    }
+    @if(nodeOpt) { | }
+    @_nodeTitleTpl(nodeOpt)
     | market | Suggest.io
   </title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>

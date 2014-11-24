@@ -204,6 +204,11 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       }
     }
 
+    /** Узел, запрошенный в qs-аргументах. */
+    lazy val adnNodeReqFut: Future[Option[MAdnNode]] = {
+      MAdnNodeCache.maybeGetByIdCached( _scState.adnId )
+    }
+
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
       indexRenderArgsFut.map { indexRenderArgs =>
         new HtmlGeoIndexLogic {
@@ -212,25 +217,23 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
           /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */
           override def gdrFut: Future[GeoDetectResult] = {
-            val nodeIdOpt = _scState.adnId
-            MAdnNodeCache.maybeGetByIdCached( nodeIdOpt )
-              .flatMap {
-                case Some(node) =>
-                  // Нужно привести найденный узел к GeoDetectResult:
-                  val ngl: AdnShownType = AdnShownTypes.withName( node.adn.shownTypeId )
-                  val gdr = GeoDetectResult(ngl.ngls.head, node)
-                  Future successful gdr
-                case None =>
-                  // Имитируем экзепшен, чтобы перехватить его в Future.recover():
-                  Future failed new NoSuchElementException("Receiver node not exists or undefined: " + nodeIdOpt)
-              }
-              // Если нет возможности использовать заданный узел, пытаемся определить через метод супер-класса.
-              .recoverWith {
-                case ex: Exception =>
-                  if (!ex.isInstanceOf[NoSuchElementException])
-                    LOGGER.error("Unable to make node search. nodeIdOpt = " + nodeIdOpt, ex)
-                  super.gdrFut
-              }
+            adnNodeReqFut.flatMap {
+              case Some(node) =>
+                // Нужно привести найденный узел к GeoDetectResult:
+                val ngl: AdnShownType = AdnShownTypes.withName( node.adn.shownTypeId )
+                val gdr = GeoDetectResult(ngl.ngls.head, node)
+                Future successful gdr
+              case None =>
+                // Имитируем экзепшен, чтобы перехватить его в Future.recover():
+                Future failed new NoSuchElementException("Receiver node not exists or undefined: " + _scState.adnId)
+            }
+            // Если нет возможности использовать заданный узел, пытаемся определить через метод супер-класса.
+            .recoverWith {
+              case ex: Exception =>
+                if (!ex.isInstanceOf[NoSuchElementException])
+                  LOGGER.error("Unable to make node search. nodeIdOpt = " + _scState.adnId, ex)
+                super.gdrFut
+            }
           }
 
           override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
@@ -270,16 +273,19 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     def siteArgsFut: Future[ScSiteArgs] = {
       val _indexHtmlFut = indexHtmlFut
       val _headAfterFut = headAfterFut
+      val _adnNodeReqFut = adnNodeReqFut
       for {
         siteRenderArgs <- _getSiteRenderArgs
         indexHtml      <- _indexHtmlFut
         _headAfter     <- _headAfterFut
+        _adnNodeOpt    <- _adnNodeReqFut
       } yield {
         new ScSiteArgsWrapper {
-          override def _scSiteArgs = siteRenderArgs
-          override def inlineIndex = Some(indexHtml)
-          override def syncRender  = true
-          override def headAfter   = _headAfter
+          override def _scSiteArgs  = siteRenderArgs
+          override def inlineIndex  = Some(indexHtml)
+          override def syncRender   = true
+          override def headAfter    = _headAfter
+          override def nodeOpt      = _adnNodeOpt
         }
       }
     }

@@ -56,7 +56,6 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
     val args = new ScSiteArgs {
       override def showcaseCall = routes.MarketShowcase.geoShowcase()
       override def bgColor = SITE_BGCOLOR_GEO
-      override def adnId = None
     }
     Future successful args
   }
@@ -96,8 +95,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
     val args = new ScSiteArgs {
       override def showcaseCall = scCall
       override val bgColor = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
-      override def title = Some(request.adnNode.meta.name)
-      override def adnId = request.adnNode.id
+      override def nodeOpt = Some(request.adnNode)
     }
     cacheControlShort {
       Ok(demoWebsiteTpl(args))
