@@ -141,6 +141,10 @@
 
 
 
+@* TODO Нужно использовать заголовок окна:
+   title         = s"Профиль | ${node.meta.name} | ${node.meta.town.getOrElse("Город?")}"
+   А заголовок страницы - по упрощенной схеме.
+*@
 @nodeBaseTpl(
   title         = "Ваш профиль",
   isMyNode      = isMyNode,

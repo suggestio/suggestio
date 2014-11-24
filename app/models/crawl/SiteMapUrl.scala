@@ -26,6 +26,6 @@ case class SiteMapUrl(
 /** Изменяемость страниц. */
 object ChangeFreqs extends Enumeration {
   type ChangeFreq = Value
-  val hourly, daily = Value
-  lazy val always, weekly, monthly, yearly, never = Value
+  val hourly, daily, weekly = Value
+  lazy val always, monthly, yearly, never = Value
 }

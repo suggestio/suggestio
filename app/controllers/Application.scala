@@ -78,22 +78,24 @@ object Application extends SioController with PlayMacroLogsImpl {
       NotFound
   }
 
+
+  /** Источники для наполнения sitemap.xml */
+  private def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = Seq(MarketShowcase, Market)
+
   /**
    * Раздача сайт-мапы.
    * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
    */
   def siteMapXml = MaybeAuth { implicit request =>
     implicit val ctx = getContext2
-    val srcs: Seq[SiteMapXmlCtl] = Seq(MarketShowcase)
-    val enums = srcs.map(_.siteMapXmlEnumerator(ctx))
+    val enums = SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
     val urls = Enumerator.interleave(enums)
       .map { _urlTpl(_) }
     // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:
     val sxPrefix = Enumerator( beforeUrlsTpl()(ctx) )
     val respBody = sxPrefix
       .andThen(urls)
-      // TODO Далее нужен асинхронный рендер. Эти штуки рендерятся слишком рано и висят в памяти без дела:
-      .andThen( Enumerator( afterUrlsTpl()(ctx) ) )
+      .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем асинхронный рендер через map()
       .andThen( Enumerator.eof )
     Ok.feed(respBody)
       .as("text/xml")
