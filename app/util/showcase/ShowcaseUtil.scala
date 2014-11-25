@@ -197,10 +197,14 @@ object ShowcaseUtil {
   val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
     .getOrElse { List(1.1F, 1.2F, 1.3F, 1.4F) }
+
   /** Горизонтальное расстояние между блоками. */
   val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
+
   /** Макс. кол-во вертикальных колонок. */
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+
+  /** Коэфф. масштабирования, когда масштабирование отключено. */
   val TILE_SZ_MULT0 = 1.0F
 
   /**
@@ -209,11 +213,12 @@ object ShowcaseUtil {
    * @return SzMult_t выбранный для рендера.
    */
   def getSzMult4tiles(implicit ctx: Context): SzMult_t = {
-    ctx.deviceScreenOpt.fold [SzMult_t] (TILE_SZ_MULT0) { getSzMult4tiles(_) }
+    ctx.deviceScreenOpt
+      .fold [SzMult_t] (TILE_SZ_MULT0) { getSzMult4tiles(_) }
   }
   def getSzMult4tiles(dscr: DevScreenT): SzMult_t = {
     val blockWidthPx = BlockWidths.NORMAL.widthPx
-    // Кол-во колонок на экране:
+    // Кол-во колонок на экране в исходном масштабе:
     val colCnt = Math.min(TILE_MAX_COLUMNS,
       (dscr.width - TILE_PADDING_CSSPX) / (blockWidthPx + TILE_PADDING_CSSPX)
     )
@@ -231,7 +236,7 @@ object ShowcaseUtil {
           // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
           if (w1 > 20F)
             detectSzMult(nextSzMult, restSzMults.tail)
-          else if (w1 > 0F)
+          else if (w1 >= 0F)
             nextSzMult
           else
             lastSzMult
@@ -240,7 +245,6 @@ object ShowcaseUtil {
       detectSzMult(TILE_SZ_MULT0, TILES_SZ_MULTS)
     }
   }
-
 
 }
 

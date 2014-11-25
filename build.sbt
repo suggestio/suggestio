@@ -156,9 +156,15 @@ sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
 
+// org.apache.xmlbeans требует сие зависимостью. иначе proguard не пашет.
+unmanagedJars in Compile ~= {uj => 
+  Seq(Attributed.blank(file(System.getProperty("java.home").dropRight(3)+"lib/tools.jar"))) ++ uj
+}
 
 // proguard: защита скомпиленного кода от реверса.
 proguardSettings
+
+ProguardKeys.proguardVersion in Proguard := "5.1"
 
 ProguardKeys.options in Proguard ++= Seq(
   "-keepnames class * implements org.xml.sax.EntityResolver",
@@ -190,7 +196,11 @@ ProguardKeys.options in Proguard ++= Seq(
   }""",
   "-dontnote",
   "-dontwarn",
-  "-ignorewarnings"
+  //"-dontoptimize",    // не пашет из-за какой-то внутренней ошибки
+  //"-dontobfuscate",   // вылетает ошибка java.lang.ClassCastException: java.lang.Object cannot be cast to java.lang.String
+                      //    at proguard.obfuscate.MemberObfuscator.newMemberName(MemberObfuscator.java:198)
+  //"-ignorewarnings"
+  "-verbose"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
