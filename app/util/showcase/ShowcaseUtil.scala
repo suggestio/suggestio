@@ -9,6 +9,7 @@ import models.im.DevPixelRatios
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -190,6 +191,51 @@ object ShowcaseUtil {
       Future successful bra
     }
   }
+
+
+  /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
+  val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
+    .map { _.map(_.toFloat).toList }
+    .getOrElse { List(1.1F, 1.2F, 1.3F, 1.4F) }
+  /** Минимальные отступы по бокам. */
+  val TILE_SIDE_PADDING_MIN_CSSPX: Int = configuration.getInt("sc.tiles.padding.side.min.csspx") getOrElse 10
+  /** Горизонтальное расстояние между блоками. */
+  val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
+  /** Макс. кол-во вертикальных колонок. */
+  val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+
+  /**
+   * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
+   * @param ctx Контекст грядущего рендера.
+   * @return SzMult_t выбранный для рендера.
+   */
+  def getSzMult4tiles(implicit ctx: Context): SzMult_t = {
+    val szMultDflt: SzMult_t = 1.0F
+    ctx.deviceScreenOpt.fold [SzMult_t] (szMultDflt) { dscr =>
+      val blockWidthPx = BlockWidths.NORMAL.widthPx
+      // Кол-во колонок на экране:
+      val colCnt = Math.min(TILE_MAX_COLUMNS, dscr.width / blockWidthPx)
+      @tailrec def detectSzMult(lastSzMult: SzMult_t, restSzMults: List[SzMult_t]): SzMult_t = {
+        if (restSzMults.isEmpty) {
+          lastSzMult
+        } else {
+          val nextSzMult = restSzMults.head
+          // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
+          val bwPxW = (blockWidthPx * nextSzMult).toInt
+          val w1 = dscr.width  - colCnt * bwPxW  - TILE_PADDING_CSSPX * 2 * (colCnt - 1)
+          // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
+          if (w1 > 0)
+            detectSzMult(nextSzMult, restSzMults.tail)
+          else if (w1 == 0)
+            nextSzMult
+          else
+            lastSzMult
+        }
+      }
+      detectSzMult(szMultDflt, TILES_SZ_MULTS)
+    }
+  }
+
 
 }
 

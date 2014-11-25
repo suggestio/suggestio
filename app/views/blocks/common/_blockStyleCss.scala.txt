@@ -1,14 +1,14 @@
 @(args: blk.CssRenderArgsT)
 @import args._
 
-.sm-block@{madId}.__size-@szMult .mvbl-@{cssClass} {
+.sm-block@{madId} .mvbl-@{cssClass} {
 position: absolute;
 @defining(aovf.coords getOrElse xy) { c =>
 left:@{c.x * szMult}px@if(szMult > 1) {!important};
 top:@{c.y * szMult}px@if(szMult > 1) {!important};
 }}
 
-.sm-block@{madId}.__size-@szMult .@{cssClass} {
+.sm-block@{madId} .@{cssClass} {
 color: #@aovf.font.color!important;
 @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*szMult}px!important;}
 @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*szMult}px!important;}

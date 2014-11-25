@@ -6,7 +6,7 @@ import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.CssRenderArgsT
+import models.blk.{SzMult_t, CssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
@@ -82,8 +82,18 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
     lazy val ctx = implicitly[Context]
 
-    // TODO Нужно тут что-то решать бы.
-    lazy val brArgs = blk.RenderArgs.DEFAULT.copy(inlineStyles = false)
+    /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
+      * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
+    lazy val szMult: SzMult_t = ShowcaseUtil.getSzMult4tiles(ctx)
+
+    /** Параметры для рендера блоков плитки. */
+    lazy val brArgs = blk.RenderArgs(
+      withEdit      = false,
+      isStandalone  = false,
+      wideBg        = None,
+      szMult        = szMult,
+      inlineStyles  = false
+    )
 
     def renderMad2html(mad: MAd): HtmlFormat.Appendable = {
       _single_offer(mad, args = brArgs, isWithAction = true)(ctx)
