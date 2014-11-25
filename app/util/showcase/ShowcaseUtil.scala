@@ -5,7 +5,7 @@ import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{SzMult_t, BlockWidth, BlockHeights, BlockWidths}
-import models.im.DevPixelRatios
+import models.im.{DevScreenT, DevPixelRatios}
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
@@ -197,12 +197,11 @@ object ShowcaseUtil {
   val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
     .getOrElse { List(1.1F, 1.2F, 1.3F, 1.4F) }
-  /** Минимальные отступы по бокам. */
-  val TILE_SIDE_PADDING_MIN_CSSPX: Int = configuration.getInt("sc.tiles.padding.side.min.csspx") getOrElse 10
   /** Горизонтальное расстояние между блоками. */
   val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
   /** Макс. кол-во вертикальных колонок. */
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+  val TILE_SZ_MULT0 = 1.0F
 
   /**
    * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
@@ -210,18 +209,25 @@ object ShowcaseUtil {
    * @return SzMult_t выбранный для рендера.
    */
   def getSzMult4tiles(implicit ctx: Context): SzMult_t = {
-    val szMultDflt: SzMult_t = 1.0F
-    ctx.deviceScreenOpt.fold [SzMult_t] (szMultDflt) { dscr =>
-      val blockWidthPx = BlockWidths.NORMAL.widthPx
-      // Кол-во колонок на экране:
-      val colCnt = Math.min(TILE_MAX_COLUMNS, dscr.width / blockWidthPx)
+    ctx.deviceScreenOpt.fold [SzMult_t] (TILE_SZ_MULT0) { getSzMult4tiles(_) }
+  }
+  def getSzMult4tiles(dscr: DevScreenT): SzMult_t = {
+    val blockWidthPx = BlockWidths.NORMAL.widthPx
+    // Кол-во колонок на экране:
+    val colCnt = Math.min(TILE_MAX_COLUMNS,
+      (dscr.width - TILE_PADDING_CSSPX) / (blockWidthPx + TILE_PADDING_CSSPX)
+    )
+    if (colCnt <= 0) {
+      // Экран довольно узок - тут нечего вычислять пока, всё равно выйдет минималка.
+      TILE_SZ_MULT0
+    } else {
       @tailrec def detectSzMult(lastSzMult: SzMult_t, restSzMults: List[SzMult_t]): SzMult_t = {
         if (restSzMults.isEmpty) {
           lastSzMult
         } else {
           val nextSzMult = restSzMults.head
           // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-          val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt - 1) * nextSzMult
+          val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt + 1) * nextSzMult
           // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
           if (w1 > 20F)
             detectSzMult(nextSzMult, restSzMults.tail)
@@ -231,7 +237,7 @@ object ShowcaseUtil {
             lastSzMult
         }
       }
-      detectSzMult(szMultDflt, TILES_SZ_MULTS)
+      detectSzMult(TILE_SZ_MULT0, TILES_SZ_MULTS)
     }
   }
 
