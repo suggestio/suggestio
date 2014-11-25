@@ -39,8 +39,8 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
         mad.offers
           .iterator
           .flatMap { offer =>
-            val t1r = offer.text1.map { t1 => blk.CssRenderArgs2(mad.id, t1, bc.titleBf, offer.n, yoff = 0,  arg.szMult, "title") }
-            val t2r = offer.text2.map { t2 => blk.CssRenderArgs2(mad.id, t2, bc.descrBf, offer.n, yoff = 25, arg.szMult, "descr") }
+            val t1r = offer.text1.map { t1 => blk.CssRenderArgs2(mad, t1, bc.titleBf, offer.n, yoff = 0,  arg.szMult, "title") }
+            val t2r = offer.text2.map { t2 => blk.CssRenderArgs2(mad, t2, bc.descrBf, offer.n, yoff = 25, arg.szMult, "descr") }
             t1r ++ t2r
           }
           .map { cssRenderArgs =>

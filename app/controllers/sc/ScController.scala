@@ -83,7 +83,7 @@ trait ScController extends SioController {
         val fields = t1 ++ t2
         fields.iterator.map { case (fid, aosf, bf, yoff) =>
           blk.CssRenderArgs2(
-            madId   = mad.id,
+            mad     = mad,
             aovf    = aosf,
             bf      = bf,
             szMult  = szMult,

@@ -221,12 +221,11 @@ object ShowcaseUtil {
         } else {
           val nextSzMult = restSzMults.head
           // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-          val bwPxW = (blockWidthPx * nextSzMult).toInt
-          val w1 = dscr.width  - colCnt * bwPxW  - TILE_PADDING_CSSPX * 2 * (colCnt - 1)
+          val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt - 1) * nextSzMult
           // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
-          if (w1 > 0)
+          if (w1 > 20F)
             detectSzMult(nextSzMult, restSzMults.tail)
-          else if (w1 == 0)
+          else if (w1 > 0F)
             nextSzMult
           else
             lastSzMult

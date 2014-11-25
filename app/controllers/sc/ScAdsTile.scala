@@ -2,11 +2,12 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import _root_.util.jsa.{SmRcvResp, Js}
+import util.jsa.{SmRcvResp, Js}
+import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.{SzMult_t, CssRenderArgsT}
+import models.blk.{BlockWidths, SzMult_t, CssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
@@ -14,6 +15,7 @@ import util.acl._
 import views.html.market.showcase._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 import SiowebEsUtil.client
 import scala.concurrent.Future
 import models._
@@ -25,6 +27,9 @@ import models._
  * Description: Поддержка плитки в контроллере: экшен и прочая логика.
  */
 trait ScAdsTile extends ScController with PlayMacroLogsI {
+
+  /** Начальный размер буффера сборки ответа на запрос findAds(). */
+  private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
     * @param adSearch Поисковый запрос.
@@ -52,13 +57,16 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     }
     // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
     val cssAppendFut = logic.jsAppendAdsCss
+    // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
+    val setCellSizeJsa = SetCellSize((BlockWidths.NARROW.widthPx * logic.szMult).toInt)
+    val setCellPaddingJsa = SetCellPadding((ShowcaseUtil.TILE_PADDING_CSSPX * logic.szMult).toInt)
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
     val resultFut = for {
       smRcvResp <- smRcvRespFut
       cssAppend <- cssAppendFut
     } yield {
       cacheControlShort {
-        Ok( Js(8192, cssAppend, smRcvResp) )
+        Ok( Js(TILE_JS_RESP_BUFFER_SIZE_BYTES, setCellSizeJsa, setCellPaddingJsa, cssAppend, smRcvResp) )
       }
     }
     // В фоне собираем статистику

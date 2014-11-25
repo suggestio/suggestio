@@ -1,4 +1,5 @@
 cbca_grid =
+  ## DO NOT RENAME this globals. Global variables will be updated from MarketShowcase controller. See util.jsa.cbca.grid._
   cell_size : 140
   cell_padding : 20
   top_offset : 70

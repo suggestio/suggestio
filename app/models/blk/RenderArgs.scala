@@ -59,7 +59,7 @@ case class WideBgRenderCtx(
 
 /** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
 trait CssRenderArgsT {
-  def madId     : Option[String]
+  def mad       : MAdT
   def aovf      : AOValueField
   def bf        : BlockAOValueFieldT
   def szMult    : Float
@@ -68,7 +68,7 @@ trait CssRenderArgsT {
 }
 
 case class CssRenderArgs(
-  madId     : Option[String],
+  mad       : MAdT,
   aovf      : AOValueField,
   bf        : BlockAOValueFieldT,
   szMult    : Float,
@@ -78,14 +78,14 @@ case class CssRenderArgs(
 
 /**
  * Контейнер параметров рендера css-стиля блока.
- * @param madId id рекламной карточки, если есть.
+ * @param mad рекламная карточка.
  * @param bf Экземпляр BlockField
  * @param offerN порядкой номер оффера в карточке.
  * @param yoff Сдвиг по оси y.
  * @param fid title либо descr обычно.
  */
 case class CssRenderArgs2(
-  madId   : Option[String],
+  mad     : MAdT,
   aovf    : AOStringField,
   bf      : BfText,
   offerN  : Int,
