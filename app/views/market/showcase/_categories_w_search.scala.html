@@ -11,7 +11,7 @@
 
     @* Кнопка/ссылка закрытия этой поисковой панели. *@
     @args.jsStateOpt.map { jsState =>
-      <a href="@routes.MarketShowcase.syncGeoSite(jsState.toggleSearchScreen)">
+      <a href="@args.syncUrl( jsState.toggleSearchScreen )">
     }
     <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smCategoriesScreenCloseButton">
       @svg._backArrowRight( args.fgColor )
@@ -31,7 +31,7 @@
 
         @* Табы *@
         @args.jsStateOpt.map { jsState =>
-          <a href="@routes.MarketShowcase.syncGeoSite(jsState.copy(searchTabListOpt = None))">
+          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = None) )">
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
@@ -42,7 +42,7 @@
         }
 
         @args.jsStateOpt.map { jsState =>
-          <a href="@routes.MarketShowcase.syncGeoSite(jsState.copy(searchTabListOpt = Some(true)))">
+          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = Some(true)) )">
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-right @if(!isListTab) {__inactive}" id="smShopsTab"

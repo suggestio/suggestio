@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import controllers.SioController
+import controllers.{routes, SioController}
 import models._
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
@@ -36,23 +36,33 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       case None =>
         super._geoSiteResult
       case Some(jsState) =>
-        _syncGeoSite(jsState)
+        _syncGeoSite(jsState, ajaxStatedUrl)
     }
   }
 
+  /** Генератор ссылок на выдачу вида /#!...jsState... */
+  private def ajaxStatedUrl(jsState: ScJsState): String = {
+    val qsb = ScJsState.qsbStandalone
+    routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", jsState)
+  }
+
+
   /** Прямой доступ к синхронному сайту выдачи. */
   def syncGeoSite(scState: ScJsState) = MaybeAuth.async { implicit request =>
-    _syncGeoSite(scState)
+    _syncGeoSite(scState, routes.MarketShowcase.syncGeoSite(_).url)
   }
 
   /**
    * Синхронный рендер выдачи без каких-либо асинхронных участий на основе указанного состояния.
    * @param scState Состояние js-выдачи.
+   * @param urlGenF Генератор внутренних ссылок, получающий на вход изменённое состояние выдачи.
    */
-  protected def _syncGeoSite(scState: ScJsState)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _syncGeoSite(scState: ScJsState, urlGenF: ScJsState => String)
+                            (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val logic = new ScSyncSiteLogic {
       override def _scState = scState
       override implicit def _request = request
+      override def _urlGenF = urlGenF
     }
     logic.resultFut
   }
@@ -63,6 +73,8 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
   trait ScSyncSiteLogic { that =>
     def _scState: ScJsState
     implicit def _request: AbstractRequestWithPwOpt[_]
+    /** Генератор ссылок на выдачу. */
+    def _urlGenF: ScJsState => String
     lazy val ctx = implicitly[Context]
 
     /** Есть ли какая-либо необходимость в рендере плитки карточек? */
@@ -182,7 +194,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
     // Рендерим indexTpl
     /** Готовим контейнер с аргументами рендера indexTpl. */
-    def indexRenderArgsFut: Future[ScReqArgs] = {
+    def indexReqArgsFut: Future[ScReqArgs] = {
       val _tilesRenderFut = tilesRenderFut
       val _focusedContentOptFut = maybeFocusedContent
       val _maybeNodesListHtmlFut = maybeNodesListHtmlFut
@@ -200,6 +212,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override def inlineNodesList = _nodesListHtmlOpt
           override def adnNodeCurrentGeo = _currNodeGeoOpt
           override def jsStateOpt = Some(_scState)
+          override def syncUrl(jsState: ScJsState) = that._urlGenF(jsState)
         }
       }
     }
@@ -210,9 +223,9 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
 
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
-      indexRenderArgsFut.map { indexRenderArgs =>
+      indexReqArgsFut.map { indexReqArgs =>
         new HtmlGeoIndexLogic {
-          override def _reqArgs: ScReqArgs = indexRenderArgs
+          override def _reqArgs: ScReqArgs = indexReqArgs
           override implicit def _request = that._request
 
           /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */

@@ -10,7 +10,7 @@
     @defining( !(args.catsStats contains mmcat.id.get) ) { isDisabled =>
       @if(!isDisabled) {
         @args.jsStateOpt.map { jsState =>
-          <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(tilesCatIdOpt = mmcat.id, searchScrOpenedOpt = None) )">
+          <a href="@args.syncUrl( jsState.copy(tilesCatIdOpt = mmcat.id, searchScrOpenedOpt = None) )">
         }
       }
       <span class="categories-list_single-cat categorie js-cat-link @if(isDisabled) {__disabled}" data-cat-class="@mmcat.cssClass" data-cat-id="@mmcat.id">

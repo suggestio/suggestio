@@ -1,5 +1,6 @@
 package models
 
+import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
@@ -61,6 +62,7 @@ object ScReqArgs {
 trait SyncRenderInfo {
   def jsStateOpt: Option[ScJsState]
   def syncRender: Boolean = jsStateOpt.isDefined
+  def syncUrl(jsState: ScJsState): String = routes.MarketShowcase.syncGeoSite(jsState).url
 }
 trait SyncRenderInfoDflt extends SyncRenderInfo {
   override def jsStateOpt: Option[ScJsState] = None

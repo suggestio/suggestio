@@ -7,7 +7,7 @@
     @* Заинлайненные рекламные карточки при синхронном рендере. *@
     @for(tile <- args.inlineTiles) {
       @args.jsStateOpt.map { jsState =>
-        <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(fadOpenedIdOpt = tile.mad.id, navScrOpenedOpt = None, searchScrOpenedOpt = None) )">
+        <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = tile.mad.id, navScrOpenedOpt = None, searchScrOpenedOpt = None) )">
       }
       @tile.rendered
       @if(args.jsStateOpt) {
