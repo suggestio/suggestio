@@ -1,8 +1,0 @@
-@(args: blk.FieldCssRenderArgsT)
-
-@* Генерация динамического стиля для одного блока. *@
-
-@import views.txt.blocks.common._
-
-@* TODO Quick-and-dirty решение вопроса с txt-шаблоном стиля. Возможно, есть решение оптимальнее. *@
-<style>@Html(_textCss(args).toString.trim)</style>

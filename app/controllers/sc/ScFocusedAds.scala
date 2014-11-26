@@ -1,7 +1,6 @@
 package controllers.sc
 
-import _root_.util.jsa.{SmRcvResp, Js}
-import models.blk.{CssRenderArgsT, FieldCssRenderArgsT}
+import util.jsa.{SmRcvResp, Js}
 import models.jsm.ProducerAdsResp
 import play.twirl.api.Html
 import util.showcase._
@@ -289,7 +288,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     def addCssClasses = Seq("focused")
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    override def adsCssRenderArgsFut: Future[immutable.Seq[CssRenderArgsT]] = {
+    override def adsCssRenderArgsFut: Future[immutable.Seq[blk.CssRenderArgsT]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.toStream
       }
