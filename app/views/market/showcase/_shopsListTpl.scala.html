@@ -28,12 +28,12 @@
 
   @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
   <style type="text/css">
-    .shops-list_row {
-      color:#@args.fgColor;
-    }
-    .shops-list_row.__odd {
-      background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
-    }
+.shops-list_row {
+  color:#@args.fgColor;
+}
+.shops-list_row.__odd {
+  background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
+}
   </style>
   }
 

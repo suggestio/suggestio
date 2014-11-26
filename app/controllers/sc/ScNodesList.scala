@@ -126,16 +126,30 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
       }
     }
 
-    /** Асинхронный результат рендера списка узлов. */
-    def nodesListRenderedFut: Future[JsStateRenderWrapper] = {
+    /** Сборка контейнера с аргументами рендера шаблона. */
+    def renderArgsFut: Future[NodeListRenderArgs] = {
       val _gnls4RenderFut = gnls4RenderFut
       for {
         nextNodeGdr <- nextNodeWithLayerFut
         gnls4Render <- _gnls4RenderFut
       } yield {
+        new NodeListRenderArgs {
+          override def nodeLayers: Seq[GeoNodesLayer] = gnls4Render
+          override def currNode: Option[MAdnNode] = Some(nextNodeGdr.node)
+        }
+      }
+    }
+
+    /** Асинхронный результат рендера списка узлов. */
+    def nodesListRenderedFut: Future[JsStateRenderWrapper] = {
+      renderArgsFut map { renderArgs =>
         new JsStateRenderWrapper {
-          override def apply(jsStateOpt: Option[ScJsState]): Html = {
-            _geoNodesListTpl(gnls4Render, Some(nextNodeGdr.node), jsStateOpt)
+          override def apply(_jsStateOpt: Option[ScJsState]): Html = {
+            val args1 = new NodeListRenderArgsWrapper {
+              override def _nlraUnderlying: NodeListRenderArgs = renderArgs
+              override def jsStateOpt = _jsStateOpt
+            }
+            _geoNodesListTpl(args1)
           }
         }
       }

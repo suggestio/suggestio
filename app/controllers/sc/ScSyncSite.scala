@@ -162,6 +162,14 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
         currAdnId = _scState.adnId,
         geoMode = _scState.geo
       )
+      override def renderArgsFut: Future[NodeListRenderArgs] = {
+        super.renderArgsFut map { renderArgs =>
+          new NodeListRenderArgsWrapper {
+            override def _nlraUnderlying = renderArgs
+            override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
+          }
+        }
+      }
     }
 
     def maybeNodesListHtmlFut: Future[Option[Html]] = {

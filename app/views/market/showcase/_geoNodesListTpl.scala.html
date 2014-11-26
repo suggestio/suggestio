@@ -1,13 +1,22 @@
-@(nodeLayers: Seq[GeoNodesLayer], currNode: Option[MAdnNode], jsStateOpt: Option[ScJsState] = None)(implicit ctx: Context)
+@(args: NodeListRenderArgs)(implicit ctx: Context)
 
 @* Список узлов выдачи в левой колонке. *@
 
 @import ctx._
+@import args._
+@import AdnShownTypes._
 
 @* Функция оборачивая верстки ноды в ссылку с версткой этой ноды, если используется синхронный режим работы. *@
 @nodeSyncUrl(mnode: MAdnNode)(content: Html) = {
   @jsStateOpt.map { jsState =>
-    <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(adnId = mnode.id, navScrOpenedOpt = None, fadOpenedIdOpt = None, fadsOffsetOpt = None, tilesCatIdOpt = None) )">
+    <a href="@syncUrl( jsState.copy(
+      adnId           = mnode.id,
+      navScrOpenedOpt = None,
+      fadOpenedIdOpt  = None,
+      fadsOffsetOpt   = None,
+      tilesCatIdOpt   = None,
+      navNglsMap      = mnode.adn.ngls.map(_ -> true).toMap
+    ))">
   }
   @content
   @if(jsStateOpt) {
@@ -26,7 +35,7 @@
       @defining( jsStateOpt.fold(nl.expanded)(_.nglExpanded(nl)) ) { showExpanded =>
         @* Есть заголовок геослоя. Рендерим его: *@
         @jsStateOpt.map { jsState =>
-          <a href="@routes.MarketShowcase.syncGeoSite( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
+          <a href="@syncUrl( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
         }
         <div class="geo-nodes-list_layer js-gnlayer @if(showExpanded) {__active}" data-index="@i" id="geoLayer@i">
           <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>

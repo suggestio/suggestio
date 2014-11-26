@@ -478,3 +478,20 @@ case class FocusedAdsTplArgs(
   jsStateOpt  : Option[ScJsState]
 ) extends FocusedArgsBase
 
+
+
+/** Данные для рендера, передаваемые в geoNodesListTpl. */
+trait NodeListRenderArgs extends SyncRenderInfoDflt {
+  def nodeLayers: Seq[GeoNodesLayer]
+  def currNode: Option[MAdnNode]
+}
+trait NodeListRenderArgsWrapper extends NodeListRenderArgs {
+  def _nlraUnderlying: NodeListRenderArgs
+
+  override def nodeLayers = _nlraUnderlying.nodeLayers
+  override def currNode = _nlraUnderlying.currNode
+  override def jsStateOpt: Option[ScJsState] = _nlraUnderlying.jsStateOpt
+  override def syncRender = _nlraUnderlying.syncRender
+  override def syncUrl(jsState: ScJsState) = _nlraUnderlying.syncUrl(jsState)
+}
+
