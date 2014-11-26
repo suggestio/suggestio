@@ -70,9 +70,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def getAdFormM(catIdM: Mapping[Option[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       "ad" -> mapping(
-        CAT_ID_K -> catIdM,
-        OFFER_K  -> blockM,
-        "descr"  -> richDescrOptM
+        CAT_ID_K    -> catIdM,
+        OFFER_K     -> blockM,
+        "pattern"   -> coveringPatternM,
+        "descr"     -> richDescrOptM
       )(adFormApply)(adFormUnapply)
     )
   }

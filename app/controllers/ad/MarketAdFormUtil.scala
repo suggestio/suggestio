@@ -24,7 +24,7 @@ object MarketAdFormUtil {
 
 
   /** Маппинг для выравнивания текста в рамках поля. */
-  val textAlignOptM: Mapping[Option[TextAlign]] = {
+  def textAlignOptM: Mapping[Option[TextAlign]] = {
     optional(text(maxLength = 10))
       .transform[Option[TextAlign]](
         {_.filter(_.length <= 10)
@@ -44,7 +44,7 @@ object MarketAdFormUtil {
 
 
   private def fontSizeOptM(fontSizes: Seq[FontSize]): Mapping[Option[FontSize]] = {
-    val hasFontSizes = !fontSizes.isEmpty
+    val hasFontSizes = fontSizes.nonEmpty
     val (min, max) = if (hasFontSizes) {
       val minSz = fontSizes.iterator.map(_.size).min
       val maxSz = fontSizes.iterator.map(_.size).max
@@ -131,8 +131,25 @@ object MarketAdFormUtil {
   }
 
 
+  /** Маппер для активации и настройки покрывающей сетки-паттерна указанного цвета. */
+  def coveringPatternM: Mapping[Option[String]] = {
+    tuple(
+      "enabled" -> boolean,
+      "color"   -> optional(colorM)
+    )
+    .verifying("error.required", {m => m match {
+      case (true, None)   => false
+      case _              => true
+    }})
+    .transform[Option[String]] (
+      { case (isEnabled, colorOpt) => colorOpt.filter(_ => isEnabled) },
+      { colorOpt => (colorOpt.isDefined, colorOpt) }
+    )
+  }
+
+
   /** Парсер координаты. Координата может приходить нецелой, поэтому нужно округлить. */
-  val coordM: Mapping[Int] = {
+  def coordM: Mapping[Int] = {
     // TODO Достаточно парсить первые цифры до $ или до десятичной точки/запятой, остальное отбрасывать.
     doubleM
       .transform[Int](_.toInt, _.toDouble)
@@ -256,6 +273,7 @@ object MarketAdFormUtil {
     }
   }
 
+  val COVERING_PATTERN_COLOR_FN = "cpc"
 
   /** Маппим необязательное Float-поле. */
   def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
@@ -288,12 +306,18 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, richDescrOpt: Option[RichDescr]): AdFormMResult = {
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String], richDescrOpt: Option[RichDescr]): AdFormMResult = {
+    val colors1: Map[String, String] = {
+      if (pattern.isDefined)
+        bmr.bd.colors + (COVERING_PATTERN_COLOR_FN -> pattern.get)
+      else
+        bmr.bd.colors
+    }
     val mad = MAd(
       producerId  = null,
       offers      = bmr.bd.offers,
       blockMeta   = bmr.bd.blockMeta,
-      colors      = bmr.bd.colors,
+      colors      = colors1,
       imgs        = null,
       userCatId   = userCatId,
       richDescrOpt = richDescrOpt
@@ -302,10 +326,11 @@ object MarketAdFormUtil {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[RichDescr])] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr])] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
-    Some( (mad.userCatId, bmr, mad.richDescrOpt) )
+    val pattern = mad.colors.get(COVERING_PATTERN_COLOR_FN)
+    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt) )
   }
 
 
