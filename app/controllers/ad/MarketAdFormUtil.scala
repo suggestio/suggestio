@@ -308,10 +308,11 @@ object MarketAdFormUtil {
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
   def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String], richDescrOpt: Option[RichDescr]): AdFormMResult = {
     val colors1: Map[String, String] = {
+      val c0 = bmr.bd.colors
       if (pattern.isDefined)
-        bmr.bd.colors + (COVERING_PATTERN_COLOR_FN -> pattern.get)
+        c0 + (COVERING_PATTERN_COLOR_FN -> pattern.get)
       else
-        bmr.bd.colors
+        c0
     }
     val mad = MAd(
       producerId  = null,
