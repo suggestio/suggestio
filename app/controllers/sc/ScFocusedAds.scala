@@ -245,19 +245,20 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       val _madsHeadFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
       for {
-        producer      <- _producerFut
+        _producer     <- _producerFut
         madsHead      <- _madsHeadFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        FocusedAdsTplArgs(
-          mad         = madsHead.mad,
-          producer    = producer,
-          bgColor     = producer.meta.color getOrElse SITE_BGCOLOR_DFLT,
-          brArgs      = madsHead.brArgs,
-          adsCount    = madsCountInt,
-          startIndex  = _adSearch.offset,
-          jsStateOpt  = _scStateOpt
-        )
+        val _bgColor = _producer.meta.color getOrElse SITE_BGCOLOR_DFLT
+        new FocusedAdsTplArgs {
+          override def mad        = madsHead.mad
+          override def producer   = _producer
+          override def bgColor    = _bgColor
+          override def brArgs     = madsHead.brArgs
+          override def adsCount   = madsCountInt
+          override def startIndex = _adSearch.offset
+          override def jsStateOpt = _scStateOpt
+        }
       }
     }
 

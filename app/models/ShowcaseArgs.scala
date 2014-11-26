@@ -2,6 +2,7 @@ package models
 
 import controllers.routes
 import io.suggest.ym.model.common.LogoImgOptI
+import models.blk.RenderArgs
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
 import play.twirl.api.Html
@@ -460,24 +461,28 @@ case class ScJsState(
 }
 
 
-trait FocusedArgsBase extends SyncRenderInfo {
-  def adsCount: Int
-  def startIndex: Int
-  def producer: MAdnNode
-  def brArgs: blk.RenderArgs
-}
-
 /** Параметры для вызова showcase-шаблона focusedAdsTpl. */
-case class FocusedAdsTplArgs(
-  mad         : MAd,
-  producer    : MAdnNode,
-  bgColor     : String,
-  brArgs      : blk.RenderArgs,
-  adsCount    : Int,
-  startIndex  : Int,
-  jsStateOpt  : Option[ScJsState]
-) extends FocusedArgsBase
+trait FocusedAdsTplArgs extends SyncRenderInfo {
+  def mad         : MAd
+  def producer    : MAdnNode
+  def bgColor     : String
+  def brArgs      : blk.RenderArgs
+  def adsCount    : Int
+  def startIndex  : Int
+}
+trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
+  def _focArgsUnderlying: FocusedAdsTplArgs
 
+  override def mad        = _focArgsUnderlying.mad
+  override def startIndex = _focArgsUnderlying.startIndex
+  override def producer   = _focArgsUnderlying.producer
+  override def brArgs     = _focArgsUnderlying.brArgs
+  override def bgColor    = _focArgsUnderlying.bgColor
+  override def adsCount   = _focArgsUnderlying.adsCount
+  override def jsStateOpt = _focArgsUnderlying.jsStateOpt
+  override def syncUrl(jsState: ScJsState) = _focArgsUnderlying.syncUrl(jsState)
+  override def syncRender = _focArgsUnderlying.syncRender
+}
 
 
 /** Данные для рендера, передаваемые в geoNodesListTpl. */

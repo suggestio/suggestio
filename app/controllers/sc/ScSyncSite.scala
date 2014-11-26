@@ -136,6 +136,15 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override val _adSearch = _scState.focusedAdSearch(
         _maxResultsOpt = Some(1)
       )
+      override def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
+        // Нужно добавить в список аргументов данные по syncUrl.
+        super.focAdsHtmlArgsFut map { args0 =>
+          new FocusedAdsTplArgsWrapper {
+            override def _focArgsUnderlying: FocusedAdsTplArgs = args0
+            override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
+          }
+        }
+      }
     }
 
     lazy val maybeFocusedLogic: Option[FocusedAdsLogic { type OBT = Html }] = {
