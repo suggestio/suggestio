@@ -2,13 +2,15 @@ package controllers.sc
 
 import controllers.{routes, SioController}
 import models._
-import models.blk.{SzMult_t, CssRenderArgsT}
+import models.blk.SzMult_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
 import util.cdn.CdnUtil
-import util.jsa.JsAppendByTagName
+import util.jsa.{JsAction, JsAppendByTagName}
+import views.txt.blocks.common._
 
+import scala.collection.immutable
 import scala.concurrent.Future
 
 /**
@@ -72,42 +74,71 @@ trait ScController extends SioController {
      * Вернуть данные по пакетному рендеру css блоков одновременно с текущим запросом.
      * @return последовательность аргументов для вызова рендера как можно скорее.
      */
-    def adsCssInternalFut: Future[Seq[CssRenderArgsT]]
+    def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]]
+    
+    def adsFieldCssRenderFut: Future[immutable.Seq[Txt]] = {
+      adsCssFieldRenderArgsFut flatMap { args =>
+        // TODO Нужно обрать из выхлопа лишнии пробелы и пустые строки. Это сократит выхлоп до 10%.
+        Future.traverse(args) { cssRenderArgs =>
+          Future {
+            _textCss(cssRenderArgs)
+          }
+        }
+      }
+    }
+
+    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
+    def adsCssRenderArgsFut: Future[immutable.Seq[blk.CssRenderArgsT]]
+
+    /** Рендер обрамляющего css блоков на основе соотв. параметров. */
+    def adsCssRenderFut: Future[immutable.Seq[Txt]] = {
+      adsCssRenderArgsFut flatMap { args =>
+        Future.traverse(args) { cra =>
+          Future {
+            _blockCss(cra)
+          }
+        }
+      }
+    }
 
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-    protected def mad2craIter(mad: MAd, szMult: SzMult_t): Iterator[CssRenderArgsT] = {
+    protected def mad2craIter(mad: MAd, szMult: SzMult_t, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
       val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
       mad.offers.iterator.flatMap { offer =>
         val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
         val t2 = offer.text2.map { text2 => ("descr", text2, bc.descrBf, 25) }
         val fields = t1 ++ t2
         fields.iterator.map { case (fid, aosf, bf, yoff) =>
-          blk.CssRenderArgs2(
+          blk.FieldCssRenderArgs2(
             mad     = mad,
             aovf    = aosf,
             bf      = bf,
             szMult  = szMult,
             offerN  = offer.n,
             yoff    = yoff,
-            fid     = fid
+            fid     = fid,
+            cssClasses = cssClasses
           )
         }
       }
     }
 
+    def jsAppendCssAction(html: JsString): JsAction = {
+      JsAppendByTagName("head", html)
+    }
+
     /** Отрендерить css для блоков, данные по котором лежат в addCssInternalFut(). */
-    def jsAppendAdsCss: Future[JsAppendByTagName] = {
-      adsCssInternalFut flatMap { args =>
-        // TODO Нужно обрать из выхлопа лишнии пробелы и пустые строки. Это сократит выхлоп до 10%.
-        Future.traverse(args) { cssRenderArgs =>
-          Future {
-            views.txt.blocks.common._blockStyleCss(cssRenderArgs)
-          }
-        }
-      } map { renders =>
-        val styleTxt = new Txt(renders.toList)
-        val html = List(new Txt("<style>"), styleTxt, new Txt("</style>"))
-        JsAppendByTagName("head", JsString(new Txt(html)))
+    def jsAppendAdsCss: Future[JsAction] = {
+      val _adsCssRenderFut = adsCssRenderFut
+      for {
+        fieldRenders  <- adsFieldCssRenderFut
+        adsCssRenders <- _adsCssRenderFut
+      } yield {
+        val blkCssTxts = new Txt(adsCssRenders)
+        val fieldCssTxts = new Txt(fieldRenders)
+        val html = List(Txt("<style>"), blkCssTxts, fieldCssTxts, Txt("</style>"))
+        val data = JsString( new Txt(html) )
+        jsAppendCssAction(data)
       }
     }
 
@@ -115,4 +146,7 @@ trait ScController extends SioController {
 
 }
 
-case class AdAndBrArgs(mad: MAd, brArgs: blk.RenderArgs)
+sealed case class AdAndBrArgs(mad: MAd, brArgs: blk.RenderArgs) extends blk.CssRenderArgsT {
+  override def szMult = brArgs.szMult
+  override def cssClasses = brArgs.withCssClasses
+}

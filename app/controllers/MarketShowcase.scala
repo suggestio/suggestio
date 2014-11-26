@@ -35,7 +35,7 @@ with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScSitemap
         val bc: BlockConf = BlocksConf(mad.blockMeta.blockId)
         // TODO Проверять карточку на опубликованность?
         cacheControlShort {
-          Ok( bc.renderBlock(mad, blk.RenderArgs(isStandalone = true)) )
+          Ok( bc.renderBlock(mad, blk.RenderArgs(szMult = 1.0F, isStandalone = true)) )
         }
 
       case None =>

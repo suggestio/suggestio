@@ -1,0 +1,18 @@
+@(args: blk.CssRenderArgsT)
+
+@* Стили для блока в общем. *@
+
+@import args._
+
+@defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
+.sm-block@{mad.id}@{cc} {
+  width: @((mad.blockMeta.width * szMult).toInt)px;
+  height: @((mad.blockMeta.height * szMult).toInt)px;
+}
+
+@* Надо это вообще?
+  .sm-block@{mad.id} .info {
+    width: @((@mad.blockMeta.width * 1.1F * args.szMult).toInt)px;
+  }
+*@
+}

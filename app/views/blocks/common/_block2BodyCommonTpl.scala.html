@@ -2,6 +2,8 @@
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
+@import views.txt.blocks.common._
+
 @* если true, то нужно рендерить стили инлайново. Иначе -- ссылкой на css. *@
 @* Отрендерить одно строковое значение оффера. *@
 @renderText(aosfOpt: Option[AOStringField], fid: String, bf: BfText, yoff: Int, offerN: Int, withStyle: Boolean) = {
@@ -10,7 +12,7 @@
       <div class="@fid @fid-@offerN">@Html(aosf.value)</div>
     </div>
     @if(withStyle) {
-      @_blockStyleTpl(blk.CssRenderArgs2(
+      @_textCssTpl(blk.FieldCssRenderArgs2(
         mad     = mad,
         aovf    = aosf,
         bf      = bf,
@@ -27,6 +29,10 @@
 @defining( args.inlineStyles || mad.id.isEmpty ) { isStylesInline =>
 
   @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
+
+  @if(isStylesInline) {
+    <style>@_blockCss( blk.CssRenderArgs(mad, args.szMult) ).toString</style>
+  }
 
   @mad.offers.map { offer =>
     <div class="info el-@{offer.n + 1}">

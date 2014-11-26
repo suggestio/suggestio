@@ -139,10 +139,9 @@ object ShowcaseUtil {
   /**
    * Аргументы для рендера блока, когда карточка открыта.
    * @param mad Рекламная карточка.
-   * @param inlineStyles Значение поля RenderArgs.inlineStyles в экземпляре результата.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAdT, inlineStyles: Boolean = true)(implicit ctx: Context): Future[blk.RenderArgs] = {
+  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
     if (mad.blockMeta.wide) {
       // мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
       val szMult: SzMult_t = BgImg.WIDE_TARGET_HEIGHT_PX.toFloat / mad.blockMeta.height.toFloat
@@ -154,24 +153,18 @@ object ShowcaseUtil {
           withEdit      = false,
           isStandalone  = false,
           szMult        = szMult,
-          wideBg        = wideBgCtxOpt,
-          inlineStyles  = inlineStyles
+          wideBg        = wideBgCtxOpt
         )
       }
 
     } else {
 
       // Если ширина экрана позволяет, то нужно отрендерить в увеличенном размере:
+      // TODO Тут кажется какой-то велосипед. Сначала определяется оптимальный szMult для картинки, потом идёт прочая мудотряска.
       val devScrHasDoubleWidth: Boolean = {
         ctx.deviceScreenOpt.exists { devScr =>
-          val nonWideImgRenderSz = BgImg.getRenderSz(
-            szMult      = FOCUSED_SZ_MULT,
-            blockMeta   = mad.blockMeta,
-            devScreenSz = devScr,
-            pxRatioOpt  = Some(DevPixelRatios.MDPI)   // Узнаём реально отображаемое разрешение в css-пикселях.
-          )
-          // Если ширина экрана намекает, то рендерим на широкую.
-          nonWideImgRenderSz.width  <  devScr.width
+          val wantSzMult = FOCUSED_SZ_MULT
+          BgImg.getImgResMult(wantSzMult, mad.blockMeta, devScr, Some(DevPixelRatios.MDPI)) >= wantSzMult
         }
       }
       // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
@@ -185,8 +178,7 @@ object ShowcaseUtil {
         withEdit      = false,
         isStandalone  = false,
         szMult        = szMult,
-        wideBg        = None,
-        inlineStyles  = inlineStyles
+        wideBg        = None
       )
       Future successful bra
     }

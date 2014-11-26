@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.jsa.{SmRcvResp, Js}
-import models.blk.CssRenderArgsT
+import models.blk.{CssRenderArgsT, FieldCssRenderArgsT}
 import models.jsm.ProducerAdsResp
 import play.twirl.api.Html
 import util.showcase._
@@ -12,6 +12,7 @@ import views.html.market.showcase._
 import play.api.libs.json._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.collection.immutable
 import scala.concurrent.Future
 
 /**
@@ -154,9 +155,13 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     lazy val mads2andBrArgsFut: Future[Seq[AdAndBrArgs]] = {
       mads2Fut flatMap { mads =>
         val _ctx = ctx
+        val _addCssClasses = addCssClasses
         Future.traverse(mads.zipWithIndex) { case (mad, i) =>
-          ShowcaseUtil.focusedBrArgsFor(mad, inlineStyles = false)(_ctx)
-            .map { brArgs => AdAndBrArgs(mad, brArgs) -> i }
+          ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
+            .map { brArgs =>
+              val brArgs1 = brArgs.copy(inlineStyles = false, withCssClasses = _addCssClasses)
+              AdAndBrArgs(mad, brArgs1) -> i
+            }
         } map { resUnsorted =>
           // Восстановить исходный порядок:
           resUnsorted
@@ -167,8 +172,10 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     }
 
 
-    def mads4blkRenderFut = mads2andBrArgsFut.map { mads =>
-      if (_withHeadAd) mads.tail else mads // Caused by: java.lang.UnsupportedOperationException: tail of empty list
+    def mads4blkRenderFut: Future[Seq[AdAndBrArgs]] = {
+      mads2andBrArgsFut.map { mads =>
+        if (_withHeadAd) mads.tail else mads // Caused by: java.lang.UnsupportedOperationException: tail of empty list
+      }
     }
 
     lazy val ctx = implicitly[Context]
@@ -270,15 +277,23 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
-    override def adsCssInternalFut: Future[Seq[CssRenderArgsT]] = {
+    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]] = {
       mads2andBrArgsFut.map { mbas =>
-        mbas.iterator.flatMap { mba =>
-          mad2craIter(mba.mad, mba.brArgs.szMult)
-        }
-          .toSeq
+        mbas.iterator
+          .flatMap { mba =>  mad2craIter(mba.mad, mba.brArgs.szMult, mba.brArgs.withCssClasses) }
+          .toStream
       }
     }
 
+    /** Дописывать эти css-классы в стили и в рендер. */
+    def addCssClasses = Seq("focused")
+
+    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
+    override def adsCssRenderArgsFut: Future[immutable.Seq[CssRenderArgsT]] = {
+      mads2andBrArgsFut.map { mbas =>
+        mbas.toStream
+      }
+    }
 
     /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
       * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение [[_withHeadAd]].

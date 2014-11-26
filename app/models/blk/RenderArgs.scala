@@ -16,7 +16,7 @@ import util.img.DynImgUtil
 object RenderArgs {
 
   /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
-  val DEFAULT = RenderArgs()
+  val DEFAULT = RenderArgs(szMult = 1.0F)
 
   def DOUBLE_SIZED_ARGS = RenderArgs(szMult = 2F)
 }
@@ -26,17 +26,19 @@ object RenderArgs {
  * Всегда immutable класс!
  * @param withEdit Рендерим в редакторе.
  * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
- * @param szMult Мультипликатор размера (и относительных координат).
+ * @param szMult Мультипликатор размеров карточки.
  * @param wideBg Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
  *               вне блока, широким, а тело блока сдвинуто согласно кропу.
  * @param inlineStyles Рендерить стили инлайново?
+ * @param withCssClasses Дополнительные css-классы, которые относятся к рендеру.
  */
 case class RenderArgs(
+  szMult        : SzMult_t,
   withEdit      : Boolean = false,
   isStandalone  : Boolean = false,
-  szMult        : Float = 1.0F,
   wideBg        : Option[WideBgRenderCtx] = None,
-  inlineStyles  : Boolean = true
+  inlineStyles  : Boolean = true,
+  withCssClasses: Seq[String] = Nil
 )
 
 
@@ -57,24 +59,33 @@ case class WideBgRenderCtx(
 }
 
 
-/** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
+/** Параметры для рендера внешнего css блока. */
 trait CssRenderArgsT {
   def mad       : MAdT
-  def aovf      : AOValueField
-  def bf        : BlockAOValueFieldT
-  def szMult    : Float
-  def cssClass  : String
-  def xy        : ICoords2D
+  def szMult    : SzMult_t
+  def cssClasses: Seq[String]
+}
+case class CssRenderArgs(mad: MAdT, szMult: SzMult_t, cssClasses: Seq[String] = Nil)
+  extends CssRenderArgsT
+
+
+/** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
+trait FieldCssRenderArgsT extends CssRenderArgsT {
+  def aovf          : AOValueField
+  def bf            : BlockAOValueFieldT
+  def fieldCssClass : String
+  def xy            : ICoords2D
 }
 
-case class CssRenderArgs(
-  mad       : MAdT,
-  aovf      : AOValueField,
-  bf        : BlockAOValueFieldT,
-  szMult    : Float,
-  cssClass  : String,
-  xy        : ICoords2D
-) extends CssRenderArgsT
+case class FieldCssRenderArgs(
+  szMult          : SzMult_t,
+  mad             : MAdT,
+  aovf            : AOValueField,
+  bf              : BlockAOValueFieldT,
+  fieldCssClass   : String,
+  xy              : ICoords2D,
+  cssClasses      : Seq[String] = Nil
+) extends FieldCssRenderArgsT
 
 /**
  * Контейнер параметров рендера css-стиля блока.
@@ -84,16 +95,18 @@ case class CssRenderArgs(
  * @param yoff Сдвиг по оси y.
  * @param fid title либо descr обычно.
  */
-case class CssRenderArgs2(
+case class FieldCssRenderArgs2(
+  szMult  : SzMult_t,
   mad     : MAdT,
   aovf    : AOStringField,
   bf      : BfText,
   offerN  : Int,
   yoff    : Int,
-  szMult  : Float,
-  fid     : String
-) extends CssRenderArgsT {
-  override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)
-  override val cssClass: String = s"$fid-$offerN"
-}
+  fid     : String,
+  cssClasses: Seq[String] = Nil
+) extends FieldCssRenderArgsT {
 
+  override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)
+  override val fieldCssClass: String = s"$fid-$offerN"
+
+}

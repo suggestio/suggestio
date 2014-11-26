@@ -7,7 +7,7 @@ import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.{BlockWidths, SzMult_t, CssRenderArgsT}
+import models.blk.{CssRenderArgsT, BlockWidths, SzMult_t, FieldCssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
@@ -17,6 +17,7 @@ import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import SiowebEsUtil.client
+import scala.collection.immutable
 import scala.concurrent.Future
 import models._
 
@@ -174,12 +175,24 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
         .map { adId => AdCssArgs(adId, szMult) }
     }
 
-    override def adsCssInternalFut: Future[Seq[CssRenderArgsT]] = {
+    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
+    override def adsCssRenderArgsFut: Future[immutable.Seq[CssRenderArgsT]] = {
       madsFut.map { mads =>
         val szMult = brArgs.szMult
-        mads.iterator.flatMap { mad =>
-          mad2craIter(mad, szMult)
-        }.toSeq
+        mads
+          .iterator
+          .map { mad =>  blk.CssRenderArgs(mad, szMult) }
+          .toStream
+      }
+    }
+
+    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
+      madsFut.map { mads =>
+        val szMult = brArgs.szMult
+        mads
+          .iterator
+          .flatMap { mad =>  mad2craIter(mad, szMult, Nil) }
+          .toStream
       }
     }
 

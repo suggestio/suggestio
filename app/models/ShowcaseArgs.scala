@@ -473,15 +473,15 @@ trait FocusedAdsTplArgs extends SyncRenderInfo {
 trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
   def _focArgsUnderlying: FocusedAdsTplArgs
 
-  override def mad        = _focArgsUnderlying.mad
-  override def startIndex = _focArgsUnderlying.startIndex
-  override def producer   = _focArgsUnderlying.producer
-  override def brArgs     = _focArgsUnderlying.brArgs
-  override def bgColor    = _focArgsUnderlying.bgColor
-  override def adsCount   = _focArgsUnderlying.adsCount
-  override def jsStateOpt = _focArgsUnderlying.jsStateOpt
+  override def mad            = _focArgsUnderlying.mad
+  override def startIndex     = _focArgsUnderlying.startIndex
+  override def producer       = _focArgsUnderlying.producer
+  override def brArgs         = _focArgsUnderlying.brArgs
+  override def bgColor        = _focArgsUnderlying.bgColor
+  override def adsCount       = _focArgsUnderlying.adsCount
+  override def jsStateOpt     = _focArgsUnderlying.jsStateOpt
   override def syncUrl(jsState: ScJsState) = _focArgsUnderlying.syncUrl(jsState)
-  override def syncRender = _focArgsUnderlying.syncRender
+  override def syncRender     = _focArgsUnderlying.syncRender
 }
 
 
