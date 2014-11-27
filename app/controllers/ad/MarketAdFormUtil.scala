@@ -69,8 +69,8 @@ object MarketAdFormUtil {
   /** Маппер для значения font.family. */
   def fontFamilyOptM: Mapping[Option[String]] = {
     optional(
-      // TODO RELEASE: Добавить валидацию перед запуском
       text(maxLength = 32)
+        .verifying("error.font.unknown", {s => blk.Fonts.values.exists(_.fileName == s)} )
     )
   }
 

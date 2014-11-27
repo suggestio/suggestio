@@ -3,6 +3,7 @@
 @* Поле для ввода текста: input или textarea в зависимости от обстоятельств. *@
 @import ctx._
 @import helper._
+@import models.blk._
 
 @* TODO Надо бы выпилить этот пустой label, но вёрстка съезжает. *@
 <label class="ad-block-editor__fieldset_label">@*Messages(bc.i18nLabelOf(bf.name)) @bf.offerNopt.map(_ + 1)*@</label>
@@ -18,29 +19,13 @@
         @if( bf.withFontFamily ) {
           @defining( bfNameBase + ".font.family") { ffname =>
             <div class="lk-field-tools__editor">
-            <select name="@ffname" class="js-custom-font-family-select">
-            @List(
-              ("favoritlightcondcregular","Favorit Light Cond C Regular"),
-              ("favoritcondc-bold-webfont", "Favorit Cond C Bold"),
-              ("heliosthin", "Helios Thin"),
-              ("helioscondlight-webfont", "Helios Cond Light"),
-              ("HeliosExtBlack", "Helios Ext Black"),
-              ("PFDinTextCompPro-Medium", "PF Din Text Comp Pro Medium"),
-              ("futurfutc-webfont", "Futur Fut C"),
-              ("PharmadinCondensedLight", "Pharmadin Condensed Light"),
-              ("newspsan-webfont", "Newspaper Sans"),
-              ("rex_bold-webfont", "Rex Bold"),
-              ("perforama-webfont", "Perforama"),
-              ("decorc-webfont", "Decor C"),
-              ("blocextconc-webfont", "BlocExt Cond"),
-              ("bodonconc-webfont", "Bodon Conc"),
-              ("aa_higherup-webfont", "Higherup"),
-              ("Georgia", "Georgia"),
-              ("confic-webfont", "Confic")
-            ).zipWithIndex.map { case ((vl,nm), i) =>
-              <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>@nm</option>
-            }
-            </select>
+              <select name="@ffname" class="js-custom-font-family-select">
+                @defining( af(ffname) ) { ff =>
+                  @Fonts.values.iterator.zipWithIndex.map { case (font, i) =>
+                    <option value="@font.fileName" @if( ff.value.exists(_ == font.fileName) ){selected="selected"}>@font.descr</option>
+                  }
+                }
+              </select>
             </div>
           }
         }
