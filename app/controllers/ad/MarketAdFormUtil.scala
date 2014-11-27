@@ -43,7 +43,7 @@ object MarketAdFormUtil {
   }
 
 
-  private def fontSizeOptM(fontSizes: Seq[FontSize]): Mapping[Option[FontSize]] = {
+  private def fontSizeOptM(fontSizes: Iterable[FontSize]): Mapping[Option[FontSize]] = {
     val hasFontSizes = fontSizes.nonEmpty
     val (min, max) = if (hasFontSizes) {
       val minSz = fontSizes.iterator.map(_.size).min
@@ -105,7 +105,7 @@ object MarketAdFormUtil {
    * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Seq[FontSize]): Mapping[AOFieldFont] = {
+  def getFontM(withFontSizes: Iterable[FontSize]): Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
       "size"   -> fontSizeOptM(withFontSizes),

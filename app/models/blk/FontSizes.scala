@@ -48,7 +48,8 @@ object FontSizes extends Enumeration {
   /** Приведение Enumeration.Value к экземпляру модели. */
   implicit def value2val(x: Value): FontSize = x.asInstanceOf[FontSize]
 
-  /** Сортированный список значений. */
+  /** Сортированный список значений FontSize.
+    * values() тоже вроде бы сортирован, но по строковому имени, и является Set[Value]. А нам надо по id сортировку. */
   val valuesSorted: List[FontSize] = {
     values
       .iterator

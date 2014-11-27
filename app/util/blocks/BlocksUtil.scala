@@ -159,7 +159,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: List[FontSize]
+  def withFontSizes: Iterable[FontSize]
   def withFontSize = withFontSizes.nonEmpty
   def fontSizeDflt: Option[Int]
   def fontForSize(sz: Int): Option[FontSize] = withFontSizes.find(_.size == sz)
@@ -167,9 +167,11 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
-  def getFontMapping = MarketAdFormUtil.getFontM(
-    withFontSizes = withFontSizes
-  )
+  def getFontMapping = {
+    MarketAdFormUtil.getFontM(
+      withFontSizes = withFontSizes
+    )
+  }
 
   def withCoords: Boolean
 }
@@ -228,7 +230,7 @@ case class BfPrice(
   offerNopt       : Option[Int] = None,
   defaultValue    : Option[AOPriceField] = None,
   withFontColor   : Boolean = true,
-  withFontSizes   : List[FontSize] = FontSizes.valuesSorted,
+  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
   dfltFontSize    : Option[Int] = None,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
@@ -266,7 +268,7 @@ case class BfText(
   minLen          : Int = 0,
   maxLen          : Int = 16000,
   withFontColor   : Boolean = true,
-  withFontSizes   : List[FontSize] = FontSizes.valuesSorted,
+  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
   withCoords      : Boolean = true,
