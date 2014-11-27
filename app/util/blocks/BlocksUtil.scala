@@ -26,12 +26,7 @@ object BlocksUtil {
   type BlockImgEntry = (String, MImg)
   type BlockImgMap = Map[String, MImg]
 
-  val BLOCK_ID_FN = "blockId"
-
   val I18N_PREFIX = "blocks.field."
-
-  /** Цвет фона под картинкой, когда та ещё не загружена. */
-  val IMG_BG_COLOR_FN = "ibgc"
 
   val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
     .transform[String](strTrimSanitizeF, strIdentityF)

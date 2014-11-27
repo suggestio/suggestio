@@ -12,4 +12,6 @@ package object blk {
   type BlockHeight = BlockHeights.BlockHeight
 
   type SzMult_t    = Float
+
+  type AdColorFn   = AdColorFns.AdColorFn
 }
