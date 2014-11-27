@@ -65,7 +65,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
      * @param bk исходный BK_-идентификатор
      * @return идентификатор, пригодный для резолва через Messages().
       */
-    override def i18nLabelOf(bk: String) = I18N_PREFIX + bk
+    override def i18nLabelOf(bk: String) = "blocks.field." + bk
 
     /** Отрендерить редактор. */
     override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable = {

@@ -14,4 +14,7 @@ package object blk {
   type SzMult_t    = Float
 
   type AdColorFn   = AdColorFns.AdColorFn
+
+  type FontSize    = FontSizes.FontSize
+
 }

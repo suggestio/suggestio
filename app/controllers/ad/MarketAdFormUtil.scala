@@ -1,9 +1,9 @@
 package controllers.ad
 
 import models._
+import models.blk.FontSize
 import util.FormUtil._
 import play.api.data._, Forms._
-import play.api.Play.current
 import io.suggest.ym.parsers.Price
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
