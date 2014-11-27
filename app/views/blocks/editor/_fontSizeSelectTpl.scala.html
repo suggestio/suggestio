@@ -8,7 +8,7 @@
     <select class="js-custom-font-select" name="@fsName">
       @defining( af(fsName).value.filter(!_.isEmpty).map(_.toInt).orElse(bf.fontSizeDflt).orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt: Option[Int] =>
         @for(fsz <- bf.withFontSizes) {
-          <option value="@fsz.size"@if(fsValueOpt.exists(_ == fsz.size)) {selected="selected"}>@fsz.size</option>
+          <option value="@fsz.size" @if(fsValueOpt.exists(_ == fsz.size)) {selected="selected"}>@fsz.size</option>
         }
       }
     </select>

@@ -32,6 +32,7 @@ object Fonts extends Enumeration(0) {
     }
   }
 
+
   /** Тип экземпляра модели. */
   type Font = Val
 
@@ -53,13 +54,19 @@ object Fonts extends Enumeration(0) {
   val Georgia             : Font = Val("Georgia", "Georgia")
   val Confic              : Font = Val("confic-webfont", "Confic")
 
+
   /** Приведение Enumeration.Value к экземпляру модели Font. */
   implicit def value2val(x: Value): Font = x.asInstanceOf[Font]
 
-  /** Для рендера json-конфига tinyMCE лучше использовать эту функцию. */
+  /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */
   def valuesJsonTinyMce: JsArray = {
-    val inlineSpan: FieldsJsonAcc = List("inline" -> JsString("span"))
-    val jsons = values.iterator.map(_.toJsonTinyMce(inlineSpan)).toSeq
+    val inlineSpan: FieldsJsonAcc = List(
+      "inline" -> JsString("span")
+    )
+    // iterator + toSeq используется из-за того, что values() - это Set[], а не Seq.
+    val jsons = values.iterator
+      .map { _.toJsonTinyMce(inlineSpan) }
+      .toSeq
     JsArray(jsons)
   }
 
