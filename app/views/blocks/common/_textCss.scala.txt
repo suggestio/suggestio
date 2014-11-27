@@ -1,0 +1,21 @@
+@(args: blk.FieldCssRenderArgsT)
+
+@* Стили для одного текстового поля одного оффера одного блока. *@
+
+@import args._
+
+.sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
+  position: absolute;
+  @defining(aovf.coords getOrElse xy) { c =>
+    left: @{c.x * szMult}px@if(szMult > 1) {!important};
+    top: @{c.y * szMult}px@if(szMult > 1) {!important};
+  }
+}
+
+.sm-block@{mad.id}@cssClasses.map{c =>.@c } .@{fieldCssClass} {
+  color: #@aovf.font.color!important;
+  @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*szMult}px!important;}
+  @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*szMult}px!important;}
+  @aovf.font.family.map {ff =>font-family: @ff!important;}
+  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
+}

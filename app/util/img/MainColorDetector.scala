@@ -4,14 +4,13 @@ import java.awt.Color
 import java.io.{FileInputStream, InputStreamReader, File}
 import java.nio.file.Files
 import java.text.ParseException
-import models.BlockConf
 import models.im.{ImOp, MImg, Im4jAsyncSuccessProcessListener}
 import org.im4java.core.{IMOperation, ConvertCmd}
 
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
-import util.blocks.BlocksUtil.{BlockImgMap, IMG_BG_COLOR_FN}
+import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
 import scala.concurrent.{Promise, Future}

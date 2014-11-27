@@ -1,8 +1,10 @@
 package controllers
 
 import models.CallBackReqCallTimes.CallBackReqCallTime
+import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import org.joda.time.DateTime
 import play.api.i18n.Messages
+import play.api.libs.iteratee.Enumerator
 import util.billing.MmpDailyBilling
 import util.img._
 import util.{ContextImpl, PlayMacroLogsImpl}
@@ -17,6 +19,7 @@ import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import MarketLkAdnEdit.logoKM
+import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 
 /**
  * Suggest.io
@@ -24,7 +27,7 @@ import MarketLkAdnEdit.logoKM
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
+object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator with SiteMapXmlCtl {
 
   import LOGGER._
 
@@ -347,6 +350,20 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     mailMsg.send(
       bodyText = views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx)
     )
+  }
+
+
+  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
+  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
+    Enumerator(
+      routes.MarketJoin.joinAdvRequest()
+    ) map { call =>
+      SiteMapUrl(
+        loc = ctx.SC_URL_PREFIX + call.url,
+        lastMod = Some( PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
+        changeFreq = Some( ChangeFreqs.weekly )
+      )
+    }
   }
 
 }

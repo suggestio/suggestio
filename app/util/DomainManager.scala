@@ -19,14 +19,14 @@ object DomainManager extends SNStaticSubscriber with Logs {
 
   import LOGGER._
 
-  def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+  def snMap: List[(Classifier, Seq[Subscriber])] = {
     val c = SioJsFoundOnSite.getClassifier(isValidOpt = Some(true))
     val s = SnFunSubscriber {
       case ValidSioJsFoundOnSite(_dkey, _pwOpt) =>
         val addedBy = _pwOpt.map(_.personId) getOrElse "anonymous"
         maybeInstallDkey(_dkey, addedBy)
     }
-    Seq(c -> Seq(s))
+    List(c -> Seq(s))
   }
 
   /**

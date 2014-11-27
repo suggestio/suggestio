@@ -1,22 +1,41 @@
 package controllers
 
+import models.Context
+import models.crawl.SiteMapUrlT
+import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.cdn.CorsUtil
 import play.api.i18n.Lang
-import play.api.Play.{current, configuration}
+import play.api.Play, Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
+import views.html.static.sitemap._
 
 object Application extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Время кеширования /robots.txt ответа на клиенте. */
+  private val ROBOTS_TXT_CACHE_TTL_SECONDS = configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {
+    if (Play.isDev) 5 else 120
+  }
+
+  /** Время кеширования /sitemap.xml ответа на клиенте. */
+  private val SITEMAP_XML_CACHE_TTL_SECONDS = configuration.getInt("sitemap.xml.cache.ttl.seconds") getOrElse {
+    if (Play.isDev) 1 else 60
+  }
+
+
   /** Раздача содержимого robots.txt. */
   def robotsTxt = Action { implicit request =>
     Ok(views.txt.static.robotsTxtTpl())
+      .withHeaders(
+        CONTENT_TYPE  -> "text/plain; charset=utf-8",
+        CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
+      )
   }
 
   /** Запрос смены языка UI. */
@@ -73,4 +92,37 @@ object Application extends SioController with PlayMacroLogsImpl {
       NotFound
   }
 
+
+  /** Источники для наполнения sitemap.xml */
+  private def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = {
+    Seq(MarketShowcase, Market, MarketJoin)
+  }
+
+  /**
+   * Раздача сайт-мапы.
+   * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
+   */
+  def siteMapXml = MaybeAuth { implicit request =>
+    implicit val ctx = getContext2
+    val enums = SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
+    val urls = Enumerator.interleave(enums)
+      .map { _urlTpl(_) }
+    // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:
+    val respBody = Enumerator( beforeUrlsTpl()(ctx) )
+      .andThen(urls)
+      .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем отложенный рендер футера через map()
+      .andThen( Enumerator.eof )
+    Ok.feed(respBody)
+      .withHeaders(
+        CONTENT_TYPE  -> "text/xml",
+        CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
+      )
+  }
+
+}
+
+/** Интерфейс для контроллеров, которые раздают страницы, подлежащие публикации в sitemap.xml. */
+trait SiteMapXmlCtl {
+  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
+  def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT]
 }

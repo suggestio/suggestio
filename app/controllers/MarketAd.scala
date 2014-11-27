@@ -1,6 +1,7 @@
 package controllers
 
 import models.im.MImg
+import org.joda.time.DateTime
 import play.api.libs.json.JsValue
 import util.PlayMacroLogsImpl
 import util.blocks.BlocksUtil.BlockImgMap
@@ -69,16 +70,17 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def getAdFormM(catIdM: Mapping[Option[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       "ad" -> mapping(
-        CAT_ID_K -> catIdM,
-        OFFER_K  -> blockM,
-        "descr"  -> richDescrOptM
+        CAT_ID_K    -> catIdM,
+        OFFER_K     -> blockM,
+        "pattern"   -> coveringPatternM,
+        "descr"     -> richDescrOptM
       )(adFormApply)(adFormUnapply)
     )
   }
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
-  private def detectAdnAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
+  private def detectAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
     val anmt = adnNode.adn.memberType
     val adMode = request.body.getOrElse("ad.offer.mode", Nil)
       .headOption
@@ -96,7 +98,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               Some(rawBlockId.toInt)
             } catch {
               case ex: NumberFormatException =>
-                warn("detectAdnAdForm(): Invalid block number format: " + rawBlockId)
+                warn("detectAdForm(): Invalid block number format: " + rawBlockId)
                 None
             }
           }
@@ -104,7 +106,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           .filter { blockId =>
             val result = nodeBlockIds contains blockId
             if (!result)
-              warn("detectAdnAdForm(): Unknown or disallowed blockId requested: " + blockId)
+              warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
             result
           }
           // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
@@ -147,7 +149,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    detectAdnAdForm(adnNode) match {
+    detectAdForm(adnNode) match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -268,7 +270,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdnAdForm(request.producer) match {
+    detectAdForm(request.producer) match {
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
@@ -305,7 +307,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                   prio          = mad2.prio,
                   userCatId     = mad2.userCatId,
                   blockMeta     = mad2.blockMeta,
-                  richDescrOpt  = mad2.richDescrOpt
+                  richDescrOpt  = mad2.richDescrOpt,
+                  dateEdited    = Some(DateTime.now)
                 )
               }
             } yield {

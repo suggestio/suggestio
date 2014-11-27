@@ -830,8 +830,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           case None => routes.SysMarket.index()
         }
       }
-      { rcvrId =>
-        val call = routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = List(rcvrId)))
+      {rcvrId =>
+        val adSearch = new AdSearch {
+          override def receiverIds = List(rcvrId)
+        }
+        val call = routes.SysMarket.showAdnNodeAds(adSearch)
         Future successful call
       }
     }

@@ -1,0 +1,12 @@
+@(nodeOpt: Option[MAdnNode])
+
+@* Рисование куска head.title, составляющего внутри себя данные о рекламном узле. *@
+
+@import AdnShownTypes._
+
+@nodeOpt.map { node =>
+  @node.meta.name
+  @if(node.meta.town && node.adn.showWithTown) {
+    (@node.meta.town)
+  }
+}

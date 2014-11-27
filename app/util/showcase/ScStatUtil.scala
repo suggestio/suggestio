@@ -157,7 +157,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
             .flatMap { dc => Option(dc.getName) }
             .filter(isStrUseful),
           clickedAdIds = clickedAdIds,
-          generation  = adSearchOpt.flatMap(_.generation),
+          generation  = adSearchOpt.flatMap(_.generationOpt),
           clOsVsn     = agentOs
             .flatMap { os => Option(os.getVersionNumber) }
             .flatMap { vsn => Option(vsn.getMajor) }

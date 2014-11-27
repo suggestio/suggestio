@@ -8,11 +8,15 @@
 @import stuff._
 @import LkLeftPanelLinks._
 
-@defining( nodeOpt.flatMap(_.id)) { adnIdOpt =>
 <!DOCTYPE html>
 <html>
 <head>
-  <title>@title | market | Suggest.io</title>
+  <title>
+    @title
+    @if(nodeOpt) { | }
+    @_nodeTitleTpl(nodeOpt)
+    | market | Suggest.io
+  </title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -30,6 +34,7 @@
   @headAfter
 </head>
 
+@defining( nodeOpt.flatMap(_.id)) { adnIdOpt =>
 <body class="lk">
 
     <header class="header">
@@ -118,5 +123,5 @@
   <script src='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 
 </body>
-</html>
 }
+</html>

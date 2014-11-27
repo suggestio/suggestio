@@ -25,6 +25,5 @@
 
   case Some("sm-info") =>       {@_infoIconTpl(color)}
 
-  case Some(_) =>               {@_serviceIconTpl(color)}
-  case None =>                  {@_serviceIconTpl(color)}
+  case _ =>                     {@_serviceIconTpl(color)}
 }

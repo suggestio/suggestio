@@ -1,39 +1,69 @@
-@(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+@(args: ScRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-categories-screen __initial" id="smCategoriesScreen">
+<div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
 
   <div class="sm-categories-screen_header">
 
     <div class="sm-button sm-producer-header_btn __left-aligned abs" id="smCategoriesIndexButton">
     </div>
 
+    @* Кнопка/ссылка закрытия этой поисковой панели. *@
+    @args.jsStateOpt.map { jsState =>
+      <a href="@args.syncUrl( jsState.toggleSearchScreen )">
+    }
     <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smCategoriesScreenCloseButton">
       @svg._backArrowRight( args.fgColor )
     </div>
+    @if(args.jsStateOpt) {
+      </a>
+    }
 
   </div>
 
   @_search_bar( args, "smSearch", "Быстрый поиск по предложениям" )
 
-  <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor, true );">
-    <div class="sm-categories-screen_tabs-wrapper">
+  @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
+    @* Панель с табами *@
+    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor, true );">
+      <div class="sm-categories-screen_tabs-wrapper">
 
-      <div class="sm-categories-screen_single-tab">
-        <div class="sm-tab __rounded-left" id="smCategoriesTab" style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">КАТЕГОРИИ</div>
+        @* Табы *@
+        @args.jsStateOpt.map { jsState =>
+          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = None) )">
+        }
+        <div class="sm-categories-screen_single-tab">
+          <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">КАТЕГОРИИ</div>
+        </div>
+        @if(args.jsStateOpt) {
+          </a>
+        }
+
+        @args.jsStateOpt.map { jsState =>
+          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = Some(true)) )">
+        }
+        <div class="sm-categories-screen_single-tab">
+          <div class="sm-tab __rounded-right @if(!isListTab) {__inactive}" id="smShopsTab"
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">СПИСОК</div>
+        </div>
+        @if(args.jsStateOpt) {
+          </a>
+        }
+
+        <div class="clear"></div>
       </div>
-
-      <div class="sm-categories-screen_single-tab">
-        <div class="sm-tab __rounded-right __inactive" id="smShopsTab" style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">СПИСОК</div>
-      </div>
-
-      <div class="clear"></div>
     </div>
-  </div>
 
-  @_categoriesListTpl( args )
-  @_shopsListTpl( args )
+    @if(!args.syncRender || !isListTab) {
+      @_categoriesListTpl( args )
+    }
+    @if(!args.syncRender || isListTab) {
+      @_shopsListTpl( args )
+    }
+
+  }
 
   @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslBgColor =>
   <style type="text/css">

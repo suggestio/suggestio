@@ -108,13 +108,15 @@ GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
 
 # Витрина market'а и её экшены
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
+GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
+
+GET  /blk/css                           controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
 
 GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
 GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   controllers.MarketShowcase.rdrToGeoSite
-GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
+GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: ScReqArgs ?= ScReqArgs.empty)
 
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
@@ -124,9 +126,10 @@ GET  /market/ads                        controllers.MarketShowcase.findAds(a: Ad
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 
 GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
-# Поиск по узлам
+## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
-
+## Прямой доступ к синхронной выдаче
+GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState())
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
@@ -320,6 +323,7 @@ POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySub
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 
 GET  /robots.txt                         controllers.Application.robotsTxt
+GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты

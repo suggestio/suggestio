@@ -259,7 +259,7 @@ trait DeleteOnIm2FullyDeletedEvent extends SNStaticSubscriber with SnClassSubscr
   val DIR: File
   def deleteAllFor(rowKey: UUID): Future[_]
 
-  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+  override def snMap = {
     List(Img2FullyDeletedEvent.getClassifier() -> Seq(this))
   }
 

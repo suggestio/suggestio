@@ -92,7 +92,7 @@ object MAdv {
     import LOGGER._
 
     /** Карта подписок. */
-    override def snMap: Seq[(Classifier, Seq[Subscriber])] = List(
+    override def snMap = List(
       AdDeletedEvent.getClassifier() -> Seq(this)
     )
 

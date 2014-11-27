@@ -23,9 +23,9 @@ object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
   override type GetAs_t = MAdnNode
 
   /** Карта событий adnNode для статического подписывания в SioNotifier. */
-  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+  override def snMap = {
     val subs = Seq(this)
-    Seq(
+    List(
       AdnNodeSavedEvent.getClassifier()   -> subs,
       AdnNodeDeletedEvent.getClassifier() -> subs,
       AdnNodeOnOffEvent.getClassifier()   -> subs

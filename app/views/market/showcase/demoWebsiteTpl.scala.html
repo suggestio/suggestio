@@ -1,25 +1,33 @@
-@(args: SMDemoSiteArgs)(implicit ctx: Context)
+@(args: ScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
+@import _root_.views.html.stuff._
 @import util.cdn.CdnUtil
 @import market.lk.adn._node._installScriptTpl
 
 <html>
 <head>
   <title>
-      @args.title
-      @if(args.title) { | }
-      Suggest.io | Мобильная таргетированная реклама в Москве и СПБ, размещение рекламы в Интернете
+    @* SEO: Пытаемся рисовать разные заголовки на разных страницах. *@
+    @_nodeTitleTpl(args.nodeOpt)
+    @if(args.nodeOpt) { | }
+    Suggest.io | Мобильная таргетированная реклама в Москве и СПБ, размещение рекламы в Интернете
   </title>
+  <meta name="description" content="Система размещения таргетированной мобильной интернет-рекламы. Более 150 рекламных локаций в Москве и Санкт-Петербурге." />
+
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   @if(!ctx.isIpad) {
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   }
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
+  @* TODO Когда будет готово !#-навигация, надо задать тег <link rel="canonical" href="..."/> *@
+
+  @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
   <!--[if IE]>
   <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
   <![endif]-->
@@ -33,8 +41,6 @@
 
   <link href="@CdnUtil.asset("images/icons/228.png")" rel="icon" sizes="228x228" type="image/png" />
 
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-
   @* windows 8+ metro: *@
   <meta name="msapplication-TileImage" content="@CdnUtil.asset("images/icons/144.png")" />
 
@@ -45,16 +51,23 @@
 
   <link type="text/css" rel="stylesheet" media="screen" href="@CdnUtil.asset("stylesheets/market/showcase.css")"/>
 
+  @args.headAfter
 </head>
+
 
 <body class="sm-body">
 
-<script type="text/javascript">
-   @_installScriptTpl(args.adnId, mkPermanent = false);
-   window.siomart_index = '@args.showcaseCall';
-   window.with_geo = @args.withGeo;
-</script>
+  @if(!args.syncRender) {
+    <script type="text/javascript">
+@_installScriptTpl(args.adnId, mkPermanent = false);
+window.siomart_index = '@args.showcaseCall';
+window.with_geo = @args.withGeo;
+    </script>
+  }
+  @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново
+          выглядеть и работать. Но не для кравлеров. *@
 
+  @args.inlineIndex
 </body>
 
 </html>

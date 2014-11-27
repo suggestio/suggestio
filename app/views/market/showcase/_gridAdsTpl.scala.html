@@ -1,12 +1,26 @@
-@(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+@(args: ScRenderArgs)(implicit ctx: Context)
 @import util.TplDataFormatUtil._
 
 @stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
 
-  <div class="sm-grid-ads_container" id="smGridAdsContainer" data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"></div>
-  <div class="sm-grid-ads_loader hidden" id="smGridAdsLoader">
-    <div class="sm-grid-ads_loader-spinner"><div class="sm-grid-ads_loader-spinner-inner">@svg._spinnerTpl(args.bgColor)</div></div>
+  <div class="sm-grid-ads_container" id="smGridAdsContainer" @if(!args.syncRender) {data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"} >
+    @* Заинлайненные рекламные карточки при синхронном рендере. *@
+    @for(tile <- args.inlineTiles) {
+      @args.jsStateOpt.map { jsState =>
+        <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = tile.mad.id, navScrOpenedOpt = None, searchScrOpenedOpt = None) )">
+      }
+      @tile.rendered
+      @if(args.jsStateOpt) {
+        </a>
+      }
+    }
   </div>
+
+  @if(!args.syncRender) {
+    <div class="sm-grid-ads_loader hidden" id="smGridAdsLoader">
+      <div class="sm-grid-ads_loader-spinner"><div class="sm-grid-ads_loader-spinner-inner">@svg._spinnerTpl(args.bgColor)</div></div>
+    </div>
+  }
 
 }
 
