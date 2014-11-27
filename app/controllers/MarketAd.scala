@@ -80,7 +80,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
-  private def detectAdnAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
+  private def detectAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
     val anmt = adnNode.adn.memberType
     val adMode = request.body.getOrElse("ad.offer.mode", Nil)
       .headOption
@@ -98,7 +98,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               Some(rawBlockId.toInt)
             } catch {
               case ex: NumberFormatException =>
-                warn("detectAdnAdForm(): Invalid block number format: " + rawBlockId)
+                warn("detectAdForm(): Invalid block number format: " + rawBlockId)
                 None
             }
           }
@@ -106,7 +106,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           .filter { blockId =>
             val result = nodeBlockIds contains blockId
             if (!result)
-              warn("detectAdnAdForm(): Unknown or disallowed blockId requested: " + blockId)
+              warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
             result
           }
           // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
@@ -149,7 +149,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    detectAdnAdForm(adnNode) match {
+    detectAdForm(adnNode) match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -270,7 +270,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdnAdForm(request.producer) match {
+    detectAdForm(request.producer) match {
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(

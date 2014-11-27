@@ -52,7 +52,8 @@
       </div>
 
       @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
-      @checkbox(af("pattern.enabled"), '_label -> "Паттерн")
+      @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
+      @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
 
       <div class="clear"></div>
 
