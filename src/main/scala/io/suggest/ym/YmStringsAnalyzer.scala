@@ -9,7 +9,7 @@ import org.tartarus.snowball.ext.{RussianStemmer, EnglishStemmer}
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents
 import org.apache.lucene.analysis.snowball.SnowballFilter
-import org.apache.lucene.analysis.{Analyzer, TokenStream}
+import org.apache.lucene.analysis.{Tokenizer, Analyzer, TokenStream}
 import java.io.Reader
 import org.apache.lucene.analysis.util.CharArraySet
 import java.util
@@ -78,64 +78,130 @@ extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY)
 with TextNormalizerAn
 with NormTokensOutAn
 with ParamNameParserAn
-with MassUnitParserAn {
+with MassUnitParserAn
+with YmStringAnalyzerT
 
-  /** Сборка анализатора текстов происходит здесь. */
-  def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
+
+/** Трейт с переопределяемыми методами сборки привычного YmString-анализатора. */
+trait YmStringAnalyzerT extends Analyzer {
+
+  def _luceneVsn = luceneVsn
+
+  def tokenizer(reader: Reader): Tokenizer = {
+    val tok = new StandardTokenizer(_luceneVsn, reader)
+    tok.setMaxTokenLength(MAX_TOKEN_LEN)
+    tok
+  }
+
+  def addFilters(tokenized: Tokenizer): TokenStream = {
     // Заменить букву ё на е.
-    val tokens = new StandardTokenizer(luceneVsn, reader)
-    tokens.setMaxTokenLength(MAX_TOKEN_LEN)
-    var filtered: TokenStream = new StandardFilter(luceneVsn, tokens)  // https://stackoverflow.com/a/16965481
-    filtered = new ReplaceMischarsAnalyzer(luceneVsn, filtered)
-    filtered = new LowerCaseFilter(luceneVsn, filtered)
+    var filtered: TokenStream = new StandardFilter(_luceneVsn, tokenized)  // https://stackoverflow.com/a/16965481
+    filtered = new ReplaceMischarsAnalyzer(_luceneVsn, filtered)
+    filtered = new LowerCaseFilter(_luceneVsn, filtered)
     // Выкинуть стоп-слова.
-    filtered = new StopFilter(luceneVsn, filtered, PARAM_TEXT_STOPWORD_SET)
+    filtered = new StopFilter(_luceneVsn, filtered, PARAM_TEXT_STOPWORD_SET)
     // Стеммеры для отбрасывания окончаний.
     filtered = new SnowballFilter(filtered, new RussianStemmer)
     filtered = new SnowballFilter(filtered, new EnglishStemmer)
+    filtered
+  }
+
+  /** Сборка анализатора текстов происходит здесь. */
+  override def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
+    val tokens = tokenizer(reader)
+    val filtered = addFilters(tokens)
     new TokenStreamComponents(tokens, filtered)
   }
+
 }
 
 
-trait NormTokensOutAn extends Analyzer {
- 
+trait AnalyzerUtil extends Analyzer {
+
+  /** Абстрактный прогонятель исходных данных через анализатор. Каждый токен попадает в handleResultToken. */
+  trait TokenStreamUnfold {
+    def getStream: TokenStream
+    def handleResultToken(token: String): Unit
+    def unfoldStream(): this.type = {
+      val _stream = getStream
+      try {
+        _stream.reset()
+        while (_stream.incrementToken()) {
+          val resultToken = token2string(_stream)
+          handleResultToken(resultToken)
+        }
+      } finally {
+        _stream.close()
+      }
+      this
+    }
+  }
+
+  /** Прогнать строку через анализатор. */
+  trait StringTokenStreamUnfold extends TokenStreamUnfold {
+    def _src: String
+    override def getStream = tokenStream(null, _src)
+  }
+
+  /** Прогнать Reader через аналиатор. */
+  trait ReaderTokenStreamUnfold extends TokenStreamUnfold {
+    def _src: Reader
+    override def getStream = tokenStream(null, _src)
+  }
+
+  // TODO Нужен iterator-интерфейс для обхода TokenStream.
+}
+
+trait NormTokensOutAn extends Analyzer with AnalyzerUtil {
+
   /** Собрать набор токенов из строки в виде списка. Список в обратном порядке. */
   def toNormTokensRev(src: String): List[String] = {
-    var acc: List[String] = Nil
-    val stream = tokenStream(null, src)
-    try {
-      stream.reset()
-      while (stream.incrementToken()) {
-        val resultToken = token2string(stream)
-        acc ::= resultToken
+    val unfolder = new StringTokenStreamUnfold {
+      var _acc: List[String] = Nil
+      override def _src = src
+      override def handleResultToken(token: String): Unit = {
+        _acc ::= token
       }
-    } finally {
-      stream.close()
     }
-    acc
+    unfolder.unfoldStream()._acc
   }
 
   /** Тоже самое, что и toNormTokensRev(String), но токены в прямом порядке. */
   def toNormTokensDirect(src: String) = toNormTokensRev(src).reverse
 }
 
+/** Аналог [[NormTokensOutAn]], но работает с reader-ом, а не со строкой. */
+trait NormTokensOutAnStream extends Analyzer with AnalyzerUtil {
+  def normTokensReaderRev(reader: Reader): List[String] = {
+    val unfolder = new ReaderTokenStreamUnfold {
+      var _acc: List[String] = Nil
+      override def _src = reader
+      override def handleResultToken(token: String): Unit = {
+        _acc ::= token
+      }
+    }
+    unfolder.unfoldStream()._acc
+  }
 
-trait TextNormalizerAn extends Analyzer {
+
+  def normTokensReaderDirect(reader: Reader): List[String] = {
+    normTokensReaderRev(reader).reverse
+  }
+}
+
+
+trait TextNormalizerAn extends Analyzer with AnalyzerUtil {
   /** Нормализовать имя параметра, заданного в произвольной форме. */
   def normalizeText(pn: String): StringBuilder = {
-    val readyTokens = new StringBuilder
-    val stream = tokenStream(null, pn)
-    try {
-      stream.reset()
-      while (stream.incrementToken()) {
-        val resultToken = token2string(stream)
-        readyTokens append resultToken
+    val sb = new StringBuilder
+    val unfolder = new StringTokenStreamUnfold {
+      override def _src: String = pn
+      override def handleResultToken(token: String): Unit = {
+        sb append token
       }
-    } finally {
-      stream.close()
     }
-    readyTokens
+    unfolder.unfoldStream()
+    sb
   }
 }
 

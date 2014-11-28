@@ -20,4 +20,11 @@ class YmStringsAnalyzerTest extends FlatSpec with Matchers {
     an.toNormTokensDirect("аКсеccуаРы") shouldBe List("аксессуар")    // в слове есть неправильная c/с
   }
 
+  it should "handle more complex strings" in {
+    val an = new YmStringsAnalyzer
+    // TODO Тут идёт потеря смысла исходника: отрицательный температура стала положительной. Это надо исправлять.
+    an.toNormTokensDirect("Температура ночью -6°, днём -2°.") shouldBe List("температур", "ноч", "6", "днём", "2")
+    an.toNormTokensDirect("Санкт-Петербург, 30 ноября") shouldBe List("санкт", "петербург", "30", "ноябр")
+  }
+
 }
