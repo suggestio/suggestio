@@ -3,10 +3,10 @@ package util.geo.osm.xml
 import javax.xml.parsers.SAXParserFactory
 
 import io.suggest.model.geo.GeoPoint
-import io.suggest.sax.SaxContentHandlerWrapper
-import org.xml.sax.{ContentHandler, Locator, SAXParseException, Attributes}
 import org.xml.sax.helpers.DefaultHandler
+import org.xml.sax.{ContentHandler, Locator, SAXParseException, Attributes}
 import util.PlayLazyMacroLogsImpl
+import util.ai.sax.StackFsmSax
 import util.geo.osm._
 
 /**
@@ -61,40 +61,18 @@ trait ElementParserConstants {
 /** Абстрактный парсер выхлопов OSM GET elements xml api. */
 trait ElementsParserT
   extends DefaultHandler
-  with SaxContentHandlerWrapper
+  with StackFsmSax
   with PlayLazyMacroLogsImpl
   with ElementParserConstants
 {
-
-  protected var handlersStack: List[TagHandler] = Nil
-
-  override def contentHandler: ContentHandler = handlersStack.head
 
   protected var nodesAccRev: List[OsmNode] = Nil
   protected var waysAccRev: List[OsmWayParsed] = Nil
   protected var relationsAccRev: List[OsmRelationParsed] = Nil
 
-  implicit var locator: Locator = null
-
-  override def setDocumentLocator(l: Locator): Unit = {
-    locator = l
-  }
-
     /** Начало работы с документом. Нужно выставить дефолтовый обработчик в стек. */
   override def startDocument() {
     become(new TopLevelHandler)
-  }
-
-  /** Стековое переключение состояние этого ContentHandler'а. */
-  def become(h: TagHandler) {
-    handlersStack ::= h
-  }
-
-  /** Извлечение текущего состояния из стека состояний. */
-  def unbecome(): TagHandler = {
-    val result = handlersStack.head
-    handlersStack = handlersStack.tail
-    result
   }
 
   /** Получить карту точек. */
@@ -126,73 +104,12 @@ trait ElementsParserT
   def getRelations = relationsAccRev.reverse
 
 
-  /** Базовый интерфейс для написания обработчиков тегов в рамках этого парсера. */
-  trait TagHandler extends DefaultHandler {
-    def thisTagName: String
-    def thisTagAttrs: Attributes
-
-    def startTag(tagName:String, attributes: Attributes) {}
-
-    def getTagNameFor(uri:String, localName:String, qName:String): String = {
-      if (localName.isEmpty) {
-        if (uri.isEmpty) {
-          qName
-        } else {
-          val ex = new SAXParseException("Internal parser error. Cannot understand tag name: " + qName, locator)
-          fatalError(ex)
-          throw ex    // для надежности
-        }
-      } else {
-        localName
-      }
-    }
-
-    override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
-      // Т.к. нет нормального неймспейса, усредняем тут localName и qName.
-      super.startElement(uri, localName, qName, attributes)
-      val tagName = getTagNameFor(uri, localName, qName)
-      startTag(tagName, attributes)
-    }
-
-    def endTag(tagName: String) {
-      if (tagName == tagName && handlersStack.head == this) {
-        handlerFinish(tagName)
-        unbecome()
-      } else {
-        // Надо остановиться и выругаться на неправильно закрытый тег. Наверху оно будет обработано через try-catch
-        unexpectedClosingTag(tagName)
-      }
-    }
-
-    def unexpectedClosingTag(tagName: String) {
-      fatalError(new SAXParseException(s"Unexpected closing tag: '$tagName', but close-tag '$tagName' expected.", locator))
-    }
-
-    /** Фунция вызывается, когда наступает пора завершаться.
-      * В этот момент обычно отпавляются в коллектор накопленные данные. */
-    def handlerFinish(tagName: String) {}
-
-    /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
-      super.endElement(uri, localName, qName)
-      val tagName = getTagNameFor(uri, localName, qName)
-      endTag(tagName)
-    }
-  }
-
   trait ElementTagHandler extends TagHandler {
     val getId = thisTagAttrs.getValue(ATTR_ID).toLong
   }
 
-  sealed case class DummyHandler(thisTagName: String, thisTagAttrs: Attributes) extends TagHandler
-
   /** Самый начальный обработчик докумена. С него начинается парсинг. Тут ожидается тэг osm.  */
-  class TopLevelHandler extends TagHandler {
-    override def thisTagName: String = ???
-    override def thisTagAttrs: Attributes = ???
-
-    override def endTag(tagName: String) {}
-
+  class TopLevelHandler extends TopLevelHandlerT {
     override def startTag(tagName: String, attributes: Attributes) {
       if (tagName == TAG_OSM) {
         become(new OsmTagHandler(attributes))

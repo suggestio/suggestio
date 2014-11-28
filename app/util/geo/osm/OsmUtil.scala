@@ -81,8 +81,11 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
       case sex: SAXParseException =>
         throw sex
       case ex: Exception =>
-        val l = handler.locator
-        throw new SAXParseException(s"Parsing failed at (${l.getLineNumber}, ${l.getColumnNumber})", handler.locator, ex)
+        val ex2 = handler.locator match {
+          case null => new SAXParseException("Parsing failed before document locator has been set", "", "", 0, 0, ex)
+          case l    => new SAXParseException(s"Parsing failed at (${l.getLineNumber}, ${l.getColumnNumber})", l, ex)
+        }
+        throw ex2
     }
     // Распарсенные элементы нужно объеденить в нормальные структуры.
     if (typ == OsmElemTypes.NODE) {
