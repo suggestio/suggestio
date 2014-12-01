@@ -1924,11 +1924,11 @@ sm =
         _block_width = _b.getAttribute 'data-width'
 
         if cbca_grid.ww >= 660
-          sm.utils.addClass _b, 'double-size'
+          #sm.utils.addClass _b, 'double-size'
           _block_width = _block_width*2
           padding = 0
         else
-          sm.utils.removeClass _b, 'double-size'
+          #sm.utils.removeClass _b, 'double-size'
           padding = 0
           _block_width = 300
 
