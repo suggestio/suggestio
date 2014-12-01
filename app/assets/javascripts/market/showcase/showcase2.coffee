@@ -54,6 +54,7 @@ cbca_grid =
 
     this.columns = this.columns - this.left_offset - this.right_offset
 
+
   ##############
   ## Fetch block
   ##############
@@ -1473,32 +1474,50 @@ sm =
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
+  resources :
+
+    common :
+
+      init : () ->
+        if sm.utils.ge("smResources") != null
+          sm.utils.re("smResources")
+
+        sm_resources_attr =
+          id : "smResources"
+
+        sm_resources = sm.utils.ce "div", sm_resources_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources
+
+    focused :
+
+      clear : () ->
+        sm.utils.ge("smResourcesFocused").innerHTML = ""
+
+      init : () ->
+        if sm.utils.ge("smResourcesFocused") != null
+          sm.utils.re("smResourcesFocused")
+
+        sm_resources_focused_attr =
+          id : "smResourcesFocused"
+
+        sm_resources_focused = sm.utils.ce "div", sm_resources_focused_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources_focused
+
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
 
   draw_layout : () ->
 
+    this.resources.common.init()
+    this.resources.focused.init()
+
     if sm.utils.ge('sioMartRoot') != null
       sm.utils.re('sioMartRoot')
-
-    ## блок для ресурсов
-    if sm.utils.ge("smResources") != null
-      sm.utils.re("smResources")
-
-    sm_resources_attr =
-      id : "smResources"
-
-    sm_resources = this.utils.ce "div", sm_resources_attr, ""
-
-    if sm.utils.ge("smResourcesFocused") != null
-      sm.utils.re("smResourcesFocused")
-
-    sm_resources_focused_attr =
-      id : "smResourcesFocused"
-
-    sm_resources_focused = this.utils.ce "div", sm_resources_focused_attr, ""
-
 
     sm.geo.active_layer = null
 
@@ -1512,8 +1531,6 @@ sm =
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
-    _body.appendChild sm_resources
-    _body.appendChild sm_resources_focused
 
   ###################################
   ## Осуществить запрос к серверу sio
@@ -2012,7 +2029,7 @@ sm =
       cb = () ->
         sm.utils.ge('smFocusedAds').style.display = 'none'
         sm.focused_ads.ads_container_dom.innerHTML = ''
-        sm.utils.ge("smResourcesFocused").innerHTML = ""
+        sm.resources.focused.clear()
 
       setTimeout cb, 200
 
