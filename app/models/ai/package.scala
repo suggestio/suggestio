@@ -15,4 +15,5 @@ package object ai {
   type SkyState               = SkyStates.SkyState
   type Precipation            = Precipations.Precipation
 
+  type MAiRenderer            = MAiRenderers.MAiRenderer
 }

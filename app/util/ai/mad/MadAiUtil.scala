@@ -3,13 +3,11 @@ package util.ai.mad
 import java.io.{FileInputStream, InputStream}
 
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.ad.AOStringField
-import models.ai.{MAiMad, MAiMadContentHandler, ContentHandlerResult}
+import models.ai.{MAiRenderer, MAiMad, MAiMadContentHandler, ContentHandlerResult}
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
 import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
 import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.apache.tika.sax.TeeContentHandler
-import org.clapper.scalasti.ST
 import util.PlayMacroLogsImpl
 import util.ws.HttpGetToFile
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -80,33 +78,22 @@ object MadAiUtil extends PlayMacroLogsImpl {
   }
 
 
-  private def renderTextFieldOpt(tfOpt: Option[AOStringField], args: Map[String, ContentHandlerResult]): Option[AOStringField] = {
-    tfOpt.map { tf =>
-      val st = ST(tf.value, '#', '#')
-        .addAttributes(args, raw = true)
-      val v2 = st.render(lineWidth = 256)
-      tf.copy(value = v2)
-    }
-  }
-
   /**
-   * Рендер шаблонной карточки в финальную карточку испрользуя указанную карту аргументов.
+   * Рендер шаблонной карточки в финальную карточку испрользуя указанную карту аргументов и переданный набор парсеров.
    * @param tplAd Шаблонная карточка.
    * @param args Карта аргументов рендера.
+   * @param renderers Рендереры в порядке употребления.
    * @return Отрендеренная карточка: новый инстанс без id и версии.
    */
-  def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult]): MAd = {
-    tplAd.copy(
-      offers = tplAd.offers.map { offer =>
-        offer.copy(
-          text1 = renderTextFieldOpt(offer.text1, args),
-          text2 = renderTextFieldOpt(offer.text2, args)
-        )
-      },
-      id          = None,
-      versionOpt  = None,
-      alienRsc    = true
-    )
+  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult]): Future[MAd] = {
+    val acc0 = Future successful tplAd
+    renderers.foldLeft(acc0) {
+      (acc, renderer) =>
+        acc.flatMap { mad0 =>
+          val rr = renderer.getRenderer()
+          rr.renderTplAd(mad0, args)
+        }
+    }
   }
 
 
@@ -133,15 +120,21 @@ object MadAiUtil extends PlayMacroLogsImpl {
     }
 
     // Отрендерить шаблонную карточку.
-    for {
-      tplMad      <- tplMadFut
-      renderArgs  <- renderArgsFut
-    } yield {
-      // Пробежаться по всем полям и вызвать рендерер.
-      val madRendered = renderTplAd(tplMad, renderArgs)
-      ???
-      // TODO Сохранение новых id с защитой от удаление ресурсов.
+    val renderedAdFut = tplMadFut flatMap { tplMad =>
+      renderArgsFut flatMap { renderArgs =>
+        renderTplAd(tplMad, madAi.renderers, renderArgs)
+      }
+    }
+
+    // Сохранить целевые карточки
+    renderedAdFut flatMap { madRendered =>
+      Future.traverse( madAi.targetAdIds ) { tgtAdId =>
+        val mad4save = madRendered.copy(id = Some(tgtAdId))
+        mad4save.save
+      }
     }
   }
 
 }
+
+

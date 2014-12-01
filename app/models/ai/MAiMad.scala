@@ -7,6 +7,7 @@ import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
 import util.ai.GetParseResult
+import util.ai.mad.render.{ScalaStiRenderer, MadAiRenderedT}
 import util.ai.sax.weather.gidromet.GidrometRssSax
 
 import scala.collection.Map
@@ -30,6 +31,7 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
   val TPL_AD_ID_ESFN          = "tpl"
   val TARGET_AD_IDS_ESFN      = "tgts"
   val DESCR_ESFN              = "d"
+  val RENDERERS_ESFN          = "rr"
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -44,7 +46,8 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
       FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(CONTENT_HANDLERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(TPL_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
+      FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
     )
   }
 
@@ -63,6 +66,9 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
         .map { chId => MAiMadContentHandlers.withName(stringParser(chId)): MAiMadContentHandler }
         .toSeq,
       tplAdId = stringParser(m(TPL_AD_ID_ESFN)),
+      renderers = iteratorParser(m(RENDERERS_ESFN))
+        .map { s => MAiRenderers.withName(stringParser(s)) : MAiRenderer }
+        .toSeq,
       targetAdIds = strListParser(m(TARGET_AD_IDS_ESFN)),
       descr = m.get(DESCR_ESFN).map(stringParser),
       id = id,
@@ -81,6 +87,7 @@ case class MAiMad(
   url             : String,
   contentHandlers : Seq[MAiMadContentHandler],
   tplAdId         : String,
+  renderers       : Seq[MAiRenderer],
   targetAdIds     : Seq[String],
   descr           : Option[String] = None,
   id              : Option[String] = None,
@@ -98,6 +105,8 @@ case class MAiMad(
       TPL_AD_ID_ESFN          -> JsString(tplAdId) ::
       TARGET_AD_IDS_ESFN      -> JsArray( targetAdIds.map(JsString.apply) ) ::
       acc
+    if (renderers.nonEmpty)
+      acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.name)))
     if (descr.isDefined)
       acc1 ::= DESCR_ESFN -> JsString(descr.get)
     acc
@@ -117,7 +126,7 @@ object MAiMadContentHandlers extends Enumeration {
   // Тут всякие доступные content-handler'ы.
 
   /** Sax-парсер для rss-прогнозов росгидромета. */
-  val GidrometRss = new Val("gidromet.rss") {
+  val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
     override def newInstance = new GidrometRssSax
   }
 
@@ -135,3 +144,23 @@ object MAiMadContentHandlers extends Enumeration {
 
 /** Абстрактный результат работы Content-Handler'а. Это JavaBean-ы, поэтому должны иметь Serializable. */
 trait ContentHandlerResult extends Serializable
+
+
+/** Модель доступных рендереров динамических рекламных карточек. */
+object MAiRenderers extends Enumeration {
+  /** Экземпляр модели. */
+  protected sealed abstract class Val(val name: String) extends super.Val(name) {
+    def getRenderer(): MadAiRenderedT
+  }
+
+  type MAiRenderer = Val
+
+  /** Вызов рендера шаблонов scalasti. */
+  val ScalaSti: MAiRenderer = new Val("scalasti") {
+    override def getRenderer() = ScalaStiRenderer
+  }
+
+
+  implicit def value2val(x: Value): MAiRenderer = x.asInstanceOf[MAiRenderer]
+
+}
