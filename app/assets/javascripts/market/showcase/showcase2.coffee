@@ -1482,6 +1482,15 @@ sm =
     if sm.utils.ge('sioMartRoot') != null
       sm.utils.re('sioMartRoot')
 
+    ## блок для ресурсов
+    if sm.utils.ge("smResources") != null
+      sm.utils.re("smResources")
+
+    sm_resources_attr =
+      id : "smResources"
+
+    sm_resources = this.utils.ce "div", sm_resources_attr, ""
+
     sm.geo.active_layer = null
 
     ## Интерфейс маркета
@@ -1491,8 +1500,10 @@ sm =
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
     sm_layout.style.display = 'none'
 
+
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
+    _body.appendChild sm_resources
 
   ###################################
   ## Осуществить запрос к серверу sio
