@@ -55,9 +55,7 @@
 </head>
 
 
-<body class="sm-body">
-
-  <div id="smResources"></div>
+<body class="sm-body @if(args.syncRender){ __sync }">
 
   @if(!args.syncRender) {
     <script type="text/javascript">
