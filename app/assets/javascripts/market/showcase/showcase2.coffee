@@ -712,6 +712,10 @@ sm =
 
     init : () ->
 
+      console.log "deprecated method"
+      return false
+
+      ###
       style_tags = sm.utils.ge_tag('code', true)
 
       css = ''
@@ -727,6 +731,7 @@ sm =
       this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
+      ###
 
   #########################
   ## History Api navigation
@@ -1667,7 +1672,7 @@ sm =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        sm.styles.init()
+        #sm.styles.init()
 
         if data.action == 'searchAds'
           if cbca_grid.ww <= 400
@@ -1890,7 +1895,7 @@ sm =
 
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
-      sm.styles.init()
+      #sm.styles.init()
 
     check_if_fully_loaded : () ->
 
@@ -2081,7 +2086,7 @@ sm =
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
 
-      sm.styles.init()
+      #sm.styles.init()
       this.active_ad_index = 0
 
   ##################################################
