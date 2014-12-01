@@ -10,9 +10,9 @@ package object ai {
 
   type MAiMadContentHandler   = MAiMadContentHandlers.MAiMadContentHandler
 
-  type WindDirection          = WindDirections.WindDirection
+  type WindDirection          = GeoDirections.GeoDirection
 
   type SkyState               = SkyStates.SkyState
-  type Percipation            = Percipations.Percipation
+  type Precipation            = Precipations.Precipation
 
 }

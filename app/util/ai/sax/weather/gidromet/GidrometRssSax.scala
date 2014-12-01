@@ -5,8 +5,7 @@ import java.io.{CharArrayReader, Reader}
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
 import io.suggest.ym.{NormTokensOutAnStream, YmStringAnalyzerT}
-import models.ai.Percipations.Percipation
-import models.ai.{DayWeatherBean, ContentHandlerResult}
+import models.ai.{DayWeatherBean, DayWeatherAcc, ContentHandlerResult}
 import org.apache.lucene.analysis.core.LowerCaseFilter
 import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard.StandardFilter
@@ -16,6 +15,7 @@ import org.joda.time.DateTime
 import org.tartarus.snowball.ext.RussianStemmer
 import org.xml.sax.{SAXParseException, Attributes}
 import org.xml.sax.helpers.DefaultHandler
+import util.PlayLazyMacroLogsImpl
 import util.ai.GetParseResult
 import util.ai.sax.StackFsmSax
 
@@ -29,7 +29,11 @@ import util.ai.sax.StackFsmSax
 class GidrometRssSax
   extends DefaultHandler
   with StackFsmSax
-  with GetParseResult {
+  with GetParseResult
+  with PlayLazyMacroLogsImpl
+{
+
+  import LOGGER._
 
   /** Для нормализации строк с погодой используется сие добро: */
   protected val an = new YmStringAnalyzerT with NormTokensOutAnStream {
@@ -46,6 +50,9 @@ class GidrometRssSax
       filtered
     }
   }
+
+  /** Аккамулятор результатов в обратном порядке. */
+  var accRev: List[DayWeatherBean] = Nil
 
   /** Дата-время во время запуска этой канители. */
   val now = DateTime.now
@@ -119,7 +126,7 @@ class GidrometRssSax
    */
   class ItemTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
     override def thisTagName = "item"
-    val dw = DayWeatherBean(today)
+    val dw = DayWeatherAcc(today)
 
     override def startTag(tagName: String, attributes: Attributes): Unit = {
       val nextState = if (tagName == "title") {
@@ -174,7 +181,13 @@ class GidrometRssSax
         val tokens = an.normTokensReaderDirect(reader)
           .mkString(" ")
         // Нужно пропарсить нормализованные токены с помощью парсеров.
-        ???
+        val p = wParsers.dayWeatherP(dw)
+        val pr = wParsers.parse(p, tokens)
+        if (pr.successful) {
+          accRev ::= pr.get
+        } else {
+          LOGGER.error("Unable to parse weather description string:\n " + tokens + "\n " + pr)
+        }
       }
     }
   }
@@ -185,7 +198,10 @@ class GidrometRssSax
    * Если результата нет или он заведомо неверный/бесполезный, то должен быть экзепшен с причиной.
    * @return Реализация модели ContentHandlerResult.
    */
-  override def getParseResult: ContentHandlerResult = ???
+  override def getParseResult: ContentHandlerResult = {
+    accRev.reverse
+    ???
+  }
 
 }
 
