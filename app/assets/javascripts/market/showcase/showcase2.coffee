@@ -1491,6 +1491,15 @@ sm =
 
     sm_resources = this.utils.ce "div", sm_resources_attr, ""
 
+    if sm.utils.ge("smResourcesFocused") != null
+      sm.utils.re("smResourcesFocused")
+
+    sm_resources_focused_attr =
+      id : "smResourcesFocused"
+
+    sm_resources_focused = this.utils.ce "div", sm_resources_focused_attr, ""
+
+
     sm.geo.active_layer = null
 
     ## Интерфейс маркета
@@ -1504,6 +1513,7 @@ sm =
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
     _body.appendChild sm_resources
+    _body.appendChild sm_resources_focused
 
   ###################################
   ## Осуществить запрос к серверу sio
@@ -2002,6 +2012,7 @@ sm =
       cb = () ->
         sm.utils.ge('smFocusedAds').style.display = 'none'
         sm.focused_ads.ads_container_dom.innerHTML = ''
+        sm.utils.ge("smResourcesFocused").innerHTML = ""
 
       setTimeout cb, 200
 
