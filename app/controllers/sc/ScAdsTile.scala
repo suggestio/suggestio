@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import util.jsa.{SmRcvResp, Js}
+import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
@@ -207,6 +207,9 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       }
     }
 
+    override def jsAppendCssAction(html: JsString): JsAction = {
+      JsAppendById("smResources", html)
+    }
   }
 
 }
