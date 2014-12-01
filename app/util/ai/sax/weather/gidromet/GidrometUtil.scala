@@ -96,22 +96,21 @@ trait GidrometParsers extends JavaTokenParsers {
   def southP: Parser[_] = "(?U)ю(жн|г)\\w*".r
 
   def geoDirectionP: Parser[WindDirection] = {
+    import GeoDirections._
     val _eastP = eastP
     val _northP = northP
     val _westP = westP
     val _southP = southP
     val delimOpt = opt("[-–‒—―]+".r)
-    val e = _eastP ^^^ GeoDirections.EAST
-    val w = _westP ^^^ GeoDirections.WEST
-    val n = _northP ^^^ GeoDirections.NORTH
-    val s = _southP ^^^ GeoDirections.SOUTH
-    val nd = _northP <~ delimOpt
-    val ne = (nd ~ _eastP) ^^^ GeoDirections.NORTH_EAST
-    val nw = (nd ~ _westP) ^^^ GeoDirections.NORTH_WEST
-    val sd = _southP <~ delimOpt
-    val se = (sd ~ _eastP) ^^^ GeoDirections.SOUTH_EAST
-    val sw = (sd ~ _westP) ^^^ GeoDirections.SOUTH_WEST
-    ne | nw | se | sw | e | w | n | s
+    val e = _eastP ^^^ EAST
+    val w = _westP ^^^ WEST
+    val nd: Parser[GeoDirection] = _northP ~> opt(delimOpt ~> (_eastP ^^^ NORTH_EAST | _westP ^^^ NORTH_WEST)) ^^ {
+      _ getOrElse NORTH
+    }
+    val sd: Parser[GeoDirection] = _southP ~> opt(delimOpt ~> (_eastP ^^^ SOUTH_EAST | _westP ^^^ SOUTH_WEST)) ^^ {
+      _ getOrElse SOUTH
+    }
+    nd | sd | e | w
   }
 
   def speedMs: Parser[Float] = {
