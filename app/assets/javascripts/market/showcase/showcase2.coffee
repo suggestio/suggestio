@@ -1931,9 +1931,18 @@ sm =
 
 
         _block_wideBg = _b.getAttribute("data-wide-bg")
+
         # если карточка растягивается на ширину устройства
-        if _block_wideBg
+        if _block_wideBg == "true"
+          #console.log _b.getAttribute("class")
           _b.parentNode.parentNode.parentNode.style.overflow = "hidden"
+          _b.parentNode.parentNode.parentNode.style.position = "relative"
+          _b.style.position = "absolute"
+          _b.style.top = "50px"
+          bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
+          if bg.length > 0
+            bg = bg[0]
+            bg.style.width = "100%"
         else
           _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
