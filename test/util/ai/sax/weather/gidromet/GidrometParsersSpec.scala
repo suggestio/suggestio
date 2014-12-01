@@ -161,8 +161,8 @@ class GidrometParsersSpec extends PlaySpec with GidrometParsersVal with RegexPar
       t("температура ночью -4° днём -2°")   mustBe Temperatures(dayOpt = Some(-2F),  nightOpt = Some(-4F))
       t("температура днем -2° ночью -4°")   mustBe Temperatures(dayOpt = Some(-2F),  nightOpt = Some(-4F))
       t("температура днем +2° ночью +4°")   mustBe Temperatures(dayOpt = Some(2F),   nightOpt = Some(4F))
-      t("температура днем +2 ночью +4")     mustBe Temperatures(dayOpt = Some(2F),   nightOpt = Some(4F))
-      t("температура днем +22° ночью +0°")  mustBe Temperatures(dayOpt = Some(22F),  nightOpt = Some(0F))
+      t("температура днем +2 ночью 4")      mustBe Temperatures(dayOpt = Some(2F),   nightOpt = Some(4F))
+      t("температура днем +22° ночью 0°")   mustBe Temperatures(dayOpt = Some(22F),  nightOpt = Some(0F))
     }
   }
 

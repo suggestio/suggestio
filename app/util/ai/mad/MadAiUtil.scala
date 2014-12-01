@@ -35,12 +35,13 @@ object MadAiUtil {
 
   /**
    * Распарсить данные из файла с помощью tika. Нужно собрать список content-handler'ов под запрос и сделать дело.
-   * @param file Файл с контентом, подлежащим парсингу.
+   * @param is InputStream с контентом, подлежащим парсингу.
    * @param aiMad Описание задачи AI для сборки карточек.
    * @param meta Метаданные.
    * @return Результаты работы content-handler'ов.
    */
-  def parseFromFile(file: File, aiMad: MAiMad, meta: Metadata) = {
+  def parseFromStream(is: InputStream, aiMad: MAiMad, meta: Metadata) = {
+
     ???
   }
 
@@ -55,14 +56,14 @@ class TikaCallable(md: Metadata, input: InputStream) extends Callable[Map[String
 
   override def call(): Map[String, AnyRef] = {
     // Сборка цепочки парсинга
-    val jsInstalledHandler = new GidrometRssSax
+    val saxHandler = new GidrometRssSax
     val parser = new AutoDetectParser()   // TODO использовать HtmlParser? Да, если безопасно ли скармливать на вход HtmlParser'у левые данные.
     val parseContext = new ParseContext
     parseContext.set(classOf[HtmlMapper], new IdentityHtmlMapper)
     // Блокирующий запуск парсера. Заодно засекаем время его работы.
     val parserStartedAt: Long = if (LOGGER.underlying.isDebugEnabled) System.currentTimeMillis() else -1L
     try {
-      parser.parse(input, jsInstalledHandler, md, parseContext)
+      parser.parse(input, saxHandler, md, parseContext)
     } finally {
       // Выполнено. Не исключено, что с ошибкой, ибо вместо HTML может прийти всё что угодно.
       LOGGER.debug {

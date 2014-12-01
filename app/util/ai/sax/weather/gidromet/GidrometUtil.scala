@@ -98,16 +98,14 @@ trait GidrometParsers extends JavaTokenParsers {
   def geoDirectionP: Parser[WindDirection] = {
     import GeoDirections._
     val _eastP = eastP
-    val _northP = northP
     val _westP = westP
-    val _southP = southP
     val delimOpt = opt("[-–‒—―]+".r)
     val e = _eastP ^^^ EAST
     val w = _westP ^^^ WEST
-    val nd: Parser[GeoDirection] = _northP ~> opt(delimOpt ~> (_eastP ^^^ NORTH_EAST | _westP ^^^ NORTH_WEST)) ^^ {
+    val nd: Parser[GeoDirection] = northP ~> opt(delimOpt ~> (_eastP ^^^ NORTH_EAST | _westP ^^^ NORTH_WEST)) ^^ {
       _ getOrElse NORTH
     }
-    val sd: Parser[GeoDirection] = _southP ~> opt(delimOpt ~> (_eastP ^^^ SOUTH_EAST | _westP ^^^ SOUTH_WEST)) ^^ {
+    val sd: Parser[GeoDirection] = southP ~> opt(delimOpt ~> (_eastP ^^^ SOUTH_EAST | _westP ^^^ SOUTH_WEST)) ^^ {
       _ getOrElse SOUTH
     }
     nd | sd | e | w
@@ -128,7 +126,7 @@ trait GidrometParsers extends JavaTokenParsers {
   // TODO Нужно запилить атм.давление, вероятность осадков и тесты.
 
   def pressureWordP: Parser[_] = "(?U)атм\\w*".r ~> "(?U)д[ао]влен\\w*".r
-  def pressureUnitP: Parser[_] = "[mм]{2}".r ~> "[рp][тt]".r ~> "[cс]т".r
+  def pressureUnitP: Parser[_] = "[mм]{2}".r ~> "[рp][тt]".r ~> "[cс][тt]".r
   def pressureP(acc: AtmPressure): Parser[AtmPressure] = {
     val nP = intNumberP <~ pressureUnitP
     val dayPressP = (dayP ~> nP) ^^ {
