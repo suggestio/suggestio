@@ -116,14 +116,14 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
     f :: super.writeJsonFields(acc)
   }
 
-  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val fut = super.eraseResources
+  override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.doEraseResources
     // Раньше вызывался MWelcomeAd.deleteByProducerId1by1(producerId) через событие SioNotifier.
     meta.welcomeAdId.fold(fut) { welcomeAdId =>
       MWelcomeAd.getById(welcomeAdId)
         .flatMap {
           case Some(mwa) =>
-            mwa.eraseResources
+            mwa.doEraseResources
               .flatMap { _ => mwa.delete }
           case None => Future successful false
         } flatMap {

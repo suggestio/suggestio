@@ -667,7 +667,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @return Фьючерс, подлежащий дальнейшей обработке.
    */
   def startScroll(query: QueryBuilder = QueryBuilders.matchAllQuery(), resultsPerScroll: Int = SCROLL_SIZE_DFLT,
-                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
+                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                 (implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
     prepareScroll(new TimeValue(keepAliveMs))
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(10)
@@ -1350,8 +1351,13 @@ trait OptStrId {
 /** Интерфейс для стирания данных, относящихся только к текущему экземпляру модели, но хранящимися в других моделях. */
 trait EraseResources {
 
-  /** Стирание ресурсов, относящихся к этой модели. Например, картинок, на которые ссылкаются поля этой модели. */
+  /** Вызывалка стирания ресурсов. Позволяет переопределить логику вызова doEraseResources(). */
   def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    doEraseResources
+  }
+  
+  /** Логика стирания ресурсов, относящихся к этой модели. Например, картинок, на которые ссылкаются поля этой модели. */
+  protected def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     Future successful None
   }
 
@@ -1414,9 +1420,10 @@ trait EsModelCommonT extends OptStrId with EraseResources {
 
   def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
 
-  /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
-    * @return true - всё ок, false - документ не найден.
-    */
+  /**
+   * Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
+   * @return true - всё ок, false - документ не найден.
+   */
   def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     eraseResources flatMap { _ =>
       id match {

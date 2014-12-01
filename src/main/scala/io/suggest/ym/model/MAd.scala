@@ -40,6 +40,7 @@ object MAd
   with EMDisableReasonStatic
   with EMRichDescrStatic
   with EMModerationStatic
+  with EMAlienRscStatic
   with EsModelStaticMutAkvIgnoreT
 {
   import LOGGER._
@@ -67,7 +68,8 @@ object MAd
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String, ignoreResources: Boolean = false)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def deleteById(id: String, ignoreResources: Boolean = false)
+                         (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val adOptFut = getById(id)
     adOptFut flatMap {
       case Some(ad) =>
@@ -161,6 +163,7 @@ final case class MAd(
   var dateCreated   : DateTime = DateTime.now,
   var dateEdited    : Option[DateTime] = None,
   var moderation    : ModerationInfo = ModerationInfo(),
+  var alienRsc      : Boolean = false,
   var versionOpt    : Option[Long] = None
 )
   extends EsModelEmpty
@@ -180,6 +183,7 @@ final case class MAd(
   with EMDisableReasonMut
   with EMRichDescrMut
   with EMModerationMut
+  with EMAlienRscMut
 {
   @JsonIgnore
   override type T = MAd

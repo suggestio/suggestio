@@ -97,8 +97,8 @@ trait EMImg extends EMImgI {
   }
 
   /** Стирание ресурсов, относящихся к этой модели. */
-  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val fut = super.eraseResources
+  override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.doEraseResources
     EMImg.eraseImgs(imgs)
       .flatMap { _ => fut }
   }
