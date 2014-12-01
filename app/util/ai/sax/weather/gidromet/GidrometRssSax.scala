@@ -5,7 +5,7 @@ import java.io.{CharArrayReader, Reader}
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
 import io.suggest.ym.{NormTokensOutAnStream, YmStringAnalyzerT}
-import models.ai.{DayWeatherBean, DayWeatherAcc, ContentHandlerResult}
+import models.ai.{WeatherForecastT, DayWeatherBean, DayWeatherAcc, ContentHandlerResult}
 import org.apache.lucene.analysis.core.LowerCaseFilter
 import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard.StandardFilter
@@ -32,8 +32,10 @@ class GidrometRssSax
   with GetParseResult
   with PlayLazyMacroLogsImpl
 {
-
+  
   import LOGGER._
+
+  override def stiResKey = "weather"
 
   /** Для нормализации строк с погодой используется сие добро: */
   protected val an = new YmStringAnalyzerT with NormTokensOutAnStream {
@@ -274,9 +276,17 @@ class GidrometRssSax
    * Если результата нет или он заведомо неверный/бесполезный, то должен быть экзепшен с причиной.
    * @return Реализация модели ContentHandlerResult.
    */
-  override def getParseResult: ContentHandlerResult = {
-    accRev.reverse
-    ???
+  override def getParseResult: WeatherForecastT = {
+    new WeatherForecastT {
+      override val getToday: DayWeatherBean = accRev.find(_.date == today).get
+
+      def findWithDays(d: Int): Option[DayWeatherBean] = {
+        val tmr = today.plusDays(d)
+        accRev.find(_.date == tmr)
+      }
+      override lazy val getTomorrow = findWithDays(1)
+      override lazy val getAfterTomorrow = findWithDays(2)
+    }
   }
 
 }

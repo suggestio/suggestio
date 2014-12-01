@@ -48,8 +48,18 @@ case class DayWeatherBean(
   @BeanProperty pressureMmHg      : AtmPressure,
   @BeanProperty windOpt           : Option[Wind],
   @BeanProperty precipChanceOpt   : Option[Int]
-) extends Serializable
+) extends ContentHandlerResult
 
+
+/** Интерфейс готового прогноза погоды: сегодня, завтра и послезавтра если есть. */
+trait WeatherForecastT extends ContentHandlerResult {
+  /** Погода на сегодня. */
+  def getToday: DayWeatherBean
+  /** Погода на завтра, если есть. */
+  def getTomorrow: Option[DayWeatherBean]
+  /** Погода на послезавтра, если есть. */
+  def getAfterTomorrow: Option[DayWeatherBean]
+}
 
 
 /** Направления ветров. */

@@ -3,8 +3,11 @@ package models.ai
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticT, EsModelT}
 import io.suggest.util.SioEsUtil._
+import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
+import util.ai.GetParseResult
+import util.ai.sax.weather.gidromet.GidrometRssSax
 
 import scala.collection.Map
 
@@ -99,19 +102,36 @@ case class MAiMad(
       acc1 ::= DESCR_ESFN -> JsString(descr.get)
     acc
   }
+
 }
 
 
 /** Модель с доступными обработчиками контента. */
 object MAiMadContentHandlers extends Enumeration {
-  protected sealed class Val(name: String) extends super.Val(name)
+  protected sealed abstract class Val(val name: String) extends super.Val(name) {
+    /** Собрать новый инстанс sax-парсера. */
+    def newInstance: DefaultHandler with GetParseResult
+  }
   type MAiMadContentHandler = Val
 
-  // TODO Добавить сюда доступные content-handler'ы.
+  // Тут всякие доступные content-handler'ы.
+
+  /** Sax-парсер для rss-прогнозов росгидромета. */
+  val GidrometRss = new Val("gidromet.rss") {
+    override def newInstance = new GidrometRssSax
+  }
+
 
   implicit def value2val(x: Value): MAiMadContentHandler = x.asInstanceOf[MAiMadContentHandler]
+
+  def maybeWithName(n: String): Option[MAiMadContentHandler] = {
+    values
+      .iterator
+      .map(value2val)
+      .find(_.name == n)
+  }
 }
 
 
-/** Абстрактный результат работы Content-Handler'а. */
-trait ContentHandlerResult
+/** Абстрактный результат работы Content-Handler'а. Это JavaBean-ы, поэтому должны иметь Serializable. */
+trait ContentHandlerResult extends Serializable

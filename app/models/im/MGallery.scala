@@ -135,11 +135,11 @@ case class MGallery(
   }
 
   /** Стирание ресурсов, относящихся к этой модели. Т.е. картинок, на которые ссылкается эта модель. */
-  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+  override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val eraseImgsFut = Future.traverse(imgs) { img =>
       MImg.deleteAllFor(img.rowKey)
     }
-    super.eraseResources
+    super.doEraseResources
       .flatMap { _ => eraseImgsFut }
   }
 
@@ -147,7 +147,7 @@ case class MGallery(
     * @return true - всё ок, false - документ не найден.
     */
   override def delete(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    eraseResources flatMap { _ =>
+    doEraseResources flatMap { _ =>
       super.delete
     }
   }

@@ -11,10 +11,18 @@ import models.ai.ContentHandlerResult
 
 /** Интерфейс для чтения результата из ContentHandler'ов */
 trait GetParseResult {
+
+  /**
+   * Ключ-идентификатор, используемый для формирования карты результатов.
+   * @return Строка, маленькими буквами и без пробелов.
+   */
+  def stiResKey: String
+
   /**
    * Вернуть накопленный результат парсинга.
    * Если результата нет или он заведомо неверный/бесполезный, то должен быть экзепшен с причиной.
    * @return Реализация модели ContentHandlerResult.
    */
   def getParseResult: ContentHandlerResult
+
 }

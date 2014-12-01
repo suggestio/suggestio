@@ -48,7 +48,7 @@ trait HttpGetToFile {
    * @return Future с файлом, куда отфетчен контент.
    *         Future с экзепшеном в иных случаях.
    */
-  def request(): Future[File] = {
+  def request(): Future[(WSResponseHeaders, File)] = {
     val respFut = WS.url(urlStr)
       .withFollowRedirects(followRedirects)
       .getStream()
@@ -68,10 +68,10 @@ trait HttpGetToFile {
             case result => os.close()
           }
           // Вернуть готовый файл, когда всё закончится.
-          .map { _ => f }
+          .map { _ => headers -> f }
         // При ошибке при обработке запроса нужно удалить созданный временный файл.
-        resFut onFailure { case ex =>
-          f.delete()
+        resFut onFailure {
+          case ex => f.delete()
         }
         resFut
       }
