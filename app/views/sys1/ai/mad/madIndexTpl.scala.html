@@ -1,0 +1,54 @@
+@(ais: Seq[ai.MAiMad])(implicit ctx: Context)
+
+@* Заглавная страница, отражающая генераторы карточек s.io. *@
+
+@import ctx._
+
+@hPathAfter1 = {
+}
+
+@madAiBase("Mad AI", Some(hPathAfter1)) {
+
+  <p>Управление генераторами карточек происходит здесь.</p>
+
+  @if(ais.isEmpty) {
+    <p>Пока не создано ни одного генератора.</p>
+  } else {
+    <table>
+      <thead>
+        <tr>
+          <th title="Глобальный id генератора будет в выпадающей подсказке.">Отображаемое имя</th>
+          <th>Действия</th>
+          <th>Источники</th>
+          <th>Рендереры</th>
+          <th>Карточки</th>
+          <th>Описание</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @ais.map { mai =>
+          <tr>
+            <td title="id: @mai.id">@mai.name</td>
+            <td>
+              TODO выполнить<br/>
+              TODO @Messages("Edit")
+            </td>
+            <td>
+              <a href="@mai.url" title="@mai.url">URL</a>
+              <br/>
+              @mai.contentHandlers.map { ch => @ch.name<br/> }
+            </td>
+            <td>@mai.renderers.map { rrr => @rrr.name<br/> }</td>
+            <td>
+              Шаблон: @mai.tplAdId<br/>
+              Цели: @mai.targetAdIds.map { tai => <br/>@tai }
+            </td>
+            <td>@mai.descr</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+}

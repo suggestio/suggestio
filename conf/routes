@@ -319,6 +319,11 @@ GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
 POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
 POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySubmit(galId)
 
+## sys/AI
+GET  /sys/ai                             controllers.SysAi.index
+GET  /sys/ai/mad                         controllers.SysAi.madIndex
+
+
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 

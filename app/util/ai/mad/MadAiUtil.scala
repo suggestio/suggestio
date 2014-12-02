@@ -97,7 +97,12 @@ object MadAiUtil extends PlayMacroLogsImpl {
   }
 
 
-  def processOne(madAi: MAiMad): Future[_] = {
+  /**
+   * Запуск на исполнение заполнятеля карточек на основе указанной спецификации.
+   * @param madAi Данные по сборке карточек.
+   * @return Фьючерс для синхронизации.
+   */
+  def run(madAi: MAiMad): Future[_] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val getter = new HttpGetToFile {
       override def followRedirects = false
