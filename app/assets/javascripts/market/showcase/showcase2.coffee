@@ -578,6 +578,7 @@ sm =
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
       url_params = sm.states.get_url_params()
+      console.log url_params
 
       if typeof cs != 'undefined'
         sm.states.add_state
@@ -590,6 +591,7 @@ sm =
             fads :
               is_opened : true
               ad_id : url_params["f.cur.id"]
+              producer_id : url_params["f.pr.id"]
 
           sm.states.add_state ns
         else
@@ -2498,6 +2500,8 @@ sm =
       get_params = []
       path = ""
 
+      #console.log state
+
       if state.cat_screen.is_opened
         get_params.push "s.open=true"
 
@@ -2506,6 +2510,7 @@ sm =
 
       if state.fads.is_opened
         get_params.push "f.cur.id=#{state.fads.ad_id}"
+        get_params.push "f.pr.id=#{state.fads.producer_id}"
 
       if state.cat_id
         get_params.push "t.cat=#{state.cat_id}"
@@ -2519,9 +2524,7 @@ sm =
       return path
 
     push : ( state ) ->
-
       path = this.get_path state
-      console.log "path = #{path}"
 
       this.process_state state
 
@@ -2588,6 +2591,8 @@ sm =
 
       ## 4. Focused ads
       if typeof state.fads != 'undefined' && state.fads.is_opened == true
+        console.log state.fads.producer_id
+        console.log state.fads.ad_id
         sm.do_load_for_shop_id state.fads.producer_id, state.fads.ad_id
       else
         sm.focused_ads.close()
