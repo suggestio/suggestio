@@ -748,6 +748,9 @@ sm =
         sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
+      console.log data
+      console.log title
+      console.log path
       history.pushState data, title, this.base_path + '#' + path
 
     init : () ->
