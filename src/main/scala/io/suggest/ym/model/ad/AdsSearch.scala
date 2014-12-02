@@ -8,7 +8,6 @@ import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.ym.model.common._
 import io.suggest.util.SioConstants
-import io.suggest.util.SioRandom.rnd
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import scala.collection.JavaConversions._
 import java.{util => ju}
