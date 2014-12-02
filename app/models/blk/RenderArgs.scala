@@ -45,12 +45,11 @@ case class RenderArgs(
 /**
  * При рендере bg по-широкому в шаблоне нужны данные по этой широкой картинке.
  * Эти параметры приходят из контроллера, т.к. для их сборки требуется асинхронный контекст (ибо работа с кассандрой).
- * @param height Высота картинки.
- * @param width Ширина картинки.
+ * @param szCss данные о размере картинки. Если размер неизвестен, то там будет отрицательное значение в соотв. поле.
+ * @param dynCallArgs Данные для сборки ссылки на картинку.
  */
 case class WideBgRenderCtx(
-  szCss         : MImgInfoMeta,
-  szPhysical    : MImgInfoMeta,
+  szCss         : MImgSizeT,
   dynCallArgs   : MImg
 ) {
 

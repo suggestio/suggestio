@@ -131,14 +131,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
         imOps0
     }
 
-    // Считаем параметры отображения отображаемой и оригинальной картинок.
-    val szPhysical = MImgInfoMeta(tgtHeightReal, width = cropWidth)
+    // Считаем параметры отображения отображаемой
     val szCss: MImgInfoMeta = {
       val dpr = DevPixelRatios.MDPI
       if (dpr == pxRatio)
-        szPhysical
+        MImgInfoMeta(tgtHeightReal, width = -1)
       else
-        MImgInfoMeta(height = getWideHeight(dpr),  width = getWideWidth(dpr))
+        MImgInfoMeta(height = getWideHeight(dpr),  width = -1)  // Нужно высчитывать размер после AbsResizeOp. Пока лень этим заниматься.
     }
 
     imOps2Fut map { imOps2 =>
@@ -152,7 +151,6 @@ object BgImg extends PlayLazyMacroLogsImpl {
       }
       blk.WideBgRenderCtx(
         szCss       = szCss,
-        szPhysical  = szPhysical,
         dynCallArgs = iik.copy(dynImgOps = imOps)
       )
     }
