@@ -82,8 +82,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
    */
   def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
     val iik = MImg( bgImgInfo.filename )
+    val iikOrig = iik.original
     // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-    val origWhFut = iik.original
+    val origWhFut = iikOrig
       .getImageWH
       .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
@@ -109,21 +110,21 @@ object BgImg extends PlayLazyMacroLogsImpl {
     val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
       Future failed new NoSuchElementException("No default crop is here.")
     } { crop0 =>
-      origWhFut
-        .map { origWh =>
-          // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
-          // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
-          val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
-          val crop1 = ImgCrop(
-            width = cropWidth,
-            height = tgtHeightReal,
-            offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
-            offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
-          )
-          AbsCropOp(crop1) :: imOps0
-        }
+      origWhFut.map { origWh =>
+        // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
+        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
+        val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
+        val crop1 = ImgCrop(
+          width = cropWidth,
+          height = tgtHeightReal,
+          offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
+          offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
+        )
+        AbsCropOp(crop1) :: imOps0
+      }
     }.recover {
       case ex: Exception =>
+        warn(s"Failed to read image[${iikOrig.fileName}] WH", ex)
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
         ImGravities.Center ::
         AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::

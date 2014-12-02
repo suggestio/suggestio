@@ -1,7 +1,7 @@
 package models
 
 import controllers.routes
-import io.suggest.ym.model.common.LogoImgOptI
+import io.suggest.ym.model.common.{SlNameTokenStr, LogoImgOptI}
 import models.blk.RenderArgs
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
@@ -427,6 +427,13 @@ case class ScJsState(
     override def receiverIds    = that.adnId.toList
     override def generationOpt  = that.generationOpt
     override def geo            = that.geo
+    override def levels = {
+      val sl = if (catIds.nonEmpty)
+        AdShowLevels.LVL_CATS
+      else
+        AdShowLevels.LVL_START_PAGE
+      Seq(sl)
+    }
   }
 
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
