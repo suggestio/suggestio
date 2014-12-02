@@ -99,7 +99,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
       apply(n).asInstanceOf[CommonBlock2T]
     } catch {
       case ex: NoSuchElementException =>
-        warn(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
+        debug(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
         DEFAULT
     }
   }

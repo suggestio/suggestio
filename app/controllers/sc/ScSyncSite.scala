@@ -5,7 +5,7 @@ import java.util.NoSuchElementException
 import controllers.{routes, SioController}
 import models._
 import play.api.mvc.Result
-import play.twirl.api.{Html, HtmlFormat}
+import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
 import views.html.market.showcase.demoWebsiteTpl
@@ -36,16 +36,10 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       case None =>
         super._geoSiteResult
       case Some(jsState) =>
-        _syncGeoSite(jsState, ajaxStatedUrl)
+        val qsb = ScJsState.qsbStandalone
+        _syncGeoSite(jsState, _.ajaxStatedUrl(qsb))
     }
   }
-
-  /** Генератор ссылок на выдачу вида /#!...jsState... */
-  private def ajaxStatedUrl(jsState: ScJsState): String = {
-    val qsb = ScJsState.qsbStandalone
-    routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", jsState)
-  }
-
 
   /** Прямой доступ к синхронному сайту выдачи. */
   def syncGeoSite(scState: ScJsState) = MaybeAuth.async { implicit request =>

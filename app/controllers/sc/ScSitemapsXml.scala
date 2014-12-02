@@ -9,6 +9,7 @@ import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.{DateTime, LocalDate}
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.QueryStringBindable
 import util.SiowebEsUtil.client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 
@@ -22,7 +23,7 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
  * - Если изменялось сегодня, то hourly. Это простимулирует кравлер просмотреть документ сегодня.
  * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
 */
-trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
+trait ScSitemapsXml extends ScSiteGeo with SiteMapXmlCtl {
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -56,8 +57,9 @@ trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
           }
       }.flatMap { mads =>
         // Из списка mads делаем Enumerator, который поочерёдно запиливает каждую карточку в элемент sitemap.xml.
+        val qsb = ScJsState.qsbStandalone
         Enumerator(mads : _*)
-          .map[SiteMapUrlT] { mad2sxu(_, today) }
+          .map[SiteMapUrlT] { mad2sxu(_, today, qsb) }
       }
     }
     Enumerator.flatten(erFut)
@@ -70,17 +72,18 @@ trait ScSitemapsXml extends ScController with SiteMapXmlCtl {
    * @param ctx Контекст.
    * @return Экземпляр SiteMapUrl.
    */
-  protected def mad2sxu(mad: MAd, today: LocalDate)(implicit ctx: Context): SiteMapUrl = {
+  protected def mad2sxu(mad: MAd, today: LocalDate, qsb: QueryStringBindable[ScJsState])(implicit ctx: Context): SiteMapUrl = {
     val jsState = ScJsState(
-      adnId = mad.receivers.headOption.map(_._1),
-      fadOpenedIdOpt = mad.id
+      adnId           = mad.receivers.headOption.map(_._1),
+      fadOpenedIdOpt  = mad.id,
+      generationOpt   = None    // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
     )
-    val call = routes.MarketShowcase.syncGeoSite(jsState)
+    val url = jsState.ajaxStatedUrl(qsb)
     val lastDt = mad.dateEdited.getOrElse(mad.dateCreated)
     val lastDate = lastDt.toLocalDate
     SiteMapUrl(
       // TODO Нужно здесь перейти на #!-адресацию, когда появится поддержка этого чуда в js выдаче.
-      loc = ctx.SC_URL_PREFIX + call.url,
+      loc = ctx.SC_URL_PREFIX + url,
       lastMod = Some( lastDate ),
       changeFreq = Some( if (lastDate isBefore today) ChangeFreqs.daily else ChangeFreqs.hourly )
     )

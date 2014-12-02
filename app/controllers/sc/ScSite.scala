@@ -79,6 +79,8 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
     MovedPermanently(call)
   }
 
+
+
 }
 
 

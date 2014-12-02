@@ -10,6 +10,8 @@ import util.cdn.CdnUtil
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
 
+import scala.util.Random
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -320,6 +322,11 @@ object ScJsState {
   val TILES_CAT_ID_FN         = "t.cat"
   val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
 
+  def generationDflt: Option[Long] = {
+    val l = new Random().nextLong()
+    Some(l)
+  }
+
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     import util.qsb.QSBs._
@@ -352,7 +359,7 @@ object ScJsState {
             adnId               = strNonEmpty( maybeAdnId ),
             searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
             navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
-            generationOpt       = maybeGeneration,
+            generationOpt       = maybeGeneration orElse generationDflt,
             fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
             fadsOffsetOpt       = maybeFadsOffset,
             searchTabListOpt    = noFalse( maybeSearchTab ),
@@ -391,7 +398,7 @@ case class ScJsState(
   adnId               : Option[String]   = None,
   searchScrOpenedOpt  : Option[Boolean]  = None,
   navScrOpenedOpt     : Option[Boolean]  = None,
-  generationOpt       : Option[Long]     = None,
+  generationOpt       : Option[Long]     = ScJsState.generationDflt,
   fadOpenedIdOpt      : Option[String]   = None,
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
@@ -457,6 +464,16 @@ case class ScJsState(
   def toggleNavScreen = copy( navScrOpenedOpt = !isNavScrOpened )
 
   def toggleSearchScreen = copy( searchScrOpenedOpt = !isSearchScrOpened )
+
+
+  /**
+   * Генератор ссылок на выдачу вида /#!...jsState...
+   * @param qsb экземпляр QueryStringBinder'а, если есть.
+   * @return Относительная ссылка.
+   */
+  def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
+    routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", this)
+  }
 
 }
 
