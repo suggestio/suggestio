@@ -1982,10 +1982,14 @@ sm =
           _b.parentNode.parentNode.parentNode.style.position = "relative"
           _b.style.position = "absolute"
           _b.style.top = "50px"
+          _b.style.left = "50%"
+          _b.style.transform = "translate3d(-50%,0,0)"
           bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
           if bg.length > 0
             bg = bg[0]
-            bg.style.width = "100%"
+            #bg.style.width = "100%"
+            bg.style.display = "block"
+            bg.style.margin = "0 auto"
         else
           _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
