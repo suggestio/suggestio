@@ -1,14 +1,11 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.ym.model._
 import org.elasticsearch.index.query.{FilterBuilder, QueryBuilder, FilterBuilders, QueryBuilders}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
-import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.model.EsModelStaticT
 import io.suggest.ym.model.common._
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
@@ -27,6 +24,7 @@ object AdsSearch {
     * @see [[http://stackoverflow.com/a/15539093]]
     */
   // TODO Оно кажется не работает совсем.
+  // TODO ES 1.4 выкидывает MVEL: нужно выкинуть это или же на clojure переделать, заодно починить.
   lazy val IDS_SCORE_MVEL =
     """
       |uid = doc["_uid"].value;
@@ -34,12 +32,6 @@ object AdsSearch {
       |id = uid.substring(dInx + 1);
       |if (ids contains id) { incr; } else { 1.0; }
       |""".stripMargin
-
-  /**
-   * MVEL-скрипт Generation-timestamp сортировщика, который организует посраничный вывод с внешне рандомной выдачей.
-   * gents - таймштамп поколения исходной выдачи.
-   */
-  val GENTS_SORTER_MVEL = """(_score + 1) * (doc["_uid"].value.hashCode() / generation)"""
 
   /**
    * Скомпилировать из аргументов запроса сам ES-запрос со всеми фильтрами и т.д.
@@ -140,8 +132,7 @@ object AdsSearch {
     }
     if (adSearch.generationOpt.isDefined && adSearch.qOpt.isEmpty) {
       // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
-      val scoreFun = ScoreFunctionBuilders.scriptFunction(GENTS_SORTER_MVEL, "mvel")
-        .param("generation", java.lang.Long.valueOf( Math.abs(adSearch.generationOpt.get) ))
+      val scoreFun = ScoreFunctionBuilders.randomFunction(generationOpt.get)
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
@@ -262,25 +253,6 @@ trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper {
 /** Если нужно добавить в рекламную модель поиск по рекламным карточкам, то следует задействовать вот этот трейт. */
 trait AdsSimpleSearchT extends EsDynSearchStatic[AdsSearchArgsT] {
 
-  /** Постпроцессинг результатов поиска рекламных карточек. */
-  private def postprocessSearchResults(args: AdsSearchArgsT, resultFut: Future[Seq[T]])(implicit ec: ExecutionContext): Future[Seq[T]] = {
-    // TODO Надо бы сделать так, что Seq могла быть и List
-    if (args.qOpt.isEmpty) {
-      resultFut.map { rnd.shuffle(_) }
-    } else {
-      resultFut
-    }
-  }
-
-  /**
-   * Поиск карточек в ТЦ по критериям.
-   * @return Список рекламных карточек, подходящих под требования.
-   */
-  override def dynSearch(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    val resultFut = super.dynSearch(adSearch)
-    postprocessSearchResults(adSearch, resultFut)
-  }
-
   /**
    * Посчитать кол-во рекламных карточек, подходящих под запрос.
    * @param adSearch Экземпляр, описывающий поисковый запрос.
@@ -294,11 +266,6 @@ trait AdsSimpleSearchT extends EsDynSearchStatic[AdsSearchArgsT] {
       override def forceFirstIds = Nil
     }
     super.dynCount(adSearch2)
-  }
-
-  override def dynSearchRt(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val resultFut = super.dynSearchRt(adSearch)
-    postprocessSearchResults(adSearch, resultFut)
   }
 
 }
