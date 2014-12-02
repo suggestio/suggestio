@@ -577,14 +577,24 @@ sm =
     load_for_node_id : ( node_id ) ->
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
+      url_params = sm.states.get_url_params()
 
       if typeof cs != 'undefined'
         sm.states.add_state
           mart_id : node_id
           geo_screen : cs.geo_screen
       else
-        sm.states.add_state
-          mart_id : node_id
+        if url_params["f.cur.id"]
+          ns =
+            mart_id : url_params["m.id"]
+            fads :
+              is_opened : true
+              ad_id : url_params["f.cur.id"]
+
+          sm.states.add_state ns
+        else
+          sm.states.add_state
+            mart_id : node_id
 
     adjust : () ->
 
@@ -748,10 +758,7 @@ sm =
         sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
-      console.log data
-      console.log title
-      console.log path
-      history.pushState data, title, this.base_path + '#' + path
+      history.pushState data, title, this.base_path + path
 
     init : () ->
       this.base_path = window.location.pathname
@@ -2487,7 +2494,34 @@ sm =
 
       this.push ns
 
+    get_path : ( state ) ->
+      get_params = []
+      path = ""
+
+      if state.cat_screen.is_opened
+        get_params.push "s.open=true"
+
+      if state.geo_screen.is_opened
+        get_params.push "n.open=true"
+
+      if state.fads.is_opened
+        get_params.push "f.cur.id=#{state.fads.ad_id}"
+
+      if state.cat_id
+        get_params.push "t.cat=#{state.cat_id}"
+
+      if state.mart_id
+        get_params.push "m.id=#{state.mart_id}"
+
+      if get_params.length
+        path += "#!?#{get_params.join("&")}"
+
+      return path
+
     push : ( state ) ->
+
+      path = this.get_path state
+      console.log "path = #{path}"
 
       this.process_state state
 
@@ -2496,7 +2530,7 @@ sm =
 
       ## state index
       this.cur_state_index = this.list.length - 1
-      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', '/p' + this.cur_state_index
+      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', path
 
     goto : ( state_index ) ->
       if state_index == -1
@@ -2570,6 +2604,19 @@ sm =
         url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
         sm.request.perform url
 
+    get_url_params : () ->
+      pl     = ///\+///g
+      search = ///([^&=]+)=?([^&]*)///g
+      decode = (s) ->
+        return decodeURIComponent(s.replace(pl, " "))
+      query  = window.location.hash.substring(3)
+      urlParams = {}
+      while match = search.exec(query)
+        urlParams[decode(match[1])] = decode(match[2])
+
+      return urlParams
+
+
   ############################
   ## Функции для инициализации
   ############################
@@ -2603,7 +2650,6 @@ sm =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
-
     sm.config.host = window.siomart_host
     this.utils.set_vendor_prefix()
     this.history.init()
@@ -2611,7 +2657,6 @@ sm =
     sm_id = window.siomart_id || undefined
 
     sm.warn 'initial mart_id : ' + sm_id
-
     if window.with_geo == true
       ## Если еще не запрашивали координаты у юзера
       if sm.geo.location_requested == false
@@ -2619,6 +2664,7 @@ sm =
     else
       sm.states.add_state
         mart_id : sm_id
+
 
 window.sm = window.siomart = sm
 sm.init()
