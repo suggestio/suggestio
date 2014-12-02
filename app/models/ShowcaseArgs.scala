@@ -475,6 +475,12 @@ case class ScJsState(
     routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", this)
   }
 
+  /**
+   * Генерации ссылки на вечно-синхронную выдачу для текущего состояния.
+   * @return Относительная ссылка на syncGeoSite.
+   */
+  def syncSiteUrl: String = routes.MarketShowcase.syncGeoSite(this).url
+
 }
 
 

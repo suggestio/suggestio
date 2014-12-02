@@ -62,6 +62,14 @@ object BgImg extends PlayLazyMacroLogsImpl {
     (cssHeight * pxRatio.pixelRatio).toInt
   }
 
+
+  private def getWideHeight(pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
+    calculateWideSidePx(WIDE_HEIGHTS_PX, _.height, WIDE_TARGET_HEIGHT_PX, pxRatio)
+  }
+  private def getWideWidth(pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
+    calculateWideSidePx(WIDE_WIDTHS_PX, _.width, WIDE_WIDTHS_PX.last, pxRatio)
+  }
+
   /**
    * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
    * необходимостью получения данных о размерах исходной картинки.
@@ -75,7 +83,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
     val iik = MImg( bgImgInfo.filename )
     // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-    val origWhFut = iik.original.getImageWH
+    val origWhFut = iik.original
+      .getImageWH
       .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
@@ -84,9 +93,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // До bb15fc0a9ad5 включительно wide-картинка пыталась отресайзится на весь экран устройства, что было слегка неправильно.
     // TODO Нужно учитывать (bm.height * szMult). Тогда точно не будет расхождений с контроллером в будущем.
     //      Сейчас для упрощения испрользуется такая логика: если вызов пришел сюда, то значит точно wide и скалинг карточки до максимума.
-    val tgtHeightReal: Int = calculateWideSidePx(WIDE_HEIGHTS_PX, _.height, WIDE_TARGET_HEIGHT_PX, pxRatio)
+    val tgtHeightReal: Int = getWideHeight(pxRatio)
     // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-    val cropWidth: Int = calculateWideSidePx(WIDE_WIDTHS_PX, _.width, WIDE_WIDTHS_PX.last, pxRatio)
+    val cropWidth: Int = getWideWidth(pxRatio)
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
@@ -121,6 +130,16 @@ object BgImg extends PlayLazyMacroLogsImpl {
         imOps0
     }
 
+    // Считаем параметры отображения отображаемой и оригинальной картинок.
+    val szPhysical = MImgInfoMeta(tgtHeightReal, width = cropWidth)
+    val szCss: MImgInfoMeta = {
+      val dpr = DevPixelRatios.MDPI
+      if (dpr == pxRatio)
+        szPhysical
+      else
+        MImgInfoMeta(height = getWideHeight(dpr),  width = getWideWidth(dpr))
+    }
+
     imOps2Fut map { imOps2 =>
       val imOps: List[ImOp] = {
         // В общих чертах вписать изображение в примерно необходимые размеры:
@@ -131,8 +150,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
         rszOp :: imOps2
       }
       blk.WideBgRenderCtx(
-        width       = cropWidth,
-        height      = tgtHeightReal,
+        szCss       = szCss,
+        szPhysical  = szPhysical,
         dynCallArgs = iik.copy(dynImgOps = imOps)
       )
     }

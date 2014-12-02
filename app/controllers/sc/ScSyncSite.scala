@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import controllers.{routes, SioController}
+import controllers.SioController
 import models._
 import play.api.mvc.Result
 import play.twirl.api.Html
@@ -43,7 +43,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
   /** Прямой доступ к синхронному сайту выдачи. */
   def syncGeoSite(scState: ScJsState) = MaybeAuth.async { implicit request =>
-    _syncGeoSite(scState, routes.MarketShowcase.syncGeoSite(_).url)
+    _syncGeoSite(scState, _.syncSiteUrl)
   }
 
   /**

@@ -49,10 +49,10 @@ case class RenderArgs(
  * @param width Ширина картинки.
  */
 case class WideBgRenderCtx(
-  height        : Int,
-  width         : Int,
+  szCss         : MImgInfoMeta,
+  szPhysical    : MImgInfoMeta,
   dynCallArgs   : MImg
-) extends MImgSizeT {
+) {
 
   def dynImgCall: Call = DynImgUtil.imgCall(dynCallArgs)
 

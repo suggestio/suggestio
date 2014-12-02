@@ -39,7 +39,10 @@ trait ScSitemapsXml extends ScSiteGeo with SiteMapXmlCtl {
     }
     var reqb = MAd.dynSearchReqBuilder(adSearch)
     reqb = MAd.prepareScrollFor(reqb)
+    // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
+    val qsb = ScJsState.qsbStandalone
+    // Запускаем поточный обход всех опубликованных MAd'ов и поточную генерацию sitemap'а.
     val erFut = reqb.execute().map { searchResp0 =>
       // Пришел ответ без результатов с начальным scrollId.
       Enumerator.unfoldM(searchResp0.getScrollId) { scrollId0 =>
@@ -57,7 +60,6 @@ trait ScSitemapsXml extends ScSiteGeo with SiteMapXmlCtl {
           }
       }.flatMap { mads =>
         // Из списка mads делаем Enumerator, который поочерёдно запиливает каждую карточку в элемент sitemap.xml.
-        val qsb = ScJsState.qsbStandalone
         Enumerator(mads : _*)
           .map[SiteMapUrlT] { mad2sxu(_, today, qsb) }
       }

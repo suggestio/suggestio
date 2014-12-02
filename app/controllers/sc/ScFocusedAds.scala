@@ -116,9 +116,6 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         // Если заданы firstIds и offset == 0, то нужно получить из модели указанные рекламные карточки.
         val firstAdsFut = if (_adSearch.offset <= 0) {
           MAd.multiGet(_adSearch.forceFirstIds)
-            .map { _.filter {
-              mad => _adSearch.producerIds contains mad.producerId
-            } }
         } else {
           Future successful Nil
         }

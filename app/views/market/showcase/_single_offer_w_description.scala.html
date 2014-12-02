@@ -9,7 +9,7 @@
           mad.colors.get(WIDE_IMG_PATTERN_COLOR_FN.toString).map { patternColor => ... }  *@
   <img src="@wideBg.dynImgCall" class="bg" alt=""
     @mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
-    data-width="@wideBg.width" data-height="@wideBg.height"
+    width="@wideBg.szCss.width" height="@wideBg.szCss.height" data-width="@wideBg.szCss.width" data-height="@wideBg.szCss.height"
   />
 }
 
