@@ -1,6 +1,6 @@
 package controllers.sc
 
-import util.jsa.{SmRcvResp, Js}
+import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import models.jsm.ProducerAdsResp
 import play.twirl.api.Html
 import util.showcase._
@@ -320,6 +320,9 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
       }
     }
 
+    override def jsAppendCssAction(html: JsString): JsAction = {
+      JsAppendById("smResourcesFocused", html)
+    }
   }
 
 }

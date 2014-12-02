@@ -7,7 +7,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
 import util.cdn.CdnUtil
-import util.jsa.{JsAction, JsAppendByTagName}
+import util.jsa.JsAction
 import views.txt.blocks.common._
 
 import scala.collection.immutable
@@ -123,9 +123,8 @@ trait ScController extends SioController {
       }
     }
 
-    def jsAppendCssAction(html: JsString): JsAction = {
-      JsAppendByTagName("head", html)
-    }
+    /** Генерация js-экшена для рендера стилей. */
+    def jsAppendCssAction(html: JsString): JsAction
 
     /** Отрендерить css для блоков, данные по котором лежат в addCssInternalFut(). */
     def jsAppendAdsCss: Future[JsAction] = {
