@@ -100,8 +100,8 @@ object MadAiUtil extends PlayMacroLogsImpl {
   def processOne(madAi: MAiMad): Future[_] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val getter = new HttpGetToFile {
-      override def followRedirects: Boolean = false
-      override def urlStr: String = madAi.url
+      override def followRedirects = false
+      override def urlStr = madAi.url
     }
     val respFut = getter.request()
     // Запустить в фоне получение шаблонной карточки
@@ -119,7 +119,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
       }
     }
 
-    // Отрендерить шаблонную карточку.
+    // Отрендерить шаблонную карточку с помощью цепочки рендереров.
     val renderedAdFut = tplMadFut flatMap { tplMad =>
       renderArgsFut flatMap { renderArgs =>
         renderTplAd(tplMad, madAi.renderers, renderArgs)
