@@ -7,11 +7,12 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.joda.time.DateTimeZone
 import org.xml.sax.helpers.DefaultHandler
-import play.api.libs.json.{JsArray, JsString}
+import play.api.libs.json.{JsObject, JsArray, JsString}
 import util.PlayMacroLogsImpl
 import util.ai.GetParseResult
 import util.ai.mad.render.{ScalaStiRenderer, MadAiRenderedT}
 import util.ai.sax.weather.gidromet.GidrometRssSax
+import java.{util => ju}
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -30,13 +31,12 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
 
   // Названия JSON-полей
   val NAME_ESFN               = "n"
-  val URL_ESFN                = "url"
-  val CONTENT_HANDLERS_ESFN   = "chs"
   val TPL_AD_ID_ESFN          = "tpl"
   val TARGET_AD_IDS_ESFN      = "tgts"
   val DESCR_ESFN              = "d"
   val RENDERERS_ESFN          = "rr"
   val TIMEZONE_ESFN           = "tz"
+  val SOURCES_ESFN            = "src"
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -48,12 +48,11 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false),
-      FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(CONTENT_HANDLERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(TPL_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(TIMEZONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
+      FieldString(TIMEZONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      AiSource.generateMapping
     )
   }
 
@@ -67,9 +66,8 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
     import EsModel.{stringParser, strListParser, iteratorParser}
     MAiMad(
       name = stringParser(m(NAME_ESFN)),
-      url  = stringParser(m(URL_ESFN)),
-      contentHandlers = iteratorParser( m(CONTENT_HANDLERS_ESFN) )
-        .map { chId => MAiMadContentHandlers.withName(stringParser(chId)): MAiMadContentHandler }
+      sources = iteratorParser( m(SOURCES_ESFN) )
+        .map { AiSource.parseJson }
         .toSeq,
       tplAdId = stringParser(m(TPL_AD_ID_ESFN)),
       renderers = iteratorParser(m(RENDERERS_ESFN))
@@ -93,8 +91,7 @@ import MAiMad._
 
 case class MAiMad(
   name            : String,
-  url             : String,
-  contentHandlers : Seq[MAiMadContentHandler],
+  sources         : Seq[AiSource],
   tplAdId         : String,
   renderers       : Seq[MAiRenderer],
   targetAdIds     : Seq[String],
@@ -110,8 +107,7 @@ case class MAiMad(
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc =
       NAME_ESFN               -> JsString(name) ::
-      URL_ESFN                -> JsString(url) ::
-      CONTENT_HANDLERS_ESFN   -> JsArray( contentHandlers.map(ch => JsString(ch.toString())) ) ::
+      SOURCES_ESFN            -> JsArray(sources.map(_.toPlayJson)) ::
       TPL_AD_ID_ESFN          -> JsString(tplAdId) ::
       TARGET_AD_IDS_ESFN      -> JsArray( targetAdIds.map(JsString.apply) ) ::
       TIMEZONE_ESFN           -> JsString(tz.getID) ::
@@ -126,14 +122,68 @@ case class MAiMad(
 }
 
 
-// JMX этой модели
+/** JMX MBean для модели [[MAiMad]]. */
 trait MAiMadJmxMBean extends EsModelJMXMBeanI
+/** Реализация JMX MBean для модели [[MAiMad]]. */
 final class MAiMadJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAiMadJmxMBean {
-
   override def companion = MAiMad
 }
 
+
+object AiSource {
+
+  val URL_ESFN                = "url"
+  val CONTENT_HANDLERS_ESFN   = "chs"
+
+  def generateMapping: DocField = {
+    FieldObject(SOURCES_ESFN, enabled = true, properties = Seq(
+      FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(CONTENT_HANDLERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    ))
+  }
+
+  /** Распарсить из jackson json ранее сериализованный экземпляр [[AiSource]]. */
+  def parseJson(x: Any): AiSource = {
+    x match {
+      case jmap: ju.Map[_,_] =>
+        AiSource(
+          url = Option( jmap.get(URL_ESFN) )
+            .map(EsModel.stringParser)
+            .getOrElse(""),
+          contentHandlers = Option( jmap.get(CONTENT_HANDLERS_ESFN) )
+            .map { rawChs =>
+              EsModel.iteratorParser(rawChs)
+                .map { rawChId => MAiMadContentHandlers.withName(EsModel.stringParser(rawChId)): MAiMadContentHandler }
+                .toSeq
+            }
+            .getOrElse(Seq.empty)
+        )
+    }
+  }
+
+}
+
+/**
+ * Source описывает источник данных: ссылка с сырыми данными и парсеры, применяемые для извлечения полезной нагрузки.
+ * @param url Ссылка или её шаблон.
+ * @param contentHandlers Экстракторы контента.
+ */
+case class AiSource(
+  url: String,
+  contentHandlers: Seq[MAiMadContentHandler]
+) {
+  import AiSource._
+
+  /** Сериализация экземпляра. */
+  def toPlayJson: JsObject = {
+    JsObject(Seq(
+      URL_ESFN -> JsString(url),
+      CONTENT_HANDLERS_ESFN -> JsArray( contentHandlers.map(ch => JsString(ch.toString())) )
+    ))
+  }
+
+}
 
 
 /** Модель с доступными обработчиками контента. */

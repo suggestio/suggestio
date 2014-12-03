@@ -88,16 +88,19 @@ object FormUtil {
 
   /** Маппер поля формы для опциональной time-зоны. */
   def timeZoneOptM: Mapping[Option[DateTimeZone]] = {
-    nonEmptyText(minLength = 2, maxLength = 64)
+    val ntm = nonEmptyText(minLength = 2, maxLength = 64)
+    toStrOptM(ntm, strTrimSanitizeF)
       .transform [Option[DateTimeZone]] (
-        {tzRaw =>
-          try {
-            Option(DateTimeZone.forID(tzRaw))
-          } catch {
-            case ex: Exception => None
+        {tzRawOpt =>
+          tzRawOpt.flatMap { tzRaw =>
+            try {
+              Option( DateTimeZone.forID(tzRaw) )
+            } catch {
+              case ex: Exception => None
+            }
           }
         },
-        { _.fold("")(_.getID) }
+        { _.map(_.getID) }
       )
   }
   /** Маппер поля формы для обязательной time-зоны. */

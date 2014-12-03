@@ -44,9 +44,11 @@
               <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")...</a>
             </td>
             <td>
-              <a href="http://anonym.to/?@mai.url" title="@mai.url">URL</a>
-              <br/>
-              @mai.contentHandlers.map { ch => @ch.name<br/> }
+              @mai.sources.map { src =>
+                <a href="http://anonym.to/?@src.url" title="@src.url">URL</a>
+                <br/>
+                @src.contentHandlers.map { ch => @ch.name<br/> }
+              }
             </td>
             <td>@mai.renderers.map { rrr => @rrr.name<br/> }</td>
             <td>

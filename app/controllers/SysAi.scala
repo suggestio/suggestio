@@ -1,6 +1,5 @@
 package controllers
 
-import org.joda.time.DateTimeZone
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
@@ -50,21 +49,44 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
   private def getDelimRe = "[,;\\s]+".r
   private def MERGE_DELIM = ", "
 
-  /** Маппинг для списка content-handler'ов. */
-  private def contentHandlersM(delimRe: Regex): Mapping[Seq[MAiMadContentHandler]] = {
-    nonEmptyText(
-      minLength = MAiMadContentHandlers.values.iterator.map(_.name.length).max,
-      maxLength = 128
-    )
-    .transform [Seq[Option[MAiMadContentHandler]]] (
-      {raw => delimRe.split(raw).iterator.map(MAiMadContentHandlers.maybeWithName).toSeq },
-      { _.flatMap(identity(_)).mkString(MERGE_DELIM) }
-    )
-    .verifying("error.invalid", { _.forall { _.isDefined } })
-    .transform [Seq[MAiMadContentHandler]] (
-      { _.flatMap(identity(_)) },
-      { _.map(Some.apply) }
-    )
+  /**
+   * Маппер для карты источников и их парсеров.
+   * Список вводится в textarea и имеет формат:
+   *  URL1 парсер1 парсер2 ...
+   *  URL2 парсер3 ...
+   *  ...
+   * В качестве разделителя можно использовать любой из [\\s].
+   */
+  private def sourcesM: Mapping[Seq[AiSource]] = {
+    nonEmptyText(maxLength = 1024)
+      .transform(
+        {raw =>
+          val tokRe = "\\s+".r
+          raw.linesIterator
+            .map { line =>
+              val tokens = tokRe.split(line).toList
+              val url = tokens.head
+              val chs = tokens.tail.map { chId =>
+                MAiMadContentHandlers.withName(chId) : MAiMadContentHandler
+              }
+              AiSource(url, chs)
+            }
+            .toSeq
+        },
+        {sources =>
+          val sb = new StringBuilder(256)
+          sources.foreach { source =>
+            sb.append(source.url)
+              .append(' ')
+            source.contentHandlers.foreach { ch =>
+              sb.append(ch.name)
+                .append(' ')
+            }
+            sb.append('\n')
+          }
+          sb.toString()
+        }
+      )
   }
 
   /** Маппинг для списка рендереров. */
@@ -88,7 +110,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
         { raw => delimRe.split(raw).toSeq },
         { _.mkString(MERGE_DELIM) }
       )
-      //.verifying("error.invalid", { _.forall(esIdM) })  // TODO Нужно валидировать каждый распарсенный элемент как esId.
+    // Не валидируем ничего больше, т.к. вызов dryRun() при сабмите должен развеять все подозрения.
   }
 
   /** Маппинг для формы создания/редактирования экземпляра MAiMad. */
@@ -97,24 +119,23 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
     val m = mapping(
       "name"              -> nonEmptyText(minLength = 5, maxLength = 256)
         .transform [String] (strTrimSanitizeF, strIdentityF),
-      "url"               -> urlStrM,
-      "contentHandlers"   -> contentHandlersM(delimRe),
+      "sources"           -> sourcesM,
       "tplAdId"           -> esIdM,
       "renderers"         -> renderersM(delimRe),
       "targetAdIds"       -> targetAdIdsM(delimRe),
       "tz"                -> timeZoneM,
       "descr"             -> toStrOptM( text(maxLength = 512) )
     )
-    {(name, url, chs, tplAdId, renderers, targetAdIds, tz, descrOpt) =>
+    {(name, sources, tplAdId, renderers, targetAdIds, tz, descrOpt) =>
       MAiMad(
-        name = name, url = url, contentHandlers = chs, tplAdId = tplAdId, renderers = renderers,
+        name = name, sources = sources, tplAdId = tplAdId, renderers = renderers,
         targetAdIds = targetAdIds, descr = descrOpt, tz = tz
       )
     }
     {maimad =>
       import maimad._
       // Изначально не было поля timezon'ы, поэтому она через Option[DTZ].
-      Some((name, url, contentHandlers, tplAdId, renderers, targetAdIds, tz, descr))
+      Some((name, sources, tplAdId, renderers, targetAdIds, tz, descr))
     }
     Form(m)
   }
@@ -174,8 +195,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
         // Обновляем исходный экземпляр MAiMad новыми данными
         val aim2 = aiMad.copy(
           name        = aim1.name,
-          url         = aim1.url,
-          contentHandlers =  aim1.contentHandlers,
+          sources     = aim1.sources,
           tplAdId     = aim1.tplAdId,
           renderers   = aim1.renderers,
           targetAdIds = aim1.targetAdIds,

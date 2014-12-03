@@ -48,9 +48,9 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param meta Метаданные.
    * @return Результаты работы content-handler'ов в виде карты.
    */
-  def parseFromStream(is: InputStream, maim: MAiMad, meta: Metadata): Map[String, ContentHandlerResult] = {
+  def parseFromStream(is: InputStream, chs: Seq[MAiMadContentHandler], maim: MAiMad, meta: Metadata): Map[String, ContentHandlerResult] = {
     // Собираем все запрошенные парсеры
-    val handlers = maim.contentHandlers.map { _.newInstance(maim) }
+    val handlers = chs.map { _.newInstance(maim) }
     val handler = if (handlers.size > 1) {
       new TeeContentHandler(handlers: _*)
     } else {
@@ -107,27 +107,31 @@ object MadAiUtil extends PlayMacroLogsImpl {
    */
   def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
     // Запустить получение результата по ссылки от remote-сервера.
-    val getter = new HttpGetToFile {
-      override def followRedirects = false
-      override def urlStr = madAi.url
+    val renderArgsFut = Future.traverse( madAi.sources ) { source =>
+      val getter = new HttpGetToFile {
+        override def followRedirects = false
+        override def urlStr = source.url
+      }
+      getter.request().map { case (headers, file) =>
+        // Получен результат в файл. Надо его распарсить в переменные для рендера.
+        val meta = httpHeaders2meta(headers.headers, Some(source.url))
+        val is = new FileInputStream(file)
+        try {
+          parseFromStream(is, source.contentHandlers, madAi, meta)
+        } finally {
+          is.close()
+          file.delete()
+        }
+      }
+    } map { results =>
+      results.reduce(_ ++ _)
     }
-    val respFut = getter.request()
+
     // Запустить в фоне получение шаблонной карточки
     val tplMadFut = MAd.getById(madAi.tplAdId)
       .map(_.get)
     val targetAdsFut = MAd.multiGet(madAi.targetAdIds)
-      .filter { mads => mads.size == madAi.targetAdIds.size }
-    val renderArgsFut = respFut map { case (headers, file) =>
-      // Получен результат в файл. Надо его распарсить в переменные для рендера.
-      val meta = httpHeaders2meta(headers.headers, Some(madAi.url))
-      val is = new FileInputStream(file)
-      try {
-        parseFromStream(is, madAi, meta)
-      } finally {
-        is.close()
-        file.delete()
-      }
-    }
+      .filter { mads => mads.size == madAi.targetAdIds.size}
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.
     for {
