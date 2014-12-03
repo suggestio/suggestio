@@ -23,12 +23,12 @@
 
   @inputText(mf("tplAdId"), '_label -> "id шаблонной карточки")
 
-  @inputText(mf("renderers"), '_label -> "Рендереры")
   <p>Доступные рендереры: @ai.MAiRenderers.values.map { rrr =>
     <span title="@Messages("ai.mad.rrr.descr." + rrr.name)">
       <strong>@rrr.name</strong>
     </span>
   }</p>
+  @inputText(mf("renderers"), '_label -> "Рендереры")
 
   @inputText(mf("targetAdIds"), '_label -> "id карточек-целей")
 

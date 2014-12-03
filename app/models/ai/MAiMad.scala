@@ -5,10 +5,10 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
-import org.joda.time.DateTimeZone
+import org.joda.time.{LocalDate, DateTime, DateTimeZone}
 import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsObject, JsArray, JsString}
-import util.PlayMacroLogsImpl
+import util.{TplDataFormatUtil, PlayMacroLogsImpl}
 import util.ai.GetParseResult
 import util.ai.mad.render.{ScalaStiRenderer, MadAiRenderedT}
 import util.ai.sax.weather.gidromet.GidrometRssSax
@@ -226,3 +226,30 @@ object MAiRenderers extends EnumMaybeWithName {
   }
 
 }
+
+
+/** Строки ссылок могут содержать внутри себя scalasti-вызовы, доступные через состояние.
+  * Тут интерфейс JavaBean, пригодный для передачи в scalasti. */
+trait UrlRenderContextBeanT {
+  def getNow: DateTimeBeanT = DateTimeBeanImpl( DateTime.now() )
+}
+class UrlRenderContextBeanImpl extends UrlRenderContextBeanT
+
+/** JavaBean для описания даты и времени. */
+trait DateTimeBeanT {
+  def getDateTime: DateTime
+  def getTomorrow: DateTimeBeanT = DateTimeBeanImpl( getDateTime.minusDays(1) )
+  def getYesterday: DateTimeBeanT = DateTimeBeanImpl( getDateTime.plusDays(1) )
+  def getDate: DateBeanT = DateBeanImpl( getDateTime.toLocalDate )
+}
+case class DateTimeBeanImpl(getDateTime: DateTime) extends DateTimeBeanT
+
+
+/** JavaBean для доступа к дате. */
+trait DateBeanT {
+  def getDate: LocalDate
+  def getFmtNumeric: String = TplDataFormatUtil.numericDate(getDate)
+  def getFmtW3c: String = TplDataFormatUtil.w3cDate(getDate)
+}
+case class DateBeanImpl(getDate: LocalDate) extends DateBeanT
+

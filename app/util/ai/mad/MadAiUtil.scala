@@ -3,11 +3,12 @@ package util.ai.mad
 import java.io.{FileInputStream, InputStream}
 
 import io.suggest.ym.model.MAd
-import models.ai.{MAiRenderer, MAiMad, MAiMadContentHandler, ContentHandlerResult}
+import models.ai._
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
 import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
 import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.apache.tika.sax.TeeContentHandler
+import org.clapper.scalasti.ST
 import util.PlayMacroLogsImpl
 import util.ws.HttpGetToFile
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -107,14 +108,19 @@ object MadAiUtil extends PlayMacroLogsImpl {
    */
   def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
     // Запустить получение результата по ссылки от remote-сервера.
+    val urlRenderCtx = new UrlRenderContextBeanImpl()
     val renderArgsFut = Future.traverse( madAi.sources ) { source =>
+      // 2014.12.03: Поддержка URL, который содержит переменные, описанные через ScalaSti-синтаксис.
+      val url = ST(source.url, '#', '#')
+        .add("ctx", urlRenderCtx, raw = true)
+        .render()
       val getter = new HttpGetToFile {
         override def followRedirects = false
-        override def urlStr = source.url
+        override def urlStr = url
       }
       getter.request().map { case (headers, file) =>
         // Получен результат в файл. Надо его распарсить в переменные для рендера.
-        val meta = httpHeaders2meta(headers.headers, Some(source.url))
+        val meta = httpHeaders2meta(headers.headers, Some(url))
         val is = new FileInputStream(file)
         try {
           parseFromStream(is, source.contentHandlers, madAi, meta)
