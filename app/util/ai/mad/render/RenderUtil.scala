@@ -23,5 +23,5 @@ trait MadAiRenderedT {
    * @param args Аргументы рендера.
    * @return Фьючерс с новой карточкой.
    */
-  def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult]): Future[MAd]
+  def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult], targetAd: MAd): Future[MAd]
 }

@@ -83,26 +83,29 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param tplAd Шаблонная карточка.
    * @param args Карта аргументов рендера.
    * @param renderers Рендереры в порядке употребления.
-   * @return Отрендеренная карточка: новый инстанс без id и версии.
+   * @param targetAds Целевые карточки, которые нужно обновить с помощью рендереров и карточки-шаблона.
+   * @return Отрендеренные карточки в неопределённом порядке.
    */
-  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult]): Future[MAd] = {
-    val acc0 = Future successful tplAd
-    renderers.foldLeft(acc0) {
-      (acc, renderer) =>
-        acc.flatMap { mad0 =>
-          val rr = renderer.getRenderer()
-          rr.renderTplAd(mad0, args)
-        }
+  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult], targetAds: Seq[MAd]): Future[Seq[MAd]] = {
+    // Параллельно маппим все рекламные карточки. Это нарушает исходный порядок, но на это плевать.
+    Future.traverse( targetAds ) { targetAd =>
+      renderers.foldLeft(Future successful targetAd) {
+        (acc, renderer) =>
+          acc.flatMap { mad0 =>
+            renderer
+              .getRenderer()
+              .renderTplAd(tplAd, args, targetAd = mad0)
+          }
+      }
     }
   }
 
-
   /**
-   * Запуск на исполнение заполнятеля карточек на основе указанной спецификации.
-   * @param madAi Данные по сборке карточек.
-   * @return Фьючерс для синхронизации.
+   * Read-only запуск madAI на исполнение. Полезно для проверки валидности.
+   * @param madAi id рекламной карточки.
+   * @return Фьючерс с отрендеренными карточками, которые ещё не сохранены.
    */
-  def run(madAi: MAiMad): Future[_] = {
+  def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val getter = new HttpGetToFile {
       override def followRedirects = false
@@ -112,6 +115,8 @@ object MadAiUtil extends PlayMacroLogsImpl {
     // Запустить в фоне получение шаблонной карточки
     val tplMadFut = MAd.getById(madAi.tplAdId)
       .map(_.get)
+    val targetAdsFut = MAd.multiGet(madAi.targetAdIds)
+      .filter { mads => mads.size == madAi.targetAdIds.size }
     val renderArgsFut = respFut map { case (headers, file) =>
       // Получен результат в файл. Надо его распарсить в переменные для рендера.
       val meta = httpHeaders2meta(headers.headers, Some(madAi.url))
@@ -125,18 +130,26 @@ object MadAiUtil extends PlayMacroLogsImpl {
     }
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.
-    val renderedAdFut = tplMadFut flatMap { tplMad =>
-      renderArgsFut flatMap { renderArgs =>
-        renderTplAd(tplMad, madAi.renderers, renderArgs)
-      }
+    for {
+      tplMad        <- tplMadFut
+      renderArgs    <- renderArgsFut
+      targetAds     <- targetAdsFut
+      renders       <- renderTplAd(tplMad, madAi.renderers, renderArgs, targetAds)
+    } yield {
+      renders
     }
+  }
 
+
+  /**
+   * Запуск на исполнение заполнятеля карточек на основе указанной спецификации.
+   * @param madAi Данные по сборке карточек.
+   * @return Фьючерс для синхронизации.
+   */
+  def run(madAi: MAiMad): Future[_] = {
     // Сохранить целевые карточки
-    renderedAdFut flatMap { madRendered =>
-      Future.traverse( madAi.targetAdIds ) { tgtAdId =>
-        val mad4save = madRendered.copy(id = Some(tgtAdId))
-        mad4save.save
-      }
+    dryRun(madAi) flatMap { madsRendered =>
+      Future.traverse(madsRendered)(_.save)
     }
   }
 

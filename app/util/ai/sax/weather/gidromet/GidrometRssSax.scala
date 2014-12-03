@@ -32,7 +32,7 @@ class GidrometRssSax
   with GetParseResult
   with PlayLazyMacroLogsImpl
 {
-  
+
   import LOGGER._
 
   override def stiResKey = "weather"

@@ -3,6 +3,7 @@
 @* Заглавная страница, отражающая генераторы карточек s.io. *@
 
 @import ctx._
+@import helper._
 
 @hPathAfter1 = {
 }
@@ -10,6 +11,10 @@
 @madAiBase("Mad AI", Some(hPathAfter1)) {
 
   <p>Управление генераторами карточек происходит здесь.</p>
+
+  <p>
+    <a href="@routes.SysAi.createMadAi()">Создать новый генератор...</a>
+  </p>
 
   @if(ais.isEmpty) {
     <p>Пока не создано ни одного генератора.</p>
@@ -31,8 +36,10 @@
           <tr>
             <td title="id: @mai.id">@mai.name</td>
             <td>
-              TODO выполнить<br/>
-              TODO @Messages("Edit")
+              @form(routes.SysAi.runMadAi(mai.id.get)) {
+                <input type="submit" value="Выполнить" /><br/>
+              }
+              <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")/@Messages("Delete")...</a>
             </td>
             <td>
               <a href="@mai.url" title="@mai.url">URL</a>

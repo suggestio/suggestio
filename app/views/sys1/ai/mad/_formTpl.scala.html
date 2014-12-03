@@ -1,0 +1,32 @@
+@(mf: Form[ai.MAiMad], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Рендер формы для создания/редактирования экземпляра модели MAiMad. *@
+
+@import helper._
+@import ctx._
+
+@form(submitCall) {
+
+  @inputText(mf("name"), '_label -> Messages("Name"))
+
+  @inputText(mf("url"), '_label -> "Ссылка на источник")
+
+  @inputText(mf("contentHandlers"), '_label -> "Парсеры ссылки")
+  <p>Доступные парсеры: @ai.MAiMadContentHandlers.values.map { mch =>
+    <span title="@Messages("ai.ch.descr." + mch.name)">@mch.name</span>
+  }</p>
+
+  @inputText(mf("tplAdId"), '_label -> "id шаблонной карточки")
+
+  @inputText(mf("renderers"), '_label -> "Рендереры")
+  <p>Доступные рендереры: @ai.MAiRenderers.values.map { rrr =>
+    <span title="@Messages("ai.mad.rrr.descr." + rrr.name)">@rrr.name</span>
+  }</p>
+
+  @inputText(mf("targetAdIds"), '_label -> "id карточек-целей")
+
+  @textarea(mf("descr"), '_label -> Messages("Description"))
+
+  <input type="submit" value="@btnText" />
+
+}

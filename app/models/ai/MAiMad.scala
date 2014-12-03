@@ -1,7 +1,7 @@
 package models.ai
 
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticT, EsModelT}
+import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsArray, JsString}
@@ -116,29 +116,22 @@ case class MAiMad(
 
 
 /** Модель с доступными обработчиками контента. */
-object MAiMadContentHandlers extends Enumeration {
+object MAiMadContentHandlers extends EnumMaybeWithName {
   protected sealed abstract class Val(val name: String) extends super.Val(name) {
     /** Собрать новый инстанс sax-парсера. */
     def newInstance: DefaultHandler with GetParseResult
   }
+
   type MAiMadContentHandler = Val
+  override type T = MAiMadContentHandler
+
 
   // Тут всякие доступные content-handler'ы.
-
   /** Sax-парсер для rss-прогнозов росгидромета. */
   val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
     override def newInstance = new GidrometRssSax
   }
 
-
-  implicit def value2val(x: Value): MAiMadContentHandler = x.asInstanceOf[MAiMadContentHandler]
-
-  def maybeWithName(n: String): Option[MAiMadContentHandler] = {
-    values
-      .iterator
-      .map(value2val)
-      .find(_.name == n)
-  }
 }
 
 
@@ -147,20 +140,18 @@ trait ContentHandlerResult extends Serializable
 
 
 /** Модель доступных рендереров динамических рекламных карточек. */
-object MAiRenderers extends Enumeration {
+object MAiRenderers extends EnumMaybeWithName {
   /** Экземпляр модели. */
   protected sealed abstract class Val(val name: String) extends super.Val(name) {
     def getRenderer(): MadAiRenderedT
   }
 
   type MAiRenderer = Val
+  override type T = MAiRenderer
 
   /** Вызов рендера шаблонов scalasti. */
   val ScalaSti: MAiRenderer = new Val("scalasti") {
     override def getRenderer() = ScalaStiRenderer
   }
-
-
-  implicit def value2val(x: Value): MAiRenderer = x.asInstanceOf[MAiRenderer]
 
 }

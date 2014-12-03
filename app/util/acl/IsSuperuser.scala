@@ -396,3 +396,44 @@ case class GalleryRequest[A](
   sioReqMd  : SioReqMd
 ) extends AbstractRequestWithPwOpt(request)
 
+
+
+/** IsSuperuser + доступ к указанному MAiMad. */
+trait IsSuperuserAiMadAbstract extends ActionBuilder[AiMadRequest] {
+  def aiMadId: String
+
+  override def invokeBlock[A](request: Request[A], block: (AiMadRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    val madAiFut = ai.MAiMad.getById(aiMadId)
+    if (PersonWrapper isSuperuser pwOpt) {
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      madAiFut flatMap {
+        case Some(madAi) =>
+          srmFut flatMap { srm =>
+            val req1 = AiMadRequest(madAi, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None => aiMadNotFound
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+  def aiMadNotFound: Future[Result] = {
+    val res = Results.NotFound(s"MAiMad($aiMadId) not found.")
+    Future successful res
+  }
+}
+case class IsSuperuserAiMad(aiMadId: String)
+  extends IsSuperuserAiMadAbstract
+  with ExpireSession[AiMadRequest]
+/** Реквест с доступом к aiMad. */
+case class AiMadRequest[A](
+  aiMad     : ai.MAiMad,
+  pwOpt     : PwOpt_t,
+  request   : Request[A],
+  sioReqMd  : SioReqMd
+) extends AbstractRequestWithPwOpt(request)
+

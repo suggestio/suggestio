@@ -1,5 +1,6 @@
 package util.ai.mad.render
 
+import io.suggest.ym.model.ad.AOBlock
 import models.{AOStringField, MAd}
 import models.ai.ContentHandlerResult
 import org.clapper.scalasti.ST
@@ -17,26 +18,40 @@ object ScalaStiRenderer extends MadAiRenderedT {
 
   /**
    * Компиляция текстовых шаблонов в карточке.
-   * @param tplAd Исходная карточка.
+   * @param tplAd Шаблонная карточка.
    * @param args Аргументы рендера.
-   * @return Фьючерс с новой карточкой.
+   * @param targetAd Обновляемая карточка.
+   * @return Фьючерс с обновлённой карточкой.
    */
-  override def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult]): Future[MAd] = {
+  override def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult], targetAd: MAd): Future[MAd] = {
     Future {
-      tplAd.copy(
-        offers = tplAd.offers.map { offer =>
-          offer.copy(
-            text1 = renderTextFieldOpt(offer.text1, args),
-            text2 = renderTextFieldOpt(offer.text2, args)
+      val tgOffersMap = targetAd
+        .offers
+        .iterator
+        .map(offer2tuple)
+        .toMap
+      // Отрендерить офферы из шаблонной карточки. В качестве исходных значений попытаться задействовать поля исходной карточки.
+      val renderedOffers = tplAd.offers
+        .map { tplOffer =>
+          val srcOffer = tgOffersMap.getOrElse(tplOffer.n, tplOffer)
+          val off2 = srcOffer.copy(
+            text1 = renderTextFieldOpt(tplOffer.text1, args),
+            text2 = renderTextFieldOpt(tplOffer.text2, args)
           )
-        },
-        id = None,
-        versionOpt = None,
-        alienRsc = true
+          offer2tuple(off2)
+        }
+        .toMap
+      // Накатить отрендеренные офферы на офферы целевой рекламной карточки
+      targetAd.copy(
+        offers = tgOffersMap
+          .++(renderedOffers)
+          .valuesIterator
+          .toList
       )
     }
   }
 
+  private def offer2tuple(off: AOBlock) = off.n -> off
 
   /** Рендер одного текстового поля.
     * @param tfOpt Опциональное строковое поле.
