@@ -310,5 +310,12 @@ weather.sky.state.PartlyCloudy=Местами облачно
 weather.sky.state.Cloudy=Облачно
 weather.sky.state.VaryCloudy=Переменная облачность
 
-
+wind.direction.north=северный
+wind.direction.south=южный
+wind.direction.east=восточный
+wind.direction.west=западный
+wind.direction.north-west=северо-западный
+wind.direction.north-east=северо-восточный
+wind.direction.south-west=юго-западный
+wind.direction.south-east=юго-восточный
 

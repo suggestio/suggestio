@@ -66,6 +66,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
     )
   }
 
+  /** Маппинг для списка рендереров. */
   private def renderersM(delimRe: Regex): Mapping[Seq[MAiRenderer]] = {
     nonEmptyText(minLength = 2, maxLength = 128)
       .transform [Seq[Option[MAiRenderer]]] (
@@ -79,6 +80,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
       )
   }
 
+  /** Маппинг для списка целевых рекламных карточек, подлежащих обновлению. */
   private def targetAdIdsM(delimRe: Regex): Mapping[Seq[String]] = {
     nonEmptyText(minLength = 16, maxLength = 512)
       .transform [Seq[String]] (

@@ -300,3 +300,12 @@ weather.sky.state.Cloudy=Cloudy
 weather.sky.state.VaryCloudy=Variable cloudness
 
 
+wind.direction.north=north
+wind.direction.south=south
+wind.direction.east=east
+wind.direction.west=west
+wind.direction.north-west=north-west
+wind.direction.north-east=north-east
+wind.direction.south-west=south-west
+wind.direction.south-east=south-east
+

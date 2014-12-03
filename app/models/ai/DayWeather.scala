@@ -1,6 +1,7 @@
 package models.ai
 
 import org.joda.time.LocalDate
+import play.api.i18n.Messages
 import util.TplDataFormatUtil
 
 import scala.beans.BeanProperty
@@ -44,12 +45,16 @@ case class DayWeatherAcc(
 case class DayWeatherBean(
   @BeanProperty date              : LocalDate,
   skyStateOpt                     : Option[SkyState],
-  @BeanProperty precipations      : List[Precipation],
+  precipations                    : List[Precipation],
   @BeanProperty temperatures      : Temperatures,
   @BeanProperty pressureMmHg      : AtmPressure,
-  @BeanProperty windOpt           : Option[Wind],
-  @BeanProperty precipChanceOpt   : Option[Int]
-) extends ContentHandlerResult
+  windOpt                         : Option[Wind],
+  precipChanceOpt                 : Option[Int]
+) extends ContentHandlerResult {
+
+  val getWind = windOpt getOrElse Wind(GeoDirections.NONE, 0F)
+  def getPrecipChance: String = if (precipChanceOpt.isDefined)  precipChanceOpt.get.toString  else  "?"
+}
 
 
 /** Интерфейс готового прогноза погоды: сегодня, завтра и послезавтра если есть. */
@@ -66,21 +71,39 @@ trait WeatherForecastT extends ContentHandlerResult {
 /** Направления ветров. */
 object GeoDirections extends Enumeration {
 
-  protected sealed class Val(name: String) extends super.Val(name) {
+  sealed protected trait ValT {
+    @BeanProperty val name: String
     def i18nCode: String = "wind.direction." + name
+    def getI18n: String = Messages(i18nCode)
+    def getVDirection: GeoDirection
+  }
+
+  protected sealed class Val(@BeanProperty val name: String) extends super.Val(name) with ValT {
+    @BeanProperty
+    override def getVDirection: GeoDirection = this
+  }
+
+  trait NorthV extends ValT {
+    @BeanProperty override def getVDirection = NORTH
+  }
+  trait SouthV extends ValT {
+    @BeanProperty override def getVDirection = SOUTH
   }
 
   type GeoDirection = Val
 
-  val NONE        : GeoDirection = new Val("none")
+  val NONE        : GeoDirection = new Val("none") {
+    override def i18nCode: String = ""
+    override def getI18n: String = ""
+  }
   val EAST        : GeoDirection = new Val("east")
   val WEST        : GeoDirection = new Val("west")
   val NORTH       : GeoDirection = new Val("north")
   val SOUTH       : GeoDirection = new Val("south")
-  val NORTH_WEST  : GeoDirection = new Val("north-west")
-  val NORTH_EAST  : GeoDirection = new Val("north-east")
-  val SOUTH_WEST  : GeoDirection = new Val("south-west")
-  val SOUTH_EAST  : GeoDirection = new Val("south-east")
+  val NORTH_WEST  : GeoDirection = new Val("north-west") with NorthV
+  val NORTH_EAST  : GeoDirection = new Val("north-east") with NorthV
+  val SOUTH_WEST  : GeoDirection = new Val("south-west") with SouthV
+  val SOUTH_EAST  : GeoDirection = new Val("south-east") with SouthV
 
   implicit def value2val(x: Value): GeoDirection = x.asInstanceOf[GeoDirection]
 
@@ -129,7 +152,7 @@ object Precipations extends Enumeration {
  * @param direction Направление ветра.
  * @param speedMps Скорость ветра.
  */
-case class Wind(direction: WindDirection, speedMps: Float)
+case class Wind(@BeanProperty direction: GeoDirection, @BeanProperty speedMps: Float)
 
 
 /**

@@ -95,7 +95,7 @@ trait GidrometParsers extends JavaTokenParsers {
   def northP: Parser[_] = "(?U)север\\w*".r
   def southP: Parser[_] = "(?U)ю(жн|г)\\w*".r
 
-  def geoDirectionP: Parser[WindDirection] = {
+  def geoDirectionP: Parser[GeoDirection] = {
     import GeoDirections._
     val _eastP = eastP
     val _westP = westP
