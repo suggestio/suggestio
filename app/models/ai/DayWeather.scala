@@ -1,6 +1,6 @@
 package models.ai
 
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import play.api.i18n.Messages
 import util.TplDataFormatUtil
 
@@ -65,6 +65,30 @@ trait WeatherForecastT extends ContentHandlerResult {
   def getTomorrow: Option[DayWeatherBean]
   /** Погода на послезавтра, если есть. */
   def getAfterTomorrow: Option[DayWeatherBean]
+
+  /** Локальное время в точке, к которой относится этот прогноз. */
+  def getLocalTime: DateTime = DateTime.now
+
+  /** В зависимости от текущего времени нужно сгенерить прогноз погоды на день и ночь или наоборот. */
+  def getH24: DayWeatherBean = {
+    val hod = getLocalTime.getHourOfDay
+    if (hod > 18 || hod < 5) {
+      // Если ночь, то надо отобразить сегодняшнюю ночь и завтрашний день
+      val today = getToday
+      val tmrOpt = getTomorrow
+      today.copy(
+        temperatures = today.temperatures.copy(
+          dayOpt = tmrOpt.flatMap(_.temperatures.dayOpt).orElse(today.temperatures.dayOpt)
+        ),
+        pressureMmHg = today.pressureMmHg.copy(
+          dayOpt = tmrOpt.flatMap(_.pressureMmHg.dayOpt).orElse(today.pressureMmHg.dayOpt)
+        )
+      )
+    } else {
+      // Если не ночь, то отобразить погоду на сейчас
+      getToday
+    }
+  }
 }
 
 

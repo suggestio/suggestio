@@ -5,7 +5,7 @@ import java.io.{CharArrayReader, Reader}
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
 import io.suggest.ym.{NormTokensOutAnStream, YmStringAnalyzerT}
-import models.ai.{WeatherForecastT, DayWeatherBean, DayWeatherAcc, ContentHandlerResult}
+import models.ai._
 import org.apache.lucene.analysis.core.LowerCaseFilter
 import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard.StandardFilter
@@ -26,7 +26,7 @@ import util.ai.sax.StackFsmSax
  * Description: Парсер данных от гидромета по RSS.
  * Пример RSS: http://meteoinfo.ru/rss/forecasts/26063
  */
-class GidrometRssSax
+class GidrometRssSax(maim: MAiMad)
   extends DefaultHandler
   with StackFsmSax
   with GetParseResult
@@ -278,6 +278,11 @@ class GidrometRssSax
    */
   override def getParseResult: WeatherForecastT = {
     new WeatherForecastT {
+      override def getLocalTime: DateTime = {
+        super.getLocalTime
+          .withZone(maim.tz)
+      }
+
       override val getToday: DayWeatherBean = accRev.find(_.date == today).get
 
       def findWithDays(d: Int): Option[DayWeatherBean] = {
@@ -286,6 +291,9 @@ class GidrometRssSax
       }
       override lazy val getTomorrow = findWithDays(1)
       override lazy val getAfterTomorrow = findWithDays(2)
+
+      /** В зависимости от текущего времени нужно сгенерить прогноз погоды на день и ночь или наоборот. */
+      override val getH24 = super.getH24
     }
   }
 

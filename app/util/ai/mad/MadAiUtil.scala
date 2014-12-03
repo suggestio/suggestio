@@ -44,13 +44,13 @@ object MadAiUtil extends PlayMacroLogsImpl {
   /**
    * Распарсить данные из файла с помощью tika. Нужно собрать список content-handler'ов под запрос и сделать дело.
    * @param is InputStream с контентом, подлежащим парсингу.
-   * @param contentHandlers SAX-хандлеры для формирования карты шаблона.
+   * @param maim Экземпляр текущего MAiMad.
    * @param meta Метаданные.
    * @return Результаты работы content-handler'ов в виде карты.
    */
-  def parseFromStream(is: InputStream, contentHandlers: Seq[MAiMadContentHandler], meta: Metadata): Map[String, ContentHandlerResult] = {
+  def parseFromStream(is: InputStream, maim: MAiMad, meta: Metadata): Map[String, ContentHandlerResult] = {
     // Собираем все запрошенные парсеры
-    val handlers = contentHandlers.map { _.newInstance }
+    val handlers = maim.contentHandlers.map { _.newInstance(maim) }
     val handler = if (handlers.size > 1) {
       new TeeContentHandler(handlers: _*)
     } else {
@@ -122,7 +122,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
       val meta = httpHeaders2meta(headers.headers, Some(madAi.url))
       val is = new FileInputStream(file)
       try {
-        parseFromStream(is, madAi.contentHandlers, meta)
+        parseFromStream(is, madAi, meta)
       } finally {
         is.close()
         file.delete()

@@ -5,6 +5,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
+import org.joda.time.DateTimeZone
 import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
@@ -35,6 +36,7 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
   val TARGET_AD_IDS_ESFN      = "tgts"
   val DESCR_ESFN              = "d"
   val RENDERERS_ESFN          = "rr"
+  val TIMEZONE_ESFN           = "tz"
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -50,7 +52,8 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
       FieldString(CONTENT_HANDLERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(TPL_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldString(TIMEZONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
     )
   }
 
@@ -73,7 +76,10 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
         .map { s => MAiRenderers.withName(stringParser(s)) : MAiRenderer }
         .toSeq,
       targetAdIds = strListParser(m(TARGET_AD_IDS_ESFN)),
-      descr = m.get(DESCR_ESFN).map(stringParser),
+      descr = m.get(DESCR_ESFN)
+        .map(stringParser),
+      tz = m.get(TIMEZONE_ESFN)
+        .fold(DateTimeZone.getDefault) { tzRaw => DateTimeZone.forID(stringParser(tzRaw)) },
       id = id,
       versionOpt = version
     )
@@ -92,6 +98,7 @@ case class MAiMad(
   tplAdId         : String,
   renderers       : Seq[MAiRenderer],
   targetAdIds     : Seq[String],
+  tz              : DateTimeZone,
   descr           : Option[String] = None,
   id              : Option[String] = None,
   versionOpt      : Option[Long] = None
@@ -107,6 +114,7 @@ case class MAiMad(
       CONTENT_HANDLERS_ESFN   -> JsArray( contentHandlers.map(ch => JsString(ch.toString())) ) ::
       TPL_AD_ID_ESFN          -> JsString(tplAdId) ::
       TARGET_AD_IDS_ESFN      -> JsArray( targetAdIds.map(JsString.apply) ) ::
+      TIMEZONE_ESFN           -> JsString(tz.getID) ::
       acc
     if (renderers.nonEmpty)
       acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.name)))
@@ -132,7 +140,7 @@ final class MAiMadJmx(implicit val ec: ExecutionContext, val client: Client, val
 object MAiMadContentHandlers extends EnumMaybeWithName {
   protected sealed abstract class Val(val name: String) extends super.Val(name) {
     /** Собрать новый инстанс sax-парсера. */
-    def newInstance: DefaultHandler with GetParseResult
+    def newInstance(maim: MAiMad): DefaultHandler with GetParseResult
   }
 
   type MAiMadContentHandler = Val
@@ -142,7 +150,7 @@ object MAiMadContentHandlers extends EnumMaybeWithName {
   // Тут всякие доступные content-handler'ы.
   /** Sax-парсер для rss-прогнозов росгидромета. */
   val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
-    override def newInstance = new GidrometRssSax
+    override def newInstance(maim: MAiMad) = new GidrometRssSax(maim)
   }
 
 }

@@ -1,5 +1,6 @@
 package controllers
 
+import org.joda.time.DateTimeZone
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
@@ -101,17 +102,19 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
       "tplAdId"           -> esIdM,
       "renderers"         -> renderersM(delimRe),
       "targetAdIds"       -> targetAdIdsM(delimRe),
+      "tz"                -> timeZoneM,
       "descr"             -> toStrOptM( text(maxLength = 512) )
     )
-    {(name, url, chs, tplAdId, renderers, targetAdIds, descrOpt) =>
+    {(name, url, chs, tplAdId, renderers, targetAdIds, tz, descrOpt) =>
       MAiMad(
         name = name, url = url, contentHandlers = chs, tplAdId = tplAdId, renderers = renderers,
-        targetAdIds = targetAdIds, descr = descrOpt
+        targetAdIds = targetAdIds, descr = descrOpt, tz = tz
       )
     }
     {maimad =>
       import maimad._
-      Some((name, url, contentHandlers, tplAdId, renderers, targetAdIds, descr))
+      // Изначально не было поля timezon'ы, поэтому она через Option[DTZ].
+      Some((name, url, contentHandlers, tplAdId, renderers, targetAdIds, tz, descr))
     }
     Form(m)
   }
