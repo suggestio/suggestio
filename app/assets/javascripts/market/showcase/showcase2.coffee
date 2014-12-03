@@ -585,6 +585,7 @@ sm =
           mart_id : node_id
           geo_screen : cs.geo_screen
       else
+        # если после перезагрузки страницы есть get параметры
         if url_params["f.cur.id"]
           ns =
             mart_id : url_params["m.id"]
@@ -592,11 +593,19 @@ sm =
               is_opened : true
               ad_id : url_params["f.cur.id"]
               producer_id : url_params["f.pr.id"]
-
-          sm.states.add_state ns
+        else if url_params["s.open"]
+          ns =
+            cat_screen :
+              is_opened : true
+        else if url_params["n.open"]
+          ns =
+            geo_screen :
+              is_opened : true
         else
-          sm.states.add_state
+          ns =
             mart_id : node_id
+
+        sm.states.add_state ns
 
     adjust : () ->
 
