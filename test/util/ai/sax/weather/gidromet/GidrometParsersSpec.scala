@@ -228,7 +228,7 @@ class GidrometParsersSpec extends PlaySpec with GidrometParsersVal with RegexPar
         skyStateOpt     = Some(SkyStates.CloudVary),
         precipations    = List(Precipations.NoPercipations),
         temperatures    = Temperatures(Some(-2), nightOpt = Some(-4)),
-        pressureMmHg    = AtmPressure(Some(770), night = Some(772)),
+        pressureMmHg    = AtmPressure(Some(770), nightOpt = Some(772)),
         windOpt         = Some(Wind(GeoDirections.SOUTH_WEST, 4)),
         precipChanceOpt = Some(21)
       )

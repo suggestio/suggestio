@@ -292,3 +292,11 @@ send=Send
 
 
 c.s.search_query.empty=Empty search query. What are you looking for?
+
+
+weather.sky.state.Clear=Clear sky
+weather.sky.state.PartlyCloudy=Partly cloudy
+weather.sky.state.Cloudy=Cloudy
+weather.sky.state.VaryCloudy=Variable cloudness
+
+

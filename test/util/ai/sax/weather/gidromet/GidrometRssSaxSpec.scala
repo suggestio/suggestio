@@ -51,7 +51,7 @@ class GidrometRssSaxSpec extends PlaySpec with WithInputStream {
       d3.date               mustBe new LocalDate(2014, 12, 3)
       d3.precipations       mustBe List(Precipations.NoPercipations)
       d3.precipChanceOpt    mustBe Some(41)
-      d3.pressureMmHg       mustBe AtmPressure(Some(761), night = Some(764))
+      d3.pressureMmHg       mustBe AtmPressure(Some(761), nightOpt = Some(764))
       d3.skyStateOpt        mustBe Some(SkyStates.CloudVary)
       d3.temperatures       mustBe Temperatures(Some(2F), nightOpt = Some(-4))
       d3.windOpt            mustBe Some(Wind(GeoDirections.WEST, 6))

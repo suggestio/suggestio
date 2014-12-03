@@ -1,6 +1,5 @@
 package controllers
 
-import io.suggest.ym.model.MAd
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
@@ -12,7 +11,6 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import models.ai._
 
-import scala.concurrent.Future
 import scala.util.matching.Regex
 
 /**
@@ -202,13 +200,14 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
     MadAiUtil.run(request.aiMad)
       // Рендерим результаты работы:
       .map { res =>
-        Ok("Finished ok. Result:\n" + res)
+        Redirect( routes.SysAi.madIndex() )
+          .flashing("success" -> (request.aiMad.name + ": Выполнено без ошибок."))
       }
       .recover {
         case ex: Exception =>
           val msg = s"Failed to run MAiMad($aiMadId)"
-          warn(msg, ex)
-          NotAcceptable(msg + ":\n" + ex.getClass.getSimpleName + ": " + ex.getMessage)
+          error(msg, ex)
+          NotAcceptable(msg + ":\n" + ex.getClass.getSimpleName + ": " + ex.getMessage + "\n" + ex.getStackTraceString)
       }
   }
 

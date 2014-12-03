@@ -35,8 +35,8 @@ object ScalaStiRenderer extends MadAiRenderedT {
         .map { tplOffer =>
           val srcOffer = tgOffersMap.getOrElse(tplOffer.n, tplOffer)
           val off2 = srcOffer.copy(
-            text1 = renderTextFieldOpt(tplOffer.text1, args),
-            text2 = renderTextFieldOpt(tplOffer.text2, args)
+            text1 = renderTextFieldOpt(tplOffer.text1, args, srcOffer.text1),
+            text2 = renderTextFieldOpt(tplOffer.text2, args, srcOffer.text2)
           )
           offer2tuple(off2)
         }
@@ -58,12 +58,13 @@ object ScalaStiRenderer extends MadAiRenderedT {
     * @param args Аргументы для рендера.
     * @return Новое опциональное строковое поле.
     */
-  private def renderTextFieldOpt(tfOpt: Option[AOStringField], args: Map[String, ContentHandlerResult]): Option[AOStringField] = {
-    tfOpt.map { tf =>
+  private def renderTextFieldOpt(tfOpt: Option[AOStringField], args: Map[String, ContentHandlerResult], tgFieldOpt: Option[AOStringField]): Option[AOStringField] = {
+    tfOpt.fold(tgFieldOpt) { tf =>
       val st = ST(tf.value, '#', '#')
         .addAttributes(args, raw = true)
       val v2 = st.render(lineWidth = 256)
-      tf.copy(value = v2)
+      val f = tgFieldOpt.getOrElse(tf)
+      Some( f.copy(value = v2) )
     }
   }
 

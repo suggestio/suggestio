@@ -1,6 +1,7 @@
 package models.ai
 
 import org.joda.time.LocalDate
+import util.TplDataFormatUtil
 
 import scala.beans.BeanProperty
 import java.{lang => jl}
@@ -42,7 +43,7 @@ case class DayWeatherAcc(
 /** immutable bean версия аккамулятора погоды за один день. */
 case class DayWeatherBean(
   @BeanProperty date              : LocalDate,
-  @BeanProperty skyStateOpt       : Option[SkyState],
+  skyStateOpt                     : Option[SkyState],
   @BeanProperty precipations      : List[Precipation],
   @BeanProperty temperatures      : Temperatures,
   @BeanProperty pressureMmHg      : AtmPressure,
@@ -92,23 +93,29 @@ case class Temperatures(
   @BeanProperty var nightOpt: Option[Float] = None
 ) {
 
-  // Убогая java-хрень для взаимодейсвия со scalaSti без использования Option[].
-  def getNightTemp: jl.Float = if (nightOpt.isDefined) nightOpt.get else null
-  def setNightTemp(t: jl.Float): Unit = {
-    nightOpt = Option(t)
+  protected def formatTemp(t: Option[Float]): String = {
+    if (t.isDefined)  TplDataFormatUtil.formatTemperature(t.get)  else  ""
   }
 
-  def getDayTemp: jl.Float = if (dayOpt.isDefined) dayOpt.get else null
-  def setDayTemp(t: jl.Float): Unit = {
-    dayOpt = Option(t)
-  }
+  // JavaBean-интерфейс для взаимодейсвия со scalaSti рендерером без использования Option[].
+  def getNight = formatTemp(nightOpt)
+  def getDay = formatTemp(dayOpt)
 
 }
 
 /** Состояние неба: ясно, малооблачно, облачно и переменная облачность. */
 object SkyStates extends Enumeration {
-  type SkyState = Value
-  val Clear, CloudPartly, Cloudy, CloudVary = Value: SkyState
+
+  sealed protected class Val(@BeanProperty val name: String) extends super.Val(name) {
+    def getL10nId = "weather.sky.state." + name
+  }
+
+  type SkyState = Val
+
+  val Clear         : SkyState = new Val("Clear")
+  val CloudPartly   : SkyState = new Val("PartlyCloudy")
+  val Cloudy        : SkyState = new Val("Cloudy")
+  val CloudVary     : SkyState = new Val("VaryCloudy")
 }
 
 object Precipations extends Enumeration {
@@ -125,8 +132,28 @@ object Precipations extends Enumeration {
 case class Wind(direction: WindDirection, speedMps: Float)
 
 
+/**
+ * Описание атмосферного давления днём и ночью.
+ * @param dayOpt Давление днём.
+ * @param nightOpt Давление ночью.
+ */
 case class AtmPressure(
-  @BeanProperty var day: Option[Int] = None,
-  @BeanProperty var night: Option[Int] = None
-)
+  var dayOpt: Option[Int] = None,
+  var nightOpt: Option[Int] = None
+) {
+
+  private def formatPressure(p: Option[Int], default: Option[Int]): String = {
+    if (p.isDefined)  {
+      p.get.toString
+    } else if (default.isDefined) {
+      default.get.toString
+    } else {
+      ""
+    }
+  }
+
+  def getDay = formatPressure(dayOpt, nightOpt)
+  def getNight = formatPressure(nightOpt, dayOpt)
+
+}
 

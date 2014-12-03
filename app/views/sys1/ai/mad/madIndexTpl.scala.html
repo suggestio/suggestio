@@ -34,15 +34,17 @@
       <tbody>
         @ais.map { mai =>
           <tr>
-            <td title="id: @mai.id">@mai.name</td>
+            <td title="id: @mai.id">
+              <strong>@mai.name</strong>
+            </td>
             <td>
               @form(routes.SysAi.runMadAi(mai.id.get)) {
                 <input type="submit" value="Выполнить" /><br/>
               }
-              <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")/@Messages("Delete")...</a>
+              <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")...</a>
             </td>
             <td>
-              <a href="@mai.url" title="@mai.url">URL</a>
+              <a href="http://anonym.to/?@mai.url" title="@mai.url">URL</a>
               <br/>
               @mai.contentHandlers.map { ch => @ch.name<br/> }
             </td>

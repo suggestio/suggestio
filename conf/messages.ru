@@ -303,3 +303,12 @@ send=Отправить
 c.s.search_query.empty=Пустая строка поиска. Что-то ищем?
 
 tariff.type.p=Абонплата
+
+
+weather.sky.state.Clear=Ясно
+weather.sky.state.PartlyCloudy=Местами облачно
+weather.sky.state.Cloudy=Облачно
+weather.sky.state.VaryCloudy=Переменная облачность
+
+
+

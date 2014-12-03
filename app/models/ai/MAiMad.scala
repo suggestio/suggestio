@@ -1,8 +1,10 @@
 package models.ai
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.client.Client
 import org.xml.sax.helpers.DefaultHandler
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
@@ -11,6 +13,7 @@ import util.ai.mad.render.{ScalaStiRenderer, MadAiRenderedT}
 import util.ai.sax.weather.gidromet.GidrometRssSax
 
 import scala.collection.Map
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -109,10 +112,20 @@ case class MAiMad(
       acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.name)))
     if (descr.isDefined)
       acc1 ::= DESCR_ESFN -> JsString(descr.get)
-    acc
+    acc1
   }
 
 }
+
+
+// JMX этой модели
+trait MAiMadJmxMBean extends EsModelJMXMBeanI
+final class MAiMadJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MAiMadJmxMBean {
+
+  override def companion = MAiMad
+}
+
 
 
 /** Модель с доступными обработчиками контента. */

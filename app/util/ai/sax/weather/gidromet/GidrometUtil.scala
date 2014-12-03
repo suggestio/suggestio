@@ -130,10 +130,10 @@ trait GidrometParsers extends JavaTokenParsers {
   def pressureP(acc: AtmPressure): Parser[AtmPressure] = {
     val nP = intNumberP <~ pressureUnitP
     val dayPressP = (dayP ~> nP) ^^ {
-      case p => acc.day = Some(p)
+      case p => acc.dayOpt = Some(p)
     }
     val nightPressP = (nightP ~> nP) ^^ {
-      case p => acc.night = Some(p)
+      case p => acc.nightOpt = Some(p)
     }
     pressureWordP ~> rep1(dayPressP | nightPressP) ^^^ acc
   }
