@@ -14,7 +14,7 @@ object ScStatActions extends Enumeration {
    * @param strId Строковой id.
    * @param billable Допускается для биллинга?
    */
-  protected class Val(val strId: String,  val billable: Boolean) extends super.Val(strId) {
+  protected class Val(val strId: String, val billable: Boolean) extends super.Val(strId) {
     def i18nCode = "ad.stat.action." + strId
   }
 
@@ -23,19 +23,19 @@ object ScStatActions extends Enumeration {
 
 
   /** Просмотр плитки выдачи. */
-  val Tiles: ScStatAction  = new Val("tiles", billable = true)
+  val Tiles: ScStatAction  = new Val("v", billable = true)
 
   /** Юзер открывает карточку, вызывая focusedAds() на сервере. */
-  val Opened: ScStatAction = new Val("opened", billable = true)
+  val Opened: ScStatAction = new Val("c", billable = true)
 
   /** Запрос к "сайту" выдачи, т.е. к странице, с которой начинается рендер выдачи. */
-  val Site: ScStatAction  = new Val("site", billable = false)
+  val Site: ScStatAction  = new Val("s", billable = false)
 
   /** Запрос к showcase/index, т.е. к верстке выдачи узла какого-то например. */
-  val Index: ScStatAction = new Val("index", billable = false)
+  val Index: ScStatAction = new Val("i", billable = false)
 
   /** Запрос списка нод от клиента. */
-  val Nodes: ScStatAction = new Val("nodes", billable = false)
+  val Nodes: ScStatAction = new Val("n", billable = false)
 
 
   implicit def value2val(x: Value): ScStatAction = x.asInstanceOf[ScStatAction]
