@@ -240,6 +240,8 @@ object AOBlock {
 }
 
 
+// TODO Нужно дедублицировать text1 и text2, убрать discount и все price'ы. Сделать immutable и что-то решить с href.
+// Поле n наверное остаётся нужен для упорядочивания. Хотя и это тоже не обязательно.
 case class AOBlock(
   n             : Int,
   var text1     : Option[AOStringField] = None,
