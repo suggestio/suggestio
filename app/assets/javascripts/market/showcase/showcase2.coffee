@@ -590,30 +590,7 @@ sm =
           mart_id : node_id
           geo_screen : cs.geo_screen
       else
-        # если после перезагрузки страницы есть get параметры
-        if url_params["f.cur.id"]
-          sm.grid_ads.gen_id = url_params["gen_id"]
-          ns =
-            mart_id : url_params["m.id"]
-            gen_id : sm.grid_ads.gen_id
-            fads :
-              is_opened : true
-              ad_id : url_params["f.cur.id"]
-              producer_id : url_params["f.pr.id"]
-        else if url_params["s.open"]
-          ns =
-            mart_id : url_params["m.id"]
-            cat_screen :
-              is_opened : true
-        else if url_params["n.open"]
-          ns =
-            mart_id : url_params["m.id"]
-            geo_screen :
-              is_opened : true
-        else
-          ns =
-            mart_id : node_id
-
+        ns = sm.states.get_state_by_url()
         sm.states.add_state ns
 
     adjust : () ->
@@ -1415,8 +1392,7 @@ sm =
 
       sm.utils.ge('smSearchField').value = ''
 
-      if sm.search.found_count > 0
-        sm.grid_ads.load_index_ads()
+      if sm.search.found_count > 0 then sm.grid_ads.load_index_ads()
 
     error_message : ( message, is_hide ) ->
 
@@ -1577,6 +1553,8 @@ sm =
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
 
+      #console.log "url : #{url}"
+
       timeout_cb = () ->
         sm.request.on_request_error()
 
@@ -1596,6 +1574,8 @@ sm =
 
     sm.log 'receive_response : got some data'
     sm.warn data
+
+    console.log data
 
     if typeof sm.request.request_timeout_timer != 'undefined'
       clearTimeout sm.request.request_timeout_timer
@@ -1679,7 +1659,10 @@ sm =
           sm.utils.ge('smWifiInfo').style.display = 'block'
 
         sm.init_navigation()
-        sm.grid_ads.load_index_ads()
+        # TODO исправить костыль
+        if typeof cs.cat_id == 'undefined'
+          sm.grid_ads.load_index_ads()
+
 
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
@@ -2518,7 +2501,60 @@ sm =
 
       this.push ns
 
-    get_path : ( state ) ->
+    get_url_params : () ->
+      pl     = ///\+///g
+      search = ///([^&=]+)=?([^&]*)///g
+      decode = (s) ->
+        return decodeURIComponent(s.replace(pl, " "))
+      query  = window.location.hash.substring(3)
+      urlParams = {}
+      while match = search.exec(query)
+        urlParams[decode(match[1])] = decode(match[2])
+
+      return urlParams
+
+    get_state_by_url : () ->
+      url_params = @.get_url_params()
+      state = null
+      sm.grid_ads.gen_id = url_params["gen_id"]
+
+      if url_params["f.cur.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          fads :
+            is_opened : true
+            ad_id : url_params["f.cur.id"]
+            producer_id : url_params["f.pr.id"]
+
+      else if url_params["s.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          cat_screen :
+            is_opened : true
+
+      else if url_params["n.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          geo_screen :
+            is_opened : true
+
+      else if url_params["t.cat"]
+        state =
+          mart_id : url_params["m.id"]
+          cat_id : url_params["t.cat"]
+          cat_class : url_params["t.cat_class"]
+          gen_id : sm.grid_ads.gen_id
+
+      else
+        state =
+          gen_id : sm.grid_ads.gen_id
+
+      return state
+
+    get_path_by_state : ( state ) ->
       get_params = []
       path = ""
 
@@ -2537,6 +2573,9 @@ sm =
       if state.cat_id
         get_params.push "t.cat=#{state.cat_id}"
 
+      if state.cat_class
+        get_params.push "t.cat_class=#{state.cat_class}"
+
       if state.mart_id
         get_params.push "m.id=#{state.mart_id}"
 
@@ -2549,7 +2588,7 @@ sm =
       return path
 
     push : ( state ) ->
-      path = this.get_path state
+      path = this.get_path_by_state state
 
       this.process_state state
 
@@ -2585,8 +2624,6 @@ sm =
 
       cs = this.cur_state()
 
-      console.log cs
-
       sm.warn 'process_state_2 invoked'
       sm.warn state
       this.requested_state = undefined
@@ -2601,8 +2638,7 @@ sm =
       ## 2. Карточки по категориям
       if typeof state.cat_id != 'undefined' && sm.global_cat_id != state.cat_id
         sm.load_for_cat_id state.cat_id, state.cat_class
-
-      sm.global_cat_id = state.cat_id
+        sm.global_cat_id = state.cat_id
 
       if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
@@ -2634,18 +2670,6 @@ sm =
         url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
         sm.request.perform url
 
-    get_url_params : () ->
-      pl     = ///\+///g
-      search = ///([^&=]+)=?([^&]*)///g
-      decode = (s) ->
-        return decodeURIComponent(s.replace(pl, " "))
-      query  = window.location.hash.substring(3)
-      urlParams = {}
-      while match = search.exec(query)
-        urlParams[decode(match[1])] = decode(match[2])
-
-      return urlParams
-
 
   ############################
   ## Функции для инициализации
@@ -2661,6 +2685,7 @@ sm =
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
 
     sm.log 'about to call index_action : ' + index_action
+
     this.request.perform index_action
 
   define_per_load_values : () ->
