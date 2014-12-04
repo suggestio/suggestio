@@ -27,17 +27,28 @@ class CbrfCurDayXmlSaxSpec extends AiSaxPlaySpec  {
     )
     val res = doParse(info)
 
-    "parse 2014.dec.12 dump from /scripts/XML_daily.asp" in {
+    "test map" in {
       res.getMap.nonEmpty mustBe true
-      res.getMap.contains("EUR") mustBe true
+    }
 
-      res.getMap.contains("USD") mustBe true
+    "EUR" in {
+      res.getMap.contains("EUR") mustBe true
       val usd = res.getMap("USD")
       usd.charCode    mustBe "USD"
       usd.count       mustBe 1
       usd.course      mustBe 52.6932F
       usd.getName     mustBe "Доллар США"
       usd.numCodeOpt  mustBe Some("840")
+    }
+
+    "USD" in {
+      res.getMap.contains("USD") mustBe true
+      val eur = res.getEur
+      eur.charCode    mustBe "EUR"
+      eur.count       mustBe 1
+      eur.course      mustBe 64.8443F
+      eur.getName     mustBe "Евро"
+      eur.numCodeOpt  mustBe Some("978")
     }
 
     // TODO Нужно тестировать материал от ЦБ по ссылке заново.
@@ -52,12 +63,20 @@ class CbrfCurDayXmlSaxSpec extends AiSaxPlaySpec  {
     )
     val res = doParse(info)
 
-    "parse current XML API output" in {
+    "test map" in {
       res.getMap.nonEmpty mustBe true
-      res.getMap.contains("EUR") mustBe true
+    }
 
+    "EUR" in {
+      val eur = res.getEur
+      eur.charCode    mustBe "EUR"
+      eur.count       mustBe 1
+      eur.getName     mustBe "Евро"
+    }
+
+    "USD" in {
       res.getMap.contains("USD") mustBe true
-      val usd = res.getMap("USD")
+      val usd = res.getUsd
       usd.charCode    mustBe "USD"
       usd.count       mustBe 1
       usd.getName     mustBe "Доллар США"

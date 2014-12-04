@@ -17,7 +17,10 @@ import util.ai.AiContentHandler
  */
 abstract class AiSaxPlaySpec extends PlaySpec with WithInputStream {
 
+  /** Точный тип тестируемого ContentHandler'а. */
   type H <: DefaultHandler with AiContentHandler
+
+  /** Тип возвращаемых результатов от тестируемого ContentHandler'а. */
   type T
   
   /** Инфа по парсингу одного экземпляра готового rss. */
@@ -30,9 +33,13 @@ abstract class AiSaxPlaySpec extends PlaySpec with WithInputStream {
     }
   }
 
+  /** Создать новый инстанс используемого ContentHandler'а. */
   def getHandler(ctx: MAiParserCtxT): H
+
+  /** Извлечь результат из тестируемого экземпляра ContentHandler'а. */
   def getResult(handler: H): T
 
+  /** Запустить парсинг по упрощенной схеме. */
   protected def doParse(info: Info): T = {
     // Сборка цепочки парсинга
     val ctx = new MAiParserCtxT {
