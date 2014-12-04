@@ -1575,8 +1575,6 @@ sm =
     sm.log 'receive_response : got some data'
     sm.warn data
 
-    console.log data
-
     if typeof sm.request.request_timeout_timer != 'undefined'
       clearTimeout sm.request.request_timeout_timer
 
@@ -2548,6 +2546,11 @@ sm =
           cat_class : url_params["t.cat_class"]
           gen_id : sm.grid_ads.gen_id
 
+      else if url_params["m.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+
       else
         state =
           gen_id : sm.grid_ads.gen_id
@@ -2622,7 +2625,9 @@ sm =
 
     process_state_2 : ( state ) ->
 
-      cs = this.cur_state()
+      cs = @.cur_state()
+
+      console.log cs
 
       sm.warn 'process_state_2 invoked'
       sm.warn state
