@@ -224,7 +224,7 @@ case class MLocalImg(
     Future successful result
   }
 
-  override def original = {
+  override def original: MLocalImg = {
     if (dynImgOps.nonEmpty)
       copy(dynImgOps = Nil)
     else

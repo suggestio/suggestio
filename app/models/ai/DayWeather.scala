@@ -4,6 +4,7 @@ import org.joda.time.{DateTime, LocalDate}
 import play.api.i18n.Messages
 import util.TplDataFormatUtil
 
+import scala.annotation.meta.getter
 import scala.beans.BeanProperty
 import java.{lang => jl}
 
