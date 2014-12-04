@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import HTapConversionsBasic._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits._
 import org.apache.hadoop.hbase.{HTableDescriptor, HColumnDescriptor}
 import io.suggest.util.JMXBase
@@ -33,7 +33,7 @@ trait HTableModel {
 
   /** Существует ли указанная таблица? */
   def isTableExists: Future[Boolean] = {
-    future {
+    Future {
       val adm = SioHBaseSyncClient.admin
       try {
         adm.tableExists(HTABLE_NAME_BYTES)
@@ -50,10 +50,10 @@ trait HTableModel {
   /** Асинхронно создать таблицу. Полезно при первом запуске. Созданная таблица относится и к подчиненным моделям.
    * @return Пустой фьючерс, который исполняется при наступлении эффекта созданной таблицы.
    */
-  def createTable: Future[Unit] = {
+  def createTable: Future[_] = {
     val tableDesc = new HTableDescriptor(HTABLE_NAME)
     CFs foreach { cfName => tableDesc addFamily getColumnDescriptor(cfName) }
-    future {
+    Future {
       val adm = SioHBaseSyncClient.admin
       try {
         adm.createTable(tableDesc)
@@ -67,10 +67,10 @@ trait HTableModel {
   /** Убедиться, что таблица существует.
    * TODO Сделать, чтобы был updateTable при необходимости (если схема таблицы слегка устарела).
    */
-  def ensureTableExists: Future[Unit] = {
+  def ensureTableExists: Future[_] = {
     isTableExists flatMap {
       case false => createTable
-      case true  => Future.successful(())
+      case true  => Future successful None
     }
   }
 

@@ -36,7 +36,7 @@ object VirtualIndexUtil extends MacroLogsImpl {
         // Нечего даунгрейдить, если 0 или 1 индекс всего лишь.
         case (rowKey, mviGroup) if mviGroup.isEmpty || mviGroup.tail.isEmpty =>
           trace(s"$logPrefix Nothing to downgrade on rowKey=$rowKey indices=${mdvisAsString(mviGroup)}")
-          Future successful ()
+          Future successful None
 
         // Есть чего поудалять.
         case (rowKey, mviGroup) =>

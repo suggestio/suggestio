@@ -46,12 +46,12 @@ object SioEsIndexUtil extends MacroLogsImpl with Serializable {
    * @param types Удаляемые типы (маппинги).
    * @return true, если всё нормально.
    */
-  def deleteMappingsSeqFrom(indices:Seq[String], types:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def deleteMappingsSeqFrom(indices:Seq[String], types:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[_] = {
     val adm = client.admin().indices()
-    val p = Promise[Unit]()
+    val p = Promise[Any]()
     // Рекурсивный последовательный фьючерс.
     def deleteMapping(restTypes:Seq[String]) {
-      if (!restTypes.isEmpty) {
+      if (restTypes.nonEmpty) {
         val h :: t = restTypes
         adm.prepareDeleteMapping(indices: _*)
           .setType(h)
@@ -66,7 +66,7 @@ object SioEsIndexUtil extends MacroLogsImpl with Serializable {
             deleteMapping(t)
           }
       } else {
-        p success ()
+        p success None
       }
     }
     deleteMapping(types)
@@ -148,7 +148,7 @@ object SioEsIndexUtil extends MacroLogsImpl with Serializable {
    * @param replicasCount новое кол-во реплик.
    * @return Удачный фьючерс, когда всё ок.
    */
-  def setReplicasCountFor(indices:Seq[String], replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def setReplicasCountFor(indices:Seq[String], replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[_] = {
     debug(s"setReplicasCountFor($replicasCount for ${indices.mkString(",")}) called...")
     val settings = ImmutableSettings.settingsBuilder()
       .put(SETTING_NUMBER_OF_REPLICAS, replicasCount)

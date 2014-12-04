@@ -3,9 +3,8 @@ package io.suggest.model
 import org.apache.hadoop.fs.{Path, FileSystem}
 import io.suggest.util._
 import io.suggest.util.SiobixFs._
-import scala.concurrent.{ExecutionContext, Await, Future, future}
+import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.duration._
-import scala.Some
 import MyConfig.CONFIG
 
 /**
@@ -174,7 +173,7 @@ trait JsonBackendT {
 trait JsonDfsBackendGlobalT extends JsonBackendT {
 
   // Защита от параллельной асинхронной записи в один и тот же файл.
-  protected var jsonDfsWriteFut: Future[_] = Future.successful()
+  protected var jsonDfsWriteFut: Future[_] = Future.successful(None)
 
   protected def getStateFileName = getSaveStateId + ".json"
 
@@ -192,7 +191,11 @@ trait JsonDfsBackendGlobalT extends JsonBackendT {
   }
 
 
-  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = future { readStateSync }
+  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = {
+    Future {
+      readStateSync
+    }
+  }
 
   protected def readStateSync: Option[ImportExportMap] = {
     JsonDfsBackend.getAs[ImportExportMap](getStatePath, getFileSystem)

@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.util.Bytes
 import org.hbase.async.{KeyValue, Scanner, HBaseClient}
 import com.stumbleupon.async.{Callback, Deferred}
-import scala.concurrent.{ExecutionContext, Promise, Future, future}
+import scala.concurrent.{ExecutionContext, Promise, Future}
 import scala.util.{Failure, Success}
 import java.util
 import org.apache.hadoop.conf.Configuration
@@ -61,8 +61,10 @@ trait SioHBaseSyncClientT {
    * @return Фьючерс с экземпляром табличного клиента. Клиент не является thread-safe и его нужно закрывать когда он
     *        более не нужен.
    */
-  def clientForTable(tableName:String) = future {
-    pool.getTable(tableName)
+  def clientForTable(tableName:String) = {
+    Future {
+      pool.getTable(tableName)
+    }
   }
 }
 object SioHBaseSyncClient extends SioHBaseSyncClientT

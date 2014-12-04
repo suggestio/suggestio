@@ -192,7 +192,7 @@ case class MDVISubshard(
    * @param indices индексы. По дефолту взять из файла данных.
    * @return Выполненный фьючерс, если всё нормально.
    */
-  def deleteMappaings(indices: Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def deleteMappaings(indices: Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[_] = {
     val _typename = getTypename
     debug("deleteMappings(%s) getTypename=%s" format (indices, _typename))
     SioEsIndexUtil.deleteMappingsSeqFrom(indices, Seq(_typename))

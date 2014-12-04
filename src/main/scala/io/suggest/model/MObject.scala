@@ -143,37 +143,6 @@ object MObject extends HTableModel {
     }
   }
 
-  /**
-   * Пересоздать указанные. Кривой код, чисто для девелопмента. Опривачен, ибо не нужен пока что.
-   * @param cfs Названия CF'ок этой модели.
-   * @return Фьючерс для синхронизации исполнения задачи.
-   */
-  private def recreateCFs(cfs: Seq[Array[Byte]]): Future[Unit] = future {
-    val adm = SioHBaseSyncClient.admin
-    try {
-      adm.disableTable(HTABLE_NAME_BYTES)
-      try {
-        // удалить CF-ки, которые подлежат
-        val desc0 = adm.getTableDescriptor(HTABLE_NAME_BYTES)
-        cfs foreach desc0.removeFamily
-        adm.modifyTable(HTABLE_NAME_BYTES, desc0)
-
-        // modifyTable - asynchronous operation.
-        Thread.sleep(1000)
-
-        // Разудалить CF'ки.
-        val desc1 = adm.getTableDescriptor(HTABLE_NAME_BYTES)
-        cfs foreach { cf => desc1 addFamily getColumnDescriptor(cf) }
-        adm.modifyTable(HTABLE_NAME_BYTES, desc1)
-
-      } finally {
-        adm.enableTable(HTABLE_NAME_BYTES)
-      }
-
-    } finally {
-      adm.close()
-    }
-  }
 }
 
 

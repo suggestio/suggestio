@@ -90,7 +90,7 @@ object MYmCategory
             trace(s"'${ymCat.pathStr}' inserted as $ymCatId")
             ymCat.subcatsOpt match {
               case Some(cats) => insertYmCatTree(cats, parentId = ymCatId)
-              case None       => Future successful ()
+              case None       => Future successful None
             }
           }
         }

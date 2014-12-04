@@ -233,7 +233,7 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount новое число реплик.
    * @return true, если всё ок. false по сути никогда и не возвращает.
    */
-  def setReplicasCount(replicasCount:Int, shards:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def setReplicasCount(replicasCount:Int, shards:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[_] = {
     SioEsIndexUtil.setReplicasCountFor(shards, replicasCount)
   }
 
@@ -250,7 +250,7 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount кол-во реплик.
    * @return Фьючерс.
    */
-  def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[_] = {
     val shards = getShards
     ensureIndices(shards, replicasCount=replicasCount)
       .flatMap { boolSeq =>
