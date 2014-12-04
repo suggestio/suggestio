@@ -2,7 +2,7 @@ package util.anorm
 
 import java.sql.PreparedStatement
 
-import anorm.{ToStatement, TypeDoesNotMatch, Column}
+import anorm.{MayErr, ToStatement, TypeDoesNotMatch, Column}
 import io.suggest.ym.model.common.AdnSinks
 import models.AdnSink
 
@@ -15,7 +15,7 @@ import models.AdnSink
 object AnormAdnSink {
 
   implicit def rowToSink: Column[AdnSink] = Column.nonNull { (value, meta) =>
-    value match {
+    val res = value match {
       case s: String =>
         Right( AdnSinks.withName(s) : AdnSink )
       case c: Char =>
@@ -23,6 +23,7 @@ object AnormAdnSink {
       case other =>
         Left(TypeDoesNotMatch(s"Cannot convert $other : ${other.getClass.getName} to AdnSink"))
     }
+    MayErr(res)
   }
 
 

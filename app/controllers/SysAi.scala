@@ -62,7 +62,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
       .transform(
         {raw =>
           val tokRe = "\\s+".r
-          raw.linesIterator
+          raw.lines
             .map { line =>
               val tokens = tokRe.split(line).toList
               val url = tokens.head

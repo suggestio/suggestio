@@ -2,7 +2,7 @@ package util.anorm
 
 import java.sql.PreparedStatement
 
-import anorm.{Column, ToStatement, TypeDoesNotMatch}
+import anorm.{MayErr, Column, ToStatement, TypeDoesNotMatch}
 import org.joda.time.Period
 import org.postgresql.util.PGInterval
 
@@ -15,7 +15,7 @@ import org.postgresql.util.PGInterval
 object AnormPgInterval {
 
   implicit def rowToPgInterval: Column[PGInterval] = Column.nonNull { (value, meta) =>
-    value match {
+    val res = value match {
       case pgi: PGInterval =>
         Right(pgi)
       case str: String =>
@@ -23,6 +23,7 @@ object AnormPgInterval {
       case _ =>
         Left(TypeDoesNotMatch("Cannot convert " + value + ": " + value.asInstanceOf[AnyRef].getClass) )
     }
+    MayErr(res)
   }
 
   implicit val pgIntervalToStatement = new ToStatement[PGInterval] {

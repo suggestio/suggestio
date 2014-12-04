@@ -20,26 +20,24 @@ object AnormPgArray {
    * @return
    */
   implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualifier, nullable, clazz) = meta
-    value match {
+    val res = value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[Integer]].toSeq.map(_.intValue) )
-
       case _ =>
-        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + qualifier))
+        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + meta.column))
     }
+    MayErr(res)
   }
 
 
   implicit def rowToStringSet: Column[Set[String]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualifier, nullable, clazz) = meta
-    value match {
+    val res = value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSet)
-
       case _ =>
-        Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column $qualifier"))
+        Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column ${meta.column}"))
     }
+    MayErr(res)
   }
 
 
@@ -62,14 +60,13 @@ object AnormPgArray {
    * @return Seq[String] или экзепшен.
    */
   implicit def rowToSeqString: Column[Seq[String]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualified, nullable, clazz) = meta
-    value match {
+    val res = value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSeq)
-
       case _ =>
-        Left(TypeDoesNotMatch("Cannot convert %s: %s to Seq[String] for column %s".format(value, value.getClass, qualified)))
+        Left(TypeDoesNotMatch("Cannot convert %s: %s to Seq[String] for column %s".format(value, value.getClass, meta.column)))
     }
+    MayErr(res)
   }
 
 }
