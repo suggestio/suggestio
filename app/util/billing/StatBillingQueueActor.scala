@@ -7,7 +7,7 @@ import models._
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
-import scala.concurrent.future
+import scala.concurrent.Future
 import play.api.db.DB
 import scala.util.{Failure, Success}
 import play.libs.Akka
@@ -164,7 +164,7 @@ class StatBillingQueueActor extends Actor {
       // Крайне невероятно, что в этой проверке вообще есть какой-то смысл, т.к. flush-таймер запускается только когда появляются элементы.
       if (acc.nonEmpty) {
         val readyAcc = acc
-        future {
+        Future {
           flushAcc(readyAcc)
         } onComplete {
           case Success(totalDebited) => trace("Successfully flushed accumulator. Debited: " + totalDebited.mkString("[", ", ", "]"))

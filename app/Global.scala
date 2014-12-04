@@ -9,7 +9,7 @@ import util.cdn.{DumpXffHeaders, CorsFilter}
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.showcase.ScStatSaver
-import scala.concurrent.{Await, Future, future}
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
 import util._
@@ -45,7 +45,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter, DumpXff
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    val esNodeFut = future {
+    val esNodeFut = Future {
       SiowebEsUtil.ensureNode()
     }
     ensureScryptNoJni()
@@ -108,7 +108,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter, DumpXff
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.session.closeAsync()
       .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
-    val esCloseFut = future {
+    val esCloseFut = Future {
       SiowebEsUtil.stopNode()
     }
 

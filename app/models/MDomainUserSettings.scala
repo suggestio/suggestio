@@ -4,14 +4,13 @@ import util._
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
 import io.suggest.util.StorageType._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.domain_user_settings.DUS_Basic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.Path
 import org.hbase.async.{GetRequest, PutRequest}
-import scala.Some
 import scala.collection.JavaConversions._
 import io.suggest.util.SioModelUtil
 
@@ -138,18 +137,22 @@ object MDomainUserSettings extends DfsModelStaticT {
       new Path(SiobixFs.dkeyPathConf(dkey), filename)
     }
 
-    def save(d: MDomainUserSettings): Future[_] = future {
-      val path = getPath(d.dkey)
-      if (!d.data.isEmpty) {
-        JsonDfsBackend.writeToPath(path, d.data)
-      } else {
-        fs.delete(path, false)
+    def save(d: MDomainUserSettings): Future[_] = {
+      Future {
+        val path = getPath(d.dkey)
+        if (d.data.nonEmpty) {
+          JsonDfsBackend.writeToPath(path, d.data)
+        } else {
+          fs.delete(path, false)
+        }
       }
     }
 
-    def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = future {
-      val path = getPath(dkey)
-      JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
+    def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = {
+      Future {
+        val path = getPath(dkey)
+        JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
+      }
     }
   }
 

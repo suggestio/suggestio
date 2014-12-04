@@ -8,10 +8,9 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import scala.concurrent.future
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import SiowebEsUtil.client
 
 /**
@@ -58,8 +57,10 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   /** Сабжевый актор стартанул. Надо выполнить асинхронно какие-то действия.
    * Вызывается из preStart() актора.
    */
-  private def snAfterStartAsync = future {
-    staticSubscribeAllSync()
+  private def snAfterStartAsync = {
+    Future {
+      staticSubscribeAllSync()
+    }
   }
 
   import Implicts.sn

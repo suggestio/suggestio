@@ -5,7 +5,7 @@ import com.google.common.io.CharStreams
 import java.io.{PrintWriter, InputStreamReader}
 import util.{StorageUtil, SiobixFs, DkeyModelT, DfsModelStaticT}
 import io.suggest.util.StorageType._
-import scala.concurrent.{future, Future}
+import scala.concurrent.Future
 import org.apache.hadoop.fs.Path
 import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{GetRequest, PutRequest}
@@ -70,40 +70,44 @@ object MDomainUserJson extends DfsModelStaticT {
      */
     private def getPath(dkey:String) : Path = new Path(SiobixFs.dkeyPathConf(dkey), filename)
 
-    def save(j: MDomainUserJson): Future[_] = future {
-      import j._
-      val path = getPath(dkey)
-      if (data.isEmpty) {
-        fs.delete(path, false)
-      } else {
-        val os = fs.create(path, true)
-        try {
-          new PrintWriter(os).print(data)
+    def save(j: MDomainUserJson): Future[_] = {
+      Future {
+        import j._
+        val path = getPath(dkey)
+        if (data.isEmpty) {
+          fs.delete(path, false)
+        } else {
+          val os = fs.create(path, true)
+          try {
+            new PrintWriter(os).print(data)
 
-        } finally {
-          os.close()
+          } finally {
+            os.close()
+          }
         }
       }
     }
 
-    def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = future {
-      val path = getPath(dkey)
-      fs.exists(path) match {
-        case true =>
-          val is = fs.open(path)
-          try {
-            // Прочитать весь файл в строку
-            val result = new MDomainUserJson(
-              dkey = dkey,
-              data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
-            )
-            Some(result)
+    def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = {
+      Future {
+        val path = getPath(dkey)
+        fs.exists(path) match {
+          case true =>
+            val is = fs.open(path)
+            try {
+              // Прочитать весь файл в строку
+              val result = new MDomainUserJson(
+                dkey = dkey,
+                data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
+              )
+              Some(result)
 
-          } finally {
-            is.close()
-          }
+            } finally {
+              is.close()
+            }
 
-        case false => None
+          case false => None
+        }
       }
     }
   }

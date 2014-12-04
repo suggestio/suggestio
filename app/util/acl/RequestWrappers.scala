@@ -7,10 +7,10 @@ import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -194,7 +194,7 @@ object SioReqMd {
 
   /** Генерация srm для юзера в рамках личного кабинета. */
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
-    val bbOptFut = future {
+    val bbOptFut = Future {
       DB.withConnection { implicit c =>
         MBillBalance.getByAdnId(adnId)
       }

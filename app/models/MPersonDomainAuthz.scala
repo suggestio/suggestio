@@ -12,7 +12,7 @@ import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.JavaConversions._
 import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
@@ -322,7 +322,7 @@ object MPersonDomainAuthz {
      * @param dkey
      * @return
      */
-    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]] = future {
+    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]] = Future {
       val path = dkeyAllPath(dkey)
       fs.listStatus(path)
         .toList
@@ -334,43 +334,51 @@ object MPersonDomainAuthz {
 
     def save(data: MPersonDomainAuthz): Future[_] = {
       val filepath = dkeyPersonPath(dkey = data.dkey,  personId = data.personId)
-      future {
+      Future {
         JsonDfsBackend.writeToPath(filepath, data)
       }
     }
 
     def delete(personId: String, dkey: String): Future[Any] = {
       val path = dkeyPersonPath(dkey=dkey, personId=personId)
-      future { fs.delete(path, false) }
+      Future {
+        fs.delete(path, false)
+      }
     }
 
     def getForPersonDkey(personId: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
       val path = dkeyPersonPath(dkey=dkey, personId=personId)
-      future { readOne(path) }
-    }
-
-    override def getForPersonDkeys(personId: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = future {
-      dkeys
-        .map { _dkey => dkeyPersonPath(dkey = _dkey, personId=personId) }
-        .filter { fs.exists }
-        .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
-    }
-
-    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = future {
-      val personDomainsDir = personPath(personId)
-      val fss = try {
-        fs.listStatus(personDomainsDir)
-      } catch {
-        case ex: IOException =>
-          LOGGER.warn("Suppressed failure call fs.listStatus() for dir " + personDomainsDir, ex)
-          Array.empty[FileStatus]
+      Future {
+        readOne(path)
       }
-      fss.foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
-        if (fstatus.isDirectory) {
-          val authzPath = authzFilePath(fstatus.getPath)
-          readOneAcc(acc, authzPath)
-        } else {
-          acc
+    }
+
+    override def getForPersonDkeys(personId: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = {
+      Future {
+        dkeys
+          .map { _dkey => dkeyPersonPath(dkey = _dkey, personId=personId) }
+          .filter { fs.exists }
+          .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
+      }
+    }
+
+    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = {
+      Future {
+        val personDomainsDir = personPath(personId)
+        val fss = try {
+          fs.listStatus(personDomainsDir)
+        } catch {
+          case ex: IOException =>
+            LOGGER.warn("Suppressed failure call fs.listStatus() for dir " + personDomainsDir, ex)
+            Array.empty[FileStatus]
+        }
+        fss.foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
+          if (fstatus.isDirectory) {
+            val authzPath = authzFilePath(fstatus.getPath)
+            readOneAcc(acc, authzPath)
+          } else {
+            acc
+          }
         }
       }
     }
