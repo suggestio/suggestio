@@ -222,6 +222,11 @@ cbca_grid =
 
     for elt in sm.utils.ge_class document, 'sm-block'
 
+      ## проверка, открыта ли карточка, TODO вынести в отдельный метод
+      className = elt.className
+      if className.indexOf("focused") > -1
+        continue
+
       if elt.id == ''
         _this = elt
 
@@ -578,7 +583,7 @@ sm =
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
       url_params = sm.states.get_url_params()
-      console.log url_params
+      #console.log url_params
 
       if typeof cs != 'undefined'
         sm.states.add_state
@@ -587,18 +592,22 @@ sm =
       else
         # если после перезагрузки страницы есть get параметры
         if url_params["f.cur.id"]
+          sm.grid_ads.gen_id = url_params["gen_id"]
           ns =
             mart_id : url_params["m.id"]
+            gen_id : sm.grid_ads.gen_id
             fads :
               is_opened : true
               ad_id : url_params["f.cur.id"]
               producer_id : url_params["f.pr.id"]
         else if url_params["s.open"]
           ns =
+            mart_id : url_params["m.id"]
             cat_screen :
               is_opened : true
         else if url_params["n.open"]
           ns =
+            mart_id : url_params["m.id"]
             geo_screen :
               is_opened : true
         else
@@ -1491,7 +1500,9 @@ sm =
         sm.grid_ads.multiplier = sm.grid_ads.multiplier / 10
 
       url = url.replace '&a.geo=ip', ''
-      sm.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+      sm.grid_ads.gen_id = Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) )
+      sm.grid_ads.gen_id
+      sm.grid_ads.c_url = url + '&a.gen=' + sm.grid_ads.gen_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
@@ -2306,8 +2317,9 @@ sm =
 
     cs = sm.states.cur_state()
     a_rcvr = '&a.rcvr=' + cs.mart_id
+    gen_id = sm.grid_ads.gen_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + gen_id + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
     sm.focused_ads.curl = url
 
@@ -2480,6 +2492,7 @@ sm =
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
       if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
       if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
+      if typeof sm.gen_id == 'undefined' then ns.gen_id = 6
 
       this.push ns
 
@@ -2527,6 +2540,9 @@ sm =
       if state.mart_id
         get_params.push "m.id=#{state.mart_id}"
 
+      if sm.grid_ads.gen_id
+        get_params.push "gen_id=#{sm.grid_ads.gen_id}"
+
       if get_params.length
         path += "#!?#{get_params.join("&")}"
 
@@ -2569,6 +2585,8 @@ sm =
 
       cs = this.cur_state()
 
+      console.log cs
+
       sm.warn 'process_state_2 invoked'
       sm.warn state
       this.requested_state = undefined
@@ -2600,8 +2618,6 @@ sm =
 
       ## 4. Focused ads
       if typeof state.fads != 'undefined' && state.fads.is_opened == true
-        console.log state.fads.producer_id
-        console.log state.fads.ad_id
         sm.do_load_for_shop_id state.fads.producer_id, state.fads.ad_id
       else
         sm.focused_ads.close()
