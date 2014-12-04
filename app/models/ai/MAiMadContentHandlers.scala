@@ -3,6 +3,7 @@ package models.ai
 import io.suggest.model._
 import org.xml.sax.helpers.DefaultHandler
 import util.ai.AiContentHandler
+import util.ai.sax.currency.cbrf.CbrfCurDayXmlSax
 import util.ai.sax.weather.gidromet.GidrometRssSax
 
 /**
@@ -22,10 +23,16 @@ object MAiMadContentHandlers extends EnumMaybeWithName {
   override type T = MAiMadContentHandler
 
 
-  // Тут всякие доступные content-handler'ы.
-  /** Sax-парсер для rss-прогнозов росгидромета. */
+  // Тут всякие доступные content-handler'ы. Имена менять нельзя.
+
+  /** Sax/tika-парсер для rss-прогнозов росгидромета. */
   val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
     override def newInstance(maim: MAiCtx) = new GidrometRssSax(maim)
+  }
+
+  /** SAX-парсер для выхлопов ЦБ РФ через XML API сайта. */
+  val CbrfXml: MAiMadContentHandler = new Val("cbrf.xml") {
+    override def newInstance(maim: MAiCtx) = new CbrfCurDayXmlSax
   }
 
 }

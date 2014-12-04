@@ -13,8 +13,10 @@ trait WithInputStream {
   /** Директория с ресурсами. "/util/geo/osm/" например.  */
   val RES_DIR: String
 
+  def getResourceAsStream(fn: String) = getClass.getResource(RES_DIR + fn).openStream()
+
   protected def withFileStream(fn: String)(f: InputStream => Any): Unit = {
-    val is = getClass.getResource(RES_DIR + fn).openStream()
+    val is = getResourceAsStream(fn)
     try {
       f(is)
     } finally {

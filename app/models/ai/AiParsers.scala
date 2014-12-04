@@ -1,13 +1,12 @@
 package models.ai
 
-import java.io.{FileInputStream, File, InputStreamReader, InputStream}
+import java.io.InputStream
 
 import io.suggest.model.EnumMaybeWithName
 import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
 import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
-import play.api.libs.ws.WSResponseHeaders
 import util.PlayLazyMacroLogsImpl
 import util.parse.{TikaParseUtil, SaxParseUtil}
 

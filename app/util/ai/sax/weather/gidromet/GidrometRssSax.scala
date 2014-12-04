@@ -12,7 +12,7 @@ import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard.StandardFilter
 import org.apache.lucene.analysis.{TokenStream, Tokenizer}
 import org.apache.lucene.analysis.pattern.PatternTokenizer
-import org.joda.time.DateTime
+import org.joda.time.{LocalDate, DateTime}
 import org.tartarus.snowball.ext.RussianStemmer
 import org.xml.sax.{SAXParseException, Attributes}
 import org.xml.sax.helpers.DefaultHandler
@@ -24,8 +24,9 @@ import util.ai.sax.StackFsmSax
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 28.11.14 13:01
- * Description: Парсер данных от гидромета по RSS.
+ * Description: Парсер данных от гидромета по RSS с помощью SAX.
  * Пример RSS: http://meteoinfo.ru/rss/forecasts/26063
+ * 2014.12.04: Поддержка tika выкинута.
  */
 class GidrometRssSax(maim: MAiCtx)
   extends DefaultHandler
@@ -39,7 +40,7 @@ class GidrometRssSax(maim: MAiCtx)
   override def stiResKey = "weather"
 
   /** Этот парсер в основном работает с tika, хотя наверное лучше его на SAX переключить. */
-  override def sourceParser: AiParser = AiParsers.Tika
+  override def sourceParser: AiParser = AiParsers.SaxTolerant
 
   /** Для нормализации строк с погодой используется сие добро: */
   protected val an = new YmStringAnalyzerT with NormTokensOutAnStream {
@@ -69,71 +70,21 @@ class GidrometRssSax(maim: MAiCtx)
   /** Набор парсеров в рамках этого инстанса, который исполняется лишь в одном потоке. */
   val wParsers = new GidrometParsersVal {}
 
-  /** Экщепшен на тему получения очень неожиданного тега. */
-  def unexpectedTag(tagName: String) = {
-    val ex = new SAXParseException(s"Unexpected tag: '$tagName' on state ${handlersStack.headOption.getClass.getSimpleName}.", locator)
-    fatalError(ex)
-    throw ex
-  }
-
   /** Начинается документ. Пора выставить начальный обработчик. */
   override def startDocument(): Unit = {
     become(new TopLevelHandler)
     super.startDocument()
   }
 
-
   /** Обработчик корня стека. */
   class TopLevelHandler extends TopLevelHandlerT {
     override def startTag(tagName: String, attributes: Attributes): Unit = {
       val nextState = if (tagName == "rss") {
         new RssTagHandler(attributes)
-      } else if (tagName == "html") {
-        new TikaHtmlTagHandler(attributes)
       } else {
         unexpectedTag(tagName)
       }
       become(nextState)
-    }
-  }
-
-
-  /** Парсим выхлоп tika. */
-  class TikaHtmlTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
-    override def thisTagName = "html"
-    override def startTag(tagName: String, attributes: Attributes): Unit = {
-      if (tagName == "head") {
-        become(new DummyHandler(tagName, attributes))
-      } else if (tagName == "body") {
-        become(new BodyTagHandler(attributes))
-      } else {
-        unexpectedTag(tagName)
-      }
-    }
-  }
-  /** Парсим body выхлопа tika. */
-  class BodyTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
-    override def thisTagName = "body"
-    override def startTag(tagName: String, attributes: Attributes): Unit = {
-      val nextState: TagHandler = if (tagName == "h1" || tagName == "p") {
-        new DummyHandler(tagName, attributes)
-      } else if (tagName == "ul") {
-        new UlTagHandler(attributes)
-      } else {
-        unexpectedTag(tagName)
-      }
-      become(nextState)
-    }
-  }
-  /** Парсим body.ul выхлопа tika. */
-  class UlTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
-    override def thisTagName = "ul"
-    override def startTag(tagName: String, attributes: Attributes): Unit = {
-      if (tagName == "li") {
-        become(new LiTagHandler(attributes))
-      } else {
-        unexpectedTag(tagName)
-      }
     }
   }
 
@@ -151,19 +102,17 @@ class GidrometRssSax(maim: MAiCtx)
       }
 
       override def onTagEnd(tagName: String): Unit = {
+        super.onTagEnd(tagName)
+        // Нужно отковырять из доки ту дату, которая имелась в виду. Гидрометцентр не указывает год, только день и месяц.
         val reader = new CharArrayReader(sb.toArray)
-        val tokens = an.normTokensReaderRev(reader)
-        tokens.find { token =>
-          DAY_OF_MONTH_RE.pattern.matcher(token).matches()
-        }.foreach { dayOfMonthStr =>
-          val dayOfMonth = dayOfMonthStr.toInt
-          val d0 = if (dayOfMonth < today.getDayOfMonth) {
-            today.plusMonths(1)
-          } else {
-            today
+        val tokensRev = today.getYear.toString :: an.normTokensReaderRev(reader)
+        val s = tokensRev.reverse.mkString(" ")
+        DateParseUtil
+          .extractDates(s)
+          .headOption
+          .foreach { d0 =>
+            dw.date = d0
           }
-          dw.date = d0.withDayOfMonth(dayOfMonth)
-        }
       }
     }
 
@@ -181,6 +130,7 @@ class GidrometRssSax(maim: MAiCtx)
       sb.appendAll(ch, start, length)
     }
     override def onTagEnd(tagName: String): Unit = {
+      super.onTagEnd(tagName)
       val reader = new CharArrayReader(sb.toArray)
       val tokens = an.normTokensReaderDirect(reader)
         .mkString(" ")
@@ -194,24 +144,6 @@ class GidrometRssSax(maim: MAiCtx)
       }
     }
   }
-
-
-  class LiTagHandler(val thisTagAttrs: Attributes) extends ItemElementHandlerT with DescrElementHandlerT {
-    override def thisTagName = "li"
-    override def _dw = dw
-    override def startTag(tagName: String, attributes: Attributes): Unit = {
-      if (tagName == "a") {
-        // Ссылка содержит заголовок. Нужно его распарсить.
-        become(new ATitleTagHandler(attributes))
-      }
-    }
-
-    /** RSS-title tika FeedParser транслирует в html-ссылку. */
-    class ATitleTagHandler(val thisTagAttrs: Attributes) extends TitleElementHandlerT {
-      override def thisTagName = "a"
-    }
-  }
-
 
 
   /** Обработчик тега верхнего уровня. */
@@ -251,26 +183,56 @@ class GidrometRssSax(maim: MAiCtx)
    */
   class ItemTagHandler(val thisTagAttrs: Attributes) extends ItemElementHandlerT {
     override def thisTagName = "item"
+    var sourceDate: Option[LocalDate] = None
 
     override def startTag(tagName: String, attributes: Attributes): Unit = {
       val nextState = if (tagName == "title") {
         new TitleTagHandler(attributes)
       } else if (tagName == "description") {
         new DescriptionTagHandler(attributes)
+      } else if (tagName == "source") {
+        new SourceTagHandler(attributes)
       } else {
         new DummyHandler(tagName, attributes)
       }
       become(nextState)
     }
 
+    override def endTag(tagName: String): Unit = {
+      if (sourceDate.isDefined)
+        // TODO Прогноз, составленный 31 декабря будет выдавать неправильный год для первого января.
+        dw.date = dw.date.withYear(sourceDate.get.getYear)
+      super.endTag(tagName)
+    }
+
     /** Тело title-тега содержит название города и дату, на которую приходится прогноз (без года!) */
-    class TitleTagHandler(val thisTagAttrs: Attributes) extends ItemElementHandlerT {
+    class TitleTagHandler(val thisTagAttrs: Attributes) extends TitleElementHandlerT {
       override def thisTagName = "title"
     }
 
     /** Парсер описания погоды. Здесь содержится вся инфа по погоде. */
     class DescriptionTagHandler(val thisTagAttrs: Attributes) extends DescrSubElementHandlerT {
       override def thisTagName = "description"
+    }
+
+    /** source содержит какую-то инфу об источнике данных. Отсюда нам нужен только год. */
+    class SourceTagHandler(val thisTagAttrs: Attributes) extends TagHandler {
+      override def thisTagName = "source"
+      val sb = new StringBuilder(64)
+
+      override def characters(ch: Array[Char], start: Int, length: Int): Unit = {
+        super.characters(ch, start, length)
+        sb.appendAll(ch, start, length)
+      }
+
+      override def endTag(tagName: String): Unit = {
+        DateParseUtil.extractDates(sb.toString())
+          .headOption
+          .foreach { d0 =>
+            sourceDate = Some(d0)
+          }
+        super.endTag(tagName)
+      }
     }
   }
 

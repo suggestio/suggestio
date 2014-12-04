@@ -1,7 +1,7 @@
 package util.ai.sax
 
 import io.suggest.sax.SaxContentHandlerWrapper
-import org.xml.sax.{ContentHandler, Locator, Attributes, SAXParseException}
+import org.xml.sax._
 import org.xml.sax.helpers.DefaultHandler
 
 /**
@@ -12,7 +12,7 @@ import org.xml.sax.helpers.DefaultHandler
  */
 
 /** Реализация обходчика дерева тегов с помощью стековый конечный автомат. */
-trait StackFsmSax extends SaxContentHandlerWrapper {
+trait StackFsmSax extends SaxContentHandlerWrapper with ErrorHandler {
 
   override def contentHandler: ContentHandler = handlersStack.head
 
@@ -48,6 +48,14 @@ trait StackFsmSax extends SaxContentHandlerWrapper {
   }
 
 
+  /** Экщепшен на тему получения очень неожиданного тега. */
+  def unexpectedTag(tagName: String) = {
+    val ex = new SAXParseException(s"Unexpected tag: '$tagName' on state ${handlersStack.headOption.getClass.getSimpleName}.", locator)
+    fatalError(ex)
+    throw ex
+  }
+
+
   /** Базовый интерфейс для написания обработчиков тегов в рамках этого парсера. */
   trait TagHandler extends DefaultHandler {
     def thisTagName: String
@@ -77,7 +85,7 @@ trait StackFsmSax extends SaxContentHandlerWrapper {
     }
 
     def endTag(tagName: String) {
-      if (tagName == tagName && handlersStack.head == this) {
+      if ((tagName equalsIgnoreCase thisTagName) && (handlersStack.head == this)) {
         onTagEnd(tagName)
         unbecome()
       } else {
