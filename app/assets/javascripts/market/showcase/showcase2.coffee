@@ -1193,11 +1193,18 @@ sm =
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
 
+        #console.log sm.geo.location_node
+        #console.log geogoBack
+
+        # TODO очень странный кусок кода
+        ###
         if geogoBack == "false"
           sm.states.gb_mart_id = cs.mart_id
         else
           if cs.mart_id == sm.geo.location_node._id
             sm.states.gb_mart_id = cs.mart_id
+        ###
+        sm.states.gb_mart_id = cs.mart_id
 
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
@@ -2626,8 +2633,6 @@ sm =
     process_state_2 : ( state ) ->
 
       cs = @.cur_state()
-
-      console.log cs
 
       sm.warn 'process_state_2 invoked'
       sm.warn state
