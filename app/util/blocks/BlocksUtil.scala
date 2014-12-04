@@ -1,6 +1,6 @@
 package util.blocks
 
-import models.blk.{BlockWidths, BlockHeights}
+import models.blk._
 import models.im.MImg
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -18,23 +18,13 @@ import play.twirl.api.{HtmlFormat, Template5}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.14 21:50
- * Description:
+ * Description: Всякая утиль для блоков, в основном для редактора блоков.
  */
 
 object BlocksUtil {
 
   type BlockImgEntry = (String, MImg)
   type BlockImgMap = Map[String, MImg]
-
-  val BLOCK_ID_FN = "blockId"
-
-  val I18N_PREFIX = "blocks.field."
-
-  /** Цвет фона под картинкой, когда та ещё не загружена. */
-  val IMG_BG_COLOR_FN = "ibgc"
-
-  val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
-    .transform[String](strTrimSanitizeF, strIdentityF)
 
   def bDescriptionM = publishedTextM
 
@@ -49,13 +39,6 @@ object BlocksUtil {
 
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
 
-  /** Линейка размеров шрифтов. */
-  val FONT_SIZES_DFLT: List[FontSize] = List(
-    FontSize(10, 8), FontSize(12, 10), FontSize(14, 12), FontSize(16, 14),
-    FontSize(18, 16), FontSize(22, 20), FontSize(26, 24), FontSize(30, 28), FontSize(34, 30), FontSize(38, 34),
-    FontSize(42, 38), FontSize(46, 42), FontSize(50, 46), FontSize(54, 50), FontSize(58, 54), FontSize(62, 58),
-    FontSize(66, 62), FontSize(70, 66), FontSize(74, 70), FontSize(80, 76), FontSize(84, 80)
-  )
 }
 
 
@@ -176,7 +159,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: List[FontSize]
+  def withFontSizes: Iterable[FontSize]
   def withFontSize = withFontSizes.nonEmpty
   def fontSizeDflt: Option[Int]
   def fontForSize(sz: Int): Option[FontSize] = withFontSizes.find(_.size == sz)
@@ -184,9 +167,11 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
-  def getFontMapping = MarketAdFormUtil.getFontM(
-    withFontSizes = withFontSizes
-  )
+  def getFontMapping = {
+    MarketAdFormUtil.getFontM(
+      withFontSizes = withFontSizes
+    )
+  }
 
   def withCoords: Boolean
 }
@@ -245,7 +230,7 @@ case class BfPrice(
   offerNopt       : Option[Int] = None,
   defaultValue    : Option[AOPriceField] = None,
   withFontColor   : Boolean = true,
-  withFontSizes   : List[FontSize] = FONT_SIZES_DFLT,
+  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
   dfltFontSize    : Option[Int] = None,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
@@ -283,7 +268,7 @@ case class BfText(
   minLen          : Int = 0,
   maxLen          : Int = 16000,
   withFontColor   : Boolean = true,
-  withFontSizes   : List[FontSize] = FONT_SIZES_DFLT,
+  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
   withCoords      : Boolean = true,

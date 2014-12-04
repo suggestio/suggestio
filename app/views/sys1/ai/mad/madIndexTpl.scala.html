@@ -1,0 +1,65 @@
+@(ais: Seq[ai.MAiMad])(implicit ctx: Context)
+
+@* Заглавная страница, отражающая генераторы карточек s.io. *@
+
+@import ctx._
+@import helper._
+
+@hPathAfter1 = {
+}
+
+@madAiBase("Mad AI", Some(hPathAfter1)) {
+
+  <p>Управление генераторами карточек происходит здесь.</p>
+
+  <p>
+    <a href="@routes.SysAi.createMadAi()">Создать новый генератор...</a>
+  </p>
+
+  @if(ais.isEmpty) {
+    <p>Пока не создано ни одного генератора.</p>
+  } else {
+    <table>
+      <thead>
+        <tr>
+          <th title="Глобальный id генератора будет в выпадающей подсказке.">Отображаемое имя</th>
+          <th>Действия</th>
+          <th>Источники</th>
+          <th>Рендереры</th>
+          <th>Карточки</th>
+          <th>Описание</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @ais.map { mai =>
+          <tr>
+            <td title="id: @mai.id">
+              <strong>@mai.name</strong>
+            </td>
+            <td>
+              @form(routes.SysAi.runMadAi(mai.id.get)) {
+                <input type="submit" value="Выполнить" /><br/>
+              }
+              <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")...</a>
+            </td>
+            <td>
+              @mai.sources.map { src =>
+                <a href="http://anonym.to/?@src.url" title="@src.url">URL</a>
+                <br/>
+                @src.contentHandlers.map { ch => @ch.name<br/> }
+              }
+            </td>
+            <td>@mai.renderers.map { rrr => @rrr.name<br/> }</td>
+            <td>
+              Шаблон: @mai.tplAdId<br/>
+              Цели: @mai.targetAdIds.map { tai => <br/>@tai }
+            </td>
+            <td>@mai.descr</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+}

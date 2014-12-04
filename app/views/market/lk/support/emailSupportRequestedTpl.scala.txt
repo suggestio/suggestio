@@ -13,5 +13,5 @@
 @lsr.replyEmail
 ------------------------------------------
 
-@adnIdOpt.map { adnId => Узел сети: @ctx.myAudienceUrl@routes.MarketLkAdn.showAdnNode(adnId)}
-@if(r.isDefined) { URL страницы: @ctx.myAudienceUrl@r }
+@adnIdOpt.map { adnId => Узел сети: @ctx.LK_URL_PREFIX@routes.MarketLkAdn.showAdnNode(adnId)}
+@if(r.isDefined) { URL страницы: @ctx.SC_URL_PREFIX@r }

@@ -9,4 +9,4 @@
 Указанная компания: @mir.name
 
 Полное содержимое запроса:
-@ctx.myAudienceUrl@routes.SysMarketInvReq.showIR(mir.id.get)
+@ctx.LK_URL_PREFIX@routes.SysMarketInvReq.showIR(mir.id.get)

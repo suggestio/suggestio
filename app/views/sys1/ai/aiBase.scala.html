@@ -1,0 +1,17 @@
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для /sys/ai раздела. *@
+
+@import sys1._
+
+@hPathAfter1 = {
+  / <a class="blue-link" href="@routes.SysAi.index()">AI</a>
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
+}
+
+
+@sysBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1),
+  headAfter = headAfter
+)(content)

@@ -1,4 +1,5 @@
-@(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None, headAfter: Option[Html] = None, cssClass: Option[String] = None, style: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* База для шаблонов блоков. *@
 
@@ -32,10 +33,9 @@
 }
 
 @* Тут постоянный div блока выдачи. Сюда рендерится блок. *@
-@* TODO добавить класс __size-"args.szMult *@
-<div class="sm-block height-@mad.blockMeta.height width-@mad.blockMeta.width sio-mart__single-offer sm-block-tpl@bc.id @mad.id.map { madId =>sm-block@madId} __size-@args.szMult @cssClass"
-     data-width="@mad.blockMeta.width" data-height="@mad.blockMeta.height" data-mad-id="@mad.id"
-     @style.map { _style => style="@_style" }>
+<div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.withCssClasses"
+     data-width="@((mad.blockMeta.width * args.szMult).toInt)" data-height="@((mad.blockMeta.height * args.szMult).toInt)"
+     data-mad-id="@mad.id" data-wide-bg="@args.wideBg.isDefined" >
   @content
 </div>
 

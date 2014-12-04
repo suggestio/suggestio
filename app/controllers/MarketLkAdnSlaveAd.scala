@@ -118,10 +118,10 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
   def _showSlaveAds(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     // Тут подборка рекламы, которая собственная для указанного узла-продьюсера.
     val listAdnId = List(adnId)
-    val req = AdSearch(
-      receiverIds = request.supNode.id.get :: listAdnId,
-      producerIds = listAdnId
-    )
+    val req = new AdSearch {
+      override def receiverIds = request.supNode.id.get :: listAdnId
+      override def producerIds = listAdnId
+    }
     MAd.dynSearchRt(req) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,

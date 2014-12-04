@@ -1,0 +1,15 @@
+@(gf: Form[_])(implicit ctx: Context)
+
+@* Рендер страницы с формой создания новой галереи. *@
+
+@import ctx._
+
+@galFormBase("Создание новой галереи картинок") {
+
+  @_galFormTpl(
+    gf          = gf,
+    submitCall  = routes.SysGallery.createGalSubmit(),
+    btnText     = Messages("Create")
+  )
+
+}

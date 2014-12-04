@@ -59,12 +59,6 @@ case class SysAdnNodeBillingArgs(
 
 
 
-/** Выбор высоты шрифта влияет на высоту линии (интерлиньяж) и возможно иные параметры.
-  * В любом случае, ключом является кегль шрифта. */
-case class FontSize(size: Int, lineHeight: Int)
-
-
-
 case class CurrentAdvsTplArgs(
   advs: Seq[MAdvI],
   adv2adn: Map[Int, MAdnNode],

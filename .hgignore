@@ -18,7 +18,7 @@ RUNNING_PID
 *.swp
 *.rej
 *.orig
-conf/application.conf
+conf/application.conf*
 .DS_Store
 dout/
 *.log
@@ -28,3 +28,4 @@ picture
 *.zip
 *.rar
 *.gz
+conf/elasticsearch.yml*

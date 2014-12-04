@@ -18,7 +18,7 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
 
   /** Т.к. контекст может быть не настроен в конфиге, то нужно рендерить сообщение о проблеме в консоль. */
   def fallbackContext(ck: String, ex: Throwable, dfltPar: EcParInfo): ExecutionContext = {
-    warn(
+    val msg =
       s"""Failed to create execution context. Please add something like this into application.conf:
         |$ck {
         |  fork-join-executor {
@@ -26,9 +26,11 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
         |    parallelism-max = ${dfltPar.parMax}
         |  }
         |}
-      """.stripMargin,
-      ex
-    )
+      """.stripMargin
+    if (ex.isInstanceOf[ConfigurationException])
+      warn(msg)
+    else
+      warn(msg, ex)
     Implicits.defaultContext
   }
 

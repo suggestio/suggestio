@@ -400,10 +400,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
    */
   def showSlave(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     import request.{slaveNode, supNode}
-    val req = AdSearch(
-      receiverIds = List(request.supNode.id.get),
-      producerIds = List(adnId)
-    )
+    val req = new AdSearch {
+      override def receiverIds = List(request.supNode.id.get)
+      override def producerIds = List(adnId)
+    }
     MAd.dynSearchRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
     }

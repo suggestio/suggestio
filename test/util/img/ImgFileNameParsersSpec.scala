@@ -1,5 +1,6 @@
 package util.img
 
+import functional.RegexParsersTesting
 import io.suggest.img.ImgCrop
 import io.suggest.util.UuidUtil.base64ToUuid
 import models._
@@ -14,19 +15,10 @@ import play.api.test.FakeApplication
  * Created: 28.10.14 17:34
  * Description: Тесты для парсеров сериализованных идентификаторов картинок.
  */
-class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNameParsers {
-
-  private def parseExpr[T](p: Parser[T], in: CharSequence): T = {
-    parseAll(p, in) match {
-      case Success(res, _) =>
-        res
-      case NoSuccess(msg, next) =>
-        throw new IllegalArgumentException(s"Could not parse '$in' near ${next.pos.longString}: $msg")
-    }
-  }
+class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNameParsers with RegexParsersTesting {
 
   /** Для тестирования парсера с удобным выводом ошибок лучше использовать сие: */
-  private def parseFileName(f: CharSequence) = parseExpr(fileNameP, f)
+  private def parseFileName(f: CharSequence) = parseSuccess(fileNameP, f)
 
 
   "Parser 'fileNameP'" must {

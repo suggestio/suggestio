@@ -1,21 +1,31 @@
-@(args: SMShowcaseRenderArgs)(implicit ctx: Context)
+@(args: ScRenderArgs)(implicit ctx: Context)
 
-@stuff.scrollableContainerTpl( "sm-categories", "smCategories",  stuff._bgcolor( args.bgColor, false ).toString ){
+@stuff.scrollableContainerTpl( "sm-categories", "smCategories",  style = Some(stuff._bgcolor( args.bgColor, false ).toString + "height: 83%;") ){
 
   <div class="categories-list">
   @args.mmcats.zipWithIndex.map { case (mmcat, index) =>
 
     @if( index%2==0 && index!=0 ){ <div class="categories-list_horizontal-delimiter"></div> }
 
-    <span class="categories-list_single-cat categorie js-cat-link @if(!(args.catsStats contains mmcat.id.get)) {__disabled}" data-cat-class="@mmcat.cssClass" data-cat-id="@mmcat.id">
+    @defining( !(args.catsStats contains mmcat.id.get) ) { isDisabled =>
+      @if(!isDisabled) {
+        @args.jsStateOpt.map { jsState =>
+          <a href="@args.syncUrl( jsState.copy(tilesCatIdOpt = mmcat.id, searchScrOpenedOpt = None) )">
+        }
+      }
+      <span class="categories-list_single-cat categorie js-cat-link @if(isDisabled) {__disabled}" data-cat-class="@mmcat.cssClass" data-cat-id="@mmcat.id">
 
-      <div class="categorie_icon __@mmcat.cssClass">
-        @svg._catIconTpl( mmcat.cssClass, args.fgColor )
-      </div>
+        <div class="categorie_icon __@mmcat.cssClass">
+          @svg._catIconTpl( mmcat.cssClass, args.fgColor )
+        </div>
 
-      <div class="categorie_name" style="color: #@args.fgColor;">@mmcat.name</div>
+        <div class="categorie_name" style="color: #@args.fgColor;">@mmcat.name</div>
 
-    </span>
+      </span>
+      @if(!isDisabled && args.jsStateOpt) {
+        </a>
+      }
+    }
 
   }
 

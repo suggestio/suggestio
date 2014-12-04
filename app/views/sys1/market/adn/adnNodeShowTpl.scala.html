@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, slaves:Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, slaves: Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 @import ctx._
@@ -8,14 +8,12 @@
 
 
 @* Подшаблон генерации квадратной кнопки. *@
-@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+@btn(href: Call, paddingPx: Int)(btnText: Html) = {
   <div class="i __btn">
 
     <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
       @btnText
     </a>
-
-    @afterBtn
   </div>
 }
 
@@ -50,15 +48,15 @@
 
   <div class="i-list">
 
-    @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }{ }
+    @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
 
     @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
-      @btn(siteCall, 40) { demo<br/>WebSite } { }
+      @btn(siteCall, 40) { demo<br/>WebSite }
     }
 
-    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { BILLING }{ }
+    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { BILLING }
 
-    @btn(routes.SysAdnGeo.forNode(adnNode.id.get), 52) { GEO }{ }
+    @btn(routes.SysAdnGeo.forNode(adnNode.id.get), 52) { GEO }
   </div>
 
 
@@ -112,11 +110,23 @@
 
   }
 
+
   @market.lk.lkBlock("Управление") {
 
-    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList)), 28) { Собственные<br/>рекламные<br/>карточки }{ }
-    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList)), 28) { Рекламные<br/>карточки<br/>в выдаче }{ }
-    @btn(routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get), 28) { Инвайты на<br/>управление<br/> узлом }{ }
+    @btn(
+      href = routes.SysMarket.showAdnNodeAds(new AdSearch { override def producerIds = adnNode.id.toList }),
+      paddingPx = 28
+    ) { Собственные<br/>рекламные<br/>карточки }
+
+    @btn(
+      href = routes.SysMarket.showAdnNodeAds(new AdSearch { override def receiverIds = adnNode.id.toList }),
+      paddingPx  = 28
+    ) { Рекламные<br/>карточки<br/>в выдаче }
+
+    @btn(
+      href = routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get),
+      paddingPx = 28
+    ) { Инвайты на<br/>управление<br/> узлом }
 
   }
 
@@ -129,10 +139,9 @@
 
   @market.lk.lkBlock("Модерация бесплатного размещения") {
 
-      <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
-      <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
-      <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
-
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
   }
 
 

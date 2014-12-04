@@ -330,7 +330,7 @@ trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
   def geoId: String
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AdnGeoRequest[A]) => Future[Result]): Future[Result] = {
-  val pwOpt = PersonWrapper.getFromRequest(request)
+    val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper isSuperuser pwOpt) {
       val srmFut = SioReqMd.fromPwOpt(pwOpt)
       MAdnNodeGeo.get(geoId, adnId) flatMap {
@@ -354,4 +354,86 @@ case class IsSuperuserAdnGeo(geoId: String, adnId: String)
   extends IsSuperuserAdnGeoAbstract
   with ExpireSession[AdnGeoRequest]
 
+
+
+/** Суперюзер запрашивает доступ к галерее. */
+trait IsSuperuserGalleryAbstract extends ActionBuilder[GalleryRequest] {
+  def galId: String
+
+  override def invokeBlock[A](request: Request[A], block: (GalleryRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper isSuperuser pwOpt) {
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      im.MGallery.getById(galId) flatMap {
+        case Some(gallery) =>
+          srmFut flatMap { srm =>
+            val req1 = GalleryRequest(gallery, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None =>
+          galNotFound
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+  def galNotFound: Future[Result] = {
+    val res = Results.NotFound(s"Gallery $galId not found.")
+    Future successful res
+  }
+}
+case class IsSuperuserGallery(galId: String)
+  extends IsSuperuserGalleryAbstract
+  with ExpireSession[GalleryRequest]
+
+/** Реквест запроса к галерее. */
+case class GalleryRequest[A](
+  gallery   : im.MGallery,
+  pwOpt     : PwOpt_t,
+  request   : Request[A],
+  sioReqMd  : SioReqMd
+) extends AbstractRequestWithPwOpt(request)
+
+
+
+/** IsSuperuser + доступ к указанному MAiMad. */
+trait IsSuperuserAiMadAbstract extends ActionBuilder[AiMadRequest] {
+  def aiMadId: String
+
+  override def invokeBlock[A](request: Request[A], block: (AiMadRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    val madAiFut = ai.MAiMad.getById(aiMadId)
+    if (PersonWrapper isSuperuser pwOpt) {
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      madAiFut flatMap {
+        case Some(madAi) =>
+          srmFut flatMap { srm =>
+            val req1 = AiMadRequest(madAi, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None => aiMadNotFound
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+  def aiMadNotFound: Future[Result] = {
+    val res = Results.NotFound(s"MAiMad($aiMadId) not found.")
+    Future successful res
+  }
+}
+case class IsSuperuserAiMad(aiMadId: String)
+  extends IsSuperuserAiMadAbstract
+  with ExpireSession[AiMadRequest]
+/** Реквест с доступом к aiMad. */
+case class AiMadRequest[A](
+  aiMad     : ai.MAiMad,
+  pwOpt     : PwOpt_t,
+  request   : Request[A],
+  sioReqMd  : SioReqMd
+) extends AbstractRequestWithPwOpt(request)
 

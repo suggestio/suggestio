@@ -65,9 +65,7 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   import Implicts.sn
 
   private def deleteAdsOnAdnNodeDeleteSNSC = new SNStaticSubscriber {
-    def snMap: Seq[(Classifier, Seq[Subscriber])] = {
-      DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
-    }
+    def snMap = DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
   }
 
 }

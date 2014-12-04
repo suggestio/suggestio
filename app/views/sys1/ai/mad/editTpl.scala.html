@@ -1,0 +1,19 @@
+@(mai: ai.MAiMad, mf: Form[ai.MAiMad])(implicit ctx: Context)
+
+@* Страница с формой создания нового MAiMad. *@
+
+@import ctx._
+@import stuff._
+
+@madAiBase("Редактировать генератор " + mai.name) {
+
+  @_deleteSmthFormBtnTpl( routes.SysAi.deleteMadAi(mai.id.get) )
+
+  @_formTpl(
+    mf          = mf,
+    submitCall  = routes.SysAi.editMadAiSubmit(mai.id.get),
+    btnText     = Messages("Save")
+  )
+
+}
+

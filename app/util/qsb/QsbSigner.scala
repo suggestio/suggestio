@@ -53,12 +53,16 @@ with PlayMacroLogsImpl
 
   /** Посчитать подпись для указанной карты параметров. */
   def mkSignForMap(key: String, params: Map[String, Seq[String]]): String = {
+    val params2 = onlyParamsForKey(key, params)
+    mkSignForMap(params2)
+  }
+  def mkSignForMap(params: TraversableOnce[(String, Seq[String])]): String = {
     val mac = mkMac
     // Объявляем вне цикла используемые разделители ключей, значений и их пар:
     val kvDelim = "=".getBytes
     val kkDelim = "&".getBytes
     // Нужно отсортировать все данные:
-    onlyParamsForKey(key, params)
+    params.toIterator
       .map { case (k, vs) => k -> vs.sorted}
       .toSeq
       .sortBy(_._1)
@@ -86,11 +90,11 @@ with PlayMacroLogsImpl
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Map[String, Seq[String]]]] = {
     strB.bind(signKeyName, params).map { maybeSignature =>
       maybeSignature.right.flatMap { signature =>
-        val realSignature = mkSignForMap(key, params)
+        val pfk = onlyParamsForKey(key, params).toStream
+        val realSignature = mkSignForMap(pfk)
         if (realSignature equalsIgnoreCase signature) {
           // Всё ок, собираем подходящие результаты в кучу.
-          val params2 = onlyParamsForKey(key, params).toMap
-          Right(params2)
+          Right(pfk.toMap)
         } else {
           warn(s"Invalid qsb signature for key '$key': expected=$signature real=$realSignature\n params = $params")
           Left(SIG_INVALID_MSG)

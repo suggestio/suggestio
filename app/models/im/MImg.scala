@@ -12,13 +12,12 @@ import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
+import util.secure.SecretGetter
 import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
-import play.api.Play.{current, configuration}
+import play.api.Play.{current, configuration, isProd}
 import util.img.{ImgFileNameParsers, ImgFormUtil}
 
-import scala.annotation.tailrec
 import scala.concurrent.Future
-import scala.util.Random
 
 /**
  * Suggest.io
@@ -33,7 +32,7 @@ import scala.util.Random
  */
 
 
-object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
+object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
 
   import LOGGER._
 
@@ -45,32 +44,12 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers {
 
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
   private[models] val SIGN_SECRET: String = {
-    val confKey = "dynimg.sign.key"
-    configuration.getString(confKey) getOrElse {
-      if (play.api.Play.isProd) {
-        // В продакшене без ключа нельзя. Генерить его и в логи писать его тоже писать не стоит наверное.
-        throw new IllegalStateException(s"""Production mode without dyn-img signature key defined is impossible. Please define '$confKey = ' like 'application.secret' property with 64 length.""")
-      } else {
-        // В devel/test-режимах допускается использование рандомного ключа.
-        val rnd = new Random()
-        val len = 64
-        val sb = new StringBuilder(len)
-        // Избегаем двойной ковычи в ключе, дабы не нарываться на проблемы при копипасте ключа в конфиг.
-        @tailrec def nextPrintableCharNonQuote: Char = {
-          val next = rnd.nextPrintableChar()
-          if (next == '"' || next == '\\')
-            nextPrintableCharNonQuote
-          else
-            next
-        }
-        for(i <- 1 to len) {
-          sb append nextPrintableCharNonQuote
-        }
-        val result = sb.toString()
-        warn(s"""Please define secret key for dyn-img cryto-signing in application.conf:\n  $confKey = "$result" """)
-        result
-      }
+    val sg = new SecretGetter {
+      override val confKey = "dynimg.sign.key"
+      override def useRandomIfMissing = isProd
+      override def LOGGER = model.LOGGER
     }
+    sg()
   }
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */

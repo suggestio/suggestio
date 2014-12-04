@@ -5,10 +5,11 @@ import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{SzMult_t, BlockWidth, BlockHeights, BlockWidths}
-import models.im.DevPixelRatios
+import models.im.{DevScreenT, DevPixelRatios}
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -63,12 +64,12 @@ object ShowcaseUtil {
    * @param adnIdOpt id узла, если есть.
    * @return Кортеж из фьючерса с картой статистики категорий и списком отображаемых категорий.
    */
-  def getCats(adnIdOpt: Option[String]) = {
-    val catAdsSearch = AdSearch(
-      receiverIds   = adnIdOpt.toList,
-      maxResultsOpt = Some(100),
-      levels        = List(AdShowLevels.LVL_CATS)
-    )
+  def getCats(adnIdOpt: Option[String]): GetCatsResult = {
+    val catAdsSearch = new AdSearch {
+      override def receiverIds    = adnIdOpt.toList
+      override def maxResultsOpt  = Some(100)
+      override def levels         = List(AdShowLevels.LVL_CATS)
+    }
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
       .map { _.toMap }
@@ -101,7 +102,7 @@ object ShowcaseUtil {
           .map { _.sortBy(MMartCategory.sortByMmcat) }
       }
     }
-    (catsStatsFut, mmcatsFut)
+    GetCatsResult(catsStatsFut, mmcatsFut)
   }
 
 
@@ -159,16 +160,11 @@ object ShowcaseUtil {
     } else {
 
       // Если ширина экрана позволяет, то нужно отрендерить в увеличенном размере:
+      // TODO Тут кажется какой-то велосипед. Сначала определяется оптимальный szMult для картинки, потом идёт прочая мудотряска.
       val devScrHasDoubleWidth: Boolean = {
         ctx.deviceScreenOpt.exists { devScr =>
-          val nonWideImgRenderSz = BgImg.getRenderSz(
-            szMult      = FOCUSED_SZ_MULT,
-            blockMeta   = mad.blockMeta,
-            devScreenSz = devScr,
-            pxRatioOpt  = Some(DevPixelRatios.MDPI)   // Узнаём реально отображаемое разрешение в css-пикселях.
-          )
-          // Если ширина экрана намекает, то рендерим на широкую.
-          nonWideImgRenderSz.width  <  devScr.width
+          val wantSzMult = FOCUSED_SZ_MULT
+          BgImg.getImgResMult(wantSzMult, mad.blockMeta, devScr, Some(DevPixelRatios.MDPI)) >= wantSzMult
         }
       }
       // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
@@ -185,6 +181,60 @@ object ShowcaseUtil {
         wideBg        = None
       )
       Future successful bra
+    }
+  }
+
+
+  /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
+  val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
+    .map { _.map(_.toFloat).toList }
+    .getOrElse { List(1.1F, 1.2F, 1.3F, 1.4F) }
+
+  /** Горизонтальное расстояние между блоками. */
+  val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
+
+  /** Макс. кол-во вертикальных колонок. */
+  val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+
+  /** Коэфф. масштабирования, когда масштабирование отключено. */
+  val TILE_SZ_MULT0 = 1.0F
+
+  /**
+   * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
+   * @param ctx Контекст грядущего рендера.
+   * @return SzMult_t выбранный для рендера.
+   */
+  def getSzMult4tiles(implicit ctx: Context): SzMult_t = {
+    ctx.deviceScreenOpt
+      .fold [SzMult_t] (TILE_SZ_MULT0) { getSzMult4tiles(_) }
+  }
+  def getSzMult4tiles(dscr: DevScreenT): SzMult_t = {
+    val blockWidthPx = BlockWidths.NORMAL.widthPx
+    // Кол-во колонок на экране в исходном масштабе:
+    val colCnt = Math.min(TILE_MAX_COLUMNS,
+      (dscr.width - TILE_PADDING_CSSPX) / (blockWidthPx + TILE_PADDING_CSSPX)
+    )
+    if (colCnt <= 0) {
+      // Экран довольно узок - тут нечего вычислять пока, всё равно выйдет минималка.
+      TILE_SZ_MULT0
+    } else {
+      @tailrec def detectSzMult(lastSzMult: SzMult_t, restSzMults: List[SzMult_t]): SzMult_t = {
+        if (restSzMults.isEmpty) {
+          lastSzMult
+        } else {
+          val nextSzMult = restSzMults.head
+          // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
+          val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt + 1) * nextSzMult
+          // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
+          if (w1 > 20F)
+            detectSzMult(nextSzMult, restSzMults.tail)
+          else if (w1 >= 0F)
+            nextSzMult
+          else
+            lastSzMult
+        }
+      }
+      detectSzMult(TILE_SZ_MULT0, TILES_SZ_MULTS)
     }
   }
 

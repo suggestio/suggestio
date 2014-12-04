@@ -230,7 +230,7 @@ object MBillContract extends SqlModelStatic with FromJson {
     import LOGGER._
 
     /** Подписка на события. */
-    override def snMap: Seq[(Classifier, Seq[Subscriber])] = List(
+    override def snMap = List(
       AdnNodeDeletedEvent.getClassifier() -> Seq(this)
     )
 

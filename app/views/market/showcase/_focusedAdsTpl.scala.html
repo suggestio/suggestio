@@ -1,37 +1,47 @@
-@(mads: Seq[MAd], adSearch: AdSearch, producer: MAdnNode, bgColor: String, brArgs: blk.RenderArgs, adsCount: Int, startIndex: Int = 0)(implicit ctx: Context)
+@(args: FocusedAdsTplArgs)(implicit ctx: Context)
 
 @* Рендер под-выдачи для просмотра развёрных карточек.
    Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
 @import util.cdn.CdnUtil
 
-@defining( producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
-@* Список карточек указанного продюссера *@
-<div class="sm-producer-header abs" style="@stuff._bgcolor( bgColor )">
+@defining( args.producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
 
+@* Список карточек указанного продюссера *@
+<div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
+
+  @args.jsStateOpt.map { jsState =>
+    <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = None, fadsOffsetOpt = None) )">
+  }
   <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="closeFocusedAdsButton">
     @svg._backArrowLeft( fgColor )
   </div>
+  @if(args.jsStateOpt) {
+    </a>
+  }
 
-  @producer.logoImgOpt.map { logoImg =>
+  @args.producer.logoImgOpt.map { logoImg =>
     @* TODO Нужно ссылку на логотип генерить исходя из экрана клиента, а не с потолка. *@
     <img class="sm-producer-header_logo" height="30" src="@CdnUtil.dynImg(logoImg.filename)"/>
   }
 
 </div>
 
-<div class="sm-focused-ads_arrow-label fad-arrow-label" id="smFocusedAdsArrowLabel" style="background-color: #@bgColor;">
+
+<div class="sm-focused-ads_arrow-label fad-arrow-label" id="smFocusedAdsArrowLabel" style="background-color: #@args.bgColor;">
   <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(fgColor)</div>
   <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(fgColor)</div>
 </div>
 
+
 @* Контейнер с прокручивающимися офферами *@
-<div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@adsCount">
+<div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@args.adsCount">
   <span id="ads0">
-  @mads.zipWithIndex.map { case (mad, index) =>
-    @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount, brArgs = brArgs)
-  }
+    @_focusedAdTpl(args.mad,  args.startIndex,  args.producer,  adsCount = args.adsCount, brArgs = args.brArgs)
   </span>
-  @_focusedAdLoaderTpl(bgColor)
+  @if(!args.syncRender) {
+    @_focusedAdLoaderTpl(args.bgColor)
+  }
 </div>
-}
+
+} @* defining *@

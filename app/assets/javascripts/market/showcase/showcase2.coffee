@@ -1,4 +1,5 @@
 cbca_grid =
+  ## DO NOT RENAME this globals. Global variables will be updated from MarketShowcase controller. See util.jsa.cbca.grid._
   cell_size : 140
   cell_padding : 20
   top_offset : 70
@@ -52,6 +53,7 @@ cbca_grid =
       sm.utils.ge('smGridAdsLoader').style.width = cw + 'px'
 
     this.columns = this.columns - this.left_offset - this.right_offset
+
 
   ##############
   ## Fetch block
@@ -711,6 +713,10 @@ sm =
 
     init : () ->
 
+      console.log "deprecated method"
+      return false
+
+      ###
       style_tags = sm.utils.ge_tag('code', true)
 
       css = ''
@@ -722,10 +728,11 @@ sm =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
-      sm.utils.ge_tag('head')[0].appendChild(style_dom)
+      sm.utils.ge_tag('body')[0].appendChild(style_dom)
       this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
+      ###
 
   #########################
   ## History Api navigation
@@ -1467,11 +1474,47 @@ sm =
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
+  resources :
+
+    common :
+
+      init : () ->
+        if sm.utils.ge("smResources") != null
+          sm.utils.re("smResources")
+
+        sm_resources_attr =
+          id : "smResources"
+
+        sm_resources = sm.utils.ce "div", sm_resources_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources
+
+    focused :
+
+      clear : () ->
+        sm.utils.ge("smResourcesFocused").innerHTML = ""
+
+      init : () ->
+        if sm.utils.ge("smResourcesFocused") != null
+          sm.utils.re("smResourcesFocused")
+
+        sm_resources_focused_attr =
+          id : "smResourcesFocused"
+
+        sm_resources_focused = sm.utils.ce "div", sm_resources_focused_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources_focused
+
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
 
   draw_layout : () ->
+
+    this.resources.common.init()
+    this.resources.focused.init()
 
     if sm.utils.ge('sioMartRoot') != null
       sm.utils.re('sioMartRoot')
@@ -1484,6 +1527,7 @@ sm =
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
     sm_layout.style.display = 'none'
+
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
@@ -1666,7 +1710,7 @@ sm =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        sm.styles.init()
+        #sm.styles.init()
 
         if data.action == 'searchAds'
           if cbca_grid.ww <= 400
@@ -1889,7 +1933,7 @@ sm =
 
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
-      sm.styles.init()
+      #sm.styles.init()
 
     check_if_fully_loaded : () ->
 
@@ -1918,19 +1962,37 @@ sm =
         _block_width = _b.getAttribute 'data-width'
 
         if cbca_grid.ww >= 660
-          sm.utils.addClass _b, 'double-size'
+          #sm.utils.addClass _b, 'double-size'
           _block_width = _block_width*2
           padding = 0
         else
-          sm.utils.removeClass _b, 'double-size'
+          #sm.utils.removeClass _b, 'double-size'
           padding = 0
           _block_width = 300
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
+
+        _block_wideBg = _b.getAttribute("data-wide-bg")
+
+        # если карточка растягивается на ширину устройства
+        if _block_wideBg == "true"
+          #console.log _b.getAttribute("class")
+          _b.parentNode.parentNode.parentNode.style.overflow = "hidden"
+          _b.parentNode.parentNode.parentNode.style.position = "relative"
+          _b.style.position = "absolute"
+          _b.style.top = "50px"
+          bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
+          if bg.length > 0
+            bg = bg[0]
+            bg.style.width = "100%"
+        else
+          _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
         sm.utils.addClass _b, '__rel'
+
+        #console.log cbca_grid.ww
+        #console.log cbca_grid.wh
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
@@ -1967,6 +2029,7 @@ sm =
       cb = () ->
         sm.utils.ge('smFocusedAds').style.display = 'none'
         sm.focused_ads.ads_container_dom.innerHTML = ''
+        sm.resources.focused.clear()
 
       setTimeout cb, 200
 
@@ -2062,7 +2125,7 @@ sm =
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
 
-      sm.styles.init()
+      #sm.styles.init()
       this.active_ad_index = 0
 
   ##################################################

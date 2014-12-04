@@ -1,11 +1,11 @@
-@(mmart: MAdnNode, eAct: EmailActivation)(implicit ctx: util.Context)
+@(mmart: MAdnNode, eAct: EmailActivation)(implicit ctx: Context)
 
 @* Шаблон HTML-письма с приглашением на управление торговым центром. *@
 
 Добро пожаловать в SIOMarket!
 
 Для подтверждения регистрации в качестве участника рекламной сети используйте ссылку:
-@ctx.myAudienceUrl@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(mmart.id.get, eaId = eAct.id.get)
+@ctx.LK_URL_PREFIX@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(mmart.id.get, eaId = eAct.id.get)
 
 
 Это письмо отправлено автоматически. Пожалуйста, не отвечайте на это сообщение.

@@ -154,8 +154,8 @@ final case class MInviteRequest(
   override def companion = MInviteRequest
 
   /** Стирание ресурсов, относящихся к этой модели. */
-  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    var fut = super.eraseResources
+  override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    var fut = super.doEraseResources
     fut = MInviteRequest.withEraseLeftResources(fut, company)
     fut = adnNode.fold(fut) { adnNodeEith =>
       MInviteRequest.withEraseLeftResources(fut, adnNodeEith)

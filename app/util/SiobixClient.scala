@@ -64,7 +64,7 @@ object SiobixClient extends SiobixClientWrapperT with SNStaticSubscriber {
   siobixClientImpl.install()
 
   // Костыль, чтобы akka-клиент загрузился в память и проинициализировался по-скорее.
-  override def snMap: Seq[(SioNotifier.Classifier, Seq[SioNotifier.Subscriber])] = Nil
+  override def snMap = Nil
 }
 
 

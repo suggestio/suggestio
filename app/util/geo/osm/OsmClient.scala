@@ -1,11 +1,9 @@
 package util.geo.osm
 
-import java.io._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.iteratee.Iteratee
 import play.api.libs.ws._
 import util.geo.osm.OsmElemTypes.OsmElemType
-import play.api.Play.current
+import util.ws.HttpGetToFile
 import scala.concurrent.Future
 
 /**
@@ -24,29 +22,21 @@ object OsmClient {
    * @return Полученный и распарсенный osm-объект.
    */
   def fetchElement(typ: OsmElemType, id: Long): Future[OsmObject] = {
-    val urlStr = typ.xmlUrl(id)
-    val respFut = WS.url(urlStr)
-      .withFollowRedirects(false)
-      .getStream()
-    respFut.flatMap { case (headers, body) =>
-      if (headers.status != 200)
-        throw OsmClientStatusCodeInvalidException(headers.status)
-      val f = File.createTempFile(s"$typ.$id.", ".osm.xml")
-      val os = new FileOutputStream(f)
-      val iteratee = Iteratee.foreach[Array[Byte]] { bytes =>
-        os.write(bytes)
+    val fetcher = new HttpGetToFile {
+      override def urlStr: String = typ.xmlUrl(id)
+      override def followRedirects: Boolean = false
+      override def statusCodeInvalidException(resp: WSResponseHeaders): Exception = {
+        OsmClientStatusCodeInvalidException(resp.status)
       }
-      // отправлять байты enumerator'а в iteratee, который будет их записывать в файл.
-      (body |>>> iteratee)
-        // Надо дождаться закрытия файла перед вызовом последующего map, который его откроет для чтения.
-        .andThen {
-          case result =>  os.close()
-        }
-        // Открыть файл и распарсить содержимое
-        .map { _ =>
-          OsmUtil.parseElementFromFile(f, typ, id)
-        }
     }
+    fetcher.request()
+      .map { case (headers, file) =>
+        try {
+          OsmUtil.parseElementFromFile(file, typ, id)
+        } finally {
+          file.delete()
+        }
+      }
   }
 
 }

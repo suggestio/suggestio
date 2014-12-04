@@ -31,8 +31,18 @@ logger.models=${logger.application}
 ## TODO Тут какая-то хрень: после второй точки всё как будто игнорируется, а elasticsearch не подхватывает logback.
 #logger.org.elasticsearch=WARN
 
-# Протокол, используемый при генерации ссылок на сайт suggest.io.
-sio.proto.dflt = http
+
+## домен ограниченного доступа: WWW.suggest.io
+sio.sc.hostport = "www.suggest.io"
+sio.sc.proto = "http"
+
+## Домен публичного доступа: MY.suggest.io
+sio.lk.hostport = "my.suggest.io"
+sio.lk.proto = "https"
+
+## Протокол, хост и порт, используемые при генерации ссылок на сайт suggest.io, когда больше ничего уже нет.
+sio.proto.dflt = "http"
+sio.hostport.dflt = "suggest.io"
 
 
 ###############################################################################

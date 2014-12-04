@@ -1,0 +1,39 @@
+@(gals: Seq[im.MGallery], page: Int, pageSz: Int)(implicit ctx: Context)
+
+@import ctx._
+
+@hPathAfter1 = {
+  Все (стр.@page)
+}
+
+@galBase(
+  title = s"Галереи картинок (стр.$page)",
+  hPathAfter = Some(hPathAfter1)
+) {
+
+  @* Рендерим таблицу с галереями. *@
+  @if(gals.isEmpty) {
+    Пока нет галерей.<br/>
+  } else {
+    @_galsTableTpl(gals, withAdmLinks = true)
+  }
+
+  <br/>
+
+
+  @* Ссылка на создание новой галереи. *@
+  <a href="@routes.SysGallery.createGal()">Создать новую галерею...</a>
+
+
+  @* Постраничный вывод галерей. *@
+  <br/><br/>
+  Страницы:
+  @if(page > 0) {
+    <a href="@routes.SysGallery.showList(page - 1)">пред.</a>
+  }
+  @page
+  @if(gals.size >= pageSz) {
+    <a href="@routes.SysGallery.showList(page - 1)">след.</a>
+  }
+
+}

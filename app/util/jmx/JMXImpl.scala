@@ -4,6 +4,7 @@ import io.suggest.ym.model._
 import io.suggest.model._
 import io.suggest.model.inx2._
 import io.suggest.ym.model.stat._
+import models.ai.MAiMadJmx
 import util.SiowebEsUtil.client
 import util.compat.BlocksConfPreStripUtilJmx
 import util.event.SiowebNotifier.Implicts.sn
@@ -45,6 +46,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new SiowebEsModelJmx,
     new MRemoteErrorJmx,
     new BlocksConfPreStripUtilJmx,
+    new MAiMadJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,

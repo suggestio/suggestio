@@ -28,8 +28,9 @@ libraryDependencies ++= Seq(
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.1",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.10.1-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.10.6-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -74,6 +75,8 @@ libraryDependencies ++= Seq(
   // Явный дубляж из util, эти зависимости по факту нужны datastax-cassandra-драйверу, но он их не тянет.
   "org.xerial.snappy" % "snappy-java" % "1.+",
   "net.jpountz.lz4" % "lz4" % "1.+",
+  // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
+  "org.clapper" %% "scalasti" % "2.+",
   // svg
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test
@@ -155,9 +158,15 @@ sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
 
+// org.apache.xmlbeans требует сие зависимостью. иначе proguard не пашет.
+unmanagedJars in Compile ~= {uj => 
+  Seq(Attributed.blank(file(System.getProperty("java.home").dropRight(3)+"lib/tools.jar"))) ++ uj
+}
 
 // proguard: защита скомпиленного кода от реверса.
 proguardSettings
+
+ProguardKeys.proguardVersion in Proguard := "5.1"
 
 ProguardKeys.options in Proguard ++= Seq(
   "-keepnames class * implements org.xml.sax.EntityResolver",
@@ -187,9 +196,14 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
   }""",
+  "-keepclassmembers class * implements models.ai.ContentHandlerResult",
   "-dontnote",
   "-dontwarn",
-  "-ignorewarnings"
+  //"-dontoptimize",    // не пашет из-за какой-то внутренней ошибки
+  //"-dontobfuscate",   // вылетает ошибка java.lang.ClassCastException: java.lang.Object cannot be cast to java.lang.String
+                      //    at proguard.obfuscate.MemberObfuscator.newMemberName(MemberObfuscator.java:198)
+  //"-ignorewarnings"
+  "-verbose"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
