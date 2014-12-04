@@ -5,6 +5,7 @@ import OsmElemTypes.OsmElemType
 import io.suggest.model.geo._
 import org.xml.sax.SAXParseException
 import util.PlayLazyMacroLogsImpl
+import util.parse.SaxParseUtil
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -73,7 +74,7 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
    * @return Найденный osm object.
    */
   def parseElementFromStream(is: InputStream, typ: OsmElemType, id: Long): OsmObject = {
-    val parser = xml.ElementsParser.getSaxFactory.newSAXParser()
+    val parser = SaxParseUtil.getSaxFactoryTolerant.newSAXParser()
     val handler = new xml.ElementsParser
     try {
       parser.parse(is, handler)

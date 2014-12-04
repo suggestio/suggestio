@@ -2,7 +2,7 @@ package models.ai
 
 import io.suggest.model._
 import org.xml.sax.helpers.DefaultHandler
-import util.ai.GetParseResult
+import util.ai.AiContentHandler
 import util.ai.sax.weather.gidromet.GidrometRssSax
 
 /**
@@ -15,7 +15,7 @@ import util.ai.sax.weather.gidromet.GidrometRssSax
 object MAiMadContentHandlers extends EnumMaybeWithName {
   protected sealed abstract class Val(val name: String) extends super.Val(name) {
     /** Собрать новый инстанс sax-парсера. */
-    def newInstance(maim: MAiMad): DefaultHandler with GetParseResult
+    def newInstance(maim: MAiCtx): DefaultHandler with AiContentHandler
   }
 
   type MAiMadContentHandler = Val
@@ -25,7 +25,7 @@ object MAiMadContentHandlers extends EnumMaybeWithName {
   // Тут всякие доступные content-handler'ы.
   /** Sax-парсер для rss-прогнозов росгидромета. */
   val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
-    override def newInstance(maim: MAiMad) = new GidrometRssSax(maim)
+    override def newInstance(maim: MAiCtx) = new GidrometRssSax(maim)
   }
 
 }

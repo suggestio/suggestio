@@ -1,12 +1,10 @@
 package util.ai.mad
 
-import java.io.{FileInputStream, InputStream}
+import java.io.FileInputStream
 
 import io.suggest.ym.model.MAd
 import models.ai._
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
-import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
-import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
 import util.PlayMacroLogsImpl
@@ -43,39 +41,33 @@ object MadAiUtil extends PlayMacroLogsImpl {
   }
 
   /**
-   * Распарсить данные из файла с помощью tika. Нужно собрать список content-handler'ов под запрос и сделать дело.
-   * @param is InputStream с контентом, подлежащим парсингу.
-   * @param maim Экземпляр текущего MAiMad.
-   * @param meta Метаданные.
+   * Распарсить данные из потока с помощью tika. Нужно собрать список content-handler'ов под запрос и сделать дело.
+   * @param parseCtx Неизменяемый контекст парсинга.
    * @return Результаты работы content-handler'ов в виде карты.
    */
-  def parseFromStream(is: InputStream, chs: Seq[MAiMadContentHandler], maim: MAiMad, meta: Metadata): Map[String, ContentHandlerResult] = {
+  def parseSource(chs: Seq[MAiMadContentHandler], parseCtx: MAiParserCtxT): Future[Map[String, ContentHandlerResult]] = {
     // Собираем все запрошенные парсеры
-    val handlers = chs.map { _.newInstance(maim) }
-    val handler = if (handlers.size > 1) {
-      new TeeContentHandler(handlers: _*)
-    } else {
-      handlers.head
-    }
-    // Сборка цепочки парсинга
-    val parser = new AutoDetectParser()   // TODO использовать HtmlParser? Да, если безопасно ли скармливать на вход HtmlParser'у левые данные.
-    val parseContext = new ParseContext
-    parseContext.set(classOf[HtmlMapper], new IdentityHtmlMapper)
-    // Блокирующий запуск парсера. Заодно засекаем время его работы.
-    val parserStartedAt: Long = if (LOGGER.underlying.isDebugEnabled) System.currentTimeMillis() else -1L
-    try {
-      parser.parse(is, handler, meta, parseContext)
-    } finally {
-      LOGGER.debug {
-        val timeMs = System.currentTimeMillis() - parserStartedAt
-        "tikaParseFromStream(): tika parser completed after " + timeMs + " ms."
+    // 2014.dec.04: Каждый ContentHandler сам выбирает себе парсер из модели парсеров. Теперь поддерживается не только Tika.
+    // Если задействованы разные парсеры, то они будут выполняться параллельно.
+    val running = chs
+      .map { _.newInstance(parseCtx) }
+      .groupBy(_.sourceParser)
+      .map { case (parser, handlers) =>
+        Future {
+          val pch = if (handlers.size > 1) {
+            new TeeContentHandler(handlers: _*)
+          } else {
+            handlers.head
+          }
+          parser.parseFromStream(pch, parseCtx)
+          // Парсинг окончен. Пора собрать результаты.
+          handlers
+            .iterator
+            .map { h => h.stiResKey -> h.getParseResult}
+            .toMap
+        }
       }
-    }
-    // Парсинг окончен. Пора собрать результаты.
-    handlers
-      .iterator
-      .map { h => h.stiResKey -> h.getParseResult }
-      .toMap
+    Future.reduce(running)(_ ++ _)
   }
 
 
@@ -118,16 +110,15 @@ object MadAiUtil extends PlayMacroLogsImpl {
         override def followRedirects = false
         override def urlStr = url
       }
-      getter.request().map { case (headers, file) =>
-        // Получен результат в файл. Надо его распарсить в переменные для рендера.
-        val meta = httpHeaders2meta(headers.headers, Some(url))
-        val is = new FileInputStream(file)
-        try {
-          parseFromStream(is, source.contentHandlers, madAi, meta)
-        } finally {
-          is.close()
-          file.delete()
+      getter.request().flatMap { case (headers, file) =>
+        // Запускаем в фоне парсинг и обработку входных данных.
+        val parseCtx = new MAiParserCtxT with MAiCtxWrapper {
+          override def openInputStream  = new FileInputStream(file)
+          override def urlOpt           = Some(url)
+          override def respHeaders      = headers.headers
+          override def mAiCtx           = madAi
         }
+        parseSource(source.contentHandlers, parseCtx)
       }
     } map { results =>
       results.reduce(_ ++ _)

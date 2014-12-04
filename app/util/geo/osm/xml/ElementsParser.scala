@@ -1,10 +1,8 @@
 package util.geo.osm.xml
 
-import javax.xml.parsers.SAXParserFactory
-
 import io.suggest.model.geo.GeoPoint
 import org.xml.sax.helpers.DefaultHandler
-import org.xml.sax.{ContentHandler, Locator, SAXParseException, Attributes}
+import org.xml.sax.{SAXParseException, Attributes}
 import util.PlayLazyMacroLogsImpl
 import util.ai.sax.StackFsmSax
 import util.geo.osm._
@@ -16,23 +14,6 @@ import util.geo.osm._
  * Description: Парсер для element-выхлопов osm xml api по разным объектам.
  * http://wiki.openstreetmap.org/wiki/API_v0.6#Elements_2
  */
-
-object ElementsParser {
-
-  /** Собрать и настроить sax parser factory для парсеров, используемых в работе по
-    * разбору всех этих кривых yml-файлов. */
-  def getSaxFactory: SAXParserFactory = {
-    val saxfac = SAXParserFactory.newInstance()
-    saxfac.setValidating(false)
-    saxfac.setFeature("http://xml.org/sax/features/validation", false)
-    saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
-    saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-    saxfac.setFeature("http://xml.org/sax/features/external-general-entities", false)
-    saxfac.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
-    saxfac
-  }
-
-}
 
 /** Статические константы инклюдятся в трейт, т.к. за пределами редкоработающего инстанса парсера они не нужны. */
 trait ElementParserConstants {

@@ -5,6 +5,7 @@ import java.io.{CharArrayReader, Reader}
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
 import io.suggest.ym.{NormTokensOutAnStream, YmStringAnalyzerT}
+import models.ai.AiParsers.AiParser
 import models.ai._
 import org.apache.lucene.analysis.core.LowerCaseFilter
 import org.apache.lucene.analysis.snowball.SnowballFilter
@@ -16,7 +17,7 @@ import org.tartarus.snowball.ext.RussianStemmer
 import org.xml.sax.{SAXParseException, Attributes}
 import org.xml.sax.helpers.DefaultHandler
 import util.PlayLazyMacroLogsImpl
-import util.ai.GetParseResult
+import util.ai.AiContentHandler
 import util.ai.sax.StackFsmSax
 
 /**
@@ -26,16 +27,19 @@ import util.ai.sax.StackFsmSax
  * Description: Парсер данных от гидромета по RSS.
  * Пример RSS: http://meteoinfo.ru/rss/forecasts/26063
  */
-class GidrometRssSax(maim: MAiMad)
+class GidrometRssSax(maim: MAiCtx)
   extends DefaultHandler
   with StackFsmSax
-  with GetParseResult
+  with AiContentHandler
   with PlayLazyMacroLogsImpl
 {
 
   import LOGGER._
 
   override def stiResKey = "weather"
+
+  /** Этот парсер в основном работает с tika, хотя наверное лучше его на SAX переключить. */
+  override def sourceParser: AiParser = AiParsers.Tika
 
   /** Для нормализации строк с погодой используется сие добро: */
   protected val an = new YmStringAnalyzerT with NormTokensOutAnStream {

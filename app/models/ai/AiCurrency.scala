@@ -1,5 +1,7 @@
 package models.ai
 
+import java.util.Currency
+
 import scala.beans.BeanProperty
 
 /**
@@ -9,9 +11,13 @@ import scala.beans.BeanProperty
  * Description: Описание валюты в рамках ai-моделей.
  */
 case class AiCurrency(
-  @BeanProperty code: String,
+  @BeanProperty charCode: String,
   @BeanProperty course: Float,
-  cbrfCodeOpt: Option[Int] = None,
+  numCodeOpt: Option[Int] = None,
   @BeanProperty count: Int = 1,
   nameOpt: Option[String] = None
-)
+) {
+
+  def getCurrency = Currency.getInstance(charCode)
+
+}

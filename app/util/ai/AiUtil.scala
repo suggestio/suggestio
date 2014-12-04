@@ -1,5 +1,6 @@
 package util.ai
 
+import models.ai.AiParsers.AiParser
 import models.ai.ContentHandlerResult
 
 /**
@@ -10,7 +11,7 @@ import models.ai.ContentHandlerResult
  */
 
 /** Интерфейс для чтения результата из ContentHandler'ов */
-trait GetParseResult {
+trait AiContentHandler {
 
   /**
    * Ключ-идентификатор, используемый для формирования карты результатов.
@@ -24,5 +25,11 @@ trait GetParseResult {
    * @return Реализация модели ContentHandlerResult.
    */
   def getParseResult: ContentHandlerResult
+
+  /**
+   * Какой парсер сырца надо использовать с этим ContentHandler'ом?
+   * @return tika, sax и др.
+   */
+  def sourceParser: AiParser
 
 }

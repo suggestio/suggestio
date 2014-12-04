@@ -94,7 +94,7 @@ case class MAiMad(
   descr           : Option[String] = None,
   id              : Option[String] = None,
   versionOpt      : Option[Long] = None
-) extends EsModelT with EsModelPlayJsonT {
+) extends EsModelT with EsModelPlayJsonT with MAiCtx {
 
   override type T = this.type
   override def companion = MAiMad
@@ -126,3 +126,17 @@ final class MAiMadJmx(implicit val ec: ExecutionContext, val client: Client, val
 }
 
 
+/** Интерфейс разных MAi-моделей: [[MAiMad]] и возможных других в будущем.
+  * Нужен, чтобы абстрагироваться от конкретных моделей на уровне общих полей этих моделей. */
+trait MAiCtx extends OptStrId {
+  def tz: DateTimeZone
+  def name: String
+}
+/** Враппер для трейта [[MAiCtx]]. Позволяет переопределять значения некоторых полей. */
+trait MAiCtxWrapper extends MAiCtx {
+  def mAiCtx: MAiCtx
+
+  override def tz     = mAiCtx.tz
+  override def name   = mAiCtx.name
+  override def id     = mAiCtx.id
+}
