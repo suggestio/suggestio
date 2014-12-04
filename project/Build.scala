@@ -23,11 +23,11 @@ object SiobixBuild extends Build {
     )
   }
 
-  lazy val siobix = Project(
+  /*lazy val siobix = Project(
     id = "siobix",
     base = file("bixo"),
     dependencies = Seq(util, cascadingEs2)
-  )
+  )*/
 
   lazy val utilPlay = Project(
     id = "util-play",
@@ -47,6 +47,6 @@ object SiobixBuild extends Build {
     id = "root",
     base = file(".")
   )
-  .aggregate(util, cascadingEs2, siobix, utilPlay, web21)
+  .aggregate(util, cascadingEs2, utilPlay, web21)
 
 }
