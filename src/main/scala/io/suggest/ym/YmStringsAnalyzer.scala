@@ -155,9 +155,9 @@ trait AnalyzerUtil extends Analyzer {
 trait NormTokensOutAn extends Analyzer with AnalyzerUtil {
 
   /** Собрать набор токенов из строки в виде списка. Список в обратном порядке. */
-  def toNormTokensRev(src: String): List[String] = {
+  def toNormTokensRev(src: String, acc0: List[String] = Nil): List[String] = {
     val unfolder = new StringTokenStreamUnfold {
-      var _acc: List[String] = Nil
+      var _acc: List[String] = acc0
       override def _src = src
       override def handleResultToken(token: String): Unit = {
         _acc ::= token
@@ -172,9 +172,9 @@ trait NormTokensOutAn extends Analyzer with AnalyzerUtil {
 
 /** Аналог [[NormTokensOutAn]], но работает с reader-ом, а не со строкой. */
 trait NormTokensOutAnStream extends Analyzer with AnalyzerUtil {
-  def normTokensReaderRev(reader: Reader): List[String] = {
+  def normTokensReaderRev(reader: Reader, acc0: List[String] = Nil): List[String] = {
     val unfolder = new ReaderTokenStreamUnfold {
-      var _acc: List[String] = Nil
+      var _acc: List[String] = acc0
       override def _src = reader
       override def handleResultToken(token: String): Unit = {
         _acc ::= token

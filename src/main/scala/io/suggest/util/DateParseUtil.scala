@@ -33,7 +33,7 @@ object DateParseUtil extends Logs {
   val RE_MONTH_I        = "((11)|(12)|(0?[1-9]))"
   val RE_MONTH_I2       = "((11)|(12)|(0[1-9]))"          // форсировать MM-представление месяца
   val RE_MONTH_L        = "(\\p{L}{3,16})"                // "декабрь", "дек.", "DeCemBER", etc
-  val RE_YEAR4          = "(((19)|(20))\\d\\d)"           // пока доступны только YYYY-форматы.
+  val RE_YEAR4          = "(((19)|(2[01]))\\d\\d)"        // пока доступны только YYYY-форматы.
 
 
   // Конструируются готовые регэкспы и replace-паттерны для них.
@@ -78,7 +78,7 @@ object DateParseUtil extends Logs {
    * @param text Текст, которые вероятно содержит даты.
    * @return Список обнаруженных дат. В частности пустой список, если дат не найдено.
    */
-  def extractDates(text:String) : List[LocalDate] = {
+  def extractDates(text: String): List[LocalDate] = {
     // Пройти по списку action, потом по списку регэкспов-реплейсов экшена и обработать текст.
     actions.foldLeft(List[LocalDate]()) { case (acc0, (parseMonthF, patterns)) =>
       patterns.foldLeft(acc0) { (_acc0, _patternAndreplace) =>
@@ -292,7 +292,7 @@ object DateParseUtil extends Logs {
     if (dms <= SINSE_YEAR_DFLT_INSTANT_MS) {
       0
     } else {
-      val dcL = (dms - SINSE_YEAR_DFLT_INSTANT_MS) / MS_PER_DAY + 1
+      val dcL = (dms - SINSE_YEAR_DFLT_INSTANT_MS) / MS_PER_DAY
       dcL.toInt
     }
   }
