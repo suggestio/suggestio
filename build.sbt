@@ -87,7 +87,7 @@ libraryDependencies ++= Seq(
   "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
   // play-2.3+:
-  "org.scalatestplus" %% "play" % "1.2.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+  "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
 play.Play.projectSettings
