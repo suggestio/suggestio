@@ -121,8 +121,9 @@ resolvers ++= Seq(
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/",
-  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases"
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases",
+  "scalaz-bintray-repo" at "https://ivy2-internal.cbca.ru/artifactory/scalaz-bintray-repo"
 )
 
 
