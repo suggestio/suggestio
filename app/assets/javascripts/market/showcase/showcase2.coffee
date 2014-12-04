@@ -1323,7 +1323,12 @@ sm =
     document_keyup : ( event ) ->
       #esc
       if event.keyCode == 27
-        sm.focused_ads.close()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       #left arrow
       if event.keyCode == 37
@@ -1341,7 +1346,12 @@ sm =
 
       ## Exc button
       if event.keyCode == 27
-        sm.close_focused_ads()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       if event.keyCode == 39
         sm.focused_ads.next_ad()
