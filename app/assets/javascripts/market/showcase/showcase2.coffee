@@ -222,6 +222,11 @@ cbca_grid =
 
     for elt in sm.utils.ge_class document, 'sm-block'
 
+      ## проверка, открыта ли карточка, TODO вынести в отдельный метод
+      className = elt.className
+      if className.indexOf("focused") > -1
+        continue
+
       if elt.id == ''
         _this = elt
 
@@ -577,14 +582,16 @@ sm =
     load_for_node_id : ( node_id ) ->
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
+      url_params = sm.states.get_url_params()
+      #console.log url_params
 
       if typeof cs != 'undefined'
         sm.states.add_state
           mart_id : node_id
           geo_screen : cs.geo_screen
       else
-        sm.states.add_state
-          mart_id : node_id
+        ns = sm.states.get_state_by_url()
+        sm.states.add_state ns
 
     adjust : () ->
 
@@ -748,7 +755,7 @@ sm =
         sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
-      history.pushState data, title, this.base_path + '#' + path
+      history.pushState data, title, this.base_path + path
 
     init : () ->
       this.base_path = window.location.pathname
@@ -985,7 +992,6 @@ sm =
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
       pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
-
       obj =
         lowercase: pre
         css: '-'.concat( pre, '-')
@@ -1186,11 +1192,18 @@ sm =
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
 
+        #console.log sm.geo.location_node
+        #console.log geogoBack
+
+        # TODO очень странный кусок кода
+        ###
         if geogoBack == "false"
           sm.states.gb_mart_id = cs.mart_id
         else
           if cs.mart_id == sm.geo.location_node._id
             sm.states.gb_mart_id = cs.mart_id
+        ###
+        sm.states.gb_mart_id = cs.mart_id
 
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
@@ -1309,7 +1322,12 @@ sm =
     document_keyup : ( event ) ->
       #esc
       if event.keyCode == 27
-        sm.focused_ads.close()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       #left arrow
       if event.keyCode == 37
@@ -1327,7 +1345,12 @@ sm =
 
       ## Exc button
       if event.keyCode == 27
-        sm.close_focused_ads()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       if event.keyCode == 39
         sm.focused_ads.next_ad()
@@ -1385,8 +1408,7 @@ sm =
 
       sm.utils.ge('smSearchField').value = ''
 
-      if sm.search.found_count > 0
-        sm.grid_ads.load_index_ads()
+      if sm.search.found_count > 0 then sm.grid_ads.load_index_ads()
 
     error_message : ( message, is_hide ) ->
 
@@ -1470,7 +1492,9 @@ sm =
         sm.grid_ads.multiplier = sm.grid_ads.multiplier / 10
 
       url = url.replace '&a.geo=ip', ''
-      sm.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+      sm.grid_ads.gen_id = Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) )
+      sm.grid_ads.gen_id
+      sm.grid_ads.c_url = url + '&a.gen=' + sm.grid_ads.gen_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
@@ -1544,6 +1568,8 @@ sm =
 
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
+
+      #console.log "url : #{url}"
 
       timeout_cb = () ->
         sm.request.on_request_error()
@@ -1647,7 +1673,10 @@ sm =
           sm.utils.ge('smWifiInfo').style.display = 'block'
 
         sm.init_navigation()
-        sm.grid_ads.load_index_ads()
+        # TODO исправить костыль
+        if typeof cs.cat_id == 'undefined'
+          sm.grid_ads.load_index_ads()
+
 
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
@@ -2285,8 +2314,9 @@ sm =
 
     cs = sm.states.cur_state()
     a_rcvr = '&a.rcvr=' + cs.mart_id
+    gen_id = sm.grid_ads.gen_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + gen_id + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
     sm.focused_ads.curl = url
 
@@ -2459,6 +2489,7 @@ sm =
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
       if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
       if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
+      if typeof sm.gen_id == 'undefined' then ns.gen_id = 6
 
       this.push ns
 
@@ -2484,7 +2515,99 @@ sm =
 
       this.push ns
 
+    get_url_params : () ->
+      pl     = ///\+///g
+      search = ///([^&=]+)=?([^&]*)///g
+      decode = (s) ->
+        return decodeURIComponent(s.replace(pl, " "))
+      query  = window.location.hash.substring(3)
+      urlParams = {}
+      while match = search.exec(query)
+        urlParams[decode(match[1])] = decode(match[2])
+
+      return urlParams
+
+    get_state_by_url : () ->
+      url_params = @.get_url_params()
+      state = null
+      sm.grid_ads.gen_id = url_params["gen_id"]
+
+      if url_params["f.cur.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          fads :
+            is_opened : true
+            ad_id : url_params["f.cur.id"]
+            producer_id : url_params["f.pr.id"]
+
+      else if url_params["s.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          cat_screen :
+            is_opened : true
+
+      else if url_params["n.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          geo_screen :
+            is_opened : true
+
+      else if url_params["t.cat"]
+        state =
+          mart_id : url_params["m.id"]
+          cat_id : url_params["t.cat"]
+          cat_class : url_params["t.cat_class"]
+          gen_id : sm.grid_ads.gen_id
+
+      else if url_params["m.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+
+      else
+        state =
+          gen_id : sm.grid_ads.gen_id
+
+      return state
+
+    get_path_by_state : ( state ) ->
+      get_params = []
+      path = ""
+
+      #console.log state
+
+      if state.cat_screen.is_opened
+        get_params.push "s.open=true"
+
+      if state.geo_screen.is_opened
+        get_params.push "n.open=true"
+
+      if state.fads.is_opened
+        get_params.push "f.cur.id=#{state.fads.ad_id}"
+        get_params.push "f.pr.id=#{state.fads.producer_id}"
+
+      if state.cat_id
+        get_params.push "t.cat=#{state.cat_id}"
+
+      if state.cat_class
+        get_params.push "t.cat_class=#{state.cat_class}"
+
+      if state.mart_id
+        get_params.push "m.id=#{state.mart_id}"
+
+      if sm.grid_ads.gen_id
+        get_params.push "gen_id=#{sm.grid_ads.gen_id}"
+
+      if get_params.length
+        path += "#!?#{get_params.join("&")}"
+
+      return path
+
     push : ( state ) ->
+      path = this.get_path_by_state state
 
       this.process_state state
 
@@ -2493,7 +2616,7 @@ sm =
 
       ## state index
       this.cur_state_index = this.list.length - 1
-      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', '/p' + this.cur_state_index
+      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', path
 
     goto : ( state_index ) ->
       if state_index == -1
@@ -2518,7 +2641,7 @@ sm =
 
     process_state_2 : ( state ) ->
 
-      cs = this.cur_state()
+      cs = @.cur_state()
 
       sm.warn 'process_state_2 invoked'
       sm.warn state
@@ -2534,8 +2657,7 @@ sm =
       ## 2. Карточки по категориям
       if typeof state.cat_id != 'undefined' && sm.global_cat_id != state.cat_id
         sm.load_for_cat_id state.cat_id, state.cat_class
-
-      sm.global_cat_id = state.cat_id
+        sm.global_cat_id = state.cat_id
 
       if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
@@ -2567,6 +2689,7 @@ sm =
         url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
         sm.request.perform url
 
+
   ############################
   ## Функции для инициализации
   ############################
@@ -2581,6 +2704,7 @@ sm =
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
 
     sm.log 'about to call index_action : ' + index_action
+
     this.request.perform index_action
 
   define_per_load_values : () ->
@@ -2600,7 +2724,6 @@ sm =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
-
     sm.config.host = window.siomart_host
     this.utils.set_vendor_prefix()
     this.history.init()
@@ -2608,7 +2731,6 @@ sm =
     sm_id = window.siomart_id || undefined
 
     sm.warn 'initial mart_id : ' + sm_id
-
     if window.with_geo == true
       ## Если еще не запрашивали координаты у юзера
       if sm.geo.location_requested == false
@@ -2616,6 +2738,7 @@ sm =
     else
       sm.states.add_state
         mart_id : sm_id
+
 
 window.sm = window.siomart = sm
 sm.init()
