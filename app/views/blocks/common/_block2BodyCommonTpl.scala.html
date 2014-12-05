@@ -37,10 +37,10 @@
   }
 
   @mad.offers.map { offer =>
-    <div class="info el-@{offer.n + 1}">
+
       @renderText(offer.text1, "title", bc.titleBf, yoff = 0, offerN = offer.n, withStyle = isStylesInline)
       @renderText(offer.text2, "descr", bc.descrBf, yoff = 25, offerN = offer.n, withStyle = isStylesInline)
-    </div>
+
   }
 
 }
