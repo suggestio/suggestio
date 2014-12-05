@@ -1832,10 +1832,12 @@ sm =
       this.active_ad_index = ad_index
 
       if this.active_ad_index > this.ads.length
-        cb = () ->
+        cb = () =>
           sm.focused_ads.load_more_ads()
 
         setTimeout cb, 400
+      else
+        @.add_active_ad_state()
 
       if direction == '+'
         ad_c_el = sm.utils.ge('focusedAd' + ( ad_index + 1 ) )
@@ -1853,18 +1855,38 @@ sm =
         if fel != null
           fel.style.visibility = 'hidden';
 
-      ad_id = this.sm_blocks[ad_index].getAttribute("data-mad-id")
+    set_index_in_dom : ( index ) ->
+      active_ad = sm.utils.ge( "focusedAd#{@.active_ad_index}" )
+      count_container = sm.utils.ge_class( active_ad, "focused-ad_count" )
+      html = "<div>#{index}/#{@.ads.length}</div>"
+      count_container[0].innerHTML = html
+
+    get_index_by_id : ( id ) ->
+      index = 1
+      for ad in @.sm_blocks
+        curr_id = ad.getAttribute("data-mad-id")
+        if curr_id == id then return index
+        index += 1
+
+    add_active_ad_state : () ->
+      ad_id = @.sm_blocks[@.active_ad_index].getAttribute("data-mad-id")
       cs = sm.states.cur_state()
 
-      ns =
-        mart : cs.mart_id
-        fads :
-          is_opened : true
-          producer_id : cs.fads.producer_id
-          ad_id : ad_id
+      if ad_id
+        index = @.get_index_by_id( ad_id )
+        @.set_index_in_dom( index )
+        ns =
+          process_state : false
+          mart_id : cs.mart_id
+          fads :
+            is_opened : true
+            producer_id : cs.fads.producer_id
+            ad_id : ad_id
 
-      console.log "active ad id = #{ad_id}"
-      console.log ns
+        sm.states.add_state( ns )
+        #console.log "active ad index = #{@.active_ad_index}"
+        #console.log "active ad id = #{ad_id}"
+        #console.log ns
 
     next_ad : () ->
       if typeof this.active_ad_index == 'undefined'
@@ -1975,6 +1997,8 @@ sm =
 
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
+
+      @.add_active_ad_state()
       #sm.styles.init()
 
     check_if_fully_loaded : () ->
@@ -2494,6 +2518,7 @@ sm =
     # добавляет новое состояние
     add_state : ( ns ) ->
 
+      if typeof ns.process_state == 'undefined' then ns.process_state = true
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
       if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
       if typeof ns.with_welcome_ad == 'undefined' then ns.with_welcome_ad = this.ds.with_welcome_ad
@@ -2626,7 +2651,8 @@ sm =
     push : ( state ) ->
       path = this.get_path_by_state state
 
-      this.process_state state
+      if state.process_state != false
+        this.process_state state
 
       this.list = this.list.slice 0, this.cur_state_index+1
       this.list.push state
