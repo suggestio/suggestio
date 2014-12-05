@@ -39,17 +39,46 @@ object SioCassandraClient extends MacroLogsImplLazy {
   /** Явно разрешено ли в конфиге вызывать truncate над cassandra-таблицей? */
   def JMX_CAN_TRUNCATE_TABLE: Boolean = CONFIG.getBoolean("cassandra.table.ALL.truncate.allowed") getOrElse false
 
-
-  /** Собираем инфу по кластеру. */
-  val cluster = synchronized {
-    Cluster.builder()
-      .addContactPoints(CONTACT_NODES: _*)
-      .build()
+  private var _cluster: Cluster = null
+  /** Вернуть инфу по кластеру. */
+  def cluster: Cluster = {
+    if (_cluster == null) {
+      synchronized {
+        if (_cluster == null) {
+          _cluster = Cluster.builder()
+            .addContactPoints(CONTACT_NODES: _*)
+            .build()
+        }
+      }
+    }
+    _cluster
   }
 
+  private var _session: Session = null
   /** Открываем прочный канал связи с кластером. */
-  implicit val session = synchronized {
-    cluster.newSession()
+  implicit def session: Session = {
+    if (_session == null) {
+      synchronized {
+        if (_session == null) {
+          _session = cluster.newSession()
+        }
+      }
+    }
+    _session
+  }
+
+  /** Закрытие кластера. */
+  def close(): Future[_] = {
+    val sesCloseFut = SioCassandraClient.session.closeAsync()
+    val clCloseFut = sesCloseFut
+      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
+    sesCloseFut onComplete { case _ =>
+      _session = null
+    }
+    clCloseFut onComplete { case _ =>
+      _cluster = null
+    }
+    clCloseFut
   }
 
   /** Создать пространство ключей под нужды s.io. */
