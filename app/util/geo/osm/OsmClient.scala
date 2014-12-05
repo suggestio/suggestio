@@ -30,7 +30,7 @@ object OsmClient {
       }
     }
     fetcher.request()
-      .map { file =>
+      .map { case (headers, file) =>
         try {
           OsmUtil.parseElementFromFile(file, typ, id)
         } finally {

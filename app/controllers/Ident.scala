@@ -124,7 +124,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
               }
             } else {
               // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
-              Future successful()
+              Future successful None  // None вместо Unit(), чтобы 2.11 компилятор не ругался.
             }
           } map { _ =>
             // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.

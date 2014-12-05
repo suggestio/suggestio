@@ -9,12 +9,10 @@ import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.duration._
 import util.DfsModelUtil._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
 import scala.collection.JavaConversions._
-import scala.Some
-import play.api.Logger
 import io.suggest.util.SioModelUtil
 
 /**
@@ -113,27 +111,33 @@ object MDomainQiAuthzTmp extends PlayMacroLogsImpl {
       new Path(tmpDir, dkey + "/" + qi_id)
     }
 
-    def save(data: MDomainQiAuthzTmp): Future[_] = future {
-      val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
-      val os = fs.create(filepath)
-      try {
-        JsonDfsBackend.writeToPath(filepath, data)
-      } finally {
-        os.close()
+    def save(data: MDomainQiAuthzTmp): Future[_] = {
+      Future {
+        val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
+        val os = fs.create(filepath)
+        try {
+          JsonDfsBackend.writeToPath(filepath, data)
+        } finally {
+          os.close()
+        }
       }
     }
 
-    def delete(dkey: String, id: String): Future[Any] = future {
-      val filepath = getFilePath(dkey, id)
-      val result = deleteNr(filepath)
-      // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
-      deleteNr(filepath.getParent)
-      result
+    def delete(dkey: String, id: String): Future[Any] = {
+      Future {
+        val filepath = getFilePath(dkey, id)
+        val result = deleteNr(filepath)
+        // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
+        deleteNr(filepath.getParent)
+        result
+      }
     }
 
-    def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = future {
-      val filepath = getFilePath(dkey, id)
-      readOne[MDomainQiAuthzTmp](filepath, fs)
+    def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = {
+      Future {
+        val filepath = getFilePath(dkey, id)
+        readOne[MDomainQiAuthzTmp](filepath, fs)
+      }
     }
 
     /* Выдать список временных авторизация для указанного домена.

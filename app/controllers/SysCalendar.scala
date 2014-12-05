@@ -67,6 +67,8 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
           } finally {
             stream.close()
           }
+        } catch {
+          case ex: Exception => false
         }
     }
   )

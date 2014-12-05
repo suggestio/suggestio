@@ -50,9 +50,9 @@ object TplDataFormatUtil {
     val max = rgbSorted(2)
     val min = rgbSorted(0)
 
-    if( max == min ){
+    if (max == min) {
       List( 0, 0, ((max + min)/2*100).toInt)
-    }else{
+    } else {
 
       val l = ( max + min ) / 2
 
@@ -139,7 +139,7 @@ object TplDataFormatUtil {
 
 
   // Пока локали не работают, используем общий для всех форматтер данных.
-  private val pcFmt = {
+  private def pcFmt = {
     val currFmt = NumberFormat.getPercentInstance
     currFmt.setMinimumFractionDigits(0)
     currFmt.setMaximumFractionDigits(2)
@@ -159,6 +159,12 @@ object TplDataFormatUtil {
   def formatPercentRaw(pc: Float): String = {
     // TODO Надо бы реоргонизовать через DecimalFormat и decimalSymbols
     pcRawIntegerFmt.format(pc)
+  }
+
+
+  private def temperatureFmt = new DecimalFormat("+#;(-#)")
+  def formatTemperature(t: Float): String = {
+    temperatureFmt.format(t)
   }
 
 

@@ -308,6 +308,28 @@ GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
+## Галереи картинок
+GET  /sys/gals/all                       controllers.SysGallery.showList(page: Int ?= 0)
+POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
+GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
+GET  /sys/gals/new                       controllers.SysGallery.createGal
+POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
+GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
+GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
+POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
+POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySubmit(galId)
+
+## sys/AI
+GET  /sys/ai                             controllers.SysAi.index
+GET  /sys/ai/mad                         controllers.SysAi.madIndex
+GET  /sys/ai/mad/create                  controllers.SysAi.createMadAi
+POST /sys/ai/mad/create                  controllers.SysAi.createMadAiSubmit
+GET  /sys/ai/mad/edit/:id                controllers.SysAi.editMadAi(id)
+POST /sys/ai/mad/edit/:id                controllers.SysAi.editMadAiSubmit(id)
+POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
+POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
+
+
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 

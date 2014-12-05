@@ -1,0 +1,10 @@
+@(gal: im.MGallery)(implicit ctx: Context)
+
+@* Страница с формой отображения одной галереи. *@
+
+@galBase(title = gal.name + " | Галереи картинок") {
+
+  @* Отображение через таблицу вполне достаточно. *@
+  @_galsTableTpl(Seq(gal), withAdmLinks = true)
+
+}

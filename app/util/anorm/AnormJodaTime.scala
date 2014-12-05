@@ -19,12 +19,13 @@ object AnormJodaTime {
   private def dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS");
 
   implicit def rowToDateTime: Column[DateTime] = Column.nonNull { (value, meta) =>
-    value match {
+    val res = value match {
       case ts: java.sql.Timestamp => Right(new DateTime(ts.getTime))
       case d: java.sql.Date => Right(new DateTime(d.getTime))
       case str: java.lang.String => Right(dateFormatGeneration.parseDateTime(str))
       case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass) )
     }
+    MayErr(res)
   }
 
   implicit val dateTimeToStatement = new ToStatement[DateTime] {

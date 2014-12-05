@@ -3,7 +3,7 @@ package util.anorm
 import java.net.InetAddress
 import java.sql.PreparedStatement
 
-import anorm.{Column, ToStatement, TypeDoesNotMatch}
+import anorm.{MayErr, Column, ToStatement, TypeDoesNotMatch}
 import org.postgresql.util.PGobject
 
 /**
@@ -16,7 +16,7 @@ sealed trait AnormNetAddrs {
   def PG_TYPE: String
 
   implicit def column2inetAddr: Column[InetAddress] = Column.nonNull { (value, meta) =>
-    value match {
+    val res = value match {
       case pgo: PGobject =>
         // TODO Проверять pgo.getType?
         Right(InetAddress.getByName(pgo.getValue))
@@ -25,6 +25,7 @@ sealed trait AnormNetAddrs {
       case _ =>
         Left(TypeDoesNotMatch("Cannot convert " + value + ": " + value.asInstanceOf[AnyRef].getClass))
     }
+    MayErr(res)
   }
 
   implicit def inetAddr2column = new ToStatement[InetAddress] {

@@ -23,7 +23,11 @@ trait HttpGetToFile {
   /** Следовать редиректам? */
   def followRedirects: Boolean
 
-  /** Валиден ли http-статус ответа remote-сервера по ссылке? */
+  /**
+   * Валиден ли http-статус ответа remote-сервера по ссылке?
+   * @param status HTTP статус.
+   * @return true, если ответ можно сохранить в файл. Иначе false.
+   */
   def isStatusValid(status: Int): Boolean = {
     status == 200
   }
@@ -41,9 +45,10 @@ trait HttpGetToFile {
 
   /**
    * Запустить фетчинг файла на исполнение.
-   * @return Future с файлом, куда отфетчен контент
+   * @return Future с файлом, куда отфетчен контент.
+   *         Future с экзепшеном в иных случаях.
    */
-  def request(): Future[File] = {
+  def request(): Future[(WSResponseHeaders, File)] = {
     val respFut = WS.url(urlStr)
       .withFollowRedirects(followRedirects)
       .getStream()
@@ -63,10 +68,10 @@ trait HttpGetToFile {
             case result => os.close()
           }
           // Вернуть готовый файл, когда всё закончится.
-          .map { _ => f }
+          .map { _ => headers -> f }
         // При ошибке при обработке запроса нужно удалить созданный временный файл.
-        resFut onFailure { case ex =>
-          f.delete()
+        resFut onFailure {
+          case ex => f.delete()
         }
         resFut
       }

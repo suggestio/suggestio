@@ -209,6 +209,10 @@ stuff.menu.LIVE=ВЖИВУЮ
 stuff.menu.CONTACTS=КОНТАКТЫ
 
 
+ai.mad.rrr.descr.scalasti=Трансформация полей рекламной карточки с помощью шаблонизатора ScalaSti с #-разделителями.
+ai.ch.descr.gidromet.rss=Парсер прогнозов погоды росгидрометцентра в формате RSS (meteoinfo.ru).
+
+
 live_search_for_your_website=Живой поиск для вашего сайта
 site_indexation_caption_initial=ЗАПУСК ИНДЕКСАЦИИ
 site_indexation_caption=ИНДЕКСАЦИЯ САЙТА
@@ -299,3 +303,19 @@ send=Отправить
 c.s.search_query.empty=Пустая строка поиска. Что-то ищем?
 
 tariff.type.p=Абонплата
+
+
+weather.sky.state.Clear=Ясно
+weather.sky.state.PartlyCloudy=Местами облачно
+weather.sky.state.Cloudy=Облачно
+weather.sky.state.VaryCloudy=Переменная облачность
+
+wind.direction.north=северный
+wind.direction.south=южный
+wind.direction.east=восточный
+wind.direction.west=западный
+wind.direction.north-west=северо-западный
+wind.direction.north-east=северо-восточный
+wind.direction.south-west=юго-западный
+wind.direction.south-east=юго-восточный
+
