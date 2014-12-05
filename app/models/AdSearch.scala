@@ -118,6 +118,9 @@ trait AdSearch extends AdsSearchArgsDflt {
   /** Данные по экрану, присланные клиентом. */
   def screen        : Option[DevScreen] = None
 
+  /** Принудительно должен быть эти карточки первыми в списке.
+    * На уровне ES это дело не прижилось, поэтому тут параметр, который отрабатывается в контроллере. */
+  def forceFirstIds : Seq[String] = Seq.empty
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   override def offset: Int = {
@@ -152,6 +155,8 @@ trait AdSearch extends AdsSearchArgsDflt {
 
 /** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
 trait AdSearchWrapper extends AdSearch with AdsSearchArgsWrapper {
+  override type WT = AdSearch
+
   /** Значение, которое скрывает этот враппер. */
   override def _dsArgsUnderlying: AdSearch
 
