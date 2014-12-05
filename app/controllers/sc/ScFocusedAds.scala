@@ -96,7 +96,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         new AdSearchWrapper {
           override def _adsSearchArgsUnderlying: AdSearch = _adSearch
           override def forceFirstIds = Nil
-          override def withoutIds = forceFirstIds
+          override def withoutIds = _adSearch.forceFirstIds
         }
       }
       MAd.dynSearch(adSearch2)

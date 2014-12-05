@@ -15,7 +15,7 @@ import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
 import util.{AsyncUtil, PlayMacroLogsImpl}
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import util.billing.MmpDailyBilling

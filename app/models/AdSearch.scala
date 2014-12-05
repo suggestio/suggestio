@@ -3,7 +3,7 @@ package models
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
-import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
+import io.suggest.ym.model.ad.{AdsSearchArgsT, AdsSearchArgsWrapper, AdsSearchArgsDflt}
 import util.qsb.QsbUtil._
 
 /**

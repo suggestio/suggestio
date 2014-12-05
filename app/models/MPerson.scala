@@ -6,7 +6,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel._
 import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext, future}
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import play.api.Play.current
 import play.api.cache.Cache
