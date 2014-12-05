@@ -992,7 +992,6 @@ sm =
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
       pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
-
       obj =
         lowercase: pre
         css: '-'.concat( pre, '-')
