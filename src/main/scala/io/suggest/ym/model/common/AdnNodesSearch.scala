@@ -23,312 +23,9 @@ import org.elasticsearch.search.sort.{SortOrder, SortBuilders}
 object AdnNodesSearch {
 
   /** Скрипт для фильтрации по наличию значения в поле logo. */
-  val LOGO_EXIST_MVEL = {
+  def LOGO_EXIST_MVEL = {
     val fn = EMLogoImg.LOGO_IMG_ESFN
     s"""_source.containsKey("$fn");"""
-  }
-
-  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которых ближе, чем это допустимо. */
-  private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
-    // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил перепиливание подсистемы географии.
-    innerCircle.fold(qb2) { inCircle =>
-      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnNodeGeo.GEO_POINT_ESFN)
-        .point(inCircle.center.lat, inCircle.center.lon)
-        .distance(inCircle.radius.distance, inCircle.radius.units)
-      val notInner = FilterBuilders.notFilter(innerFilter)
-      QueryBuilders.filteredQuery(qb2, notInner)
-    }
-  }
-
-  /**
-   * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
-   * @param args Критерии поиска.
-   * @return Экземпляр QueryBuilder, пригодный для отправки в поисковом запросе.
-   */
-  def mkEsQuery(args: AdnNodesSearchArgsT): QueryBuilder = {
-    var qb2: QueryBuilder = args.qStr.flatMap[QueryBuilder] { qStr =>
-      TextQueryV2Util.queryStr2QueryMarket(qStr, args.ftsSearchFN)
-        .map { _.q }
-
-    // Отрабатываем withIds, ограничивающий выдачу по ids.
-    }.map[QueryBuilder] { qb =>
-      if (args.withIds.nonEmpty) {
-        val idf = FilterBuilders.idsFilter().ids(args.withIds: _*)
-        QueryBuilders.filteredQuery(qb, idf)
-      } else {
-        qb
-      }
-    }.orElse[QueryBuilder] {
-      if (args.withIds.nonEmpty) {
-        val qb = QueryBuilders.idsQuery().ids(args.withIds: _*)
-        Some(qb)
-      } else {
-        None
-      }
-
-    // Отрабатываем companyId
-    }.map[QueryBuilder] { qb =>
-      if (args.companyIds.isEmpty) {
-        qb
-      } else {
-        val cf = FilterBuilders.termsFilter(EMCompanyId.COMPANY_ID_ESFN, args.companyIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, cf)
-      }
-    }.orElse {
-      if (args.companyIds.isEmpty) {
-        None
-      } else {
-        val cq = QueryBuilders.termsQuery(EMCompanyId.COMPANY_ID_ESFN, args.companyIds : _*)
-          .minimumMatch(1)
-        Some(cq)
-      }
-
-    // Отрабатываем adnSupIds:
-    }.map[QueryBuilder] { qb =>
-      if (args.adnSupIds.isEmpty) {
-        qb
-      } else {
-        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SUPERVISOR_ID_ESFN, args.adnSupIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, sf)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.adnSupIds.nonEmpty) {
-        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SUPERVISOR_ID_ESFN, args.adnSupIds : _*)
-          .minimumMatch(1)
-        Some(sq)
-      } else {
-        None
-      }
-
-    // Дальше отрабатываем список возможных personIds.
-    }.map[QueryBuilder] { qb =>
-      if (args.anyOfPersonIds.isEmpty) {
-        qb
-      } else {
-        val pf = FilterBuilders.termsFilter(EMPersonIds.PERSON_ID_ESFN, args.anyOfPersonIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, pf)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.anyOfPersonIds.isEmpty) {
-        None
-      } else {
-        val pq = QueryBuilders.termsQuery(EMPersonIds.PERSON_ID_ESFN, args.anyOfPersonIds : _*)
-          .minimumMatch(1)
-        Some(pq)
-      }
-
-    // Отрабатываем id узлов adv-делегатов
-    }.map[QueryBuilder] { qb =>
-      if (args.advDelegateAdnIds.isEmpty) {
-        qb
-      } else {
-        val af = FilterBuilders.termsFilter(AdNetMember.ADN_ADV_DELEGATE_ESFN, args.advDelegateAdnIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, af)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.advDelegateAdnIds.isEmpty) {
-        None
-      } else {
-        val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, args.advDelegateAdnIds: _*)
-          .minimumMatch(1)
-        Some(aq)
-      }
-
-    // Отрабатываем прямых гео-родителей
-    }.map[QueryBuilder] { qb =>
-      if (args.withDirectGeoParents.nonEmpty) {
-        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, args.withDirectGeoParents : _*)
-        QueryBuilders.filteredQuery(qb, filter)
-      } else {
-        qb
-      }
-    }.orElse[QueryBuilder] {
-      if (args.withDirectGeoParents.nonEmpty) {
-        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, args.withDirectGeoParents: _*)
-        Some(qb)
-      } else {
-        None
-      }
-
-    // Отрабатываем поиск по любым гео-родителям
-    }.map[QueryBuilder] { qb =>
-      if (args.withGeoParents.nonEmpty) {
-        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, args.withGeoParents : _*)
-        QueryBuilders.filteredQuery(qb, filter)
-      } else {
-        qb
-      }
-    }.orElse[QueryBuilder] {
-      if (args.withGeoParents.nonEmpty) {
-        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, args.withGeoParents : _*)
-        Some(qb)
-      } else {
-        None
-      }
-
-    // Поиск/фильтрация по полю shown type id, хранящий id типа узла.
-    }.map[QueryBuilder] { qb =>
-      if (args.shownTypeIds.isEmpty) {
-        qb
-      } else {
-        val stiFilter = FilterBuilders.termsFilter(AdNetMember.ADN_SHOWN_TYPE_ID, args.shownTypeIds : _*)
-        QueryBuilders.filteredQuery(qb, stiFilter)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.shownTypeIds.isEmpty) {
-        None
-      } else {
-        val stiQuery = QueryBuilders.termsQuery(AdNetMember.ADN_SHOWN_TYPE_ID, args.shownTypeIds : _*)
-          .minimumMatch(1)  // может быть только один тип ведь у одного узла.
-        Some(stiQuery)
-      }
-
-    // Отрабатываем geoDistance через geoShape'ы. Текущий запрос обнаружения описываем как круг.
-    // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
-    }.map[QueryBuilder] { qb =>
-      // Вешаем фильтры GeoShape
-      args.geoDistance.fold(qb) { gsqd =>
-        // География узлов живёт в отдельной модели, которая доступна через has_child
-        val gq = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
-        val gsfOuter = FilterBuilders.hasChildFilter(MAdnNodeGeo.ES_TYPE_NAME, gq)
-        val qb2 = QueryBuilders.filteredQuery(qb, gsfOuter)
-        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
-      }
-    }.orElse[QueryBuilder] {
-      args.geoDistance.map { gsqd =>
-        // Создаём GeoShape query. query по внешнему контуру, и filter по внутреннему.
-        val gq  = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
-        val qb2 = QueryBuilders.hasChildQuery(MAdnNodeGeo.ES_TYPE_NAME, gq)
-        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
-      }
-
-    // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
-    }.map[QueryBuilder] { qb =>
-      if (args.intersectsWithPreIndexed.isEmpty) {
-        qb
-      } else {
-        val filters = args.intersectsWithPreIndexed
-          .map { _.toGeoShapeFilter }
-        val filter = if (filters.size == 1) {
-          filters.head
-        } else {
-          FilterBuilders.orFilter(filters: _*)
-        }
-        QueryBuilders.filteredQuery(qb, filter)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.intersectsWithPreIndexed.isEmpty) {
-        None
-      } else if (args.intersectsWithPreIndexed.size == 1) {
-        val qb = args.intersectsWithPreIndexed.head.toGeoShapeQuery
-        Some(qb)
-      } else {
-        val qb = args.intersectsWithPreIndexed.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
-          (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
-        }
-        Some(qb)
-      }
-
-    // Отрабатываем возможный список прав узла.
-    }.map[QueryBuilder] { qb =>
-      if (args.withAdnRights.isEmpty) {
-        qb
-      } else {
-        val rf = FilterBuilders.termsFilter(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name) : _*)
-          .execution("and")
-        QueryBuilders.filteredQuery(qb, rf)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.withAdnRights.isEmpty) {
-        None
-      } else {
-        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, args.withAdnRights.map(_.name): _*)
-          .minimumMatch(args.withAdnRights.size)
-        Some(rq)
-      }
-
-    // Ищем/фильтруем по sink-флагам
-    }.map[QueryBuilder] { qb =>
-      if (args.onlyWithSinks.isEmpty) {
-        qb
-      } else {
-        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SINKS_ESFN, args.onlyWithSinks.map(_.name) : _*)
-        QueryBuilders.filteredQuery(qb, sf)
-      }
-    }.orElse[QueryBuilder] {
-      if (args.onlyWithSinks.isEmpty) {
-        None
-      } else {
-        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SINKS_ESFN, args.onlyWithSinks.map(_.name) : _*)
-          .minimumMatch(args.onlyWithSinks.size)
-        Some(sq)
-      }
-
-    // Отрабатываем флаг testNode.
-    }.map[QueryBuilder] { qb =>
-      args.testNode.fold(qb) { tnFlag =>
-        var tnf: FilterBuilder = FilterBuilders.termFilter(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
-        if (!tnFlag) {
-          val tmf = FilterBuilders.missingFilter(AdNetMember.ADN_TEST_NODE_ESFN)
-          tnf = FilterBuilders.orFilter(tnf, tmf)
-        }
-        QueryBuilders.filteredQuery(qb, tnf)
-      }
-    }.orElse[QueryBuilder] {
-      args.testNode.map { tnFlag =>
-        // TODO Нужно добавить аналог missing filter для query и как-то объеденить через OR. Или пока так и пересохранять узлы с tn=false.
-        QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
-      }
-
-    // Отрабатываем флаг conf.showInScNodeList
-    }.map[QueryBuilder] { qb =>
-      args.showInScNodeList.fold(qb) { sscFlag =>
-        val sscf = FilterBuilders.termFilter(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
-        QueryBuilders.filteredQuery(qb, sscf)
-      }
-    }.orElse[QueryBuilder] {
-      args.showInScNodeList.map { sscFlag =>
-        QueryBuilders.termQuery(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
-      }
-
-    // Ищем/фильтруем по флагу включённости узла.
-    }.map[QueryBuilder] { qb =>
-      args.isEnabled.fold(qb) { isEnabled =>
-        val ief = FilterBuilders.termFilter(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
-        QueryBuilders.filteredQuery(qb, ief)
-      }
-    }.orElse[QueryBuilder] {
-      args.isEnabled.map { isEnabled =>
-        QueryBuilders.termQuery(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
-      }
-
-    // Нет критерия для поиска по индексу - сдаёмся.
-    }.getOrElse[QueryBuilder] {
-      QueryBuilders.matchAllQuery()
-    }
-
-    // Добавляем фильтр по id нежелательных результатов.
-    if (args.withoutIds.nonEmpty) {
-      val idsf = FilterBuilders.notFilter(
-        FilterBuilders.idsFilter().ids(args.withoutIds : _*))
-      qb2 = QueryBuilders.filteredQuery(qb2, idsf)
-    }
-
-    // Добавить фильтр по наличию логотипа. Т.к. поле не индексируется, то используется
-    if (args.hasLogo.nonEmpty) {
-      var ef: FilterBuilder = FilterBuilders.scriptFilter(LOGO_EXIST_MVEL).lang("mvel")
-      if (!args.hasLogo.get) {
-        ef = FilterBuilders.notFilter(ef)
-      }
-      qb2 = QueryBuilders.filteredQuery(qb2, ef)
-    }
-
-    // Сборка завершена, возвращаем собранную es query.
-    qb2
   }
 
 }
@@ -403,7 +100,308 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** По каким полям будем искать? */
   def ftsSearchFN: String = SioConstants.FIELD_ALL
 
-  override def toEsQuery = AdnNodesSearch.mkEsQuery(this)
+
+  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которых ближе, чем это допустимо. */
+  private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
+    // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил перепиливание подсистемы географии.
+    innerCircle.fold(qb2) { inCircle =>
+      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnNodeGeo.GEO_POINT_ESFN)
+        .point(inCircle.center.lat, inCircle.center.lon)
+        .distance(inCircle.radius.distance, inCircle.radius.units)
+      val notInner = FilterBuilders.notFilter(innerFilter)
+      QueryBuilders.filteredQuery(qb2, notInner)
+    }
+  }
+
+  /**
+   * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
+   * @return Экземпляр QueryBuilder, пригодный для отправки в поисковом запросе.
+   */
+  override def toEsQuery: QueryBuilder = {
+    var qb2: QueryBuilder = qStr.flatMap[QueryBuilder] { qStr =>
+      TextQueryV2Util.queryStr2QueryMarket(qStr, ftsSearchFN)
+        .map { _.q }
+
+    // Отрабатываем withIds, ограничивающий выдачу по ids.
+    }.map[QueryBuilder] { qb =>
+      if (withIds.nonEmpty) {
+        val idf = FilterBuilders.idsFilter().ids(withIds: _*)
+        QueryBuilders.filteredQuery(qb, idf)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (withIds.nonEmpty) {
+        val qb = QueryBuilders.idsQuery().ids(withIds: _*)
+        Some(qb)
+      } else {
+        None
+      }
+
+    // Отрабатываем companyId
+    }.map[QueryBuilder] { qb =>
+      if (companyIds.isEmpty) {
+        qb
+      } else {
+        val cf = FilterBuilders.termsFilter(EMCompanyId.COMPANY_ID_ESFN, companyIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, cf)
+      }
+    }.orElse {
+      if (companyIds.isEmpty) {
+        None
+      } else {
+        val cq = QueryBuilders.termsQuery(EMCompanyId.COMPANY_ID_ESFN, companyIds : _*)
+          .minimumMatch(1)
+        Some(cq)
+      }
+
+    // Отрабатываем adnSupIds:
+    }.map[QueryBuilder] { qb =>
+      if (adnSupIds.isEmpty) {
+        qb
+      } else {
+        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, sf)
+      }
+    }.orElse[QueryBuilder] {
+      if (adnSupIds.nonEmpty) {
+        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
+          .minimumMatch(1)
+        Some(sq)
+      } else {
+        None
+      }
+
+    // Дальше отрабатываем список возможных personIds.
+    }.map[QueryBuilder] { qb =>
+      if (anyOfPersonIds.isEmpty) {
+        qb
+      } else {
+        val pf = FilterBuilders.termsFilter(EMPersonIds.PERSON_ID_ESFN, anyOfPersonIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, pf)
+      }
+    }.orElse[QueryBuilder] {
+      if (anyOfPersonIds.isEmpty) {
+        None
+      } else {
+        val pq = QueryBuilders.termsQuery(EMPersonIds.PERSON_ID_ESFN, anyOfPersonIds : _*)
+          .minimumMatch(1)
+        Some(pq)
+      }
+
+    // Отрабатываем id узлов adv-делегатов
+    }.map[QueryBuilder] { qb =>
+      if (advDelegateAdnIds.isEmpty) {
+        qb
+      } else {
+        val af = FilterBuilders.termsFilter(AdNetMember.ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, af)
+      }
+    }.orElse[QueryBuilder] {
+      if (advDelegateAdnIds.isEmpty) {
+        None
+      } else {
+        val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds: _*)
+          .minimumMatch(1)
+        Some(aq)
+      }
+
+    // Отрабатываем прямых гео-родителей
+    }.map[QueryBuilder] { qb =>
+      if (withDirectGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (withDirectGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents: _*)
+        Some(qb)
+      } else {
+        None
+      }
+
+    // Отрабатываем поиск по любым гео-родителям
+    }.map[QueryBuilder] { qb =>
+      if (withGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (withGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(EMAdnNodeGeo.GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+        Some(qb)
+      } else {
+        None
+      }
+
+    // Поиск/фильтрация по полю shown type id, хранящий id типа узла.
+    }.map[QueryBuilder] { qb =>
+      if (shownTypeIds.isEmpty) {
+        qb
+      } else {
+        val stiFilter = FilterBuilders.termsFilter(AdNetMember.ADN_SHOWN_TYPE_ID, shownTypeIds : _*)
+        QueryBuilders.filteredQuery(qb, stiFilter)
+      }
+    }.orElse[QueryBuilder] {
+      if (shownTypeIds.isEmpty) {
+        None
+      } else {
+        val stiQuery = QueryBuilders.termsQuery(AdNetMember.ADN_SHOWN_TYPE_ID, shownTypeIds : _*)
+          .minimumMatch(1)  // может быть только один тип ведь у одного узла.
+        Some(stiQuery)
+      }
+
+    // Отрабатываем geoDistance через geoShape'ы. Текущий запрос обнаружения описываем как круг.
+    // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
+    }.map[QueryBuilder] { qb =>
+      // Вешаем фильтры GeoShape
+      geoDistance.fold(qb) { gsqd =>
+        // География узлов живёт в отдельной модели, которая доступна через has_child
+        val gq = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val gsfOuter = FilterBuilders.hasChildFilter(MAdnNodeGeo.ES_TYPE_NAME, gq)
+        val qb2 = QueryBuilders.filteredQuery(qb, gsfOuter)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
+      }
+    }.orElse[QueryBuilder] {
+      geoDistance.map { gsqd =>
+        // Создаём GeoShape query. query по внешнему контуру, и filter по внутреннему.
+        val gq  = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val qb2 = QueryBuilders.hasChildQuery(MAdnNodeGeo.ES_TYPE_NAME, gq)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
+      }
+
+    // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
+    }.map[QueryBuilder] { qb =>
+      if (intersectsWithPreIndexed.isEmpty) {
+        qb
+      } else {
+        val filters = intersectsWithPreIndexed
+          .map { _.toGeoShapeFilter }
+        val filter = if (filters.size == 1) {
+          filters.head
+        } else {
+          FilterBuilders.orFilter(filters: _*)
+        }
+        QueryBuilders.filteredQuery(qb, filter)
+      }
+    }.orElse[QueryBuilder] {
+      if (intersectsWithPreIndexed.isEmpty) {
+        None
+      } else if (intersectsWithPreIndexed.size == 1) {
+        val qb = intersectsWithPreIndexed.head.toGeoShapeQuery
+        Some(qb)
+      } else {
+        val qb = intersectsWithPreIndexed.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
+          (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
+        }
+        Some(qb)
+      }
+
+    // Отрабатываем возможный список прав узла.
+    }.map[QueryBuilder] { qb =>
+      if (withAdnRights.isEmpty) {
+        qb
+      } else {
+        val rf = FilterBuilders.termsFilter(AdNetMember.ADN_RIGHTS_ESFN, withAdnRights.map(_.name) : _*)
+          .execution("and")
+        QueryBuilders.filteredQuery(qb, rf)
+      }
+    }.orElse[QueryBuilder] {
+      if (withAdnRights.isEmpty) {
+        None
+      } else {
+        val rq = QueryBuilders.termsQuery(AdNetMember.ADN_RIGHTS_ESFN, withAdnRights.map(_.name): _*)
+          .minimumMatch(withAdnRights.size)
+        Some(rq)
+      }
+
+    // Ищем/фильтруем по sink-флагам
+    }.map[QueryBuilder] { qb =>
+      if (onlyWithSinks.isEmpty) {
+        qb
+      } else {
+        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SINKS_ESFN, onlyWithSinks.map(_.name) : _*)
+        QueryBuilders.filteredQuery(qb, sf)
+      }
+    }.orElse[QueryBuilder] {
+      if (onlyWithSinks.isEmpty) {
+        None
+      } else {
+        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SINKS_ESFN, onlyWithSinks.map(_.name) : _*)
+          .minimumMatch(onlyWithSinks.size)
+        Some(sq)
+      }
+
+    // Отрабатываем флаг testNode.
+    }.map[QueryBuilder] { qb =>
+      testNode.fold(qb) { tnFlag =>
+        var tnf: FilterBuilder = FilterBuilders.termFilter(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+        if (!tnFlag) {
+          val tmf = FilterBuilders.missingFilter(AdNetMember.ADN_TEST_NODE_ESFN)
+          tnf = FilterBuilders.orFilter(tnf, tmf)
+        }
+        QueryBuilders.filteredQuery(qb, tnf)
+      }
+    }.orElse[QueryBuilder] {
+     testNode.map { tnFlag =>
+        // TODO Нужно добавить аналог missing filter для query и как-то объеденить через OR. Или пока так и пересохранять узлы с tn=false.
+        QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+      }
+
+    // Отрабатываем флаг conf.showInScNodeList
+    }.map[QueryBuilder] { qb =>
+      showInScNodeList.fold(qb) { sscFlag =>
+        val sscf = FilterBuilders.termFilter(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+        QueryBuilders.filteredQuery(qb, sscf)
+      }
+    }.orElse[QueryBuilder] {
+      showInScNodeList.map { sscFlag =>
+        QueryBuilders.termQuery(EMNodeConf.CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+      }
+
+    // Ищем/фильтруем по флагу включённости узла.
+    }.map[QueryBuilder] { qb =>
+      isEnabled.fold(qb) { isEnabled =>
+        val ief = FilterBuilders.termFilter(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
+        QueryBuilders.filteredQuery(qb, ief)
+      }
+    }.orElse[QueryBuilder] {
+      isEnabled.map { isEnabled =>
+        QueryBuilders.termQuery(AdNetMember.ADN_IS_ENABLED_ESFN, isEnabled)
+      }
+
+    // Нет критерия для поиска по индексу - сдаёмся.
+    }.getOrElse[QueryBuilder] {
+      QueryBuilders.matchAllQuery()
+    }
+
+    // Добавляем фильтр по id нежелательных результатов.
+    if (withoutIds.nonEmpty) {
+      val idsf = FilterBuilders.notFilter(
+        FilterBuilders.idsFilter().ids(withoutIds : _*))
+      qb2 = QueryBuilders.filteredQuery(qb2, idsf)
+    }
+
+    // Добавить фильтр по наличию логотипа. Т.к. поле не индексируется, то используется
+    if (hasLogo.nonEmpty) {
+      var ef: FilterBuilder = FilterBuilders.scriptFilter(AdnNodesSearch.LOGO_EXIST_MVEL).lang("mvel")
+      if (!hasLogo.get) {
+        ef = FilterBuilders.notFilter(ef)
+      }
+      qb2 = QueryBuilders.filteredQuery(qb2, ef)
+    }
+
+    // Сборка завершена, возвращаем собранную es query.
+    qb2
+  }
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)

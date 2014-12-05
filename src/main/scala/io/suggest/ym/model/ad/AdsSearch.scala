@@ -24,23 +24,57 @@ object AdsSearch {
     */
   // TODO Оно кажется не работает совсем.
   // TODO ES 1.4 выкидывает MVEL: нужно выкинуть это или же на clojure переделать, заодно починить.
-  lazy val IDS_SCORE_MVEL =
-    """
+  lazy val IDS_SCORE_MVEL = """
       |uid = doc["_uid"].value;
       |dInx = uid.indexOf('#');
       |id = uid.substring(dInx + 1);
       |if (ids contains id) { incr; } else { 1.0; }
       |""".stripMargin
 
+}
+
+
+/** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
+trait AdsSearchArgsT extends DynSearchArgs {
+  // Ниже Seq брать нельзя, т.к. используется vararhs конструкция вида (x : _*), которая требует Seq[T].
+
+  /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
+  def receiverIds: Seq[String]
+
+  /** Добавить exists или missing фильтр на выходе, который будет убеждаться, что в индексе есть или нет id ресиверов. */
+  def anyReceiverId: Option[Boolean]
+
+  /** Необязательный id владельца рекламы. Полезно при поиске в рамках магазина. */
+  def producerIds: Seq[String]
+
+  /** Необязательный id категории */
+  def catIds: Seq[String]
+
+  /** Какого уровня требуются карточки. */
+  def levels: Seq[SlNameTokenStr]
+
+  /** Добавить exists/missing фильтр на выходе, который будет убеждаться, что уровни присуствуют или отсутствуют. */
+  def anyLevel: Option[Boolean]
+
+  /** Произвольный текстовый запрос, если есть. */
+  def qOpt: Option[String]
+
+  /** Форсировать указанные id в начало списка (через мощный скоринг). */
+  def forceFirstIds: Seq[String]
+
+  /** Отбрасывать документы, имеющие указанные id'шники. */
+  def withoutIds: Seq[String]
+
+  /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
+  def generationOpt: Option[Long]
+
   /**
    * Скомпилировать из аргументов запроса сам ES-запрос со всеми фильтрами и т.д.
-   * @param adSearch Аргументы запроса.
    * @return
    */
-  def prepareEsQuery(adSearch: AdsSearchArgsT): QueryBuilder = {
-    import adSearch._
+  override def toEsQuery: QueryBuilder = {
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    var query3: QueryBuilder = adSearch.qOpt.flatMap[QueryBuilder] { q =>
+    var query3: QueryBuilder = qOpt.flatMap[QueryBuilder] { q =>
       // Собираем запрос текстового поиска.
       // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
       TextQueryV2Util.queryStr2QueryMarket(q, s"${SioConstants.FIELD_ALL}")
@@ -129,16 +163,16 @@ object AdsSearch {
       val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
       QueryBuilders.filteredQuery(q0, nf)
     }
-    if (adSearch.generationOpt.isDefined && adSearch.qOpt.isEmpty) {
+    if (generationOpt.isDefined && qOpt.isEmpty) {
       // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
       val scoreFun = ScoreFunctionBuilders.randomFunction(generationOpt.get)
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
-    if (adSearch.forceFirstIds.nonEmpty) {
+    if (forceFirstIds.nonEmpty) {
       // Запрошено, чтобы указанные id были в начале списка результатов.
-      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL, "mvel")
-        .param("ids", new ju.HashSet[String](adSearch.forceFirstIds.size).addAll(adSearch.forceFirstIds) )  // TODO Opt: использовать java.util.HashSet?
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(AdsSearch.IDS_SCORE_MVEL, "mvel")
+        .param("ids", new ju.HashSet[String](forceFirstIds.size).addAll(forceFirstIds) )  // TODO Opt: использовать java.util.HashSet?
         .param("incr", 100)
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
@@ -175,44 +209,6 @@ object AdsSearch {
     query3
   }
 
-}
-
-
-/** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
-trait AdsSearchArgsT extends DynSearchArgs {
-  // Ниже Seq брать нельзя, т.к. используется vararhs конструкция вида (x : _*), которая требует Seq[T].
-
-  /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
-  def receiverIds: Seq[String]
-
-  /** Добавить exists или missing фильтр на выходе, который будет убеждаться, что в индексе есть или нет id ресиверов. */
-  def anyReceiverId: Option[Boolean]
-
-  /** Необязательный id владельца рекламы. Полезно при поиске в рамках магазина. */
-  def producerIds: Seq[String]
-
-  /** Необязательный id категории */
-  def catIds: Seq[String]
-
-  /** Какого уровня требуются карточки. */
-  def levels: Seq[SlNameTokenStr]
-
-  /** Добавить exists/missing фильтр на выходе, который будет убеждаться, что уровни присуствуют или отсутствуют. */
-  def anyLevel: Option[Boolean]
-
-  /** Произвольный текстовый запрос, если есть. */
-  def qOpt: Option[String]
-
-  /** Форсировать указанные id в начало списка (через мощный скоринг). */
-  def forceFirstIds: Seq[String]
-
-  /** Отбрасывать документы, имеющие указанные id'шники. */
-  def withoutIds: Seq[String]
-
-  /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
-  def generationOpt: Option[Long]
-
-  override def toEsQuery = AdsSearch.prepareEsQuery(this)
 }
 
 /** Дефолтовые значения аргументов поиска рекламных карточек. */

@@ -116,5 +116,4 @@ trait DynSearchArgsWrapper extends DynSearchArgs {
 
   override def maxResults = _dsArgsUnderlying.maxResults
   override def offset     = _dsArgsUnderlying.offset
-  override def toEsQuery  = _dsArgsUnderlying.toEsQuery
 }
