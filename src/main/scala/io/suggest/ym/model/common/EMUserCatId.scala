@@ -3,6 +3,7 @@ package io.suggest.ym.model.common
 import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json.JsString
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -23,6 +24,7 @@ object EMUserCatId {
 import EMUserCatId._
 
 
+/** Аддон для статической части модели с поддержкой поля категорий. */
 trait EMUserCatIdStatic extends EsModelStaticMutAkvT {
   override type T <: EMUserCatIdMut
 
@@ -62,12 +64,14 @@ trait EMUserCatIdStatic extends EsModelStaticMutAkvT {
 }
 
 
+/** Аддон-интерфейс экземпляра модели. */
 trait EMUserCatIdI extends EsModelPlayJsonT {
   override type T <: EMUserCatIdI
   def userCatId: Option[String]
 }
 
 
+/** Аддон к экземпляру модели. */
 trait EMUserCatId extends EMUserCatIdI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
@@ -83,3 +87,40 @@ trait EMUserCatIdMut extends EMUserCatId {
   override type T <: EMUserCatIdMut
   var userCatId: Option[String]
 }
+
+
+/** Аддон для dyn-search для поиска по полю userCatId. */
+trait UserCatIdDsa extends DynSearchArgs {
+
+  /** Необязательный id категории */
+  def catIds: Seq[String]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map { qb =>
+      // Если есть q или shopId и указана catId, то добавляем catId-фильтр.
+      if (catIds.isEmpty) {
+        qb
+      } else {
+        val catIdFilter = FilterBuilders.termsFilter(USER_CAT_ID_ESFN, catIds : _*)
+        QueryBuilders.filteredQuery(qb, catIdFilter)
+      }
+    }.orElse[QueryBuilder] {
+      // Запроса всё ещё нет, т.е. собрать запрос по shopId тоже не удалось. Пробуем собрать запрос с catIdOpt...
+      if (catIds.isEmpty) {
+        None
+      } else {
+        val qb = QueryBuilders.termsQuery(USER_CAT_ID_ESFN, catIds : _*)
+        Some(qb)
+      }
+    }
+  }
+
+}
+trait UserCatIdDsaDflt extends UserCatIdDsa {
+  override def catIds: Seq[String] = Seq.empty
+}
+trait UserCatIdDsaWrapper extends UserCatIdDsa with DynSearchArgsWrapper {
+  override type WT <: UserCatIdDsa
+  override def catIds = _dsArgsUnderlying.catIds
+}
+

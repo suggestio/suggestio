@@ -299,6 +299,12 @@ trait ReceiversDsa extends DynSearchArgs {
   /** Какого уровня требуются карточки. */
   def levels: Seq[SlNameTokenStr]
 
+  /** Добавить exists или missing фильтр на выходе, который будет убеждаться, что в индексе есть или нет id ресиверов. */
+  def anyReceiverId: Option[Boolean]
+
+  /** Добавить exists/missing фильтр на выходе, который будет убеждаться, что уровни присуствуют или отсутствуют. */
+  def anyLevel: Option[Boolean]
+
   override def toEsQueryOpt: Option[QueryBuilder] = {
     super.toEsQueryOpt.map { qb =>
       // Если receiverId задан, то надо фильтровать в рамках ресивера. Сразу надо уровни отработать, т.к. они nested в одном поддокументе.
@@ -345,14 +351,55 @@ trait ReceiversDsa extends DynSearchArgs {
     }
   }
 
+  override def toEsQuery: QueryBuilder = {
+    var query = super.toEsQuery
+    // Если задан anyReceiverId, то нужно добавить exists/missing-фильтр для проверки состояния значений в rcvrs.id.
+    if (anyReceiverId.isDefined) {
+      val fn = EMReceivers.RCVRS_RECEIVER_ID_ESFN
+      val f = if (anyReceiverId.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query = QueryBuilders.filteredQuery(query, nf)
+    }
+    // Если задан anyLevel, то нужно добавиль фильтр по аналогии с anyReceiverId.
+    if (anyLevel.isDefined) {
+      val fn = EMReceivers.RCVRS_SLS_ESFN
+      val f = if(anyLevel.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query = QueryBuilders.filteredQuery(query, nf)
+    }
+    query
+  }
+
 }
 trait ReceiversDsaDflt extends ReceiversDsa {
-  override def receiverIds: Seq[String] = Seq.empty
-  override def levels: Seq[SlNameTokenStr] = Seq.empty
+  override def receiverIds    : Seq[String] = Seq.empty
+  override def levels         : Seq[SlNameTokenStr] = Seq.empty
+  override def anyReceiverId  : Option[Boolean] = None
+  override def anyLevel       : Option[Boolean] = None
 }
 trait ReceiversDsaWrapper extends ReceiversDsa with DynSearchArgsWrapper {
   override type WT <: ReceiversDsa
-  override def receiverIds = _dsArgsUnderlying.receiverIds
-  override def levels = _dsArgsUnderlying.levels
+  override def receiverIds    = _dsArgsUnderlying.receiverIds
+  override def levels         = _dsArgsUnderlying.levels
+  override def anyReceiverId  = _dsArgsUnderlying.anyReceiverId
+  override def anyLevel       = _dsArgsUnderlying.anyLevel
 }
 
+/** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить.
+  * Нужно отображать только карточки, которые опубликованы где-либо. */
+trait ReceiversDsaOnlyPublishedByDefault extends DynSearchArgs {
+  override def defaultEsQuery: QueryBuilder = {
+    val q0 = super.defaultEsQuery
+    val f = FilterBuilders.existsFilter(EMReceivers.RCVRS_SLS_ESFN)
+    val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+    QueryBuilders.filteredQuery(q0, nf)
+  }
+}
