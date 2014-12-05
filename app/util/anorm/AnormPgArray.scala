@@ -19,25 +19,23 @@ object AnormPgArray {
    * https://groups.google.com/d/msg/play-framework/qs7mbWwIjjY/a6M_xPaNFggJ
    * @return
    */
-  implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull { (value, meta) =>
-    val res = value match {
+  implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull1 { (value, meta) =>
+    value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[Integer]].toSeq.map(_.intValue) )
       case _ =>
         Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + meta.column))
     }
-    MayErr(res)
   }
 
 
-  implicit def rowToStringSet: Column[Set[String]] = Column.nonNull { (value, meta) =>
-    val res = value match {
+  implicit def rowToStringSet: Column[Set[String]] = Column.nonNull1 { (value, meta) =>
+    value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSet)
       case _ =>
         Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column ${meta.column}"))
     }
-    MayErr(res)
   }
 
 
@@ -59,14 +57,13 @@ object AnormPgArray {
    * Распознование массива строк в Seq[String].
    * @return Seq[String] или экзепшен.
    */
-  implicit def rowToSeqString: Column[Seq[String]] = Column.nonNull { (value, meta) =>
-    val res = value match {
+  implicit def rowToSeqString: Column[Seq[String]] = Column.nonNull1 { (value, meta) =>
+    value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSeq)
       case _ =>
         Left(TypeDoesNotMatch("Cannot convert %s: %s to Seq[String] for column %s".format(value, value.getClass, meta.column)))
     }
-    MayErr(res)
   }
 
 }
