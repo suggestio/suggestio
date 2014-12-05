@@ -1853,6 +1853,19 @@ sm =
         if fel != null
           fel.style.visibility = 'hidden';
 
+      ad_id = this.sm_blocks[ad_index].getAttribute("data-mad-id")
+      cs = sm.states.cur_state()
+
+      ns =
+        mart : cs.mart_id
+        fads :
+          is_opened : true
+          producer_id : cs.fads.producer_id
+          ad_id : ad_id
+
+      console.log "active ad id = #{ad_id}"
+      console.log ns
+
     next_ad : () ->
       if typeof this.active_ad_index == 'undefined'
         return false
@@ -2478,6 +2491,7 @@ sm =
         return undefined
       this.list[this.cur_state_index]
 
+    # добавляет новое состояние
     add_state : ( ns ) ->
 
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
@@ -2493,12 +2507,15 @@ sm =
 
       this.push ns
 
+    # изменяет текущее состояние
     update_state : ( sup ) -> #state_update_params
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       this.list[this.list.length-1] = cs
 
+    # добавляет новое состояние
+    # если какие-то параметры не переданы, берёт значения текущего состояния
     transform_state : ( stp ) -> #state_transform_params
       cs = sm.states.cur_state()
       ns = {}
