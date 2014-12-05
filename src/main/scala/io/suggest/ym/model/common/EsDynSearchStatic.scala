@@ -4,7 +4,7 @@ import io.suggest.model.EsModelStaticT
 import io.suggest.util.MacroLogsI
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilder
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -86,8 +86,15 @@ trait DynSearchArgs {
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   def offset: Int
 
-  /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных. */
-  def toEsQuery: QueryBuilder
+  /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
+    * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
+  def toEsQuery: QueryBuilder = toEsQueryOpt getOrElse defaultEsQuery
+
+  /** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить. */
+  def defaultEsQuery: QueryBuilder = QueryBuilders.matchAllQuery()
+
+  /** Сборка EsQuery сверху вниз. */
+  def toEsQueryOpt: Option[QueryBuilder] = None
 
   /**
    * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
@@ -112,8 +119,10 @@ trait DynSearchArgsDflt extends DynSearchArgs {
 
 /** Враппер для контейнера аргументов dyn-поиска. */
 trait DynSearchArgsWrapper extends DynSearchArgs {
-  def _dsArgsUnderlying: DynSearchArgs
+  type WT <: DynSearchArgs
+  def _dsArgsUnderlying: WT
 
   override def maxResults = _dsArgsUnderlying.maxResults
   override def offset     = _dsArgsUnderlying.offset
+  override def MAX_RESULTS_HARD = _dsArgsUnderlying.MAX_RESULTS_HARD
 }

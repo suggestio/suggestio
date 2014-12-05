@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.ym.model.common.AdnSinks.AdnSink
 import io.suggest.ym.model.common.SinkShowLevels.SinkShowLevel
 import scala.collection.JavaConversions._
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
@@ -114,6 +114,7 @@ trait EMReceiversStatic extends EsModelStaticMutAkvT {
   }
 
 }
+
 
 
 trait EMReceiversI extends EsModelPlayJsonT {
@@ -285,5 +286,73 @@ case class AdReceiverInfo(
     val rcvrsFmt = sls.iterator.map(_.name).mkString(", ")
     s"ri[$receiverId -> $rcvrsFmt]"
   }
+}
+
+
+
+/** DynSearch-Аддон для поиска по ресиверам. */
+trait ReceiversDsa extends DynSearchArgs {
+
+  /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
+  def receiverIds: Seq[String]
+
+  /** Какого уровня требуются карточки. */
+  def levels: Seq[SlNameTokenStr]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map { qb =>
+      // Если receiverId задан, то надо фильтровать в рамках ресивера. Сразу надо уровни отработать, т.к. они nested в одном поддокументе.
+      if (receiverIds.nonEmpty || levels.nonEmpty) {
+        var nestedSubfilters: List[FilterBuilder] = Nil
+        if (receiverIds.nonEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
+        }
+        if (levels.nonEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
+        }
+        // Если получилось несколько фильтров, то надо их объеденить.
+        val finalNestedSubfilter: FilterBuilder = if (nestedSubfilters.tail.nonEmpty) {
+          FilterBuilders.andFilter(nestedSubfilters: _*)
+        } else {
+          nestedSubfilters.head
+        }
+        // Оборачиваем результирующий фильтр в nested, и затем вешаем на исходную query.
+        val nestedFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, finalNestedSubfilter)
+        QueryBuilders.filteredQuery(qb, nestedFilter)
+      } else {
+        qb
+      }
+
+    }.orElse[QueryBuilder] {
+      // Нет поискового запроса. Попытаться собрать запрос по ресиверу с опциональным фильтром по level.
+      if (receiverIds.nonEmpty) {
+        var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
+        if (levels.nonEmpty) {
+          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
+          nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
+        }
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
+        Some(qb)
+
+      } else if (levels.nonEmpty) {
+        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_ESFN, levels.map(_.name) : _*)
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
+        Some(qb)
+
+      } else {
+        None
+      }
+    }
+  }
+
+}
+trait ReceiversDsaDflt extends ReceiversDsa {
+  override def receiverIds: Seq[String] = Seq.empty
+  override def levels: Seq[SlNameTokenStr] = Seq.empty
+}
+trait ReceiversDsaWrapper extends ReceiversDsa with DynSearchArgsWrapper {
+  override type WT <: ReceiversDsa
+  override def receiverIds = _dsArgsUnderlying.receiverIds
+  override def levels = _dsArgsUnderlying.levels
 }
 
