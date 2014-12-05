@@ -4,8 +4,8 @@ organization := "io.suggest"
 
 version := "1.10.6-SNAPSHOT"
 
-scalaVersion := "2.10.4"
-//scalaVersion := "2.11.3"
+//scalaVersion := "2.10.4"
+scalaVersion := "2.11.4"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -29,10 +29,10 @@ libraryDependencies ++= {
   val jacksonVsn    = "2.4.+"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
-  val playVsn       = "2.3.4"
+  val playVsn       = "2.4.0-M2"
   val morphVsn      = "1.3-SNAPSHOT"
   val bcVsn         = "1.46"
-  val phantomVersion = "1.2.8"
+  val phantomVersion = "1.2.7"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
