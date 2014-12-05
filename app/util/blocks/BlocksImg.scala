@@ -53,7 +53,6 @@ trait ISaveImgs {
     Future successful Map.empty
   }
 
-  def getBgImg(bim: BlockImgMap): Option[MImg] = None
 }
 
 

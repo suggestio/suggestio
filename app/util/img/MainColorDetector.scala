@@ -7,13 +7,12 @@ import models.im.{MLocalImg, ImOp, MImg, Im4jAsyncSuccessProcessListener}
 import org.im4java.core.{IMOperation, ConvertCmd}
 
 import play.api.Play.{current, configuration}
-import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
 import models.im._
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
@@ -143,30 +142,6 @@ object MainColorDetector extends PlayMacroLogsImpl {
   def colorDistance3D(p1: ColorPoint3D, p2: ColorPoint3D, exp: Double = 2.0): Double = {
     val expDst = Math.pow(p2.x - p1.x, exp)  +  Math.pow(p2.y - p1.y, exp)  +  Math.pow(p2.z - p1.z, exp)
     Math.pow(expDst, 1.0 / exp)
-  }
-
-
-  /**
-   * Кеширующий враппер на detectColorFor().
-   * @param bgImg4s Исходная картинка.
-   * @return Фьючерс с результатом определения цвета.
-   */
-  def detectColorCachedFor(bgImg4s: MImg): Future[ImgBgColorUpdateAction] = {
-    val resultPromise = Promise[ImgBgColorUpdateAction]()
-    val resultFut = resultPromise.future
-    val ck = bgImg4s.fileName + ":dCCF"
-    Cache.getAs [Future[ImgBgColorUpdateAction]] (ck) match {
-      case None =>
-        Cache.set(ck, resultFut, expiration = DETECTED_COLOR_RESULT_CACHE_TTL_SECONDS)
-        val dcfFut = Future {
-          detectColorFor(bgImg4s)
-        }.flatMap(identity)
-        resultPromise completeWith dcfFut
-
-      case Some(cachedResFut) =>
-        resultPromise completeWith cachedResFut
-    }
-    resultFut
   }
 
 

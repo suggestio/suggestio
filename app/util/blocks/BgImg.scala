@@ -317,11 +317,6 @@ trait SaveBgImgI extends ISaveImgs {
   def BG_IMG_FN: String
   def bgImgBf: BfImage
 
-  /** Прочитать инфу о сохраняемой картинке из карты картинок создаваемого блока. */
-  override def getBgImg(bim: BlockImgMap): Option[MImg] = {
-    bim.get(BG_IMG_FN)
-  }
-
   /** Прочитать данные по картинки из imgs-поля рекламной карточки. */
   def getMadBgImg(mad: Imgs): Option[MImgInfoT] = {
     mad.imgs.get(BG_IMG_FN)

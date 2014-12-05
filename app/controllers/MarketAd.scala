@@ -73,7 +73,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         CAT_ID_K    -> catIdM,
         OFFER_K     -> blockM,
         "pattern"   -> coveringPatternM,
-        "descr"     -> richDescrOptM
+        "descr"     -> richDescrOptM,
+        "bgColor"   -> colorM
       )(adFormApply)(adFormUnapply)
     )
   }
@@ -162,18 +163,15 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Асинхронно обрабатываем всякие прочие данные.
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
             val t4s2Fut = newTexts4search(mad, request.adnNode)
-            val ibgcUpdFut = adPrepareUpdateBgColors(bim, bc)
             // Когда всё готово, сохраняем саму карточку.
             for {
               t4s2      <- t4s2Fut
               savedImgs <- saveImgsFut
-              ibgcUpd   <- ibgcUpdFut
               adId      <- {
                 mad.copy(
                   producerId    = adnId,
                   imgs          = savedImgs,
-                  texts4search  = t4s2,
-                  colors        = ibgcUpd.updateColors(mad.colors)
+                  texts4search  = t4s2
                 ).save
               }
             } yield {
@@ -280,7 +278,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2, request.producer)
-            val ibgcUpdFut = adPrepareUpdateBgColors(bim, bc)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
             val saveImgsFut = bc.saveImgs(
@@ -292,7 +289,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             for {
               imgsSaved <- saveImgsFut
               t4s2      <- t4s2Fut
-              ibgcUpd   <- ibgcUpdFut
               _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
                 mad0.copy(
                   imgs          = imgsSaved,
@@ -302,7 +298,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                     freeAdv = mad0.moderation.freeAdv
                       .filter { _.isAllowed != true }
                   ),
-                  colors        = ibgcUpd.updateColors(mad2.colors),
+                  colors        = mad2.colors,
                   offers        = mad2.offers,
                   prio          = mad2.prio,
                   userCatId     = mad2.userCatId,
@@ -528,21 +524,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             upCats
         }
       }
-  }
-
-  /**
-   * Выполнить действия, связанные с определением цвета фона и возвращение промежуточного результата для MAd.
-   * @param newBim Новый набор картинок.
-   * @param bc Конфиг блока.
-   * @return Фьючерс с действием по обновлению карты цветов рекламной карточки.
-   */
-  private def adPrepareUpdateBgColors(newBim: BlockImgMap, bc: BlockConf): Future[ImgBgColorUpdateAction] = {
-    bc.getBgImg(newBim).fold [Future[ImgBgColorUpdateAction]] {
-      trace(s"adPrepareUpdateBgColors(): No background image - nothing to do.")
-      Future successful Remove    // TODO Возвращать Keep?
-    } { bgImg4s =>
-      MainColorDetector.detectColorCachedFor(bgImg4s)
-    }
   }
 
 }

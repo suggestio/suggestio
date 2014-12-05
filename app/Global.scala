@@ -106,8 +106,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter, DumpXff
   override def onStop(app: Application) {
     ScStatSaver.BACKEND.close()
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
-    val casCloseFut = SioCassandraClient.session.closeAsync()
-      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
+    val casCloseFut = SioCassandraClient.close()
     val esCloseFut = Future {
       SiowebEsUtil.stopNode()
     }

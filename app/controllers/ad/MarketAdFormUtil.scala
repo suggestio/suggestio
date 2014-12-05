@@ -1,7 +1,7 @@
 package controllers.ad
 
 import models._
-import models.blk.FontSize
+import models.blk.{AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
 import io.suggest.ym.parsers.Price
@@ -306,19 +306,21 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String], richDescrOpt: Option[RichDescr]): AdFormMResult = {
-    val colors1: Map[String, String] = {
-      val c0 = bmr.bd.colors
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String],
+                  richDescrOpt: Option[RichDescr], bgColor: String): AdFormMResult = {
+    val colors: Map[String, String] = {
+      // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
+      var ci = bmr.bd.colors.iterator
+      ci ++= Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
       if (pattern.isDefined)
-        c0 + (COVERING_PATTERN_COLOR_FN -> pattern.get)
-      else
-        c0
+        ci ++= Iterator(COVERING_PATTERN_COLOR_FN -> pattern.get)
+      ci.toMap
     }
     val mad = MAd(
       producerId  = null,
       offers      = bmr.bd.offers,
       blockMeta   = bmr.bd.blockMeta,
-      colors      = colors1,
+      colors      = colors,
       imgs        = null,
       userCatId   = userCatId,
       richDescrOpt = richDescrOpt
@@ -327,11 +329,13 @@ object MarketAdFormUtil {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr])] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
     val pattern = mad.colors.get(COVERING_PATTERN_COLOR_FN)
-    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt) )
+    import AdColorFns._
+    val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
+    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )
   }
 
 

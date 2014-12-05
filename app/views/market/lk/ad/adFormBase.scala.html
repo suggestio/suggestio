@@ -18,9 +18,12 @@
   @content
 
   <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
-  <script>
 
-    @* Сразу открываем веб-сокет в фоне. Он нужен для получения задетекченного цвета картинки. *@
+   @* Сразу открываем веб-сокет в фоне. Он нужен для получения асинхронных данных по редактированию.
+      TODO Отображать полученную палитру цветов юзеру.
+      TODO Выставлять цвет подложки картинки (пока -- поле ad.bgColor в _adFormTpl).
+   *@
+  <script>
     var ws = new WebSocket("@ctx.wsUrlPrefix@routes.MarketAd.ws(ctx.ctxIdStr)");
     ws.onmessage = function (evt) {
       var received_msg = evt.data;
