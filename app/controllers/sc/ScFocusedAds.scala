@@ -94,7 +94,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         _adSearch
       } else {
         new AdSearchWrapper {
-          override def _adsSearchArgsUnderlying: AdSearch = _adSearch
+          override def _dsArgsUnderlying: AdSearch = _adSearch
           override def forceFirstIds = Nil
           override def withoutIds = _adSearch.forceFirstIds
         }

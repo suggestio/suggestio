@@ -122,14 +122,14 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
         // При поиске по категориям надо искать только если есть указанный show level.
         if (_adSearch.catIds.nonEmpty) {
           val result = new AdSearchWrapper {
-            override def _adsSearchArgsUnderlying = _adSearch
+            override def _dsArgsUnderlying = _adSearch
             override def levels: Seq[SlNameTokenStr] = AdShowLevels.LVL_CATS :: super.levels.toList
           }
           Future successful result
         } else if (_adSearch.receiverIds.nonEmpty) {
           // TODO Можно спилить этот костыль?
           val result = new AdSearchWrapper {
-            override def _adsSearchArgsUnderlying = _adSearch
+            override def _dsArgsUnderlying = _adSearch
             override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
           }
           Future successful result
@@ -142,7 +142,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
             .map {
               case Some(adnNode) =>
                 new AdSearchWrapper {
-                  override def _adsSearchArgsUnderlying = _adSearch
+                  override def _dsArgsUnderlying = _adSearch
                   override def receiverIds = List(adnNode.id.get)
                   override def geo: GeoMode = GeoNone
                 }
