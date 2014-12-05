@@ -12,8 +12,6 @@ name := "sioweb21"
 
 version := "1.0-SNAPSHOT"
 
-lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
-
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
 //scalaVersion := "2.10.4"
@@ -32,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.10.6-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.10.7-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
