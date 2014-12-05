@@ -1,16 +1,16 @@
 package util.img
 
-import java.awt.Color
 import java.io.{FileInputStream, InputStreamReader, File}
 import java.nio.file.Files
 import java.text.ParseException
-import models.im.{ImOp, MImg, Im4jAsyncSuccessProcessListener}
+import models.im.{MLocalImg, ImOp, MImg, Im4jAsyncSuccessProcessListener}
 import org.im4java.core.{IMOperation, ConvertCmd}
 
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
+import models.im._
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
 import scala.concurrent.{Promise, Future}
@@ -76,7 +76,8 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * Для этого квантуем цвета в пространстве CIE Lab, чтобы визуально близкие цвета принадлежали к одному кванту.
    * @param img Исходная картинка.
    */
-  def detectFilePalette(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT, preImOps: Seq[ImOp] = Nil): Future[List[HistogramEntry]] = {
+  def detectFilePaletteUnsorted(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
+                        preImOps: Seq[ImOp] = Nil): Future[List[HistogramEntry]] = {
     // Создаём временный файл для сохранения выхлопа convert histogram:info:
     val resultFile = File.createTempFile(getClass.getSimpleName, ".txt")
     val resultFut = convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps) map { _ =>
@@ -118,8 +119,9 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * @param maxColors Необязательный размер промежуточной палитры и гистограммы.
    * @return None при ошибке и suppressErrors или если картинка вообще не содержит цветов.
    */
-  def detectFileMainColor(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT, preImOps: Seq[ImOp] = Nil): Future[Option[HistogramEntry]] = {
-    detectFilePalette(img, suppressErrors, maxColors, preImOps) map { hist =>
+  def detectFileMainColor(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
+                          preImOps: Seq[ImOp] = Nil): Future[Option[HistogramEntry]] = {
+    detectFilePaletteUnsorted(img, suppressErrors, maxColors, preImOps) map { hist =>
       if (hist.isEmpty) {
         debug("Detected colors pallette is empty. img = " + img.getAbsolutePath)
         None
@@ -167,13 +169,17 @@ object MainColorDetector extends PlayMacroLogsImpl {
     resultFut
   }
 
+
+  /** Результат вызова prepareImg(). */
+  case class PrepareImgResult(localOpt: Option[MLocalImg], imOps: Seq[ImOp])
+
   /**
-   * Поиск "главного" цвета для указанной (через указатель) картинки.
-   * @param bgImg4s Исходная картинка.
-   * @return Фьючерс с результатом работы.
+   * Подготовить указанную картинку к извлечению гистограммы.
+   * @param bgImg4s Данные по картинке.
+   * @return Фьючерс с данными картинки.
    */
-  def detectColorFor(bgImg4s: MImg): Future[ImgBgColorUpdateAction] = {
-    lazy val logPrefix = s"detectColorFor(${bgImg4s.fileName}): "
+  def prepareImg(bgImg4s: MImg): Future[PrepareImgResult] = {
+    lazy val logPrefix = s"prepareImg(${bgImg4s.fileName}): "
     // toLocalImg не существовует обычно вообще (ибо голый orig [+ crop]). Поэтому сразу ищем оригинал, но не теряя надежды.
     val localOrigImgFut = bgImg4s
       .original
@@ -181,27 +187,35 @@ object MainColorDetector extends PlayMacroLogsImpl {
     // Всё-таки ищем отропанный результат.
     var localImg2Fut = bgImg4s.toLocalImg
       .filter(_.exists(_.isExists))
-      .map { _ -> Seq.empty[ImOp] }
+      .map { v => PrepareImgResult(v, Seq.empty[ImOp]) }
     // Если исходная картинка - чистый оригинал, то отрабатывать отсутствие произодной картинки не требуется.
     if (bgImg4s.hasImgOps) {
       // Если исходная картинка - обрезок, то можно изъять операции из исходной картинки и повторить их на оригинале вместе с генерацией гистограммы.
       localImg2Fut = localImg2Fut.recoverWith {
         case ex: NoSuchElementException =>
           val resFut = localOrigImgFut
-            .map { _ -> bgImg4s.dynImgOps }
+            .map { v => PrepareImgResult(v, bgImg4s.dynImgOps) }
           trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgOps}")
           resFut
       }
     }
     // Подавляем возможные исключения.
-    localImg2Fut = localImg2Fut recover {
+    localImg2Fut recover {
       case ex: Throwable =>
         warn(s"${logPrefix}Failed to find img requested.", ex)
-        (None, Nil)
+        PrepareImgResult(None, Nil)
     }
-    // Когда картинка будет готова, можно будет запускать генерацию гистограммы:
-    localImg2Fut.flatMap {
-      case (Some(localImg), preImOps) =>
+  }
+
+  /**
+   * Поиск "главного" цвета для указанной (через указатель) картинки.
+   * @param bgImg4s Исходная картинка.
+   * @return Фьючерс с результатом работы.
+   */
+  def detectColorFor(bgImg4s: MImg): Future[ImgBgColorUpdateAction] = {
+    lazy val logPrefix = s"detectColorFor(${bgImg4s.fileName}): "
+    prepareImg(bgImg4s) flatMap {
+      case PrepareImgResult(Some(localImg), preImOps) =>
         detectFileMainColor(localImg.file, suppressErrors = true, preImOps = preImOps) map { heOpt =>
           val result = he2updateAction(heOpt)
           trace(s"${logPrefix}Detected color info for already saved orig img: $result")
@@ -212,6 +226,22 @@ object MainColorDetector extends PlayMacroLogsImpl {
       case _ =>
         warn(s"${logPrefix}Img not found anywhere: ${bgImg4s.fileName}")
         Future successful Keep
+    }
+  }
+
+  /**
+   * Получить палитру цветов для указанной картинки.
+   * @param bgImg4s Данные по исходной картинке.
+   * @param maxColors Макс.размер результирующей палитры.
+   * @return Фьючерс с гистограммой, где самый частый в начале, и далее по убыванию.
+   */
+  def detectPaletteFor(bgImg4s: MImg, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
+    prepareImg(bgImg4s) flatMap {
+      case PrepareImgResult(Some(localImg), preImOps) =>
+        detectFilePaletteUnsorted(localImg.file, suppressErrors = true, preImOps = preImOps, maxColors = maxColors)
+          .map { hist => Histogram( hist.sortBy(v => -v.frequency) ) }
+      case other =>
+        Future failed new IllegalArgumentException("Failed to extract palette. prepareImg() result is " + other)
     }
   }
 
@@ -318,45 +348,4 @@ object HistogramParsers extends JavaTokenParsers {
   }
 
 }
-
-
-/** Интерфейс цветовой точки в абстрактном 3-мерном пространстве цветов. */
-sealed trait ColorPoint3D {
-  def x: Int
-  def y: Int
-  def z: Int
-}
-
-/** Цвет-точка в 3-мерном пространстве цветов RGB. */
-case class RGB(red: Int, green: Int, blue: Int) extends ColorPoint3D {
-  override def x = red 
-  override def y = green 
-  override def z = blue 
-}
-
-object RGB {
-  /**
-   * Парсер из hex в [[RGB]].
-   * @param colorStr hex-строка вида "FFAA33" или "#FFAA33".
-   * @return Инстанс RGB.
-   *         Exception, если не удалось строку осилить.
-   */
-  def hex2rgb(colorStr: String): RGB = {
-    val cs1 = if (colorStr startsWith "#")
-      colorStr
-    else
-      "#" + colorStr
-    val c = Color.decode(cs1)
-    RGB(c.getRed, c.getGreen, c.getBlue)
-  }
-
-  def apply(hex: String) = hex2rgb(hex)
-}
-
-/**
- * Распарсенный ряд гистограммы. Включает в себя абсолютную частоту и код цвета.
- * @param frequency Кол-во пикселей с указанным цветом.
- * @param colorHex HEX-код цвета в виде строки: "FFFFFF".
- */
-case class HistogramEntry(frequency: Long, colorHex: String, rgb: RGB)
 

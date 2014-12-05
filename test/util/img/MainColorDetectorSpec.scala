@@ -107,41 +107,43 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuite with FutureAwai
   /** Путь к ресурсом в рамках classpath. Ресурсы лежат внутри sioweb21/test/resources/. */
   private val RSC_BASEPATH = "/util/img/"
 
-  /** Карта из картинок и приблизительных правильных основных цветов. */
-  private val IMGS = List(
-    "1214545755807.jpg" -> List("ECD50C"),
-    "1224517380638.jpg" -> List("CFC9C2")
-  )
-
   /** Максимальная погрешность при сравнении желаемого цвета с найденным (макс. цветовое расстояние в 3д пространстве). */
   private val maxColorDistance: Double = app.configuration.getDouble("mcd.test.distance.error.max") getOrElse 15.0
 
 
   "detectFileMainColor()" must {
 
-    "detect color pallette of simple test files" in {
-      IMGS.foreach { case (filename, mainColorsHex) =>
-        // Копируем файл из jar classpath в /tmp/. Так картинка станет гарантированно доступна для внешней IM.
-        // Рецепт копирования взят из http://stackoverflow.com/a/10308305
-        val rscFilepath = RSC_BASEPATH + filename
-        val fileExt = FilenameUtils.getExtension(filename)    // взято из http://stackoverflow.com/a/16202288
-        val rscUrl = getClass.getResource(rscFilepath)
-        val tmpImgFile = File.createTempFile(classOf[MainColorDetectorSpec].getSimpleName, "." + fileExt)
-        FileUtils.copyURLToFile(rscUrl, tmpImgFile)
-        val detectResultFut = detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
-        detectResultFut onComplete { case _ =>
-          tmpImgFile.delete()
-        }
-        val detectResult = await(detectResultFut)
-        detectResult.nonEmpty  mustBe  true
-        val dmchRgb = detectResult.get.rgb
-        mainColorsHex foreach { mch =>
-          val mchRgb = RGB(mch)
-          val distance = MainColorDetector.colorDistance3D(dmchRgb, mchRgb)
-          distance mustBe <= (maxColorDistance)
-        }
+    /** Метод, производящий тестирование одного файла и проверяет конечные результаты. */
+    def mkTest(filename: String, mainColorsHex: List[String]): Unit = {
+      // Копируем файл из jar classpath в /tmp/. Так картинка станет гарантированно доступна для внешней IM.
+      // Рецепт копирования взят из http://stackoverflow.com/a/10308305
+      val rscFilepath = RSC_BASEPATH + filename
+      val fileExt = FilenameUtils.getExtension(filename)    // взято из http://stackoverflow.com/a/16202288
+      val rscUrl = getClass.getResource(rscFilepath)
+      val tmpImgFile = File.createTempFile(classOf[MainColorDetectorSpec].getSimpleName, "." + fileExt)
+      FileUtils.copyURLToFile(rscUrl, tmpImgFile)
+      val detectResultFut = detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
+      detectResultFut onComplete { case _ =>
+        tmpImgFile.delete()
+      }
+      val detectResult = await(detectResultFut)
+      detectResult.nonEmpty  mustBe  true
+      val dmchRgb = detectResult.get.rgb
+      mainColorsHex foreach { mch =>
+        val mchRgb = RGB(mch)
+        val distance = MainColorDetector.colorDistance3D(dmchRgb, mchRgb)
+        distance mustBe <= (maxColorDistance)
       }
     }
+
+    "detect main color pallette for 1214545755807.jpg" in {
+      mkTest("1214545755807.jpg", List("ECD50C"))
+    }
+
+    "detect main color for 1224517380638.jpg" in {
+      mkTest("1224517380638.jpg", List("CFC9C2"))
+    }
+
   }
 
 

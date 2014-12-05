@@ -19,6 +19,8 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 //scalaVersion := "2.10.4"
 scalaVersion := "2.11.4"
 
+//updateOptions := updateOptions.value.withCachedResolution(true)
+
 libraryDependencies ++= Seq(
   jdbc, 
   anorm,
@@ -200,9 +202,6 @@ ProguardKeys.options in Proguard ++= Seq(
   "-keepclassmembers class * implements models.ai.ContentHandlerResult",
   "-dontnote",
   "-dontwarn",
-  //"-dontoptimize",    // не пашет из-за какой-то внутренней ошибки
-  //"-dontobfuscate",   // вылетает ошибка java.lang.ClassCastException: java.lang.Object cannot be cast to java.lang.String
-                      //    at proguard.obfuscate.MemberObfuscator.newMemberName(MemberObfuscator.java:198)
   //"-ignorewarnings"
   "-verbose"
 )
@@ -211,6 +210,6 @@ ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.N
 
 javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
-// play-2.4
+// play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 //routesGenerator := InjectedRoutesGenerator
 

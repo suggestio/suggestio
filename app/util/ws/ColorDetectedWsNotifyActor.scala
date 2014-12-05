@@ -1,7 +1,8 @@
 package util.ws
 
 import akka.actor.{ActorRef, Actor}
-import play.api.libs.json.{JsString, JsObject}
+import models.im.Histogram
+import play.api.libs.json.{JsArray, JsString, JsObject}
 import util.PlayMacroLogsI
 import util.img.MainColorDetector
 import util.img.MainColorDetector.ImgBgColorUpdateAction
@@ -18,6 +19,14 @@ trait ColorDetectedWsNotifyActor extends Actor with PlayMacroLogsI {
   def out: ActorRef
 
   abstract override def receive: Receive = super.receive orElse {
+
+    // Пришла гистограмма с палитрой предлагаемых цветов.
+    case h: Histogram =>
+      val respJson = JsObject(Seq(
+        "type" -> JsString("colorPalette"),
+        "data" -> JsArray( h.sorted.map(c => JsString(c.colorHex)) )
+      ))
+      out ! respJson
 
     // Пришло сообщение, что успешно выявлен цвет картинки
     case MainColorDetector.Update(newColorHex) =>

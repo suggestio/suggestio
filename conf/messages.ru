@@ -209,8 +209,9 @@ stuff.menu.LIVE=ВЖИВУЮ
 stuff.menu.CONTACTS=КОНТАКТЫ
 
 
-ai.mad.rrr.descr.scalasti=Трансформация полей рекламной карточки с помощью шаблонизатора ScalaSti с #-разделителями.
-ai.ch.descr.gidromet.rss=Парсер прогнозов погоды росгидрометцентра в формате RSS (meteoinfo.ru).
+ai.mad.rrr.descr.scalasti=Обновление значений текстовых полей целевой рекламной карточки с помощью шаблонизатора ScalaSti и шаблонной карточки с #-разделителями.
+ai.ch.descr.gidromet.rss=Парсер прогнозов погоды росгидрометцентра в формате RSS (meteoinfo.ru/rss/forecasts/26063).
+ai.ch.descr.cbrf.xml=Парсер валютных котировок XML API с сайта ЦБ РФ (cbr.ru/scripts/XML_daily.asp).
 
 
 live_search_for_your_website=Живой поиск для вашего сайта

@@ -300,9 +300,14 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs {
+trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName {
 
-  val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt("ctl.img.temp.preview.side.px") getOrElse 620
+  /** Размер генерируемой палитры. */
+  val MAIN_COLORS_PALETTE_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8
+  /** Размер возвращаемой по WebSocket палитры. */
+  val MAIN_COLORS_PALETTE_SHRINK_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.shrink.size") getOrElse 4
+
+  val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
@@ -355,17 +360,26 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs {
             val res2Fut = imgPrepareFut map { _ =>
               Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
             }
-            // Запускаем в фоне детектор цвета картинки. При сабмите результат будет извелечен из кеша.
+            // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {
-              imgPrepareFut onSuccess { case _ =>
-                MainColorDetector.detectColorCachedFor(im) onComplete {
-                  case Success(result) =>
-                    wsId.foreach { _wsId =>
-                      _notifyWs(_wsId, result)
-                    }
-                  case Failure(ex) =>
-                    LOGGER.warn(s"Failed to execute color detector on tmp img " + im.fileName, ex)
+              if (wsId.isDefined) {
+                imgPrepareFut onSuccess { case _ =>
+                  MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) onComplete {
+                    case Success(result) =>
+                      val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
+                        result.copy(
+                          sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
+                        )
+                      } else {
+                        result
+                      }
+                      _notifyWs(wsId.get, res2)
+                    case Failure(ex) =>
+                      LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
+                  }
                 }
+              } else {
+                LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.fileName)
               }
             }
             // Возвращаем ожидаемый результат:
