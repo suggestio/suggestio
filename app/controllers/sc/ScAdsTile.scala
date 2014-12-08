@@ -93,7 +93,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
-    lazy val szMult: SzMult_t = ShowcaseUtil.getSzMult4tiles(ctx)
+    lazy val szMult: SzMult_t = ShowcaseUtil.getSzMult4tiles(ShowcaseUtil.TILES_SZ_MULTS)(ctx)
 
     /** Параметры для рендера блоков плитки. */
     lazy val brArgs = blk.RenderArgs(

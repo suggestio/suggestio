@@ -158,26 +158,11 @@ object ShowcaseUtil {
       }
 
     } else {
-
-      // Если ширина экрана позволяет, то нужно отрендерить в увеличенном размере:
-      // TODO Тут кажется какой-то велосипед. Сначала определяется оптимальный szMult для картинки, потом идёт прочая мудотряска.
-      val devScrHasDoubleWidth: Boolean = {
-        ctx.deviceScreenOpt.exists { devScr =>
-          val wantSzMult = FOCUSED_SZ_MULT
-          BgImg.getImgResMult(wantSzMult, mad.blockMeta, devScr, Some(DevPixelRatios.MDPI)) >= wantSzMult
-        }
-      }
-      // Рендерить в wide? Да, если карточка разрешает и разрешение экрана не противоречит этому
-      val szMult: SzMult_t = if (devScrHasDoubleWidth || mad.blockMeta.height == BlockHeights.H140.heightPx) {
-        FOCUSED_SZ_MULT
-      } else {
-        1F
-      }
       // Возвращаем результат
       val bra = blk.RenderArgs(
         withEdit      = false,
         isStandalone  = false,
-        szMult        = szMult,
+        szMult        = getSzMult4tiles(FOCUSED_TILE_SZ_MULTS, maxCols = 1),
         wideBg        = None
       )
       Future successful bra
@@ -188,7 +173,9 @@ object ShowcaseUtil {
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
   val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
-    .getOrElse { List(1.1F, 1.2F, 1.3F, 1.4F) }
+    .getOrElse { List(1.4F, 1.3F, 1.2F, 1.1F, 1.0F) }
+
+  val FOCUSED_TILE_SZ_MULTS = FOCUSED_SZ_MULT :: TILES_SZ_MULTS
 
   /** Горизонтальное расстояние между блоками. */
   val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
@@ -196,45 +183,39 @@ object ShowcaseUtil {
   /** Макс. кол-во вертикальных колонок. */
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
 
-  /** Коэфф. масштабирования, когда масштабирование отключено. */
-  val TILE_SZ_MULT0 = 1.0F
-
   /**
    * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
    * @param ctx Контекст грядущего рендера.
    * @return SzMult_t выбранный для рендера.
    */
-  def getSzMult4tiles(implicit ctx: Context): SzMult_t = {
+  def getSzMult4tiles(szMults: List[SzMult_t], maxCols: Int = TILE_MAX_COLUMNS)(implicit ctx: Context): SzMult_t = {
     ctx.deviceScreenOpt
-      .fold [SzMult_t] (TILE_SZ_MULT0) { getSzMult4tiles(_) }
+      .fold [SzMult_t] (szMults.last) { getSzMult4tiles(szMults, _, maxCols) }
   }
-  def getSzMult4tiles(dscr: DevScreenT): SzMult_t = {
+  def getSzMult4tiles(szMults: List[SzMult_t], dscr: DevScreenT, maxCols: Int): SzMult_t = {
     val blockWidthPx = BlockWidths.NORMAL.widthPx
     // Кол-во колонок на экране в исходном масштабе:
-    val colCnt = Math.min(TILE_MAX_COLUMNS,
+    val colCnt = Math.min(maxCols,
       (dscr.width - TILE_PADDING_CSSPX) / (blockWidthPx + TILE_PADDING_CSSPX)
     )
     if (colCnt <= 0) {
       // Экран довольно узок - тут нечего вычислять пока, всё равно выйдет минималка.
-      TILE_SZ_MULT0
+      szMults.last
     } else {
-      @tailrec def detectSzMult(lastSzMult: SzMult_t, restSzMults: List[SzMult_t]): SzMult_t = {
-        if (restSzMults.isEmpty) {
-          lastSzMult
+      @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
+        val nextSzMult = restSzMults.head
+        if (restSzMults.tail.isEmpty) {
+          nextSzMult
         } else {
-          val nextSzMult = restSzMults.head
           // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
           val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt + 1) * nextSzMult
-          // Если ещё остался запас по высоте, то ещё увеличить масштабирование и повторить попытку.
-          if (w1 > 20F)
-            detectSzMult(nextSzMult, restSzMults.tail)
-          else if (w1 >= 0F)
+          if (w1 > 0F)
             nextSzMult
           else
-            lastSzMult
+            detectSzMult(restSzMults.tail)
         }
       }
-      detectSzMult(TILE_SZ_MULT0, TILES_SZ_MULTS)
+      detectSzMult(szMults)
     }
   }
 

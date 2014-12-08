@@ -1,6 +1,7 @@
 package util.img
 
 import java.io.{PrintWriter, File}
+import models.im.{RGB, HistogramEntry}
 import org.apache.commons.io.{FilenameUtils, FileUtils}
 import org.scalatestplus.play._
 import play.api
