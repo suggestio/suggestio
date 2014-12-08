@@ -159,12 +159,6 @@ GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
 GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
 POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
 
-GET  /sys/indices                       controllers.Sys.indicesIndex
-GET  /sys/indices/active                controllers.Sys.indicesListAllActive
-GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
-GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
-POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
-GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
@@ -359,8 +353,6 @@ GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
-
-GET  /search/site                       controllers.Search.siteSearchGET
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain

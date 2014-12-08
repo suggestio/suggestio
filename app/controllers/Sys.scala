@@ -11,12 +11,7 @@ import util._
 import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
-import io.suggest.model.MDVIActive
-import io.suggest.util.VirtualIndexUtil
-import util.SiowebEsUtil.client
 import util.urls_supply.SeedUrlsSupplier
-import io.suggest.model.inx2.MMartInx
-import io.suggest.model.MVirtualIndexVin
 
 /**
  * Suggest.io
@@ -149,48 +144,6 @@ object Sys extends SioController with PlayMacroLogsImpl {
   }
 
 
-  // ============================================================
-  // Текущие индексы (просмотр конфигурации виртуальных индексов)
-
-  def indicesIndex = IsSuperuser { implicit request =>
-    Ok(indices.indexTpl())
-  }
-
-  /** Листинг всех MDVIActive. */
-  def indicesListAllActive = IsSuperuser.async { implicit request =>
-    MDVIActive.getAll.map { l =>
-      trace("All MDVIActive found: " + l.size)
-      Ok(indices.listAllMdviActiveTpl(l))
-    }
-  }
-
-  /** Выдать данные по вирт.индексу в домене.
-    * @param dkey Ключ домена
-    * @param vin виртуальный индекс.
-    */
-  def indicesShowActiveFor(dkey:String, vin:String) = IsSuperuser.async { implicit request =>
-    MDVIActive.getForDkeyVin(dkey=dkey, vin=vin) map {
-      case Some(mdviActive) => Ok(indices.showMdviActiveTpl(mdviActive))
-      case None             => NotFound(s"No virtual index '$vin' for dkey '$dkey'")
-    }
-  }
-
-  /** Выдать данные по vin'у. */
-  def showVin(vin: String) = IsSuperuser.async { implicit request =>
-    val mvi = new MVirtualIndexVin(vin)
-    mvi.getUsers.map { l =>
-      Ok(indices.showMviTpl(mvi, l))
-    }
-  }
-
-  /** Запрос на downgrade всех индексов. */
-  def indicesDowngradeAll = IsSuperuser.async { implicit request =>
-    // TODO Нужно отправлять запрос в main-кравлер, чтобы тот делал всё это если можно. На время начальной разработки, этот функционал тут, хоть и конфликтует с majorRebuild().
-    VirtualIndexUtil.downgradeAll.map { _ =>
-      Redirect(routes.Sys.indicesListAllActive())
-    }
-  }
-
 
   // ==============================================================
   // referrers
@@ -222,26 +175,6 @@ object Sys extends SioController with PlayMacroLogsImpl {
         Ok(siobix.pushReferrerFormTpl(pushRefFormM, withResult=Some(true)))
       }
     )
-  }
-
-
-  // ======================================================================
-  // inx2
-
-  /** Выдать страницу со всеми индексами из inx2 моделей. */
-  def inx2AllIndices = IsSuperuser.async { implicit request =>
-    val allMartsMapFut = MAdnNode.findAllByType(AdNetMemberTypes.MART)
-      .map { all =>
-        all.map {
-          mmart => mmart.id.get -> mmart
-        }.toMap
-      }
-    MMartInx.getAll().flatMap { minxs =>
-      val minxsGrouped = minxs.groupBy(_.targetEsInxName)
-      allMartsMapFut map { allMartsMap =>
-        Ok(indices.inx2.listByEsInxTpl(minxsGrouped, allMartsMap))
-      }
-    }
   }
 
 }

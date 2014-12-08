@@ -232,7 +232,7 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
         case ex: Exception =>
           val msg = s"Failed to run MAiMad($aiMadId)"
           error(msg, ex)
-          NotAcceptable(msg + ":\n" + ex.getClass.getSimpleName + ": " + ex.getMessage + "\n" + ex.getStackTraceString)
+          NotAcceptable(msg + ":\n" + ex.getClass.getSimpleName + ": " + ex.getMessage + "\n" + ex.getStackTrace.mkString("", "\n", "\n"))
       }
   }
 
