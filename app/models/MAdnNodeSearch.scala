@@ -33,7 +33,7 @@ case class SimpleNodesSearchArgs(
   def toSearchArgs(glevelOpt: Option[NodeGeoLevel], maxResults2: Int = maxResultsDflt)(implicit request: SioRequestHeader): Future[AdnNodesSearchArgsT] = {
     geoMode.geoSearchInfoOpt.map { gsiOpt =>
       new AdnNodesSearchArgs {
-        override def qStr = snsa.qStr
+        override def qOpt = snsa.qStr
         override def geoDistance   = gsiOpt
           .flatMap { gsi => glevelOpt.map(_ -> gsi) }
           .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) }
@@ -42,7 +42,7 @@ case class SimpleNodesSearchArgs(
         override def offset = snsa.offset.getOrElse(0)
         override def withAdnRights = Seq(AdnRights.RECEIVER)
         override def withNameSort = true
-        override def ftsSearchFN = AdnMMetadata.NAME_ESFN
+        override def qOptField = AdnMMetadata.NAME_ESFN
       }
     }
   }
