@@ -1,8 +1,7 @@
 package io.suggest.model
 
-import scala.concurrent.{ExecutionContext, Future, future}
+import scala.concurrent.{ExecutionContext, Future}
 import org.apache.hadoop.hbase.HColumnDescriptor
-import HTapConversionsBasic._
 import io.suggest.util.SioConstants.DOMAIN_QI_TTL_SECONDS
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.collection.JavaConversions._
@@ -27,7 +26,6 @@ object MObject extends HTableModel {
 
   // Column family для хранения произвольных k-v колонок для доменов (ключ - reversed dkey). В значениях идём по алфавиту.
   val CF_DPROPS         = "a" // Пропертисы всякие. js-install в частности.
-  val CF_MVI            = "b"
 
   // Для моделей веб-морды:
   val CF_DDATA          = "d" // DomainData - сохранение json'а настроек (веб-морда)
@@ -46,7 +44,7 @@ object MObject extends HTableModel {
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
   def CFs = Seq(
-    CF_DPROPS, CF_MVI,
+    CF_DPROPS,
     CF_DDATA, CF_DQI,
     CF_UAUTHZ ,
     CF_BLOG, CF_DOMAIN,
@@ -54,12 +52,11 @@ object MObject extends HTableModel {
     CF_RA_PROPS
   )
 
-  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_MVI, CF_FACET_INVLINK)
+  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_FACET_INVLINK)
 
 
   def getColumnDescriptor: PartialFunction[String, HColumnDescriptor] = {
     case cf @ CF_DPROPS          => hcd(cf, 2)
-    case cf @ CF_MVI             => MVIUnit.getCFDescriptor
     case cf @ CF_DDATA           => hcd(cf, 2)
     case cf @ CF_DQI             => hcd(cf, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS)
     case cf @ CF_UAUTHZ          => hcd(cf, 2)

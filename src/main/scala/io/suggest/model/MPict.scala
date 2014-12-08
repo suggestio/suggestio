@@ -20,6 +20,8 @@ import org.hbase.async.DeleteRequest
  */
 object MPict extends HTableModel {
 
+  val Q_USER_IMG_ORIG = "o"   // Бинарник, содержащий оригинал изображения. CF_ORIGINALS
+
   val HTABLE_NAME = "pict"
 
   val CF_METADATA     = "a"   // Метаданные картинок. Маленькие, с переменным доступом.
@@ -30,7 +32,6 @@ object MPict extends HTableModel {
   val Q_THUMB         = "t"   // Картинка-превьюшка. CF_THUMBS
   val Q_IMAGE_URL     = "u"   // Ссылка на исходную картинку, если есть. CF_METADATA
   // MUserImg
-  val Q_USER_IMG_ORIG = "o"   // Бинарник, содержащий оригинал изображения. CF_ORIGINALS
 
   private val rnd = {
     val _rnd = new Random

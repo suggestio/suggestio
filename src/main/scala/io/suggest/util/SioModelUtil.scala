@@ -14,7 +14,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 // для локалхоста. Переключение между hbase и fs происходит через конфиг, а модели при запуске выбирают свои backend'ы.
 object StorageType extends Enumeration {
   type StorageType = Value
-  val HBASE, DFS = Value
+  val DFS = Value
 }
 
 import StorageType._

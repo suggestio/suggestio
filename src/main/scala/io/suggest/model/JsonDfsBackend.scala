@@ -265,13 +265,6 @@ trait JsonBackendSwitchableT extends JsonBackendWrapperT {
           def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
           def getSaveStateId: String = me.getSaveStateId
         }
-
-      case StorageType.HBASE =>
-        new JsonHBaseBackendT {
-          def exportState: ImportExportMap = me.exportState
-          def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
-          def getSaveStateId: String = me.getSaveStateId
-        }
     }
   }
 
