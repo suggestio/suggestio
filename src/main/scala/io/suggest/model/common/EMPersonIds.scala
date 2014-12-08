@@ -3,10 +3,11 @@ package io.suggest.model.common
 import io.suggest.model._
 import io.suggest.model.EsModel.{FieldsJsonAcc, asJsonStrArray}
 import io.suggest.util.SioEsUtil._
+import io.suggest.ym.model.common.{DynSearchArgsWrapper, DynSearchArgs}
 import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -75,7 +76,7 @@ trait EMPersonIds extends EsModelPlayJsonT {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!personIds.isEmpty) {
+    if (personIds.nonEmpty) {
       val personIdsJson = asJsonStrArray(personIds)
       (PERSON_ID_ESFN, personIdsJson) :: acc0
     } else {
@@ -84,3 +85,53 @@ trait EMPersonIds extends EsModelPlayJsonT {
   }
 
 }
+
+
+
+// Аддоны для поиска по personIds
+trait AnyOfPersonIdsDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по юзеру. */
+  def anyOfPersonIds: Seq[String]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt .map[QueryBuilder] { qb =>
+      // Дальше отрабатываем список возможных personIds.
+      if (anyOfPersonIds.isEmpty) {
+        qb
+      } else {
+        val pf = FilterBuilders.termsFilter(PERSON_ID_ESFN, anyOfPersonIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, pf)
+      }
+    }.orElse[QueryBuilder] {
+      if (anyOfPersonIds.isEmpty) {
+        None
+      } else {
+        val pq = QueryBuilders.termsQuery(PERSON_ID_ESFN, anyOfPersonIds : _*)
+          .minimumMatch(1)
+        Some(pq)
+      }
+    }
+  }
+
+  override def sbInitSize: Int = {
+    collStringSize(anyOfPersonIds, super.sbInitSize)
+  }
+
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("anyOfPersonIds", anyOfPersonIds, super.toStringBuilder)
+  }
+
+}
+
+trait AnyOfPersonIdsDsaDflt extends AnyOfPersonIdsDsa {
+  override def anyOfPersonIds: Seq[String] = Seq.empty
+}
+
+trait AnyOfPersonIdsDsaWrapper extends AnyOfPersonIdsDsa with DynSearchArgsWrapper {
+  override type WT <: AnyOfPersonIdsDsa
+  override def anyOfPersonIds = _dsArgsUnderlying.anyOfPersonIds
+}
+

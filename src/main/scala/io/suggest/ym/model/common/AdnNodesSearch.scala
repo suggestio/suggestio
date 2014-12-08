@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel
-import io.suggest.model.common.EMPersonIds
+import io.suggest.model.common._
 import io.suggest.model.geo._
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.MAdnNodeGeo
@@ -32,10 +32,9 @@ object AdnNodesSearch {
 
 
 /** Интерфейс для описания критериев того, какие узлы надо найти. По этой спеки собирается ES-запрос. */
-trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDsa with AdnSupIdsDsa {
-
-  /** Искать/фильтровать по юзеру. */
-  def anyOfPersonIds: Seq[String]
+trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDsa with AdnSupIdsDsa
+with AnyOfPersonIdsDsa
+{
 
   /** Искать/фильтровать по id узла, которому была делегирована фунция модерации размещения рекламных карточек. */
   def advDelegateAdnIds: Seq[String]
@@ -102,25 +101,7 @@ trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDs
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
     super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      // Дальше отрабатываем список возможных personIds.
-      if (anyOfPersonIds.isEmpty) {
-        qb
-      } else {
-        val pf = FilterBuilders.termsFilter(EMPersonIds.PERSON_ID_ESFN, anyOfPersonIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, pf)
-      }
-    }.orElse[QueryBuilder] {
-      if (anyOfPersonIds.isEmpty) {
-        None
-      } else {
-        val pq = QueryBuilders.termsQuery(EMPersonIds.PERSON_ID_ESFN, anyOfPersonIds : _*)
-          .minimumMatch(1)
-        Some(pq)
-      }
-
-    // Отрабатываем id узлов adv-делегатов
-    }.map[QueryBuilder] { qb =>
+      // Отрабатываем id узлов adv-делегатов
       if (advDelegateAdnIds.isEmpty) {
         qb
       } else {
@@ -361,7 +342,6 @@ trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDs
 
   override def toStringBuilder: StringBuilder = {
     val sb = super.toStringBuilder
-    fmtColl2sb("anyOfPersonIds", anyOfPersonIds, sb)
     fmtColl2sb("advDelegateAdnIds", advDelegateAdnIds, sb)
     fmtColl2sb("withDirectGeoParents", withDirectGeoParents, sb)
     fmtColl2sb("withGeoParents", withGeoParents, sb)
@@ -389,7 +369,7 @@ trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDs
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
 trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithIdsDsaDflt with CompanyIdsDsaDflt
-with AdnSupIdsDsaDflt
+with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt
 {
   override def advDelegateAdnIds: Seq[String] = Seq.empty
   override def withGeoDistanceSort: Option[GeoPoint] = None
@@ -397,7 +377,6 @@ with AdnSupIdsDsaDflt
   override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
   override def shownTypeIds: Seq[String] = Seq.empty
   override def withDirectGeoParents: Seq[String] = Seq.empty
-  override def anyOfPersonIds: Seq[String] = Seq.empty
   override def withRouting: Seq[String] = Seq.empty
   override def testNode: Option[Boolean] = None
   override def showInScNodeList: Option[Boolean] = None
@@ -415,7 +394,7 @@ with AdnSupIdsDsaDflt
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
 trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithIdsDsaWrapper
-with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper
+with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper with AnyOfPersonIdsDsaWrapper
 {
 
   override type WT <: AdnNodesSearchArgsT
@@ -426,7 +405,6 @@ with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper
   override def intersectsWithPreIndexed = _dsArgsUnderlying.intersectsWithPreIndexed
   override def shownTypeIds = _dsArgsUnderlying.shownTypeIds
   override def withDirectGeoParents = _dsArgsUnderlying.withDirectGeoParents
-  override def anyOfPersonIds = _dsArgsUnderlying.anyOfPersonIds
   override def withRouting = _dsArgsUnderlying.withRouting
   override def testNode = _dsArgsUnderlying.testNode
   override def showInScNodeList = _dsArgsUnderlying.showInScNodeList
