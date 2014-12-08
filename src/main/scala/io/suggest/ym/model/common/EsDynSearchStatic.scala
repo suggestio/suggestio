@@ -118,7 +118,8 @@ trait DynSearchArgs {
   /** Базовый размер StringBuilder'а. */
   def sbInitSize = 32
 
-  protected def collStringSize(coll: Iterable[String], sis: Int, addOffset: Int = 0): Int = {
+  /** Вспомогательный подсчет размер коллекции для ускорения работы toStringBuilder. */
+  final protected def collStringSize(coll: Iterable[String], sis: Int, addOffset: Int = 0): Int = {
     if (coll.isEmpty)
       sis
     else
@@ -138,7 +139,7 @@ trait DynSearchArgs {
   }
 
   /** Вспомогательное форматирование аргумента-коллекции строкой внутрь StringBuilder'а. */
-  protected def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): StringBuilder = {
+  final protected def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): StringBuilder = {
     if (coll.nonEmpty)
       sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
     sb

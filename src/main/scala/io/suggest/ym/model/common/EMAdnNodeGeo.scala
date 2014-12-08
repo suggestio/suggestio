@@ -4,6 +4,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import io.suggest.model.geo.GeoPoint
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json._
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -169,3 +170,99 @@ case class AdnNodeGeodata(
   }
 
 }
+
+
+// Аддоны для dyn-search по полям этой модели.
+/** Аддон для поиска по прямым гео-родителями. */
+trait DirectGeoParentsDsa extends DynSearchArgs {
+
+  /** Искать по прямым гео-родителям. Нужно чтобы у узлов была проставлена инфа по геородителям. */
+  def withDirectGeoParents: Seq[String]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем прямых гео-родителей
+      if (withDirectGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (withDirectGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents: _*)
+        Some(qb)
+      } else {
+        None
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(withDirectGeoParents, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("withDirectGeoParents", withDirectGeoParents, super.toStringBuilder)
+  }
+}
+
+trait DirectGeoParentsDsaDflt extends DirectGeoParentsDsa {
+  override def withDirectGeoParents: Seq[String] = Seq.empty
+}
+
+trait DirectGeoParentsDsaWrapper extends DirectGeoParentsDsa with DynSearchArgsWrapper {
+  override type WT <: DirectGeoParentsDsa
+  override def withDirectGeoParents = _dsArgsUnderlying.withDirectGeoParents
+}
+
+
+trait GeoParentsDsa extends DynSearchArgs {
+
+  /** Искать по гео-родителям любого уровня. */
+  def withGeoParents: Seq[String]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем поиск по любым гео-родителям
+      if (withGeoParents.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+        QueryBuilders.filteredQuery(qb, filter)
+      } else {
+        qb
+      }
+    }.orElse[QueryBuilder] {
+      if (withGeoParents.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+        Some(qb)
+      } else {
+        None
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(withGeoParents, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("withGeoParents", withGeoParents, super.toStringBuilder)
+  }
+
+}
+
+trait GeoParentsDsaDflt extends GeoParentsDsa {
+  override def withGeoParents: Seq[String] = Seq.empty
+}
+
+trait GeoParentsDsaWrapper extends GeoParentsDsa with DynSearchArgsWrapper {
+  override type WT <: GeoParentsDsa
+  override def withGeoParents = _dsArgsUnderlying.withGeoParents
+}
+
