@@ -1832,10 +1832,12 @@ sm =
       this.active_ad_index = ad_index
 
       if this.active_ad_index > this.ads.length
-        cb = () ->
+        cb = () =>
           sm.focused_ads.load_more_ads()
 
         setTimeout cb, 400
+      else
+        @.add_active_ad_state()
 
       if direction == '+'
         ad_c_el = sm.utils.ge('focusedAd' + ( ad_index + 1 ) )
@@ -1852,6 +1854,24 @@ sm =
         fel = sm.utils.ge('focusedAd' + ( ad_index + 2 ) )
         if fel != null
           fel.style.visibility = 'hidden';
+
+    add_active_ad_state : () ->
+      ad_id = @.sm_blocks[@.active_ad_index].getAttribute("data-mad-id")
+      cs = sm.states.cur_state()
+
+      if ad_id
+        ns =
+          process_state : false
+          mart_id : cs.mart_id
+          fads :
+            is_opened : true
+            producer_id : cs.fads.producer_id
+            ad_id : ad_id
+
+        sm.states.add_state( ns )
+        #console.log "active ad index = #{@.active_ad_index}"
+        #console.log "active ad id = #{ad_id}"
+        #console.log ns
 
     next_ad : () ->
       if typeof this.active_ad_index == 'undefined'
@@ -1962,6 +1982,8 @@ sm =
 
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
+
+      @.add_active_ad_state()
       #sm.styles.init()
 
     check_if_fully_loaded : () ->
@@ -2478,8 +2500,10 @@ sm =
         return undefined
       this.list[this.cur_state_index]
 
+    # добавляет новое состояние
     add_state : ( ns ) ->
 
+      if typeof ns.process_state == 'undefined' then ns.process_state = true
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
       if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
       if typeof ns.with_welcome_ad == 'undefined' then ns.with_welcome_ad = this.ds.with_welcome_ad
@@ -2493,12 +2517,15 @@ sm =
 
       this.push ns
 
+    # изменяет текущее состояние
     update_state : ( sup ) -> #state_update_params
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       this.list[this.list.length-1] = cs
 
+    # добавляет новое состояние
+    # если какие-то параметры не переданы, берёт значения текущего состояния
     transform_state : ( stp ) -> #state_transform_params
       cs = sm.states.cur_state()
       ns = {}
@@ -2609,7 +2636,8 @@ sm =
     push : ( state ) ->
       path = this.get_path_by_state state
 
-      this.process_state state
+      if state.process_state != false
+        this.process_state state
 
       this.list = this.list.slice 0, this.cur_state_index+1
       this.list.push state
