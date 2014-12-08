@@ -118,6 +118,9 @@ trait AdSearch extends AdsSearchArgsDflt {
   /** Данные по экрану, присланные клиентом. */
   def screen        : Option[DevScreen] = None
 
+  /** Принудительно должен быть эти карточки первыми в списке.
+    * На уровне ES это дело не прижилось, поэтому тут параметр, который отрабатывается в контроллере. */
+  def forceFirstIds : Seq[String] = Seq.empty
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   override def offset: Int = {
@@ -132,19 +135,19 @@ trait AdSearch extends AdsSearchArgsDflt {
   // Утиль для удобства работы в шаблонах, привыкших к вызову copy().
   /** Без оффсета */
   def withoutOffset: AdSearch = new AdSearchWrapper {
-    override def _adsSearchArgsUnderlying = this
+    override def _dsArgsUnderlying = this
     override def offsetOpt: Option[Int] = None
   }
 
   /** Вычесть указанное число элементов из offset'а, отфильтровать неположительные значения. */
   def minusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
-    override def _adsSearchArgsUnderlying = this
+    override def _dsArgsUnderlying = this
     override def offsetOpt = super.offsetOpt.map(_ - count).filter(_ > 0)
   }
 
   /** Инкрементить offset на указанное кол-во элементов. */
   def plusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
-    override def _adsSearchArgsUnderlying = this
+    override def _dsArgsUnderlying = this
     override def offsetOpt: Option[Int] = Some( super.offsetOpt.fold(count)(_ + count) )
   }
 
@@ -152,12 +155,14 @@ trait AdSearch extends AdsSearchArgsDflt {
 
 /** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
 trait AdSearchWrapper extends AdSearch with AdsSearchArgsWrapper {
-  /** Значение, которое скрывает этот враппер. */
-  override def _adsSearchArgsUnderlying: AdSearch
+  override type WT = AdSearch
 
-  override def maxResultsOpt  = _adsSearchArgsUnderlying.maxResultsOpt
-  override def offsetOpt      = _adsSearchArgsUnderlying.offsetOpt
-  override def geo            = _adsSearchArgsUnderlying.geo
-  override def screen         = _adsSearchArgsUnderlying.screen
+  /** Значение, которое скрывает этот враппер. */
+  override def _dsArgsUnderlying: AdSearch
+
+  override def maxResultsOpt  = _dsArgsUnderlying.maxResultsOpt
+  override def offsetOpt      = _dsArgsUnderlying.offsetOpt
+  override def geo            = _dsArgsUnderlying.geo
+  override def screen         = _dsArgsUnderlying.screen
 }
 
