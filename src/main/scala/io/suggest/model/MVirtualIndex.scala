@@ -298,12 +298,6 @@ trait MVirtualIndex extends Serializable {
   }
 
 
-  /** Выдать домены, официально использующие этот индекс. Ресурсоемкая операция, перебирающая всю таблицу.
-   * @return Коллекция сабжей, в т.ч. пустая.
-   */
-  def getUsers(implicit ec: ExecutionContext) = MDVIActive.getAllForVin(vin)
-
-
   /**
    * Отключить автообновление индекса, перейдя тем самым в режим bulk-работы.
    * @return Фьючерс для синхронизации.

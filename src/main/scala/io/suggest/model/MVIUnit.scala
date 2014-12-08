@@ -27,7 +27,7 @@ object MVIUnit extends MacroLogsImpl {
   def HTABLE_NAME = MObject.HTABLE_NAME
   def HTABLE_NAME_BYTES = MObject.HTABLE_NAME_BYTES
 
-  val MVI_COMPANIONS = List(MDVIActive, MVIMart, MVIShop)
+  val MVI_COMPANIONS = List(MVIMart, MVIShop)
 
   def deserializeRaw(rowkey: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Option[MVIUnit] = {
     val vin = deserializeQualifier2Vin(qualifier)
