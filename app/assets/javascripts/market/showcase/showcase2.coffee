@@ -2041,6 +2041,7 @@ sm =
             #bg.style.width = "100%"
             bg.style.display = "block"
             bg.style.margin = "0 auto"
+        # раньше карточкам задавалась ширина через js
         #else
           #_b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
