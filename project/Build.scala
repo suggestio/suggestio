@@ -5,7 +5,6 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt._
 import com.typesafe.sbt.web._
-import java.io.{PrintWriter, File}
 
 object SiobixBuild extends Build {
 
@@ -14,7 +13,7 @@ object SiobixBuild extends Build {
     base = file("util")
   )
 
-  lazy val cascadingEs2 = {
+  /*lazy val cascadingEs2 = {
     val ces2 ="cascading-elasticsearch2"
     Project(
       id    = ces2,
@@ -23,7 +22,7 @@ object SiobixBuild extends Build {
     )
   }
 
-  /*lazy val siobix = Project(
+  lazy val siobix = Project(
     id = "siobix",
     base = file("bixo"),
     dependencies = Seq(util, cascadingEs2)
@@ -47,6 +46,6 @@ object SiobixBuild extends Build {
     id = "root",
     base = file(".")
   )
-  .aggregate(util, cascadingEs2, utilPlay, web21)
+  .aggregate(util, utilPlay, web21)
 
 }
