@@ -1855,26 +1855,11 @@ sm =
         if fel != null
           fel.style.visibility = 'hidden';
 
-    set_index_in_dom : ( index ) ->
-      active_ad = sm.utils.ge( "focusedAd#{@.active_ad_index}" )
-      count_container = sm.utils.ge_class( active_ad, "focused-ad_count" )
-      html = "<div>#{index}/#{@.ads.length}</div>"
-      count_container[0].innerHTML = html
-
-    get_index_by_id : ( id ) ->
-      index = 1
-      for ad in @.sm_blocks
-        curr_id = ad.getAttribute("data-mad-id")
-        if curr_id == id then return index
-        index += 1
-
     add_active_ad_state : () ->
       ad_id = @.sm_blocks[@.active_ad_index].getAttribute("data-mad-id")
       cs = sm.states.cur_state()
 
       if ad_id
-        index = @.get_index_by_id( ad_id )
-        @.set_index_in_dom( index )
         ns =
           process_state : false
           mart_id : cs.mart_id
