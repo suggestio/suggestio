@@ -7,7 +7,7 @@
 
 @galFormBase(title = s"Редактирование галереи ${gal.name}") {
 
-  @_deleteSmthFormBtnTpl( routes.SysGallery.deleteGallerySubmit(gal.id.get) )
+  @_deleteSmthFormBtnTpl( routes.SysGallery.deleteGallerySubmit(gal.id.get), Some("__size-M __ft-XM") )
 
   @_galsTableTpl(Seq(gal), withAdmLinks = false)
 

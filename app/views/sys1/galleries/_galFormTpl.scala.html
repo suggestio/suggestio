@@ -20,7 +20,12 @@
       )
     } { galName =>
       @* Название отключенной галереи. *@
-      <input type="text" disabled value="@galName" title="Нельзя менять идентификатор уже существующей галереи."/>
+      <td class="input-w_left">
+        <label class="input-w_prop-name">Название:</label>
+      </td>
+      <td>
+        <input type="text" disabled value="@galName" title="Нельзя менять идентификатор уже существующей галереи."/>
+      </td>
     }
   </table>
 
@@ -37,44 +42,49 @@
      Название полей в теле POST: imgs[0], imgs[1] и т.д. Цифры-индексы должны отражать порядок картинок в галерее,
      но им не обязательно идти по порядку. *@
 
-  <div class="ovh" id="imgs">
-    <p class="prop_name __block">Фотографии:</p>
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">Фотографии:
+      </label>
+    </td>
+    <td id="imgs">
   
-    @gf("gallery").errors.map { error =>
-      <p class="block __margin-M red">Ошибка: @Messages(error.message, error.args: _*)</p>
-    }
-  
-    <div class="image __size-M f-left js-image-upload" >
-      @stuff._fileUploadTpl(
-        routes.Img.handleTempImg,
-        fieldName = "imgs",
-        multiple = true,
-        previewRoot = "#imgs",
-        previewClass = "__size-M f-left",
-        editBtnClass = "image_edit-btn js-crop-image-btn"
-      )
-      <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">
-        <span>Добавить<br/>фотографию</span>
-      </a>
-    </div>
-  
-    @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
-    @defining( gf("imgs") ) { gf =>
-      @gf.indexes.map { gfi =>
-        @defining( s"gallery[$gfi]" ) { gfn =>
-          @gf(gfn).value.map { imgId =>
-          <div class="image __size-M f-left js-preview">
-            <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
-            <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-            <a class="image_edit-btn js-crop-image-btn" title="Удалить">
-              <span></span>
-            </a>
-          </div>
+      @gf("gallery").errors.map { error =>
+        <p class="block __margin-M red">Ошибка: @Messages(error.message, error.args: _*)</p>
+      }
+
+      <div class="image __size-M f-left js-image-upload" >
+        @stuff._fileUploadTpl(
+          routes.Img.handleTempImg,
+          fieldName = "imgs",
+          multiple = true,
+          previewRoot = "#imgs",
+          previewClass = "__size-M f-left",
+          editBtnClass = "image_edit-btn js-crop-image-btn"
+        )
+        <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">
+          <span>Добавить<br/>фотографию</span>
+        </a>
+      </div>
+
+      @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
+      @defining( gf("imgs") ) { gf =>
+        @gf.indexes.map { gfi =>
+          @defining( s"gallery[$gfi]" ) { gfn =>
+            @gf(gfn).value.map { imgId =>
+              <div class="image __size-M f-left js-preview">
+                <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
+                <a class="image_edit-btn js-crop-image-btn" title="Удалить">
+                  <span></span>
+                </a>
+              </div>
+            }
           }
         }
       }
-    }
-  </div>
+    </td>
+  </table>
 
   <div class="btn-w __size-M">
     <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" type="submit" value="@btnText" />
