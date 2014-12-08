@@ -4,8 +4,8 @@ import controllers.routes
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
 import models._
-import models.blk.{SzMult_t, BlockWidth, BlockHeights, BlockWidths}
-import models.im.{DevScreenT, DevPixelRatios}
+import models.blk.{SzMult_t, BlockWidth, BlockWidths}
+import models.im.DevScreenT
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
@@ -143,7 +143,9 @@ object ShowcaseUtil {
    */
   def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
     if (mad.blockMeta.wide) {
-      // мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
+      // Вычисляем мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
+      // TODO Нужно по макс высоте лимитировать и лимитировать по ширине и высоте экрана. Допускается только пропоциональное масштабирование,
+      //      поэтому карточка должна полностью помещаться на экране.
       val szMult: SzMult_t = BgImg.WIDE_TARGET_HEIGHT_PX.toFloat / mad.blockMeta.height.toFloat
       // Нужно получить данные для рендера широкой карточки.
       val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
@@ -189,8 +191,10 @@ object ShowcaseUtil {
    * @return SzMult_t выбранный для рендера.
    */
   def getSzMult4tiles(szMults: List[SzMult_t], maxCols: Int = TILE_MAX_COLUMNS)(implicit ctx: Context): SzMult_t = {
-    ctx.deviceScreenOpt
-      .fold [SzMult_t] (szMults.last) { getSzMult4tiles(szMults, _, maxCols) }
+    ctx.deviceScreenOpt match {
+      case Some(dsOpt)  => getSzMult4tiles(szMults, dsOpt, maxCols)
+      case None         => szMults.last
+    }
   }
   def getSzMult4tiles(szMults: List[SzMult_t], dscr: DevScreenT, maxCols: Int): SzMult_t = {
     val blockWidthPx = BlockWidths.NORMAL.widthPx
