@@ -197,7 +197,7 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
   }""",
-  "-keepclassmembers class * implements models.ai.ContentHandlerResult",
+  "-keepclassmembernames class * implements models.ai.ContentHandlerResult",
   "-dontnote",
   "-dontwarn",
   //"-ignorewarnings"
