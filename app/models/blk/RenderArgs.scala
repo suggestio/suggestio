@@ -60,11 +60,11 @@ case class WideBgRenderCtx(
 
 /** Параметры для рендера внешнего css блока. */
 trait CssRenderArgsT {
-  def mad       : MAdT
-  def szMult    : SzMult_t
-  def cssClasses: Seq[String]
+  def mad         : MAdT
+  def brArgs      : blk.RenderArgs
+  def cssClasses  : Seq[String]
 }
-case class CssRenderArgs(mad: MAdT, szMult: SzMult_t, cssClasses: Seq[String] = Nil)
+case class CssRenderArgs(mad: MAdT, brArgs: blk.RenderArgs, cssClasses: Seq[String] = Nil)
   extends CssRenderArgsT
 
 
@@ -76,16 +76,6 @@ trait FieldCssRenderArgsT extends CssRenderArgsT {
   def xy            : ICoords2D
 }
 
-case class FieldCssRenderArgs(
-  szMult          : SzMult_t,
-  mad             : MAdT,
-  aovf            : AOValueField,
-  bf              : BlockAOValueFieldT,
-  fieldCssClass   : String,
-  xy              : ICoords2D,
-  cssClasses      : Seq[String] = Nil
-) extends FieldCssRenderArgsT
-
 /**
  * Контейнер параметров рендера css-стиля блока.
  * @param mad рекламная карточка.
@@ -95,7 +85,7 @@ case class FieldCssRenderArgs(
  * @param fid title либо descr обычно.
  */
 case class FieldCssRenderArgs2(
-  szMult  : SzMult_t,
+  brArgs  : blk.RenderArgs,
   mad     : MAdT,
   aovf    : AOStringField,
   bf      : BfText,

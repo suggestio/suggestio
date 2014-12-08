@@ -36,17 +36,18 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
       val txts: Iterator[Txt] = mads.iterator.flatMap { mad =>
         val arg = argsMap(mad.id.get)
         val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+        val brArgs = blk.RenderArgs(szMult = arg.szMult, inlineStyles = false)
         val offerFieldsTxts = mad.offers
           .iterator
           .flatMap { offer =>
-            val t1r = offer.text1.map { t1 => blk.FieldCssRenderArgs2(arg.szMult, mad, t1, bc.titleBf, offer.n, yoff = 0,  fid = "title") }
-            val t2r = offer.text2.map { t2 => blk.FieldCssRenderArgs2(arg.szMult, mad, t2, bc.descrBf, offer.n, yoff = 25, fid = "descr") }
+            val t1r = offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, mad, t1, bc.titleBf, offer.n, yoff = 0,  fid = "title") }
+            val t2r = offer.text2.map { t2 => blk.FieldCssRenderArgs2(brArgs, mad, t2, bc.descrBf, offer.n, yoff = 25, fid = "descr") }
             t1r ++ t2r
           }
           .map { cssRenderArgs =>
             _textCss(cssRenderArgs) : Txt
           }
-        val preableCssTxt = _blockCss( blk.CssRenderArgs(mad, arg.szMult) ) : Txt
+        val preableCssTxt = _blockCss( blk.CssRenderArgs(mad, brArgs) ) : Txt
         Iterator(preableCssTxt) ++ offerFieldsTxts
       }
       new Txt(txts.toStream)  // toSeq не прокатывает, т.к. требует immutable.Seq.

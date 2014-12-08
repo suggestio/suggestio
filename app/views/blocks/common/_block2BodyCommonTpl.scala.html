@@ -17,7 +17,7 @@
           mad     = mad,
           aovf    = aosf,
           bf      = bf,
-          szMult  = args.szMult,
+          brArgs  = args,
           offerN  = offerN,
           yoff    = yoff,
           fid     = fid
@@ -33,7 +33,7 @@
   @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
 
   @if(isStylesInline) {
-    <style>@Html(_blockCss( blk.CssRenderArgs(mad, args.szMult) ).toString.trim)</style>
+    <style>@Html(_blockCss( blk.CssRenderArgs(mad, args) ).toString.trim)</style>
   }
 
   @mad.offers.map { offer =>

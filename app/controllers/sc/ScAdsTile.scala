@@ -178,20 +178,18 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
     override def adsCssRenderArgsFut: Future[immutable.Seq[CssRenderArgsT]] = {
       madsFut.map { mads =>
-        val szMult = brArgs.szMult
         mads
           .iterator
-          .map { mad =>  blk.CssRenderArgs(mad, szMult) }
+          .map { mad =>  blk.CssRenderArgs(mad, brArgs) }
           .toStream
       }
     }
 
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
       madsFut.map { mads =>
-        val szMult = brArgs.szMult
         mads
           .iterator
-          .flatMap { mad =>  mad2craIter(mad, szMult, Nil) }
+          .flatMap { mad =>  mad2craIter(mad, brArgs, Nil) }
           .toStream
       }
     }

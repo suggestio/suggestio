@@ -102,7 +102,7 @@ trait ScController extends SioController {
     }
 
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-    protected def mad2craIter(mad: MAd, szMult: SzMult_t, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
+    protected def mad2craIter(mad: MAd, brArgs: blk.RenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
       val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
       mad.offers.iterator.flatMap { offer =>
         val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
@@ -113,7 +113,7 @@ trait ScController extends SioController {
             mad     = mad,
             aovf    = aosf,
             bf      = bf,
-            szMult  = szMult,
+            brArgs  = brArgs,
             offerN  = offer.n,
             yoff    = yoff,
             fid     = fid,
@@ -146,6 +146,5 @@ trait ScController extends SioController {
 }
 
 sealed case class AdAndBrArgs(mad: MAd, brArgs: blk.RenderArgs) extends blk.CssRenderArgsT {
-  override def szMult = brArgs.szMult
   override def cssClasses = brArgs.withCssClasses
 }

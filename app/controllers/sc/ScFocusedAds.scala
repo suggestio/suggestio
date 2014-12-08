@@ -276,7 +276,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.iterator
-          .flatMap { mba =>  mad2craIter(mba.mad, mba.brArgs.szMult, mba.brArgs.withCssClasses) }
+          .flatMap { mba =>  mad2craIter(mba.mad, mba.brArgs, mba.brArgs.withCssClasses) }
           .toStream
       }
     }

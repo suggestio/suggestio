@@ -5,7 +5,7 @@
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {
-  width: @((mad.blockMeta.width * szMult).toInt)px;
-  height: @((mad.blockMeta.height * szMult).toInt)px;
+  width: @((mad.blockMeta.width * brArgs.szMult).toInt)px;
+  height: @((mad.blockMeta.height * brArgs.szMult).toInt)px;
 }
 }
