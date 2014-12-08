@@ -33,11 +33,8 @@ object AdnNodesSearch {
 
 /** Интерфейс для описания критериев того, какие узлы надо найти. По этой спеки собирается ES-запрос. */
 trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDsa with AdnSupIdsDsa
-with AnyOfPersonIdsDsa
+with AnyOfPersonIdsDsa with AdvDelegateAdnIdsDsa
 {
-
-  /** Искать/фильтровать по id узла, которому была делегирована фунция модерации размещения рекламных карточек. */
-  def advDelegateAdnIds: Seq[String]
 
   /** Искать по прямым гео-родителям. Нужно чтобы у узлов была проставлена инфа по геородителям. */
   def withDirectGeoParents: Seq[String]
@@ -101,25 +98,7 @@ with AnyOfPersonIdsDsa
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
     super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      // Отрабатываем id узлов adv-делегатов
-      if (advDelegateAdnIds.isEmpty) {
-        qb
-      } else {
-        val af = FilterBuilders.termsFilter(AdNetMember.ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, af)
-      }
-    }.orElse[QueryBuilder] {
-      if (advDelegateAdnIds.isEmpty) {
-        None
-      } else {
-        val aq = QueryBuilders.termsQuery(AdNetMember.ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds: _*)
-          .minimumMatch(1)
-        Some(aq)
-      }
-
-    // Отрабатываем прямых гео-родителей
-    }.map[QueryBuilder] { qb =>
+      // Отрабатываем прямых гео-родителей
       if (withDirectGeoParents.nonEmpty) {
         val filter = FilterBuilders.termsFilter(EMAdnNodeGeo.GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents : _*)
         QueryBuilders.filteredQuery(qb, filter)
@@ -342,7 +321,6 @@ with AnyOfPersonIdsDsa
 
   override def toStringBuilder: StringBuilder = {
     val sb = super.toStringBuilder
-    fmtColl2sb("advDelegateAdnIds", advDelegateAdnIds, sb)
     fmtColl2sb("withDirectGeoParents", withDirectGeoParents, sb)
     fmtColl2sb("withGeoParents", withGeoParents, sb)
     fmtColl2sb("shownTypeIds", shownTypeIds, sb)
@@ -369,9 +347,8 @@ with AnyOfPersonIdsDsa
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
 trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithIdsDsaDflt with CompanyIdsDsaDflt
-with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt
+with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt with AdvDelegateAdnIdsDsaDflt
 {
-  override def advDelegateAdnIds: Seq[String] = Seq.empty
   override def withGeoDistanceSort: Option[GeoPoint] = None
   override def hasLogo: Option[Boolean] = None
   override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
@@ -394,12 +371,11 @@ with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
 trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithIdsDsaWrapper
-with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper with AnyOfPersonIdsDsaWrapper
+with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper with AnyOfPersonIdsDsaWrapper with AdvDelegateAdnIdsDsaWrapper
 {
 
   override type WT <: AdnNodesSearchArgsT
 
-  override def advDelegateAdnIds = _dsArgsUnderlying.advDelegateAdnIds
   override def withGeoDistanceSort = _dsArgsUnderlying.withGeoDistanceSort
   override def hasLogo = _dsArgsUnderlying.hasLogo
   override def intersectsWithPreIndexed = _dsArgsUnderlying.intersectsWithPreIndexed
