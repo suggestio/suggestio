@@ -2041,8 +2041,8 @@ sm =
             #bg.style.width = "100%"
             bg.style.display = "block"
             bg.style.margin = "0 auto"
-        else
-          _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
+        #else
+          #_b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
         sm.utils.addClass _b, '__rel'
 
