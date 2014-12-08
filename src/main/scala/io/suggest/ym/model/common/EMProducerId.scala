@@ -5,7 +5,7 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.search.sort.SortBuilder
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json.JsString
 import io.suggest.event.SioNotifierStaticClientI
@@ -128,3 +128,41 @@ trait EMProducerIdMut extends EMProducerId {
   override type T <: EMProducerIdMut
   var producerId: String
 }
+
+
+
+/** Поисковый аддон для поддержки поиска по полю producerId. */
+trait ProducerIdsDsa extends DynSearchArgs {
+
+  /** Необязательный id владельца рекламы. Полезно при поиске в рамках магазина. */
+  def producerIds: Seq[String]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt .map { qstrQB =>
+      // Если producerId задан, то навешиваем ещё фильтр сверху.
+      if (producerIds.isEmpty) {
+        qstrQB
+      } else {
+        val shopIdFilter = FilterBuilders.termsFilter(PRODUCER_ID_ESFN, producerIds : _*)
+        QueryBuilders.filteredQuery(qstrQB, shopIdFilter)
+      }
+    }.orElse[QueryBuilder] {
+      // Всё ещё не удалось собрать поисковый запрос. Если задан shopId, то собираем query по магазину.
+      if (producerIds.isEmpty) {
+        None
+      } else {
+        val qb = QueryBuilders.termsQuery(PRODUCER_ID_ESFN, producerIds : _*)
+        Some(qb)
+      }
+    }
+  }
+
+}
+trait ProducerIdsDsaDflt extends ProducerIdsDsa {
+  override def producerIds: Seq[String] = Seq.empty
+}
+trait ProducerIdsDsaWrapper extends ProducerIdsDsa with DynSearchArgsWrapper {
+  override type WT <: ProducerIdsDsa
+  override def producerIds = _dsArgsUnderlying.producerIds
+}
+

@@ -4,7 +4,7 @@ import io.suggest.model.EsModelStaticT
 import io.suggest.util.MacroLogsI
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilder
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -86,8 +86,17 @@ trait DynSearchArgs {
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   def offset: Int
 
-  /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных. */
-  def toEsQuery: QueryBuilder
+  /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
+    * Здесь можно навешивать дополнительные фильтры, выполнять post-процессинг запроса. */
+  def toEsQuery: QueryBuilder = {
+    toEsQueryOpt getOrElse defaultEsQuery
+  }
+
+  /** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить. */
+  def defaultEsQuery: QueryBuilder = QueryBuilders.matchAllQuery()
+
+  /** Сборка EsQuery сверху вниз. */
+  def toEsQueryOpt: Option[QueryBuilder] = None
 
   /**
    * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
@@ -102,7 +111,42 @@ trait DynSearchArgs {
       .setFrom(Math.max(0, offset))
   }
 
+  /** toString() выводит экземпляр этого класса списком. Но ей нужно знать какое-то название модуля,
+    * которое конкретные реализации могут переопределять. */
+  def mySimpleName = getClass.getSimpleName
+
+  /** Базовый размер StringBuilder'а. */
+  def sbInitSize = 32
+
+  /** Вспомогательный подсчет размер коллекции для ускорения работы toStringBuilder. */
+  final protected def collStringSize(coll: Iterable[_], sis: Int, addOffset: Int = 0): Int = {
+    if (coll.isEmpty)
+      sis
+    else
+      sis + coll.size * (coll.head.toString.length + 1) + 10 + addOffset
+  }
+
+  /** Построение выхлопа метода toString(). */
+  def toStringBuilder: StringBuilder = {
+    new StringBuilder(sbInitSize, mySimpleName).append(' ').append('\n')
+  }
+
+  override def toString: String = {
+    toStringBuilder
+      .append('\n')
+      .append('}')
+      .toString()
+  }
+
+  /** Вспомогательное форматирование аргумента-коллекции строкой внутрь StringBuilder'а. */
+  final protected def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): StringBuilder = {
+    if (coll.nonEmpty)
+      sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
+    sb
+  }
+
 }
+
 
 /** Дефолтовые значения базовых параметров dyn-поиска. */
 trait DynSearchArgsDflt extends DynSearchArgs {
@@ -110,10 +154,13 @@ trait DynSearchArgsDflt extends DynSearchArgs {
   override def maxResults: Int = 10
 }
 
+
 /** Враппер для контейнера аргументов dyn-поиска. */
 trait DynSearchArgsWrapper extends DynSearchArgs {
-  def _dsArgsUnderlying: DynSearchArgs
+  type WT <: DynSearchArgs
+  def _dsArgsUnderlying: WT
 
   override def maxResults = _dsArgsUnderlying.maxResults
   override def offset     = _dsArgsUnderlying.offset
+  override def MAX_RESULTS_HARD = _dsArgsUnderlying.MAX_RESULTS_HARD
 }

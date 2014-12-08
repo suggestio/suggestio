@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.ym.model.common.AdnSinks.AdnSink
 import io.suggest.ym.model.common.SinkShowLevels.SinkShowLevel
 import scala.collection.JavaConversions._
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
@@ -114,6 +114,7 @@ trait EMReceiversStatic extends EsModelStaticMutAkvT {
   }
 
 }
+
 
 
 trait EMReceiversI extends EsModelPlayJsonT {
@@ -287,3 +288,118 @@ case class AdReceiverInfo(
   }
 }
 
+
+
+/** DynSearch-Аддон для поиска по ресиверам. */
+trait ReceiversDsa extends DynSearchArgs {
+
+  /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
+  def receiverIds: Seq[String]
+
+  /** Какого уровня требуются карточки. */
+  def levels: Seq[SlNameTokenStr]
+
+  /** Добавить exists или missing фильтр на выходе, который будет убеждаться, что в индексе есть или нет id ресиверов. */
+  def anyReceiverId: Option[Boolean]
+
+  /** Добавить exists/missing фильтр на выходе, который будет убеждаться, что уровни присуствуют или отсутствуют. */
+  def anyLevel: Option[Boolean]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map { qb =>
+      // Если receiverId задан, то надо фильтровать в рамках ресивера. Сразу надо уровни отработать, т.к. они nested в одном поддокументе.
+      if (receiverIds.nonEmpty || levels.nonEmpty) {
+        var nestedSubfilters: List[FilterBuilder] = Nil
+        if (receiverIds.nonEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
+        }
+        if (levels.nonEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
+        }
+        // Если получилось несколько фильтров, то надо их объеденить.
+        val finalNestedSubfilter: FilterBuilder = if (nestedSubfilters.tail.nonEmpty) {
+          FilterBuilders.andFilter(nestedSubfilters: _*)
+        } else {
+          nestedSubfilters.head
+        }
+        // Оборачиваем результирующий фильтр в nested, и затем вешаем на исходную query.
+        val nestedFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, finalNestedSubfilter)
+        QueryBuilders.filteredQuery(qb, nestedFilter)
+      } else {
+        qb
+      }
+
+    }.orElse[QueryBuilder] {
+      // Нет поискового запроса. Попытаться собрать запрос по ресиверу с опциональным фильтром по level.
+      if (receiverIds.nonEmpty) {
+        var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
+        if (levels.nonEmpty) {
+          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_ESFN, levels.map(_.name) : _*)
+          nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
+        }
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
+        Some(qb)
+
+      } else if (levels.nonEmpty) {
+        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_ESFN, levels.map(_.name) : _*)
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
+        Some(qb)
+
+      } else {
+        None
+      }
+    }
+  }
+
+  override def toEsQuery: QueryBuilder = {
+    var query = super.toEsQuery
+    // Если задан anyReceiverId, то нужно добавить exists/missing-фильтр для проверки состояния значений в rcvrs.id.
+    if (anyReceiverId.isDefined) {
+      val fn = EMReceivers.RCVRS_RECEIVER_ID_ESFN
+      val f = if (anyReceiverId.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query = QueryBuilders.filteredQuery(query, nf)
+    }
+    // Если задан anyLevel, то нужно добавиль фильтр по аналогии с anyReceiverId.
+    if (anyLevel.isDefined) {
+      val fn = EMReceivers.RCVRS_SLS_ESFN
+      val f = if(anyLevel.get) {
+        FilterBuilders.existsFilter(fn)
+      } else {
+        FilterBuilders.missingFilter(fn)
+      }
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      query = QueryBuilders.filteredQuery(query, nf)
+    }
+    query
+  }
+
+}
+trait ReceiversDsaDflt extends ReceiversDsa {
+  override def receiverIds    : Seq[String] = Seq.empty
+  override def levels         : Seq[SlNameTokenStr] = Seq.empty
+  override def anyReceiverId  : Option[Boolean] = None
+  override def anyLevel       : Option[Boolean] = None
+}
+trait ReceiversDsaWrapper extends ReceiversDsa with DynSearchArgsWrapper {
+  override type WT <: ReceiversDsa
+  override def receiverIds    = _dsArgsUnderlying.receiverIds
+  override def levels         = _dsArgsUnderlying.levels
+  override def anyReceiverId  = _dsArgsUnderlying.anyReceiverId
+  override def anyLevel       = _dsArgsUnderlying.anyLevel
+}
+
+/** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить.
+  * Нужно отображать только карточки, которые опубликованы где-либо. */
+trait ReceiversDsaOnlyPublishedByDefault extends DynSearchArgs {
+  override def defaultEsQuery: QueryBuilder = {
+    val q0 = super.defaultEsQuery
+    val f = FilterBuilders.existsFilter(EMReceivers.RCVRS_SLS_ESFN)
+    val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+    QueryBuilders.filteredQuery(q0, nf)
+  }
+}

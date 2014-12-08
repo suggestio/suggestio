@@ -4,10 +4,11 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.geo.{GeoShape, GeoPoint}
 import io.suggest.ym.model.MWelcomeAd
-import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import org.joda.time.DateTime
 import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -310,3 +311,44 @@ case class AdnMMetadata(
 
 }
 
+
+/** Добавить сортировку по имени. */
+trait NameSortDsa extends DynSearchArgs {
+
+  /** Сортировать по названиям? */
+  def withNameSort: Boolean
+
+  override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    val srb1 = super.prepareSearchRequest(srb)
+    if (withNameSort) {
+      val sob = SortBuilders.fieldSort(META_NAME_SHORT_NOTOK_ESFN)
+        .order(SortOrder.ASC)
+        .ignoreUnmapped(true)
+      srb1 addSort sob
+    }
+    srb1
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    val sis = super.sbInitSize
+    if (withNameSort)  sis + 18  else  sis
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    val sb1 = super.toStringBuilder
+    if (withNameSort)
+      sb1.append("\n  withNameSort = ").append(withNameSort)
+    sb1
+  }
+}
+
+trait NameSortDsaDflt extends NameSortDsa {
+  override def withNameSort: Boolean = false
+}
+
+trait NameSortDsaWrapper extends NameSortDsa with DynSearchArgsWrapper {
+  override type WT <: NameSortDsa
+  override def withNameSort = _dsArgsUnderlying.withNameSort
+}
