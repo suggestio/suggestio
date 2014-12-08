@@ -2,9 +2,13 @@ package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShapeQueryData, GeoPoint}
 import io.suggest.util.SioEsUtil._
+import io.suggest.ym.model.MAdnNodeGeo
+import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
+import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import play.api.libs.json._
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -220,6 +224,8 @@ trait DirectGeoParentsDsaWrapper extends DirectGeoParentsDsa with DynSearchArgsW
 }
 
 
+
+/** Аддон для dyn-search для поддержки поиска/фильтрации по withGeoParents. */
 trait GeoParentsDsa extends DynSearchArgs {
 
   /** Искать по гео-родителям любого уровня. */
@@ -264,5 +270,170 @@ trait GeoParentsDsaDflt extends GeoParentsDsa {
 trait GeoParentsDsaWrapper extends GeoParentsDsa with DynSearchArgsWrapper {
   override type WT <: GeoParentsDsa
   override def withGeoParents = _dsArgsUnderlying.withGeoParents
+}
+
+
+
+/** DynSearch-аддон для поддержки поля geoDistance. */
+trait GeoDistanceDsa extends DynSearchArgs {
+
+  /** Фильтровать по дистанции относительно какой-то точки. */
+  def geoDistance: Option[GeoShapeQueryData]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем geoDistance через geoShape'ы. Текущий запрос обнаружения описываем как круг.
+      // Если задан внутренний вырез (minDistance), то используем другое поле location и distance filter, т.к. SR.WITHIN не работает.
+      // Вешаем фильтры GeoShape
+      geoDistance.fold(qb) { gsqd =>
+        // География узлов живёт в отдельной модели, которая доступна через has_child
+        val gq = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val gsfOuter = FilterBuilders.hasChildFilter(MAdnNodeGeo.ES_TYPE_NAME, gq)
+        val qb2 = QueryBuilders.filteredQuery(qb, gsfOuter)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
+      }
+    }.orElse[QueryBuilder] {
+      geoDistance.map { gsqd =>
+        // Создаём GeoShape query. query по внешнему контуру, и filter по внутреннему.
+        val gq  = MAdnNodeGeo.geoQuery(gsqd.glevel, gsqd.gdq.outerCircle)
+        val qb2 = QueryBuilders.hasChildQuery(MAdnNodeGeo.ES_TYPE_NAME, gq)
+        innerUnshapeFilter(qb2, gsqd.gdq.innerCircleOpt)
+      }
+
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(geoDistance, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("geoDistance", geoDistance, super.toStringBuilder)
+  }
+
+  /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которых ближе, чем это допустимо. */
+  private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
+    // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил перепиливание подсистемы географии.
+    innerCircle.fold(qb2) { inCircle =>
+      val innerFilter = FilterBuilders.geoDistanceFilter(EMAdnNodeGeo.GEO_POINT_ESFN)
+        .point(inCircle.center.lat, inCircle.center.lon)
+        .distance(inCircle.radius.distance, inCircle.radius.units)
+      val notInner = FilterBuilders.notFilter(innerFilter)
+      QueryBuilders.filteredQuery(qb2, notInner)
+    }
+  }
+
+}
+
+trait GeoDistanceDsaDflt extends GeoDistanceDsa {
+  override def geoDistance: Option[GeoShapeQueryData] = None
+}
+
+trait GeoDistanceDsaWrapper extends GeoDistanceDsa with DynSearchArgsWrapper {
+  override type WT <: GeoDistanceDsa
+  override def geoDistance = _dsArgsUnderlying.geoDistance
+}
+
+
+
+/** DynSearch-аддон для поиска по уже проиндексированным шейпам. Этот аддон не привязан к модели EMAdnNodeGeo. */
+trait GeoIntersectsWithPreIndexedDsa extends DynSearchArgs {
+
+  /** Пересечение с шейпом другого узла. Полезно для поиска узлов, географически входящих в указанный узел. */
+  def intersectsWithPreIndexed: Seq[GeoShapeIndexed]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
+      if (intersectsWithPreIndexed.isEmpty) {
+        qb
+      } else {
+        val filters = intersectsWithPreIndexed
+          .map { _.toGeoShapeFilter }
+        val filter = if (filters.size == 1) {
+          filters.head
+        } else {
+          FilterBuilders.orFilter(filters: _*)
+        }
+        QueryBuilders.filteredQuery(qb, filter)
+      }
+    }.orElse[QueryBuilder] {
+      if (intersectsWithPreIndexed.isEmpty) {
+        None
+      } else if (intersectsWithPreIndexed.size == 1) {
+        val qb = intersectsWithPreIndexed.head.toGeoShapeQuery
+        Some(qb)
+      } else {
+        val qb = intersectsWithPreIndexed.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
+          (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
+        }
+        Some(qb)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(intersectsWithPreIndexed, super.sbInitSize, 10)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("intersectsWithPreIndexed", intersectsWithPreIndexed, super.toStringBuilder)
+  }
+}
+
+trait GeoIntersectsWithPreIndexedDsaDftl extends GeoIntersectsWithPreIndexedDsa {
+  override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
+}
+
+trait GeoIntersectsWithPreIndexedDsaWrapper extends GeoIntersectsWithPreIndexedDsa with DynSearchArgsWrapper {
+  override type WT <: GeoIntersectsWithPreIndexedDsa
+  override def intersectsWithPreIndexed = _dsArgsUnderlying.intersectsWithPreIndexed
+}
+
+
+
+/** DynSearch-Аддон для сортировки по географическом удалению от указанной точки. */
+trait GeoDistanceSortDsa extends DynSearchArgs {
+
+  /** + сортировка результатов по расстоянию до указанной точки. */
+  def withGeoDistanceSort: Option[GeoPoint]
+
+  override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    val srb1 = super.prepareSearchRequest(srb)
+    // Добавить сортировку по дистанции до указанной точки, если необходимо.
+    withGeoDistanceSort.foreach { geoPoint =>
+      val sb = SortBuilders.geoDistanceSort(GEO_POINT_ESFN)
+        .point(geoPoint.lat, geoPoint.lon)
+        .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
+        .unit(DistanceUnit.KILOMETERS)
+      srb1.addSort(sb)
+    }
+    srb1
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(withGeoDistanceSort, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("withGeoDistanceSort", withGeoDistanceSort, super.toStringBuilder)
+  }
+}
+
+trait GeoDistanceSortDsaDflt extends GeoDistanceSortDsa {
+  override def withGeoDistanceSort: Option[GeoPoint] = None
+}
+
+trait GeoDistanceSortDsaWrapper extends GeoDistanceSortDsa with DynSearchArgsWrapper {
+  override type WT <: GeoDistanceSortDsa
+  override def withGeoDistanceSort = _dsArgsUnderlying.withGeoDistanceSort
 }
 

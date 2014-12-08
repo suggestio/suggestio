@@ -119,11 +119,11 @@ trait DynSearchArgs {
   def sbInitSize = 32
 
   /** Вспомогательный подсчет размер коллекции для ускорения работы toStringBuilder. */
-  final protected def collStringSize(coll: Iterable[String], sis: Int, addOffset: Int = 0): Int = {
+  final protected def collStringSize(coll: Iterable[_], sis: Int, addOffset: Int = 0): Int = {
     if (coll.isEmpty)
       sis
     else
-      sis + coll.size * (coll.head.length + 1) + 10 + addOffset
+      sis + coll.size * (coll.head.toString.length + 1) + 10 + addOffset
   }
 
   /** Построение выхлопа метода toString(). */

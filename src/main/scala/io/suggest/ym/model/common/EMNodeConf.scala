@@ -3,6 +3,7 @@ package io.suggest.ym.model.common
 import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json._
 import scala.collection.JavaConversions._
 import java.{util => ju, lang => jl}
@@ -136,3 +137,43 @@ case class NodeConf(
 
 }
 
+
+
+trait ShowInScNodeListDsa extends DynSearchArgs {
+
+  /** искать/фильтровать по флагу отображения в списке узлов поисковой выдачи. */
+  def showInScNodeList: Option[Boolean]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем флаг conf.showInScNodeList
+      showInScNodeList.fold(qb) { sscFlag =>
+        val sscf = FilterBuilders.termFilter(CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+        QueryBuilders.filteredQuery(qb, sscf)
+      }
+    }.orElse[QueryBuilder] {
+      showInScNodeList.map { sscFlag =>
+        QueryBuilders.termQuery(CONF_SHOW_IN_SC_NODES_LIST_ESFN, sscFlag)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    val sis = super.sbInitSize
+    if (showInScNodeList.isDefined)  sis + 24  else  sis
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("showInScNodeList", showInScNodeList, super.toStringBuilder)
+  }
+}
+trait ShowInScNodeListDsaDflt extends ShowInScNodeListDsa {
+  override def showInScNodeList: Option[Boolean] = None
+}
+trait ShowInScNodeListDsaWrapper extends ShowInScNodeListDsa with DynSearchArgsWrapper {
+  override type WT <: ShowInScNodeListDsa
+  override def showInScNodeList = _dsArgsUnderlying.showInScNodeList
+}

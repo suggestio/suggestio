@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import EsModel._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
 import io.suggest.ym.model.{MAdnNode, AdShowLevel}
@@ -806,3 +806,242 @@ trait AdvDelegateAdnIdsDsaWrapper extends AdvDelegateAdnIdsDsa with DynSearchArg
   override def advDelegateAdnIds = _dsArgsUnderlying.advDelegateAdnIds
 }
 
+
+/** Поддержка dyn-поиска по полю shownTypeIds. */
+trait ShownTypeIdsDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по shownTypeId узла. */
+  def shownTypeIds: Seq[String]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Поиск/фильтрация по полю shown type id, хранящий id типа узла.
+      if (shownTypeIds.isEmpty) {
+        qb
+      } else {
+        val stiFilter = FilterBuilders.termsFilter(ADN_SHOWN_TYPE_ID, shownTypeIds : _*)
+        QueryBuilders.filteredQuery(qb, stiFilter)
+      }
+    }.orElse[QueryBuilder] {
+      if (shownTypeIds.isEmpty) {
+        None
+      } else {
+        val stiQuery = QueryBuilders.termsQuery(ADN_SHOWN_TYPE_ID, shownTypeIds : _*)
+          .minimumMatch(1)  // может быть только один тип ведь у одного узла.
+        Some(stiQuery)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(shownTypeIds, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("shownTypeIds", shownTypeIds, super.toStringBuilder)
+  }
+}
+
+trait ShownTypeIdsDsaDflt extends ShownTypeIdsDsa {
+  override def shownTypeIds: Seq[String] = Seq.empty
+}
+
+trait ShownTypeIdsDsaWrapper extends ShownTypeIdsDsa with DynSearchArgsWrapper {
+  override type WT <: ShownTypeIdsDsa
+  override def shownTypeIds = _dsArgsUnderlying.shownTypeIds
+}
+
+
+
+/** Аддон для поиска по полю adn.rigths. */
+trait AdnRightsDsa extends DynSearchArgs {
+
+  /** Права, которые должны быть у узла. */
+  def withAdnRights: Seq[AdnRight]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      if (withAdnRights.isEmpty) {
+        qb
+      } else {
+        val rf = FilterBuilders.termsFilter(ADN_RIGHTS_ESFN, withAdnRights.map(_.name) : _*)
+          .execution("and")
+        QueryBuilders.filteredQuery(qb, rf)
+      }
+    }.orElse[QueryBuilder] {
+      if (withAdnRights.isEmpty) {
+        None
+      } else {
+        val rq = QueryBuilders.termsQuery(ADN_RIGHTS_ESFN, withAdnRights.map(_.name): _*)
+          .minimumMatch(withAdnRights.size)
+        Some(rq)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(withAdnRights, super.sbInitSize, addOffset = 10)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("withAdnRights", withAdnRights, super.toStringBuilder)
+  }
+}
+
+trait AdnRightsDsaDflt extends AdnRightsDsa {
+  override def withAdnRights: Seq[AdnRight] = Seq.empty
+}
+
+trait AdnRightsDsaWrapper extends AdnRightsDsa with DynSearchArgsWrapper {
+  override type WT <: AdnRightsDsa
+  override def withAdnRights = _dsArgsUnderlying.withAdnRights
+}
+
+
+
+/** Аддон для поиска по синкам узла. */
+trait AdnSinksDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по доступным sink'ам. */
+  def onlyWithSinks: Seq[AdnSink]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    // Отрабатываем возможный список прав узла.
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Ищем/фильтруем по sink-флагам
+      if (onlyWithSinks.isEmpty) {
+        qb
+      } else {
+        val sf = FilterBuilders.termsFilter(ADN_SINKS_ESFN, onlyWithSinks.map(_.name) : _*)
+        QueryBuilders.filteredQuery(qb, sf)
+      }
+    }.orElse[QueryBuilder] {
+      if (onlyWithSinks.isEmpty) {
+        None
+      } else {
+        val sq = QueryBuilders.termsQuery(ADN_SINKS_ESFN, onlyWithSinks.map(_.name) : _*)
+          .minimumMatch(onlyWithSinks.size)
+        Some(sq)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(onlyWithSinks, super.sbInitSize, 5)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("onlyWithSinks", onlyWithSinks, super.toStringBuilder)
+  }
+}
+
+trait AdnSinksDsaDflt extends AdnSinksDsa {
+  override def onlyWithSinks: Seq[AdnSink] = Seq.empty
+}
+
+trait AdnSinksDsaWrapper extends AdnSinksDsa with DynSearchArgsWrapper {
+  override type WT <: AdnSinksDsa
+  override def onlyWithSinks = _dsArgsUnderlying.onlyWithSinks
+}
+
+
+
+/** Аддон для dyn-search для поиска/фильтрации по флагу тестовости узла. */
+trait TestNodeDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по значению флага тестового узла. */
+  def testNode: Option[Boolean]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем флаг testNode.
+      testNode.fold(qb) { tnFlag =>
+        var tnf: FilterBuilder = FilterBuilders.termFilter(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+        if (!tnFlag) {
+          val tmf = FilterBuilders.missingFilter(AdNetMember.ADN_TEST_NODE_ESFN)
+          tnf = FilterBuilders.orFilter(tnf, tmf)
+        }
+        QueryBuilders.filteredQuery(qb, tnf)
+      }
+    }.orElse[QueryBuilder] {
+     testNode.map { tnFlag =>
+        // TODO Нужно добавить аналог missing filter для query и как-то объеденить через OR. Или пока так и пересохранять узлы с tn=false.
+        QueryBuilders.termQuery(AdNetMember.ADN_TEST_NODE_ESFN, tnFlag)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    val sis = super.sbInitSize
+    if (testNode.isDefined) sis + 16 else sis
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("testNode", testNode, super.toStringBuilder)
+  }
+}
+
+trait TestNodeDsaDflt extends TestNodeDsa {
+  override def testNode: Option[Boolean] = None
+}
+
+trait TestNodeDsaWrapper extends TestNodeDsa with DynSearchArgsWrapper {
+  override type WT <: TestNodeDsa
+  override def testNode = _dsArgsUnderlying.testNode
+}
+
+
+
+/** Аддон для поиска/фильтрации по значению поля adn.isEnabled. */
+trait NodeIsEnabledDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по галочки активности узла. */
+  def isEnabled: Option[Boolean]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Ищем/фильтруем по флагу включённости узла.
+      isEnabled.fold(qb) { isEnabled =>
+        val ief = FilterBuilders.termFilter(ADN_IS_ENABLED_ESFN, isEnabled)
+        QueryBuilders.filteredQuery(qb, ief)
+      }
+    }.orElse[QueryBuilder] {
+      isEnabled.map { isEnabled =>
+        QueryBuilders.termQuery(ADN_IS_ENABLED_ESFN, isEnabled)
+      }
+    }
+  }
+
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    val sis = super.sbInitSize
+    if (isEnabled.isDefined) sis + 16 else sis
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("isEnabled", isEnabled, super.toStringBuilder)
+  }
+}
+
+trait NodeIsEnabledDsaDflt extends NodeIsEnabledDsa {
+  override def isEnabled: Option[Boolean] = None
+}
+
+trait NodeIsEnabledDsaWrapper extends NodeIsEnabledDsa with DynSearchArgsWrapper {
+  override type WT <: NodeIsEnabledDsa
+  override def isEnabled = _dsArgsUnderlying.isEnabled
+}

@@ -28,6 +28,15 @@ trait WithoutIdsDsa extends DynSearchArgs {
     query3
   }
 
+  /** Базовый размер StringBuilder'а. */
+  override def sbInitSize: Int = {
+    collStringSize(withoutIds, super.sbInitSize)
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("withoutIds", withoutIds, super.toStringBuilder)
+  }
 }
 
 trait WithoutIdsDsaDflt extends WithoutIdsDsa {
