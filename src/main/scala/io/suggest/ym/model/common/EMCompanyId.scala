@@ -5,7 +5,7 @@ import EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import io.suggest.ym.model.MCompanySel
 import play.api.libs.json.JsString
 
@@ -77,4 +77,53 @@ trait EMCompanyId extends EsModelPlayJsonT with MCompanySel {
     COMPANY_ID_ESFN -> JsString(companyId) :: super.writeJsonFields(acc)
   }
 
+}
+
+
+// Аддоны для dyn-search.
+/** Поддержка поиска по полю companyId. */
+trait CompanyIdsDsa extends DynSearchArgs {
+
+  /** id компаний, под которые копаем узлы ADN. */
+  def companyIds: Seq[String]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt .map[QueryBuilder] { qb =>
+      // Отрабатываем companyId
+      if (companyIds.isEmpty) {
+        qb
+      } else {
+        val cf = FilterBuilders.termsFilter(COMPANY_ID_ESFN, companyIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, cf)
+      }
+    }.orElse {
+      if (companyIds.isEmpty) {
+        None
+      } else {
+        val cq = QueryBuilders.termsQuery(COMPANY_ID_ESFN, companyIds : _*)
+          .minimumMatch(1)
+        Some(cq)
+      }
+    }
+  }
+
+  override def sbInitSize: Int = {
+    collStringSize(companyIds, super.sbInitSize)
+  }
+
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("companyIds", companyIds, super.toStringBuilder)
+  }
+}
+
+
+trait CompanyIdsDsaDflt extends CompanyIdsDsa {
+  override def companyIds: Seq[String] = Seq.empty
+}
+
+
+trait CompanyIdsDsaWrapper extends CompanyIdsDsa with DynSearchArgsWrapper {
+  override type WT <: CompanyIdsDsa
+  override def companyIds = _dsArgsUnderlying.companyIds
 }

@@ -30,11 +30,24 @@ trait TextQueryDsa extends DynSearchArgs {
     }
   }
 
+  /** Для форматирования вывода используется эта функция. Выводит в lucene формате: field:value. */
+  protected def qOptWithFn = qOpt.map(qOptField + ":" + _)
+
+  override def sbInitSize: Int = {
+    collStringSize(qOpt, super.sbInitSize, addOffset = qOptField.length + 1)
+  }
+
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("qStr", qOptWithFn, super.toStringBuilder)
+  }
+
 }
+
 
 trait TextQueryDsaDflt extends TextQueryDsa {
   override def qOpt: Option[String] = None
 }
+
 
 trait TextQueryDsaWrapper extends TextQueryDsa with DynSearchArgsWrapper {
   override type WT <: TextQueryDsa

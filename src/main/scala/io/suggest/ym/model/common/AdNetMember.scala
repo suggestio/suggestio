@@ -708,3 +708,54 @@ case class AdnMemberShowLevels(
   def out4render = sls4render(out)
 }
 
+
+
+// Аддоны для DynSearch-поиска
+/** Аддон с поддержкой поиска по полю adn.supId . */
+trait AdnSupIdsDsa extends DynSearchArgs {
+
+  /** Искать/фильтровать по id супервизора узла. */
+  def adnSupIds: Seq[String]
+
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Отрабатываем adnSupIds:
+      if (adnSupIds.isEmpty) {
+        qb
+      } else {
+        val sf = FilterBuilders.termsFilter(ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
+          .execution("or")
+        QueryBuilders.filteredQuery(qb, sf)
+      }
+    }.orElse[QueryBuilder] {
+      if (adnSupIds.nonEmpty) {
+        val sq = QueryBuilders.termsQuery(ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
+          .minimumMatch(1)
+        Some(sq)
+      } else {
+        None
+      }
+    }
+  }
+
+  override def sbInitSize: Int = {
+    collStringSize(adnSupIds, super.sbInitSize)
+  }
+
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("adnSupIds", adnSupIds, super.toStringBuilder)
+  }
+
+}
+
+
+trait AdnSupIdsDsaDflt extends AdnSupIdsDsa {
+  override def adnSupIds: Seq[String] = Seq.empty
+}
+
+
+trait AdnSupIdsDsaWrapper extends AdnSupIdsDsa with DynSearchArgsWrapper {
+  override type WT <: AdnSupIdsDsa
+  override def adnSupIds = _dsArgsUnderlying.adnSupIds
+}
+

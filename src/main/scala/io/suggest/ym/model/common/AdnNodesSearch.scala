@@ -4,8 +4,8 @@ import io.suggest.model.EsModel
 import io.suggest.model.common.EMPersonIds
 import io.suggest.model.geo._
 import io.suggest.util.SioConstants
-import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.MAdnNodeGeo
+import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common.AdnRights.AdnRight
 import io.suggest.ym.model.common.AdnSinks.AdnSink
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -32,19 +32,7 @@ object AdnNodesSearch {
 
 
 /** Интерфейс для описания критериев того, какие узлы надо найти. По этой спеки собирается ES-запрос. */
-trait AdnNodesSearchArgsT extends DynSearchArgs {
-
-  /** Поиск по слову/словам. */
-  def qStr: Option[String]
-
-  /** Искать только результаты, имеющие указанные _id. */
-  def withIds: Seq[String]
-
-  /** id компаний, под которые копаем узлы ADN. */
-  def companyIds: Seq[String]
-
-  /** Искать/фильтровать по id супервизора узла. */
-  def adnSupIds: Seq[String]
+trait AdnNodesSearchArgsT extends TextQueryDsa with WithIdsDsa with CompanyIdsDsa with AdnSupIdsDsa {
 
   /** Искать/фильтровать по юзеру. */
   def anyOfPersonIds: Seq[String]
@@ -97,9 +85,6 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
   /** Дополнительно задать ключ для роутинга. */
   def withRouting: Seq[String]
 
-  /** По каким полям будем искать? */
-  def ftsSearchFN: String = SioConstants.FIELD_ALL
-
 
   /** Добавить фильтр в запрос, выкидывающий объекты, расстояние до центра которых ближе, чем это допустимо. */
   private def innerUnshapeFilter(qb2: QueryBuilder, innerCircle: Option[CircleGs]): QueryBuilder = {
@@ -113,69 +98,11 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     }
   }
 
-  /**
-   * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
-   * @return Экземпляр QueryBuilder, пригодный для отправки в поисковом запросе.
-   */
-  override def toEsQuery: QueryBuilder = {
-    var qb2: QueryBuilder = qStr.flatMap[QueryBuilder] { qStr =>
-      TextQueryV2Util.queryStr2QueryMarket(qStr, ftsSearchFN)
-        .map { _.q }
 
-    // Отрабатываем withIds, ограничивающий выдачу по ids.
-    }.map[QueryBuilder] { qb =>
-      if (withIds.nonEmpty) {
-        val idf = FilterBuilders.idsFilter().ids(withIds: _*)
-        QueryBuilders.filteredQuery(qb, idf)
-      } else {
-        qb
-      }
-    }.orElse[QueryBuilder] {
-      if (withIds.nonEmpty) {
-        val qb = QueryBuilders.idsQuery().ids(withIds: _*)
-        Some(qb)
-      } else {
-        None
-      }
-
-    // Отрабатываем companyId
-    }.map[QueryBuilder] { qb =>
-      if (companyIds.isEmpty) {
-        qb
-      } else {
-        val cf = FilterBuilders.termsFilter(EMCompanyId.COMPANY_ID_ESFN, companyIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, cf)
-      }
-    }.orElse {
-      if (companyIds.isEmpty) {
-        None
-      } else {
-        val cq = QueryBuilders.termsQuery(EMCompanyId.COMPANY_ID_ESFN, companyIds : _*)
-          .minimumMatch(1)
-        Some(cq)
-      }
-
-    // Отрабатываем adnSupIds:
-    }.map[QueryBuilder] { qb =>
-      if (adnSupIds.isEmpty) {
-        qb
-      } else {
-        val sf = FilterBuilders.termsFilter(AdNetMember.ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, sf)
-      }
-    }.orElse[QueryBuilder] {
-      if (adnSupIds.nonEmpty) {
-        val sq = QueryBuilders.termsQuery(AdNetMember.ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
-          .minimumMatch(1)
-        Some(sq)
-      } else {
-        None
-      }
-
-    // Дальше отрабатываем список возможных personIds.
-    }.map[QueryBuilder] { qb =>
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt.map[QueryBuilder] { qb =>
+      // Дальше отрабатываем список возможных personIds.
       if (anyOfPersonIds.isEmpty) {
         qb
       } else {
@@ -379,9 +306,15 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
       }
 
     // Нет критерия для поиска по индексу - сдаёмся.
-    }.getOrElse[QueryBuilder] {
-      QueryBuilders.matchAllQuery()
     }
+  }
+
+  /**
+   * Сборка поискового ES-запроса под перечисленные в аргументах критерии.
+   * @return Экземпляр QueryBuilder, пригодный для отправки в поисковом запросе.
+   */
+  override def toEsQuery: QueryBuilder = {
+    var qb2 = super.toEsQuery
 
     // Добавляем фильтр по id нежелательных результатов.
     if (withoutIds.nonEmpty) {
@@ -425,17 +358,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     srb1
   }
 
-  private def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): Unit = {
-    if (coll.nonEmpty)
-      sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
-  }
 
-  override def toString: String = {
-    val sb = new StringBuilder("NodeSearchArgs {")
-    fmtColl2sb("qStr", qStr, sb)
-    fmtColl2sb("withIds", withIds, sb)
-    fmtColl2sb("companyIds", companyIds, sb)
-    fmtColl2sb("adnSupIds", adnSupIds, sb)
+  override def toStringBuilder: StringBuilder = {
+    val sb = super.toStringBuilder
     fmtColl2sb("anyOfPersonIds", anyOfPersonIds, sb)
     fmtColl2sb("advDelegateAdnIds", advDelegateAdnIds, sb)
     fmtColl2sb("withDirectGeoParents", withDirectGeoParents, sb)
@@ -453,10 +378,9 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
     if (withNameSort)
       sb.append("\n  withNameSort = true")
     fmtColl2sb("withRouting", withRouting, sb)
-    if (ftsSearchFN != SioConstants.FIELD_ALL)
-      fmtColl2sb("ftsSearchFN", ftsSearchFN, sb)
-    sb.append("\n}")
-    sb.toString()
+    if (qOptField != SioConstants.FIELD_ALL)
+      fmtColl2sb("ftsSearchFN", qOptField, sb)
+    sb
   }
 
 }
@@ -464,12 +388,10 @@ trait AdnNodesSearchArgsT extends DynSearchArgs {
 
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
-trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
-  override def qStr: Option[String] = None
-  override def withIds: Seq[String] = Seq.empty
-  override def companyIds: Seq[String] = Seq.empty
+trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithIdsDsaDflt with CompanyIdsDsaDflt
+with AdnSupIdsDsaDflt
+{
   override def advDelegateAdnIds: Seq[String] = Seq.empty
-  override def adnSupIds: Seq[String] = Seq.empty
   override def withGeoDistanceSort: Option[GeoPoint] = None
   override def hasLogo: Option[Boolean] = None
   override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
@@ -492,31 +414,31 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT {
 
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
-trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT {
-  def underlying: AdnNodesSearchArgsT
-  override def qStr = underlying.qStr
-  override def withIds = underlying.withIds
-  override def companyIds = underlying.companyIds
-  override def advDelegateAdnIds = underlying.advDelegateAdnIds
-  override def adnSupIds = underlying.adnSupIds
-  override def withGeoDistanceSort = underlying.withGeoDistanceSort
-  override def hasLogo = underlying.hasLogo
-  override def intersectsWithPreIndexed = underlying.intersectsWithPreIndexed
-  override def shownTypeIds = underlying.shownTypeIds
-  override def withDirectGeoParents = underlying.withDirectGeoParents
-  override def anyOfPersonIds = underlying.anyOfPersonIds
-  override def withRouting = underlying.withRouting
-  override def testNode = underlying.testNode
-  override def showInScNodeList = underlying.showInScNodeList
-  override def isEnabled = underlying.isEnabled
-  override def onlyWithSinks = underlying.onlyWithSinks
-  override def geoDistance = underlying.geoDistance
-  override def withGeoParents = underlying.withGeoParents
-  override def withoutIds = underlying.withoutIds
-  override def withAdnRights = underlying.withAdnRights
-  override def withNameSort = underlying.withNameSort
-  override def maxResults = underlying.maxResults
-  override def offset = underlying.offset
+trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithIdsDsaWrapper
+with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper
+{
+
+  override type WT <: AdnNodesSearchArgsT
+
+  override def advDelegateAdnIds = _dsArgsUnderlying.advDelegateAdnIds
+  override def withGeoDistanceSort = _dsArgsUnderlying.withGeoDistanceSort
+  override def hasLogo = _dsArgsUnderlying.hasLogo
+  override def intersectsWithPreIndexed = _dsArgsUnderlying.intersectsWithPreIndexed
+  override def shownTypeIds = _dsArgsUnderlying.shownTypeIds
+  override def withDirectGeoParents = _dsArgsUnderlying.withDirectGeoParents
+  override def anyOfPersonIds = _dsArgsUnderlying.anyOfPersonIds
+  override def withRouting = _dsArgsUnderlying.withRouting
+  override def testNode = _dsArgsUnderlying.testNode
+  override def showInScNodeList = _dsArgsUnderlying.showInScNodeList
+  override def isEnabled = _dsArgsUnderlying.isEnabled
+  override def onlyWithSinks = _dsArgsUnderlying.onlyWithSinks
+  override def geoDistance = _dsArgsUnderlying.geoDistance
+  override def withGeoParents = _dsArgsUnderlying.withGeoParents
+  override def withoutIds = _dsArgsUnderlying.withoutIds
+  override def withAdnRights = _dsArgsUnderlying.withAdnRights
+  override def withNameSort = _dsArgsUnderlying.withNameSort
+  override def maxResults = _dsArgsUnderlying.maxResults
+  override def offset = _dsArgsUnderlying.offset
 }
 
 

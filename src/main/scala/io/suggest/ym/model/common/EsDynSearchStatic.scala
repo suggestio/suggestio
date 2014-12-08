@@ -87,8 +87,10 @@ trait DynSearchArgs {
   def offset: Int
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
-    * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
-  def toEsQuery: QueryBuilder = toEsQueryOpt getOrElse defaultEsQuery
+    * Здесь можно навешивать дополнительные фильтры, выполнять post-процессинг запроса. */
+  def toEsQuery: QueryBuilder = {
+    toEsQueryOpt getOrElse defaultEsQuery
+  }
 
   /** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить. */
   def defaultEsQuery: QueryBuilder = QueryBuilders.matchAllQuery()
@@ -109,13 +111,48 @@ trait DynSearchArgs {
       .setFrom(Math.max(0, offset))
   }
 
+  /** toString() выводит экземпляр этого класса списком. Но ей нужно знать какое-то название модуля,
+    * которое конкретные реализации могут переопределять. */
+  def mySimpleName = getClass.getSimpleName
+
+  /** Базовый размер StringBuilder'а. */
+  def sbInitSize = 32
+
+  protected def collStringSize(coll: Iterable[String], sis: Int, addOffset: Int = 0): Int = {
+    if (coll.isEmpty)
+      sis
+    else
+      sis + coll.size * (coll.head.length + 1) + 10 + addOffset
+  }
+
+  /** Построение выхлопа метода toString(). */
+  def toStringBuilder: StringBuilder = {
+    new StringBuilder(sbInitSize, mySimpleName).append(' ').append('\n')
+  }
+
+  override def toString: String = {
+    toStringBuilder
+      .append('\n')
+      .append('}')
+      .toString()
+  }
+
+  /** Вспомогательное форматирование аргумента-коллекции строкой внутрь StringBuilder'а. */
+  protected def fmtColl2sb(name: String, coll: TraversableOnce[_], sb: StringBuilder): StringBuilder = {
+    if (coll.nonEmpty)
+      sb.append("\n  ").append(name).append(" = ").append(coll.mkString(", "))
+    sb
+  }
+
 }
+
 
 /** Дефолтовые значения базовых параметров dyn-поиска. */
 trait DynSearchArgsDflt extends DynSearchArgs {
   override def offset: Int = 0
   override def maxResults: Int = 10
 }
+
 
 /** Враппер для контейнера аргументов dyn-поиска. */
 trait DynSearchArgsWrapper extends DynSearchArgs {
