@@ -7,8 +7,8 @@
 .sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
   position: absolute;
   @defining(aovf.coords getOrElse xy) { c =>
-    left: @{c.x * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
-    top: @{c.y * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
+    left: @{c.x * brArgs.szMult}px;
+    top: @{c.y * brArgs.szMult}px;
   }
 }
 
