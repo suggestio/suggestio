@@ -231,7 +231,7 @@ object ShowcaseUtil {
    * @param scrWidth Доступная для размещения плитки блоков ширина экрана.
    * @return Остаток ширины.
    */
-  private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int): Float = {
+  private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int, paddingPx: Int = TILE_PADDING_CSSPX): Float = {
     scrWidth - (colCnt * blockWidth + TILE_PADDING_CSSPX * (colCnt + 1)) * szMult
   }
 
@@ -252,13 +252,12 @@ object ShowcaseUtil {
     val szMultIter1: Iterator[SzMult_t] = if (bm.wide) {
       szMultIter0
     } else {
-      val (i1, i2) = szMultIter0.duplicate
-      i1.map(_ * 2) ++ i2
+      Iterator(FOCUSED_SZ_MULT) ++ szMultIter0
     }
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator)
       .filter { szMult =>
         // Проверяем, влезает ли ширина на экран при таком раскладе?
-        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width)
+        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = 10)
         w1 > 0F
       }
     if (maxHiter.isEmpty)

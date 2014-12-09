@@ -1,10 +1,12 @@
 package util.showcase
 
+import io.suggest.ym.model.common.BlockMeta
 import models.blk.SzMult_t
 import models.im.{DevScreenT, DevPixelRatios, DevScreen}
 import org.scalatestplus.play._
 import play.api.GlobalSettings
 import play.api.test.FakeApplication
+import util.blocks.BlocksConf
 
 /**
  * Suggest.io
@@ -15,8 +17,10 @@ import play.api.test.FakeApplication
 class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
   import ShowcaseUtil._
 
-  "ShowcaseUtil.getSzMult4tiles() for tiling purposes" must {
-    lazy val pxRatioOpt = Some(DevPixelRatios.HDPI)  // Нужно lazy или def, иначе будет exception in initializer error.
+  private lazy val pxRatioOpt = Some(DevPixelRatios.HDPI)  // Нужно lazy или def, иначе будет exception in initializer error.
+
+  // Тестируем калькулятор szMult для блоков плитки выдачи.
+  "getSzMult4tiles() for tile" must {
     def t(scr: DevScreenT, res: SzMult_t): Unit = {
       getSzMult4tilesScr(
         szMults = ShowcaseUtil.TILES_SZ_MULTS,
@@ -54,6 +58,39 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
       t(scr, 1.3F)
     }
 
+  }
+
+
+  // Тестим вычислитель szMult для открытой рекламной карточки.
+  "fitBlockToScreen() for focused ad" must {
+    def t(bw: Int, bh: Int, dscr: DevScreenT, res: SzMult_t): Unit = {
+      val bm = BlockMeta(
+        blockId = BlocksConf.DEFAULT.id,
+        height = bh,
+        width = bw
+      )
+      fitBlockToScreen(bm, dscr) mustBe res
+    }
+
+    "resize by x1.0 on 320x480 for 300x300 ad" in {
+      val scr = DevScreen(width = 320, height = 480, pxRatioOpt)
+      t(300, 300, scr, 1.0F)
+    }
+
+    "resize by x1.0 on 360x640 for 300x300 ad" in {
+      val scr = DevScreen(width = 360, height = 640, pxRatioOpt)
+      t(300, 300, scr, 1.0F)
+    }
+
+    "resize by x1.1 on 380x640 for 300x300 ad" in {
+      val scr = DevScreen(width = 380, height = 640, pxRatioOpt)
+      t(300, 300, scr, 1.1F)
+    }
+
+    "resize by ~x2.06 on wide screen for 300x300 ad" in {
+      val scr = DevScreen(width = 1600, height = 1200, pxRatioOpt)
+      t(300, 300, scr, 620F/300F)
+    }
   }
 
 
