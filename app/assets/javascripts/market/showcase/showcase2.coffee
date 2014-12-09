@@ -312,6 +312,17 @@ cbca_grid =
 
   resize : () ->
 
+    #console.log "resize event"
+
+    # открытую карточку нужно обновлять
+    cs = sm.states.cur_state()
+    setTimeout(
+      () ->
+        sm.states.process_state_2( cs )
+      10
+    )
+
+
     this.set_container_size()
 
     if typeof cbca_grid.blocks == 'undefined'
@@ -684,6 +695,7 @@ sm =
 
   ## Забиндить оконные события
   bind_window_events : () ->
+
     resize_cb = () ->
 
       sm.welcome_ad.fit sm.welcome_ad._bg_img_dom
