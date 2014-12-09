@@ -33,6 +33,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
   /** Целевая высота широкой картинки. */
   val WIDE_TARGET_HEIGHT_PX = configuration.getInt("blocks.bg.wide.height.target.px") getOrElse 620
 
+
   /** Желаемые ширИны широкого бэкграунда. */
   val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
   val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(300, 460, WIDE_TARGET_HEIGHT_PX) )
