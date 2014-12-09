@@ -25,10 +25,14 @@
    *@
   <script>
     var ws = new WebSocket("@ctx.wsUrlPrefix@routes.MarketAd.ws(ctx.ctxIdStr)");
-    ws.onmessage = function (evt) {
-      var received_msg = evt.data;
-      alert("WS message is received: " + received_msg);
-    };
+
+    @* TODO Макс: УДАЛИТЬ этот alert-блок вместе с if'ом, когда будет запилена обработка событий websocket. *@
+    @if(ctx.isDev) {
+      ws.onmessage = function (evt) {
+        var received_msg = evt.data;
+        alert("WS message is received: " + received_msg);
+      };
+    }
 
     tinymce.init({
       selector: 'textarea.js-tinymce',

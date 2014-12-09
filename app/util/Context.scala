@@ -6,6 +6,7 @@ import controllers.routes
 import io.suggest.util.UuidUtil
 import models.im.DevScreen
 import org.joda.time.DateTime
+import play.api.Play
 import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration}
@@ -224,6 +225,10 @@ trait Context extends MyHostsT {
   override def LK_URL_PREFIX  = Context.LK_URL_PREFIX
   override def DFLT_HOST_PORT = Context.DFLT_HOST_PORT
   override def DFLT_PROTO     = Context.DFLT_PROTO
+
+  def isProd  = Play.isProd
+  def isDev   = Play.isDev
+  def isTest  = Play.isTest
 }
 
 
