@@ -316,8 +316,10 @@ cbca_grid =
     cs = sm.states.cur_state()
     setTimeout(
       () ->
-        #console.log "resize callback"
-        sm.states.process_state_2( cs )
+        if sm.focused_ads.is_active == true
+          sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
+        else
+          sm.load_mart( cs )
       50
     )
 
