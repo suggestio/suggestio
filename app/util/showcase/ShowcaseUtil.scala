@@ -179,6 +179,9 @@ object ShowcaseUtil {
   /** Горизонтальное расстояние между блоками. */
   val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
 
+  /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
+  val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx") getOrElse 10
+
   /** Макс. кол-во вертикальных колонок. */
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
 
@@ -211,7 +214,7 @@ object ShowcaseUtil {
           nextSzMult
         } else {
           // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-          val w1 = getW1(nextSzMult, colCnt, blockWidth = blockWidthPx, scrWidth = dscr.width)
+          val w1 = getW1(nextSzMult, colCnt, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = TILE_PADDING_CSSPX)
           if (w1 > 0F)
             nextSzMult
           else
@@ -231,7 +234,7 @@ object ShowcaseUtil {
    * @param scrWidth Доступная для размещения плитки блоков ширина экрана.
    * @return Остаток ширины.
    */
-  private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int, paddingPx: Int = TILE_PADDING_CSSPX): Float = {
+  private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int, paddingPx: Int): Float = {
     scrWidth - (colCnt * blockWidth + TILE_PADDING_CSSPX * (colCnt + 1)) * szMult
   }
 
@@ -257,7 +260,7 @@ object ShowcaseUtil {
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator)
       .filter { szMult =>
         // Проверяем, влезает ли ширина на экран при таком раскладе?
-        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = 10)
+        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
         w1 > 0F
       }
     if (maxHiter.isEmpty)
