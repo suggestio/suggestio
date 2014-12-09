@@ -2,9 +2,9 @@ package util.showcase
 
 import controllers.routes
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.common.{AdShowLevels, IBlockMeta}
+import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
 import models._
-import models.blk.{SzMult_t, BlockWidth, BlockWidths}
+import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im.DevScreenT
 import util.blocks.BgImg
 import play.api.Play.{current, configuration}
@@ -131,10 +131,7 @@ object ShowcaseUtil {
 
 
   /** Дефолтовый мультипликатор размера для блоков, отображаемых через focusedAds(). */
-  def FOCUSED_SZ_MULT: SzMult_t = 2.0F
-
-  /** Дефолтовые аргументы рендера на черный день. Обычно не важно, что там написано в полях. */
-  def focusedBrArgsDflt = blk.RenderArgs(szMult = FOCUSED_SZ_MULT)
+  def FOCUSED_SZ_MULT: SzMult_t = 620F / 300F
 
   /**
    * Аргументы для рендера блока, когда карточка открыта.
@@ -142,7 +139,10 @@ object ShowcaseUtil {
    * @return Аргументы для рендера.
    */
   def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
-    val szMult: SzMult_t = getSzMult4tiles(FOCUSED_TILE_SZ_MULTS, maxCols = 1)
+    val szMult: SzMult_t = ctx.deviceScreenOpt match {
+      case Some(dscr) => fitBlockToScreen(mad.blockMeta, dscr)
+      case None       => TILES_SZ_MULTS.last
+    }
     if (mad.blockMeta.wide) {
       // Нужно получить данные для рендера широкой карточки.
       val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
@@ -187,13 +187,15 @@ object ShowcaseUtil {
    * @param ctx Контекст грядущего рендера.
    * @return SzMult_t выбранный для рендера.
    */
-  def getSzMult4tiles(szMults: List[SzMult_t], maxCols: Int = TILE_MAX_COLUMNS)(implicit ctx: Context): SzMult_t = {
+  def getSzMult4tiles(szMults: List[SzMult_t], maxCols: Int = TILE_MAX_COLUMNS,
+                      colWidthPx: Int = BlockWidths.NORMAL.intValue)(implicit ctx: Context): SzMult_t = {
     ctx.deviceScreenOpt match {
-      case Some(dsOpt)  => getSzMult4tiles(szMults, dsOpt, maxCols)
+      case Some(dsOpt)  => getSzMult4tilesScr(szMults, dsOpt, maxCols = maxCols, colWidthPx = colWidthPx)
       case None         => szMults.last
     }
   }
-  def getSzMult4tiles(szMults: List[SzMult_t], dscr: DevScreenT, maxCols: Int): SzMult_t = {
+  def getSzMult4tilesScr(szMults: List[SzMult_t], dscr: DevScreenT, maxCols: Int = TILE_MAX_COLUMNS,
+                         colWidthPx: Int = BlockWidths.NORMAL.intValue): SzMult_t = {
     val blockWidthPx = BlockWidths.NORMAL.widthPx
     // Кол-во колонок на экране в исходном масштабе:
     val colCnt = Math.min(maxCols,
@@ -209,7 +211,7 @@ object ShowcaseUtil {
           nextSzMult
         } else {
           // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-          val w1 = dscr.width  - colCnt * blockWidthPx * nextSzMult  - TILE_PADDING_CSSPX * (colCnt + 1) * nextSzMult
+          val w1 = getW1(nextSzMult, colCnt, blockWidth = blockWidthPx, scrWidth = dscr.width)
           if (w1 > 0F)
             nextSzMult
           else
@@ -218,6 +220,51 @@ object ShowcaseUtil {
       }
       detectSzMult(szMults)
     }
+  }
+
+  /**
+   * w1 - это ширина экрана за вычетом плитки блоков указанной ширины в указанное кол-во колонок.
+   * Этот метод запускает формулу рассчета оставшейся ширины.
+   * @param szMult Предлагаемый мультипликатор размера.
+   * @param colCnt Кол-во колонок.
+   * @param blockWidth Ширина блока.
+   * @param scrWidth Доступная для размещения плитки блоков ширина экрана.
+   * @return Остаток ширины.
+   */
+  private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int): Float = {
+    scrWidth - (colCnt * blockWidth + TILE_PADDING_CSSPX * (colCnt + 1)) * szMult
+  }
+
+  /**
+   * Вписывание блока по ширине и высоте в экран устройства. Прикидываются разные szMult.
+   * @param bm Метаданные блока.
+   * @param dscr Данные по экрану устройства.
+   * @return Значение SzMult, пригодное для рендера блока.
+   */
+  def fitBlockToScreen(bm: BlockMeta, dscr: DevScreenT): SzMult_t = {
+    val hfloat = bm.height.toFloat
+    val szMultIter0 = BlockHeights.values
+      .iterator
+      .map { _.heightPx }
+      .filter { heightPx => heightPx < dscr.height && heightPx >= bm.height }
+      .map { heightPx => heightPx.toFloat / hfloat }
+    // для не-wide карточек также возможно отображение в двойном размере.
+    val szMultIter1: Iterator[SzMult_t] = if (bm.wide) {
+      szMultIter0
+    } else {
+      val (i1, i2) = szMultIter0.duplicate
+      i1.map(_ * 2) ++ i2
+    }
+    val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator)
+      .filter { szMult =>
+        // Проверяем, влезает ли ширина на экран при таком раскладе?
+        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width)
+        w1 > 0F
+      }
+    if (maxHiter.isEmpty)
+      TILES_SZ_MULTS.last
+    else
+      maxHiter.max
   }
 
 }

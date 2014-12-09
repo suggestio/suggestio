@@ -27,6 +27,18 @@ object BlockWidths extends Enumeration {
   implicit def value2val(x: Value): BlockWidth = x.asInstanceOf[BlockWidth]
 
   def default = NORMAL
+  def max = NORMAL
+  def min = NARROW
+
+  def maybeWithWidth(width: Int): Option[BlockWidth] = {
+    values
+      .iterator
+      .map(value2val)
+      .find(_.intValue == width)
+  }
+  def withWidth(width: Int): BlockWidth = {
+    maybeWithWidth(width).get
+  }
 
   /** Все допустимые ширИны по возрастанию. */
   val allSorted: Seq[BlockWidth] = {

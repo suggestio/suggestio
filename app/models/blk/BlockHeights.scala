@@ -27,6 +27,8 @@ object BlockHeights extends Enumeration {
   implicit def value2val(x: Value): BlockHeight = x.asInstanceOf[BlockHeight]
 
   def default = H300
+  def max = H620
+  def min = H140
 
   /**
    * Все высоты по возрастанию.
@@ -37,6 +39,17 @@ object BlockHeights extends Enumeration {
       .toSeq
       .map(value2val)
       .sortBy(_.heightPx)
+  }
+
+
+  def maybeWithHeight(height: Int): Option[BlockHeight] = {
+    values
+      .iterator
+      .map(value2val)
+      .find(_.intValue == height)
+  }
+  def withHeight(width: Int): BlockHeight = {
+    maybeWithHeight(width).get
   }
 
 }

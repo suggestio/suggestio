@@ -1,6 +1,7 @@
 package util.showcase
 
-import models.im.{DevPixelRatios, DevScreen}
+import models.blk.SzMult_t
+import models.im.{DevScreenT, DevPixelRatios, DevScreen}
 import org.scalatestplus.play._
 import play.api.GlobalSettings
 import play.api.test.FakeApplication
@@ -14,37 +15,43 @@ import play.api.test.FakeApplication
 class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
   import ShowcaseUtil._
 
-  "ShowcaseUtil.getSzMult4tiles()" must {
+  "ShowcaseUtil.getSzMult4tiles() for tiling purposes" must {
     lazy val pxRatioOpt = Some(DevPixelRatios.HDPI)  // Нужно lazy или def, иначе будет exception in initializer error.
+    def t(scr: DevScreenT, res: SzMult_t): Unit = {
+      getSzMult4tilesScr(
+        szMults = ShowcaseUtil.TILES_SZ_MULTS,
+        dscr = scr
+      ) mustBe res
+    }
 
     "not scale on screen: 320x480" in {
       val scr = DevScreen(width = 320, height = 480, pxRatioOpt)
-      getSzMult4tiles(scr) mustBe 1.0F
+      t(scr,  1.0F)
     }
 
     "not scale on screen: 360x640" in {
       val scr = DevScreen(width = 360, height = 640, pxRatioOpt)
-      getSzMult4tiles(scr) mustBe 1.0F
+      t(scr, 1.0F)
     }
 
     "scale by x1.1 on screen: 768x1024" in {
       val scr = DevScreen(width = 768, height = 640, pxRatioOpt)
-      getSzMult4tiles(scr) mustBe 1.1F
+      t(scr, 1.1F)
     }
 
     "scale by x1.2 on screen: 800x1280" in {
       val scr = DevScreen(width = 800, height = 1280, pxRatioOpt)
-      getSzMult4tiles(scr) mustBe 1.2F
+      t(scr, 1.2F)
     }
 
     "not scale on screen: 980x1280" in {
       val scr = DevScreen(width = 980, height = 1280, pxRatioOpt)
-      getSzMult4tiles(scr) mustBe 1.0F
+      t(scr, 1.0F)
     }
 
     "scale by x1.3 on screen: 1280x600" in {
       val scr = DevScreen(width = 1280, height = 600, pxRatioOpt)
-      getSzMult4tiles(scr)
+      t(scr, 1.3F)
     }
 
   }
