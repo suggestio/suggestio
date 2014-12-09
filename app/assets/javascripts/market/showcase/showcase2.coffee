@@ -2036,7 +2036,6 @@ sm =
           _b.style.left = "50%"
           _b.style.transform = "translate3d(-50%,0,0)"
           _b.style.webkitTransform = "translate3d(-50%,0,0)"
-          #console.log _b.style
           bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
           if bg.length > 0
             bg = bg[0]
