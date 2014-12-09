@@ -142,11 +142,8 @@ object ShowcaseUtil {
    * @return Аргументы для рендера.
    */
   def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
+    val szMult: SzMult_t = getSzMult4tiles(FOCUSED_TILE_SZ_MULTS, maxCols = 1)
     if (mad.blockMeta.wide) {
-      // Вычисляем мультипликатор размера блока получаем на основе отношения высоты блока к целевой высоте фоновой картинки.
-      // TODO Нужно по макс высоте лимитировать и лимитировать по ширине и высоте экрана. Допускается только пропоциональное масштабирование,
-      //      поэтому карточка должна полностью помещаться на экране.
-      val szMult: SzMult_t = BgImg.WIDE_TARGET_HEIGHT_PX.toFloat / mad.blockMeta.height.toFloat
       // Нужно получить данные для рендера широкой карточки.
       val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
       val wideBgCtxOptFut = bc.wideBgImgArgs(mad, szMult)
@@ -164,7 +161,7 @@ object ShowcaseUtil {
       val bra = blk.RenderArgs(
         withEdit      = false,
         isStandalone  = false,
-        szMult        = getSzMult4tiles(FOCUSED_TILE_SZ_MULTS, maxCols = 1),
+        szMult        = szMult,
         wideBg        = None
       )
       Future successful bra

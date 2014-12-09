@@ -31,11 +31,11 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
   /** Целевая высота широкой картинки. */
-  val WIDE_TARGET_HEIGHT_PX = configuration.getInt("blocks.bg.wide.height.target.px") getOrElse 700
+  val WIDE_TARGET_HEIGHT_PX = configuration.getInt("blocks.bg.wide.height.target.px") getOrElse 620
 
   /** Желаемые ширИны широкого бэкграунда. */
-  val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(160, 350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
-  val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(240, 360, 540, WIDE_TARGET_HEIGHT_PX) )
+  val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
+  val WIDE_HEIGHTS_PX: List[Int] = getConfSzsRow("heights", List(300, 460, WIDE_TARGET_HEIGHT_PX) )
 
 
   private def getConfSzsRow(confKeyPart: String, default: => List[Int]): List[Int] = {
@@ -45,29 +45,33 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
   /**
-   * Дедубликация кода подгонки размера стороны
-   * @param cssQuants Допустимые наборы значений в css-пикселях.
-   * @param minValueF Извлекатель минимального значения из dev screen.
-   * @param defaultCssPx Генерация дефолтового размера стророны, если экрана нет.
-   * @param pxRatio Данные о плотности пикселей экрана.
-   * @param ctx Контекст рендера.
-   * @return Int со значением целевой ширины/высоты.
+   * Рассчет высоты широкой картинки.
+   * @param bm Метаданные блока.
+   * @param szMult Мультипликатор размера, заданный контроллером.
+   * @param pxRatio Плотность пикселей экрана.
+   * @return Целочисленная высота.
    */
-  private def calculateWideSidePx(cssQuants: Iterable[Int], minValueF: DevScreen => Int, defaultCssPx: => Int,
-                                  pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
-    val cssHeight = ctx.deviceScreenOpt
-      .fold[Int] ( defaultCssPx ) { ds =>
-        normWideBgSz(minValueF(ds), acc = cssQuants.head, variants = cssQuants.tail)
-      }
-    (cssHeight * pxRatio.pixelRatio).toInt
+  private def getWideHeight(bm: BlockMeta, szMult: SzMult_t, pxRatio: DevPixelRatio): Int = {
+    (bm.height * szMult * pxRatio.pixelRatio).toInt
   }
 
-
-  private def getWideHeight(pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
-    calculateWideSidePx(WIDE_HEIGHTS_PX, _.height, WIDE_TARGET_HEIGHT_PX, pxRatio)
-  }
+  /**
+   * Рассчет ширины широкой картинки. Нужно снизить лишний трафик клиента, снизить нагрузку на хранилища картинок,
+   * но отображать картинку как можно шире. Для этого используется квантование переданной ширины экрана устройства.
+   * @param pxRatio Плотность пикселей.
+   * @param ctx Контекст запроса.
+   * @return Целочисленная ширина картинки.
+   */
   private def getWideWidth(pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
-    calculateWideSidePx(WIDE_WIDTHS_PX, _.width, WIDE_WIDTHS_PX.last, pxRatio)
+    // TODO Следует лимитировать ширину по доступной ширине картинки при текущем szMult.
+    val cssQuants = WIDE_WIDTHS_PX
+    val cssWidth = ctx.deviceScreenOpt match {
+      case Some(ds) =>
+        normWideBgSz(ds.width, acc = cssQuants.head, variants = cssQuants.tail)
+      case None =>
+        cssQuants.last
+    }
+    (cssWidth * pxRatio.pixelRatio).toInt
   }
 
   /**
@@ -89,14 +93,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
       .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
-    // Нужно вычислить размеры wide-версии оригинала.
-    // 2014.nov.05: Размер по высоте ограничиваем через высоту экрана и константу макс.высоты (с учетом pixel ratio).
-    // До bb15fc0a9ad5 включительно wide-картинка пыталась отресайзится на весь экран устройства, что было слегка неправильно.
-    // TODO Нужно учитывать (bm.height * szMult). Тогда точно не будет расхождений с контроллером в будущем.
-    //      Сейчас для упрощения испрользуется такая логика: если вызов пришел сюда, то значит точно wide и скалинг карточки до максимума.
-    val tgtHeightReal: Int = getWideHeight(pxRatio)
-    // Ширину кропа подбираем квантуя ширину экрана по допустимому набору ширИн.
-    val cropWidth: Int = getWideWidth(pxRatio)
+    // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
+    val tgtHeightReal = getWideHeight(bm, szMult, pxRatio)
+    // Ширину экрана квантуем, получая ширину картинки.
+    val cropWidth = getWideWidth(pxRatio)
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
@@ -134,10 +134,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // Считаем параметры отображения отображаемой
     val szCss: MImgInfoMeta = {
       val dpr = DevPixelRatios.MDPI
-      if (dpr == pxRatio)
-        MImgInfoMeta(tgtHeightReal, width = -1)
-      else
-        MImgInfoMeta(height = getWideHeight(dpr),  width = -1)  // Нужно высчитывать размер после AbsResizeOp. Пока лень этим заниматься.
+      // Нужно высчитывать горизонтальный размер после AbsResizeOp. Пока лень этим заниматься.
+      val h1 = if (dpr == pxRatio)  tgtHeightReal  else  getWideHeight(bm, szMult, dpr)
+      MImgInfoMeta(h1, width = -1)
     }
 
     imOps2Fut map { imOps2 =>

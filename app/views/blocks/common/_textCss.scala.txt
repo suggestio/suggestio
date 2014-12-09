@@ -5,15 +5,10 @@
 @import args._
 
 .sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
-  @if(brArgs.wideBg) {
-    position: static;
-    margin: 10px 0;
-  } else {
-    position: absolute;
-    @defining(aovf.coords getOrElse xy) { c =>
-      left: @{c.x * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
-      top: @{c.y * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
-    }
+  position: absolute;
+  @defining(aovf.coords getOrElse xy) { c =>
+    left: @{c.x * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
+    top: @{c.y * brArgs.szMult}px@if(brArgs.szMult > 1) {!important};
   }
 }
 
