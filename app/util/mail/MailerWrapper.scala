@@ -7,6 +7,7 @@ import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
 import com.typesafe.plugin.{MailerAPI, use, MailerPlugin}
 import util.{AsyncUtil, PlayLazyMacroLogsImpl}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
@@ -144,9 +145,12 @@ class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared {
     if (_recipients.nonEmpty)
       email.addTo(_recipients : _*)
     // Отправить собранное сообщение куда надо. Нужно освобождать текущий поток как можно скорее.
-    Future {
+    val fut = Future {
       email.send()
     }(AsyncUtil.singleThreadIoContext)
+    fut onFailure { case ex: Throwable =>
+      MailerWrapper.LOGGER.error(s"${getClass.getSimpleName}.send() Exception occured while trying to send msg", ex)
+    }
   }
 
 }
