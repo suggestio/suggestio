@@ -7,6 +7,7 @@ import play.api.i18n.Messages
 import play.api.libs.iteratee.Enumerator
 import util.billing.MmpDailyBilling
 import util.img._
+import util.mail.MailerWrapper
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -341,15 +342,14 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       warn(s"""I don't know, whom to notify about new invite request. Add following setting into your application.conf:\n  $suEmailsConfKey = ["support@sugest.io"]""")
       Seq("support@suggest.io")
     }
-    val mailMsg = use[MailerPlugin].email
-    mailMsg.setRecipient(emails : _*)
-    mailMsg.setFrom("no-reply@suggest.io")
-    mailMsg.setSubject("Новый запрос на подключение | Suggest.io")
+    val msg = MailerWrapper.instance
+    msg.setRecipients(emails : _*)
+    msg.setFrom("no-reply@suggest.io")
+    msg.setSubject("Новый запрос на подключение | Suggest.io")
     val ctx = ContextImpl()
     val mir1 = mir0.copy(id = Some(irId))
-    mailMsg.send(
-      bodyText = views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx)
-    )
+    msg.setText( views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx) )
+    msg.send()
   }
 
 

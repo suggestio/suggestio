@@ -6,6 +6,7 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
+import util.mail.MailerWrapper
 import views.html.ident._, recover._
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
@@ -13,7 +14,6 @@ import models._
 import play.api.mvc.Security.username
 import play.api.i18n.Messages
 import SiowebEsUtil.client
-import com.typesafe.plugin.{use, MailerPlugin}
 import util.acl.PersonWrapper.PwOpt_t
 import FormUtil.{passwordM, passwordWithConfirmM}
 
@@ -95,7 +95,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                 case (acc, _) => acc
               }
                 .headOption
-                .map { Future successful }
+                .map { Future.successful }
                 .getOrElse {
                   // берём personId из moz persona. Там в списке только один элемент, т.к. email является уникальным в рамках ident-модели.
                   val personId = idents.map(_.personId).head
@@ -111,15 +111,14 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                     id = Some(eaId)
                   )
                   // Можно отправлять письмецо на ящик.
-                  val mail = use[MailerPlugin].email
-                  mail.setFrom("no-reply@suggest.io")
-                  mail.setRecipient(email1)
+                  val msg = MailerWrapper.instance
+                  msg.setFrom("no-reply@suggest.io")
+                  msg.setRecipients(email1)
                   val ctx = implicitly[Context]
-                  mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
-                  mail.send(
-                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact2)(ctx),
-                    bodyHtml = emailPwRecoverTpl(eact2)(ctx)
-                  )
+                  msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
+                  msg.setText( views.txt.ident.recover.emailPwRecoverTpl(eact2)(ctx) )
+                  msg.setHtml( emailPwRecoverTpl(eact2)(ctx) )
+                  msg.send()
                 }
               }
             } else {

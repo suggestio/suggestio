@@ -7,11 +7,10 @@ import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsAdnNodeAdmin, AbstractRequestWithPwOpt, IsAuth}
+import util.mail.MailerWrapper
 import views.html.market.lk.support._
-import com.typesafe.plugin.{use, MailerPlugin}
-import play.api.Play.{current, configuration}
 import scala.concurrent.Future
-import Feedback.{FEEDBACK_RCVR_EMAILS, REPLY_TO_HDR}
+import Feedback.FEEDBACK_RCVR_EMAILS
 
 /**
  * Suggest.io
@@ -95,17 +94,16 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
       {lsr =>
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val userEmailsFut = MPersonIdent.findAllEmails(request.pwOpt.get.personId)
-        val mail = use[MailerPlugin].email
-        mail.addHeader(REPLY_TO_HDR, lsr.replyEmail)
-        mail.setFrom("no-reply@suggest.io")
-        mail.setRecipient(FEEDBACK_RCVR_EMAILS : _*)
+        val msg = MailerWrapper.instance
+        msg.setReplyTo(lsr.replyEmail)
+        msg.setFrom("no-reply@suggest.io")
+        msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
         val personId = request.pwOpt.get.personId
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
-          mail.setSubject("SiO Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
-          mail.send(
-            bodyText = views.txt.market.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
-          )
+          msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
+          msg.setText( views.txt.market.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r) )
+          msg.send()
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
           RdrBackOrFut(r) { Ident.redirectCallUserSomewhere(personId) }

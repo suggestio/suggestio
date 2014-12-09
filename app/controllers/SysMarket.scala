@@ -8,6 +8,7 @@ import util.acl._
 import models._
 import util.adv.AdvUtil
 import util.billing.MmpDailyBilling
+import util.mail.MailerWrapper
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -626,15 +627,14 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Выслать письмо активации. */
   def sendEmailInvite(ea: EmailActivation, adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
     // Собираем и отправляем письмо адресату
-    val mail = use[MailerPlugin].email
+    val msg = MailerWrapper.instance
     val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-    mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.lang))
-    mail.setFrom("no-reply@suggest.io")
-    mail.setRecipient(ea.email)
-    mail.send(
-      bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx),
-      bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx)
-    )
+    msg.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.lang))
+    msg.setFrom("no-reply@suggest.io")
+    msg.setRecipients(ea.email)
+    msg.setHtml( views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )
+    msg.setText( views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )
+    msg.send()
   }
 
 
