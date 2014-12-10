@@ -4,7 +4,6 @@ import models._
 import models.blk.{AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
-import io.suggest.ym.parsers.Price
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.ad.RichDescr
@@ -209,69 +208,6 @@ object MarketAdFormUtil {
     }
   }
 
-  /** Поле с ценой. Является вариацией float-поля. */
-  def aoPriceFieldM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOPriceField] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> priceStrictM,
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {case ((rawPrice, price), font, coordsOpt) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-      }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font, coords) )
-      }
-    } else {
-      mapping(
-        "value" -> priceStrictM,
-        "font"  -> fontM
-      )
-      {case ((rawPrice, price), font) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font) )
-      }
-    }
-  }
-
-
-  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  def aoPriceOptM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOPriceField]] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> optional(priceStrictM),
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {(pricePairOpt, font, coordsOpt) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font, coords)
-      }}
-    } else {
-      mapping(
-        "value" -> optional(priceStrictM),
-        "font"  -> fontM
-      )
-      {(pricePairOpt, font) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font)
-      }}
-    }
-  }
 
   val COVERING_PATTERN_COLOR_FN = "cpc"
 

@@ -153,41 +153,8 @@ trait PairListBlock extends ValT {
 }
 
 
-/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
-trait TitlePriceListBlockT extends PairListBlock {
-
-  def TITLE_FN = Title.BF_NAME_DFLT
-  def PRICE_FN = Price.BF_NAME_DFLT
-
-  override type T1 = AOStringField
-  override type BfT1 = BfText
-  override def bf1(offerNopt: Option[Int]) = ListBlock.mkBfText(TITLE_FN, offerNopt)
-
-  override type T2 = AOPriceField
-  override type BfT2 = BfPrice
-  override def bf2(offerNopt: Option[Int]) = {
-    BfPrice(PRICE_FN, offerNopt = offerNopt)
-  }
-
-
-  def titleBf = bf1(None)
-  def priceBf = bf2(None)
-
-  override def applyAOBlock(offerN: Int, v1: Option[T1], v2: Option[T2]): AOBlock = {
-    AOBlock(n = offerN, text1 = v1, price = v2)
-  }
-
-
-  override def unapplyAOBlock(blk: AOBlock): (Option[T1], Option[T2]) = {
-    blk.text1 -> blk.price
-  }
-
-}
-
-
 /** Блок для списка title-descr. В целом аналогичен TitlePriceListBlockT. */
 trait TitleDescrListBlockT extends PairListBlock {
-  // TODO 2014.06.10 titleBf(), descrBf() методы сделаны по аналогии, но не используются пока что. Можно их удалить, если не понадобятся.
 
   def TITLE_FN = Title.BF_NAME_DFLT
   override type T1 = AOStringField
