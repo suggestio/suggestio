@@ -7,6 +7,8 @@
 @import helper._
 @import AdOfferTypes._
 @import util.blocks._
+@import util.FC.checkboxFc
+
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -49,11 +51,12 @@
       @* Отображение нужного редактора *@
       <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
         @blocks.editor._blockEditorTpl(af, withBC = withBC)
-      </div>
 
-      @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
-      @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
-      @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+        @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
+        @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
+        @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+
+      </div>
 
       <div class="clear"></div>
 

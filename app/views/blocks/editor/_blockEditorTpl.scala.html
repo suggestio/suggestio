@@ -3,31 +3,30 @@
 @import util.blocks._
 
 @defining( "ad.offer" ) { nameBase =>
-@defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
+  @defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
 
-<div class="ad-block-editor">
-  @for(bf <- bc.blockFields) {
+    <div class="ad-block-editor">
+      @for(bf <- bc.blockFields) {
+        <div class="ad-block-editor__fieldset">
+          @bf.renderEditorField(
+            af = af,
+            bfNameBase = nameBase + bf.offerNopt.map(".offer[" + _ + "]").getOrElse("") + "." + bf.name,
+            bc = bc
+          )
+        </div>
+        <div class="clear"></div>
+      }
 
-    <div class="ad-block-editor__fieldset">
-      @bf.renderEditorField(
-        af = af,
-        bfNameBase = nameBase + bf.offerNopt.map(".offer[" + _ + "]").getOrElse("") + "." + bf.name,
-        bc = bc
-      )
+      @* Исходный id блока. Необходим при переключении блоков. *@
+      <input type="hidden" name="@{nameBase}.oldBlockId" value="@bc.id"/>
+
+      @* Новый/текущий id блока. При переключении сюда втыкается новый id блока и происходит submit для получения новой формы. *@
+      <input type="hidden" name="@{nameBase}.blockId" value="@bc.id"/>
+
+      @formDataSer.map { fds =>
+        <input type="hidden" name="formData" value="@fds"/>
+      }
     </div>
-    <div class="clear"></div>
 
   }
-
-  @* Исходный id блока. Необходим при переключении блоков. *@
-  <input type="hidden" name="@{nameBase}.oldBlockId" value="@bc.id"/>
-
-  @* Новый/текущий id блока. При переключении сюда втыкается новый id блока и происходит submit для получения новой формы. *@
-  <input type="hidden" name="@{nameBase}.blockId" value="@bc.id"/>
-
-  @formDataSer.map { fds =>
-    <input type="hidden" name="formData" value="@fds"/>
-  }
-</div>
-}
 }

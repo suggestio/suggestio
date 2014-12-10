@@ -1207,6 +1207,7 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
+      ###
       $ '.lk input[type = "checkbox"]'
       .filter ':enabled'
       .each ()->
@@ -1217,6 +1218,7 @@ PersonalCabinet =
           this.checked = true
         else
           $this.removeAttr 'checked'
+      ###
 
       ## Набор чекбоксов, где можно выбрать только один вариант
       $ document
