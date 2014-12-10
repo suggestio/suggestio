@@ -312,21 +312,21 @@ cbca_grid =
 
   resize : () ->
 
-    RESIZE_COEFFICIENT = 100
+    UPDATE_WIDTH = 100
 
     cs = sm.states.cur_state()
     setTimeout(
       ( start_ww ) =>
         diff_ww = window.cbca_grid.ww - start_ww
 
-        if diff_ww > RESIZE_COEFFICIENT
+        if Math.abs( diff_ww ) > UPDATE_WIDTH
           if sm.focused_ads.is_active == true
             # обновить открытую карточку
             sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
           else
             # обновить выдачу
             sm.load_mart( cs )
-      500
+      100
       @.ww
     )
 
@@ -716,8 +716,6 @@ sm =
         clearTimeout sm.window_resize_timer
 
       grid_resize = () ->
-
-        console.log "grid resize"
 
         document.getElementById('smGridAdsWrapper').scrollTop = '0';
 
