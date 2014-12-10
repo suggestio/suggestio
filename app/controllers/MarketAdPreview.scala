@@ -36,7 +36,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
   private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = {
-    MarketAd.getAdFormM(userCatIdOptM, blockM)
+    MarketAd.getAdFormM(adCatIdsM, blockM)
   }
 
   private def detectAdPreviewForm(adnNode: MAdnNode)(implicit request: Request[collection.Map[String, Seq[String]]]) = {

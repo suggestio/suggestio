@@ -1,37 +1,22 @@
-@(mmcats: CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+@(mmcats: CollectMMCatsAcc_t, af: Form[_])(implicit ctx: Context)
 
 @* Механизм задания/изменения категории рекламной карточки. *@
 
+@import helper._
+
 @* Input для id выбранной категории. *@
-<input id="catId" data-curr-cat="cat" type="hidden" name="ad.catId" value="@af("ad.catId").value" />
-
-  <div class="categories-select" id="cat-select">
-    @mmcats.map { case (selectedIdOpt, mmcats1) =>
-      <span class="cbca-select">
-        <div class="selectbox">
-          <div class="value">
-            <div class="selected">--------</div>
-            <div class="dropdown">
-
-              @* Выводим список категорий на текущем уровне.
-                 Для активной категории нужно добавлять атрибут data-selected="selected" *@
-              @mmcats1.zipWithIndex.map { case (mmcat, i) =>
-                <div class="@if(i%2 == 0) {odd} else {even} option" data-value="@mmcat.id"@if(selectedIdOpt.isDefined && selectedIdOpt.get == mmcat.id.get) { data-selected="selected"}>
-                  @mmcat.name
-                </div>
-              }
-
-            </div>
-          </div>
-          <div class="triger">
-          </div>
-        </div>
-      </span>
-
-
+<div class="categories-select" id="cat-select">
+  @mmcats.map { case (selectedIdOpt, cats) =>
+    @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
+      <label>
+        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" @if(selectedIdOpt.isDefined && selectedIdOpt == mmcat.id) {checked="checked"}/>
+        @mmcat.name
+      </label>
     }
-  </div><!-- categories end -->
-
-  @if(!af.errors("ad.catId").isEmpty) {
-    <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">Выберите категорию</div>
+    <div class="triger"></div>
   }
+</div>
+
+@if(!af.errors("ad.catId").isEmpty) {
+  <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">Выберите категорию</div>
+}

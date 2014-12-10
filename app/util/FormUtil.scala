@@ -263,11 +263,20 @@ object FormUtil {
   def addressSomeM = toSomeStrM(addressM)
 
 
-  /** id категории. */
-  def userCatIdM = esIdM
-  def userCatIdOptM = optional(userCatIdM)
-    .transform [Option[String]] (emptyStrOptToNone, identity)
-  def userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
+  /** id категорий. */
+  def adCatIdsM: Mapping[Set[String]] = {
+    list(esIdM).transform [Set[String]] (
+      {_.iterator
+        .flatMap { v =>
+          val v1 = strTrimSanitizeF(v)
+          if (v1.isEmpty) Seq.empty else Seq(v1)
+        }
+        .toSet
+      },
+      { _.toList }
+    )
+  }
+  def adCatIdsNonEmptyM = adCatIdsM.verifying("error.required", _.nonEmpty)
 
   // TODO Нужен нормальный валидатор телефонов.
   def phoneM = nonEmptyText(minLength = 5, maxLength = 50)
