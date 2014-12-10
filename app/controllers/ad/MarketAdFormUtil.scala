@@ -154,7 +154,7 @@ object MarketAdFormUtil {
     doubleM
       .transform[Int](_.toInt, _.toDouble)
       .verifying("error.coord.too.big", { _ <= 2048 })
-      .verifying("error.coord.negative", { _ >= 0 })
+      .transform[Int](Math.max(0, _), identity)
   }
   def coords2DM: Mapping[Coords2D] = {
     // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
