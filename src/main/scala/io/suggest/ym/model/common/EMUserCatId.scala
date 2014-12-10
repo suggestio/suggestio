@@ -4,12 +4,14 @@ import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsArray, JsString}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import scala.collection.JavaConversions._
+import java.{lang => jl}
+import EsModel.{stringParser, iteratorParser}
 
 /**
  * Suggest.io
@@ -36,7 +38,15 @@ trait EMUserCatIdStatic extends EsModelStaticMutAkvT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (USER_CAT_ID_ESFN, value) =>
-        acc.userCatId = Option(EsModel.stringParser(value))
+        val v1 = value match {
+          case ids: jl.Iterable[_] =>
+            iteratorParser(ids)
+              .map { stringParser }
+              .toSet
+          case id =>
+            Set( stringParser(id) )
+        }
+        acc.userCatId = v1
     }
   }
 
@@ -67,7 +77,7 @@ trait EMUserCatIdStatic extends EsModelStaticMutAkvT {
 /** Аддон-интерфейс экземпляра модели. */
 trait EMUserCatIdI extends EsModelPlayJsonT {
   override type T <: EMUserCatIdI
-  def userCatId: Option[String]
+  def userCatId: Set[String]
 }
 
 
@@ -75,17 +85,21 @@ trait EMUserCatIdI extends EsModelPlayJsonT {
 trait EMUserCatId extends EMUserCatIdI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (userCatId.isDefined)
-      USER_CAT_ID_ESFN -> JsString(userCatId.get) :: acc0
-    else
+    if (userCatId.isEmpty) {
       acc0
+    } else {
+      val arr = userCatId.iterator
+        .map(JsString.apply)
+        .toSeq
+      USER_CAT_ID_ESFN -> JsArray(arr) :: acc0
+    }
   }
 }
 
 
 trait EMUserCatIdMut extends EMUserCatId {
   override type T <: EMUserCatIdMut
-  var userCatId: Option[String]
+  var userCatId: Set[String]
 }
 
 
