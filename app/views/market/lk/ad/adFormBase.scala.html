@@ -30,7 +30,7 @@
     @if(ctx.isDev) {
       ws.onmessage = function (evt) {
         var received_msg = evt.data;
-        console.log(received_msg);
+        $(".js-color-block").remove();
         received_msg = $.parseJSON(received_msg);
         var colors = received_msg["data"];
 

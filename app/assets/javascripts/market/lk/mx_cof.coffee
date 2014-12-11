@@ -1349,6 +1349,16 @@ PersonalCabinet =
       event = if isTouchDevice() then 'touchend' else 'click'
 
       $ document
+      .on "click", ".js-color-block", (e) ->
+        e.preventDefault()
+        $this = $ this
+        $colorSelect = $ "#ad_descr_bgColor"
+        color = $this.data "color"
+
+        $colorSelect.val color
+        $colorSelect.trigger "change"
+
+      $ document
       .on event, '.js-input-btn', (e)->
         e.preventDefault()
         $this = $ this
