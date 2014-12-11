@@ -1229,7 +1229,6 @@ sm =
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
-            #mart_id : sm.geo.location_node._id
             mart_id : sm.states.gb_mart_id
             with_welcome_ad : false
             geo_screen :
@@ -1882,7 +1881,6 @@ sm =
       if ad_id
         ns =
           process_state : false
-          mart_id : cs.mart_id
           fads :
             is_opened : true
             producer_id : cs.fads.producer_id
@@ -2549,6 +2547,7 @@ sm =
     # добавляет новое состояние
     # если какие-то параметры не переданы, берёт значения текущего состояния
     transform_state : ( stp ) -> #state_transform_params
+      console.log "transform state"
       cs = sm.states.cur_state()
       ns = {}
 

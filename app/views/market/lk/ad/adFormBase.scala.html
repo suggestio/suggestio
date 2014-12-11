@@ -30,7 +30,18 @@
     @if(ctx.isDev) {
       ws.onmessage = function (evt) {
         var received_msg = evt.data;
-        alert("WS message is received: " + received_msg);
+        console.log(received_msg);
+        received_msg = $.parseJSON(received_msg);
+        var colors = received_msg["data"];
+
+        $("#adBgColor").val(colors[0]);
+
+        $dom = $("#adFormDescriptionTable td:last");
+        for(index in colors) {
+          color = colors[index];
+          html = "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
+          $dom.append(html);
+        }
       };
     }
 
