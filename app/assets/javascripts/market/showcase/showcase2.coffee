@@ -325,7 +325,7 @@ cbca_grid =
             sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
           else
             # обновить выдачу
-            sm.load_mart( cs )
+            sm.load_mart( cs, false )
       100
       @.ww
     )
@@ -2746,11 +2746,16 @@ sm =
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
-  load_mart : ( state ) ->
+  load_mart : ( state, wc = true ) ->
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
+
+    if !wc
+      index_action += "&a.wc=0"
+
+    console.log index_action
 
     sm.log 'about to call index_action : ' + index_action
 
