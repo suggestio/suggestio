@@ -172,57 +172,87 @@ object ShowcaseUtil {
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
   val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
-    .getOrElse { List(1.4F, 1.3F, 1.2F, 1.1F, 1.0F) }
+    .getOrElse { List(1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
+      32F/33F   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
+  ) }
 
   val FOCUSED_TILE_SZ_MULTS = FOCUSED_SZ_MULT :: TILES_SZ_MULTS
 
-  /** Горизонтальное расстояние между блоками. */
-  val TILE_PADDING_CSSPX = configuration.getInt("sc.tiles.padding.between.blocks.csspx") getOrElse 20
+  /** Расстояние между блоками и до краёв экрана.
+    * Размер этот должен быть жестко связан с остальными размерами карточек, поэтому не настраивается. */
+  def TILE_PADDING_CSSPX = 20
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
   val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx") getOrElse 10
 
   /** Макс. кол-во вертикальных колонок. */
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+  val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse 1
+
+  val MIN_W1 = -1F
+
+  val MIN_SZ_MULT = TILES_SZ_MULTS.last
+
+
+  private def getBlockWidthPx = BlockWidths.NORMAL.widthPx
+
+  /**
+   * Рассчитать целевое кол-во колонок в плитке. Считаем это по минимальному padding'у.
+   * @param dscr Экран устройства.
+   * @return Число от 1 до 4.
+   */
+  def getTileColsCountScr(dscr: DevScreenT): Int = {
+    val padding = TILE_PADDING_CSSPX * MIN_SZ_MULT
+    val targetCount = ((dscr.width - padding) / (getBlockWidthPx*MIN_SZ_MULT + padding)).toInt
+    Math.min(TILE_MAX_COLUMNS,
+      Math.max(TILE_MIN_COLUMNS, targetCount))
+  }
+
+  def getTileArgs()(implicit ctx: Context): TileArgs = {
+    getTileArgs( ctx.deviceScreenOpt )
+  }
+  def getTileArgs(dscrOpt: Option[DevScreenT]): TileArgs = {
+    dscrOpt match {
+      case Some(dscr) =>
+        getTileArgs(dscr)
+      case None =>
+        TileArgs(
+          szMult = MIN_SZ_MULT,
+          colsCount = TILE_MAX_COLUMNS
+        )
+    }
+  }
+  def getTileArgs(dscr: DevScreenT): TileArgs = {
+    val colsCount = getTileColsCountScr(dscr)
+    TileArgs(
+      szMult      = getSzMult4tilesScr(colsCount, dscr),
+      colsCount   = colsCount
+    )
+  }
 
   /**
    * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
-   * @param ctx Контекст грядущего рендера.
-   * @return SzMult_t выбранный для рендера.
+   * @param colsCount Кол-во колонок в плитке.
+   * @param dscr Экран.
+   * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
-  def getSzMult4tiles(szMults: List[SzMult_t], maxCols: Int = TILE_MAX_COLUMNS,
-                      colWidthPx: Int = BlockWidths.NORMAL.intValue)(implicit ctx: Context): SzMult_t = {
-    ctx.deviceScreenOpt match {
-      case Some(dsOpt)  => getSzMult4tilesScr(szMults, dsOpt, maxCols = maxCols, colWidthPx = colWidthPx)
-      case None         => szMults.last
-    }
-  }
-  def getSzMult4tilesScr(szMults: List[SzMult_t], dscr: DevScreenT, maxCols: Int = TILE_MAX_COLUMNS,
-                         colWidthPx: Int = BlockWidths.NORMAL.intValue): SzMult_t = {
-    val blockWidthPx = BlockWidths.NORMAL.widthPx
-    // Кол-во колонок на экране в исходном масштабе:
-    val colCnt = Math.min(maxCols,
-      (dscr.width - TILE_PADDING_CSSPX) / (blockWidthPx + TILE_PADDING_CSSPX)
-    )
-    if (colCnt <= 0) {
-      // Экран довольно узок - тут нечего вычислять пока, всё равно выйдет минималка.
-      szMults.last
-    } else {
-      @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
-        val nextSzMult = restSzMults.head
-        if (restSzMults.tail.isEmpty) {
+  def getSzMult4tilesScr(colsCount: Int, dscr: DevScreenT): SzMult_t = {
+    val blockWidthPx = getBlockWidthPx
+    // Считаем целевое кол-во колонок на экране.
+    @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
+      val nextSzMult = restSzMults.head
+      if (restSzMults.tail.isEmpty) {
+        nextSzMult
+      } else {
+        // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
+        val w1 = getW1(nextSzMult, colsCount, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = TILE_PADDING_CSSPX)
+        if (w1 >= MIN_W1)
           nextSzMult
-        } else {
-          // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-          val w1 = getW1(nextSzMult, colCnt, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = TILE_PADDING_CSSPX)
-          if (w1 > 0F)
-            nextSzMult
-          else
-            detectSzMult(restSzMults.tail)
-        }
+        else
+          detectSzMult(restSzMults.tail)
       }
-      detectSzMult(szMults)
     }
+    detectSzMult(TILES_SZ_MULTS)
   }
 
   /**
@@ -261,10 +291,10 @@ object ShowcaseUtil {
       .filter { szMult =>
         // Проверяем, влезает ли ширина на экран при таком раскладе?
         val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
-        w1 > 0F
+        w1 >= MIN_W1
       }
     if (maxHiter.isEmpty)
-      TILES_SZ_MULTS.last
+      MIN_SZ_MULT
     else
       maxHiter.max
   }

@@ -128,8 +128,14 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     }
 
     /** Получение карточки приветствия. */
-    def welcomeAdOptFut = adnNodeFut.flatMap { adnNode =>
-      WelcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx)
+    def welcomeAdOptFut: Future[Option[WelcomeRenderArgsT]] = {
+      if (_reqArgs.withWelcomeAd) {
+        adnNodeFut.flatMap { adnNode =>
+          WelcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx)
+        }
+      } else {
+        Future successful None
+      }
     }
 
     /** Приготовить аргументы рендера выдачи. */

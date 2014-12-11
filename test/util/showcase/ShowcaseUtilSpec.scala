@@ -21,11 +21,8 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
 
   // Тестируем калькулятор szMult для блоков плитки выдачи.
   "getSzMult4tiles() for tile" must {
-    def t(scr: DevScreenT, res: SzMult_t): Unit = {
-      getSzMult4tilesScr(
-        szMults = ShowcaseUtil.TILES_SZ_MULTS,
-        dscr = scr
-      ) mustBe res
+    def t(dscr: DevScreenT, res: SzMult_t): Unit = {
+      getTileArgs(dscr).szMult mustBe res
     }
 
     "not scale on screen: 320x480" in {
@@ -35,7 +32,7 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
 
     "not scale on screen: 360x640" in {
       val scr = DevScreen(width = 360, height = 640, pxRatioOpt)
-      t(scr, 1.0F)
+      t(scr, 1.06F)
     }
 
     "scale by x1.1 on screen: 768x1024" in {
@@ -79,7 +76,7 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
 
     "resize by x1.0 on 360x640 for 300x300 ad" in {
       val scr = DevScreen(width = 360, height = 640, pxRatioOpt)
-      t(300, 300, scr, 1.0F)
+      t(300, 300, scr, 1.06F)
     }
 
     "resize by x1.1 on 380x640 for 300x300 ad" in {

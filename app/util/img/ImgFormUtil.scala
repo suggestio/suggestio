@@ -76,9 +76,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /** Минимальный размер откропанной стороны. */
   private val CROP_SIDE_MIN_PX = configuration.getInt("img.crop.side.max") getOrElse 10
   /** Максимальный размер откропанной стороны. */
-  private val CROP_SIDE_MAX_PX = configuration.getInt("img.crop.side.max") getOrElse 2048
+  private val CROP_SIDE_MAX_PX = configuration.getInt("img.crop.side.max") getOrElse 20000
   /** Максимальный размер сдвига относительно левого верхнего узла. */
-  private val CROP_OFFSET_MAX_PX = configuration.getInt("img.crop.offset.max") getOrElse 4096
+  private val CROP_OFFSET_MAX_PX = configuration.getInt("img.crop.offset.max") getOrElse 60000
 
   /** Проверка одной стороны кропа на соотвествие критериям. */
   private def isCropSideValid(sideVal: Int): Boolean = {
