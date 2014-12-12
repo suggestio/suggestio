@@ -1321,7 +1321,6 @@ sm =
       ## focused_ads
       ##############
       if sm.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
-
         cs = sm.states.cur_state()
         sm.states.transform_state
           with_welcome_ad : false
@@ -1882,8 +1881,11 @@ sm =
       ad_id = @.sm_blocks[@.active_ad_index].getAttribute("data-mad-id")
       cs = sm.states.cur_state()
 
+      #console.log "cat id = #{cs.cat_id}"
+
       if ad_id
         ns =
+          mart_id : cs.mart_id
           process_state : false
           fads :
             is_opened : true
@@ -2736,11 +2738,11 @@ sm =
       else
         sm.focused_ads.close()
 
-      if cbca_grid.ww <= 400
-        if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
-          sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
-        else
-          sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+      #if cbca_grid.ww <= 400
+      if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
+        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
+      else
+        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
       ## 5. Search
       if typeof state.search_request != 'undefined'
