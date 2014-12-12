@@ -315,6 +315,7 @@ cbca_grid =
     UPDATE_WIDTH = 100
 
     cs = sm.states.cur_state()
+    cs.with_welcome_ad = false
     setTimeout(
       ( start_ww ) =>
         diff_ww = window.cbca_grid.ww - start_ww
@@ -325,6 +326,8 @@ cbca_grid =
             sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
           else
             # обновить выдачу
+            console.log "--resize--"
+            console.log cs
             sm.load_mart( cs, false )
       100
       @.ww
@@ -2438,6 +2441,9 @@ sm =
 
       this._dom = sm.utils.ge 'smWelcomeAd'
 
+      console.log "--init--"
+      console.log cs
+
       if typeof cs.with_welcome_ad != 'undefined' && cs.with_welcome_ad == false
 
         ## Все скрыть и вернуть false
@@ -2752,10 +2758,8 @@ sm =
 
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
 
-    if !wc
-      index_action += "&a.wc=0"
-
-    console.log index_action
+    #if !wc
+    #  index_action += "&a.wc=0"
 
     sm.log 'about to call index_action : ' + index_action
 
