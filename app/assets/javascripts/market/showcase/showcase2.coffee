@@ -323,7 +323,9 @@ cbca_grid =
         if Math.abs( diff_ww ) > UPDATE_WIDTH
           if sm.focused_ads.is_active == true
             # обновить открытую карточку
-            sm.load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
+            console.log "resize mart_id = #{cs.mart_id}"
+            sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
+            #location.reload()
           else
             # обновить выдачу
             sm.load_mart( cs )
@@ -1322,6 +1324,7 @@ sm =
 
         cs = sm.states.cur_state()
         sm.states.transform_state
+          with_welcome_ad : false
           cat_id : cs.cat_id
           cat_class : cs.cat_class
           fads :
@@ -2346,6 +2349,8 @@ sm =
 
     cs = sm.states.cur_state()
 
+    console.log "load for shop id #{cs.mart_id}"
+
     sm.states.transform_state
       cat_id : cs.cat_id
       cat_class : cs.cat_class
@@ -2357,10 +2362,12 @@ sm =
   do_load_for_shop_id : ( shop_id, ad_id ) ->
 
     cs = sm.states.cur_state()
-    a_rcvr = '&a.rcvr=' + cs.mart_id
+    console.log "do_load_for_shop_id mart id = #{cs._mart_id}"
+    if cs.mart_id then a_rcvr = '&a.rcvr=' + cs.mart_id else a_rcvr = ""
+
     gen_id = sm.grid_ads.gen_id
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + gen_id + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    url = "/market/fads?a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&a.firstAdId=#{ad_id}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
 
     sm.focused_ads.curl = url
 
@@ -2556,6 +2563,7 @@ sm =
       ns.search_request = if typeof stp.search_request != 'undefined' then stp.search_request else undefined
       ns.geo_screen = if typeof stp.geo_screen != 'undefined' then stp.geo_screen else cs.geo_screen
       ns.cat_screen = if typeof stp.cat_screen != 'undefined' then stp.cat_screen else cs.cat_screen
+      ns.with_welcome_ad = if typeof stp.with_welcome_ad != 'undefined' then stp.with_welcome_ad else cs.with_welcome_ad
       ns.fads = if typeof stp.fads != 'undefined' then stp.fads else cs.fads
 
       ns.cat_id = stp.cat_id
