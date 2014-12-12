@@ -323,7 +323,7 @@ cbca_grid =
         if Math.abs( diff_ww ) > UPDATE_WIDTH
           if sm.focused_ads.is_active == true
             # обновить открытую карточку
-            sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
+            sm.load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
           else
             # обновить выдачу
             sm.load_mart( cs )
@@ -1893,6 +1893,7 @@ sm =
         #console.log ns
 
     next_ad : () ->
+      console.log "go next"
       if typeof this.active_ad_index == 'undefined'
         return false
 
