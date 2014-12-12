@@ -2351,8 +2351,6 @@ sm =
 
     cs = sm.states.cur_state()
 
-    console.log "load for shop id #{cs.mart_id}"
-
     sm.states.transform_state
       cat_id : cs.cat_id
       cat_class : cs.cat_class
@@ -2364,7 +2362,6 @@ sm =
   do_load_for_shop_id : ( shop_id, ad_id ) ->
 
     cs = sm.states.cur_state()
-    console.log "do_load_for_shop_id mart id = #{cs._mart_id}"
     if cs.mart_id then a_rcvr = '&a.rcvr=' + cs.mart_id else a_rcvr = ""
 
     gen_id = sm.grid_ads.gen_id
@@ -2514,6 +2511,7 @@ sm =
     ds :
       url : '/'
       mart_id : undefined
+      window_width : undefined
       with_welcome_ad : true
       cat_id : undefined
       cat_class : undefined
@@ -2546,6 +2544,8 @@ sm =
       if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
       if typeof sm.gen_id == 'undefined' then ns.gen_id = 6
 
+      ns.window_width = cbca_grid.ww
+
       this.push ns
 
     # изменяет текущее состояние
@@ -2572,6 +2572,8 @@ sm =
       ns.cat_class = stp.cat_class
 
       ns.mart_id = cs.mart_id
+
+      ns.window_width = if typeof cs.window_width != "undefined" then cs.window_width else cbca_grid.ww
 
       this.push ns
 
@@ -2743,6 +2745,9 @@ sm =
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
       else
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+        
+        if state.window_width != cbca_grid.ww
+          sm.load_mart( cs )
 
       ## 5. Search
       if typeof state.search_request != 'undefined'
