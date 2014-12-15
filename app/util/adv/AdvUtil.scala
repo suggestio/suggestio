@@ -3,11 +3,14 @@ package util.adv
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
+import org.joda.time.DateTime
+import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.PlayMacroLogsImpl
+import util.{AsyncUtil, PlayMacroLogsImpl}
 import util.SiowebEsUtil.client
 import util.billing.MmpDailyBilling
 import util.event.SiowebNotifier.Implicts.sn
+import play.api.Play.{current, configuration}
 
 import scala.concurrent.Future
 
@@ -29,6 +32,11 @@ object AdvUtil extends PlayMacroLogsImpl {
     )
     .filter(_.isEnabled)
   }
+
+  /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
+    * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
+  def SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
+
   
   info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.iterator.map(_.getClass.getSimpleName).mkString(", "))
 
@@ -92,6 +100,67 @@ object AdvUtil extends PlayMacroLogsImpl {
     resultFut
   }
 
+
+  /** Убрать указанную рекламную карточку из выдачи указанного ресивера или всех ресиверов. */
+  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String]): Future[Boolean] = {
+    lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
+    val madOptFut = MAd.getById(adId)
+    // Радуемся в лог.
+    rcvrIdOpt match {
+      case Some(rcvrId) => info(logPrefix + "Starting removing for single rcvr...")
+      case None => warn(logPrefix + "Starting removing ALL rcvrs...")
+    }
+    // Надо убрать указанного ресиверов из списка ресиверов
+    val isOkFut = madOptFut flatMap {
+      case Some(mad) =>
+        MAd.tryUpdate(mad) { mad1 =>
+          mad1.copy(
+            receivers = if (rcvrIdOpt.isEmpty) {
+              Map.empty
+            } else {
+              mad1.receivers.filterKeys(_ != rcvrIdOpt.get)
+            }
+          )
+        }
+          .map { _ => true}
+      case None =>
+        warn(logPrefix + "MAd not found: " + adId)
+        Future successful false
+    }
+    // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
+    val dbUpdFut = Future {
+      DB.withTransaction { implicit c =>
+        // Резать как online, так и в очереди на публикацию.
+        val sepo = SelectPolicies.UPDATE
+        val advsOk = if (rcvrIdOpt.isDefined) {
+          MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
+        } else {
+          MAdvOk.findNotExpiredByAdId(adId, policy = sepo)
+        }
+        advsOk
+          .foreach { advOk =>
+          info(s"${logPrefix}offlining advOk[${advOk.id.get}]")
+          advOk.copy(dateEnd = DateTime.now, isOnline = false)
+            .saveUpdate
+        }
+        // Запросы размещения переколбашивать в refused с возвратом бабла.
+        val advsReq = if (rcvrIdOpt.isDefined) {
+          MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
+        } else {
+          MAdvReq.findByAdId(adId, policy = sepo)
+        }
+        advsReq.foreach { madvReq =>
+          trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
+          // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
+          MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
+        }
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+    dbUpdFut flatMap { _ =>
+      isOkFut
+    }
+  }
+
 }
 
 
@@ -111,11 +180,14 @@ trait AdvExtraRcvrsCalculator {
 }
 
 
+
 // JMX утиль
 /** MBean-интерфейс для доступа к сабжу. */
 trait AdvUtilJmxMBean {
   def resetAllReceivers(): String
   def resetReceiversForAd(adId: String): String
+  def depublishAd(adId: String): String
+  def depublishAdAt(adId: String, prodId: String): String
 }
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
@@ -131,13 +203,14 @@ final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
         )
       }
     }
-    cntFut map { cnt =>
+    val s = cntFut map { cnt =>
       "Total updated: " + cnt
     }
+    awaitString(s)
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    MAd.getById(adId) flatMap {
+    val s = MAd.getById(adId) flatMap {
       case None =>
         Future successful s"Not found ad: $adId"
       case Some(mad) =>
@@ -151,6 +224,19 @@ final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
           }
         }
     }
+    awaitString(s)
+  }
+
+  override def depublishAd(adId: String): String = {
+    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = None)
+      .map { isOk => "Result: " + isOk }
+    awaitString(s)
+  }
+
+  override def depublishAdAt(adId: String, prodId: String): String = {
+    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = Some(prodId))
+      .map { isOk => "Result: " + isOk }
+    awaitString(s)
   }
 
 }
