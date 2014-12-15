@@ -2751,9 +2751,10 @@ sm =
       else
         sm.focused_ads.close()
 
-      #if cbca_grid.ww <= 400
+
       if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
-        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
+        if cbca_grid.ww < 768
+          sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
       else
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
