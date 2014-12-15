@@ -70,6 +70,7 @@ object SioRequestHeader extends PlayMacroLogsImpl {
       .iterator
       .filter { addr =>
         try {
+          // TODO Доставать только ip адреса, отсеивать хлам.
           InetAddress.getByName(addr)
           true
         } catch {

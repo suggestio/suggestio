@@ -43,3 +43,4 @@ object MarketIndexAccess extends ActionBuilder[MarketIndexRequest] {
 
 final case class MarketIndexRequest[A](displayNodes: Seq[MAdnNode], pwOpt: PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestWithPwOpt[A](request)
+  with SioRequestHeader

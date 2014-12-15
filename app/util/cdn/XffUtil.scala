@@ -46,7 +46,7 @@ object DumpXffHeaders extends Filter with PlayMacroLogsImpl {
         }
       if (fwdHdrsIter.nonEmpty) {
         val sb = new StringBuilder("Fwd headers for ")
-        sb.append(rh.remoteAddress)
+        sb.append(rh.remoteAddress).append("(play-guessed remote address)")
           .append(":\n")
         fwdHdrsIter.foreach { case (k, vs) =>
           sb.append(' ')
