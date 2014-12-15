@@ -264,8 +264,8 @@ cbca_grid =
 
         _spacer_attributes =
           'class' : 'sm-b-spacer sm-b-spacer-' + k
-          'data-width' : 140
-          'data-height' : 140
+          'data-width' : cbca_grid.cell_size
+          'data-height' : cbca_grid.cell_size
 
         _spacer = sm.utils.ce 'div', _spacer_attributes
         _this = _spacer
@@ -277,8 +277,11 @@ cbca_grid =
         height = cbca_grid.cell_size
         width = cbca_grid.cell_size
 
-        opened_height = 140
-        opened_width = 140
+        _this.style.width = width
+        _this.style.height = height
+
+        opened_height = cbca_grid.cell_size
+        opened_width = cbca_grid.cell_size
 
         _class = _this.className
         _search_string = _this.getAttribute 'data-search-string'
