@@ -1017,7 +1017,6 @@ sm =
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
       pre = (Array.prototype.slice.call(styles).join('').match(///-(moz|webkit|ms)-///) || (styles.OLink == '' && ['', 'o']))[1]
-      console.log pre
       obj =
         lowercase: pre
         css: '-'.concat( pre, '-')
@@ -1278,8 +1277,10 @@ sm =
 
         # меняем в текущем состоянии with_welcome_ad на false,
         # чтобы после листания карточек и возврата назад, не появлялась заставка
+        # + запоминаем ширину окна на момент открытия карточки
         upd_state =
           with_welcome_ad : false
+          window_width : cbca_grid.ww
         sm.states.update_state upd_state
 
         sm.load_for_shop_id producer_id, ad_id
@@ -2562,6 +2563,7 @@ sm =
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       if typeof sup.with_welcome_ad != 'undefined' then cs.with_welcome_ad = sup.with_welcome_ad
+      if typeof sup.window_width != 'undefined' then cs.window_width = sup.window_width
       this.list[this.list.length-1] = cs
 
     # добавляет новое состояние
@@ -2696,9 +2698,6 @@ sm =
 
       state = this.list[state_index]
 
-      console.log "---goto---"
-      console.log state
-
       this.process_state state
       this.cur_state_index = state_index
 
@@ -2757,6 +2756,9 @@ sm =
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
       else
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+
+        console.log "w1 = #{state.window_width}"
+        console.log "w2 = #{cbca_grid.ww}"
 
         if state.window_width != cbca_grid.ww
           sm.load_mart( cs )
