@@ -323,7 +323,6 @@ cbca_grid =
         if Math.abs( diff_ww ) > UPDATE_WIDTH
           if sm.focused_ads.is_active == true
             # обновить открытую карточку
-            console.log "resize mart_id = #{cs.mart_id}"
             sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
             #location.reload()
           else
@@ -1273,9 +1272,10 @@ sm =
         producer_id = shop_link_target.getAttribute 'data-producer-id'
         ad_id = shop_link_target.getAttribute 'data-ad-id'
 
+        # меняем в текущем состоянии with_welcome_ad на false,
+        # чтобы после листания карточек и возврата назад, не появлялась заставка
         upd_state =
           with_welcome_ad : false
-
         sm.states.update_state upd_state
 
         sm.load_for_shop_id producer_id, ad_id
@@ -1903,7 +1903,6 @@ sm =
         #console.log ns
 
     next_ad : () ->
-      console.log "go next"
       if typeof this.active_ad_index == 'undefined'
         return false
 
@@ -2564,7 +2563,6 @@ sm =
     # добавляет новое состояние
     # если какие-то параметры не переданы, берёт значения текущего состояния
     transform_state : ( stp ) -> #state_transform_params
-      console.log "transform state"
       cs = sm.states.cur_state()
       ns = {}
 
@@ -2697,9 +2695,6 @@ sm =
       this.cur_state_index = state_index
 
     process_state : ( state ) ->
-
-      console.log "process state"
-      console.log state
 
       cs = this.cur_state()
 
