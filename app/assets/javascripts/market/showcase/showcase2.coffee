@@ -1016,7 +1016,7 @@ sm =
     ###########################
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
-      pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
+      pre = (Array.prototype.slice.call(styles).join('').match(///-(moz|webkit|ms)-///) || (styles.OLink == '' && ['', 'o']))[1]
       console.log pre
       obj =
         lowercase: pre
@@ -2695,6 +2695,10 @@ sm =
         return false
 
       state = this.list[state_index]
+
+      console.log "---goto---"
+      console.log state
+
       this.process_state state
       this.cur_state_index = state_index
 
