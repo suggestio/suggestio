@@ -104,7 +104,7 @@ object AdSearch {
 }
 
 
-trait AdSearch extends AdsSearchArgsDflt {
+trait AdSearch extends AdsSearchArgsDflt { that =>
 
   /** Опциональное значение обязательного maxResults. Удобно при query-string. */
   def maxResultsOpt : Option[Int] = None
@@ -135,19 +135,19 @@ trait AdSearch extends AdsSearchArgsDflt {
   // Утиль для удобства работы в шаблонах, привыкших к вызову copy().
   /** Без оффсета */
   def withoutOffset: AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = this
+    override def _dsArgsUnderlying = that
     override def offsetOpt: Option[Int] = None
   }
 
   /** Вычесть указанное число элементов из offset'а, отфильтровать неположительные значения. */
   def minusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = this
+    override def _dsArgsUnderlying = that
     override def offsetOpt = super.offsetOpt.map(_ - count).filter(_ > 0)
   }
 
   /** Инкрементить offset на указанное кол-во элементов. */
   def plusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = this
+    override def _dsArgsUnderlying = that
     override def offsetOpt: Option[Int] = Some( super.offsetOpt.fold(count)(_ + count) )
   }
 

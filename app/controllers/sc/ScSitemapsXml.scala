@@ -1,12 +1,12 @@
 package controllers.sc
 
-import controllers.{routes, SiteMapXmlCtl}
+import controllers.SiteMapXmlCtl
 import io.suggest.model.EsModel
 import io.suggest.ym.model.MAd
 import models.{ScJsState, AdSearch, Context}
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import org.elasticsearch.common.unit.TimeValue
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.LocalDate
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.QueryStringBindable
