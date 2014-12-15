@@ -274,8 +274,8 @@ cbca_grid =
 
         _this.setAttribute 'id', 'elt' + i
 
-        height = 140
-        width = 140
+        height = cbca_grid.cell_size
+        width = cbca_grid.cell_size
 
         opened_height = 140
         opened_width = 140
@@ -1014,6 +1014,7 @@ sm =
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
       pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
+      console.log pre
       obj =
         lowercase: pre
         css: '-'.concat( pre, '-')
