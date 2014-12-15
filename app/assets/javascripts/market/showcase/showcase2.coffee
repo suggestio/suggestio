@@ -1273,6 +1273,11 @@ sm =
         producer_id = shop_link_target.getAttribute 'data-producer-id'
         ad_id = shop_link_target.getAttribute 'data-ad-id'
 
+        upd_state =
+          with_welcome_ad : false
+
+        sm.states.update_state upd_state
+
         sm.load_for_shop_id producer_id, ad_id
 
         return false
@@ -2553,6 +2558,7 @@ sm =
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
+      if typeof sup.with_welcome_ad != 'undefined' then cs.with_welcome_ad = sup.with_welcome_ad
       this.list[this.list.length-1] = cs
 
     # добавляет новое состояние
@@ -2692,6 +2698,9 @@ sm =
 
     process_state : ( state ) ->
 
+      console.log "process state"
+      console.log state
+
       cs = this.cur_state()
 
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
@@ -2745,7 +2754,7 @@ sm =
         sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
       else
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
-        
+
         if state.window_width != cbca_grid.ww
           sm.load_mart( cs )
 
