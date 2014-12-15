@@ -101,7 +101,12 @@ object AdvUtil extends PlayMacroLogsImpl {
   }
 
 
-  /** Убрать указанную рекламную карточку из выдачи указанного ресивера или всех ресиверов. */
+  /**
+   * Убрать указанную рекламную карточку из выдачи указанного ресивера или всех ресиверов.
+   * @param adId id рекламной карточки.
+   * @param rcvrIdOpt id ресивера. Если пусто, то все ресиверы вообще.
+   * @return Boolean, который обычно не имеет смысла.
+   */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String]): Future[Boolean] = {
     lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
     val madOptFut = MAd.getById(adId)
@@ -149,10 +154,12 @@ object AdvUtil extends PlayMacroLogsImpl {
         } else {
           MAdvReq.findByAdId(adId, policy = sepo)
         }
+        // Расставляем сообщения о депубликации для всех запросов размещения.
+        val msg = SIOM_REFUSE_REASON
         advsReq.foreach { madvReq =>
           trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
           // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-          MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
+          MmpDailyBilling.refuseAdvReq(madvReq, msg)
         }
       }
     }(AsyncUtil.jdbcExecutionContext)
@@ -184,10 +191,28 @@ trait AdvExtraRcvrsCalculator {
 // JMX утиль
 /** MBean-интерфейс для доступа к сабжу. */
 trait AdvUtilJmxMBean {
+
+  /** Пройтись по карточкам, пересчитать всех ресиверов для каждой карточки и сохранить в хранилище. */
   def resetAllReceivers(): String
+
+  /**
+   * Пересчитать ресиверов для карточки и сохранить в карточку.
+   * @param adId id карточки.
+   */
   def resetReceiversForAd(adId: String): String
+
+  /**
+   * Депубликация указанной рекламной карточки отовсюду.
+   * @param adId id рекламной карточки.
+   */
   def depublishAd(adId: String): String
-  def depublishAdAt(adId: String, prodId: String): String
+
+  /**
+   * Депубликация рекламной карточки на указанном узле.
+   * @param adId id рекламной карточки.
+   * @param rcvrId id ресивера.
+   */
+  def depublishAdAt(adId: String, rcvrId: String): String
 }
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
@@ -233,8 +258,8 @@ final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
     awaitString(s)
   }
 
-  override def depublishAdAt(adId: String, prodId: String): String = {
-    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = Some(prodId))
+  override def depublishAdAt(adId: String, rcvrId: String): String = {
+    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = Some(rcvrId))
       .map { isOk => "Result: " + isOk }
     awaitString(s)
   }
