@@ -1,12 +1,13 @@
 package util.adv
 
+import io.suggest.util.JMXBase
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import models.AdReceiverInfo.formatReceiversMapPretty
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
 import util.billing.MmpDailyBilling
+import util.event.SiowebNotifier.Implicts.sn
 
 import scala.concurrent.Future
 
@@ -44,10 +45,10 @@ object AdvUtil extends PlayMacroLogsImpl {
     val producerFut: Future[MAdnNode] = if (needProducer) {
       producerOpt
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
-        .filter { _.id.exists(_ == mad.producerId) }
+        .filter { _.id contains mad.producerId }
         .fold[Future[MAdnNode]]
           { MAdnNodeCache.getById(mad.producerId).map(_.get) }
-          { Future successful }
+          { Future.successful }
     } else {
       Future successful producerOpt.orNull
     }
@@ -107,5 +108,50 @@ trait AdvExtraRcvrsCalculator {
    * @return Фьючерс с картой extra-ресиверов.
    */
   def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t]
+}
+
+
+// JMX утиль
+/** MBean-интерфейс для доступа к сабжу. */
+trait AdvUtilJmxMBean {
+  def resetAllReceivers(): String
+  def resetReceiversForAd(adId: String): String
+}
+
+/** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
+final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
+
+  override def jmxName = "util:type=adv,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def resetAllReceivers(): String = {
+    val cntFut = MAd.updateAll() { mad0 =>
+      AdvUtil.calculateReceiversFor(mad0) map { rcvrs1 =>
+        mad0.copy(
+          receivers = rcvrs1
+        )
+      }
+    }
+    cntFut map { cnt =>
+      "Total updated: " + cnt
+    }
+  }
+
+  override def resetReceiversForAd(adId: String): String = {
+    MAd.getById(adId) flatMap {
+      case None =>
+        Future successful s"Not found ad: $adId"
+      case Some(mad) =>
+        AdvUtil.calculateReceiversFor(mad) flatMap { rcvrs1 =>
+          MAd.tryUpdate(mad) { mad0 =>
+            mad0.copy(
+              receivers = rcvrs1
+            )
+          } map { s =>
+            "Successfully reset receivers: " + s + "\n\n" + rcvrs1
+          }
+        }
+    }
+  }
+
 }
 
