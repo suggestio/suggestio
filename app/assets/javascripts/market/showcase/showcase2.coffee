@@ -2757,9 +2757,6 @@ sm =
       else
         sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
 
-        console.log "w1 = #{state.window_width}"
-        console.log "w2 = #{cbca_grid.ww}"
-
         if state.window_width != cbca_grid.ww
           sm.load_mart( cs )
 
