@@ -16,9 +16,10 @@ import play.api.db.DB
  */
 
 object AnormJodaTime {
-  private def dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS");
 
-  implicit def rowToDateTime: Column[DateTime] = Column.nonNull { (value, meta) =>
+  private def dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS")
+
+  implicit def rowToDateTime: Column[DateTime] = Column.nonNull1 { (value, meta) =>
     value match {
       case ts: java.sql.Timestamp => Right(new DateTime(ts.getTime))
       case d: java.sql.Date => Right(new DateTime(d.getTime))

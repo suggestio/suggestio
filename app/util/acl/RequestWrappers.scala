@@ -2,14 +2,15 @@ package util.acl
 
 import java.net.InetAddress
 
+import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -104,6 +105,40 @@ trait SioRequestHeader extends RequestHeader {
     firstForwardedAddr(ra0)
   }
 
+  /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */
+  lazy val ajaxEscapedFragment: Option[String] = {
+    queryString
+      .get("_escaped_fragment_")
+      .flatMap(_.headOption)
+      // TODO Нужно делать URL unescape тут?
+  }
+
+  /** Переданное js-состояние скрипта выдачи, закинутое в ajax escaped_fragment. */
+  lazy val ajaxJsScState: Option[ScJsState] = {
+    ajaxEscapedFragment
+      .flatMap { raw =>
+        try {
+          val r = FormUrlEncodedParser.parseNotPreservingOrder(raw)
+          Some(r)
+        } catch {
+          case ex: Exception =>
+            LOGGER.debug("Failed to parse ajax-escaped fragment.", ex)
+            None
+        }
+      }
+      .flatMap { aefMap =>
+        val qsb = ScJsState.qsbStandalone
+        qsb.bind("", aefMap)
+      }
+      .flatMap {
+        case Right(res) =>
+          Some(res)
+        case Left(errMsg) =>
+          LOGGER.warn(s"_geoSiteResult(): Failed to bind ajax escaped_fragment '$ajaxEscapedFragment' from '$remoteAddress': $errMsg")
+          None
+      }
+  }
+
 }
 
 
@@ -159,7 +194,7 @@ object SioReqMd {
 
   /** Генерация srm для юзера в рамках личного кабинета. */
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
-    val bbOptFut = future {
+    val bbOptFut = Future {
       DB.withConnection { implicit c =>
         MBillBalance.getByAdnId(adnId)
       }

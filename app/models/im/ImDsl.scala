@@ -5,7 +5,10 @@ import java.text.DecimalFormat
 import org.im4java.core.IMOperation
 import models._
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsImpl
+import play.core.parsers.FormUrlEncodedParser
+import util.{FormUtil, PlayMacroLogsImpl}
+
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -15,7 +18,7 @@ import util.PlayMacroLogsImpl
  * Что-то подобное было в зотонике, где список qs биндился в список im-действий над картинкой.
  */
 
-object ImOp extends PlayMacroLogsImpl {
+object ImOp extends PlayMacroLogsImpl with JavaTokenParsers {
 
   val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 
@@ -41,15 +44,22 @@ object ImOp extends PlayMacroLogsImpl {
   }
 
 
+  /** Дефолтовый StringBuilder для unbind-методов. */
+  def unbindSbDflt = new StringBuilder(64)
+
   /**
    * Для разных вариантов unbind'а используется этот метод
    * @param keyDotted Префикс ключа.
    * @param value Значения (im-операции).
    * @param withOrderInx Добавлять ли индексы операций? true если нужен будет вызов bind() над результатом.
+   * @param sb Используемый для работы StrinbBuilder. По умолчанию - создавать новый.
    * @return Строка im-операций.
    */
-  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean): String = {
-    val sb = new StringBuilder(value.size + 32)
+  def unbindImOps(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): String = {
+    unbindImOpsSb(keyDotted, value, withOrderInx, sb)
+      .toString()
+  }
+  def unbindImOpsSb(keyDotted: String, value: Seq[ImOp], withOrderInx: Boolean, sb: StringBuilder = unbindSbDflt): StringBuilder = {
     value
       // Порядковый номер нужен для восстановления порядка вызовов при bind'е.
       .iterator
@@ -68,7 +78,28 @@ object ImOp extends PlayMacroLogsImpl {
     // Убрать последний '&'
     if (value.nonEmpty)
       sb.setLength(sb.length - 1)
-    sb.toString()
+    sb
+  }
+
+  /** Забиндить распарсенное по итератору. */
+  def bindImOps(keyDotted: String, rawOps: Iterator[(String, Seq[String])]): Iterator[ImOp] = {
+    rawOps
+      .flatMap { case (k, vs) =>
+        val opCodeStr = k.substring(keyDotted.length)
+        ImOpCodes.maybeWithName(opCodeStr)
+          .map { _ -> vs }
+      }
+      // Попытаться сгенерить результат
+      .map {
+        case (opCode, vs)  =>  opCode.mkOp(vs)
+      }
+  }
+
+  /** Забиндить исходную qs-строку, предварительно протокенизировав. */
+  def bindImOps(keyDotted: String, raw: String): Iterator[ImOp] = {
+    val iter0 = FormUtil.parseToPairs(raw)
+      .map { case (k, v)  =>  k -> List(v) }
+    bindImOps(keyDotted, iter0)
   }
 
 }
@@ -89,7 +120,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
    */
   override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
     try {
-      val ops = params
+      val ops0 = params
         .iterator
         // в карте params содержит также всякий посторонний мусор. Он нам неинтересен.
         .filter { _._1 startsWith keyDotted }
@@ -108,14 +139,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
         // Распарсить команды.
         .iterator
         .map(_._1)
-        // Попытаться распарсить код операции.
-        .flatMap { case (k, vs) =>
-          val opCodeStr = k.substring(keyDotted.length)
-          ImOpCodes.maybeWithName(opCodeStr)
-            .map { _ -> vs }
-        }
-        // Попытаться сгенерить результат
-        .map { case (opCode, vs)  =>  opCode.mkOp(vs) }
+      val ops = ImOp.bindImOps(keyDotted, ops0)
         .toSeq
       if (ops.isEmpty) {
         None
@@ -159,7 +183,7 @@ object ImOpCodes extends Enumeration {
   }
   val Gravity: ImOpCode = new Val("b") {
     override def mkOp(vs: Seq[String]) = {
-      GravityOp( ImGravities.withName(vs.head) )
+      ImGravities.withName(vs.head)
     }
   }
   val AbsResize: ImOpCode = new Val("c") {
@@ -202,11 +226,12 @@ object ImOpCodes extends Enumeration {
       ImSamplingFactors.withName( vs.head )
     }
   }
-  val RelSzCrop: ImOpCode = new Val("k") {
+  val PercentSzCrop: ImOpCode = new Val("k") {
     override def mkOp(vs: Seq[String]): ImOp = {
-      RelSzCropOp(ImgCrop(vs.head))
+      PercentSzCropOp(ImgCrop(vs.head))
     }
   }
+
 
   implicit def value2val(x: Value): ImOpCode = x.asInstanceOf[ImOpCode]
 
@@ -220,7 +245,14 @@ object ImOpCodes extends Enumeration {
 
 
 object ImGravities extends Enumeration {
-  protected case class Val(strId: String, imName: String) extends super.Val(strId)
+
+  protected case class Val(strId: String, imName: String) extends super.Val(strId) with ImOp {
+    override def opCode = ImOpCodes.Gravity
+    override def addOperation(op: IMOperation): Unit = {
+      op.gravity(imName)
+    }
+    override def qsValue: String = strId
+  }
 
   type ImGravity = Val
 
@@ -236,17 +268,6 @@ object ImGravities extends Enumeration {
   implicit def value2val(x: Value): ImGravity = x.asInstanceOf[ImGravity]
 
 }
-
-/** Добавить -gravity South. */
-case class GravityOp(gravity: ImGravity) extends ImOp {
-  override def opCode = ImOpCodes.Gravity
-  override def addOperation(op: IMOperation): Unit = {
-    op.gravity(gravity.imName)
-  }
-
-  override def qsValue: String = gravity.strId
-}
-
 
 
 /** quality для результата. */

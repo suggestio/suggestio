@@ -73,12 +73,12 @@ POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
 POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /m/lk/ap/:adnId/edit/block         controllers.MarketAdPreview.adBlockSwitchEditor(adnId)
-POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlockImg(blockId: Int, fn: String)
+POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
 GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
+GET  /m/lk/ws/:wsId/ad                  controllers.MarketAd.ws(wsId: String)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/_txns/adn/:adnId             controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)
@@ -101,26 +101,22 @@ POST /m/support                         controllers.MarketLkSupport.supportFormS
 
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
-GET  /img/tmp/$filename<[-_\w\d~.]+>    controllers.Img.getTempImg(filename)
-GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
-GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
-GET  /img/dyn                           controllers.Img.dynImg(i: DynImgArgs)
-## thumb в основном используется в рамках draft sio-v1. Для sioM лучше использовать dynImg.
-GET  /thumb/get/$imageId<[-_\w\d~.]+>   controllers.Img.getThumb(imageId)
+GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
 
 
 # Витрина market'а и её экшены
-GET  /b/svg/:svgTpl                     controllers.MarketShowcase.blockSvg(svgTpl: BlockSvg, c: BSvgColorMap)
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
+GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
+
+GET  /blk/css                           controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
 
 GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
 GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   controllers.MarketShowcase.rdrToGeoSite
-GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: SMShowcaseReqArgs ?= SMShowcaseReqArgs.empty)
+GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: ScReqArgs ?= ScReqArgs.empty)
 
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
@@ -130,9 +126,10 @@ GET  /market/ads                        controllers.MarketShowcase.findAds(a: Ad
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 
 GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
-# Поиск по узлам
+## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
-
+## Прямой доступ к синхронной выдаче
+GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState())
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
@@ -162,12 +159,6 @@ GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
 GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
 POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
 
-GET  /sys/indices                       controllers.Sys.indicesIndex
-GET  /sys/indices/active                controllers.Sys.indicesListAllActive
-GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
-GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
-POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
-GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
@@ -311,10 +302,33 @@ GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
 GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
+## Галереи картинок
+GET  /sys/gals/all                       controllers.SysGallery.showList(page: Int ?= 0)
+POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
+GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
+GET  /sys/gals/new                       controllers.SysGallery.createGal
+POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
+GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
+GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
+POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
+POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySubmit(galId)
+
+## sys/AI
+GET  /sys/ai                             controllers.SysAi.index
+GET  /sys/ai/mad                         controllers.SysAi.madIndex
+GET  /sys/ai/mad/create                  controllers.SysAi.createMadAi
+POST /sys/ai/mad/create                  controllers.SysAi.createMadAiSubmit
+GET  /sys/ai/mad/edit/:id                controllers.SysAi.editMadAi(id)
+POST /sys/ai/mad/edit/:id                controllers.SysAi.editMadAiSubmit(id)
+POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
+POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
+
+
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
 
 GET  /robots.txt                         controllers.Application.robotsTxt
+GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты
@@ -339,8 +353,6 @@ GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
-
-GET  /search/site                       controllers.Search.siteSearchGET
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain

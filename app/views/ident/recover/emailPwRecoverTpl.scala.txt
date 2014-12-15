@@ -9,6 +9,6 @@
 
 Если вы не делали запроса, просто удалить это сообщение.
 Если вам необходимо восстановить пароль, воспользуйтесь следующей ссылкой:
-@ctx.myAudienceUrl@routes.Ident.recoverPwReturn(eAct.id.get)
+@ctx.LK_URL_PREFIX@routes.Ident.recoverPwReturn(eAct.id.get)
 
 Это сообщение отправлено автоматически. Пожалуйста, не отвечайте на него.

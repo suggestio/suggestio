@@ -117,14 +117,13 @@ ngls.to=Города
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
 
-blocks.field.price=Цена
-blocks.field.oldPrice=Старая цена
+blocks.field.isWide=Отображать на широкую?
 blocks.field.height=Высота блока
+blocks.field.width=Ширина блока
 blocks.field.title=Заголовок
 blocks.field.bgImg=Фоновое изображение
 blocks.field.text1=Текст 1
 blocks.field.text2=Текст 2
-blocks.field.discount=Скидка
 blocks.field.logo=Логотип
 blocks.field.lineColor=Цвет линии
 blocks.field.bottomColor=Цвет нижней заливки
@@ -134,8 +133,6 @@ blocks.field.saleMaskColor=Цвет маски SALE
 blocks.field.bgColor=Цвет фона
 blocks.field.circleFillColor=Цвет заливки кружков
 blocks.field.borderColor=Цвет бордюра
-blocks.field.discoIconColor=Цвет значка скидки
-blocks.field.discoBorderColor=Цвет бордюра скидки
 blocks.field.maskColor=Цвет маски
 blocks.field.fillColor=Цвет заливки
 blocks.field.href=Ссылка на внешний ресурс
@@ -205,6 +202,11 @@ stuff.menu.ABOUT=О ПРОЕКТЕ
 stuff.menu.HELP=ПОМОЩЬ
 stuff.menu.LIVE=ВЖИВУЮ
 stuff.menu.CONTACTS=КОНТАКТЫ
+
+
+ai.mad.rrr.descr.scalasti=Обновление значений текстовых полей целевой рекламной карточки с помощью шаблонизатора ScalaSti и шаблонной карточки с #-разделителями.
+ai.ch.descr.gidromet.rss=Парсер прогнозов погоды росгидрометцентра в формате RSS (meteoinfo.ru/rss/forecasts/26063).
+ai.ch.descr.cbrf.xml=Парсер валютных котировок XML API с сайта ЦБ РФ (cbr.ru/scripts/XML_daily.asp).
 
 
 live_search_for_your_website=Живой поиск для вашего сайта
@@ -297,3 +299,19 @@ send=Отправить
 c.s.search_query.empty=Пустая строка поиска. Что-то ищем?
 
 tariff.type.p=Абонплата
+
+
+weather.sky.state.Clear=Ясно
+weather.sky.state.PartlyCloudy=Местами облачно
+weather.sky.state.Cloudy=Облачно
+weather.sky.state.VaryCloudy=Переменная облачность
+
+wind.direction.north=северный
+wind.direction.south=южный
+wind.direction.east=восточный
+wind.direction.west=западный
+wind.direction.north-west=северо-западный
+wind.direction.north-east=северо-восточный
+wind.direction.south-west=юго-западный
+wind.direction.south-east=юго-восточный
+

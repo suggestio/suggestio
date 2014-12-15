@@ -12,7 +12,7 @@ siom =
     sm_trigger_class : 'sio-mart-trigger'
     node_color : '@adnNode.meta.color'
     @adnNode.logoImgOpt.map { logoImg =>
-    logo_src : '@CdnUtil.getImg(logoImg.filename)'
+    logo_src : '@CdnUtil.dynImg(logoImg.filename)'
     }
   utils :
     elts_cache : {}

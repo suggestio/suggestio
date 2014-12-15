@@ -1,14 +1,15 @@
 package models
 
-import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel, EsModelStaticT}
+import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
+import models.ai.MAiMad
+import models.im.MGallery
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import util.SiowebEsUtil
+import util.{PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future
 import org.elasticsearch.client.Client
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import org.slf4j.LoggerFactory
-import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
@@ -19,7 +20,9 @@ import scala.concurrent.duration._
  * Created: 24.02.14 17:43
  * Description: Дополнительная утиль для ES-моделей.
  */
-object SiowebEsModel {
+object SiowebEsModel extends PlayLazyMacroLogsImpl {
+
+  import LOGGER._
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
@@ -28,12 +31,16 @@ object SiowebEsModel {
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq(
       MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
-      MRemoteError
+      MRemoteError, MGallery, MAiMad
     )
   }
 
+  if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
+    EsModel.errorIfIncorrectModels(ES_MODELS)
+
+  /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(implicit client: Client): Future[Boolean] = {
-    val ignoreExist = current.configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
+    val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
     LoggerFactory.getLogger(getClass).trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModel.putAllMappings(ES_MODELS, ignoreExist)
   }
@@ -46,7 +53,13 @@ object SiowebEsModel {
     val logPrefix = "importModelsFromRemote():"
     val esModelsCount = esModels.size
     logger.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
-    val fromClient = SioEsUtil.newTransportClient(addrs, clusterName = None)
+    val fromClient = try {
+      SioEsUtil.newTransportClient(addrs, clusterName = None)
+    } catch {
+      case ex: Throwable =>
+        error(s"Failed to create transport client: addrs=$addrs", ex)
+        throw ex
+    }
     val toClient = SiowebEsUtil.client
     val resultFut = Future.traverse(esModels) { esModel =>
       val copyResultFut = esModel.copyContent(fromClient, toClient)
@@ -79,7 +92,10 @@ trait SiowebEsModelJmxMBean {
 }
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
-final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
+final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with PlayLazyMacroLogsImpl {
+
+  import LOGGER._
+
   override def jmxName = "io.suggest.model:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */
@@ -90,11 +106,19 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean {
     val model = SiowebEsModel.ES_MODELS
       .find(_.getClass.getSimpleName equalsIgnoreCase modelStr1)
       .get
-    _importModelsFromRemote(remotes, Seq(model))
+    val fut = _importModelsFromRemote(remotes, Seq(model))
+    fut onFailure { case ex =>
+      error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
+    }
+    awaitString(fut)
   }
 
   override def importModelsFromRemote(remotes: String): String = {
-    _importModelsFromRemote(remotes, SiowebEsModel.ES_MODELS)
+    val fut = _importModelsFromRemote(remotes, SiowebEsModel.ES_MODELS)
+    fut onFailure { case ex =>
+      error(s"importModelsFromRemote($remotes): Failed", ex)
+    }
+    awaitString(fut)
   }
 
   protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]) = {

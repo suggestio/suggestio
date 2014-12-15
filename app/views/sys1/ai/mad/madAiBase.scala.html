@@ -1,0 +1,17 @@
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для /sys/ai/mad раздела админки. *@
+
+@import sys1.ai._
+
+@hPathAfter1 = {
+  / <a class="blue-link" href="@routes.SysAi.madIndex()">MAd</a>
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
+}
+
+
+@aiBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1),
+  headAfter = headAfter
+)(content)

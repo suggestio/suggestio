@@ -18,7 +18,7 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
 
   /** Т.к. контекст может быть не настроен в конфиге, то нужно рендерить сообщение о проблеме в консоль. */
   def fallbackContext(ck: String, ex: Throwable, dfltPar: EcParInfo): ExecutionContext = {
-    warn(
+    val msg =
       s"""Failed to create execution context. Please add something like this into application.conf:
         |$ck {
         |  fork-join-executor {
@@ -26,9 +26,11 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
         |    parallelism-max = ${dfltPar.parMax}
         |  }
         |}
-      """.stripMargin,
-      ex
-    )
+      """.stripMargin
+    if (ex.isInstanceOf[ConfigurationException])
+      warn(msg)
+    else
+      warn(msg, ex)
     Implicits.defaultContext
   }
 
@@ -51,6 +53,12 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
 
   /** thread-pool для синхронных запросов к postgres'у. Это позволяет избежать блокировок основного пула. */
   implicit val jdbcExecutionContext = mkEc("async.ec.jdbc")
+
+  /** thread-pool из одного треда для блокирующих операций, обычно есть какая-то внутренняя синхронизация. */
+  implicit val singleThreadIoContext = mkEc("async.ec.iosingle", EcParInfo(1.0F, 1))
+
+  /** thread-pool из для внешних cpu-тяжелых операций. */
+  implicit val singleThreadCpuContext = mkEc("async.ec.cpusingle", EcParInfo(1.0F, 2))
 
 }
 

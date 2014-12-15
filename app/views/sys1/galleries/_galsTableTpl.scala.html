@@ -1,0 +1,53 @@
+@(gals: Seq[im.MGallery], withAdmLinks: Boolean)(implicit ctx: Context)
+
+@* Таблица, отображающая список галерей.
+   withAdmLinks: отображать ссылки редактирования/удаления галереи. *@
+
+@import ctx._
+@import datetime._
+@import util.img.DynImgUtil
+
+
+@for(gal <- gals) {
+
+  @* Рендерим в ячейке построчно метаданные о текущей галерее: *@
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">Метаданные</label>
+    </td>
+    <td>
+      <span title="Название-идентификатор галереи">ID: @gal.name</span><br/>
+      Описание: @gal.descr<br/>
+      Кол-во картинок: @gal.imgs.size
+      Создана: @_prettyDate(gal.dateCreated, withSpan = true)<br/>
+      @gal.dateModified.map { dateMod =>
+        Изменена: @_prettyDate(dateMod, withSpan = true)
+        @gal.modifiedBy.map { modByPersonId =>
+          пользователем @modByPersonId
+        }
+        <br/>
+      }
+      Номер ревизии: @gal.versionOpt<br/>
+      @if(withAdmLinks) {
+        <a href="@routes.SysGallery.editGal(gal.id.get)">@Messages("Edit")</a>
+        TODO Ссылки на редактирование и удаление галереи.
+      }
+    </td>
+  </table>
+
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">Картинки</label>
+    </td>
+    @* Рендерим превьюшки картинок. *@
+    <td>
+      @gal.imgs.map { img =>
+        <a class="image __size-M f-left" href="@DynImgUtil.imgCall(img)">
+          <img class="image_src" src="@DynImgUtil.thumb256Call(img, fillArea = true)" alt="id картинки: @img.rowKeyStr"/>
+        </a>
+      }
+    </td>
+  </table>
+
+}
+

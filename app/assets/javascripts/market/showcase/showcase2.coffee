@@ -1,4 +1,5 @@
 cbca_grid =
+  ## DO NOT RENAME this globals. Global variables will be updated from MarketShowcase controller. See util.jsa.cbca.grid._
   cell_size : 140
   cell_padding : 20
   top_offset : 70
@@ -52,6 +53,7 @@ cbca_grid =
       sm.utils.ge('smGridAdsLoader').style.width = cw + 'px'
 
     this.columns = this.columns - this.left_offset - this.right_offset
+
 
   ##############
   ## Fetch block
@@ -220,6 +222,11 @@ cbca_grid =
 
     for elt in sm.utils.ge_class document, 'sm-block'
 
+      ## проверка, открыта ли карточка, TODO вынести в отдельный метод
+      className = elt.className
+      if className.indexOf("focused") > -1
+        continue
+
       if elt.id == ''
         _this = elt
 
@@ -257,8 +264,8 @@ cbca_grid =
 
         _spacer_attributes =
           'class' : 'sm-b-spacer sm-b-spacer-' + k
-          'data-width' : 140
-          'data-height' : 140
+          'data-width' : cbca_grid.cell_size
+          'data-height' : cbca_grid.cell_size
 
         _spacer = sm.utils.ce 'div', _spacer_attributes
         _this = _spacer
@@ -267,11 +274,14 @@ cbca_grid =
 
         _this.setAttribute 'id', 'elt' + i
 
-        height = 140
-        width = 140
+        height = cbca_grid.cell_size
+        width = cbca_grid.cell_size
 
-        opened_height = 140
-        opened_width = 140
+        _this.style.width = width
+        _this.style.height = height
+
+        opened_height = cbca_grid.cell_size
+        opened_width = cbca_grid.cell_size
 
         _class = _this.className
         _search_string = _this.getAttribute 'data-search-string'
@@ -304,6 +314,27 @@ cbca_grid =
     this.build( is_add )
 
   resize : () ->
+
+    UPDATE_WIDTH = 100
+
+    cs = sm.states.cur_state()
+    cs.with_welcome_ad = false
+    setTimeout(
+      ( start_ww ) =>
+        diff_ww = window.cbca_grid.ww - start_ww
+
+        if Math.abs( diff_ww ) > UPDATE_WIDTH
+          if sm.focused_ads.is_active == true
+            # обновить открытую карточку
+            sm.do_load_for_shop_id( cs.fads.producer_id, cs.fads.ad_id )
+            #location.reload()
+          else
+            # обновить выдачу
+            sm.load_mart( cs )
+      100
+      @.ww
+    )
+
 
     this.set_container_size()
 
@@ -575,14 +606,16 @@ sm =
     load_for_node_id : ( node_id ) ->
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
+      url_params = sm.states.get_url_params()
+      #console.log url_params
 
       if typeof cs != 'undefined'
         sm.states.add_state
           mart_id : node_id
           geo_screen : cs.geo_screen
       else
-        sm.states.add_state
-          mart_id : node_id
+        ns = sm.states.get_state_by_url()
+        sm.states.add_state ns
 
     adjust : () ->
 
@@ -675,6 +708,7 @@ sm =
 
   ## Забиндить оконные события
   bind_window_events : () ->
+
     resize_cb = () ->
 
       sm.welcome_ad.fit sm.welcome_ad._bg_img_dom
@@ -711,6 +745,10 @@ sm =
 
     init : () ->
 
+      console.log "deprecated method"
+      return false
+
+      ###
       style_tags = sm.utils.ge_tag('code', true)
 
       css = ''
@@ -722,10 +760,11 @@ sm =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
-      sm.utils.ge_tag('head')[0].appendChild(style_dom)
+      sm.utils.ge_tag('body')[0].appendChild(style_dom)
       this.style_dom = style_dom
 
       this.style_dom.appendChild(document.createTextNode(css))
+      ###
 
   #########################
   ## History Api navigation
@@ -741,7 +780,7 @@ sm =
         sm.states.goto state.state_index
 
     push : ( data, title, path ) ->
-      history.pushState data, title, this.base_path + '#' + path
+      history.pushState data, title, this.base_path + path
 
     init : () ->
       this.base_path = window.location.pathname
@@ -977,8 +1016,7 @@ sm =
     ###########################
     set_vendor_prefix : () ->
       styles = if typeof window.getComputedStyle != 'undefined' then window.getComputedStyle(document.documentElement, '') else ''
-      pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
-
+      pre = (Array.prototype.slice.call(styles).join('').match(///-(moz|webkit|ms)-///) || (styles.OLink == '' && ['', 'o']))[1]
       obj =
         lowercase: pre
         css: '-'.concat( pre, '-')
@@ -1179,17 +1217,23 @@ sm =
         sm.states.requested_geo_id = cs.mart_id
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
 
+        #console.log sm.geo.location_node
+        #console.log geogoBack
+
+        # TODO очень странный кусок кода
+        ###
         if geogoBack == "false"
           sm.states.gb_mart_id = cs.mart_id
         else
           if cs.mart_id == sm.geo.location_node._id
             sm.states.gb_mart_id = cs.mart_id
+        ###
+        sm.states.gb_mart_id = cs.mart_id
 
         if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
-            #mart_id : sm.geo.location_node._id
             mart_id : sm.states.gb_mart_id
             with_welcome_ad : false
             geo_screen :
@@ -1230,6 +1274,14 @@ sm =
 
         producer_id = shop_link_target.getAttribute 'data-producer-id'
         ad_id = shop_link_target.getAttribute 'data-ad-id'
+
+        # меняем в текущем состоянии with_welcome_ad на false,
+        # чтобы после листания карточек и возврата назад, не появлялась заставка
+        # + запоминаем ширину окна на момент открытия карточки
+        upd_state =
+          with_welcome_ad : false
+          window_width : cbca_grid.ww
+        sm.states.update_state upd_state
 
         sm.load_for_shop_id producer_id, ad_id
 
@@ -1279,9 +1331,9 @@ sm =
       ## focused_ads
       ##############
       if sm.events.target_lookup( event.target, 'id', 'closeFocusedAdsButton' ) != null
-
         cs = sm.states.cur_state()
         sm.states.transform_state
+          with_welcome_ad : false
           cat_id : cs.cat_id
           cat_class : cs.cat_class
           fads :
@@ -1302,7 +1354,12 @@ sm =
     document_keyup : ( event ) ->
       #esc
       if event.keyCode == 27
-        sm.focused_ads.close()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       #left arrow
       if event.keyCode == 37
@@ -1320,7 +1377,12 @@ sm =
 
       ## Exc button
       if event.keyCode == 27
-        sm.close_focused_ads()
+        cs = sm.states.cur_state()
+        sm.states.transform_state
+          cat_id : cs.cat_id
+          cat_class : cs.cat_class
+          fads :
+            is_opened : false
 
       if event.keyCode == 39
         sm.focused_ads.next_ad()
@@ -1378,8 +1440,7 @@ sm =
 
       sm.utils.ge('smSearchField').value = ''
 
-      if sm.search.found_count > 0
-        sm.grid_ads.load_index_ads()
+      if sm.search.found_count > 0 then sm.grid_ads.load_index_ads()
 
     error_message : ( message, is_hide ) ->
 
@@ -1463,15 +1524,53 @@ sm =
         sm.grid_ads.multiplier = sm.grid_ads.multiplier / 10
 
       url = url.replace '&a.geo=ip', ''
-      sm.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) ) + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+      sm.grid_ads.gen_id = Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) )
+      sm.grid_ads.gen_id
+      sm.grid_ads.c_url = url + '&a.gen=' + sm.grid_ads.gen_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
+
+  resources :
+
+    common :
+
+      init : () ->
+        if sm.utils.ge("smResources") != null
+          sm.utils.re("smResources")
+
+        sm_resources_attr =
+          id : "smResources"
+
+        sm_resources = sm.utils.ce "div", sm_resources_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources
+
+    focused :
+
+      clear : () ->
+        sm.utils.ge("smResourcesFocused").innerHTML = ""
+
+      init : () ->
+        if sm.utils.ge("smResourcesFocused") != null
+          sm.utils.re("smResourcesFocused")
+
+        sm_resources_focused_attr =
+          id : "smResourcesFocused"
+
+        sm_resources_focused = sm.utils.ce "div", sm_resources_focused_attr, ""
+
+        _body = sm.utils.ge_tag('body')[0]
+        _body.appendChild sm_resources_focused
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
 
   draw_layout : () ->
+
+    this.resources.common.init()
+    this.resources.focused.init()
 
     if sm.utils.ge('sioMartRoot') != null
       sm.utils.re('sioMartRoot')
@@ -1484,6 +1583,7 @@ sm =
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
     sm_layout.style.display = 'none'
+
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
@@ -1500,6 +1600,8 @@ sm =
 
     ## Выполнить запрос по указанному url
     perform : ( url ) ->
+
+      #console.log "url : #{url}"
 
       timeout_cb = () ->
         sm.request.on_request_error()
@@ -1603,7 +1705,10 @@ sm =
           sm.utils.ge('smWifiInfo').style.display = 'block'
 
         sm.init_navigation()
-        sm.grid_ads.load_index_ads()
+        # TODO исправить костыль
+        if typeof cs.cat_id == 'undefined'
+          sm.grid_ads.load_index_ads()
+
 
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
@@ -1666,7 +1771,7 @@ sm =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        sm.styles.init()
+        #sm.styles.init()
 
         if data.action == 'searchAds'
           if cbca_grid.ww <= 400
@@ -1759,10 +1864,12 @@ sm =
       this.active_ad_index = ad_index
 
       if this.active_ad_index > this.ads.length
-        cb = () ->
+        cb = () =>
           sm.focused_ads.load_more_ads()
 
         setTimeout cb, 400
+      else
+        @.add_active_ad_state()
 
       if direction == '+'
         ad_c_el = sm.utils.ge('focusedAd' + ( ad_index + 1 ) )
@@ -1779,6 +1886,26 @@ sm =
         fel = sm.utils.ge('focusedAd' + ( ad_index + 2 ) )
         if fel != null
           fel.style.visibility = 'hidden';
+
+    add_active_ad_state : () ->
+      ad_id = @.sm_blocks[@.active_ad_index].getAttribute("data-mad-id")
+      cs = sm.states.cur_state()
+
+      #console.log "cat id = #{cs.cat_id}"
+
+      if ad_id
+        ns =
+          mart_id : cs.mart_id
+          process_state : false
+          fads :
+            is_opened : true
+            producer_id : cs.fads.producer_id
+            ad_id : ad_id
+
+        sm.states.add_state( ns )
+        #console.log "active ad index = #{@.active_ad_index}"
+        #console.log "active ad id = #{ad_id}"
+        #console.log ns
 
     next_ad : () ->
       if typeof this.active_ad_index == 'undefined'
@@ -1889,7 +2016,9 @@ sm =
 
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
-      sm.styles.init()
+
+      @.add_active_ad_state()
+      #sm.styles.init()
 
     check_if_fully_loaded : () ->
 
@@ -1918,19 +2047,43 @@ sm =
         _block_width = _b.getAttribute 'data-width'
 
         if cbca_grid.ww >= 660
-          sm.utils.addClass _b, 'double-size'
+          #sm.utils.addClass _b, 'double-size'
           _block_width = _block_width*2
           padding = 0
         else
-          sm.utils.removeClass _b, 'double-size'
+          #sm.utils.removeClass _b, 'double-size'
           padding = 0
           _block_width = 300
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        _b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
+
+        _block_wideBg = _b.getAttribute("data-wide-bg")
+
+        # если карточка растягивается на ширину устройства
+        if _block_wideBg == "true"
+          #console.log _b.getAttribute("class")
+          _b.parentNode.parentNode.parentNode.style.overflow = "hidden"
+          _b.parentNode.parentNode.parentNode.style.position = "relative"
+          _b.style.position = "absolute"
+          _b.style.top = "50px"
+          _b.style.left = "50%"
+          _b.style.transform = "translate3d(-50%,0,0)"
+          _b.style.webkitTransform = "translate3d(-50%,0,0)"
+          bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
+          if bg.length > 0
+            bg = bg[0]
+            #bg.style.width = "100%"
+            bg.style.display = "block"
+            bg.style.margin = "0 auto"
+        # раньше карточкам задавалась ширина через js
+        #else
+          #_b.parentNode.parentNode.parentNode.style.width = parseInt( _block_width ) + padding + 'px'
 
         sm.utils.addClass _b, '__rel'
+
+        #console.log cbca_grid.ww
+        #console.log cbca_grid.wh
 
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
@@ -1967,6 +2120,7 @@ sm =
       cb = () ->
         sm.utils.ge('smFocusedAds').style.display = 'none'
         sm.focused_ads.ads_container_dom.innerHTML = ''
+        sm.resources.focused.clear()
 
       setTimeout cb, 200
 
@@ -2062,7 +2216,7 @@ sm =
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
 
-      sm.styles.init()
+      #sm.styles.init()
       this.active_ad_index = 0
 
   ##################################################
@@ -2217,9 +2371,11 @@ sm =
   do_load_for_shop_id : ( shop_id, ad_id ) ->
 
     cs = sm.states.cur_state()
-    a_rcvr = '&a.rcvr=' + cs.mart_id
+    if cs.mart_id then a_rcvr = '&a.rcvr=' + cs.mart_id else a_rcvr = ""
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + sm.config.producer_ads_per_load + a_rcvr + '&a.firstAdId=' + ad_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    gen_id = sm.grid_ads.gen_id
+
+    url = "/market/fads?a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&a.firstAdId=#{ad_id}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
 
     sm.focused_ads.curl = url
 
@@ -2364,6 +2520,7 @@ sm =
     ds :
       url : '/'
       mart_id : undefined
+      window_width : undefined
       with_welcome_ad : true
       cat_id : undefined
       cat_class : undefined
@@ -2381,8 +2538,10 @@ sm =
         return undefined
       this.list[this.cur_state_index]
 
+    # добавляет новое состояние
     add_state : ( ns ) ->
 
+      if typeof ns.process_state == 'undefined' then ns.process_state = true
       if typeof ns.url == 'undefined' then ns.url = this.ds.url
       if typeof ns.mart_id == 'undefined' then ns.mart_id = this.ds.mart_id
       if typeof ns.with_welcome_ad == 'undefined' then ns.with_welcome_ad = this.ds.with_welcome_ad
@@ -2392,15 +2551,23 @@ sm =
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
       if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
       if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
+      if typeof sm.gen_id == 'undefined' then ns.gen_id = 6
+
+      ns.window_width = cbca_grid.ww
 
       this.push ns
 
+    # изменяет текущее состояние
     update_state : ( sup ) -> #state_update_params
       cs = sm.states.cur_state()
 
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
+      if typeof sup.with_welcome_ad != 'undefined' then cs.with_welcome_ad = sup.with_welcome_ad
+      if typeof sup.window_width != 'undefined' then cs.window_width = sup.window_width
       this.list[this.list.length-1] = cs
 
+    # добавляет новое состояние
+    # если какие-то параметры не переданы, берёт значения текущего состояния
     transform_state : ( stp ) -> #state_transform_params
       cs = sm.states.cur_state()
       ns = {}
@@ -2408,6 +2575,7 @@ sm =
       ns.search_request = if typeof stp.search_request != 'undefined' then stp.search_request else undefined
       ns.geo_screen = if typeof stp.geo_screen != 'undefined' then stp.geo_screen else cs.geo_screen
       ns.cat_screen = if typeof stp.cat_screen != 'undefined' then stp.cat_screen else cs.cat_screen
+      ns.with_welcome_ad = if typeof stp.with_welcome_ad != 'undefined' then stp.with_welcome_ad else cs.with_welcome_ad
       ns.fads = if typeof stp.fads != 'undefined' then stp.fads else cs.fads
 
       ns.cat_id = stp.cat_id
@@ -2415,18 +2583,113 @@ sm =
 
       ns.mart_id = cs.mart_id
 
+      ns.window_width = if typeof cs.window_width != "undefined" then cs.window_width else cbca_grid.ww
+
       this.push ns
 
-    push : ( state ) ->
+    get_url_params : () ->
+      pl     = ///\+///g
+      search = ///([^&=]+)=?([^&]*)///g
+      decode = (s) ->
+        return decodeURIComponent(s.replace(pl, " "))
+      query  = window.location.hash.substring(3)
+      urlParams = {}
+      while match = search.exec(query)
+        urlParams[decode(match[1])] = decode(match[2])
 
-      this.process_state state
+      return urlParams
+
+    get_state_by_url : () ->
+      url_params = @.get_url_params()
+      state = null
+      sm.grid_ads.gen_id = url_params["gen_id"]
+
+      if url_params["f.cur.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          fads :
+            is_opened : true
+            ad_id : url_params["f.cur.id"]
+            producer_id : url_params["f.pr.id"]
+
+      else if url_params["s.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          cat_screen :
+            is_opened : true
+
+      else if url_params["n.open"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+          geo_screen :
+            is_opened : true
+
+      else if url_params["t.cat"]
+        state =
+          mart_id : url_params["m.id"]
+          cat_id : url_params["t.cat"]
+          cat_class : url_params["t.cat_class"]
+          gen_id : sm.grid_ads.gen_id
+
+      else if url_params["m.id"]
+        state =
+          mart_id : url_params["m.id"]
+          gen_id : sm.grid_ads.gen_id
+
+      else
+        state =
+          gen_id : sm.grid_ads.gen_id
+
+      return state
+
+    get_path_by_state : ( state ) ->
+      get_params = []
+      path = ""
+
+      #console.log state
+
+      if state.cat_screen.is_opened
+        get_params.push "s.open=true"
+
+      if state.geo_screen.is_opened
+        get_params.push "n.open=true"
+
+      if state.fads.is_opened
+        get_params.push "f.cur.id=#{state.fads.ad_id}"
+        get_params.push "f.pr.id=#{state.fads.producer_id}"
+
+      if state.cat_id
+        get_params.push "t.cat=#{state.cat_id}"
+
+      if state.cat_class
+        get_params.push "t.cat_class=#{state.cat_class}"
+
+      if state.mart_id
+        get_params.push "m.id=#{state.mart_id}"
+
+      if sm.grid_ads.gen_id
+        get_params.push "gen_id=#{sm.grid_ads.gen_id}"
+
+      if get_params.length
+        path += "#!?#{get_params.join("&")}"
+
+      return path
+
+    push : ( state ) ->
+      path = this.get_path_by_state state
+
+      if state.process_state != false
+        this.process_state state
 
       this.list = this.list.slice 0, this.cur_state_index+1
       this.list.push state
 
       ## state index
       this.cur_state_index = this.list.length - 1
-      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', '/p' + this.cur_state_index
+      sm.history.push {state_index : this.cur_state_index}, 'Suggest.io', path
 
     goto : ( state_index ) ->
       if state_index == -1
@@ -2434,6 +2697,7 @@ sm =
         return false
 
       state = this.list[state_index]
+
       this.process_state state
       this.cur_state_index = state_index
 
@@ -2451,7 +2715,7 @@ sm =
 
     process_state_2 : ( state ) ->
 
-      cs = this.cur_state()
+      cs = @.cur_state()
 
       sm.warn 'process_state_2 invoked'
       sm.warn state
@@ -2467,8 +2731,7 @@ sm =
       ## 2. Карточки по категориям
       if typeof state.cat_id != 'undefined' && sm.global_cat_id != state.cat_id
         sm.load_for_cat_id state.cat_id, state.cat_class
-
-      sm.global_cat_id = state.cat_id
+        sm.global_cat_id = state.cat_id
 
       if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
         sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
@@ -2488,17 +2751,21 @@ sm =
       else
         sm.focused_ads.close()
 
-      if cbca_grid.ww <= 400
-        if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
-          sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
-        else
-          sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+      #if cbca_grid.ww <= 400
+      if state.geo_screen.is_opened == true || state.cat_screen.is_opened == true || ( typeof state.fads != 'undefined' && state.fads.is_opened == true )
+        sm.utils.addClass sm.utils.ge('smGridAds'), '__blurred'
+      else
+        sm.utils.removeClass sm.utils.ge('smGridAds'), '__blurred'
+
+        if state.window_width != cbca_grid.ww
+          sm.load_mart( cs )
 
       ## 5. Search
       if typeof state.search_request != 'undefined'
         a_rcvr = '&a.rcvr=' + state.mart_id
         url = '/market/ads?a.q=' + state.search_request + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
         sm.request.perform url
+
 
   ############################
   ## Функции для инициализации
@@ -2513,7 +2780,9 @@ sm =
 
     index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
 
+
     sm.log 'about to call index_action : ' + index_action
+
     this.request.perform index_action
 
   define_per_load_values : () ->
@@ -2533,7 +2802,6 @@ sm =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
-
     sm.config.host = window.siomart_host
     this.utils.set_vendor_prefix()
     this.history.init()
@@ -2541,7 +2809,6 @@ sm =
     sm_id = window.siomart_id || undefined
 
     sm.warn 'initial mart_id : ' + sm_id
-
     if window.with_geo == true
       ## Если еще не запрашивали координаты у юзера
       if sm.geo.location_requested == false
@@ -2549,6 +2816,7 @@ sm =
     else
       sm.states.add_state
         mart_id : sm_id
+
 
 window.sm = window.siomart = sm
 sm.init()

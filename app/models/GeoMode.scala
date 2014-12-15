@@ -11,7 +11,7 @@ import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
 import util.{AsyncUtil, PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -176,7 +176,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   override def toQsStringOpt = Some("ip")
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
-    future {
+    Future {
       val ra = getRemoteAddr
       ip2rangeCity(ra) map { result =>
         new GeoSearchInfo {

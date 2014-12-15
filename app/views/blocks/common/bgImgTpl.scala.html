@@ -1,24 +1,28 @@
-@(mad: MAdT,  bc: util.blocks.SaveBgImgI,  args: BlockRenderArgs,  cssClass: Option[String] = None,
+@(mad: MAdT,  bc: util.blocks.SaveBgImgI,  args: blk.RenderArgs,  cssClass: Option[String] = None,
   dfltImg: Option[String] = None,  alt: Option[String] = None,  style: Option[String] = None)(implicit ctx: Context)
 
-@import util.blocks.BlocksUtil.IMG_BG_COLOR_FN
+@import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
 
-@mad.imgs.get(bc.BG_IMG_FN).fold {
-  @* Нету картинки в карточке. Рендерим заглушку: *@
-  <div class="no-photo"></div>
+@if(!args.wideBg) {
 
-} { imgInfo =>
-  @* Есть картинка в карточке. Рендерим img-тег: *@
-  <img @cssClass.map { _cssClass => class="@_cssClass" }
-    src="@bc.bgImgCall(imgInfo, mad.blockMeta.height, args.canRenderDoubleSize)"
-    @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
-      @if(iBgColorOpt.isDefined || style.isDefined) {
-        style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
+  @bc.getMadBgImg(mad).fold {
+    @* Нету картинки в карточке. Рендерим заглушку: *@
+    <div class="no-photo"></div>
+
+  } { imgInfo =>
+    @* Есть картинка в карточке. Рендерим img-тег: *@
+    <img @cssClass.map { _cssClass => class="@_cssClass" }
+      src="@bc.bgImgCallCdn(imgInfo, mad.blockMeta, args)"
+      @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
+        @if(iBgColorOpt.isDefined || style.isDefined) {
+           style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
+        }
       }
-    }
-    alt="@alt"
-  />
+      alt="@alt"
+    />
+  }
+
 }

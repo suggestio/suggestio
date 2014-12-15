@@ -2,11 +2,12 @@ package util.billing
 
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
+import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import util.adv.AdvUtil
 import scala.annotation.tailrec
-import util.blocks.{BfHeight, BlocksUtil, BlocksConf}
+import util.blocks.BlocksConf
 import util.{CronTasksProvider, PlayMacroLogsImpl}
 import play.api.db.DB
 import play.api.Play.{current, configuration}
@@ -168,23 +169,9 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
     lazy val logPrefix = s"getAdModulesCount(${mad.id.getOrElse("?")}): "
     val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
     // Мультипликатор по ширине
-    val wmul = block.blockWidth match {
-      case BlocksUtil.BLOCK_WIDTH_NORMAL_PX => 2
-      case BlocksUtil.BLOCK_WIDTH_NARROW_PX => 1
-      case other =>
-        warn(logPrefix + "Unexpected block width: " + other)
-        1
-    }
+    val wmul = BlockWidths(mad.blockMeta.width).relSz
     // Мультипликатор по высоте
-    val hmul = mad.blockMeta.height match {
-      case BfHeight.HEIGHT_140 => 1
-      case BfHeight.HEIGHT_300 => 2
-      case BfHeight.HEIGHT_460 => 3
-      case BfHeight.HEIGHT_620 => 4
-      case other =>
-        warn(logPrefix + "Unexpected block height: " + other)
-        1
-    }
+    val hmul = BlockHeights(mad.blockMeta.height).relSz
     val blockModulesCount: Int = wmul * hmul
     trace(s"${logPrefix}blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}")
     blockModulesCount

@@ -6,7 +6,7 @@ import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 import play.api.Logger
 import util.{EcParInfo, AsyncUtil, PlayMacroLogsImpl}
 
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
@@ -124,9 +124,9 @@ class BulkProcessorSaveBackend extends ScStatSaverBackend with PlayMacroLogsImpl
 
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
-    future {
+    Future {
       bp add stat.prepareIndex.request()
-    }(ec)
+    }(AsyncUtil.singleThreadCpuContext)
   }
 
   override def flush(): Unit = {

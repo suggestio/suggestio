@@ -9,13 +9,8 @@ import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.duration._
 import util.DfsModelUtil._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
-import scala.collection.JavaConversions._
-import scala.Some
-import play.api.Logger
-import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -72,7 +67,6 @@ object MDomainQiAuthzTmp extends PlayMacroLogsImpl {
   private val BACKEND: Backend = {
     StorageUtil.STORAGE match {
       case DFS    => new DfsBackend
-      case HBASE  => new HBaseBackend
     }
   }
 
@@ -113,78 +107,35 @@ object MDomainQiAuthzTmp extends PlayMacroLogsImpl {
       new Path(tmpDir, dkey + "/" + qi_id)
     }
 
-    def save(data: MDomainQiAuthzTmp): Future[_] = future {
-      val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
-      val os = fs.create(filepath)
-      try {
-        JsonDfsBackend.writeToPath(filepath, data)
-      } finally {
-        os.close()
-      }
-    }
-
-    def delete(dkey: String, id: String): Future[Any] = future {
-      val filepath = getFilePath(dkey, id)
-      val result = deleteNr(filepath)
-      // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
-      deleteNr(filepath.getParent)
-      result
-    }
-
-    def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = future {
-      val filepath = getFilePath(dkey, id)
-      readOne[MDomainQiAuthzTmp](filepath, fs)
-    }
-
-    /* Выдать список временных авторизация для указанного домена.
-     * @param dkey Ключ домена.
-     * @return Список сабжей в неопределенном порядке.
-     */
-    /*def listDkey(dkey:String): List[MDomainQiAuthzTmp] = {
-      val path = getDkeyDir(dkey)
-      fs.listStatus(path)
-        .toList
-        .foldLeft(List[MDomainQiAuthzTmp]()) { (acc, s) =>
-          readOneAcc[MDomainQiAuthzTmp](acc, s.getPath, fs)
-        }
-    }*/
-  }
-
-
-  /** HBase-backend для сохранения данных модели в HBase. */
-  class HBaseBackend extends Backend with ModelSerialJson {
-    import io.suggest.model.MObject.{CF_DQI, HTABLE_NAME_BYTES}
-    import io.suggest.model.SioHBaseAsyncClient._
-    import io.suggest.model.HTapConversionsBasic._
-
-    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
-    private def id2qualifier(id: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(id)
-    private def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
-
-    private val CF_DQI_B = CF_DQI.getBytes
-
     def save(data: MDomainQiAuthzTmp): Future[_] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2rowkey(data.dkey), CF_DQI_B, id2qualifier(data.id), serialize(data))
-      ahclient.put(putReq)
+      Future {
+        val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
+        val os = fs.create(filepath)
+        try {
+          JsonDfsBackend.writeToPath(filepath, data)
+        } finally {
+          os.close()
+        }
+      }
     }
 
     def delete(dkey: String, id: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey), CF_DQI_B, id2qualifier(id))
-      ahclient.delete(delReq)
+      Future {
+        val filepath = getFilePath(dkey, id)
+        val result = deleteNr(filepath)
+        // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
+        deleteNr(filepath.getParent)
+        result
+      }
     }
 
     def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey))
-        .family(CF_DQI_B)
-        .qualifier(id2qualifier(id))
-      ahclient.get(getReq) map { kvs =>
-        if (kvs.isEmpty) {
-          None
-        } else {
-          Some(deserialize(kvs.head.value()))
-        }
+      Future {
+        val filepath = getFilePath(dkey, id)
+        readOne[MDomainQiAuthzTmp](filepath, fs)
       }
     }
+
   }
 
 }

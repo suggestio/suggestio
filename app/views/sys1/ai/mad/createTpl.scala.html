@@ -1,0 +1,15 @@
+@(mf: Form[ai.MAiMad])(implicit ctx: Context)
+
+@* Страница с формой создания нового MAiMad. *@
+
+@import ctx._
+
+@madAiBase("Создать генератор") {
+
+  @_formTpl(
+    mf          = mf,
+    submitCall  = routes.SysAi.createMadAiSubmit(),
+    btnText     = Messages("Create")
+  )
+
+}

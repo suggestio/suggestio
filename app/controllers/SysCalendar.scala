@@ -1,5 +1,6 @@
 package controllers
 
+import play.twirl.api.HtmlFormat
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import util.SiowebEsUtil.client
@@ -17,7 +18,6 @@ import play.api.mvc._
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 import play.api.db.DB
-import play.api.templates.HtmlFormat
 import scala.Some
 import play.api.mvc.Result
 
@@ -67,6 +67,8 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
           } finally {
             stream.close()
           }
+        } catch {
+          case ex: Exception => false
         }
     }
   )
@@ -146,7 +148,8 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
   }
 
   /** Общий код экшенов, рендерящих страницу редактирования. */
-  private def editCalendarRespBody(calId: String, cf: Form[MCalendar])(implicit request: CalendarRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def editCalendarRespBody(calId: String, cf: Form[MCalendar])
+                                  (implicit request: CalendarRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
     val calMbcs = DB.withConnection { implicit c =>
       val calMbmds = MBillMmpDaily.findForCalId(calId)
       if (calMbmds.isEmpty) {

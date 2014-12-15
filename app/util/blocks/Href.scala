@@ -16,7 +16,6 @@ object Href extends MergeBindAccAOBlock[String] {
 
   val BF_HREF_DFLT = new BfString(
     name = BF_NAME_DFLT,
-    field = BlocksEditorFields.InputString,
     minLen = 6,
     maxLen = 512
   ) {

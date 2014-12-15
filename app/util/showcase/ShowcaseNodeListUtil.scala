@@ -157,11 +157,11 @@ object ShowcaseNodeListUtil {
   }
 
   def town2layer(townNode: MAdnNode) = {
-    GeoNodesLayer( Seq(townNode) )
+    GeoNodesLayer( Seq(townNode), NodeGeoLevels.NGL_TOWN )
   }
 
 
-  /** Выдать все города,  */
+  /** Выдать все города */
   def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new NodeDetectArgsT {
       override def shownTypeIds = Seq(AdnShownTypes.TOWN.name)
@@ -175,12 +175,13 @@ object ShowcaseNodeListUtil {
   /** Обернуть список городов в гео-слой. */
   def townsToLayer(townNodes: Seq[MAdnNode])(implicit lang: Lang): GeoNodesLayer = {
     if (townNodes.isEmpty) {
-      GeoNodesLayer(Seq.empty)
+      GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN)
     } else if (townNodes.tail.isEmpty) {
       town2layer(townNodes.head)
     } else {
       GeoNodesLayer(
         nodes = townNodes,
+        ngl = NodeGeoLevels.NGL_TOWN,
         nameOpt = Some( Messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)) )
     }
   }
@@ -220,7 +221,7 @@ object ShowcaseNodeListUtil {
     val sargs = new SmNodesSearchArgsT {
       override def maxResults = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
-      override def withDirectGeoParents: Seq[String] = Seq(townNodeId)
+      override def withDirectGeoParents = Seq(townNodeId)
       override def shownTypeIds = AdnShownTypes.districtNames
       override def withNameSort = gravity.isEmpty
       override def withGeoDistanceSort = gravity
@@ -240,6 +241,7 @@ object ShowcaseNodeListUtil {
           .fold(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
         GeoNodesLayer(
           nodes = districtNodes,
+          ngl = NodeGeoLevels.NGL_TOWN_DISTRICT,
           nameOpt = Some( Messages(nameL10n) )
         )
       }
@@ -276,7 +278,7 @@ object ShowcaseNodeListUtil {
           .map { case (sti, layNodes) =>
             val ast: AdnShownType = sti
             val lsSorted = layNodes.sortBy(_.meta.nameShort)
-            GeoNodesLayer(lsSorted, Some(Messages(ast.pluralNoTown)))
+            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(Messages(ast.pluralNoTown)))
           }
           .toList
           .sortBy(_.nameOpt.getOrElse(""))
@@ -301,6 +303,7 @@ object ShowcaseNodeListUtil {
       None -> None
     }
     // В зависимости от ситуации, строим слои по разным технологиям.
+    // На scala < 2.11.2 тут вылетает warning: match may not be exhausive. См. https://issues.scala-lang.org/browse/SI-8708
     currNodeLayer match {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>

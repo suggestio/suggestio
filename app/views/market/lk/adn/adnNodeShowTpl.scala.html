@@ -10,6 +10,7 @@
 @import ctx._
 @import _node._
 @import util.img.GalleryUtil
+@import util.img.DynImgUtil
 
 
 @content = {
@@ -27,7 +28,7 @@
     @if(node.meta.color.isDefined) {
       @node.logoImgOpt.map { img =>
         <div class="image __size-L" style="background-color: #@node.meta.color;">
-          <img class="image_src" src='@routes.Img.getImg(img.filename)' alt="@node.meta.name"/>
+          <img class="image_src" src="@DynImgUtil.imgCall(img.filename)" alt="@node.meta.name"/>
         </div>
       }
     }

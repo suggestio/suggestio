@@ -15,7 +15,7 @@ import org.postgresql.util.PGobject
 sealed trait AnormNetAddrs {
   def PG_TYPE: String
 
-  implicit def column2inetAddr: Column[InetAddress] = Column.nonNull { (value, meta) =>
+  implicit def column2inetAddr: Column[InetAddress] = Column.nonNull1 { (value, meta) =>
     value match {
       case pgo: PGobject =>
         // TODO Проверять pgo.getType?

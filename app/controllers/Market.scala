@@ -1,6 +1,9 @@
 package controllers
 
+import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.stat.{ScStatAction, ScStatActions}
+import play.api.libs.iteratee.Enumerator
+import play.api.mvc.Call
 import play.twirl.api.HtmlFormat
 import util.billing.StatBillingQueueActor
 import util._
@@ -19,7 +22,7 @@ import play.api.Play.{current, configuration}
  * не доросли до отдельных контроллеров.
  */
 
-object Market extends SioController {
+object Market extends SioController with SiteMapXmlCtl {
 
   /** Кол-во выводимых узлов размещения рекламы на главной. */
   val INDEX_NODES_LIST_LEN = configuration.getInt("market.index.nodes.list.len") getOrElse 5
@@ -35,7 +38,7 @@ object Market extends SioController {
     ))
       .withHeaders(CACHE_CONTROL -> "public, max-age=300")
   }*/
-  // Пока всё отключено - тут всё тоже отключено.
+  // Пока отключено визуальное отображение рекламных узлов и формы логина - тут в экшене это всё тоже выпилено:
   def index = MaybeAuth { implicit request =>
     cacheControlShort {
       Ok(indexTpl(
@@ -123,6 +126,19 @@ object Market extends SioController {
   def marketBooklet = MaybeAuth { implicit request =>
     cacheControlShort {
       Ok(marketBookletTpl())
+    }
+  }
+
+  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
+  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
+    Enumerator[Call](
+      routes.Market.marketBooklet()
+    ) map { call =>
+      SiteMapUrl(
+        loc = ctx.SC_URL_PREFIX + call.url,
+        lastMod = Some( SioControllerUtil.PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
+        changeFreq = Some( ChangeFreqs.weekly )
+      )
     }
   }
 

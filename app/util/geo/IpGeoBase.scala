@@ -8,7 +8,7 @@ import models.{CronTask, IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
-import play.api.db.{HasInternalConnection, DB}
+import play.api.db.DB
 import util.{CronTasksProvider, PlayMacroLogsImpl}
 
 import scala.annotation.tailrec
@@ -185,12 +185,13 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
   }
 
   /** Отковырять pg connection из play connection. Play использует враппер над jdbc connection'ом. */
-  @tailrec private def getPgConnection(implicit c: Connection): BaseConnection = {
+  private def getPgConnection(implicit c: Connection): BaseConnection = {
     c match {
       case bc: BaseConnection =>
         bc
-      case hic: HasInternalConnection =>
-        getPgConnection(hic.getInternalConnection())
+      // play-2.3: Был враппер для connection'на. А в 2.4 исчез.
+      //case hic: HasInternalConnection =>
+      //  getPgConnection(hic.getInternalConnection())
     }
   }
 

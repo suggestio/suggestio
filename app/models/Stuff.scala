@@ -59,12 +59,6 @@ case class SysAdnNodeBillingArgs(
 
 
 
-/** Выбор высоты шрифта влияет на высоту линии (интерлиньяж) и возможно иные параметры.
-  * В любом случае, ключом является кегль шрифта. */
-case class FontSize(size: Int, lineHeight: Int)
-
-
-
 case class CurrentAdvsTplArgs(
   advs: Seq[MAdvI],
   adv2adn: Map[Int, MAdnNode],
@@ -203,25 +197,6 @@ trait ImgUrlInfoT {
   def meta: Option[MImgSizeT]
 }
 
-
-/** Статический рендер блоков. */
-object BlockRenderArgs {
-
-  /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
-  val DEFAULT = BlockRenderArgs()
-
-  val DOUBLE_SIZED_ARGS = BlockRenderArgs(canRenderDoubleSize = true)
-}
-
-/**
- * Параметры рендера блока.
- * Всегда immutable класс!
- * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
- */
-case class BlockRenderArgs(
-  isStandalone          : Boolean = false,
-  canRenderDoubleSize   : Boolean = false
-)
 
 
 /**

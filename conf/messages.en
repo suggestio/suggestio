@@ -114,13 +114,12 @@ ngls.to=Towns
 Input.text.from.picture=Input text from the picture
 error.captcha=Invalid human-check code
 
-blocks.field.price=Price
-blocks.field.oldPrice=Old price
+blocks.field.isWide=Display wide?
 blocks.field.height=Block height
+blocks.field.width=Block width
 blocks.field.title=Title
 blocks.field.text1=Text 1
 blocks.field.text2=Text 2
-blocks.field.discount=Discount
 blocks.field.logo=Logo
 blocks.field.lineColor=Line color
 blocks.field.bottomColor=Bottom color
@@ -130,8 +129,6 @@ blocks.field.saleMaskColor=SALE mask color
 blocks.field.bgColor=Background color
 blocks.field.circleFillColor=Circles fill color
 blocks.field.borderColor=Border color
-blocks.field.discoIconColor=Discount icon color
-blocks.field.discoBorderColor=Discount border color
 blocks.field.maskColor=Mask color
 blocks.field.fillColor=Fill color
 blocks.field.href=External url address
@@ -290,3 +287,20 @@ send=Send
 
 
 c.s.search_query.empty=Empty search query. What are you looking for?
+
+
+weather.sky.state.Clear=Clear sky
+weather.sky.state.PartlyCloudy=Partly cloudy
+weather.sky.state.Cloudy=Cloudy
+weather.sky.state.VaryCloudy=Variable cloudness
+
+
+wind.direction.north=north
+wind.direction.south=south
+wind.direction.east=east
+wind.direction.west=west
+wind.direction.north-west=north-west
+wind.direction.north-east=north-east
+wind.direction.south-west=south-west
+wind.direction.south-east=south-east
+

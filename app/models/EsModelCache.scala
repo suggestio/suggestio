@@ -51,14 +51,11 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
    * @return Тоже самое, что и исходный getById().
    */
   def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+    // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
     val ck = cacheKey(id)
-    // Негативные результаты не кешируются.
-    Cache.getAs[T1](ck) match {
-      case r @ Some(adnn) =>
-        Future successful r
-
-      case None => getByIdAndCache(id, ck)
-    }
+    Future { Cache.getAs[T1](ck) }
+      .filter { _.isDefined }
+      .recoverWith { case ex: NoSuchElementException => getByIdAndCache(id, ck) }
   }
 
   /**

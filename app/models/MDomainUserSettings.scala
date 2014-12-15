@@ -4,14 +4,13 @@ import util._
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
 import io.suggest.util.StorageType._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.domain_user_settings.DUS_Basic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.Path
 import org.hbase.async.{GetRequest, PutRequest}
-import scala.Some
 import scala.collection.JavaConversions._
 import io.suggest.util.SioModelUtil
 
@@ -75,7 +74,6 @@ object MDomainUserSettings extends DfsModelStaticT {
 
   val BACKEND: Backend = StorageUtil.STORAGE match {
     case DFS    => new DfsBackend
-    case HBASE  => new HBaseBackend
   }
 
   type DataMapKey_t = String
@@ -138,47 +136,21 @@ object MDomainUserSettings extends DfsModelStaticT {
       new Path(SiobixFs.dkeyPathConf(dkey), filename)
     }
 
-    def save(d: MDomainUserSettings): Future[_] = future {
-      val path = getPath(d.dkey)
-      if (!d.data.isEmpty) {
-        JsonDfsBackend.writeToPath(path, d.data)
-      } else {
-        fs.delete(path, false)
+    def save(d: MDomainUserSettings): Future[_] = {
+      Future {
+        val path = getPath(d.dkey)
+        if (d.data.nonEmpty) {
+          JsonDfsBackend.writeToPath(path, d.data)
+        } else {
+          fs.delete(path, false)
+        }
       }
     }
 
-    def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = future {
-      val path = getPath(dkey)
-      JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
-    }
-  }
-
-
-  /** Бэкэнд для хранения данных модели в HBase. */
-  class HBaseBackend extends Backend with ModelSerialJava {
-    import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_DPROPS}
-    import io.suggest.model.SioHBaseAsyncClient._
-    import io.suggest.model.HTapConversionsBasic._
-
-    private val CF_DPROPS_B = CF_DPROPS.getBytes
-    private def QUALIFIER = CF_DPROPS_B
-
-    def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
-    def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
-
-    def save(d: MDomainUserSettings): Future[_] = {
-      val key = dkey2rowkey(d.dkey)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS_B, QUALIFIER, serialize(d.data))
-      ahclient.put(putReq)
-    }
-
-    def getProps(dkey: String): Future[DataMap_t] = {
-      val key = dkey2rowkey(dkey)
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, key)
-        .family(CF_DPROPS_B)
-        .qualifier(QUALIFIER)
-      ahclient.get(getReq) map { kvs =>
-        if (kvs.isEmpty) emptyDataMap else deserialize(kvs.head.value)
+    def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = {
+      Future {
+        val path = getPath(dkey)
+        JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
       }
     }
   }

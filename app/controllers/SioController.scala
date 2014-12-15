@@ -1,17 +1,16 @@
 package controllers
 
-import java.io.{FileInputStream, File}
+import java.io.File
 import java.net.JarURLConnection
-import java.nio.file.{StandardCopyOption, Files}
 
 import models.Context
-import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc._
 import play.twirl.api.{TxtFormat, HtmlFormat}
 import util._
 import util.acl.SioRequestHeader
+import util.ws.WsDispatcherActor
 import scala.concurrent.{Promise, Future}
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
@@ -19,14 +18,12 @@ import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
-import io.suggest.img.SioImageUtilT
-import play.api.libs.Files.TemporaryFile
 import models._
-import util.img.{SvgUtil, OutImgFmts}
-import net.sf.jmimemagic.Magic
 import play.api.libs.json.JsString
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -145,45 +142,94 @@ trait SioController extends Controller with ContextT {
     }
     r.withHeaders(CACHE_CONTROL -> v)
   }
+
 }
 
 
-/** Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
-  * Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
-  * 0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
-  */
-trait BruteForceProtect extends SioController with PlayMacroLogsI {
-
-  /** имя модуля по конфигу. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
+/** Трейт, добавляющий константу, хранящую имя текущего модуля, пригодного для использования в конфиге в качестве ключа. */
+trait MyConfName {
+ 
+  /** Имя модуля в ключах конфига. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
     * ко всем объектам. Используется только при инициализации. */
-  val myBfpConfName = getClass.getSimpleName.replace("$", "")
+  val MY_CONF_NAME = getClass.getSimpleName.replace("$", "")
+ 
+}
+
+
+/** Утиль для связи с акторами, обрабатывающими ws-соединения. */
+trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
+
+  /** Сколько асинхронных попыток предпринимать. */
+  val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
+  def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 5
+
+  /** Пауза между повторными попытками отправить уведомление. */
+  val NOTIFY_WS_RETRY_PAUSE_MS = configuration.getLong(s"ctl.ws.notify.$MY_CONF_NAME.retry.pause.ms") getOrElse NOTIFY_WS_RETRY_PAUSE_MS_DFLT
+  def NOTIFY_WS_RETRY_PAUSE_MS_DFLT = 1000L
+
+  /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
+    * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
+  def _notifyWs(wsId: String, msg: Any, counter: Int = 0): Unit = {
+    WsDispatcherActor.getForWsId(wsId)
+      .onComplete {
+        case Success(Some(wsActorRef)) =>
+          wsActorRef ! msg
+        case other =>
+          if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
+            Akka.system.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS milliseconds) {
+              _notifyWs(wsId, msg, counter + 1)
+            }
+            other match {
+              case Success(None) =>
+                LOGGER.trace(s"WS actor $wsId not exists right now. Will retry after $NOTIFY_WS_RETRY_PAUSE_MS ms...")
+              case Failure(ex) =>
+                LOGGER.error(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
+             // подавляем warning на Success(Some(_)), который отрабатывается выше
+              case _ =>
+                // should never happen
+            }
+          } else {
+            LOGGER.warn(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was: $other")
+          }
+      }
+  }
+
+}
+
+
+/** 
+ * Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
+ *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
+ *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
+ */
+trait BruteForceProtect extends SioController with PlayMacroLogsI with MyConfName {
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
-  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$myBfpConfName.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
+  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
   def BRUTEFORCE_LAG_MS_DFLT = 222
 
   /** Префикс в кеше для ip-адреса. */
-  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$myBfpConfName.cache.prefix") getOrElse BRUTEFORCE_CACHE_PREFIX_DFLT
+  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.prefix") getOrElse BRUTEFORCE_CACHE_PREFIX_DFLT
   def BRUTEFORCE_CACHE_PREFIX_DFLT = "bfp:"
 
   /** Какой лаг уже считается лагом текущей атаки? (в миллисекундах) */
-  val BRUTEFORCE_ATTACK_LAG_MS = configuration.getInt(s"bfp.$myBfpConfName.attack.lag.ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
+  val BRUTEFORCE_ATTACK_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.attack.lag.ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
   def BRUTEFORCE_ATTACK_LAG_MS_DFLT = 2000
 
   /** Нормализация кол-ва попыток происходит по этому целому числу. */
-  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$myBfpConfName.try.count.divisor") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
+  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$MY_CONF_NAME.try.count.divisor") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
   def BRUTEFORCE_TRY_COUNT_DIVISOR_DFLT = 2
 
   /** Время хранения в кеше инфы о попытках для ip-адреса. */
-  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl").getOrElse(BRUTEFORCE_CACHE_TTL_SECONDS_DFLT).seconds
+  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl").getOrElse(BRUTEFORCE_CACHE_TTL_SECONDS_DFLT).seconds
   def BRUTEFORCE_CACHE_TTL_SECONDS_DFLT = 30
 
   /** Макс кол-во попыток, после которого запросы будут отправляться в помойку. */
-  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
+  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
   def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 40
 
   def bruteForceLogPrefix(implicit request: RequestHeader): String = {
-    s"bruteForceProtect($myBfpConfName/${request.remoteAddress}): ${request.method} ${request.path}?${request.rawQueryString} : "
+    s"bruteForceProtect($MY_CONF_NAME/${request.remoteAddress}): ${request.method} ${request.path}?${request.rawQueryString} : "
   }
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
@@ -254,68 +300,6 @@ trait BruteForceProtect extends SioController with PlayMacroLogsI {
 }
 
 
-
-/** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI {
-
-  /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String], preserveFmt: Boolean = false)
-                              (implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
-    try {
-      request.body.file("picture") match {
-        case Some(pictureFile) =>
-          val fileRef = pictureFile.ref
-          val srcFile = fileRef.file
-          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-          // Отрабатываем svg: не надо конвертить.
-          val srcMime = srcMagicMatch.getMimeType
-          if (SvgUtil maybeSvgMime srcMime) {
-            // Это svg?
-            if (SvgUtil isSvgFileValid srcFile) {
-              // Это svg. Надо его сжать и переместить в tmp-хранилище.
-              val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
-              val mptmp = MPictureTmp.getForTempFile(srcFile, OutImgFmts.SVG, marker)
-              FileUtils.writeStringToFile(mptmp.file, newSvg)
-              Ok(Img.jsonTempOk(mptmp.filename))
-            } else {
-              val reply = Img.jsonImgError("SVG format invalid or not supported.")
-              NotAcceptable(reply)
-            }
-
-          } else {
-            // Это наверное растровая картинка.
-            val outFmt = if (preserveFmt) {
-              OutImgFmts.forImageMime(srcMime)
-            } else {
-              OutImgFmts.JPEG
-            }
-            try {
-              val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
-              imageUtil.convert(srcFile, mptmp.file)
-              Ok(Img.jsonTempOk(mptmp.filename))
-            } catch {
-              case ex: Throwable =>
-                LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-                val reply = Img.jsonImgError("Unsupported picture format.")
-                NotAcceptable(reply)
-            }
-          }
-
-        // В реквесте не найдена именованая часть, содержащая картинку.
-        case None =>
-          val reply = Img.jsonImgError("picture part not found in request.")
-          NotAcceptable(reply)
-      }
-
-    } finally {
-      // Удалить все файлы, которые были приняты в реквесте.
-      request.body.files.foreach { f =>
-        f.ref.file.delete()
-      }
-    }
-  }
-
-}
 
 
 /** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.

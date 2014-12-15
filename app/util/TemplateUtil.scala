@@ -50,9 +50,9 @@ object TplDataFormatUtil {
     val max = rgbSorted(2)
     val min = rgbSorted(0)
 
-    if( max == min ){
+    if (max == min) {
       List( 0, 0, ((max + min)/2*100).toInt)
-    }else{
+    } else {
 
       val l = ( max + min ) / 2
 
@@ -139,7 +139,7 @@ object TplDataFormatUtil {
 
 
   // Пока локали не работают, используем общий для всех форматтер данных.
-  private val pcFmt = {
+  private def pcFmt = {
     val currFmt = NumberFormat.getPercentInstance
     currFmt.setMinimumFractionDigits(0)
     currFmt.setMaximumFractionDigits(2)
@@ -162,6 +162,12 @@ object TplDataFormatUtil {
   }
 
 
+  private def temperatureFmt = new DecimalFormat("+#;(-#)")
+  def formatTemperature(t: Float): String = {
+    temperatureFmt.format(t)
+  }
+
+
   /** Лимитирование длины строки слева. Если строка длинее указанного порога,
     * то она будет урезана и в конце появится многоточие. */
   def strLimitLen(str: String, maxLen: Int): String = {
@@ -175,6 +181,10 @@ object TplDataFormatUtil {
   private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
   def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
+
+  private val w3cDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+  def w3cDate(d: ReadablePartial) = w3cDateFormat.print(d)
+  def w3cDate(dt: ReadableInstant) = w3cDateFormat.print(dt)
 
   private val numericDtFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   // TODO Нужно прикрутить поддержку timezone, используя context

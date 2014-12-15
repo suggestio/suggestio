@@ -15,7 +15,7 @@ import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
 import util.{AsyncUtil, PlayMacroLogsImpl}
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import util.billing.MmpDailyBilling
@@ -242,7 +242,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
 
     // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
-    val adAdvInfoFut = future {
+    val adAdvInfoFut = Future {
       DB.withConnection { implicit c =>
         // Собираем всю инфу о размещении этой рекламной карточки
         val advsOk = MAdvOk.findNotExpiredByAdId(adId)
@@ -477,7 +477,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     * @return Новый adves, который НЕ содержит уже размещаемые карточки.
     */
   private def filterEntiesByBusyRcvrs(adId: String, adves: List[AdvFormEntry]): Future[List[AdvFormEntry]] = {
-    val advsResultFut = future {
+    val advsResultFut = Future {
       DB.withConnection { implicit c =>
         val advsOk = MAdvOk.findNotExpiredByAdId(adId)
         val advsReq = MAdvReq.findByAdId(adId)
@@ -591,7 +591,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       if (request.isProducerAdmin) {
         // Узел-продьюсер смотрит инфу по размещению карточки. Нужно отобразить ему список по текущим векторам размещения.
         val limit = ADVS_MODE_SELECT_LIMIT
-        val advsFut = future {
+        val advsFut = Future {
           DB.withConnection { implicit c =>
             val advsOk = MAdvOk.findNotExpiredByAdId(adId, limit = limit)
             val advsReq = MAdvReq.findNotExpiredByAdId(adId, limit = limit)
@@ -616,7 +616,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       } else {
         // Доступ не-продьюсера к чужой рекламной карточке. Это узел-ресивер или узел-модератор, которому делегировали возможности размещения.
         val advOptFut = advId.fold [Future[Option[MAdvI]]] (Future successful None) { _advId =>
-          future {
+          Future {
             DB.withConnection { implicit c =>
               MAdvOk.getById(_advId) orElse MAdvReq.getById(_advId)
             }
@@ -755,7 +755,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
-        future {
+        Future {
           MmpDailyBilling.refuseAdvReq(request.advReq, reason)
         }(AsyncUtil.jdbcExecutionContext)
           .map { _ =>
@@ -773,7 +773,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    */
   def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
-    future {
+    Future {
       MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
     }(AsyncUtil.jdbcExecutionContext)
       .map { _ =>

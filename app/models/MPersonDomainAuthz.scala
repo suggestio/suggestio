@@ -3,19 +3,17 @@ package models
 import java.io.IOException
 
 import org.joda.time.{ReadableDuration, DateTime, Duration}
-import io.suggest.util.{SioModelUtil, StringUtil}
+import io.suggest.util.StringUtil
 import util._
 import SiobixFs.fs
 import org.apache.hadoop.fs.{FileStatus, Path}
-import io.suggest.model.{AsyncHbaseScannerFold, JsonDfsBackend}
+import io.suggest.model.JsonDfsBackend
 import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.collection.JavaConversions._
-import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
 import play.api.Logger
 import org.elasticsearch.client.Client
 
@@ -135,7 +133,6 @@ object MPersonDomainAuthz {
 
   private val BACKEND: Backend = StorageUtil.STORAGE match {
     case DFS    => new DfsBackend
-    case HBASE  => new HBaseBackend
   }
 
   // Длина кода валидации
@@ -322,7 +319,7 @@ object MPersonDomainAuthz {
      * @param dkey
      * @return
      */
-    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]] = future {
+    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]] = Future {
       val path = dkeyAllPath(dkey)
       fs.listStatus(path)
         .toList
@@ -334,98 +331,56 @@ object MPersonDomainAuthz {
 
     def save(data: MPersonDomainAuthz): Future[_] = {
       val filepath = dkeyPersonPath(dkey = data.dkey,  personId = data.personId)
-      future {
+      Future {
         JsonDfsBackend.writeToPath(filepath, data)
       }
     }
 
     def delete(personId: String, dkey: String): Future[Any] = {
       val path = dkeyPersonPath(dkey=dkey, personId=personId)
-      future { fs.delete(path, false) }
+      Future {
+        fs.delete(path, false)
+      }
     }
 
     def getForPersonDkey(personId: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
       val path = dkeyPersonPath(dkey=dkey, personId=personId)
-      future { readOne(path) }
-    }
-
-    override def getForPersonDkeys(personId: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = future {
-      dkeys
-        .map { _dkey => dkeyPersonPath(dkey = _dkey, personId=personId) }
-        .filter { fs.exists }
-        .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
-    }
-
-    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = future {
-      val personDomainsDir = personPath(personId)
-      val fss = try {
-        fs.listStatus(personDomainsDir)
-      } catch {
-        case ex: IOException =>
-          LOGGER.warn("Suppressed failure call fs.listStatus() for dir " + personDomainsDir, ex)
-          Array.empty[FileStatus]
-      }
-      fss.foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
-        if (fstatus.isDirectory) {
-          val authzPath = authzFilePath(fstatus.getPath)
-          readOneAcc(acc, authzPath)
-        } else {
-          acc
-        }
+      Future {
+        readOne(path)
       }
     }
-  }
 
-
-  /** При использовании HBase использовать id юзера как ряд, а dkey как колонку. */
-  class HBaseBackend extends Backend with ModelSerialJson {
-    import io.suggest.model.MObject.{CF_UAUTHZ, HTABLE_NAME_BYTES}
-    import io.suggest.model.SioHBaseAsyncClient._
-
-    private val CF_UAUTHZ_B = CF_UAUTHZ.getBytes
-
-    def personId2key(personId: String): Array[Byte]  = SioModelUtil.serializeStrForHCellCoord(personId)
-    def dkey2qualifier(dkey: String): Array[Byte]    = SioModelUtil.dkey2rowKey(dkey)
-    def deserialize(data: Array[Byte])               = deserializeTo[MPersonDomainAuthz](data)
-
-    def save(data: MPersonDomainAuthz): Future[_] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.personId), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))
-      ahclient.put(putReq)
-    }
-
-    def delete(personId: String, dkey: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(personId), CF_UAUTHZ_B, dkey2qualifier(dkey))
-      ahclient.delete(delReq)
-    }
-
-    def getForPersonDkey(personId: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(personId))
-        .family(CF_UAUTHZ_B)
-        .qualifier(dkey2qualifier(dkey))
-      ahclient.get(getReq) map { kvs =>
-        if (kvs.isEmpty)  None  else  Some(deserialize(kvs.head.value))
+    override def getForPersonDkeys(personId: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = {
+      Future {
+        dkeys
+          .map { _dkey => dkeyPersonPath(dkey = _dkey, personId=personId) }
+          .filter { fs.exists }
+          .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
       }
     }
 
     def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(personId)).family(CF_UAUTHZ)
-      ahclient.get(getReq) map { kvs =>
-        kvs.map { kv => deserialize(kv.value) }.toList
-      }
-    }
-
-    def getForDkey(dkey: String): Future[List[MPersonDomainAuthz]] = {
-      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
-      scanner.setFamily(CF_UAUTHZ)
-      scanner.setQualifier(dkey2qualifier(dkey))
-      val folder = new AsyncHbaseScannerFold[List[MPersonDomainAuthz]] {
-        def fold(acc0: List[MPersonDomainAuthz], kv: KeyValue): List[MPersonDomainAuthz] = {
-          deserialize(kv.value()) :: acc0
+      Future {
+        val personDomainsDir = personPath(personId)
+        val fss = try {
+          fs.listStatus(personDomainsDir)
+        } catch {
+          case ex: IOException =>
+            LOGGER.warn("Suppressed failure call fs.listStatus() for dir " + personDomainsDir, ex)
+            Array.empty[FileStatus]
+        }
+        fss.foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
+          if (fstatus.isDirectory) {
+            val authzPath = authzFilePath(fstatus.getPath)
+            readOneAcc(acc, authzPath)
+          } else {
+            acc
+          }
         }
       }
-      folder(Nil, scanner)
     }
   }
+
 
 }
 

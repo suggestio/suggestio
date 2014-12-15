@@ -37,16 +37,20 @@ object WelcomeUtil {
     getWelcomeAdOpt( node.meta.welcomeAdId )
   }
 
-  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[ImgIdKey]) = {
-    ImgFormUtil.updateOrigImg(
-      needImgs = newWaImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
-      oldImgs = waOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
+  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImg]) = {
+    val saveAllFut = ImgFormUtil.updateOrigImgFull(
+      needImgs = newWaImgOpt.toSeq,
+      oldImgs = waOpt
+        .flatMap(_.imgs.headOption)
+        .map { kv => MImg(kv._2.filename) }
+        .toIterable
     )
+    saveAllFut map { _.headOption }
   }
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
-  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
+  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[MImg]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
       updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
@@ -58,10 +62,12 @@ object WelcomeUtil {
               { waId => MWelcomeAd.deleteById(waId).map { _ => None } }
 
         // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-        case newImgInfoOpt @ Some(newImgInfo) =>
-          val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
-          newWelcomeAd.save
-            .map { Some.apply }
+        case Some(newImg) =>
+          ImgFormUtil.img2imgInfo(newImg) flatMap { newImgInfo =>
+            val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
+            newWelcomeAd.save
+              .map { Some.apply }
+          }
       }
     }
   }
@@ -91,7 +97,7 @@ object WelcomeUtil {
   def welcomeAd2iik(waOpt: Option[MWelcomeAd]) = {
     waOpt
       .flatMap { _.imgs.headOption }
-      .map[OrigImgIdKey] { img => img._2 }
+      .map[MImg] { img => MImg(img._2.filename) }
   }
 
 
@@ -111,8 +117,8 @@ object WelcomeUtil {
       .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful colorBg(adnNode)
       } { bgImgFilename =>
-        val oiik = OrigImgIdKey.apply(bgImgFilename)
-        oiik.getBaseImageWH map {
+        val oiik = MImg(bgImgFilename)
+        oiik.original.getImageWH map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ => colorBg(adnNode)
@@ -133,8 +139,8 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: OrigImgIdKey, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
-    val oiik2 = oiik.uncropped
+  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+    val oiik2 = oiik.original
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr =>
@@ -142,12 +148,12 @@ object WelcomeUtil {
       }
       .fold [ImgUrlInfoT] {
         new ImgUrlInfoT {
-          override def call = CdnUtil.getImg(oiik2.filename)
+          override def call = CdnUtil.dynImg(oiik2.fileName)
           override def meta = Some(origMeta)
         }
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = DynImgArgs(oiik2, imOps)
+        val dynArgs = oiik2.copy(dynImgOps = imOps)
         new ImgUrlInfoT {
           override def call = CdnUtil.dynImg(dynArgs)
           override def meta = Some(bss)
@@ -160,7 +166,7 @@ object WelcomeUtil {
     * @return Список ImOp в прямом порядке.
     */
   def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
-    val gravity = GravityOp(ImGravities.Center)
+    val gravity = ImGravities.Center
     val acc0: List[ImOp] = Nil
     val bgc = screen.pixelRatio.bgCompression
     val acc1 = gravity ::

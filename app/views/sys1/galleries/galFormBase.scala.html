@@ -1,0 +1,15 @@
+@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@galBase(title = title, hPathAfter = hPathAfter) {
+
+  <script type="text/javascript">
+    @* Сразу открываем веб-сокет в фоне. Он нужен для получения задетекченного цвета картинки. *@
+    var ws = new WebSocket("@ctx.wsUrlPrefix@routes.SysGallery.ws(ctx.ctxIdStr)");
+    ws.onmessage = function (evt) {
+      var received_msg = evt.data;
+      alert("WS message is received: " + received_msg);
+    };
+  </script>
+
+  @content
+}

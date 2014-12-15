@@ -1,0 +1,20 @@
+@(bf: BfWidth, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@* Поле настройки ширины блока.
+   2014.oct.14: Верстка была скопипасчена из _heightTpl и дублирует код.
+   В будущем скорее всего тут что-то будет изменено. *@
+
+@import ctx._
+
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
+
+<div class="block-height-editor js-block-height-editor">
+
+  <div class="block-height-editor__button js-block-width-editor-button" data-change-direction="decrease"><div></div></div>
+  <div class="block-height-editor__button block-height-editor__button_increase js-block-width-editor-button" data-change-direction="increase"><div></div></div>
+
+  @defining( af(bfNameBase) ) { formField =>
+    <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.availableVals.min" data-max-value="@bf.availableVals.max"/>
+  }
+
+</div>

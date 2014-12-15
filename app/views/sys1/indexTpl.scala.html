@@ -2,14 +2,12 @@
 
 
 @* Подшаблон генерации квадратной кнопки. *@
-@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+@btn(href: Call, paddingPx: Int)(btnText: Html) = {
   <div class="i __btn">
 
     <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
       @btnText
     </a>
-
-    @afterBtn
   </div>
 }
 
@@ -20,15 +18,12 @@
 
     <div class="i-list">
 
-      @btn(routes.Sys.dkeysListAll, 40) { ОБЗОР<br/>САЙТОВ }{
-        <a href="@routes.Sys.addSiteForm" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
-          +добавить<br/>сайт
-        </a>
-      }
+      @btn(routes.Sys.dkeysListAll(), 40) { ОБЗОР<br/>САЙТОВ }
+      @btn(routes.Sys.siobixIndex(), 52) { КРАВЛЕР }
 
-      @btn(routes.Sys.siobixIndex, 52) { КРАВЛЕР }{ }
-      @btn(routes.Sys.indicesIndex, 52) { ИНДЕКСЫ }{ }
-      @btn(routes.SysMarket.index, 52) { МАРКЕТ }{ }
+      @btn(routes.SysMarket.index(), 52) { МАРКЕТ }
+      @btn(routes.SysGallery.showList(), 52) { ГАЛЕРЕИ }
+      @btn(routes.SysAi.index(), 52) { AI }
 
     </div>
 

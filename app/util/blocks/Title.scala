@@ -1,7 +1,6 @@
 package util.blocks
 
 import models._
-import util.blocks.BlocksEditorFields.BefText
 import play.api.data.{Mapping, FormError}
 
 /**

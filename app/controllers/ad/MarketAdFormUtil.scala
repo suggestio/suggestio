@@ -1,10 +1,9 @@
 package controllers.ad
 
 import models._
+import models.blk.{AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
-import play.api.Play.current
-import io.suggest.ym.parsers.Price
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.ad.RichDescr
@@ -24,7 +23,7 @@ object MarketAdFormUtil {
 
 
   /** Маппинг для выравнивания текста в рамках поля. */
-  val textAlignOptM: Mapping[Option[TextAlign]] = {
+  def textAlignOptM: Mapping[Option[TextAlign]] = {
     optional(text(maxLength = 10))
       .transform[Option[TextAlign]](
         {_.filter(_.length <= 10)
@@ -43,8 +42,8 @@ object MarketAdFormUtil {
   }
 
 
-  private def fontSizeOptM(fontSizes: Seq[FontSize]): Mapping[Option[FontSize]] = {
-    val hasFontSizes = !fontSizes.isEmpty
+  private def fontSizeOptM(fontSizes: Iterable[FontSize]): Mapping[Option[FontSize]] = {
+    val hasFontSizes = fontSizes.nonEmpty
     val (min, max) = if (hasFontSizes) {
       val minSz = fontSizes.iterator.map(_.size).min
       val maxSz = fontSizes.iterator.map(_.size).max
@@ -69,8 +68,8 @@ object MarketAdFormUtil {
   /** Маппер для значения font.family. */
   def fontFamilyOptM: Mapping[Option[String]] = {
     optional(
-      // TODO RELEASE: Добавить валидацию перед запуском
       text(maxLength = 32)
+        .verifying("error.font.unknown", {s => blk.Fonts.values.exists(_.fileName == s)} )
     )
   }
 
@@ -105,7 +104,7 @@ object MarketAdFormUtil {
    * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Seq[FontSize]): Mapping[AOFieldFont] = {
+  def getFontM(withFontSizes: Iterable[FontSize]): Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
       "size"   -> fontSizeOptM(withFontSizes),
@@ -131,13 +130,30 @@ object MarketAdFormUtil {
   }
 
 
+  /** Маппер для активации и настройки покрывающей сетки-паттерна указанного цвета. */
+  def coveringPatternM: Mapping[Option[String]] = {
+    tuple(
+      "enabled" -> boolean,
+      "color"   -> optional(colorM)
+    )
+    .verifying("error.required", {m => m match {
+      case (true, None)   => false
+      case _              => true
+    }})
+    .transform[Option[String]] (
+      { case (isEnabled, colorOpt) => colorOpt.filter(_ => isEnabled) },
+      { colorOpt => (colorOpt.isDefined, colorOpt) }
+    )
+  }
+
+
   /** Парсер координаты. Координата может приходить нецелой, поэтому нужно округлить. */
-  val coordM: Mapping[Int] = {
+  def coordM: Mapping[Int] = {
     // TODO Достаточно парсить первые цифры до $ или до десятичной точки/запятой, остальное отбрасывать.
     doubleM
       .transform[Int](_.toInt, _.toDouble)
       .verifying("error.coord.too.big", { _ <= 2048 })
-      .verifying("error.coord.negative", { _ >= 0 })
+      .transform[Int](Math.max(0, _), identity)
   }
   def coords2DM: Mapping[Coords2D] = {
     // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
@@ -192,70 +208,8 @@ object MarketAdFormUtil {
     }
   }
 
-  /** Поле с ценой. Является вариацией float-поля. */
-  def aoPriceFieldM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOPriceField] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> priceStrictM,
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {case ((rawPrice, price), font, coordsOpt) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-      }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font, coords) )
-      }
-    } else {
-      mapping(
-        "value" -> priceStrictM,
-        "font"  -> fontM
-      )
-      {case ((rawPrice, price), font) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font) )
-      }
-    }
-  }
 
-
-  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  def aoPriceOptM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOPriceField]] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> optional(priceStrictM),
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {(pricePairOpt, font, coordsOpt) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font, coords)
-      }}
-    } else {
-      mapping(
-        "value" -> optional(priceStrictM),
-        "font"  -> fontM
-      )
-      {(pricePairOpt, font) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font)
-      }}
-    }
-  }
-
+  val COVERING_PATTERN_COLOR_FN = "cpc"
 
   /** Маппим необязательное Float-поле. */
   def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
@@ -288,12 +242,21 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, richDescrOpt: Option[RichDescr]): AdFormMResult = {
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String],
+                  richDescrOpt: Option[RichDescr], bgColor: String): AdFormMResult = {
+    val colors: Map[String, String] = {
+      // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
+      var ci = bmr.bd.colors.iterator
+      ci ++= Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
+      if (pattern.isDefined)
+        ci ++= Iterator(COVERING_PATTERN_COLOR_FN -> pattern.get)
+      ci.toMap
+    }
     val mad = MAd(
       producerId  = null,
       offers      = bmr.bd.offers,
       blockMeta   = bmr.bd.blockMeta,
-      colors      = bmr.bd.colors,
+      colors      = colors,
       imgs        = null,
       userCatId   = userCatId,
       richDescrOpt = richDescrOpt
@@ -302,10 +265,13 @@ object MarketAdFormUtil {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[RichDescr])] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
-    Some( (mad.userCatId, bmr, mad.richDescrOpt) )
+    val pattern = mad.colors.get(COVERING_PATTERN_COLOR_FN)
+    import AdColorFns._
+    val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
+    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )
   }
 
 

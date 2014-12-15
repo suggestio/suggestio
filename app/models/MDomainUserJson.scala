@@ -5,12 +5,9 @@ import com.google.common.io.CharStreams
 import java.io.{PrintWriter, InputStreamReader}
 import util.{StorageUtil, SiobixFs, DkeyModelT, DfsModelStaticT}
 import io.suggest.util.StorageType._
-import scala.concurrent.{future, Future}
+import scala.concurrent.Future
 import org.apache.hadoop.fs.Path
 import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{GetRequest, PutRequest}
-import scala.collection.JavaConversions._
-import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -42,7 +39,6 @@ object MDomainUserJson extends DfsModelStaticT {
 
   private val BACKEND: Backend = StorageUtil.STORAGE match {
     case DFS   => new DfsBackend
-    case HBASE => new HBaseBackend
   }
 
 
@@ -70,72 +66,43 @@ object MDomainUserJson extends DfsModelStaticT {
      */
     private def getPath(dkey:String) : Path = new Path(SiobixFs.dkeyPathConf(dkey), filename)
 
-    def save(j: MDomainUserJson): Future[_] = future {
-      import j._
-      val path = getPath(dkey)
-      if (data.isEmpty) {
-        fs.delete(path, false)
-      } else {
-        val os = fs.create(path, true)
-        try {
-          new PrintWriter(os).print(data)
+    def save(j: MDomainUserJson): Future[_] = {
+      Future {
+        import j._
+        val path = getPath(dkey)
+        if (data.isEmpty) {
+          fs.delete(path, false)
+        } else {
+          val os = fs.create(path, true)
+          try {
+            new PrintWriter(os).print(data)
 
-        } finally {
-          os.close()
+          } finally {
+            os.close()
+          }
         }
       }
     }
 
-    def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = future {
-      val path = getPath(dkey)
-      fs.exists(path) match {
-        case true =>
-          val is = fs.open(path)
-          try {
-            // Прочитать весь файл в строку
-            val result = new MDomainUserJson(
-              dkey = dkey,
-              data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
-            )
-            Some(result)
-
-          } finally {
-            is.close()
-          }
-
-        case false => None
-      }
-    }
-  }
-
-
-  class HBaseBackend extends Backend {
-    import io.suggest.model.MObject.{CF_DDATA, HTABLE_NAME_BYTES}
-    import io.suggest.model.SioHBaseAsyncClient._
-    import io.suggest.model.HTapConversionsBasic._
-
-    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
-    private val CF_DDATA_B = CF_DDATA.getBytes
-    private val QUALIFIER: Array[Byte] = "uj".getBytes
-
-    def deserialize(j: Array[Byte]): String = j
-
-    def save(j: MDomainUserJson): Future[_] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2rowkey(j.dkey), CF_DDATA_B, QUALIFIER, j.data:Array[Byte])
-      ahclient.put(putReq)
-    }
-
     def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey))
-        .family(CF_DDATA_B)
-        .qualifier(QUALIFIER)
-      ahclient.get(getReq).map { kvs =>
-        if (kvs.isEmpty) {
-          None
-        } else {
-          val data: String = kvs.head.value
-          val result = MDomainUserJson(dkey=dkey, data=data)
-          Some(result)
+      Future {
+        val path = getPath(dkey)
+        fs.exists(path) match {
+          case true =>
+            val is = fs.open(path)
+            try {
+              // Прочитать весь файл в строку
+              val result = new MDomainUserJson(
+                dkey = dkey,
+                data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
+              )
+              Some(result)
+
+            } finally {
+              is.close()
+            }
+
+          case false => None
         }
       }
     }

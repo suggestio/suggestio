@@ -1,10 +1,13 @@
 package controllers
 
 import models.CallBackReqCallTimes.CallBackReqCallTime
+import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import org.joda.time.DateTime
 import play.api.i18n.Messages
+import play.api.libs.iteratee.Enumerator
 import util.billing.MmpDailyBilling
 import util.img._
+import util.mail.MailerWrapper
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -17,6 +20,7 @@ import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import MarketLkAdnEdit.logoKM
+import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 
 /**
  * Suggest.io
@@ -24,7 +28,7 @@ import MarketLkAdnEdit.logoKM
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
+object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator with SiteMapXmlCtl {
 
   import LOGGER._
 
@@ -306,7 +310,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       },
       {case (mir, logoOpt) =>
         assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs = Nil)
+        val savedLogoFut = ImgFormUtil.updateOrigImgFull(logoOpt.toSeq, oldImgs = Nil)
+          .flatMap { vs => ImgFormUtil.optImg2OptImgInfo(vs.headOption) }
         savedLogoFut flatMap { savedLogoOpt =>
           val mir2 = mir.copy(
             adnNode = mir.adnNode.map {
@@ -337,15 +342,28 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       warn(s"""I don't know, whom to notify about new invite request. Add following setting into your application.conf:\n  $suEmailsConfKey = ["support@sugest.io"]""")
       Seq("support@suggest.io")
     }
-    val mailMsg = use[MailerPlugin].email
-    mailMsg.setRecipient(emails : _*)
-    mailMsg.setFrom("no-reply@suggest.io")
-    mailMsg.setSubject("Новый запрос на подключение | Suggest.io")
+    val msg = MailerWrapper.instance
+    msg.setRecipients(emails : _*)
+    msg.setFrom("no-reply@suggest.io")
+    msg.setSubject("Новый запрос на подключение | Suggest.io")
     val ctx = ContextImpl()
     val mir1 = mir0.copy(id = Some(irId))
-    mailMsg.send(
-      bodyText = views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx)
-    )
+    msg.setText( views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx) )
+    msg.send()
+  }
+
+
+  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
+  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
+    Enumerator(
+      routes.MarketJoin.joinAdvRequest()
+    ) map { call =>
+      SiteMapUrl(
+        loc = ctx.SC_URL_PREFIX + call.url,
+        lastMod = Some( PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
+        changeFreq = Some( ChangeFreqs.weekly )
+      )
+    }
   }
 
 }

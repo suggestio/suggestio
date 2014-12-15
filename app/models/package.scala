@@ -25,9 +25,6 @@ package object models {
   type MShopPriceList       = ym.model.MShopPriceList
   val  MShopPriceList       = ym.model.MShopPriceList
 
-  type MShopPromoOffer      = ym.model.MShopPromoOffer
-  val  MShopPromoOffer      = ym.model.MShopPromoOffer
-
   type MYmCategory          = ym.model.MYmCategory
   val  MYmCategory          = ym.model.MYmCategory
 
@@ -123,6 +120,7 @@ package object models {
   type SelectPolicy         = SelectPolicies.SelectPolicy
 
   type Context              = util.Context
+  val  Context              = util.Context
   type BlockData            = common.IBlockMeta with ym.model.ad.IOffers with common.IColors
 
   val  BlocksConf           = util.blocks.BlocksConf
@@ -131,14 +129,14 @@ package object models {
   type BlockFieldT          = util.blocks.BlockFieldT
   type BlockAOValueFieldT   = util.blocks.BlockAOValueFieldT
   type BfHeight             = util.blocks.BfHeight
-  type BfDiscount           = util.blocks.BfDiscount
+  type BfWidth              = util.blocks.BfWidth
   type BfText               = util.blocks.BfText
-  type BfPrice              = util.blocks.BfPrice
   type BfString             = util.blocks.BfString
   type BfImage              = util.blocks.BfImage
   type BfColor              = util.blocks.BfColor
+  type BfCheckbox           = util.blocks.BfCheckbox
 
-  //type ICoords2D            = ym.model.ad.ICoords2D
+  type ICoords2D            = ym.model.ad.ICoords2D
   type Coords2D             = ym.model.ad.Coords2D
   val  Coords2D             = ym.model.ad.Coords2D
 
@@ -197,12 +195,11 @@ package object models {
   type MUserImg2            = io.suggest.model.MUserImg2
   val  MUserImg2            = io.suggest.model.MUserImg2
 
-  type BlockSvg             = BlocksSvg.BlockSvg
-  type BSvgColorName        = BSvgColorNames.BSvgColorName
-  type BSvgColorMap         = BSvgColorsUtil.BSvgColorMap
-
   type RemoteErrorType      = RemoteErrorTypes.RemoteErrorType
 
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
+
+  type ImgMetaI             = io.suggest.model.ImgMetaI
+
 }

@@ -13,7 +13,7 @@ import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import play.api.data.Mapping
-import org.joda.time.{Period, LocalDate}
+import org.joda.time.{DateTimeZone, Period, LocalDate}
 import io.suggest.ym.YmParsers
 import org.joda.time.format.ISOPeriodFormat
 import models._
@@ -84,6 +84,30 @@ object FormUtil {
     } catch {
       case ex: Exception => false
     }
+  }
+
+  /** Маппер поля формы для опциональной time-зоны. */
+  def timeZoneOptM: Mapping[Option[DateTimeZone]] = {
+    val ntm = nonEmptyText(minLength = 2, maxLength = 64)
+    toStrOptM(ntm, strTrimSanitizeF)
+      .transform [Option[DateTimeZone]] (
+        {tzRawOpt =>
+          tzRawOpt.flatMap { tzRaw =>
+            try {
+              Option( DateTimeZone.forID(tzRaw) )
+            } catch {
+              case ex: Exception => None
+            }
+          }
+        },
+        { _.map(_.getID) }
+      )
+  }
+  /** Маппер поля формы для обязательной time-зоны. */
+  def timeZoneM: Mapping[DateTimeZone] = {
+    timeZoneOptM
+      .verifying("error.invalid", { _.isDefined })
+      .transform [DateTimeZone] (_.get, Some.apply)
   }
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
@@ -616,6 +640,25 @@ object FormUtil {
     {mim =>
       Some((mim.height, mim.height))
     }
+  }
+
+
+  /** Копипаст из FormUrlEncodedParser. Распарсить строку qs-аргументов в последовательность. */
+  def parseToPairs(data: String, encoding: String = "utf-8"): Iterator[(String, String)] = {
+    import java.net._
+    // Generate all the pairs, with potentially redundant key values, by parsing the body content.
+    data.split('&')
+      .iterator
+      .flatMap { param =>
+        if (param.contains("=") && !param.startsWith("=")) {
+          val parts = param.split("=")
+          val key = URLDecoder.decode(parts.head, encoding)
+          val value = URLDecoder.decode(parts.tail.headOption.getOrElse(""), encoding)
+          Seq(key -> value)
+        } else {
+          Nil
+        }
+      }
   }
 
 }

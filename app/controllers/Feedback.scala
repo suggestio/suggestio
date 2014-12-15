@@ -1,7 +1,7 @@
 package controllers
 
+import util.mail.MailerWrapper
 import util.{PlayLazyMacroLogsImpl, ContextT}
-import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.data._
 import play.api.data.Forms._
 import util.HtmlSanitizer.supportMsgPolicy
@@ -66,18 +66,19 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
       },
       {case (email1, message, captchaId, captchaTyped) =>
         // Отправить письмо на ящик suggest.io.
-        val mail = use[MailerPlugin].email
+        val msg = MailerWrapper.instance
         // Разделять сабжи в зависимости от залогиненности юзеров.
         val subjectEnd = pwOpt match {
           case Some(pw) => "клиента " + pw.personId
           case None     => "посетителя сайта"
         }
-        mail.setSubject("Сообщение от " + subjectEnd)
-        mail.setFrom(email1)
-        mail.addHeader(REPLY_TO_HDR, email1)
-        mail.setRecipient(FEEDBACK_RCVR_EMAILS : _*)
+        msg.setSubject("Сообщение от " + subjectEnd)
+        msg.setFrom(email1)
+        msg.setReplyTo(email1)
+        msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
         val ctx = getContext2
-        mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
+        msg.setText( feedbackMailTxtTpl(email1, message)(ctx) )
+        msg.send()
         rmCaptcha(formBinded) {
           // Отредиректить юзера куда-нибудь на главную, стерев капчу из кукисов.
           Redirect(models.MAIN_PAGE_CALL)

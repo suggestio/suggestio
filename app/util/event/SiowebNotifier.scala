@@ -1,16 +1,16 @@
 package util.event
 
 import io.suggest.event._
+import models.im.MLocalImg
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import scala.concurrent.future
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import SiowebEsUtil.client
 
 /**
@@ -45,7 +45,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     controllers.MarketShowcase,
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
-    new MBillContract.DelContractsWhenAdnNodeDeleted
+    new MBillContract.DelContractsWhenAdnNodeDeleted,
+    MLocalImg
   )
 
   /** SiowebSup собирается запустить сие. */
@@ -56,16 +57,16 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   /** Сабжевый актор стартанул. Надо выполнить асинхронно какие-то действия.
    * Вызывается из preStart() актора.
    */
-  private def snAfterStartAsync = future {
-    staticSubscribeAllSync()
+  private def snAfterStartAsync = {
+    Future {
+      staticSubscribeAllSync()
+    }
   }
 
   import Implicts.sn
 
   private def deleteAdsOnAdnNodeDeleteSNSC = new SNStaticSubscriber {
-    def snMap: Seq[(Classifier, Seq[Subscriber])] = {
-      DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
-    }
+    def snMap = DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
   }
 
 }

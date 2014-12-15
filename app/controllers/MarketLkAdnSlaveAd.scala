@@ -6,11 +6,10 @@ import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
 import models._
-import com.typesafe.plugin.{use, MailerPlugin}
+import util.mail.MailerWrapper
 import views.html.market.lk.adn._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import play.api.Play.current
 
 /**
  * Suggest.io
@@ -95,16 +94,14 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
         if (emails.isEmpty) {
           warn(s"notifyAdDisabled(${mad.id.get}): No notify emails found for shop ${slaveNode.id.get}")
         } else {
-          val mail = use[MailerPlugin].email
-          mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
-          mail.setFrom("no-reply@suggest.io")
-          mail.setRecipient(emails : _*)
+          val msg = MailerWrapper.instance
+          msg.setSubject("Suggest.io | Отключена ваша рекламная карточка")
+          msg.setFrom("no-reply@suggest.io")
+          msg.setRecipients(emails : _*)
           val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
-          mail.send(
-            // TODO Вынести письма за пределы shop.
-            bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx),
-            bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx)
-          )
+          msg.setHtml( views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx) )
+          msg.setText( views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx) )
+          msg.send()
         }
       }
     }
@@ -118,10 +115,10 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
   def _showSlaveAds(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     // Тут подборка рекламы, которая собственная для указанного узла-продьюсера.
     val listAdnId = List(adnId)
-    val req = AdSearch(
-      receiverIds = request.supNode.id.get :: listAdnId,
-      producerIds = listAdnId
-    )
+    val req = new AdSearch {
+      override def receiverIds = request.supNode.id.get :: listAdnId
+      override def producerIds = listAdnId
+    }
     MAd.dynSearchRt(req) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,

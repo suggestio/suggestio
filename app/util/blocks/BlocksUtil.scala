@@ -1,5 +1,7 @@
 package util.blocks
 
+import models.blk._
+import models.im.MImg
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -9,32 +11,19 @@ import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
-import controllers.MarketAdPreview.PreviewFormDefaults
-import io.suggest.img.SioImageUtilT
-import util.img.ImgInfo4Save
-import util.FormUtil
 import play.twirl.api.{HtmlFormat, Template5}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.14 21:50
- * Description:
+ * Description: Всякая утиль для блоков, в основном для редактора блоков.
  */
 
 object BlocksUtil {
 
-  type BlockImgMap = Map[String, ImgInfo4Save[ImgIdKey]]
-
-  val BLOCK_ID_FN = "blockId"
-
-  val I18N_PREFIX = "blocks.field."
-
-  /** Цвет фона под картинкой, когда та ещё не загружена. */
-  val IMG_BG_COLOR_FN = "ibgc"
-
-  val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
-    .transform[String](strTrimSanitizeF, strIdentityF)
+  type BlockImgEntry = (String, MImg)
+  type BlockImgMap = Map[String, MImg]
 
   def bDescriptionM = publishedTextM
 
@@ -49,118 +38,78 @@ object BlocksUtil {
 
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
 
-  // Допустимые ширины блоков.
-  // TODO Нужно зафиксировать допустимые значения ширины через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
-  val BLOCK_WIDTH_NORMAL_PX = 300
-  val BLOCK_WIDTH_NARROW_PX = 140
-
-  /** Линейка размеров шрифтов. */
-  val FONT_SIZES_DFLT: List[FontSize] = List(
-    FontSize(10, 8), FontSize(12, 10), FontSize(14, 12), FontSize(16, 14),
-    FontSize(18, 16), FontSize(22, 20), FontSize(26, 24), FontSize(30, 28), FontSize(34, 30), FontSize(38, 34),
-    FontSize(42, 38), FontSize(46, 42), FontSize(50, 46), FontSize(54, 50), FontSize(58, 54), FontSize(62, 58),
-    FontSize(66, 62), FontSize(70, 66), FontSize(74, 70), FontSize(80, 76), FontSize(84, 80)
-  )
 }
 
+
 import BlocksUtil._
+
+
+/** Трейт для значений BlockEditorField. */
+sealed trait BefValT { bv =>
+  type VT
+  type BFT <: BlockFieldT { type T = VT }
+  def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, HtmlFormat.Appendable]
+  def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    fieldTemplate.render(bf, bfNameBase, af, bc, ctx)
+  }
+}
 
 
 object BlocksEditorFields extends Enumeration {
 
   // TODO Наверное надо параметризовать BFT или T, иначе тут какая-то задница с типами получается.
-  protected abstract case class Val(name: String) extends super.Val(name) {
-    type T
-    type BFT <: BlockFieldT
-    def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, HtmlFormat.Appendable]
-    def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-      fieldTemplate.render(bf, bfNameBase, af, bc, ctx)
-    }
-  }
- 
-  protected trait TextVal {
-    type T = AOStringField
-    type BFT = BfText
-  }
-  
-  protected trait HeightVal {
-    type T = Int
-    type BFT = BfHeight
-  }
-  
-  protected trait PriceVal {
-    type T = AOPriceField
-    type BFT = BfPrice
-  }
+  protected abstract class Val(val name: String) extends super.Val(name) with BefValT
 
-  protected trait StringVal {
-    type T = String
-    type BFT = BfString
-  }
-
-  protected trait ImageVal {
-    type T = BlockImgMap
-    type BFT = BfImage
-  }
-
-  protected trait DiscountVal {
-    type T = AOFloatField
-    type BFT = BfDiscount
-  }
-
-  protected trait ColorVal {
-    type T = String
-    type BFT = BfColor
-  }
-
-  type BlockEditorField   = Val
-  type BefHeight          = BlockEditorField with HeightVal
-  type BefDiscount        = BlockEditorField with DiscountVal
-  type BefPrice           = BlockEditorField with PriceVal
-  type BefText            = BlockEditorField with TextVal
-  type BefString          = BlockEditorField with StringVal
-  type BefImage           = BlockEditorField with ImageVal
-  type BefColor           = BlockEditorField with ColorVal
+  type BlockEditorField = Val
 
   implicit def value2val(x: Value): BlockEditorField = {
     x.asInstanceOf[BlockEditorField]
   }
 
   /** Скрытое поле для указания высоты блока. */
-  val Height: BefHeight = new Val("height") with HeightVal {
+  val Height = new Val("height") {
+    override type VT = Int
+    override type BFT = BfHeight
     override def fieldTemplate = _heightTpl
   }
 
-  /** input text с указанием цвета. */
-  val InputText: BefText = new Val("inputText") with TextVal {
-    override def fieldTemplate = _inputTextTpl
-  }
-
-  val InputString: BefString = new Val("inputStr") with StringVal {
+  val Width = new Val("width") {
+    override type VT = Int
+    override type BFT = BfWidth
+    override def fieldTemplate = _widthTpl
+  } 
+ 
+  /** Ввод голой строки. */
+  val InputString = new Val("inputStr") {
+    override type VT = String
+    override type BFT = BfString
     def fieldTemplate = _inputStringTpl
   }
 
   /** Это когда много букв с указанием цвета. */
-  val TextArea: BefText = new Val("textarea") with TextVal {
+  val TextArea = new Val("textarea") {
+    override type VT = AOStringField
+    override type BFT = BfText
     override def fieldTemplate = _textareaTpl
   }
 
-  /** input text для задания цены. */
-  val Price: BefPrice = new Val("price") with PriceVal {
-    override def fieldTemplate = _priceTpl
-  }
-
   /** Поле с кнопкой для загрузки картинки. */
-  val Image: BefImage = new Val("img") with ImageVal {
+  val Image = new Val("img") {
+    override type VT = BlockImgMap
+    override type BFT = BfImage
     override def fieldTemplate = _imageTpl
   }
-  
-  val Discount: BefDiscount = new Val("discount") with DiscountVal {
-    override def fieldTemplate = _discountTpl
-  }
 
-  val Color: BefColor = new Val("color") with ColorVal {
+  val Color = new Val("color") {
+    override type VT = String
+    override type BFT = BfColor
     override def fieldTemplate = _colorTpl
+  }
+  
+  val Checkbox = new Val("checkbox") {
+    override type VT = Boolean
+    override type BFT = BfCheckbox
+    override def fieldTemplate = _checkboxTpl
   }
 }
 
@@ -168,10 +117,10 @@ import BlocksEditorFields._
 
 
 /** Трейт для конкретного поля в рамках динамического маппинга поля. */
-trait BlockFieldT {
+trait BlockFieldT { that =>
   type T
   def name: String
-  def field: BlockEditorField
+  def field: BlockEditorField { type VT = that.T }
   def defaultValue: Option[T]
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   def fallbackValue: T
@@ -196,7 +145,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: List[FontSize]
+  def withFontSizes: Iterable[FontSize]
   def withFontSize = withFontSizes.nonEmpty
   def fontSizeDflt: Option[Int]
   def fontForSize(sz: Int): Option[FontSize] = withFontSizes.find(_.size == sz)
@@ -204,100 +153,82 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
-  def getFontMapping = MarketAdFormUtil.getFontM(
-    withFontSizes = withFontSizes
-  )
+  def getFontMapping = {
+    MarketAdFormUtil.getFontM(
+      withFontSizes = withFontSizes
+    )
+  }
 
   def withCoords: Boolean
 }
 
 
+/** Хелпер для полей ширины и высоты. */
+sealed trait IntBlockSizeBf extends BlockFieldT {
+  override type T = Int
+  override def offerNopt: Option[Int] = None
+  def availableVals: Set[Int]
+
+  override def mappingBase = number
+    .verifying("error.invalid", availableVals.contains(_) )
+}
+
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
 object BfHeight {
-  val HEIGHT_DFLT = Some(300)
-
-  val HEIGHT_140 = 140
-  val HEIGHT_300 = 300
-  val HEIGHT_460 = 460
-  val HEIGHT_620 = 620
-
-  val HEIGHTS_AVAILABLE_DFLT = Set(HEIGHT_300, HEIGHT_460, HEIGHT_620)
+  def HEIGHT_DFLT = BlockHeights.default.heightPx
+  val SOME_HEIGHT_DFLT = Some(BlockHeights.default.heightPx)
+  val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.heightPx)
 }
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
-  name: String,
-  defaultValue: Option[Int] = BfHeight.HEIGHT_DFLT,
-  availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
-) extends BlockFieldT {
-  override type T = Int
+  name          : String,
+  defaultValue  : Option[Int] = BfHeight.SOME_HEIGHT_DFLT,
+  availableVals : Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
+) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Height
-  override def offerNopt: Option[Int] = None
-
-  override def fallbackValue: T = 140
-
-  override def mappingBase = number
-    .verifying("error.invalid", { availableVals.contains(_) })
+  override def fallbackValue: T = BlockHeights.H140.heightPx
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
 
-
-case class BfPrice(
-  name: String,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[AOPriceField] = None,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
-  dfltFontSize: Option[Int] = None,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = true,
-  withCoords: Boolean = true,
-  withTextAlign: Boolean = false
-) extends BlockAOValueFieldT {
-  override type T = AOPriceField
-
-  def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
-
-  override def mappingBase: Mapping[T] = MarketAdFormUtil.aoPriceFieldM(getFontMapping, withCoords)
-
-  override def field: BefPrice = BlocksEditorFields.Price
-
-  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = AOPriceField(
-    value = 100F,
-    currencyCode = "RUB",
-    orig = "100 рублей",
-    font = defaultFont
-  )
-
+object BfWidth {
+  val WIDTH_DFLT = Some( BlockWidths.default.widthPx )
+  val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.widthPx)
+}
+case class BfWidth(
+  name          : String,
+  defaultValue  : Option[Int] = BfWidth.WIDTH_DFLT,
+  availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
+) extends IntBlockSizeBf {
+  override def field = BlocksEditorFields.Width
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
-
-  override def getOptionalStrictMapping: Mapping[Option[T]] = MarketAdFormUtil.aoPriceOptM(getFontMapping, withCoords)
+  override def fallbackValue = BlockWidths.default.widthPx
 }
 
 
 case class BfText(
-  name: String,
-  field: BefText = BlocksEditorFields.TextArea,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[AOStringField] = None,
-  minLen: Int = 0,
-  maxLen: Int = 16000,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = true,
-  withCoords: Boolean = true,
-  withTextAlign: Boolean = true
+  name            : String,
+  offerNopt       : Option[Int] = None,
+  defaultValue    : Option[AOStringField] = None,
+  minLen          : Int = 0,
+  maxLen          : Int = 16000,
+  withFontColor   : Boolean = true,
+  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
+  fontSizeDflt    : Option[Int] = None,
+  withFontFamily  : Boolean = true,
+  withCoords      : Boolean = true,
+  withTextAlign   : Boolean = true
 ) extends BlockAOValueFieldT {
   override type T = AOStringField
 
   def strTransformF = strTrimSanitizeF
+
+  override def field = BlocksEditorFields.TextArea
 
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
@@ -324,18 +255,19 @@ case class BfText(
 
 /** Поля для строки. */
 case class BfString(
-  name: String,
-  field: BefString,
-  offerNopt: Option[Int] = None,
-  defaultValue: Option[String] = None,
-  withFontColor: Boolean = true,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
-  withTextAlign: Boolean = false,
-  minLen: Int = 0,
-  maxLen: Int = 16000
+  name            : String,
+  offerNopt       : Option[Int] = None,
+  defaultValue    : Option[String] = None,
+  withFontColor   : Boolean = true,
+  withFontFamily  : Boolean = false,
+  withCoords      : Boolean = false,
+  withTextAlign   : Boolean = false,
+  minLen          : Int = 0,
+  maxLen          : Int = 16000
 ) extends BlockFieldT {
   def fallbackValue = "example"
+
+  override def field = InputString
 
   override type T = String
   def strTransformF = strTrimSanitizeF
@@ -357,84 +289,35 @@ case class BfString(
 
 
 case class BfImage(
-  name: String,
-  marker: String,
-  imgUtil: SioImageUtilT,
-  field: BefImage = Image,
-  defaultValue: Option[BlockImgMap] = None,
-  offerNopt: Option[Int] = None,
-  preserveFmt: Boolean = false,
-  saveWithThumb: Boolean = false
+  name                : String,
+  marker              : String,
+  defaultValue        : Option[BlockImgMap] = None,
+  offerNopt           : Option[Int] = None,
+  preDetectMainColor  : Boolean = false,
+  preserveFmt         : Boolean = false
 ) extends BlockFieldT {
   override type T = BlockImgMap
 
+  override def field = Image
+
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = {
-    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
-    val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
-    Map(name -> i4s)
+    //val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
+    //val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
+    //Map(name -> i4s)
+    // TODO Нужно fallback-картинку запилить и чтобы на неё была ссылка? Возможно, этот метод никогда не вызывается.
+    Map.empty
   }
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
-    ImgFormUtil.imgIdMarkedOptM(marker = marker)
+    ImgFormUtil.imgIdOptM
       .transform[BlockImgMap] (
-        { _.map { iik => ImgInfo4Save(iik, withThumb = saveWithThumb) }
-           .fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) }
-        },
-        { _.get(name).map(_.iik) }
+        { _.fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) } },
+        { _.get(name) }
       )
   }
 
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
-}
-
-
-object BfDiscount {
-  val DFLT: Option[AOFloatField] = Some(AOFloatField(50F, defaultFont))
-}
-
-/** Поле для ввода скидки в процентах. Кто-то хочет положительную скидку задавать, кто-то отрицательную. */
-case class BfDiscount(
-  name: String,
-  defaultValue: Option[AOFloatField] = BfDiscount.DFLT,
-  offerNopt: Option[Int] = None,
-  min: Float = -99F,
-  max: Float = 100F,
-  withFontColor: Boolean = true,
-  withFontSizes: List[FontSize] = Nil,
-  fontSizeDflt: Option[Int] = None,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
-  withTextAlign: Boolean = false
-) extends BlockAOValueFieldT {
-  override type T = AOFloatField
-  val discoFloatM = getTolerantDiscountPercentM(
-    min = min,
-    max = max,
-    dflt = defaultValue
-      .map(_.value)
-      .getOrElse(fallbackValue.value)
-  )
-
-  def maxStrlen: Int = FormUtil.PERCENT_M_CHARLEN_MAX
-
-  override def field: BefDiscount = BlocksEditorFields.Discount
-
-  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = AOFloatField(0F, defaultFont)
-
-  override def mappingBase: Mapping[T] = {
-    val mapping0 = MarketAdFormUtil.aoFloatFieldM(discoFloatM, getFontMapping, withCoords)
-    defaultOpt(mapping0, defaultValue)
-  }
-
-  override def getOptionalStrictMapping: Mapping[Option[T]] = {
-    MarketAdFormUtil.aoFloatFieldOptM(discoFloatM, getFontMapping, withCoords)
-  }
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
@@ -461,11 +344,26 @@ case class BfColor(
 }
 
 
+case class BfCheckbox(
+  name          : String,
+  defaultValue  : Option[Boolean] = None,
+  fallbackValue : Boolean = false,
+  offerNopt     : Option[Int] = None
+) extends BlockFieldT {
+  override type T = Boolean
+  override def field = Checkbox
+  override def mappingBase: Mapping[T] = boolean
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+}
+
+
 /** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
 case class BlockDataImpl(
-  blockMeta: BlockMeta,
-  offers: List[AOBlock],
-  colors: Map[String, String] = Map.empty
+  blockMeta   : BlockMeta,
+  offers      : List[AOBlock],
+  colors      : Map[String, String] = Map.empty
 )
   extends IBlockMeta
   with IOffers

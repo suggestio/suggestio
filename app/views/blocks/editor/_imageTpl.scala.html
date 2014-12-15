@@ -9,7 +9,7 @@
 
   <div id="cardPhoto">
     <div class="image __size-M f-left js-image-upload" >
-      <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg" data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+      <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg" data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
       <a class="image_add-btn js-file-upload-btn" title="Загрузить файл">Загрузить файл</a>
     </div>
   </div>

@@ -12,12 +12,11 @@ name := "sioweb21"
 
 version := "1.0-SNAPSHOT"
 
-lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
-
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
-scalaVersion := "2.10.4"
-//scalaVersion := "2.11.1"
+scalaVersion := "2.11.4"
+
+//updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= Seq(
   jdbc, 
@@ -25,17 +24,18 @@ libraryDependencies ++= Seq(
   cache,
   json,
   ws,
-  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.0",
+  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.1",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.9.1-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.12.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "2.3.4-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.4.0-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -74,6 +74,8 @@ libraryDependencies ++= Seq(
   // Явный дубляж из util, эти зависимости по факту нужны datastax-cassandra-драйверу, но он их не тянет.
   "org.xerial.snappy" % "snappy-java" % "1.+",
   "net.jpountz.lz4" % "lz4" % "1.+",
+  // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
+  "org.clapper" %% "scalasti" % "2.+",
   // svg
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
   // test
@@ -84,7 +86,7 @@ libraryDependencies ++= Seq(
   "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
   // play-2.3+:
-  "org.scalatestplus" %% "play" % "1.2.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+  "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
 play.Play.projectSettings
@@ -118,8 +120,9 @@ resolvers ++= Seq(
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots/",
-  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases"
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases",
+  "scalaz-bintray-repo" at "https://ivy2-internal.cbca.ru/artifactory/scalaz-bintray-repo"
 )
 
 
@@ -128,7 +131,6 @@ routesImport ++= Seq(
   "models._",
   "util.qsb._",
   "util.qsb.QSBs._",
-  "models.BSvgColorsUtil._",
   "models.im.ImOp._"
 )
 
@@ -156,9 +158,15 @@ sources in (Compile,doc) := Seq.empty
 
 publishArtifact in (Compile, packageDoc) := false
 
+// org.apache.xmlbeans требует сие зависимостью. иначе proguard не пашет.
+unmanagedJars in Compile ~= {uj => 
+  Seq(Attributed.blank(file(System.getProperty("java.home").dropRight(3)+"lib/tools.jar"))) ++ uj
+}
 
 // proguard: защита скомпиленного кода от реверса.
 proguardSettings
+
+ProguardKeys.proguardVersion in Proguard := "5.1"
 
 ProguardKeys.options in Proguard ++= Seq(
   "-keepnames class * implements org.xml.sax.EntityResolver",
@@ -188,12 +196,17 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
   }""",
+  "-keepclassmembernames class * implements models.ai.ContentHandlerResult",
   "-dontnote",
   "-dontwarn",
-  "-ignorewarnings"
+  //"-ignorewarnings"
+  "-verbose"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
 
 javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
+
+// play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
+//routesGenerator := InjectedRoutesGenerator
 

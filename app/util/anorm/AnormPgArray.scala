@@ -19,26 +19,22 @@ object AnormPgArray {
    * https://groups.google.com/d/msg/play-framework/qs7mbWwIjjY/a6M_xPaNFggJ
    * @return
    */
-  implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualifier, nullable, clazz) = meta
+  implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull1 { (value, meta) =>
     value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[Integer]].toSeq.map(_.intValue) )
-
       case _ =>
-        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + qualifier))
+        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + meta.column))
     }
   }
 
 
-  implicit def rowToStringSet: Column[Set[String]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualifier, nullable, clazz) = meta
+  implicit def rowToStringSet: Column[Set[String]] = Column.nonNull1 { (value, meta) =>
     value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSet)
-
       case _ =>
-        Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column $qualifier"))
+        Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column ${meta.column}"))
     }
   }
 
@@ -61,14 +57,12 @@ object AnormPgArray {
    * Распознование массива строк в Seq[String].
    * @return Seq[String] или экзепшен.
    */
-  implicit def rowToSeqString: Column[Seq[String]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualified, nullable, clazz) = meta
+  implicit def rowToSeqString: Column[Seq[String]] = Column.nonNull1 { (value, meta) =>
     value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[String]].toSeq)
-
       case _ =>
-        Left(TypeDoesNotMatch("Cannot convert %s: %s to Seq[String] for column %s".format(value, value.getClass, qualified)))
+        Left(TypeDoesNotMatch("Cannot convert %s: %s to Seq[String] for column %s".format(value, value.getClass, meta.column)))
     }
   }
 

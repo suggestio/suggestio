@@ -1,7 +1,6 @@
 package util.geo.osm
 
-import java.io.InputStream
-
+import functional.WithInputStream
 import io.suggest.model.geo.GsTypes.GsType
 import io.suggest.model.geo.{GsTypes, LineStringGs, GeoPoint}
 import org.scalatestplus.play._
@@ -14,7 +13,9 @@ import play.api.test.FakeApplication
  * Created: 03.09.14 10:21
  * Description: Тесты для osm-парсеров. Тестовые файлы лежат в test/resources/util/geo/osm
  */
-class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
+class OsmUtilSpec extends PlaySpec with OneAppPerSuite with WithInputStream {
+
+  override val RES_DIR = "/util/geo/osm/"
 
   /** Штатный Global производит долгую инициализацию, которая нам не нужен.
     * Нужен только доступ к конфигу. Ускоряем запуск: */
@@ -26,17 +27,6 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite {
       }
     })
   )
-
-  val TEST_FILES_DIR = "/util/geo/osm/"
-
-  private def withFileStream(fn: String)(f: InputStream => Any): Unit = {
-    val is = getClass.getResource(TEST_FILES_DIR + fn).openStream()
-    try {
-      f(is)
-    } finally {
-      is.close()
-    }
-  }
 
 
   case class RelResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,

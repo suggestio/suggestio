@@ -1,11 +1,25 @@
-@(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0)(implicit ctx: Context)
+@(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0,
+  args: blk.RenderArgs = blk.RenderArgs.DOUBLE_SIZED_ARGS)(implicit ctx: Context)
+
+@import models.blk.AdColorFns._
+
+@* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
+@args.wideBg.map { wideBg =>
+  @* TODO Надо прикрутить здесь необязательную покрывающую сетку-паттерн (как на cbca.ru):
+          mad.colors.get(WIDE_IMG_PATTERN_COLOR_FN.toString).map { patternColor => ... }  *@
+  <img src="@wideBg.dynImgCall" class="bg" alt=""
+    @mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
+    height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
+  />
+}
+
+<div class="focused-ad_offer">
+  @_single_offer(mad, isWithAction = false, args)
+</div>
+
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
-
-<div class="focused-ad_offer">
-  @_single_offer(mad, isWithAction = false, BlockRenderArgs.DOUBLE_SIZED_ARGS)
-</div>
 
 @* Информация о магазине *@
 <div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}; color: #@pFgColor">
@@ -26,9 +40,10 @@
 
 @* Контейнер с описанием рекламной карточки *@
 @mad.richDescrOpt.map { rd =>
-<div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
-  @Html(rd.text)
-</div>
+  <div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
+    @Html(rd.text)
+  </div>
 }
+
 }
 }

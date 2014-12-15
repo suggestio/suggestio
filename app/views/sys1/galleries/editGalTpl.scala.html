@@ -1,0 +1,21 @@
+@(gal: im.MGallery, gf: Form[_])(implicit ctx: Context)
+
+@* Страница с формой редактирования существующей галереи. *@
+
+@import ctx._
+@import stuff._
+
+@galFormBase(title = s"Редактирование галереи ${gal.name}") {
+
+  @_deleteSmthFormBtnTpl( routes.SysGallery.deleteGallerySubmit(gal.id.get), Some("__size-M __ft-XM") )
+
+  @_galsTableTpl(Seq(gal), withAdmLinks = false)
+
+  @_galFormTpl(
+    gf          = gf,
+    submitCall  = routes.SysGallery.editGalSubmit(gal.id.get),
+    btnText     = Messages("Save"),
+    galNameDisabled = Some(gal.name)
+  )
+
+}

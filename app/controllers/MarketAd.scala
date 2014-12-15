@@ -1,6 +1,11 @@
 package controllers
 
+import models.im.MImg
+import org.joda.time.DateTime
+import play.api.libs.json.JsValue
 import util.PlayMacroLogsImpl
+import util.blocks.BlocksUtil.BlockImgMap
+import util.img.MainColorDetector.{Remove, ImgBgColorUpdateAction}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -9,14 +14,14 @@ import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.Future
-import play.api.mvc.Request
+import play.api.mvc.{WebSocket, Request}
 import play.api.Play.{current, configuration}
 import MMartCategory.CollectMMCatsAcc_t
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import util.blocks.BlockMapperResult
-import util.img.{MainColorDetector, ImgInfo4Save, OrigImgIdKey}
+import util.blocks.{LkEditorWsActor, BlockMapperResult}
+import util.img.MainColorDetector
 import io.suggest.ym.model.common.Texts4Search
 
 /**
@@ -36,10 +41,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Сколько попыток сохранения карточки предпринимать при runtime-экзепшенах при сохранении?
     * Такие проблемы возникают при конфликте версий. */
   val SAVE_AD_RETRIES_MAX = configuration.getInt("ad.save.retries.max") getOrElse 7
-
-  /** Дефолтовый блок, используемый редакторами форм. */
-  protected[controllers] def dfltBlock = BlocksConf.Block1
-
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
@@ -69,16 +70,18 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def getAdFormM(catIdM: Mapping[Option[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       "ad" -> mapping(
-        CAT_ID_K -> catIdM,
-        OFFER_K  -> blockM,
-        "descr"  -> richDescrOptM
+        CAT_ID_K    -> catIdM,
+        OFFER_K     -> blockM,
+        "pattern"   -> coveringPatternM,
+        "descr"     -> richDescrOptM,
+        "bgColor"   -> colorM
       )(adFormApply)(adFormUnapply)
     )
   }
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
-  private def detectAdnAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
+  private def detectAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
     val anmt = adnNode.adn.memberType
     val adMode = request.body.getOrElse("ad.offer.mode", Nil)
       .headOption
@@ -96,7 +99,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               Some(rawBlockId.toInt)
             } catch {
               case ex: NumberFormatException =>
-                warn("detectAdnAdForm(): Invalid block number format: " + rawBlockId)
+                warn("detectAdForm(): Invalid block number format: " + rawBlockId)
                 None
             }
           }
@@ -104,7 +107,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           .filter { blockId =>
             val result = nodeBlockIds contains blockId
             if (!result)
-              warn("detectAdnAdForm(): Unknown or disallowed blockId requested: " + blockId)
+              warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
             result
           }
           // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
@@ -122,7 +125,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getSaveAdFormM(adnNode.adn.memberType, dfltBlock.strictMapping),
+      af = getSaveAdFormM(adnNode.adn.memberType, BlocksConf.DEFAULT.strictMapping),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -147,7 +150,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    detectAdnAdForm(adnNode) match {
+    detectAdForm(adnNode) match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -160,18 +163,15 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Асинхронно обрабатываем всякие прочие данные.
             val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
             val t4s2Fut = newTexts4search(mad, request.adnNode)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc)
             // Когда всё готово, сохраняем саму карточку.
             for {
               t4s2      <- t4s2Fut
               savedImgs <- saveImgsFut
-              ibgcUpd   <- ibgcUpdFut
               adId      <- {
                 mad.copy(
                   producerId    = adnId,
                   imgs          = savedImgs,
-                  texts4search  = t4s2,
-                  colors        = ibgcUpd.updateColors(mad.colors)
+                  texts4search  = t4s2
                 ).save
               }
             } yield {
@@ -252,11 +252,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editAd(adId: String) = CanEditAd(adId).async { implicit request =>
     import request.mad
-    val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
+    val blockConf = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
     val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
     val bim = mad.imgs.mapValues { mii =>
-      val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
-      ImgInfo4Save(oiik)
+      MImg(mii.filename)
     }
     val formFilled = form0 fill ((mad, bim))
     renderEditFormWith(formFilled)
@@ -269,7 +268,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdnAdForm(request.producer) match {
+    detectAdForm(request.producer) match {
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
@@ -279,7 +278,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2, request.producer)
-            val ibgcUpdFut = MainColorDetector.adPrepareUpdateBgColors(bim, bc, mad.colors)
             // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
             // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
             val saveImgsFut = bc.saveImgs(
@@ -291,7 +289,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             for {
               imgsSaved <- saveImgsFut
               t4s2      <- t4s2Fut
-              ibgcUpd   <- ibgcUpdFut
               _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
                 mad0.copy(
                   imgs          = imgsSaved,
@@ -301,12 +298,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                     freeAdv = mad0.moderation.freeAdv
                       .filter { _.isAllowed != true }
                   ),
-                  colors        = ibgcUpd.updateColors(mad2.colors),
+                  colors        = mad2.colors,
                   offers        = mad2.offers,
                   prio          = mad2.prio,
                   userCatId     = mad2.userCatId,
                   blockMeta     = mad2.blockMeta,
-                  richDescrOpt  = mad2.richDescrOpt
+                  richDescrOpt  = mad2.richDescrOpt,
+                  dateEdited    = Some(DateTime.now)
                 )
               }
             } yield {
@@ -468,6 +466,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       rcvrId -> AdReceiverInfo(rcvrId)
     }.toMap
     Future successful result
+  }
+
+
+  /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
+  def ws(wsId: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
+    // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
+    val auth = PersonWrapper.getFromRequest.isDefined
+    Future.successful(
+      if (auth) {
+        Right(LkEditorWsActor.props(_, wsId))
+      } else {
+        val result = Forbidden("Unathorized")
+        Left(result)
+      }
+    )
   }
 
 

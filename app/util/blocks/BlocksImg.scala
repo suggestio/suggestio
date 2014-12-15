@@ -1,10 +1,9 @@
 package util.blocks
 
 import controllers.routes
-import io.suggest.ym.model.common.{Imgs, MImgInfoT}
-import models.im._
+import io.suggest.ym.model.common.Imgs
+import models.im.MImg
 import play.api.mvc.Call
-import util.PlayLazyMacroLogsImpl
 import util.cdn.CdnUtil
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -37,10 +36,13 @@ trait ISaveImgs {
       // Картинка оставалась в хранилище, но на неё терялись все указатели.
       val abandonedOldImgAliases = oldImgs.keySet -- newImgs2.keySet
       val oldImgsAbandoned = oldImgs
-        .filterKeys(abandonedOldImgAliases contains)
+        .iterator
+        .filter(kv  =>  abandonedOldImgAliases contains kv._1)
+        .map { case (k, v)  =>  MImg(v.filename) }
+        .toIterable
       if (oldImgsAbandoned.nonEmpty) {
         // Удаляем связанные orig-картинки с помощью updateOrigImg()
-        ImgFormUtil.updateOrigImg(needImgs = Seq.empty, oldImgs = oldImgsAbandoned.values)
+        ImgFormUtil.updateOrigImgFull(needImgs = Seq.empty, oldImgs = oldImgsAbandoned)
       }
     }
     resultFut
@@ -51,8 +53,6 @@ trait ISaveImgs {
     Future successful Map.empty
   }
 
-  def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
-
 }
 
 
@@ -62,20 +62,24 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
   def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
     val needImgsThis = newImgs.get(fn)
     val oldImgsThis = oldImgs.get(fn)
+      .map { i => MImg(i.filename) }
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgFut = ImgFormUtil.updateOrigImg(
-        needImgs = needImgsThis.toSeq,
-        oldImgs  = oldImgsThis.toIterable
-      )
+      val saveBgImgFut = ImgFormUtil.updateOrigImgFull(
+          needImgs = needImgsThis.toSeq,
+          oldImgs  = oldImgsThis.toIterable
+        )
+        .map(_.headOption)
+      val imgInfoOptFut = saveBgImgFut.flatMap { savedBgImg =>
+        ImgFormUtil.optImg2OptImgInfo(savedBgImg)
+      }
       for {
-        savedBgImg <- saveBgImgFut
+        imgInfoOpt  <- imgInfoOptFut
         supSavedMap <- supImgsFut
       } yield {
-        savedBgImg.fold(supSavedMap) {
-          savedBgImg =>
-            supSavedMap + (fn -> savedBgImg)
+        imgInfoOpt.fold(supSavedMap) {
+          imgInfo =>  supSavedMap + (fn -> imgInfo)
         }
       }
     } else {
@@ -91,155 +95,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 }
 
 
-object BgImg extends PlayLazyMacroLogsImpl {
-
-  val BG_IMG_FN = "bgImg"
-  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
-
-}
-
-/** Функционал для сохранения фоновой (основной) картинки блока. ValT нужен для доступа к blockWidth. */
-trait SaveBgImgI extends ISaveImgs with ValT {
-
-  import BgImg.LOGGER._
-
-  def BG_IMG_FN: String
-  def bgImgBf: BfImage
-
-  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = {
-    bim.get(BG_IMG_FN)
-  }
-
-  /** Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
-    * @param imgInfo Инфа о картинке, используемой в качестве фона.
-    * @param blockHeight высота блока (и картинки, соответственно).
-    * @param canRenderDoubleSize Можно ли рендерить в двойном размере? Если да и если экран позволяет,
-    *                           будет создана ссылка на картинку в двойном разрешении.
-    *                           Такое полезно при focusedAds(), превьюшках редактора карточек и т.д.
-    * @param ctx Контекст рендера шаблонов.
-    * @return Экземпляр Call, пригодный для рендера в ссылку.
-    */
-  def bgImgCall(imgInfo: MImgInfoT, blockHeight: Int, canRenderDoubleSize: Boolean)(implicit ctx: Context): Call = {
-    Some( ImgIdKey(imgInfo.filename) )
-      .filter { iik =>
-        // В былом формате откропанная картинка хранилась в двойном разрешении, которое соответствовало размерам блока.
-        // Ширина и длина кропа сохранялись согласно двойному размеру блока, а offX и offY были относительно оригинала.
-        // В общем, абсолютно неюзабельный для дальнейших трансформаций формат.
-        iik.cropOpt.isEmpty || iik.cropOpt.exists { crop =>
-          val oldFormat  =  crop.height == blockHeight  ||  crop.width == blockWidth
-          !oldFormat
-        }
-      }
-      .flatMap {
-        // dynImg принимает только orig-картинки.
-        case oiik: OrigImgIdKey => Some(oiik)
-        case _ => None
-      }
-      .fold [Call] {
-        // Пропускаем картинку, ибо данные для этого дела были отброшены.
-        CdnUtil.getImg(imgInfo.filename)
-      } { oiik =>
-        val devPxRatio = ctx.deviceScreenOpt
-          .fold(DevPixelRatios.MDPI)(_.pixelRatio)
-        // Генерим dynImg-ссылку на картинку.
-        val fgc = devPxRatio.fgCompression
-
-        // Проверка допустимости использования флага canRenderDoubleSize с учётом экрана устройства.
-        val willRenderDoubleSize: Boolean = {
-          canRenderDoubleSize && {
-            val devScrSize: MImgSizeT = ctx.deviceScreenOpt getOrElse {
-              warn(s"bgImgCall($imgInfo, bh=$blockHeight, canDouble=$canRenderDoubleSize): width=$blockWidth Missing client screen size! Will use standard VGA (1024х768)!")
-              MImgInfoMeta(width = 1024, height = 768)
-            }
-            blockWidth * 2 <= devScrSize.width
-          }
-        }
-
-        // Настройки сохранения результирующей картинки (аккамулятор).
-        var imOpsAcc: List[ImOp] = List(
-          StripOp,
-          ImInterlace.Plane,
-          fgc.chromaSubSampling,
-          fgc.imQualityOp
-        )
-
-        // Мультипликатор размера (разрешения) картинки на основе doubleSize-флага.
-        val sizeMult: Int = if (willRenderDoubleSize) 2 else 1
-
-        // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
-        // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет 6-кратное разрешение блока /O_o/
-        val imgResMult = devPxRatio.pixelRatio * sizeMult
-
-        // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-        imOpsAcc ::= {
-          val sz = MImgInfoMeta(
-            height = (blockHeight * imgResMult).toInt,
-            width  = (blockWidth * imgResMult).toInt
-          )
-          AbsResizeOp(sz)
-        }
-
-        // Если картинка была сохранена откропанной, то надо откропать исходник заново, отресайзив до размера кропа.
-        if (oiik.cropOpt.isDefined) {
-          val crop = oiik.cropOpt.get
-          imOpsAcc ::= AbsCropOp(crop)
-        }
-        imOpsAcc ::= ImFilters.Lanczos
-        // Генерим финальную ссыль на картинку:
-        val dargs = DynImgArgs(oiik.uncropped,  imOpsAcc)
-        CdnUtil.dynImg(dargs)
-      }
-  }
-
-}
-
-trait BgImg extends ValT with SaveBgImgI {
-  // Константы можно легко переопределить т.к. trait и early initializers.
-  def BG_IMG_FN = BgImg.BG_IMG_FN
-  def bgImgBf = BgImg.bgImgBf
-
-  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
-    SaveImgUtil.saveImgsStatic(
-      fn = BG_IMG_FN,
-      newImgs = newImgs,
-      oldImgs = oldImgs,
-      supImgsFut = supImgsFut
-    )
-  }
-
-  abstract override def blockFieldsRev: List[BlockFieldT] = bgImgBf :: super.blockFieldsRev
-
-  // Mapping
-  private def m = bgImgBf.getStrictMapping.withPrefix(bgImgBf.name).withPrefix(key)
-
-  abstract override def mappingsAcc: List[Mapping[_]] = {
-    m :: super.mappingsAcc
-  }
-
-  abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
-    val maybeAcc0 = super.bindAcc(data)
-    val maybeBim = m.bind(data)
-    SaveImgUtil.mergeBindAcc(maybeAcc0, maybeBim)
-  }
-
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
-    val v = m.unbind( value.unapplyBIM(bgImgBf) )
-    super.unbind(value) ++ v
-  }
-
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
-    val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.unapplyBIM(bgImgBf)
-    val (cms, cfes) = m.unbindAndValidate(c)
-    (ms ++ cms) -> (fes ++ cfes)
-  }
-}
-
 
 object LogoImg {
   val LOGO_IMG_FN = "logo"
-  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
+  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
 }
 
 /** Функционал для сохранения вторичного логотипа рекламной карточки. */
@@ -282,37 +141,6 @@ trait LogoImg extends ValT with ISaveImgs {
     val c = value.unapplyBIM(logoImgBf)
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
-  }
-
-
-  /**
-   * Собрать Call к картинке логотипа.
-   * @param mad Рекламная карточка.
-   * @param default Строка дефолтового путя к ассету.
-   * @param ctx Контекст рендера шаблонов.
-   * @return Экземпляр Call, пригодный для обращения в ссылку.
-   */
-  def logoImgCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
-    mad.imgs
-      .get(LOGO_IMG_FN)
-      .map {
-        logoImgInfo  =>  CdnUtil.getImg(logoImgInfo.filename)
-      }
-      .orElse {
-        default.map { routes.Assets.versioned(_) }
-      }
-  }
-
-  /**
-   * Собрать Call к картинке логотипа, но по возможности через CDN.
-   * @param mad Рекламная карточка.
-   * @param default Дефолтовый путь до ассета, если в карточке нет логотипа.
-   * @param ctx Контекст рендера шаблона.
-   * @return Экземпляр Call.
-   */
-  def logoImgCdnCall(mad: Imgs, default: => Option[String] = None)(implicit ctx: Context): Option[Call] = {
-    logoImgCall(mad, default)
-      .map { CdnUtil.forCall }
   }
 
 }

@@ -174,11 +174,11 @@ object SelectPolicies extends Enumeration {
 object PgTransaction {
 
   def savepoint(name: String)(implicit c: Connection) {
-    SQL("SAVEPOINT " + name).execute()
+    SQL("SAVEPOINT " + name).on().execute()
   }
 
   def rollbackTo(name: String)(implicit c: Connection) {
-    SQL("ROLLBACK TO " + name).execute()
+    SQL("ROLLBACK TO " + name).on().execute()
   }
 
 }
@@ -202,6 +202,7 @@ trait SqlTruncate extends SqlTableName {
 trait SqlAnalyze extends SqlTableName {
   def analyze(implicit c: Connection) {
     SQL("ANALYZE " + TABLE_NAME)
+      .on()
       .execute()
   }
 }
@@ -209,6 +210,7 @@ trait SqlAnalyze extends SqlTableName {
 trait SqlVacuumAnalyze extends SqlTableName {
   def vacuumAnalyze(implicit c: Connection): Unit = {
     SQL("VACUUM ANALYZE " + TABLE_NAME)
+      .on()
       .execute()
   }
 }

@@ -1,11 +1,12 @@
 package util
 
+import models.im.MLocalImg
 import play.api.Play.current
 import akka.actor.{Scheduler, Cancellable}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.concurrent.Akka
 import util.geo.IpGeoBaseImport
-import models.{ICronTask, MPictureTmp}
+import models.ICronTask
 import play.api.Logger
 import util.billing.{MmpDailyBilling, Billing}
 
@@ -25,7 +26,7 @@ object Crontab extends PlayLazyMacroLogsImpl {
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
   def TASK_PROVIDERS: List[CronTasksProvider] = {
-    List(Billing, MPictureTmp, MmpDailyBilling, IpGeoBaseImport)
+    List(Billing, MmpDailyBilling, IpGeoBaseImport, MLocalImg)
   }
 
   def sched: Scheduler = {
@@ -73,3 +74,8 @@ trait CronTasksProvider {
   def cronTasks: TraversableOnce[ICronTask]
 }
 
+
+/** При использование stackable trait и abstract override имеет смысл подмешивать этот трейт с дефолтовой пустой реализацией. */
+trait CronTasksProviderEmpty extends CronTasksProvider {
+  override def cronTasks: TraversableOnce[ICronTask] = Nil
+}
