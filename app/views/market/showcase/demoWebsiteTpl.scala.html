@@ -16,7 +16,6 @@
   </title>
   <meta name="description" content="Система размещения таргетированной мобильной интернет-рекламы. Более 150 рекламных локаций в Москве и Санкт-Петербурге." />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <meta name="fragment" content="!"/>
 
   @if(!ctx.isIpad) {
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,6 +29,9 @@
       searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
       fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
     ).ajaxStatedUrl()"/>
+  }
+  @if(!args.syncRender) {
+    <meta name="fragment" content="!"/>
   }
 
   @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
