@@ -29,4 +29,13 @@ case class LkEditorWsActor(out: ActorRef, wsId: String)
   extends WsActorDummy
   with SubscribeToWsDispatcher
   with ColorDetectedWsNotifyActor
-  with PlayLazyMacroLogsImpl
+  with PlayLazyMacroLogsImpl {
+
+  import LOGGER._
+
+  override def postStop(): Unit = {
+    super.postStop()
+    trace(s"Stopping actor for wsId=$wsId and out=$out")
+  }
+
+}

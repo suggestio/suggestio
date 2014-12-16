@@ -58,7 +58,7 @@ class WsDispatcherActor extends Actor with PlayMacroLogsImpl {
     // Запрос адреса доставки
     case GetForId(wsId: String) =>
       val res = wsMap.get(wsId)
-      trace(s"wsId $wsId resolved to $res")
+      trace(s"$self : wsId $wsId resolved TO $res")
       sender() ! res
 
     // Запустился актор, занимающийся обработкой ws-запросов.
