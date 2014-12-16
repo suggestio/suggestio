@@ -84,20 +84,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       .exists { dt => !(modelTstampMs isAfter dt) }
   }
 
-  /** Обслуживание картинки. */
-  private def serveImgMaybeCached(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader): Result = {
-    // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
-    val modelInstant = withoutMs(its.timestampMs)
-    val isCached = isModifiedSinceCached(modelInstant)
-    if (isCached) {
-      //trace("serveImg(): 304 Not Modified")
-      NotModified
-        .withHeaders(CACHE_CONTROL -> s"public, max-age=$cacheSeconds")
-    } else {
-      serveImgBytes(its.imgBytes, cacheSeconds, modelInstant)
-    }
-  }
-
   private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
     serveImg(
@@ -135,26 +121,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
-  }
-
-  /**
-   * Для подавления http get flood атаки через запросы с приписыванием рандомных qs
-   * и передачи ссылок публичным http-фетчерам.
-   * @param onSuccess Если реквест прошел проверку, то тут генерация результата.
-   * @param req Исходный реквест.
-   * @return
-   * @see [[https://www.linux.org.ru/forum/security/10389031]]
-   * @see [[http://habrahabr.ru/post/215233/]]
-   */
-  private def suppressQsFlood(onProblem: => Call)(onSuccess: => Future[Result])(implicit req: RequestHeader): Future[Result] = {
-    // TODO Надо отрабатывать неявно пустую qs (когда в ссылке есть ?, по после него конец ссылки).
-    val rqs = req.rawQueryString
-    if (rqs.length <= 1) {
-      onSuccess
-    } else {
-      debug("suppressQsFlood(): Query string found in request, but it should not. Sending redirects... qs=" + rqs)
-      MovedPermanently(onProblem.url)
-    }
   }
 
   /** Выдать json ошибку по поводу картинки. */
