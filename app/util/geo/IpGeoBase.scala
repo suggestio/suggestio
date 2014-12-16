@@ -4,6 +4,7 @@ import java.io._
 import java.net.{URL, InetAddress}
 import java.sql.Connection
 import java.util.Comparator
+import com.jolbox.bonecp.ConnectionHandle
 import models.{CronTask, IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
@@ -189,9 +190,8 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
     c match {
       case bc: BaseConnection =>
         bc
-      // play-2.3: Был враппер для connection'на. А в 2.4 исчез.
-      //case hic: HasInternalConnection =>
-      //  getPgConnection(hic.getInternalConnection())
+      case bcpc: ConnectionHandle =>
+        getPgConnection(bcpc.getInternalConnection)
     }
   }
 
