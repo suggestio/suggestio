@@ -67,7 +67,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   /** Генератор logo-маппингов. */
-  def getLogoKM(errorMsg: String, marker: String): (String, Mapping[LogoOpt_t]) = {
+  def getLogoKM(errorMsg: String): (String, Mapping[LogoOpt_t]) = {
     "logoImgId" -> optional(imgIdM)
   }
 

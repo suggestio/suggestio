@@ -2,7 +2,6 @@ package controllers
 
 import java.io.File
 
-import _root_.util.ws.WsDispatcherActor
 import io.suggest.model.ImgWithTimestamp
 import models.im._
 import org.apache.commons.io.FileUtils
@@ -136,14 +135,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
-  }
-
-  /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
-    * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
-  def handleTempImg = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtected {
-      _handleTempImg()
-    }
   }
 
   /**

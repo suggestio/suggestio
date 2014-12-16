@@ -37,7 +37,8 @@ GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnI
 GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
-POST /m/adn/logo/prepare                controllers.MarketLkAdnEdit.handleTempLogo
+POST /m/adn/img/logo/prepare            controllers.MarketLkAdnEdit.handleTempLogo
+POST /m/adn/img/gal/prepare             controllers.MarketLkAdnEdit.handleGallweryImg
 ## Базовый супервайзинг узлов
 GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
@@ -100,7 +101,6 @@ GET  /m/support                         controllers.MarketLkSupport.supportForm(
 POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
 
 
-POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
 GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
