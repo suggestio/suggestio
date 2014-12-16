@@ -496,7 +496,7 @@ case class ScJsState(
    * @return Относительная ссылка.
    */
   def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
-    routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", this)
+    routes.MarketShowcase.geoSite().url + "#!?" + qsb.unbind("", this)
   }
 
   /**

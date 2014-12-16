@@ -25,7 +25,12 @@
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
-  @* TODO Когда будет готово !#-навигация, надо задать тег <link rel="canonical" href="..."/> *@
+  @args.jsStateOpt.map { jsState =>
+    <link rel="canonical" href="@ctx.SC_URL_PREFIX@jsState.copy(
+      searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
+      fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
+    ).ajaxStatedUrl()"/>
+  }
 
   @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
   <!--[if IE]>
