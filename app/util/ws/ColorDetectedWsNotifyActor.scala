@@ -22,7 +22,7 @@ trait ColorDetectedWsNotifyActor extends Actor with PlayMacroLogsI {
 
     // Пришла гистограмма с палитрой предлагаемых цветов.
     case h: Histogram =>
-      LOGGER.trace(s"Forwarding color histogram info to $out\n$h")
+      //LOGGER.trace(s"Forwarding color histogram info to $out\n$h")
       val respJson = JsObject(Seq(
         "type" -> JsString("colorPalette"),
         "data" -> JsArray( h.sorted.map(c => JsString(c.colorHex)) )
@@ -31,7 +31,7 @@ trait ColorDetectedWsNotifyActor extends Actor with PlayMacroLogsI {
 
     // Пришло сообщение, что успешно выявлен цвет картинки
     case MainColorDetector.Update(newColorHex) =>
-      LOGGER.trace(s"Sending detected $newColorHex color to client via ws...")
+      //LOGGER.trace(s"Sending detected $newColorHex color to client via ws...")
       val respJson = JsObject(Seq(
         "type"  -> JsString("imgColor"),
         "data"  -> JsString(newColorHex)
