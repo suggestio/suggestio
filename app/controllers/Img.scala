@@ -42,11 +42,11 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   /** Сколько времени кешировать temp-картинки на клиенте. */
   val TEMP_IMG_CACHE_SECONDS = {
-    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_ minutes) getOrElse {
+    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_.minutes) getOrElse {
       if (Play.isProd) {
-        10 minutes
+        10.minutes
       } else {
-        30 seconds
+        30.seconds
       }
     }
     cacheDuration.toSeconds.toInt
@@ -56,9 +56,9 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   val CACHE_ORIG_CLIENT_SECONDS = {
     val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse {
       if (Play.isProd) {
-        2 days
+        2.days
       } else {
-        30 seconds
+        30.seconds
       }
     }
     cacheDuration.toSeconds.toInt

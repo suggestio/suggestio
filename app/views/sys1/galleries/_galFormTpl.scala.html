@@ -37,11 +37,6 @@
     )
   </table>
 
-  @* TODO Нужна асинхронная загрузка картинок.
-     Сабмит для отправки картинки: routes.SysGallery.uploadImg(ctx.ctxIdStr)
-     Название полей в теле POST: imgs[0], imgs[1] и т.д. Цифры-индексы должны отражать порядок картинок в галерее,
-     но им не обязательно идти по порядку. *@
-
   <table class="input-w __size-L">
     <td class="input-w_left">
       <label class="input-w_prop-name">Фотографии:
@@ -55,7 +50,7 @@
 
       <div class="image __size-M f-left js-image-upload" >
         @stuff._fileUploadTpl(
-          routes.Img.handleTempImg,
+          routes.SysGallery.uploadImg(ctx.ctxIdStr),
           fieldName = "imgs",
           multiple = true,
           previewRoot = "#imgs",

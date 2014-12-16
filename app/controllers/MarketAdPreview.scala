@@ -1,6 +1,7 @@
 package controllers
 
-import util.{FormDataSerializer, PlayMacroLogsImpl}
+import play.core.parsers.Multipart
+import util.PlayMacroLogsImpl
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.FormUtil._
@@ -12,6 +13,7 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import views.html.market.showcase._
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -23,6 +25,12 @@ import views.html.market.showcase._
 
 object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
   import LOGGER._
+
+  /** Макс.длина загружаемой картинки в байтах. */
+  val IMG_UPLOAD_MAXLEN_BYTES: Int = {
+    val mib = configuration.getInt("ad.img.len.max.mib") getOrElse 40
+    mib * 1024 * 1024
+  }
 
   /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
     * в шаблон формы и для изоляции области видимости от другого кода. */
@@ -127,19 +135,22 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtected {
-      val bc: BlockConf = BlocksConf(blockId)
-      bc.blockFieldForName(fn) match {
-        case Some(bfi: BfImage) =>
-          val resultFut = _handleTempImg(
-            preserveUnknownFmt = false,
-            runEarlyColorDetector = bfi.preDetectMainColor,
-            wsId = wsId
-          )
-          resultFut
+  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong)
+    IsAuth.async(bp) { implicit request =>
+      bruteForceProtected {
+        val bc: BlockConf = BlocksConf(blockId)
+        bc.blockFieldForName(fn) match {
+          case Some(bfi: BfImage) =>
+            val resultFut = _handleTempImg(
+              preserveUnknownFmt = false,
+              runEarlyColorDetector = bfi.preDetectMainColor,
+              wsId = wsId
+            )
+            resultFut
 
-        case _ => NotFound
+          case _ => NotFound
+        }
       }
     }
   }

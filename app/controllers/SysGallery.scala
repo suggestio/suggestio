@@ -3,6 +3,7 @@ package controllers
 import play.api.data._
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket
+import play.core.parsers.Multipart
 import util.img.{ImgFormUtil, SysGalEditWsActor}
 import util.{FormUtil, PlayMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -29,6 +30,12 @@ object SysGallery extends SioController with PlayMacroLogsImpl with TempImgSuppo
 
   /** Макс.выдача на страницу. */
   private val MAX_PER_PAGE = configuration.getInt("sys.gallery.list.max.per.page") getOrElse 10
+
+  /** Макс.длина загружаемой картинки в байтах. */
+  private val IMG_MAX_LEN_BYTES: Int = {
+    val mib = configuration.getInt("sys.gallery.img.len.max.mib") getOrElse 10
+    mib * 1024 * 1024
+  }
 
 
   /** form-маппер для имени (идентификатора) галереи. */
@@ -114,9 +121,13 @@ object SysGallery extends SioController with PlayMacroLogsImpl with TempImgSuppo
     )
   }
 
+
   /** Экшен для загрузки tmp-картинки. */
-  def uploadImg(wsId: String) = IsSuperuser.async(parse.multipartFormData) { implicit request =>
-    _handleTempImg(runEarlyColorDetector = true, wsId = Some(wsId))
+  def uploadImg(wsId: String) = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_MAX_LEN_BYTES)
+    IsSuperuser.async(bp) { implicit request =>
+      _handleTempImg(runEarlyColorDetector = true, wsId = Some(wsId))
+    }
   }
 
 
