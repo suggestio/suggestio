@@ -3,9 +3,8 @@ package controllers
 import models.im.MImg
 import org.joda.time.DateTime
 import play.api.libs.json.JsValue
+import play.core.parsers.Multipart
 import util.PlayMacroLogsImpl
-import util.blocks.BlocksUtil.BlockImgMap
-import util.img.MainColorDetector.{Remove, ImgBgColorUpdateAction}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -20,8 +19,7 @@ import MMartCategory.CollectMMCatsAcc_t
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import util.blocks.{LkEditorWsActor, BlockMapperResult}
-import util.img.MainColorDetector
+import util.blocks.{BgImg, LkEditorWsActor, BlockMapperResult}
 import io.suggest.ym.model.common.Texts4Search
 
 /**
@@ -30,7 +28,7 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl {
+object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
 
   import LOGGER._
 
@@ -44,6 +42,16 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
+
+  override val BRUTEFORCE_TRY_COUNT_DIVISOR: Int = 3
+  override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
+
+
+  /** Макс.длина загружаемой картинки в байтах. */
+  val IMG_UPLOAD_MAXLEN_BYTES: Int = {
+    val mib = configuration.getInt("ad.img.len.max.mib") getOrElse 40
+    mib * 1024 * 1024
+  }
 
 
   /**
@@ -78,6 +86,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       )(adFormApply)(adFormUnapply)
     )
   }
+
+  /** Полный ключ доступа к полю bgImg в маппинге формы. */
+  private def bgImgFullK = "ad." + OFFER_K + "." + BgImg.BG_IMG_FN
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
@@ -119,6 +130,25 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
 
   /**
+   * Запуск детектирования палитры картинки в фоне.
+   * @param form Маппинг формы со всеми данными.
+   * @param ctx Контекст рендера.
+   */
+  private def detectMainColorBg(form: AdFormM)(implicit ctx: Context): Unit = {
+    val vOpt = form(bgImgFullK).value
+    try {
+      vOpt.foreach { v =>
+        val im = MImg(v)
+        _detectPalletteWs(im, wsId = ctx.ctxIdStr)
+      }
+    } catch {
+      case ex: Exception =>
+        debug("detectMainColorBg(): Cannot start color detection for im = " + vOpt)
+    }
+  }
+
+
+  /**
    * Рендер унифицированной страницы добаления рекламной карточки.
    * @param adnId id узла рекламной сети.
    */
@@ -131,14 +161,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     ).map(Ok(_))
   }
 
-
   /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код.
     * @param formWithErrors Форма для рендера.
     * @param catOwnerId id владельца категории. Обычно id ТЦ.
     * @param adnNode Магазин, с которым происходит сейчас работа.
     * @return NotAcceptable со страницей с create-формой.
     */
-  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])(implicit ctx: util.Context) = {
+  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])(implicit ctx: Context) = {
     renderCreateFormWith(formWithErrors, catOwnerId, adnNode, withBC)
       .map(NotAcceptable(_))
   }
@@ -226,7 +255,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
-    getMMCatsForCreate(af, catOwnerId) map { mmcats =>
+    val cats = getMMCatsForCreate(af, catOwnerId)
+    detectMainColorBg(af)
+    cats map { mmcats =>
       createAdTpl(mmcats, af, adnNode, withBC, blocksFor(adnNode))
     }
   }
@@ -234,9 +265,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
     import request.{producer, mad}
-    val catOwnerId = getCatOwnerId(producer)
-    getMMCatsForEdit(af, mad, catOwnerId) map { mmcats =>
-      editAdTpl(mad, mmcats, af, producer, blocksFor(producer))
+    val cats = getMMCatsForEdit(af, mad, getCatOwnerId(producer))
+    implicit val ctx = implicitly[Context]
+    detectMainColorBg(af)(ctx)
+    cats map { mmcats =>
+      editAdTpl(mad, mmcats, af, producer, blocksFor(producer))(ctx)
     }
   }
 
@@ -524,6 +557,28 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             upCats
         }
       }
+  }
+
+
+  /** Подготовка картинки, которая загружается в динамическое поле блока. */
+  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong)
+    IsAuth.async(bp) { implicit request =>
+      bruteForceProtected {
+        val bc: BlockConf = BlocksConf(blockId)
+        bc.blockFieldForName(fn) match {
+          case Some(bfi: BfImage) =>
+            val resultFut = _handleTempImg(
+              preserveUnknownFmt = false,
+              runEarlyColorDetector = bfi.preDetectMainColor,
+              wsId = wsId
+            )
+            resultFut
+
+          case _ => NotFound
+        }
+      }
+    }
   }
 
 }

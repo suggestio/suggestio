@@ -300,6 +300,28 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
 
   val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
 
+
+  /**
+   * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
+   * @param im Картинка для обработки.
+   * @param wsId id для уведомления.
+   */
+  def _detectPalletteWs(im: MImg, wsId: String) = {
+    MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) andThen {
+      case Success(result) =>
+        val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
+          result.copy(
+            sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
+          )
+        } else {
+          result
+        }
+        _notifyWs(wsId, res2)
+      case Failure(ex) =>
+        LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
+    }
+  }
+
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
     * @param request HTTP-реквест.
@@ -354,20 +376,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {
               if (wsId.isDefined) {
-                imgPrepareFut onSuccess { case _ =>
-                  MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) onComplete {
-                    case Success(result) =>
-                      val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
-                        result.copy(
-                          sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
-                        )
-                      } else {
-                        result
-                      }
-                      _notifyWs(wsId.get, res2)
-                    case Failure(ex) =>
-                      LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
-                  }
+                imgPrepareFut flatMap { _ =>
+                  _detectPalletteWs(im, wsId.get)
                 }
               } else {
                 LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.fileName)
