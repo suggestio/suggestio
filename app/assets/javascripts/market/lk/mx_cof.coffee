@@ -313,6 +313,8 @@ Slider =
 
   init: ()->
 
+    if !$("#indexSlider").size() then return false
+
     event = if isTouchDevice() then 'touchend' else 'click'
 
     cbca.slider.phoneSlide()
