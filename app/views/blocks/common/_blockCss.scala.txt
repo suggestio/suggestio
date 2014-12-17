@@ -9,3 +9,13 @@
   height: @((mad.blockMeta.height * brArgs.szMult).toInt)px;
 }
 }
+.sm-block-bg@{mad.id} {
+  position:  absolute;
+  top:     0;
+  left:    0;
+  z-index: 10;
+  width:   100%;
+  height:  100%;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(0,0,0)"/></svg>');
+  background-repeat: no-repeat;
+}
