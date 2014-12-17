@@ -209,8 +209,6 @@ object MarketAdFormUtil {
   }
 
 
-  val COVERING_PATTERN_COLOR_FN = "cpc"
-
   /** Маппим необязательное Float-поле. */
   def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
     if (withCoords) {
@@ -249,7 +247,7 @@ object MarketAdFormUtil {
       var ci = bmr.bd.colors.iterator
       ci ++= Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
       if (pattern.isDefined)
-        ci ++= Iterator(COVERING_PATTERN_COLOR_FN -> pattern.get)
+        ci ++= Iterator(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name -> pattern.get)
       ci.toMap
     }
     val mad = MAd(
@@ -268,7 +266,7 @@ object MarketAdFormUtil {
   def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
-    val pattern = mad.colors.get(COVERING_PATTERN_COLOR_FN)
+    val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
     import AdColorFns._
     val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
     Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )

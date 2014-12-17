@@ -7,7 +7,7 @@ import models.Context
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc._
-import play.twirl.api.{TxtFormat, HtmlFormat}
+import play.twirl.api.{Html, Txt, TxtFormat, HtmlFormat}
 import util._
 import util.acl.SioRequestHeader
 import util.ws.WsDispatcherActor
@@ -91,17 +91,19 @@ trait SioController extends Controller with ContextT {
 
   implicit def sn = SiowebNotifier
 
-  implicit def html4email(html: HtmlFormat.Appendable): String = {
+  implicit def html4email(html: Html): String = {
     HtmlCompressUtil.compressForEmail(html)
   }
 
-  implicit def html2jsStr(html: HtmlFormat.Appendable) = JsString(
-    HtmlCompressUtil.compressForJson(html)
-  )
+  implicit def html2jsStr(html: Html): JsString = {
+    JsString(
+      HtmlCompressUtil.compressForJson(html)
+    )
+  }
 
-  implicit def txt2str(txt: TxtFormat.Appendable): String = txt.body.trim
+  implicit def txt2str(txt: Txt): String = txt.body.trim
 
-  implicit def txt2jsStr(txt: TxtFormat.Appendable) = JsString(txt)
+  implicit def txt2jsStr(txt: Txt): JsString = JsString(txt)
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {
