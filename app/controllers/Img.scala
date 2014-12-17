@@ -84,15 +84,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       .exists { dt => !(modelTstampMs isAfter dt) }
   }
 
-  private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
-    trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
-    serveImg(
-      resultRaw = Ok(imgBytes),
-      mm        = Magic.getMagicMatch(imgBytes),
-      cacheSeconds = cacheSeconds,
-      modelInstant = modelInstant
-    )
-  }
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
