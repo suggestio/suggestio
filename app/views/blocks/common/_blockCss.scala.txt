@@ -3,6 +3,7 @@
 @* Стили для блока в общем. *@
 @import args._
 @import models.blk.AdColorFns._
+@import util.TplDataFormatUtil._
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {
@@ -15,7 +16,7 @@
 @if(brArgs.wideBg) {
 @mad.colors.get(WIDE_IMG_PATTERN_COLOR_FN.toString).map { patternColor =>
   .sm-block_img-pattern.__id-@{mad.id} {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="black"/></svg>');
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="3" height="3"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(@colorHex2rgb(patternColor).mkString(","))"/></svg>');
   }
 }
 }
