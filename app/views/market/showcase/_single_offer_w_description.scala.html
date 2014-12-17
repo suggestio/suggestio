@@ -3,9 +3,6 @@
 
 @import models.blk.AdColorFns._
 
-@svg_pattern() = {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(0,0,0)"/></svg>');
-}
 
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
 @args.wideBg.map { wideBg =>
@@ -17,7 +14,7 @@
     height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
   />
 
-  <div class="sm-block-bg@{mad.id}"></div>
+  <div class="sm-block_img-pattern __id-@{mad.id}" style="height: @{wideBg.szCss.height}px;"></div>
 }
 
 <div class="focused-ad_offer">
