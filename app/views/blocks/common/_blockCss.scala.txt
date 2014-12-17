@@ -15,7 +15,7 @@
 @* Пока паттерн касается только отображения широких карточек. *@
 @if(brArgs.wideBg) {
 @mad.colors.get(WIDE_IMG_PATTERN_COLOR_FN.toString).map { patternColor =>
-  .sm-block_img-pattern.__id-@{mad.id} {
+  .dotted-pattern.__id-@{mad.id} {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(@colorHex2rgb(patternColor).mkString(","))"/></svg>');
   }
 }
