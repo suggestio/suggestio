@@ -220,17 +220,3 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
   }
 }*/
 
-
-// Bower - менеджер js-пакетов.
-seq(bowerSettings : _*)
-
-BowerKeys.frontendDependencies ++= Seq(
-  "angular" %%% "=1.2.0-rc.2"
-)
-
-BowerKeys.sourceDirectory in BowerKeys.Bower <<= sourceDirectory (_ / ".." / "app" / "assets")
-
-BowerKeys.installDirectory in BowerKeys.Bower <<= (sourceDirectory in BowerKeys.Bower) (_ / "javascripts" / "bower-install")
-
-//update <<= update dependsOn (installTask dependsOn(pruneTask))
-
