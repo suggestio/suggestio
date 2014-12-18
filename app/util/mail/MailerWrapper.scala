@@ -5,7 +5,8 @@ import javax.mail.Authenticator
 
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
-import com.typesafe.plugin.{MailerAPI, use, MailerPlugin}
+import play.libs.mailer.Email
+import play.api.libs.mailer.{MailerPlugin, MailerAPI}
 import util.{AsyncUtil, PlayLazyMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -160,7 +161,7 @@ object MailerWrapper extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
-  def getPlayMailer: MailerAPI = use[MailerPlugin].email
+  def getPlayMailer = new Email()
 
   /** Неизменяемая резидентная инфа по fallback'у. */
   private lazy val fallBackInfo: FallbackState = {
