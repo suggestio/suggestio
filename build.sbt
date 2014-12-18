@@ -211,10 +211,26 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 //routesGenerator := InjectedRoutesGenerator
 
 // jslint пока включен только для отрефакторенной showcase.js
-includeFilter in (Assets, JshintKeys.jshint) := new FileFilter{
+/*includeFilter in (Assets, JshintKeys.jshint) := new FileFilter {
   val p = "/assets/javascripts/sc/"
   def accept(f: File) = {
-    f.getAbsolutePath.contains(p)
+    val ap = f.getAbsolutePath
+    println(ap)
+    ap.contains(p)
   }
-}
+}*/
+
+
+// Bower - менеджер js-пакетов.
+seq(bowerSettings : _*)
+
+BowerKeys.frontendDependencies ++= Seq(
+  "angular" %%% "=1.2.0-rc.2"
+)
+
+BowerKeys.sourceDirectory in BowerKeys.Bower <<= sourceDirectory (_ / ".." / "app" / "assets")
+
+BowerKeys.installDirectory in BowerKeys.Bower <<= (sourceDirectory in BowerKeys.Bower) (_ / "javascripts" / "bower-install")
+
+//update <<= update dependsOn (installTask dependsOn(pruneTask))
 

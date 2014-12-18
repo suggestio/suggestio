@@ -9,14 +9,15 @@ resolvers ++= Seq(
   "typesafe-snapshots"      at "http://repo.typesafe.com/typesafe/snapshots/",
   Resolver.url("bintray-repository", url("http://dl.bintray.com/neomaclin/sbt-plugins/"))(Resolver.ivyStylePatterns),
   //"sbt-snapshot-plugins"  at "https://ivy2-internal.cbca.ru/artifactory/sbt-plugin-snapshots"
-  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
+  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
+  "mdedetrich-releases"     at "http://artifactory.mdedetrich.com/plugins-release"
 )
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.6")
 
@@ -27,6 +28,8 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.0.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.1")
+
+addSbtPlugin("com.mdedetrich" %% "sbt-bower" % "0.2.1")
 
 
 // Use the Play sbt plugin for Play projects
