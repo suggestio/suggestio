@@ -21,7 +21,7 @@ import scala.concurrent.Future
  * Created: 27.05.14 12:07
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
-object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
+object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

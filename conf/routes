@@ -303,7 +303,7 @@ GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJso
 POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
 ## Галереи картинок
-GET  /sys/gals/all                       controllers.SysGallery.showList(page: Int ?= 0)
+GET  /sys/gals                           controllers.SysGallery.showList(page: Int ?= 0)
 POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
 GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
 GET  /sys/gals/new                       controllers.SysGallery.createGal
@@ -312,6 +312,11 @@ GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
 GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
 POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
 POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySubmit(galId)
+
+## sys/Картинки
+GET  /sys/img                            controllers.SysImg.index(q: Option[String] ?= None)
+POST /sys/img/search                     controllers.SysImg.searchFormSubmit
+GET  /sys/img/show                       controllers.SysImg.showOne(i: im.MImg)
 
 ## sys/AI
 GET  /sys/ai                             controllers.SysAi.index

@@ -198,6 +198,19 @@ constraint.minLength=Минимальная длина: {0}
 constraint.maxLength=Максимальная длина: {0}
 constraint.email=Email
 
+im.op.a=Кроп абс
+im.op.b=Гравитация
+im.op.c=Ресайз абс
+im.op.d=Интерласинг
+im.op.e=Размывка по Гауссу
+im.op.f=Качество сжатия
+im.op.g=Экстент
+im.op.h=Стрип метаданных
+im.op.i=Фильтр
+im.op.j=Сэмплинг
+im.op.k=Кроп процентный
+
+
 stuff.menu.ABOUT=О ПРОЕКТЕ
 stuff.menu.HELP=ПОМОЩЬ
 stuff.menu.LIVE=ВЖИВУЮ

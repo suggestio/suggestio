@@ -210,3 +210,11 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 //routesGenerator := InjectedRoutesGenerator
 
+// jslint пока включен только для отрефакторенной showcase.js
+includeFilter in (Assets, JshintKeys.jshint) := new FileFilter{
+  val p = "/assets/javascripts/sc/"
+  def accept(f: File) = {
+    f.getAbsolutePath.contains(p)
+  }
+}
+

@@ -1,0 +1,71 @@
+@(img: im.MImg, metaOpt: Option[MUserImgMeta2])(implicit ctx: Context)
+
+@* Отображение данных и ссылок навигации/управления для одной указанной картинке. *@
+
+@import datetime._
+@import ctx._
+@import util.img.DynImgUtil._
+
+@sysImgBase(
+  title = img.rowKeyStr + " (" + (if(img.isOriginal) "оригинал" else "дериватив") + ")"
+) {
+
+  @* Рендер разных метаданных о картинке. *@
+  <table>
+    <thead>
+      <tr>
+        <th>Ключ</th>
+        <th>Значение</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>rowKey</td>
+        <td title="rowKey UUID: @img.rowKey">@img.rowKeyStr</td>
+      </tr>
+
+      @metaOpt.map { meta =>
+        <tr>
+          <td>meta.map</td>
+          <td>@meta.md.mkString(", ")</td>
+        </tr>
+        <tr>
+          <td title="Column qualifier">meta.qr</td>
+          <td>@meta.q</td>
+        </tr>
+        <tr>
+          <td>timestamp</td>
+          <td>@_prettyDate(meta.timestamp, withSpan = true)</td>
+        </tr>
+      }
+
+      @if(img.hasImgOps) {
+        <tr>
+          <td>img ops</td>
+          <td>
+            @img.dynImgOps.iterator.map { op =>
+              <strong title="@op.opCode">@Messages("im.op." + op.opCode.strId)</strong>:
+              @op.unwrappedValue  @op.i18nValueCode.map(Messages(_))  (@op.qsValue)
+              <br/>
+            }
+          </td>
+        </tr>
+      }
+
+      @if(!img.isOriginal) {
+        <tr>
+          <td>original</td>
+          <td>
+            <a href="@routes.SysImg.showOne(img.original)">Перейти</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+
+  @* Рендер самой картинки. *@
+  <img src="@imgCall(img)" alt="Текущая картинка" />
+
+}

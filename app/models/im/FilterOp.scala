@@ -14,19 +14,26 @@ object ImFilters extends Enumeration {
   /**
    * Класс значения этого перечисления.
    * @param qsValue короткий id фильтра, который рендерится юзеру в ссылке.
-   * @param imName название фильтра, которое передаётся в convert -filter.
    */
-  protected sealed case class Val(qsValue: String, imName: String) extends super.Val(qsValue) with ImOp {
+  protected sealed abstract class Val(val qsValue: String) extends super.Val(qsValue) with ImOp {
     override def opCode = ImOpCodes.Filter
+
+    /** Название фильтра, которое передаётся в convert -filter. */
+    def imName: String
 
     override def addOperation(op: IMOperation): Unit = {
       op.filter(imName)
     }
+
+    override def unwrappedValue: Option[String] = Some(imName)
   }
 
   type ImFilter = Val
 
-  val Lanczos: ImFilter = Val("a", "Lanczos")
+  val Lanczos: ImFilter = new Val("a") {
+    override def imName = "Lanczos"
+  }
+
 
   implicit def value2val(x: Value): ImFilter = x.asInstanceOf[ImFilter]
 

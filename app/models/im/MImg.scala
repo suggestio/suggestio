@@ -77,6 +77,12 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
     }
   }
 
+  def qsbStandalone = {
+    import ImOp._
+    import QueryStringBindable._
+    qsb
+  }
+
   /** routes-биндер для query-string. */
   implicit def qsb(implicit strB: QueryStringBindable[String], imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
     new QueryStringBindable[MImg] {
@@ -119,8 +125,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
   /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
   def fileName2miP: Parser[MImg] = {
     fileNameP ^^ {
-      case uuid ~ imOps =>
-        MImg(uuid, imOps)
+      case uuid ~ imOps  =>  MImg(uuid, imOps)
     }
   }
 
@@ -167,10 +172,10 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   override lazy val dynImgOpsString = super.dynImgOpsString
 
   def qOpt: Option[String] = {
-    if (dynImgOps.nonEmpty) {
-      Some( dynImgOpsString )
-    } else {
+    if (isOriginal) {
       None
+    } else {
+      Some( dynImgOpsString )
     }
   }
 
@@ -347,6 +352,8 @@ trait ImgFilename {
 /** Поле минимально-сериализованных dynImg-аргументов для класса. */
 trait DynImgOpsString {
   def dynImgOps: Seq[ImOp]
+
+  def isOriginal: Boolean = dynImgOps.isEmpty
 
   def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
     ImOp.unbindImOpsSb(

@@ -24,7 +24,7 @@ import scala.concurrent.Future
  * Created: 06.11.14 18:48
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
-object SysGallery extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object SysGallery extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 

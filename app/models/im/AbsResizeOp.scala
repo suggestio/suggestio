@@ -88,6 +88,14 @@ case class AbsResizeOp(sz: MImgSizeT, flags: Seq[ImResizeFlag] = Nil) extends Im
     }
     sb.toString()
   }
+
+  override def unwrappedValue: Option[String] = {
+    val sb = new StringBuilder(16, sz.toString)
+    flags.foreach { flag =>
+      sb append flag.imChar
+    }
+    Some( sb.toString() )
+  }
 }
 
 
