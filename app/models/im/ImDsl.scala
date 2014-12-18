@@ -166,6 +166,8 @@ trait ImOp {
   def opCode: ImOpCode
   def addOperation(op: IMOperation)
   def qsValue: String
+  def i18nValueCode: Option[String] = None
+  def unwrappedValue: Option[String] = None
 }
 
 
@@ -252,6 +254,7 @@ object ImGravities extends Enumeration {
       op.gravity(imName)
     }
     override def qsValue: String = strId
+    override def unwrappedValue = Some(imName)
   }
 
   type ImGravity = Val
@@ -299,6 +302,7 @@ object ImInterlace extends Enumeration {
     override def addOperation(op: IMOperation): Unit = {
       op.interlace(imName)
     }
+    override def unwrappedValue: Option[String] = Some(imName)
   }
 
   type ImInterlacing = Val

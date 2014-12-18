@@ -172,10 +172,10 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   override lazy val dynImgOpsString = super.dynImgOpsString
 
   def qOpt: Option[String] = {
-    if (dynImgOps.nonEmpty) {
-      Some( dynImgOpsString )
-    } else {
+    if (isOriginal) {
       None
+    } else {
+      Some( dynImgOpsString )
     }
   }
 
@@ -352,6 +352,8 @@ trait ImgFilename {
 /** Поле минимально-сериализованных dynImg-аргументов для класса. */
 trait DynImgOpsString {
   def dynImgOps: Seq[ImOp]
+
+  def isOriginal: Boolean = dynImgOps.isEmpty
 
   def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
     ImOp.unbindImOpsSb(

@@ -194,6 +194,20 @@ constraint.minLength=Minimum length: {0}
 constraint.maxLength=Maximum length: {0}
 constraint.email=Email
 
+
+im.op.a=Crop abs
+im.op.b=Gravity
+im.op.c=Resize abs
+im.op.d=Interlacing
+im.op.e=Gauss blur
+im.op.f=Compression quality
+im.op.g=Extent
+im.op.h=Strip meta
+im.op.i=Filter
+im.op.j=Sampling
+im.op.k=Crop percent
+
+
 stuff.menu.ABOUT=ABOUT
 stuff.menu.HELP=HELP
 stuff.menu.LIVE=LIVE

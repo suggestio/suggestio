@@ -26,6 +26,10 @@ case class AbsCropOp(crop: ImgCrop) extends ImCropOpT {
   override def addOperation(op: IMOperation): Unit = {
     op.crop(crop.width, crop.height, crop.offX, crop.offY)
   }
+
+  override def unwrappedValue: Option[String] = {
+    Some(crop.toCropStr)
+  }
 }
 
 

@@ -316,7 +316,7 @@ POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySub
 ## sys/Картинки
 GET  /sys/img                            controllers.SysImg.index(q: Option[String] ?= None)
 POST /sys/img/search                     controllers.SysImg.searchFormSubmit
-GET  /sys/img/one                        controllers.SysImg.getOne(i: im.MImg)
+GET  /sys/img/show                       controllers.SysImg.showOne(i: im.MImg)
 
 ## sys/AI
 GET  /sys/ai                             controllers.SysAi.index

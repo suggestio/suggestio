@@ -16,7 +16,7 @@
     Задайте данные по искомой картинке в поле выше.
   } else {
     @imgs.iterator.map { img =>
-      <a href="@routes.SysImg.getOne(img)">
+      <a href="@routes.SysImg.showOne(img)">
         <img src="@thumb256Call(img, fillArea = true)" alt="rowKey: @img.rowKeyStr" />
       </a>
     }

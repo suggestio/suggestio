@@ -58,6 +58,7 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
       .transform [MImg] (_.get, Some.apply)
   )
 
+
   /** Рендер главной страницы sys.img-раздела админки. */
   def index(q: Option[String]) = IsSuperuser { implicit request =>
     val imgs = Seq.empty[MImg]    // TODO Нужно искать все картинки или по указанному в q запросу.
@@ -75,15 +76,18 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
         NotAcceptable( indexTpl(Seq.empty, formWithErrors) )
       },
       {img =>
-        Redirect( routes.SysImg.getOne(img) )
+        Redirect( routes.SysImg.showOne(img) )
       }
     )
   }
 
   /** Сабмит формы поиска картинки по ссылке на неё. */
-  def getOne(im: MImg) = IsSuperuser.async { implicit request =>
-    
-    ???
+  def showOne(im: MImg) = IsSuperuser.async { implicit request =>
+    val metaFut = im.permMetaCached
+    // TODO Искать, где используется эта картинка.
+    metaFut map { metaOpt =>
+      Ok(showOneTpl(im, metaOpt))
+    }
   }
 
 }
