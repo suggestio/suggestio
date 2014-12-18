@@ -77,6 +77,12 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
     }
   }
 
+  def qsbStandalone = {
+    import ImOp._
+    import QueryStringBindable._
+    qsb
+  }
+
   /** routes-биндер для query-string. */
   implicit def qsb(implicit strB: QueryStringBindable[String], imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
     new QueryStringBindable[MImg] {
@@ -119,8 +125,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
   /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
   def fileName2miP: Parser[MImg] = {
     fileNameP ^^ {
-      case uuid ~ imOps =>
-        MImg(uuid, imOps)
+      case uuid ~ imOps  =>  MImg(uuid, imOps)
     }
   }
 

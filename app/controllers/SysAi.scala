@@ -20,7 +20,7 @@ import scala.util.matching.Regex
  * Description: Управление системами автоматической генерации контента.
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
-object SysAi extends SysAiMadT {
+object SysAi extends SioControllerImpl with SysAiMadT {
 
   import views.html.sys1.ai._
 

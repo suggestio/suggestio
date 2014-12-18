@@ -21,7 +21,7 @@ import SysMarket.companyFormM
  * v2: Нужен многошаговый и удобный мастер создания узлов со всеми контрактами и инвайтами, отметками о ходе
  * обработки запроса и т.д.
  */
-object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
+object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

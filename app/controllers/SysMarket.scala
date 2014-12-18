@@ -29,7 +29,7 @@ import play.api.i18n.Messages
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
+object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompat {
 
   import LOGGER._
 

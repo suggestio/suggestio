@@ -25,7 +25,7 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-object SysAdnGeo extends SioController with PlayLazyMacroLogsImpl {
+object SysAdnGeo extends SioControllerImpl with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 

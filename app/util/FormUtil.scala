@@ -661,6 +661,13 @@ object FormUtil {
       }
   }
 
+  def parseQsToMap(data: String, encoding: String = "utf-8"): Map[String, Seq[String]] = {
+    parseToPairs(data, encoding)
+      .toSeq
+      .groupBy(_._1)
+      .mapValues { _.map { _._2 } }
+  }
+
 }
 
 
