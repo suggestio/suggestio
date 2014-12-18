@@ -61,7 +61,8 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
 
   /** Рендер главной страницы sys.img-раздела админки. */
   def index(q: Option[String]) = IsSuperuser { implicit request =>
-    val imgs = Seq.empty[MImg]    // TODO Нужно искать все картинки или по указанному в q запросу.
+    val imgs = Seq.empty[MImg]
+    // TODO Нужно искать все картинки или по указанному в q запросу.
     Ok( indexTpl(imgs, imgFormM) )
   }
 
@@ -81,7 +82,10 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
     )
   }
 
-  /** Сабмит формы поиска картинки по ссылке на неё. */
+  /**
+   * Сабмит формы поиска картинки по ссылке на неё.
+   * @param im Данные по запрашиваемой картинке.
+   */
   def showOne(im: MImg) = IsSuperuser.async { implicit request =>
     val metaFut = im.permMetaCached
     // TODO Искать, где используется эта картинка.
