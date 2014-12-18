@@ -96,6 +96,8 @@ trait MImgSizeT {
 
   def isVertical = height > width
   def isHorizontal = width > height
+
+  override def toString: String = s"${width}x$height"
 }
 
 case class MImgInfoMeta(height: Int, width: Int) extends MImgSizeT {
