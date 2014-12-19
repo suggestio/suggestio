@@ -16,7 +16,6 @@ import views.html.market.join._
 import util.FormUtil._
 import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import MarketLkAdnEdit.logoKM

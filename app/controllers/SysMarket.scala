@@ -1,13 +1,11 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import org.joda.time.DateTime
 import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
 import util.adv.AdvUtil
-import util.billing.MmpDailyBilling
 import util.mail.MailerWrapper
 import views.html.sys1.market._
 import play.api.data._, Forms._
@@ -15,8 +13,7 @@ import util.FormUtil._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.Context
-import com.typesafe.plugin.{use, MailerPlugin}
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
