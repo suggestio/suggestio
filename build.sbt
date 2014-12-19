@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   cache,
   json,
   ws,
-  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.1",
+  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.4.0-M2-SNAPSHOT",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",

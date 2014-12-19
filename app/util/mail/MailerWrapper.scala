@@ -1,11 +1,10 @@
 package util.mail
 
-
 import javax.mail.Authenticator
 
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
-import com.typesafe.plugin.{MailerAPI, use, MailerPlugin}
+import play.api.libs.mailer.{Email, MailerPlugin}
 import util.{AsyncUtil, PlayLazyMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -31,14 +30,22 @@ trait EmailBuilder {
   def setHtml(html: String): T
   def setText(text: String): T
   def setRecipients(rcpts: String*): T
+
   def send(): Unit
 }
 
 
+/** Абстрактная реализация set-методов [[EmailBuilder]], которая работает в виде билдера,
+  * который накапливает все данные у себя в состоянии. Она потоко-НЕбезопасна. */
 trait EmailBuilderShared extends EmailBuilder {
 
-  protected var _html: Option[String] = None
-  protected var _text: Option[String] = None
+  protected var _html: Option[String]     = None
+  protected var _text: Option[String]     = None
+  protected var _replyTo: Option[String]  = None
+  protected var _recipients: Seq[String]  = Seq.empty
+  protected var _from: Option[String]     = None
+  protected var _subject: Option[String]  = None
+
 
   override def setHtml(html: String): T = {
     _html = Some(html)
@@ -48,55 +55,6 @@ trait EmailBuilderShared extends EmailBuilder {
     _text = Some(text)
     this
   }
-
-  protected def undefinedBodyException =
-    throw new IllegalArgumentException("Nor text body, neither html body are not defined. Define at least one.")
-}
-
-
-class PlayMailerEmailBuilder(underlying: MailerAPI) extends EmailBuilderShared {
-
-  override def setReplyTo(srt: String): T = {
-    underlying.setReplyTo(srt)
-    this
-  }
-
-  override def setFrom(f: String): T = {
-    underlying.setFrom(f)
-    this
-  }
-
-  override def setRecipients(rcpts: String*): T = {
-    underlying.setRecipient(rcpts : _*)
-    this
-  }
-
-  override def setSubject(s: String): T = {
-    underlying.setSubject(s)
-    this
-  }
-
-  override def send(): Unit = {
-    // Нужно дергать разные методы для отправки сообщения.
-    if (_html.isDefined && _text.isDefined) {
-      underlying.send(_text.get, _html.get)
-    } else if (_html.isDefined) {
-      underlying.sendHtml(_html.get)
-    } else if (_text.isDefined) {
-      underlying.send(_text.get)
-    } else {
-      undefinedBodyException
-    }
-  }
-}
-
-
-class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared {
-
-  protected var _replyTo: Option[String]  = None
-  protected var _recipients: Seq[String]  = Seq.empty
-  protected var _from: Option[String]     = None
-  protected var _subject: Option[String]  = None
 
   override def setReplyTo(srt: String): T = {
     _replyTo = Some(srt)
@@ -117,6 +75,31 @@ class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared {
     _recipients = rcpts
     this
   }
+
+  protected def undefinedBodyException =
+    throw new IllegalArgumentException("Nor text body, neither html body are not defined. Define at least one.")
+}
+
+
+/** Билдер для play-mailer'а. */
+class PlayMailerEmailBuilder extends EmailBuilderShared {
+
+  override def send(): Unit = {
+    val email = Email(
+      subject   = _subject.get,
+      from      = _from.get,
+      to        = _recipients,
+      bodyText  = _text,
+      bodyHtml  = _html,
+      replyTo   = _replyTo
+    )
+    MailerPlugin.send(email)
+  }
+}
+
+
+/** Если play-mailer не работает, то можно использовать вот это. */
+class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared with PlayLazyMacroLogsImpl {
 
   override def send(): Unit = {
     // В зависимости от наличия/отсутствия html-части нужно дергать те или иные классы:
@@ -149,18 +132,14 @@ class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared {
       email.send()
     }(AsyncUtil.singleThreadIoContext)
     fut onFailure { case ex: Throwable =>
-      MailerWrapper.LOGGER.error(s"${getClass.getSimpleName}.send() Exception occured while trying to send msg", ex)
+      LOGGER.error(s"${getClass.getSimpleName}.send() Exception occured while trying to send msg", ex)
     }
   }
 
 }
 
 
-object MailerWrapper extends PlayLazyMacroLogsImpl {
-
-  import LOGGER._
-
-  def getPlayMailer: MailerAPI = use[MailerPlugin].email
+object MailerWrapper {
 
   /** Неизменяемая резидентная инфа по fallback'у. */
   private lazy val fallBackInfo: FallbackState = {
@@ -172,26 +151,17 @@ object MailerWrapper extends PlayLazyMacroLogsImpl {
     )
   }
 
-  val usePlayMailer: Boolean = {
-    try {
-      getPlayMailer
-      true
-    } catch {
-      case ex: Exception =>
-        warn("Cannot use play-mailer because of exception while instantiating", ex)
-        false
-    }
-  }
+  /** Использовать ли play mailer для отправки электронной почты? */
+  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer") getOrElse true
 
-
+  /** Выдать инстанс EmailBuilder'а, который позволит собрать письмо и отправить. */
   def instance: EmailBuilder = {
-    if (usePlayMailer) {
-      new PlayMailerEmailBuilder(getPlayMailer)
+    if (USE_PLAY_MAILER) {
+      new PlayMailerEmailBuilder()
     } else {
       new CommonsEmailBuilder(fallBackInfo)
     }
   }
-
 
 }
 
