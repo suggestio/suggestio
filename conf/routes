@@ -377,3 +377,9 @@ GET     /blog                           controllers.Static.blogIndex
 GET     /blog/:path                     controllers.Static.blogPage(path)
 GET     /badbrowser                     controllers.Static.badbrowser
 
+
+## yeoman-play
+GET     /ui         com.tuplejump.playYeoman.Yeoman.index
+->	/ui/	    yeoman.Routes
+#GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
+
