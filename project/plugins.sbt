@@ -12,9 +12,9 @@ resolvers ++= Seq(
   Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
 )
 
-//addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
 
-//addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
 

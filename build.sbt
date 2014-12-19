@@ -208,3 +208,6 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
 Yeoman.yeomanSettings
 
+Yeoman.withTemplates
+
+

@@ -4,7 +4,9 @@ define([], function() {
     urlArgs: "bust=" + (new Date()).getTime(),
     "baseUrl": "/assets/javascripts/",
     "paths": {
-      "router": "bower_components/requirejs-router/router",
+      "router": "router.min",
+
+      // вспомогательные инструменты
       "dom": "sc/utilites/dom"
     }
   });

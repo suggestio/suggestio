@@ -1,8 +1,14 @@
-define [], () ->
-
-  noMethod: () ->
+define () ->
 
   init: () ->
-    console.log "init module"
-
-    @.noMethod()
+    
+    myAppModule = angular.module "myApp", []
+    
+    # configure the module.
+    # in this example we will create a greeting filter
+    myAppModule.filter(
+      "greet",
+      () ->
+        return (name) ->
+          return "Hello, #{name} !"
+    )
