@@ -206,8 +206,5 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 //routesGenerator := InjectedRoutesGenerator
 
-Yeoman.yeomanSettings
-
-Yeoman.withTemplates
-
+Yeoman.yeomanSettings ++ Yeoman.withTemplates
 
