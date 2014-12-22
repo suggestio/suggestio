@@ -60,7 +60,9 @@ object SioCassandraClient extends MacroLogsImplLazy {
     if (_session == null) {
       synchronized {
         if (_session == null) {
-          _session = cluster.newSession()
+          val s = cluster.newSession()
+          _useKeyspaceFor(SIO_KEYSPACE, s)
+          _session = s
         }
       }
     }
@@ -90,7 +92,8 @@ object SioCassandraClient extends MacroLogsImplLazy {
     session.executeAsync(cmd)
   }
 
-  private def _useKeyspaceSync(ks: String) = session.execute(s"USE $ks;")
+  private def _useKeyspaceSync(ks: String) = _useKeyspaceFor(ks, session)
+  private def _useKeyspaceFor(ks: String, s: Session) = s.execute(s"USE $ks;")
 
   /** Выставить клиенту используемый keyspace. */
   def useKeyspaceSync(ks: String) = {
@@ -99,13 +102,6 @@ object SioCassandraClient extends MacroLogsImplLazy {
     _useKeyspaceSync(ks)
   }
 
-  // При старте надо выставить keyspace как дефолтовый. В нём живут все модели.
-  try {
-    _useKeyspaceSync(SIO_KEYSPACE)
-  } catch {
-    case ex: Throwable =>
-      error(s"Suppressing failure to connect to keyspace $SIO_KEYSPACE; Not created? Use JMX console to create it.", ex)
-  }
 }
 
 
