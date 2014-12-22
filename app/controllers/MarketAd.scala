@@ -63,8 +63,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   private def getSaveAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockMapperResult]): AdFormM = {
     import AdNetMemberTypes._
     val catIdM = anmt match {
-      case SHOP | RESTAURANT      => userCatIdSomeM
-      case MART | RESTAURANT_SUP  => userCatIdOptM
+      case SHOP | RESTAURANT      => adCatIdsNonEmptyM
+      case MART | RESTAURANT_SUP  => adCatIdsM
     }
     getAdFormM(catIdM, blockM)
   }
@@ -75,7 +75,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    * @param blockM маппер для блоков.
    * @return Маппинг формы, готовый к эксплуатации.
    */
-  def getAdFormM(catIdM: Mapping[Option[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
+  def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       "ad" -> mapping(
         CAT_ID_K    -> catIdM,
@@ -255,7 +255,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
-    val cats = getMMCatsForCreate(af, catOwnerId)
+    val cats = getMMCats()
     detectMainColorBg(af)
     cats map { mmcats =>
       createAdTpl(mmcats, af, adnNode, withBC, blocksFor(adnNode))
@@ -265,7 +265,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
 
   private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
     import request.{producer, mad}
-    val cats = getMMCatsForEdit(af, mad, getCatOwnerId(producer))
+    val cats = getMMCats()
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
     cats map { mmcats =>
@@ -380,8 +380,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   private def newTexts4search(newMadData: MAd, producer: MAdnNode): Future[Texts4Search] = {
     // Собираем названия родительских категорий:
     val catNamesFut: Future[List[String]] = {
-      newMadData.userCatId.fold(Future successful List.empty[String]) { userCatId =>
-        MMartCategory.foldUpChain [List[String]] (userCatId, Nil) {
+      val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
+        val fut = MMartCategory.foldUpChain [List[String]] (catId, Nil) {
           (acc, e) =>
             if (e.includeInAll) {
               e.name :: acc
@@ -389,7 +389,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
               acc
             }
         }
+        fut :: accFut
       }
+      Future.reduce(futs) { _ ++ _ }
     }
     // Узнаём название узла-продьюсера:
     // Генерим общий результат:
@@ -525,38 +527,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
     af(catIdK).value.filter { _ => af.errors(catIdK).isEmpty }
   }
 
-  /** Получение списков категорий на основе формы и владельца категорий. */
-  private def getMMCatsForCreate(af: AdFormM, catOwnerId: String): Future[MMartCategory.CollectMMCatsAcc_t] = {
-    val catIdOpt = maybeAfCatId(af)
-    getMMCatsFor(catIdOpt, catOwnerId: String)
-  }
-
-
-  private def getMMCatsForEdit(af: AdFormM, mad: MAd, catOwnerId: String): Future[CollectMMCatsAcc_t] = {
-    val catIdOpt = maybeAfCatId(af).orElse(mad.userCatId)
-    getMMCatsFor(catIdOpt, catOwnerId: String)
-  }
-
-  private def getMMCatsFor(catIdOpt: Option[String], catOwnerId: String): Future[CollectMMCatsAcc_t] = {
-    catIdOpt.fold
-      { // Выдать top-категории
-        val mmcatsFut = MMartCategory.findTopForOwner(catOwnerId)
-        MMartCategory.catsAsAccFut(mmcatsFut)
-      }
-      {catId =>
-        // Выдать над и под-категории по отношению к указанной категории.
-        val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
-        val upCatsFut = MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
-        for {
-          upCats  <- upCatsFut
-          subcats <- subcatsFut
-        } yield {
-          if (subcats.nonEmpty)
-            upCats ++ List(None -> subcats)
-          else
-            upCats
-        }
-      }
+  /** Подготовить список категорий асинхронно. */
+  private def getMMCats(): Future[CollectMMCatsAcc_t] = {
+    // 2014.dec.10: Плоские категории как были, так и остались. Упрощаем работу с категориями по максимуму.
+    val catOwnerId = MMartCategory.DEFAULT_OWNER_ID
+    val mmcatsFut = MMartCategory.findTopForOwner(catOwnerId)
+    MMartCategory.catsAsAccFut(mmcatsFut)
   }
 
 

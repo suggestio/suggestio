@@ -240,7 +240,7 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, pattern: Option[String],
+  def adFormApply(userCatId: Set[String], bmr: BlockMapperResult, pattern: Option[String],
                   richDescrOpt: Option[RichDescr], bgColor: String): AdFormMResult = {
     val colors: Map[String, String] = {
       // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
@@ -263,7 +263,7 @@ object MarketAdFormUtil {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Set[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
     val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
