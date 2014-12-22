@@ -20,7 +20,7 @@ import io.suggest.ym.parsers.Price
  * Created: 20.04.14 21:12
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
-object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
+object SysMarketBillingTariff extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

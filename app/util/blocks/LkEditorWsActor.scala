@@ -1,10 +1,7 @@
 package util.blocks
 
-import akka.actor.{Actor, ActorRef, Props}
-import play.api.libs.json.{JsString, JsObject}
-import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
-import util.img.MainColorDetector
-import util.img.MainColorDetector.ImgBgColorUpdateAction
+import akka.actor.{ActorRef, Props}
+import util.PlayLazyMacroLogsImpl
 import util.ws._
 
 /**
@@ -29,4 +26,13 @@ case class LkEditorWsActor(out: ActorRef, wsId: String)
   extends WsActorDummy
   with SubscribeToWsDispatcher
   with ColorDetectedWsNotifyActor
-  with PlayLazyMacroLogsImpl
+  with PlayLazyMacroLogsImpl {
+
+  import LOGGER._
+
+  override def postStop(): Unit = {
+    super.postStop()
+    trace(s"Stopping actor for wsId=$wsId and out=$out")
+  }
+
+}

@@ -7,7 +7,7 @@ import models.Context
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc._
-import play.twirl.api.{TxtFormat, HtmlFormat}
+import play.twirl.api.{Html, Txt, TxtFormat, HtmlFormat}
 import util._
 import util.acl.SioRequestHeader
 import util.ws.WsDispatcherActor
@@ -91,17 +91,19 @@ trait SioController extends Controller with ContextT {
 
   implicit def sn = SiowebNotifier
 
-  implicit def html4email(html: HtmlFormat.Appendable): String = {
+  implicit def html4email(html: Html): String = {
     HtmlCompressUtil.compressForEmail(html)
   }
 
-  implicit def html2jsStr(html: HtmlFormat.Appendable) = JsString(
-    HtmlCompressUtil.compressForJson(html)
-  )
+  implicit def html2jsStr(html: Html): JsString = {
+    JsString(
+      HtmlCompressUtil.compressForJson(html)
+    )
+  }
 
-  implicit def txt2str(txt: TxtFormat.Appendable): String = txt.body.trim
+  implicit def txt2str(txt: Txt): String = txt.body.trim
 
-  implicit def txt2jsStr(txt: TxtFormat.Appendable) = JsString(txt)
+  implicit def txt2jsStr(txt: Txt): JsString = JsString(txt)
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {
@@ -129,7 +131,7 @@ trait SioController extends Controller with ContextT {
   def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
     rdrPath
       .filter(_ startsWith "/")
-      .fold { dflt.map(_.url) }  { Future successful }
+      .fold { dflt.map(_.url) }  { Future.successful }
       .map { r => Results.Redirect(r) }
   }
 
@@ -144,6 +146,9 @@ trait SioController extends Controller with ContextT {
   }
 
 }
+/** Абстрактная реализация контроллера с дедубликации скомпиленного кода между контроллерами.
+  * TODO Когда заработает proguard, этот класс надо будет выпилить начисто. */
+abstract class SioControllerImpl extends SioController
 
 
 /** Трейт, добавляющий константу, хранящую имя текущего модуля, пригодного для использования в конфиге в качестве ключа. */
@@ -161,7 +166,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 
   /** Сколько асинхронных попыток предпринимать. */
   val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
-  def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 5
+  def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 15
 
   /** Пауза между повторными попытками отправить уведомление. */
   val NOTIFY_WS_RETRY_PAUSE_MS = configuration.getLong(s"ctl.ws.notify.$MY_CONF_NAME.retry.pause.ms") getOrElse NOTIFY_WS_RETRY_PAUSE_MS_DFLT
@@ -176,7 +181,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
           wsActorRef ! msg
         case other =>
           if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
-            Akka.system.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS milliseconds) {
+            Akka.system.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
               _notifyWs(wsId, msg, counter + 1)
             }
             other match {
@@ -184,7 +189,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
                 LOGGER.trace(s"WS actor $wsId not exists right now. Will retry after $NOTIFY_WS_RETRY_PAUSE_MS ms...")
               case Failure(ex) =>
                 LOGGER.error(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
-             // подавляем warning на Success(Some(_)), который отрабатывается выше
+              // подавляем warning на Success(Some(_)), который отрабатывается выше
               case _ =>
                 // should never happen
             }

@@ -100,7 +100,9 @@
 }
 
 @* Окно с предупреждением о выходе из Sio.Market *@
-@_exit_screen(args)
+@if(!args.syncRender) {
+  @_exit_screen(args)
+}
 
 @* Окно с версткой гео-меню *@
 @if( !args.syncRender || args.jsStateOpt.exists(_.isNavScrOpened) ) {

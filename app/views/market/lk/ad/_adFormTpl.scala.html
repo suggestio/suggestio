@@ -8,6 +8,8 @@
 @import helper._
 @import AdOfferTypes._
 @import util.blocks._
+@import util.FC.checkboxFc
+
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -50,11 +52,12 @@
       @* Отображение нужного редактора *@
       <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
         @blocks.editor._blockEditorTpl(af, withBC = withBC)
-      </div>
 
-      @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
-      @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
-      @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+        @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
+        @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
+        @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+
+      </div>
 
       <div class="clear"></div>
 
@@ -66,7 +69,7 @@
   @* HTML-редактор для ввода текстового описания. *@
   @market.lk.lkBlock("Описание") {
 
-    <table class="input-w __size-L tinymce">
+    <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
 
       <td class="input-w_tinymce-editor">
         <textarea class="js-tinymce" id="ad_descr_text" name="ad.descr.text">
@@ -83,6 +86,6 @@
   <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
 
   @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
-  <input type="hidden" name="ad.bgColor" value="EEEEEE" />
+  <input id="adBgColor" type="hidden" name="ad.bgColor" value="EEEEEE" />
 }
 

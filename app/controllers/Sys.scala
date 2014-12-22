@@ -21,7 +21,7 @@ import util.urls_supply.SeedUrlsSupplier
  * В прошлой версии sioweb был /db/ контроллер для этого. Для экшенов этого контроллера всегда используется isSuperuser.
  */
 
-object Sys extends SioController with PlayMacroLogsImpl {
+object Sys extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

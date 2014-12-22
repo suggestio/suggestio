@@ -29,3 +29,8 @@ picture
 *.rar
 *.gz
 conf/elasticsearch.yml*
+ui/node_modules
+ui/dist
+ui/.tmp
+ui/.sass-cache
+ui/bower_components

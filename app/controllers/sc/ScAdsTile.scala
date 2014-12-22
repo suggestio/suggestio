@@ -7,7 +7,7 @@ import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.{CssRenderArgsT, BlockWidths, SzMult_t, FieldCssRenderArgsT}
+import models.blk.{CssRenderArgsT, BlockWidths, FieldCssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.HtmlFormat
 import util._
@@ -58,9 +58,10 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     }
     // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
     val cssAppendFut = logic.jsAppendAdsCss
+    val tileArgs = logic.tileArgs
     // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
-    val setCellSizeJsa = SetCellSize((BlockWidths.NARROW.widthPx * logic.szMult).toInt)
-    val setCellPaddingJsa = SetCellPadding((ShowcaseUtil.TILE_PADDING_CSSPX * logic.szMult).toInt)
+    val setCellSizeJsa = SetCellSize((BlockWidths.NARROW.widthPx * tileArgs.szMult).toInt)
+    val setCellPaddingJsa = SetCellPadding((ShowcaseUtil.TILE_PADDING_CSSPX * tileArgs.szMult).toInt)
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
     val resultFut = for {
       smRcvResp <- smRcvRespFut
@@ -93,14 +94,14 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
-    lazy val szMult: SzMult_t = ShowcaseUtil.getSzMult4tiles(ShowcaseUtil.TILES_SZ_MULTS)(ctx)
+    lazy val tileArgs = ShowcaseUtil.getTileArgs()(ctx)
 
     /** Параметры для рендера блоков плитки. */
     lazy val brArgs = blk.RenderArgs(
       withEdit      = false,
       isStandalone  = false,
       wideBg        = None,
-      szMult        = szMult,
+      szMult        = tileArgs.szMult,
       inlineStyles  = false
     )
 

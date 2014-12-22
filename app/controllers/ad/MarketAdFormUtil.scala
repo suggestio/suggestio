@@ -4,7 +4,6 @@ import models._
 import models.blk.{AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
-import io.suggest.ym.parsers.Price
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.ad.RichDescr
@@ -154,7 +153,7 @@ object MarketAdFormUtil {
     doubleM
       .transform[Int](_.toInt, _.toDouble)
       .verifying("error.coord.too.big", { _ <= 2048 })
-      .verifying("error.coord.negative", { _ >= 0 })
+      .transform[Int](Math.max(0, _), identity)
   }
   def coords2DM: Mapping[Coords2D] = {
     // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
@@ -209,71 +208,6 @@ object MarketAdFormUtil {
     }
   }
 
-  /** Поле с ценой. Является вариацией float-поля. */
-  def aoPriceFieldM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOPriceField] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> priceStrictM,
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {case ((rawPrice, price), font, coordsOpt) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-      }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font, coords) )
-      }
-    } else {
-      mapping(
-        "value" -> priceStrictM,
-        "font"  -> fontM
-      )
-      {case ((rawPrice, price), font) =>
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
-      {mmadp =>
-        import mmadp._
-        Some( (orig -> Price(value, currency), font) )
-      }
-    }
-  }
-
-
-  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  def aoPriceOptM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOPriceField]] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> optional(priceStrictM),
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {(pricePairOpt, font, coordsOpt) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font, coords)
-      }}
-    } else {
-      mapping(
-        "value" -> optional(priceStrictM),
-        "font"  -> fontM
-      )
-      {(pricePairOpt, font) =>
-        pricePairOpt.map { case (rawPrice, price) =>
-          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-        }
-      }
-      {_.map { mmadp =>
-        import mmadp._
-        (Some(orig -> Price(value, currency)), font)
-      }}
-    }
-  }
-
-  val COVERING_PATTERN_COLOR_FN = "cpc"
 
   /** Маппим необязательное Float-поле. */
   def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
@@ -313,7 +247,7 @@ object MarketAdFormUtil {
       var ci = bmr.bd.colors.iterator
       ci ++= Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
       if (pattern.isDefined)
-        ci ++= Iterator(COVERING_PATTERN_COLOR_FN -> pattern.get)
+        ci ++= Iterator(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name -> pattern.get)
       ci.toMap
     }
     val mad = MAd(
@@ -332,7 +266,7 @@ object MarketAdFormUtil {
   def adFormUnapply(applied: AdFormMResult): Option[(Set[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
-    val pattern = mad.colors.get(COVERING_PATTERN_COLOR_FN)
+    val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
     import AdColorFns._
     val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
     Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )

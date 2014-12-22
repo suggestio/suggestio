@@ -2,7 +2,7 @@ package models
 
 import controllers.routes
 import io.suggest.ym.model.common.{SlNameTokenStr, LogoImgOptI}
-import models.blk.RenderArgs
+import models.blk.{SzMult_t, RenderArgs}
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
 import play.twirl.api.Html
@@ -23,9 +23,11 @@ object ScReqArgs {
 
   val GEO_SUF               = ".geo"
   val SCREEN_SUF            = ".screen"
+  val WITH_WELCOME_SUF      = ".wc"
 
   /** routes-Биндер для параметров showcase'а. */
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
+                   intOptB: QueryStringBindable[Option[Int]],
                    devScreenB: QueryStringBindable[Option[DevScreen]],
                    boolOptB: QueryStringBindable[Option[Boolean]] ) = {
     new QueryStringBindable[ScReqArgs] {
@@ -33,6 +35,7 @@ object ScReqArgs {
         for {
           maybeGeo                <- strOptB.bind(key + GEO_SUF, params)
           maybeDevScreen          <- devScreenB.bind(key + SCREEN_SUF, params)
+          maybeWithWelcomeAd      <- intOptB.bind(key + WITH_WELCOME_SUF, params)
         } yield {
           Right(new ScReqArgsDflt {
             override val geo = {
@@ -42,6 +45,12 @@ object ScReqArgs {
             }
             // Игнорим неверные размеры, ибо некритично.
             override lazy val screen: Option[DevScreen] = maybeDevScreen
+            override val withWelcomeAd: Boolean = {
+              maybeWithWelcomeAd.fold(
+                {_ => true},
+                {vOpt => vOpt.isEmpty || vOpt.get > 0}
+              )
+            }
           })
         }
       }
@@ -49,7 +58,8 @@ object ScReqArgs {
       override def unbind(key: String, value: ScReqArgs): String = {
         List(
           strOptB.unbind(key + GEO_SUF, value.geo.toQsStringOpt),
-          devScreenB.unbind(key + SCREEN_SUF, value.screen)
+          devScreenB.unbind(key + SCREEN_SUF, value.screen),
+          intOptB.unbind(key + WITH_WELCOME_SUF, if (value.withWelcomeAd) None else Some(0))
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
@@ -82,6 +92,7 @@ case class RenderedAdBlockImpl(mad: MAd, rendered: Html) extends RenderedAdBlock
 trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
+  def withWelcomeAd       : Boolean
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[RenderedAdBlock]
   def focusedContent      : Option[Html]
@@ -101,6 +112,7 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
   override def adnNodeCurrentGeo    : Option[MAdnNode] = None
+  override def withWelcomeAd        : Boolean = true
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
@@ -111,6 +123,7 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def focusedContent       = reqArgsUnderlying.focusedContent
   override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
   override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
+  override def withWelcomeAd        = reqArgsUnderlying.withWelcomeAd
 
   override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
 }
@@ -227,6 +240,10 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
     sb.toString()
   }
 }
+
+
+/** Настройки рендера плитки на клиенте. */
+case class TileArgs(szMult: SzMult_t, colsCount: Int)
 
 
 /** Данные по рендеру приветствия. */
@@ -479,7 +496,7 @@ case class ScJsState(
    * @return Относительная ссылка.
    */
   def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
-    routes.MarketShowcase.geoSite().url + "#!" + qsb.unbind("", this)
+    routes.MarketShowcase.geoSite().url + "#!?" + qsb.unbind("", this)
   }
 
   /**

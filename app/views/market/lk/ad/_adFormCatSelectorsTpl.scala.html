@@ -9,7 +9,8 @@
   @mmcats.map { case (selectedIdOpt, cats) =>
     @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
       <label>
-        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" @if(selectedIdOpt.isDefined && selectedIdOpt == mmcat.id) {checked="checked"}/>
+        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
+               @if(selectedIdOpt.isDefined && selectedIdOpt == mmcat.id) {checked="checked"}/>
         @mmcat.name
       </label>
     }

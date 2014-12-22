@@ -1,6 +1,6 @@
 package controllers
 
-import util.{FormDataSerializer, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.FormUtil._
@@ -21,7 +21,7 @@ import views.html.market.showcase._
  * для обновления рекламной карточки в реальном времени.
  */
 
-object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object MarketAdPreview extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
@@ -118,29 +118,6 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
       case Left(formWithGlobalError) =>
         NotAcceptable("Form mode invalid")
-    }
-  }
-
-
-
-  override val BRUTEFORCE_TRY_COUNT_DIVISOR: Int = 3
-  override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
-
-  /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtected {
-      val bc: BlockConf = BlocksConf(blockId)
-      bc.blockFieldForName(fn) match {
-        case Some(bfi: BfImage) =>
-          val resultFut = _handleTempImg(
-            preserveUnknownFmt = false,
-            runEarlyColorDetector = bfi.preDetectMainColor,
-            wsId = wsId
-          )
-          resultFut
-
-        case _ => NotFound
-      }
     }
   }
 

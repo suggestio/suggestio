@@ -1,0 +1,16 @@
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов img-раздела системной админки. *@
+
+@import sys1._
+
+@hPathAfter1 = {
+  / <a class="blue-link" href="@routes.SysImg.index()">img</a>
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
+}
+
+@sysBase(
+  title       = title + " | Картинки",
+  hPathAfter  = Some(hPathAfter1),
+  headAfter   = headAfter
+)(content)

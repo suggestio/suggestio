@@ -97,13 +97,13 @@ trait WeatherForecastT extends ContentHandlerResult {
 object GeoDirections extends Enumeration {
 
   sealed protected trait ValT {
-    @BeanProperty val name: String
-    def i18nCode: String = "wind.direction." + name
+    val getName: String
+    def i18nCode: String = "wind.direction." + getName
     def getI18n: String = Messages(i18nCode)
     def getVDirection: GeoDirection
   }
 
-  protected sealed class Val(@BeanProperty val name: String) extends super.Val(name) with ValT {
+  protected sealed class Val(@BeanProperty val getName: String) extends super.Val(getName) with ValT {
     @BeanProperty
     override def getVDirection: GeoDirection = this
   }

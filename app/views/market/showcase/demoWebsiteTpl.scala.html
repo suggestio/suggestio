@@ -15,7 +15,6 @@
     Suggest.io | Мобильная таргетированная реклама в Москве и СПБ, размещение рекламы в Интернете
   </title>
   <meta name="description" content="Система размещения таргетированной мобильной интернет-рекламы. Более 150 рекламных локаций в Москве и Санкт-Петербурге." />
-
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   @if(!ctx.isIpad) {
@@ -25,7 +24,15 @@
 
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
-  @* TODO Когда будет готово !#-навигация, надо задать тег <link rel="canonical" href="..."/> *@
+  @args.jsStateOpt.map { jsState =>
+    <link rel="canonical" href="@ctx.SC_URL_PREFIX@jsState.copy(
+      searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
+      fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
+    ).ajaxStatedUrl()"/>
+  }
+  @if(!args.syncRender) {
+    <meta name="fragment" content="!"/>
+  }
 
   @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
   <!--[if IE]>

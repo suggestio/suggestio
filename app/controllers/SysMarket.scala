@@ -1,13 +1,11 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import org.joda.time.DateTime
 import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
 import util.adv.AdvUtil
-import util.billing.MmpDailyBilling
 import util.mail.MailerWrapper
 import views.html.sys1.market._
 import play.api.data._, Forms._
@@ -15,8 +13,7 @@ import util.FormUtil._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.Context
-import com.typesafe.plugin.{use, MailerPlugin}
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
@@ -29,7 +26,7 @@ import play.api.i18n.Messages
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
+object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompat {
 
   import LOGGER._
 
@@ -765,62 +762,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
-    * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
-  val SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
-
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = IsSuperuser.async { implicit request =>
+    val isOkFut = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = rcvrIdOpt)
     lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
     val madOptFut = MAd.getById(adId)
     // Радуемся в лог.
     rcvrIdOpt match {
       case Some(rcvrId) => info(logPrefix + "Starting removing for single rcvr...")
       case None         => warn(logPrefix + "Starting removing ALL rcvrs...")
-    }
-    // Надо убрать указанного ресиверов из списка ресиверов
-    val isOkFut = madOptFut flatMap {
-      case Some(mad) =>
-        MAd.tryUpdate(mad) { mad1 =>
-          mad1.copy(
-            receivers = if (rcvrIdOpt.isEmpty) {
-              Map.empty
-            } else {
-              mad1.receivers.filterKeys(_ != rcvrIdOpt.get)
-            }
-          )
-        }
-        .map { _ => true }
-      case None =>
-        warn(logPrefix + "MAd not found: " + adId)
-        Future successful false
-    }
-    // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
-    DB.withTransaction { implicit c =>
-      // Резать как online, так и в очереди на публикацию.
-      val sepo = SelectPolicies.UPDATE
-      val advsOk = if (rcvrIdOpt.isDefined) {
-        MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
-      } else {
-        MAdvOk.findNotExpiredByAdId(adId, policy = sepo)
-      }
-      advsOk
-        .foreach { advOk =>
-          info(s"${logPrefix}offlining advOk[${advOk.id.get}] by superuser[${request.pwOpt.get.personId}] request...")
-          advOk.copy(dateEnd = DateTime.now, isOnline = false)
-            .saveUpdate
-        }
-      // Запросы размещения переколбашивать в refused с возвратом бабла.
-      val advsReq = if (rcvrIdOpt.isDefined) {
-        MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
-      } else {
-        MAdvReq.findByAdId(adId, policy = sepo)
-      }
-      advsReq.foreach { madvReq =>
-        trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
-        // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-        MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
-      }
     }
     // Начинаем асинхронно генерить ответ клиенту.
     val rdrToFut: Future[Result] = RdrBackOrFut(r) {

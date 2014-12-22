@@ -29,6 +29,10 @@ object ImSamplingFactors extends Enumeration {
     override def addOperation(op: IMOperation): Unit = {
       op.samplingFactor(horizontal.toDouble, vertical.toDouble)
     }
+
+    override def unwrappedValue: Option[String] = {
+      Some(s"${horizontal}x$vertical")
+    }
   }
 
   /** Тип значения перечисления. */

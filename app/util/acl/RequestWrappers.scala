@@ -2,6 +2,7 @@ package util.acl
 
 import java.net.InetAddress
 
+import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
@@ -70,6 +71,7 @@ object SioRequestHeader extends PlayMacroLogsImpl {
       .iterator
       .filter { addr =>
         try {
+          // TODO Доставать только ip адреса, отсеивать хлам.
           InetAddress.getByName(addr)
           true
         } catch {
@@ -101,8 +103,10 @@ trait SioRequestHeader extends RequestHeader {
    * Тут мы это исправляем, чтобы не было проблем в будущем.
    */
   abstract override lazy val remoteAddress: String = {
-    val ra0 = super.remoteAddress
-    firstForwardedAddr(ra0)
+    headers
+      .get(HeaderNames.X_FORWARDED_FOR)
+      .map { firstForwardedAddr }
+      .getOrElse { super.remoteAddress }
   }
 
   /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */

@@ -2,15 +2,9 @@
 
 @* Checkbox, принимающий значения true и false. *@
 
-<div class="lk-text-field">
-  <label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
-  <div>
-    @defining( af(bfNameBase) ) { sf =>
-      <input name="@sf.name"
-             type="checkbox"
-             @if( sf.value.orElse(bf.defaultValue).map(_.toString).exists(_ equalsIgnoreCase "true") ) {checked="checked"}
-             value="true"
-      />
-    }
-  </div>
-</div>
+<label >
+  @defining( af(bfNameBase) ) { sf =>
+    <input  class="checkbox" type="checkbox" name="@sf.name"  @if( sf.value.orElse(bf.defaultValue).map(_.toString).exists(_ equalsIgnoreCase "true") ) {checked="checked"} value="true" />
+    <span class="styled-checkbox"></span>&nbsp;@Messages(bc.i18nLabelOf(bf.name))
+  }
+</label>

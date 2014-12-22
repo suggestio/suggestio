@@ -1,0 +1,25 @@
+@(imgs: Seq[im.MImg], uf: Form[_])(implicit ctx: Context)
+
+@* Шаблон главной страницы sys.img-раздела админки. *@
+@import util.img.DynImgUtil.thumb256Call
+
+@hPathAfter1 = { }
+
+@sysImgBase(
+  title = "Все картинки",
+  hPathAfter = Some(hPathAfter1)
+) {
+
+  @_searchFormTpl(uf)
+
+  @if(imgs.isEmpty) {
+    Задайте данные по искомой картинке в поле выше.
+  } else {
+    @imgs.iterator.map { img =>
+      <a href="@routes.SysImg.showOne(img)">
+        <img src="@thumb256Call(img, fillArea = true)" alt="rowKey: @img.rowKeyStr" />
+      </a>
+    }
+  }
+
+}

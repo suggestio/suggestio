@@ -28,7 +28,7 @@ import play.api.mvc.Result
  * Description: Работа с календаре в формате jollyday в /sys/. Можно генерить календари,
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
-object SysCalendar extends SioController with PlayMacroLogsImpl {
+object SysCalendar extends SioControllerImpl with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Форма с селектом шаблона нового календаря. */

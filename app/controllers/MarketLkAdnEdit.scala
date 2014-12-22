@@ -1,6 +1,7 @@
 package controllers
 
 import models.im.MImg
+import play.core.parsers.Multipart
 import util.img.LogoUtil.LogoOpt_t
 import util.img._
 import util.PlayMacroLogsImpl
@@ -15,6 +16,7 @@ import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -28,10 +30,13 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   import LOGGER._
 
-  /** Маркер картинки для использования в качестве логотипа. */
-  private val TMP_LOGO_MARKER = "leadLogo"
+  /** Макс. байтовая длина загружаемой картинки в галлерею. */
+  private val IMG_GALLERY_MAX_LEN_BYTES: Int = {
+    val mib = configuration.getInt("adn.node.img.gallery.len.max.mib") getOrElse 20
+    mib * 1024 * 1024
+  }
 
-  def logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
+  def logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid")
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM
@@ -227,6 +232,17 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   def handleTempLogo = IsAuth.async(parse.multipartFormData) { implicit request =>
     bruteForceProtected {
       _handleTempImg()
+    }
+  }
+
+
+  /** Юзер постит временную картинку для личного галереи узла. */
+  def handleGallweryImg = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
+    IsAuth.async(bp) { implicit request =>
+      bruteForceProtected {
+        _handleTempImg()
+      }
     }
   }
 

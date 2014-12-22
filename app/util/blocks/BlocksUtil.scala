@@ -11,7 +11,6 @@ import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
-import util.FormUtil
 import play.twirl.api.{HtmlFormat, Template5}
 
 /**
@@ -94,24 +93,11 @@ object BlocksEditorFields extends Enumeration {
     override def fieldTemplate = _textareaTpl
   }
 
-  /** input text для задания цены. */
-  val Price = new Val("price") {
-    override type VT = AOPriceField
-    override type BFT = BfPrice
-    override def fieldTemplate = _priceTpl
-  }
-
   /** Поле с кнопкой для загрузки картинки. */
   val Image = new Val("img") {
     override type VT = BlockImgMap
     override type BFT = BfImage
     override def fieldTemplate = _imageTpl
-  }
-  
-  val Discount = new Val("discount") {
-    override type VT = AOFloatField
-    override type BFT = BfDiscount
-    override def fieldTemplate = _discountTpl
   }
 
   val Color = new Val("color") {
@@ -184,7 +170,7 @@ sealed trait IntBlockSizeBf extends BlockFieldT {
   def availableVals: Set[Int]
 
   override def mappingBase = number
-    .verifying("error.invalid", { availableVals.contains(_) })
+    .verifying("error.invalid", availableVals.contains(_) )
 }
 
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
@@ -222,42 +208,6 @@ case class BfWidth(
     field.renderEditorField(this, bfNameBase, af, bc)
   }
   override def fallbackValue = BlockWidths.default.widthPx
-}
-
-
-case class BfPrice(
-  name            : String,
-  offerNopt       : Option[Int] = None,
-  defaultValue    : Option[AOPriceField] = None,
-  withFontColor   : Boolean = true,
-  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
-  dfltFontSize    : Option[Int] = None,
-  fontSizeDflt    : Option[Int] = None,
-  withFontFamily  : Boolean = true,
-  withCoords      : Boolean = true,
-  withTextAlign   : Boolean = false
-) extends BlockAOValueFieldT {
-  override type T = AOPriceField
-
-  def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
-
-  override def mappingBase: Mapping[T] = MarketAdFormUtil.aoPriceFieldM(getFontMapping, withCoords)
-
-  override def field = BlocksEditorFields.Price
-
-  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = AOPriceField(
-    value = 100F,
-    currencyCode = "RUB",
-    orig = "100 рублей",
-    font = defaultFont
-  )
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
-
-  override def getOptionalStrictMapping: Mapping[Option[T]] = MarketAdFormUtil.aoPriceOptM(getFontMapping, withCoords)
 }
 
 
@@ -368,55 +318,6 @@ case class BfImage(
       )
   }
 
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
-}
-
-
-object BfDiscount {
-  val DFLT: Option[AOFloatField] = Some(AOFloatField(50F, defaultFont))
-}
-
-/** Поле для ввода скидки в процентах. Кто-то хочет положительную скидку задавать, кто-то отрицательную. */
-case class BfDiscount(
-  name            : String,
-  defaultValue    : Option[AOFloatField] = BfDiscount.DFLT,
-  offerNopt       : Option[Int] = None,
-  min             : Float = -99F,
-  max             : Float = 100F,
-  withFontColor   : Boolean = true,
-  withFontSizes   : List[FontSize] = Nil,
-  fontSizeDflt    : Option[Int] = None,
-  withFontFamily  : Boolean = false,
-  withCoords      : Boolean = false,
-  withTextAlign   : Boolean = false
-) extends BlockAOValueFieldT {
-  override type T = AOFloatField
-  val discoFloatM = getTolerantDiscountPercentM(
-    min = min,
-    max = max,
-    dflt = defaultValue
-      .map(_.value)
-      .getOrElse(fallbackValue.value)
-  )
-
-  def maxStrlen: Int = FormUtil.PERCENT_M_CHARLEN_MAX
-
-  override def field = BlocksEditorFields.Discount
-
-  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = AOFloatField(0F, defaultFont)
-
-  override def mappingBase: Mapping[T] = {
-    val mapping0 = MarketAdFormUtil.aoFloatFieldM(discoFloatM, getFontMapping, withCoords)
-    defaultOpt(mapping0, defaultValue)
-  }
-
-  override def getOptionalStrictMapping: Mapping[Option[T]] = {
-    MarketAdFormUtil.aoFloatFieldOptM(discoFloatM, getFontMapping, withCoords)
-  }
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)

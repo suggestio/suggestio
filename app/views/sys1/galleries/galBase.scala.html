@@ -5,13 +5,12 @@
 @import sys1._
 
 @hPathAfter1 = {
-  @hPathAfter.getOrElse {
-    / @title
-  }
+  / <a class="blue-link" href="@routes.SysGallery.showList()">market</a>
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 
 @sysBase(
-  title      = title,
+  title      = title + " | Галереи",
   hPathAfter = Some(hPathAfter1),
   headAfter  = headAfter
 )(content)

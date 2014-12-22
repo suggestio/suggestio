@@ -20,7 +20,7 @@ object WsDispatcherActor {
 
   val ACTOR_NAME = "wsd"
 
-  implicit val ASK_TIMEOUT = Timeout(5 seconds)
+  implicit val ASK_TIMEOUT = Timeout(5.seconds)
 
   val ACTOR_PATH = SiowebSup.actorPath / ACTOR_NAME
 
@@ -57,7 +57,9 @@ class WsDispatcherActor extends Actor with PlayMacroLogsImpl {
 
     // Запрос адреса доставки
     case GetForId(wsId: String) =>
-      sender() ! wsMap.get(wsId)
+      val res = wsMap.get(wsId)
+      //trace(s"$self : wsId $wsId resolved TO $res")
+      sender() ! res
 
     // Запустился актор, занимающийся обработкой ws-запросов.
     case WsActStarted(wsId: String) =>

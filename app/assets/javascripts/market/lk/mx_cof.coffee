@@ -313,6 +313,8 @@ Slider =
 
   init: ()->
 
+    if !$("#indexSlider").size() then return false
+
     event = if isTouchDevice() then 'touchend' else 'click'
 
     cbca.slider.phoneSlide()
@@ -1207,6 +1209,7 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
+      ###
       $ '.lk input[type = "checkbox"]'
       .filter ':enabled'
       .each ()->
@@ -1217,6 +1220,7 @@ PersonalCabinet =
           this.checked = true
         else
           $this.removeAttr 'checked'
+      ###
 
       ## Набор чекбоксов, где можно выбрать только один вариант
       $ document
@@ -1345,6 +1349,16 @@ PersonalCabinet =
     buttons: () ->
 
       event = if isTouchDevice() then 'touchend' else 'click'
+
+      $ document
+      .on "click", ".js-color-block", (e) ->
+        e.preventDefault()
+        $this = $ this
+        $colorSelect = $ "#ad_descr_bgColor"
+        color = $this.data "color"
+
+        $colorSelect.val color
+        $colorSelect.trigger "change"
 
       $ document
       .on event, '.js-input-btn', (e)->

@@ -24,7 +24,7 @@ import util.billing.Billing
  * Created: 18.04.14 12:39
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
-object SysMarketBilling extends SioController with PlayMacroLogsImpl {
+object SysMarketBilling extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

@@ -2,7 +2,6 @@ package controllers
 
 import java.io.File
 
-import _root_.util.ws.WsDispatcherActor
 import io.suggest.model.ImgWithTimestamp
 import models.im._
 import org.apache.commons.io.FileUtils
@@ -42,11 +41,11 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
 
   /** Сколько времени кешировать temp-картинки на клиенте. */
   val TEMP_IMG_CACHE_SECONDS = {
-    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_ minutes) getOrElse {
+    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_.minutes) getOrElse {
       if (Play.isProd) {
-        10 minutes
+        10.minutes
       } else {
-        30 seconds
+        30.seconds
       }
     }
     cacheDuration.toSeconds.toInt
@@ -56,9 +55,9 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   val CACHE_ORIG_CLIENT_SECONDS = {
     val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse {
       if (Play.isProd) {
-        2 days
+        2.days
       } else {
-        30 seconds
+        30.seconds
       }
     }
     cacheDuration.toSeconds.toInt
@@ -85,29 +84,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
       .exists { dt => !(modelTstampMs isAfter dt) }
   }
 
-  /** Обслуживание картинки. */
-  private def serveImgMaybeCached(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader): Result = {
-    // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
-    val modelInstant = withoutMs(its.timestampMs)
-    val isCached = isModifiedSinceCached(modelInstant)
-    if (isCached) {
-      //trace("serveImg(): 304 Not Modified")
-      NotModified
-        .withHeaders(CACHE_CONTROL -> s"public, max-age=$cacheSeconds")
-    } else {
-      serveImgBytes(its.imgBytes, cacheSeconds, modelInstant)
-    }
-  }
-
-  private def serveImgBytes(imgBytes: Array[Byte], cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
-    trace(s"serveImg(): 200 OK. size = ${imgBytes.length} bytes")
-    serveImg(
-      resultRaw = Ok(imgBytes),
-      mm        = Magic.getMagicMatch(imgBytes),
-      cacheSeconds = cacheSeconds,
-      modelInstant = modelInstant
-    )
-  }
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
@@ -136,34 +112,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
-  }
-
-  /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
-    * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
-  def handleTempImg = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtected {
-      _handleTempImg()
-    }
-  }
-
-  /**
-   * Для подавления http get flood атаки через запросы с приписыванием рандомных qs
-   * и передачи ссылок публичным http-фетчерам.
-   * @param onSuccess Если реквест прошел проверку, то тут генерация результата.
-   * @param req Исходный реквест.
-   * @return
-   * @see [[https://www.linux.org.ru/forum/security/10389031]]
-   * @see [[http://habrahabr.ru/post/215233/]]
-   */
-  private def suppressQsFlood(onProblem: => Call)(onSuccess: => Future[Result])(implicit req: RequestHeader): Future[Result] = {
-    // TODO Надо отрабатывать неявно пустую qs (когда в ссылке есть ?, по после него конец ссылки).
-    val rqs = req.rawQueryString
-    if (rqs.length <= 1) {
-      onSuccess
-    } else {
-      debug("suppressQsFlood(): Query string found in request, but it should not. Sending redirects... qs=" + rqs)
-      MovedPermanently(onProblem.url)
-    }
   }
 
   /** Выдать json ошибку по поводу картинки. */
@@ -309,6 +257,28 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
 
   val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
 
+
+  /**
+   * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
+   * @param im Картинка для обработки.
+   * @param wsId id для уведомления.
+   */
+  def _detectPalletteWs(im: MImg, wsId: String) = {
+    MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) andThen {
+      case Success(result) =>
+        val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
+          result.copy(
+            sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
+          )
+        } else {
+          result
+        }
+        _notifyWs(wsId, res2)
+      case Failure(ex) =>
+        LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
+    }
+  }
+
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
     * @param request HTTP-реквест.
@@ -363,20 +333,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {
               if (wsId.isDefined) {
-                imgPrepareFut onSuccess { case _ =>
-                  MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) onComplete {
-                    case Success(result) =>
-                      val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
-                        result.copy(
-                          sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
-                        )
-                      } else {
-                        result
-                      }
-                      _notifyWs(wsId.get, res2)
-                    case Failure(ex) =>
-                      LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
-                  }
+                imgPrepareFut flatMap { _ =>
+                  _detectPalletteWs(im, wsId.get)
                 }
               } else {
                 LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.fileName)
