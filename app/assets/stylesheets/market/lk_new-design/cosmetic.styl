@@ -447,5 +447,13 @@
     display block
     width   200px
 
-  &_category-checkbox-title:before
-    margin-right  20px
+  &_category-checkbox-title
+    display   block
+    overflow  hidden
+    padding-right 10px
+
+    text-overflow ellipsis
+    white-space   nowrap
+
+    &:before
+      margin-right  20px
