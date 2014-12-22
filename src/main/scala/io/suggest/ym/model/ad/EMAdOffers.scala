@@ -43,11 +43,6 @@ object EMAdOffers {
 
   val FONT_COLOR_DFLT   = "FFFFFF"
 
-  // PRODUCT offer
-  val MODEL_ESFN        = "model"
-  val PRICE_ESFN        = "price"
-  val OLD_PRICE_ESFN    = "oldPrice"
-
   // DISCOUNT offer
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
@@ -89,14 +84,9 @@ trait EMAdOffersStatic extends EsModelStaticMutAkvT {
       FieldString(ORIG_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
       vfields0
     }
-    // Сгенерить набор полей для AOPriceField.
-    def priceFields(iia: Boolean) = floatValueField(iia) :: priceFields0
     // Маппинг для объекта, представляющего сериализованный AOBlock.
     val offerBodyProps = Seq(
       // product-поля
-      // TODO нужно как-то проанализировать цифры эти, округлять например.
-      FieldObject(PRICE_ESFN,  properties = priceFields(iia = true)),
-      FieldObject(OLD_PRICE_ESFN,  properties = priceFields(iia = false)),
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = stringValueField(1.1F) :: vfields0),
       FieldObject(DISCOUNT_ESFN, properties = floatValueField(iia = true) :: vfields0),
@@ -227,10 +217,6 @@ object AOBlock {
             .flatMap(AOStringField.deserializeOpt),
           discount = Option(m get DISCOUNT_ESFN)
             .flatMap(AOFloatField.deserializeOpt),
-          price = Option(m get PRICE_ESFN)
-            .flatMap(AOPriceField.deserializeOpt),
-          oldPrice = Option(m get OLD_PRICE_ESFN)
-            .flatMap(AOPriceField.deserializeOpt),
           href = Option(m get HREF_ESFN)
             .map(EsModel.stringParser)
         )
@@ -247,8 +233,6 @@ case class AOBlock(
   var text1     : Option[AOStringField] = None,
   var text2     : Option[AOStringField] = None,
   var discount  : Option[AOFloatField] = None,
-  var price     : Option[AOPriceField]  = None,
-  var oldPrice  : Option[AOPriceField] = None,
   var href      : Option[String] = None
 ) extends AdOfferT {
   @JsonIgnore
@@ -263,10 +247,6 @@ case class AOBlock(
       acc ::= TEXT2_ESFN -> text2.get.renderPlayJson
     if (discount.isDefined)
       acc ::= DISCOUNT_ESFN -> discount.get.renderPlayJson
-    if (price.isDefined)
-      acc ::= PRICE_ESFN -> price.get.renderPlayJson
-    if (oldPrice.isDefined)
-      acc ::= OLD_PRICE_ESFN -> oldPrice.get.renderPlayJson
     if (href.isDefined)
       acc ::= HREF_ESFN -> JsString(href.get)
     acc
