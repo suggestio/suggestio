@@ -24,7 +24,7 @@
 
   <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)" />
 
-  @market.lk.lkBlock("Выбор категории", cntSubClass = "__innerVisible") {
+  @market.lk.lkBlock("Выбор категории") {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
 

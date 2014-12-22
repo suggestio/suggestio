@@ -8,10 +8,10 @@
 <div class="categories-select" id="cat-select">
   @defining( af("ad.catId").indexes.flatMap { i => af(s"ad.catId[$i]").value }.toSet ) { catIds =>
     @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
-      <label>
-        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
+      <label class="edit-ad_category-checkbox-w">
+        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id"
                @if(catIds contains mmcat.id.get) {checked="checked"} />
-        @mmcat.name
+        <span class="styled-checkbox edit-ad_category-checkbox-title">@mmcat.name</span>
       </label>
     }
     <div class="triger"></div>
