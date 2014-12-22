@@ -82,9 +82,6 @@ package object models {
   val  AdPanelSettings      = ym.model.common.AdPanelSettings 
   type AdPanelSettings      = ym.model.common.AdPanelSettings
 
-  val  AOPriceField         = ym.model.ad.AOPriceField
-  type AOPriceField         = ym.model.ad.AOPriceField
-
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
   type MImgInfoT            = ym.model.common.MImgInfoT
