@@ -116,8 +116,7 @@ trait PairListBlock extends ValT {
 
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
-    val m1 = m
-    m1 :: super.mappingsAcc
+    m :: super.mappingsAcc
   }
 
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {

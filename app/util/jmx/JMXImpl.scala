@@ -7,7 +7,6 @@ import io.suggest.ym.model.stat._
 import models.ai.MAiMadJmx
 import util.SiowebEsUtil.client
 import util.adv.AdvUtilJmx
-import util.compat.BlocksConfPreStripUtilJmx
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
@@ -46,7 +45,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MAdnNodeGeoJmx,
     new SiowebEsModelJmx,
     new MRemoteErrorJmx,
-    new BlocksConfPreStripUtilJmx,
     new MAiMadJmx,
     new AdvUtilJmx,
     // cassandra
