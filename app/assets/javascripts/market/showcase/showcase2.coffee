@@ -540,10 +540,12 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+      sm.geo.callback_active = true
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+      sm.geo.callback_active = true
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -588,13 +590,22 @@ sm =
         sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
       sm.geo.location_requested = true
+      sm.geo.callback_active = false
 
       if typeof navigator.geolocation != 'undefined'
-        if sm.utils.is_webkit() == true
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
-        else
-          sm.geo.position_callback_fallback()
-          navigator.geolocation.getCurrentPosition sm.geo.position_callback
+        ###
+        # странный кусок кода, временно закомментирован
+        # if sm.utils.is_webkit() == true
+        #  navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
+        #else
+        ###
+        setTimeout(
+          () ->
+            if !sm.geo.callback_active
+              sm.geo.position_callback_fallback()
+          5000
+        )
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
       else
         sm.geo.position_callback_fallback()
 
@@ -2779,7 +2790,7 @@ sm =
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    index_action = if typeof state.mart_id != 'undefined' then '/market/index/' + state.mart_id  + '?' + sm.request_context.screen_param() else '/market/geo/index?' + sm.request_context.screen_param()
+    index_action = if typeof state.mart_id != 'undefined' then "/market/index/#{state.mart_id}?#{sm.request_context.screen_param()}&#{sm.geo.request_query_param()}" else "/market/geo/index?#{sm.request_context.screen_param()}&#{sm.geo.request_query_param()}"
 
 
     sm.log 'about to call index_action : ' + index_action
