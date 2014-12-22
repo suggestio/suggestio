@@ -1,4 +1,4 @@
-@(mmcats: CollectMMCatsAcc_t, af: Form[_])(implicit ctx: Context)
+@(cats: Seq[MMartCategory], af: Form[_])(implicit ctx: Context)
 
 @* Механизм задания/изменения категории рекламной карточки. *@
 
@@ -6,17 +6,15 @@
 
 @* Input для id выбранной категории. *@
 <div class="categories-select" id="cat-select">
-  @defining( af("ad.catId").indexes.flatMap { i => af(s"ad.catId[$i]").value } ) { catIds =>
-    @mmcats.map { case (_, cats) =>
-      @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
-        <label>
-          <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
-                 @if(catIds contains mmcat.id.get) {checked="checked"} />
-          @mmcat.name
-        </label>
-      }
-      <div class="triger"></div>
+  @defining( af("ad.catId").indexes.flatMap { i => af(s"ad.catId[$i]").value }.toSet ) { catIds =>
+    @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
+      <label>
+        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
+               @if(catIds contains mmcat.id.get) {checked="checked"} />
+        @mmcat.name
+      </label>
     }
+    <div class="triger"></div>
   }
 </div>
 

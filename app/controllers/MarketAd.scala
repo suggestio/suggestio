@@ -522,11 +522,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   // ============================== common-методы =================================
 
   /** Подготовить список категорий асинхронно. */
-  private def getMMCats(): Future[CollectMMCatsAcc_t] = {
+  private def getMMCats(): Future[Seq[MMartCategory]] = {
     // 2014.dec.10: Плоские категории как были, так и остались. Упрощаем работу с категориями по максимуму.
     val catOwnerId = MMartCategory.DEFAULT_OWNER_ID
-    val mmcatsFut = MMartCategory.findTopForOwner(catOwnerId)
-    MMartCategory.catsAsAccFut(mmcatsFut)
+    MMartCategory.findTopForOwner(catOwnerId)
   }
 
 
