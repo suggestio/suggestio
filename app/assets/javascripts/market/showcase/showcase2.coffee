@@ -540,12 +540,12 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
-      sm.geo.location_installed = true
+      sm.geo.callback_active = true
       sm.geo.geo_position_obj = gp_obj
-      console.log gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+      sm.geo.callback_active = true
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -590,7 +590,7 @@ sm =
         sm.utils.ge('smGeoLocationButtonSpinner').style.display = 'block'
 
       sm.geo.location_requested = true
-      sm.geo.location_installed = false
+      sm.geo.callback_active = false
 
       if typeof navigator.geolocation != 'undefined'
         ###
@@ -601,12 +601,11 @@ sm =
         ###
         setTimeout(
           () ->
-            console.log "loc installed = #{sm.geo.location_installed}"
-            if !sm.geo.location_installed
+            if !sm.geo.callback_active
               sm.geo.position_callback_fallback()
           5000
         )
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
       else
         sm.geo.position_callback_fallback()
 
