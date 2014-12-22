@@ -46,7 +46,6 @@ object EMAdOffers {
   // DISCOUNT offer
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
-  val DISCOUNT_ESFN     = "discount"
   val HREF_ESFN         = "href"
 
   /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
@@ -74,22 +73,11 @@ trait EMAdOffersStatic extends EsModelStaticMutAkvT {
       include_in_all = true,
       boost = Some(boost)
     )
-    // Сгенерить поле числового значения (.value)
-    def floatValueField(iia: Boolean) = {
-      FieldNumber(VALUE_ESFN,  fieldType = DocFieldTypes.float,  index = FieldIndexingVariants.no,  include_in_all = iia)
-    }
-    // Основной список полей для AOPriceField дополняется валютой и исходной ценой.
-    val priceFields0 = {
-      FieldString(CURRENCY_CODE_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
-      FieldString(ORIG_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
-      vfields0
-    }
     // Маппинг для объекта, представляющего сериализованный AOBlock.
     val offerBodyProps = Seq(
       // product-поля
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = stringValueField(1.1F) :: vfields0),
-      FieldObject(DISCOUNT_ESFN, properties = floatValueField(iia = true) :: vfields0),
       FieldObject(TEXT2_ESFN, properties = stringValueField(0.9F) :: vfields0),
       FieldString(HREF_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
     )
@@ -133,7 +121,7 @@ trait EMAdOffersI extends EsModelPlayJsonT with IOffers {
 trait EMAdOffers extends EMAdOffersI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!offers.isEmpty) {
+    if (offers.nonEmpty) {
       val offersJson = offers.map(_.renderPlayJson)
       (OFFERS_ESFN, JsArray(offersJson)) :: acc0
     } else {
@@ -156,26 +144,12 @@ object AdOffer {
   /** Десериализовать один оффер. */
   def deserializeOne(x: Any): AOBlock = {
     x match {
-      case jsObject: java.util.Map[_, _] =>
-        jsObject.get(OFFER_TYPE_ESFN) match {
-          case ots: String =>
-            val n: Int = Option(jsObject.get(N_ESFN)).map(EsModel.intParser).getOrElse(0)
-            AdOfferTypes.maybeWithName(ots) match {
-              case Some(ot) =>
-                val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                import AdOfferTypes._
-                ot match {
-                  case BLOCK => AOBlock.deserializeBody(offerBody, n)
-                }
-              // Старые AOProduct, AODiscount, AOText удалены -- тут обработка. // TODO Удалить это после первого полугодия 2014.
-              case None =>
-                AOBlock(
-                  n = n,
-                  text1 = Some(AOStringField("Оффер в старом формате не поддерживается.", font = AOFieldFont("888888")))
-                )
-            }
-
-        }
+      case jsObject: ju.Map[_, _] =>
+        val n: Int = Option(jsObject get N_ESFN)
+          .map(EsModel.intParser)
+          .getOrElse(0)
+        val offerBody = jsObject.get(OFFER_BODY_ESFN)
+        AOBlock.deserializeBody(offerBody, n)
     }
   }
 
@@ -215,8 +189,6 @@ object AOBlock {
             .flatMap(AOStringField.deserializeOpt),
           text2 = Option(m get TEXT2_ESFN)
             .flatMap(AOStringField.deserializeOpt),
-          discount = Option(m get DISCOUNT_ESFN)
-            .flatMap(AOFloatField.deserializeOpt),
           href = Option(m get HREF_ESFN)
             .map(EsModel.stringParser)
         )
@@ -226,13 +198,12 @@ object AOBlock {
 }
 
 
-// TODO Нужно дедублицировать text1 и text2, убрать discount и все price'ы. Сделать immutable и что-то решить с href.
+// TODO Нужно дедублицировать text1 и text2. Сделать immutable и что-то решить с href.
 // Поле n наверное остаётся нужен для упорядочивания. Хотя и это тоже не обязательно.
 case class AOBlock(
   n             : Int,
   var text1     : Option[AOStringField] = None,
   var text2     : Option[AOStringField] = None,
-  var discount  : Option[AOFloatField] = None,
   var href      : Option[String] = None
 ) extends AdOfferT {
   @JsonIgnore
@@ -245,8 +216,6 @@ case class AOBlock(
       acc ::= TEXT1_ESFN -> text1.get.renderPlayJson
     if (text2.isDefined)
       acc ::= TEXT2_ESFN -> text2.get.renderPlayJson
-    if (discount.isDefined)
-      acc ::= DISCOUNT_ESFN -> discount.get.renderPlayJson
     if (href.isDefined)
       acc ::= HREF_ESFN -> JsString(href.get)
     acc
