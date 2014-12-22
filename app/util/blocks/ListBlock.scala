@@ -70,14 +70,14 @@ trait PairListBlock extends ValT {
       .zipWithIndex
       // Выкинуть пустые офферы
       .filter {
-      case ((titleOpt, priceOpt), _) =>
-        titleOpt.isDefined || priceOpt.isDefined
-    }
+        case ((titleOpt, priceOpt), _) =>
+          titleOpt.isDefined || priceOpt.isDefined
+      }
       // Оставшиеся офферы завернуть в AOBlock
       .map {
-      case ((v1Opt, v2Opt), i) =>
-        applyAOBlock(i, v1Opt, v2Opt)
-    }
+        case ((v1Opt, v2Opt), i) =>
+          applyAOBlock(i, v1Opt, v2Opt)
+      }
       .toList
   }
 

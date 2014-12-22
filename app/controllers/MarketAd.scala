@@ -521,12 +521,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
 
   // ============================== common-методы =================================
 
-
-  private def maybeAfCatId(af: AdFormM) = {
-    val catIdK = "ad." + CAT_ID_K
-    af(catIdK).value.filter { _ => af.errors(catIdK).isEmpty }
-  }
-
   /** Подготовить список категорий асинхронно. */
   private def getMMCats(): Future[CollectMMCatsAcc_t] = {
     // 2014.dec.10: Плоские категории как были, так и остались. Упрощаем работу с категориями по максимуму.

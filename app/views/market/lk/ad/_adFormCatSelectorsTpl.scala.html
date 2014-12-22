@@ -6,15 +6,17 @@
 
 @* Input для id выбранной категории. *@
 <div class="categories-select" id="cat-select">
-  @mmcats.map { case (selectedIdOpt, cats) =>
-    @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
-      <label>
-        <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
-               @if(selectedIdOpt.isDefined && selectedIdOpt == mmcat.id) {checked="checked"}/>
-        @mmcat.name
-      </label>
+  @defining( af("ad.catId").indexes.flatMap { i => af(s"ad.catId[$i]").value } ) { catIds =>
+    @mmcats.map { case (_, cats) =>
+      @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
+        <label>
+          <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id" style="display: inline;"
+                 @if(catIds contains mmcat.id.get) {checked="checked"} />
+          @mmcat.name
+        </label>
+      }
+      <div class="triger"></div>
     }
-    <div class="triger"></div>
   }
 </div>
 
