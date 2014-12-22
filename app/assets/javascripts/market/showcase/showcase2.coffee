@@ -541,11 +541,19 @@ sm =
 
     position_callback : ( gp_obj ) ->
       sm.geo.callback_active = true
+
+      cs = sm.states.cur_state()
+      if cs != undefined then sm.states.transform_state { geo_screen : { is_opened : false } }
+
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
       sm.geo.callback_active = true
+
+      cs = sm.states.cur_state()
+      if cs != undefined then sm.states.transform_state { geo_screen : { is_opened : false } }
+
       if typeof sm.geo.geo_position_obj == 'undefined'
         sm.geo.load_for_node_id()
 
@@ -599,6 +607,8 @@ sm =
         #  navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
         #else
         ###
+
+        # не всегда срабатывает вызов ошибки у метода getCurrentPosition, поэтому используется конструкция с setTimeout
         setTimeout(
           () ->
             if !sm.geo.callback_active
@@ -1206,8 +1216,7 @@ sm =
 
       ## Кнопка для определения текущей геопозиции, напрямую на влияет на состояние выдачи
       if sm.events.target_lookup( event.target, 'id', 'smGeoLocationButton' ) != null
-        if sm.events.is_touch_locked
-          return false
+        if sm.events.is_touch_locked then return false
 
         sm.geo.location_requested = false
         sm.geo.location_node = undefined
@@ -2575,6 +2584,7 @@ sm =
       if typeof sup.mart_id != 'undefined' then cs.mart_id = sup.mart_id
       if typeof sup.with_welcome_ad != 'undefined' then cs.with_welcome_ad = sup.with_welcome_ad
       if typeof sup.window_width != 'undefined' then cs.window_width = sup.window_width
+      if typeof sup.geo_screen != 'undefined' then cs.geo_screen = sup.geo_screen
       this.list[this.list.length-1] = cs
 
     # добавляет новое состояние
