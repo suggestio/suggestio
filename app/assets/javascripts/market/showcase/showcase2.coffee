@@ -542,6 +542,8 @@ sm =
     position_callback : ( gp_obj ) ->
       sm.geo.callback_active = true
 
+      console.log "geo accuracy = #{gp_obj.coords.accuracy}"
+
       cs = sm.states.cur_state()
       if cs != undefined then sm.states.transform_state { geo_screen : { is_opened : false } }
 
@@ -613,9 +615,13 @@ sm =
           () ->
             if !sm.geo.callback_active
               sm.geo.position_callback_fallback()
-          5000
+          5500
         )
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
+        geo_options =
+          enableHighAccuracy: true
+          timeout : 5000
+          maximumAge : 100
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options
       else
         sm.geo.position_callback_fallback()
 
