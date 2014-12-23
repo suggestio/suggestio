@@ -540,6 +540,7 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+      if sm.geo.callback_active then return false
       sm.geo.callback_active = true
 
       console.log "geo accuracy = #{gp_obj.coords.accuracy}"
@@ -551,6 +552,8 @@ sm =
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+
+      if sm.geo.callback_active then return false
       sm.geo.callback_active = true
 
       cs = sm.states.cur_state()
