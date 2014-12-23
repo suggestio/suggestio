@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
   "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
   // Соц.сети. ветка oauth2-spam
-  "ws.securesocial" %% "securesocial" % "3.0play24-SNAPSHOT",
+  //"ws.securesocial" %% "securesocial" % "3.0play24-SNAPSHOT",
   // play-2.3+:
   "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
