@@ -6,6 +6,7 @@
 // 'test/spec/{,*/}*.js'
 // use this if you want to recursively match all subfolders:
 // 'test/spec/**/*.js'
+// 2014.dec.23: Patched from https://github.com/tuplejump/play-yeoman/pull/62
 
 module.exports = function (grunt) {
 
@@ -132,6 +133,12 @@ module.exports = function (grunt) {
 
     // Empties folders to start fresh
     clean: {
+      twirl: {
+	files: [{
+	  dot: true,
+	  src:['twirl']
+	}]
+      },
       dist: {
         files: [{
           dot: true,
@@ -296,6 +303,24 @@ module.exports = function (grunt) {
 
     // Copies remaining files to places other tasks can use
     copy: {
+      'twirl-dev': {
+        files: [{
+          expand: true,
+          dot: true,
+          cwd: '<%= yeoman.app %>',
+          dest: 'twirl',
+          src: ['*.scala.html']
+        }]
+      },
+      'twirl-dist': {
+        files: [{
+          expand: true,
+          dot: true,
+          cwd: '<%= yeoman.dist %>',
+          dest: 'twirl',
+          src: ['*.scala.html']
+        }]
+      },
       dist: {
         files: [{
           expand: true,
@@ -358,7 +383,7 @@ module.exports = function (grunt) {
     grunt.task.run([
       'clean:server',
       'wiredep',
-      'concurrent:server',
+      //'concurrent:server',
       'autoprefixer',
       'watch'
     ]);
@@ -377,7 +402,13 @@ module.exports = function (grunt) {
     'karma'
   ]);
 
-  grunt.registerTask('build', [
+  grunt.registerTask('build-dev', [
+    'clean:twirl',
+    'copy:twirl-dev'
+  ]);
+
+  grunt.registerTask('build-dist', [
+    'clean:twirl',
     'clean:dist',
     'wiredep',
     'useminPrepare',
@@ -391,12 +422,13 @@ module.exports = function (grunt) {
     'uglify',
     'filerev',
     'usemin',
-    'htmlmin'
+    //'htmlmin',
+    'copy:twirl-dist'
   ]);
 
   grunt.registerTask('default', [
     'newer:jshint',
     'test',
-    'build'
+    'build-dev'
   ]);
 };
