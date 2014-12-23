@@ -16,7 +16,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.6")
 
@@ -24,7 +24,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.1")
 
@@ -42,6 +42,8 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
+
+addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.0-SNAPSHOT")
 
 // ProGuard занимается обфускацией скомпиленных данных.
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")

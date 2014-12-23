@@ -4,6 +4,7 @@ import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.SbtProguard.ProguardKeys._
+import com.tuplejump.sbt.yeoman.Yeoman
 
 
 organization := "io.suggest"
@@ -142,11 +143,6 @@ includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
 
 excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
-//StylusKeys.compress in Assets := true
-
-
-// LESS
-includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
@@ -212,11 +208,5 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 //routesGenerator := InjectedRoutesGenerator
 
-// jslint пока включен только для отрефакторенной showcase.js
-includeFilter in (Assets, JshintKeys.jshint) := new FileFilter{
-  val p = "/assets/javascripts/sc/"
-  def accept(f: File) = {
-    f.getAbsolutePath.contains(p)
-  }
-}
+Yeoman.yeomanSettings ++ Yeoman.withTemplates
 
