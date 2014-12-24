@@ -263,21 +263,22 @@ module.exports = function (grunt) {
       }
     },
 
-    htmlmin: {
-      dist: {
-        options: {
-          collapseWhitespace: true,
-          conservativeCollapse: true,
-          collapseBooleanAttributes: true,
-          removeCommentsFromCDATA: true,
-          removeOptionalTags: true
-        },
-        files: [{
-          expand: true,
-          cwd: '<%= yeoman.dist %>',
-          src: ['*.html', 'views/{,*/}*.html'],
-          dest: '<%= yeoman.dist %>'
-        }]
+    // Вместо htmlmin, т.к. тот не работает ни разу. Эта поделка тоже не работает.
+    replace: {
+      htmlmin: {
+	src: ['<%= yeoman.dist %>/**/*.html'],  // source files array (supports minimatch)
+	//src: ['dist/views/**.html'],  // source files array (supports minimatch)
+	overwrite: true,
+	replacements: [
+	  /*{
+	    from: 'Foo',
+	    to: function (matchedWord) {   // callback replacement
+	      return matchedWord + ' Bar';
+	    }
+	  },*/
+	  {from: /^\s+/mg, to: ''},
+	  {from: /\s\s+/mg, to: ' '}
+	]
       }
     },
 
@@ -309,7 +310,7 @@ module.exports = function (grunt) {
           dot: true,
           cwd: '<%= yeoman.app %>',
           dest: 'twirl',
-          src: ['*.scala.html']
+          src: ['**/*.scala.html']
         }]
       },
       'twirl-dist': {
@@ -318,7 +319,7 @@ module.exports = function (grunt) {
           dot: true,
           cwd: '<%= yeoman.dist %>',
           dest: 'twirl',
-          src: ['*.scala.html']
+          src: ['**/*.scala.html']
         }]
       },
       dist: {
@@ -331,9 +332,9 @@ module.exports = function (grunt) {
             '*.{ico,png,txt}',
             '.htaccess',
             '*.html',
-            'views/{,*/}*.html',
-            'images/{,*/}*.{webp}',
-            'fonts/{,*/}*.*'
+            'views/**/*.html',
+            'images/**/*.{webp}',
+            'fonts/**/*.*'
           ]
         }, {
           expand: true,
@@ -422,7 +423,7 @@ module.exports = function (grunt) {
     'uglify',
     'filerev',
     'usemin',
-    //'htmlmin',
+    'replace:htmlmin',
     'copy:twirl-dist'
   ]);
 
