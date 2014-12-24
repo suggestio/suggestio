@@ -267,7 +267,6 @@ module.exports = function (grunt) {
     replace: {
       htmlmin: {
 	src: ['<%= yeoman.dist %>/**/*.html'],  // source files array (supports minimatch)
-	//src: ['dist/views/**.html'],  // source files array (supports minimatch)
 	overwrite: true,
 	replacements: [
 	  /*{
