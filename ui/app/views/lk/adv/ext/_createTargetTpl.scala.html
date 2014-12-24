@@ -1,0 +1,11 @@
+@(mnode: MAdnNode, tf: Form[_])(implicit ctx: Context)
+
+@* Окошко для добавления новой внешней PR-цели. *@
+
+@import ctx._
+
+@_targetFormTpl(
+  tf          = tf,
+  submitCall  = routes.LkAdvExt.createTargetSubmit(mnode.id.get),
+  btnText     = Messages("Create")
+)

@@ -1,0 +1,25 @@
+@(mad: MAd, mnode: MAdnNode, targets: Seq[adv.MExtTarget], currentAdvs: Map[String, adv.MExtAdv], af: Form[_])(implicit ctx: Context)
+
+@* Страница со формой размещения рекламной карточки на внешних сервисах. *@
+
+@import ctx._
+@import helper._
+
+@base("Внешнее размещение карточки", mnode) {
+
+  @form( routes.LkAdvExt.advFormSubmit(mad.id.get) ) {
+    @targets.iterator.zipWithIndex.map { case (target, i) =>
+      <input type="hidden" name="adv[@i].targetId" value="@target.id" />
+      <label>
+        <input type="checkbox" name="adv[@i].enabled" value="true" />
+        @Messages(target.service.i18nCode)
+        @target.name
+      </label>
+    }
+
+    <a href="@routes.LkAdvExt.createTarget(mnode.id.get)">Добавить цель...</a>
+
+    <input type="submit" value="Начать размещение..." />
+  }
+
+}

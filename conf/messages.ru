@@ -328,3 +328,5 @@ wind.direction.north-east=северо-восточный
 wind.direction.south-west=юго-западный
 wind.direction.south-east=юго-восточный
 
+Vkontakte=ВКонтакте
+

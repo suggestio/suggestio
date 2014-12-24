@@ -8,7 +8,7 @@ import models.stat.{ScStatActions, ScStatAction}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
-import java.net.URL
+import java.net.{MalformedURLException, URL}
 import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
@@ -323,13 +323,33 @@ object FormUtil {
       identity
     )
 
-
+  /** Маппер опционального form-поля с ссылкой в java.net.URL. */
+  def urlOptM: Mapping[Option[URL]] = {
+    val m1 = nonEmptyText(minLength = 8, maxLength = 1024)
+    // TODO Нужно различать случаи, когда None из-за неправильной ссылки и None из-за пустой строки.
+    toStrOptM(m1, strTrimSanitizeUnescapeF)
+      .transform [Option[URL]] (
+        {rawOpt =>
+          rawOpt.flatMap { raw =>
+            try {
+              Some(new URL(raw))
+            } catch {
+              case ex: MalformedURLException => None
+            }
+          }
+        },
+        { _.map(_.toExternalForm) }
+      )
+  }
   /** Маппер form-поля с ссылкой в java.net.URL. */
-  def urlMapper = urlStrM
-    .transform[URL](new URL(_), _.toExternalForm)
+  def urlM: Mapping[URL] = {
+    urlOptM
+      .verifying("error.required", _.isDefined)
+      .transform[URL] (_.get, Some.apply)
+  }
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
-  def urlAllowedMapper = urlMapper
+  def urlAllowedMapper = urlM
     .verifying("mappers.url.only_http_https_allowed", { url =>
       allowedProtocolRE.pattern.matcher(url.getProtocol).matches()
     })

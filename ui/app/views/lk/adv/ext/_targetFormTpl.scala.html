@@ -1,0 +1,14 @@
+@(tf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Форма добавления новой цели. *@
+
+@import helper._
+
+
+@form(submitCall) {
+
+  @inputText(tf("url"))
+
+  <input type="submit" value="@btnText" />
+
+}
