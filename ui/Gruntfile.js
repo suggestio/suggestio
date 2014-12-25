@@ -136,7 +136,7 @@ module.exports = function (grunt) {
       twirl: {
 	files: [{
 	  dot: true,
-	  src:['twirl']
+	  src:['twirl/**']
 	}]
       },
       dist: {

@@ -210,3 +210,8 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
 Yeoman.yeomanSettings ++ Yeoman.withTemplates
 
+// Для сорцов, которые генерятся автоматом в ui/twirl нужно вызывать перекомпиляцию. Проблема в невозможности их отслеживать.
+// TODO Пока это не работает ни разу
+watchSources <++= Yeoman.yeomanDirectory
+  .map { path => (path / "twirl" ** "*").get }
+
