@@ -263,7 +263,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   }
 
 
-  private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+  private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
     import request.{producer, mad}
     val cats = getMMCats()
     implicit val ctx = implicitly[Context]
@@ -274,7 +274,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   }
 
 
-  private def renderFailedEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+  private def renderFailedEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
     renderEditFormWith(af) map {
       NotAcceptable(_)
     }

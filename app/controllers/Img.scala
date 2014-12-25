@@ -2,7 +2,6 @@ package controllers
 
 import java.io.File
 
-import io.suggest.model.ImgWithTimestamp
 import models.im._
 import org.apache.commons.io.FileUtils
 import play.api.libs.Files.TemporaryFile

@@ -231,7 +231,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
   private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
-                           (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.

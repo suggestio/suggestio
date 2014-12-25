@@ -1,11 +1,13 @@
 package util.img
 
 import java.io.File
-import java.net.URL
-import org.apache.commons.io.FileUtils
-import util.PlayMacroLogsImpl
-import util.img.OutImgFmts.OutImgFmt
-import play.api.Play.{current, configuration}
+import java.nio.file.Files
+
+import util.{AsyncUtil, PlayMacroLogsImpl}
+import models.im._
+
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -14,67 +16,53 @@ import play.api.Play.{current, configuration}
  * Description: Утиль для работы с wkhtml2image, позволяющая рендерить html в растровые картинки.
  */
 
-// TODO Этот модуль пока не используется (не исп. с момента создания).
-
 object WkHtmlUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** path для директории кеширования. */
-  val CACHE_DIR: Option[String] = {
-    val dirPath = configuration.getString("wkhtml.cache.dir") getOrElse "/tmp/sio2/wkhtml/cache"
-    val dirFile = new File(dirPath)
-    if ((dirFile.exists && dirFile.isDirectory)  ||  dirFile.mkdirs) {
-      debug("WkHtml cache dir is set to " + dirPath)
-      Some(dirPath)
-    } else {
-      warn("WkHtml cache dir in not created/unset or invalid. Working without cache.")
-      None
+  /**
+   * Упрощенная функция для того, чтобы быстро сделать всё круто:
+   * - асинхронно
+   * - с участием кеша для защиты от DDOS.
+   * @param args настройки вызова.
+   * @return Фьючерс с прочитанной в память картинкой.
+   */
+  // TODO Этот метод - эталонный quick and dirty быдлокод. Отрендеренные картинки нужно хранить на винче, не трогая кеш.
+  def html2imgSimple(args: WkHtmlArgs): Future[Array[Byte]] = {
+    // TODO добавить cache
+    val dstFile = File.createTempFile("/tmp/", "." + args.outFmt.name)
+    val fut = Future {
+      html2img(args, dstFile)
+      Files.readAllBytes(dstFile.toPath)
+    }(AsyncUtil.singleThreadIoContext)
+    fut onComplete { case _ =>
+      dstFile.delete()
     }
-  }
-
-  /** Название/путь к утили, вызываемой из командной строки. */
-  val WKHTML2IMG = configuration.getString("wkhtml.toimg.prog.name") getOrElse "wkhtmltoimage"
-
-  /** Команда wkhtmltoimage для отправки на выполнение. */
-  val CMD: List[String] = {
-    var l = List(
-      "--disable-plugins",
-      "--images",
-      "--zoom", "2.0",
-      "--width", "1280",
-      "--height", "1600",
-      "--quality", "100"
-    )
-    l = CACHE_DIR.fold (l) ("--cache-dir" :: _ :: l)
-    WKHTML2IMG :: l
+    fut
   }
 
   /**
    * Запуск конвертации блокировано.
-   * @param url Ссылка для получения страницы.
-   * @param outFmt Выходной формат картинки.
+   * @param args Аргументы вызова.
    * @return Массив байт с картинкой если всё ок.
    *         RuntimeException если вызов wkhtmltoimage вернул не 0.
    *         Exception при иных проблемах.
    */
-  def html2img(url: URL, outFmt: OutImgFmt): Array[Byte] = {
-    val tmpFile = File.createTempFile("wkhtml2img", "." + outFmt)
-    try {
-      val cmdargs = CMD ++ List(url.toExternalForm, tmpFile.getAbsolutePath)
-      val p = Runtime.getRuntime.exec(cmdargs.toArray)
-      val result = p.waitFor()
-      lazy val cmd = cmdargs.mkString(" ")
-      trace(cmd + "  ===>>>  " + result)
-      if (result == 0) {
-        FileUtils.readFileToByteArray(tmpFile)
-      } else {
-        throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
-      }
-    } finally {
-      tmpFile.delete()
+  def html2img(args: WkHtmlArgsT, dstFile: File): Unit = {
+    val cmdargs = args.toCmdLine()
+    val now = System.currentTimeMillis()
+    // TODO Асинхронно запускать сие?
+    val p = Runtime.getRuntime.exec(cmdargs.toArray)
+    val result = p.waitFor()
+    val tookMs = System.currentTimeMillis() - now
+    lazy val cmd = cmdargs.mkString(" ")
+    trace(cmd + "  ===>>>  " + result + " ; took = " + tookMs + "ms")
+    if (result != 0) {
+      throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
     }
   }
+
+
 
 }
 

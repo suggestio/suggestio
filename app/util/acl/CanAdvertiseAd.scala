@@ -31,15 +31,15 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
    * @param mad Рекламная карточка.
    * @param request Реквест.
    * @tparam A Параметр типа реквеста.
-   * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
+   * @return None если нельзя. Some([[RequestWithAdAndProducer]]) если можно исполнять реквест.
    */
-  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAdAndProducer[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
           val adnNode = adnNodeOpt.get
           SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
-            Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
+            Some(RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode))
           }
         } else {
           debug(s"maybeAllowed($pwOpt, ${mad.id.get}): superuser, but ad producer node ${mad.producerId} is not allowed to advertise.")
@@ -57,11 +57,11 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
               .fold
                 {
                   debug(s"maybeAllowed($pwOpt, ${mad.id.get}): User is not node ${mad.producerId} admin or node is not a producer.")
-                  Future successful Option.empty[RequestWithAd[A]]
+                  Future successful Option.empty[RequestWithAdAndProducer[A]]
                 }
                 {adnNode =>
                   SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
-                    Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
+                    Some(RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode))
                   }
                 }
           }
@@ -77,10 +77,10 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
 
 
 /** Редактировать карточку может только владелец магазина. */
-trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
+trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAdAndProducer] {
   import CanAdvertiseAd.LOGGER._
   def adId: String
-  def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAd.getById(adId) flatMap {
       case Some(mad) =>
@@ -99,5 +99,5 @@ trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
 }
 final case class CanAdvertiseAd(adId: String)
   extends CanAdvertiseAdBase
-  with ExpireSession[RequestWithAd]
+  with ExpireSession[RequestWithAdAndProducer]
 

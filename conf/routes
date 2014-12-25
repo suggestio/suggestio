@@ -135,7 +135,8 @@ GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnI
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 
-GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
+GET  /market/ad/one                     controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
+
 ## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
@@ -143,6 +144,7 @@ GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
+
 
 # market+join: Присоединение к sio-market.
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
