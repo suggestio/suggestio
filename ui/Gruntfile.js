@@ -61,6 +61,10 @@ module.exports = function (grunt) {
           '.tmp/styles/{,*/}*.css',
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
+      },
+      scalaTpl: {
+	files: ['<%= yeoman.app %>/views/**/*.scala.*'],
+	tasks: ['newer:copy:twirl-dev']
       }
     },
 
@@ -133,12 +137,6 @@ module.exports = function (grunt) {
 
     // Empties folders to start fresh
     clean: {
-      twirl: {
-	files: [{
-	  dot: true,
-	  src:['twirl/**']
-	}]
-      },
       dist: {
         files: [{
           dot: true,
@@ -308,7 +306,7 @@ module.exports = function (grunt) {
           expand: true,
           dot: true,
           cwd: '<%= yeoman.app %>',
-          dest: 'twirl',
+          dest: '<%= yeoman.dist %>',
           src: ['**/*.scala.html']
         }]
       },
@@ -404,12 +402,10 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('build-dev', [
-    'clean:twirl',
-    'copy:twirl-dev'
+    'copy:twirl-dev',
   ]);
 
   grunt.registerTask('build-dist', [
-    'clean:twirl',
     'clean:dist',
     'wiredep',
     'useminPrepare',

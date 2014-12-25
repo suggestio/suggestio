@@ -43,7 +43,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
 
-addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.1-SNAPSHOT")
+addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.4-SNAPSHOT")
 
 // ProGuard занимается обфускацией скомпиленных данных.
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
