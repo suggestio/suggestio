@@ -240,3 +240,13 @@ case class CronTask(
   def run(): Unit = actionF
 }
 
+
+
+/** Дополнение json-функционала возможностью рендерить туда код. Используем JsString из-за sealed JsValue. */
+object JsRawCode {
+  def apply(value: String) = new JsRawCode(value)
+}
+class JsRawCode(value: String) extends JsString(value) {
+  override def toString() = value
+}
+

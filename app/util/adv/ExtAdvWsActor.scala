@@ -4,6 +4,7 @@ import _root_.util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
 import _root_.util.ws.{SubscribeToWsDispatcher, WsActorDummy}
 import akka.actor.{Actor, ActorRef, Props}
 import io.suggest.model.EsModel.FieldsJsonAcc
+import models.JsRawCode
 import models.adv.MExtAdvQs
 import play.api.libs.json._
 
@@ -37,6 +38,8 @@ sealed trait ExtAdvWsActorCore extends Actor with PlayMacroLogsI {
   def out: ActorRef
   def args: MExtAdvQs
 
+  def sioPrJs = "SioPR"
+
   // TODO Нужны состояния, обработка переключение и вся остальная логика.
   override def preStart(): Unit = {
     super.preStart()
@@ -51,14 +54,6 @@ sealed trait ExtAdvWsActorCore extends Actor with PlayMacroLogsI {
       LOGGER.error("TODO")
   }
 
-
-  /** Дополнение json-функционала возможностью рендерить туда код. Используем JsString из-за sealed JsValue. */
-  object JsRawCode {
-    def apply(value: String) = new JsRawCode(value)
-  }
-  class JsRawCode(value: String) extends JsString(value) {
-    override def toString() = value
-  }
 
   private def onSuccessJson(name: String, args: FieldsJsonAcc): JsObject = {
     JsObject(Seq(
@@ -88,12 +83,13 @@ sealed trait ExtAdvWsActorCore extends Actor with PlayMacroLogsI {
     // TODO всякие начальные данные в состояние залить бы...
     val ctx0 = JsObject(Nil)
     val errorJson = onErrorJson(action, reason = "reason")
-    s"""
-      |SioPR.$action($ctx0).execute(
-      |function(ws, ctx1) { ws.send($successJson); },
-      |function(ws, reason) { ws.send($errorJson); }
-      |)
-    """.stripMargin
+    new StringBuilder(256, sioPrJs)
+      .append('.')
+      .append(action).append('(').append(ctx0).append(')')
+      .append(".execute(")
+      .append("function(ws, ctx1) { ws.send(").append(successJson).append(");},")
+      .append("function(ws, reason) { ws.send(").append(errorJson).append(");});")
+      .toString()
   }
 
   /** Генерация JSON'а приветствия клиентского сервера. */
