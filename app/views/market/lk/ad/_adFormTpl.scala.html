@@ -53,10 +53,16 @@
       <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
         @blocks.editor._blockEditorTpl(af, withBC = withBC)
 
+        <hr class="delimiter __light" />
         @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
-        @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
-        @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
-
+        <div class="edit-ad_pattern-w input-w">
+          <div class="edit-ad_pattern-option">
+            @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
+          </div>
+          <div class="edit-ad_pattern-color">
+            @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+          </div>
+        </div>
       </div>
 
       <div class="clear"></div>

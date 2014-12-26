@@ -545,12 +545,26 @@ li
 
 
 .lk-ad-block-edit-form__editor
-  width: 480px
-  float: left
+  overflow  hidden
+  padding-right 20px
 
 /* Блока редактора блока с полями ввода */
-.ad-block-editor__fieldset
-  margin: 20px 0px
+.edit-ad_block-field
+  margin  20px 0
+  clear both
+
+  &.__width,
+  &.__height
+    float left
+    margin-top 0
+    width 200px
+
+  &.__bgImg
+    margin-top 0
+    margin-bottom 50px
+    overflow  hidden
+    clear none
+
 
 .ad-block-editor__fieldset_label
   display: block
@@ -1395,8 +1409,6 @@ th.__bg-head
 
   &_cnt-w
     background: #efefef
-    box-shadow(0px 1px 0px 0px #acadad)
-
 
   &_cnt
     padding: 10px 0
