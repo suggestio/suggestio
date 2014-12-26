@@ -155,7 +155,7 @@ final case class MAd(
   var receivers     : Receivers_t = Map.empty,
   var prio          : Option[Int] = None,
   var id            : Option[String] = None,
-  var userCatId     : Option[String] = None,
+  var userCatId     : Set[String] = Set.empty,
   var texts4search  : Texts4Search = Texts4Search.EMPTY,
   var colors        : Map[String, String] = Map.empty,
   var disableReason : List[DisableReason] = Nil,
