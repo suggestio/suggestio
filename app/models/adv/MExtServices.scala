@@ -29,7 +29,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
   val VKONTAKTE: MExtService = new Val("vk") {
     override def i18nCode = "VKontakte"
     override def isForHost(host: String): Boolean = {
-      "(?i)(www\\.)?vk(ontakte)\\.(com|ru)$".r.pattern.matcher(host).find()
+      "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
     }
   }
 

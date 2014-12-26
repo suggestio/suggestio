@@ -212,3 +212,26 @@ object SioReqMd {
   }
 
 }
+
+
+/** Враппер над RequestHeader. */
+trait RequestHeaderWrapper extends RequestHeader {
+  def underlying: RequestHeader
+  override def id             = underlying.id
+  override def secure         = underlying.secure
+  override def uri            = underlying.uri
+  override def remoteAddress  = underlying.remoteAddress
+  override def queryString    = underlying.queryString
+  override def method         = underlying.method
+  override def headers        = underlying.headers
+  override def path           = underlying.path
+  override def version        = underlying.version
+  override def tags           = underlying.tags
+}
+
+case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Nothing] with RequestHeaderWrapper {
+  override def body: Nothing = {
+    throw new UnsupportedOperationException("This is request headers wrapper. Body never awailable here.")
+  }
+}
+

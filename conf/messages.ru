@@ -329,4 +329,5 @@ wind.direction.south-west=юго-западный
 wind.direction.south-east=юго-восточный
 
 Vkontakte=ВКонтакте
-
+error.service.unknown=Этот сайт не поддерживается.
+error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.

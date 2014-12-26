@@ -8,9 +8,8 @@ import util.PlayMacroLogsI
 import util.acl.GetAnyAd
 import util.blocks.BlocksConf
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import util.img.WkHtmlUtil
-import util.play.PlayUtil.httpPort
+import util.xplay.PlayUtil.httpPort
 
 /**
  * Suggest.io
@@ -48,7 +47,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
     val fmt = OutImgFmts.PNG
     val wkArgs = WkHtmlArgs(
-      src     = s"http://localhost:$httpPort${routes.MarketShowcase.onlyOneAd(adArgs).url}",
+      src     = "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url,
       imgSize = request.mad.blockMeta,
       outFmt  = fmt,
       plugins = false

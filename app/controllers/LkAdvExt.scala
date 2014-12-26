@@ -2,15 +2,24 @@ package controllers
 
 import java.net.URL
 
+import models._
 import models.adv._
+import play.api.libs.json.JsValue
+import play.api.mvc.WebSocket.HandlerProps
+import play.api.mvc.{Result, WebSocket}
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.acl.{IsAdnNodeAdmin, CanAdvertiseAd}
+import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.adv.ExtAdvWsActor
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.lk.adv.ext._
+import play.api.Play.{current, configuration}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,6 +33,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
+  val WS_BEST_BEFORE_SECONDS = configuration.getInt("adv.ext.ws.api.best.before.seconds") getOrElse 30
 
   /** Маппинг одной выбранной цели. */
   private def advM: Mapping[Option[String]] = {
@@ -43,11 +54,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     )
   }
 
+  private type Form_t = Form[List[String]]
+
   /** Маппинг формы со списком целей. */
-  private def advsFormM: Form[List[String]] = {
+  private def advsFormM: Form_t = {
     Form(
       "adv" -> list(advM)
         .transform[List[String]] (_.flatten, _.map(Some.apply))
+        .verifying("error.required.at.least.one.adv.service", _.nonEmpty)
     )
   }
 
@@ -58,27 +72,89 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
   def forAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+    _forAdRender(adId, advsFormM)
+      .map { Ok(_) }
+  }
+
+  private def _forAdRender(adId: String, form: Form_t)(implicit request: RequestWithAdAndProducer[_]): Future[Html] = {
     val targetsFut = MExtTarget.findByAdnId(request.producerId)
     val currentAdvsFut = MExtAdv.findForAd(adId)
-      .map { advs => advs.iterator.map { a => a.extTargetId -> a }.toMap }
-    val form = advsFormM
+      .map { advs =>
+        advs.iterator
+          .map { a =>  a.extTargetId -> a }
+          .toMap
+      }
     for {
       targets       <- targetsFut
       currentAdvs   <- currentAdvsFut
     } yield {
-      Ok(forAdTpl(request.mad, request.producer, targets, currentAdvs, form))
+      forAdTpl(request.mad, request.producer, targets, currentAdvs, form)
     }
   }
 
   /**
    * Сабмит формы размещения рекламных карточек на внешних сервисах. Нужно:
-   * - запустить рендер карточки в картинку
-   * - отрендерить страницу с системой взаимодействия с JS API указанных сервисов
+   * - Распарсить и проверить данные реквеста.
+   * - отрендерить страницу с системой взаимодействия с JS API указанных сервисов:
+   * -- Нужно подготовить websocket url, передав в него всё состояние, полученное из текущего реквеста.
+   * -- Ссылка должна иметь ttl и цифровую подпись для защиты от несанкционированного доступа.
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
   def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    ???
+    advsFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
+        _forAdRender(adId, formWithErrors)
+          .map { NotAcceptable(_) }
+      },
+      {advs =>
+        implicit val ctx = implicitly[Context]
+        val wsCallArgs = MExtAdvQs(
+          adId          = adId,
+          targetIds     = advs,
+          bestBeforeSec = WS_BEST_BEFORE_SECONDS,
+          wsId          = ctx.ctxIdStr
+        )
+        Ok( advRunnerTpl(wsCallArgs, request.mad, request.producer)(ctx) )
+      }
+    )
+  }
+
+  private sealed case class ExceptionWithResult(res: Result) extends Exception
+  def wsRun(args: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
+    // Сначала нужно проверить права доступа всякие.
+    val fut0 = if (args.bestBeforeSec <= BestBefore.nowSec) {
+      Future successful None
+    } else {
+      val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
+      Future failed ExceptionWithResult(res)
+    }
+    fut0.flatMap { _ =>
+      val madFut = MAd.getById(args.adId)
+        .map(_.get)
+        .recoverWith { case ex: NoSuchElementException =>
+          Future failed ExceptionWithResult(NotFound("Ad not found: " + args.adId))
+        }
+      val pwOpt = PersonWrapper.getFromRequest
+      madFut
+        .flatMap { mad =>
+          val req1 = RequestHeaderAsRequest(requestHeader)
+          CanAdvertiseAd.maybeAllowed(pwOpt, mad, req1)
+        }
+        .map(_.get)
+        .recoverWith { case ex: NoSuchElementException =>
+           Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+        }
+    }.map { req1 =>
+      val hp: HandlerProps = ExtAdvWsActor.props(_, args)
+      Right(hp)
+    }.recover {
+      case ExceptionWithResult(res) =>
+        Left(res)
+      case ex: Exception =>
+        Left(InternalServerError("500 Internal server error. Please try again later."))
+    }
   }
 
 
@@ -116,6 +192,12 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     Ok(_createTargetTpl(request.adnNode, form))
   }
 
+  /**
+   * Сабмит формы создания новой цели для размещения рекламной карточки.
+   * @param adnId id узла, к которому привязывается цель.
+   * @return 200 Ok если цель создана.
+   *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
+   */
   def createTargetSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     targetFormM.bindFromRequest().fold(
       {formWithErrors =>

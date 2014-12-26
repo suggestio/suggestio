@@ -76,6 +76,7 @@ GET  /m/lk/xadv/ext/:adId               controllers.LkAdvExt.forAd(adId)
 POST /m/lk/xadv/ext/:adId               controllers.LkAdvExt.advFormSubmit(adId)
 GET  /m/lk/xadv/ext/tgt/new/:adnId      controllers.LkAdvExt.createTarget(adnId)
 POST /m/lk/xadv/ext/tgt/new/:adnId      controllers.LkAdvExt.createTargetSubmit(adnId)
+GET  /m/lk/xadv/ext/ws/run              controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
 
 
 # ЛК: Рекламные карточки

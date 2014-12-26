@@ -1,6 +1,7 @@
 package util.acl
 
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc.WebSocket.HandlerProps
+import play.api.mvc._
 import models._
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper.PwOpt_t
@@ -85,7 +86,8 @@ trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAdAndProducer] {
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         CanAdvertiseAd.maybeAllowed(pwOpt, mad, request) flatMap {
-          case Some(req1) => block(req1)
+          case Some(req1) =>
+            block(req1)
           case None =>
             debug(s"invokeBlock(): maybeAllowed($pwOpt, mad=${mad.id.get}) -> false.")
             onUnauth(request, pwOpt)

@@ -58,10 +58,10 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
     MExtTarget(
       id          = id,
       versionOpt  = version,
-      url         = stringParser(m get URL_ESFN),
-      service     = MExtServices.withName( stringParser(m get SERVICE_ID_ESFN) ),
-      adnId       = stringParser(m get ADN_ID_ESFN),
-      name        = Option(m get NAME_ESFN).map(stringParser)
+      url         = stringParser(m(URL_ESFN)),
+      service     = MExtServices.withName( stringParser(m(SERVICE_ID_ESFN)) ),
+      adnId       = stringParser(m(ADN_ID_ESFN)),
+      name        = m.get(NAME_ESFN).map(stringParser)
     )
   }
 

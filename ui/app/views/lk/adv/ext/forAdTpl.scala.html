@@ -8,10 +8,16 @@
 @base("Внешнее размещение карточки", mnode) {
 
   @form( routes.LkAdvExt.advFormSubmit(mad.id.get) ) {
+
+    @* Сообщения о проблемах с выборкой. СВЕРСТАТЬ, А НЕ КОММЕНТИТЬ КАК ОБЫЧНО! *@
+    @af("adv").errors.map { error =>
+      <p>Возникла проблема: @Messages(error.message, error.args)</p>
+    }
+
     @targets.iterator.zipWithIndex.map { case (target, i) =>
       <input type="hidden" name="adv[@i].targetId" value="@target.id" />
       <label>
-        <input type="checkbox" name="adv[@i].enabled" value="true" />
+        <input type="checkbox" name="adv[@i].enabled" value="true" style="display: block;" />
         @Messages(target.service.i18nCode)
         @target.name
       </label>

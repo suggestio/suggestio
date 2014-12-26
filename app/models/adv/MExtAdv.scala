@@ -57,11 +57,11 @@ object MExtAdv extends EsModelStaticT with PlayMacroLogsImpl {
     MExtAdv(
       id          = id,
       versionOpt  = version,
-      adId        = stringParser(m get AD_ID_ESFN),
-      extTargetId = stringParser(m get EXT_TARGET_ID_ESFN),
-      url         = stringParser(m get URL_ESFN),
-      personId    = stringParser(m get PERSON_ID_ESFN),
-      date        = Option(m get DATE_ESFN)
+      adId        = stringParser(m(AD_ID_ESFN)),
+      extTargetId = stringParser(m(EXT_TARGET_ID_ESFN)),
+      url         = stringParser(m(URL_ESFN)),
+      personId    = stringParser(m(PERSON_ID_ESFN)),
+      date        = m.get(DATE_ESFN)
         .fold(DateTime.now)(dateTimeParser)
     )
   }
