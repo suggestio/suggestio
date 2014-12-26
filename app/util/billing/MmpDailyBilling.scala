@@ -167,7 +167,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    */
   def getAdModulesCount(mad: EMBlockMetaI): Int = {
     lazy val logPrefix = s"getAdModulesCount(${mad.id.getOrElse("?")}): "
-    val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
+    val block: BlockConf = BlocksConf applyOrDefault mad.blockMeta.blockId
     // Мультипликатор по ширине
     val wmul = BlockWidths(mad.blockMeta.width).relSz
     // Мультипликатор по высоте
