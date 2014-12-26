@@ -2,7 +2,7 @@ package models.adv.js
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import models.JsRawCode
-import play.api.libs.json.{JsString, JsObject}
+import play.api.libs.json.{JsValue, JsString, JsObject}
 
 /**
  * Suggest.io
@@ -37,10 +37,14 @@ trait AskBuilderUtil {
 
 }
 
-/** Сборка запросов. */
-trait AskBuilder extends AskBuilderUtil {
+
+trait IAction {
   /** Некое название экшена. Это то, что фигурирует как идентификатор в запросах-ответах. */
   def action: String
+}
+
+/** Сборка запросов. */
+trait AskBuilder extends AskBuilderUtil with IAction {
 
   def onSuccessArgs: List[String]
   def onSuccessReply: JsObject = onSuccessJson(action, onSuccessJsonArgs)
@@ -104,5 +108,46 @@ trait AskBuilder extends AskBuilderUtil {
   }
 
   override def toString: String = js
+}
+
+
+/** Заготовка для быстрой сборки статических компаньонов классов js-протокола, умеющих делать unapply() из JSON'а. */
+trait StaticUnapplier extends IAction {
+
+  /** Класс-компаньон. */
+  type T
+
+  /** Результат, возвращаемый из unapply(). Если больше одного аргумента, то нужен кортеж. */
+  type Tu
+
+  /** Этот элемент точно подходит. Нужно десериализовать данные из него. */
+  def fromJs(json: JsValue): Tu
+
+  /** Статус, который требуется классом-компаньоном. */
+  def statusExpected: String
+
+  def isStatusExpected(json: JsObject): Boolean = {
+    (json \ "status").toString() == statusExpected
+  }
+
+  def isReplyToMe(json: JsObject): Boolean = {
+    (json \ "replyTo").toString == action
+  }
+
+  def unapplyJs(json: JsObject): Option[Tu] = {
+    if (isStatusExpected(json)  &&  isReplyToMe(json)) {
+      Some(fromJs(json \ "args"))
+    } else {
+      None
+    }
+  }
+
+  def unapply(a: Any): Option[Tu] = {
+    a match {
+      case jso: JsObject    => unapplyJs(jso)
+      case _                => None
+    }
+  }
+
 }
 

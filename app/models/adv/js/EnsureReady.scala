@@ -1,6 +1,6 @@
 package models.adv.js
 
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsValue, JsObject}
 
 /**
  * Suggest.io
@@ -9,10 +9,18 @@ import play.api.libs.json.JsObject
  * Description: Протокол взаимодействия с ensureReady-логикой. Эта логика инициализирует состояние js-сервера
  * в браузере клиента, инициализирует начальное состояние и подтверждает общую исправность js-сервера.
  */
-case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder {
-
+trait EnsureReadyAction extends IAction {
   override def action: String = "ensureReady"
-  override def onSuccessArgs = List("ctx1")
+  def CTX1 = "ctx1"
+}
+
+
+/**
+ * Запрос инициализации js-компонента с кодогенератором.
+ * @param ctx0 Начальное состояние.
+ */
+case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder with EnsureReadyAction {
+  override def onSuccessArgs = List(CTX1)
 
   /**
    * Генерация основного js-кода.
@@ -27,3 +35,21 @@ case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder {
   }
 
 }
+
+
+/** Компаньон положительного ответа на запрос инициализации. */
+object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
+  override type T = EnsureReadySuccess
+  override type Tu = JsObject
+
+  override def statusExpected: String = "success"
+  override def fromJs(args: JsValue): Tu = {
+    args \ CTX1 match {
+      case jso: JsObject => jso
+      case _             => JsObject(Nil)
+    }
+  }
+}
+
+/** Положительный ответ на запрос инициализации. Обычно используется через unapply() в ws-акторе. */
+case class EnsureReadySuccess(ctx1: JsObject)
