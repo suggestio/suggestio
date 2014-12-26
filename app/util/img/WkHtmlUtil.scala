@@ -3,11 +3,13 @@ package util.img
 import java.io.File
 import java.nio.file.Files
 
+import play.api.cache.Cache
 import util.{AsyncUtil, PlayMacroLogsImpl}
 import models.im._
 
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -20,6 +22,10 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Сколько кешировать в памяти сгенеренную картинку. Картинки жирные и нужны недолго, поэтому следует и
+    * кеширование снизить до минимума. Это позволит избежать DoS-атаки. */
+  val CACHE_TTL_SECONDS = configuration.getInt("wkhtml.cache.ttl.seconds") getOrElse 5
+
   /**
    * Упрощенная функция для того, чтобы быстро сделать всё круто:
    * - асинхронно
@@ -29,7 +35,6 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    */
   // TODO Этот метод - эталонный quick and dirty быдлокод. Отрендеренные картинки нужно хранить на винче, не трогая кеш.
   def html2imgSimple(args: WkHtmlArgs): Future[Array[Byte]] = {
-    // TODO добавить cache
     val dstFile = File.createTempFile("/tmp/", "." + args.outFmt.name)
     val fut = Future {
       html2img(args, dstFile)
@@ -42,6 +47,27 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
   }
 
   /**
+   * Враппер над html2imgSingle() для кеширования результатов.
+   * @param args Аргументы для вызова wkhtml2img.
+   * @param cacheSec Опциональное время кеширования в секундах.
+   * @return Тоже самое, что и нижележащий метод.
+   */
+  def html2imgSimpleCached(args: WkHtmlArgs, cacheSec: Int = CACHE_TTL_SECONDS): Future[Array[Byte]] = {
+    val ck = args.toString
+    val p = Promise[Array[Byte]]()
+    val pfut = p.future
+    val resFut = Cache.getAs [Future[Array[Byte]]] (ck) match {
+      case Some(bytesFut) =>
+        bytesFut
+      case None =>
+        Cache.set(ck, pfut, expiration = cacheSec)
+        html2imgSimple(args)
+    }
+    p completeWith resFut
+    pfut
+  }
+
+  /**
    * Запуск конвертации блокировано.
    * @param args Аргументы вызова.
    * @return Массив байт с картинкой если всё ок.
@@ -49,7 +75,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    *         Exception при иных проблемах.
    */
   def html2img(args: WkHtmlArgsT, dstFile: File): Unit = {
-    val cmdargs = args.toCmdLine()
+    val cmdargs = args.toCmdLine(List(dstFile.getAbsolutePath))
     val now = System.currentTimeMillis()
     // TODO Асинхронно запускать сие?
     val p = Runtime.getRuntime.exec(cmdargs.toArray)
@@ -61,8 +87,6 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
       throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
     }
   }
-
-
 
 }
 

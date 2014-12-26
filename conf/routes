@@ -134,8 +134,9 @@ GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnI
 
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
-
-GET  /market/ad/one                     controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
+## Рендер ровно одной карточки.
+GET  /market/ad/one/html                controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /market/ad/one/img                 controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 
 ## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
@@ -203,6 +204,7 @@ GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
 POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
 POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
 # sys.ad
+GET  /sys/ad/:adId/show                 controllers.SysMarket.showAd(adId)
 GET  /sys/ad/:adId/rcvrs/analyze        controllers.SysMarket.analyzeAdRcvrs(adId)
 POST /sys/ad/:adId/rcvrs/reset          controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
 POST /sys/ad/:adId/rcvrs/clean          controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)

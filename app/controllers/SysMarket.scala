@@ -8,6 +8,8 @@ import models._
 import util.adv.AdvUtil
 import util.mail.MailerWrapper
 import views.html.sys1.market._
+import views.html.sys1.market.ad._
+import views.html.sys1.market.adn._
 import play.api.data._, Forms._
 import util.FormUtil._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -154,9 +156,6 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       }
   }
 
-
-  /* Унифицированные узлы ADN */
-  import views.html.sys1.market.adn._
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
   // TODO stiIdOpt должен быть не id, а конретным экземпляром ShownTypeId.
@@ -845,32 +844,45 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   }
 
 
+  /**
+   * Выдать sys-страницу относительно указанной карточки.
+   * @param adId id рекламной карточки.
+   */
+  def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+    import request.mad
+    val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+    for {
+      producerOpt <- producerOptFut
+    } yield {
+      Ok(showAdTpl(mad, producerOpt))
+    }
+  }
+
+
   /** Вывести результат анализа ресиверов рекламной карточки. */
-  def analyzeAdRcvrs(adId: String) = IsSuperuser.async { implicit request =>
-    MAd.getById(adId).flatMap { madOpt =>
-      val mad = madOpt.get
-      val producerOptFut = MAdnNodeCache.getById(mad.producerId)
-      val newRcvrsMapFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
-      // Достаём из кеша узлы.
-      val nodesMapFut: Future[Map[String, MAdnNode]] = {
-        val adnIds1 = mad.receivers.keySet
-        for {
-          adns1       <- MAdnNodeCache.multiGet(adnIds1)
-          newRcvrsMap <- newRcvrsMapFut
-          newAdns     <- MAdnNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
-        } yield {
-          (adns1.iterator ++ newAdns.iterator)
-            .map { adnNode => adnNode.id.get -> adnNode }
-            .toMap
-        }
-      }
+  def analyzeAdRcvrs(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+    import request.mad
+    val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+    val newRcvrsMapFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
+    // Достаём из кеша узлы.
+    val nodesMapFut: Future[Map[String, MAdnNode]] = {
+      val adnIds1 = mad.receivers.keySet
       for {
+        adns1       <- MAdnNodeCache.multiGet(adnIds1)
         newRcvrsMap <- newRcvrsMapFut
-        producerOpt <- producerOptFut
-        nodesMap    <- nodesMapFut
+        newAdns     <- MAdnNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
       } yield {
-        Ok(showAdRcvrsTpl(mad, newRcvrsMap, nodesMap, producerOpt))
+        (adns1.iterator ++ newAdns.iterator)
+          .map { adnNode => adnNode.id.get -> adnNode }
+          .toMap
       }
+    }
+    for {
+      newRcvrsMap <- newRcvrsMapFut
+      producerOpt <- producerOptFut
+      nodesMap    <- nodesMapFut
+    } yield {
+      Ok(showAdRcvrsTpl(mad, newRcvrsMap, nodesMap, producerOpt))
     }
   }
 

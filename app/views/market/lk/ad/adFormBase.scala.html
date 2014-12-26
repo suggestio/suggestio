@@ -1,4 +1,4 @@
-@(title: String, adnNode: MAdnNode)(content: Html)(implicit ctx: Context)
+@(title: String, adnNode: MAdnNode, madOpt: Option[MAd])(content: Html)(implicit ctx: Context)
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
@@ -11,6 +11,12 @@
   <div class="page-title __without-border">
     <div class="page-title_cnt">
       @title.toUpperCase
+      @* Отрендерить системную ссылку для суперюзера. *@
+      @madOpt.flatMap(_.id).map { madId =>
+        @if(ctx.isSuperuser) {
+          <a href="@routes.SysMarket.showAd(madId)">/sys</a>
+        }
+      }
     </div>
   </div>
 
