@@ -3,7 +3,7 @@ package util.adv
 import akka.actor.{Props, ActorRef}
 import models.adv.MExtServices.MExtService
 import models.adv.MExtTarget
-import models.adv.js.{EnsureServiceReadyError, EnsureServiceReadySuccess, EnsureServiceReadyAsk}
+import models.adv.js.{ServiceParams, EnsureServiceReadyError, EnsureServiceReadySuccess, EnsureServiceReadyAsk}
 import play.api.libs.json.JsObject
 import util.PlayMacroLogsImpl
 
@@ -21,8 +21,11 @@ object ExtServiceActor {
 
 /** Актор, занимающийся загрузкой карточек в однин рекламный сервис. */
 case class ExtServiceActor(out: ActorRef, service: MExtService, targets0: List[MExtTarget], ctx1: JsObject)
-  extends EnsureServiceReady
+  extends FsmActor with PlayMacroLogsImpl with SioPrJsUtil
 {
+
+  import LOGGER._
+
   /** Текущее состояние FSM. */
   override protected var _state: FsmState = new DummyState
 
@@ -35,20 +38,10 @@ case class ExtServiceActor(out: ActorRef, service: MExtService, targets0: List[M
     super.preStart()
     become(new EnsureServiceReadyState)
   }
-}
 
-
-/** Базовый трейт для аддонов этого актора. */
-sealed trait ExtServiceActorBase extends FsmActor with PlayMacroLogsImpl {
-  val out: ActorRef
-  val targets0: List[MExtTarget]
-  val ctx1: JsObject
-  val service: MExtService
-}
-
-
-/** Поддержка инициализации одного сервиса. */
-sealed trait EnsureServiceReady extends ExtServiceActorBase with SioPrJsUtil {
+  protected def harakiri(): Unit = {
+    context stop self
+  }
 
   /** Состояние, когда запускается инициализация API одного сервиса. */
   class EnsureServiceReadyState extends FsmState {
@@ -62,11 +55,32 @@ sealed trait EnsureServiceReady extends ExtServiceActorBase with SioPrJsUtil {
     }
 
     override def receiverPart: Receive = {
-      case EnsureServiceReadySuccess(_, ctx2, params) =>
-        ???
-      case EnsureServiceReadyError(_, reason) =>
-        ???
+      case EnsureServiceReadySuccess((_, ctx2, params)) =>
+        val nextState = if (params.picture.needStorage) {
+          new HasPictureStorageState(ctx2, params)
+        } else {
+          // TODO Генерить абсолютную ссылку на отрендеренную карточку-картинку.
+          new WallPostState(???)
+        }
+        become(nextState)
+
+      case EnsureServiceReadyError((_, reason)) =>
+        error(name + ": JS failed to ensureServiceReady: " + reason)
+        harakiri()
     }
+  }
+
+
+  /** Если требуется отдельное обслуживание хранилища картинок, то в этом состоянии узнаём,
+    * существует ли необходимое хранилище на сервисе? */
+  class HasPictureStorageState(ctx2: JsObject, params: ServiceParams) extends FsmState {
+    override def receiverPart: Receive = ???
+  }
+
+
+  /** Состояние постинга на стену. */
+  class WallPostState(imgId: String) extends FsmState {
+    override def receiverPart: Receive = ???
   }
 
 }

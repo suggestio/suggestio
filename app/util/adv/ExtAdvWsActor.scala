@@ -115,8 +115,8 @@ trait SioPrJsUtil {
 
 /** Базовый трейт для запиливания реализации актора и его аддонов */
 sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher with PlayLazyMacroLogsImpl {
-  def out: ActorRef
-  def args: MExtAdvQs
+  val out: ActorRef
+  val args: MExtAdvQs
 }
 
 
