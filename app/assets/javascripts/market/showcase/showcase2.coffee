@@ -554,6 +554,7 @@ sm =
     position_callback_fallback : () ->
 
       if sm.geo.callback_active then return false
+
       sm.geo.callback_active = true
 
       cs = sm.states.cur_state()
@@ -606,25 +607,26 @@ sm =
       sm.geo.callback_active = false
 
       if typeof navigator.geolocation != 'undefined'
-        ###
-        # странный кусок кода, временно закомментирован
-        # if sm.utils.is_webkit() == true
-        #  navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, {enableHighAccuracy: true, timeout : 4000, maximumAge : 100 }
-        #else
-        ###
 
         # не всегда срабатывает вызов ошибки у метода getCurrentPosition, поэтому используется конструкция с setTimeout
         setTimeout(
           () ->
-            if !sm.geo.callback_active
-              sm.geo.position_callback_fallback()
+            sm.geo.position_callback_fallback()
           5500
         )
-        geo_options =
+
+        # делаем одновременно и точный, и неточный запрос геолокации
+        geo_options_accurate =
           enableHighAccuracy: true
+          timeout : 60000
+          maximumAge : 100
+        geo_options_inaccurate =
+          enableHighAccuracy: false
           timeout : 5000
           maximumAge : 100
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options
+
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options_accurate
+        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options_inaccurate
       else
         sm.geo.position_callback_fallback()
 
