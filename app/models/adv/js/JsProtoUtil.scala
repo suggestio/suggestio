@@ -1,6 +1,9 @@
 package models.adv.js
 
-import play.api.libs.json.{JsValue, JsString, JsObject}
+import models.adv.MExtServices
+import models.adv.MExtServices.MExtService
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -147,14 +150,63 @@ trait StaticUnapplier extends IAction {
 }
 
 
+object StaticErrorUnapplier {
+  type Tu = String
+  implicit val seReads: Reads[String] = {
+    (JsPath \ "reason").read[String]
+  }
+}
 trait StaticErrorUnapplier extends StaticUnapplier {
-  override type Tu = String
+  override type Tu = StaticErrorUnapplier.Tu
   override def statusExpected: String = "error"
   override def fromJs(json: JsValue): Tu = {
-    json \ "reason" match {
-      case JsString(reason) => reason
-      case _ => "unknown"
-    }
+    json.validate(StaticErrorUnapplier.seReads)
+      .get
+  }
+}
+
+object StaticServiceErrorUnapplier {
+  type Tu = (MExtService, String)
+  implicit val sseReads: Reads[Tu] = {
+    val p = ServiceStatic.serviceFieldReads and
+      StaticErrorUnapplier.seReads
+    p.apply(Tuple2(_, _))
+  }
+}
+trait StaticServiceErrorUnapplier extends StaticUnapplier {
+  override type Tu = StaticServiceErrorUnapplier.Tu
+  override def statusExpected = "error"
+  override def fromJs(json: JsValue): Tu = {
+    json.validate(StaticServiceErrorUnapplier.sseReads)
+      .get
+  }
+}
+
+
+object ServiceStatic {
+  val SERVICE = "service"
+
+  implicit val serviceFieldReads = (JsPath \ SERVICE).read[String].map(MExtServices.withName(_): MExtService)
+}
+
+/** В параметры onSuccess и onError колбэков добавляется параметр service для уточнения целевого актора. */
+trait CallbackServiceAskBuilder extends AskBuilder {
+  import ServiceStatic._
+
+  def service: MExtService
+
+  private def appendService(sb: StringBuilder): StringBuilder = {
+    sb.append(JsString(SERVICE)).append(':').append(JsString(service.strId))
+  }
+
+  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
+    appendService(sb)
+  }
+
+  override def onErrorArgs(sb: StringBuilder): StringBuilder = {
+    super.onErrorArgs(sb)
+      .append(',')
+    appendService(sb)
   }
 }
 

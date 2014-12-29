@@ -1,6 +1,7 @@
 package models.adv.js
 
-import play.api.libs.json.{JsString, JsValue, JsObject}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -9,7 +10,7 @@ import play.api.libs.json.{JsString, JsValue, JsObject}
  * Description: Протокол взаимодействия с ensureReady-логикой. Эта логика инициализирует состояние js-сервера
  * в браузере клиента, инициализирует начальное состояние и подтверждает общую исправность js-сервера.
  */
-trait EnsureReadyAction extends IAction {
+sealed trait EnsureReadyAction extends IAction {
   override def action: String = "ensureReady"
   def CTX1 = "ctx1"
 }
@@ -17,9 +18,12 @@ trait EnsureReadyAction extends IAction {
 
 /**
  * Запрос инициализации js-компонента с кодогенератором.
- * @param ctx0 Начальное состояние.
+ * @param ctx1 Начальное состояние.
  */
-case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder with EnsureReadyAction {
+case class EnsureReadyAsk(ctx1: JsObject) extends AskBuilder with EnsureReadyAction {
+
+  override val CTX1 = super.CTX1
+
   override def onSuccessArgsList = List(CTX1)
   override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
     sb.append(JsString(CTX1))
@@ -36,7 +40,7 @@ case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder with EnsureReadyAct
    */
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
-      .append('.').append(action).append('(').append(ctx0).append(')')
+      .append(".prepareEnsureReady(").append(ctx1).append(')')
   }
 
 }
@@ -48,11 +52,16 @@ object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
   override type Tu = JsObject
 
   override def statusExpected: String = "success"
+
+  implicit val ersReads: Reads[EnsureReadySuccess] = {
+    val v = (JsPath \ CTX1).read[JsObject]
+    v.map { EnsureReadySuccess.apply }
+  }
+
   override def fromJs(args: JsValue): Tu = {
-    args \ CTX1 match {
-      case jso: JsObject => jso
-      case _             => JsObject(Nil)
-    }
+    args.validate[EnsureReadySuccess]
+      .get
+      .ctx1
   }
 }
 
