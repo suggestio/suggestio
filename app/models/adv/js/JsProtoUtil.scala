@@ -1,7 +1,5 @@
 package models.adv.js
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import models.JsRawCode
 import play.api.libs.json.{JsValue, JsString, JsObject}
 
 /**
@@ -11,65 +9,62 @@ import play.api.libs.json.{JsValue, JsString, JsObject}
  * Description: Заготовки js-моделей протокола общения с adv-фронтендами.
  */
 
-/** Для запросов к веб-морде используется вот эта утиль. */
-trait AskBuilderUtil {
-
-  def sioPrJsName = "SioPR"
-  
-  def onSuccessJson(name: String, args: FieldsJsonAcc): JsObject = {
-    JsObject(Seq(
-      "replyTo" -> JsString(name),
-      "status"  -> JsString("success"),
-      "args"    -> JsObject(args)
-    ))
-  }
-
-  def onErrorJson(name: String, reason: String, args: FieldsJsonAcc = Nil): JsObject = {
-    JsObject(Seq(
-      "replyTo" -> JsString(name),
-      "status"  -> JsString("error"),
-      "args"    -> JsObject(
-        "reason" -> JsRawCode(reason) ::
-        args
-      )
-    ))
-  }
-
-}
-
-
 trait IAction {
   /** Некое название экшена. Это то, что фигурирует как идентификатор в запросах-ответах. */
   def action: String
 }
 
-/** Сборка запросов. */
-trait AskBuilder extends AskBuilderUtil with IAction {
+/** trait-шаблон для сборки запросов, т.е. классов, генерящих js-код. */
+trait AskBuilder extends IAction {
 
-  def onSuccessArgs: List[String]
-  def onSuccessReply: JsObject = onSuccessJson(action, onSuccessJsonArgs)
+  def sioPrJsName = "SioPR"
+
+  private def onSomethingJson(status: String, sb: StringBuilder): StringBuilder = {
+    sb.append('{')
+      .append(JsString("replyTo")).append(':').append(JsString(action)).append(',')
+      .append(JsString("status")).append(':').append(JsString(status)).append(',')
+      .append(JsString("args")).append(':').append('{')
+  }
+  private def afterSomethingJson(sb: StringBuilder): StringBuilder = {
+    sb.append('}')    // args{}
+      .append('}')    // msg{}
+  }
+
+  def onSuccessArgsList: List[String]
+  def onSuccessArgs(sb: StringBuilder): StringBuilder
   def onSuccessCallbackBuilder(sb: StringBuilder): StringBuilder = {
     sb.append("function(ws")
-    onSuccessArgs.foreach { argName =>
+    onSuccessArgsList.foreach { argName =>
       sb.append(',').append(argName)
     }
-    sb.append("){ws.send(").append(onSuccessReply).append(");}")
-  }
-  def onSuccessJson(args: FieldsJsonAcc): JsObject = onSuccessJson(action, args)
-  def onSuccessJsonArgs: FieldsJsonAcc = {
-    onSuccessArgs
-      .map { argName =>  argName -> JsRawCode(argName) }
+    sb.append("){ws.send(")
+    // Сборка ответа
+    onSomethingJson("success", sb)
+    onSuccessArgs(sb)
+    afterSomethingJson(sb)
+    // Завершена сборка ответа
+    sb.append(");}")
   }
 
-  def onErrorReply: JsObject = onErrorJson(action, "reason")
   def onErrorCallbackBuilder(sb: StringBuilder): StringBuilder = {
     sb.append("function(ws,reason){ws.send(")
-      .append(onErrorReply)
-      .append(");}")
+    onSomethingJson("error", sb)
+    onErrorArgs(sb)
+    afterSomethingJson(sb)
+    sb.append(");}")
+  }
+  def onErrorArgs(sb: StringBuilder): StringBuilder = {
+    val r = "reason"
+    sb.append(JsString(r)).append(':').append(r)
   }
 
-  def onErrorArgs: List[String] = List("reason")
 
+  /**
+   * В конце сборки каждого запроса вызывается ".execute(onSuccess, onError)".
+   * Тут метод, занимающийся генерацией этого кода.
+   * @param sb
+   * @return
+   */
   def executeCallBuilder(sb: StringBuilder): StringBuilder = {
     sb.append(".execute(")
     onSuccessCallbackBuilder(sb)

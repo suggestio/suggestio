@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import models.JsRawCode
 import models.adv.MExtAdvQs
+import models.adv.js.EnsureReadyAsk
 import play.api.libs.json._
 
 /**
@@ -40,11 +41,15 @@ sealed trait ExtAdvWsActorCore extends Actor with PlayMacroLogsI {
 
   def sioPrJs = "SioPR"
 
+  /** Начальное состояние, передаваемое в prepareReady.
+    * По мере необходимости, сюда можно добавлять новые поля. */
+  def ctx0 = JsObject(Nil)
+
   // TODO Нужны состояния, обработка переключение и вся остальная логика.
   override def preStart(): Unit = {
     super.preStart()
     // Сразу отправить команду инициализации js-api:
-    out ! prepareEnsureReadyJson
+    out ! prepareEnsureReadyJson(ctx0)
     // TODO Выставить состояние ожидания ответа инициализации.
   }
 
@@ -55,48 +60,11 @@ sealed trait ExtAdvWsActorCore extends Actor with PlayMacroLogsI {
   }
 
 
-  private def onSuccessJson(name: String, args: FieldsJsonAcc): JsObject = {
-    JsObject(Seq(
-      "replyTo" -> JsString(name),
-      "status"  -> JsString("success"),
-      "args"    -> JsObject(args)
-    ))
-  }
-  
-  private def onErrorJson(name: String, reason: String, args: FieldsJsonAcc = Nil): JsObject = {
-    JsObject(Seq(
-      "replyTo" -> JsString(name),
-      "status"  -> JsString("error"),
-      "args"    -> JsObject(
-        "reason" -> JsRawCode(reason) ::
-        args
-      )
-    ))
-  }
-
-  /** Генерация js-кода запуска приветствия клиенского сервера. */
-  private def prepareEnsureReadyJs: String = {
-    val action = "prepareEnsureReady"
-    val successJson = onSuccessJson(action, List(
-      "ctx1" -> JsRawCode("ctx1")
-    ))
-    // TODO всякие начальные данные в состояние залить бы...
-    val ctx0 = JsObject(Nil)
-    val errorJson = onErrorJson(action, reason = "reason")
-    new StringBuilder(256, sioPrJs)
-      .append('.')
-      .append(action).append('(').append(ctx0).append(')')
-      .append(".execute(")
-      .append("function(ws, ctx1) { ws.send(").append(successJson).append(");},")
-      .append("function(ws, reason) { ws.send(").append(errorJson).append(");});")
-      .toString()
-  }
-
   /** Генерация JSON'а приветствия клиентского сервера. */
-  private def prepareEnsureReadyJson: JsObject = {
+  private def prepareEnsureReadyJson(ctx0: JsObject): JsObject = {
     JsObject(Seq(
       "type" -> JsString("js"),
-      "data" -> JsString(prepareEnsureReadyJs)
+      "data" -> JsString(EnsureReadyAsk(ctx0).js)
     ))
   }
 

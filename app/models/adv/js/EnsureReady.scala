@@ -1,6 +1,6 @@
 package models.adv.js
 
-import play.api.libs.json.{JsValue, JsObject}
+import play.api.libs.json.{JsString, JsValue, JsObject}
 
 /**
  * Suggest.io
@@ -20,7 +20,12 @@ trait EnsureReadyAction extends IAction {
  * @param ctx0 Начальное состояние.
  */
 case class EnsureReadyAsk(ctx0: JsObject) extends AskBuilder with EnsureReadyAction {
-  override def onSuccessArgs = List(CTX1)
+  override def onSuccessArgsList = List(CTX1)
+  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
+    sb.append(JsString(CTX1))
+      .append(':')
+      .append(CTX1)
+  }
 
   /**
    * Генерация основного js-кода.
