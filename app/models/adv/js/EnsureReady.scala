@@ -58,3 +58,10 @@ object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
 
 /** Положительный ответ на запрос инициализации. Обычно используется через unapply() в ws-акторе. */
 case class EnsureReadySuccess(ctx1: JsObject)
+
+
+/** Ошибка получена. */
+object EnsureReadyError extends StaticErrorUnapplier with EnsureReadyAction {
+  override type T = EnsureReadyError
+}
+case class EnsureReadyError(reason: String)

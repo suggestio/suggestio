@@ -130,7 +130,7 @@ trait StaticUnapplier extends IAction {
   }
 
   def unapplyJs(json: JsObject): Option[Tu] = {
-    if (isStatusExpected(json)  &&  isReplyToMe(json)) {
+    if (isReplyToMe(json) && isStatusExpected(json)) {
       Some(fromJs(json \ "args"))
     } else {
       None
@@ -144,5 +144,17 @@ trait StaticUnapplier extends IAction {
     }
   }
 
+}
+
+
+trait StaticErrorUnapplier extends StaticUnapplier {
+  override type Tu = String
+  override def statusExpected: String = "error"
+  override def fromJs(json: JsValue): Tu = {
+    json \ "reason" match {
+      case JsString(reason) => reason
+      case _ => "unknown"
+    }
+  }
 }
 
