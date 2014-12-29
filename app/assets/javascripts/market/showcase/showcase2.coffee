@@ -540,10 +540,10 @@ sm =
     position_callback_timeout : 10000
 
     position_callback : ( gp_obj ) ->
+      console.log "geo accuracy = #{gp_obj.coords.accuracy}"
+
       if sm.geo.callback_active then return false
       sm.geo.callback_active = true
-
-      console.log "geo accuracy = #{gp_obj.coords.accuracy}"
 
       cs = sm.states.cur_state()
       if cs != undefined then sm.states.transform_state { geo_screen : { is_opened : false } }
@@ -552,6 +552,8 @@ sm =
       sm.geo.load_nodes_and_reload_with_mart_id()
 
     position_callback_fallback : () ->
+
+      console.log "geo fallback"
 
       if sm.geo.callback_active then return false
 
@@ -611,7 +613,9 @@ sm =
         # не всегда срабатывает вызов ошибки у метода getCurrentPosition, поэтому используется конструкция с setTimeout
         setTimeout(
           () ->
-            sm.geo.position_callback_fallback()
+            if !sm.geo.callback_active
+              console.log "no geo callback"
+              sm.geo.position_callback_fallback()
           5500
         )
 
@@ -620,6 +624,7 @@ sm =
           enableHighAccuracy: true
           timeout : 60000
           maximumAge : 100
+
         geo_options_inaccurate =
           enableHighAccuracy: false
           timeout : 5000
