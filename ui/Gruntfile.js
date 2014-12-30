@@ -370,7 +370,17 @@ module.exports = function (grunt) {
         configFile: 'test/karma.conf.js',
         singleRun: true
       }
+    },
+
+    coffee: {
+      compile: {
+        files: {
+          'dist/scripts/lk/adv/ext/main.js': 'app/scripts/lk/adv/ext/main.coffee',
+          'dist/scripts/lk/adv/ext/vk.js': 'app/scripts/lk/adv/ext/vk.coffee'
+        }
+      },
     }
+
   });
 
 
@@ -404,6 +414,10 @@ module.exports = function (grunt) {
   grunt.registerTask('build-dev', [
     'copy:twirl-dev',
   ]);
+
+   grunt.registerTask('build-js', [
+     'coffee'
+   ]);
 
   grunt.registerTask('build-dist', [
     'clean:dist',
