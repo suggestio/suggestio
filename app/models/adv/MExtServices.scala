@@ -28,6 +28,13 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
      * @return Обновлённый JSON контекст.
      */
     def prepareContext(jso: JsObject): JsObject = jso
+
+    /**
+     * Клиент прислал upload-ссылку. Нужно её проверить на валидность.
+     * @param url Ссылка.
+     * @return true если upload-ссылка корректная. Иначе false.
+     */
+    def checkImgUploadUrl(url: String): Boolean = false
   }
 
   type MExtService = Val
@@ -50,6 +57,16 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
           JsObject(v1)
         case None =>
           jso1
+      }
+    }
+
+    override def checkImgUploadUrl(url: String): Boolean = {
+      try {
+        new URL(url)
+          .getHost
+          .contains(".vk.com")
+      } catch {
+        case ex: Throwable => false
       }
     }
   }

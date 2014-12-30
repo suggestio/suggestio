@@ -1,15 +1,14 @@
 package controllers.sc
 
-import controllers.{routes, SioController}
+import controllers.SioController
 import models._
 import models.blk.OneAdQsArgs
-import models.im.{OutImgFmts, WkHtmlArgs}
+import models.im.OutImgFmts
 import util.PlayMacroLogsI
 import util.acl.GetAnyAd
 import util.blocks.BlocksConf
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.img.WkHtmlUtil
-import util.xplay.PlayUtil.httpPort
 
 /**
  * Suggest.io
@@ -46,17 +45,12 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    */
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
     val fmt = OutImgFmts.PNG
-    val wkArgs = WkHtmlArgs(
-      src     = "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url,
-      imgSize = request.mad.blockMeta,
-      outFmt  = fmt,
-      plugins = false
-    )
-    WkHtmlUtil.html2imgSimpleCached(wkArgs) map { imgBytes =>
-      Ok(imgBytes).withHeaders(
-        CONTENT_TYPE -> fmt.mime
-      )
-    }
+    WkHtmlUtil.renderAd2img(adArgs, request.mad.blockMeta, fmt)
+      .map { imgBytes =>
+        Ok(imgBytes).withHeaders(
+          CONTENT_TYPE -> fmt.mime
+        )
+      }
   }
 
 }

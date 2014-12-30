@@ -147,7 +147,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
            Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
         }
     }.map { req1 =>
-      val hp: HandlerProps = ExtAdvWsActor.props(_, args)
+      val ctx = MExtAdvContext(args, req1)
+      val hp: HandlerProps = ExtAdvWsActor.props(_, ctx)
       Right(hp)
     }.recover {
       case ExceptionWithResult(res) =>

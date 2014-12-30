@@ -2,6 +2,7 @@ package models.adv
 
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
+import util.acl.RequestWithAdAndProducer
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
 import play.api.Play._
@@ -86,4 +87,10 @@ case class MExtAdvQs(
   targetIds     : List[String],
   bestBeforeSec : Long,
   wsId          : String
+)
+
+
+case class MExtAdvContext(
+  qs      : MExtAdvQs,
+  request : RequestWithAdAndProducer[_]
 )

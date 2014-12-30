@@ -3,8 +3,12 @@ package util.img
 import java.io.File
 import java.nio.file.Files
 
+import controllers.routes
+import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
+import models.blk.OneAdQsArgs
 import play.api.cache.Cache
 import util.{AsyncUtil, PlayMacroLogsImpl}
+import util.xplay.PlayUtil.httpPort
 import models.im._
 
 import scala.concurrent.{Promise, Future}
@@ -86,6 +90,26 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
     if (result != 0) {
       throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
     }
+  }
+
+  /**
+   * Рендер указанной рекламной карточки
+   * @param adArgs Данные по рендеру.
+   * @param sourceAdSz Исходный размер карточки.
+   * @param fmt Целевой формат.
+   * @return Фьючерс с байтами картинки.
+   */
+  def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt = OutImgFmts.PNG): Future[Array[Byte]] = {
+    val wkArgs = WkHtmlArgs(
+      src     = "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url,
+      imgSize = MImgInfoMeta(
+        height = (sourceAdSz.height * adArgs.szMult).toInt,
+        width  = (sourceAdSz.width * adArgs.szMult).toInt
+      ),
+      outFmt  = fmt,
+      plugins = false
+    )
+    WkHtmlUtil.html2imgSimpleCached(wkArgs)
   }
 
 }

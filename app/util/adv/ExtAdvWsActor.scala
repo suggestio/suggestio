@@ -4,7 +4,7 @@ import _root_.util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
-import models.adv.{MExtServices, MExtTarget, MExtAdvQs}
+import models.adv.{MExtAdvContext, MExtServices, MExtTarget}
 import models.adv.js.{EnsureReadyError, EnsureReadySuccess, AskBuilder, EnsureReadyAsk}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -19,16 +19,16 @@ import scala.util.{Failure, Success}
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
 object ExtAdvWsActor {
-  def props(out: ActorRef, args: MExtAdvQs) = Props(new ExtAdvWsActor(out, args))
+  def props(out: ActorRef, eactx: MExtAdvContext) = Props(new ExtAdvWsActor(out, eactx))
 }
 
 
 /** ws-актор, готовый к использованию websocket api. */
-case class ExtAdvWsActor(out: ActorRef, args: MExtAdvQs)
+case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvContext)
   extends ExtAdvWsActorBase
   with EnsureReady
 {
-  override def wsId: String = args.wsId
+  override def wsId: String = eactx.qs.wsId
 
   override def allStatesReceiver: Receive = PartialFunction.empty
   override def receive: Actor.Receive = allStatesReceiver
@@ -116,7 +116,7 @@ trait SioPrJsUtil {
 /** Базовый трейт для запиливания реализации актора и его аддонов */
 sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher with PlayLazyMacroLogsImpl {
   val out: ActorRef
-  val args: MExtAdvQs
+  val eactx: MExtAdvContext
 }
 
 
@@ -133,7 +133,7 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
   class EnsureReadyState extends FsmState {
 
     /** Фьючерс с целями для размещения рекламной карточки. Результаты работы понадобятся на следующем шаге. */
-    val targetsFut = MExtTarget.multiGet(args.targetIds)
+    val targetsFut = MExtTarget.multiGet(eactx.qs.targetIds)
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
@@ -200,7 +200,7 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase {
       // Сразу запустить паралельных акторов, которые паралельно занимаются обслуживанием каждого сервиса.
       targets.groupBy(_.service).foreach {
         case (service, serviceTargets) =>
-          val props = ExtServiceActor.props(out, service, serviceTargets, ctx1)
+          val props = ExtServiceActor.props(out, service, serviceTargets, ctx1, eactx)
           context.actorOf(props, name = service.strId)
       }
     }

@@ -210,3 +210,14 @@ trait CallbackServiceAskBuilder extends AskBuilder {
   }
 }
 
+
+/** Добавить вызов ".service(...)". */
+trait ServiceCall extends CallbackServiceAskBuilder {
+  override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
+    super.buildJsCodeBody(sb)
+      .append(".service(")
+      .append(JsString(service.strId))
+      .append(')')
+  }
+}
+
