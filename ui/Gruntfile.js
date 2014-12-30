@@ -423,6 +423,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build-dist', [
     'clean:dist',
+    'coffee',
     'wiredep',
     'useminPrepare',
     'concurrent:dist',
