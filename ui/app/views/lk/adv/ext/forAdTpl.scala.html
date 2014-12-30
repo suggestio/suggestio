@@ -25,6 +25,50 @@
 
     <a href="@routes.LkAdvExt.createTarget(mnode.id.get)">Добавить цель...</a>
 
+    <script src="//vk.com/js/api/openapi.js" type="text/javascript"></script>
+
+    <div id="login_button" onclick="VK.Auth.login(authInfo, 5);"></div>
+
+    <script language="javascript">
+      VK.init({
+        apiId: 4705589
+      });
+
+      function authInfo(response) {
+        if (response.session) {
+          console.log('user: '+response.session.mid);
+        } else {
+          console.log('not auth');
+        }
+      }
+
+      VK.Auth.getLoginStatus(authInfo);
+      VK.UI.button('login_button');
+
+      VK.Api.call('account.getAppPermissions', {user_id: 1717555}, function(r) {
+        console.log("-----");
+        console.log(r);
+        if(r.response) {
+          console.log(r.response);
+        }
+      });
+
+      VK.Api.call('photos.getWallUploadServer', {user_id: 1717555}, function(r) {
+        if(r.response) {
+          console.log(r.response);
+        }
+      });
+
+      VK.Api.call('users.get', {uids: 1717555}, function(r) {
+        if(r.response) {
+          console.log('Привет, ' + r.response[0].first_name);
+        }
+      });
+    </script>
+
+
+
+
     <input type="submit" value="Начать размещение..." />
   }
 

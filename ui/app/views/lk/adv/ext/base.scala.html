@@ -2,10 +2,15 @@
 
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
+@headAfter = {
+  <script data-main="/ui/app/scripts/social_api/social_api" src="/scripts/require.js"></script>
+  <script src="/scripts/angular.js"></script>
+}
+
 @market.lk.lkBaseLayout(
   title         = title,
   nodeOpt       = Some(mnode),
   backHref      = Some(routes.MarketLkAdn.showAdnNode(mnode.id.get).url),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
-  headAfter     = headAfter
+  headAfter     = Some(headAfter)
 )(content)
