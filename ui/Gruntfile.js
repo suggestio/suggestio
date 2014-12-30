@@ -168,7 +168,7 @@ module.exports = function (grunt) {
     // Automatically inject Bower components into the app
     wiredep: {
       app: {
-        src: ['<%= yeoman.app %>/index.html'],
+        src: ['<%= yeoman.dist %>/views/**/*.html'],
         ignorePath:  /\.\.\//
       }
     },
@@ -412,7 +412,9 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('build-dev', [
+    'coffee',
     'copy:twirl-dev',
+    'wiredep'
   ]);
 
    grunt.registerTask('build-js', [
