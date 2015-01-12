@@ -10,9 +10,6 @@ import play.api.libs.concurrent.Execution.Implicits._
 import util.domain_user_settings.DUS_Basic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.Path
-import org.hbase.async.{GetRequest, PutRequest}
-import scala.collection.JavaConversions._
-import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io

@@ -15,7 +15,7 @@ version := "1.0-SNAPSHOT"
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
@@ -197,6 +197,7 @@ ProguardKeys.options in Proguard ++= Seq(
   "-keepclassmembernames class * implements models.ai.ContentHandlerResult",
   "-dontnote",
   "-dontwarn",
+  "-dontoptimize",
   //"-ignorewarnings"
   "-verbose"
 )
