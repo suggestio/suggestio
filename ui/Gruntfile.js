@@ -31,7 +31,7 @@ module.exports = function (grunt) {
     // Watches files for changes and runs tasks based on the changed files
     watch: {
       coffee: {
-        files: 'app/scripts/lk/adv/ext/*.coffee',
+        files: '<%= yeoman.app %>/scripts/**/*.coffee',
         tasks: ['coffee:compile']
       },
       bower: {
@@ -380,9 +380,9 @@ module.exports = function (grunt) {
       compile: {
         files: [{
           expand: true,
-          cwd: "app/scripts/lk/adv/ext/",
+          cwd: "<%= yeoman.app %>/scripts/",
           src: ["**/*.coffee"],
-          dest: 'app/scripts/lk/adv/ext/compiled/',
+          dest: '<%= yeoman.dist %>/scripts/',
           ext: '.js'
         }]
       }
@@ -424,9 +424,9 @@ module.exports = function (grunt) {
     'wiredep'
   ]);
 
-   grunt.registerTask('build-js', [
-     'coffee'
-   ]);
+  grunt.registerTask('build-js', [
+   'coffee'
+  ]);
 
   grunt.registerTask('build-dist', [
     'clean:dist',

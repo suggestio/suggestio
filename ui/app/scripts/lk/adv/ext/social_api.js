@@ -2,11 +2,12 @@ define([], function() {
 
   requirejs.config({
 
-      baseUrl: "/ui/scripts/lk/adv/ext/compiled/",
+      baseUrl: "/vassets/scripts/lk/adv/ext/",
 
       paths: {
         "main": "main"
       }
+
   });
 
   require(["main"], function(Main) {
