@@ -2,15 +2,19 @@ package models.adv
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
+import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
+import models.ScJsState
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.libs.json.{JsObject, JsString}
+import play.api.libs.json.{Json, JsObject, JsString}
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.stringParser
 
 import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext}
+
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -26,10 +30,18 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
 
   override val ES_TYPE_NAME: String = "aet"
 
+  /** Имя поле со ссылкой на цель. */
   val URL_ESFN          = "url"
+  /** Имя поля, в котором хранится id внешнего сервиса, к которому относится эта цель. */
   val SERVICE_ID_ESFN   = "srv"
+  /** Имя поля с названием этой цели. */
   val NAME_ESFN         = "name"
+  /** Имя поля с id узла, к которому привязан данный интанс. */
   val ADN_ID_ESFN       = "adnId"
+  /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
+  val ON_CLICK_URL_ESFN = "href"
+  /** В поле с этим именем хранятся контекстные данные, заданные js'ом. */
+  val CTX_DATA_ESFN     = "stored"
 
 
   override def generateMappingStaticFields: List[Field] = {
@@ -44,7 +56,8 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
       FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(SERVICE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldObject(CTX_DATA_ESFN, enabled = false, properties = Nil)
     )
   }
 
@@ -61,7 +74,18 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
       url         = stringParser(m(URL_ESFN)),
       service     = MExtServices.withName( stringParser(m(SERVICE_ID_ESFN)) ),
       adnId       = stringParser(m(ADN_ID_ESFN)),
-      name        = m.get(NAME_ESFN).map(stringParser)
+      name        = m.get(NAME_ESFN).map(stringParser),
+      ctxData     = m.get(CTX_DATA_ESFN).flatMap {
+        case jm: ju.Map[_, _] =>
+          if (jm.isEmpty) {
+            None
+          } else {
+            val rawJson = JacksonWrapper.serialize(jm)
+            val jso = Json.parse(rawJson).asInstanceOf[JsObject]
+            Some(jso)
+          }
+        case _ => None
+      }
     )
   }
 
@@ -94,12 +118,16 @@ case class MExtTarget(
   service       : MExtService,
   adnId         : String,
   name          : Option[String] = None,
+  ctxData       : Option[JsObject] = None,
   versionOpt    : Option[Long] = None,
   id            : Option[String] = None
 ) extends EsModelT with EsModelPlayJsonT with JsPublishTargetT {
 
   override type T = this.type
   override def companion = MExtTarget
+
+  /** Тут заглушка, сама ссылка должна задаваться в момент публикации. */
+  override def onClickUrl: String = ScJsState(adnId = Some(adnId)).ajaxStatedUrl()
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     SERVICE_ID_ESFN   -> JsString(service.strId) ::
@@ -110,7 +138,7 @@ case class MExtTarget(
 }
 
 
-/** Для отправки в JS нужны объекты с простым интерфейсом. */
+/** Для отправки в JS нужны объекты с очень простым и ограниченным интерфейсом. */
 trait JsPublishTargetT {
 
   /** Ссылка на целевую страницу. */
@@ -119,17 +147,30 @@ trait JsPublishTargetT {
   /** Опциональное название по мнению пользователя. */
   def name: Option[String]
 
+  /** Произвольные данные контекста, заданные на стороне js. */
+  def ctxData: Option[JsObject]
+
+  /** Ссылка, по которой должен переходить юзер при щелчке на размещенную рекламу. */
+  def onClickUrl: String
+
   /** Генерация экземпляра play.json.JsObject на основе имеющихся данных. */
   def toJsTargetPlayJson: JsObject = JsObject(toJsTargetPlayJsonFields)
 
   /** Генерация JSON-тела на основе имеющихся данных. */
   def toJsTargetPlayJsonFields: FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
-      URL_ESFN -> JsString(url)
+      URL_ESFN            -> JsString(url),
+      ON_CLICK_URL_ESFN   -> JsString(onClickUrl)
     )
+
     val _name = name
     if (_name.isDefined)
       acc ::= NAME_ESFN -> JsString(_name.get)
+
+    val _ctxData = ctxData
+    if (_ctxData.nonEmpty)
+      acc ::= CTX_DATA_ESFN -> _ctxData.get
+
     acc
   }
 }

@@ -125,7 +125,7 @@ case class ExtServiceActor(
         _serviceParams = params
         val puctxOpt = PictureUploadCtx.maybeFromJson(pictureUploadCtxRaw)
         val nextState = if (puctxOpt contains UrlPictureUpload) {
-          new WallPostState(getExtAdImgAbsUrl())
+          new PublishMessageState(getExtAdImgAbsUrl())
         } else {
           new PreparePictureStorageState()
         }
@@ -160,7 +160,7 @@ case class ExtServiceActor(
             new C2sPutPictureToStorageState
           case UrlPictureUpload =>
             // Возможно unreachable code, но избавляет от warning'a.
-            new WallPostState(getExtAdImgAbsUrl())
+            new PublishMessageState(getExtAdImgAbsUrl())
         }
         become(nextState)
 
@@ -255,7 +255,7 @@ case class ExtServiceActor(
       case wsResp: WSResponse if respStatusCodeValid(wsResp.status) =>
         debug(s"$service successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
         trace(s"$service Remote server response is:\n ${wsResp.body}")
-        val nextState = new WallPostState(wsResp.body)
+        val nextState = new PublishMessageState(wsResp.body)
         become(nextState)
 
       // Запрос выполнился, но в ответ пришло что-то неожиданное.
@@ -278,10 +278,23 @@ case class ExtServiceActor(
 
 
   /** Состояние постинга сообщений на стены. */
-  class WallPostState(pictureInfo: String) extends FsmState {
+  class PublishMessageState(pictureInfo: String, targets: List[MExtTarget] = targets0) extends FsmState {
     /** Нужно отправить в js команду отправки запроса размещения сообщения по указанной цели. */
     override def afterBecome(): Unit = {
       super.afterBecome()
+      if (targets.isEmpty) {
+        debug("No more targes. Finishing")
+        harakiri()
+      } else {
+        val target = targets.head
+        val pmAsk = PublishMessageAsk(
+          service = service,
+          ctx     = _ctx,
+          target  = target,
+          onClickUrl = ???
+
+        )
+      }
       ???
     }
 

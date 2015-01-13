@@ -159,8 +159,12 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   }
 
 
-  /** Маппинг формы для ввода ссылки на цель. */
-  def targetFormM: Form[MExtTarget] = {
+  /**
+   * Маппинг формы для ввода ссылки на цель.
+   * @param adnId id узла, в рамках которого происходит действо.
+   * @return Экземпляр формы.
+   */
+  def targetFormM(adnId: String): Form[MExtTarget] = {
     Form(
       // Проверять по доступным сервисам, подходит ли эта ссылка для хотя бы одного из них. И возвращать этот сервис.
       "url" -> urlM
@@ -176,7 +180,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
           {case (url, srvOpt) =>
             val srv = srvOpt.get
             val url1 = srv.normalizeTargetUrl(url)
-            MExtTarget(url = url1, service = srv, adnId = null)
+            // Ссылка пока генерится прямо здесь.
+            MExtTarget(url = url1, service = srv, adnId = adnId)
           },
           { metgt => (new URL(metgt.url), Some(metgt.service)) }
         )
@@ -189,7 +194,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @return 200 Ok с отрендеренной формой.
    */
   def createTarget(adnId: String) = IsAdnNodeAdmin(adnId) { implicit request =>
-    val form = targetFormM
+    val form = targetFormM(adnId)
     Ok(_createTargetTpl(request.adnNode, form))
   }
 
@@ -200,17 +205,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
    */
   def createTargetSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    targetFormM.bindFromRequest().fold(
+    targetFormM(adnId).bindFromRequest().fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
         NotAcceptable(_createTargetTpl(request.adnNode, formWithErrors))
       },
-      {tgt0 =>
+      {tgt =>
         // TODO Обращаться по ссылке, получать title страницы, вставлять в поле name
-        val tgt1 = tgt0.copy(
-          adnId = adnId
-        )
-        tgt1.save.map { tgtId =>
+        tgt.save.map { tgtId =>
           Ok("TODO")
         }
       }
