@@ -375,8 +375,8 @@ module.exports = function (grunt) {
     coffee: {
       compile: {
         files: {
-          'dist/scripts/lk/adv/ext/main.js': 'app/scripts/lk/adv/ext/main.coffee',
-          'dist/scripts/lk/adv/ext/vk.js': 'app/scripts/lk/adv/ext/vk.coffee'
+          'app/scripts/lk/adv/ext/compiled/main.js': 'app/scripts/lk/adv/ext/main.coffee',
+          'app/scripts/lk/adv/ext/compiled/vk.js': 'app/scripts/lk/adv/ext/vk.coffee'
         }
       },
     }

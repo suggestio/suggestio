@@ -2,17 +2,15 @@ define([], function() {
 
   requirejs.config({
 
-      baseUrl: "/ui/dist/scripts/social_api",
+      baseUrl: "/ui/scripts/lk/adv/ext/compiled/",
 
       paths: {
-        "main": "main",
-        "vk": "main"
+        "main": "main"
       }
   });
 
-  require(["main"], function(main) {
-    console.log("require module");
-    main.init();
+  require(["main"], function(Main) {
+    Main.init();
   });
 
 });

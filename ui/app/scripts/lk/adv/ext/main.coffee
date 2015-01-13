@@ -32,12 +32,12 @@ define [], () ->
     Инициализация social api
     @param (Json) контекст, в котором вызывается api
   ###
-  # TODO перенести context в параметры
-  context =
-    connectionUrl: "ws://example.org:12345/myapp"
-    initializationStatus: false
-
   init: () ->
+    # TODO перенести context в параметры
+    context =
+      connectionUrl: "ws://example.org:12345/myapp"
+      initializationStatus: false
+
     #connection = new WebSocket context.connectionUrl
 
     #connection.onopen = () =>
@@ -47,4 +47,6 @@ define [], () ->
     #connection.onerror = (error) =>
     #  @.onError(connection, error)
 
-    @.getServiceByName "vk"
+    #@.getServiceByName "vk"
+
+    console.log "main module init"

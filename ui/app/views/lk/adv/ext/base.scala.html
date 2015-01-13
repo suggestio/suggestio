@@ -3,14 +3,9 @@
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
 @headAfter = {
-  <script data-main="@routes.Assets.versioned("javascripts/lk/adv/ext/social_api.js")"
-	  src="@routes.Assets.versioned("javascripts/require.js")"></script>
 
-  <!-- build:js(.) scripts/lk/adv/ext/vendor.js -->
-  <!-- bower:js -->
-  <script src="bower_components/angular/angular.js"></script>
-  <!-- endbower -->
-  <!-- endbuild -->
+  <script data-main="/ui/scripts/lk/adv/ext/social_api" src="/ui/scripts/require.js"></script>
+
 }
 
 @market.lk.lkBaseLayout(
