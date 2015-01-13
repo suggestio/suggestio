@@ -49,4 +49,4 @@ define [], () ->
 
     #@.getServiceByName "vk"
 
-    console.log "main module init332"
+    console.log "main module init3311112"
