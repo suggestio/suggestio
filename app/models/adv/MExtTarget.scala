@@ -5,7 +5,7 @@ import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.libs.json.JsString
+import play.api.libs.json.{JsObject, JsString}
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.stringParser
 
@@ -96,20 +96,41 @@ case class MExtTarget(
   name          : Option[String] = None,
   versionOpt    : Option[Long] = None,
   id            : Option[String] = None
-) extends EsModelT with EsModelPlayJsonT {
+) extends EsModelT with EsModelPlayJsonT with JsPublishTargetT {
 
   override type T = this.type
   override def companion = MExtTarget
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = List(
-      URL_ESFN          -> JsString(url),
-      SERVICE_ID_ESFN   -> JsString(service.strId),
-      ADN_ID_ESFN       -> JsString(adnId)
-    )
-    if (name.isDefined)
-      acc ::= NAME_ESFN -> JsString(name.get)
-    acc
+    SERVICE_ID_ESFN   -> JsString(service.strId) ::
+    ADN_ID_ESFN       -> JsString(adnId) ::
+    toJsTargetPlayJsonFields
   }
 
 }
+
+
+/** Для отправки в JS нужны объекты с простым интерфейсом. */
+trait JsPublishTargetT {
+
+  /** Ссылка на целевую страницу. */
+  def url: String
+
+  /** Опциональное название по мнению пользователя. */
+  def name: Option[String]
+
+  /** Генерация экземпляра play.json.JsObject на основе имеющихся данных. */
+  def toJsTargetPlayJson: JsObject = JsObject(toJsTargetPlayJsonFields)
+
+  /** Генерация JSON-тела на основе имеющихся данных. */
+  def toJsTargetPlayJsonFields: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = List(
+      URL_ESFN -> JsString(url)
+    )
+    val _name = name
+    if (_name.isDefined)
+      acc ::= NAME_ESFN -> JsString(_name.get)
+    acc
+  }
+}
+

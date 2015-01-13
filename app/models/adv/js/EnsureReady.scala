@@ -1,5 +1,6 @@
 package models.adv.js
 
+import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -20,7 +21,7 @@ sealed trait EnsureReadyAction extends IAction {
  * Запрос инициализации js-компонента с кодогенератором.
  * @param ctx1 Начальное состояние.
  */
-case class EnsureReadyAsk(ctx1: JsObject) extends AskBuilder with EnsureReadyAction {
+case class EnsureReadyAsk(ctx1: JsCtx_t) extends AskBuilder with EnsureReadyAction {
 
   override val CTX1 = super.CTX1
 
@@ -49,12 +50,12 @@ case class EnsureReadyAsk(ctx1: JsObject) extends AskBuilder with EnsureReadyAct
 /** Компаньон положительного ответа на запрос инициализации. */
 object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
   override type T = EnsureReadySuccess
-  override type Tu = JsObject
+  override type Tu = JsCtx_t
 
   override def statusExpected: String = "success"
 
   implicit val ersReads: Reads[EnsureReadySuccess] = {
-    val v = (JsPath \ CTX1).read[JsObject]
+    val v = (JsPath \ CTX1).read[JsCtx_t]
     v.map { EnsureReadySuccess.apply }
   }
 
@@ -66,7 +67,7 @@ object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
 }
 
 /** Положительный ответ на запрос инициализации. Обычно используется через unapply() в ws-акторе. */
-case class EnsureReadySuccess(ctx1: JsObject)
+case class EnsureReadySuccess(ctx1: JsCtx_t)
 
 
 /** Ошибка получена. */

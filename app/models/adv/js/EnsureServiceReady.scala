@@ -1,6 +1,7 @@
 package models.adv.js
 
 import models.adv.MExtService
+import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import ServiceStatic._
@@ -21,7 +22,7 @@ sealed trait EnsureServiceReadyAction extends IAction {
 
 
 /** Генерация js-кода, который занимается сборкой и отправкой запроса инициализации в клиент сервиса. */
-case class EnsureServiceReadyAsk(service: MExtService, ctx1: JsObject) extends CallbackServiceAskBuilder with EnsureServiceReadyAction {
+case class EnsureServiceReadyAsk(service: MExtService, ctx1: JsCtx_t) extends CallbackServiceAskBuilder with EnsureServiceReadyAction {
 
   override val PARAMS = super.PARAMS
   override val CTX2   = super.CTX2
@@ -81,17 +82,21 @@ object ServiceParams {
 }
 
 
-case class EnsureServiceReadySuccess(service: MExtService, ctx2: JsObject, params: ServiceParams)
+case class EnsureServiceReadySuccess(
+  service : MExtService,
+  ctx2    : JsCtx_t,
+  params  : ServiceParams
+)
 object EnsureServiceReadySuccess extends StaticUnapplier with EnsureServiceReadyAction {
   override type T = EnsureServiceReadySuccess
-  override type Tu = (MExtService, JsObject, ServiceParams)
+  override type Tu = (MExtService, JsCtx_t, ServiceParams)
   override def statusExpected = "success"
 
   /** Маппер из json'а. */
   implicit val esrsReads: Reads[EnsureServiceReadySuccess] = {
     val s =
       serviceFieldReads and
-      (JsPath \ CTX2).read[JsObject] and
+      (JsPath \ CTX2).read[JsCtx_t] and
       (JsPath \ PARAMS).read[ServiceParams]
     s(EnsureServiceReadySuccess.apply _)
   }

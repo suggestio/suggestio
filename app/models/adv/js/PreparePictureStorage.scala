@@ -2,6 +2,7 @@ package models.adv.js
 
 import ServiceStatic._
 import models.adv.MExtService
+import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -20,7 +21,7 @@ trait PreparePictureStorageFields {
 
 case class PreparePictureStorageAsk(
   service : MExtService,
-  ctx     : JsObject,
+  ctx     : JsCtx_t,
   name    : String = "suggest.io",
   descr   : Option[String] = None
 )
@@ -49,10 +50,10 @@ case class PreparePictureStorageAsk(
 }
 
 
-case class PreparePictureStorageSuccess(service: MExtService, ctx2: JsObject)
+case class PreparePictureStorageSuccess(service: MExtService, ctx2: JsCtx_t)
 object PreparePictureStorageSuccess extends StaticUnapplier with PreparePictureStorageAction with PreparePictureStorageFields {
   override type T = PreparePictureStorageSuccess
-  override type Tu = (MExtService, JsObject)
+  override type Tu = (MExtService, JsCtx_t)
   override def statusExpected = "success"
 
   implicit val hpsReads: Reads[T] = {

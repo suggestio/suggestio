@@ -16,16 +16,17 @@ object PictureUploadCtx {
 
   def MODE_FN = "mode"
 
-  def fromJson(json1: JsValue): PictureUploadCtxT = {
-    val mode = json1 \ MODE_FN match {
-      case JsString(modeStr) =>
-        PictureUploadModes.maybeWithName(modeStr)
-          .getOrElse(PictureUploadModes.default)
+  def maybeFromJson(json1: JsValue): Option[PictureUploadCtxT] = {
+    (json1 \ MODE_FN)
+      .asOpt[String]
+      .flatMap { PictureUploadModes.maybeWithName }
+      .map { _.fromJson(json1) }
+  }
 
-      case other =>
-        PictureUploadModes.default
+  def fromJson(json1: JsValue): PictureUploadCtxT = {
+    maybeFromJson(json1) getOrElse {
+      PictureUploadModes.default.fromJson(json1)
     }
-    mode.fromJson(json1)
   }
 
 }

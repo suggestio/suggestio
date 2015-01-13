@@ -93,6 +93,15 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
   }
 
   /**
+   * Генерации абсолютной ссылки на отрендеренную в картинку рекламную карточку.
+   * @param adArgs Параметры рендера.
+   * @return Строка с абсолютной ссылкой на локалхост.
+   */
+  def adImgLocalUrl(adArgs: OneAdQsArgs): String = {
+    "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url
+  }
+
+  /**
    * Рендер указанной рекламной карточки
    * @param adArgs Данные по рендеру.
    * @param sourceAdSz Исходный размер карточки.
@@ -101,7 +110,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    */
   def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt = OutImgFmts.PNG): Future[Array[Byte]] = {
     val wkArgs = WkHtmlArgs(
-      src     = "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url,
+      src     = adImgLocalUrl(adArgs),
       imgSize = MImgInfoMeta(
         height = (sourceAdSz.height * adArgs.szMult).toInt,
         width  = (sourceAdSz.width * adArgs.szMult).toInt
