@@ -30,6 +30,10 @@ module.exports = function (grunt) {
 
     // Watches files for changes and runs tasks based on the changed files
     watch: {
+      coffee: {
+        files: 'app/scripts/lk/adv/ext/*.coffee',
+        tasks: ['coffee:compile']
+      },
       bower: {
         files: ['bower.json'],
         tasks: ['wiredep']
@@ -374,11 +378,14 @@ module.exports = function (grunt) {
 
     coffee: {
       compile: {
-        files: {
-          'app/scripts/lk/adv/ext/compiled/main.js': 'app/scripts/lk/adv/ext/main.coffee',
-          'app/scripts/lk/adv/ext/compiled/vk.js': 'app/scripts/lk/adv/ext/vk.coffee'
-        }
-      },
+        files: [{
+          expand: true,
+          cwd: "app/scripts/lk/adv/ext/",
+          src: ["**/*.coffee"],
+          dest: 'app/scripts/lk/adv/ext/compiled/',
+          ext: '.js'
+        }]
+      }
     }
 
   });
@@ -412,7 +419,7 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('build-dev', [
-    'coffee',
+    'coffee:compile',
     'copy:twirl-dev',
     'wiredep'
   ]);
