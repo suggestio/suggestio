@@ -67,8 +67,8 @@ module.exports = function (grunt) {
         ]
       },
       scalaTpl: {
-	files: ['<%= yeoman.app %>/views/**/*.scala.*'],
-	tasks: ['newer:copy:twirl-dev']
+        files: ['<%= yeoman.app %>/views/**/*.scala.*'],
+        tasks: ['newer:copy:twirl-dev']
       }
     },
 
@@ -350,6 +350,12 @@ module.exports = function (grunt) {
         cwd: '<%= yeoman.app %>/styles',
         dest: '.tmp/styles/',
         src: '{,*/}*.css'
+      },
+      scripts: {
+        expand: true,
+        cwd: '<%= yeoman.app %>/scripts',
+        dest: '<%= yeoman.dist %>/scripts',
+        src: '**/*.js'
       }
     },
 
@@ -421,6 +427,7 @@ module.exports = function (grunt) {
   grunt.registerTask('build-dev', [
     'coffee:compile',
     'copy:twirl-dev',
+    'copy:scripts',
     'wiredep'
   ]);
 
