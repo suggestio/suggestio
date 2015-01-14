@@ -10,7 +10,12 @@
   Идёт размещение рекламной карточки.
   Не закрывайте эту вкладку до завершения процесса.
 
-  <script type="text/javascript">
+
+  <script src="//vk.com/js/api/openapi.js" type="text/javascript"></script>
+
+  <input id="socialApiConnection" type="hidden" value="@ctx.wsUrlPrefix@Html(routes.LkAdvExt.wsRun(wsCallArgs).url)" />
+
+  <!--<script type="text/javascript">
     var ws = new WebSocket("@ctx.wsUrlPrefix@Html(routes.LkAdvExt.wsRun(wsCallArgs).url)");
 
     ws.onmessage = function (evt) {
@@ -21,5 +26,5 @@
         alert(msg);
       }
     }
-  </script>
+  </script>-->
 }

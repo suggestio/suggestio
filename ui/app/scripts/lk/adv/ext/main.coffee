@@ -1,13 +1,14 @@
 define [], () ->
 
+  serviceList = new Array()
+  ws = null
+
   ###*
     @callback отправляет на сервер сообщение об успешной инициализации
     @param (Object) экземпляр webSocket для отправки результата на сервер
-    @param (Json) новое состояние системы
   ###
-  onSuccess: (connection, context) ->
-    message = JSON.stringify context
-    connection.send message
+  onSuccess: (connection) ->
+    console.log "connection success"
 
   ###*
     @callback отправляет на сервер сообщение об ошибке инициализации
@@ -15,38 +16,74 @@ define [], () ->
     @param (String) описание ошибки
   ###
   onError: (connection, reason) ->
-    connection.send reason
+    console.log "connection error"
+
+  ###*
+    @callback обработка сообщения от сервера
+    @param (Object) объект события, содержит сообщение сервера
+  ###
+  onMessage: (event) ->
+    message = $.parseJSON event.data
+    console.log message
+    if message["type"] == "js"
+      eval message["data"]
 
   ###*
     Получить модуль конкретной социальной сети
     @param (String) название модуля социальной сети
   ###
-  getServiceByName: (name) ->
+  initServiceByName: (name) ->
     require(
       [name]
       (service) ->
-        console.log service.init()
+        serviceList[name] = service
+        serviceList[name].init()
     )
+
+  post: (serviceName, options) ->
+    serviceList[serviceName].post options
+
+
+  class PrepareEnsureReadyBuilder
+
+    execute: (onSuccess, onError) ->
+      onSuccess ws, {}
+      console.log ws
+
+  class PrepareEnsureServiceReadyBuilder
+
+    @name = undefined
+
+    setServiceName: (name) ->
+      @name = name
+      return @
+
+    execute: (onSuccess, onError) ->
+      onSuccess(ws, {})
+
+  class SioPR
+    instance = undefined
+
+    constructor: ->
+      if instance?
+        return instance
+      else instance = @
+
+    @prepareEnsureReady: ()->
+      return new PrepareEnsureReadyBuilder()
 
   ###*
     Инициализация social api
     @param (Json) контекст, в котором вызывается api
   ###
   init: () ->
-    # TODO перенести context в параметры
-    context =
-      connectionUrl: "ws://example.org:12345/myapp"
-      initializationStatus: false
+    $input = $ "#socialApiConnection"
+    url = $input.val()
 
-    #connection = new WebSocket context.connectionUrl
+    ws = new WebSocket url
 
-    #connection.onopen = () =>
-    #  context.initializationStatus = true
-    #  @.onSuccess(connection, context)
-
-    #connection.onerror = (error) =>
-    #  @.onError(connection, error)
-
-    #@.getServiceByName "vk"
-
-    console.log "main module init3311112"
+    ws.onmessage = (event) =>
+      message = $.parseJSON event.data
+      console.log message
+      if message["type"] == "js"
+        eval message["data"]

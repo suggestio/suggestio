@@ -5,7 +5,8 @@ define([], function() {
       baseUrl: "/vassets/scripts/lk/adv/ext/",
 
       paths: {
-        "main": "main"
+        "main": "main",
+        "vk": "vk"
       }
 
   });
