@@ -2,6 +2,7 @@ package models.adv
 
 import akka.actor.ActorRef
 import models.adv.js.ctx.JsCtx_t
+import util.acl.RequestWithAdAndProducer
 
 /**
  * Suggest.io
@@ -21,4 +22,15 @@ case class MExtAdvActorArgs(
   targets0  : ActorTargets_t,
   ctx0      : JsCtx_t,
   eactx     : MExtAdvContext
+)
+
+
+/**
+ * Параметры, передаваемые от общего актора к service-актору.
+ * @param qs
+ * @param request
+ */
+case class MExtAdvContext(
+  qs      : MExtAdvQs,
+  request : RequestWithAdAndProducer[_]
 )

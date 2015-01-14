@@ -111,7 +111,7 @@ object FormUtil {
   }
 
   /** Регэксп для парсинга uuid, закодированного в base64. */
-  val uuidB64Re = "[_-a-zA-Z0-9]{22}".r
+  val uuidB64Re = "[_a-zA-Z0-9-]{22}".r
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   val esIdM = nonEmptyText(minLength=22, maxLength=30)

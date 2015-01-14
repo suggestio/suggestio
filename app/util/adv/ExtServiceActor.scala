@@ -45,7 +45,7 @@ case class ExtServiceActor(args: MExtAdvActorArgs)
 {
   
   import LOGGER._
-  import args._
+  import args.{service, out, eactx}
 
   protected var _ctx  : JsCtx_t = args.ctx0
   
@@ -283,7 +283,7 @@ case class ExtServiceActor(args: MExtAdvActorArgs)
 
 
   /** Состояние постинга сообщений на стены. */
-  class PublishMessageState(pictureInfo: String, targets: ActorTargets_t = targets0) extends FsmState {
+  class PublishMessageState(pictureInfo: String, targets: ActorTargets_t = args.targets0) extends FsmState {
     /** Нужно отправить в js команду отправки запроса размещения сообщения по указанной цели. */
     override def afterBecome(): Unit = {
       super.afterBecome()

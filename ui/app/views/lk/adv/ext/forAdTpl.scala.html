@@ -21,6 +21,10 @@
         @Messages(target.service.i18nCode)
         @target.name
       </label>
+      <label>
+        <input type="checkbox" name="adv[@i].return" value="@adv.MExtReturns.default" checked="checked" />
+        @* При переходе возвращаться на выдачу *@
+      </label>
     }
 
     <a href="@routes.LkAdvExt.createTarget(mnode.id.get)">Добавить цель...</a>

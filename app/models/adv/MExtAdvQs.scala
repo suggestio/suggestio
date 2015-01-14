@@ -90,8 +90,3 @@ case class MExtAdvQs(
   wsId          : String
 )
 
-
-case class MExtAdvContext(
-  qs      : MExtAdvQs,
-  request : RequestWithAdAndProducer[_]
-)
