@@ -2,11 +2,11 @@ package util.adv
 
 import java.io.ByteArrayOutputStream
 
-import akka.actor.{Props, ActorRef}
+import akka.actor.Props
 import controllers.routes
-import models.adv.MExtServices.MExtService
+import models.ScJsState
 import models.adv.js.ctx._
-import models.adv.{MExtAdvContext, MExtTarget}
+import models.adv._
 import models.adv.js._
 import models.blk.{SzMult_t, OneAdQsArgs}
 import models.im.OutImgFmts
@@ -29,8 +29,8 @@ import scala.util.{Failure, Success}
  * Description: Актор, обслуживающий один сервис внешнего размещения.
  */
 object ExtServiceActor {
-  def props(out: ActorRef, service: MExtService, targets0: List[MExtTarget], ctx1: JsCtx_t, eactx: MExtAdvContext) = {
-    Props(ExtServiceActor(out, service, targets0, ctx1, eactx))
+  def props(args: MExtAdvActorArgs) = {
+    Props(ExtServiceActor(args))
   }
 
   /** Дефолтовое значение szMult для рендера карточки, когда другого значения нет под рукой. */
@@ -40,18 +40,15 @@ object ExtServiceActor {
 
 
 /** Актор, занимающийся загрузкой карточек в однин рекламный сервис. */
-case class ExtServiceActor(
-  out                 : ActorRef,
-  service             : MExtService,
-  targets0            : List[MExtTarget],
-  protected var _ctx  : JsCtx_t,
-  eactx               : MExtAdvContext
-)
+case class ExtServiceActor(args: MExtAdvActorArgs)
   extends FsmActor with PlayMacroLogsImpl with SioPrJsUtil
 {
-
+  
   import LOGGER._
+  import args._
 
+  protected var _ctx  : JsCtx_t = args.ctx0
+  
   /** Текущий контекст вызова. Выставляется в конструкторе актора и после инициализации клиента сервиса. */
   def serverCtx = _ctx \ "_server"
   def pictureUploadCtxRaw = serverCtx \ "picture" \ "upload"
@@ -87,7 +84,7 @@ case class ExtServiceActor(
    */
   def getAdRenderArgs(szMult: SzMult_t = ExtServiceActor.szMultDflt) = {
     OneAdQsArgs(
-      adId = eactx.qs.adId,
+      adId = args.eactx.qs.adId,
       szMult = szMult
     )
   }
@@ -136,6 +133,14 @@ case class ExtServiceActor(
         error(name + ": JS failed to ensureServiceReady: " + reason)
         harakiri()
     }
+  }
+
+
+  /** Состояния, исполняемые в рамках обработки цели. */
+  trait StateInTarget extends FsmState {
+    def targets: ActorTargets_t
+    def target = targets.head
+    // TODO def Переключалка на начало обработки следующего target'а, если есть.
   }
 
 
@@ -278,7 +283,7 @@ case class ExtServiceActor(
 
 
   /** Состояние постинга сообщений на стены. */
-  class PublishMessageState(pictureInfo: String, targets: List[MExtTarget] = targets0) extends FsmState {
+  class PublishMessageState(pictureInfo: String, targets: ActorTargets_t = targets0) extends FsmState {
     /** Нужно отправить в js команду отправки запроса размещения сообщения по указанной цели. */
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -286,19 +291,37 @@ case class ExtServiceActor(
         debug("No more targes. Finishing")
         harakiri()
       } else {
-        val target = targets.head
+        val targetInfo = targets.head
+        // Извлекаем первую цель из списка, отправляем её на сторону js.
         val pmAsk = PublishMessageAsk(
           service = service,
           ctx     = _ctx,
-          target  = target,
-          onClickUrl = ???
-
+          target  = targetInfo.target,
+          onClickUrl = {
+            // TODO Нужно, чтобы пользователь мог настраивать целевой url во время размещения КАРТОЧКИ.
+            ScJsState( adnId = Some(targetInfo.target.adnId) )
+              .ajaxStatedUrl()
+          }
         )
+        out ! mkJsAsk(pmAsk)
       }
-      ???
     }
 
-    override def receiverPart: Receive = ???
+    override def receiverPart: Receive = {
+      // js рапортует, что сообщение удалось разместить. Нужно перейти на следующую итерацию.
+      case PublishMessageSuccess((_, ctx2)) =>
+        ???
+
+      // Ошибка публикации сообщения. Ругнутся в логи, по возможности написать об этом юзеру, перейти к следующей цели.
+      case PublishMessageError((_, reason)) =>
+        error(service.strId + "Failed to publish message: " + reason)
+        ???
+    }
+
+    def nextTargetState(): Unit = {
+      val nextState = ???
+      ???
+    }
   }
 
 }

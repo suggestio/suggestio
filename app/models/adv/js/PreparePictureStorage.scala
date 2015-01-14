@@ -1,6 +1,5 @@
 package models.adv.js
 
-import ServiceStatic._
 import models.adv.MExtService
 import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json._
@@ -15,9 +14,6 @@ import play.api.libs.functional.syntax._
 trait PreparePictureStorageAction extends IAction {
   override def action: String = "hasPictureStorage"
 }
-trait PreparePictureStorageFields {
-  def IS_EXISTS = "isExists"
-}
 
 case class PreparePictureStorageAsk(
   service : MExtService,
@@ -28,15 +24,15 @@ case class PreparePictureStorageAsk(
   extends CallbackServiceAskBuilder
   with ServiceCall
   with PreparePictureStorageAction
-  with PreparePictureStorageFields
+  with Ctx2Fields
 {
-  override val IS_EXISTS = super.IS_EXISTS
+  override val CTX2 = super.CTX2
 
-  override def onSuccessArgsList: List[String] = List(IS_EXISTS)
+  override def onSuccessArgsList: List[String] = List(CTX2)
   override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
     super.onSuccessArgs(sb)
       .append(',')
-      .append(JsString(IS_EXISTS)).append(':').append(IS_EXISTS)
+      .append(JsString(CTX2)).append(':').append(CTX2)
   }
 
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
@@ -50,28 +46,13 @@ case class PreparePictureStorageAsk(
 }
 
 
-case class PreparePictureStorageSuccess(service: MExtService, ctx2: JsCtx_t)
-object PreparePictureStorageSuccess extends StaticUnapplier with PreparePictureStorageAction with PreparePictureStorageFields {
+case class PreparePictureStorageSuccess(service: MExtService, ctx2: JsCtx_t) extends ISuccess
+object PreparePictureStorageSuccess extends ServiceAndCtxStaticUnapplier with PreparePictureStorageAction {
   override type T = PreparePictureStorageSuccess
-  override type Tu = (MExtService, JsCtx_t)
-  override def statusExpected = "success"
-
-  implicit val hpsReads: Reads[T] = {
-    val s =
-      serviceFieldReads and
-      (JsPath \ IS_EXISTS).read[JsObject]
-    s(PreparePictureStorageSuccess.apply _)
-  }
-
-  /** Этот элемент точно подходит. Нужно десериализовать данные из него. */
-  override def fromJs(json: JsValue): Tu = {
-    val v = json.validate[T].get
-    (v.service, v.ctx2)
-  }
 }
 
 
 case class PreparePictureStorageError(service: MExtService, reason: String)
 object PreparePictureStorageError extends StaticServiceErrorUnapplier with PreparePictureStorageAction {
-  override type T = PreparePictureStorageAction
+  override type T = PreparePictureStorageError
 }

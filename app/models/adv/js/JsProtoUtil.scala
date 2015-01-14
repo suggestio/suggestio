@@ -2,6 +2,7 @@ package models.adv.js
 
 import models.adv.MExtServices
 import models.adv.MExtServices.MExtService
+import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -147,6 +148,46 @@ trait StaticUnapplier extends IAction {
     }
   }
 
+}
+
+
+trait Ctx2Fields {
+  def CTX2 = "ctx2"
+}
+
+/** Интерфейс экземпляра успешного исполнения приказа. */
+trait ISuccess {
+  def service: MExtService
+  def ctx2: JsCtx_t
+}
+
+/** Реализация StaticUnapplier заточенный под типичный success-ответ: (service, ctx2). */
+trait ServiceAndCtxStaticUnapplier extends StaticUnapplier with Ctx2Fields {
+  override type T <: ISuccess
+  override type Tu = (MExtService, JsCtx_t)
+  override def statusExpected = "success"
+
+  def apply(service: MExtService, ctx2: JsCtx_t): T
+
+  implicit val hpsReads: Reads[T] = {
+    val s =
+      ServiceStatic.serviceFieldReads and
+      (JsPath \ CTX2).read[JsObject]
+    s(apply _)
+  }
+
+  /** Этот элемент точно подходит. Нужно десериализовать данные из него. */
+  override def fromJs(json: JsValue): Tu = {
+    val v = json.validate[T].get
+    (v.service, v.ctx2)
+  }
+
+}
+
+/** Интерфейс экземпляров ошибок. */
+trait IError {
+  def service: MExtService
+  def reason: String
 }
 
 

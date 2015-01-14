@@ -37,30 +37,31 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   val WS_BEST_BEFORE_SECONDS = configuration.getInt("adv.ext.ws.api.best.before.seconds") getOrElse 30
 
   /** Маппинг одной выбранной цели. */
-  private def advM: Mapping[Option[String]] = {
+  private def advM: Mapping[Option[MExtTargetInfo]] = {
     val t = tuple(
       "enabled"  -> optional(boolean),
-      "targetId" -> esIdM
+      "targetId" -> esIdM,
+      "return"   -> MExtReturns.mapping
     )
-    .transform[Option[String]] (
-      { case (Some(true), targetId) => Some(targetId)
+    .transform[Option[MExtTargetInfo]] (
+      { case (Some(true), targetId, ret) => Some(MExtTargetInfo(targetId, ret))
         case _ => None },
-      { case Some(targetId) => (Some(true), targetId)
-        case _ => (None, "") }
+      { case Some(info) => (Some(true), info.targetId, info.returnTo)
+        case _ => (None, "", MExtReturns.default) }
     )
-    optional(t).transform[Option[String]] (
+    optional(t).transform[Option[MExtTargetInfo]] (
       _.flatten,
       {v => if (v.isDefined) Some(v) else None }
     )
   }
 
-  private type Form_t = Form[List[String]]
+  private type Form_t = Form[List[MExtTargetInfo]]
 
   /** Маппинг формы со списком целей. */
   private def advsFormM: Form_t = {
     Form(
       "adv" -> list(advM)
-        .transform[List[String]] (_.flatten, _.map(Some.apply))
+        .transform[List[MExtTargetInfo]] (_.flatten, _.map(Some.apply))
         .verifying("error.required.at.least.one.adv.service", _.nonEmpty)
     )
   }
@@ -112,7 +113,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
         implicit val ctx = implicitly[Context]
         val wsCallArgs = MExtAdvQs(
           adId          = adId,
-          targetIds     = advs,
+          targets       = advs,
           bestBeforeSec = WS_BEST_BEFORE_SECONDS,
           wsId          = ctx.ctxIdStr
         )

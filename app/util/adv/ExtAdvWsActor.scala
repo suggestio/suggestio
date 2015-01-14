@@ -4,7 +4,7 @@ import _root_.util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
-import models.adv.{MExtAdvContext, MExtServices, MExtTarget}
+import models.adv._
 import models.adv.js.{EnsureReadyError, EnsureReadySuccess, AskBuilder, EnsureReadyAsk}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -115,8 +115,10 @@ trait SioPrJsUtil {
 
 /** Базовый трейт для запиливания реализации актора и его аддонов */
 sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher with PlayLazyMacroLogsImpl {
+
   val out: ActorRef
   val eactx: MExtAdvContext
+
 }
 
 
@@ -133,12 +135,30 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
   class EnsureReadyState extends FsmState {
 
     /** Фьючерс с целями для размещения рекламной карточки. Результаты работы понадобятся на следующем шаге. */
-    val targetsFut = MExtTarget.multiGet(eactx.qs.targetIds)
+    lazy val targetsFut: Future[ActorTargets_t] = {
+      val ids = eactx.qs.targets.iterator.map(_.targetId)
+      val targetsFut = MExtTarget.multiGet(ids)
+      val targetsMap = eactx.qs
+        .targets
+        .iterator
+        .map { info => info.targetId -> info }
+        .toMap
+      targetsFut map { targets =>
+        targets.iterator
+          .flatMap { target =>
+            target.id
+              .flatMap(targetsMap.get)
+              .map { info => MExtTargetInfoFull(target, info.returnTo) }
+          }
+          .toList
+      }
+    }
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       out ! mkJsAsk( EnsureReadyAsk(ctx0) )
+      targetsFut  // Запускаем на исполнение lazy val future
     }
 
     override def receiverPart: Receive = {
@@ -159,7 +179,7 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
    * Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии.
    * @param targetsFut Фьючерс с будущими целями.
    */
-  class WaitForTargetsState(targetsFut: Future[Seq[MExtTarget]], ctx1: JsObject) extends FsmState {
+  class WaitForTargetsState(targetsFut: Future[ActorTargets_t], ctx1: JsObject) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
@@ -171,13 +191,14 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
 
     override def receiverPart: Receive = {
       case TargetsReady(targets) =>
+        trace(s"$name waiting finished. Found ${targets.size} targets.")
         become(new SuperviseServiceActorsState(targets, ctx1))
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
         become(new DummyState)
     }
 
-    case class TargetsReady(targets: List[MExtTarget])
+    case class TargetsReady(targets: ActorTargets_t)
     case class TargetsFailed(ex: Throwable)
   }
 
@@ -194,13 +215,14 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase {
    * @param targets Цели, полученные из хранилища.
    * @param ctx1 Состояние после начальной инициализации.
    */
-  class SuperviseServiceActorsState(targets: List[MExtTarget], ctx1: JsObject) extends FsmState {
+  class SuperviseServiceActorsState(targets: ActorTargets_t, ctx1: JsObject) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Сразу запустить паралельных акторов, которые паралельно занимаются обслуживанием каждого сервиса.
-      targets.groupBy(_.service).foreach {
+      targets.groupBy(_.target.service).foreach {
         case (service, serviceTargets) =>
-          val props = ExtServiceActor.props(out, service, serviceTargets, ctx1, eactx)
+          val args = MExtAdvActorArgs(out, service, serviceTargets, ctx1, eactx)
+          val props = ExtServiceActor.props(args)
           context.actorOf(props, name = service.strId)
       }
     }
@@ -212,6 +234,7 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase {
         srvOpt match {
           case Some(srv) =>
             val sel = context.system.actorSelection(self.path / srv.strId)
+            trace(s"$name: Message received for slave service actor: $srv. Forwarding message to actor $sel")
             sel forward jso
           case None =>
             warn(s"$name: Dropping unexpected message: " + jso)

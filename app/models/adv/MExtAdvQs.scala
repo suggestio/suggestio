@@ -34,7 +34,11 @@ object MExtAdvQs {
   /** Разделитель id'шников с поле targetIds. */
   def TARGET_IDS_DELIM = ","
 
-  implicit def qsb(implicit longB: QueryStringBindable[Long], strB: QueryStringBindable[String]) = {
+  implicit def qsb(
+                    implicit longB: QueryStringBindable[Long],
+                    strB: QueryStringBindable[String],
+                    infosB: QueryStringBindable[List[MExtTargetInfo]]
+  ) = {
     new QueryStringBindable[MExtAdvQs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
@@ -44,21 +48,19 @@ object MExtAdvQs {
           params1           <- getQsbSigner(key).signedOrNone(key, params)
           maybeAdId         <- strB.bind(key + AD_ID_SUF, params1)
           maybeCreatedAt    <- longB.bind(key + BEST_BEFORE_SEC_SUF, params1)
-          maybeTargetIdsStr <- strB.bind(key + TARGET_ID_SUF, params1)
+          maybeTargetInfos  <- infosB.bind(key + TARGET_ID_SUF, params1)
           maybeWsId         <- strB.bind(key + WS_ID_SUF, params1)
         } yield {
           for {
             createdAt     <- maybeCreatedAt.right
-            targetIdsStr  <- maybeTargetIdsStr.right
+            targetInfos   <- maybeTargetInfos.right
             adId          <- maybeAdId.right
             wsId          <- maybeWsId.right
           } yield {
-            val targetIds = targetIdsStr.split(TARGET_IDS_DELIM)
-              .toList
             MExtAdvQs(
               adId            = adId,
               bestBeforeSec   = createdAt,
-              targetIds       = targetIds,
+              targets         = targetInfos,
               wsId            = wsId
             )
           }
@@ -66,11 +68,10 @@ object MExtAdvQs {
       }
 
       override def unbind(key: String, value: MExtAdvQs): String = {
-        val targetIdsStr = value.targetIds.mkString(TARGET_IDS_DELIM)
         val unsigned = Seq(
           strB.unbind(key + AD_ID_SUF, value.adId),
           longB.unbind(key + BEST_BEFORE_SEC_SUF, value.bestBeforeSec),
-          strB.unbind(key + TARGET_ID_SUF, targetIdsStr),
+          infosB.unbind(key + TARGET_ID_SUF, value.targets),
           strB.unbind(key + WS_ID_SUF, value.wsId)
         )
         .mkString("&")
@@ -84,7 +85,7 @@ object MExtAdvQs {
 
 case class MExtAdvQs(
   adId          : String,
-  targetIds     : List[String],
+  targets       : List[MExtTargetInfo],
   bestBeforeSec : Long,
   wsId          : String
 )

@@ -4,7 +4,6 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
-import models.ScJsState
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{Json, JsObject, JsString}
@@ -121,13 +120,10 @@ case class MExtTarget(
   ctxData       : Option[JsObject] = None,
   versionOpt    : Option[Long] = None,
   id            : Option[String] = None
-) extends EsModelT with EsModelPlayJsonT with JsPublishTargetT {
+) extends EsModelT with EsModelPlayJsonT with JsExtTargetT {
 
   override type T = this.type
   override def companion = MExtTarget
-
-  /** Тут заглушка, сама ссылка должна задаваться в момент публикации. */
-  override def onClickUrl: String = ScJsState(adnId = Some(adnId)).ajaxStatedUrl()
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     SERVICE_ID_ESFN   -> JsString(service.strId) ::
@@ -138,8 +134,8 @@ case class MExtTarget(
 }
 
 
-/** Для отправки в JS нужны объекты с очень простым и ограниченным интерфейсом. */
-trait JsPublishTargetT {
+/** Упрощенный интерфейс MExtTarget для js target-таргетирования. */
+trait JsExtTargetT {
 
   /** Ссылка на целевую страницу. */
   def url: String
@@ -150,17 +146,13 @@ trait JsPublishTargetT {
   /** Произвольные данные контекста, заданные на стороне js. */
   def ctxData: Option[JsObject]
 
-  /** Ссылка, по которой должен переходить юзер при щелчке на размещенную рекламу. */
-  def onClickUrl: String
-
   /** Генерация экземпляра play.json.JsObject на основе имеющихся данных. */
   def toJsTargetPlayJson: JsObject = JsObject(toJsTargetPlayJsonFields)
 
   /** Генерация JSON-тела на основе имеющихся данных. */
   def toJsTargetPlayJsonFields: FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
-      URL_ESFN            -> JsString(url),
-      ON_CLICK_URL_ESFN   -> JsString(onClickUrl)
+      URL_ESFN            -> JsString(url)
     )
 
     val _name = name
@@ -173,5 +165,13 @@ trait JsPublishTargetT {
 
     acc
   }
+
 }
 
+/** Враппер над [[JsExtTargetT]]. */
+trait JsExtTargetWrapperT extends JsExtTargetT {
+  def _targetUnderlying: JsExtTargetT
+  override def url = _targetUnderlying.url
+  override def ctxData = _targetUnderlying.ctxData
+  override def name = _targetUnderlying.name
+}

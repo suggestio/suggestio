@@ -8,6 +8,11 @@ package models
  */
 package object adv {
 
-  type MExtService     = MExtServices.MExtService
+  type MExtService      = MExtServices.MExtService
+
+  type MExtReturn       = MExtReturns.MExtReturn
+
+  /** Тип списка целей для обработки. */
+  type ActorTargets_t   = List[MExtTargetInfoFull]
 
 }

@@ -1,7 +1,7 @@
 package models.adv.js
 
 import models.adv.js.ctx.JsCtx_t
-import models.adv.{JsPublishTargetT, MExtService}
+import models.adv.{JsExtTargetT, MExtService}
 import play.api.libs.json.JsString
 
 /**
@@ -12,11 +12,6 @@ import play.api.libs.json.JsString
  */
 trait PublishMessageAction extends IAction {
   override def action: String = "publishMessage"
-}
-
-/** Поля для рендера js-кода. */
-trait PublishMessageFields {
-  def POST_ID = "postId"
 }
 
 
@@ -32,7 +27,7 @@ trait PublishMessageFields {
 case class PublishMessageAsk(
   service     : MExtService,
   ctx         : JsCtx_t,
-  target      : JsPublishTargetT,
+  target      : JsExtTargetT,
   onClickUrl  : String,
   text        : Option[String] = None,
   pictures    : Seq[String] = Seq.empty
@@ -40,17 +35,17 @@ case class PublishMessageAsk(
   extends CallbackServiceAskBuilder
   with ServiceCall
   with PublishMessageAction
-  with PublishMessageFields
+  with Ctx2Fields
 {
 
-  override val POST_ID = super.POST_ID
+  override val CTX2 = super.CTX2
 
-  override def onSuccessArgsList: List[String] = List(POST_ID)
+  override def onSuccessArgsList: List[String] = List(CTX2)
 
   override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
     super.onSuccessArgs(sb)
       .append(',')
-      .append(JsString(POST_ID)).append(':').append(POST_ID)
+      .append(JsString(CTX2)).append(':').append(CTX2)
   }
 
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
@@ -67,3 +62,22 @@ case class PublishMessageAsk(
   }
 
 }
+
+
+/** Распарсенный экземпляр положительного ответа. */
+case class PublishMessageSuccess(
+  service   : MExtService,
+  ctx2      : JsCtx_t
+) extends ISuccess
+
+object PublishMessageSuccess extends ServiceAndCtxStaticUnapplier with PublishMessageAction with Ctx2Fields {
+  override type T = PublishMessageSuccess
+}
+
+
+/** Распарсенный экземпляр отрицательного результата исполнения. */
+case class PublishMessageError(service: MExtService, reason: String) extends IError
+object PublishMessageError extends StaticServiceErrorUnapplier with PublishMessageAction {
+  override type T = PublishMessageError
+}
+

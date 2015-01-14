@@ -110,9 +110,13 @@ object FormUtil {
       .transform [DateTimeZone] (_.get, Some.apply)
   }
 
+  /** Регэксп для парсинга uuid, закодированного в base64. */
+  val uuidB64Re = "[_-a-zA-Z0-9]{22}".r
+
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
-  val esIdM = nonEmptyText(minLength=6, maxLength=64)
+  val esIdM = nonEmptyText(minLength=22, maxLength=30)
     .transform(strTrimSanitizeF, strIdentityF)
+    .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
 
   /** Маппинг для номера этажа в ТЦ. */
   def floorM = nonEmptyText(maxLength = 4)
