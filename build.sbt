@@ -4,7 +4,7 @@ organization := "io.suggest"
 
 version := "1.13.1-SNAPSHOT"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -25,7 +25,7 @@ libraryDependencies ++= {
   val hadoopVsn     = "2.4.1"
   val hbaseVsn      = "0.98.5-hadoop2"
   val akkaVsn       = "2.3.4"
-  val jacksonVsn    = "2.4.+"
+  val jacksonVsn    = "2.5.0"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
   val playVsn       = "2.4.0-M2"
@@ -39,9 +39,10 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "1.+",
     "commons-lang" % "commons-lang" % "2.+",
+    "commons-beanutils" % "commons-beanutils" % "1.9.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.0-SNAPSHOT",
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     "org.json4s" %% "json4s-native" % "3.+",
     "com.typesafe.play" %% "play-json" % playVsn,
@@ -64,9 +65,11 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
     "org.apache.hadoop" % "hadoop-main" % hadoopVsn
       exclude("commons-beanutils", "commons-beanutils")
+      exclude("commons-beanutils", "commons-beanutils-core")
     ,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn
       exclude("commons-beanutils", "commons-beanutils")
+      exclude("commons-beanutils", "commons-beanutils-core")
     ,
     // cassandra
     "com.websudos"  %% "phantom-dsl" % phantomVersion,

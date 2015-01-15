@@ -3,7 +3,7 @@ package io.suggest.util
 import java.lang.reflect.{Type, ParameterizedType}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import java.io.{OutputStream, InputStream, StringWriter}
-import com.fasterxml.jackson.databind.{SerializationFeature, ObjectMapper}
+import com.fasterxml.jackson.databind.{ObjectWriter, SerializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.joda.JodaModule
 
@@ -22,7 +22,7 @@ object JacksonWrapper {
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   }
 
-  val prettyWriter = mapper.writer().withDefaultPrettyPrinter()
+  def prettyWriter = mapper.writer[ObjectWriter]().withDefaultPrettyPrinter()
 
 
   def serialize(value: Any): String = {
