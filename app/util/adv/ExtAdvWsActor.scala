@@ -66,6 +66,13 @@ trait FsmActor extends Actor with PlayMacroLogsI {
     _state.afterBecome()
   }
 
+  /** Ресивер, добавляемый к конец reveive() для всех состояний, чтобы выводить в логи сообщения,
+    * которые не были отработаны актором. */
+  protected val unexpectedReceiver: Receive = {
+    case other =>
+      LOGGER.warn(s"${_state.name} Unexpected message dropped [${other.getClass.getName}]:\n  $other")
+  }
+
   /** Интерфейс одного состояния. */
   trait FsmState {
     def name = getClass.getSimpleName
@@ -76,7 +83,7 @@ trait FsmActor extends Actor with PlayMacroLogsI {
       if (sr isDefinedAt msg)
         sr(msg)
     }
-    def receiver = receiverPart orElse superReceiver
+    def receiver = receiverPart orElse superReceiver orElse unexpectedReceiver
     override def toString: String = name
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
@@ -191,8 +198,17 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
 
     override def receiverPart: Receive = {
       case TargetsReady(targets) =>
-        trace(s"$name waiting finished. Found ${targets.size} targets.")
-        become(new SuperviseServiceActorsState(targets, ctx1))
+        val tisCount = eactx.qs.targets.size
+        val tgtsCount = targets.size
+        if (tisCount != tgtsCount) {
+          warn(s"Unexpected number of targets read from model: $tgtsCount, but $tisCount expected.\n  requested = ${eactx.qs.targets}  found = $targets")
+        }
+        if (targets.isEmpty) {
+          throw new IllegalStateException("No targets found in storage, but it should.")
+        } else {
+          trace(s"$name waiting finished. Found ${targets.size} targets.")
+          become(new SuperviseServiceActorsState(targets, ctx1))
+        }
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
         become(new DummyState)

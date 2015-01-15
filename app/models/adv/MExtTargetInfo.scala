@@ -39,7 +39,8 @@ object MExtTargetInfo extends ExtTargetInfoParsers with PlayMacroLogsDyn {
       }
 
       override def unbind(key: String, value: MExtTargetInfo): String = {
-        new StringBuilder(26)
+        new StringBuilder(32, key)
+          .append('=')
           .append(value.targetId)
           .append(DELIMITER)
           .append(value.returnTo.strId)

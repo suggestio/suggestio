@@ -48,7 +48,7 @@ case class EnsureServiceReadyAsk(service: MExtService, ctx1: JsCtx_t) extends Ca
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
       .append(".prepareEnsureServiceReady(")
-      .append(service.strId)
+      .append(JsString(service.strId))
       .append(',')
       .append(ctx1)
       .append(')')

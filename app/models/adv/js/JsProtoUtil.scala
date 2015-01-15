@@ -126,11 +126,15 @@ trait StaticUnapplier extends IAction {
   def statusExpected: String
 
   def isStatusExpected(json: JsObject): Boolean = {
-    (json \ "status").toString() == statusExpected
+    (json \ "status")
+      .asOpt[String]
+      .contains(statusExpected)
   }
 
   def isReplyToMe(json: JsObject): Boolean = {
-    (json \ "replyTo").toString == action
+    (json \ "replyTo")
+      .asOpt[String]
+      .contains(action)
   }
 
   def unapplyJs(json: JsObject): Option[Tu] = {
