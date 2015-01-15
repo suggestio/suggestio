@@ -48,6 +48,17 @@ define [], () ->
         VK.init
           apiId: VK_API_ID
 
+        authInfo = (response) ->
+          if response.session
+            userId = response.session.mid
+            console.log "user_id = #{userId}"
+          else
+            #console.log "user not auth"
+            VK.Auth.login authInfo, ACESS_LVL
+
+        VK.Auth.getLoginStatus authInfo
+
+
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
       @initService()
