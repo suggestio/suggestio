@@ -41,8 +41,17 @@ define [], () ->
       @name = name
       return @
 
+    initService: () ->
+
+      if @name == "vk"
+        VK_API_ID = 4705589
+        VK.init
+          apiId: VK_API_ID
+
     execute: (onSuccess, onError) ->
-      onSuccess(ws, {})
+      console.log "PrepareEnsureServiceReadyBuilder execute"
+      @initService()
+      onSuccess(@ws, {})
 
 
 
