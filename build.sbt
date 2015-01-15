@@ -25,7 +25,6 @@ libraryDependencies ++= {
   val hadoopVsn     = "2.4.1"
   val hbaseVsn      = "0.98.5-hadoop2"
   val akkaVsn       = "2.3.4"
-  val jacksonVsn    = "2.5.0"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
   val playVsn       = "2.4.0-M2"
@@ -42,8 +41,8 @@ libraryDependencies ++= {
     "commons-beanutils" % "commons-beanutils" % "1.9.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.0-SNAPSHOT",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.4.4",
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.4.4",
     "org.json4s" %% "json4s-native" % "3.+",
     "com.typesafe.play" %% "play-json" % playVsn,
     // ES
