@@ -17,11 +17,12 @@ define [], () ->
       return new PrepareEnsureReadyBuilder(ws)
 
     @prepareEnsureServiceReady: (serviceName, ctx1) ->
-      newService = new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx1)
-      serviceList[serviceName] = newService
-      return newService
+      return new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx1)
 
-    service: (name) ->
+    @setService: (name, adapter) ->
+      serviceList[name] = adapter
+
+    @service: (name) ->
       return serviceList[name]
 
   class PrepareEnsureReadyBuilder
@@ -30,39 +31,25 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureReadyBuilder execute"
-      testObject = new Object()
-      onSuccess @ws, testObject
+      ctx1 = new Object()
+      onSuccess @ws, ctx1
 
   class PrepareEnsureServiceReadyBuilder
+    adapter = null
 
     constructor: (@ws, @name, @ctx1) ->
+      adapter = new VkAdapter(@ws)
+      SioPR.setService @name, adapter
 
     setServiceName: (name) ->
       @name = name
       return @
 
-    initService: () ->
-
-      if @name == "vk"
-        VK_API_ID = 4705589
-        VK.init
-          apiId: VK_API_ID
-
-        authInfo = (response) ->
-          if response.session
-            userId = response.session.mid
-            console.log "user_id = #{userId}"
-          else
-            #console.log "user not auth"
-            VK.Auth.login authInfo, ACESS_LVL
-
-        VK.Auth.getLoginStatus authInfo
-
-
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
-      @initService()
-      onSuccess(@ws, {})
+      ctx2 = new Object()
+      #SioPR.service("vk").preparePublishMessageBuilder()
+      onSuccess(@ws, ctx2)
 
 
 
@@ -70,13 +57,29 @@ define [], () ->
 
     constructor: (@ws) ->
 
-    preparePublishMessageBuilder: (ctx0) ->
+    @preparePublishMessageBuilder: (ctx0) ->
       return new IPublishMessageBuilder(ws, ctx0)
 
   class VkAdapter extends IAdapter
+    API_ID = 4705589
+
+    constructor: (@ws) ->
+      VK.init
+        apiId: API_ID
+
+      authInfo = (response) ->
+        if response.session
+          userId = response.session.mid
+          console.log "user_id = #{userId}"
+        else
+          #console.log "user not auth"
+          VK.Auth.login authInfo, ACESS_LVL
+
+      VK.Auth.getLoginStatus authInfo
 
     preparePublishMessageBuilder: (ctx0) ->
-      return new VkPublishMessageBuilder(ws, ctx0)
+      console.log "prepare adapter for msg"
+      return new VkPublishMessageBuilder(@ws, ctx0)
 
 
 
