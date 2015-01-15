@@ -41,21 +41,21 @@ trait AskBuilder extends IAction {
     onSuccessArgsList.foreach { argName =>
       sb.append(',').append(argName)
     }
-    sb.append("){ws.send(")
+    sb.append("){ws.send(JSON.stringify(")
     // Сборка ответа
     onSomethingJson("success", sb)
     onSuccessArgs(sb)
     afterSomethingJson(sb)
     // Завершена сборка ответа
-    sb.append(");}")
+    sb.append("));}")
   }
 
   def onErrorCallbackBuilder(sb: StringBuilder): StringBuilder = {
-    sb.append("function(ws,reason){ws.send(")
+    sb.append("function(ws,reason){ws.send(JSON.stringify(")
     onSomethingJson("error", sb)
     onErrorArgs(sb)
     afterSomethingJson(sb)
-    sb.append(");}")
+    sb.append("));}")
   }
   def onErrorArgs(sb: StringBuilder): StringBuilder = {
     val r = "reason"
