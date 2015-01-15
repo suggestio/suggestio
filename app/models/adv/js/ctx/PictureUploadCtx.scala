@@ -36,7 +36,7 @@ import PictureUploadCtx._
 
 
 /** Трейт для данных по режиму upload'а. */
-trait PictureUploadCtxT {
+sealed trait PictureUploadCtxT {
 
   def mode: PictureUploadMode
 
@@ -50,6 +50,9 @@ trait PictureUploadCtxT {
 
 }
 
+case object SkipPictureUpload extends PictureUploadCtxT {
+  override def mode = PictureUploadModes.Skip
+}
 
 /** Режим работы через ссылку. Без параметров, поэтому сингтон. */
 case object UrlPictureUpload extends PictureUploadCtxT {
@@ -125,6 +128,11 @@ object PictureUploadModes extends Enumeration with EnumMaybeWithName {
     override def fromJson(json1: JsValue) = C2sPictureUpload
   }
 
+  /** js-сторона предлагает серверу не париться насчет загрузки картинки. */
+  val Skip: PictureUploadMode = new Val("skip") {
+    override type X = SkipPictureUpload.type
+    override def fromJson(json1: JsValue) = SkipPictureUpload
+  }
 
   def default = Url
 

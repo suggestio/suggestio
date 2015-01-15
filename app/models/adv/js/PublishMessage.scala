@@ -19,16 +19,12 @@ trait PublishMessageAction extends IAction {
  * Экземпляр запроса публикации сообщения в цели.
  * @param service Сервис.
  * @param ctx Исходный js-контекст.
- * @param target Описание цели.
- * @param onClickUrl Ссылка при клике юзера (куда юзер должен переходить).
  * @param text Текст сообщения
  * @param pictures Картинки.
  */
 case class PublishMessageAsk(
   service     : MExtService,
   ctx         : JsCtx_t,
-  target      : JsExtTargetT,
-  onClickUrl  : String,
   text        : Option[String] = None,
   pictures    : Seq[String] = Seq.empty
 )
@@ -51,8 +47,6 @@ case class PublishMessageAsk(
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     val sb1 = super.buildJsCodeBody(sb)
       .append(".preparePublishMessage(").append(ctx).append(')')
-      .append(".setTarget(").append(target.toJsTargetPlayJson).append(')')
-      .append(".setUrl(").append(JsString(onClickUrl)).append(')')
     if (text.isDefined)
       sb1.append(".setText(").append(JsString(text.get)).append(')')
     pictures.foreach { pic =>

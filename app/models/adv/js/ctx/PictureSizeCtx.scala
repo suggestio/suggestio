@@ -11,8 +11,9 @@ import play.api.libs.functional.syntax._
  * Он закидывается в context силами js подсистемы ext adv.
  */
 object PictureSizeCtx {
-/** Парсер из json. */
-  implicit def sppReads: Reads[PictureSizeCtx] = {
+
+  /** Парсер из json. */
+  implicit def pscReads: Reads[PictureSizeCtx] = {
     val s =
       (JsPath \ "width").read[Int] and
       (JsPath \ "height").read[Int]

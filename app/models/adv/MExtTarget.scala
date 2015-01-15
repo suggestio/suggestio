@@ -175,3 +175,19 @@ trait JsExtTargetWrapperT extends JsExtTargetT {
   override def ctxData = _targetUnderlying.ctxData
   override def name = _targetUnderlying.name
 }
+
+
+/** Абстрактная модель того, что лежит в ext adv js ctx._target. */
+trait JsExtTargetFullT extends JsExtTargetT {
+  def onClickUrl: String
+
+  /** Генерация JSON-тела на основе имеющихся данных. */
+  override def toJsTargetPlayJsonFields: FieldsJsonAcc = {
+    ON_CLICK_URL_ESFN -> JsString(onClickUrl) ::
+    super.toJsTargetPlayJsonFields
+  }
+}
+
+case class JsExtTargetFull(_targetUnderlying: JsExtTargetT, onClickUrl: String)
+  extends JsExtTargetFullT with JsExtTargetWrapperT
+

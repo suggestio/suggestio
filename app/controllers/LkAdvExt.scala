@@ -123,19 +123,25 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   }
 
   private sealed case class ExceptionWithResult(res: Result) extends Exception
-  def wsRun(args: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
+
+  /**
+   * Открытие websocket'а, запускающее также процессы размещения, акторы и т.д.
+   * @param qsArgs Подписанные параметры размещения.
+   * @return 101 Upgrade.
+   */
+  def wsRun(qsArgs: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
     // Сначала нужно проверить права доступа всякие.
-    val fut0 = if (args.bestBeforeSec <= BestBefore.nowSec) {
+    val fut0 = if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
       Future successful None
     } else {
       val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
       Future failed ExceptionWithResult(res)
     }
     fut0.flatMap { _ =>
-      val madFut = MAd.getById(args.adId)
+      val madFut = MAd.getById(qsArgs.adId)
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
-          Future failed ExceptionWithResult(NotFound("Ad not found: " + args.adId))
+          Future failed ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
         }
       val pwOpt = PersonWrapper.getFromRequest
       madFut
@@ -148,8 +154,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
            Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
         }
     }.map { req1 =>
-      val ctx = MExtAdvContext(args, req1)
-      val hp: HandlerProps = ExtAdvWsActor.props(_, ctx)
+      val eaArgs = MExtAdvContext(qsArgs, req1)
+      val hp: HandlerProps = ExtAdvWsActor.props(_, eaArgs)
       Right(hp)
     }.recover {
       case ExceptionWithResult(res) =>

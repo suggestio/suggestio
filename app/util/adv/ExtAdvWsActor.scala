@@ -5,6 +5,7 @@ import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
 import models.adv._
+import models.adv.js.ctx.JsCtx_t
 import models.adv.js.{EnsureReadyError, EnsureReadySuccess, AskBuilder, EnsureReadyAsk}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -19,12 +20,12 @@ import scala.util.{Failure, Success}
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
 object ExtAdvWsActor {
-  def props(out: ActorRef, eactx: MExtAdvContext) = Props(new ExtAdvWsActor(out, eactx))
+  def props(out: ActorRef, eactx: MExtAdvArgsT) = Props(new ExtAdvWsActor(out, eactx))
 }
 
 
 /** ws-актор, готовый к использованию websocket api. */
-case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvContext)
+case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
   extends ExtAdvWsActorBase
   with EnsureReady
 {
@@ -124,7 +125,7 @@ trait SioPrJsUtil {
 sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher with PlayLazyMacroLogsImpl {
 
   val out: ActorRef
-  val eactx: MExtAdvContext
+  val eactx: MExtAdvArgsT
 
 }
 
@@ -222,7 +223,7 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
 
 
 /** Поддержка инициализации сервисов и диспатчинга их по акторам. */
-sealed trait SuperviseServiceActors extends ExtAdvWsActorBase {
+sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
 
   import LOGGER._
 
@@ -236,10 +237,18 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase {
       super.afterBecome()
       // Сразу запустить паралельных акторов, которые паралельно занимаются обслуживанием каждого сервиса.
       targets.groupBy(_.target.service).foreach {
-        case (service, serviceTargets) =>
-          val args = MExtAdvActorArgs(out, service, serviceTargets, ctx1, eactx)
+        case (_service, serviceTargets) =>
+          val args = new MExtServiceAdvArgsT with MExtAdvArgsWrapperT {
+            override def out                = actor.out
+            override def ctx0               = ctx1
+            override def service            = _service
+            override def targets0           = serviceTargets
+            override def _eaArgsUnderlying  = eactx
+          }
           val props = ExtServiceActor.props(args)
-          context.actorOf(props, name = service.strId)
+          // TODO Нужно придумать более безопасный для akka идентификатор: uuid+hex? uuid+base64+urlsafe?
+          val actorName = _service.strId
+          context.actorOf(props, name = actorName)
       }
     }
 
