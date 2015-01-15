@@ -53,18 +53,13 @@ case class ExtServiceActor(args: MExtAdvActorArgs)
   def serverCtx = _ctx \ "_server"
   def pictureUploadCtxRaw = serverCtx \ "picture" \ "upload"
 
-  /** Параметры сервиса, присланные клиентом. */
-  protected var _serviceParams: ServiceParams = null
-
   /** Текущее состояние FSM. */
   override protected var _state: super.FsmState = new DummyState
 
   override def receive: Receive = allStatesReceiver
 
-  protected var imgBytesOpt: Option[Array[Byte]] = None
-
   /** Ресивер для всех состояний. */
-  override val allStatesReceiver: Receive = PartialFunction.empty
+  override def allStatesReceiver: Receive = PartialFunction.empty
 
   override def preStart(): Unit = {
     super.preStart()
@@ -117,9 +112,8 @@ case class ExtServiceActor(args: MExtAdvActorArgs)
 
     override def receiverPart: Receive = {
       // Сообщение от SioPR.js об удачной инициализации
-      case EnsureServiceReadySuccess((_, ctx2, params)) =>
+      case EnsureServiceReadySuccess((_, ctx2)) =>
         _ctx = ctx2
-        _serviceParams = params
         val puctxOpt = PictureUploadCtx.maybeFromJson(pictureUploadCtxRaw)
         val nextState = if (puctxOpt contains UrlPictureUpload) {
           new PublishMessageState(getExtAdImgAbsUrl())
