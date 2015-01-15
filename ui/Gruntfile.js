@@ -432,7 +432,8 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('build-js', [
-   'coffee'
+   'coffee',
+   'copy:scripts'
   ]);
 
   grunt.registerTask('build-dist', [

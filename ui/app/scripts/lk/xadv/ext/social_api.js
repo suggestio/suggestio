@@ -2,7 +2,7 @@ define([], function() {
 
   requirejs.config({
 
-      baseUrl: "/vassets/scripts/lk/adv/ext/",
+      baseUrl: "/vassets/scripts/lk/xadv/ext/",
 
       paths: {
         "main": "main",
