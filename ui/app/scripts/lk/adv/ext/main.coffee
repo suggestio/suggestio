@@ -1,50 +1,5 @@
 define [], () ->
 
-  serviceList = new Array()
-
-
-  ###*
-    @callback отправляет на сервер сообщение об успешной инициализации
-    @param (Object) экземпляр webSocket для отправки результата на сервер
-  ###
-  onSuccess: (connection) ->
-    console.log "connection success"
-
-  ###*
-    @callback отправляет на сервер сообщение об ошибке инициализации
-    @param (Object) экземпляр webSocket для отправки результата на сервер
-    @param (String) описание ошибки
-  ###
-  onError: (connection, reason) ->
-    console.log "connection error"
-
-  ###*
-    @callback обработка сообщения от сервера
-    @param (Object) объект события, содержит сообщение сервера
-  ###
-  onMessage: (event) ->
-    message = $.parseJSON event.data
-    console.log message
-    if message["type"] == "js"
-      eval message["data"]
-
-  ###*
-    Получить модуль конкретной социальной сети
-    @param (String) название модуля социальной сети
-  ###
-  initServiceByName: (name) ->
-    require(
-      [name]
-      (service) ->
-        serviceList[name] = service
-        serviceList[name].init()
-    )
-
-  post: (serviceName, options) ->
-    serviceList[serviceName].post options
-
-
-
   class SioPR
     instance = undefined
     ws = null
