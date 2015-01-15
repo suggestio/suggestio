@@ -18,13 +18,19 @@
   </div>
 }
 
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
+
+}
+
 
 @market.lk.lkBaseLayout(
   title         = "Управление рекламой",
   nodeOpt       = Some(producerNode),
   backHref      = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url),
   rightBar      = Some(rightBar),
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS)
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  headAfter     = Some(headAfter)
 ) {
 
   <a href="@routes.LkAdvExt.forAd(mad.id.get)">Размещение на внешних сервисах...</a>
@@ -32,5 +38,7 @@
   @_currentAdvsTpl(currAdvsArgs)
 
   @_advFormTpl(formArgs)
+
+  <script src='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 
 }

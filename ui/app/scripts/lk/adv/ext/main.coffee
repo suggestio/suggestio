@@ -75,7 +75,8 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureReadyBuilder execute"
-      onSuccess @ws, {}
+      testObject = new Object()
+      onSuccess @ws, testObject
 
   class PrepareEnsureServiceReadyBuilder
 
