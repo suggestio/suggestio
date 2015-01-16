@@ -48,7 +48,8 @@ define [], () ->
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
       ctx2 = new Object()
-      #SioPR.service("vk").preparePublishMessageBuilder()
+      #SioPR.service("vk").preparePublishMessageBuilder().setMessage("test from adapter").execute()
+      #SioPR.service("vk").preparePictureStorageBuilder().execute()
       onSuccess(@ws, ctx2)
 
 
@@ -58,21 +59,27 @@ define [], () ->
     constructor: (@ws) ->
 
     @preparePublishMessageBuilder: (ctx0) ->
-      return new IPublishMessageBuilder(ws, ctx0)
+      return new IPublishMessageBuilder(@ws, ctx0)
+
+    @preparePictureStorage: (ctx2) ->
+      return new PictureStorageBuilder(@ws, ctx2)
 
   class VkAdapter extends IAdapter
     API_ID = 4705589
+    USER_ID = null
 
     constructor: (@ws) ->
       VK.init
         apiId: API_ID
 
+      @setUserId()
+
+    setUserId: () ->
+
       authInfo = (response) ->
         if response.session
-          userId = response.session.mid
-          console.log "user_id = #{userId}"
+          USER_ID = response.session.mid
         else
-          #console.log "user not auth"
           VK.Auth.login authInfo, ACESS_LVL
 
       VK.Auth.getLoginStatus authInfo
@@ -81,9 +88,43 @@ define [], () ->
       console.log "prepare adapter for msg"
       return new VkPublishMessageBuilder(@ws, ctx0)
 
+    preparePictureStorageBuilder: (ctx = new Object()) ->
+      ctx.userId = USER_ID
+      return new VkPictureStorageBuilder(@ws, ctx)
 
 
-  #  Абстрактный класс-заглушка билдеров запросов отправки сообщений на стену.
+
+  class PictureStorageBuilder
+
+    constructor: (@ws, @ctx) ->
+
+    setName: (name) ->
+      return true
+
+    setDescription: (description) ->
+      return true
+
+    execute: () ->
+      console.log "picture storage execute"
+
+  class VkPictureStorageBuilder extends PictureStorageBuilder
+
+    execute: (onSuccess, onError) ->
+      console.log "vk picture storage execute"
+      console.log @ctx
+
+      params =
+        group_id: @ctx.userId
+
+      onSuccess = (response) ->
+        console.log "---"
+        console.log response
+        console.log "---"
+
+      VK.Api.call "photos.getWallUploadServer", params, onSuccess
+
+
+
   class IPublishMessageBuilder
 
     constructor: (@ws, @ctx0) ->
@@ -94,7 +135,6 @@ define [], () ->
     execute: (onSuccess, onError) ->
       onError(ws, "execute() not implemented!")
 
-  #  Реализация адаптера IAdapter в рамках некоторой абстрактной соц.сети
   class VkPublishMessageBuilder extends IPublishMessageBuilder
     url = null
     message = null
@@ -108,16 +148,16 @@ define [], () ->
       return @
 
     execute: (onSuccess, onError) ->
+      onSuccess = () ->
+        console.log "success call for post message"
+
       params =
         message: message
 
       VK.Api.call "wall.post", params, onSuccess
 
 
-  ###*
-    Инициализация social api
-    @param (Json) контекст, в котором вызывается api
-  ###
+
   init: () ->
     $input = $ "#socialApiConnection"
     url = $input.val()
