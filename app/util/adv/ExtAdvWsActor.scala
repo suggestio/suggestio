@@ -5,6 +5,7 @@ import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
 import models.adv._
+import models.adv.js.ctx.MJsCtx
 import models.adv.js.{EnsureReady, Answer, AskBuilder, EnsureReadyAsk}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -170,11 +171,11 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
 
     override def receiverPart: Receive = {
       // Пришел какой-то ответ на ensureReady
-      case Answer(status, replyTo, ctx1) if replyTo == EnsureReady.action =>
+      case Answer(status, replyTo, mctx1) if replyTo == EnsureReady.action =>
         val nextState = if (status.isSuccess) {
           // Инициализация выполнена.
-          trace(s"$name: success. New context = $ctx1")
-          new WaitForTargetsState(targetsFut, ctx1)
+          trace(s"$name: success. New context = ${mctx1.json}")
+          new WaitForTargetsState(targetsFut, mctx1)
         } else {
           // Проблемы при инициализации
           error(s"$name: js returned error")    // TODO Выводить ошибку из контекста.
@@ -189,7 +190,7 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
    * Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии.
    * @param targetsFut Фьючерс с будущими целями.
    */
-  class WaitForTargetsState(targetsFut: Future[ActorTargets_t], ctx1: JsObject) extends FsmState {
+  class WaitForTargetsState(targetsFut: Future[ActorTargets_t], mctx1: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
@@ -210,7 +211,7 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
           throw new IllegalStateException("No targets found in storage, but it should.")
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
-          become(new SuperviseServiceActorsState(targets, ctx1))
+          become(new SuperviseServiceActorsState(targets, mctx1))
         }
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
@@ -234,7 +235,7 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
    * @param targets Цели, полученные из хранилища.
    * @param ctx1 Состояние после начальной инициализации.
    */
-  class SuperviseServiceActorsState(targets: ActorTargets_t, ctx1: JsObject) extends FsmState {
+  class SuperviseServiceActorsState(targets: ActorTargets_t, mctx1: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Сразу запустить паралельных акторов, которые паралельно занимаются обслуживанием каждого сервиса.
@@ -242,7 +243,7 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
         case (_service, serviceTargets) =>
           val args = new MExtServiceAdvArgsT with MExtAdvArgsWrapperT {
             override def out                = actor.out
-            override def ctx0               = ctx1
+            override def mctx0              = mctx1
             override def service            = _service
             override def targets0           = serviceTargets
             override def _eaArgsUnderlying  = eactx

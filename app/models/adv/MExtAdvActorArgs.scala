@@ -1,7 +1,7 @@
 package models.adv
 
 import akka.actor.ActorRef
-import models.adv.js.ctx.JsCtx_t
+import models.adv.js.ctx.{MJsCtx, JsCtx_t}
 import util.acl.RequestWithAdAndProducer
 
 /**
@@ -50,6 +50,6 @@ trait MExtServiceAdvArgsT extends MExtAdvArgsT {
   def targets0  : ActorTargets_t
 
   /** Начальный контекст в рамках сервиса. */
-  def ctx0      : JsCtx_t
+  def mctx0      : MJsCtx
 }
 

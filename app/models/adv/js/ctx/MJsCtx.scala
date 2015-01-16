@@ -1,6 +1,6 @@
 package models.adv.js.ctx
 
-import play.api.libs.json.JsObject
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -13,17 +13,24 @@ object MJsCtx {
   val PICTURE_FN  = "_picture"
   val TARGET_FN   = "_target"
 
+  implicit val mJsCtxReads: Reads[MJsCtx] = {
+    Reads {
+      case jso: JsObject  => JsSuccess(MJsCtx(jso))
+      case _              => JsError("No JSON found")
+    }
+  }
+
 }
 
 
 import MJsCtx._
 
 
-case class MJsCtx(ctx: JsCtx_t) {
+case class MJsCtx(json: JsCtx_t) {
 
   /** top-level-поле _picture содержит инфу разную по картинке. */
   lazy val picture = {
-    ctx \ PICTURE_FN match {
+    json \ PICTURE_FN match {
       case jso: JsObject  => Some(MPictureCtx(jso))
       case _              => None
     }

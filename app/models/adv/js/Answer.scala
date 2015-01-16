@@ -1,6 +1,6 @@
 package models.adv.js
 
-import models.adv.js.ctx.JsCtx_t
+import models.adv.js.ctx.{MJsCtx, JsCtx_t}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 /**
@@ -22,9 +22,9 @@ object Answer {
   /** На какое действие ответ. Для самоконтроля. */
   val REPLY_TO_FN   = "replyTo"
 
-  implicit val contextReads: Reads[JsCtx_t] = {
+  implicit val contextReads: Reads[MJsCtx] = {
     (JsPath \ CTX2)
-      .read[JsCtx_t]
+      .read[MJsCtx]
   }
 
   /** JSON-парсер для поля статуса. */
@@ -45,7 +45,7 @@ object Answer {
     answerReader(apply _)
   }
 
-  type Tu = (AnswerStatus, String, JsCtx_t)
+  type Tu = (AnswerStatus, String, MJsCtx)
 
   /** Прозрачное приведение JsValue к содержимому Answer'а. */
   def unapply(json: JsValue): Option[Tu] = {
@@ -74,12 +74,12 @@ trait IAnswer {
   def replyTo   : String
 
   /** Обновлённое состояние. */
-  def ctx2      : JsCtx_t
+  def ctx2      : MJsCtx
 
 }
 
 
 /** Экземпляр одного распарсенного ответа в рамках сервиса. */
-case class Answer(status: AnswerStatus, replyTo: String, ctx2: JsCtx_t)
+case class Answer(status: AnswerStatus, replyTo: String, ctx2: MJsCtx)
   extends IAnswer
 

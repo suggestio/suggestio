@@ -58,7 +58,7 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
   override def preStart(): Unit = {
     super.preStart()
-    become(new EnsureServiceReadyState(args.ctx0))
+    become(new EnsureServiceReadyState(args.mctx0))
   }
 
   /** Команда к самозавершению. */
@@ -95,34 +95,30 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
     override def name: String = service.strId + "/" + super.name
 
     /** Экземпляр JSON-контекста. */
-    def ctx0: JsCtx_t
-
-    /** Враппер контекста, предоставляющий простой доступ к распарсенному контексту. */
-    def mctx0 = MJsCtx(ctx0)
+    def mctx0: MJsCtx
   }
 
 
   /** Состояние, когда запускается инициализация API одного сервиса. */
-  class EnsureServiceReadyState(val ctx0: JsCtx_t) extends FsmState {
+  class EnsureServiceReadyState(val mctx0: MJsCtx) extends FsmState {
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Сразу отправить в сокет запрос иницализации этого сервиса.
-      val ctx11 = service.prepareContext(ctx0)
+      val ctx11 = service.prepareContext(mctx0.json)
       val askJson = EnsureServiceReadyAsk(service, ctx11)
       out ! mkJsAsk(askJson)
     }
 
     override def receiverPart: Receive = {
-      case ServiceAnswer(status, service, replyTo, ctx2) if replyTo == EnsureServiceReady.action =>
+      case ServiceAnswer(status, service, replyTo, mctx2) if replyTo == EnsureServiceReady.action =>
         if (status.isSuccess) {
           // Сообщение от SioPR.js об удачной инициализации
-          val mctx2 = MJsCtx(ctx2)
           val puctxOpt = mctx2.pictureUpload
           val nextState = if (puctxOpt contains UrlPictureUpload) {
-            new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), args.targets0)
+            new PublishMessageState(mctx2, Some(getExtAdImgAbsUrl()), args.targets0)
           } else {
-            new PreparePictureStorageState(ctx2, args.targets0)
+            new PreparePictureStorageState(mctx2, args.targets0)
           }
           become(nextState)
 
@@ -146,15 +142,15 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
     /**
      * Переход на следующую цель.
-     * @param ctx2 Новое состояние.
+     * @param mctx Новое состояние.
      */
-    def nextTargetState(ctx2: JsCtx_t): Unit = {
+    def nextTargetState(mctx: MJsCtx): Unit = {
       val tl = targets.tail
       if (tl.isEmpty) {
         info(s"$name Done work for service $service")
         harakiri()
       } else {
-        val nextState = new PreparePictureStorageState(ctx2, tl)
+        val nextState = new PreparePictureStorageState(mctx, tl)
         become(nextState)
       }
     }
@@ -163,12 +159,12 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
   /** Если требуется отдельное обслуживание хранилища картинок, то в этом состоянии узнаём,
     * существует ли необходимое хранилище на сервисе? */
-  class PreparePictureStorageState(val ctx0: JsCtx_t, val targets: ActorTargets_t) extends TargetedFsmState {
+  class PreparePictureStorageState(val mctx0: MJsCtx, val targets: ActorTargets_t) extends TargetedFsmState {
 
     /** Сгенерить новый контекст на основе ctx0. В состояние закинуть инфу по текущей цели. */
     def ctx0WithTarget: JsCtx_t = {
       val fn = MJsCtx.PICTURE_FN
-      val fields1 = ctx0.fields
+      val fields1 = mctx0.json.fields
         .iterator
         .filter { case (k, _) => k != fn }
         .toList
@@ -191,9 +187,8 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
     }
 
     override def receiverPart: Receive = {
-      case ServiceAnswer(status, service, replyTo, ctx2) if replyTo == PreparePictureStorage.action =>
+      case ServiceAnswer(status, service, replyTo, mctx2) if replyTo == PreparePictureStorage.action =>
         if (status.isSuccess) {
-          val mctx2 = MJsCtx(ctx2)
           val puctx = mctx2.pictureUpload
           if (puctx.isEmpty) {
             error(s"$name Context _picture.upload is missing or invalid.")
@@ -201,14 +196,14 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
           } else {
             val nextState = puctx.get match {
               case s2sCtx: S2sPictureUpload =>
-                new S2sRenderAd2ImgState(ctx2, s2sCtx, targets)
+                new S2sRenderAd2ImgState(mctx2, s2sCtx, targets)
               case C2sPictureUpload =>
-                new C2sPutPictureToStorageState(ctx2)
+                new C2sPutPictureToStorageState(mctx2)
               case UrlPictureUpload =>
                 // Возможно unreachable code, но избавляет от warning'a.
-                new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), targets)
+                new PublishMessageState(mctx2, Some(getExtAdImgAbsUrl()), targets)
               case SkipPictureUpload =>
-                new PublishMessageState(ctx2, None, targets)
+                new PublishMessageState(mctx2, None, targets)
             }
             become(nextState)
           }
@@ -263,15 +258,15 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
    * Произвести заливку картинки на удалённый сервис с помощью ссылки.
    * @param uploadCtx Данные для s2s-загрузки.
    */
-  class S2sRenderAd2ImgState(val ctx0: JsCtx_t, uploadCtx: S2sPictureUpload, val targets: ActorTargets_t) extends RenderAd2ImgStateT {
+  class S2sRenderAd2ImgState(val mctx0: MJsCtx, uploadCtx: S2sPictureUpload, val targets: ActorTargets_t) extends RenderAd2ImgStateT {
     override def getNextStateOk(okRes: Ad2ImgRenderOk): FsmState = {
-      new S2sPutPictureState(ctx0, uploadCtx, okRes.imgBytes, targets)
+      new S2sPutPictureState(mctx0, uploadCtx, okRes.imgBytes, targets)
     }
   }
 
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
-  class S2sPutPictureState(val ctx0: JsCtx_t, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte], val targets: ActorTargets_t)
+  class S2sPutPictureState(val mctx0: MJsCtx, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte], val targets: ActorTargets_t)
     extends TargetedFsmState {
 
     /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
@@ -306,7 +301,7 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
       case wsResp: WSResponse if respStatusCodeValid(wsResp.status) =>
         debug(s"$service successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
         trace(s"$service Remote server response is:\n ${wsResp.body}")
-        val nextState = new PublishMessageState(ctx0, Some(wsResp.body), targets)
+        val nextState = new PublishMessageState(mctx0, Some(wsResp.body), targets)
         become(nextState)
 
       // Запрос выполнился, но в ответ пришло что-то неожиданное.
@@ -323,18 +318,18 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
 
   /** Отправка картинки в хранилище через клиента. */
-  class C2sPutPictureToStorageState(val ctx0: JsCtx_t) extends FsmState {
+  class C2sPutPictureToStorageState(val mctx0: MJsCtx) extends FsmState {
     override def receiverPart: Receive = ???
   }
 
 
   /**
    * Состояние постинга сообщений на стены.
-   * @param ctx0 НАчальный контекст в рамках состояния.
+   * @param mctx0 НАчальный контекст в рамках состояния.
    * @param pictureInfo Инфа по картинке (ссылка, resp body, итд), которую надо закинуть в контекст.
    * @param targets Остаточный список целей.
    */
-  class PublishMessageState(val ctx0: JsCtx_t, pictureInfo: Option[String], val targets: ActorTargets_t)
+  class PublishMessageState(val mctx0: MJsCtx, pictureInfo: Option[String], val targets: ActorTargets_t)
     extends TargetedFsmState {
 
     /** Нужно отправить в js команду отправки запроса размещения сообщения по указанной цели. */
@@ -347,7 +342,7 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
         // Извлекаем первую цель из списка, отправляем её на сторону js.
         val pmAsk = PublishMessageAsk(
           service = service,
-          ctx     = ctx0
+          ctx     = mctx0.json
         )
         out ! mkJsAsk(pmAsk)
       }

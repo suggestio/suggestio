@@ -1,7 +1,7 @@
 package models.adv.js
 
 import models.adv.{MExtServices, MExtService}
-import models.adv.js.ctx.JsCtx_t
+import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 /**
@@ -27,7 +27,7 @@ object ServiceAnswer {
     s { (service, ans)  =>  ServiceAnswer(ans.status, service, ans.replyTo, ans.ctx2) }
   }
 
-  type Tu = (AnswerStatus, MExtService, String, JsCtx_t)
+  type Tu = (AnswerStatus, MExtService, String, MJsCtx)
 
   /** Прозрачное приведение JsValue к содержимому Answer'а. */
   def unapply(json: JsValue): Option[Tu] = {
@@ -55,6 +55,6 @@ trait IServiceAnswer extends IAnswer {
 }
 
 
-case class ServiceAnswer(status: AnswerStatus, service: MExtService, replyTo: String, ctx2: JsCtx_t)
+case class ServiceAnswer(status: AnswerStatus, service: MExtService, replyTo: String, ctx2: MJsCtx)
   extends IServiceAnswer
 
