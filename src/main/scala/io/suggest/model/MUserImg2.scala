@@ -6,7 +6,6 @@ import io.suggest.util.UuidUtil
 import org.joda.time.DateTime
 import com.websudos.phantom.Implicits._
 import SioCassandraClient.session
-import MPict.Q_USER_IMG_ORIG
 
 import scala.concurrent.Future
 
@@ -52,6 +51,8 @@ sealed class MUserImgRecord extends CassandraTable[MUserImgRecord, MUserImg2] {
 object MUserImg2 extends MUserImgRecord with CassandraStaticModel[MUserImgRecord, MUserImg2] with DeleteByStrId {
 
   override val tableName = "i2"
+
+  val Q_USER_IMG_ORIG = "o"   // Бинарник, содержащий оригинал изображения
 
   def qOpt2q(qOpt: Option[String]): String = {
     qOpt getOrElse Q_USER_IMG_ORIG

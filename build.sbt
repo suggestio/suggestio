@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.13.1-SNAPSHOT"
+version := "1.13.2-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -23,7 +23,6 @@ libraryDependencies ++= {
   val slf4jVsn      = "1.7.7"
   val esVsn         = "1.3.2"
   val hadoopVsn     = "2.4.1"
-  val hbaseVsn      = "0.98.5-hadoop2"
   val akkaVsn       = "2.3.4"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
@@ -74,20 +73,6 @@ libraryDependencies ++= {
     "com.websudos"  %% "phantom-dsl" % phantomVersion,
     "org.xerial.snappy" % "snappy-java" % "1.+",
     "net.jpountz.lz4" % "lz4" % "1.+",
-    // hbase
-    "org.apache.hbase" % "hbase" % hbaseVsn,
-    "org.apache.hbase" % "hbase-server" % hbaseVsn
-      exclude("org.mortbay.jetty", "jetty")
-      exclude("org.mortbay.jetty", "jetty-util")
-      exclude("org.mortbay.jetty", "jetty-sslengine")
-      exclude("org.mortbay.jetty", "jsp-2.1")
-      exclude("org.mortbay.jetty", "jsp-api-2.1")
-      exclude("org.mortbay.jetty", "servlet-api-2.5")
-      exclude("tomcat", "jasper-compiler")
-      exclude("tomcat", "jasper-runtime")
-    ,
-    "org.apache.hbase" % "hbase-common" % hbaseVsn,
-    "org.hbase" % "asynchbase" % "1.5.0A-SNAPSHOT",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     //"cascading" % "cascading-hadoop" % cascadingVsn,      // hadoop <= 1.x

@@ -167,6 +167,19 @@ trait UuidIdStr {
 }
 
 
+/** Трейт картинки, эвакуированный из MPict в ходе удаление HBase. */
+trait ImgWithTimestamp {
+  def imgBytes: Array[Byte]
+  def timestampMs: Long
+}
+
+trait ImgMetaI {
+  def md: Map[String, String]
+  def timestampMs: Long
+}
+
+
+
 /** Реализация ImgWithTimestamp для моделей. */
 trait CassandraImgWithTimestamp extends ImgWithTimestamp {
   def timestamp: DateTime

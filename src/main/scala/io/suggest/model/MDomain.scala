@@ -1,14 +1,7 @@
 package io.suggest.model
 
-import scala.concurrent.{Future, future}
-import scala.concurrent.ExecutionContext.Implicits._
-import io.suggest.util.SiobixFs.fs
-import org.apache.hadoop.fs.Path
-import io.suggest.util.{UrlUtil, JacksonWrapper, SiobixFs}
-import org.hbase.async._
-import scala.collection.JavaConversions._
+import scala.concurrent.Future
 import org.joda.time.DateTime
-import scala.Some
 
 /**
  * Suggest.io
@@ -42,7 +35,8 @@ case class MDomain(
 
 object MDomain {
 
-  val BACKEND: Backend = new HBaseBackend
+  // 2015.jan.16 d555039065a2: удалён единственный оставшийся hbase backend
+  val BACKEND: Backend = null
 
   /**
    * Прочитать экземпляр модели из хранилища по ключу.
@@ -84,75 +78,5 @@ object MDomain {
     def getSeveral(dkeys: Seq[String]): Future[List[MDomain]]
   }
 
-
-  /** Backend для хранения данных модели в HBase. Используются reversed-ключи. */
-  class HBaseBackend extends Backend {
-    import SioHBaseAsyncClient._
-    import MObject.{HTABLE_NAME_BYTES, CF_DOMAIN}
-
-    private val cfBytes = CF_DOMAIN.getBytes
-    def QUALIFIER = CF_DOMAIN
-    private def qualifierBytes = cfBytes
-
-    def serialize(d: MDomain) = JacksonWrapper.serialize(d).getBytes
-    def deserialize(d: Array[Byte]) = JacksonWrapper.deserialize[MDomain](d)
-
-    def getForDkey(dkey: String): Future[Option[MDomain]] = {
-      val dkeyReversed = UrlUtil.reverseDomain(dkey)
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes)
-        .family(CF_DOMAIN)
-        .qualifier(qualifierBytes)
-      ahclient.get(getReq).map { kvs =>
-        if (kvs.isEmpty) {
-          None
-        } else {
-          val result = deserialize(kvs.head.value)
-          Some(result)
-        }
-      }
-    }
-
-    def getAll: Future[List[MDomain]] = collectAllFromScanner(getScanner)
-
-
-    def save(d: MDomain): Future[MDomain] = {
-      val dkeyReversed = UrlUtil.reverseDomain(d.dkey)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes, cfBytes, qualifierBytes, serialize(d))
-      ahclient.put(putReq).map {_ => d}
-    }
-
-    def delete(dkey: String): Future[Any] = {
-      val dkeyReversed = UrlUtil.reverseDomain(dkey)
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes, cfBytes, qualifierBytes)
-      ahclient.delete(delReq)
-    }
-
-    def getSeveral(dkeys: Seq[String]): Future[List[MDomain]] = {
-      val scanner = getScanner
-      val dkeysSorted = dkeys.sorted.distinct   // TODO Надо бы использовать какой-нибудь usort.
-      scanner.setStartKey(dkeysSorted.head)
-      scanner.setStopKey(dkeysSorted.last + " ")
-      // Чтобы сервер hbase отсеивал лишние ключи сразу, нужен regexp
-      val keyRe = "^(" + dkeys.mkString("|") + ")$"
-      scanner.setKeyRegexp(keyRe)
-      collectAllFromScanner(scanner)
-    }
-
-    private def getScanner = {
-      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
-      scanner.setFamily(cfBytes)
-      scanner.setQualifier(qualifierBytes)
-      scanner
-    }
-
-    private def collectAllFromScanner(scanner: Scanner): Future[List[MDomain]] = {
-      val folder = new AsyncHbaseScannerFold[List[MDomain]] {
-        def fold(acc0: List[MDomain], kv: KeyValue): List[MDomain] = {
-          deserialize(kv.value) :: acc0
-        }
-      }
-      folder(Nil, getScanner)
-    }
-  }
 
 }

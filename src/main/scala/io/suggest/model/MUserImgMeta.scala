@@ -7,7 +7,6 @@ import com.websudos.phantom.Implicits._
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
-import MPict.Q_USER_IMG_ORIG
 import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
 import MUserImg2.qOpt2q
 
@@ -19,10 +18,10 @@ import MUserImg2.qOpt2q
  * Модель используется те же квалифиеры, что и orig-img-модель, но собственную CF (таблицу).
  */
 case class MUserImgMeta2(
-  md: Map[String, String],
-  q: String,
-  id: UUID = UUID.randomUUID(),
-  timestamp: DateTime = DateTime.now()
+  md        : Map[String, String],
+  q         : String,
+  id        : UUID = UUID.randomUUID(),
+  timestamp : DateTime = DateTime.now()
 ) extends UuidIdStr with CassandraImgMeta {
 
   def save = MUserImgMeta2.insertMd(this)

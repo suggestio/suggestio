@@ -68,10 +68,6 @@ object SioConstants {
   // Конфиги всякие лежат в субдиректориях с таким названием
   val CONF_SUBDIR         = "conf"
 
-  // Название ключевого поля: DkeyUrlKey. В HBase название не сохраняется, но глобально в рамках каждого Flow.
-  val HBASE_KEY_FN = "hbaseRowKey"
-  val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
-
   // Время жизни рядов qi, создаваемых в базе на веб-морде.
   val DOMAIN_QI_TTL_SECONDS: Int = MyConfig.CONFIG.getInt("domain.qi.ttl.seconds") getOrElse 5.hours.toSeconds.toInt
 

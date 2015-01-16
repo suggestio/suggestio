@@ -208,28 +208,6 @@ trait JsonDfsBackendGlobalT extends JsonBackendT {
 }
 
 
-/** Бэкэнд для хранения random-access данных в MObject. */
-trait JsonHBaseBackendT extends JsonBackendT {
-
-  /** Экспортировать состояние, сериализовать и отправить в DFS. */
-  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = {
-    val dataSer = JacksonWrapper.serialize(data).getBytes
-    MObject.setProp(getSaveStateId, dataSer)
-  }
-
-  /** Прочитать состояние. */
-  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = {
-    val key = getSaveStateId
-    MObject.getProp(key) map { resultOpt =>
-      resultOpt.map {
-        v => JacksonWrapper.deserialize[ImportExportMap](v)
-      }
-    }
-  }
-
-}
-
-
 trait JsonBackendWrapperT extends JsonBackendT {
   protected def jsonBackend: JsonBackendT
 
@@ -245,35 +223,3 @@ trait JsonBackendWrapperT extends JsonBackendT {
 
   // Остальное наверное можно не врапать, т.к. те функции обычно не меняются в backend'ах.
 }
-
-
-
-/** Json-бэкэнд, умеющий работать без проблем, если ему задать значение бэкэнда. */
-trait JsonBackendSwitchableT extends JsonBackendWrapperT {
-
-  protected def getJsonBackendStorageType: StorageType.StorageType
-
-  def getSaveStateId: String = getClass.getName
-
-  /** В зависимости от конфига, выбрать тот или иной backend, пробросив в них абстрактные методы. */
-  protected def getJsonBackend: JsonBackendT = {
-    val me = this
-    getJsonBackendStorageType match {
-      case StorageType.DFS =>
-        new JsonDfsBackendGlobalT {
-          def exportState: ImportExportMap = me.exportState
-          def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
-          def getSaveStateId: String = me.getSaveStateId
-        }
-    }
-  }
-
-}
-
-
-/** json-бэкэнд, работающий без дополнительных настроек. */
-trait JsonBackendAutoswitchT extends JsonBackendSwitchableT {
-  protected def getJsonBackendStorageType = SioDefaultStorage.STORAGE
-  protected val jsonBackend = getJsonBackend
-}
-
