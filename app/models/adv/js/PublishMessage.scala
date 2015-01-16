@@ -10,7 +10,7 @@ import play.api.libs.json.JsString
  * Created: 13.01.15 13:01
  * Description: Модель запроса публикации сообщения и результаты запроса.
  */
-trait PublishMessageAction extends IAction {
+object PublishMessage extends IAction {
   override def action: String = "publishMessage"
 }
 
@@ -28,21 +28,11 @@ case class PublishMessageAsk(
   text        : Option[String] = None,
   pictures    : Seq[String] = Seq.empty
 )
-  extends CallbackServiceAskBuilder
-  with ServiceCall
-  with PublishMessageAction
-  with Ctx2Fields
+  extends ServiceAskBuilder
+  with InServiceAskBuilder
 {
 
-  override val CTX2 = super.CTX2
-
-  override def onSuccessArgsList: List[String] = List(CTX2)
-
-  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
-    super.onSuccessArgs(sb)
-      .append(',')
-      .append(JsString(CTX2)).append(':').append(CTX2)
-  }
+  override def action: String = PublishMessage.action
 
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     val sb1 = super.buildJsCodeBody(sb)
@@ -55,23 +45,5 @@ case class PublishMessageAsk(
     sb1
   }
 
-}
-
-
-/** Распарсенный экземпляр положительного ответа. */
-case class PublishMessageSuccess(
-  service   : MExtService,
-  ctx2      : JsCtx_t
-) extends ISuccess
-
-object PublishMessageSuccess extends ServiceAndCtxStaticUnapplier with PublishMessageAction with Ctx2Fields {
-  override type T = PublishMessageSuccess
-}
-
-
-/** Распарсенный экземпляр отрицательного результата исполнения. */
-case class PublishMessageError(service: MExtService, reason: String) extends IError
-object PublishMessageError extends StaticServiceErrorUnapplier with PublishMessageAction {
-  override type T = PublishMessageError
 }
 

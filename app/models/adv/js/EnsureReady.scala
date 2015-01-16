@@ -1,8 +1,6 @@
 package models.adv.js
 
 import models.adv.js.ctx.JsCtx_t
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -11,9 +9,8 @@ import play.api.libs.functional.syntax._
  * Description: Протокол взаимодействия с ensureReady-логикой. Эта логика инициализирует состояние js-сервера
  * в браузере клиента, инициализирует начальное состояние и подтверждает общую исправность js-сервера.
  */
-sealed trait EnsureReadyAction extends IAction {
-  override def action: String = "ensureReady"
-  def CTX1 = "ctx1"
+object EnsureReady extends IAction {
+  override val action: String = "ensureReady"
 }
 
 
@@ -21,16 +18,9 @@ sealed trait EnsureReadyAction extends IAction {
  * Запрос инициализации js-компонента с кодогенератором.
  * @param ctx1 Начальное состояние.
  */
-case class EnsureReadyAsk(ctx1: JsCtx_t) extends AskBuilder with EnsureReadyAction {
+case class EnsureReadyAsk(ctx1: JsCtx_t) extends AskBuilder {
 
-  override val CTX1 = super.CTX1
-
-  override def onSuccessArgsList = List(CTX1)
-  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
-    sb.append(JsString(CTX1))
-      .append(':')
-      .append(CTX1)
-  }
+  override def action: String = EnsureReady.action
 
   /**
    * Генерация основного js-кода.
@@ -46,32 +36,3 @@ case class EnsureReadyAsk(ctx1: JsCtx_t) extends AskBuilder with EnsureReadyActi
 
 }
 
-
-/** Компаньон положительного ответа на запрос инициализации. */
-object EnsureReadySuccess extends StaticUnapplier with EnsureReadyAction {
-  override type T = EnsureReadySuccess
-  override type Tu = JsCtx_t
-
-  override def statusExpected: String = "success"
-
-  implicit val ersReads: Reads[EnsureReadySuccess] = {
-    val v = (JsPath \ CTX1).read[JsCtx_t]
-    v.map { EnsureReadySuccess.apply }
-  }
-
-  override def fromJs(args: JsValue): Tu = {
-    args.validate[EnsureReadySuccess]
-      .get
-      .ctx1
-  }
-}
-
-/** Положительный ответ на запрос инициализации. Обычно используется через unapply() в ws-акторе. */
-case class EnsureReadySuccess(ctx1: JsCtx_t)
-
-
-/** Ошибка получена. */
-object EnsureReadyError extends StaticErrorUnapplier with EnsureReadyAction {
-  override type T = EnsureReadyError
-}
-case class EnsureReadyError(reason: String)

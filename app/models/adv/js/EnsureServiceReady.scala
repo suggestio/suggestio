@@ -11,25 +11,15 @@ import play.api.libs.json._
  * Description: Модели для работы с инициализацией js-api одного сервиса.
  */
 
-sealed trait EnsureServiceReadyAction extends IAction {
+object EnsureServiceReady extends IAction {
   override def action = "ensureServiceReady"
 }
 
 
 /** Генерация js-кода, который занимается сборкой и отправкой запроса инициализации в клиент сервиса. */
-case class EnsureServiceReadyAsk(service: MExtService, ctx1: JsCtx_t) extends CallbackServiceAskBuilder
-with EnsureServiceReadyAction with Ctx2Fields {
+case class EnsureServiceReadyAsk(service: MExtService, ctx1: JsCtx_t) extends ServiceAskBuilder {
 
-  override val CTX2   = super.CTX2
-
-  override def onSuccessArgsList: List[String] = {
-    List(CTX2)
-  }
-  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
-    super.onSuccessArgs(sb)
-      .append(',')
-      .append(JsString(CTX2)).append(':').append(CTX2)
-  }
+  override def action: String = EnsureServiceReady.action
 
   /**
    * Генерация основного js-кода.
@@ -48,21 +38,4 @@ with EnsureServiceReadyAction with Ctx2Fields {
   }
 
 }
-
-
-case class EnsureServiceReadySuccess(
-  service : MExtService,
-  ctx2    : JsCtx_t
-) extends ISuccess
-object EnsureServiceReadySuccess extends ServiceAndCtxStaticUnapplier with EnsureServiceReadyAction {
-  override type T = EnsureServiceReadySuccess
-}
-
-
-
-/** Ошибка получена. */
-object EnsureServiceReadyError extends StaticServiceErrorUnapplier with EnsureServiceReadyAction {
-  override type T = EnsureServiceReadyError
-}
-case class EnsureServiceReadyError(service: MExtService, reason: String)
 

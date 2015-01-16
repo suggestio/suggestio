@@ -1,10 +1,8 @@
 package models.adv.js
 
-import models.adv.MExtServices
-import models.adv.MExtServices.MExtService
-import models.adv.js.ctx.JsCtx_t
+import io.suggest.model.EnumMaybeWithName
+import models.adv.MExtService
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -25,17 +23,24 @@ trait AskBuilder extends IAction {
 
   private def onSomethingJson(status: String, sb: StringBuilder): StringBuilder = {
     sb.append('{')
-      .append(JsString("replyTo")).append(':').append(JsString(action)).append(',')
-      .append(JsString("status")).append(':').append(JsString(status)).append(',')
-      .append(JsString("args")).append(':').append('{')
+      .append(JsString(Answer.REPLY_TO_FN)).append(':').append(JsString(action)).append(',')
+      .append(JsString(Answer.STATUS_FN)).append(':').append(JsString(status)).append(',')
   }
   private def afterSomethingJson(sb: StringBuilder): StringBuilder = {
-    sb.append('}')    // args{}
-      .append('}')    // msg{}
+    sb.append('}')    // msg{}
   }
 
-  def onSuccessArgsList: List[String]
-  def onSuccessArgs(sb: StringBuilder): StringBuilder
+  def onSuccessArgsList: List[String] = List(Answer.CTX2)
+
+  def onSuccessArgs(sb: StringBuilder): StringBuilder = {
+    onSuccessArgsList.foreach { fn =>
+      sb.append(JsString(fn))
+        .append(':')
+        .append(fn)
+    }
+    sb
+  }
+
   def onSuccessCallbackBuilder(sb: StringBuilder): StringBuilder = {
     sb.append("function(ws")
     onSuccessArgsList.foreach { argName =>
@@ -43,16 +48,16 @@ trait AskBuilder extends IAction {
     }
     sb.append("){ws.send(JSON.stringify(")
     // Сборка ответа
-    onSomethingJson("success", sb)
+    onSomethingJson(AnswerStatuses.Success.jsStr, sb)
     onSuccessArgs(sb)
     afterSomethingJson(sb)
-    // Завершена сборка ответа
+    // Завершена сборка ответа: завершаем рендер вызова function(){}.
     sb.append("));}")
   }
 
   def onErrorCallbackBuilder(sb: StringBuilder): StringBuilder = {
     sb.append("function(ws,reason){ws.send(JSON.stringify(")
-    onSomethingJson("error", sb)
+    onSomethingJson(AnswerStatuses.Error.jsStr, sb)
     onErrorArgs(sb)
     afterSomethingJson(sb)
     sb.append("));}")
@@ -66,8 +71,8 @@ trait AskBuilder extends IAction {
   /**
    * В конце сборки каждого запроса вызывается ".execute(onSuccess, onError)".
    * Тут метод, занимающийся генерацией этого кода.
-   * @param sb
-   * @return
+   * @param sb Аккамулятор строки.
+   * @return Экземпляр StringBuilder, желательно тот же самый, что и sb.
    */
   def executeCallBuilder(sb: StringBuilder): StringBuilder = {
     sb.append(".execute(")
@@ -110,138 +115,14 @@ trait AskBuilder extends IAction {
 }
 
 
-/** Заготовка для быстрой сборки статических компаньонов классов js-протокола, умеющих делать unapply() из JSON'а. */
-trait StaticUnapplier extends IAction {
-
-  /** Класс-компаньон. */
-  type T
-
-  /** Результат, возвращаемый из unapply(). Если больше одного аргумента, то нужен кортеж. */
-  type Tu
-
-  /** Этот элемент точно подходит. Нужно десериализовать данные из него. */
-  def fromJs(json: JsValue): Tu
-
-  /** Статус, который требуется классом-компаньоном. */
-  def statusExpected: String
-
-  def isStatusExpected(json: JsObject): Boolean = {
-    (json \ "status")
-      .asOpt[String]
-      .contains(statusExpected)
-  }
-
-  def isReplyToMe(json: JsObject): Boolean = {
-    (json \ "replyTo")
-      .asOpt[String]
-      .contains(action)
-  }
-
-  def unapplyJs(json: JsObject): Option[Tu] = {
-    if (isReplyToMe(json) && isStatusExpected(json)) {
-      Some(fromJs(json \ "args"))
-    } else {
-      None
-    }
-  }
-
-  def unapply(a: Any): Option[Tu] = {
-    a match {
-      case jso: JsObject    => unapplyJs(jso)
-      case _                => None
-    }
-  }
-
-}
-
-
-trait Ctx2Fields {
-  def CTX2 = "ctx2"
-}
-
-/** Интерфейс экземпляра успешного исполнения приказа. */
-trait ISuccess {
-  def service: MExtService
-  def ctx2: JsCtx_t
-}
-
-/** Реализация StaticUnapplier заточенный под типичный success-ответ: (service, ctx2). */
-trait ServiceAndCtxStaticUnapplier extends StaticUnapplier with Ctx2Fields {
-  override type T <: ISuccess
-  override type Tu = (MExtService, JsCtx_t)
-  override def statusExpected = "success"
-
-  def apply(service: MExtService, ctx2: JsCtx_t): T
-
-  implicit val hpsReads: Reads[T] = {
-    val s =
-      ServiceStatic.serviceFieldReads and
-      (JsPath \ CTX2).read[JsObject]
-    s(apply _)
-  }
-
-  /** Этот элемент точно подходит. Нужно десериализовать данные из него. */
-  override def fromJs(json: JsValue): Tu = {
-    val v = json.validate[T].get
-    (v.service, v.ctx2)
-  }
-
-}
-
-/** Интерфейс экземпляров ошибок. */
-trait IError {
-  def service: MExtService
-  def reason: String
-}
-
-
-object StaticErrorUnapplier {
-  type Tu = String
-  implicit val seReads: Reads[String] = {
-    (JsPath \ "reason").read[String]
-  }
-}
-trait StaticErrorUnapplier extends StaticUnapplier {
-  override type Tu = StaticErrorUnapplier.Tu
-  override def statusExpected: String = "error"
-  override def fromJs(json: JsValue): Tu = {
-    json.validate(StaticErrorUnapplier.seReads)
-      .get
-  }
-}
-
-object StaticServiceErrorUnapplier {
-  type Tu = (MExtService, String)
-  implicit val sseReads: Reads[Tu] = {
-    val p = ServiceStatic.serviceFieldReads and
-      StaticErrorUnapplier.seReads
-    p.apply(Tuple2(_, _))
-  }
-}
-trait StaticServiceErrorUnapplier extends StaticUnapplier {
-  override type Tu = StaticServiceErrorUnapplier.Tu
-  override def statusExpected = "error"
-  override def fromJs(json: JsValue): Tu = {
-    json.validate(StaticServiceErrorUnapplier.sseReads)
-      .get
-  }
-}
-
-
-object ServiceStatic {
-  val SERVICE = "service"
-
-  implicit val serviceFieldReads = (JsPath \ SERVICE).read[String].map(MExtServices.withName(_): MExtService)
-}
-
 /** В параметры onSuccess и onError колбэков добавляется параметр service для уточнения целевого актора. */
-trait CallbackServiceAskBuilder extends AskBuilder {
-  import ServiceStatic._
-
+trait ServiceAskBuilder extends AskBuilder {
   def service: MExtService
 
   private def appendService(sb: StringBuilder): StringBuilder = {
-    sb.append(JsString(SERVICE)).append(':').append(JsString(service.strId))
+    sb.append(JsString(ServiceAnswer.SERVICE_FN))
+      .append(':')
+      .append(JsString(service.strId))
   }
 
   override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
@@ -257,12 +138,33 @@ trait CallbackServiceAskBuilder extends AskBuilder {
 
 
 /** Добавить вызов ".service(...)". */
-trait ServiceCall extends CallbackServiceAskBuilder {
+trait InServiceAskBuilder extends ServiceAskBuilder {
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
       .append(".service(")
       .append(JsString(service.strId))
       .append(')')
   }
+}
+
+
+/** Статусы ответов js серверу. */
+object AnswerStatuses extends Enumeration with EnumMaybeWithName {
+
+  protected abstract sealed class Val(val jsStr: String) extends super.Val(jsStr) {
+    def isSuccess: Boolean
+  }
+
+  type AnswerStatus = Val
+  override type T = AnswerStatus
+
+  val Success: AnswerStatus = new Val("success") {
+    override def isSuccess = true
+  }
+
+  val Error: AnswerStatus   = new Val("error") {
+    override def isSuccess = false
+  }
+
 }
 

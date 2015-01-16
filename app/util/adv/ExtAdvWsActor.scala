@@ -5,8 +5,7 @@ import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
 import models.adv._
-import models.adv.js.ctx.JsCtx_t
-import models.adv.js.{EnsureReadyError, EnsureReadySuccess, AskBuilder, EnsureReadyAsk}
+import models.adv.js.{EnsureReady, Answer, AskBuilder, EnsureReadyAsk}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -170,15 +169,18 @@ sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors w
     }
 
     override def receiverPart: Receive = {
-      // Положительный ответ на ensureReady
-      case EnsureReadySuccess(ctx1) =>
-        trace(s"$name: success. New context = $ctx1")
-        become(new WaitForTargetsState(targetsFut, ctx1))
-
-      // Проблемы при инициализации
-      case EnsureReadyError(reason) =>
-        error(s"$name: js error: $reason")
-        become(new DummyState)
+      // Пришел какой-то ответ на ensureReady
+      case Answer(status, replyTo, ctx1) if replyTo == EnsureReady.action =>
+        val nextState = if (status.isSuccess) {
+          // Инициализация выполнена.
+          trace(s"$name: success. New context = $ctx1")
+          new WaitForTargetsState(targetsFut, ctx1)
+        } else {
+          // Проблемы при инициализации
+          error(s"$name: js returned error")    // TODO Выводить ошибку из контекста.
+          new DummyState
+        }
+        become(nextState)
     }
   }
 

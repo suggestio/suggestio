@@ -114,29 +114,50 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
     }
 
     override def receiverPart: Receive = {
-      // Сообщение от SioPR.js об удачной инициализации
-      case EnsureServiceReadySuccess((_, ctx2)) =>
-        val mctx2 = MJsCtx(ctx2)
-        val puctxOpt = mctx2.pictureUpload
-        val nextState = if (puctxOpt contains UrlPictureUpload) {
-          new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), args.targets0)
-        } else {
-          new PreparePictureStorageState(ctx2, args.targets0)
-        }
-        become(nextState)
+      case ServiceAnswer(status, service, replyTo, ctx2) if replyTo == EnsureServiceReady.action =>
+        if (status.isSuccess) {
+          // Сообщение от SioPR.js об удачной инициализации
+          val mctx2 = MJsCtx(ctx2)
+          val puctxOpt = mctx2.pictureUpload
+          val nextState = if (puctxOpt contains UrlPictureUpload) {
+            new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), args.targets0)
+          } else {
+            new PreparePictureStorageState(ctx2, args.targets0)
+          }
+          become(nextState)
 
-      // При инициализации клиента возникла проблема.
-      case EnsureServiceReadyError((_, reason)) =>
-        error(name + ": JS failed to ensureServiceReady: " + reason)
-        harakiri()
+        } else {
+          // При инициализации клиента возникла проблема. Смысла продолжать нет.
+          error(name + ": JS failed to ensureServiceReady: ")  // TODO Печатать reason в логи
+          // TODO Рендерить ошибку в брузер клиенту.
+          harakiri()
+        }
     }
   }
 
 
   /** Состояния, исполняемые в рамках обработки цели. */
   trait TargetedFsmState extends FsmState {
+    /** Остаточный список целей. */
     def targets: ActorTargets_t
+
+    /** Текущая цель -- это первая цель в списке. */
     def currTarget = targets.head
+
+    /**
+     * Переход на следующую цель.
+     * @param ctx2 Новое состояние.
+     */
+    def nextTargetState(ctx2: JsCtx_t): Unit = {
+      val tl = targets.tail
+      if (tl.isEmpty) {
+        info(s"$name Done work for service $service")
+        harakiri()
+      } else {
+        val nextState = new PreparePictureStorageState(ctx2, tl)
+        become(nextState)
+      }
+    }
   }
 
 
@@ -170,30 +191,32 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
     }
 
     override def receiverPart: Receive = {
-      case PreparePictureStorageSuccess((_, ctx2)) =>
-        val mctx2 = MJsCtx(ctx2)
-        val puctx = mctx2.pictureUpload
-        if (puctx.isEmpty) {
-          error(s"$name Context _picture.upload is missing or invalid.")
-          harakiri()
-        } else {
-          val nextState = puctx.get match {
-            case s2sCtx: S2sPictureUpload =>
-              new S2sRenderAd2ImgState(ctx2, s2sCtx, targets)
-            case C2sPictureUpload =>
-              new C2sPutPictureToStorageState(ctx2)
-            case UrlPictureUpload =>
-              // Возможно unreachable code, но избавляет от warning'a.
-              new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), targets)
-            case SkipPictureUpload =>
-              new PublishMessageState(ctx2, None, targets)
+      case ServiceAnswer(status, service, replyTo, ctx2) if replyTo == PreparePictureStorage.action =>
+        if (status.isSuccess) {
+          val mctx2 = MJsCtx(ctx2)
+          val puctx = mctx2.pictureUpload
+          if (puctx.isEmpty) {
+            error(s"$name Context _picture.upload is missing or invalid.")
+            harakiri()
+          } else {
+            val nextState = puctx.get match {
+              case s2sCtx: S2sPictureUpload =>
+                new S2sRenderAd2ImgState(ctx2, s2sCtx, targets)
+              case C2sPictureUpload =>
+                new C2sPutPictureToStorageState(ctx2)
+              case UrlPictureUpload =>
+                // Возможно unreachable code, но избавляет от warning'a.
+                new PublishMessageState(ctx2, Some(getExtAdImgAbsUrl()), targets)
+              case SkipPictureUpload =>
+                new PublishMessageState(ctx2, None, targets)
+            }
+            become(nextState)
           }
-          become(nextState)
-        }
 
-      case PreparePictureStorageError((_, reason)) =>
-        error(name + ": Failed to ensure picture storage persistence: " + reason)
-        harakiri()
+        } else {
+          error(name + ": Failed to ensure picture storage persistence: ")    // TODO Печатать причину
+          harakiri()    // TODO Переходить на следующий таргет, удалять error из context, рендерить на экран ошибку.
+        }
     }
   }
 
@@ -332,24 +355,18 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
     override def receiverPart: Receive = {
       // js рапортует, что сообщение удалось разместить. Нужно перейти на следующую итерацию.
-      case PublishMessageSuccess((_, ctx2)) =>
-        ???
+      case ServiceAnswer(status, service, replyTo, ctx2) if replyTo == PublishMessage.action =>
+        if (status.isSuccess) {
+          trace(s"$name target ${currTarget.target.idOrNull} reached OK.")
+          // TODO Сохранить в постоянное хранилище контекстные данные текущей цели.
+          // TODO Рендерить сообщение об удачном размещении на экран юзеру.
 
-      // Ошибка публикации сообщения. Ругнутся в логи, по возможности написать об этом юзеру, перейти к следующей цели.
-      case PublishMessageError((_, reason)) =>
-        error(service.strId + "Failed to publish message: " + reason)
-        ???
-    }
-
-    def nextTargetState(ctx2: JsCtx_t): Unit = {
-      val tl = targets.tail
-      if (tl.isEmpty) {
-        info(s"$name Done work for service $service")
-        harakiri()
-      } else {
-        val nextState = new PreparePictureStorageState(ctx2, tl)
-        become(nextState)
-      }
+        } else {
+          // Ошибка публикации сообщения. Ругнутся в логи, по возможности написать об этом юзеру, перейти к следующей цели.
+          error(service.strId + "Failed to publish message: ")    // TODO Рендерить reason в логи
+          // TODO Рендерить ошибку на экран юзеру
+        }
+        nextTargetState(ctx2)
     }
   }
 

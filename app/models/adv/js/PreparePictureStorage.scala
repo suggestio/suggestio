@@ -11,7 +11,7 @@ import play.api.libs.functional.syntax._
  * Created: 30.12.14 11:14
  * Description: Модели для взаимодействий на языке хранилищь.
  */
-trait PreparePictureStorageAction extends IAction {
+object PreparePictureStorage extends IAction {
   override def action: String = "hasPictureStorage"
 }
 
@@ -21,19 +21,10 @@ case class PreparePictureStorageAsk(
   name    : String = "suggest.io",
   descr   : Option[String] = None
 )
-  extends CallbackServiceAskBuilder
-  with ServiceCall
-  with PreparePictureStorageAction
-  with Ctx2Fields
+  extends ServiceAskBuilder
+  with InServiceAskBuilder
 {
-  override val CTX2 = super.CTX2
-
-  override def onSuccessArgsList: List[String] = List(CTX2)
-  override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
-    super.onSuccessArgs(sb)
-      .append(',')
-      .append(JsString(CTX2)).append(':').append(CTX2)
-  }
+  override def action: String = PreparePictureStorage.action
 
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
@@ -43,16 +34,4 @@ case class PreparePictureStorageAsk(
       sb.append(".setDescription(").append(JsString(descr.get)).append(')')
     sb
   }
-}
-
-
-case class PreparePictureStorageSuccess(service: MExtService, ctx2: JsCtx_t) extends ISuccess
-object PreparePictureStorageSuccess extends ServiceAndCtxStaticUnapplier with PreparePictureStorageAction {
-  override type T = PreparePictureStorageSuccess
-}
-
-
-case class PreparePictureStorageError(service: MExtService, reason: String)
-object PreparePictureStorageError extends StaticServiceErrorUnapplier with PreparePictureStorageAction {
-  override type T = PreparePictureStorageError
 }
