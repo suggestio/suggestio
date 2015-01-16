@@ -34,6 +34,7 @@ object ServiceAnswer {
     json.asOpt[ServiceAnswer]
       .flatMap { unapply }
   }
+
   def unapply(any: Any): Option[Tu] = {
     any match {
       case sa: ServiceAnswer => unapply(sa)

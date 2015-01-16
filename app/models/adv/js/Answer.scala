@@ -23,28 +23,29 @@ object Answer {
   val REPLY_TO_FN   = "replyTo"
 
   implicit val contextReads: Reads[JsCtx_t] = {
-    (JsPath \ CTX2).read[JsObject]
+    (JsPath \ CTX2)
+      .read[JsCtx_t]
   }
 
   /** JSON-парсер для поля статуса. */
   implicit val statusReads: Reads[AnswerStatus] = {
     (JsPath \ STATUS_FN)
       .read[String]
-        .map(AnswerStatuses.withName(_): AnswerStatus)
-    }
+      .map(AnswerStatuses.withName(_): AnswerStatus)
+  }
 
-    val replyToReads: Reads[String] = {
-      (JsPath \ REPLY_TO_FN)
-        .read[String]
-    }
+  val replyToReads: Reads[String] = {
+    (JsPath \ REPLY_TO_FN)
+      .read[String]
+  }
 
-    /** JSON-парсер для ответов. */
-    implicit val answerReads: Reads[Answer] = {
-      val answerReader = statusReads  and  replyToReads  and  contextReads
-      answerReader(apply _)
-    }
+  /** JSON-парсер для ответов. */
+  implicit val answerReads: Reads[Answer] = {
+    val answerReader = statusReads  and  replyToReads  and  contextReads
+    answerReader(apply _)
+  }
 
-    type Tu = (AnswerStatus, String, JsCtx_t)
+  type Tu = (AnswerStatus, String, JsCtx_t)
 
   /** Прозрачное приведение JsValue к содержимому Answer'а. */
   def unapply(json: JsValue): Option[Tu] = {
