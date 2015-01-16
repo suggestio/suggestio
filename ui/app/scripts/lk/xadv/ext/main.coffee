@@ -49,7 +49,7 @@ define [], () ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
       ctx2 = new Object()
       #SioPR.service("vk").preparePublishMessageBuilder().setMessage("test from adapter").execute()
-      #SioPR.service("vk").preparePictureStorageBuilder().execute()
+      SioPR.service("vk").preparePictureStorageBuilder().execute()
       onSuccess(@ws, ctx2)
 
 
@@ -116,12 +116,23 @@ define [], () ->
       params =
         group_id: @ctx.userId
 
-      onSuccess = (response) ->
+      callback = (data) ->
         console.log "---"
-        console.log response
+        @ctx =
+          _picture:
+            size:
+              width: 600
+              height: 500
+            upload:
+              mode: "s2s"
+              url: data.response.upload_url
+              partName: "photo"
+
+        console.log @ctx
+        onSuccess @ctx
         console.log "---"
 
-      VK.Api.call "photos.getWallUploadServer", params, onSuccess
+      VK.Api.call "photos.getWallUploadServer", params, callback
 
 
 
