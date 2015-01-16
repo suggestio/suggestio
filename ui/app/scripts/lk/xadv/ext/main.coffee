@@ -66,7 +66,8 @@ define [], () ->
 
   class VkAdapter extends IAdapter
     API_ID = 4705589
-    USER_ID = null
+
+    userId = null
 
     constructor: (@ws) ->
       VK.init
@@ -78,7 +79,7 @@ define [], () ->
 
       authInfo = (response) ->
         if response.session
-          USER_ID = response.session.mid
+          userId = response.session.mid
         else
           VK.Auth.login authInfo, ACESS_LVL
 
@@ -89,7 +90,7 @@ define [], () ->
       return new VkPublishMessageBuilder(@ws, ctx0)
 
     preparePictureStorageBuilder: (ctx = new Object()) ->
-      ctx.userId = USER_ID
+      ctx.userId = userId
       return new VkPictureStorageBuilder(@ws, ctx)
 
 
@@ -158,6 +159,15 @@ define [], () ->
       message = _message
       return @
 
+    saveWallPhoto: () ->
+      params =
+        user_id: userId
+
+      callback = (data) ->
+        console.log data
+
+      VK.Api.call "photos.saveWallPhoto", params, callback
+      
     execute: (onSuccess, onError) ->
       onSuccess = () ->
         console.log "success call for post message"
