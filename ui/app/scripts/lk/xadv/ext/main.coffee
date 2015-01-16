@@ -5,6 +5,7 @@ define [], () ->
     ws = null
     serviceList = new Array()
 
+    # singletone
     constructor: ->
       if instance?
         return instance
@@ -17,7 +18,7 @@ define [], () ->
       return new PrepareEnsureReadyBuilder(ws)
 
     @prepareEnsureServiceReady: (serviceName, ctx1) ->
-      return new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx1)
+      return new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
 
     @setService: (name, adapter) ->
       serviceList[name] = adapter
@@ -31,13 +32,13 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureReadyBuilder execute"
-      ctx1 = new Object()
-      onSuccess @ws, ctx1
+      ctx = new Object()
+      onSuccess @ws, ctx
 
   class PrepareEnsureServiceReadyBuilder
     adapter = null
 
-    constructor: (@ws, @name, @ctx1) ->
+    constructor: (@ws, @name, @ctx) ->
       adapter = new VkAdapter(@ws)
       SioPR.setService @name, adapter
 
@@ -47,10 +48,11 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
-      ctx2 = new Object()
+      ctx = new Object()
       #SioPR.service("vk").preparePublishMessageBuilder().setMessage("test from adapter").execute()
-      SioPR.service("vk").preparePictureStorageBuilder().execute()
-      onSuccess(@ws, ctx2)
+      #SioPR.service("vk").preparePictureStorageBuilder().execute()
+      #SioPR.service("vk").preparePutPicture().execute()
+      onSuccess(@ws, ctx)
 
 
 
@@ -58,11 +60,14 @@ define [], () ->
 
     constructor: (@ws) ->
 
-    @preparePublishMessageBuilder: (ctx0) ->
-      return new IPublishMessageBuilder(@ws, ctx0)
+    @preparePublishMessageBuilder: (ctx) ->
+      return new IPublishMessageBuilder(@ws, ctx)
 
-    @preparePictureStorage: (ctx2) ->
-      return new PictureStorageBuilder(@ws, ctx2)
+    @preparePictureStorage: (ctx) ->
+      return new PictureStorageBuilder(@ws, ctx)
+
+    @preparePutPicture: (ctx) ->
+      return new PutPictureBuilder(@ws, ctx)
 
   class VkAdapter extends IAdapter
     API_ID = 4705589
@@ -85,13 +90,17 @@ define [], () ->
 
       VK.Auth.getLoginStatus authInfo
 
-    preparePublishMessageBuilder: (ctx0) ->
+    preparePublishMessageBuilder: (ctx = new Object()) ->
       console.log "prepare adapter for msg"
-      return new VkPublishMessageBuilder(@ws, ctx0)
+      return new VkPublishMessageBuilder(@ws, ctx)
 
     preparePictureStorageBuilder: (ctx = new Object()) ->
       ctx.userId = userId
       return new VkPictureStorageBuilder(@ws, ctx)
+
+    preparePutPicture: (ctx = new Object()) ->
+      ctx.userId = userId
+      return new VkPutPictureBuilder(@ws, ctx)
 
 
 
@@ -118,7 +127,11 @@ define [], () ->
         group_id: @ctx.userId
 
       callback = (data) ->
+        if data.error
+          onError data.error
+
         console.log "---"
+        console.log data
         @ctx =
           _picture:
             size:
@@ -137,9 +150,39 @@ define [], () ->
 
 
 
+  class PutPictureBuilder
+
+    constructor: (@ctx) ->
+
+    setPictureUrl: (url) ->
+      return true
+
+    setDescription: (description) ->
+      return true
+
+    execute: (onSucess, onError) ->
+      onSuccess()
+
+  class VkPutPictureBuilder extends PutPictureBuilder
+
+    execute: (onSucess, onError) ->
+      console.log "vk put picture execute"
+      params =
+        user_id: @ctx.userId
+
+      callback = (data) ->
+        console.log data
+
+        if data.error && onError?
+          onError data.error
+
+      VK.Api.call "photos.saveWallPhoto", params, callback
+
+
+
   class IPublishMessageBuilder
 
-    constructor: (@ws, @ctx0) ->
+    constructor: (@ws, @ctx) ->
 
     setUrl: (url) ->
       return @
@@ -159,23 +202,18 @@ define [], () ->
       message = _message
       return @
 
-    saveWallPhoto: () ->
-      params =
-        user_id: userId
+    execute: (onSuccess, onError) ->
 
       callback = (data) ->
-        console.log data
-
-      VK.Api.call "photos.saveWallPhoto", params, callback
-      
-    execute: (onSuccess, onError) ->
-      onSuccess = () ->
-        console.log "success call for post message"
+        if data.error
+          onError data
+        else
+          onSuccess data
 
       params =
         message: message
 
-      VK.Api.call "wall.post", params, onSuccess
+      VK.Api.call "wall.post", params, callback
 
 
 
