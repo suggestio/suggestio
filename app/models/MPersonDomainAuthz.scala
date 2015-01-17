@@ -8,7 +8,6 @@ import util._
 import SiobixFs.fs
 import org.apache.hadoop.fs.{FileStatus, Path}
 import io.suggest.model.JsonDfsBackend
-import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
@@ -43,8 +42,8 @@ final case class MPersonDomainAuthz(
 
   // Связи с другими моделями и компонентами системы.
   @JsonIgnore def person(implicit client: Client) = MPerson.getById(personId)
-  def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
-  def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
+  def maybeRevalidate(sendEvents:Boolean = true) = ??? //DomainValidator.maybeRevalidate(this, sendEvents)
+  def revalidate(sendEvents:Boolean = true)      = ??? //DomainValidator.revalidate(this, sendEvents)
 
 
   /**
@@ -131,9 +130,7 @@ object MPersonDomainAuthz {
 
   private val LOGGER = Logger(getClass)
 
-  private val BACKEND: Backend = StorageUtil.STORAGE match {
-    case DFS    => new DfsBackend
-  }
+  private val BACKEND: Backend = new DfsBackend
 
   // Длина кода валидации
   private val BODY_CODE_LEN = 16

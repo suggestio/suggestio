@@ -10,7 +10,6 @@ import concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
-import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
 import util.event.SiowebNotifier
 import util.urls_supply.SeedUrlsSupplier
 
@@ -49,13 +48,6 @@ object SiowebSup {
     Await.result(sel ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
   }
 
-  /**
-   * Выдать ref менеджера менеджера запросов в доменам-сайтам.
-   * @return ActorRef
-   */
-  def getDomainRequesterRef = getChildRef(DOMAIN_REQUESTER_NAME).get
-
-
   // Сообщение запроса дочернего процесса
   sealed case class GetChildRef(childName: String)
 }
@@ -75,7 +67,6 @@ class SiowebSup extends Actor with Logs {
       throw new Exception("self.path==%s but it must be equal to val %s.actorPath = %s" format (self.path, SiowebSup.getClass.getSimpleName, actorPath))
     }
     // Запускаем все дочерние процессы.
-    DomainRequester.startLink(context)
     NewsQueue4Play.startLinkSup(context)
     SiowebNotifier.startLink(context)
     SeedUrlsSupplier.startLink(context)

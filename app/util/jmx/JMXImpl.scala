@@ -32,8 +32,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MWelcomeAdJmx,
     new MAdJmx,
     new MAdnNodeJmx,
-    new MPictJmx,
-    new MObjectJmx,
     new MMartCategoryJmx,
     new EmailActivationJmx,
     new EmailPwIdentJmx,

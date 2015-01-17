@@ -53,7 +53,7 @@ object DomainRequester {
    * Узнать actorRef для актора DomainRequester. Можно использовать actorFor(path), но тут по сути короче.
    * @return ActorRef
    */
-  protected def actorRef : ActorRef = SiowebSup.getDomainRequesterRef
+  protected def actorRef : ActorRef = ??? //SiowebSup.getDomainRequesterRef
 
   /**
    * Отправить ссылку в псевдо-очередь.

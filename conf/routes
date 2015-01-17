@@ -370,15 +370,9 @@ GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 
 ### Барахло от Sio-v1 (не работает, в основном):
 # Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
-GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
-## Callback'и инсталляторов и валидаторов сайтов.
-POST /js/add_domain                             controllers.Js.addDomain
-POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
-GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
-POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
 
 ## compat
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
