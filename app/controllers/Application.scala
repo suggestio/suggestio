@@ -13,8 +13,9 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import views.html.static.sitemap._
+import views.html.sys1._
 
-object Application extends SioController with PlayMacroLogsImpl {
+object Application extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -117,6 +118,17 @@ object Application extends SioController with PlayMacroLogsImpl {
         CONTENT_TYPE  -> "text/xml",
         CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
       )
+  }
+
+
+  // 2014.jan.18: Из ctl.Sys удалена поддержка siobix в связи с заброшенностью и
+  // экстренным выпиливанием лишних зависимостей.
+  // Последний коммит-родитель: 5572decfec00
+  // В sys-контроллере остался только один экшен, поэтому он был закинут в эту помойку.
+
+  /** indexTpl.scala.html для системной панели. */
+  def sysIndex = IsSuperuserOr404 { implicit request =>
+    Ok(indexTpl())
   }
 
 }

@@ -158,20 +158,7 @@ POST /market/join/callback              controllers.MarketJoin.callbackRequestSu
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
 
-GET  /sys                               controllers.Sys.index
-GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
-GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
-GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
-GET  /sys/addSite                       controllers.Sys.addSiteForm
-POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
-POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
-POST /sys/majorRebuild                  controllers.Sys.majorRebuild
-GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
-GET  /sys/siobix                        controllers.Sys.siobixIndex
-GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
-
-GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
-POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
+GET  /sys                               controllers.Application.sysIndex
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

@@ -11,7 +11,6 @@ import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
 import util.event.SiowebNotifier
-import util.urls_supply.SeedUrlsSupplier
 
 /**
  * Suggest.io
@@ -24,11 +23,11 @@ import util.urls_supply.SeedUrlsSupplier
 // Статический клиент к актору. Запускает всё дерево супервизора.
 object SiowebSup {
 
-  private val timeoutSec = 5.seconds
-  private implicit val timeout = Timeout(timeoutSec)
+  private def timeoutSec = 5.seconds
+  private implicit def timeout = Timeout(timeoutSec)
 
-  val actorName = "siowebSup"
-  val actorPath = Akka.system / actorName
+  def actorName = "siowebSup"
+  def actorPath = Akka.system / actorName
 
 
   /** Запуск супервизора в top-level. */
@@ -67,9 +66,7 @@ class SiowebSup extends Actor with Logs {
       throw new Exception("self.path==%s but it must be equal to val %s.actorPath = %s" format (self.path, SiowebSup.getClass.getSimpleName, actorPath))
     }
     // Запускаем все дочерние процессы.
-    NewsQueue4Play.startLinkSup(context)
     SiowebNotifier.startLink(context)
-    SeedUrlsSupplier.startLink(context)
     billing.StatBillingQueueActor.startLink(context)
     WsDispatcherActor.startLink(context)
   }

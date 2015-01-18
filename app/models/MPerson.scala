@@ -130,8 +130,6 @@ trait MPersonLinks {
     MPerson getById personId
   }
   @JsonIgnore def isSuperuser = MPerson isSuperuserId personId
-  def authzForDomain(dkey: String) = MPersonDomainAuthz.getForPersonDkey(dkey, personId)
-  @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(personId)
 }
 
 

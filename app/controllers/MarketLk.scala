@@ -53,7 +53,7 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
         // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
         .orElse {
           if (MPerson isSuperuserId personId) {
-            Some(routes.Sys.index())
+            Some(routes.Application.sysIndex())
           } else {
             None
           }

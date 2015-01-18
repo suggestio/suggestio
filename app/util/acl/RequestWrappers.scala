@@ -156,24 +156,6 @@ case class RequestWithPwOpt[A](pwOpt: PwOpt_t, request: Request[A], sioReqMd: Si
   extends AbstractRequestWithPwOpt(request)
 
 
-
-abstract class AbstractRequestWithDAuthz[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def dAuthz: MDomainAuthzT
-  def dkey = dAuthz.dkey
-}
-
-/**
- * При ограничении прав в рамках домена используется сий класс, как бы родственный и расширенный по
- * отношению к RequestWithPwOpt.
- * @param pwOpt Данные о текущем юзере.
- * @param dAuthz Данные об авторизации в рамках домена.
- * @param request Реквест.
- * @tparam A Подтип реквеста.
- */
-case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: Request[A], sioReqMd: SioReqMd)
-  extends AbstractRequestWithDAuthz(request)
-
-
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
   def shopId: String
