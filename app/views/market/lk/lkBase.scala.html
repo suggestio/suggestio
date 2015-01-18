@@ -1,5 +1,6 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None, headAfter:Option[Html] = None,
-  popupContent: Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None,
+  headAfter:Option[Html] = None, popupContent: Option[Html] = None,
+  povAdnId: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.

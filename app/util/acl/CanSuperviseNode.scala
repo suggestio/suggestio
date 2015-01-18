@@ -21,7 +21,7 @@ object CanSuperviseNode {
     * @param supNode Узел-супервизор
     * @return true, если есть права на супервайзинг.
     */
-  def canSuperviseNode(slaveNode: MAdnNode, supNode: MAdnNode)(implicit ctx: util.Context): Boolean = {
+  def canSuperviseNode(slaveNode: MAdnNode, supNode: MAdnNode)(implicit ctx: Context): Boolean = {
     supNode.id.isDefined &&
       slaveNode.adn.supId == supNode.id &&
       (PersonWrapper.isSuperuser(ctx.pwOpt) ||

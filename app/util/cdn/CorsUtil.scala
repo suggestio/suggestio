@@ -1,7 +1,6 @@
 package util.cdn
 
 import play.api.mvc.{Results, Result, RequestHeader, Filter}
-import util.Context
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
 import play.api.Play.{current, configuration}
