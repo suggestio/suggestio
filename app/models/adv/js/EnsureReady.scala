@@ -10,7 +10,7 @@ import models.adv.js.ctx.JsCtx_t
  * в браузере клиента, инициализирует начальное состояние и подтверждает общую исправность js-сервера.
  */
 object EnsureReady extends IAction {
-  override val action: String = "ensureReady"
+  override def action: String = "ensureReady"
 }
 
 
