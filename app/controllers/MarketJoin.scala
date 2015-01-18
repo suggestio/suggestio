@@ -8,7 +8,7 @@ import play.api.libs.iteratee.Enumerator
 import util.billing.MmpDailyBilling
 import util.img._
 import util.mail.MailerWrapper
-import util.{ContextImpl, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
 import models._
