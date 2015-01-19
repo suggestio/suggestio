@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
  * Description: Модели для взаимодействий на языке хранилищь.
  */
 object PreparePictureStorage extends IAction {
-  override def action: String = "hasPictureStorage"
+  override def action: String = "preparePictureStorage"
 }
 
 case class PreparePictureStorageAsk(
@@ -28,7 +28,7 @@ case class PreparePictureStorageAsk(
 
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
-      .append(".prepareHasPictureStorage(").append(ctx).append(')')
+      .append(".preparePictureStorage(").append(ctx).append(')')
       .append(".setName(").append(JsString(name)).append(')')
     if (descr.isDefined)
       sb.append(".setDescription(").append(JsString(descr.get)).append(')')
