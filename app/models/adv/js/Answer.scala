@@ -1,6 +1,6 @@
 package models.adv.js
 
-import models.adv.js.ctx.{MJsCtx, JsCtx_t}
+import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 /**
@@ -22,25 +22,26 @@ object Answer {
   /** На какое действие ответ. Для самоконтроля. */
   val REPLY_TO_FN   = "replyTo"
 
-  implicit val contextReads: Reads[MJsCtx] = {
+  implicit def contextReads: Reads[MJsCtx] = {
     (JsPath \ CTX2)
-      .read[MJsCtx]
+      .read[JsObject]
+      .map { MJsCtx.apply }
   }
 
   /** JSON-парсер для поля статуса. */
-  implicit val statusReads: Reads[AnswerStatus] = {
+  implicit def statusReads: Reads[AnswerStatus] = {
     (JsPath \ STATUS_FN)
       .read[String]
       .map(AnswerStatuses.withName(_): AnswerStatus)
   }
 
-  val replyToReads: Reads[String] = {
+  def replyToReads: Reads[String] = {
     (JsPath \ REPLY_TO_FN)
       .read[String]
   }
 
   /** JSON-парсер для ответов. */
-  implicit val answerReads: Reads[Answer] = {
+  implicit def answerReads: Reads[Answer] = {
     val answerReader = statusReads  and  replyToReads  and  contextReads
     answerReader(apply _)
   }

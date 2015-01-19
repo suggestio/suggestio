@@ -27,7 +27,7 @@ object ExtAdvWsActor {
 /** ws-актор, готовый к использованию websocket api. */
 case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
   extends ExtAdvWsActorBase
-  with EnsureReady
+  with EnsureReadyAddon
 {
   override def wsId: String = eactx.qs.wsId
 
@@ -131,7 +131,7 @@ sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher wit
 
 
 /** Поддержка диалога ensureReady.  */
-sealed trait EnsureReady extends ExtAdvWsActorBase with SuperviseServiceActors with SioPrJsUtil {
+sealed trait EnsureReadyAddon extends ExtAdvWsActorBase with SuperviseServiceActors with SioPrJsUtil {
 
   import LOGGER._
 
@@ -233,7 +233,7 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
   /**
    * Состояние перехода на обработку целей размещения.
    * @param targets Цели, полученные из хранилища.
-   * @param ctx1 Состояние после начальной инициализации.
+   * @param mctx1 Состояние после начальной инициализации.
    */
   class SuperviseServiceActorsState(targets: ActorTargets_t, mctx1: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
