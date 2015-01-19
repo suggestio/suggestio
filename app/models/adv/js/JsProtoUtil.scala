@@ -24,7 +24,7 @@ trait AskBuilder extends IAction {
   private def onSomethingJson(status: String, sb: StringBuilder): StringBuilder = {
     sb.append('{')
       .append(JsString(Answer.REPLY_TO_FN)).append(':').append(JsString(action)).append(',')
-      .append(JsString(Answer.STATUS_FN)).append(':').append(JsString(status)).append(',')
+      .append(JsString(Answer.STATUS_FN)).append(':').append(JsString(status))
   }
   private def afterSomethingJson(sb: StringBuilder): StringBuilder = {
     sb.append('}')    // msg{}
@@ -34,10 +34,10 @@ trait AskBuilder extends IAction {
 
   def onSuccessArgs(sb: StringBuilder): StringBuilder = {
     onSuccessArgsList.foreach { fn =>
-      sb.append(JsString(fn))
+      sb.append(',')
+        .append(JsString(fn))
         .append(':')
         .append(fn)
-        .append(',')
     }
     sb
   }
@@ -66,7 +66,10 @@ trait AskBuilder extends IAction {
   }
   def onErrorArgs(sb: StringBuilder): StringBuilder = {
     val r = "reason"
-    sb.append(JsString(r)).append(':').append(r)
+    sb.append(',')
+      .append(JsString(r))
+      .append(':')
+      .append(r)
   }
 
 
@@ -144,6 +147,7 @@ trait ServiceAskBuilder extends AskBuilder {
 trait InServiceAskBuilder extends ServiceAskBuilder {
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
+      .append(',')
       .append(".service(")
       .append(JsString(service.strId))
       .append(')')
