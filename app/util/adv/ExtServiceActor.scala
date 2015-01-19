@@ -163,10 +163,10 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
 
     /** Сгенерить новый контекст на основе ctx0. В состояние закинуть инфу по текущей цели. */
     def ctx0WithTarget: JsCtx_t = {
-      val fn = MJsCtx.PICTURE_FN
+      val fn = MJsCtx.TARGET_FN
       val fields1 = mctx0.json.fields
         .iterator
-        .filter { case (k, _) => k != fn }
+        .filter { _._1 != fn }
         .toList
       val onClickUrl: String = {
         // TODO Нужно, чтобы пользователь мог настраивать целевой url во время размещения КАРТОЧКИ. См. targetInfo.returnTo
