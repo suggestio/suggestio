@@ -39,7 +39,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    */
   // TODO Этот метод - эталонный quick and dirty быдлокод. Отрендеренные картинки нужно хранить на винче, не трогая кеш.
   def html2imgSimple(args: WkHtmlArgs): Future[Array[Byte]] = {
-    val dstFile = File.createTempFile("/tmp/", "." + args.outFmt.name)
+    val dstFile = File.createTempFile("wkhtml2image", "." + args.outFmt.name)
     val fut = Future {
       html2img(args, dstFile)
       Files.readAllBytes(dstFile.toPath)
