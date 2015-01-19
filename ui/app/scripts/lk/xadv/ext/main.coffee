@@ -73,6 +73,7 @@ define [], () ->
 
   class VkAdapter extends IAdapter
     API_ID = 4705589
+    ACESS_LVL = 5
 
     userId = null
 
