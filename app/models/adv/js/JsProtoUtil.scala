@@ -125,7 +125,8 @@ trait ServiceAskBuilder extends AskBuilder {
   def service: MExtService
 
   private def appendService(sb: StringBuilder): StringBuilder = {
-    sb.append(JsString(ServiceAnswer.SERVICE_FN))
+    sb.append(',')
+      .append(JsString(ServiceAnswer.SERVICE_FN))
       .append(':')
       .append(JsString(service.strId))
   }
@@ -137,7 +138,6 @@ trait ServiceAskBuilder extends AskBuilder {
 
   override def onErrorArgs(sb: StringBuilder): StringBuilder = {
     super.onErrorArgs(sb)
-      .append(',')
     appendService(sb)
   }
 }
