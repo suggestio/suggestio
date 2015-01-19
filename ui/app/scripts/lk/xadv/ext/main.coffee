@@ -47,13 +47,10 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
+
       #SioPR.service("vk").preparePublishMessageBuilder().setMessage("test from adapter").execute()
       #SioPR.service("vk").preparePictureStorageBuilder().execute()
       #SioPR.service("vk").preparePutPicture().execute()
-      console.log "---"
-      console.log "context"
-      console.log @ctx
-      console.log "---"
       onSuccess @ws, @ctx
 
 
@@ -62,13 +59,13 @@ define [], () ->
 
     constructor: (@ws) ->
 
-    @preparePublishMessageBuilder: (ctx) ->
+    preparePublishMessageBuilder: (ctx) ->
       return new IPublishMessageBuilder(@ws, ctx)
 
-    @preparePictureStorage: (ctx) ->
+    preparePictureStorage: (ctx) ->
       return new PictureStorageBuilder(@ws, ctx)
 
-    @preparePutPicture: (ctx) ->
+    preparePutPicture: (ctx) ->
       return new PutPictureBuilder(@ws, ctx)
 
   class VkAdapter extends IAdapter
@@ -97,7 +94,7 @@ define [], () ->
       console.log "prepare adapter for msg"
       return new VkPublishMessageBuilder(@ws, ctx)
 
-    preparePictureStorageBuilder: (ctx = new Object()) ->
+    preparePictureStorage: (ctx = new Object()) ->
       ctx.userId = userId
       return new VkPictureStorageBuilder(@ws, ctx)
 
@@ -112,10 +109,10 @@ define [], () ->
     constructor: (@ws, @ctx) ->
 
     setName: (name) ->
-      return true
+      return @
 
     setDescription: (description) ->
-      return true
+      return @
 
     execute: () ->
       console.log "picture storage execute"
@@ -124,17 +121,14 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "vk picture storage execute"
-      console.log @ctx
 
       params =
         group_id: @ctx.userId
 
-      callback = (data) ->
+      callback = (data) =>
         if data.error
           onError data.error
 
-        console.log "---"
-        console.log data
         @ctx =
           _picture:
             size:
@@ -146,8 +140,7 @@ define [], () ->
               partName: "photo"
 
         console.log @ctx
-        onSuccess @ctx
-        console.log "---"
+        onSuccess @ws, @ctx
 
       VK.Api.call "photos.getWallUploadServer", params, callback
 
