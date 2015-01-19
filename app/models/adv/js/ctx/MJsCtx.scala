@@ -7,6 +7,9 @@ import play.api.libs.json._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 15.01.15 17:45
  * Description: Модель-враппер над json для быстрого прозрачного доступа к служебным данным.
+ * Динамические части моделей существуют как в виде json-обёрток, так и в виде нормальных моделей.
+ * Это сделано, т.к. далеко не всегда нужно что-то парсить и менять в контексте, а полный парсинг контекста
+ * в будущем может стать ресурсоёмким процессом.
  */
 object MJsCtx {
 
@@ -15,16 +18,26 @@ object MJsCtx {
 
   implicit def mJsCtxReads: Reads[MJsCtx] = {
     Reads {
-      case jso: JsObject  => JsSuccess(MJsCtx(jso))
+      case jso: JsObject  => JsSuccess( apply(jso) )
       case _              => JsError("No JSON found")
     }
   }
 
+  def apply(json: JsCtx_t): MJsCtx = MJsCtxJson(json)
+
 }
 
 
+/** Трейт для объединения разных вариантов. */
+trait MJsCtx {
+  def picture: Option[MPictureCtx]
+  def json: JsCtx_t
 
-case class MJsCtx(json: JsCtx_t) {
+  def pictureUpload = picture.flatMap(_.upload)
+}
+
+
+case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
   import MJsCtx._
 
   /** top-level-поле _picture содержит инфу разную по картинке. */
@@ -34,8 +47,6 @@ case class MJsCtx(json: JsCtx_t) {
       case _              => None
     }
   }
-
-  def pictureUpload = picture.flatMap(_.upload)
 
 }
 
