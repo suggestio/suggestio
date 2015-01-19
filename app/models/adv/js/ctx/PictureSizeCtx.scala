@@ -1,6 +1,7 @@
 package models.adv.js.ctx
 
-import play.api.libs.json.{JsPath, Reads}
+import models.MImgSizeT
+import play.api.libs.json.{JsNumber, JsObject, Reads, __}
 import play.api.libs.functional.syntax._
 
 /**
@@ -12,15 +13,30 @@ import play.api.libs.functional.syntax._
  */
 object PictureSizeCtx {
 
+  val WIDTH_FN = "width"
+  val HEIGHT_FN = "height"
+
   /** Парсер из json. */
   implicit def pscReads: Reads[PictureSizeCtx] = {
     val s =
-      (JsPath \ "width").read[Int] and
-      (JsPath \ "height").read[Int]
+      (__ \ WIDTH_FN).read[Int] and
+      (__ \ HEIGHT_FN).read[Int]
     s.apply(PictureSizeCtx.apply _)
   }
 
 }
 
 
-case class PictureSizeCtx(width: Int, height: Int)
+import PictureSizeCtx._
+
+
+case class PictureSizeCtx(width: Int, height: Int) extends MImgSizeT {
+
+  def toPlayJson = {
+    JsObject(Seq(
+      HEIGHT_FN -> JsNumber(height),
+      WIDTH_FN  -> JsNumber(width)
+    ))
+  }
+
+}

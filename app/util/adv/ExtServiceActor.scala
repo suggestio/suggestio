@@ -297,7 +297,7 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Собрать POST-запрос и запустить его на исполнение
-      val boundary = "----------" + args.request.mad.id.getOrElse("xxxxxxx")
+      val boundary = "----------BOUNDARY--" + args.request.mad.id.getOrElse("BoUnDaRy-_-")
       val entity = MultipartEntityBuilder.create()
         .setBoundary(boundary)
       val fmt = imgFmt
@@ -306,7 +306,8 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
       val partBody = new ByteArrayBody(imgBytes, partCt, partFilename)
       entity.addPart(uploadCtx.partName, partBody)
       val baos = new ByteArrayOutputStream((imgBytes.length * 1.1F).toInt)
-      entity.build().writeTo(baos)
+      val resp = entity.build()
+      resp.writeTo(baos)
       WS.url(uploadCtx.url)
         .withHeaders(
           HeaderNames.CONTENT_TYPE -> ("multipart/form-data; boundary=" + boundary)
