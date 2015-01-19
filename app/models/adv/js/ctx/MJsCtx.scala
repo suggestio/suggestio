@@ -13,7 +13,7 @@ object MJsCtx {
   val PICTURE_FN  = "_picture"
   val TARGET_FN   = "_target"
 
-  implicit val mJsCtxReads: Reads[MJsCtx] = {
+  implicit def mJsCtxReads: Reads[MJsCtx] = {
     Reads {
       case jso: JsObject  => JsSuccess(MJsCtx(jso))
       case _              => JsError("No JSON found")
@@ -23,10 +23,9 @@ object MJsCtx {
 }
 
 
-import MJsCtx._
-
 
 case class MJsCtx(json: JsCtx_t) {
+  import MJsCtx._
 
   /** top-level-поле _picture содержит инфу разную по картинке. */
   lazy val picture = {
@@ -41,19 +40,28 @@ case class MJsCtx(json: JsCtx_t) {
 }
 
 
+object MPictureCtx {
+
+  val SAVED_FN    = "saved"
+  val UPLOAD_FN   = "upload"
+  val SIZE_FN     = "size"
+
+}
+
 /**
  * Модель-враппер над содержимым поля picture.
  * @param pctx ctx._picture
  */
 case class MPictureCtx(pctx: JsObject) {
+  import MPictureCtx._
 
   /** Данные по картинке, если есть. */
-  lazy val size = (pctx \ "size").asOpt[PictureSizeCtx]
+  lazy val size = (pctx \ SIZE_FN).asOpt[PictureSizeCtx]
 
   /** Параметры аплоада картинки, если есть. */
-  lazy val upload = PictureUploadCtx.maybeFromJson(pctx \ "upload")
+  lazy val upload = PictureUploadCtx.maybeFromJson(pctx \ UPLOAD_FN)
 
   /** Данные по сохранённой картинке. */
-  lazy val saved: Option[String] = (pctx \ "saved").asOpt[String]
+  lazy val saved: Option[String] = (pctx \ SAVED_FN).asOpt[String]
 
 }

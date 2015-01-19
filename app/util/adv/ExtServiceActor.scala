@@ -14,7 +14,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import play.api.http.HeaderNames
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsString, JsObject}
 import util.PlayMacroLogsImpl
 import util.img.WkHtmlUtil
 import play.api.libs.ws._
@@ -37,7 +37,28 @@ object ExtServiceActor {
   /** Дефолтовое значение szMult для рендера карточки, когда другого значения нет под рукой. */
   def szMultDflt: SzMult_t = 2.0F
 
+
+  /**
+   * Добавить сохранённую картинку в контекст.
+   * @param mctx1 Исходный контекст.
+   * @param pictureInfo Инфа по картинке.
+   * @return Новый экземпляр контекста.
+   */
+  def withPictureBody(mctx1: MJsCtx, pictureInfo: String): MJsCtx = {
+    // Залить _picture.saved указанную строку body, чтобы js получил инфу о картинке.
+    val newInfo = JsObject(Seq(
+      MJsCtx.PICTURE_FN -> JsObject(Seq(
+        MPictureCtx.SAVED_FN -> JsString(pictureInfo)
+      ))
+    ))
+    val json1 = mctx1.json.deepMerge(newInfo)
+    MJsCtx(json1)
+  }
+
 }
+
+
+import ExtServiceActor._
 
 
 /** Актор, занимающийся загрузкой карточек в однин рекламный сервис. */
@@ -116,7 +137,8 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
           // Сообщение от SioPR.js об удачной инициализации
           val puctxOpt = mctx2.pictureUpload
           val nextState = if (puctxOpt contains UrlPictureUpload) {
-            new PublishMessageState(mctx2, Some(getExtAdImgAbsUrl()), args.targets0)
+            val mctx3 = withPictureBody(mctx2, getExtAdImgAbsUrl())
+            new PublishMessageState(mctx3, args.targets0)
           } else {
             new PreparePictureStorageState(mctx2, args.targets0)
           }
@@ -154,6 +176,7 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
         become(nextState)
       }
     }
+
   }
 
 
@@ -201,9 +224,10 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
                 new C2sPutPictureToStorageState(mctx2)
               case UrlPictureUpload =>
                 // Возможно unreachable code, но избавляет от warning'a.
-                new PublishMessageState(mctx2, Some(getExtAdImgAbsUrl()), targets)
+                val mctx3 = withPictureBody(mctx2, getExtAdImgAbsUrl())
+                new PublishMessageState(mctx3, targets)
               case SkipPictureUpload =>
-                new PublishMessageState(mctx2, None, targets)
+                new PublishMessageState(mctx2, targets)
             }
             become(nextState)
           }
@@ -301,7 +325,8 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
       case wsResp: WSResponse if respStatusCodeValid(wsResp.status) =>
         debug(s"$service successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
         trace(s"$service Remote server response is:\n ${wsResp.body}")
-        val nextState = new PublishMessageState(mctx0, Some(wsResp.body), targets)
+        val mctx2 = withPictureBody(mctx0, wsResp.body)
+        val nextState = new PublishMessageState(mctx2, targets)
         become(nextState)
 
       // Запрос выполнился, но в ответ пришло что-то неожиданное.
@@ -326,10 +351,9 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
   /**
    * Состояние постинга сообщений на стены.
    * @param mctx0 НАчальный контекст в рамках состояния.
-   * @param pictureInfo Инфа по картинке (ссылка, resp body, итд), которую надо закинуть в контекст.
    * @param targets Остаточный список целей.
    */
-  class PublishMessageState(val mctx0: MJsCtx, pictureInfo: Option[String], val targets: ActorTargets_t)
+  class PublishMessageState(val mctx0: MJsCtx, val targets: ActorTargets_t)
     extends TargetedFsmState {
 
     /** Нужно отправить в js команду отправки запроса размещения сообщения по указанной цели. */
