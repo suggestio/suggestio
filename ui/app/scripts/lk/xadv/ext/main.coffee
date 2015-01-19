@@ -14,10 +14,10 @@ define [], () ->
     @setWs: (_ws) ->
       ws = _ws
 
-    @prepareEnsureReady: () ->
-      return new PrepareEnsureReadyBuilder(ws)
+    @prepareEnsureReady: (ctx) ->
+      return new PrepareEnsureReadyBuilder(ws, ctx)
 
-    @prepareEnsureServiceReady: (serviceName, ctx1) ->
+    @prepareEnsureServiceReady: (serviceName, ctx) ->
       return new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
 
     @setService: (name, adapter) ->
@@ -28,12 +28,11 @@ define [], () ->
 
   class PrepareEnsureReadyBuilder
 
-    constructor: (@ws) ->
+    constructor: (@ws, @ctx) ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureReadyBuilder execute"
-      ctx = new Object()
-      onSuccess @ws, ctx
+      onSuccess @ws, @ctx
 
   class PrepareEnsureServiceReadyBuilder
     adapter = null
@@ -48,11 +47,14 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureServiceReadyBuilder execute"
-      ctx = new Object()
       #SioPR.service("vk").preparePublishMessageBuilder().setMessage("test from adapter").execute()
       #SioPR.service("vk").preparePictureStorageBuilder().execute()
       #SioPR.service("vk").preparePutPicture().execute()
-      onSuccess(@ws, ctx)
+      console.log "---"
+      console.log "context"
+      console.log @ctx
+      console.log "---"
+      onSuccess @ws, @ctx
 
 
 
