@@ -59,7 +59,7 @@ define [], () ->
 
     constructor: (@ws) ->
 
-    preparePublishMessageBuilder: (ctx) ->
+    preparePublishMessage: (ctx) ->
       return new IPublishMessageBuilder(@ws, ctx)
 
     preparePictureStorage: (ctx) ->
@@ -90,7 +90,7 @@ define [], () ->
 
       VK.Auth.getLoginStatus authInfo
 
-    preparePublishMessageBuilder: (ctx = new Object()) ->
+    preparePublishMessage: (ctx = new Object()) ->
       console.log "prepare adapter for msg"
       return new VkPublishMessageBuilder(@ws, ctx)
 
@@ -151,10 +151,10 @@ define [], () ->
     constructor: (@ctx) ->
 
     setPictureUrl: (url) ->
-      return true
+      return @
 
     setDescription: (description) ->
-      return true
+      return @
 
     execute: (onSucess, onError) ->
       onSuccess()
