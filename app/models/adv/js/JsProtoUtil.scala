@@ -37,6 +37,7 @@ trait AskBuilder extends IAction {
       sb.append(JsString(fn))
         .append(':')
         .append(fn)
+        .append(',')
     }
     sb
   }
@@ -50,6 +51,9 @@ trait AskBuilder extends IAction {
     // Сборка ответа
     onSomethingJson(AnswerStatuses.Success.jsStr, sb)
     onSuccessArgs(sb)
+    // удалить последнюю запятую от onSuccessArgs:
+    sb.setLength(sb.length - 1)
+    // Завершить оформление кода onSuccess().
     afterSomethingJson(sb)
     // Завершена сборка ответа: завершаем рендер вызова function(){}.
     sb.append("));}")
@@ -126,6 +130,7 @@ trait ServiceAskBuilder extends AskBuilder {
   }
 
   override def onSuccessArgs(sb: StringBuilder): StringBuilder = {
+    super.onSuccessArgs(sb)
     appendService(sb)
   }
 

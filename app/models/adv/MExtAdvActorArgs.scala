@@ -50,6 +50,6 @@ trait MExtServiceAdvArgsT extends MExtAdvArgsT {
   def targets0  : ActorTargets_t
 
   /** Начальный контекст в рамках сервиса. */
-  def mctx0      : MJsCtx
+  def mctx0     : MJsCtx
 }
 
