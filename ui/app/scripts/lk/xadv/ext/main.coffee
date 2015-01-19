@@ -90,7 +90,7 @@ define [], () ->
 
       VK.Auth.getLoginStatus authInfo
 
-    preparePublishMessage: (ctx = new Object()) ->
+    preparePublishMessage: (ctx) ->
       console.log "prepare adapter for msg"
       return new VkPublishMessageBuilder(@ws, ctx)
 
@@ -184,11 +184,16 @@ define [], () ->
       return @
 
     execute: (onSuccess, onError) ->
-      onError(ws, "execute() not implemented!")
+      onError @ws, "execute() not implemented!"
 
   class VkPublishMessageBuilder extends IPublishMessageBuilder
     url = null
     message = null
+
+    constructor: (@ws, @ctx) ->
+      console.log "---"
+      console.log JSON.parse(@ctx._picture.saved)
+      console.log "---"
 
     setUrl: (_url) ->
       url = _url
@@ -200,16 +205,20 @@ define [], () ->
 
     execute: (onSuccess, onError) ->
 
-      callback = (data) ->
-        if data.error
-          onError data
-        else
-          onSuccess data
+      callback = (data) =>
+        console.log "saveWallPhoto callback"
+        console.log data
+
+      savedPhoto = JSON.parse(@ctx._picture.saved)
 
       params =
-        message: message
+        user_id: 284213818
+        server: savedPhoto.server
+        photo: savedPhoto.photo
+        hash: savedPhoto.hash
 
-      VK.Api.call "wall.post", params, callback
+      #VK.Api.call "wall.post", params, callback
+      VK.Api.call "photos.saveWallPhoto", params, callback
 
 
 
