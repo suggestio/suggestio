@@ -51,8 +51,6 @@ trait AskBuilder extends IAction {
     // Сборка ответа
     onSomethingJson(AnswerStatuses.Success.jsStr, sb)
     onSuccessArgs(sb)
-    // удалить последнюю запятую от onSuccessArgs:
-    sb.setLength(sb.length - 1)
     // Завершить оформление кода onSuccess().
     afterSomethingJson(sb)
     // Завершена сборка ответа: завершаем рендер вызова function(){}.
