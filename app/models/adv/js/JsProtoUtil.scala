@@ -147,7 +147,6 @@ trait ServiceAskBuilder extends AskBuilder {
 trait InServiceAskBuilder extends ServiceAskBuilder {
   override def buildJsCodeBody(sb: StringBuilder): StringBuilder = {
     super.buildJsCodeBody(sb)
-      .append(',')
       .append(".service(")
       .append(JsString(service.strId))
       .append(')')
