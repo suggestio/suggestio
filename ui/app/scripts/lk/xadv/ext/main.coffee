@@ -123,7 +123,7 @@ define [], () ->
       console.log "vk picture storage execute"
 
       params =
-        group_id: @ctx.userId
+        user_id: @ctx.userId
 
       callback = (data) =>
         if data.error
@@ -190,11 +190,6 @@ define [], () ->
     url = null
     message = null
 
-    constructor: (@ws, @ctx) ->
-      console.log "---"
-      console.log JSON.parse(@ctx._picture.saved)
-      console.log "---"
-
     setUrl: (_url) ->
       url = _url
       return @
@@ -207,7 +202,18 @@ define [], () ->
 
       callback = (data) =>
         console.log "saveWallPhoto callback"
+
         console.log data
+        console.log data.response[0].id
+
+        postCallback = (newData) ->
+          console.log newData
+
+        postParams =
+          attachments: data.response[0].id
+
+        VK.Api.call "wall.post", postParams, postCallback
+
 
       savedPhoto = JSON.parse(@ctx._picture.saved)
 
@@ -216,6 +222,8 @@ define [], () ->
         server: savedPhoto.server
         photo: savedPhoto.photo
         hash: savedPhoto.hash
+
+      console.log params
 
       #VK.Api.call "wall.post", params, callback
       VK.Api.call "photos.saveWallPhoto", params, callback
