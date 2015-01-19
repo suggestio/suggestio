@@ -6,7 +6,7 @@ import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
 import models.adv._
 import models.adv.js.ctx.MJsCtx
-import models.adv.js.{EnsureReady, Answer, AskBuilder, EnsureReadyAsk}
+import models.adv.js._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -256,17 +256,11 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
     }
 
     override def receiverPart: Receive = {
-      // Пришло сообщение от js. Там в аргументах внутри должно быть поле service, которое идентифицирует дочернего актора.
-      case jso: JsObject =>
-        val srvOpt = MExtServices.maybeWithName( (jso \ "args" \ "service").toString() )
-        srvOpt match {
-          case Some(srv) =>
-            val sel = context.system.actorSelection(self.path / srv.strId)
-            trace(s"$name: Message received for slave service actor: $srv. Forwarding message to actor $sel")
-            sel forward jso
-          case None =>
-            warn(s"$name: Dropping unexpected message: " + jso)
-        }
+      // Пришло сообщение от js для другого service-актора.
+      case sa @ ServiceAnswer(status, service, replyTo, ctx2) =>
+        val sel = context.system.actorSelection(self.path / service.strId)
+        trace(s"$name: Message received for slave service actor: $service. Forwarding message to actor $sel")
+        sel forward sa
     }
   }
 }

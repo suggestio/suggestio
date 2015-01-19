@@ -16,15 +16,17 @@ object ServiceAnswer {
   /** К какому сервису (service-актору) относится ответ. */
   val SERVICE_FN    = "service"
 
-  implicit val serviceReads: Reads[MExtService] = {
-    (JsPath \ SERVICE_FN)
+  implicit def serviceReads: Reads[MExtService] = {
+    (__ \ SERVICE_FN)
       .read[String]
       .map(MExtServices.withName(_): MExtService)
   }
 
-  implicit val serviceAnswerReads: Reads[ServiceAnswer] = {
-    val s = serviceReads and Answer.answerReads
-    s { (service, ans)  =>  ServiceAnswer(ans.status, service, ans.replyTo, ans.ctx2) }
+  implicit def serviceAnswerReads: Reads[ServiceAnswer] = {
+    (serviceReads and Answer.answerReads) {
+      (service, ans) =>
+        ServiceAnswer(ans.status, service, ans.replyTo, ans.ctx2)
+    }
   }
 
   type Tu = (AnswerStatus, MExtService, String, MJsCtx)
