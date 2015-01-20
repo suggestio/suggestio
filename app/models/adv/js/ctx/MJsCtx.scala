@@ -1,6 +1,7 @@
 package models.adv.js.ctx
 
 import io.suggest.model.EsModel.FieldsJsonAcc
+import models.adv.JsExtTargetFullT
 import play.api.libs.json._
 
 /**
@@ -32,6 +33,7 @@ object MJsCtx {
 /** Трейт для объединения разных вариантов реализаций MJsCtx. */
 trait MJsCtx {
   def picture: Option[MPictureCtx]
+  def target: Option[JsExtTargetFullT]
   def json: JsCtx_t
 
   def pictureUpload = picture.flatMap(_.upload)
@@ -42,11 +44,15 @@ case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
   import MJsCtx._
 
   /** top-level-поле _picture содержит инфу разную по картинке. */
-  lazy val picture = {
+  lazy val picture: Option[MPictureCtx] = {
     json \ PICTURE_FN match {
       case jso: JsObject  => Some(MPictureCtx(jso))
       case _              => None
     }
+  }
+
+  lazy val target: Option[JsExtTargetFullT] = {
+    None    // TODO not yet implemented
   }
 
 }
@@ -54,15 +60,29 @@ case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
 /**
  * Полноценный контекст, удобный для редактирования через copy().
  * @param picture Картинка, если есть.
+ * @param restJson Исходный json. Контекст может содержать любые данные, и они должны сохранятся между
+ *                 модификациями контекста.
  */
-case class MJsCtxFull(picture: Option[MPictureCtx]) extends MJsCtx {
+case class MJsCtxFull(
+  picture   : Option[MPictureCtx] = None,
+  target    : Option[JsExtTargetFullT] = None,
+  restJson  : JsCtx_t = JsObject(Nil)
+) extends MJsCtx {
   import MJsCtx._
 
-  override def json: JsCtx_t = {
+  /** Сериализовать в json только данные. */
+  def jsonOnlyData: JsCtx_t = {
     var acc: FieldsJsonAcc = Nil
     if (picture.isDefined)
       acc ::= PICTURE_FN -> picture.get.json
+    if (target.isDefined)
+      acc ::= TARGET_FN -> target.get.toJsTargetPlayJson
     JsObject(acc)
+  }
+
+  /** Сериализовать в контекст данные, объеденив их с внешними данные контекста. */
+  override def json: JsCtx_t = {
+    restJson deepMerge jsonOnlyData
   }
 }
 

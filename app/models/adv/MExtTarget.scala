@@ -188,6 +188,6 @@ trait JsExtTargetFullT extends JsExtTargetT {
   }
 }
 
-case class JsExtTargetFull(_targetUnderlying: JsExtTargetT, onClickUrl: String)
+case class JsExtTargetWrap(_targetUnderlying: JsExtTargetT, onClickUrl: String)
   extends JsExtTargetFullT with JsExtTargetWrapperT
 

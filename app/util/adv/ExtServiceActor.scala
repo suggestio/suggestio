@@ -193,10 +193,9 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
         .toList
       val onClickUrl: String = {
         // TODO Нужно, чтобы пользователь мог настраивать целевой url во время размещения КАРТОЧКИ. См. targetInfo.returnTo
-        ScJsState( adnId = Some(currTarget.target.adnId) )
-          .ajaxStatedUrl()
+        Context.SC_URL_PREFIX + ScJsState( adnId = Some(currTarget.target.adnId) ).ajaxStatedUrl()
       }
-      val fullTarget = JsExtTargetFull(currTarget.target, onClickUrl)
+      val fullTarget = JsExtTargetWrap(currTarget.target, onClickUrl)
       val fields2 = fn -> fullTarget.toJsTargetPlayJson  ::  fields1
       JsObject(fields2)
     }
