@@ -1,16 +1,27 @@
 define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
 
   class VkPublishMessageBuilder extends IPublishMessageBuilder
-    url = null
-    text = null
+    post = new Object()
 
-    setUrl: (_url) ->
-      url = _url
+    setText: (text) ->
+      post.message = text
       return @
 
-    setText: (_text) ->
-      text = _text
-      return @
+    setOwnerId: () ->
+      REGEXP = /// /(?!.+/)(.+)$ ///
+      url = @ctx._target.url
+
+      match = url.match REGEXP
+
+      # TODO добавить обработку ошибок если match[1] undefined
+      params =
+        screen_name: match[1]
+
+      callback = (data) =>
+        post.owner_id = data.response.object_id
+        @wallPost()
+
+      VK.Api.call "utils.resolveScreenName", params, callback
 
     saveWallPhoto: () ->
 
@@ -19,15 +30,12 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
       callback = (data) =>
         attachments = new Array()
         attachments.push data.response[0].id
-        #attachments.push @ctx._target.href
-        #TODO убрать статичную ссылку
-        attachments.push "http://localhost"
+        attachments.push @ctx._target.href
         attachments = attachments.join ","
 
-        post =
-          attachments: attachments
+        post.attachments = attachments
 
-        @wallPost(post)
+        @setOwnerId()
 
       params =
         user_id: @ctx.user_id
@@ -37,10 +45,7 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
 
       VK.Api.call "photos.saveWallPhoto", params, callback
 
-    wallPost: (post) ->
-
-      if text?
-        post.message = text
+    wallPost: () ->
 
       callback = (data) ->
         console.log data

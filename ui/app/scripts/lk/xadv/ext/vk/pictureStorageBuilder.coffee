@@ -2,8 +2,6 @@ define ["pictureStorageBuilder"], (PictureStorageBuilder) ->
 
   class VkPictureStorageBuilder extends PictureStorageBuilder
 
-    constructor: (@ws, @ctx) ->
-
     execute: (onSuccess, onError) ->
       console.log "vk picture storage execute"
 
