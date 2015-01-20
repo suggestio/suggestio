@@ -2,7 +2,7 @@ define ["iAdapter", "VkPublishMessageBuilder", "VkPictureStorageBuilder", "VkPut
 
   class VkAdapter extends IAdapter
     API_ID = 4705589
-    ACESS_LVL = 5
+    ACESS_LVL = 8197
 
     userId = null
 
@@ -22,7 +22,7 @@ define ["iAdapter", "VkPublishMessageBuilder", "VkPictureStorageBuilder", "VkPut
 
       VK.Auth.getLoginStatus authInfo
 
-    preparePublishMessage: (ctx) ->
+    preparePublishMessage: (ctx = new Object()) ->
       ctx.user_id = userId
       return new VkPublishMessageBuilder(@ws, ctx)
 

@@ -24,9 +24,7 @@ define([], function() {
 
     ws = new WebSocket(url);
 
-    console.log(SioPR);
     SioPR = new SioPR();
-    console.log(SioPR);
     SioPR.setWs(ws);
 
     ws.onmessage = function(event) {

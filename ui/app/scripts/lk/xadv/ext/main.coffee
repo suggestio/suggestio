@@ -4,7 +4,6 @@ define [], () ->
     instance = undefined
     ws = null
     serviceList = new Array()
-    vk = null
 
     # singletone
     constructor: ->

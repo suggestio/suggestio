@@ -13,11 +13,17 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
       return @
 
     saveWallPhoto: () ->
+
       savedPhoto = JSON.parse(@ctx._picture.saved)
 
       callback = (data) =>
+        attachments = new Array()
+        attachments.push data.response[0].id
+        attachments.push @ctx._target.href
+        attachments = attachments.join ","
+
         post =
-          attachments: data.response[0].id
+          attachments: attachments
 
         @wallPost(post)
 
@@ -33,8 +39,6 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
 
       callback = (data) ->
         console.log data
-
-      console.log post
 
       VK.Api.call "wall.post", post, callback
 
