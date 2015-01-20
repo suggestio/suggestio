@@ -1,0 +1,7 @@
+@(clazz: Option[String] = None)(content: Html)(implicit ctx: Context)
+
+@* Очень-очень базовый и минимальный шаблон для абсолютно любой нотификации в системе. *@
+
+<div class="@clazz">
+  @content
+</div>

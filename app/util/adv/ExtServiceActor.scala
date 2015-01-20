@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 
 import akka.actor.Props
 import controllers.routes
-import models.{ScJsState, Context}
+import models.Context
 import models.adv.js.ctx._
 import models.adv._
 import models.adv.js._
@@ -14,7 +14,6 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import play.api.http.HeaderNames
-import play.api.libs.json.{JsString, JsObject}
 import util.PlayMacroLogsImpl
 import util.img.WkHtmlUtil
 import play.api.libs.ws._
