@@ -328,6 +328,7 @@ object ScJsState {
 
   // Название qs-параметров, отражающих состояние выдачи.
   // r = receiver, p = producer, s = search, n = navigation, f = focused ads
+  // 2014.jan.20: Переименованы некоторые поля, чтобы подогнать их под js, который пока некогда чинить.
   val ADN_ID_FN               = "m.id"
   val CAT_SCR_OPENED_FN       = "s.open"
   val GEO_SCR_OPENED_FN       = "n.open"
@@ -409,6 +410,8 @@ object ScJsState {
 
   /** Выдать пустой инстанс. Всегда немного разный, чтобы был эффект тасования. */
   def empty = ScJsState()
+
+  /** Очень часто-используемый вообще пустой инстанс. */
   val veryEmpty = ScJsState(generationOpt = None)
 
 }
@@ -511,7 +514,7 @@ case class ScJsState(
    * @return Относительная ссылка.
    */
   def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
-    routes.MarketShowcase.geoSite(ScJsState.veryEmpty).url + "#!?" + qsb.unbind("", this)
+    routes.MarketShowcase.geoSite().url + "#!?" + qsb.unbind("", this)
   }
 
   /**

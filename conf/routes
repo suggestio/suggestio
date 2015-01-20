@@ -11,7 +11,7 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.empty)
+GET  /                                  controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.veryEmpty)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
