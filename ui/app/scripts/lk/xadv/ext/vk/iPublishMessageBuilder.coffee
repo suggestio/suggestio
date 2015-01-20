@@ -2,14 +2,14 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
 
   class VkPublishMessageBuilder extends IPublishMessageBuilder
     url = null
-    message = null
+    text = null
 
     setUrl: (_url) ->
       url = _url
       return @
 
-    setMessage: (_message) ->
-      message = _message
+    setText: (_text) ->
+      text = _text
       return @
 
     saveWallPhoto: () ->
@@ -19,7 +19,9 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
       callback = (data) =>
         attachments = new Array()
         attachments.push data.response[0].id
-        attachments.push @ctx._target.href
+        #attachments.push @ctx._target.href
+        #TODO убрать статичную ссылку
+        attachments.push "http://localhost"
         attachments = attachments.join ","
 
         post =
@@ -36,6 +38,9 @@ define ["IPublishMessageBuilder"], (IPublishMessageBuilder) ->
       VK.Api.call "photos.saveWallPhoto", params, callback
 
     wallPost: (post) ->
+
+      if text?
+        post.message = text
 
       callback = (data) ->
         console.log data
