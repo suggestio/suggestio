@@ -46,13 +46,16 @@ object ExtServiceActor {
    */
   def withPictureBody(mctx1: MJsCtx, pictureInfo: String): MJsCtx = {
     // Залить _picture.saved указанную строку body, чтобы js получил инфу о картинке.
-    val newInfo = JsObject(Seq(
-      MJsCtx.PICTURE_FN -> JsObject(Seq(
-        MPictureCtx.SAVED_FN -> JsString(pictureInfo)
-      ))
-    ))
-    val json1 = mctx1.json.deepMerge(newInfo)
-    MJsCtx(json1)
+    mctx1.copy(
+      picture = {
+        val somePi = Some(pictureInfo)
+        val pctx2 = mctx1.picture match {
+          case Some(picCtx)   => picCtx.copy(saved = somePi)
+          case None           => MPictureCtxFull(saved = somePi)
+        }
+        Some(pctx2)
+      }
+    )
   }
 
 }
@@ -185,26 +188,27 @@ case class ExtServiceActor(args: MExtServiceAdvArgsT)
   class PreparePictureStorageState(val mctx0: MJsCtx, val targets: ActorTargets_t) extends TargetedFsmState {
 
     /** Сгенерить новый контекст на основе ctx0. В состояние закинуть инфу по текущей цели. */
-    def ctx0WithTarget: JsCtx_t = {
-      val fn = MJsCtx.TARGET_FN
-      val fields1 = mctx0.json.fields
-        .iterator
-        .filter { _._1 != fn }
-        .toList
+    def ctx0WithTarget: MJsCtx = {
+      val ct = currTarget
+      // Собираем ссылку с помощью модели return'ов.
       val onClickUrl: String = {
-        // TODO Нужно, чтобы пользователь мог настраивать целевой url во время размещения КАРТОЧКИ. См. targetInfo.returnTo
-        Context.SC_URL_PREFIX + routes.MarketShowcase.geoSite( ScJsState( adnId = Some(currTarget.target.adnId) ) )
+        ct.returnTo.builder()
+          .setAdnId( ct.target.adnId )
+          .setFocusedAdId( args.request.mad.idOrNull )
+          .setFocusedProducerId( args.request.mad.producerId )
+          .toAbsUrl
       }
-      val fullTarget = JsExtTargetWrap(currTarget.target, onClickUrl)
-      val fields2 = fn -> fullTarget.toJsTargetPlayJson  ::  fields1
-      JsObject(fields2)
+      // Заполнить поле _target в js-контексте
+      mctx0.copy(
+        target = Some(JsExtTargetWrap(ct.target, onClickUrl))
+      )
     }
     
     /** Отправить в js запрос на проверку наличия хранилища картинок. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Залить в ctx._target данные по текущей цели.
-      val jsonAsk = PreparePictureStorageAsk(service, ctx0WithTarget)
+      val jsonAsk = PreparePictureStorageAsk(service, ctx0WithTarget.json)
       out ! mkJsAsk(jsonAsk)
     }
 

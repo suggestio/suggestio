@@ -35,16 +35,20 @@ trait MJsCtx {
   def picture: Option[MPictureCtx]
   def target: Option[JsExtTargetFullT]
   def json: JsCtx_t
+  def restJson: JsCtx_t
 
   def pictureUpload = picture.flatMap(_.upload)
 
   def copy(picture   : Option[MPictureCtx] = this.picture,
-           target    : Option[JsExtTargetFullT] = this.target): MJsCtx
+           target    : Option[JsExtTargetFullT] = this.target,
+           restJson  : JsCtx_t = this.restJson): MJsCtx
 }
 
 
 case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
   import MJsCtx._
+
+  override def restJson = json
 
   /** top-level-поле _picture содержит инфу разную по картинке. */
   lazy val picture: Option[MPictureCtx] = {
@@ -58,8 +62,9 @@ case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
     None    // TODO not yet implemented
   }
 
-  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target): MJsCtx = {
-    MJsCtxFull(picture = picture, target = target, restJson = json)
+  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target,
+                    restJson: JsCtx_t = this.restJson): MJsCtx = {
+    MJsCtxFull(picture = picture, target = target, restJson = restJson)
   }
 }
 
@@ -92,7 +97,8 @@ case class MJsCtxFull(
     restJson deepMerge jsonOnlyData
   }
 
-  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target): MJsCtxFull = {
+  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target,
+                    restJson: JsCtx_t = this.restJson): MJsCtxFull = {
     MJsCtxFull(picture, target, restJson)
   }
 }
@@ -120,9 +126,9 @@ trait MPictureCtx {
   def saved   : Option[String]
 
   /** Враппер для вызова copy(x,y,z) или иного метода в зав-ти от ситуации. */
-  def copy(size: Option[PictureSizeCtx] = this.size,
-           upload  : Option[PictureUploadCtxT] = this.upload,
-           saved   : Option[String] = this.saved): MPictureCtxFull
+  def copy(size     : Option[PictureSizeCtx] = this.size,
+           upload   : Option[PictureUploadCtxT] = this.upload,
+           saved    : Option[String] = this.saved): MPictureCtxFull
 }
 
 
@@ -138,9 +144,9 @@ case class MPictureCtxJson(json: JsObject) extends MPictureCtx {
   lazy val saved: Option[String] = (json \ SAVED_FN).asOpt[String]
 
   /** Враппер для вызова copy или иного метода. */
-  override def copy(size: Option[PictureSizeCtx] = this.size,
+  override def copy(size  : Option[PictureSizeCtx] = this.size,
                     upload: Option[PictureUploadCtxT] = this.upload,
-                    saved: Option[String] = this.saved): MPictureCtxFull = {
+                    saved : Option[String] = this.saved): MPictureCtxFull = {
     MPictureCtxFull(size, upload, saved)
   }
 

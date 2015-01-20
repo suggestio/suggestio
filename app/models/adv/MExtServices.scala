@@ -4,6 +4,7 @@ import java.net.URL
 
 import io.suggest.model.EnumMaybeWithName
 import io.suggest.util.UrlUtil
+import models.adv.js.ctx.JsCtx_t
 import play.api.libs.json.{JsString, JsObject}
 import play.api.Play._
 
@@ -27,7 +28,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
      * @param jso Исходный JSON контекст.
      * @return Обновлённый JSON контекст.
      */
-    def prepareContext(jso: JsObject): JsObject = jso
+    def prepareContext(jso: JsCtx_t): JsCtx_t = jso
 
     /**
      * Клиент прислал upload-ссылку. Нужно её проверить на валидность.
@@ -49,7 +50,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
     }
-    override def prepareContext(jso: JsObject): JsObject = {
+    override def prepareContext(jso: JsCtx_t): JsCtx_t = {
       val jso1 = super.prepareContext(jso)
       APP_ID_OPT match {
         case Some(apiId) =>

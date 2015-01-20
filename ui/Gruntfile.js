@@ -426,7 +426,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build-dev', [
     'coffee:compile',
-    'copy:twirl-dev',
+    'newer:copy:twirl-dev',
     'copy:scripts',
     'wiredep'
   ]);
