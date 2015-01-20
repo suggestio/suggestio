@@ -23,8 +23,12 @@ import play.api.Play.{current, configuration}
 trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite = MaybeAuth.async { implicit request =>
-    _geoSite
+  def geoSite(maybeJsState: ScJsState) = MaybeAuth.async { implicit request =>
+    if (maybeJsState.nonEmpty) {
+      MovedPermanently( maybeJsState.ajaxStatedUrl() )
+    } else {
+      _geoSite
+    }
   }
 
   /**

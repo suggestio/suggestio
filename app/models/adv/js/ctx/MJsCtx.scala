@@ -37,6 +37,9 @@ trait MJsCtx {
   def json: JsCtx_t
 
   def pictureUpload = picture.flatMap(_.upload)
+
+  def copy(picture   : Option[MPictureCtx] = this.picture,
+           target    : Option[JsExtTargetFullT] = this.target): MJsCtx
 }
 
 
@@ -55,6 +58,9 @@ case class MJsCtxJson(json: JsCtx_t) extends MJsCtx {
     None    // TODO not yet implemented
   }
 
+  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target): MJsCtx = {
+    MJsCtxFull(picture = picture, target = target, restJson = json)
+  }
 }
 
 /**
@@ -82,7 +88,12 @@ case class MJsCtxFull(
 
   /** Сериализовать в контекст данные, объеденив их с внешними данные контекста. */
   override def json: JsCtx_t = {
+    // TODO Нужно убедится/проконтролировать, чтобы поля в jsonOnlyData были в приоритете.
     restJson deepMerge jsonOnlyData
+  }
+
+  override def copy(picture: Option[MPictureCtx] = this.picture, target: Option[JsExtTargetFullT] = this.target): MJsCtxFull = {
+    MJsCtxFull(picture, target, restJson)
   }
 }
 
@@ -110,8 +121,8 @@ trait MPictureCtx {
 
   /** Враппер для вызова copy(x,y,z) или иного метода в зав-ти от ситуации. */
   def copy(size: Option[PictureSizeCtx] = this.size,
-            upload  : Option[PictureUploadCtxT] = this.upload,
-            saved   : Option[String] = this.saved): MPictureCtxFull
+           upload  : Option[PictureUploadCtxT] = this.upload,
+           saved   : Option[String] = this.saved): MPictureCtxFull
 }
 
 

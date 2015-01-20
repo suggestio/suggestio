@@ -328,14 +328,14 @@ object ScJsState {
 
   // Название qs-параметров, отражающих состояние выдачи.
   // r = receiver, p = producer, s = search, n = navigation, f = focused ads
-  val ADN_ID_FN               = "r.id"
+  val ADN_ID_FN               = "m.id"
   val CAT_SCR_OPENED_FN       = "s.open"
   val GEO_SCR_OPENED_FN       = "n.open"
   val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
   val FADS_OFFSET_FN          = "f.off"
-  val GENERATION_FN           = "gen"
+  val GENERATION_FN           = "gen_id"
   val SEARCH_TAB_FN           = "s.tab"
-  val PRODUCER_ADN_ID_FN      = "p.id"
+  val PRODUCER_ADN_ID_FN      = "f.pr.id"
   val TILES_CAT_ID_FN         = "t.cat"
   val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
 
@@ -407,6 +407,10 @@ object ScJsState {
     }
   }
 
+  /** Выдать пустой инстанс. Всегда немного разный, чтобы был эффект тасования. */
+  def empty = ScJsState()
+  val veryEmpty = ScJsState(generationOpt = None)
+
 }
 
 
@@ -423,6 +427,17 @@ case class ScJsState(
   tilesCatIdOpt       : Option[String]   = None,
   navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty  // Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
 ) { that =>
+
+  /** Содержаться ли тут какие-либо данные? */
+  def nonEmpty: Boolean = {
+    productIterator.exists {
+      case opt: Option[_]           => opt.nonEmpty && !(opt eq generationOpt)
+      case col: TraversableOnce[_]  => col.nonEmpty
+      case _ => true
+    }
+  }
+  /** Инстанс содержит хоть какие-нибудь полезные данные? */
+  def isEmpty = !nonEmpty
 
   implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     boolOpt.isDefined && boolOpt.get
@@ -496,7 +511,7 @@ case class ScJsState(
    * @return Относительная ссылка.
    */
   def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
-    routes.MarketShowcase.geoSite().url + "#!?" + qsb.unbind("", this)
+    routes.MarketShowcase.geoSite(ScJsState.veryEmpty).url + "#!?" + qsb.unbind("", this)
   }
 
   /**

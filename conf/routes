@@ -11,7 +11,7 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  controllers.MarketShowcase.geoSite
+GET  /                                  controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.empty)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
@@ -142,7 +142,7 @@ GET  /market/ad/one/img                 controllers.MarketShowcase.onlyOneAdAsIm
 ## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState())
+GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
