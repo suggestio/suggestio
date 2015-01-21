@@ -174,7 +174,7 @@ sealed trait EnsureReadyAddon extends ExtAdvWsActorBase with SuperviseServiceAct
       case Answer(status, replyTo, mctx1) if replyTo == EnsureReady.action =>
         val nextState = if (status.isSuccess) {
           // Инициализация выполнена.
-          trace(s"$name: success. New context = ${mctx1.json}")
+          trace(s"$name: success. New context = $mctx1")
           new WaitForTargetsState(targetsFut, mctx1)
         } else {
           // Проблемы при инициализации
