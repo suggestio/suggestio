@@ -1,12 +1,12 @@
-package models
+package util
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 20.01.15 20:00
+ * Created: 21.01.15 10:30
  */
 package object notify {
 
-  type ArgName = ArgNames.ArgName
+  type NotifyType  = NotifyTypes.NotifyType
 
 }

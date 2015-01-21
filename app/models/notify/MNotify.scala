@@ -1,14 +1,15 @@
 package models.notify
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EnumMaybeWithName, EsModelPlayJsonT, EsModelT, EsModelStaticT}
+import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import io.suggest.model._
 import io.suggest.util.SioEsUtil._
-import models.Context
-import play.twirl.api.Html
+import org.joda.time.DateTime
+import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
+import util.notify.NotifyTypes
+import util.notify.NotifyTypes.NotifyType
 
 import scala.collection.Map
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,10 +29,26 @@ object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
   val IS_CLOSEABLE_ESFN = "ic"
   val IS_UNSEEN_ESFN    = "iu"
 
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MNotify.T = {
+  
+  def isCloseableDflt = true
+  def isUnseenDflt    = true
+  def dateCreatedDflt = DateTime.now()
+  def argsDflt        = EmptyArgsInfo
+
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+    val ntype = Option(m get NOTIFY_TYPE_ESFN)
+      .map(stringParser)
+      .flatMap(NotifyTypes.maybeWithName)
+      .get
     MNotify(
-      id = id,
-      versionOpt = version
+      ntype       = ntype,
+      ownerId     = stringParser(m get OWNER_ID_ESFN),
+      argsInfo    = ntype.deserializeArgsInfo(m get ARGS_ESFN),
+      dateCreated = EsModel.dateTimeParser(m get DATE_CREATED_ESFN),
+      isCloseable = Option(m get IS_CLOSEABLE_ESFN).fold(isCloseableDflt)(EsModel.booleanParser),
+      isUnseen    = Option(m get IS_UNSEEN_ESFN).fold(isUnseenDflt)(EsModel.booleanParser),
+      id          = id,
+      versionOpt  = version
     )
   }
 
@@ -57,51 +74,39 @@ object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
 
 // TODO Не забыть прилинковать эту модель к SiowebEsModel!
 
+import MNotify._
 
+
+/** Класс-экземпляр одной нотификации. */
 case class MNotify(
-  id: Option[String] = None,
-  versionOpt: Option[Long] = None
+  ntype         : NotifyType,
+  ownerId       : String,
+  argsInfo      : IArgsInfo       = MNotify.argsDflt,
+  dateCreated   : DateTime        = MNotify.dateCreatedDflt,
+  isCloseable   : Boolean         = MNotify.isCloseableDflt,
+  isUnseen      : Boolean         = MNotify.isUnseenDflt,
+  id            : Option[String]  = None,
+  versionOpt    : Option[Long]    = None
 ) extends EsModelT with EsModelPlayJsonT {
 
   override def companion = MNotify
   override type T = this.type
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    ???
+    var acc: FieldsJsonAcc = List(
+      NOTIFY_TYPE_ESFN  -> JsString(ntype.strId),
+      OWNER_ID_ESFN     -> JsString(ownerId),
+      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
+    )
+    if (argsInfo.nonEmpty)
+      acc ::= ARGS_ESFN -> argsInfo.toPlayJson
+    if (isCloseable != isCloseableDflt)
+      acc ::= IS_CLOSEABLE_ESFN -> JsBoolean(isCloseable)
+    if (isUnseen != isUnseenDflt)
+      acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)
+    acc
   }
 
 }
 
 
-object ArgNames extends Enumeration with EnumMaybeWithName {
-  protected class Val(strId: String) extends super.Val(strId)
-
-  type ArgName = Val
-  override type T = ArgName
-
-  val AdnId     = new Val("a")
-  //val PersonId  = new Val("p")
-  val AdvId     = new Val("v")
-
-}
-
-
-// TODO Вынести в отд.файл. Тут будет много букв.
-object NotifyTypes extends Enumeration with EnumMaybeWithName {
-
-  protected abstract class Val(strId: String) extends super.Val(strId) {
-    /**
-     * Поиск необходимых данных
-     * @param args
-     * @param runtimeArgs
-     * @param ctx
-     * @return
-     */
-    def render(args: Map[String, Any], runtimeArgs: Map[String, Any])(implicit ctx: Context): Future[Html]
-  }
-
-  type NotifyType = Val
-  override type T = NotifyType
-
-  // TODO Разные
-}
