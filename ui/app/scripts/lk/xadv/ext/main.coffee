@@ -1,4 +1,4 @@
-define [], () ->
+define ["VkPrepareEnsureServiceReadyBuilder"], (VkPrepareEnsureServiceReadyBuilder) ->
 
   class SioPR
     instance = undefined
@@ -18,9 +18,10 @@ define [], () ->
       return new PrepareEnsureReadyBuilder(ws, ctx)
 
     prepareEnsureServiceReady: (serviceName, ctx) ->
-      return new PrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
+      console.log VkPrepareEnsureServiceReadyBuilder
+      return new VkPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
 
-    setService: (name, adapter) ->
+    registerService: (name, adapter) ->
       serviceList[name] = adapter
 
     service: (name) ->
@@ -34,24 +35,6 @@ define [], () ->
     execute: (onSuccess, onError) ->
       console.log "PrepareEnsureReadyBuilder execute"
       onSuccess @ws, @ctx
-
-
-  class PrepareEnsureServiceReadyBuilder
-
-    constructor: (@ws, @name, @ctx) ->
-
-    execute: (onSuccess, onError) ->
-      console.log "PrepareEnsureServiceReadyBuilder execute"
-
-      requirejs(
-        [@name]
-        (VkAdapter) =>
-          adapter = new VkAdapter(@ws)
-          SioPR = new SioPR()
-
-          SioPR.setService @name, adapter
-          onSuccess @ws, @ctx
-      )
 
 
   return SioPR

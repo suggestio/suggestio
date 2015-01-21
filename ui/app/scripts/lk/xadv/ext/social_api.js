@@ -2,19 +2,21 @@ define([], function() {
 
   requirejs.config({
 
-      baseUrl: "/vassets/scripts/lk/xadv/ext/",
+    baseUrl: "/vassets/scripts/lk/xadv/ext/",
 
-      paths: {
-        "SioPR": "main",
-        "IAdapter": "iAdapter",
-        "PictureStorageBuilder": "pictureStorageBuilder",
-        "IPublishMessageBuilder": "iPublishMessageBuilder",
-        "PutPictureBuilder": "putPictureBuilder",
-        "vk": "vk/adapter",
-        "VkPictureStorageBuilder": "vk/pictureStorageBuilder",
-        "VkPublishMessageBuilder": "vk/iPublishMessageBuilder",
-        "VkPutPictureBuilder": "vk/putPictureBuilder"
-      }
+    paths: {
+      "SioPR": "main",
+      "IAdapter": "iAdapter",
+      "PictureStorageBuilder": "pictureStorageBuilder",
+      "IPublishMessageBuilder": "iPublishMessageBuilder",
+      "PutPictureBuilder": "putPictureBuilder",
+      "PrepareEnsureServiceReadyBuilder": "prepareEnsureServiceReadyBuilder",
+      "vk": "vk/adapter",
+      "VkPictureStorageBuilder": "vk/pictureStorageBuilder",
+      "VkPublishMessageBuilder": "vk/iPublishMessageBuilder",
+      "VkPrepareEnsureServiceReadyBuilder": "vk/prepareEnsureServiceReadyBuilder",
+      "VkPutPictureBuilder": "vk/putPictureBuilder"
+    }
 
   });
 
