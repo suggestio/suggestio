@@ -20,6 +20,22 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
           @statusChangeCallback(response)
       )
 
+
+    login: () ->
+
+      FB.login(
+        (response) ->
+          if response.authResponse
+            console.log "Welcome!  Fetching your information.... "
+            FB.api(
+              "/me"
+              (response) ->
+                console.log "Good to see you, #{response.name} ."
+            )
+          else
+            console.log "User cancelled login or did not fully authorize."
+      )
+
     testAPI: () ->
       console.log "Welcome to Facebook API!  Fetching your information.... "
       FB.api(
@@ -50,9 +66,6 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
       window.fbAsyncInit = () =>
         FB.init options
 
-        FB.getLoginStatus(
-          (response) =>
-            @statusChangeCallback(response)
-        )
+        @login()
 
       @loadSdk document, 'script', 'facebook-jssdk'
