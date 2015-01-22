@@ -1,4 +1,4 @@
-define ["VkPrepareEnsureServiceReadyBuilder"], (VkPrepareEnsureServiceReadyBuilder) ->
+define ["VkPrepareEnsureServiceReadyBuilder", "FbPrepareEnsureServiceReadyBuilder"], (VkPrepareEnsureServiceReadyBuilder, FbPrepareEnsureServiceReadyBuilder) ->
 
   class SioPR
     instance = undefined
@@ -18,8 +18,11 @@ define ["VkPrepareEnsureServiceReadyBuilder"], (VkPrepareEnsureServiceReadyBuild
       return new PrepareEnsureReadyBuilder(ws, ctx)
 
     prepareEnsureServiceReady: (serviceName, ctx) ->
-      console.log VkPrepareEnsureServiceReadyBuilder
-      return new VkPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
+      if serviceName == "vk"
+        return new VkPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
+
+      if serviceName == "fb"
+        return new FbPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
 
     registerService: (name, adapter) ->
       serviceList[name] = adapter

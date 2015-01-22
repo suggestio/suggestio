@@ -5,17 +5,22 @@ define([], function() {
     baseUrl: "/vassets/scripts/lk/xadv/ext/",
 
     paths: {
-      "SioPR": "main",
-      "IAdapter": "iAdapter",
-      "PictureStorageBuilder": "pictureStorageBuilder",
-      "IPublishMessageBuilder": "iPublishMessageBuilder",
-      "PutPictureBuilder": "putPictureBuilder",
-      "PrepareEnsureServiceReadyBuilder": "prepareEnsureServiceReadyBuilder",
-      "vk": "vk/adapter",
-      "VkPictureStorageBuilder": "vk/pictureStorageBuilder",
-      "VkPublishMessageBuilder": "vk/iPublishMessageBuilder",
-      "VkPrepareEnsureServiceReadyBuilder": "vk/prepareEnsureServiceReadyBuilder",
-      "VkPutPictureBuilder": "vk/putPictureBuilder"
+      SioPR: "main",
+      IAdapter: "iAdapter",
+      PictureStorageBuilder: "pictureStorageBuilder",
+      IPublishMessageBuilder: "iPublishMessageBuilder",
+      PutPictureBuilder: "putPictureBuilder",
+      PrepareEnsureServiceReadyBuilder: "prepareEnsureServiceReadyBuilder",
+
+      vk: "vk/adapter",
+      VkPictureStorageBuilder: "vk/pictureStorageBuilder",
+      VkPublishMessageBuilder: "vk/publishMessageBuilder",
+      VkPrepareEnsureServiceReadyBuilder: "vk/prepareEnsureServiceReadyBuilder",
+      VkPutPictureBuilder: "vk/putPictureBuilder",
+
+      fb: "fb/adapter",
+      FbPrepareEnsureServiceReadyBuilder: "fb/prepareEnsureServiceReadyBuilder",
+      FbPublishMessageBuilder: "fb/publishMessageBuilder"
     }
 
   });
@@ -29,6 +34,8 @@ define([], function() {
     SioPR = new SioPR();
     SioPR.setWs(ws);
 
+    SioPR.prepareEnsureServiceReady("fb",{}).execute();
+
     ws.onmessage = function(event) {
       message = $.parseJSON(event.data);
       if(message["type"] == "js") {
@@ -36,6 +43,7 @@ define([], function() {
         eval(message["data"]);
       }
     }
+
   });
 
 });

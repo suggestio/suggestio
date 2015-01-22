@@ -2,7 +2,7 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
 
   class VkPrepareEnsureServiceReadyBuilder extends PrepareEnsureServiceReadyBuilder
     API_ID = 4705589
-    ACESS_LVL = 5
+    ACESS_LVL = 8197
 
     authorization: (onSuccess, onError) ->
 
