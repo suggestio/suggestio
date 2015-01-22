@@ -1,7 +1,6 @@
 package util.adv
 
 import _root_.util.PlayMacroLogsImpl
-import _root_.util.acl.RequestWithAdAndProducer
 import _root_.util.async.FsmActor
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client

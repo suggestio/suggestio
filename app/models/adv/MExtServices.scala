@@ -13,6 +13,8 @@ import play.api.Play._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.12.14 15:13
  * Description: Модель сервисов для внешнего размещения рекламных карточек.
+ * TODO ext.adv api v2: Модель осталась для совместимости, должна быть удалена или же стать неким каталогом скриптов,
+ * либо ещё что-то...
  */
 object MExtServices extends Enumeration with EnumMaybeWithName {
 

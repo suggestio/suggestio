@@ -226,6 +226,8 @@ case class ExtTargetActor(args: MExtAdvTargetActorArgs)
   }
 
 
+  // TODO Вынести render ad + s2s upload в отдельный актор. Так можно будет рендерить и грузить несколько карточек одновременно.
+
   /** Заготовка состояния рендера карточки в картинку. */
   trait RenderAd2ImgStateT extends FsmState {
     /** На какое состояние переключаться надо, когда картинка отрендерилась? */

@@ -10,11 +10,6 @@ import play.api.libs.json._
  * Description: Заготовки js-моделей протокола общения с adv-фронтендами.
  */
 
-trait IAction {
-  /** Некое название экшена. Это то, что фигурирует как идентификатор в запросах-ответах. */
-  def action: String
-}
-
 
 /** Компаньон абстрактных ask-builder'ов. */
 object JsBuilder {
