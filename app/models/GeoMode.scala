@@ -10,7 +10,8 @@ import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
-import util.{AsyncUtil, PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
+import util.async.AsyncUtil
+import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
 

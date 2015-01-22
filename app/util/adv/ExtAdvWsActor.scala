@@ -1,6 +1,8 @@
 package util.adv
 
-import _root_.util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
+import _root_.util.PlayMacroLogsImpl
+import _root_.util.acl.RequestWithAdAndProducer
+import _root_.util.async.FsmActor
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
@@ -10,8 +12,9 @@ import models.adv.js._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+import scala.collection.immutable.Queue
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Random, Failure, Success}
 
 /**
  * Suggest.io
@@ -20,15 +23,66 @@ import scala.util.{Failure, Success}
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
 object ExtAdvWsActor {
-  def props(out: ActorRef, eactx: MExtAdvArgsT) = Props(new ExtAdvWsActor(out, eactx))
+
+  /** Сборка конфигурации актора. */
+  def props(out: ActorRef, eactx: MExtAdvArgsT): Props = {
+    Props(new ExtAdvWsActor(out, eactx))
+  }
+
 }
 
 
 /** ws-актор, готовый к использованию websocket api. */
 case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
-  extends ExtAdvWsActorBase
-  with EnsureReadyAddon
-{
+  extends FsmActor
+  with SubscribeToWsDispatcher
+  with PlayMacroLogsImpl
+{ actor =>
+
+  import LOGGER._
+
+  /** Флаг, обозначающий, что на клиент отправлена ask-команда, и он занимается обработкой оной.
+    * Если флаг true, то значит js-система занимается какими-то действиями, скорее всего юзеру какое-то окно
+    * отображено. */
+  protected var _jsAskLock: Boolean = false
+
+  /** Очередь команд для клиента. */
+  protected var _queue = Queue[JsCommand]()
+
+
+  /** Сериализация и отправка одной js-команды в веб-сокет. */
+  def sendJsCommand(jsCmd: JsCommand): Unit = {
+    out ! Json.toJson(jsCmd)
+  }
+
+  /** Получена js-команда от какого-то актора. Нужно в зависимости от ситуации отправить её в очередь
+    * или же отправить немедлено, выставив флаг блокировки. */
+  def enqueueCommand(ask: JsCommand): Unit = {
+    if (_jsAskLock) {
+      // Клиент отрабатывает другой ask. Значит отправить в очередь.
+      _queue = _queue.enqueue(ask)
+    } else {
+      // Клиент свободен. Считаем, что очередь пуста. Сразу отправляем, выставляя флаг.
+      sendJsCommand(ask)
+      _jsAskLock = true
+    }
+  }
+
+  /** Необходимо пропедалировать очередь команд вперёд в связи с получением какого-то ответа от js. */
+  def dequeueAnswerReceived(): Unit = {
+    if (_queue.isEmpty) {
+      // Очередь пуста. Снимает флаг блокировки.
+      _jsAskLock = false
+    } else {
+      // В очереди ещё есть запросы к js -- отправляем следующий запрос.
+      val (ask, newQueue) = _queue.dequeue
+      sendJsCommand(ask)
+      _queue = newQueue
+      _jsAskLock = true
+    }
+  }
+
+  /** Подписка на WsDispatcher требует указания wsId. */
   override def wsId: String = eactx.qs.wsId
 
   override def allStatesReceiver: Receive = PartialFunction.empty
@@ -42,102 +96,12 @@ case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
     become(new EnsureReadyState)
   }
 
-}
 
-
-// TODO Вынести FsmActor в другое место.
-/** Утиль для построения FSM-актора. */
-trait FsmActor extends Actor with PlayMacroLogsI {
-
-  /** Текущее состояние. */
-  protected var _state: FsmState
-
-  /** Ресивер для всех состояний. */
-  def allStatesReceiver: Receive
-
-  /**
-   * Переключение на новое состояние. Старое состояние будет отброшено.
-   * @param nextState Новое состояние.
-   */
-  def become(nextState: FsmState): Unit = {
-    LOGGER.trace(s"become(): fsm mode switch ${_state} -> $nextState")
-    _state.beforeUnbecome()
-    _state = nextState
-    context.become(_state.receiver, discardOld = true)
-    _state.afterBecome()
-  }
-
-  /** Ресивер, добавляемый к конец reveive() для всех состояний, чтобы выводить в логи сообщения,
-    * которые не были отработаны актором. */
-  protected val unexpectedReceiver: Receive = {
-    case other =>
-      LOGGER.warn(s"${_state.name} Unexpected message dropped [${other.getClass.getName}]:\n  $other")
-  }
-
-  /** Интерфейс одного состояния. */
-  trait FsmState {
-    def name = getClass.getSimpleName
-    def receiverPart: Receive
-    def superReceiver = allStatesReceiver
-    def maybeSuperReceive(msg: Any): Unit = {
-      val sr = superReceiver
-      if (sr isDefinedAt msg)
-        sr(msg)
-    }
-    def receiver = receiverPart orElse superReceiver orElse unexpectedReceiver
-    override def toString: String = name
-
-    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
-    def afterBecome() {}
-
-    /** Действия, которые вызываются, перед тем как это состояние слетает из актора. */
-    def beforeUnbecome() {}
-  }
-
-  /** Состояние-заглушка. Не делает ровным счётом ничего. */
-  class DummyState extends FsmState {
-    override def receiverPart: Receive = PartialFunction.empty
-  }
-
-}
-
-
-/** Утиль взаимодействия с js. */
-trait SioPrJsUtil {
-
-  /**
-   * Сборка JSON запроса на основе указанных данных.
-   * @param data Данные запроса. Обычно js-генератор.
-   * @param askType Тип запроса. Обычно "js" (по умоляанию).
-   * @return JSON.
-   */
-  def mkJsAsk(data: AskBuilder, askType: String = "js"): JsObject = {
-    JsObject(Seq(
-      "type" -> JsString(askType),
-      "data" -> JsString(data.js)
-    ))
-  }
-
-}
-
-
-/** Базовый трейт для запиливания реализации актора и его аддонов */
-sealed trait ExtAdvWsActorBase extends FsmActor with SubscribeToWsDispatcher with PlayLazyMacroLogsImpl {
-
-  val out: ActorRef
-  val eactx: MExtAdvArgsT
-
-}
-
-
-/** Поддержка диалога ensureReady.  */
-sealed trait EnsureReadyAddon extends ExtAdvWsActorBase with SuperviseServiceActors with SioPrJsUtil {
-
-  import LOGGER._
 
   /** Начальное состояние, передаваемое в prepareReady.
     * По мере необходимости, сюда можно добавлять новые поля. */
   def ctx0 = JsObject(Nil)
+
 
   /** Состояние диалога на этапе начальной инициализации. */
   class EnsureReadyState extends FsmState {
@@ -165,16 +129,19 @@ sealed trait EnsureReadyAddon extends ExtAdvWsActorBase with SuperviseServiceAct
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      out ! mkJsAsk( EnsureReadyAsk(ctx0) )
-      targetsFut  // Запускаем на исполнение lazy val future
+      // Отправить запрос на подготовку к работе.
+      val cmd = JsCommand(EnsureReadyAsk(ctx0), CmdSendModes.Async)
+      sendJsCommand(cmd)
+      // Запускаем на исполнение lazy val future. Это сократит временные издержки.
+      targetsFut
     }
 
     override def receiverPart: Receive = {
       // Пришел какой-то ответ на ensureReady
-      case Answer(status, replyTo, mctx1) if replyTo == EnsureReady.action =>
-        val nextState = if (status.isSuccess) {
+      case Answer(replyToOpt, mctx1) if replyToOpt.isEmpty =>
+        val nextState = if (mctx1.status contains AnswerStatuses.Success) {
           // Инициализация выполнена.
-          trace(s"$name: success. New context = ${mctx1.json}")
+          trace(s"$name: success. New context = $mctx1")
           new WaitForTargetsState(targetsFut, mctx1)
         } else {
           // Проблемы при инициализации
@@ -222,13 +189,7 @@ sealed trait EnsureReadyAddon extends ExtAdvWsActorBase with SuperviseServiceAct
     case class TargetsFailed(ex: Throwable)
   }
 
-}
 
-
-/** Поддержка инициализации сервисов и диспатчинга их по акторам. */
-sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
-
-  import LOGGER._
 
   /**
    * Состояние перехода на обработку целей размещения.
@@ -238,30 +199,44 @@ sealed trait SuperviseServiceActors extends ExtAdvWsActorBase { actor =>
   class SuperviseServiceActorsState(targets: ActorTargets_t, mctx1: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // Сразу запустить паралельных акторов, которые паралельно занимаются обслуживанием каждого сервиса.
-      targets.groupBy(_.target.service).foreach {
-        case (_service, serviceTargets) =>
-          val args = new MExtServiceAdvArgsT with MExtAdvArgsWrapperT {
-            override def out                = actor.out
-            override def mctx0              = mctx1
-            override def service            = _service
-            override def targets0           = serviceTargets
-            override def _eaArgsUnderlying  = eactx
-          }
-          val props = ExtServiceActor.props(args)
-          // TODO Нужно придумать более безопасный для akka идентификатор: uuid+hex? uuid+base64+urlsafe?
-          val actorName = _service.strId
-          context.actorOf(props, name = actorName)
+      // Запускаем всех акторов для всех таргетов. Они сразу заполнят всю очередь запросами.
+      val rnd = new Random()
+      targets.foreach { tg =>
+        val args = new MExtAdvTargetActorArgs with MExtAdvArgsWrapperT {
+          override def service  = tg.target.service
+          override def mctx0    = mctx1
+          override def target   = tg
+          override def _eaArgsUnderlying = eactx
+        }
+        val props = ExtTargetActor.props(args)
+        // Придумываем рандомный идентификатор для нового актора. По этому id будут роутится js-ответы.
+        val actorName = Math.abs(rnd.nextLong()).toString
+        context.actorOf(props, name = actorName)
       }
     }
 
+    /** Обработка входящих сообщений: как от js, так и от акторов. */
     override def receiverPart: Receive = {
-      // Пришло сообщение от js для другого service-актора.
-      case sa @ ServiceAnswer(status, service, replyTo, ctx2) =>
-        val sel = context.system.actorSelection(self.path / service.strId)
-        trace(s"$name: Message received for slave service actor: $service. Forwarding message to actor $sel")
-        sel forward sa
+      // Пришло сообщение из web-socket'а для указанного target-актора.
+      case sa @ Answer(replyTo, ctx2) if replyTo.nonEmpty =>
+        dequeueAnswerReceived()
+        val sel = context.system.actorSelection(self.path / replyTo.get)
+        trace(s"$name: Message received for slave service actor: $replyTo...")
+        // Пересылаем сообщение целевому актору.
+        // Используем send() вместо forward(), чтобы скрыть out от подчинённых акторов.
+        sel ! sa
+
+      // Подчинённый актор хочет отправить js-код для исполнения на клиенте.
+      case jsCmd: JsCommand =>
+        jsCmd.sendMode match {
+          case CmdSendModes.Async =>
+            sendJsCommand(jsCmd)
+          case CmdSendModes.Queued =>
+            enqueueCommand(jsCmd)
+        }
     }
   }
+
+
 }
 

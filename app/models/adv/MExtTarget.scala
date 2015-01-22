@@ -4,10 +4,11 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
+import util.PlayMacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.libs.json.{Json, JsObject, JsString}
-import util.PlayMacroLogsImpl
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import io.suggest.model.EsModel.stringParser
 
 import scala.collection.Map
@@ -37,8 +38,6 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
   val NAME_ESFN         = "name"
   /** Имя поля с id узла, к которому привязан данный интанс. */
   val ADN_ID_ESFN       = "adnId"
-  /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
-  val ON_CLICK_URL_ESFN = "href"
   /** В поле с этим именем хранятся контекстные данные, заданные js'ом. */
   val CTX_DATA_ESFN     = "stored"
 
@@ -120,7 +119,7 @@ case class MExtTarget(
   ctxData       : Option[JsObject] = None,
   versionOpt    : Option[Long] = None,
   id            : Option[String] = None
-) extends EsModelT with EsModelPlayJsonT with JsExtTargetT {
+) extends EsModelT with EsModelPlayJsonT with IExtTarget {
 
   override type T = this.type
   override def companion = MExtTarget
@@ -135,7 +134,7 @@ case class MExtTarget(
 
 
 /** Упрощенный интерфейс MExtTarget для js target-таргетирования. */
-trait JsExtTargetT {
+trait IExtTarget {
 
   /** Ссылка на целевую страницу. */
   def url: String
@@ -168,26 +167,58 @@ trait JsExtTargetT {
 
 }
 
-/** Враппер над [[JsExtTargetT]]. */
-trait JsExtTargetWrapperT extends JsExtTargetT {
-  def _targetUnderlying: JsExtTargetT
+/** Враппер над [[IExtTarget]]. */
+trait IExtTargetWrapper extends IExtTarget {
+  def _targetUnderlying: IExtTarget
   override def url = _targetUnderlying.url
   override def ctxData = _targetUnderlying.ctxData
   override def name = _targetUnderlying.name
 }
 
 
-/** Абстрактная модель того, что лежит в ext adv js ctx._target. */
-trait JsExtTargetFullT extends JsExtTargetT {
-  def onClickUrl: String
+object JsExtTarget {
 
-  /** Генерация JSON-тела на основе имеющихся данных. */
-  override def toJsTargetPlayJsonFields: FieldsJsonAcc = {
-    ON_CLICK_URL_ESFN -> JsString(onClickUrl) ::
-    super.toJsTargetPlayJsonFields
+  val URL_FN          = "url"
+
+  /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
+  val ON_CLICK_URL_FN = "href"
+
+  val NAME_FN         = "name"
+
+  /** mapper из JSON. */
+  implicit def reads: Reads[JsExtTarget] = (
+    (__ \ URL_FN).read[String] and
+    (__ \ ON_CLICK_URL_FN).read[String] and
+    (__ \ NAME_FN).readNullable[String]
+  )(apply(_, _, _))
+
+  /** unmapper в JSON. */
+  implicit def writes: Writes[JsExtTarget] = (
+    (__ \ URL_FN).write[String] and
+    (__ \ ON_CLICK_URL_FN).write[String] and
+    (__ \ NAME_FN).writeNullable[String]
+  )(unlift(unapply))
+
+  
+  def apply(target: IExtTarget, onClickUrl: String): JsExtTarget = {
+    apply(
+      url         = target.url,
+      onClickUrl  = onClickUrl,
+      name        = target.name
+    )
   }
+
 }
 
-case class JsExtTargetWrap(_targetUnderlying: JsExtTargetT, onClickUrl: String)
-  extends JsExtTargetFullT with JsExtTargetWrapperT
+/** Модель того, что лежит в ext adv js ctx._target. */
+case class JsExtTarget(
+  url         : String,
+  onClickUrl  : String,
+  name        : Option[String] = None
+) extends IExtTarget {
+
+  // TODO Произвольные данные контекста, заданные на стороне js.
+  override def ctxData: Option[JsObject] = None
+
+}
 
