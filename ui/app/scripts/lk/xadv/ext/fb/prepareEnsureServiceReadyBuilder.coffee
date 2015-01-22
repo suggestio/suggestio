@@ -11,8 +11,10 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
         @testAPI()
       else if response.status == "not_authorized"
         console.log "Please log into this app."
+        @login()
       else
         console.log "Please log into Facebook."
+        @login()
 
     checkLoginState: () ->
       FB.getLoginStatus(
@@ -23,17 +25,17 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
 
     login: () ->
 
+      loginParams =
+        scope: "user_actions.news,user_photos"
+
       FB.login(
-        (response) ->
+        (response) =>
           if response.authResponse
             console.log "Welcome!  Fetching your information.... "
-            FB.api(
-              "/me"
-              (response) ->
-                console.log "Good to see you, #{response.name} ."
-            )
+            @testAPI()
           else
             console.log "User cancelled login or did not fully authorize."
+        loginParams
       )
 
     testAPI: () ->
@@ -66,6 +68,6 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
       window.fbAsyncInit = () =>
         FB.init options
 
-        @login()
+        @checkLoginState()
 
       @loadSdk document, 'script', 'facebook-jssdk'
