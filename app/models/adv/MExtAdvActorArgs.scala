@@ -1,7 +1,6 @@
 package models.adv
 
-import akka.actor.ActorRef
-import models.adv.js.ctx.{MJsCtx, JsCtx_t}
+import models.adv.js.ctx.MJsCtx
 import util.acl.RequestWithAdAndProducer
 
 /**
@@ -39,17 +38,26 @@ trait MExtAdvArgsWrapperT extends MExtAdvArgsT {
 
 
 /** Аргументы, передаваемые от общего актора внешнего размещения к актору конкретного сервиса. */
+@deprecated("remove with ExtServiceActor", "2014.jan.22")
 trait MExtServiceAdvArgsT extends MExtAdvArgsT {
-  /** Актор-интерфейс к веб-сокету. */
-  def out       : ActorRef
 
-  /** Сервис, в рамках которого будет работать текущий service-актор. */
   def service   : MExtService
 
   /** Начальный список целей. */
   def targets0  : ActorTargets_t
 
-  /** Начальный контекст в рамках сервиса. */
   def mctx0     : MJsCtx
 }
 
+
+/** APIv2: Один подчинённый актор обслуживает только одну цель и обновляет GUI в рамках оной. */
+trait MExtAdvTargetActorArgs extends MExtAdvArgsT {
+  /** Сервис, в рамках которого будет работать текущий service-актор. */
+  def service : MExtService
+
+  /** Цель, с которой нужно вести работу. */
+  def target  : MExtTargetInfoFull
+
+  /** Начальный контекст в рамках сервиса. */
+  def mctx0   : MJsCtx
+}

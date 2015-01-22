@@ -14,8 +14,9 @@ import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.mvc.Call
 import play.api.Play.{current, configuration}
-import util.{AsyncUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.async.AsyncUtil
 import scala.collection.JavaConversions._
 
 import scala.concurrent.{Promise, Future}

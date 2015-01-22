@@ -13,8 +13,9 @@ import models._
 import org.joda.time.{Period, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
+import util.async.AsyncUtil
 import views.html.market.lk.adv._
-import util.{AsyncUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException

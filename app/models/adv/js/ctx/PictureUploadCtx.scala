@@ -17,22 +17,20 @@ object PictureUploadCtx {
   val MODE_FN = "mode"
 
   /** mapper из JSON. */
-  implicit def reads = new Reads[PictureUploadCtxT] {
-    override def reads(json: JsValue): JsResult[PictureUploadCtxT] = {
+  implicit def reads = new Reads[PictureUploadCtx] {
+    override def reads(json: JsValue): JsResult[PictureUploadCtx] = {
       import PictureUploadModes._
       (json \ MODE_FN)
         .validate[PictureUploadMode]
         .flatMap {
           case S2s => json.validate[S2sPictureUpload]
-          case Url => JsSuccess(UrlPictureUpload)
-          case C2s => JsSuccess(C2sPictureUpload)
         }
     }
   }
 
   /** Unmapper из JSON. */
-  implicit def writes = new Writes[PictureUploadCtxT] {
-    override def writes(o: PictureUploadCtxT): JsValue = {
+  implicit def writes = new Writes[PictureUploadCtx] {
+    override def writes(o: PictureUploadCtx): JsValue = {
       o match {
         case s2s: S2sPictureUpload =>
           S2sPictureUpload.writes.writes(s2s)
@@ -49,14 +47,8 @@ object PictureUploadCtx {
 
 
 /** Трейт для данных по режиму upload'а. */
-sealed trait PictureUploadCtxT {
+sealed trait PictureUploadCtx {
   def mode: PictureUploadMode
-}
-
-
-/** Режим работы через ссылку. Без параметров, поэтому сингтон. */
-case object UrlPictureUpload extends PictureUploadCtxT {
-  override def mode = PictureUploadModes.Url
 }
 
 
@@ -85,14 +77,8 @@ object S2sPictureUpload {
 }
 
 /** Модель данных по s2s upload. */
-case class S2sPictureUpload(url: String, partName: String) extends PictureUploadCtxT {
+case class S2sPictureUpload(url: String, partName: String) extends PictureUploadCtx {
   override def mode = PictureUploadModes.S2s
-}
-
-
-/** Режим работы через отправку картинки со стороны клиента. */
-case object C2sPictureUpload extends PictureUploadCtxT {
-  override def mode = PictureUploadModes.C2s
 }
 
 
@@ -105,17 +91,8 @@ object PictureUploadModes extends Enumeration with EnumMaybeWithName {
   type PictureUploadMode = Val
   override type T = PictureUploadMode
 
-
-  /** Загрузка картинки на сервис с помощью ссылки внутри текста публикуемого сообщения. */
-  val Url: PictureUploadMode = new Val("url")
-
   /** Сервер s.io должен отправить http-запрос на сервер сервиса. */
   val S2s: PictureUploadMode = new Val("s2s")
-
-  /** Запрос аплода картинки должен идти через браузер клиента (на стороне js). */
-  val C2s: PictureUploadMode = new Val("c2s")
-
-  def default = Url
 
 
   /** JSON mapper */

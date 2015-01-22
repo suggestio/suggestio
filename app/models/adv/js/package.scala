@@ -9,4 +9,6 @@ package object js {
 
   type AnswerStatus = AnswerStatuses.AnswerStatus
 
+  type CmdSendMode  = CmdSendModes.CmdSendMode
+
 }

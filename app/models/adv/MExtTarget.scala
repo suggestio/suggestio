@@ -119,7 +119,7 @@ case class MExtTarget(
   ctxData       : Option[JsObject] = None,
   versionOpt    : Option[Long] = None,
   id            : Option[String] = None
-) extends EsModelT with EsModelPlayJsonT with JsExtTargetT {
+) extends EsModelT with EsModelPlayJsonT with IExtTarget {
 
   override type T = this.type
   override def companion = MExtTarget
@@ -134,7 +134,7 @@ case class MExtTarget(
 
 
 /** Упрощенный интерфейс MExtTarget для js target-таргетирования. */
-trait JsExtTargetT {
+trait IExtTarget {
 
   /** Ссылка на целевую страницу. */
   def url: String
@@ -167,9 +167,9 @@ trait JsExtTargetT {
 
 }
 
-/** Враппер над [[JsExtTargetT]]. */
-trait JsExtTargetWrapperT extends JsExtTargetT {
-  def _targetUnderlying: JsExtTargetT
+/** Враппер над [[IExtTarget]]. */
+trait IExtTargetWrapper extends IExtTarget {
+  def _targetUnderlying: IExtTarget
   override def url = _targetUnderlying.url
   override def ctxData = _targetUnderlying.ctxData
   override def name = _targetUnderlying.name
@@ -190,7 +190,7 @@ object JsExtTarget {
     (__ \ URL_FN).read[String] and
     (__ \ ON_CLICK_URL_FN).read[String] and
     (__ \ NAME_FN).readNullable[String]
-  )(apply _)
+  )(apply(_, _, _))
 
   /** unmapper в JSON. */
   implicit def writes: Writes[JsExtTarget] = (
@@ -199,13 +199,23 @@ object JsExtTarget {
     (__ \ NAME_FN).writeNullable[String]
   )(unlift(unapply))
 
+  
+  def apply(target: IExtTarget, onClickUrl: String): JsExtTarget = {
+    apply(
+      url         = target.url,
+      onClickUrl  = onClickUrl,
+      name        = target.name
+    )
+  }
+
 }
+
 /** Модель того, что лежит в ext adv js ctx._target. */
 case class JsExtTarget(
   url         : String,
   onClickUrl  : String,
   name        : Option[String] = None
-) extends JsExtTargetT {
+) extends IExtTarget {
 
   // TODO Произвольные данные контекста, заданные на стороне js.
   override def ctxData: Option[JsObject] = None

@@ -1,9 +1,11 @@
-package util
+package util.async
 
 import akka.ConfigurationException
-import play.api.libs.concurrent.Akka
 import play.api.Play.current
+import play.api.libs.concurrent.Akka
 import play.api.libs.concurrent.Execution.Implicits
+import util.PlayLazyMacroLogsImpl
+
 import scala.concurrent.ExecutionContext
 
 /**

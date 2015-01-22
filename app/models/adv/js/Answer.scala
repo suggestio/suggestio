@@ -14,39 +14,19 @@ object Answer {
 
   // Названия полей JSON-ответа.
   /** Поле с JSON нового состояние системы (новым контекстом). */
-  val CTX2 = "ctx2"
-
-  /** Статус: успех, ошибка, ... */
-  val STATUS_FN     = "status"
+  val CTX2_FN = "ctx2"
 
   /** На какое действие ответ. Для самоконтроля. */
   val REPLY_TO_FN   = "replyTo"
 
-  implicit def contextReads: Reads[MJsCtx] = {
-    (JsPath \ CTX2)
-      .read[JsObject]
-      .map { MJsCtx.apply }
-  }
-
-  /** JSON-парсер для поля статуса. */
-  implicit def statusReads: Reads[AnswerStatus] = {
-    (JsPath \ STATUS_FN)
-      .read[String]
-      .map(AnswerStatuses.withName(_): AnswerStatus)
-  }
-
-  def replyToReads: Reads[String] = {
-    (JsPath \ REPLY_TO_FN)
-      .read[String]
-  }
-
   /** JSON-парсер для ответов. */
-  implicit def answerReads: Reads[Answer] = {
-    val answerReader = statusReads  and  replyToReads  and  contextReads
-    answerReader(apply _)
-  }
+  implicit def reads: Reads[Answer] = (
+    (JsPath \ REPLY_TO_FN).readNullable[String] and
+    (JsPath \ CTX2_FN).read[MJsCtx]
+  )(apply _)
 
-  type Tu = (AnswerStatus, String, MJsCtx)
+  /** Тип значения, которое возвращает unapply. */
+  type Tu = (Option[String], MJsCtx)
 
   /** Прозрачное приведение JsValue к содержимому Answer'а. */
   def unapply(json: JsValue): Option[Tu] = {
@@ -54,10 +34,10 @@ object Answer {
       .flatMap { unapply }
   }
 
-  def unapply(any: Any): Option[Tu] = {
-    any match {
+  def unapply(a: Any): Option[Tu] = {
+    a match {
       case jsv: JsValue => unapply(jsv)
-      case a: Answer    => unapply(a)
+      case ans: Answer  => unapply(ans)
       case _            => None
     }
   }
@@ -68,11 +48,8 @@ object Answer {
 /** Интерфейс ответа. */
 trait IAnswer {
 
-  /** Статус ответа. */
-  def status    : AnswerStatus
-
-  /** По какому экшену ответ? (См. поле action в [[AskBuilder]]). */
-  def replyTo   : String
+  /** id того актора, кому нужно отправить ответ. */
+  def replyTo   : Option[String]
 
   /** Обновлённое состояние. */
   def ctx2      : MJsCtx
@@ -81,6 +58,6 @@ trait IAnswer {
 
 
 /** Экземпляр одного распарсенного ответа в рамках сервиса. */
-case class Answer(status: AnswerStatus, replyTo: String, ctx2: MJsCtx)
+case class Answer(replyTo: Option[String], ctx2: MJsCtx)
   extends IAnswer
 
