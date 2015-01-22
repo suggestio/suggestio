@@ -26,7 +26,7 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
     login: () ->
 
       loginParams =
-        scope: "user_actions.news,user_photos"
+        scope: "user_actions.news,user_photos,publish_actions"
 
       FB.login(
         (response) =>
@@ -38,6 +38,41 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
         loginParams
       )
 
+    publicatePost: () ->
+      params =
+        message: "Reading JS SDK documentation"
+        picture: "http://cs621520.vk.me/v621520368/c705/AZFdRlNVAvA.jpg"
+        link: "suggest.io"
+
+      callback = (response) ->
+        if !response || response.error
+          console.log "Error occured"
+          console.log response
+        else
+          console.log "Post ID: #{response.id}"
+
+      FB.api(
+        "/me/feed"
+        "post"
+        params
+        callback
+      )
+
+    uploadPhotoByUrl: () ->
+
+      params =
+        url: "http://cs621520.vk.me/v621520368/c705/AZFdRlNVAvA.jpg"
+
+      callback = (response) ->
+        console.log response
+
+      FB.api(
+        "/me/photos",
+        "POST",
+        params
+        callback
+      )
+
     testAPI: () ->
       console.log "Welcome to Facebook API!  Fetching your information.... "
       FB.api(
@@ -45,6 +80,10 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
         (response) ->
           console.log "Successful login for: #{response.name}"
       )
+
+      @publicatePost()
+
+      #@uploadPhotoByUrl()
 
     loadSdk: (d, s, id) ->
       js = d.getElementsByTagName(s)[0]
