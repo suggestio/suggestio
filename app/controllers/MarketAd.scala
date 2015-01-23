@@ -379,7 +379,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    */
   private def newTexts4search(newMadData: MAd, producer: MAdnNode): Future[Texts4Search] = {
     // Собираем названия родительских категорий:
-    val catNamesFut: Future[List[String]] = {
+    val catNamesFut: Future[List[String]] = if (newMadData.userCatId.nonEmpty) {
       val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
         val fut = MMartCategory.foldUpChain [List[String]] (catId, Nil) {
           (acc, e) =>
@@ -392,6 +392,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
         fut :: accFut
       }
       Future.reduce(futs) { _ ++ _ }
+    } else {
+      Future successful Nil
     }
     // Узнаём название узла-продьюсера:
     // Генерим общий результат:
