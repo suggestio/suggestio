@@ -1187,11 +1187,45 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       val req = client.prepareMultiGet()
         .setRealtime(true)
       ids.foreach {
-        id =>
-          req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
+        id  =>  req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
       }
       req.execute()
         .map { mgetResp2list(_, acc0) }
+    }
+  }
+
+
+  /**
+   * Пакетно вернуть инстансы модели с указанными id'шниками, но в виде карты (id -> T).
+   * Враппер над multiget, но ещё вызывает resultsToMap над результатами.
+   * @param ids Коллекция или итератор необходимых id'шников.
+   * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
+   * @return Фьючерс с картой результатов.
+   */
+  def multiGetMap(ids: TraversableOnce[String], acc0: List[T] = Nil)
+                 (implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
+    multiGet(ids, acc0)
+      // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
+      .map { resultsToMap }
+  }
+
+
+  /** Сконвертить распарсенные результаты в карту. */
+  def resultsToMap(results: TraversableOnce[T]): Map[String, T] = {
+    if (results.isEmpty) {
+      Map.empty
+    } else {
+      results
+        .toIterator
+        .flatMap { v =>
+          if (v.id.nonEmpty) {
+            List(v.id.get -> v)
+          } else {
+            LOGGER.warn("multiGetMap(): This should never occur! Dropping model instance because no .id value present:\n  " + v)
+            Nil
+          }
+        }
+        .toMap
     }
   }
 
