@@ -94,6 +94,7 @@ define ["SioPR"], (SioPR) ->
       callback = (data) =>
         console.log data
 
+        @ctx._status = "success"
         @ctx._ads[0]._picture =
           size:
             width: 600
