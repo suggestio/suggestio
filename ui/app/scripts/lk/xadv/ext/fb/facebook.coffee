@@ -21,6 +21,7 @@ define ["SioPR"], (SioPR) ->
 
       @loadSdk document, 'script', 'facebook-jssdk'
 
+
     statusChangeCallback: (response) ->
       console.log "statusChangeCallback"
       console.log response

@@ -8,14 +8,14 @@ define ["SioPR"], (SioPR) ->
 
     userId = null
 
-    constructor: (@ws, ctx, onComplete) ->
+    constructor: (@ws, @ctx, @onComplete) ->
       console.log "vk init"
 
       window.vkAsyncInit = () =>
         VK.init
           apiId: API_ID
 
-        SioPR.registerService ctx, onComplete
+        SioPR.registerService @ctx, @onComplete
 
       @loadSdk()
 
@@ -78,15 +78,23 @@ define ["SioPR"], (SioPR) ->
 
       VK.Api.call "wall.post", post, callback
 
-    getWallUploadServer: (ctx, onComplete) ->
+    getWallUploadServer: () ->
+      console.log "getWallUploadServer"
+
+      if !userId?
+        onSuccess = () =>
+          @getWallUploadServer()
+
+        @login onSuccess
+        return false
+
       params =
         user_id: userId
 
       callback = (data) =>
-        if data.error
-          onError data.error
+        console.log data
 
-        ctx._picture =
+        @ctx._picture =
           size:
             width: 600
             height: 500
@@ -95,27 +103,34 @@ define ["SioPR"], (SioPR) ->
             url: data.response.upload_url
             partName: "photo"
 
-        onComplete ctx, sendF
+        @onComplete @ctx, sendF
 
       VK.Api.call "photos.getWallUploadServer", params, callback
 
-    login: () ->
-      console.log "vk login"
+    login: (onSuccess) ->
 
       authInfo = (response) =>
         console.log response
         if response.session
           userId = response.session.mid
+          onSuccess()
         else
           VK.Auth.login authInfo, ACESS_LVL
+          @ctx._status = "error"
+          @onComplete @ctx, sendF
 
       VK.Auth.getLoginStatus authInfo
 
-    handleTarget: (ctx) ->
+    handleTarget: (ctx, onComplete) ->
       console.log "vk handle target"
 
-      if !userId? then return @login()
-      if ctx._ads[0].rendered.saved then return @getWallUploadServer(ctx, onComplete)
+      @ctx = ctx
+      @onComplete = onComplete
+
+      console.log ctx
+
+      if ctx._ads[0].rendered.sioUrl then return @getWallUploadServer()
+      #@getWallUploadServer()
 
 
     loadSdk: () ->
