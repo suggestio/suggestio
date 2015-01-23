@@ -23,7 +23,7 @@ define [], () ->
       console.log "ensureReady"
 
       requirejs(
-        ["facebook", "vk"]
+        ["vk"]
         () ->
           # регистрируем и инициализируем новые сервисы
           for index in [0...arguments.length]
