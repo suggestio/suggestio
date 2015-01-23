@@ -1,4 +1,4 @@
-package models.notify
+package models.event
 
 import io.suggest.model.EnumMaybeWithName
 import play.api.libs.json.{JsObject, JsValue, JsString}
@@ -14,7 +14,7 @@ import scala.concurrent.Future
  * Тут файл с моделями, которые описывают всё это необъятное множество.
  *
  * У нас есть два уровня аргументов нотификации:
- *  - Контейнеры с хранимыми в MNotify id'шниками: [[IArgsInfo]]
+ *  - Контейнеры с хранимыми в [[MEvent]] id'шниками: [[IArgsInfo]]
  *  - Контейнеры с готовыми к рендеру интансами: [[IArgsInst]]
  */
 

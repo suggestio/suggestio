@@ -1,10 +1,11 @@
-package util.notify
+package util.event
+
+import java.{util => ju}
 
 import io.suggest.model.EnumMaybeWithName
 import models.Context
-import models.notify._
+import models.event._
 import play.twirl.api.Html
-import java.{util => ju}
 
 import scala.concurrent.Future
 
@@ -16,11 +17,12 @@ import scala.concurrent.Future
  * Смесь некоторой логики контроллера, утили и немного модели по типу [[util.blocks.BlocksConf]].
  * Дергает разные шаблоны для рендера разных типов уведомлений, сгребая необходимые данные из других моделей.
  */
-object NotifyTypes extends Enumeration with EnumMaybeWithName {
+object EventTypes extends Enumeration with EnumMaybeWithName {
 
   protected abstract class Val(val strId: String) extends super.Val(strId) {
 
-    //def render(rawArgs: ju.Map[_,_])(implicit ctx: Context): Future[Html]
+    /** Рендер события. */
+    def render(args: IArgsInfo, runtimeArgs: Map[ArgName, Any])(implicit ctx: Context): Future[Html]
 
     /**
      * Десериализация инфы по аргументам из JSON.
@@ -30,10 +32,10 @@ object NotifyTypes extends Enumeration with EnumMaybeWithName {
     def deserializeArgsInfo(raw: Any): IArgsInfo
   }
 
-  type NotifyType = Val
-  override type T = NotifyType
+  type EventType = Val
+  override type T = EventType
 
 
 
-  // TODO Разные
+  // TODO Разные типы нотификаций тут.
 }

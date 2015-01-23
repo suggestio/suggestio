@@ -1,34 +1,43 @@
-package models.notify
+package models.event
 
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.action.index.IndexRequestBuilder
+import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
+import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
 import play.api.libs.json.{JsBoolean, JsString}
+import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
-import util.notify.NotifyTypes
-import util.notify.NotifyTypes.NotifyType
+import util.event.EventTypes
+import EventTypes.EventType
+import scala.concurrent.duration._
 
 import scala.collection.Map
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.01.15 19:46
- * Description: Модель, описывающая нотификации для узла или другого объекта системы suggest.io.
+ * Description: Модель, описывающая события для узла или другого объекта системы suggest.io.
  */
-object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
+object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
 
-  override type T = MNotify
+  override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
 
-  val NOTIFY_TYPE_ESFN  = "nt"
+  val EVT_TYPE_ESFN     = "et"
   val OWNER_ID_ESFN     = "ownerId"     // Такая же, как в MMartCategory
   val ARGS_ESFN         = "args"
   val DATE_CREATED_ESFN = "dc"
   val IS_CLOSEABLE_ESFN = "ic"
   val IS_UNSEEN_ESFN    = "iu"
 
+  val TTL_DAYS_UNSEEN = configuration.getInt("mevent.ttl.days.unseen") getOrElse 90
+  val TTL_DAYS_SEEN   = configuration.getInt("mevent.ttl.days.seen")   getOrElse 30
   
   def isCloseableDflt = true
   def isUnseenDflt    = true
@@ -36,12 +45,12 @@ object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
   def argsDflt        = EmptyArgsInfo
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    val ntype = Option(m get NOTIFY_TYPE_ESFN)
+    val ntype = Option(m get EVT_TYPE_ESFN)
       .map(stringParser)
-      .flatMap(NotifyTypes.maybeWithName)
+      .flatMap(EventTypes.maybeWithName)
       .get
-    MNotify(
-      ntype       = ntype,
+    MEvent(
+      etype       = ntype,
       ownerId     = stringParser(m get OWNER_ID_ESFN),
       argsInfo    = ntype.deserializeArgsInfo(m get ARGS_ESFN),
       dateCreated = EsModel.dateTimeParser(m get DATE_CREATED_ESFN),
@@ -61,7 +70,7 @@ object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NOTIFY_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(EVT_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldObject(ARGS_ESFN, properties = Nil, enabled = false),
       FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false),
@@ -70,31 +79,54 @@ object MNotify extends EsModelStaticT with PlayMacroLogsImpl {
     )
   }
 
+  def ownerIdQuery(ownerId: String): QueryBuilder = {
+    QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
+  }
+
+  /**
+   * Поиск по ownerId.
+   * @param ownerId id владельца.
+   * @param limit Макс.кол-во результатов.
+   * @param offset Сдвиг.
+   * @return Фьючерс со списком результатов, новые сверху.
+   */
+  def findByOwner(ownerId: String, limit: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                  (implicit ec: ExecutionContext, client: Client): Future[Seq[MEvent]] = {
+    prepareSearch
+      .setQuery( ownerIdQuery(ownerId) )
+      .setSize(limit)
+      .setFrom(offset)
+      .addSort(DATE_CREATED_ESFN, SortOrder.DESC)
+      .execute()
+      .map { searchResp2list }
+  }
+
 }
 
 // TODO Не забыть прилинковать эту модель к SiowebEsModel!
 
-import MNotify._
+import MEvent._
 
 
 /** Класс-экземпляр одной нотификации. */
-case class MNotify(
-  ntype         : NotifyType,
+case class MEvent(
+  etype         : EventType,
   ownerId       : String,
-  argsInfo      : IArgsInfo       = MNotify.argsDflt,
-  dateCreated   : DateTime        = MNotify.dateCreatedDflt,
-  isCloseable   : Boolean         = MNotify.isCloseableDflt,
-  isUnseen      : Boolean         = MNotify.isUnseenDflt,
+  argsInfo      : IArgsInfo       = MEvent.argsDflt,
+  dateCreated   : DateTime        = MEvent.dateCreatedDflt,
+  isCloseable   : Boolean         = MEvent.isCloseableDflt,
+  isUnseen      : Boolean         = MEvent.isUnseenDflt,
+  ttlDays       : Int             = MEvent.TTL_DAYS_UNSEEN,
   id            : Option[String]  = None,
   versionOpt    : Option[Long]    = None
 ) extends EsModelT with EsModelPlayJsonT {
 
-  override def companion = MNotify
+  override def companion = MEvent
   override type T = this.type
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
-      NOTIFY_TYPE_ESFN  -> JsString(ntype.strId),
+      EVT_TYPE_ESFN     -> JsString(etype.strId),
       OWNER_ID_ESFN     -> JsString(ownerId),
       DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
     )
@@ -105,6 +137,12 @@ case class MNotify(
     if (isUnseen != isUnseenDflt)
       acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)
     acc
+  }
+
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
+    super.indexRequestBuilder
+      .setTTL( ttlDays.days.toMillis )
   }
 
 }

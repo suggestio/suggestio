@@ -3,6 +3,8 @@ package models.adv
 import models.adv.js.ctx.MJsCtx
 import util.acl.RequestWithAdAndProducer
 
+import scala.concurrent.Future
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,7 +14,7 @@ import util.acl.RequestWithAdAndProducer
  */
 
 /** Аргументы для главного актора ext.adv. */
-trait MExtAdvArgsT {
+trait IExtActorArgs {
   /** Распарсенные qs-аргументы запроса. */
   def qs      : MExtAdvQs
 
@@ -21,16 +23,25 @@ trait MExtAdvArgsT {
 }
 
 
+trait IExtWsActorArgs extends IExtActorArgs {
+
+  /** Фьючерс списка целей для обработки. */
+  def targetsFut: Future[ActorTargets_t]
+
+}
+
+
 /** Параметры, передаваемые от общего актора к service-актору. */
 case class MExtAdvContext(
-  qs      : MExtAdvQs,
-  request : RequestWithAdAndProducer[_]
-) extends MExtAdvArgsT
+  qs        : MExtAdvQs,
+  request   : RequestWithAdAndProducer[_],
+  targetsFut: Future[ActorTargets_t]
+) extends IExtWsActorArgs
 
 
-/** Враппер над [[MExtAdvArgsT]]. */
-trait MExtAdvArgsWrapperT extends MExtAdvArgsT {
-  def _eaArgsUnderlying: MExtAdvArgsT
+/** Враппер над [[IExtActorArgs]]. */
+trait IExtAdvArgsWrapperT extends IExtActorArgs {
+  def _eaArgsUnderlying: IExtActorArgs
 
   override def qs = _eaArgsUnderlying.qs
   override def request = _eaArgsUnderlying.request
@@ -38,10 +49,7 @@ trait MExtAdvArgsWrapperT extends MExtAdvArgsT {
 
 
 /** APIv2: Один подчинённый актор обслуживает только одну цель и обновляет GUI в рамках оной. */
-trait MExtAdvTargetActorArgs extends MExtAdvArgsT {
-  /** Сервис, в рамках которого будет работать текущий service-актор. */
-  def service : MExtService
-
+trait IExtAdvTargetActorArgs extends IExtActorArgs {
   /** Цель, с которой нужно вести работу. */
   def target  : MExtTargetInfoFull
 

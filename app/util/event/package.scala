@@ -5,8 +5,8 @@ package util
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.01.15 10:30
  */
-package object notify {
+package object event {
 
-  type NotifyType  = NotifyTypes.NotifyType
+  type EventType  = EventTypes.EventType
 
 }

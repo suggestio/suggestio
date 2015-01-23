@@ -7,7 +7,7 @@ import controllers.routes
 import io.suggest.util.UrlUtil
 import models.Context
 import models.adv.js._
-import models.adv.{JsExtTarget, MExtReturn, MExtReturns, MExtAdvTargetActorArgs}
+import models.adv.{JsExtTarget, MExtReturn, MExtReturns, IExtAdvTargetActorArgs}
 import models.adv.js.ctx._
 import models.blk.{SzMult_t, OneAdQsArgs}
 import models.im.OutImgFmts
@@ -33,7 +33,7 @@ import scala.util.{Failure, Success}
  */
 object ExtTargetActor {
 
-  def props(args: MExtAdvTargetActorArgs): Props = {
+  def props(args: IExtAdvTargetActorArgs): Props = {
     Props(ExtTargetActor(args))
   }
 
@@ -50,7 +50,7 @@ object ExtTargetActor {
 import ExtTargetActor._
 
 
-case class ExtTargetActor(args: MExtAdvTargetActorArgs)
+case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   extends FsmActor
   with PlayMacroLogsImpl
 {
@@ -66,7 +66,7 @@ case class ExtTargetActor(args: MExtAdvTargetActorArgs)
 
   override def preStart(): Unit = {
     super.preStart()
-    become(new HandleTargetState(args.mctx0))
+    become(new PrepareZeroContextState(args.mctx0))
   }
 
 
@@ -149,7 +149,7 @@ case class ExtTargetActor(args: MExtAdvTargetActorArgs)
       val mctx1 = mctx0.copy(
         mads    = Seq(madCtx),
         target  = Some(targetFull),
-        domain  = Some( UrlUtil.url2dkey( targetFull.url ) ),
+        domain  = Seq( UrlUtil.url2dkey( targetFull.url ) ),
         status  = None,
         error   = None
       )

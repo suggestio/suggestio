@@ -5,6 +5,7 @@ import _root_.util.async.FsmActor
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
+import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
@@ -24,7 +25,7 @@ import scala.util.{Random, Failure, Success}
 object ExtAdvWsActor {
 
   /** Сборка конфигурации актора. */
-  def props(out: ActorRef, eactx: MExtAdvArgsT): Props = {
+  def props(out: ActorRef, eactx: IExtWsActorArgs): Props = {
     Props(new ExtAdvWsActor(out, eactx))
   }
 
@@ -32,7 +33,7 @@ object ExtAdvWsActor {
 
 
 /** ws-актор, готовый к использованию websocket api. */
-case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
+case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   extends FsmActor
   with SubscribeToWsDispatcher
   with PlayMacroLogsImpl
@@ -92,75 +93,16 @@ case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
 
   override def preStart(): Unit = {
     super.preStart()
-    become(new EnsureReadyState)
+    become(new WaitForTargetsState)
   }
 
 
-
-  /** Начальное состояние, передаваемое в prepareReady.
-    * По мере необходимости, сюда можно добавлять новые поля. */
-  def ctx0 = JsObject(Nil)
-
-
-  /** Состояние диалога на этапе начальной инициализации. */
-  class EnsureReadyState extends FsmState {
-
-    /** Фьючерс с целями для размещения рекламной карточки. Результаты работы понадобятся на следующем шаге. */
-    lazy val targetsFut: Future[ActorTargets_t] = {
-      val ids = eactx.qs.targets.iterator.map(_.targetId)
-      val targetsFut = MExtTarget.multiGet(ids)
-      val targetsMap = eactx.qs
-        .targets
-        .iterator
-        .map { info => info.targetId -> info }
-        .toMap
-      targetsFut map { targets =>
-        targets.iterator
-          .flatMap { target =>
-            target.id
-              .flatMap(targetsMap.get)
-              .map { info => MExtTargetInfoFull(target, info.returnTo) }
-          }
-          .toList
-      }
-    }
-
-    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Отправить запрос на подготовку к работе.
-      val cmd = JsCommand(EnsureReadyAsk(ctx0), CmdSendModes.Async)
-      sendJsCommand(cmd)
-      // Запускаем на исполнение lazy val future. Это сократит временные издержки.
-      targetsFut
-    }
-
-    override def receiverPart: Receive = {
-      // Пришел какой-то ответ на ensureReady
-      case Answer(replyToOpt, mctx1) if replyToOpt.isEmpty =>
-        val nextState = if (mctx1.status contains AnswerStatuses.Success) {
-          // Инициализация выполнена.
-          trace(s"$name: success. New context = $mctx1")
-          new WaitForTargetsState(targetsFut, mctx1)
-        } else {
-          // Проблемы при инициализации
-          error(s"$name: js returned error")    // TODO Выводить ошибку из контекста.
-          new DummyState
-        }
-        become(nextState)
-    }
-  }
-
-
-  /**
-   * Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии.
-   * @param targetsFut Фьючерс с будущими целями.
-   */
-  class WaitForTargetsState(targetsFut: Future[ActorTargets_t], mctx1: MJsCtx) extends FsmState {
+  /** Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии. */
+  class WaitForTargetsState extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
-      targetsFut onComplete {
+      eactx.targetsFut onComplete {
         case Success(targets) => self ! TargetsReady(targets.toList)
         case Failure(ex)      => self ! TargetsFailed(ex)
       }
@@ -177,7 +119,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
           throw new IllegalStateException("No targets found in storage, but it should.")
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
-          become(new SuperviseServiceActorsState(targets, mctx1))
+          become(new EnsureReadyState(targets))
         }
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
@@ -188,6 +130,41 @@ case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
     case class TargetsFailed(ex: Throwable)
   }
 
+
+
+  /** Состояние диалога на этапе начальной инициализации. */
+  class EnsureReadyState(targets: ActorTargets_t) extends FsmState {
+
+    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // Отправить запрос на подготовку к работе.
+      val mctx0 = MJsCtx(
+        domain = targets
+          .iterator
+          .map { tg => UrlUtil.url2dkey(tg.target.url) }
+          .toSet
+          .toSeq
+      )
+      val cmd = JsCommand(EnsureReadyAsk(mctx0), CmdSendModes.Async)
+      sendJsCommand(cmd)
+    }
+
+    override def receiverPart: Receive = {
+      // Пришел какой-то ответ на ensureReady
+      case Answer(replyToOpt, mctx1) if replyToOpt.isEmpty =>
+        val nextState = if (mctx1.status contains AnswerStatuses.Success) {
+          // Инициализация выполнена.
+          trace(s"$name: success. New context = $mctx1")
+          new SuperviseServiceActorsState(targets, mctx1)
+        } else {
+          // Проблемы при инициализации
+          error(s"$name: js returned error")    // TODO Выводить ошибку из контекста.
+          new DummyState
+        }
+        become(nextState)
+    }
+  }
 
 
   /**
@@ -201,8 +178,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: MExtAdvArgsT)
       // Запускаем всех акторов для всех таргетов. Они сразу заполнят всю очередь запросами.
       val rnd = new Random()
       targets.foreach { tg =>
-        val args = new MExtAdvTargetActorArgs with MExtAdvArgsWrapperT {
-          override def service  = tg.target.service
+        val args = new IExtAdvTargetActorArgs with IExtAdvArgsWrapperT {
           override def mctx0    = mctx1
           override def target   = tg
           override def _eaArgsUnderlying = eactx

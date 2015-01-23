@@ -79,7 +79,7 @@ POST /m/lk/xadv/ext/tgt/new/:adnId      controllers.LkAdvExt.createTargetSubmit(
 GET  /m/lk/xadv/ext/ws/run              controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
 
 
-# ЛК: Рекламные карточки
+## ЛК: Рекламные карточки
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
@@ -100,16 +100,19 @@ GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeM
 
 POST  /error/occured/in/showcase        controllers.RemoteError.handleShowcaseError
 
-# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
+## Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/lk/c/usr/o/:ownerId/top         controllers.MarketCategory.topCatsOf(ownerId)
-# 2014.12.10: Больше не используется. Категории теперь набором галочек.
+## 2014.12.10: Больше не используется. Категории теперь набором галочек.
 GET  /m/lk/c/usr/c/:catId/dc            controllers.MarketCategory.directSubcatsOf(catId)
 
-# Обращение в тех.поддерку зареганного клиента sio-market.
+## Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
 POST /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
 GET  /m/support                         controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
 POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
+
+## ЛК: нотификации (события)
+GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId)
 
 
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)

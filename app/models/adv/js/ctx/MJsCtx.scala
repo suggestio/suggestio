@@ -39,7 +39,8 @@ object MJsCtx {
           status = (json \ STATUS_FN)
             .asOpt[AnswerStatus],
           domain = (json \ DOMAIN_FN)
-            .asOpt[String],
+            .asOpt[Seq[String]]
+            .getOrElse(Seq.empty),
           error = (json \ ERROR_FN)
             .asOpt[JsErrorInfo],
           restCtx = {
@@ -67,7 +68,7 @@ object MJsCtx {
       if (o.status.nonEmpty)
         acc ::= STATUS_FN -> Json.toJson(o.status.get)
       if (o.domain.nonEmpty)
-        acc ::= DOMAIN_FN -> Json.toJson(o.domain.get)
+        acc ::= DOMAIN_FN -> Json.toJson(o.domain)
       if (o.error.nonEmpty)
         acc ::= ERROR_FN -> Json.toJson(o.error.get)
       // Объединение результата с restJson, если требуется.
@@ -99,7 +100,7 @@ object MJsCtx {
 case class MJsCtx(
   mads      : Seq[MAdCtx]           = Seq.empty,
   target    : Option[JsExtTarget]   = None,
-  domain    : Option[String]        = None,
+  domain    : Seq[String]           = Seq.empty,
   status    : Option[AnswerStatus]  = None,
   error     : Option[JsErrorInfo]   = None,
   restCtx   : JsObject              = JsObject(Nil)

@@ -137,6 +137,25 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
       val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
       Future failed ExceptionWithResult(res)
     }
+    // Если купон валиден, то сразу запускаем в фоне чтение данных по целям размещения...
+    val targetsFut: Future[ActorTargets_t] = fut0.flatMap { _ =>
+      val ids = qsArgs.targets.iterator.map(_.targetId)
+      val targetsFut = MExtTarget.multiGet(ids)
+      val targetsMap = qsArgs.targets
+        .iterator
+        .map { info => info.targetId -> info }
+        .toMap
+      targetsFut map { targets =>
+        targets.iterator
+          .flatMap { target =>
+          target.id
+            .flatMap(targetsMap.get)
+            .map { info => MExtTargetInfoFull(target, info.returnTo) }
+        }
+          .toList
+      }
+    }
+    // Одновременно запускаем сбор инфы по карточке и проверку прав на неё.
     fut0.flatMap { _ =>
       val madFut = MAd.getById(qsArgs.adId)
         .map(_.get)
@@ -154,7 +173,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
            Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
         }
     }.map { req1 =>
-      val eaArgs = MExtAdvContext(qsArgs, req1)
+      // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
+      val eaArgs = MExtAdvContext(qsArgs, req1, targetsFut)
       val hp: HandlerProps = ExtAdvWsActor.props(_, eaArgs)
       Right(hp)
     }.recover {

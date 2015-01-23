@@ -1,7 +1,7 @@
 package models.adv.js
 
-import models.adv.js.ctx.JsCtx_t
-import play.api.libs.json.JsString
+import models.adv.js.ctx.{MJsCtx, JsCtx_t}
+import play.api.libs.json.{Json, JsString}
 import Answer._
 
 /**
@@ -16,12 +16,12 @@ import Answer._
  * Запрос инициализации js-компонента с кодогенератором.
  * @param ctx1 Начальное состояние.
  */
-case class EnsureReadyAsk(ctx1: JsCtx_t) extends JsBuilder {
+case class EnsureReadyAsk(mctx: MJsCtx) extends JsBuilder {
 
   override def js: String = {
     new StringBuilder(128)
       .append("SioPR.ensureReady(")
-      .append(ctx1)
+      .append( Json.toJson(mctx) )
       .append(',')
       .append("function(ctx2,sendF){sendF({")
       .append(JsString(CTX2_FN)).append(":ctx2")
