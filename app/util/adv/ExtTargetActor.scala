@@ -239,6 +239,10 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
             trace("Fill context requested")
             become(new FillContextState(ans.ctx2))
         }
+
+      // Для облегчения отладки.
+      case ans: Answer =>
+        error("_status field is missing in answer:\n  " + ans)
     }
   }
 

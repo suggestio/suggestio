@@ -60,8 +60,10 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   def enqueueCommand(ask: JsCommand): Unit = {
     if (_jsAskLock) {
       // Клиент отрабатывает другой ask. Значит отправить в очередь.
+      trace("asking locked. 1 command queued.")
       _queue = _queue.enqueue(ask)
     } else {
+      trace("Client ready for asking. Sending command and locking...")
       // Клиент свободен. Считаем, что очередь пуста. Сразу отправляем, выставляя флаг.
       sendJsCommand(ask)
       _jsAskLock = true
@@ -72,9 +74,11 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   def dequeueAnswerReceived(): Unit = {
     if (_queue.isEmpty) {
       // Очередь пуста. Снимает флаг блокировки.
+      trace("Queue empty. Unlocking...")
       _jsAskLock = false
     } else {
       // В очереди ещё есть запросы к js -- отправляем следующий запрос.
+      trace("Dequeuing & sending next command...")
       val (ask, newQueue) = _queue.dequeue
       sendJsCommand(ask)
       _queue = newQueue
