@@ -94,7 +94,7 @@ define ["SioPR"], (SioPR) ->
       callback = (data) =>
         console.log data
 
-        @ctx._picture =
+        @ctx._ads[0]._picture =
           size:
             width: 600
             height: 500
@@ -102,6 +102,8 @@ define ["SioPR"], (SioPR) ->
             mode: "s2s"
             url: data.response.upload_url
             partName: "photo"
+
+        console.log @ctx
 
         @onComplete @ctx, sendF
 
