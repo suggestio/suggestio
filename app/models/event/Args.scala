@@ -136,8 +136,11 @@ case class RenderArgs(
   mevent      : IEvent,
   adnNodeOpt  : Option[MAdnNode]    = None,
   advExtTgOpt : Option[MExtTarget]  = None,
-  madOpt      : Option[MAd]         = None
+  madOpt      : Option[MAd]         = None,
+  errors      : Seq[ErrorInfo]      = Nil
 ) extends IArgsInfo with EmptyProduct {
+
+  def hasErrors = errors.nonEmpty
 
   override def adnIdOpt = adnNodeOpt.flatMap(_.id)
   override def adIdOpt  = madOpt.flatMap(_.id)
@@ -159,3 +162,14 @@ trait EmptyProduct extends Product {
 }
 
 
+/**
+ * Инфа по ошибке.
+ * @param msg Сообщение или его код в messages.
+ * @param args Параметры сообщения из messages, если есть/нужны.
+ * @param info Какая-то доп.инфа по проблеме, если есть.
+ */
+case class ErrorInfo(
+  msg   : String,
+  args  : Seq[Any] = Nil,
+  info  : Option[String] = None
+)

@@ -33,13 +33,16 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
   override type T = EventType
 
 
-  val AdvExtTargetSuccess: EventType = new Val("a") {
+  val AdvExtTgSuccess: EventType = new Val("a") {
     override def template = successTpl
   }
 
-  val AdvExtTargetInProcess: EventType = new Val("b") {
+  val AdvExtTgInProcess: EventType = new Val("b") {
     override def template = targetInProcessTpl
   }
+  
+  val AdvExtTgError: EventType = new Val("c") {
+    override def template = targetErrorTpl
+  }
 
-  // TODO Разные типы нотификаций тут.
 }

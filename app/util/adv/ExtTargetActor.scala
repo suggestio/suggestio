@@ -1,6 +1,7 @@
 package util.adv
 
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 import akka.actor.Props
 import controllers.routes
@@ -10,7 +11,7 @@ import models.adv.js._
 import models.adv.{JsExtTarget, MExtReturn, MExtReturns, IExtAdvTargetActorArgs}
 import models.adv.js.ctx._
 import models.blk.{SzMult_t, OneAdQsArgs}
-import models.event.{MEventTmp, RenderArgs}
+import models.event.{ErrorInfo, MEventTmp, RenderArgs}
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
@@ -106,6 +107,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     context.parent ! jsc
   }
 
+  def getDomain: String = UrlUtil.url2dkey(args.target.target.url)
+
 
   /**
    * Генерация абс.ссылок на выдачу s.io.
@@ -121,17 +124,30 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
-  def evtRenderArgs(etype: EventType) = RenderArgs(
+  def evtRenderArgs(etype: EventType, errors: ErrorInfo*) = RenderArgs(
     mevent      = MEventTmp(etype, ownerId = args.request.producerId),
-    advExtTgOpt = Some(args.target.target)
+    advExtTgOpt = Some(args.target.target),
+    errors      = errors
   )
+
+  /** Перезаписать содержимое блока цели на странице. */
+  def renderEventReplace(rargs: RenderArgs): Unit = {
+    val html = rargs.mevent.etype.render(rargs)
+    val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
+    val jsa = InnerHtmlById(replyTo, htmlStr)
+    val cmd = JsCommand(
+      cmd       = jsa.renderToString(),
+      sendMode  = CmdSendModes.Async
+    )
+    sendCommand(cmd)
+  }
 
   // FSM states
 
   class EnsureClientReadyState(mctx0: MJsCtx) extends FsmState {
 
     def renderInProcess(): Unit = {
-      val etype = EventTypes.AdvExtTargetInProcess
+      val etype = EventTypes.AdvExtTgInProcess
       val html = targetEvtContainerTpl(replyTo) {
         val rargs = evtRenderArgs(etype)
         etype.render(rargs)
@@ -197,7 +213,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       val mctx1 = mctx0.copy(
         mads    = Seq(madCtx),
         target  = Some(targetFull),
-        domain  = Seq( UrlUtil.url2dkey( targetFull.url ) ),
+        domain  = Seq(getDomain),
         status  = None,
         error   = None
       )
@@ -225,16 +241,21 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
     /** Рендер на экран уведомления об успехе, стерев предыдущую инфу по target'у. */
     def renderSuccess(): Unit = {
-      val etype = EventTypes.AdvExtTargetSuccess
-      val rargs = evtRenderArgs(etype)
-      val html = etype.render(rargs)
-      val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-      val jsa = InnerHtmlById(replyTo, htmlStr)
-      val cmd = JsCommand(
-        cmd       = jsa.renderToString(),
-        sendMode  = CmdSendModes.Async
+      val rargs = evtRenderArgs( EventTypes.AdvExtTgSuccess )
+      renderEventReplace(rargs)
+    }
+
+    /** Сообщить юзеру, что на стороне js зафиксирована ошибка. */
+    def renderError(errOpt: Option[JsErrorInfo]): Unit = {
+      // TODO Добавить поддержку msg-кодов настороне js.
+      val einfo = errOpt.map { jsei =>
+        jsei.msg + "\n\n" + jsei.other
+      }
+      val err = ErrorInfo(
+        msg = "error.adv.ext.js.refused",
+        info = einfo
       )
-      sendCommand(cmd)
+      evtRenderArgs(EventTypes.AdvExtTgError, err)
     }
 
     override def receiverPart: Receive = {
@@ -243,14 +264,14 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         ans.ctx2.status.get match {
           // Публикация удалась. Актор должен обрадовать юзера и тихо завершить работу.
           case AnswerStatuses.Success =>
-            renderSuccess()
             trace("Success received from js. Finishing...")
+            renderSuccess()
             harakiri()
 
           // Непоправимая ошибка на стороне js. Актор должен огорчить юзера, и возможно ещё что-то сделать.
           case AnswerStatuses.Error =>
-            // TODO Отрендерить error на экран юзеру.
             warn("Error received from JS: " + ans.ctx2.error)
+            renderError(ans.ctx2.error)
             harakiri()
 
           // JS'у недостаточно данных в контексте для создания публикации.
@@ -303,6 +324,15 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     // TODO нужно вычислять на основе данных, присланных клиентом.
     def szMult: SzMult_t = szMultDflt
 
+    def renderWkhtmlError(ex: Throwable): Unit = {
+      val err = ErrorInfo(
+        msg  = "error.sio.internal",
+        info = Some(s"[$replyTo] ${ex.getMessage}")
+      )
+      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      renderEventReplace(rargs)
+    }
+
     /** При переключении на состояние надо запустить в фоне рендер карточки. */
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -323,7 +353,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
       // Не удалось отрендерить карточку в картинку.
       case Failure(ex) =>
-        error(s"Failed to render ad[${args.qs.adId}] into picture", ex)
+        error(s"[$replyTo] Failed to render ad[${args.qs.adId}] into picture", ex)
+        renderWkhtmlError(ex)
         harakiri()
     }
 
@@ -364,6 +395,34 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         }   // map()
       )     // copy()
     }       // withPictureBody()
+
+
+    /** Отправить юзеру траурную весточку, что не удалось картинку залить по s2s. */
+    def renderImgUploadRefused(wsResp: WSResponse): Unit = {
+      val errMsg = new StringBuilder(wsResp.body.length + uploadCtx.url.length + 128)
+        .append("POST ").append(uploadCtx.url).append('\n')
+        .append(wsResp.status).append(' ').append(wsResp.statusText).append('\n').append('\n')
+        .append(wsResp.body)
+        .toString()
+      val err = ErrorInfo(
+        msg  = "error.adv.ext.s2s.img.upload.refused",
+        args = Seq(getDomain),
+        info = Some(errMsg)
+      )
+      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      renderEventReplace(rargs)
+    }
+
+    /** Не удалось связаться с запрошенным сервером. */
+    def renderImgUploadFailed(ex: Throwable): Unit = {
+      val err = ErrorInfo(
+        msg  = "error.adv.ext.s2s.img.upload.failed",
+        args = Seq(getDomain),
+        info = Some(s"[$replyTo] ${ex.getMessage}")
+      )
+      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      renderEventReplace(rargs)
+    }
 
     /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
     override def afterBecome(): Unit = {
@@ -409,13 +468,14 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       // Запрос выполнился, но в ответ пришло что-то неожиданное.
       case wsResp: WSResponse =>
         error(s"Cannot load image to remote server: HTTP ${wsResp.statusText}: ${wsResp.body}")
-        // TODO Сообщить юзеру о провале.
+        renderImgUploadRefused(wsResp)
         harakiri()
 
       // Запрос не удался или произошла ещё какая-то ошибка.
       case Failure(ex) =>
-        error(s"Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
-        // TODO Сообщить юзеру о неудаче. Или попробовать ещё разок, а?
+        // Если юзер обратится с описаловом, то там будет ключ ошибки. Экзепшен можно будет отследить по логам.
+        error(s"[$replyTo] Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
+        renderImgUploadFailed(ex)
         harakiri()
     }
   }
