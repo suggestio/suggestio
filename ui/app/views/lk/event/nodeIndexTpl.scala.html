@@ -1,14 +1,12 @@
-@(mevts: Seq[event.MEvent], mnode: MAdnNode, evtRndrArgs: Map[event.ArgName, AnyRef])(implicit ctx: Context)
+@(evts: Seq[Html], mnode: MAdnNode)(implicit ctx: Context)
 
-@* Страница со списком событий одного узла. *@
+@* Страница со списком событий одного узла. Рендером каждого события заправляет контроллер, т.к.
+   для разных событий нужны разные шаблоны. *@
 
 @base("События", nodeOpt = Some(mnode)) {
 
-  <h1>События @mevts.size</h1>
+  <h1>События @evts.size</h1>
 
-  @* Рендер списка событий. *@
-  @mevts.map { mevt =>
-    @mevt.etype.render(mevt.argsInfo, evtRndrArgs)
-  }
+  @_eventsListTpl(evts)
 
 }

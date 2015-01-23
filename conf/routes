@@ -112,7 +112,8 @@ GET  /m/support                         controllers.MarketLkSupport.supportForm(
 POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
 
 ## ЛК: нотификации (события)
-GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId)
+GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
+POST /m/lk/event/delete/:evtId          controllers.LkEvents.nodeEventDelete(evtId)
 
 
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)

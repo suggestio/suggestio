@@ -1,7 +1,16 @@
-@(clazz: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(rargs: event.RenderArgs, clazz: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Очень-очень базовый и минимальный шаблон для абсолютно любой нотификации в системе. *@
+@import helper._
 
 <div class="@clazz">
+  @* Рендерить крестик в углу для событий, которые разрешают их сокрытие *@
+  @if(rargs.mevent.isCloseable && rargs.mevent.id) {
+    @form( routes.LkEvents.nodeEventDelete(rargs.mevent.id.get) ) {
+      <input type="submit" value="X" title="Скрыть событие" />
+    }
+  }
+
+  @* Рендерим остальное содержимое события. *@
   @content
 </div>

@@ -12,14 +12,16 @@ import play.api.libs.functional.syntax._
 
 object MPictureCtx {
 
-  val SAVED_FN    = "saved"
-  val UPLOAD_FN   = "upload"
   val SIZE_FN     = "size"
+  val UPLOAD_FN   = "upload"
+  val SIO_URL_FN  = "sioUrl"
+  val SAVED_FN    = "saved"
 
   /** mapper из JSON. */
   implicit def reads: Reads[MPictureCtx] = (
     (__ \ SIZE_FN).readNullable[PictureSizeCtx] and
     (__ \ UPLOAD_FN).readNullable[PictureUploadCtx] and
+    (__ \ SIO_URL_FN).readNullable[String] and
     (__ \ SAVED_FN).readNullable[String]
   )(apply _)
 
@@ -27,6 +29,7 @@ object MPictureCtx {
   implicit def writes: Writes[MPictureCtx] = (
     (__ \ SIZE_FN).writeNullable[PictureSizeCtx] and
     (__ \ UPLOAD_FN).writeNullable[PictureUploadCtx] and
+    (__ \ SIO_URL_FN).writeNullable[String] and
     (__ \ SAVED_FN).writeNullable[String]
   )(unlift(unapply))
 
@@ -36,7 +39,8 @@ object MPictureCtx {
 /** Представление picture-контекста через распарсенный case class. */
 case class MPictureCtx(
   size    : Option[PictureSizeCtx]      = None,
-  upload  : Option[PictureUploadCtx]   = None,
+  upload  : Option[PictureUploadCtx]    = None,
+  sioUrl  : Option[String]              = None,
   saved   : Option[String]              = None
 )
 

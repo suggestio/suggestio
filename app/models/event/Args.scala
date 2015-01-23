@@ -1,9 +1,11 @@
 package models.event
 
-import io.suggest.model.EnumMaybeWithName
-import play.api.libs.json.{JsObject, JsValue, JsString}
-
-import scala.concurrent.Future
+import io.suggest.model.{EsModel, EnumMaybeWithName}
+import models.adv.MExtTarget
+import models.{MAd, MAdnNode}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -14,8 +16,8 @@ import scala.concurrent.Future
  * Тут файл с моделями, которые описывают всё это необъятное множество.
  *
  * У нас есть два уровня аргументов нотификации:
- *  - Контейнеры с хранимыми в [[MEvent]] id'шниками: [[IArgsInfo]]
- *  - Контейнеры с готовыми к рендеру интансами: [[IArgsInst]]
+ *  - Контейнеры с хранимыми в [[MEvent]] id'шниками моделей: [[IArgsInfo]]
+ *  - Контейнеры данных с готовыми к рендеру интансами моделей: [[RenderArgs]]
  */
 
 
@@ -25,10 +27,11 @@ object ArgNames extends Enumeration with EnumMaybeWithName {
   type ArgName = Val
   override type T = ArgName
 
-  val AdnId     = new Val("a")
-
-  val PersonId  = new Val("p")
-  val AdvId     = new Val("v")
+  val AdnId           = new Val("a")
+  val AdvExtTarget    = new Val("b")
+  val AdId            = new Val("c")
+  //val PersonId      = new Val("d")
+  //val AdvId         = new Val("e")
 
 }
 
@@ -39,44 +42,117 @@ trait IArgs {
 }
 
 
+object IArgsInfo {
+
+  import ArgNames._
+
+  implicit def writes: Writes[IArgsInfo] = (
+    (__ \ AdnId.strId).writeNullable[String] and
+    (__ \ AdvExtTarget.strId).writeNullable[String] and
+    (__ \ AdId.strId).writeNullable[String]
+  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt) }
+
+}
+
 /** Трейт для хранимых контейнеров аргументов: id'шники всякие тут. */
 trait IArgsInfo extends IArgs {
   
-  /** Сериализовать данные в json. */
-  def toPlayJson: JsObject
+  /** Опциональный id узла, с которым связано это событие. */
+  def adnIdOpt: Option[String]
 
-  /**
-   * Отфетчить все аргументы из хранилища, используя вспомогательную карту уже отфеченных инстансов.
-   * @param runtimeArgs Карта с уже имеющимися аргументами, если есть.
-   * @return Фьючерс с аргументами.
-   */
-  def toArgs(runtimeArgs: Map[ArgName, AnyRef] = Map.empty): Future[IArgsInst]
+  /** id цели внешнего размещения, если есть. */
+  def advExtTgIdOpt: Option[String]
+
+  /** Опциональный id рекламной карточки, с которой связано это событие. */
+  def adIdOpt: Option[String]
+
+  override def nonEmpty: Boolean
+  override def isEmpty: Boolean
+
 }
 
 
-/** Трейт для контейнеров готовых инстансов аргументов. */
-trait IArgsInst extends IArgs {
+/** Статическая сторона модели [[ArgsInfo]]. */
+object ArgsInfo {
 
-  /**
-   * Упростить до [[IArgsInfo]].
-   * @return Экземпляр реализации [[IArgsInfo]].
-   */
-  def toInfo: IArgsInfo
-}
+  import ArgNames._
 
+  implicit def reads: Reads[ArgsInfo] = (
+    (__ \ AdnId.strId).readNullable[String] and
+    (__ \ AdvExtTarget.strId).readNullable[String] and
+    (__ \ AdId.strId).readNullable[String]
+  )(apply _)
 
-// Пустые аргументы. Инстанс на всех один.
-sealed trait IEmptyArgs extends IArgs {
-  override def nonEmpty = false
-  override def isEmpty = true
-}
-case object EmptyArgsInst extends IArgsInst with IEmptyArgs {
-  override def toInfo = EmptyArgsInfo
-}
-case object EmptyArgsInfo extends IArgsInfo with IEmptyArgs {
-  override def toPlayJson = JsObject(Nil)
-  override def toArgs(runtimeArgs: Map[ArgName, AnyRef]) = {
-    Future successful EmptyArgsInst
+  /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
+  def fromJacksonJson: PartialFunction[Any, ArgsInfo] = {
+    case jm: ju.Map[_,_] =>
+      if (jm.isEmpty) {
+        EmptyArgsInfo
+      } else {
+        val f = ArgsInfo(
+          adnIdOpt      = Option(jm get AdnId.strId).map(EsModel.stringParser),
+          advExtTgIdOpt = Option(jm get AdvExtTarget.strId).map(EsModel.stringParser),
+          adIdOpt       = Option(jm get AdId.strId).map(EsModel.stringParser)
+        )
+        // На случай появления мусора в карте...
+        if (f.isEmpty)
+          EmptyArgsInfo
+        else
+          f
+      }
+
+    case _ => EmptyArgsInfo
   }
+
 }
+
+
+/**
+ * Экземпляр того, что получается при десериализации набора MEvent.argsInfo.
+ * @param adnIdOpt Если событие связано с другим узлом, то тут id узла.
+ * @param adIdOpt Если событие связано с рекламной карточкой, то тут id карточки.
+ */
+case class ArgsInfo(
+  adnIdOpt        : Option[String]  = None,
+  advExtTgIdOpt   : Option[String]  = None,
+  adIdOpt         : Option[String]  = None
+) extends IArgsInfo with EmptyProduct
+
+
+/** Общий инстанс для пустой инфы по аргументам. Нанооптимизация. */
+object EmptyArgsInfo extends ArgsInfo() {
+  // Нанооптимизация
+  override def isEmpty = true
+  override def nonEmpty = false
+}
+
+
+/** Контейнер для представления готовых инстансов аргументов. Он передаётся в шаблоны для рендера.
+  * Заполняется контроллером перед рендером всех событий. */
+case class RenderArgs(
+  mevent      : IEvent,
+  adnNodeOpt  : Option[MAdnNode]    = None,
+  advExtTgOpt : Option[MExtTarget]  = None,
+  madOpt      : Option[MAd]         = None
+) extends IArgsInfo with EmptyProduct {
+
+  override def adnIdOpt = adnNodeOpt.flatMap(_.id)
+  override def adIdOpt  = madOpt.flatMap(_.id)
+  override def advExtTgIdOpt = advExtTgOpt.flatMap(_.id)
+
+}
+
+
+/** Вынести куда-нить... */
+trait EmptyProduct extends Product {
+  def nonEmpty: Boolean = {
+    productIterator.exists {
+      case opt: Option[_]           => opt.nonEmpty
+      case col: TraversableOnce[_]  => col.nonEmpty
+      case _                        => true
+    }
+  }
+  def isEmpty: Boolean = !nonEmpty
+}
+
 

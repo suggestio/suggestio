@@ -1,13 +1,9 @@
 package util.event
 
-import java.{util => ju}
-
 import io.suggest.model.EnumMaybeWithName
 import models.Context
 import models.event._
-import play.twirl.api.Html
-
-import scala.concurrent.Future
+import play.twirl.api.{Template2, Html}
 
 /**
  * Suggest.io
@@ -21,15 +17,13 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
 
   protected abstract class Val(val strId: String) extends super.Val(strId) {
 
-    /** Рендер события. */
-    def render(args: IArgsInfo, runtimeArgs: Map[ArgName, Any])(implicit ctx: Context): Future[Html]
+    /** Шаблон для рендера одного события текущего типа. */
+    def template: Template2[RenderArgs, Context, Html]
 
-    /**
-     * Десериализация инфы по аргументам из JSON.
-     * @param raw Jackson json map (js object) или null/undefined, но гипотетически может быть и нечто ещё.
-     * @return Конкретная реализация
-     */
-    def deserializeArgsInfo(raw: Any): IArgsInfo
+    /** Рендер одного события. */
+    def render(args: RenderArgs)(implicit ctx: Context): Html = {
+      template.render(args, ctx)
+    }
   }
 
   type EventType = Val

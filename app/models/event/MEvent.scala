@@ -8,7 +8,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
-import play.api.libs.json.{JsBoolean, JsString}
+import play.api.libs.json.{Json, JsBoolean, JsString}
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.event.EventTypes
@@ -45,17 +45,22 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
   def argsDflt        = EmptyArgsInfo
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    val ntype = Option(m get EVT_TYPE_ESFN)
-      .map(stringParser)
-      .flatMap(EventTypes.maybeWithName)
-      .get
     MEvent(
-      etype       = ntype,
-      ownerId     = stringParser(m get OWNER_ID_ESFN),
-      argsInfo    = ntype.deserializeArgsInfo(m get ARGS_ESFN),
-      dateCreated = EsModel.dateTimeParser(m get DATE_CREATED_ESFN),
-      isCloseable = Option(m get IS_CLOSEABLE_ESFN).fold(isCloseableDflt)(EsModel.booleanParser),
-      isUnseen    = Option(m get IS_UNSEEN_ESFN).fold(isUnseenDflt)(EsModel.booleanParser),
+      etype       = m.get(EVT_TYPE_ESFN)
+        .map(stringParser)
+        .flatMap(EventTypes.maybeWithName)
+        .get,
+      ownerId     = m.get(OWNER_ID_ESFN)
+        .map(stringParser)
+        .get,
+      argsInfo    = m.get(ARGS_ESFN)
+        .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
+      dateCreated = m.get(DATE_CREATED_ESFN)
+        .fold(DateTime.now)(EsModel.dateTimeParser),
+      isCloseable = m.get(IS_CLOSEABLE_ESFN)
+        .fold(isCloseableDflt)(EsModel.booleanParser),
+      isUnseen    = m.get(IS_UNSEEN_ESFN)
+        .fold(isUnseenDflt)(EsModel.booleanParser),
       id          = id,
       versionOpt  = version
     )
@@ -112,14 +117,14 @@ import MEvent._
 case class MEvent(
   etype         : EventType,
   ownerId       : String,
-  argsInfo      : IArgsInfo       = MEvent.argsDflt,
+  argsInfo      : ArgsInfo        = MEvent.argsDflt,
   dateCreated   : DateTime        = MEvent.dateCreatedDflt,
   isCloseable   : Boolean         = MEvent.isCloseableDflt,
   isUnseen      : Boolean         = MEvent.isUnseenDflt,
   ttlDays       : Int             = MEvent.TTL_DAYS_UNSEEN,
   id            : Option[String]  = None,
   versionOpt    : Option[Long]    = None
-) extends EsModelT with EsModelPlayJsonT {
+) extends EsModelT with EsModelPlayJsonT with IEvent {
 
   override def companion = MEvent
   override type T = this.type
@@ -131,7 +136,7 @@ case class MEvent(
       DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
     )
     if (argsInfo.nonEmpty)
-      acc ::= ARGS_ESFN -> argsInfo.toPlayJson
+      acc ::= ARGS_ESFN -> Json.toJson(argsInfo)
     if (isCloseable != isCloseableDflt)
       acc ::= IS_CLOSEABLE_ESFN -> JsBoolean(isCloseable)
     if (isUnseen != isUnseenDflt)
@@ -147,4 +152,15 @@ case class MEvent(
 
 }
 
+
+/** Минимальный интерфейс абстрактного события.
+  * Используется для рендера шаблонов, аргументы которых абстрагированы от конкретной реализации. */
+trait IEvent extends OptStrId {
+  def etype         : EventType
+  def ownerId       : String
+  def argsInfo      : ArgsInfo
+  def dateCreated   : DateTime
+  def isCloseable   : Boolean
+  def isUnseen      : Boolean
+}
 

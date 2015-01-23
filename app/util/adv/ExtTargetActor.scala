@@ -135,8 +135,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           val adArgs = getAdRenderArgs(szMult)
           val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adArgs).url
           Some(MPictureCtx(
-            size  = Some(sz1),
-            saved = Some(url)
+            size   = Some(sz1),
+            sioUrl = Some(url)
           ))
         }
       )
