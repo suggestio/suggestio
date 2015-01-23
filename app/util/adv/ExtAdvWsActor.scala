@@ -193,13 +193,23 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
     /** Обработка входящих сообщений: как от js, так и от акторов. */
     override def receiverPart: Receive = {
       // Пришло сообщение из web-socket'а для указанного target-актора.
-      case sa @ Answer(replyTo, ctx2) if replyTo.nonEmpty =>
-        dequeueAnswerReceived()
-        val sel = context.system.actorSelection(self.path / replyTo.get)
-        trace(s"$name: Message received for slave service actor: $replyTo...")
-        // Пересылаем сообщение целевому актору.
-        // Используем send() вместо forward(), чтобы скрыть out от подчинённых акторов.
-        sel ! sa
+      case jso: JsObject =>
+        try {
+          val ans = jso.as[Answer]
+          dequeueAnswerReceived()
+          if (ans.replyTo.nonEmpty) {
+            val sel = context.system.actorSelection(self.path / ans.replyTo.get)
+            trace(s"$name: Message received for slave service actor: ${ans.replyTo}...")
+            // Пересылаем сообщение целевому актору.
+            // Используем send() вместо forward(), чтобы скрыть out от подчинённых акторов.
+            sel ! ans
+          } else {
+            unexpectedReceiver(ans)
+          }
+        } catch {
+          case ex: Exception =>
+            warn("JSON received, but cannot parse answer:\n  " + jso, ex)
+        }
 
       // Подчинённый актор хочет отправить js-код для исполнения на клиенте.
       case jsCmd: JsCommand =>

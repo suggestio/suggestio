@@ -219,9 +219,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     }
 
     override def receiverPart: Receive = {
-      // Супервизор прислал ws-ответ от js по текущему таргету.
-      case Answer(_, mctx1) if mctx1.status.nonEmpty =>
-        mctx1.status.get match {
+      // Супервизор прислал распарсенный ws-ответ от js по текущему таргету.
+      case ans: Answer if ans.ctx2.status.nonEmpty =>
+        ans.ctx2.status.get match {
           // Публикация удалась. Актор должен обрадовать юзера и тихо завершить работу.
           case AnswerStatuses.Success =>
             // TODO отрендерить error на экран
@@ -231,13 +231,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           // Непоправимая ошибка на стороне js. Актор должен огорчить юзера, и возможно ещё что-то сделать.
           case AnswerStatuses.Error =>
             // TODO Отрендерить success на экран юзеру.
-            warn("Error received from JS: " + mctx1.error)
+            warn("Error received from JS: " + ans.ctx2.error)
             harakiri()
 
           // JS'у недостаточно данных в контексте для создания публикации.
           case AnswerStatuses.FillContext =>
             trace("Fill context requested")
-            become(new FillContextState(mctx1))
+            become(new FillContextState(ans.ctx2))
         }
     }
   }
