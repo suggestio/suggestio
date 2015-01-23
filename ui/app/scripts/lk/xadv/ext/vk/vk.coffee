@@ -94,7 +94,7 @@ define ["SioPR"], (SioPR) ->
       callback = (data) =>
         console.log data
 
-        @ctx._status = "success"
+        @ctx._status = "fillCtx"
         @ctx._ads[0]._picture =
           size:
             width: 600
@@ -131,6 +131,10 @@ define ["SioPR"], (SioPR) ->
       @onComplete = onComplete
 
       console.log ctx
+
+      if ctx._adv
+        console.log ctx._adv
+        return false
 
       if ctx._ads[0].rendered.sioUrl then return @getWallUploadServer()
       #@getWallUploadServer()
