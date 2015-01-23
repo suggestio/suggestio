@@ -10,17 +10,22 @@ import models.adv.js._
 import models.adv.{JsExtTarget, MExtReturn, MExtReturns, IExtAdvTargetActorArgs}
 import models.adv.js.ctx._
 import models.blk.{SzMult_t, OneAdQsArgs}
+import models.event.{MEventTmp, RenderArgs}
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
 import play.api.http.HeaderNames
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json.JsString
 import play.api.libs.ws.{WSResponse, WS}
 import play.api.Play.current
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
+import util.event.EventTypes
 import util.img.WkHtmlUtil
+import util.jsa.JsAppendById
+import ExtUtil.RUNNER_EVENTS_DIV_ID
 
 import scala.util.{Failure, Success}
 
@@ -55,6 +60,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with PlayMacroLogsImpl
 {
 
+  import args.ctx
   import LOGGER._
 
   override protected var _state: FsmState = new DummyState
@@ -66,7 +72,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
   override def preStart(): Unit = {
     super.preStart()
-    become(new PrepareZeroContextState(args.mctx0))
+    become(new EnsureClientReadyState(args.mctx0))
   }
 
 
@@ -95,6 +101,10 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAd(args).url
   }
 
+  def sendCommand(jsc: JsCommand): Unit = {
+    context.parent ! jsc
+  }
+
 
   /**
    * Генерация абс.ссылок на выдачу s.io.
@@ -111,6 +121,39 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
 
   // FSM states
+
+  class EnsureClientReadyState(mctx0: MJsCtx) extends FsmState {
+
+    def renderInProcess(): Unit = {
+      val etype = EventTypes.AdvExtTargetInProcess
+      val rargs = RenderArgs(
+        mevent      = MEventTmp(etype, ownerId = args.request.producerId),
+        advExtTgOpt = Some(args.target.target)
+      )
+      val html = etype.render(rargs)
+      val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
+      val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
+      val cmd = JsCommand(
+        cmd       = jsa.renderToString(),
+        sendMode  = CmdSendModes.Async
+      )
+      sendCommand(cmd)
+    }
+
+    /** При переходе в это состояние нужно дождаться готовности клиента
+      * и отрендерить юзеру инфу о начале процесса публикации. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // TODO Запустить проверку готовности клиента к обработке домена.
+      // Считаем, что клиент готов. Отрендерить юзеру писульку о начале процесса публикации цели.
+      renderInProcess()
+      // Переход на след.состояние...
+      become(new PrepareZeroContextState(mctx0))
+    }
+
+    override def receiverPart: Receive = PartialFunction.empty
+  }
+
 
   /** Состояние начальной подготовки контекста.
     * Пока асинхронных и ресурсоёмких операций у нас тут нет, поэтому всё необходимое происходит в afterBecome(). */
@@ -168,10 +211,11 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   class HandleTargetState(mctx0: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
-      context.parent ! JsCommand(
+      val cmd = JsCommand(
         jsBuilder = HandleTargetAsk(mctx0, replyTo = Some(replyTo)),
         sendMode  = CmdSendModes.Queued
       )
+      sendCommand(cmd)
     }
 
     override def receiverPart: Receive = {

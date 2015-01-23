@@ -172,7 +172,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
         .recoverWith { case ex: NoSuchElementException =>
            Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
         }
-    }.map { req1 =>
+    }.map { implicit req1 =>
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtAdvContext(qsArgs, req1, targetsFut)
       val hp: HandlerProps = ExtAdvWsActor.props(_, eaArgs)

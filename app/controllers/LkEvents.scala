@@ -1,6 +1,7 @@
 package controllers
 
 import models._
+import models.adv.MExtTarget
 import models.event.MEvent
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -40,45 +41,52 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
     implicit val ctx = implicitly[Context]
     // Нужно отрендерить каждое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
     val evtsRndrFut = eventsFut.flatMap { mevents =>
-      // Пакетно отфетчить рекламные карточки, создав карту оных.
-      val allAdIds = mevents
-        .iterator
-        .flatMap { _.argsInfo.adIdOpt }
-        .toSet
-      val madsMapFut = MAd.multiGet(allAdIds)
-        .map { _.iterator
-          .flatMap { mad => mad.id.map { _ -> mad } }
-          .toMap
-        }
+      // Пакетно отфетчить рекламные карточки в виде карты.
+      val madsMapFut = {
+        val allAdIds = mevents
+          .iterator
+          .flatMap { _.argsInfo.adIdOpt }
+          .toSet
+        MAd.multiGetMap(allAdIds)
+      }
 
-      // Пакетно отфетчить все необходимые ноды, исключая текущий узел.
-      val allNodeIds = mevents
-        .iterator
-        .flatMap { _.argsInfo.adnIdOpt }
-        .filter { _ != adnId }    // Текущую ноду фетчить не надо -- она уже в request лежит.
-        .toSet
-      val nodesMapFut = MAdnNodeCache.multiGet(allNodeIds)
-        .map { allNodes =>
-          // Добавить текущую ноду в финальную карту.
-          (allNodes.iterator ++ Iterator(request.adnNode))
-            .flatMap { adnNode => adnNode.id.map { _ -> adnNode } }
-            .toMap
-        }
+      // Пакетно отфетчить все необходимые MExtTarget в виде карты.
+      val advExtTgsMapFut = {
+        val allTgsFut = mevents
+          .iterator
+          .flatMap { _.argsInfo.advExtTgIdOpt }
+          .toSet
+        MExtTarget.multiGetMap(allTgsFut)
+      }
 
-      // TODO Пакетно отфетчить все необходимые MExtTarget
+      // Пакетно отфетчить все необходимые ноды, включая текущий узел в финальную карту.
+      // Используется кеш, поэтому это будет быстрее и должно запускаться в последнюю очередь.
+      val nodesMapFut = {
+        val allNodeIds = mevents
+          .iterator
+          .flatMap { _.argsInfo.adnIdOpt }
+          .filter { _ != adnId }    // Текущую ноду фетчить не надо -- она уже в request лежит.
+          .toSet
+        MAdnNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
+      }
 
       // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
       madsMapFut.flatMap { madsMap =>
         nodesMapFut.flatMap { nodesMap =>
-          // Параллельный рендер всех событий
-          Future.traverse(mevents.zipWithIndex) { case (mevent, i) =>
-            Future {
-              val rArgs = event.RenderArgs(
-                mevent      = mevent,
-                adnNodeOpt  = mevent.argsInfo.adnIdOpt.flatMap(nodesMap.get),
-                madOpt      = mevent.argsInfo.adIdOpt.flatMap(madsMap.get)
-              )
-              mevent.etype.render(rArgs)(ctx) -> i
+          advExtTgsMapFut.flatMap { advExtTgsMap =>
+            // Параллельный рендер всех событий
+            Future.traverse(mevents.zipWithIndex) { case (mevent, i) =>
+              Future {
+                // Запускаем рендер одного нотификейшена
+                val ai = mevent.argsInfo
+                val rArgs = event.RenderArgs(
+                  mevent      = mevent,
+                  adnNodeOpt  = ai.adnIdOpt.flatMap(nodesMap.get),
+                  advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
+                  madOpt      = ai.adIdOpt.flatMap(madsMap.get)
+                )
+                mevent.etype.render(rArgs)(ctx) -> i
+              }
             }
           } map {
             // Восстанавливаем исходный порядок после параллельного рендера.
@@ -87,7 +95,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         }
       }
     }
-    // Рендерим конечный результат: страница или инлайн
+    // Рендерим конечный результат: страница или же инлайн
     evtsRndrFut.map { evtsRndr =>
       val render: Html = if (inline)
         _eventsListTpl(evtsRndr)(ctx)

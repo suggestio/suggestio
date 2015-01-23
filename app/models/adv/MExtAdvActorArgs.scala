@@ -1,5 +1,6 @@
 package models.adv
 
+import models.Context
 import models.adv.js.ctx.MJsCtx
 import util.acl.RequestWithAdAndProducer
 
@@ -20,6 +21,9 @@ trait IExtActorArgs {
 
   /** Экземпляр распарсенного http-реквеста. Содержит в себе продьюсера и карточку. */
   def request : RequestWithAdAndProducer[_]
+
+  /** Для рендера шаблонов, акторам нужен экземпляр Context, который изготовит для них контроллер. */
+  implicit def ctx: Context
 }
 
 
@@ -36,7 +40,7 @@ case class MExtAdvContext(
   qs        : MExtAdvQs,
   request   : RequestWithAdAndProducer[_],
   targetsFut: Future[ActorTargets_t]
-) extends IExtWsActorArgs
+)(implicit val ctx: Context) extends IExtWsActorArgs
 
 
 /** Враппер над [[IExtActorArgs]]. */
@@ -45,6 +49,7 @@ trait IExtAdvArgsWrapperT extends IExtActorArgs {
 
   override def qs = _eaArgsUnderlying.qs
   override def request = _eaArgsUnderlying.request
+  override implicit def ctx: Context = _eaArgsUnderlying.ctx
 }
 
 

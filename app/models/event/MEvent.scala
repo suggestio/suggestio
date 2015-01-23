@@ -164,3 +164,23 @@ trait IEvent extends OptStrId {
   def isUnseen      : Boolean
 }
 
+
+/**
+ * Реализация [[IEvent]] для нехранимого события, т.е. когда что-то нужно отрендерить в режиме БЫСТРАБЛДЖАД!
+ * @param etype Тип события.
+ * @param ownerId id owner'а.
+ * @param argsInfo Необязательная инфа по параметрам [[EmptyArgsInfo]].
+ * @param dateCreated Дата создания [now].
+ * @param isCloseable Закрывабельность [false].
+ * @param isUnseen Юзер в первый раз видит событие? [конечно true].
+ */
+case class MEventTmp(
+  etype       : EventType,
+  ownerId     : String,
+  argsInfo    : ArgsInfo        = EmptyArgsInfo,
+  dateCreated : DateTime        = DateTime.now(),
+  isCloseable : Boolean         = false,
+  isUnseen    : Boolean         = true,
+  id          : Option[String]  = None
+) extends IEvent
+

@@ -80,10 +80,7 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit final def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang): Context = {
-    // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
-    //      Для этого надо override implicit def lang(implicit request: RequestHeader) в SioController.
-    //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
+  implicit final def getContext2(implicit request: RichRequestHeader, lang: Lang): Context = {
     Context2()
   }
 }
@@ -96,6 +93,10 @@ trait Context extends MyHostsT {
 
   implicit def request: RequestHeader
   implicit def pwOpt: PwOpt_t
+
+  // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
+  //      Для этого надо override implicit def lang(implicit request: RequestHeader) в SioController.
+  //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
   implicit def lang: Lang
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
@@ -236,7 +237,7 @@ trait Context extends MyHostsT {
 
 /** Контекст времён комбинируемых ActionBuilder'ов. */
 case class Context2(
-  implicit val request: AbstractRequestWithPwOpt[_],
+  implicit val request: RichRequestHeader,
   implicit val lang: Lang
 ) extends Context {
   implicit def pwOpt: PwOpt_t = request.pwOpt

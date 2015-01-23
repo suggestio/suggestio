@@ -1,10 +1,10 @@
 @(rargs: event.RenderArgs)(implicit ctx: Context)
 
-@* Шаблон события успешного внешнего размещения. *@
+@* Шаблон события о идущем внешнего размещения по одной цели. *@
 
 @import lk.event._
 
-@_successEvtBase(rargs) {
+@_oneEvtBase(rargs) {
 
   @rargs.advExtTgOpt.map { advExtTg =>
     <p>
@@ -12,6 +12,7 @@
     </p>
   }
 
-  <p>Статус: успешно</p>
+  <p>Статус: в процессе</p>
 
 }
+

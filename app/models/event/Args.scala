@@ -3,9 +3,12 @@ package models.event
 import io.suggest.model.{EsModel, EnumMaybeWithName}
 import models.adv.MExtTarget
 import models.{MAd, MAdnNode}
+import org.elasticsearch.client.Client
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import java.{util => ju}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io

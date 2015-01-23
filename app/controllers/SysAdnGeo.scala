@@ -297,7 +297,7 @@ object SysAdnGeo extends SioControllerImpl with PlayLazyMacroLogsImpl {
   private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MAdnNode]] = {
     MAdnNodeGeo.findAdnIdsWithLevels(glevels)
       .map { _.toSet }
-      .flatMap { MAdnNodeCache.multiGet }
+      .flatMap { MAdnNodeCache.multiGet(_) }
   }
 
   /**

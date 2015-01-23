@@ -5,6 +5,9 @@ import models.Context
 import models.event._
 import play.twirl.api.{Template2, Html}
 
+import views.html.lk.event._
+import views.html.lk.adv.ext.event._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -30,6 +33,13 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
   override type T = EventType
 
 
+  val AdvExtTargetSuccess: EventType = new Val("a") {
+    override def template = successTpl
+  }
+
+  val AdvExtTargetInProcess: EventType = new Val("b") {
+    override def template = targetInProcessTpl
+  }
 
   // TODO Разные типы нотификаций тут.
 }

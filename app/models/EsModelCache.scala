@@ -61,10 +61,11 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
   /**
    * Аналог getByIdCached, но для multiget().
    * @param ids id'шники, которые надо бы получить.
+   * @param acc0 Необязательный начальный аккамулятор.
    * @return Результаты в неопределённом порядке.
    */
-  def multiGet(ids: TraversableOnce[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
-    val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
+  def multiGet(ids: TraversableOnce[String], acc0: List[T1] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+    val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (acc0 -> Nil) {
       case ((accCached, notCached), id) =>
         getByIdFromCache(id) match {
           case Some(adnNode) =>
@@ -88,6 +89,13 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
     }
     resultFut
   }
+
+  def multiGetMap(ids: TraversableOnce[String], acc0: List[T1] = Nil)
+                 (implicit ec: ExecutionContext, client: Client): Future[Map[String, T1]] = {
+    multiGet(ids, acc0)
+      .map { companion.resultsToMap }
+  }
+
 
   /**
    * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.

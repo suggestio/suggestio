@@ -18,16 +18,21 @@ object JsCommand {
 
   /** unmapper реализаций [[JsCommand]] в json. */
   implicit def writes: Writes[JsCommand] = (
-    (__ \ DATA_FN).write[JsBuilder] and
+    (__ \ DATA_FN).write[String] and
     (__ \ TYPE_FN).write[String]
-  ) { jsc => (jsc.jsBuilder, jsc.evalType) }
+  ) { jsc => (jsc.cmd, jsc.evalType) }
+
+
+  def apply(jsBuilder: JsBuilder, sendMode: CmdSendMode): JsCommand = {
+    JsCommand(jsBuilder.js, sendMode)
+  }
 
 }
 
 
 /** Контейнер js-кода, отправляемого через ws. */
 case class JsCommand(
-  jsBuilder : JsBuilder,
+  cmd       : String,
   sendMode  : CmdSendMode
 ) {
 
@@ -42,6 +47,7 @@ case class JsCommand(
 /** Допустимые режимы отправки js-кода в ws. */
 object CmdSendModes extends Enumeration {
   type CmdSendMode = Value
+
   /** Асинхронный режим отправки. */
   val Async   = Value
 
