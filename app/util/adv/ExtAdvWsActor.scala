@@ -60,7 +60,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   def enqueueCommand(ask: JsCommand): Unit = {
     if (_jsAskLock) {
       // Клиент отрабатывает другой ask. Значит отправить в очередь.
-      trace("asking locked. 1 command queued.")
+      trace("Asking still locked. 1 command queued.")
       _queue = _queue.enqueue(ask)
     } else {
       trace("Client ready for asking. Sending command and locking...")

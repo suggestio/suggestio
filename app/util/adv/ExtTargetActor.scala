@@ -22,10 +22,11 @@ import play.api.libs.ws.{WSResponse, WS}
 import play.api.Play.current
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
-import util.event.EventTypes
+import util.event.{EventType, EventTypes}
 import util.img.WkHtmlUtil
-import util.jsa.JsAppendById
+import util.jsa.{InnerHtmlById, JsAppendById}
 import ExtUtil.RUNNER_EVENTS_DIV_ID
+import views.html.lk.adv.ext.event._
 
 import scala.util.{Failure, Success}
 
@@ -120,17 +121,21 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
+  def evtRenderArgs(etype: EventType) = RenderArgs(
+    mevent      = MEventTmp(etype, ownerId = args.request.producerId),
+    advExtTgOpt = Some(args.target.target)
+  )
+
   // FSM states
 
   class EnsureClientReadyState(mctx0: MJsCtx) extends FsmState {
 
     def renderInProcess(): Unit = {
       val etype = EventTypes.AdvExtTargetInProcess
-      val rargs = RenderArgs(
-        mevent      = MEventTmp(etype, ownerId = args.request.producerId),
-        advExtTgOpt = Some(args.target.target)
-      )
-      val html = etype.render(rargs)
+      val html = targetEvtContainerTpl(replyTo) {
+        val rargs = evtRenderArgs(etype)
+        etype.render(rargs)
+      }
       val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
       val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
       val cmd = JsCommand(
@@ -218,19 +223,33 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       sendCommand(cmd)
     }
 
+    /** Рендер на экран уведомления об успехе, стерев предыдущую инфу по target'у. */
+    def renderSuccess(): Unit = {
+      val etype = EventTypes.AdvExtTargetSuccess
+      val rargs = evtRenderArgs(etype)
+      val html = etype.render(rargs)
+      val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
+      val jsa = InnerHtmlById(replyTo, htmlStr)
+      val cmd = JsCommand(
+        cmd       = jsa.renderToString(),
+        sendMode  = CmdSendModes.Async
+      )
+      sendCommand(cmd)
+    }
+
     override def receiverPart: Receive = {
       // Супервизор прислал распарсенный ws-ответ от js по текущему таргету.
       case ans: Answer if ans.ctx2.status.nonEmpty =>
         ans.ctx2.status.get match {
           // Публикация удалась. Актор должен обрадовать юзера и тихо завершить работу.
           case AnswerStatuses.Success =>
-            // TODO отрендерить error на экран
+            renderSuccess()
             trace("Success received from js. Finishing...")
             harakiri()
 
           // Непоправимая ошибка на стороне js. Актор должен огорчить юзера, и возможно ещё что-то сделать.
           case AnswerStatuses.Error =>
-            // TODO Отрендерить success на экран юзеру.
+            // TODO Отрендерить error на экран юзеру.
             warn("Error received from JS: " + ans.ctx2.error)
             harakiri()
 

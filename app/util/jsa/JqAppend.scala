@@ -26,10 +26,10 @@ case class JqAppend(target: String, html: JsString) extends JsAction {
 trait JsInsertAdjacentHtmlBeforeEnd extends JsAction {
   def html: JsString
   override def renderJsAction(sb: StringBuilder): StringBuilder = {
-    sb.append(".insertAdjacentHTML('beforeend',")
+    super.renderJsAction(sb)
+      .append(".insertAdjacentHTML('beforeend',")
       .append(html.toString())
       .append(')')
-    super.renderJsAction(sb)
   }
 }
 
@@ -44,13 +44,32 @@ case class JsAppendByTagName(tagName: String, html: JsString) extends JsInsertAd
   }
 }
 
-/** Дописать в тело тега с указанным id. */
-case class JsAppendById(id: String, html: JsString) extends JsInsertAdjacentHtmlBeforeEnd {
+trait DocumentGetElementById extends JsAction {
+  def id: String
+
   override def renderJsAction(sb: StringBuilder): StringBuilder = {
-    sb.append("document.getElementById('")
+    super.renderJsAction(sb)
+      .append("document.getElementById('")
       .append(id)
       .append("')")
+  }
+}
+
+/** Дописать в тело тега с указанным id. */
+case class JsAppendById(id: String, html: JsString) extends DocumentGetElementById with JsInsertAdjacentHtmlBeforeEnd {
+  override def renderJsAction(sb: StringBuilder): StringBuilder = {
     super.renderJsAction(sb)
+      .append(';')
+  }
+}
+
+
+case class InnerHtmlById(id: String, html: JsString) extends DocumentGetElementById {
+  override def renderJsAction(sb: StringBuilder): StringBuilder = {
+    super.renderJsAction(sb)
+      .append(".innerHTML(")
+      .append(html)
+      .append(')')
       .append(';')
   }
 }
