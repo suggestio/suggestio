@@ -14,8 +14,13 @@ define ["VkPrepareEnsureServiceReadyBuilder", "FbPrepareEnsureServiceReadyBuilde
     setWs: (_ws) ->
       ws = _ws
 
-    prepareEnsureReady: (ctx) ->
-      return new PrepareEnsureReadyBuilder(ws, ctx)
+    ensureReady: (ctx, onComplete) ->
+      sendF = (json) ->
+        message = JSON.stringify(json)
+        console.log message
+        ws.send message
+
+      onComplete ctx, sendF
 
     prepareEnsureServiceReady: (serviceName, ctx) ->
       if serviceName == "vk"
@@ -35,9 +40,9 @@ define ["VkPrepareEnsureServiceReadyBuilder", "FbPrepareEnsureServiceReadyBuilde
 
     constructor: (@ws, @ctx) ->
 
-    execute: (onSuccess, onError) ->
+    execute: (onComplete) ->
       console.log "PrepareEnsureReadyBuilder execute"
-      onSuccess @ws, @ctx
+      onComplete @ws, @ctx
 
 
   return SioPR

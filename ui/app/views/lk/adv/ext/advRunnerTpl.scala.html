@@ -15,17 +15,6 @@
 
   <input id="socialApiConnection" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
 
-  <!--<script type="text/javascript">
-    var ws = new WebSocket("@ctx.wsUrlPrefix@Html(routes.LkAdvExt.wsRun(wsCallArgs).url)");
 
-    ws.onmessage = function (evt) {
-      var msg = $.parseJSON(evt.data);
-      if (msg["type"] == "js") {
-        eval(msg["data"]);
-      } else {
-        alert(msg);
-      }
-    }
-  </script>-->
 
 }

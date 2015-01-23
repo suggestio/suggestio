@@ -34,7 +34,7 @@ define([], function() {
     SioPR = new SioPR();
     SioPR.setWs(ws);
 
-    SioPR.prepareEnsureServiceReady("fb",{}).execute();
+    //SioPR.prepareEnsureServiceReady("fb",{}).execute();
 
     ws.onmessage = function(event) {
       message = $.parseJSON(event.data);
