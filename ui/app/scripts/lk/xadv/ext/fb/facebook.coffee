@@ -1,7 +1,25 @@
-define [], () ->
+define ["SioPR"], (SioPR) ->
+
+  SioPR = new SioPR()
 
   class Facebook
     API_ID = 967620393262021
+
+    constructor: (@ws, ctx, onComplete) ->
+      console.log "Fb init"
+
+      options =
+        appId      : API_ID
+        xfbml      : true
+        cookie     : true
+        version    : "v2.2"
+
+      window.fbAsyncInit = () =>
+        FB.init options
+
+        SioPR.registerService ctx, onComplete
+
+      @loadSdk document, 'script', 'facebook-jssdk'
 
     statusChangeCallback: (response) ->
       console.log "statusChangeCallback"
@@ -93,17 +111,3 @@ define [], () ->
       js.id = id
       js.src = "//connect.facebook.net/en_US/sdk.js"
       fjs.parentNode.insertBefore js, fjs
-
-    init: (onSuccess, onError) ->
-      console.log "Fb init"
-
-      options =
-        appId      : API_ID
-        xfbml      : true
-        cookie     : true
-        version    : "v2.2"
-
-      window.fbAsyncInit = () =>
-        FB.init options
-
-      @loadSdk document, 'script', 'facebook-jssdk'

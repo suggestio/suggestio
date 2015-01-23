@@ -1,8 +1,27 @@
-define [], () ->
+define ["SioPR"], (SioPR) ->
+
+  SioPR = new SioPR()
 
   class Vk
     API_ID = 4705589
     ACESS_LVL = 8197
+
+    userId = null
+
+    constructor: (@ws, ctx, onComplete) ->
+      console.log "vk init"
+
+      window.vkAsyncInit = () =>
+        VK.init
+          apiId: API_ID
+
+        SioPR.registerService ctx, onComplete
+
+      @loadSdk()
+
+    sendF = (json) ->
+      message = JSON.stringify json
+      @ws.send message
 
     setText: (text) ->
       post.message = text
@@ -59,15 +78,15 @@ define [], () ->
 
       VK.Api.call "wall.post", post, callback
 
-    getWallUploadServer: () ->
+    getWallUploadServer: (ctx, onComplete) ->
       params =
-        user_id: @ctx.userId
+        user_id: userId
 
       callback = (data) =>
         if data.error
           onError data.error
 
-        @ctx._picture =
+        ctx._picture =
           size:
             width: 600
             height: 500
@@ -76,24 +95,27 @@ define [], () ->
             url: data.response.upload_url
             partName: "photo"
 
-        console.log @ctx
-        onSuccess @ws, @ctx
+        onComplete ctx, sendF
 
       VK.Api.call "photos.getWallUploadServer", params, callback
 
-    authorization: (onSuccess, onError) ->
+    login: () ->
+      console.log "vk login"
 
       authInfo = (response) =>
         console.log response
-        return false
         if response.session
-          @ctx.user_id = response.session.mid
-          @createAdapter onSuccess, onError
+          userId = response.session.mid
         else
           VK.Auth.login authInfo, ACESS_LVL
-          onError @ws, "auth error"
 
       VK.Auth.getLoginStatus authInfo
+
+    handleTarget: (ctx) ->
+      console.log "vk handle target"
+
+      if !userId? then return @login()
+      if ctx._ads[0].rendered.saved then return @getWallUploadServer(ctx, onComplete)
 
 
     loadSdk: () ->
@@ -112,13 +134,3 @@ define [], () ->
           document.getElementById("vk_api_transport").appendChild(el)
         0
       )
-
-    init: (onSuccess, onError) ->
-      console.log "Vk init"
-
-      window.vkAsyncInit = () =>
-        VK.init
-          apiId: API_ID
-
-      @loadSdk()
-
