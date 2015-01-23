@@ -24,37 +24,20 @@ define [], () ->
 
       requirejs(
         ["facebook", "vk"]
-        (Facebook, Vk) ->
-          serviceList["facebook"] = new Facebook()
-          serviceList["facebook"].init()
+        () ->
+          # регистрируем и инициализируем новые сервисы
+          for index in [0...arguments.length]
+            service = arguments[index]
 
-          serviceList["vk"] = new Vk()
-          serviceList["vk"].init()
+            serviceList[service.name] = new service()
+            serviceList[service.name].init()
+
+            if index == arguments.length - 1
+              ctx._status = "success"
+              onComplete ctx, sendF
       )
-
-      ctx._status = "success"
-      onComplete ctx, sendF
 
     handleTarget: (ctx, onComplete) ->
       console.log "handleTarget"
 
       #serviceList["vk"].handleTarget ctx, OnComplete
-
-
-    registerService: (name, adapter) ->
-      serviceList[name] = adapter
-
-    service: (name) ->
-      return serviceList[name]
-
-
-  class PrepareEnsureReadyBuilder
-
-    constructor: (@ws, @ctx) ->
-
-    execute: (onComplete) ->
-      console.log "PrepareEnsureReadyBuilder execute"
-      onComplete @ws, @ctx
-
-
-  return SioPR
