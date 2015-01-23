@@ -1,0 +1,124 @@
+define [], () ->
+
+  class Vk
+    API_ID = 4705589
+    ACESS_LVL = 8197
+
+    setText: (text) ->
+      post.message = text
+      return @
+
+    setOwnerId: () ->
+      REGEXP  = /// /(?!.+/)(.+)$ ///
+      url     = @ctx._target.url
+
+      # TODO убрать при выкате на продакшн
+      url   = "trash"
+
+      match = url.match REGEXP
+
+      # если в url была какая-то некорректная строка, использовать current user id
+      try
+        params =
+          screen_name: match[1]
+      catch exception
+        params =
+          screen_name: @ctx.user_id
+
+      callback = (data) =>
+        post.owner_id = data.response.object_id
+        @wallPost()
+
+      VK.Api.call "utils.resolveScreenName", params, callback
+
+    saveWallPhoto: () ->
+      savedPhoto = JSON.parse(@ctx._picture.saved)
+
+      callback = (data) =>
+        attachments = new Array()
+        attachments.push data.response[0].id
+        attachments.push @ctx._target.href
+        attachments = attachments.join ","
+
+        post.attachments = attachments
+
+        @setOwnerId()
+
+      params =
+        user_id: @ctx.user_id
+        server: savedPhoto.server
+        photo: savedPhoto.photo
+        hash: savedPhoto.hash
+
+      VK.Api.call "photos.saveWallPhoto", params, callback
+
+    wallPost: () ->
+
+      callback = (data) ->
+        console.log data
+
+      VK.Api.call "wall.post", post, callback
+
+    getWallUploadServer: () ->
+      params =
+        user_id: @ctx.userId
+
+      callback = (data) =>
+        if data.error
+          onError data.error
+
+        @ctx._picture =
+          size:
+            width: 600
+            height: 500
+          upload:
+            mode: "s2s"
+            url: data.response.upload_url
+            partName: "photo"
+
+        console.log @ctx
+        onSuccess @ws, @ctx
+
+      VK.Api.call "photos.getWallUploadServer", params, callback
+
+    authorization: (onSuccess, onError) ->
+
+      authInfo = (response) =>
+        console.log response
+        return false
+        if response.session
+          @ctx.user_id = response.session.mid
+          @createAdapter onSuccess, onError
+        else
+          VK.Auth.login authInfo, ACESS_LVL
+          onError @ws, "auth error"
+
+      VK.Auth.getLoginStatus authInfo
+
+
+    loadSdk: () ->
+      vkApiTransport = document.createElement "div"
+      vkApiTransport.id = "vk_api_transport"
+
+      body = document.getElementsByTagName("body")[0]
+      body.appendChild vkApiTransport
+
+      setTimeout(
+        () ->
+          el = document.createElement "script"
+          el.type = "text/javascript"
+          el.src = "//vk.com/js/api/openapi.js"
+          el.async = true
+          document.getElementById("vk_api_transport").appendChild(el)
+        0
+      )
+
+    init: (onSuccess, onError) ->
+      console.log "Vk init"
+
+      window.vkAsyncInit = () =>
+        VK.init
+          apiId: API_ID
+
+      @loadSdk()
+

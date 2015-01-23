@@ -6,28 +6,16 @@ define([], function() {
 
     paths: {
       SioPR: "main",
-      IAdapter: "iAdapter",
-      PictureStorageBuilder: "pictureStorageBuilder",
-      IPublishMessageBuilder: "iPublishMessageBuilder",
-      PutPictureBuilder: "putPictureBuilder",
-      PrepareEnsureServiceReadyBuilder: "prepareEnsureServiceReadyBuilder",
 
-      vk: "vk/adapter",
-      VkPictureStorageBuilder: "vk/pictureStorageBuilder",
-      VkPublishMessageBuilder: "vk/publishMessageBuilder",
-      VkPrepareEnsureServiceReadyBuilder: "vk/prepareEnsureServiceReadyBuilder",
-      VkPutPictureBuilder: "vk/putPictureBuilder",
-
-      fb: "fb/adapter",
-      FbPrepareEnsureServiceReadyBuilder: "fb/prepareEnsureServiceReadyBuilder",
-      FbPublishMessageBuilder: "fb/publishMessageBuilder"
+      vk: "vk/vk",
+      facebook: "fb/facebook",
     }
 
   });
 
   require(["SioPR"], function(SioPR) {
     $input = $("#socialApiConnection");
-    url = $input.val()
+    url = $input.val()       
 
     ws = new WebSocket(url);
 

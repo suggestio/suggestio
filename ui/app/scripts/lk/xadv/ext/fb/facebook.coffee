@@ -1,6 +1,6 @@
-define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) ->
+define [], () ->
 
-  class FbPrepareEnsureServiceReadyBuilder extends PrepareEnsureServiceReadyBuilder
+  class Facebook
     API_ID = 967620393262021
 
     statusChangeCallback: (response) ->
@@ -94,8 +94,8 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
       js.src = "//connect.facebook.net/en_US/sdk.js"
       fjs.parentNode.insertBefore js, fjs
 
-    execute: (onSuccess, onError) ->
-      console.log "Fb PrepareEnsureServiceReadyBuilder execute"
+    init: (onSuccess, onError) ->
+      console.log "Fb init"
 
       options =
         appId      : API_ID
@@ -103,10 +103,7 @@ define ["PrepareEnsureServiceReadyBuilder"], (PrepareEnsureServiceReadyBuilder) 
         cookie     : true
         version    : "v2.2"
 
-
       window.fbAsyncInit = () =>
         FB.init options
-
-        @checkLoginState()
 
       @loadSdk document, 'script', 'facebook-jssdk'

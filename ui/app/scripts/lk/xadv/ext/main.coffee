@@ -1,9 +1,14 @@
-define ["VkPrepareEnsureServiceReadyBuilder", "FbPrepareEnsureServiceReadyBuilder"], (VkPrepareEnsureServiceReadyBuilder, FbPrepareEnsureServiceReadyBuilder) ->
+define [], () ->
 
   class SioPR
     instance = undefined
     ws = null
     serviceList = new Array()
+
+    sendF = (json) ->
+      message = JSON.stringify(json)
+      console.log message
+      ws.send message
 
     # singletone
     constructor: ->
@@ -15,19 +20,26 @@ define ["VkPrepareEnsureServiceReadyBuilder", "FbPrepareEnsureServiceReadyBuilde
       ws = _ws
 
     ensureReady: (ctx, onComplete) ->
-      sendF = (json) ->
-        message = JSON.stringify(json)
-        console.log message
-        ws.send message
+      console.log "ensureReady"
 
+      requirejs(
+        ["facebook", "vk"]
+        (Facebook, Vk) ->
+          serviceList["facebook"] = new Facebook()
+          serviceList["facebook"].init()
+
+          serviceList["vk"] = new Vk()
+          serviceList["vk"].init()
+      )
+
+      ctx._status = "success"
       onComplete ctx, sendF
 
-    prepareEnsureServiceReady: (serviceName, ctx) ->
-      if serviceName == "vk"
-        return new VkPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
+    handleTarget: (ctx, onComplete) ->
+      console.log "handleTarget"
 
-      if serviceName == "fb"
-        return new FbPrepareEnsureServiceReadyBuilder(ws, serviceName, ctx)
+      #serviceList["vk"].handleTarget ctx, OnComplete
+
 
     registerService: (name, adapter) ->
       serviceList[name] = adapter
