@@ -48,8 +48,6 @@ define ["SioPR"], (SioPR) ->
 
         VK.Api.call "utils.resolveScreenName", params, callback
       catch error
-        console.log error
-
         post.owner_id = userId
         @wallPost()
 
@@ -76,13 +74,17 @@ define ["SioPR"], (SioPR) ->
 
     wallPost: () ->
 
+      try
+        post.message = @ctx._ads[0].content.fields[0].text
+      catch error
+        console.log error
+
       callback = (data) ->
         console.log data
 
       VK.Api.call "wall.post", post, callback
 
     getWallUploadServer: () ->
-      console.log "getWallUploadServer"
 
       if !userId?
         onSuccess = () =>
@@ -106,8 +108,6 @@ define ["SioPR"], (SioPR) ->
           @ctx._error =
             msg: error
 
-        console.log @ctx
-
         @onComplete @ctx, sendF
 
       VK.Api.call "photos.getWallUploadServer", params, callback
@@ -115,7 +115,6 @@ define ["SioPR"], (SioPR) ->
     login: (onSuccess) ->
 
       authInfo = (response) =>
-        console.log response
         if response.session
           userId = response.session.mid
           onSuccess()
@@ -132,15 +131,12 @@ define ["SioPR"], (SioPR) ->
       @ctx = ctx
       @onComplete = onComplete
 
-      console.log ctx
-
       if ctx._ads[0].rendered.saved
         @saveWallPhoto ctx._ads[0].rendered.saved
         return false
 
-      if ctx._ads[0].rendered.sioUrl then return @getWallUploadServer()
-      #@getWallUploadServer()
-
+      if ctx._ads[0].rendered.sioUrl
+        @getWallUploadServer()
 
     loadSdk: () ->
       vkApiTransport = document.createElement "div"
