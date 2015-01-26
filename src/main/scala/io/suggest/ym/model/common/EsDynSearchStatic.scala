@@ -92,6 +92,9 @@ trait DynSearchArgs {
     toEsQueryOpt getOrElse defaultEsQuery
   }
 
+  /** Возвращать ли _version в результатах? */
+  def returnVersion: Option[Boolean] = None
+
   /** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить. */
   def defaultEsQuery: QueryBuilder = QueryBuilders.matchAllQuery()
 
@@ -109,6 +112,9 @@ trait DynSearchArgs {
       .setQuery(toEsQuery)
       .setSize(Math.min(MAX_RESULTS_HARD, Math.max(1, maxResults)))
       .setFrom(Math.max(0, offset))
+    if (returnVersion.isDefined)
+      srb.setVersion(returnVersion.get)
+    srb
   }
 
   /** toString() выводит экземпляр этого класса списком. Но ей нужно знать какое-то название модуля,
