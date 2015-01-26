@@ -21,6 +21,10 @@ define ["SioPR"], (SioPR) ->
 
     sendF = (json) ->
       message = JSON.stringify json
+      console.log "---"
+      console.log message
+      console.log @ws
+      console.log "---"
       @ws.send message
 
     setText: (text) ->
@@ -92,17 +96,20 @@ define ["SioPR"], (SioPR) ->
         user_id: userId
 
       callback = (data) =>
-        console.log data
-
-        @ctx._status = "fillCtx"
-        @ctx._ads[0]._picture =
-          size:
-            width: 600
-            height: 500
-          upload:
-            mode: "s2s"
-            url: data.response.upload_url
-            partName: "photo"
+        try
+          @ctx._status = "fillCtx"
+          @ctx._ads[0]._picture =
+            size:
+              width: 600
+              height: 500
+            upload:
+              mode: "s2s"
+              url: data.response.upload_url
+              partName: "photo"
+        catch error
+          @ctx._status = "error"
+          @ctx._error =
+            msg: error
 
         console.log @ctx
 
