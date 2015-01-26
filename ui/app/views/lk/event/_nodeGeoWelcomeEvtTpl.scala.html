@@ -22,7 +22,7 @@
 
     } else {
       @* Скрытая форма отправки запроса в техподдержку. *@
-      @form( routes.MarketLkSupport.askGeo4NodeSubmit(adnId, r = Some(ctx.request.path)) ) {
+      @form( routes.MarketLkSupport.askGeo4NodeSubmit(adnId, r = ctx.r) ) {
         <textarea name="info"
                   placeholder="Введите информацию об объекте, которую вы хотели бы сообщить.">
         </textarea>

@@ -82,9 +82,17 @@
             <hr class="delimiter"/>
             <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
-            <hr class="delimiter"/>
-            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События"></a>
+            @if(ctx.billBalanceOpt) {
+              <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+              <hr class="delimiter"/>
+            }
+            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События">
+              @ctx.nodeUnseenEvtsCnt.map { cnt =>
+                @if(cnt > 0) {
+                  <span title="Новых событий: @cnt">(@cnt)</span>
+                }
+              }
+            </a>
             <hr class="delimiter"/>
           </nav>
         }

@@ -4,9 +4,11 @@ import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
+import io.suggest.ym.model.common.{EsDynSearchStatic, DynSearchArgs}
 import org.elasticsearch.action.index.IndexRequestBuilder
+import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
 import play.api.libs.json.{Json, JsBoolean, JsString}
@@ -25,7 +27,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * Created: 20.01.15 19:46
  * Description: Модель, описывающая события для узла или другого объекта системы suggest.io.
  */
-object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
+object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs] {
 
   override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
@@ -85,30 +87,6 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
     )
   }
 
-  def ownerIdQuery(ownerId: String): QueryBuilder = {
-    QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
-  }
-
-  /**
-   * Поиск по ownerId.
-   * @param ownerId id владельца.
-   * @param limit Макс.кол-во результатов.
-   * @param offset Сдвиг.
-   * @param withVsn Возвращать сохранённую версию?
-   * @return Фьючерс со списком результатов, новые сверху.
-   */
-  def findByOwner(ownerId: String, limit: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
-                 (implicit ec: ExecutionContext, client: Client): Future[Seq[MEvent]] = {
-    prepareSearch
-      .setQuery( ownerIdQuery(ownerId) )
-      .setSize(limit)
-      .setFrom(offset)
-      .setVersion(withVsn)
-      .addSort(DATE_CREATED_ESFN, SortOrder.DESC)
-      .execute()
-      .map { searchResp2list }
-  }
-
   /**
    * Сборка event classifier для простоты взаимодействия с SioNotifier.
    * @param etype Тип события, если нужен.
@@ -122,7 +100,6 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
 
 }
 
-// TODO Не забыть прилинковать эту модель к SiowebEsModel!
 
 import MEvent._
 
@@ -147,14 +124,13 @@ case class MEvent(
     var acc: FieldsJsonAcc = List(
       EVT_TYPE_ESFN     -> JsString(etype.strId),
       OWNER_ID_ESFN     -> JsString(ownerId),
-      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
+      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated),
+      IS_UNSEEN_ESFN -> JsBoolean(isUnseen)
     )
     if (argsInfo.nonEmpty)
       acc ::= ARGS_ESFN -> Json.toJson(argsInfo)
     if (isCloseable != isCloseableDflt)
       acc ::= IS_CLOSEABLE_ESFN -> JsBoolean(isCloseable)
-    if (isUnseen != isUnseenDflt)
-      acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)
     acc
   }
 
@@ -206,4 +182,80 @@ case class MEventTmp(
   isUnseen    : Boolean         = true,
   id          : Option[String]  = None
 ) extends IMEvent
+
+
+
+/** Для поиска по событиям используется сие добро. */
+trait IEventsSearchArgs extends DynSearchArgs {
+
+  /** Искать-фильтровать по значению поля ownerId. */
+  def ownerId: Option[String]
+
+  /** Искать/фильтровать по значению поля-флага IS_UNSEEN. */
+  def isUnseen: Option[Boolean]
+
+  /** false = новые сверху, true = новые снизу, None - без сортировки. */
+  def withDateSort: Option[Boolean]
+
+  /** Сборка EsQuery сверху вниз. */
+  override def toEsQueryOpt: Option[QueryBuilder] = {
+    super.toEsQueryOpt
+      // Отрабатываем ownerId фильтром или запросом.
+      .map { qb =>
+        ownerId.fold(qb) { _ownerId =>
+          val filter = FilterBuilders.termFilter(OWNER_ID_ESFN, _ownerId)
+          QueryBuilders.filteredQuery(qb, filter)
+        }
+      }
+      .orElse {
+        ownerId.map { _ownerId =>
+          QueryBuilders.termQuery(OWNER_ID_ESFN, _ownerId)
+        }
+      }
+      // Отрабатываем isUnseen фильтром или запросом.
+      .map { qb =>
+        isUnseen.fold(qb) { v =>
+          val filter = FilterBuilders.termFilter(IS_UNSEEN_ESFN, v)
+          QueryBuilders.filteredQuery(qb, filter)
+        }
+      }
+      .orElse {
+        isUnseen.map { v =>
+          QueryBuilders.termQuery(IS_UNSEEN_ESFN, v)
+        }
+      }
+  }
+
+
+  /**
+   * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
+   * кастомную сортировку например.
+   * @param srb Поисковый реквест, пришедший из модели.
+   * @return SearchRequestBuilder, наполненный данными по поисковому запросу.
+   */
+  override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    val srb1 = super.prepareSearchRequest(srb)
+    withDateSort.fold(srb1) { wds =>
+      val so = if (wds) SortOrder.ASC else SortOrder.DESC
+      srb1.addSort(DATE_CREATED_ESFN, so)
+    }
+  }
+
+  /** Построение выхлопа метода toString(). */
+  override def toStringBuilder: StringBuilder = {
+    val sb = super.toStringBuilder
+    fmtColl2sb("ownerId", ownerId, sb)
+    fmtColl2sb("isUnseen", isUnseen, sb)
+  }
+}
+
+/** Дефолтовая реализация [[IEventsSearchArgs]]. */
+case class EventsSearchArgs(
+  ownerId       : Option[String] = None,
+  isUnseen      : Option[Boolean] = None,
+  withDateSort  : Option[Boolean] = None,
+  override val returnVersion: Option[Boolean] = None,
+  maxResults    : Int = 10,
+  offset        : Int = 0
+) extends IEventsSearchArgs
 

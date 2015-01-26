@@ -3,7 +3,7 @@ package controllers
 import com.github.nscala_time.time.OrderingImplicits._
 import models._
 import models.adv.MExtTarget
-import models.event.{ArgsInfo, MEventTmp, MEvent}
+import models.event.{EventsSearchArgs, ArgsInfo, MEventTmp, MEvent}
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.twirl.api.Html
@@ -45,7 +45,15 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
     val offset = Math.min(OFFSET_MAX, offset0)
     // Запустить фетчинг событий из хранилища.
     // withVsn нужен из-за того, что у нас используется tryUpdate() для выставления isUnseen-флага.
-    val eventsFut = MEvent.findByOwner(adnId, limit = limit, offset = offset, withVsn = true)
+    val eventsSearch = new EventsSearchArgs(
+      ownerId       = Some(adnId),
+      returnVersion = Some(true),
+      maxResults    = limit,
+      offset        = offset
+    )
+    val eventsFut = MEvent.dynSearch(eventsSearch)
+
+    // implicit чтобы компилятор сразу показал те места, где этот ctx забыли явно передать.
     implicit val ctx = implicitly[Context]
 
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...

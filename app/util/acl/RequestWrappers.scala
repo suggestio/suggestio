@@ -2,16 +2,19 @@ package util.acl
 
 import java.net.InetAddress
 
+import models.event.{EventsSearchArgs, MEvent}
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
+import util.async.AsyncUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
 import play.api.Play.current
+import util.SiowebEsUtil.client
 
 
 object SioWrappedRequest {
@@ -177,10 +180,13 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
 /** Метаданные, относящиеся запросу. Сюда попадают данные, которые необходимы везде и требует асинхронных действий.
   * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
   *                    [[models.MPerson]] и [[models.MPersonIdent]].
+  * @param billBallanceOpt Текущий денежный баланс узла.
+  * @param nodeUnseenEvtsCnt Кол-во новых событий у узла.
   */
 case class SioReqMd(
-  usernameOpt: Option[String] = None,
-  billBallanceOpt: Option[MBillBalance] = None
+  usernameOpt       : Option[String] = None,
+  billBallanceOpt   : Option[MBillBalance] = None,
+  nodeUnseenEvtsCnt : Option[Int] = None
 )
 object SioReqMd {
   /** Простая генерация srm на основе юзера. */
@@ -192,16 +198,32 @@ object SioReqMd {
 
   /** Генерация srm для юзера в рамках личного кабинета. */
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
+    // Получить кол-во непрочитанных сообщений для узла.
+    val newEvtsCntFut: Future[Int] = {
+      val args = EventsSearchArgs(
+        ownerId = Some(adnId),
+        isUnseen = Some(true)
+      )
+      MEvent.dynCount(args)
+        .map { _.toInt }
+    }
+    // Получить баланс узла.
     val bbOptFut = Future {
       DB.withConnection { implicit c =>
         MBillBalance.getByAdnId(adnId)
       }
-    }
+    }(AsyncUtil.jdbcExecutionContext)
+    // Собрать результат.
     for {
       usernameOpt <- PersonWrapper.findUserName(pwOpt)
       bbOpt       <- bbOptFut
+      newEvtCnt   <- newEvtsCntFut
     } yield {
-      SioReqMd(usernameOpt, bbOpt)
+      SioReqMd(
+        usernameOpt       = usernameOpt,
+        billBallanceOpt   = bbOpt,
+        nodeUnseenEvtsCnt = Some(newEvtCnt)
+      )
     }
   }
 

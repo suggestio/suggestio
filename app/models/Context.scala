@@ -106,6 +106,7 @@ trait Context extends MyHostsT {
   protected def sioReqMdOpt: Option[SioReqMd]
   def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)
   def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
+  def nodeUnseenEvtsCnt = sioReqMdOpt.flatMap(_.nodeUnseenEvtsCnt)
 
   /** Используемый протокол. */
   lazy val myProto: String = {
