@@ -98,14 +98,10 @@ define ["SioPR"], (SioPR) ->
       callback = (data) =>
         try
           @ctx._status = "fillCtx"
-          @ctx._ads[0]._picture =
-            size:
-              width: 600
-              height: 500
-            upload:
-              mode: "s2s"
-              url: data.response.upload_url
-              partName: "photo"
+          @ctx._ads[0].rendered.upload =
+            mode: "s2s"
+            url: data.response.upload_url
+            partName: "photo"
         catch error
           @ctx._status = "error"
           @ctx._error =
