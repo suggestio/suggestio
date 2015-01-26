@@ -50,8 +50,7 @@ define ["SioPR"], (SioPR) ->
       FB.login(
         (response) =>
           if response.authResponse
-            console.log "Welcome!  Fetching your information.... "
-            @testAPI()
+            @publicatePost()
           else
             console.log "User cancelled login or did not fully authorize."
         loginParams
@@ -59,9 +58,9 @@ define ["SioPR"], (SioPR) ->
 
     publicatePost: () ->
       params =
-        message: "Reading JS SDK documentation"
-        picture: "http://cs621520.vk.me/v621520368/c705/AZFdRlNVAvA.jpg"
-        link: "suggest.io"
+        message: @ctx._ads[0].content.fields[0].text
+        picture: @ctx._ads[0].rendered.sioUrl
+        link: @ctx._target.href
 
       callback = (response) ->
         if !response || response.error
@@ -77,20 +76,6 @@ define ["SioPR"], (SioPR) ->
         callback
       )
 
-    uploadPhotoByUrl: () ->
-
-      params =
-        url: "http://cs621520.vk.me/v621520368/c705/AZFdRlNVAvA.jpg"
-
-      callback = (response) ->
-        console.log response
-
-      FB.api(
-        "/me/photos",
-        "POST",
-        params
-        callback
-      )
 
     testAPI: () ->
       console.log "Welcome to Facebook API!  Fetching your information.... "
@@ -112,3 +97,11 @@ define ["SioPR"], (SioPR) ->
       js.id = id
       js.src = "//connect.facebook.net/en_US/sdk.js"
       fjs.parentNode.insertBefore js, fjs
+
+    handleTarget: (ctx, onComplete) ->
+      console.log "fb handle target"
+
+      @ctx = ctx
+      @onComplete = onComplete
+
+      @login()

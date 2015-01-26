@@ -24,10 +24,6 @@ define ["SioPR"], (SioPR) ->
       message = JSON.stringify json
       @ws.send message
 
-    setText: (text) ->
-      post.message = text
-      return @
-
     setOwnerId: () ->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url

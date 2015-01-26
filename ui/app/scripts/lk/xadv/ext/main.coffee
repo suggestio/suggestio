@@ -23,7 +23,7 @@ define [], () ->
       console.log "ensureReady"
 
       requirejs(
-        ["vk"]
+        ["vk", "facebook"]
         () ->
           # регистрируем и инициализируем новые сервисы
           for index in [0...arguments.length]
@@ -40,6 +40,10 @@ define [], () ->
         onComplete ctx, sendF
 
     handleTarget: (ctx, onComplete) ->
-      serviceList["Vk"].handleTarget(ctx, onComplete)
+      if ctx._domain.indexOf("facebook.com") >= 0
+        serviceList["Facebook"].handleTarget(ctx, onComplete)
+
+      if ctx._domain.indexOf("vk.com") >= 0
+        serviceList["Vk"].handleTarget(ctx, onComplete)
 
       #serviceList["vk"].handleTarget ctx, OnComplete
