@@ -7,6 +7,7 @@ define ["SioPR"], (SioPR) ->
     ACESS_LVL = 8197
 
     userId = null
+    post = new Object()
 
     constructor: (@ws, @ctx, @onComplete) ->
       console.log "vk init"
@@ -54,10 +55,16 @@ define ["SioPR"], (SioPR) ->
 
       VK.Api.call "utils.resolveScreenName", params, callback
 
-    saveWallPhoto: () ->
-      savedPhoto = JSON.parse(@ctx._picture.saved)
+    saveWallPhoto: (savedPicture) ->
+
+      console.log "---savedPicture---"
+      savedPicture = JSON.parse savedPicture
+      console.log savedPicture
+      console.log "---savedPicture---"
 
       callback = (data) =>
+        console.log data
+
         attachments = new Array()
         attachments.push data.response[0].id
         attachments.push @ctx._target.href
@@ -68,10 +75,10 @@ define ["SioPR"], (SioPR) ->
         @setOwnerId()
 
       params =
-        user_id: @ctx.user_id
-        server: savedPhoto.server
-        photo: savedPhoto.photo
-        hash: savedPhoto.hash
+        user_id: userId
+        server: savedPicture.server
+        photo: savedPicture.photo
+        hash: savedPicture.hash
 
       VK.Api.call "photos.saveWallPhoto", params, callback
 
@@ -135,8 +142,8 @@ define ["SioPR"], (SioPR) ->
 
       console.log ctx
 
-      if ctx._adv
-        console.log ctx._adv
+      if ctx._ads[0].rendered.saved
+        @saveWallPhoto ctx._ads[0].rendered.saved
         return false
 
       if ctx._ads[0].rendered.sioUrl then return @getWallUploadServer()
