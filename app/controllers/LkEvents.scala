@@ -5,11 +5,13 @@ import models._
 import models.adv.MExtTarget
 import models.event.{EventsSearchArgs, ArgsInfo, MEventTmp, MEvent}
 import org.joda.time.DateTime
+import play.api.db.DB
 import play.api.i18n.Messages
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.async.AsyncUtil
 import util.event.EventTypes
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
@@ -122,11 +124,40 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         MAdnNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
       }
 
+      // Асинхронно собираем карту размещений из всех adv-моделей.
+      val advsMapFut: Future[Map[Int, MAdvI]] = {
+        val allAdvIdsIter = mevents
+          .iterator
+          .flatMap { _.argsInfo.advIdOpt }
+        if (allAdvIdsIter.nonEmpty) {
+          // Есть размещения, связанные с исходной коллекцией событий.
+          val allAdvIds = allAdvIdsIter.toSet.toSeq
+          Future.traverse(Seq(MAdvReq, MAdvOk, MAdvRefuse)) { model =>
+            Future {
+              DB.withConnection { implicit c =>
+                MAdvReq.multigetByIds(allAdvIds)
+              }
+            }(AsyncUtil.jdbcExecutionContext)
+
+          } map {
+            // Объединить все коллекции в одну карту. Ускоряем весь процесс через iterator'ы:
+            _.iterator
+             .flatMap { _.iterator }
+             .map { adv => adv.id.get -> adv }
+             .toMap
+          }
+        } else {
+          // Нечего искать.
+          Future successful Map.empty
+        }
+      }
+
       for {
         // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
         madsMap       <- madsMapFut
         nodesMap      <- nodesMapFut
         advExtTgsMap  <- advExtTgsMapFut
+        advsMap       <- advsMapFut
         // Параллельный рендер всех событий
         events   <-  Future.traverse(mevents) { case mevent =>
           Future {
@@ -136,7 +167,8 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
               mevent      = mevent,
               adnNodeOpt  = ai.adnIdOpt.flatMap(nodesMap.get),
               advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
-              madOpt      = ai.adIdOpt.flatMap(madsMap.get)
+              madOpt      = ai.adIdOpt.flatMap(madsMap.get),
+              advOpt      = ai.advIdOpt.flatMap(advsMap.get)
             )
             mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
           }
