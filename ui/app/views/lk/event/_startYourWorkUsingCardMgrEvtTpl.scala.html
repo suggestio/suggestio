@@ -1,0 +1,11 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление о том, что есть такая кнопка: добавить магазин. *@
+
+<a href="@routes.MarketLkAdn.showNodeAds(rargs.mevent.ownerId)">
+  @_oneEvtBase(rargs) {
+    <p>
+      Начните свою работу с простого и удобного менеджера рекламных карточек.
+    </p>
+  }
+</a>

@@ -3,6 +3,10 @@
 @* Очень-очень базовый и минимальный шаблон для абсолютно любой нотификации в системе. *@
 @import helper._
 
+@if(rargs.withContainer) {
+  <div id="@rargs.mevent.id">
+}
+
 <div class="@clazz">
   @* Рендерить крестик в углу для событий, которые разрешают их сокрытие *@
   @if(rargs.mevent.isCloseable && rargs.mevent.id) {
@@ -14,3 +18,7 @@
   @* Рендерим остальное содержимое события. *@
   @content
 </div>
+
+@if(rargs.withContainer) {
+  </div>
+}

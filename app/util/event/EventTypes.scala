@@ -33,16 +33,35 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
   override type T = EventType
 
 
+  /** Одна цель [[models.adv.MExtTarget]] успешно обработана. */
   val AdvExtTgSuccess: EventType = new Val("a") {
     override def template = successTpl
   }
 
+  /** Обработка одной цели [[models.adv.MExtTarget]] в процессе. */
   val AdvExtTgInProcess: EventType = new Val("b") {
     override def template = targetInProcessTpl
   }
-  
+
+  /** Возникла ошибка при обработке одной цели [[models.adv.MExtTarget]]. */
   val AdvExtTgError: EventType = new Val("c") {
     override def template = targetErrorTpl
+  }
+
+  /** Когда узел [[models.MAdnNode]] создан, нужно выводить приглашение для включения в геосеть s.io. */
+  val NodeGeoWelcome: EventType = new Val("d") {
+    override def template = _nodeGeoWelcomeEvtTpl
+  }
+
+  /** Когда узел создан, нужно добавить владельцу указание на возможность создать ещё один узел. */
+  val YouCanCreateNewShop: EventType = new Val("e") {
+    override def template = _youCanUseAddShopBtnEvtTpl
+  }
+
+  /** После создания узла, уведомление о возможности попользоваться удобным менеджером рекламных карточек. */
+  val StartYourWorkUsingCardMgr: EventType = new Val("f") {
+    /** Шаблон для рендера одного события текущего типа. */
+    override def template = _startYourWorkUsingCardMgrEvtTpl
   }
 
 }

@@ -1,13 +1,16 @@
 package controllers
 
+import com.github.nscala_time.time.OrderingImplicits._
 import models._
 import models.adv.MExtTarget
-import models.event.MEvent
+import models.event.{ArgsInfo, MEventTmp, MEvent}
+import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.event.EventTypes
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import play.api.Play.{current, configuration}
@@ -24,6 +27,8 @@ import scala.concurrent.Future
  */
 object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
 
+  import LOGGER._
+
   private val LIMIT_MAX  = configuration.getInt("lk.events.nodeIndex.limit.max") getOrElse 10
   private val OFFSET_MAX = configuration.getInt("lk.events.nodeIndex.offset.max") getOrElse 300
 
@@ -38,9 +43,47 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
   def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val limit = Math.min(LIMIT_MAX, limit0)
     val offset = Math.min(OFFSET_MAX, offset0)
-    val eventsFut = MEvent.findByOwner(adnId, limit = limit, offset = offset)
+    // Запустить фетчинг событий из хранилища.
+    // withVsn нужен из-за того, что у нас используется tryUpdate() для выставления isUnseen-флага.
+    val eventsFut = MEvent.findByOwner(adnId, limit = limit, offset = offset, withVsn = true)
     implicit val ctx = implicitly[Context]
-    // Нужно отрендерить каждое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
+
+    // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
+    val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
+      if (offset == 0  &&  request.adnNode.adn.isReceiver) {
+        MAdnNodeGeo.countByNode(adnId).map {
+          // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
+          case 0 =>
+            val etype = EventTypes.NodeGeoWelcome
+            // Дата создания события формируется на основе даты создания узла.
+            // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
+            val dt = request.adnNode.meta.dateCreated.plusSeconds(10)
+            val mevt = MEventTmp(
+              etype       = etype,
+              ownerId     = adnId,
+              argsInfo    = ArgsInfo(adnIdOpt = Some(adnId)),
+              isCloseable = false,
+              isUnseen    = true,
+              id          = Some(adnId),
+              dateCreated = dt
+            )
+            val rargs = event.RenderArgs(
+              mevent        = mevt,
+              withContainer = true,
+              adnNodeOpt    = Some(request.adnNode)
+            )
+            val html = etype.render(rargs)(ctx)
+            Some(html -> dt)
+
+          // Есть геошейпы для узла. Ничего рендерить не надо.
+          case _ => None
+        }
+      } else {
+        Future successful None
+      }
+    }
+
+    // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
     val evtsRndrFut = eventsFut.flatMap { mevents =>
       // Пакетно отфетчить рекламные карточки в виде карты.
       val madsMapFut = {
@@ -77,7 +120,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         nodesMap      <- nodesMapFut
         advExtTgsMap  <- advExtTgsMapFut
         // Параллельный рендер всех событий
-        events   <-  Future.traverse(mevents.zipWithIndex) { case (mevent, i) =>
+        events   <-  Future.traverse(mevents) { case mevent =>
           Future {
             // Запускаем рендер одного нотификейшена
             val ai = mevent.argsInfo
@@ -87,15 +130,30 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
               advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
               madOpt      = ai.adIdOpt.flatMap(madsMap.get)
             )
-            mevent.etype.render(rArgs)(ctx) -> i
+            mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
           }
         }
+        // Нужно закинуть в кучу ещё уведомление об отсутствующей геолокации
+        geoWelcomeOpt  <- geoWelcomeFut
       } yield {
-        // Восстанавливаем исходный порядок после параллельного рендера.
-        events
+        // Восстанавливаем порядок по дате после параллельного рендера.
+        // TODO Opt тут можно оптимизировать объединение и сортировку коллекций.
+        (geoWelcomeOpt.toSeq ++ events)
           .sortBy(_._2)
           .map(_._1)
       }
+    }
+
+    // Автоматически помечать все непрочитанные сообщения как прочитанные:
+    eventsFut.onSuccess { case mevents =>
+      mevents
+        .iterator
+        .filter(_.isUnseen)
+        .map { mevt =>
+          MEvent
+            .tryUpdate(mevt) { _.copy(isUnseen = false) }
+            .onFailure { case ex => error("Failed to mark event as 'seen': " + mevt, ex) }
+        }
     }
 
     // Рендерим конечный результат: страница или же инлайн

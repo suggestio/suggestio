@@ -1,5 +1,6 @@
 package models.event
 
+import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.{EsModel, EnumMaybeWithName}
 import models.adv.MExtTarget
 import models.{MAd, MAdnNode}
@@ -58,7 +59,7 @@ object IArgsInfo {
 }
 
 /** Трейт для хранимых контейнеров аргументов: id'шники всякие тут. */
-trait IArgsInfo extends IArgs {
+trait IArgsInfo extends IArgs with Event {
   
   /** Опциональный id узла, с которым связано это событие. */
   def adnIdOpt: Option[String]
@@ -71,6 +72,8 @@ trait IArgsInfo extends IArgs {
 
   override def nonEmpty: Boolean
   override def isEmpty: Boolean
+
+  override def getClassifier: Classifier = List(adIdOpt, adIdOpt, advExtTgIdOpt)
 
 }
 
@@ -119,7 +122,9 @@ case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
   advExtTgIdOpt   : Option[String]  = None,
   adIdOpt         : Option[String]  = None
-) extends IArgsInfo with EmptyProduct
+) extends IArgsInfo with EmptyProduct {
+
+}
 
 
 /** Общий инстанс для пустой инфы по аргументам. Нанооптимизация. */
@@ -130,14 +135,24 @@ object EmptyArgsInfo extends ArgsInfo() {
 }
 
 
-/** Контейнер для представления готовых инстансов аргументов. Он передаётся в шаблоны для рендера.
-  * Заполняется контроллером перед рендером всех событий. */
+/**
+ * Контейнер для представления готовых инстансов аргументов. Он передаётся в шаблоны для рендера.
+ * Заполняется контроллером перед рендером всех событий.
+ * @param mevent Экземпляр события [[IEvent]].
+ * @param withContainer Рендерить обрамляющий контейнер? [false] Контейнер используется при первичном рендере,
+ *                      чтобы его потом перезаписывать через js innerHTML() содержимое этого контейнера.
+ * @param adnNodeOpt Инстанс ноды, если событие связано с нодой.
+ * @param advExtTgOpt Инстанс MExtTarget, если событие связано с ним.
+ * @param madOpt Инстанс MAd, если событие связано с этой рекламной карточкой.
+ * @param errors Экземпляры ошибок, если событие отображает текущие ошибки.
+ */
 case class RenderArgs(
-  mevent      : IEvent,
-  adnNodeOpt  : Option[MAdnNode]    = None,
-  advExtTgOpt : Option[MExtTarget]  = None,
-  madOpt      : Option[MAd]         = None,
-  errors      : Seq[ErrorInfo]      = Nil
+  mevent        : IEvent,
+  withContainer : Boolean             = false,
+  adnNodeOpt    : Option[MAdnNode]    = None,
+  advExtTgOpt   : Option[MExtTarget]  = None,
+  madOpt        : Option[MAd]         = None,
+  errors        : Seq[ErrorInfo]      = Nil
 ) extends IArgsInfo with EmptyProduct {
 
   def hasErrors = errors.nonEmpty

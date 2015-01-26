@@ -1,5 +1,6 @@
 package models.event
 
+import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
@@ -93,17 +94,30 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl {
    * @param ownerId id владельца.
    * @param limit Макс.кол-во результатов.
    * @param offset Сдвиг.
+   * @param withVsn Возвращать сохранённую версию?
    * @return Фьючерс со списком результатов, новые сверху.
    */
-  def findByOwner(ownerId: String, limit: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                  (implicit ec: ExecutionContext, client: Client): Future[Seq[MEvent]] = {
+  def findByOwner(ownerId: String, limit: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
+                 (implicit ec: ExecutionContext, client: Client): Future[Seq[MEvent]] = {
     prepareSearch
       .setQuery( ownerIdQuery(ownerId) )
       .setSize(limit)
       .setFrom(offset)
+      .setVersion(withVsn)
       .addSort(DATE_CREATED_ESFN, SortOrder.DESC)
       .execute()
       .map { searchResp2list }
+  }
+
+  /**
+   * Сборка event classifier для простоты взаимодействия с SioNotifier.
+   * @param etype Тип события, если нужен.
+   * @param ownerId id владельца, если требуется.
+   * @param argsInfo Экземпляр [[ArgsInfo]], если есть.
+   * @return Classifier.
+   */
+  def getClassifier(etype: Option[EventType], ownerId: Option[String], argsInfo: ArgsInfo = EmptyArgsInfo): Classifier = {
+    Some(classOf[T].getSimpleName) :: etype :: ownerId :: argsInfo.getClassifier
   }
 
 }
@@ -121,10 +135,10 @@ case class MEvent(
   dateCreated   : DateTime        = MEvent.dateCreatedDflt,
   isCloseable   : Boolean         = MEvent.isCloseableDflt,
   isUnseen      : Boolean         = MEvent.isUnseenDflt,
-  ttlDays       : Int             = MEvent.TTL_DAYS_UNSEEN,
+  ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
   id            : Option[String]  = None,
   versionOpt    : Option[Long]    = None
-) extends EsModelT with EsModelPlayJsonT with IEvent {
+) extends EsModelT with EsModelPlayJsonT with IMEvent {
 
   override def companion = MEvent
   override type T = this.type
@@ -146,8 +160,10 @@ case class MEvent(
 
   /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
   override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    super.indexRequestBuilder
-      .setTTL( ttlDays.days.toMillis )
+    val irb = super.indexRequestBuilder
+    if (ttlDays.isDefined)
+      irb.setTTL( ttlDays.get.days.toMillis )
+    irb
   }
 
 }
@@ -155,13 +171,20 @@ case class MEvent(
 
 /** Минимальный интерфейс абстрактного события.
   * Используется для рендера шаблонов, аргументы которых абстрагированы от конкретной реализации. */
-trait IEvent extends OptStrId {
+trait IEvent extends OptStrId with Event {
   def etype         : EventType
   def ownerId       : String
   def argsInfo      : ArgsInfo
   def dateCreated   : DateTime
   def isCloseable   : Boolean
   def isUnseen      : Boolean
+}
+
+/** Частичная реализация [[IEvent]] с реализацией getClassifier() в рамках текущей модели. */
+trait IMEvent extends IEvent {
+  override def getClassifier: Classifier = {
+    MEvent.getClassifier(Some(etype), Some(ownerId), argsInfo)
+  }
 }
 
 
@@ -182,5 +205,5 @@ case class MEventTmp(
   isCloseable : Boolean         = false,
   isUnseen    : Boolean         = true,
   id          : Option[String]  = None
-) extends IEvent
+) extends IMEvent
 

@@ -1,0 +1,34 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление о том, что на узле нету геотаргетировнной составляющей. *@
+
+@import helper._
+
+@_oneEvtBase(rargs) {
+
+  <h1>Геотаргетированна реклама</h1>
+
+  @* TODO Нужно нормальное описание, а не то, что в дизайне *@
+
+  @* TODO При клике по ссылке, событие должно расширяться вниз, чтобы ставло видно форму, которая ниже.
+          И курсор фокусировать в texarea. *@
+  <p>Для добавления поддержки географии <a href="#">свяжитесь с нами...</a></p>
+
+  @rargs.adnNodeOpt.flatMap(_.id).map { adnId =>
+    @if(rargs.adnNodeOpt.flatMap(_.meta.address).isEmpty) {
+      @* Скрытая подсказка по заполнению данных узла. *@
+      <p>Необходимо сначала заполнить адрес и остальные реквизиты объекта
+        <a href="@routes.MarketLkAdnEdit.editAdnNode(adnId)">в профиле</a></p>.
+
+    } else {
+      @* Скрытая форма отправки запроса в техподдержку. *@
+      @form( routes.MarketLkSupport.askGeo4NodeSubmit(adnId, r = Some(ctx.request.path)) ) {
+        <textarea name="info"
+                  placeholder="Введите информацию об объекте, которую вы хотели бы сообщить.">
+        </textarea>
+        <input type="submit" value="Отправить запрос" />
+      }
+    }
+  }
+
+}

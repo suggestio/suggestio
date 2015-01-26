@@ -127,11 +127,18 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
-  def evtRenderArgs(etype: EventType, errors: ErrorInfo*) = RenderArgs(
-    mevent      = MEventTmp(etype, ownerId = args.request.producerId),
-    advExtTgOpt = Some(args.target.target),
-    errors      = errors
-  )
+  def evtRenderArgs(etype: EventType, errors: ErrorInfo*): RenderArgs = evtRenderArgs(etype, withContainer = false, errors : _*)
+  def evtRenderArgs(etype: EventType, withContainer: Boolean, errors: ErrorInfo*): RenderArgs = {
+    RenderArgs(
+      mevent = MEventTmp(
+        etype   = etype,
+        ownerId = args.request.producerId,
+        id      = Some(replyTo)
+      ),
+      advExtTgOpt = Some(args.target.target),
+      errors      = errors
+    )
+  }
 
   /** Перезаписать содержимое блока цели на странице. */
   def renderEventReplace(rargs: RenderArgs): Unit = {
@@ -151,10 +158,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
     def renderInProcess(): Unit = {
       val etype = EventTypes.AdvExtTgInProcess
-      val html = targetEvtContainerTpl(replyTo) {
-        val rargs = evtRenderArgs(etype)
-        etype.render(rargs)
-      }
+      val rargs = evtRenderArgs(etype, withContainer = true)
+      val html = etype.render(rargs)
       val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
       val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
       val cmd = JsCommand(
@@ -280,7 +285,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           // JS'у недостаточно данных в контексте для создания публикации.
           case AnswerStatuses.FillContext =>
             if (fillCtxTry >= ExtTargetActor.MAX_FILL_CTX_TRIES) {
-              error("Too many fill ctx tries. Stopping")
+              error("Too many fill ctx tries. Stopping. Last answer was:\n  " + ans)
+              renderError(ans.ctx2.error)
               harakiri()
             } else {
               trace("Fill context requested")

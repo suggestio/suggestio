@@ -110,6 +110,7 @@ GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormN
 POST /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
 GET  /m/support                         controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
 POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
+POST /m/support/geo/node/:adnId         controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
 
 ## ЛК: нотификации (события)
 GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
