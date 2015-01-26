@@ -22,6 +22,10 @@ define ["SioPR"], (SioPR) ->
       @loadSdk document, 'script', 'facebook-jssdk'
 
 
+    sendF = (json) ->
+      message = JSON.stringify json
+      @ws.send message
+
     statusChangeCallback: (response) ->
       console.log "statusChangeCallback"
       console.log response
@@ -49,10 +53,17 @@ define ["SioPR"], (SioPR) ->
 
       FB.login(
         (response) =>
+          console.log "--login--"
+          console.log response
+          console.log "--login--"
           if response.authResponse
             @publicatePost()
           else
-            console.log "User cancelled login or did not fully authorize."
+            @ctx._status = "error"
+            @ctx._error = "auth error"
+            console.log "---auth error---"
+            console.log @ctx
+            @onComplete @ctx, sendF
         loginParams
       )
 
@@ -65,9 +76,13 @@ define ["SioPR"], (SioPR) ->
       callback = (response) ->
         if !response || response.error
           console.log "Error occured"
-          console.log response
+          @ctx._status = "error"
+          @ctx._error = response.error
         else
           console.log "Post ID: #{response.id}"
+          @ctx._status = "success"
+
+        @onComplete @ctx, sendF
 
       FB.api(
         "/me/feed"
@@ -82,12 +97,9 @@ define ["SioPR"], (SioPR) ->
       FB.api(
         "/me"
         (response) ->
+          console.log response
           console.log "Successful login for: #{response.name}"
       )
-
-      @publicatePost()
-
-      #@uploadPhotoByUrl()
 
     loadSdk: (d, s, id) ->
       js = d.getElementsByTagName(s)[0]
@@ -104,4 +116,5 @@ define ["SioPR"], (SioPR) ->
       @ctx = ctx
       @onComplete = onComplete
 
+      #@testAPI()
       @login()
