@@ -4,6 +4,8 @@ import akka.actor.ActorContext
 import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
+import models.MAdvReq
+import models.adv.AdvSavedEvent
 import models.event.MEvent
 import util.PlayLazyMacroLogsImpl
 import play.api.Play.{current, configuration}
@@ -20,7 +22,7 @@ import scala.concurrent.Future
  * Description: При создании узла надо добавить в него кое-какие начальные события.
  * Для этого нужно отреагировать на событие создание узла.
  */
-object AdnNodeWelcomeEvents extends SNStaticSubscriber with SnClassSubscriber with PlayLazyMacroLogsImpl {
+object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with PlayLazyMacroLogsImpl {
 
   /** Автодобавление уведомления о создании нового магазина можно отключить через конфиг. */
   val EVT_YOU_CAN_ADD_NEW_SHOPS = configuration.getBoolean("node.evn.created.youCanAddNewShopsEvent")
@@ -33,8 +35,11 @@ object AdnNodeWelcomeEvents extends SNStaticSubscriber with SnClassSubscriber wi
 
   /** Карта подписки на события [[SiowebNotifier]]. */
   override def snMap: List[(Classifier, Seq[Subscriber])] = {
+    val subs = Seq(this)
+    val someTrue = Some(true)
     List(
-      AdnNodeSavedEvent.getClassifier(isCreated = Some(true))  ->  Seq(this)
+      AdnNodeSavedEvent.getClassifier(isCreated = someTrue)   -> subs,
+      AdvSavedEvent.getClassifier(isCreated = someTrue)       -> subs
     )
   }
 
@@ -68,6 +73,7 @@ object AdnNodeWelcomeEvents extends SNStaticSubscriber with SnClassSubscriber wi
    */
   override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
     event match {
+      // Произошел insert узла.
       case anse: AdnNodeSavedEvent =>
         import anse.adnId
         if (EVT_YOU_CAN_ADD_NEW_SHOPS) {
@@ -75,6 +81,13 @@ object AdnNodeWelcomeEvents extends SNStaticSubscriber with SnClassSubscriber wi
         }
         if (EVT_START_YOUR_WORK_USING_CARD_MGR) {
           addEvtUseCardMgr(adnId)
+        }
+
+      // Произошло insert одного из вариантов adv
+      case ase: AdvSavedEvent if false =>   // TODO удалить if false, когда всё будет готово.
+        ase.adv match {
+          case req: MAdvReq =>
+            ???
         }
 
       case other =>

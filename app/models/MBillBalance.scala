@@ -144,9 +144,11 @@ final case class MBillBalance(
   currencyCodeOpt: Option[String] = Some(CurrencyCodeOpt.CURRENCY_CODE_DFLT),
   overdraft: Float = 0F,
   blocked: Float = 0F
-) extends SqlModelSave[MBillBalance] with CurrencyCodeOpt with ToPlayJsonObj {
+) extends SqlModelSave with CurrencyCodeOpt with ToPlayJsonObj {
 
   def hasId: Boolean = true
+  override def companion = MBillBalance
+  override type T = MBillBalance
 
   /** Добавить в базу текущую запись.
     * @return Новый экземпляр сабжа.

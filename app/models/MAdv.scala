@@ -3,17 +3,19 @@ package models
 import akka.actor.ActorContext
 import anorm._
 import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
+import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
+import models.adv.AdvSavedEvent
 import org.joda.time.{Period, LocalDate, DateTime}
 import play.api.db.DB
-import util.PlayLazyMacroLogsImpl
+import util.{SqlModelSave, PlayLazyMacroLogsImpl}
 import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
 import AnormPgArray._
 import AnormPgInterval._
 import java.sql.Connection
 import java.util.Currency
+import util.event.SiowebNotifier.Implicts.sn
 
 /**
  * Suggest.io
@@ -161,6 +163,30 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
   def isReq     = mode == MAdvModes.REQ
   def isRefused = mode == MAdvModes.REFUSED
 
+}
+
+
+/** Надстройка над реализациями [[MAdvI]] и [[util.SqlModelSave]]. */
+trait MAdvModelSave extends SqlModelSave with MAdvI {
+
+  override type T <: MAdvModelSave
+
+  /**
+   * Породить уведомление после добавления текущей записи в базу.
+   * @return Новый экземпляр сабжа.
+   */
+  abstract override def saveInsert(implicit c: Connection): T = {
+    val res = super.saveInsert
+    val evt = AdvSavedEvent(res, isCreated = true)
+    sn.publish(evt)
+    res
+  }
+
+  /**
+   * Обновлить в таблице текущую запись.
+   * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
+   */
+  override def saveUpdate(implicit c: Connection): Int = 0
 }
 
 

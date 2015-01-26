@@ -84,9 +84,10 @@ final case class MBillTariffFee(
   debitCount  : Int = 0,
   fee         : Float,
   feeCC       : String = "RUB"
-) extends SqlModelSave[MBillTariffFee] with MBillContractSel with SqlModelDelete with MBillTariff {
+) extends SqlModelSave with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffFee._
 
+  override type T = MBillTariffFee
   override def companion = MBillTariffFee
 
   def tintervalPretty: String = FormUtil.pgIntervalPretty(tinterval)

@@ -3,7 +3,7 @@ package models.event
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.{EsModel, EnumMaybeWithName}
 import models.adv.MExtTarget
-import models.{MAd, MAdnNode}
+import models.{MAdvI, MAd, MAdnNode}
 import org.elasticsearch.client.Client
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -34,8 +34,8 @@ object ArgNames extends Enumeration with EnumMaybeWithName {
   val AdnId           = new Val("a")
   val AdvExtTarget    = new Val("b")
   val AdId            = new Val("c")
-  //val PersonId      = new Val("d")
-  //val AdvId         = new Val("e")
+  val AdvId           = new Val("d")
+  //val PersonId      = new Val("e")
 
 }
 
@@ -53,8 +53,9 @@ object IArgsInfo {
   implicit def writes: Writes[IArgsInfo] = (
     (__ \ AdnId.strId).writeNullable[String] and
     (__ \ AdvExtTarget.strId).writeNullable[String] and
-    (__ \ AdId.strId).writeNullable[String]
-  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt) }
+    (__ \ AdId.strId).writeNullable[String] and
+    (__ \ AdvId.strId).writeNullable[Int]
+  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt, s.advIdOpt) }
 
 }
 
@@ -69,6 +70,9 @@ trait IArgsInfo extends IArgs with Event {
 
   /** Опциональный id рекламной карточки, с которой связано это событие. */
   def adIdOpt: Option[String]
+
+  /** id размещения по базе sql. */
+  def advIdOpt: Option[Int]
 
   override def nonEmpty: Boolean
   override def isEmpty: Boolean
@@ -86,7 +90,8 @@ object ArgsInfo {
   implicit def reads: Reads[ArgsInfo] = (
     (__ \ AdnId.strId).readNullable[String] and
     (__ \ AdvExtTarget.strId).readNullable[String] and
-    (__ \ AdId.strId).readNullable[String]
+    (__ \ AdId.strId).readNullable[String] and
+    (__ \ AdvId.strId).readNullable[Int]
   )(apply _)
 
   /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
@@ -110,6 +115,16 @@ object ArgsInfo {
     case _ => EmptyArgsInfo
   }
 
+  import io.suggest.util.SioEsUtil._
+
+  /** Поля аргументов тоже индексируются. В первую очередь, чтобы их можно было легко и быстро удалять. */
+  def generateMappingProps: List[DocField] = List(
+    FieldString(AdnId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(AdvExtTarget.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(AdId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(AdvId.strId, DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+  )
+
 }
 
 
@@ -121,7 +136,8 @@ object ArgsInfo {
 case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
   advExtTgIdOpt   : Option[String]  = None,
-  adIdOpt         : Option[String]  = None
+  adIdOpt         : Option[String]  = None,
+  advIdOpt        : Option[Int]     = None
 ) extends IArgsInfo with EmptyProduct {
 
 }
@@ -152,6 +168,7 @@ case class RenderArgs(
   adnNodeOpt    : Option[MAdnNode]    = None,
   advExtTgOpt   : Option[MExtTarget]  = None,
   madOpt        : Option[MAd]         = None,
+  advOpt        : Option[MAdvI]       = None,
   errors        : Seq[ErrorInfo]      = Nil
 ) extends IArgsInfo with EmptyProduct {
 
@@ -160,7 +177,7 @@ case class RenderArgs(
   override def adnIdOpt = adnNodeOpt.flatMap(_.id)
   override def adIdOpt  = madOpt.flatMap(_.id)
   override def advExtTgIdOpt = advExtTgOpt.flatMap(_.id)
-
+  override def advIdOpt = advOpt.flatMap(_.id)
 }
 
 

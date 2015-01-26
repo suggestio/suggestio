@@ -44,7 +44,7 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
     new MBillContract.DelContractsWhenAdnNodeDeleted,
-    AdnNodeWelcomeEvents,
+    AdnNodeEvents,
     MLocalImg
   )
 

@@ -262,15 +262,15 @@ final case class MBillContract(
   isActive      : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
   id            : Option[Int] = None
-) extends SqlModelSave[MBillContract] with ToPlayJsonObj with SqlModelDelete {
+) extends SqlModelSave with ToPlayJsonObj with SqlModelDelete {
 
   def hasId: Boolean = id.isDefined
-
   def legalContractId = formatLegalContractId(id.get, crand=crand, suffix=suffix)
 
   def printContractDate: String = CONTRACT_DATE_FMT.print(contractDate)
 
   override def companion = MBillContract
+  override type T = MBillContract
 
   def suffixMatches(suffix1: Option[String]) = MBillContract.matchSuffixes(suffix, suffix1)
 
@@ -278,7 +278,7 @@ final case class MBillContract(
    * Добавить в базу текущую запись.
    * @return Новый экземпляр сабжа.
    */
-  def saveInsert(implicit c: Connection): MBillContract = {
+  def saveInsert(implicit c: Connection): T = {
     SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $CONTRACT_DATE_FN, $DATE_CREATED_FN, $HIDDEN_INFO_FN, $IS_ACTIVE_FN, $CRAND_FN, $SUFFIX_FN)" +
         " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix})")
       .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated, 'hiddenInfo -> hiddenInfo,

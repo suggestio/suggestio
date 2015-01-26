@@ -37,12 +37,14 @@ final case class MSinkComission(
   sink          : AdnSink,
   sioComission  : Float,
   id            : Option[Int] = None
-) extends SqlModelSave[MSinkComission] with SqlModelDelete with MBillContractSel {
+) extends SqlModelSave with SqlModelDelete with MBillContractSel {
+
+  override type T = MSinkComission
 
   override def hasId = id.isDefined
   override def companion = MSinkComission
 
-  override def saveInsert(implicit c: Connection): MSinkComission = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL("INSERT INTO " + TABLE_NAME + "(sink, contract_id, sio_comission) VALUES ({sink}, {contractId}, {sioComission})")
       .on('sink -> sink, 'contractId -> contractId, 'sioComission -> sioComission)
       .executeInsert(rowParser single)

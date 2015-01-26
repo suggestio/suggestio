@@ -79,15 +79,17 @@ final case class MBillTariffStat(
   debitCount      : Int = 0,
   debitedTotal    : Float = 0F,
   currencyCode    : String = "RUB"
-) extends SqlModelSave[MBillTariffStat] with MBillContractSel with SqlModelDelete with MBillTariff {
+) extends SqlModelSave with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffStat._
+
+  override type T = MBillTariffStat
 
   override def companion = MBillTariffStat
 
   /** Доступен ли ключ ряда в текущем инстансе? */
   override def hasId: Boolean = id.isDefined
 
-  override def saveInsert(implicit c: Connection): MBillTariffStat = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, name, ttype, is_enabled, date_first, date_created, date_status, generation, debit_count, debited_total, debit_for, debit_amount, currency_code) " +
         "VALUES ({contractId}, {name}, {ttype}, {isEnabled}, {dateFirst}, {dateCreated}, {dateStatus}, {generation}, {debitCount}, {debitedTotal}, {debitFor}, {debitAmount}, {currencyCode})")
       .on('contractId -> contractId, 'name -> name, 'ttype -> ttype.toString, 'isEnabled -> isEnabled,

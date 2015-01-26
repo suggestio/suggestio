@@ -151,13 +151,35 @@ final case class MAdvOk(
   isOnline      : Boolean = false,
   isPartner     : Boolean = false,
   id            : Option[Int] = None
-) extends SqlModelSave[MAdvOk] with SqlModelDelete with MAdvI {
+) extends MAdvOkT with SqlModelDelete with MAdvModelSave {
 
   override def mode = MAdvModes.OK
   override def hasId: Boolean = id.isDefined
   override def companion = MAdvOk
 
-  override def saveInsert(implicit c: Connection): MAdvOk = {
+  /**
+   * Можно обновлять некоторые поле.
+   * @return Кол-во обновлённых рядов. Т.е. 1 или 0.
+   */
+  override def saveUpdate(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET online = {isOnline}, date_start = {dateStart}, date_end = {dateEnd} WHERE id = {id}")
+      .on('id -> id.get, 'isOnline -> isOnline, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
+      .executeUpdate()
+  }
+
+}
+
+
+sealed trait MAdvOkT extends SqlModelSave with MAdvI {
+  override type T = MAdvOk
+
+  def prodTxnId   : Option[Int]
+  def rcvrTxnIds  : Seq[Int]
+  def isPartner   : Boolean
+  def isOnline    : Boolean
+  def isAuto      : Boolean
+
+  def saveInsert(implicit c: Connection): T = {
     SQL("INSERT INTO " + TABLE_NAME +
       "(ad_id, amount, currency_code, date_created, mode, date_start, date_end, prod_adn_id, rcvr_adn_id," +
       " date_status, prod_txn_id, rcvr_txn_ids, online, is_auto, show_levels, is_partner) " +
@@ -171,14 +193,5 @@ final case class MAdvOk(
     .executeInsert(rowParser single)
   }
 
-  /**
-   * Можно обновлять некоторые поле.
-   * @return Кол-во обновлённых рядов. Т.е. 1 или 0.
-   */
-  override def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET online = {isOnline}, date_start = {dateStart}, date_end = {dateEnd} WHERE id = {id}")
-      .on('id -> id.get, 'isOnline -> isOnline, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
-      .executeUpdate()
-  }
-
 }
+

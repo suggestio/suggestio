@@ -81,7 +81,7 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStat
     List(
       FieldString(EVT_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldObject(ARGS_ESFN, properties = Nil, enabled = false),
+      FieldObject(ARGS_ESFN, enabled = false, properties = ArgsInfo.generateMappingProps),
       FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false),
       FieldBoolean(IS_CLOSEABLE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldBoolean(IS_UNSEEN_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)

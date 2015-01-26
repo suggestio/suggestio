@@ -64,4 +64,9 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
     override def template = _startYourWorkUsingCardMgrEvtTpl
   }
 
+  /** Появился входящий запрос по размещению. */
+  val AdvReqCreated: EventType = new Val("g") {
+    override def template = ???
+  }
+
 }

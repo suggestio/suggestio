@@ -2,6 +2,8 @@ package util
 
 import java.sql.Connection
 
+import models.SqlModelStaticMinimal
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,7 +16,12 @@ import java.sql.Connection
   * подмешиваем к классам моделей этот трейт.
   * @tparam T Тип записи.
   */
-trait SqlModelSave[T <: SqlModelSave[_]] {
+trait SqlModelSave {
+
+  type T <: SqlModelSave
+
+  def companion: SqlModelStaticMinimal
+
   /** Доступен ли ключ ряда в текущем инстансе? */
   def hasId: Boolean
 

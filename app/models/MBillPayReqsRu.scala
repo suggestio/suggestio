@@ -89,12 +89,13 @@ final case class MBillPayReqsRu(
   commentPrefix: Option[String] = None,
   commentSuffix: Option[String] = None,
   id          : Option[Int] = None
-) extends SqlModelSave[MBillPayReqsRu] with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
+) extends SqlModelSave with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
 
   override def hasId = id.isDefined
   override def companion = MBillPayReqsRu
+  override type T = MBillPayReqsRu
 
-  override def saveInsert(implicit c: Connection): MBillPayReqsRu = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL(s"INSERT INTO $TABLE_NAME ($CONTRACT_ID_FN, $R_NAME_FN, $R_INN_FN, $R_KPP_FN, $R_OKATO_FN, $R_OKMTO_FN, $BANK_NAME_FN, $BANK_BIK_FN, $BANK_BKK_FN, $ACCOUNT_NUMBER_FN, $COMMENT_PREFIX_FN, $COMMENT_SUFFIX_FN)" +
       " VALUES({contractId}, {rName}, {rInn}, {rKpp}, {rOkato}, {rOkmto}, {bankName}, {bankBik}, {bankBkk}, {accNum}, {commPref}, {commSuf})")
     .on('contractId -> contractId, 'rName -> rName, 'rInn -> rInn, 'rKpp -> rKpp, 'rOkato -> rOkato, 'rOkmto -> rOkmto,
