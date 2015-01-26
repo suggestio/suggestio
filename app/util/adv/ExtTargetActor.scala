@@ -19,7 +19,7 @@ import play.api.http.HeaderNames
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.api.libs.ws.{WSResponse, WS}
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 import util.event.{EventType, EventTypes}
@@ -50,6 +50,8 @@ object ExtTargetActor {
   /** Формат картинки, из которой рендерится карточка. */
   def imgFmt = OutImgFmts.PNG
 
+  /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
+  val MAX_FILL_CTX_TRIES = configuration.getInt("adv.ext.target.fillCtx.try.max") getOrElse 2
 }
 
 
@@ -75,6 +77,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     super.preStart()
     become(new EnsureClientReadyState(args.mctx0))
   }
+
+  protected var fillCtxTry: Int = 0
 
 
   /** Значение replyTo в запросах клиенту. */
@@ -275,8 +279,14 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
           // JS'у недостаточно данных в контексте для создания публикации.
           case AnswerStatuses.FillContext =>
-            trace("Fill context requested")
-            become(new FillContextState(ans.ctx2))
+            if (fillCtxTry >= ExtTargetActor.MAX_FILL_CTX_TRIES) {
+              error("Too many fill ctx tries. Stopping")
+              harakiri()
+            } else {
+              trace("Fill context requested")
+              fillCtxTry += 1
+              become(new FillContextState(ans.ctx2))
+            }
         }
 
       // Для облегчения отладки.
