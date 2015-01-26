@@ -78,11 +78,13 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i __cards@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
+            <a class="left-bar_menu-i __cards@if(leftCurrEl contains LPL_ADS){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __profile@if(leftCurrEl exists {_ == LPL_NODE}){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
+            <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __billing@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+            <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+            <hr class="delimiter"/>
+            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События"></a>
             <hr class="delimiter"/>
           </nav>
         }
@@ -105,7 +107,7 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl exists {_ == LPL_SUPPORT}){ __act}"
+        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl contains LPL_SUPPORT){ __act}"
                         href="@ctx.supportFormCall(adnIdOpt)">Служба поддержки</a>
         <a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>

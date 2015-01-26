@@ -3,6 +3,7 @@ package controllers
 import models._
 import models.adv.MExtTarget
 import models.event.MEvent
+import play.api.i18n.Messages
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
@@ -70,31 +71,33 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         MAdnNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
       }
 
-      // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
-      madsMapFut.flatMap { madsMap =>
-        nodesMapFut.flatMap { nodesMap =>
-          advExtTgsMapFut.flatMap { advExtTgsMap =>
-            // Параллельный рендер всех событий
-            Future.traverse(mevents.zipWithIndex) { case (mevent, i) =>
-              Future {
-                // Запускаем рендер одного нотификейшена
-                val ai = mevent.argsInfo
-                val rArgs = event.RenderArgs(
-                  mevent      = mevent,
-                  adnNodeOpt  = ai.adnIdOpt.flatMap(nodesMap.get),
-                  advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
-                  madOpt      = ai.adIdOpt.flatMap(madsMap.get)
-                )
-                mevent.etype.render(rArgs)(ctx) -> i
-              }
-            }
-          } map {
-            // Восстанавливаем исходный порядок после параллельного рендера.
-            _.sortBy(_._2).map(_._1)
+      for {
+        // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
+        madsMap       <- madsMapFut
+        nodesMap      <- nodesMapFut
+        advExtTgsMap  <- advExtTgsMapFut
+        // Параллельный рендер всех событий
+        events   <-  Future.traverse(mevents.zipWithIndex) { case (mevent, i) =>
+          Future {
+            // Запускаем рендер одного нотификейшена
+            val ai = mevent.argsInfo
+            val rArgs = event.RenderArgs(
+              mevent      = mevent,
+              adnNodeOpt  = ai.adnIdOpt.flatMap(nodesMap.get),
+              advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
+              madOpt      = ai.adIdOpt.flatMap(madsMap.get)
+            )
+            mevent.etype.render(rArgs)(ctx) -> i
           }
         }
+      } yield {
+        // Восстанавливаем исходный порядок после параллельного рендера.
+        events
+          .sortBy(_._2)
+          .map(_._1)
       }
     }
+
     // Рендерим конечный результат: страница или же инлайн
     evtsRndrFut.map { evtsRndr =>
       val render: Html = if (inline)
@@ -117,7 +120,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         case true =>
           NoContent
         case false =>
-          NotFound("Already deleted?")
+          NotFound(Messages("e.event.not.found"))
       }
   }
 

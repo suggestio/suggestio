@@ -327,3 +327,5 @@ error.adv.ext.s2s.img.upload.failed=Failed to establish connection to remote ser
 error.sio.internal=Internal suggest.io error.
 error.adv.ext.js.refused=Advertising refused or cancelled.
 
+e.event.not.found=Event not exists.
+

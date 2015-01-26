@@ -1,7 +1,6 @@
 package util.adv
 
 import java.io.ByteArrayOutputStream
-import java.util.UUID
 
 import akka.actor.Props
 import controllers.routes
