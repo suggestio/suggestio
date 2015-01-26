@@ -4,7 +4,7 @@ import java.{util => ju}
 
 import akka.actor.ActorContext
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.event.SioNotifier.{Event, Classifier, Subscriber}
+import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -153,6 +153,19 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .setRouting(adnId)  // adnId является parentId, поэтому можно точно указать шарду, в которой надо искать результат.
       .execute()
       .map { searchResp2list }
+  }
+
+  /**
+   * Посчитать кол-во имеющихся шейпов для указанного узла.
+   * @param adnId id узла.
+   * @return Целое неотрицательное.
+   */
+  def countByNode(adnId: String)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+    prepareCount
+      .setQuery( adnIdQuery(adnId) )
+      .setRouting(adnId)
+      .execute()
+      .map { _.getCount.toInt }
   }
 
   /** Сгенерить запрос для поиска совпадений в гео-полях указанного уровня. */

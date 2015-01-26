@@ -37,7 +37,7 @@ object SioNotifier {
 
   type Event = SioEventT
   type ClassifierToken = Option[Any]
-  type Classifier = Seq[ClassifierToken]
+  type Classifier = List[ClassifierToken]
   type Subscriber = SnSubscriberT
 
 }
