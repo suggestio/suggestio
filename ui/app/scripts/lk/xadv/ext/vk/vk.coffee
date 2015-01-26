@@ -22,10 +22,6 @@ define ["SioPR"], (SioPR) ->
 
     sendF = (json) ->
       message = JSON.stringify json
-      console.log "---"
-      console.log message
-      console.log @ws
-      console.log "---"
       @ws.send message
 
     setText: (text) ->
@@ -41,37 +37,33 @@ define ["SioPR"], (SioPR) ->
 
       match = url.match REGEXP
 
-      # если в url была какая-то некорректная строка, использовать current user id
-      try
-        params =
-          screen_name: match[1]
-      catch exception
-        params =
-          screen_name: @ctx.user_id
-
       callback = (data) =>
         post.owner_id = data.response.object_id
         @wallPost()
 
-      VK.Api.call "utils.resolveScreenName", params, callback
+      # если в url была какая-то некорректная строка, использовать current user id
+      try
+        params =
+          screen_name: match[1]
+
+        VK.Api.call "utils.resolveScreenName", params, callback
+      catch error
+        console.log error
+
+        post.owner_id = userId
+        @wallPost()
 
     saveWallPhoto: (savedPicture) ->
 
-      console.log "---savedPicture---"
       savedPicture = JSON.parse savedPicture
-      console.log savedPicture
-      console.log "---savedPicture---"
 
       callback = (data) =>
-        console.log data
-
         attachments = new Array()
         attachments.push data.response[0].id
         attachments.push @ctx._target.href
         attachments = attachments.join ","
 
         post.attachments = attachments
-
         @setOwnerId()
 
       params =
