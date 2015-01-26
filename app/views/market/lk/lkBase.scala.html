@@ -87,6 +87,7 @@
               <hr class="delimiter"/>
             }
             <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События">
+              @* Вывести блямбу с кол-вом непрочитанных сообщений. *@
               @ctx.nodeUnseenEvtsCnt.map { cnt =>
                 @if(cnt > 0) {
                   <span title="Новых событий: @cnt">(@cnt)</span>

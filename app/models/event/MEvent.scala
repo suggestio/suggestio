@@ -1,6 +1,7 @@
 package models.event
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
@@ -142,6 +143,15 @@ case class MEvent(
     irb
   }
 
+}
+
+
+trait MEventJmxMBean extends EsModelJMXMBeanI
+final class MEventJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MEventJmxMBean
+{
+  override def companion = MEvent
 }
 
 
