@@ -9,7 +9,7 @@ import io.suggest.ym.model.common.{EsDynSearchStatic, DynSearchArgs}
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{FilterBuilders, FilterBuilder, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
 import play.api.libs.json.{Json, JsBoolean, JsString}
@@ -20,7 +20,7 @@ import EventTypes.EventType
 import scala.concurrent.duration._
 
 import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io

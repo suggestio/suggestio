@@ -263,7 +263,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         msg = "error.adv.ext.js.refused",
         info = einfo
       )
-      evtRenderArgs(EventTypes.AdvExtTgError, err)
+      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      renderEventReplace(rargs)
     }
 
     override def receiverPart: Receive = {
