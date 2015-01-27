@@ -1,8 +1,7 @@
 package controllers.ident
 
-import controllers.{routes, Captcha, CaptchaValidator, SioController}
+import controllers.{routes, CaptchaValidator, SioController}
 import play.api.data._
-import play.api.data.Forms._
 import util.acl._
 import util._
 import util.ident.IdentUtil
@@ -25,17 +24,7 @@ import FormUtil.passwordWithConfirmM
 
 object PwRecover {
 
-  import Captcha._
-
-  def recoverPwFormM = Form(
-    mapping(
-      "email"           -> email,
-      CAPTCHA_ID_FN     -> Captcha.captchaIdM,
-      CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
-    )
-    {(email1, _, _) => email1 }
-    {email1 => Some((email1, "", ""))}
-  )
+  def recoverPwFormM = EmailPwReg.emailRegFormM
 
 }
 

@@ -1,0 +1,8 @@
+@(title: String, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов регистрации по email. *@
+
+@views.html.ident.reg.base(
+  title = title,
+  headAfter = headAfter
+)(content)

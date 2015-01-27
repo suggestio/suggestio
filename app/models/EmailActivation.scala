@@ -17,7 +17,7 @@ import io.suggest.event.SioNotifierStaticClientI
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.08.14 15:08
- * Description:
+ * Description: Модель для хранения email-активаций.
  */
 
 

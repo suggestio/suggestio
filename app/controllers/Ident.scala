@@ -40,13 +40,13 @@ with ChangePw with PwRecover {
   }
 
 
-  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
+                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     Forbidden(emailPwLoginFormTpl(lf, r))
   }
 
 
-  // Восстановление пароля
-
+  /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
