@@ -32,7 +32,7 @@ import scala.util.{Success, Failure}
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 

@@ -111,7 +111,7 @@ object LkEventsUtil extends PlayMacroLogsDyn {
       .iterator
       .flatMap(getIdF)
       .toSet
-     model.multiGetMap(allIds)
+    model.multiGetMap(allIds)
   }
 
 

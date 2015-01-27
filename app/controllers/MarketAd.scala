@@ -28,7 +28,7 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 

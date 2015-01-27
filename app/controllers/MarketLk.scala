@@ -1,5 +1,6 @@
 package controllers
 
+import controllers.ident._
 import play.api.mvc.{Result, Call}
 import models._
 import util.acl._
@@ -8,7 +9,6 @@ import views.html.market._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.PlayMacroLogsImpl
-import controllers.Ident.EmailPwLoginForm_t
 
 /**
  * Suggest.io

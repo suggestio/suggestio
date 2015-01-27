@@ -26,7 +26,7 @@ import play.api.Play.{current, configuration}
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 

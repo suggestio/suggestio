@@ -1,6 +1,7 @@
 package controllers
 
 import _root_.util.async.AsyncUtil
+import controllers.ident._
 import util.billing.Billing
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -29,7 +30,7 @@ import play.api.mvc.Security.username
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect with ChangePwAction {
+object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction {
 
   import LOGGER._
 
@@ -223,6 +224,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
+      // Параллельности это не добавляет, но позволяет разблокировать play defaultContext от блокировки из-за JDBC.
       val canAdvFut: Future[Boolean] = {
         if (isMyNode && adnNode.adn.isProducer) {
           Future {
@@ -538,7 +540,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     Ok(userProfileEditTpl(
       adnNode = request.adnNode,
-      pf = Ident.changePasswordFormM,
+      pf = ChangePw.changePasswordFormM,
       r = r
     ))
   }

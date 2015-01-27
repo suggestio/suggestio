@@ -5,6 +5,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
+import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl.{IsAdnNodeAdmin, AbstractRequestWithPwOpt, IsAuth}
 import util.mail.MailerWrapper
@@ -106,7 +107,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
           msg.send()
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { Ident.redirectCallUserSomewhere(personId) }
+          RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
               rdr.flashing("success" -> "Ваше сообщение отправлено.")
             }
@@ -152,7 +153,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
           msg.send()
         } flatMap { _ =>
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { Ident.redirectCallUserSomewhere(personId) }
+          RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
               rdr.flashing("success" -> "Ваш запрос отправлен.")
             }

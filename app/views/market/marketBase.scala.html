@@ -47,8 +47,8 @@
                 <a class="popup_close f-right icon-icomoon js-close-popup" href="#"></a>
               </div>
 
-              @ident._emailPwLoginFormTpl(
-                lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+              @views.html.ident._emailPwLoginFormTpl(
+                lf = lf getOrElse controllers.ident.EmailPwSubmit.emailPwLoginFormM,
                 submitCall = routes.MarketLk.emailPwLoginFormSubmit()
               )
 
