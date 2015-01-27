@@ -1,0 +1,28 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление: Какой-то узел отказал мне в размещении моей рекламной карточки. *@
+
+@import ctx._
+@import AdnShownTypes._
+@import datetime._
+
+@_oneEvtBase(rargs) {
+
+  <p>
+    @rargs.adnNodeOpt.map { mnode =>
+      @Messages(mnode.adn.singular)
+      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+    }
+  </p>
+
+  <p>
+    отказал в размещении.
+    @rargs.advRefuseOpt.map { advRef =>
+      @advRef.reason
+      /
+      @_prettyDate(advRef.dateStatus)
+    }
+  </p>
+
+  @_advAdFrameTpl(rargs)
+}

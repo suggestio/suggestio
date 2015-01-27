@@ -3,7 +3,7 @@ package models.event
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.{EsModel, EnumMaybeWithName}
 import models.adv.MExtTarget
-import models.{MAdvI, MAd, MAdnNode}
+import models._
 import org.elasticsearch.client.Client
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -34,8 +34,10 @@ object ArgNames extends Enumeration with EnumMaybeWithName {
   val AdnId           = new Val("a")
   val AdvExtTarget    = new Val("b")
   val AdId            = new Val("c")
-  val AdvId           = new Val("d")
-  //val PersonId      = new Val("e")
+  val AdvOkId         = new Val("d")
+  val AdvReqId        = new Val("e")
+  val AdvRefuseId     = new Val("f")
+  //val PersonId      = new Val("")
 
 }
 
@@ -54,8 +56,10 @@ object IArgsInfo {
     (__ \ AdnId.strId).writeNullable[String] and
     (__ \ AdvExtTarget.strId).writeNullable[String] and
     (__ \ AdId.strId).writeNullable[String] and
-    (__ \ AdvId.strId).writeNullable[Int]
-  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt, s.advIdOpt) }
+    (__ \ AdvOkId.strId).writeNullable[Int] and
+    (__ \ AdvReqId.strId).writeNullable[Int] and
+    (__ \ AdvRefuseId.strId).writeNullable[Int]
+  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt, s.advOkIdOpt, s.advReqIdOpt, s.advRefuseIdOpt) }
 
 }
 
@@ -71,8 +75,10 @@ trait IArgsInfo extends IArgs with Event {
   /** Опциональный id рекламной карточки, с которой связано это событие. */
   def adIdOpt: Option[String]
 
-  /** id размещения по базе sql. */
-  def advIdOpt: Option[Int]
+  /** id размещения по моделям adv. */
+  def advOkIdOpt: Option[Int]
+  def advReqIdOpt: Option[Int]
+  def advRefuseIdOpt: Option[Int]
 
   override def nonEmpty: Boolean
   override def isEmpty: Boolean
@@ -91,7 +97,9 @@ object ArgsInfo {
     (__ \ AdnId.strId).readNullable[String] and
     (__ \ AdvExtTarget.strId).readNullable[String] and
     (__ \ AdId.strId).readNullable[String] and
-    (__ \ AdvId.strId).readNullable[Int]
+    (__ \ AdvOkId.strId).readNullable[Int] and
+    (__ \ AdvReqId.strId).readNullable[Int] and
+    (__ \ AdvRefuseId.strId).readNullable[Int]
   )(apply _)
 
   /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
@@ -103,7 +111,10 @@ object ArgsInfo {
         val f = ArgsInfo(
           adnIdOpt      = Option(jm get AdnId.strId).map(EsModel.stringParser),
           advExtTgIdOpt = Option(jm get AdvExtTarget.strId).map(EsModel.stringParser),
-          adIdOpt       = Option(jm get AdId.strId).map(EsModel.stringParser)
+          adIdOpt       = Option(jm get AdId.strId).map(EsModel.stringParser),
+          advOkIdOpt    = Option(jm get AdvOkId.strId).map(EsModel.intParser),
+          advReqIdOpt   = Option(jm get AdvReqId.strId).map(EsModel.intParser),
+          advRefuseIdOpt = Option(jm get AdvRefuseId.strId).map(EsModel.intParser)
         )
         // На случай появления мусора в карте...
         if (f.isEmpty)
@@ -122,7 +133,9 @@ object ArgsInfo {
     FieldString(AdnId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(AdvExtTarget.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(AdId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldNumber(AdvId.strId, DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldNumber(AdvOkId.strId, DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(AdvReqId.strId, DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(AdvRefuseId.strId, DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
   )
 
 }
@@ -137,7 +150,9 @@ case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
   advExtTgIdOpt   : Option[String]  = None,
   adIdOpt         : Option[String]  = None,
-  advIdOpt        : Option[Int]     = None
+  advOkIdOpt      : Option[Int]     = None,
+  advReqIdOpt     : Option[Int]     = None,
+  advRefuseIdOpt  : Option[Int]     = None
 ) extends IArgsInfo with EmptyProduct {
 
 }
@@ -168,7 +183,9 @@ case class RenderArgs(
   adnNodeOpt    : Option[MAdnNode]    = None,
   advExtTgOpt   : Option[MExtTarget]  = None,
   madOpt        : Option[MAd]         = None,
-  advOpt        : Option[MAdvI]       = None,
+  advOkOpt      : Option[MAdvOk]      = None,
+  advReqOpt     : Option[MAdvReq]     = None,
+  advRefuseOpt  : Option[MAdvRefuse]  = None,
   errors        : Seq[ErrorInfo]      = Nil
 ) extends IArgsInfo with EmptyProduct {
 
@@ -177,7 +194,11 @@ case class RenderArgs(
   override def adnIdOpt = adnNodeOpt.flatMap(_.id)
   override def adIdOpt  = madOpt.flatMap(_.id)
   override def advExtTgIdOpt = advExtTgOpt.flatMap(_.id)
-  override def advIdOpt = advOpt.flatMap(_.id)
+
+  override def advOkIdOpt     = advOkOpt.flatMap(_.id)
+  override def advReqIdOpt    = advReqOpt.flatMap(_.id)
+  override def advRefuseIdOpt = advRefuseOpt.flatMap(_.id)
+
 }
 
 

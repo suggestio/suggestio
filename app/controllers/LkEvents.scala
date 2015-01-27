@@ -12,7 +12,7 @@ import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
-import util.event.EventTypes
+import util.event.{LkEventsUtil, EventTypes}
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import play.api.Play.{current, configuration}
@@ -61,33 +61,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
     val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
       if (offset == 0  &&  request.adnNode.adn.isReceiver) {
-        MAdnNodeGeo.countByNode(adnId).map {
-          // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
-          case 0 =>
-            val etype = EventTypes.NodeGeoWelcome
-            // Дата создания события формируется на основе даты создания узла.
-            // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
-            val dt = request.adnNode.meta.dateCreated.plusSeconds(10)
-            val mevt = MEventTmp(
-              etype       = etype,
-              ownerId     = adnId,
-              argsInfo    = ArgsInfo(adnIdOpt = Some(adnId)),
-              isCloseable = false,
-              isUnseen    = true,
-              id          = Some(adnId),
-              dateCreated = dt
-            )
-            val rargs = event.RenderArgs(
-              mevent        = mevt,
-              withContainer = true,
-              adnNodeOpt    = Some(request.adnNode)
-            )
-            val html = etype.render(rargs)(ctx)
-            Some(html -> dt)
-
-          // Есть геошейпы для узла. Ничего рендерить не надо.
-          case _ => None
-        }
+        LkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
       } else {
         Future successful None
       }
@@ -95,25 +69,16 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
 
     // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
     val evtsRndrFut = eventsFut.flatMap { mevents =>
-      // Пакетно отфетчить рекламные карточки в виде карты.
-      val madsMapFut = {
-        val allAdIds = mevents
-          .iterator
-          .flatMap { _.argsInfo.adIdOpt }
-          .toSet
-        MAd.multiGetMap(allAdIds)
-      }
+      // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
+      val madsMapFut        = LkEventsUtil.readEsModel(mevents, MAd)(_.argsInfo.adIdOpt)
+      val advExtTgsMapFut   = LkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIdOpt)
 
-      // Пакетно отфетчить все необходимые MExtTarget в виде карты.
-      val advExtTgsMapFut = {
-        val allTgsFut = mevents
-          .iterator
-          .flatMap { _.argsInfo.advExtTgIdOpt }
-          .toSet
-        MExtTarget.multiGetMap(allTgsFut)
-      }
+      // Параллельно собираем карты размещений из всех adv-моделей.
+      val advsReqMapFut     = LkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
+      val advsOkMapFut      = LkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
+      val advsRefuseMapFut  = LkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
 
-      // Пакетно отфетчить все необходимые ноды, включая текущий узел в финальную карту.
+      // В фоне пакетно отфетчить все необходимые ноды через кеш узлов, но текущий узел прямо закинуть в финальную карту.
       // Используется кеш, поэтому это будет быстрее и должно запускаться в последнюю очередь.
       val nodesMapFut = {
         val allNodeIds = mevents
@@ -124,57 +89,33 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
         MAdnNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
       }
 
-      // Асинхронно собираем карту размещений из всех adv-моделей.
-      val advsMapFut: Future[Map[Int, MAdvI]] = {
-        val allAdvIdsIter = mevents
-          .iterator
-          .flatMap { _.argsInfo.advIdOpt }
-        if (allAdvIdsIter.nonEmpty) {
-          // Есть размещения, связанные с исходной коллекцией событий.
-          val allAdvIds = allAdvIdsIter.toSet.toSeq
-          Future.traverse(Seq(MAdvReq, MAdvOk, MAdvRefuse)) { model =>
-            Future {
-              DB.withConnection { implicit c =>
-                MAdvReq.multigetByIds(allAdvIds)
-              }
-            }(AsyncUtil.jdbcExecutionContext)
-
-          } map {
-            // Объединить все коллекции в одну карту. Ускоряем весь процесс через iterator'ы:
-            _.iterator
-             .flatMap { _.iterator }
-             .map { adv => adv.id.get -> adv }
-             .toMap
-          }
-        } else {
-          // Нечего искать.
-          Future successful Map.empty
-        }
-      }
-
       for {
         // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
         madsMap       <- madsMapFut
         nodesMap      <- nodesMapFut
         advExtTgsMap  <- advExtTgsMapFut
-        advsMap       <- advsMapFut
+        advsReqMap    <- advsReqMapFut
+        advsOkMap     <- advsOkMapFut
+        advsRefuseMap <- advsRefuseMapFut
         // Параллельный рендер всех событий
-        events   <-  Future.traverse(mevents) { case mevent =>
+        events        <- Future.traverse(mevents) { case mevent =>
           Future {
             // Запускаем рендер одного нотификейшена
             val ai = mevent.argsInfo
             val rArgs = event.RenderArgs(
-              mevent      = mevent,
-              adnNodeOpt  = ai.adnIdOpt.flatMap(nodesMap.get),
-              advExtTgOpt = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
-              madOpt      = ai.adIdOpt.flatMap(madsMap.get),
-              advOpt      = ai.advIdOpt.flatMap(advsMap.get)
+              mevent        = mevent,
+              adnNodeOpt    = ai.adnIdOpt.flatMap(nodesMap.get),
+              advExtTgOpt   = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
+              madOpt        = ai.adIdOpt.flatMap(madsMap.get),
+              advReqOpt     = ai.advReqIdOpt.flatMap(advsReqMap.get),
+              advOkOpt      = ai.advOkIdOpt.flatMap(advsOkMap.get),
+              advRefuseOpt  = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get)
             )
             mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
           }
         }
         // Нужно закинуть в кучу ещё уведомление об отсутствующей геолокации
-        geoWelcomeOpt  <- geoWelcomeFut
+        geoWelcomeOpt <- geoWelcomeFut
       } yield {
         // Восстанавливаем порядок по дате после параллельного рендера.
         // TODO Opt тут можно оптимизировать объединение и сортировку коллекций.
@@ -186,14 +127,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
 
     // Автоматически помечать все непрочитанные сообщения как прочитанные:
     eventsFut.onSuccess { case mevents =>
-      mevents
-        .iterator
-        .filter(_.isUnseen)
-        .map { mevt =>
-          MEvent
-            .tryUpdate(mevt) { _.copy(isUnseen = false) }
-            .onFailure { case ex => error("Failed to mark event as 'seen': " + mevt, ex) }
-        }
+      LkEventsUtil.markUnseenAsSeen(mevents)
     }
 
     // Рендерим конечный результат: страница или же инлайн
@@ -205,6 +139,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
       Ok(render)
     }
   }
+
 
 
   /**

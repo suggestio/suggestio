@@ -1,0 +1,26 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление: какой-то узел зааппрувил мою карточку. *@
+
+@import ctx._
+@import AdnShownTypes._
+@import datetime._
+
+@_oneEvtBase(rargs) {
+
+  <p>
+    @rargs.adnNodeOpt.map { mnode =>
+      @Messages(mnode.adn.singular)
+      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+    }
+  </p>
+
+  <p>
+    одобрил размещение.
+    @rargs.advOkOpt.map { advOk =>
+      @_prettyDate(advOk.dateStatus)
+    }
+  </p>
+
+  @_advAdFrameTpl(rargs)
+}

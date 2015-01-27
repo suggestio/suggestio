@@ -8,6 +8,7 @@ import io.suggest.event.subscriber.SnClassSubscriber
 import models.adv.AdvSavedEvent
 import org.joda.time.{Period, LocalDate, DateTime}
 import play.api.db.DB
+import util.event.{EventTypes, EventType}
 import util.{SqlModelSave, PlayLazyMacroLogsImpl}
 import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
@@ -190,11 +191,28 @@ trait MAdvModelSave extends SqlModelSave with MAdvI {
 }
 
 
+/** Статическая модель, описывающая разновидности размещений. */
 object MAdvModes extends Enumeration {
-  type MAdvMode = Value
-  val OK      = Value("o")
-  val REQ     = Value("r")
-  val REFUSED = Value("e")
+  protected abstract sealed class Val(strId: String) extends super.Val {
+    def eventType: EventType
+  }
+
+  type MAdvMode = Val
+
+  /** Заапрувленное размещение. */
+  val OK = new Val("o") {
+    override def eventType = EventTypes.AdvOutcomingOk
+  }
+
+  /** Запрос размещения. */
+  val REQ = new Val("r") {
+    override def eventType = EventTypes.AdvReqIncoming
+  }
+
+  /** Отклонённое размение. */
+  val REFUSED = new Val("e") {
+    override def eventType = EventTypes.AdvOutcomingRefused
+  }
 
   def busyModes = Set(OK, REQ)
 }

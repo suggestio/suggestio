@@ -65,8 +65,18 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
   }
 
   /** Появился входящий запрос по размещению. */
-  val AdvReqCreated: EventType = new Val("g") {
-    override def template = ???
+  val AdvReqIncoming: EventType = new Val("g") {
+    override def template = _advRequestedEvtTpl
+  }
+
+  /** Исходящее размещение заапрувлено. */
+  val AdvOutcomingOk: EventType = new Val("h") {
+    override def template = _yourAdvApprovedEvtTpl
+  }
+
+  /** Исходящее размещение отклонено. */
+  val AdvOutcomingRefused: EventType = new Val("i") {
+    override def template = _yourAdvRefusedEvtTpl
   }
 
 }
