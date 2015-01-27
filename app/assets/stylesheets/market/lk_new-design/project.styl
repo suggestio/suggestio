@@ -310,7 +310,8 @@
     color #8c8c8c
 
 label
-  input[type=checkbox]
+  input[type=checkbox],
+  input[type=radio]
     display none
 
   input[type=checkbox] + .checkbox_title:before
@@ -334,7 +335,8 @@ label
   input[type=checkbox]:disabled + .checkbox_title:before
     color #acacac
 
-  input[type=checkbox] + span:before
+  input[type=checkbox] + span:before,
+  input[type=radio] + span:before
     margin-right    20px
     display         inline-block
     height          16px
@@ -349,10 +351,12 @@ label
     text-align      center
     border-radius   4px
 
-  input[type=checkbox]:checked + span:before
+  input[type=checkbox]:checked + span:before,
+  input[type=radio]:checked + span:before
     content "\2713"
 
-  input[type=checkbox]:disabled + span:before
+  input[type=checkbox]:disabled + span:before,
+  input[type=radio]:disabled + span:before
     color #acacac
 
 

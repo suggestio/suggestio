@@ -47,23 +47,49 @@
       <div class="social-target_option-lst">
 
           <label class="social-target_option">
-            <input class="checkbox" type="checkbox"/>
+            <input class="checkbox" type="radio" name="someName"/>
             <span class="styled-checkbox"></span>&nbsp;Всю выдачу
           </label>
 
 
           <label class="social-target_option">
-            <input class="checkbox" type="checkbox"/>
+            <input class="checkbox" type="radio" name="someName"/>
             <span class="styled-checkbox"></span>&nbsp;Только эту карточку
           </label>
 
       </div>
     </div>
 
-    <a class="btn __size-M __minor href="@routes.LkAdvExt.createTarget(mnode.id.get)">Добавить цель...</a>
+    <div class="social-target __success">
+      <div class="social-target_icon"></div>
+      <div class="social-target_info">
+        <p class="social-target_title">https://vk.com/dev/api_confirm</p>
+        <p class="social-target_status">Статус: успешно</p>
+      </div>
+    </div>
 
+    <div class="social-target __error">
+      <div class="social-target_icon"></div>
+      <div class="social-target_info">
+        <p class="social-target_title">https://vk.com/dev/api_confirm</p>
+        <p class="social-target_status">Статус: ошибка</p>
+      </div>
+    </div>
 
-    <input class="btn __size-M __major" type="submit" value="Начать размещение..." />
+    <div class="social-target __in-process">
+      <div class="social-target_icon"></div>
+      <div class="social-target_info">
+        <p class="social-target_title">https://vk.com/dev/api_confirm</p>
+        <p class="social-target_status">Статус: в процессе</p>
+      </div>
+    </div>
+
+    <a class="btn __size-M __minor add-target" href="@routes.LkAdvExt.createTarget(mnode.id.get)">Добавить цель...</a>
+    <hr class="delimiter __light">
+
+    <div class="btn-w __size-XS">
+      <input class="btn __size-M __major social-submit" type="submit" value="Начать размещение..." />
+    </div>
   }
 
 }
