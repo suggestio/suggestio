@@ -26,6 +26,7 @@ import io.suggest.event.subscriber.SnFunSubscriber
  */
 
 object AdNetMember {
+
   import AdnRights.AdnRight
 
   /** Название root-object поля, в котором хранятся данные по участию в рекламной сети. */
