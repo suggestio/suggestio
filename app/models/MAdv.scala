@@ -242,7 +242,7 @@ object MAdvModes extends Enumeration {
     override def eventType = EventTypes.AdvOutcomingRefused
   }
 
-  def busyModes = Set(OK, REQ)
+  def busyModes: Set[MAdvMode] = Set(OK, REQ)
 }
 
 

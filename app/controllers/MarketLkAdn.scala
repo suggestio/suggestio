@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.async.AsyncUtil
 import util.billing.Billing
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -206,37 +207,48 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       }
 
-      // Карта размещений, чтобы определять размещена ли карточка где-либо или нет.
-      val ad2advMap = {
-        request.myNodeId.fold(Map.empty[String, MAdvI]) { myAdnId =>
-          val busyAdvs = DB.withConnection { implicit c =>
-            val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
-            val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
-            Seq(busyAdsOk, busyAdsReq)
+      // Собрать карту занятых размещением карточек.
+      val ad2advMapFut = {
+        request.myNodeId.fold(Future successful Map.empty[String, MAdvI]) { myAdnId =>
+          Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
+            Future {
+              DB.withConnection { implicit c =>
+                model.findNotExpiredRelatedTo(myAdnId)
+              }
+            }(AsyncUtil.jdbcExecutionContext)
+          } map { results =>
+            advs2adIdMap(results : _*)
           }
-          advs2adIdMap(busyAdvs : _*)
         }
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
-      val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
-        DB.withConnection { implicit c =>
-          MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+      val canAdvFut: Future[Boolean] = {
+        if (isMyNode && adnNode.adn.isProducer) {
+          Future {
+            DB.withConnection { implicit c =>
+              MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+            }
+          }(AsyncUtil.jdbcExecutionContext)
+        } else {
+          Future successful false
         }
       }
 
       // Рендер результата, когда все карточки будут собраны.
       for {
-        mads <- madsFut
+        mads      <- madsFut
+        ad2advMap <- ad2advMapFut
+        canAdv    <- canAdvFut
       } yield {
         Ok(nodeAdsTpl(
-          node = adnNode,
-          mode = mode,
-          mads = mads,
-          isMyNode = isMyNode,
+          node        = adnNode,
+          mode        = mode,
+          mads        = mads,
+          isMyNode    = isMyNode,
           povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
-          canAdv = canAdv,
-          ad2advMap = ad2advMap
+          canAdv      = canAdv,
+          ad2advMap   = ad2advMap
         ))
       }
     }
