@@ -73,7 +73,7 @@ define ["SioPR"], (SioPR) ->
         picture: @ctx._ads[0].rendered.sioUrl
         link: @ctx._target.href
 
-      callback = (response) ->
+      callback = (response) =>
         if !response || response.error
           console.log "Error occured"
           @ctx._status = "error"
