@@ -113,12 +113,22 @@ object AdNetMember {
 
 /** Выходы узла для отображения рекламных карточек. */
 object AdnSinks extends Enumeration {
-  protected case class Val(name: String, longName: String, sioComissionDflt: Float) extends super.Val(name) with SlNameTokenStr
+  protected abstract class Val(val name: String) extends super.Val(name) with SlNameTokenStr {
+    def longName: String
+    def sioComissionDflt: Float
+  }
   type AdnSink = Val
   implicit def value2val(x: Value): AdnSink = x.asInstanceOf[AdnSink]
 
-  val SINK_WIFI: AdnSink = Val("w", "wifi", 0.30F)
-  val SINK_GEO: AdnSink  = Val("g", "geo", 0.70F)
+  val SINK_WIFI: AdnSink = new Val("w") {
+    override def longName = "wifi"
+    override def sioComissionDflt = 0.30F
+  }
+
+  val SINK_GEO: AdnSink = new Val("g") {
+    override def longName: String = "gep"
+    override def sioComissionDflt = 1.0F
+  }
 
   def ordered: Seq[AdnSink] = {
     values
