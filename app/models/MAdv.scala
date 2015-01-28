@@ -90,6 +90,18 @@ object MAdv {
       .as(MAdv.AD_ID_PARSER *)
   }
 
+  /**
+   * Удалить все записи для рекламной карточки из всех моделей.
+   * @param adId id рекламной карточки.
+   * @return Кол-во удалённых рядов.
+   */
+  def deleteByAdId(adId: String)(implicit c: Connection): Int = {
+    ADV_MODELS.foldLeft(0) {
+      (counter, advModel) =>
+        advModel.deleteByAdId(adId) + counter
+    }
+  }
+
   /** Обработчик события удаления MAd. Стираются все adv-ряды из всех adv-моделей. */
   class DeleteAllAdvsOnAdDeleted(implicit current: play.api.Application) extends SnClassSubscriber with SNStaticSubscriber with PlayLazyMacroLogsImpl {
     import LOGGER._
@@ -105,13 +117,7 @@ object MAdv {
         case ade: AdDeletedEvent =>
           ade.mad.id.foreach { adId =>
             val totalDeleted = DB.withConnection { implicit c =>
-              ADV_MODELS.foldLeft(0) {
-                (counter, advModel) =>
-                  val modelDeleted = advModel.deleteByAdId(adId)
-                  if (modelDeleted > 0)
-                    debug(s"Deleted $modelDeleted advs for adId[$adId] in model ${advModel.getClass.getSimpleName}.")
-                  modelDeleted + counter
-              }
+              deleteByAdId(adId)
             }
             info(s"Deleted $totalDeleted advs for adId[$adId].")
           }

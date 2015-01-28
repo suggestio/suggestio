@@ -536,23 +536,24 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
               }
             }
 
+          // Карточка внезапно не найдена. Наверное она была удалена, а инфа в базе почему-то осталась. В любом случае, нужно удалить все adv.
           case None =>
-            Future failed new RuntimeException(s"MAd not found: $adId, but it should. Cannot continue.")
-        }
-        madUpdFut onComplete {
-          case Success(_) =>
-            debug(s"${logPrefix}Successfully updated rcvrs map for ad[$adId] for advs = ${advsOk.iterator.flatMap(_.id).mkString(", ")}")
-
-          case Failure(ex) =>
-            error(s"${logPrefix}Failed to update ad[$adId] rcvrs. Rollbacking advOks update txn...", ex)
-            try {
-              DB.withConnection { implicit c =>
-                advs.foreach(_.save)
-              }
-              debug(s"${logPrefix}Successfully recovered adv state back for ad[$adId]. Will retry update on next time.")
-            } catch {
-              case ex: Throwable => error(s"${logPrefix}Failed to rollback advOks update txn! Adv state inconsistent. Advs:\n  $advs", ex)
+            val totalDeleted = DB.withConnection { implicit c =>
+              MAdv.deleteByAdId(adId)
             }
+            warn(s"${logPrefix}Ad[$adId] not exists, but at least ${advsOk.size} related advs in processing. I've removed $totalDeleted orphan advs from all adv models!")
+            Future successful adId
+        }
+        madUpdFut onFailure { case ex =>
+          error(s"${logPrefix}Failed to update ad[$adId] rcvrs. Rollbacking advOks update txn...", ex)
+          try {
+            DB.withConnection { implicit c =>
+              advs.foreach(_.save)
+            }
+            debug(s"${logPrefix}Successfully recovered adv state back for ad[$adId]. Will retry update on next time.")
+          } catch {
+            case ex: Throwable => error(s"${logPrefix}Failed to rollback advOks update txn! Adv state inconsistent. Advs:\n  $advs", ex)
+          }
         }
       }
     } else {

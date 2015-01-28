@@ -21,7 +21,7 @@ import play.api.Play.{current, configuration}
 object WelcomeUtil {
 
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
-  val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse false
+  val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse true
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
