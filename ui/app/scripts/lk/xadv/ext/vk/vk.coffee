@@ -77,11 +77,14 @@ define ["SioPR"], (SioPR) ->
 
       callback = (data) =>
         console.log data
+
         if data.error
           @ctx._status = "error"
           @ctx._error = data.error
         else
           @ctx._status = "success"
+
+        # TODO все вызовы onComplete должны быть объединены в одну функцию
         @onComplete @ctx, sendF
 
       VK.Api.call "wall.post", post, callback
