@@ -1,7 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
-import models.{MPersonIdent, EmailActivation, Context}
+import models.{IEaEmailId, MPersonIdent, EmailActivation, Context}
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._
@@ -9,7 +9,7 @@ import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import util.PlayMacroLogsI
-import util.acl.{AbstractRequestWithPwOpt, IsAnon}
+import util.acl.{CanConfirmEmailPwReg, AbstractRequestWithPwOpt, IsAnon}
 import util.mail.MailerWrapper
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
@@ -50,7 +50,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
     val msg = MailerWrapper.instance
     msg.setFrom("welcome@suggest.io")
     msg.setRecipients(ea.email)
-    msg.setSubject("Suggest.io | " + Messages("" + ???)(ctx.lang))  // TODO Заголовок в messages и сюда!
+    msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.lang))  // TODO Заголовок в messages и сюда!
     msg.setHtml( emailRegMsgTpl(ea)(ctx) )
     msg.send()
   }
@@ -75,7 +75,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
             // Сохранить новый eact
             val ea0 = EmailActivation(
               email = email1,
-              key = "newUser"
+              key = CanConfirmEmailPwReg.EPW_ACT_KEY
             )
             ea0.save.flatMap { eaId =>
               // отправить письмо на указанную почту
@@ -97,6 +97,12 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
   /** Что возвращать юзеру, когда сообщение отправлено на почту? */
   def emailRequestOk(ea: Option[EmailActivation])(implicit ctx: Context): Future[Result] = {
     Ok(sentTpl(ea)(ctx))
+  }
+
+
+  /** Юзер возвращается по ссылке из письма. */
+  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwReg(eaInfo).async { implicit request =>
+    ???
   }
 
 }

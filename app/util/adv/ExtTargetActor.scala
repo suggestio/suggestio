@@ -26,7 +26,6 @@ import util.event.{EventType, EventTypes}
 import util.img.WkHtmlUtil
 import util.jsa.{InnerHtmlById, JsAppendById}
 import ExtUtil.RUNNER_EVENTS_DIV_ID
-import views.html.lk.adv.ext.event._
 
 import scala.util.{Failure, Success}
 

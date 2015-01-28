@@ -339,3 +339,5 @@ error.adv.ext.js.refused=Размещение прервано или отмен
 
 e.event.not.found=Событие не найдено.
 
+reg.emailpw.email.subj=Подтверждение регистрации в сети Suggest.io
+

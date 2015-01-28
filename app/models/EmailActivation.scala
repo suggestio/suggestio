@@ -6,6 +6,8 @@ import EsModel._
 import io.suggest.util.SioEsUtil._
 import play.api.Play.current
 import io.suggest.util.StringUtil
+import play.api.mvc.QueryStringBindable
+import scala.Predef
 import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -68,7 +70,6 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
 
 }
 
-
 /**
  * Запись об активации почты.
  * @param email Почта.
@@ -78,7 +79,7 @@ final case class EmailActivation(
   email     : String,
   key       : String = EmailActivation.randomActivationKey,
   id        : Option[String] = None
-) extends MPersonIdent with MPersonLinks {
+) extends MPersonIdent with MPersonLinks with IEaEmailId {
   override type T = EmailActivation
 
   override def personId = email
@@ -99,3 +100,50 @@ final class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Cl
 {
   override def companion = EmailActivation
 }
+
+
+// 2015.jan.28: Добавлена поддержка qsb для email+id qs.
+/** Интерфейс для QSB. Он совместим с [[EmailActivation]], но id всё-таки обязательный. */
+trait IEaEmailId extends OptStrId {
+  def email: String
+}
+
+
+/** Статическая поддержка модели [[IEaEmailId]]. */
+object IEaEmailId {
+  def ID_SUF = ".k"
+  def EMAIL_SUF = ".e"
+
+  implicit def qsb(implicit strB: QueryStringBindable[String]) = {
+    new QueryStringBindable[IEaEmailId] {
+      override def bind(key: String, params: Predef.Map[String, Seq[String]]): Option[Either[String, IEaEmailId]] = {
+        for {
+          maybeEmail <- strB.bind(key + EMAIL_SUF, params)
+          maybeId <- strB.bind(key + ID_SUF, params)
+        } yield {
+          maybeEmail.right.flatMap { email =>
+            maybeId.right.map { id =>
+              EaEmailId(email = email, id = Some(id))
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: IEaEmailId): String = {
+        List(
+          strB.unbind(key + EMAIL_SUF, value.email),
+          strB.unbind(key + ID_SUF, value.id.get)
+        ).mkString("&")
+      }
+    }
+  }
+
+}
+
+/** Дефолтовая реализация [[IEaEmailId]] */
+case class EaEmailId(
+  email : String,
+  id    : Option[String]
+) extends IEaEmailId
+
+
