@@ -127,7 +127,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
-  def evtRenderArgs(etype: EventType, errors: ErrorInfo*): RenderArgs = evtRenderArgs(etype, withContainer = false, errors : _*)
+  def evtRenderArgs(etype: EventType, errors: ErrorInfo*): RenderArgs = {
+    evtRenderArgs(etype, withContainer = false, errors : _*)
+  }
   def evtRenderArgs(etype: EventType, withContainer: Boolean, errors: ErrorInfo*): RenderArgs = {
     RenderArgs(
       mevent = MEventTmp(
@@ -136,7 +138,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         id      = Some(replyTo)
       ),
       advExtTgOpt = Some(args.target.target),
-      errors      = errors
+      errors      = errors,
+      withContainer = withContainer
     )
   }
 

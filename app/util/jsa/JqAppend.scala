@@ -67,9 +67,8 @@ case class JsAppendById(id: String, html: JsString) extends DocumentGetElementBy
 case class InnerHtmlById(id: String, html: JsString) extends DocumentGetElementById {
   override def renderJsAction(sb: StringBuilder): StringBuilder = {
     super.renderJsAction(sb)
-      .append(".innerHTML(")
+      .append(".innerHTML=")
       .append(html)
-      .append(')')
       .append(';')
   }
 }
