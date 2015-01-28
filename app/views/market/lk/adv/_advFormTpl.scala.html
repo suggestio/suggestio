@@ -170,43 +170,49 @@
       <h2 class="minor-title">Выбор даты</h2>
 
       <div class="date-widget">
-        <table class="prop">
-          <td class="prop_name">Срок размещение</td>
-          <td class="prop_value">
-            <div class="input __size-S" >
-              <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
-                @defining( args.af("period.period").value ) { currPeriod =>
-                  @args.advPeriodsAvail.map { case (v, msg) =>
-                    <option value="@v" @if(currPeriod.exists(_ equalsIgnoreCase v)) {selected="selected"}>@msg</option>
+
+        <div class="date-widget_options">
+          <table class="prop">
+            <td class="prop_name">Срок размещение</td>
+            <td class="prop_value">
+              <div class="input __size-S" >
+                <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
+                  @defining( args.af("period.period").value ) { currPeriod =>
+                    @args.advPeriodsAvail.map { case (v, msg) =>
+                      <option value="@v" @if(currPeriod.exists(_ equalsIgnoreCase v)) {selected="selected"}>@msg</option>
+                    }
                   }
-                }
-              </select>
-            </div>
-          </td>
-        </table>
-        <table class="prop" id="advManagementDateStart">
-          <td class="prop_name">Дата начала</td>
-          <td class="prop_value">
-            <div class="input __size-S">
-              <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
-            </div>
-          </td>
-        </table>
-        <table class="prop" id="advManagementDateEnd">
-          <td class="prop_name">Дата окончания</td>
-          <td class="prop_value">
-            <div class="input __size-S">
-              <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
-            </div>
-          </td>
-        </table>
-        <hr class="delimiter __light"/>
-        <div class="block __margin-S">
-          Ваша карточка будет размещена
-        </div>
+                </select>
+              </div>
+            </td>
+          </table>
+          <table class="prop" id="advManagementDateStart">
+            <td class="prop_name">Дата начала</td>
+            <td class="prop_value">
+              <div class="input __size-S">
+                <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
+              </div>
+            </td>
+          </table>
+          <table class="prop" id="advManagementDateEnd">
+            <td class="prop_name">Дата окончания</td>
+            <td class="prop_value">
+              <div class="input __size-S">
+                <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
+              </div>
+            </td>
+          </table>
+        </div><!-- .date-widget_options end -->
+
         <div class="date-widget_result">
-          с&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;по&nbsp;<span id="advManagementDateEndValue"></span>
+          <div class="block __margin-S">
+            Ваша карточка будет размещена
+          </div>
+          <div class="date-widget_result-value">
+            с&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;по&nbsp;<span id="advManagementDateEndValue"></span>
+          </div>
         </div>
+
       </div>
 
   </div>

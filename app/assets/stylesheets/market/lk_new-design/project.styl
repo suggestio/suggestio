@@ -397,13 +397,23 @@ label
 /********************************************************************************************************************/
 
 .date-widget
-  padding           5px 10px 15px
+  padding-top 5px
   background-color  white
-  border-radius     10px
+  border-radius 10px 10px 0 0
+
+  &_options
+    padding 0 10px
 
   &_result
+    overflow hidden
+    padding 0 10px 15px
+    border-radius(0px 0px 10px 10px)
+
+    color black
+    background-color #c1c1c1
+
+  &_result-value
     font-size   15px
-    color       darkGray
 
 /********************************************************************************************************************/
 /* No photo  */
