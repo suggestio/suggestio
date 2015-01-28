@@ -4,13 +4,13 @@
 
 @import lk.event._
 
-@_oneEvtBase(rargs) {
+@_oneEvtBase(rargs, Some("__bg-1 __icon-6")) {
 
   @rargs.advExtTgOpt.map { advExtTg =>
-    <p>@advExtTg.url</p>
+    <div class="event_t">@advExtTg.url</div>
   }
 
-  <p>Статус: в процессе</p>
+  Статус: в процессе
 
 }
 

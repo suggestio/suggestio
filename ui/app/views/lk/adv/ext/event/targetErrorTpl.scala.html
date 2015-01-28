@@ -8,13 +8,13 @@
 @_errorEvtBase(rargs) {
 
   @rargs.advExtTgOpt.map { advExtTg =>
-    <p>
+    <div class="event_t">
       <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
-    </p>
+    </div>
   }
 
   @rargs.errors.map { err =>
-    <p>Ошибка: @Messages(err.msg, err.args: _*)</p>
+    <p class="event_err-text">Ошибка: @Messages(err.msg, err.args: _*)</p>
 
     @* Если есть доп.информация, то её рендерим под катом *@
     @if(err.info) {

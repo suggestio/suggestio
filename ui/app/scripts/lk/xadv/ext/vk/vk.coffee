@@ -75,8 +75,14 @@ define ["SioPR"], (SioPR) ->
       catch error
         console.log error
 
-      callback = (data) ->
+      callback = (data) =>
         console.log data
+        if data.error
+          @ctx._status = "error"
+          @ctx._error = data.error
+        else
+          @ctx._status = "success"
+        @onComplete @ctx, sendF
 
       VK.Api.call "wall.post", post, callback
 
