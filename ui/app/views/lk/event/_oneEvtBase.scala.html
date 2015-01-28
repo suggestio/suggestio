@@ -8,10 +8,16 @@
 }
 
 <div class="@clazz">
+
   @* Рендерить крестик в углу для событий, которые разрешают их сокрытие *@
-  @if(rargs.mevent.isCloseable && rargs.mevent.id) {
-    @form( routes.LkEvents.nodeEventDelete(rargs.mevent.id.get) ) {
-      <input type="submit" value="X" title="Скрыть событие" />
+  @if(rargs.mevent.isCloseable) {
+    @* Если есть id, значит можно удалить событие на сервере. *@
+    @if( rargs.mevent.id ) {
+      <form action="routes.LkEvents.nodeEventDelete(rargs.mevent.id.get)" method="POST">
+    }
+    <input type="submit" value="X" title="Скрыть событие" />
+    @if(rargs.mevent.id) {
+      </form>
     }
   }
 
