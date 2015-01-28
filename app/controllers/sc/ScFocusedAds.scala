@@ -108,14 +108,41 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
-    // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
+    /**
+     * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
+     * Это нужно для более быстрого выявления проблем с валидными ссылками на несуществующие карточки.
+     * @param mads найденные рекламные карточки.
+     * @param ids id запрошенных рекламных карточек.
+     */
+    protected def logMissingFirstIds(mads: Seq[MAd], ids: Seq[String]): Unit = {
+      if (mads.size != ids.size) {
+        // Выявить, какие id не были найдены.
+        val idsFound = mads.iterator.flatMap(_.id).toSet
+        val idsWant = ids.toSet
+        val idsNotFound = idsWant -- idsFound
+        val sb = new StringBuilder(128, "logInvalidFirstIds(): Client requested inexisting ad ids: ")
+        idsNotFound.foreach { id =>
+          sb.append(id).append(',').append(' ')
+        }
+        sb.setLength(sb.length - 2)
+        LOGGER.debug(sb.toString())
+      }
+    }
+
+    /** Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных
+      * id карточек и выставить их в начало списка mads1. */
     lazy val mads2Fut: Future[Seq[MAd]] = {
       // Гарантия фонового вычисления mads1Fut:
       val _mads1Fut = mads1Fut
       if (_adSearch.forceFirstIds.nonEmpty) {
         // Если заданы firstIds и offset == 0, то нужно получить из модели указанные рекламные карточки.
         val firstAdsFut = if (_adSearch.offset <= 0) {
-          MAd.multiGet(_adSearch.forceFirstIds)
+          val ids = _adSearch.forceFirstIds
+          val fut = MAd.multiGet(ids)
+          fut onSuccess { case mads =>
+            logMissingFirstIds(mads, ids)
+          }
+          fut
         } else {
           Future successful Nil
         }

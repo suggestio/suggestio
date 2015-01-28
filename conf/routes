@@ -74,9 +74,10 @@ POST /m/lk/xadvs/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit
 ## Размещение рекламы на внешних сервисах
 GET  /m/lk/xadv/ext/:adId               controllers.LkAdvExt.forAd(adId)
 POST /m/lk/xadv/ext/:adId               controllers.LkAdvExt.advFormSubmit(adId)
-GET  /m/lk/xadv/ext/tgt/new/:adnId      controllers.LkAdvExt.createTarget(adnId)
-POST /m/lk/xadv/ext/tgt/new/:adnId      controllers.LkAdvExt.createTargetSubmit(adnId)
+GET  /m/lk/xadv/ext/tgt/write/:adnId    controllers.LkAdvExt.writeTarget(adnId)
+POST /m/lk/xadv/ext/tgt/write/:adnId    controllers.LkAdvExt.writeTargetSubmit(adnId)
 GET  /m/lk/xadv/ext/ws/run              controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
+POST /m/lk/xadv/ext/tgt/delete/:tgId    controllers.LkAdvExt.deleteTargetSubmit(tgId)
 
 
 ## ЛК: Рекламные карточки

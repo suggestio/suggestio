@@ -1,7 +1,5 @@
 package controllers
 
-import java.net.URL
-
 import models._
 import models.adv._
 import play.api.libs.json.JsValue
@@ -187,63 +185,54 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
 
 
   /**
-   * Маппинг формы для ввода ссылки на цель.
-   * @param adnId id узла, в рамках которого происходит действо.
-   * @return Экземпляр формы.
-   */
-  def targetFormM(adnId: String): Form[MExtTarget] = {
-    Form(
-      // Проверять по доступным сервисам, подходит ли эта ссылка для хотя бы одного из них. И возвращать этот сервис.
-      "url" -> urlM
-        .transform[(URL, Option[MExtService])] (
-          {url =>
-            //val url1 = srv.normalizeTargetUrl(url)
-            url -> MExtServices.findForHost(url.getHost)
-          },
-          { _._1 }
-        )
-        .verifying("error.service.unknown", _._2.isDefined)
-        .transform [MExtTarget] (
-          {case (url, srvOpt) =>
-            val srv = srvOpt.get
-            val url1 = srv.normalizeTargetUrl(url)
-            // Ссылка пока генерится прямо здесь.
-            MExtTarget(url = url1, service = srv, adnId = adnId)
-          },
-          { metgt => (new URL(metgt.url), Some(metgt.service)) }
-        )
-    )
-  }
-
-  /**
-   * Запрос формы создания новой цели для размещения рекламы.
+   * Запрос формы создания/редактирования цели для внешнего размещения рекламы.
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def createTarget(adnId: String) = IsAdnNodeAdmin(adnId) { implicit request =>
-    val form = targetFormM(adnId)
+  def writeTarget(adnId: String) = IsAdnNodeAdmin(adnId) { implicit request =>
+    val form = CanSubmitExtTargetForNode.targetFormM(adnId)
     Ok(_createTargetTpl(request.adnNode, form))
   }
 
+
   /**
-   * Сабмит формы создания новой цели для размещения рекламной карточки.
+   * Сабмит формы создания/обновления цели внешнего размещения рекламной карточки.
    * @param adnId id узла, к которому привязывается цель.
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
    */
-  def createTargetSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    targetFormM(adnId).bindFromRequest().fold(
+  def writeTargetSubmit(adnId: String) = CanSubmitExtTargetForNode(adnId).async { implicit request =>
+    request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
         NotAcceptable(_createTargetTpl(request.adnNode, formWithErrors))
       },
-      {tgt =>
-        // TODO Обращаться по ссылке, получать title страницы, вставлять в поле name
-        tgt.save.map { tgtId =>
-          Ok("TODO")
+      {tg =>
+        tg.save.map { tgId =>
+          // Вернуть форму с выставленным id.
+          val tg2 = tg.copy(id = Some(tgId))
+          val form = request.newTgForm fill tg2
+          Ok(_createTargetTpl(request.adnNode, form))
         }
       }
     )
   }
+
+
+  /**
+   * Сабмит удаления цели.
+   * @param tgId id цели.
+   * @return 204 No content, если удаление удалось.
+   *         404 если не найдена запрошенная цель.
+   *         403 при проблемах с доступом.
+   *         Редирект, если сессия истекла.
+   */
+  def deleteTargetSubmit(tgId: String) = CanAccessExtTarget(tgId).async { implicit request =>
+    request.extTarget.delete.map {
+      case true  => NoContent
+      case false => NotFound
+    }
+  }
+
 
 }

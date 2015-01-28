@@ -7,6 +7,9 @@
 
 @form(submitCall, '_class -> "js-social_add-target-form") {
 
+  @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
+  <input type="hidden" name="id" value="@tf("id").value" />
+
   <div class="social-target">
     <div class="social-target_name">
       @inputText(
@@ -30,7 +33,5 @@
 
     </div>
   </div>
-
-  <!--<input type="submit" value="@btnText" />-->
 
 }

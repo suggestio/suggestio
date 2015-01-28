@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
 import java.net.{MalformedURLException, URL}
-import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
+import io.suggest.util.{UuidUtil, JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import play.api.data.Mapping
@@ -114,9 +114,12 @@ object FormUtil {
   val uuidB64Re = "[_a-zA-Z0-9-]{22}".r
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
-  val esIdM = nonEmptyText(minLength=22, maxLength=30)
+  def esIdM = nonEmptyText(minLength=22, maxLength=30)
     .transform(strTrimSanitizeF, strIdentityF)
     .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
+
+  /** Тоже самое, что и esIdM, но пытается декодировать UUID из id. */
+  def esIdUuidM = esIdM.verifying("error.invalid.uuid", UuidUtil.isUuidStrValid(_))
 
   /** Маппинг для номера этажа в ТЦ. */
   def floorM = nonEmptyText(maxLength = 4)
