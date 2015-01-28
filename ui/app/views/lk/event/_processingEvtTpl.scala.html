@@ -1,0 +1,8 @@
+@(rargs: event.RenderArgs)(content: Html)(implicit ctx: Context)
+
+@* Шаблон для отображения какого-то процесса, происходящего в данный момент *@
+
+@_oneEvtBase(rargs, Some("__bg-1 __icon-5")) {
+  @* Какое-то содержимое уведомления *@
+  @content
+}

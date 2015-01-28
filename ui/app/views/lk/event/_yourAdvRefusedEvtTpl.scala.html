@@ -6,23 +6,25 @@
 @import AdnShownTypes._
 @import datetime._
 
-@_oneEvtBase(rargs) {
+@_oneEvtBase(rargs, Some("__bg-4 __icon-5 __with-ad-preview")) {
 
-  <p>
+  <div class="event_t">
     @rargs.adnNodeOpt.map { mnode =>
       @Messages(mnode.adn.singular)
-      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+      <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
     }
-  </p>
+  </div>
 
-  <p>
-    отказал в размещении.
-    @rargs.advRefuseOpt.map { advRef =>
+  отказал в размещении.
+  @rargs.advRefuseOpt.map { advRef =>
+    <span class="event_err-text">
       @advRef.reason
       /
       @_prettyDate(advRef.dateStatus)
-    }
-  </p>
+    </span>
+  }
 
-  @_advAdFrameTpl(rargs)
+  <div class="event_ad-preview">
+    @_advAdFrameTpl(rargs)
+  </div>
 }

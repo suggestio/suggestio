@@ -6,21 +6,21 @@
 @import AdnShownTypes._
 @import datetime._
 
-@_oneEvtBase(rargs) {
+@_oneEvtBase(rargs, Some("__bg-1 __icon-4 __with-ad-preview")) {
 
-  <p>
+  <div class="event_t">
     @rargs.adnNodeOpt.map { mnode =>
       @Messages(mnode.adn.singular)
-      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+      <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
     }
-  </p>
+  </div>
 
-  <p>
-    одобрил размещение.
-    @rargs.advOkOpt.map { advOk =>
-      @_prettyDate(advOk.dateStatus)
-    }
-  </p>
+  одобрил размещение.
+  @rargs.advOkOpt.map { advOk =>
+    @_prettyDate(advOk.dateStatus)
+  }
 
-  @_advAdFrameTpl(rargs)
+  <div class="event_ad-preview">
+    @_advAdFrameTpl(rargs)
+  </div>
 }
