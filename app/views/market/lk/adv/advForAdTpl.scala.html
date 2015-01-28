@@ -5,6 +5,18 @@
 @import market.lk._
 
 @rightBar = {
+
+  <nav class="right-bar_menu">
+    <a class="right-bar_menu-i __social" href="@routes.LkAdvExt.forAd(mad.id.get)">
+      <span>Разместить в соц.сети</span>
+    </a>
+    <hr class="delimiter"/>
+    <a class="right-bar_menu-i __geo __act">
+      <span>Разместить в геолокации</span>
+    </a>
+    <hr class="delimiter"/>
+  </nav>
+
   <div class="right-bar-price-widget">
     <div class="right-bar-price-widget_cnt">
       <h2 class="right-bar-price-widget_title">
@@ -32,8 +44,6 @@
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   headAfter     = Some(headAfter)
 ) {
-
-  <a href="@routes.LkAdvExt.forAd(mad.id.get)">Размещение на внешних сервисах...</a>
 
   @_currentAdvsTpl(currAdvsArgs)
 

@@ -1,4 +1,4 @@
-@(title: String, mnode: MAdnNode, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MAdnNode, headAfter: Option[Html] = None, rightBar: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
@@ -8,27 +8,11 @@
 
 }
 
-@rightBar = {
-
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __social" >
-      <span>Разместить в соц.сети</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __geo">
-      <span>Разместить в геолокации</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
-
-}
-
-
 @market.lk.lkBaseLayout(
   title         = title,
   nodeOpt       = Some(mnode),
   backHref      = Some(routes.MarketLkAdn.showAdnNode(mnode.id.get).url),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   headAfter     = Some(headAfter),
-  rightBar      = Some(rightBar)
+  rightBar      = rightBar
 )(content)
