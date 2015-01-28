@@ -4,25 +4,11 @@
 
 @import util.adv.ExtUtil._
 
-@rightBar = {
-
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __social __act" href="@routes.LkAdvExt.forAd(mad.id.get)">
-      <span>Разместить в соц.сети</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __geo" href="@routes.MarketAdv.advForAd(mad.id.get)">
-      <span>Разместить в геолокации</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
-
-}
 
 @base(
   title = "Размещение рекламной карточки на внешних сервисах",
   mnode = mnode,
-  rightBar = Some(rightBar)
+  mad = mad
 ) {
 
   Идёт размещение рекламной карточки.

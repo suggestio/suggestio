@@ -6,27 +6,11 @@
 @import helper._
 @import util.FC.tdRadialFc
 
-@rightBar = {
-
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __social __act" href="@routes.LkAdvExt.forAd(mad.id.get)">
-      <span>Разместить в соц.сети</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __geo" href="@routes.MarketAdv.advForAd(mad.id.get)">
-      <span>Разместить в геолокации</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
-
-}
-
-
 
 @base(
   title = "Внешнее размещение карточки",
   mnode = mnode,
-  rightBar = Some(rightBar)
+  mad = mad
 ) {
 
   <div id="socialApp">
