@@ -3,12 +3,34 @@
 @* Форма добавления новой цели. *@
 
 @import helper._
+@import util.FC.tdRadialFc
+
+@form(submitCall, '_class -> "js-social_add-target-form") {
+
+  <div class="social-target">
+    <div class="social-target_name">
+      @inputText(
+        tf("url"),
+        '_label -> "Ссылка на группу",
+        '_class -> "js-social-target_it"
+      )
+    </div>
+    <div class="social-target_option-lst">
+
+      <label class="social-target_option">
+        <input type="radio" name="someName" checked="checked"/>
+        <span class="styled-checkbox"></span>&nbsp;Всю выдачу
+      </label>
 
 
-@form(submitCall) {
+      <label class="social-target_option">
+        <input type="radio" name="someName"/>
+        <span class="styled-checkbox"></span>&nbsp;Только эту карточку
+      </label>
 
-  @inputText(tf("url"))
+    </div>
+  </div>
 
-  <input type="submit" value="@btnText" />
+  <!--<input type="submit" value="@btnText" />-->
 
 }

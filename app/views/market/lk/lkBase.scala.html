@@ -58,9 +58,13 @@
         }
       </div>
 
-      @ctx.usernameOpt.map { username =>
+      @*ctx.usernameOpt.map { username =>
         <a class="header_logout light-gray dark-link" href="@routes.Ident.logout" title="Выйти">@username</a>
-      }
+      }*@
+
+
+      <a class="btn __size-M __major header_change-node" href="#">Сменить магазин</a>
+
     </header>
 
 
@@ -97,6 +101,11 @@
             <hr class="delimiter"/>
           </nav>
         }
+        <div class="left-bar_bottom">
+          <a class="left-bar_exit" href="@routes.Ident.logout">Выход</a>
+          <hr class="delimiter"/>
+          <a class="left-bar_help">Помощь</a>
+        </div>
       </aside>
 
       @adnIdOpt.map { adnId =>

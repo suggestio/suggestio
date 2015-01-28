@@ -1,4 +1,4 @@
-define [], () ->
+define ["view"], (View) ->
 
   class SioPR
     instance = undefined
@@ -45,5 +45,3 @@ define [], () ->
 
       if ctx._domain.indexOf("vk.com") >= 0
         serviceList["Vk"].handleTarget(ctx, onComplete)
-
-      #serviceList["vk"].handleTarget ctx, OnComplete
