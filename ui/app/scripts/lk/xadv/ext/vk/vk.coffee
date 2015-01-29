@@ -119,16 +119,25 @@ define ["SioPR"], (SioPR) ->
 
     login: (onSuccess) ->
 
-      authInfo = (response) =>
+      loginCallback = (response) =>
         if response.session
           userId = response.session.mid
           onSuccess()
         else
-          VK.Auth.login authInfo, ACESS_LVL
           @ctx._status = "error"
+          @ctx._error = "not auth"
           @onComplete @ctx, sendF
 
-      VK.Auth.getLoginStatus authInfo
+      getLoginStatusCallback = (response) =>
+        console.log "---auth callback---"
+        console.log response
+        if response.session
+          userId = response.session.mid
+          onSuccess()
+        else
+          VK.Auth.login loginCallback, ACESS_LVL
+
+      VK.Auth.getLoginStatus getLoginStatusCallback
 
     handleTarget: (ctx, onComplete) ->
       console.log "vk handle target"
