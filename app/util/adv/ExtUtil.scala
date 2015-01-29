@@ -64,6 +64,11 @@ object ExtUtil {
    */
   def oneTargetFullFormM(adnId: String) = Form(oneTargetFullM(adnId))
 
+  /**
+   * Шаблоны для сборки дефолтовых форм на лету используют этот метод.
+   * @param tg Экземпляр таргета.
+   * @return Экземпляр Form'ы для работы с одной целью.
+   */
   def formForTarget(tg: MExtTarget) = oneTargetFullFormM(tg.adnId) fill (tg, None)
 
 }
