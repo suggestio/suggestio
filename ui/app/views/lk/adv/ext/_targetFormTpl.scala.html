@@ -5,12 +5,13 @@
 @import helper._
 @import util.FC.tdRadialFc
 
-@form(submitCall, '_class -> "js-social_add-target-form") {
+@form(submitCall, 'class -> "js-social_add-target-form") {
 
   @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
   <input type="hidden" name="id" value="@tf("id").value" />
 
   <div class="social-target">
+
     <div class="social-target_name">
       @inputText(
         tf("url"),
@@ -18,20 +19,21 @@
         '_class -> "js-social-target_it"
       )
     </div>
+
     <div class="social-target_option-lst">
 
       <label class="social-target_option">
-        <input type="radio" name="someName" checked="checked"/>
+        <input class="js-social-target_option" type="checkbox" name="someName" checked="checked"/>
         <span class="styled-checkbox"></span>&nbsp;Всю выдачу
       </label>
 
-
       <label class="social-target_option">
-        <input type="radio" name="someName"/>
+        <input class="js-social-target_option" type="checkbox" name="someName"/>
         <span class="styled-checkbox"></span>&nbsp;Только эту карточку
       </label>
 
     </div>
+
   </div>
 
 }

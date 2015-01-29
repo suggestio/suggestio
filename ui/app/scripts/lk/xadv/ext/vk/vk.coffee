@@ -49,6 +49,13 @@ define ["SioPR"], (SioPR) ->
 
     saveWallPhoto: (savedPicture) ->
 
+      if !userId?
+        onSuccess = () =>
+          @saveWallPhoto(savedPicture)
+
+        @login onSuccess
+        return false
+
       savedPicture = JSON.parse savedPicture
 
       callback = (data) =>
@@ -129,8 +136,6 @@ define ["SioPR"], (SioPR) ->
           @onComplete @ctx, sendF
 
       getLoginStatusCallback = (response) =>
-        console.log "---auth callback---"
-        console.log response
         if response.session
           userId = response.session.mid
           onSuccess()

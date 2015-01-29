@@ -14,22 +14,24 @@ define([], function() {
 
   });
 
-  require(["SioPR"], function(SioPR) {
+  require(["SioPR", "view"], function(SioPR, View) {
     $input = $("#socialApiConnection");
     url = $input.val()       
 
-    ws = new WebSocket(url);
+    if(url) {
+      ws = new WebSocket(url);
 
-    SioPR = new SioPR();
-    SioPR.setWs(ws);
+      SioPR = new SioPR();
+      SioPR.setWs(ws);
 
-    //SioPR.prepareEnsureServiceReady("fb",{}).execute();
+      //SioPR.prepareEnsureServiceReady("fb",{}).execute();
 
-    ws.onmessage = function(event) {
-      message = $.parseJSON(event.data);
-      if(message["type"] == "js") {
-        console.log(message);
-        eval(message["data"]);
+      ws.onmessage = function(event) {
+        message = $.parseJSON(event.data);
+        if(message["type"] == "js") {
+          console.log(message);
+          eval(message["data"]);
+        }
       }
     }
 

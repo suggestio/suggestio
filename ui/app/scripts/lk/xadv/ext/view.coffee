@@ -36,15 +36,21 @@ define [], ()->
         action = $this.attr "action"
         data = $this.serialize()
 
-        ###
-          $.ajax(
-            type: "Post"
-            url: action
-            data: data
-            success: (data)->
-              console.log data
-          )
-        ###
+        $.ajax(
+          type: "Post"
+          url: action
+          data: data
+          success: (data)->
+            console.log "---form submit callback---"
+            console.log data
+        )
+
+      $doc.on "change", ".js-social-target_option", (e)->
+        $this = $ e.currentTarget
+        checked = $this.prop "checked"
+        $form = $this.closest ".js-social_add-target-form"
+
+        $form.find(".js-social-target_option").not($this).prop("checked", false)
 
 
   return new SocialView()

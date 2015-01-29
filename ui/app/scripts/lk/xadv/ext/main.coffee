@@ -1,4 +1,4 @@
-define ["view"], (View) ->
+define [], () ->
 
   class SioPR
     instance = undefined
