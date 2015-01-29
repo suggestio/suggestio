@@ -1,7 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
-import models.{IEaEmailId, MPersonIdent, EmailActivation, Context}
+import models._
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._
@@ -25,7 +25,7 @@ import scala.concurrent.Future
 object EmailPwReg {
 
   /** Маппинг формы регистрации по email. Форма с капчей. */
-  def emailRegFormM = Form(
+  def emailRegFormM: EmailPwRegReqForm_t = Form(
     mapping(
       "email"           -> email,
       CAPTCHA_ID_FN     -> captchaIdM,
@@ -44,7 +44,8 @@ import EmailPwReg._
 trait EmailPwReg extends SioController with PlayMacroLogsI {
 
   /** Что рендерить при неудачном биндинге формы. */
-  def emailRegFormBindFailed(formWithErrors: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
+  protected def emailRegFormBindFailed(formWithErrors: EmailPwRegReqForm_t)
+                                      (implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = MailerWrapper.instance
@@ -102,7 +103,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
 
   /** Юзер возвращается по ссылке из письма. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwReg(eaInfo).async { implicit request =>
-    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
+    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.n
     ???
   }
 

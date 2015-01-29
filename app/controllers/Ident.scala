@@ -1,7 +1,6 @@
 package controllers
 
 import controllers.ident._
-import play.api.data.Form
 import util.acl._
 import util._
 import play.api.mvc._
@@ -53,10 +52,30 @@ with ChangePw with PwRecover with EmailPwReg {
   }
 
 
-  /** Что рендерить при неудачном биндинге формы регистрации? */
-  override def emailRegFormBindFailed(formWithErrors: Form[String])
-                                     (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    ???
+  /**
+   * Стартовая страница my.suggest.io. Здесь лежит предложение логина/регистрации и возможно что-то ещё.
+   * @return 200 Ok для анонимуса.
+   *         Иначе редирект в личный кабинет.
+   */
+  def mySioStartPage = IsAnon { implicit request =>
+    val logForm = EmailPwSubmit.emailPwLoginFormM
+    val regForm = EmailPwReg.emailRegFormM
+    Ok(mySioStartTpl(
+      logForm = Some(logForm),
+      regForm = Some(regForm)
+    ))
   }
+
+  /** Что рендерить при неудачном биндинге формы. */
+  override protected def emailRegFormBindFailed(formWithErrors: EmailPwRegReqForm_t)
+                                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    Ok(mySioStartTpl(
+      regForm = Some(formWithErrors),
+      logForm = None
+    ))
+  }
+
+
+
 }
 

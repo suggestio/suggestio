@@ -37,9 +37,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   /** Маппинг одной выбранной цели. */
   private def advM: Mapping[Option[MExtTargetInfo]] = {
     // Заворачиваем id таргета в подмаппинг, чтобы матчить tgId. TODO: может можно просто "tg.id" в имени запилить?
-    val tgIdM = mapping( "id" -> esIdM )(identity)(Some.apply)
     val t = tuple(
-      "tg"       -> tgIdM,
+      "tg_id"    -> esIdM,
       "return"   -> optional(MExtReturns.mapping)
     )
     .transform[Option[MExtTargetInfo]] (
