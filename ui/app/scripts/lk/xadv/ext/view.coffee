@@ -52,5 +52,17 @@ define [], ()->
 
         $form.find(".js-social-target_option").not($this).prop("checked", false)
 
+      $doc.on "click", ".js-delete-social-target", (e)->
+        console.log "js delete target"
+        e.preventDefault()
+        $this = $ e.currentTarget
+        href = $this.attr "href"
+
+        $.ajax(
+          url: href
+          success: (data)->
+            console.log data
+        )
+
 
   return new SocialView()

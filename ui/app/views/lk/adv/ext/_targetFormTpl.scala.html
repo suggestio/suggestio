@@ -9,31 +9,38 @@
 @form(submitCall, 'class -> "js-social_add-target-form") {
 
   @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
-  <input type="hidden" name="tg.id" value="@tf("tg.id").value" />
 
-  <div class="social-target">
+  @defining( tf("tg.id").value ) { tgId =>
+    <input type="hidden" name="tg.id" value="@tgId" />
 
-    <div class="social-target_name">
-      @inputText(
-        tf("tg.url"),
-        '_label -> "Ссылка на группу",
-        '_class -> "js-social-target_it"
-      )
-    </div>
 
-    <div class="social-target_option-lst">
+    <div class="social-target">
 
-      @defining( tf("return").value ) { v =>
-        @adv.MExtReturns.values.iterator.map { mret =>
-          <label class="social-target_option">
-            <input class="js-social-target_option" type="checkbox" name="return" @if(v contains mret.strId) {checked="checked"}/>
-            <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
-          </label>
+      <a class="social-target_delete close js-delete-social-target" href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>
+
+      <div class="social-target_name">
+        @inputText(
+          tf("tg.url"),
+          '_label -> "Ссылка на группу",
+          '_class -> "js-social-target_it"
+        )
+      </div>
+
+      <div class="social-target_option-lst">
+
+        @defining( tf("return").value ) { v =>
+          @adv.MExtReturns.values.iterator.map { mret =>
+            <label class="social-target_option">
+              <input class="js-social-target_option" type="checkbox" name="return" @if(v contains mret.strId) {checked="checked"}/>
+              <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
+            </label>
+          }
         }
-      }
+
+      </div>
 
     </div>
 
-  </div>
+  }
 
 }

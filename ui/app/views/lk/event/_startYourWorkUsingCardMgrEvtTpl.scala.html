@@ -2,8 +2,8 @@
 
 @* Уведомление о том, что есть такая кнопка: добавить магазин. *@
 
-<a href="@routes.MarketLkAdn.showNodeAds(rargs.mevent.ownerId)">
-  @_oneEvtBase(rargs) {
+<a class="event_w" href="@routes.MarketLkAdn.showNodeAds(rargs.mevent.ownerId)">
+  @_oneEvtBase(rargs, Some("__bg-1 __icon-1")) {
     <div class="event_t">
       Начните свою работу с простого и удобного менеджера рекламных карточек.
     </div>

@@ -17,17 +17,15 @@
 
   </div>
 
-
+  @targets.iterator.zipWithIndex.map { case (target, i) =>
+    @_createTargetTpl(target.adnId, formForTarget(target))
+  }
 
   @form( routes.LkAdvExt.advFormSubmit(mad.id.get) ) {
 
     @* Сообщения о проблемах с выборкой. СВЕРСТАТЬ, А НЕ КОММЕНТИТЬ КАК ОБЫЧНО! *@
     @af("adv").errors.map { error =>
       <p>Возникла проблема: @Messages(error.message, error.args)</p>
-    }
-
-    @targets.iterator.zipWithIndex.map { case (target, i) =>
-      @_createTargetTpl(target.adnId, formForTarget(target))
     }
 
     <a class="btn __size-M __minor add-target" id="socialApiAddTargetBtn" href="@routes.LkAdvExt.writeTarget(mnode.id.get)">Добавить цель...</a>
