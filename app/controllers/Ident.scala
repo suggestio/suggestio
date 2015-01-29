@@ -1,6 +1,7 @@
 package controllers
 
 import controllers.ident._
+import play.api.data.Form
 import util.acl._
 import util._
 import play.api.mvc._
@@ -20,7 +21,7 @@ import models._
  */
 
 object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with CaptchaValidator
-with ChangePw with PwRecover {
+with ChangePw with PwRecover with EmailPwReg {
 
   import LOGGER._
 
@@ -51,5 +52,9 @@ with ChangePw with PwRecover {
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
 
+  /** Что рендерить при неудачном биндинге формы регистрации? */
+  override def emailRegFormBindFailed(formWithErrors: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    ???
+  }
 }
 

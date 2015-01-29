@@ -95,13 +95,14 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
   }
 
   /** Что возвращать юзеру, когда сообщение отправлено на почту? */
-  def emailRequestOk(ea: Option[EmailActivation])(implicit ctx: Context): Future[Result] = {
+  protected def emailRequestOk(ea: Option[EmailActivation])(implicit ctx: Context): Future[Result] = {
     Ok(sentTpl(ea)(ctx))
   }
 
 
   /** Юзер возвращается по ссылке из письма. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwReg(eaInfo).async { implicit request =>
+    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
     ???
   }
 

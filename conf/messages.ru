@@ -341,3 +341,6 @@ e.event.not.found=Событие не найдено.
 
 reg.emailpw.email.subj=Подтверждение регистрации в сети Suggest.io
 
+adv.ext.ret.sc=Всю выдачу
+adv.ext.ret.ad=Только эту карточку
+

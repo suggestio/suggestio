@@ -5,7 +5,7 @@
 @import ctx._
 @import helper._
 @import util.FC.tdRadialFc
-
+@import util.adv.ExtUtil.formForTarget
 
 @base(
   title = "Внешнее размещение карточки",
@@ -27,16 +27,7 @@
     }
 
     @targets.iterator.zipWithIndex.map { case (target, i) =>
-      <input type="hidden" name="adv[@i].targetId" value="@target.id" />
-      <label>
-        <input type="checkbox" name="adv[@i].enabled" value="true" style="display: block;" />
-        @Messages(target.service.i18nCode)
-        @target.name
-      </label>
-      <label>
-        <input type="checkbox" name="adv[@i].return" value="@adv.MExtReturns.default" checked="checked" />
-        @* При переходе возвращаться на выдачу *@
-      </label>
+      @_createTargetTpl(target.adnId, formForTarget(target))
     }
 
     <a class="btn __size-M __minor add-target" id="socialApiAddTargetBtn" href="@routes.LkAdvExt.writeTarget(mnode.id.get)">Добавить цель...</a>

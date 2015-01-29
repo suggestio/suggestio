@@ -1,16 +1,14 @@
 package util.acl
 
-import java.net.URL
-
 import models.MAdnNode
-import play.api.data._, Forms._
+import play.api.data._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models.adv._
 import play.api.mvc.{Results, Result, Request, ActionBuilder}
-import util.FormUtil.{urlM, esIdUuidM}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
 import util.SiowebEsUtil.client
+import util.adv.ExtUtil
 
 import scala.concurrent.Future
 
@@ -23,53 +21,12 @@ import scala.concurrent.Future
  * В теле может содержаться id экшена, и нужно проверять права доступа.
  */
 
-object CanSubmitExtTargetForNode {
-
-  /**
-   * Маппинг формы для ввода ссылки на цель.
-   * @param adnId id узла, в рамках которого происходит действо.
-   * @return Экземпляр формы.
-   */
-  def targetFormM(adnId: String): Form[MExtTarget] = {
-    val tgUrlM = urlM
-      .transform[(URL, Option[MExtService])] (
-        {url =>
-          //val url1 = srv.normalizeTargetUrl(url)
-          url -> MExtServices.findForHost(url.getHost)
-        },
-        { _._1 }
-      )
-      .verifying("error.service.unknown", _._2.isDefined)
-      .transform[(String, MExtService)] (
-        {case (url, srvOpt) =>
-          val srv = srvOpt.get
-          val url1 = srv.normalizeTargetUrl(url)
-          (url1, srv) },
-        {case (url, srv) =>
-          (new URL(url), Some(srv)) }
-      )
-    val m = mapping(
-      "url" -> tgUrlM,
-      "id"  -> optional(esIdUuidM)
-    )
-    {case ((url, srv), idOpt) =>
-      MExtTarget(url = url, service = srv, adnId = adnId, id = idOpt)
-    }
-    {tg =>
-      val res = ((tg.url, tg.service), tg.id)
-      Some(res)
-    }
-    Form(m)
-  }
-
-}
-
 
 /** Экземпляр реквеста на сабмит цели. */
 case class ExtTargetSubmitRequest[A](
   pwOpt       : PwOpt_t,
   adnNode     : MAdnNode,
-  newTgForm   : Form[MExtTarget],
+  newTgForm   : Form[(MExtTarget, Option[MExtReturn])],
   tgExisting  : Option[MExtTarget],
   sioReqMd    : SioReqMd,
   request     : Request[A]
@@ -88,7 +45,7 @@ trait CanSubmitExtTargetForNodeBase extends ActionBuilder[ExtTargetSubmitRequest
   override def invokeBlock[A](request: Request[A], block: (ExtTargetSubmitRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val isAdnNodeAdmFut = IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt)
-    val formBinded = CanSubmitExtTargetForNode.targetFormM(adnId).bindFromRequest()(request)
+    val formBinded = ExtUtil.oneTargetFullFormM(adnId).bindFromRequest()(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     // Запускаем сразу в фоне поиск уже сохранённой цели.
     val tgIdOpt = formBinded.apply("id").value

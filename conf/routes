@@ -345,24 +345,27 @@ GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты
-GET  /ident/login2/email_pw             controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /ident/login2/email_pw             controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /ident/logout2                     controllers.Ident.logout
+GET  /id/epw/login                      controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /id/epw/login                      controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /id/logout                         controllers.Ident.logout
 ## ident: Восстановление пароля.
-GET  /ident/pw/r                        controllers.Ident.recoverPwForm
-POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
-GET  /ident/pw/r/ok                     controllers.Ident.recoverPwAccepted(email: String)
-GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId)
-POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
+GET  /id/epw/recover                    controllers.Ident.recoverPwForm
+POST /id/epw/recover                    controllers.Ident.recoverPwFormSubmit
+GET  /id/epw/recover/sent               controllers.Ident.recoverPwAccepted(email: String)
+GET  /id/epw/resetpw/:eActId            controllers.Ident.recoverPwReturn(eActId)
+POST /id/epw/resetpw/:eActId            controllers.Ident.pwResetSubmit(eActId)
 ## ident: Сменить пароль
-GET  /ident/pw/change                   controllers.Ident.changePassword
-POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
-GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
+GET  /id/epw/chpw                       controllers.Ident.changePassword
+POST /id/epw/chpw                       controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
+GET  /id/rdr/me/somewhere               controllers.Ident.rdrUserSomewhere
+## ident: рега по email и паролю
+POST /id/epw/reg                        controllers.Ident.emailRegSubmit
+GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: IEaEmailId)
 
 
 
 ### Барахло от Sio-v1 (не работает, в основном):
-# Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
+## Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
 

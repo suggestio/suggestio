@@ -22,6 +22,9 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
      * @return Конкретная реализация [[ReturnToScBuilder]].
      */
     def builder(): ReturnToScBuilder
+
+    /** Код в conf/messages. */
+    def i18nCode: String = "adv.ext.ret." + strId
   }
 
 
@@ -29,17 +32,17 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
   override type T = MExtReturn
 
 
-  /** Юзер должен возвращаться на открытую рекламную карточку. */
-  val ToAd: MExtReturn = new Val("ad") {
-    override def builder(): ReturnToScBuilder = {
-      new RetToNode {}
-    }
-  }
-
   /** Юзер должен возвращаться на выдачу размещающего. */
   val ToShowCase: MExtReturn = new Val("sc") {
     override def builder(): ReturnToScBuilder = {
       new RetToNode with RetToFocusedAd {}
+    }
+  }
+
+  /** Юзер должен возвращаться на открытую рекламную карточку. */
+  val ToAd: MExtReturn = new Val("ad") {
+    override def builder(): ReturnToScBuilder = {
+      new RetToNode {}
     }
   }
 

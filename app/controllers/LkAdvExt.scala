@@ -10,7 +10,7 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import util.adv.ExtAdvWsActor
+import util.adv.{ExtUtil, ExtAdvWsActor}
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -190,8 +190,8 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @return 200 Ok с отрендеренной формой.
    */
   def writeTarget(adnId: String) = IsAdnNodeAdmin(adnId) { implicit request =>
-    val form = CanSubmitExtTargetForNode.targetFormM(adnId)
-    Ok(_createTargetTpl(request.adnNode, form))
+    val form = ExtUtil.oneTargetFullFormM(adnId)
+    Ok(_createTargetTpl(adnId, form))
   }
 
 
@@ -205,14 +205,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(_createTargetTpl(request.adnNode, formWithErrors))
+        NotAcceptable(_createTargetTpl(adnId, formWithErrors))
       },
-      {tg =>
+      {case (tg, ret) =>
         tg.save.map { tgId =>
           // Вернуть форму с выставленным id.
           val tg2 = tg.copy(id = Some(tgId))
-          val form = request.newTgForm fill tg2
-          Ok(_createTargetTpl(request.adnNode, form))
+          val form = request.newTgForm fill (tg2, ret)
+          Ok(_createTargetTpl(adnId, form))
         }
       }
     )

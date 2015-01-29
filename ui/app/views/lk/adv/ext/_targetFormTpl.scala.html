@@ -1,20 +1,21 @@
-@(tf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+@(tf: Form[_], submitCall: Call)(implicit ctx: Context)
 
 @* Форма добавления новой цели. *@
 
+@import ctx._
 @import helper._
 @import util.FC.tdRadialFc
 
 @form(submitCall, 'class -> "js-social_add-target-form") {
 
   @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
-  <input type="hidden" name="id" value="@tf("id").value" />
+  <input type="hidden" name="id" value="@tf("tg.id").value" />
 
   <div class="social-target">
 
     <div class="social-target_name">
       @inputText(
-        tf("url"),
+        tf("tg.url"),
         '_label -> "Ссылка на группу",
         '_class -> "js-social-target_it"
       )
@@ -22,15 +23,14 @@
 
     <div class="social-target_option-lst">
 
-      <label class="social-target_option">
-        <input class="js-social-target_option" type="checkbox" name="someName" checked="checked"/>
-        <span class="styled-checkbox"></span>&nbsp;Всю выдачу
-      </label>
-
-      <label class="social-target_option">
-        <input class="js-social-target_option" type="checkbox" name="someName"/>
-        <span class="styled-checkbox"></span>&nbsp;Только эту карточку
-      </label>
+      @defining( tf("return").value ) { v =>
+        @adv.MExtReturns.values.iterator.map { mret =>
+          <label class="social-target_option">
+            <input class="js-social-target_option" type="checkbox" name="return" @if(v contains mret.strId) {checked="checked"}/>
+            <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
+          </label>
+        }
+      }
 
     </div>
 

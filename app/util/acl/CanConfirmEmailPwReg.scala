@@ -28,6 +28,8 @@ import CanConfirmEmailPwReg._
 
 
 trait CanConfirmEmailPwRegBase extends ActionBuilder[EmailPwRegConfirmRequest] with PlayMacroLogsDyn {
+
+  /** Инфа по активации, присланная через URL qs. */
   def eaInfo: IEaEmailId
 
   override def invokeBlock[A](request: Request[A], block: (EmailPwRegConfirmRequest[A]) => Future[Result]): Future[Result] = {
