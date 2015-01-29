@@ -3,6 +3,21 @@ define [], ()->
   $doc = $ document
   $app = $ "#socialApp"
 
+  $.fn.serializeObject = () ->
+    o = new Object()
+    a = this.serializeArray()
+    $.each(
+      a
+      () ->
+        if (o[this.name] != undefined)
+          if (!o[this.name].push)
+            o[this.name] = [o[this.name]]
+          o[this.name].push(this.value || '')
+        else
+          o[this.name] = this.value || ''
+    )
+    return o
+
   class SocialView
 
     constructor: ()->
@@ -53,21 +68,48 @@ define [], ()->
         $form.find(".js-social-target_option").not($this).prop("checked", false)
 
       $doc.on "click", ".js-delete-social-target", (e)->
-        console.log "js delete target"
         e.preventDefault()
         $this = $ e.currentTarget
+        $form = $this.closest ".js-social_add-target-form"
         href = $this.attr "href"
 
+        if href == "#"
+          $form.remove()
+
         $.ajax(
-          type: "POST"
+          type: "Post"
           url: href
-          success: (data)->
-            console.log data
+          statusCode:
+            204: ()->
+              $form.remove()
+            404: ()->
+              $form.remove()
+            403: ()->
+              # TODO сделать нормальную обработку ошибки
+              alert "Повторите попытку"
         )
 
       $doc.on "submit", "#js-social-target-list", (e)->
-        console.log "submit"
+        console.log "submit target list"
         e.preventDefault()
+        $this = $ e.currentTarget
+        action = $this.attr "action"
+
+        data = new Object()
+        data.adv = new Array()
+        $(".js-social_add-target-form").each (index)->
+          $form = $ this
+          data.adv.push $form.serializeObject()
+
+        console.log data
+
+        $.ajax(
+          type: "Post"
+          url: action
+          data: data
+          succes: (data)->
+            console.log data
+        )
 
 
 
