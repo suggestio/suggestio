@@ -1,0 +1,15 @@
+@(logForm: Option[Form[_]], regForm: Option[Form[_]])(implicit ctx: Context)
+
+@* Начальная страница для юзера, заходящего на my.suggest.io: логин или регистрация на одной странице. *@
+
+@identBase("") {
+
+  @logForm.map { lf =>
+    @_loginColumnTpl(lf)
+  }
+
+  @regForm.map { rf =>
+    @_regColumnTpl(rf)
+  }
+
+}

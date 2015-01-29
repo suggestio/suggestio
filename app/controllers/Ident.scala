@@ -15,8 +15,8 @@ import models._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 25.04.13 11:47
- * Description: Контроллер обычного логина в систему. Обычно логинятся через Mozilla Persona, но не исключено, что
- * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
+ * Description: Контроллер обычного логина в систему.
+ * Обычно логинятся через email+password.
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
@@ -51,6 +51,7 @@ with ChangePw with PwRecover with EmailPwReg {
   def rdrUserSomewhere = IsAuth.async { implicit request =>
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
+
 
   /** Что рендерить при неудачном биндинге формы регистрации? */
   override def emailRegFormBindFailed(formWithErrors: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {

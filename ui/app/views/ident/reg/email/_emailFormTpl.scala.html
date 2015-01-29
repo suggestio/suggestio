@@ -1,0 +1,28 @@
+@(rf: Form[_])(implicit ctx: Context)
+
+@import helper._
+@import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
+
+@form( routes.Ident.emailRegSubmit() ) {
+
+  @rf.globalError.map { ge =>
+    <p class="error-msg">Ошибка: @Messages(ge.message)</p>
+  }
+
+  @inputText(
+    rf("email"),
+    '_label -> "e-mail"
+  )
+
+  @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
+  @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+    <input type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
+    <img src="@routes.Captcha.getCaptcha(captchaId)" alt="" />
+  }
+
+  <p>На электронную почту будет отправлено письмо с подтверждением регистрации.</p>
+
+  <input type="submit" value="Отправить" />
+
+}

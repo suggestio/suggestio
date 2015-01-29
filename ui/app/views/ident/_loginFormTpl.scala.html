@@ -1,0 +1,36 @@
+@(lf: Form[_])(implicit ctx: Context)
+
+@* Форма логина на странице. *@
+
+@import helper._
+@import ctx._
+
+@form( routes.Ident.emailPwLoginFormSubmit() ) {
+
+  @lf.globalError.map { ge =>
+    <p class="error-msg">Ошибка: @Messages(ge.message)</p>
+  }
+
+  @inputText(
+    lf("email"),
+    '_label -> "E-mail:",
+    'placeholder -> "E-mail",
+    'type -> "email"
+  )
+
+  @inputPassword(
+    lf("password"),
+    '_label -> "Пароль:",
+    'placeholder -> "Пароль"
+  )
+
+  @checkbox(
+    lf("remember_me"),
+    '_label -> "Запомнить меня"
+  )
+
+  <a class="login-popup__recover-password js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль</a>
+
+  <input type="submit" value="Войти" />
+
+}
