@@ -21,7 +21,7 @@
     @_createTargetTpl(target.adnId, formForTarget(target))
   }
 
-  @form( routes.LkAdvExt.advFormSubmit(mad.id.get) ) {
+  @form( routes.LkAdvExt.advFormSubmit(mad.id.get), 'id->"js-social-target-list" ) {
 
     @* Сообщения о проблемах с выборкой. СВЕРСТАТЬ, А НЕ КОММЕНТИТЬ КАК ОБЫЧНО! *@
     @af("adv").errors.map { error =>

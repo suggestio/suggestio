@@ -59,10 +59,16 @@ define [], ()->
         href = $this.attr "href"
 
         $.ajax(
+          type: "POST"
           url: href
           success: (data)->
             console.log data
         )
+
+      $doc.on "submit", "#js-social-target-list", (e)->
+        console.log "submit"
+        e.preventDefault()
+
 
 
   return new SocialView()
