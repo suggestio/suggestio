@@ -230,8 +230,11 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    */
   def deleteTargetSubmit(tgId: String) = CanAccessExtTarget(tgId).async { implicit request =>
     request.extTarget.delete.map {
-      case true  => NoContent
-      case false => NotFound
+      case true =>
+        NoContent
+      case false =>
+        warn(s"deleteTargetSubmit($tgId): Target not exists, already deleted in parallel request?")
+        NotFound
     }
   }
 

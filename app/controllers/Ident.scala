@@ -54,7 +54,8 @@ with ChangePw with PwRecover with EmailPwReg {
 
 
   /** Что рендерить при неудачном биндинге формы регистрации? */
-  override def emailRegFormBindFailed(formWithErrors: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override def emailRegFormBindFailed(formWithErrors: Form[String])
+                                     (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     ???
   }
 }

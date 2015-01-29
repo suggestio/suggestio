@@ -52,7 +52,7 @@ POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
 ## Супервайзинг рекламных карточек на подчинённых узлах
-GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
+GET  /m/lk/xadv/geo/wnd/:adId           controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
@@ -63,21 +63,21 @@ POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublish
 
 
 ## Размещение рекламы (adv) на узлах-получателях
-GET  /m/lk/xadv/:adId/ctl               controllers.MarketAdv.advForAd(adId)
-POST /m/lk/xadv/:adId/ctl               controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/xadv/:adId/price             controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/xadvs/:adnId                 controllers.MarketAdv.showNodeAdvs(adnId)
+GET  /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advForAd(adId)
+POST /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/xadv/geo/price/for/:adId     controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /m/lk/xadv/geo/for/node/:adnId     controllers.MarketAdv.showNodeAdvs(adnId)
 ## Размещение рекламы: обработка запросов размещения.
-POST /m/lk/xadvs/req/:advReqId/refuse   controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
-POST /m/lk/xadvs/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /m/lk/xadv/geo/req/:advReqId/refuse   controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /m/lk/xadv/geo/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 
 ## Размещение рекламы на внешних сервисах
-GET  /m/lk/xadv/ext/:adId               controllers.LkAdvExt.forAd(adId)
-POST /m/lk/xadv/ext/:adId               controllers.LkAdvExt.advFormSubmit(adId)
-GET  /m/lk/xadv/ext/tgt/write/:adnId    controllers.LkAdvExt.writeTarget(adnId)
-POST /m/lk/xadv/ext/tgt/write/:adnId    controllers.LkAdvExt.writeTargetSubmit(adnId)
+GET  /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTarget(adnId)
+POST /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTargetSubmit(adnId)
 GET  /m/lk/xadv/ext/ws/run              controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
-POST /m/lk/xadv/ext/tgt/delete/:tgId    controllers.LkAdvExt.deleteTargetSubmit(tgId)
+POST /m/lk/xadv/ext/tg/delete/:tgId     controllers.LkAdvExt.deleteTargetSubmit(tgId)
+GET  /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.forAd(adId)
+POST /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.advFormSubmit(adId)
 
 
 ## ЛК: Рекламные карточки
