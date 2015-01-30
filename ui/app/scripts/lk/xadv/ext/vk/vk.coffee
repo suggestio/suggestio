@@ -42,7 +42,7 @@ define ["SioPR"], (SioPR) ->
         VK.Api.call "utils.resolveScreenName", params, callback
       catch error
         @ctx.__status = "error"
-        @ctx.__error = "incorrect target url"
+        @ctx.__error = "e.ext.adv.target.url.invalid"
         @onComplete @ctx, sendF
 
     saveWallPhoto: (savedPicture) ->
@@ -130,7 +130,7 @@ define ["SioPR"], (SioPR) ->
           onSuccess()
         else
           @ctx._status = "error"
-          @ctx._error = "not auth"
+          @ctx._error = "e.ext.adv.unathorized"
           @onComplete @ctx, sendF
 
       getLoginStatusCallback = (response) =>

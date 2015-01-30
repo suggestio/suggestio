@@ -334,3 +334,5 @@ reg.emailpw.email.subj=Confirm your registration in Suggest.io network
 adv.ext.ret.sc=My showcase
 adv.ext.ret.ad=This ad
 
+e.ext.adv.unathorized=User not authorized
+e.ext.adv.target.url.invalid=Invalid url

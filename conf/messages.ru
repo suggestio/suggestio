@@ -344,3 +344,5 @@ reg.emailpw.email.subj=Подтверждение регистрации в се
 adv.ext.ret.sc=Всю выдачу
 adv.ext.ret.ad=Только эту карточку
 
+e.ext.adv.unathorized=Пользователь не авторизован
+e.ext.adv.target.url.invalid=Некорректный url цели
