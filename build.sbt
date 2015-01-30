@@ -53,6 +53,7 @@ libraryDependencies ++= {
       exclude("org.ow2.asm", "asm-debug-all")
       exclude("edu.ucar", "netcdf")
       exclude("commons-logging", "commons-logging")
+      exclude("de.l3s.boilerpipe", "boilerpipe")
     ,
     // apache tika хочет bouncycastle для вскрытия негодных pdf'ов.
     "org.bouncycastle" % "bcmail-jdk16" % bcVsn,
