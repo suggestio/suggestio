@@ -41,7 +41,6 @@ define [], ()->
         console.log "change event"
         $this = $ e.currentTarget
         $form = $this.closest ".js-social_add-target-form"
-        console.log $this.val()
 
         $form.trigger "submit"
 
@@ -55,9 +54,11 @@ define [], ()->
           type: "Post"
           url: action
           data: data
+          statusCode:
+            406: ()->
+              $this.find(".js-social-target_it").addClass "__error"
           success: (data)->
-            console.log "---form submit callback---"
-            console.log data
+            $this.find(".js-social-target_it").removeClass "__error"
         )
 
       $doc.on "change", ".js-social-target_option", (e)->
@@ -88,6 +89,12 @@ define [], ()->
               # TODO сделать нормальную обработку ошибки
               alert "Повторите попытку"
         )
+
+      $doc.on "click", ".js-social-show-error", (e)->
+        $this = $ this
+        $next = $this.next()
+
+        $next.toggle()
 
       $doc.on "submit", "#js-social-target-list", (e)->
         $form = $ e.currentTarget

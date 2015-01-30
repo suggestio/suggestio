@@ -53,16 +53,13 @@ define ["SioPR"], (SioPR) ->
 
       FB.login(
         (response) =>
-          console.log "--login--"
-          console.log response
-          console.log "--login--"
           if response.authResponse
             @publicatePost()
           else
             @ctx._status = "error"
-            @ctx._error = "auth error"
-            console.log "---auth error---"
-            console.log @ctx
+            @ctx._error =
+              msg: "e.ext.adv.unathorized"
+              info: response
             @onComplete @ctx, sendF
         loginParams
       )

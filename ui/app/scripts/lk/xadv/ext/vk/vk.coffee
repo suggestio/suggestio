@@ -7,6 +7,7 @@ define ["SioPR"], (SioPR) ->
     ACESS_LVL = 8197
 
     userId = null
+    isGroup = false
     post = new Object()
 
     constructor: (@ws, @ctx, @onComplete) ->
@@ -24,17 +25,22 @@ define ["SioPR"], (SioPR) ->
       message = JSON.stringify json
       @ws.send message
 
-    setOwnerId: () ->
+    setOwnerId: (onSuccess) ->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url
 
       match = url.match REGEXP
 
       callback = (data) =>
-        post.owner_id = data.response.object_id
-        @wallPost()
+        try
+          if data.response.type == "group" then isGroup = true
+          userId = data.response.object_id
+        catch exception
+          console.log exception
 
-      # если в url была какая-то некорректная строка, использовать current user id
+        onSuccess()
+
+      # если в url была какая-то некорректная строка, возвращается status error
       try
         params =
           screen_name: match[1]
@@ -58,12 +64,17 @@ define ["SioPR"], (SioPR) ->
 
       callback = (data) =>
         attachments = new Array()
-        attachments.push data.response[0].id
-        attachments.push @ctx._target.href
-        attachments = attachments.join ","
+        try
+          attachments.push data.response[0].id
+          attachments.push @ctx._target.href
+          attachments = attachments.join ","
 
-        post.attachments = attachments
-        @setOwnerId()
+          post.attachments = attachments
+          @wallPost()
+        catch exception
+          console.log exception
+          @ctx._status = "error"
+          @onComplete @ctx, sendF
 
       params =
         user_id: userId
@@ -75,14 +86,19 @@ define ["SioPR"], (SioPR) ->
 
     wallPost: () ->
 
+      if isGroup
+        ownerId = "-#{userId}"
+      else
+        ownerId = userId
+
+      post.owner_id = ownerId
+
       try
         post.message = @ctx._ads[0].content.fields[0].text
       catch error
         console.log error
 
       callback = (data) =>
-        console.log data
-
         if data.error
           @ctx._status = "error"
           @ctx._error = data.error
@@ -126,17 +142,19 @@ define ["SioPR"], (SioPR) ->
 
       loginCallback = (response) =>
         if response.session
-          userId = response.session.mid
-          onSuccess()
+          #userId = response.session.mid
+          @setOwnerId onSuccess
         else
           @ctx._status = "error"
-          @ctx._error = "e.ext.adv.unathorized"
+          @ctx._error =
+            msg: "e.ext.adv.unathorized"
+            info: response
           @onComplete @ctx, sendF
 
       getLoginStatusCallback = (response) =>
         if response.session
-          userId = response.session.mid
-          onSuccess()
+          #userId = response.session.mid
+          @setOwnerId onSuccess
         else
           VK.Auth.login loginCallback, ACESS_LVL
 
