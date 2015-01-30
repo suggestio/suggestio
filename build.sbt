@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.13.5-SNAPSHOT"
+version := "1.13.6-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -22,7 +22,6 @@ resolvers ++= Seq(
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.7"
   val esVsn         = "1.3.2"
-  val hadoopVsn     = "2.4.1"
   val akkaVsn       = "2.3.4"
   val tikaVsn       = "1.6"
   val cascadingVsn  = "2.6.+"
@@ -61,25 +60,12 @@ libraryDependencies ++= {
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
-    "org.apache.hadoop" % "hadoop-main" % hadoopVsn
-      exclude("commons-beanutils", "commons-beanutils")
-      exclude("commons-beanutils", "commons-beanutils-core")
-    ,
-    "org.apache.hadoop" % "hadoop-client" % hadoopVsn
-      exclude("commons-beanutils", "commons-beanutils")
-      exclude("commons-beanutils", "commons-beanutils-core")
-    ,
     // cassandra
     "com.websudos"  %% "phantom-dsl" % phantomVersion,
     "org.xerial.snappy" % "snappy-java" % "1.+",
     "net.jpountz.lz4" % "lz4" % "1.+",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
-    //"cascading" % "cascading-hadoop" % cascadingVsn,      // hadoop <= 1.x
-    "cascading" % "cascading-hadoop2-mr1" % cascadingVsn,   // hadoop >= 2.x
-    "com.scaleunlimited" % "cascading-utils" % "2.2sio-SNAPSHOT"   // нужно для HadoopUtils.
-      exclude("cascading", "cascading-hadoop")
-    ,
     // Морфология
     "org.apache.lucene.morphology" % "russian" % morphVsn,
     "org.apache.lucene.morphology" % "english" % morphVsn,

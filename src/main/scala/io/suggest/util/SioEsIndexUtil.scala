@@ -1,6 +1,6 @@
 package io.suggest.util
 
-import io.suggest.model.JsonDfsBackend
+import io.suggest.model._
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import scala.concurrent.{Promise, Future}
@@ -26,7 +26,7 @@ object SioEsIndexUtil extends MacroLogsImpl with Serializable {
 
   // Описание идентификатор типов
   type IITYPE_t = String
-  type IIMap_t  = JsonDfsBackend.JsonMap_t
+  type IIMap_t  = JsonMap_t
   type AnyJsonMap = scala.collection.Map[String, Any]
 
   // Дефолтовые настройки скролла.

@@ -2,13 +2,12 @@ package io.suggest.ym.model
 
 import io.suggest.model._
 import org.joda.time.DateTime
-import org.codehaus.jackson.annotate.JsonIgnore
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
-import io.suggest.ym.model.ad.{RichDescr, MAdT}
+import io.suggest.ym.model.ad.MAdT
 import io.suggest.model.common._
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.common.EMImg.Imgs_t
@@ -65,16 +64,16 @@ final case class MWelcomeAd(
   with EMDateCreatedMut
 {
   override type T = MWelcomeAd
-  @JsonIgnore override def companion = MWelcomeAd
+  override def companion = MWelcomeAd
 
-  @JsonIgnore override def offers = Nil
-  @JsonIgnore override def prio = None
-  @JsonIgnore override def userCatId = Set.empty
-  @JsonIgnore override def receivers = Map.empty
-  @JsonIgnore override def blockMeta = BlockMeta.DEFAULT    // TODO Блоки вообще не относятся к карточкам приветствия. Нужно это спилить.
-  @JsonIgnore override def colors = Map.empty
-  @JsonIgnore override def disableReason = Nil
-  @JsonIgnore override def richDescrOpt = None
+  override def offers = Nil
+  override def prio = None
+  override def userCatId = Set.empty
+  override def receivers = Map.empty
+  override def blockMeta = BlockMeta.DEFAULT    // TODO Блоки вообще не относятся к карточкам приветствия. Нужно это спилить.
+  override def colors = Map.empty
+  override def disableReason = Nil
+  override def richDescrOpt = None
 }
 
 

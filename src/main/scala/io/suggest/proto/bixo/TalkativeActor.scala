@@ -2,7 +2,7 @@ package io.suggest.proto.bixo
 
 import akka.actor.Actor
 import io.suggest.util.JacksonWrapper
-import io.suggest.model.JsonDfsBackend.JsonMap_t
+import io.suggest.model.JsonMap_t
 
 /**
  * Suggest.io
