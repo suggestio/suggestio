@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.13.7-SNAPSHOT"
+version := "1.13.8-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -51,6 +51,8 @@ libraryDependencies ++= {
       exclude("org.bouncycastle", "bcmail-jdk15") // заменим ниже на *-jdk16
       exclude("org.bouncycastle", "bcprov-jdk15")
       exclude("org.ow2.asm", "asm-debug-all")
+      exclude("edu.ucar", "netcdf")
+      exclude("commons-logging", "commons-logging")
     ,
     // apache tika хочет bouncycastle для вскрытия негодных pdf'ов.
     "org.bouncycastle" % "bcmail-jdk16" % bcVsn,
