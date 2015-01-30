@@ -3,22 +3,6 @@ define [], ()->
   $doc = $ document
   $app = $ "#socialApp"
 
-  $.fn.serializeObject = () ->
-    o = new Object()
-    a = this.serializeArray()
-    $.each(
-      a
-      () ->
-        if (o[this.name] != undefined)
-          if (!o[this.name].push)
-            o[this.name] = [o[this.name]]
-          o[this.name].push(this.value || '')
-        else
-          o[this.name] = this.value || ''
-    )
-    return o
-
-
   $.fn.sioSerializeObject = () ->
     result = new Object()
     $form = $ this
@@ -30,7 +14,6 @@ define [], ()->
       result[xname] = $thisInput.val()
       if xname == "return" then result[xname] = "ad"
 
-    console.log result
     return result
 
   class SocialView
@@ -106,30 +89,22 @@ define [], ()->
         )
 
       $doc.on "submit", "#js-social-target-list", (e)->
-        console.log "submit target list"
-        e.preventDefault()
-        $this = $ e.currentTarget
-        action = $this.attr "action"
+        $form = $ e.currentTarget
+        adv = new Array()
 
-        data = new Object()
-        data.adv = new Array()
         $(".js-social_add-target-form").each (index)->
-          $form = $ this
-          data.adv.push $form.sioSerializeObject()
+          $targetForm = $ this
+          adv.push $targetForm.sioSerializeObject()
+
+        html = ""
+        for target in adv
+          html += "<input type='hidden' name='adv[#{_i}].tg_id' value='#{target.tg_id}' />"
+          html += "<input type='hidden' name='adv[#{_i}].return' value='#{target.return}' />"
+
+        $form.prepend html
+        return true
 
 
-        console.log data
-
-        data = JSON.stringify data
-
-        $.ajax(
-          type: "Post"
-          url: action
-          data: data
-          contentType: "application/json; charset=utf-8",
-          succes: (data)->
-            console.log data
-        )
 
 
 
