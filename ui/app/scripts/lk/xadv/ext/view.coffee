@@ -10,9 +10,11 @@ define [], ()->
 
     $input.each ()->
       $thisInput = $ this
+      # если не  выставлен чекбокс, не записываем свойство
+      if $thisInput.attr("type") == "checkbox" && !$thisInput.prop("checked")
+        return true
       xname = $thisInput.data "xname"
       result[xname] = $thisInput.val()
-      if xname == "return" then result[xname] = "ad"
 
     return result
 
@@ -63,8 +65,7 @@ define [], ()->
         checked = $this.prop "checked"
         $form = $this.closest ".js-social_add-target-form"
 
-        $this.val checked
-        $form.find(".js-social-target_option").not($this).prop("checked", false).val(false)
+        $form.find(".js-social-target_option").not($this).prop("checked", false)
 
       $doc.on "click", ".js-delete-social-target", (e)->
         e.preventDefault()
@@ -97,11 +98,14 @@ define [], ()->
           adv.push $targetForm.sioSerializeObject()
 
         html = ""
+        console.log adv
         for target in adv
-          html += "<input type='hidden' name='adv[#{_i}].tg_id' value='#{target.tg_id}' />"
-          html += "<input type='hidden' name='adv[#{_i}].return' value='#{target.return}' />"
+          if target.return
+            html += "<input type='hidden' name='adv[#{_i}].tg_id' value='#{target.tg_id}' />"
+            html += "<input type='hidden' name='adv[#{_i}].return' value='#{target.return}' />"
 
         $form.prepend html
+        console.log html
         return true
 
 
