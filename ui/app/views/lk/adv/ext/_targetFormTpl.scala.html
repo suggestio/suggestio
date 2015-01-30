@@ -31,7 +31,7 @@
         @defining( tf("return").value ) { v =>
           @adv.MExtReturns.values.iterator.map { mret =>
             <label class="social-target_option">
-              <input class="js-social-target_option" type="checkbox" name="return" data-xname="return" @if(v contains mret.strId) {checked="checked"}/>
+              <input class="js-social-target_option" type="checkbox" data-xname="return"  name="return" @if(v contains mret.strId) {checked="checked"}/>
               <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
             </label>
           }

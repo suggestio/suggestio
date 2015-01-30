@@ -18,6 +18,21 @@ define [], ()->
     )
     return o
 
+
+  $.fn.sioSerializeObject = () ->
+    result = new Object()
+    $form = $ this
+    $input = $form.find "input[data-xname]"
+
+    $input.each ()->
+      $thisInput = $ this
+      xname = $thisInput.data "xname"
+      result[xname] = $thisInput.val()
+      if xname == "return" then result[xname] = "ad"
+
+    console.log result
+    return result
+
   class SocialView
 
     constructor: ()->
@@ -65,7 +80,8 @@ define [], ()->
         checked = $this.prop "checked"
         $form = $this.closest ".js-social_add-target-form"
 
-        $form.find(".js-social-target_option").not($this).prop("checked", false)
+        $this.val checked
+        $form.find(".js-social-target_option").not($this).prop("checked", false).val(false)
 
       $doc.on "click", ".js-delete-social-target", (e)->
         e.preventDefault()
@@ -99,14 +115,18 @@ define [], ()->
         data.adv = new Array()
         $(".js-social_add-target-form").each (index)->
           $form = $ this
-          data.adv.push $form.serializeObject()
+          data.adv.push $form.sioSerializeObject()
+
 
         console.log data
+
+        data = JSON.stringify data
 
         $.ajax(
           type: "Post"
           url: action
           data: data
+          contentType: "application/json; charset=utf-8",
           succes: (data)->
             console.log data
         )
