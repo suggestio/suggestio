@@ -20,11 +20,11 @@ scalaVersion := "2.11.5"
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= Seq(
-  jdbc, 
+  jdbc exclude("com.h2database", "h2"),
   anorm,
   cache,
   json,
-  ws,
+  ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.4.0-M2-SNAPSHOT",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
@@ -48,10 +48,11 @@ libraryDependencies ++= Seq(
     exclude("xml-apis", "xmlParserAPIs")
     exclude("xerces",   "xerces")
     exclude("log4j",    "log4j")
+    exclude("commons-logging", "commons-logging")
   ,
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
-  "org.jcoffeescript" % "jcoffeescript" % "1.6.1-SNAPSHOT",
+  "org.jcoffeescript" % "jcoffeescript" % "1.6.2-SNAPSHOT",
   // for domain validation:
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
@@ -90,15 +91,36 @@ libraryDependencies ++= Seq(
   "xml-apis" % "xml-apis-ext" % "1.3.04",
   // test
   // play-2.3.x: Устарел selenium
-  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2",
-  "org.fluentlenium" % "fluentlenium-core" % "0.10.2",
-  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1",
-  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
-  // Соц.сети. ветка oauth2-spam
-  //"ws.securesocial" %% "securesocial" % "3.0play24-SNAPSHOT",
+  // org.w3c.css#sac конфликтует xml-apis-ext
+  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "org.fluentlenium" % "fluentlenium-core" % "0.10.2"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.15"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  // Логин через соц.сети
+  "io.suggest" %% "securesocial" % "3.0.0-SNAPSHOT"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
   // play-2.3+:
   "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
 )
 
 play.Play.projectSettings
@@ -176,6 +198,11 @@ proguardSettings
 ProguardKeys.proguardVersion in Proguard := "5.2"
 
 ProguardKeys.options in Proguard ++= Seq(
+
+  "-keep class * extends javax.xml.parsers.SAXParserFactory",
+  "-keep public class org.apache.xerces.**",
+  "-keep public class play.api.**",
+  "-keep public class ch.qos.logback.**",
   "-keepnames class * implements org.xml.sax.EntityResolver",
   """-keepclasseswithmembers public class * {
       public static void main(java.lang.String[]);
@@ -203,12 +230,27 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
   }""",
-  "-keepclassmembernames class * implements models.ai.ContentHandlerResult",
-  "-dontnote",
-  "-dontwarn",
+  "-keep class * implements models.ai.ContentHandlerResult",
+  "-keepattributes *Annotation*,Signature",
+  // http://stackoverflow.com/a/10311980
+  "-keep class com.google.inject.Binder",
+  "-keep public class com.google.inject.Inject",
+  // keeps all fields and Constructors with @Inject
+  """-keepclassmembers,allowoptimization,allowobfuscation class * {
+    @com.google.inject.Inject <fields>;
+    @com.google.inject.Inject <init>(...);
+  }""",
+  """-keepclassmembers,allowobfuscation,allowoptimization class * {
+    @com.google.inject.Provides <methods>;
+  }""",
+  // TODO заценить описалово из http://stackoverflow.com/a/5843875
+  "-optimizations !method/inlining/*",
   "-dontoptimize",
-  //"-ignorewarnings"
-  "-verbose"
+  "-dontobfuscate",
+  //"-ignorewarnings",
+  "-verbose",
+  "-dontnote",
+  "-dontwarn"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")

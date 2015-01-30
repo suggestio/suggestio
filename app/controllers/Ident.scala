@@ -20,7 +20,7 @@ import models._
  */
 
 object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with CaptchaValidator
-with ChangePw with PwRecover with EmailPwReg {
+with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
   import LOGGER._
 
