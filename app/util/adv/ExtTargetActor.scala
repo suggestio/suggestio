@@ -257,14 +257,18 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
     /** Сообщить юзеру, что на стороне js зафиксирована ошибка. */
     def renderError(errOpt: Option[JsErrorInfo]): Unit = {
-      // TODO Добавить поддержку msg-кодов настороне js.
-      val einfo = errOpt.map { jsei =>
-        jsei.msg + "\n\n" + jsei.other
+      val err = errOpt match {
+        case Some(jserr) =>
+          ErrorInfo(
+            msg = jserr.msg,
+            args = jserr.args,
+            info = Some(jserr.other.toString())
+          )
+        case None =>
+          ErrorInfo(
+            msg = "error.adv.ext.js.refused"
+          )
       }
-      val err = ErrorInfo(
-        msg = "error.adv.ext.js.refused",
-        info = einfo
-      )
       val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)
     }

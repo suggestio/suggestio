@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.13.6-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.13.8-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -51,7 +51,7 @@ libraryDependencies ++= Seq(
   ,
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
-  "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
+  "org.jcoffeescript" % "jcoffeescript" % "1.6.1-SNAPSHOT",
   // for domain validation:
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
@@ -77,8 +77,17 @@ libraryDependencies ++= Seq(
   "net.jpountz.lz4" % "lz4" % "1.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
-  // svg
-  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
+  // svg. batik довольно кривой, exclude(batik-ext) не пашет, приходится сочинять чудеса.
+  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-dom" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-css" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-xml" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-util" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-parser" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-anim" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-awt-util" % "1.7" intransitive(),
+  "xml-apis" % "xml-apis" % "1.4.01",
+  "xml-apis" % "xml-apis-ext" % "1.3.04",
   // test
   // play-2.3.x: Устарел selenium
   "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2",
@@ -164,7 +173,7 @@ unmanagedJars in Compile ~= {uj =>
 // proguard: защита скомпиленного кода от реверса.
 proguardSettings
 
-ProguardKeys.proguardVersion in Proguard := "5.1"
+ProguardKeys.proguardVersion in Proguard := "5.2"
 
 ProguardKeys.options in Proguard ++= Seq(
   "-keepnames class * implements org.xml.sax.EntityResolver",
