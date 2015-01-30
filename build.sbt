@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.13.6-SNAPSHOT"
+version := "1.13.7-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -23,7 +23,7 @@ libraryDependencies ++= {
   val slf4jVsn      = "1.7.7"
   val esVsn         = "1.3.2"
   val akkaVsn       = "2.3.4"
-  val tikaVsn       = "1.6"
+  val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.+"
   val playVsn       = "2.4.0-M2"
   val morphVsn      = "1.3-SNAPSHOT"
@@ -36,7 +36,6 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "1.+",
     "commons-lang" % "commons-lang" % "2.+",
-    "commons-beanutils" % "commons-beanutils" % "1.9.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.4.4",
@@ -51,6 +50,7 @@ libraryDependencies ++= {
       exclude("xerces", "xercesImpl")
       exclude("org.bouncycastle", "bcmail-jdk15") // заменим ниже на *-jdk16
       exclude("org.bouncycastle", "bcprov-jdk15")
+      exclude("org.ow2.asm", "asm-debug-all")
     ,
     // apache tika хочет bouncycastle для вскрытия негодных pdf'ов.
     "org.bouncycastle" % "bcmail-jdk16" % bcVsn,
