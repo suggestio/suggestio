@@ -34,10 +34,16 @@ object SiobixBuild extends Build {
     dependencies = Seq(util)
   )
 
+  lazy val secureSocial = Project(
+    id = "securesocial",
+    base = file("securesocial")
+  )
+  .enablePlugins(play.PlayScala, SbtWeb)
+
   lazy val web21 = Project(
     id = "web21",
     base = file("web21"),
-    dependencies = Seq(util, utilPlay)
+    dependencies = Seq(util, utilPlay, secureSocial)
   )
   .enablePlugins(play.PlayScala, SbtWeb)
 
@@ -46,6 +52,6 @@ object SiobixBuild extends Build {
     id = "root",
     base = file(".")
   )
-  .aggregate(util, utilPlay, web21)
+  .aggregate(util, utilPlay, secureSocial, web21)
 
 }
