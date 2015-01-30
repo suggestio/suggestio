@@ -28,9 +28,6 @@ define ["SioPR"], (SioPR) ->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url
 
-      # TODO убрать при выкате на продакшн
-      url   = "trash"
-
       match = url.match REGEXP
 
       callback = (data) =>
@@ -44,8 +41,9 @@ define ["SioPR"], (SioPR) ->
 
         VK.Api.call "utils.resolveScreenName", params, callback
       catch error
-        post.owner_id = userId
-        @wallPost()
+        @ctx.__status = "error"
+        @ctx.__error = "incorrect target url"
+        @onComplete @ctx, sendF
 
     saveWallPhoto: (savedPicture) ->
 

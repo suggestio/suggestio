@@ -98,14 +98,12 @@ define [], ()->
           adv.push $targetForm.sioSerializeObject()
 
         html = ""
-        console.log adv
         for target in adv
           if target.return
             html += "<input type='hidden' name='adv[#{_i}].tg_id' value='#{target.tg_id}' />"
             html += "<input type='hidden' name='adv[#{_i}].return' value='#{target.return}' />"
 
         $form.prepend html
-        console.log html
         return true
 
 
