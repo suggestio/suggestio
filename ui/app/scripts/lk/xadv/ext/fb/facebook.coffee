@@ -54,7 +54,7 @@ define ["SioPR"], (SioPR) ->
       FB.login(
         (response) =>
           if response.authResponse
-            @publicatePost()
+            @checkUserType()
           else
             @ctx._status = "error"
             @ctx._error =
@@ -62,6 +62,40 @@ define ["SioPR"], (SioPR) ->
               info: response
             @onComplete @ctx, sendF
         loginParams
+      )
+
+    checkUserType: ()->
+      REGEXP  = /// /(?!.+/)(.+)$ ///
+      url     = @ctx._target.url
+
+      if url.indexOf("/groups/") > 0
+        console.log url
+        match = url.match REGEXP
+        try
+          console.log match
+          groupId = match[1]
+          @publicatePostInGroup groupId
+        catch exception
+          console.log exception
+      else
+       @publicatePost()
+
+    publicatePostInGroup: (groupId)->
+      callback = (data)=>
+        console.log data
+        @ctx._status = "success"
+        @onComplete @ctx, sendF
+
+      options =
+        picture: @ctx._ads[0].rendered.sioUrl
+        message: @ctx._ads[0].content.fields[0].text
+        link: @ctx._target.href
+
+      FB.api(
+        "/#{groupId}/feed"
+        "POST"
+        options
+        callback
       )
 
     publicatePost: () ->
