@@ -6,10 +6,6 @@ define ["SioPR"], (SioPR) ->
     API_ID = 4705589
     ACESS_LVL = 8197
 
-    userId = null
-    isGroup = false
-    post = new Object()
-
     constructor: (@ws, @ctx, @onComplete) ->
       console.log "vk init"
 
@@ -33,8 +29,8 @@ define ["SioPR"], (SioPR) ->
 
       callback = (data) =>
         try
-          if data.response.type == "group" then isGroup = true
-          userId = data.response.object_id
+          if data.response.type == "group" then @ctx.is_group = true
+          @ctx.user_id = data.response.object_id
         catch exception
           console.log exception
 
@@ -53,7 +49,7 @@ define ["SioPR"], (SioPR) ->
 
     saveWallPhoto: (savedPicture) ->
 
-      if !userId?
+      if !@ctx.user_id?
         onSuccess = () =>
           @saveWallPhoto(savedPicture)
 
@@ -69,29 +65,30 @@ define ["SioPR"], (SioPR) ->
           attachments.push @ctx._target.href
           attachments = attachments.join ","
 
-          post.attachments = attachments
-          @wallPost()
+          @wallPost attachments
         catch exception
           console.log exception
           @ctx._status = "error"
           @onComplete @ctx, sendF
 
       params =
-        user_id: userId
+        user_id: @ctx.user_id
         server: savedPicture.server
         photo: savedPicture.photo
         hash: savedPicture.hash
 
       VK.Api.call "photos.saveWallPhoto", params, callback
 
-    wallPost: () ->
+    wallPost: (attachments) ->
+      post = new Object()
 
-      if isGroup
-        ownerId = "-#{userId}"
+      if @ctx.is_group
+        ownerId = "-#{@ctx.user_id}"
       else
-        ownerId = userId
+        ownerId = @ctx.user_id
 
       post.owner_id = ownerId
+      post.attachments = attachments
 
       try
         post.message = @ctx._ads[0].content.fields[0].text
@@ -112,7 +109,7 @@ define ["SioPR"], (SioPR) ->
 
     getWallUploadServer: () ->
 
-      if !userId?
+      if !@ctx.user_id?
         onSuccess = () =>
           @getWallUploadServer()
 
@@ -120,7 +117,7 @@ define ["SioPR"], (SioPR) ->
         return false
 
       params =
-        user_id: userId
+        user_id: @ctx.user_id
 
       callback = (data) =>
         try
@@ -142,7 +139,6 @@ define ["SioPR"], (SioPR) ->
 
       loginCallback = (response) =>
         if response.session
-          #userId = response.session.mid
           @setOwnerId onSuccess
         else
           @ctx._status = "error"
@@ -153,7 +149,6 @@ define ["SioPR"], (SioPR) ->
 
       getLoginStatusCallback = (response) =>
         if response.session
-          #userId = response.session.mid
           @setOwnerId onSuccess
         else
           VK.Auth.login loginCallback, ACESS_LVL
