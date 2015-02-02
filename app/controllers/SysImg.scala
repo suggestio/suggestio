@@ -94,4 +94,21 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Удалить указанную картинку из хранилища.
+   * @param im Картинка.
+   * @return Редирект.
+   */
+  def deleteOneSubmit(im: MImg) = IsSuperuser.async { implicit request =>
+    // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
+    im.delete map { _ =>
+      val (msg, rdr) = if (im.isOriginal)
+        "Оригинал удалён." -> routes.SysImg.index()
+      else
+        "Дериватив удалён на текущем узле и в общем хранилище." -> routes.SysImg.showOne(im.original)
+      Redirect(rdr)
+        .flashing("success" -> msg)
+    }
+  }
+
 }

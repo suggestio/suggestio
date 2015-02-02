@@ -4,6 +4,7 @@
 
 @import datetime._
 @import ctx._
+@import stuff._
 @import util.img.DynImgUtil._
 
 @sysImgBase(
@@ -67,5 +68,8 @@
 
   @* Рендер самой картинки. *@
   <img src="@imgCall(img)" alt="Текущая картинка" />
+
+  @* Отрендерить кнопку удаления. *@
+  @_deleteSmthFormBtnTpl( routes.SysImg.deleteOneSubmit(img) )
 
 }
