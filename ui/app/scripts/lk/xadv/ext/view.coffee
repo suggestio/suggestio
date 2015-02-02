@@ -33,8 +33,7 @@ define [], ()->
         $.ajax(
           url: href
           success: (data)->
-            console.log data
-            $app.append data
+            $("#js-social-target-list").before data
         )
 
       $doc.on "change", ".js-social-target_it input", (e)->
@@ -58,7 +57,9 @@ define [], ()->
             406: ()->
               $this.find(".js-social-target_it").addClass "__error"
           success: (data)->
-            $this.find(".js-social-target_it").removeClass "__error"
+            $data = $ data
+            html = $data.html()
+            $this.html html
         )
 
       $doc.on "change", ".js-social-target_option", (e)->
