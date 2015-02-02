@@ -36,7 +36,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MMartCategoryJmx,
     new EmailActivationJmx,
     new EmailPwIdentJmx,
-    new MozillaPersonaIdentJmx,
     new MPersonJmx,
     new MCompanyJmx,
     new MCalendarJmx,

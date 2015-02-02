@@ -14,6 +14,8 @@ import SiowebEsUtil.client
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl
 
+import scala.util.Success
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -65,43 +67,58 @@ trait ChangePwAction extends SioController with PlayMacroLogsI {
   /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */
   def _changePasswordSubmit(r: Option[String])(onError: Form[(String, String)] => Future[Result])
                            (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val personId = request.pwOpt.get.personId
+    lazy val logPrefix = s"_changePasswordSubmit($personId): "
     changePasswordFormM.bindFromRequest().fold(
       {formWithErrors =>
-        LOGGER.debug("changePasswordSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        LOGGER.debug(logPrefix + "Failed to bind form:\n " + formatFormErrors(formWithErrors))
         onError(formWithErrors)
       },
       {case (oldPw, newPw) =>
         // Нужно проверить старый пароль, если юзер есть в базе.
-        val personId = request.pwOpt.get.personId
-        EmailPwIdent.findByPersonId(personId).flatMap { epws =>
+        val savedIds: Future[Seq[String]] = EmailPwIdent.findByPersonId(personId).flatMap { epws =>
           if (epws.isEmpty) {
-            // Юзер меняет пароль, но залогинен через moz persona.
-            MozillaPersonaIdent.findByPersonId(personId)
-              .map { mps =>
-                if (mps.isEmpty) {
-                  LOGGER.warn("changePasswordSubmit(): Unknown user session: " + personId)
-                  None
-                } else {
-                  val mp = mps.head
-                  val epw = EmailPwIdent(email = mp.email, personId = mp.personId, pwHash = MPersonIdent.mkHash(newPw), isVerified = true)
-                  Some(epw)
+            // Юзер меняет пароль, но залогинен через внешние сервисы. Нужно вычислить email и создать EmailPwIdent.
+            MPersonIdent.findAllEmails(personId) flatMap { emails =>
+              if (emails.isEmpty) {
+                LOGGER.warn("Unknown user session: " + personId)
+                Future successful Seq.empty[String]
+              } else {
+                Future.traverse(emails) { email =>
+                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = MPersonIdent.mkHash(newPw), isVerified = true)
+                  val fut = epw.save
+                  fut onSuccess {
+                    case epwId =>
+                      LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
+                  }
+                  fut
                 }
               }
+            }
+
           } else {
             // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
             val result = epws
               .find { _.checkPassword(oldPw) }
               .map { _.copy(pwHash = MPersonIdent.mkHash(newPw)) }
-            Future successful result
+            result match {
+              case Some(epw) =>
+                epw.save.map { Seq(_) }
+              case None =>
+                LOGGER.warn(logPrefix + "No idents with email found for user " + personId)
+                Future successful Seq.empty[String]
+            }
           }
-        } flatMap {
-          case Some(epw) =>
-            epw.save
-              .flatMap { _ => RdrBackOrFut(r)(changePwOkRdrDflt) }
-              .map { _.flashing("success" -> "Новый пароль сохранён.") }
-          case None =>
+        }
+
+        savedIds flatMap {
+          case nil if nil.isEmpty =>
             val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")
             onError(formWithErrors)
+
+          case ids =>
+            RdrBackOrFut(r)(changePwOkRdrDflt)
+              .map { _.flashing("success" -> "Новый пароль сохранён.") }
         }
       }
     )

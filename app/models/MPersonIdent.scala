@@ -2,6 +2,7 @@ package models
 
 import MPersonIdent.IdTypes.MPersonIdentType
 import io.suggest.model._
+import models.usr.MExtIdent
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
@@ -126,8 +127,6 @@ object MPersonIdent extends PlayMacroLogsImpl {
       .map { searchResp =>
         searchResp.getHits.getHits.map { hit =>
           hit.getType match {
-            case MozillaPersonaIdent.ES_TYPE_NAME =>
-              MozillaPersonaIdent.deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion)).email
             case EmailPwIdent.ES_TYPE_NAME =>
               EmailPwIdent.deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion)).email
           }
@@ -140,9 +139,9 @@ object MPersonIdent extends PlayMacroLogsImpl {
     protected case class Val(companion: EsModelStaticIdentT, isIdent: Boolean) extends super.Val
 
     type MPersonIdentType = Val
-    val MOZ_PERSONA = Val(MozillaPersonaIdent, isIdent = true)
-    val EMAIL_PW    = Val(EmailPwIdent, isIdent = true)
-    val EMAIL_ACT   = Val(EmailActivation, isIdent = true)
+    val EMAIL_PW: MPersonIdentType    = Val(EmailPwIdent, isIdent = true)
+    val EMAIL_ACT: MPersonIdentType   = Val(EmailActivation, isIdent = false)
+    val EXT_ID: MPersonIdentType      = Val(MExtIdent, isIdent = true)
 
     implicit def value2val(x: Value): MPersonIdentType = x.asInstanceOf[MPersonIdentType]
 
@@ -186,20 +185,35 @@ object MPersonIdent extends PlayMacroLogsImpl {
   }
 }
 
+
 import MPersonIdent._
 
+
+/** Трейт, который реализуют все экземпляры идентов. */
 trait MPersonIdent extends EsModelPlayJsonT with EsModelT {
   override type T <: MPersonIdent
 
+  /** id юзера в системе. */
   def personId: String
+
+  /** Подтип PersonIdent. */
   def idType: MPersonIdentType
+
+  /** Некий индексируемый ключ, по которому должен идти поиск/фильтрация.
+    * В случае email-pw -- это юзернейм, т.е. email.
+    * В случае соц.сетей -- это внетренний userId соц.сети. */
   def key: String
+
+  /** Какое-то дополнительное НЕиндексируемое значение. В случае username+pw тут хеш пароля. */
   def value: Option[String]
+
+  /** Проверенный ident? */
   def isVerified: Boolean
 
   /** Определяется реализацией: надо ли записывать в хранилище значение isVerified. */
   def writeVerifyInfo: Boolean
 
+  /** Сериализация json-экземпляра. */
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = PERSON_ID_ESFN -> JsString(personId) ::
       KEY_ESFN -> JsString(key) ::
