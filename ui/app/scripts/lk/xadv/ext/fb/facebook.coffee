@@ -3,7 +3,7 @@ define ["SioPR"], (SioPR) ->
   SioPR = new SioPR()
 
   class Facebook
-    API_ID = 967620393262021
+    API_ID = 1588523678029765
 
     constructor: (@ws, ctx, onComplete) ->
       console.log "Fb init"
@@ -83,9 +83,17 @@ define ["SioPR"], (SioPR) ->
        @publicatePost()
 
     publicatePostInGroup: (groupId)->
-      callback = (data)=>
-        console.log data
-        @ctx._status = "success"
+      callback = (response)=>
+        console.log "publicate post callback"
+        console.log response
+        if !response || response.error
+          console.log "Error occured"
+          @ctx._status = "error"
+          @ctx._error =
+            msg: "e.ext.adv.permissions"
+            info: response.error
+        else
+          @ctx._status = "success"
         @onComplete @ctx, sendF
 
       options =
@@ -107,6 +115,8 @@ define ["SioPR"], (SioPR) ->
         link: @ctx._target.href
 
       callback = (response) =>
+        console.log "publicate post callback"
+        console.log response
         if !response || response.error
           console.log "Error occured"
           @ctx._status = "error"
@@ -124,16 +134,6 @@ define ["SioPR"], (SioPR) ->
         callback
       )
 
-
-    testAPI: () ->
-      console.log "Welcome to Facebook API!  Fetching your information.... "
-      FB.api(
-        "/me"
-        (response) ->
-          console.log response
-          console.log "Successful login for: #{response.name}"
-      )
-
     loadSdk: (d, s, id) ->
       js = d.getElementsByTagName(s)[0]
       fjs = d.getElementsByTagName(s)[0]
@@ -149,5 +149,4 @@ define ["SioPR"], (SioPR) ->
       @ctx = ctx
       @onComplete = onComplete
 
-      #@testAPI()
       @login()

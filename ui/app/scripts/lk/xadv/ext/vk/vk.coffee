@@ -6,6 +6,7 @@ define ["SioPR"], (SioPR) ->
     API_ID = 4761539
     ACESS_LVL = 8197
 
+
     constructor: (@ws, @ctx, @onComplete) ->
       console.log "vk init"
 
@@ -65,6 +66,7 @@ define ["SioPR"], (SioPR) ->
     ###
     saveWallPhoto: (savedPicture) ->
 
+      console.log "save wall photo"
       if !@ctx.user_id?
         onSuccess = () =>
           @saveWallPhoto(savedPicture)
@@ -85,7 +87,7 @@ define ["SioPR"], (SioPR) ->
         catch exception
           console.log exception
           @ctx._status = "error"
-          @onComplete @ctx, sendF
+          @complete()
 
       params =
         user_id: @ctx.user_id
@@ -171,6 +173,7 @@ define ["SioPR"], (SioPR) ->
           @ctx._error =
             msg: "e.ext.adv.unathorized"
             info: response
+
           @complete()
 
       getLoginStatusCallback = (response) =>
@@ -190,6 +193,7 @@ define ["SioPR"], (SioPR) ->
       @ctx = ctx
       @onComplete = onComplete
 
+      # фотография уже загружена на сервер vk
       if ctx._ads[0].rendered.saved
         @saveWallPhoto ctx._ads[0].rendered.saved
         return false

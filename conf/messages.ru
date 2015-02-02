@@ -345,4 +345,5 @@ adv.ext.ret.sc=Всю выдачу
 adv.ext.ret.ad=Только эту карточку
 
 e.ext.adv.unathorized=Пользователь не авторизован
+e.ext.adv.permissions=Недостаточно прав
 e.ext.adv.target.url.invalid=Некорректный url цели
