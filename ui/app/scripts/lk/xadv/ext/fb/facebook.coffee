@@ -21,31 +21,20 @@ define ["SioPR"], (SioPR) ->
 
       @loadSdk document, 'script', 'facebook-jssdk'
 
+    ###*
+      отправляет сообщения на сервер
+    ###
+    complete: ()->
 
-    sendF = (json) ->
-      message = JSON.stringify json
-      @ws.send message
+      sendF = (json) =>
+        message = JSON.stringify json
+        @ws.send message
 
-    statusChangeCallback: (response) ->
-      console.log "statusChangeCallback"
-      console.log response
+      @onComplete @ctx, sendF
 
-      if response.status == "connected"
-        @testAPI()
-      else if response.status == "not_authorized"
-        console.log "Please log into this app."
-        @login()
-      else
-        console.log "Please log into Facebook."
-        @login()
-
-    checkLoginState: () ->
-      FB.getLoginStatus(
-        (response) =>
-          @statusChangeCallback(response)
-      )
-
-
+    ###*
+      авторизация пользователя
+    ###
     login: () ->
 
       loginParams =
@@ -60,10 +49,13 @@ define ["SioPR"], (SioPR) ->
             @ctx._error =
               msg: "e.ext.adv.unathorized"
               info: response
-            @onComplete @ctx, sendF
+            @complete()
         loginParams
       )
 
+    ###*
+       проверка цели размещения: группа или пользователь
+    ###
     checkUserType: ()->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url
@@ -71,10 +63,8 @@ define ["SioPR"], (SioPR) ->
       if url.slice(-1) == "/" then url = url.substring(0, url.length - 1)
 
       if url.indexOf("/groups/") > 0
-        console.log url
         match = url.match REGEXP
         try
-          console.log match
           groupId = match[1]
           @publicatePostInGroup groupId
         catch exception
@@ -82,10 +72,12 @@ define ["SioPR"], (SioPR) ->
       else
        @publicatePost()
 
+    ###*
+      публикует пост в группе
+      @param {Number} id группы
+    ###
     publicatePostInGroup: (groupId)->
       callback = (response)=>
-        console.log "publicate post callback"
-        console.log response
         if !response || response.error
           console.log "Error occured"
           @ctx._status = "error"
@@ -94,7 +86,7 @@ define ["SioPR"], (SioPR) ->
             info: response.error
         else
           @ctx._status = "success"
-        @onComplete @ctx, sendF
+        @complete()
 
       options =
         picture: @ctx._ads[0].rendered.sioUrl
@@ -108,6 +100,9 @@ define ["SioPR"], (SioPR) ->
         callback
       )
 
+    ###*
+      публикация на стене у текущего пользователя
+    ###
     publicatePost: () ->
       params =
         message: @ctx._ads[0].content.fields[0].text
@@ -115,8 +110,6 @@ define ["SioPR"], (SioPR) ->
         link: @ctx._target.href
 
       callback = (response) =>
-        console.log "publicate post callback"
-        console.log response
         if !response || response.error
           console.log "Error occured"
           @ctx._status = "error"
@@ -125,7 +118,7 @@ define ["SioPR"], (SioPR) ->
           console.log "Post ID: #{response.id}"
           @ctx._status = "success"
 
-        @onComplete @ctx, sendF
+        @complete()
 
       FB.api(
         "/me/feed"
@@ -134,6 +127,9 @@ define ["SioPR"], (SioPR) ->
         callback
       )
 
+    ###*
+      загрузка fb api
+    ###
     loadSdk: (d, s, id) ->
       js = d.getElementsByTagName(s)[0]
       fjs = d.getElementsByTagName(s)[0]
@@ -143,6 +139,9 @@ define ["SioPR"], (SioPR) ->
       js.src = "//connect.facebook.net/en_US/sdk.js"
       fjs.parentNode.insertBefore js, fjs
 
+    ###*
+      на основе контекста от сервера принимает решение о действиях, которые будут выполнены на этом шаге
+    ###
     handleTarget: (ctx, onComplete) ->
       console.log "fb handle target"
 
