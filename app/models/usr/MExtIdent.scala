@@ -1,14 +1,19 @@
 package models.usr
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanI, EnumMaybeWithName}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
+import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import play.api.libs.json.JsString
+import securesocial.core.IProfileBase
 import securesocial.core.providers.{TwitterProvider, FacebookProvider, VkProvider}
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.stringParser
 
 import scala.collection.Map
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -35,13 +40,32 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MExtIdent(
-      id          = id,
       versionOpt  = version,
       personId    = stringParser(m(PERSON_ID_ESFN)),
       provider    = IdProviders.withName( stringParser(m(PROVIDER_ID_ESFN)) ),
       userId      = stringParser(m(USER_ID_ESFN)),
       email       = m.get(EMAIL_ESFN).map(stringParser)
     )
+  }
+
+  def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
+  def providerIdFilter(prov: IdProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.toString)
+
+  /** Генерация id модели. */
+  def genId(prov: IdProvider, userId: String): String = {
+    // TODO Может надо делать toLowerCase?
+    s"$prov~$userId"
+  }
+
+  /**
+   * Поиск документа по userId и провайдеру.
+   * @param prov Провайдер идентификации.
+   * @param userId id юзера в рамках провайдера.
+   * @return Результат, если есть.
+   */
+  def getByUserIdProv(prov: IdProvider, userId: String)(implicit client: Client, ec: ExecutionContext): Future[Option[T]] = {
+    val id = genId(prov, userId)
+    getById(id)
   }
 
 }
@@ -55,9 +79,8 @@ case class MExtIdent(
   provider      : IdProvider,
   userId        : String,
   email         : Option[String] = None,
-  id            : Option[String] = None,
   versionOpt    : Option[Long] = None
-) extends MPersonIdent {
+) extends MPersonIdent with IProfileBase {
 
   override type T         = this.type
   override def companion  = MExtIdent
@@ -66,6 +89,12 @@ case class MExtIdent(
   /** Ключём модели является userId. */
   override def key = userId
   override def value = email
+
+  /** Реализация UserProfile. */
+  override def providerId = provider.toString
+
+  /** Форсируем уникальность в рамках одного провайдера */
+  override def id: Option[String] = Some(genId(provider, userId))
 
   /** isVerified писать в хранилище не нужно, потому мы не управляем проверкой юзера. */
   override def writeVerifyInfo = false
@@ -76,6 +105,7 @@ case class MExtIdent(
     PROVIDER_ID_ESFN -> JsString(provider.toString) ::
     super.writeJsonFields(acc)
   }
+
 }
 
 
@@ -87,4 +117,15 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
   val Vkontakte: T  = Value(VkProvider.Vk)
   val Twitter: T    = Value(TwitterProvider.Twitter)
 }
+
+
+// Поддержка JMX.
+trait MExtIdentJmxMBean extends EsModelJMXMBeanI
+final class MExtIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MExtIdentJmxMBean
+{
+  override def companion = MExtIdent
+}
+
 

@@ -6,7 +6,7 @@ import io.suggest.model.inx2._
 import io.suggest.ym.model.stat._
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
-import models.usr.{MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
+import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
 import util.SiowebEsUtil.client
 import util.adv.AdvUtilJmx
 import util.event.SiowebNotifier.Implicts.sn
@@ -37,6 +37,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MMartCategoryJmx,
     new EmailActivationJmx,
     new EmailPwIdentJmx,
+    new MExtIdentJmx,
     new MPersonJmx,
     new MCompanyJmx,
     new MCalendarJmx,

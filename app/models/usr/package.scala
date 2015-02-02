@@ -1,6 +1,6 @@
 package models
 
-import securesocial.core.BasicProfile
+import securesocial.core.Profile
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import securesocial.core.BasicProfile
 package object usr {
 
   /** Тип экземпляра данных SecureSocial, вокруг которого крутится весь API SecureSocial. */
-  type SecSocUser = BasicProfile
+  type SsUser = Profile
 
   /** Тип экземпляра статической модели [[IdProviders]]. */
   type IdProvider = IdProviders.T
