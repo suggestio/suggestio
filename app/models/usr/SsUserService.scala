@@ -26,7 +26,6 @@ object SsUserService extends UserService[SsUser] {
   override def find(providerId: String, userId: String): Future[Option[IProfile]] = {
     val prov = IdProviders.withName(providerId)
     MExtIdent.getByUserIdProv(prov, userId)
-    ???
   }
 
   /**

@@ -1,14 +1,13 @@
 package models.usr
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanI, EnumMaybeWithName}
+import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import play.api.libs.json.JsString
-import securesocial.core.IProfileBase
-import securesocial.core.providers.{TwitterProvider, FacebookProvider, VkProvider}
+import securesocial.core.IProfileDflt
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.stringParser
 
@@ -49,7 +48,7 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
   }
 
   def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
-  def providerIdFilter(prov: IdProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.toString)
+  def providerIdFilter(prov: IdProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.strId)
 
   /** Генерация id модели. */
   def genId(prov: IdProvider, userId: String): String = {
@@ -75,12 +74,12 @@ import MExtIdent._
 
 
 case class MExtIdent(
-  personId      : String,
-  provider      : IdProvider,
-  userId        : String,
-  email         : Option[String] = None,
-  versionOpt    : Option[Long] = None
-) extends MPersonIdent with IProfileBase {
+  personId            : String,
+  provider            : IdProvider,
+  userId              : String,
+  override val email  : Option[String] = None,
+  versionOpt          : Option[Long] = None
+) extends MPersonIdent with IProfileDflt {
 
   override type T         = this.type
   override def companion  = MExtIdent
@@ -89,9 +88,6 @@ case class MExtIdent(
   /** Ключём модели является userId. */
   override def key = userId
   override def value = email
-
-  /** Реализация UserProfile. */
-  override def providerId = provider.toString
 
   /** Форсируем уникальность в рамках одного провайдера */
   override def id: Option[String] = Some(genId(provider, userId))
@@ -102,21 +98,15 @@ case class MExtIdent(
 
   /** Сериализация json-экземпляра. */
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    PROVIDER_ID_ESFN -> JsString(provider.toString) ::
+    PROVIDER_ID_ESFN -> JsString(provider.strId) ::
     super.writeJsonFields(acc)
   }
 
+  /** Реализация IProfile. */
+  override def providerId = provider.strId
+  override def authMethod = provider.ssAuthMethod
 }
 
-
-/** Поддерживаемые провайдеры идентификации. */
-object IdProviders extends Enumeration with EnumMaybeWithName {
-  override type T = Value
-
-  val Facebook: T   = Value(FacebookProvider.Facebook)
-  val Vkontakte: T  = Value(VkProvider.Vk)
-  val Twitter: T    = Value(TwitterProvider.Twitter)
-}
 
 
 // Поддержка JMX.
