@@ -67,6 +67,8 @@ define ["SioPR"], (SioPR) ->
     checkUserType: ()->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url
+      # если на конце url стоит '/', удалить его
+      if url.slice(-1) == "/" then url = url.substring(0, url.length - 1)
 
       if url.indexOf("/groups/") > 0
         console.log url
