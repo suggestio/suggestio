@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{routes, MarketLk, SioController}
+import models.usr.EmailPwIdent
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._

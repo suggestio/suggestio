@@ -1,19 +1,18 @@
-package models
+package models.usr
 
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.EsModel._
 import io.suggest.model._
-import models.MPersonIdent.IdTypes
-import EsModel._
 import io.suggest.util.SioEsUtil._
-import play.api.Play.current
 import io.suggest.util.StringUtil
-import play.api.mvc.QueryStringBindable
-import scala.Predef
-import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
+import play.api.Play.current
+import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsImpl
-import io.suggest.event.SioNotifierStaticClientI
+
+import scala.collection.Map
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io

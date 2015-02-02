@@ -1,6 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
+import models.usr.EmailActivation
 import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._

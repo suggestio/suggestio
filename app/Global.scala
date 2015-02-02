@@ -2,6 +2,7 @@ import akka.actor.Cancellable
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
+import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}

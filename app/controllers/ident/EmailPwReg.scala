@@ -2,6 +2,7 @@ package controllers.ident
 
 import controllers.SioController
 import models._
+import models.usr.{MPersonIdent, IEaEmailId, EmailActivation}
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._

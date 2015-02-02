@@ -1,6 +1,6 @@
 package util.acl
 
-import models.{IEaEmailId, EmailActivation}
+import models.usr.{IEaEmailId, EmailActivation}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t

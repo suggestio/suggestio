@@ -361,7 +361,7 @@ POST /id/epw/chpw                       controllers.Ident.changePasswordSubmit(r
 GET  /id/rdr/me/somewhere               controllers.Ident.rdrUserSomewhere
 ## ident: рега по email и паролю
 POST /id/epw/reg                        controllers.Ident.emailRegSubmit
-GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: IEaEmailId)
+GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: usr.IEaEmailId)
 ## ident: вход через внешнего провайдера
 GET  /id/via/:provider			        controllers.Ident.authenticate(provider)
 

@@ -3,8 +3,6 @@ package models.usr
 import io.suggest.model.EnumMaybeWithName
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
-import models.MPersonIdent.IdTypes
-import models.{MPersonIdent, MPersonIdentSubmodelStatic}
 import play.api.libs.json.JsString
 import securesocial.core.providers.{TwitterProvider, FacebookProvider, VkProvider}
 import util.PlayMacroLogsImpl

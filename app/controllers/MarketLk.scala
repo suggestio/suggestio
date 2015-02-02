@@ -1,6 +1,7 @@
 package controllers
 
 import controllers.ident._
+import models.usr.MPerson
 import play.api.mvc.{Result, Call}
 import models._
 import util.acl._

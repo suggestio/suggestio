@@ -1,18 +1,18 @@
-package models
+package models.usr
 
-import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.util.SioEsUtil._
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
-import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext}
+import io.suggest.model._
+import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import play.api.Play.current
 import play.api.cache.Cache
-import util.PlayMacroLogsImpl
 import play.api.libs.json.JsString
-import io.suggest.event.SioNotifierStaticClientI
+import util.PlayMacroLogsImpl
+
+import scala.collection.Map
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -98,7 +98,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
 }
 
-import MPerson._
+import models.usr.MPerson._
 
 /**
  * Экземпляр модели MPerson.

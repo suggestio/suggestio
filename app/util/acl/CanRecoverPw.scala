@@ -1,5 +1,6 @@
 package util.acl
 
+import models.usr.{EmailActivation, EmailPwIdent}
 import util._
 import play.api.mvc._
 import util.ident.IdentUtil

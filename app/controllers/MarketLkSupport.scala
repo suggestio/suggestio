@@ -1,6 +1,7 @@
 package controllers
 
 import models._
+import models.usr.MPersonIdent
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import util.event.SiowebNotifier.Implicts.sn

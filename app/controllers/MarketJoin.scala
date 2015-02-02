@@ -2,6 +2,7 @@ package controllers
 
 import models.CallBackReqCallTimes.CallBackReqCallTime
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
+import models.usr.EmailActivation
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.libs.iteratee.Enumerator

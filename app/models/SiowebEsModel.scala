@@ -4,6 +4,7 @@ import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
 import models.im.MGallery
+import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future

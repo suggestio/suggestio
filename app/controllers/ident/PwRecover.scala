@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{routes, CaptchaValidator, SioController}
+import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
 import util.acl._
 import util._

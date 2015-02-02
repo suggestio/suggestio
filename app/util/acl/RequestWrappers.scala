@@ -3,6 +3,7 @@ package util.acl
 import java.net.InetAddress
 
 import models.event.{EventsSearchArgs, MEvent}
+import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
@@ -179,7 +180,7 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
 
 /** Метаданные, относящиеся запросу. Сюда попадают данные, которые необходимы везде и требует асинхронных действий.
   * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
-  *                    [[models.MPerson]] и [[models.MPersonIdent]].
+  *                    [[MPerson]] и [[models.MPersonIdent]].
   * @param billBallanceOpt Текущий денежный баланс узла.
   * @param nodeUnseenEvtsCnt Кол-во новых событий у узла.
   */

@@ -1,6 +1,6 @@
 package controllers
 
-import io.suggest.ym.model.common.SinkShowLevels
+import models.usr.MPersonIdent
 import util.PlayMacroLogsImpl
 import util.FormUtil._
 import play.api.data._, Forms._

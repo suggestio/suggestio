@@ -2,6 +2,7 @@ package controllers
 
 import _root_.util.async.AsyncUtil
 import controllers.ident._
+import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import util.billing.Billing
 import util.PlayMacroLogsImpl
 import util.acl._

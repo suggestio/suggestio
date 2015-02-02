@@ -3,6 +3,7 @@ import io.suggest.model.geo
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
+import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 
 /**

@@ -1,14 +1,14 @@
-package models
+package models.usr
 
-import MPersonIdent.IdTypes.MPersonIdentType
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.EsModel._
 import io.suggest.model._
-import models.MPersonIdent.IdTypes
-import EsModel._
-import scala.collection.Map
-import scala.concurrent.ExecutionContext
+import models._
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
-import io.suggest.event.SioNotifierStaticClientI
+
+import scala.collection.Map
+import scala.concurrent.ExecutionContext
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

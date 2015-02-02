@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
+import models.usr.{MPersonIdent, EmailPwIdent}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
@@ -9,12 +10,9 @@ import play.api.mvc._
 import util.ident.IdentUtil
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
-import models._
 import SiowebEsUtil.client
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl
-
-import scala.util.Success
 
 /**
  * Suggest.io

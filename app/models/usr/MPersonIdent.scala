@@ -1,19 +1,18 @@
-package models
+package models.usr
 
-import MPersonIdent.IdTypes.MPersonIdentType
-import io.suggest.model._
-import models.usr.MExtIdent
-import org.elasticsearch.common.xcontent.XContentBuilder
-import EsModel._
-import io.suggest.util.SioEsUtil._
-import play.api.Play.current
 import com.lambdaworks.crypto.SCryptUtil
-import scala.concurrent.{Future, ExecutionContext}
+import io.suggest.model.EsModel._
+import io.suggest.model._
+import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import scala.collection.JavaConversions._
+import play.api.Play.current
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
+
+import scala.collection.JavaConversions._
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -134,28 +133,6 @@ object MPersonIdent extends PlayMacroLogsImpl {
       }
   }
 
-  /** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
-  object IdTypes extends Enumeration {
-    protected case class Val(companion: EsModelStaticIdentT, isIdent: Boolean) extends super.Val
-
-    type MPersonIdentType = Val
-    val EMAIL_PW: MPersonIdentType    = Val(EmailPwIdent, isIdent = true)
-    val EMAIL_ACT: MPersonIdentType   = Val(EmailActivation, isIdent = false)
-    val EXT_ID: MPersonIdentType      = Val(MExtIdent, isIdent = true)
-
-    implicit def value2val(x: Value): MPersonIdentType = x.asInstanceOf[MPersonIdentType]
-
-    def onlyIdents = {
-      values.foldLeft [List[Val]] (Nil) {
-        (acc, e) =>
-          if (e.isIdent)
-            e :: acc
-          else
-            acc
-      }
-    }
-  }
-
 
   // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
   // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
@@ -184,9 +161,6 @@ object MPersonIdent extends PlayMacroLogsImpl {
     SCryptUtil.check(password, hash)
   }
 }
-
-
-import MPersonIdent._
 
 
 /** Трейт, который реализуют все экземпляры идентов. */
@@ -254,6 +228,27 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
 
 trait MPIWithEmail {
   def email: String
+}
+
+
+/** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
+object IdTypes extends Enumeration with EnumMaybeWithName {
+  protected case class Val(companion: EsModelStaticIdentT, isIdent: Boolean) extends super.Val
+
+  override type T = Val
+  val EMAIL_PW    : T = Val(EmailPwIdent, isIdent = true)
+  val EMAIL_ACT   : T = Val(EmailActivation, isIdent = false)
+  val EXT_ID      : T  = Val(MExtIdent, isIdent = true)
+
+  def onlyIdents = {
+    values.foldLeft [List[Val]] (Nil) {
+      (acc, e) =>
+        if (e.isIdent)
+          e :: acc
+        else
+          acc
+    }
+  }
 }
 
 
