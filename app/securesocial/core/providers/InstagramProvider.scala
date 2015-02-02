@@ -48,7 +48,7 @@ case class InstagramProvider(routesService: RoutesService,
 
   override def id = InstagramProvider.Instagram
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     client.retrieveProfile(GetAuthenticatedUser.format(info.accessToken)).map { me =>
       (me \ "response" \ "user").asOpt[String] match {
@@ -60,7 +60,7 @@ case class InstagramProvider(routesService: RoutesService,
           val userId = (me \ Data \ Id).as[String]
           val fullName = (me \ Data \ FullName).asOpt[String]
           val avatarUrl = (me \ Data \ ProfilePic).asOpt[String]
-          BasicProfile(id, userId, None, None, fullName, None, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId, None, None, fullName, None, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

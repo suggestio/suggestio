@@ -36,7 +36,7 @@ class XingProvider(
 ) {
   override val id = XingProvider.Xing
 
-  override def fillProfile(info: OAuth1Info): Future[BasicProfile] = {
+  override def fillProfile(info: OAuth1Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     client.retrieveProfile(XingProvider.VerifyCredentials, info).map { json =>
       val me = (json \ Users).as[Seq[JsObject]].head
@@ -46,7 +46,7 @@ class XingProvider(
       val firstName = (me \ FirstName).asOpt[String]
       val profileImage = (me \ ProfileImage \ Large).asOpt[String]
       val email = (me \ ActiveEmail).asOpt[String]
-      BasicProfile(id, userId, displayName, firstName, lastName, email, profileImage, authMethod, Some(info))
+      Profile(id, userId, displayName, firstName, lastName, email, profileImage, authMethod, Some(info))
     } recover {
       case e =>
         logger.error("[securesocial] error retrieving profile information from Xing", e)

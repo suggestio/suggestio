@@ -20,16 +20,14 @@ import org.joda.time.DateTime
 import securesocial.core._
 import play.api.mvc.Action
 import scala.concurrent.{ ExecutionContext, Future }
-import securesocial.core.SignUpEvent
 import securesocial.core.AuthenticationResult.Authenticated
-import securesocial.core.LoginEvent
-import securesocial.core.BasicProfile
+import securesocial.core._
 import securesocial.core.services.SaveMode
 
 /**
- * A default controller that uses the BasicProfile as the application user type.
+ * A default controller that uses the GenericProfile as the application user type.
  */
-class LoginApi(override implicit val env: RuntimeEnvironment[BasicProfile]) extends BaseLoginApi[BasicProfile]
+class LoginApi(override implicit val env: RuntimeEnvironment[IProfile]) extends BaseLoginApi[IProfile]
 
 /**
  * This trait provides the means to provide an authentication API that can be used by client side or mobile apps.

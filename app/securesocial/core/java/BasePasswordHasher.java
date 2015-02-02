@@ -24,5 +24,5 @@ import securesocial.core.providers.utils.PasswordHasher;
  * This is deprecated, extend PasswordHasher directly.
  */
 @Deprecated
-public abstract class BasePasswordHasher extends PasswordHasher {
+public abstract class BasePasswordHasher implements PasswordHasher {
 }

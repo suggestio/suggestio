@@ -67,7 +67,7 @@ case class FacebookProvider(routesService: RoutesService,
     }
   }
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(MeApi + accessToken).map { me =>
@@ -88,7 +88,7 @@ case class FacebookProvider(routesService: RoutesService,
           val picture = me \ Picture
           val avatarUrl = (picture \ Data \ Url).asOpt[String]
           val email = (me \ Email).asOpt[String]
-          BasicProfile(id, userId, firstName, lastName, name, email, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId, firstName, lastName, name, email, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

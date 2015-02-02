@@ -30,11 +30,11 @@ import securesocial.core.services.SaveMode
 import scala.concurrent.{ Await, Future }
 
 /**
- * A default Registration controller that uses the BasicProfile as the user type
+ * A default Registration controller that uses the GenericProfile as the user type
  *
  * @param env the environment
  */
-class Registration(override implicit val env: RuntimeEnvironment[BasicProfile]) extends BaseRegistration[BasicProfile]
+class Registration(override implicit val env: RuntimeEnvironment[IProfile]) extends BaseRegistration[IProfile]
 
 /**
  * A trait that provides the means to handle user registration
@@ -164,7 +164,7 @@ trait BaseRegistration[U] extends MailTokenBasedOperations[U] {
               },
               info => {
                 val id = if (UsernamePasswordProvider.withUserNameSupport) info.userName.get else t.email
-                val newUser = BasicProfile(
+                val newUser = Profile(
                   providerId,
                   id,
                   Some(info.firstName),

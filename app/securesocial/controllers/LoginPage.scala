@@ -25,11 +25,11 @@ import scala.concurrent.{ ExecutionContext, Future }
 import play.filters.csrf._
 
 /**
- * A default Login controller that uses BasicProfile as the user type.
+ * A default Login controller that uses GenericProfile as the user type.
  *
  * @param env An environment
  */
-class LoginPage(override implicit val env: RuntimeEnvironment[BasicProfile]) extends BaseLoginPage[BasicProfile]
+class LoginPage(override implicit val env: RuntimeEnvironment[IProfile]) extends BaseLoginPage[IProfile]
 
 /**
  * The trait that defines the login page controller

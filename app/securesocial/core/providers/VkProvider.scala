@@ -35,7 +35,7 @@ case class VkProvider(routesService: RoutesService,
 
   override def id = VkProvider.Vk
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(GetProfilesApi + accessToken).map { json =>
@@ -53,7 +53,7 @@ case class VkProvider(routesService: RoutesService,
           val firstName = (me \ FirstName).asOpt[String]
           val lastName = (me \ LastName).asOpt[String]
           val avatarUrl = (me \ Photo).asOpt[String]
-          BasicProfile(id, userId, firstName, lastName, None, None, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId, firstName, lastName, None, None, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

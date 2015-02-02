@@ -11,7 +11,7 @@ import play.api.test._
 import play.twirl.api.Html
 import securesocial.controllers.ViewTemplates
 import securesocial.core.AuthenticationResult.Authenticated
-import securesocial.core.{ PasswordInfo, BasicProfile, AuthenticationResult }
+import securesocial.core.{ PasswordInfo, Profile, AuthenticationResult }
 import securesocial.core.providers.utils.PasswordHasher
 import securesocial.core.services._
 
@@ -71,7 +71,7 @@ class UsernamePasswordProviderSpec extends PlaySpecification with Mockito {
       avatarService.urlFor("foo@bar.com") returns Future(None)
     }
 
-    def basicProfileFor(user: User) = BasicProfile(
+    def basicProfileFor(user: User) = Profile(
       providerId = upp.id,
       userId = user.email,
       firstName = None,

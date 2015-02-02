@@ -41,7 +41,7 @@ case class SoundcloudProvider(routesService: RoutesService,
 
   override val id = SoundcloudProvider.Soundcloud
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(UserInfoApi + accessToken).map { me =>
@@ -56,7 +56,7 @@ case class SoundcloudProvider(routesService: RoutesService,
           val username = (me \ Username).asOpt[String]
           val fullName = (me \ FullName).asOpt[String]
           val avatarUrl = (me \ AvatarUrl).asOpt[String]
-          BasicProfile(id, userId.toString, None, username, fullName, None, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId.toString, None, username, fullName, None, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

@@ -76,7 +76,7 @@ case class WeiboProvider(routesService: RoutesService,
    * @param info The OAuth2Info
    * @return A copy of the user object with the new values set
    */
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     val weiboUserId = info.tokenType.getOrElse {
@@ -94,7 +94,7 @@ case class WeiboProvider(routesService: RoutesService,
           val displayName = (me \ Name).asOpt[String]
           val avatarUrl = (me \ AvatarUrl).asOpt[String]
           getEmail(accessToken).map { email =>
-            BasicProfile(id, userId, None, None, displayName, email, avatarUrl, authMethod, None, Some(info))
+            Profile(id, userId, None, None, displayName, email, avatarUrl, authMethod, None, Some(info))
           }
       }
     } recover {

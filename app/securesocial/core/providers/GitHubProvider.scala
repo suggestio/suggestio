@@ -65,7 +65,7 @@ case class GitHubProvider(routesService: RoutesService,
     )
   }
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     client.retrieveProfile(GetAuthenticatedUser.format(info.accessToken)).map { me =>
       (me \ Message).asOpt[String] match {
@@ -77,7 +77,7 @@ case class GitHubProvider(routesService: RoutesService,
           val displayName = (me \ Name).asOpt[String]
           val avatarUrl = (me \ AvatarUrl).asOpt[String]
           val email = (me \ Email).asOpt[String].filter(!_.isEmpty)
-          BasicProfile(id, userId.toString, None, None, displayName, email, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId.toString, None, None, displayName, email, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

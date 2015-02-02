@@ -36,7 +36,7 @@ class TestUserService extends UserService[DemoUser] {
   //private var identities = Map[String, BasicProfile]()
   private var tokens = Map[String, MailToken]()
 
-  def find(providerId: String, userId: String): Future[Option[BasicProfile]] = {
+  def find(providerId: String, userId: String): Future[Option[Profile]] = {
     if (logger.isDebugEnabled) {
       logger.debug("users = %s".format(users))
     }
@@ -49,7 +49,7 @@ class TestUserService extends UserService[DemoUser] {
     Future.successful(result.headOption)
   }
 
-  def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] = {
+  def findByEmailAndProvider(email: String, providerId: String): Future[Option[Profile]] = {
     if (logger.isDebugEnabled) {
       logger.debug("users = %s".format(users))
     }
@@ -63,7 +63,7 @@ class TestUserService extends UserService[DemoUser] {
     Future.successful(result.headOption)
   }
 
-  def save(user: BasicProfile, mode: SaveMode): Future[DemoUser] = {
+  def save(user: Profile, mode: SaveMode): Future[DemoUser] = {
     mode match {
       case SaveMode.SignUp =>
         val newUser = DemoUser(user, List(user))
@@ -91,7 +91,7 @@ class TestUserService extends UserService[DemoUser] {
     }
   }
 
-  def link(current: DemoUser, to: BasicProfile): Future[DemoUser] = {
+  def link(current: DemoUser, to: Profile): Future[DemoUser] = {
     if (current.identities.exists(i => i.providerId == to.providerId && i.userId == to.userId)) {
       Future.successful(current)
     } else {
@@ -132,7 +132,7 @@ class TestUserService extends UserService[DemoUser] {
     tokens = tokens.filter(!_._2.isExpired)
   }
 
-  override def updatePasswordInfo(user: DemoUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
+  override def updatePasswordInfo(user: DemoUser, info: PasswordInfo): Future[Option[Profile]] = {
     Future.successful {
       for (
         found <- users.values.find(_ == user);
@@ -160,5 +160,5 @@ class TestUserService extends UserService[DemoUser] {
 }
 
 // a simple User class that can have multiple identities
-case class DemoUser(main: BasicProfile, identities: List[BasicProfile])
+case class DemoUser(main: Profile, identities: List[Profile])
 

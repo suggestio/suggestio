@@ -29,11 +29,11 @@ import securesocial.core.services.SaveMode
 import scala.concurrent.Future
 
 /**
- * A default controller the uses the BasicProfile as the user type
+ * A default controller the uses the GenericProfile as the user type
  *
  * @param env an environment
  */
-class PasswordReset(override implicit val env: RuntimeEnvironment[BasicProfile]) extends BasePasswordReset[BasicProfile]
+class PasswordReset(override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordReset[IProfile]
 
 /**
  * The trait that provides the Password Reset functionality
@@ -121,8 +121,12 @@ trait BasePasswordReset[U] extends MailTokenBasedOperations[U] {
               env.userService.findByEmailAndProvider(t.email, UsernamePasswordProvider.UsernamePassword).flatMap {
                 case Some(profile) =>
                   val hashed = env.currentHasher.hash(p._1)
+                  val prof1 = new IProfileWrap {
+                    override def _underlying = profile
+                    override def passwordInfo = Some(hashed)
+                  }
                   for (
-                    updated <- env.userService.save(profile.copy(passwordInfo = Some(hashed)), SaveMode.PasswordChange);
+                    updated <- env.userService.save(prof1, SaveMode.PasswordChange);
                     deleted <- env.userService.deleteToken(token)
                   ) yield {
                     env.mailer.sendPasswordChangedNotice(profile)

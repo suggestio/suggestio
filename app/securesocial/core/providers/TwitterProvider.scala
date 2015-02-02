@@ -36,13 +36,13 @@ class TwitterProvider(
 ) {
   override val id = TwitterProvider.Twitter
 
-  override def fillProfile(info: OAuth1Info): Future[BasicProfile] = {
+  override def fillProfile(info: OAuth1Info): Future[Profile] = {
     import ExecutionContext.Implicits.global
     client.retrieveProfile(TwitterProvider.VerifyCredentials, info).map { me =>
       val userId = (me \ Id).as[String]
       val name = (me \ Name).asOpt[String]
       val avatar = (me \ ProfileImage).asOpt[String]
-      BasicProfile(id, userId, None, None, name, None, avatar, authMethod, Some(info))
+      Profile(id, userId, None, None, name, None, avatar, authMethod, Some(info))
     } recover {
       case e =>
         logger.error("[securesocial] error retrieving profile information from Twitter", e)

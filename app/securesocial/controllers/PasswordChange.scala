@@ -27,11 +27,11 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 import play.filters.csrf._
 
 /**
- * A default PasswordChange controller that uses the BasicProfile as the user type
+ * A default PasswordChange controller that uses the GenericProfile as the user type
  *
  * @param env An environment
  */
-class PasswordChange(override implicit val env: RuntimeEnvironment[BasicProfile]) extends BasePasswordChange[BasicProfile]
+class PasswordChange(override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordChange[IProfile]
 
 /**
  * A trait that defines the password change functionality

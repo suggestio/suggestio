@@ -35,7 +35,7 @@ case class DropboxProvider(routesService: RoutesService,
 
   override def id = DropboxProvider.Dropbox
 
-  override def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  override def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     import play.api.Play.current
 
@@ -46,7 +46,7 @@ case class DropboxProvider(routesService: RoutesService,
           val data = response.json
           val userId = (data \ Id).as[Int].toString
           val fullName = (data \ FormattedName).asOpt[String]
-          BasicProfile(id, userId, None, None, fullName, None, None, authMethod, None, Some(info))
+          Profile(id, userId, None, None, fullName, None, None, authMethod, None, Some(info))
         case _ =>
           logger.error("[securesocial] Dropbox account info request returned error: " + response.body)
           throw new AuthenticationException()

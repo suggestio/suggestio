@@ -29,10 +29,10 @@ import securesocial.util.LoggerImpl
 import scala.concurrent.Future
 
 /**
- * A default controller that uses the BasicProfile as the user type
+ * A default controller that uses the GenericProfile as the user type
  */
-class ProviderController(override implicit val env: RuntimeEnvironment[BasicProfile])
-  extends BaseProviderController[BasicProfile]
+class ProviderController(override implicit val env: RuntimeEnvironment[IProfile])
+  extends BaseProviderController[IProfile]
 
 /**
  * A trait that provides the means to authenticate users for web applications

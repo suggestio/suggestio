@@ -21,7 +21,7 @@ import org.joda.time.format.DateTimeFormat
 import play.api.http.HeaderNames
 import play.api.libs.ws.WSResponse
 import play.api.mvc.Request
-import securesocial.core.{ AuthenticationException, BasicProfile, OAuth2Client, OAuth2Constants, OAuth2Info, OAuth2Provider }
+import securesocial.core._
 import securesocial.core.services.{ CacheService, RoutesService }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -84,7 +84,7 @@ case class ConcurProvider(routesService: RoutesService,
     )
   }
 
-  override def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  override def fillProfile(info: OAuth2Info): Future[Profile] = {
     val accessToken = info.accessToken
     client.httpService.url(ConcurProvider.UserProfileApi).withHeaders(
       HeaderNames.AUTHORIZATION -> "OAuth %s".format(accessToken),
@@ -109,7 +109,7 @@ case class ConcurProvider(routesService: RoutesService,
               case s: String if !s.isEmpty => Some(s)
               case _ => None
             }
-            BasicProfile(id, userId, firstName, lastName, fullName, email, None, authMethod, oAuth2Info = Some(info))
+            Profile(id, userId, firstName, lastName, fullName, email, None, authMethod, oAuth2Info = Some(info))
         }
       } recover {
         case e: AuthenticationException => throw e

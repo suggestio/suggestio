@@ -48,7 +48,7 @@ case class LinkedInOAuth2Provider(routesService: RoutesService,
 
   override def id = LinkedInOAuth2Provider.LinkedIn
 
-  override def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  override def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(LinkedInOAuth2Provider.Api + accessToken).map { me =>
@@ -69,7 +69,7 @@ case class LinkedInOAuth2Provider(routesService: RoutesService,
           val fullName = (me \ FormattedName).asOpt[String]
           val avatarUrl = (me \ PictureUrl).asOpt[String]
           val emailAddress = (me \ EmailAddress).asOpt[String]
-          BasicProfile(id, userId, firstName, lastName, fullName, emailAddress, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId, firstName, lastName, fullName, emailAddress, avatarUrl, authMethod, oAuth2Info = Some(info))
         }
       }
     } recover {

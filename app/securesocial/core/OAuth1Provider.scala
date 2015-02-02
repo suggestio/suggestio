@@ -161,7 +161,7 @@ abstract class OAuth1Provider(routesService: RoutesService,
     }
   }
 
-  def fillProfile(info: OAuth1Info): Future[BasicProfile]
+  def fillProfile(info: OAuth1Info): Future[IProfile]
 }
 
 object OAuth1Provider {

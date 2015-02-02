@@ -56,7 +56,7 @@ case class GoogleProvider(routesService: RoutesService,
 
   override def id = GoogleProvider.Google
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile] = {
+  def fillProfile(info: OAuth2Info): Future[Profile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(UserInfoApi + accessToken).map { me =>
@@ -74,7 +74,7 @@ case class GoogleProvider(routesService: RoutesService,
           val avatarUrl = (me \ Image \ Url).asOpt[String]
           val emails = (me \ Emails).asInstanceOf[JsArray]
           val email = emails.value.find(v => (v \ EmailType).as[String] == Account).map(e => (e \ Email).as[String])
-          BasicProfile(id, userId, firstName, lastName, fullName, email, avatarUrl, authMethod, oAuth2Info = Some(info))
+          Profile(id, userId, firstName, lastName, fullName, email, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

@@ -158,7 +158,7 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
     }
   }
 
-  def fillProfile(info: OAuth2Info): Future[BasicProfile]
+  def fillProfile(info: OAuth2Info): Future[IProfile]
 
   /**
    * Defines the request format for api authentication requests
