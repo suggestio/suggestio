@@ -3,7 +3,7 @@ define ["SioPR"], (SioPR) ->
   SioPR = new SioPR()
 
   class Vk
-    API_ID = 4705589
+    API_ID = 4761539
     ACESS_LVL = 8197
 
     constructor: (@ws, @ctx, @onComplete) ->
@@ -17,10 +17,21 @@ define ["SioPR"], (SioPR) ->
 
       @loadSdk()
 
-    sendF = (json) ->
-      message = JSON.stringify json
-      @ws.send message
+    ###*
+      отправляет сообщения на сервер
+    ###
+    complete: ()->
 
+      sendF = (json) =>
+        message = JSON.stringify json
+        @ws.send message
+
+      @onComplete @ctx, sendF
+
+    ###*
+      записывает в контекст userId или groupId на стену, которого будет размещена запись
+      @param {Object} callback функция, которая выполняется при успешном завершении
+    ###
     setOwnerId: (onSuccess) ->
       REGEXP  = /// /(?!.+/)(.+)$ ///
       url     = @ctx._target.url
@@ -31,8 +42,8 @@ define ["SioPR"], (SioPR) ->
         try
           if data.response.type == "group" then @ctx.is_group = true
           @ctx.user_id = data.response.object_id
-        catch exception
-          console.log exception
+        catch error
+          console.log error
 
         onSuccess()
 
@@ -40,13 +51,18 @@ define ["SioPR"], (SioPR) ->
       try
         params =
           screen_name: match[1]
-
-        VK.Api.call "utils.resolveScreenName", params, callback
       catch error
         @ctx.__status = "error"
         @ctx.__error = "e.ext.adv.target.url.invalid"
-        @onComplete @ctx, sendF
+        @complete()
+        return false
 
+      VK.Api.call "utils.resolveScreenName", params, callback
+
+    ###*
+      сохраняет фотографию на стену
+      @param {Object} информация о сохраняемой фотографии
+    ###
     saveWallPhoto: (savedPicture) ->
 
       if !@ctx.user_id?
@@ -79,6 +95,10 @@ define ["SioPR"], (SioPR) ->
 
       VK.Api.call "photos.saveWallPhoto", params, callback
 
+    ###*
+      создаёт пост на стене
+      @param {Object} media файлы, ссылки и т.д.
+    ###
     wallPost: (attachments) ->
       post = new Object()
 
@@ -102,11 +122,13 @@ define ["SioPR"], (SioPR) ->
         else
           @ctx._status = "success"
 
-        # TODO все вызовы onComplete должны быть объединены в одну функцию
-        @onComplete @ctx, sendF
+        @complete()
 
       VK.Api.call "wall.post", post, callback
 
+    ###*
+      получает url сервера для загрузки фотографии на сервер vk
+    ###
     getWallUploadServer: () ->
 
       if !@ctx.user_id?
@@ -131,10 +153,14 @@ define ["SioPR"], (SioPR) ->
           @ctx._error =
             msg: error
 
-        @onComplete @ctx, sendF
+        @complete()
 
       VK.Api.call "photos.getWallUploadServer", params, callback
 
+    ###*
+      проверяет авторизован ли пользователь, если нет выдаёт окно авторизации
+      @param {Object} callback функция, выполняется при успешном завершении
+    ###
     login: (onSuccess) ->
 
       loginCallback = (response) =>
@@ -145,7 +171,7 @@ define ["SioPR"], (SioPR) ->
           @ctx._error =
             msg: "e.ext.adv.unathorized"
             info: response
-          @onComplete @ctx, sendF
+          @complete()
 
       getLoginStatusCallback = (response) =>
         if response.session
@@ -155,6 +181,9 @@ define ["SioPR"], (SioPR) ->
 
       VK.Auth.getLoginStatus getLoginStatusCallback
 
+    ###*
+      на основе контекста от сервера принимает решение о действиях, которые будут выполнены на этом шаге
+    ###
     handleTarget: (ctx, onComplete) ->
       console.log "vk handle target"
 
@@ -168,6 +197,9 @@ define ["SioPR"], (SioPR) ->
       if ctx._ads[0].rendered.sioUrl
         @getWallUploadServer()
 
+    ###*
+      загружает vk api
+    ###
     loadSdk: () ->
       vkApiTransport = document.createElement "div"
       vkApiTransport.id = "vk_api_transport"
