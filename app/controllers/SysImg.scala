@@ -6,8 +6,6 @@ import models.im.MImg
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
-import util.SiowebEsUtil.client
 import views.html.sys1.img._
 import play.api.data._, Forms._
 
