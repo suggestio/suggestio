@@ -227,7 +227,7 @@ object MAdvModes extends Enumeration {
     override def eventSource(adv: MAdvI): String = adv.rcvrAdnId
   }
 
-  protected abstract sealed class Val(val strId: String) extends super.Val with ValT
+  protected abstract sealed class Val(val strId: String) extends super.Val(strId) with ValT
 
   type MAdvMode = Val
 
