@@ -1,6 +1,5 @@
 package util.acl
 
-import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc._
 import models._
 import util.PlayMacroLogsImpl
@@ -99,7 +98,18 @@ trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAdAndProducer] {
     }
   }
 }
-final case class CanAdvertiseAd(adId: String)
+
+sealed trait CanAdvertiseAdBase2
   extends CanAdvertiseAdBase
   with ExpireSession[RequestWithAdAndProducer]
+
+/** Запрос какой-то формы размещения рекламной карточки. */
+case class CanAdvertiseAdGet(adId: String)
+  extends CanAdvertiseAdBase2
+  with CsrfGet[RequestWithAdAndProducer]
+
+/** Сабмит какой-то формы размещения рекламной карточки. */
+case class CanAdvertiseAdPost(adId: String)
+  extends CanAdvertiseAdBase2
+  with CsrfPost[RequestWithAdAndProducer]
 

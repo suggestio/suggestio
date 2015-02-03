@@ -215,7 +215,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Страница управления размещением рекламной карточки. */
-  def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
     renderAdvForm(adId, advFormM)
       .map { Ok(_) }
   }
@@ -436,7 +436,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param adId id размещаемой рекламной карточки.
    * @return Инлайновый рендер отображаемой цены.
    */
-  def getAdvPriceSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     advFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
@@ -515,7 +515,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Сабмит формы размещения рекламной карточки. */
-  def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
     val formBinded = advFormM.bindFromRequest()
     formBinded.fold(

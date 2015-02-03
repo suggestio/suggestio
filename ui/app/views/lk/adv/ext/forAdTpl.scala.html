@@ -21,7 +21,7 @@
     @_createTargetTpl(target.adnId, formForTarget(target))
   }
 
-  @form( routes.LkAdvExt.advFormSubmit(mad.id.get), 'id->"js-social-target-list" ) {
+  @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> "js-social-target-list" ) {
 
     @af("adv").errors.map { error =>
       <div class="event __bg-4 __icon-5">

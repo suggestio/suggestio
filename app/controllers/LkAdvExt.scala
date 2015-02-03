@@ -70,7 +70,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @param adId id рекламной карточки.
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
-  def forAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
     _forAdRender(adId, advsFormM)
       .map { Ok(_) }
   }
@@ -100,7 +100,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
-  def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     advsFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
