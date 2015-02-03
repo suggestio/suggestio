@@ -141,6 +141,9 @@ module.exports = function (grunt) {
 
     // Empties folders to start fresh
     clean: {
+      // rm views from dist to prevent *.scala.html inclusion in assets
+      distviews: ['<%= yeoman.dist %>/views'],
+      // rm dist builds
       dist: {
         files: [{
           dot: true,
@@ -447,7 +450,8 @@ module.exports = function (grunt) {
     'ngAnnotate',
     'copy:dist',
     'replace:htmlmin',
-    'copy:twirl-dist'
+    'copy:twirl-dist',
+    'clean:distviews'
   ]);
 
   grunt.registerTask('default', [
