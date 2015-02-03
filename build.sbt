@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.13.8-SNAPSHOT"
+version := "1.13.9-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -21,7 +21,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.7"
-  val esVsn         = "1.3.2"
+  val esVsn         = "1.4.2"
   val akkaVsn       = "2.3.4"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.+"
