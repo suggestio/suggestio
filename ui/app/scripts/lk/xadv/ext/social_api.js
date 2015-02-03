@@ -6,7 +6,7 @@ define([], function() {
 
     paths: {
       SioPR: "main",
-      View: "view",
+      view: "view",
 
       vk: "vk/vk",
       facebook: "fb/facebook",

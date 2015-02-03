@@ -6,6 +6,7 @@ define ["SioPR"], (SioPR) ->
     API_ID = 4761539
     ACESS_LVL = 8197
 
+    @serviceName: "Vk"
 
     constructor: (@ws, @ctx, @onComplete) ->
       console.log "vk init"

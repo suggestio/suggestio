@@ -26,22 +26,34 @@ define [], () ->
         ["vk", "facebook"]
         () ->
           # регистрируем и инициализируем новые сервисы
+          serviceList["count"] = arguments.length
           for index in [0...arguments.length]
             service = arguments[index]
-
-            serviceList[service.name] = new service(ws, ctx, onComplete)
+            console.log service
+            console.log service.serviceName
+            serviceList[service.serviceName] = new service(ws, ctx, onComplete)
       )
 
     registerService: (ctx, onComplete) ->
       regServiceCount += 1
 
-      if regServiceCount == Object.keys(serviceList).length
+      console.log "serviceList count = #{serviceList.count}"
+      console.log "reg service count = #{regServiceCount}"
+
+      if regServiceCount == serviceList.count
         ctx._status = "success"
         onComplete ctx, sendF
 
     handleTarget: (ctx, onComplete) ->
+      console.log "--handleTarget---"
+      console.log serviceList
+
+      console.log ctx
+
       if ctx._domain.indexOf("facebook.com") >= 0
         serviceList["Facebook"].handleTarget(ctx, onComplete)
 
       if ctx._domain.indexOf("vk.com") >= 0
         serviceList["Vk"].handleTarget(ctx, onComplete)
+
+      return true

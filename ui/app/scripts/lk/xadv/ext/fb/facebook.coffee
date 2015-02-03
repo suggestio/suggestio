@@ -5,6 +5,8 @@ define ["SioPR"], (SioPR) ->
   class Facebook
     API_ID = 1588523678029765
 
+    @serviceName: "Facebook"
+
     constructor: (@ws, ctx, onComplete) ->
       console.log "Fb init"
 
