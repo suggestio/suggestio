@@ -4,6 +4,7 @@ import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.SbtProguard.ProguardKeys._
+import com.tuplejump.sbt.yeoman.Yeoman
 
 
 organization := "io.suggest"
@@ -14,22 +15,22 @@ version := "1.0-SNAPSHOT"
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= Seq(
-  jdbc, 
+  jdbc exclude("com.h2database", "h2"),
   anorm,
   cache,
   json,
-  ws,
+  ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.4.0-M2-SNAPSHOT",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.13.1-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.13.9-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -47,10 +48,11 @@ libraryDependencies ++= Seq(
     exclude("xml-apis", "xmlParserAPIs")
     exclude("xerces",   "xerces")
     exclude("log4j",    "log4j")
+    exclude("commons-logging", "commons-logging")
   ,
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
-  "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
+  "org.jcoffeescript" % "jcoffeescript" % "1.6.2-SNAPSHOT",
   // for domain validation:
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
@@ -76,17 +78,49 @@ libraryDependencies ++= Seq(
   "net.jpountz.lz4" % "lz4" % "1.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
-  // svg
-  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7",
+  // svg. batik довольно кривой, exclude(batik-ext) не пашет, приходится сочинять чудеса.
+  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-dom" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-css" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-xml" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-util" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-parser" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-anim" % "1.7" intransitive(),
+  "org.apache.xmlgraphics" % "batik-awt-util" % "1.7" intransitive(),
+  "xml-apis" % "xml-apis" % "1.4.01",
+  "xml-apis" % "xml-apis-ext" % "1.3.04",
   // test
   // play-2.3.x: Устарел selenium
-  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2",
-  "org.fluentlenium" % "fluentlenium-core" % "0.10.2",
-  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1",
-  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15",
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
+  // org.w3c.css#sac конфликтует xml-apis-ext
+  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "org.fluentlenium" % "fluentlenium-core" % "0.10.2"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.15"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  // Логин через соц.сети
+  "io.suggest" %% "securesocial" % "3.1.0-SNAPSHOT"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
   // play-2.3+:
   "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
 )
 
 play.Play.projectSettings
@@ -140,11 +174,6 @@ includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
 
 excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
-//StylusKeys.compress in Assets := true
-
-
-// LESS
-includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
@@ -166,9 +195,14 @@ unmanagedJars in Compile ~= {uj =>
 // proguard: защита скомпиленного кода от реверса.
 proguardSettings
 
-ProguardKeys.proguardVersion in Proguard := "5.1"
+ProguardKeys.proguardVersion in Proguard := "5.2"
 
 ProguardKeys.options in Proguard ++= Seq(
+
+  "-keep class * extends javax.xml.parsers.SAXParserFactory",
+  "-keep public class org.apache.xerces.**",
+  "-keep public class play.api.**",
+  "-keep public class ch.qos.logback.**",
   "-keepnames class * implements org.xml.sax.EntityResolver",
   """-keepclasseswithmembers public class * {
       public static void main(java.lang.String[]);
@@ -196,11 +230,27 @@ ProguardKeys.options in Proguard ++= Seq(
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
       scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
   }""",
-  "-keepclassmembernames class * implements models.ai.ContentHandlerResult",
+  "-keep class * implements models.ai.ContentHandlerResult",
+  "-keepattributes *Annotation*,Signature",
+  // http://stackoverflow.com/a/10311980
+  "-keep class com.google.inject.Binder",
+  "-keep public class com.google.inject.Inject",
+  // keeps all fields and Constructors with @Inject
+  """-keepclassmembers,allowoptimization,allowobfuscation class * {
+    @com.google.inject.Inject <fields>;
+    @com.google.inject.Inject <init>(...);
+  }""",
+  """-keepclassmembers,allowobfuscation,allowoptimization class * {
+    @com.google.inject.Provides <methods>;
+  }""",
+  // TODO заценить описалово из http://stackoverflow.com/a/5843875
+  "-optimizations !method/inlining/*",
+  "-dontoptimize",
+  "-dontobfuscate",
+  //"-ignorewarnings",
+  "-verbose",
   "-dontnote",
-  "-dontwarn",
-  //"-ignorewarnings"
-  "-verbose"
+  "-dontwarn"
 )
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
@@ -210,11 +260,5 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 //routesGenerator := InjectedRoutesGenerator
 
-// jslint пока включен только для отрефакторенной showcase.js
-includeFilter in (Assets, JshintKeys.jshint) := new FileFilter{
-  val p = "/assets/javascripts/sc/"
-  def accept(f: File) = {
-    f.getAbsolutePath.contains(p)
-  }
-}
+Yeoman.yeomanSettings ++ Yeoman.withTemplates
 

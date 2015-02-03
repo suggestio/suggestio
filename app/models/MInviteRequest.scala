@@ -3,6 +3,7 @@ package models
 import _root_.util.qsb.QsbUtil
 import io.suggest.model._
 import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
+import models.usr.EmailActivation
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc

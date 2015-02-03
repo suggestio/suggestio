@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.util.MacroLogsI
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.PlayLazyMacroLogsImpl
+import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -104,11 +104,24 @@ sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode]
     }
   }
 }
-final case class IsAdnNodeAdmin(adnId: String)
+/** Трейт [[IsAdnNodeAdminBase]], обвешанный всеми необходимыми для работы надстройками. */
+sealed trait IsAdnNodeAdminBase2
   extends IsAdnNodeAdminBase
   with ExpireSession[AbstractRequestForAdnNode]
-  with PlayLazyMacroLogsImpl
+  with PlayMacroLogsDyn
 
+/** Просто проверка прав на узел перед запуском экшена. */
+case class IsAdnNodeAdmin(adnId: String) extends IsAdnNodeAdminBase2
+
+/** Рендер формы редактирования требует защиты от CSRF. */
+case class IsAdnNodeAdminGet(adnId: String)
+  extends IsAdnNodeAdminBase2
+  with CsrfGet[AbstractRequestForAdnNode]
+
+/** Сабмит формы редактирования требует проверки CSRF-Token'а. */
+case class IsAdnNodeAdminPost(adnId: String)
+  extends IsAdnNodeAdminBase2
+  with CsrfPost[AbstractRequestForAdnNode]
 
 
 abstract class AbstractRequestForAdnNode[A](request: Request[A])

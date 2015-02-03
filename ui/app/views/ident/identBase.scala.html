@@ -1,0 +1,11 @@
+@(title: String, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для раздела /id/
+   Судя по исходному дизайну: надо просто дёргать дизайн вышестоящего шаблона. *@
+
+@import market._
+
+@marketBase(
+  title     = title,
+  headAfter = headAfter
+)(content)

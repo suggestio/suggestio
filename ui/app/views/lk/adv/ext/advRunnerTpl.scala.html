@@ -1,0 +1,23 @@
+@(wsCallArgs: adv.MExtAdvQs, mad: MAd, mnode: MAdnNode)(implicit ctx: Context)
+
+@* Страница с идущими размещениями на внешних сервисах. *@
+
+@import util.adv.ExtUtil._
+
+
+@base(
+  title = "Размещение рекламной карточки на внешних сервисах",
+  mnode = mnode,
+  mad = mad
+) {
+
+  Идёт размещение рекламной карточки.
+  Не закрывайте эту вкладку до завершения процесса.
+
+
+  <input id="socialApiConnection" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
+
+
+  <div id="@RUNNER_EVENTS_DIV_ID"></div>
+
+}

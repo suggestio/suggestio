@@ -1,5 +1,6 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None, headAfter:Option[Html] = None,
-  popupContent: Option[Html] = None, povAdnId: Option[String] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None,
+  headAfter:Option[Html] = None, popupContent: Option[Html] = None,
+  povAdnId: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
@@ -24,7 +25,6 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/common.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase_previews.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/lightbox/css/lightbox.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 
@@ -58,9 +58,13 @@
         }
       </div>
 
-      @ctx.usernameOpt.map { username =>
+      @*ctx.usernameOpt.map { username =>
         <a class="header_logout light-gray dark-link" href="@routes.Ident.logout" title="Выйти">@username</a>
-      }
+      }*@
+
+
+      <a class="btn __size-M __major header_change-node" href="#">Сменить магазин</a>
+
     </header>
 
 
@@ -78,14 +82,30 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i __cards@if(leftCurrEl exists {_ == LPL_ADS}){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
+            <a class="left-bar_menu-i __cards@if(leftCurrEl contains LPL_ADS){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __profile@if(leftCurrEl exists {_ == LPL_NODE}){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
+            <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __billing@if(leftCurrEl exists {_ == LPL_BILLING}){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+            @if(ctx.billBalanceOpt) {
+              <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+              <hr class="delimiter"/>
+            }
+            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События">
+              @* Вывести блямбу с кол-вом непрочитанных сообщений. *@
+              @ctx.nodeUnseenEvtsCnt.map { cnt =>
+                @if(cnt > 0) {
+                  <span class="left-bar_menu-bubble" title="Новых событий: @cnt">(@cnt)</span>
+                }
+              }
+            </a>
             <hr class="delimiter"/>
           </nav>
         }
+        <div class="left-bar_bottom">
+          <a class="left-bar_exit" href="@routes.Ident.logout">Выход</a>
+          <hr class="delimiter"/>
+          <a class="left-bar_help">Помощь</a>
+        </div>
       </aside>
 
       @adnIdOpt.map { adnId =>
@@ -105,7 +125,7 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl exists {_ == LPL_SUPPORT}){ __act}"
+        &nbsp;|&nbsp;<a class="footer_link@if(leftCurrEl contains LPL_SUPPORT){ __act}"
                         href="@ctx.supportFormCall(adnIdOpt)">Служба поддержки</a>
         <a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>
@@ -120,7 +140,6 @@
   <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/lib/lightbox/js/lightbox.min.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
-  <script src='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 
 </body>
 }

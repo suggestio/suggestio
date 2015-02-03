@@ -1,0 +1,27 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон для ext.adv-событий об ошибке при обработке цели. *@
+
+@import lk.event._
+@import ctx._
+
+@_errorEvtBase(rargs) {
+
+  @rargs.advExtTgOpt.map { advExtTg =>
+    <div class="event_t">
+      <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
+    </div>
+  }
+
+  @rargs.errors.map { err =>
+    <p class="event_err-text">Ошибка: @Messages(err.msg, err.args: _*)</p>
+
+    @* Если есть доп.информация, то её рендерим под катом *@
+    @if(err.info) {
+      <p class="dark-link js-social-show-error">Показать технические подробности ошибки.</p>
+      <div style="display: none;">
+        @err.info
+      </div>
+    }
+  }
+}

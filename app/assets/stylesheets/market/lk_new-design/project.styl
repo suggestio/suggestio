@@ -53,13 +53,16 @@
   transition(all 0.2s ease-in-out 0s)
 
   &:hover
+    cursor: pointer
     color: #007b56
     border-color: #c6c6c6
 
 .dark-link
   text-decoration none
+  transition(color 0.2s ease-in-out 0s)
 
   &:hover
+    cursor pointer
     color white
 
 /********************************************************************************************************************/
@@ -164,7 +167,7 @@
     color       darkGray
 
     cursor      pointer
-    background  #e5e5e5
+    background  #c0c0c0
     border-radius 4px
     transition(all 0.2s ease-in-out 0s)
 
@@ -172,6 +175,35 @@
 
       .slide-block_btn
         background-color    #f3f3f3
+
+  &_info-btn
+    position  absolute
+    right 50px
+    top 10px
+
+    display block
+    box-sizing border-box
+    width 28px
+    height 28px
+    line-height 24px
+
+    border 2px solid #d6d6d6
+    border-radius 4px
+    cursor pointer
+
+    transition(all 0.2s ease-in-out 0s)
+
+    color #707070
+
+    font-size 18px
+    font-weight bold
+    text-align center
+    text-decoration none
+
+    &:hover
+      background-color  #9ad0b0
+      border-color  #9ad0b0
+      color white
 
 
   &_title.__js-open
@@ -310,7 +342,8 @@
     color #8c8c8c
 
 label
-  input[type=checkbox]
+  input[type=checkbox],
+  input[type=radio]
     display none
 
   input[type=checkbox] + .checkbox_title:before
@@ -324,6 +357,7 @@ label
 
     content         "\0020"
     color           #00b893
+    background-color  white
     font-size       16px
     text-align      center
     border-radius   4px
@@ -334,7 +368,8 @@ label
   input[type=checkbox]:disabled + .checkbox_title:before
     color #acacac
 
-  input[type=checkbox] + span:before
+  input[type=checkbox] + span:before,
+  input[type=radio] + span:before
     margin-right    20px
     display         inline-block
     height          16px
@@ -345,14 +380,17 @@ label
 
     content         "\0020"
     color           #00b893
+    background-color white
     font-size       16px
     text-align      center
     border-radius   4px
 
-  input[type=checkbox]:checked + span:before
+  input[type=checkbox]:checked + span:before,
+  input[type=radio]:checked + span:before
     content "\2713"
 
-  input[type=checkbox]:disabled + span:before
+  input[type=checkbox]:disabled + span:before,
+  input[type=radio]:disabled + span:before
     color #acacac
 
 
@@ -393,13 +431,51 @@ label
 /********************************************************************************************************************/
 
 .date-widget
-  padding           5px 10px 15px
+  padding-top 5px
   background-color  white
-  border-radius     10px
+  border-radius 10px 10px 0 0
+
+  &_options
+    padding 0 10px
 
   &_result
+    overflow hidden
+    padding 0 10px 15px
+    border-radius(0px 0px 10px 10px)
+
+    color black
+    background-color #c1c1c1
+
+  &_result-value
     font-size   15px
-    color       darkGray
+
+/********************************************************************************************************************/
+/* Виджет выбора уровней размещения  */
+/********************************************************************************************************************/
+.levels-widget
+  margin  15px 0
+
+  &_t
+    color #484848
+    font-size 18px
+    font-weight normal
+
+  &_lst
+    margin-top 10px
+    padding 10px 20px
+    border-radius 10px
+    background-color #b9ead6
+
+  &_i
+    list-style none
+
+  &_i-descr
+    margin-bottom 10px
+    padding-left 35px
+    font-size 11px
+
+  &_gray
+    color #8d8d8d
 
 /********************************************************************************************************************/
 /* No photo  */
@@ -407,3 +483,69 @@ label
 .no-photo
   height: 100%
   background-color: #e2e2e2
+
+/********************************************************************************************************************/
+/* События  */
+/********************************************************************************************************************/
+.event
+  position relative
+  margin 15px 0
+
+  padding-top 25px
+  padding-bottom  25px
+  padding-right 35px
+  padding-left  100px
+
+  border-radius 10px
+
+  &.__with-ad-preview
+    padding-right 225px
+
+  &.__bg-1
+    background-color white
+
+  &.__bg-2
+    background-color #91debc
+
+  &.__bg-3
+    background-color  #fbf2ce
+
+  &.__bg-4
+    background-color  #f4c0c2
+
+  &.__icon-6
+    background-image url("/vassets/images/market/new-design/social_in-process.gif")
+    background-repeat no-repeat
+    background-position left 30px top 20px
+
+  &_w
+    text-decoration none
+
+  &_close
+    position absolute
+    top 5px
+    right 5px
+
+    box-sizing  border-box
+    padding 0
+    width 40px
+    height  40px
+
+    background-color  transparent
+
+  &_t
+    font-size 16px
+    color #404040
+
+  &_err-text
+    color #cb2228
+
+  &_ad-preview
+    position absolute
+    right  45px
+    bottom 0
+
+    width 140px
+    height  60px
+
+    background-color  black

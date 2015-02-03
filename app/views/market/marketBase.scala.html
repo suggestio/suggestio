@@ -1,4 +1,4 @@
-@(title: String, lf: Option[Form[_]] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, lf: Option[Form[_]] = None, popupContent: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
 
@@ -26,7 +26,7 @@
   <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase_previews.css")'/>
 
   <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
-
+  @headAfter
 </head>
 
 
@@ -47,8 +47,8 @@
                 <a class="popup_close f-right icon-icomoon js-close-popup" href="#"></a>
               </div>
 
-              @ident._emailPwLoginFormTpl(
-                lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+              @views.html.ident._emailPwLoginFormTpl(
+                lf = lf getOrElse controllers.ident.EmailPwSubmit.emailPwLoginFormM,
                 submitCall = routes.MarketLk.emailPwLoginFormSubmit()
               )
 
@@ -78,19 +78,19 @@
   <div class="footer __responsive __fill-1">
     <div class="footer_cnt __index">
 
-      <!--<div class="f-right footer_wifi">
+      @*<!--<div class="f-right footer_wifi">
         Эффективная реклама в сетях WiFi Free
-      </div>-->
+      </div>-->@*
 
       <span class="copyright-block __color-1 f-right">
         @_copyrightTextTpl(withLink = false)
         @*&nbsp;|&nbsp;<a class="copyright-link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
-      <!--<div class="socials">
+      @*<!--<div class="socials">
         <a class="fb" href="#">Facebook</a>
         <a class="tw" href="#">Twitter</a>
-      </div>-->
+      </div>-->*@
 
     </div>
   </div>
@@ -100,7 +100,6 @@
   <script src="@CdnUtil.asset("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@CdnUtil.asset("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <script src="@CdnUtil.asset("javascripts/jquery-ui.custom.min.js")"></script>
-
 
 </body>
 </html>

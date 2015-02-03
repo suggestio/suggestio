@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode)(implicit ctx: util.Context)
+@(adnNode: MAdnNode)(implicit ctx: Context)
 @import util.CoffeeScriptTemplate._
 @import util.cdn.CdnUtil
 @coffee{

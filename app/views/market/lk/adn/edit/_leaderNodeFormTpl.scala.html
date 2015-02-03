@@ -1,12 +1,14 @@
-@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT], nodeInfo: AdNetMemberInfo)(implicit ctx: util.Context)
+@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT],
+  nodeInfo: AdNetMemberInfo)(implicit ctx: Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
 @import util.FC.tdRadialFc
 @import util.img.GalleryUtil.GALLERY_LEN_MAX
 @import util.img.DynImgUtil
+@import ctx._
 
-@form(submitCall, 'id -> "profileEdit") {
+@form(CSRF(submitCall), 'id -> "profileEdit") {
 
   <div class="profile_logo-bar" id="logo">
     @defining(mf("logoImgId").value) { logoImgIdOpt =>

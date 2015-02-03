@@ -2,6 +2,7 @@ package util.acl
 
 import play.api.mvc._
 import models._
+import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -39,11 +40,11 @@ object IsAdEditor extends PlayMacroLogsImpl {
 import IsAdEditor._
 
 /** Редактировать карточку может только владелец магазина. */
-trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
+trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] {
   import LOGGER._
 
   def adId: String
-  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
     val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -60,7 +61,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
           if (isSuperuser) {
             MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
               srmFut flatMap { srm =>
-                val req1 = RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get)
+                val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
                 block(req1)
               }
             }
@@ -75,7 +76,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
                       forbiddenFut(adId, "No node admin rights", request)
                     } { adnNode =>
                       srmFut flatMap { srm =>
-                        val req1 = RequestWithAd(mad, request, pwOpt, srm, adnNode)
+                        val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode)
                         block(req1)
                       }
                     }
@@ -93,14 +94,22 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
     }
   }
 }
-final case class CanEditAd(adId: String)
+/** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
+case class CanEditAdGet(adId: String)
   extends CanEditAdBase
-  with ExpireSession[RequestWithAd]
+  with ExpireSession[RequestWithAdAndProducer]
+  with CsrfGet[RequestWithAdAndProducer]
+
+/** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
+case class CanEditAdPost(adId: String)
+  extends CanEditAdBase
+  with ExpireSession[RequestWithAdAndProducer]
+  with CsrfPost[RequestWithAdAndProducer]
+
 
 
 /** Абстрактный реквест в сторону какой-то рекламной карточки на тему воздействия со стороны продьюсера. */
-abstract class AbstractRequestWithAdFromProducer[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def mad: MAd
+abstract class AbstractRequestWithAdAndProducer[A](request: Request[A]) extends AbstractRequestWithAd(request) {
   def producer: MAdnNode
 }
 
@@ -113,13 +122,13 @@ abstract class AbstractRequestWithAdFromProducer[A](request: Request[A]) extends
  * @param pwOpt Данные по юзеру.
  * @tparam A Параметр типа реквеста.
  */
-case class RequestWithAd[A](
+case class RequestWithAdAndProducer[A](
   mad: MAd,
   request: Request[A],
   pwOpt: PwOpt_t,
   sioReqMd: SioReqMd,
   producer: MAdnNode
-) extends AbstractRequestWithAdFromProducer(request) {
+) extends AbstractRequestWithAdAndProducer(request) {
   @JsonIgnore
   def producerId = mad.producerId
 }
@@ -131,12 +140,12 @@ case class RequestWithAd[A](
 object CanUpdateSls extends PlayMacroLogsImpl
 
 /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
-trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
+trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] {
   import CanUpdateSls.LOGGER._
 
   def adId: String
 
-  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
     val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper getFromRequest request
     pwOpt match {
@@ -158,7 +167,7 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
                 }
                 if (isNodeAdmin) {
                   // Юзер является админом. Всё ок.
-                  val req1 = RequestWithAd(mad, request, pwOpt, SioReqMd(), producerOpt.get)
+                  val req1 = RequestWithAdAndProducer(mad, request, pwOpt, SioReqMd(), producerOpt.get)
                   block(req1)
                 } else {
                   // Юзер не является админом, либо (маловероятно) producer-узел был удалён (и нельзя проверить права).
@@ -184,5 +193,5 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
 /** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
 final case class CanUpdateSls(adId: String)
   extends CanUpdateSlsBase
-  with ExpireSession[RequestWithAd]
+  with ExpireSession[RequestWithAdAndProducer]
 

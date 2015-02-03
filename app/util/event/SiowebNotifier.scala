@@ -38,14 +38,13 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   /** Набор модулей, которые необходимо статически подписать на события. */
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
-    DomainManager,
-    SiobixClient,
     MAdnNodeCache,
     deleteAdsOnAdnNodeDeleteSNSC,
     controllers.MarketShowcase,
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
     new MBillContract.DelContractsWhenAdnNodeDeleted,
+    AdnNodeEvents,
     MLocalImg
   )
 

@@ -98,12 +98,13 @@ final case class MBillMmpDaily(
   primeCalId    : String,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   id            : Option[Int] = None
-) extends SqlModelSave[MBillMmpDaily] with CurrencyCode with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
+) extends SqlModelSave with CurrencyCode with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
 
   override def hasId = id.isDefined
   override def companion = MBillMmpDaily
+  override type T = MBillMmpDaily
 
-  override def saveInsert(implicit c: Connection): MBillMmpDaily = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL(s"INSERT INTO $TABLE_NAME ($CONTRACT_ID_FN, $CURRENCY_CODE_FN, $MMP_WEEKDAY_FN, $MMP_WEEKEND_FN, $MMP_PRIMETIME_FN, $ON_START_PAGE_FN, $WEEKEND_CAL_ID_FN, $PRIME_CAL_ID_FN, $ON_RCVR_CAT_FN) " +
       "VALUES ({contractId}, {currencyCode}, {mmpWeekday}, {mmpWeekend}, {mmpPrimetime}, {onStartPage}, {weekendCalId}, {primeCalId}, {onRcvrCat})")
       .on('contractId -> contractId, 'currencyCode -> currencyCode, 'mmpWeekday -> mmpWeekday, 'mmpWeekend -> mmpWeekend,

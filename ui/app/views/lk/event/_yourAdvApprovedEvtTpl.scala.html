@@ -1,0 +1,26 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление: какой-то узел зааппрувил мою карточку. *@
+
+@import ctx._
+@import AdnShownTypes._
+@import datetime._
+
+@_oneEvtBase(rargs, Some("__bg-1 __icon-4 __with-ad-preview")) {
+
+  <div class="event_t">
+    @rargs.adnNodeOpt.map { mnode =>
+      @Messages(mnode.adn.singular)
+      <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
+    }
+  </div>
+
+  одобрил размещение.
+  @rargs.advOkOpt.map { advOk =>
+    @_prettyDate(advOk.dateStatus)
+  }
+
+  <div class="event_ad-preview">
+    @_advAdFrameTpl(rargs)
+  </div>
+}

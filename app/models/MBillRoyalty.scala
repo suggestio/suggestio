@@ -43,13 +43,16 @@ final case class MBillRoyalty(
   isInternal: Boolean,
   toAdnId: String,
   id: Option[Int] = None
-) extends SqlModelSave[MBillRoyalty] with MBillContractSel {
+) extends SqlModelSave with MBillContractSel {
 
   override def hasId = id.isDefined
 
+  override type T = MBillRoyalty
+  override def companion = MBillRoyalty
+
   def isExternal = !isInternal
 
-  override def saveInsert(implicit c: Connection): MBillRoyalty = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, royalty, is_internal, to_adn_id) " +
       "VALUES({contractId}, {royalty}, {isInternal}, {toAdnId})")
       .on('contractId -> contractId, 'royalty -> royalty, 'isInternal -> isInternal, 'toAdnId -> toAdnId)

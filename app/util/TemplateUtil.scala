@@ -2,14 +2,13 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
-import org.joda.time.{ReadableInstant, ReadablePartial, DateTime}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import models.Context
+import org.joda.time.{ReadableInstant, ReadablePartial}
+import org.joda.time.format.DateTimeFormat
 import play.twirl.api.{HtmlFormat, Html}
 import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
-
-import util._
 
 /**
  * Suggest.io

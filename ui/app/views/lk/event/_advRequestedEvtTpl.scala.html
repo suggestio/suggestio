@@ -1,0 +1,26 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Уведомление: какой-то узел запрашивает размещение своей рекламы у меня. *@
+
+@import ctx._
+@import AdnShownTypes._
+@import datetime._
+
+@_oneEvtBase(rargs) {
+
+  <p>
+    @rargs.adnNodeOpt.map { mnode =>
+      @Messages(mnode.adn.singular)
+      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+    }
+  </p>
+
+  <p>
+    запрашивает размещение. Какую инфу тут выводить?
+    @rargs.advReqOpt.map { advReq =>
+      @_prettyDate(advReq.dateStatus)
+    }
+  </p>
+
+  @_advAdFrameTpl(rargs)
+}

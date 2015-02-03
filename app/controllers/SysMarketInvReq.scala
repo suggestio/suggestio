@@ -1,5 +1,6 @@
 package controllers
 
+import models.usr.EmailActivation
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.HtmlFormat
 import util.acl._

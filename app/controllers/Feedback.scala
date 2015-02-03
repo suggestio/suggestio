@@ -1,7 +1,7 @@
 package controllers
 
 import util.mail.MailerWrapper
-import util.{PlayLazyMacroLogsImpl, ContextT}
+import util.PlayLazyMacroLogsImpl
 import play.api.data._
 import play.api.data.Forms._
 import util.HtmlSanitizer.supportMsgPolicy
@@ -19,7 +19,7 @@ import util.acl._
  * Пока что тут только отправка писем с сайта.
  */
 
-object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT with CaptchaValidator {
+object Feedback extends SioController with PlayLazyMacroLogsImpl with CaptchaValidator {
 
   import LOGGER._
 

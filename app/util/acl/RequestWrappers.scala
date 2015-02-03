@@ -2,23 +2,22 @@ package util.acl
 
 import java.net.InetAddress
 
+import models.event.{EventsSearchArgs, MEvent}
+import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
+import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import models._
+import util.async.AsyncUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
 import play.api.Play.current
+import util.SiowebEsUtil.client
 
-/*
-  Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
-  сделать case class -> case class наследование ( http://stackoverflow.com/a/12706475 ). Таким убогим образом в scala
-  можно обозначить наследование между двумя case class'ами: RequestWithPwOpt -> RequestWithPDAuthz.
-  Это поможет генерить контексты одной и той же функцией.
- */
 
 object SioWrappedRequest {
   implicit def request2sio[A](request: Request[A]): SioWrappedRequest[A] = {
@@ -31,13 +30,7 @@ class SioWrappedRequest[A](request: Request[A]) extends WrappedRequest(request) 
 
 /** Абстрактный реквест, в рамках которого содержится инфа о текущем sio-юзере. */
 abstract class AbstractRequestWithPwOpt[A](request: Request[A])
-  extends SioWrappedRequest(request) {
-  def pwOpt: PwOpt_t
-  def sioReqMd: SioReqMd
-  def isSuperuser = PersonWrapper isSuperuser pwOpt
-  def isAuth = pwOpt.isDefined
-}
-
+  extends SioWrappedRequest(request) with RichRequestHeader
 
 
 object SioRequestHeader extends PlayMacroLogsImpl {
@@ -92,6 +85,30 @@ object SioRequestHeader extends PlayMacroLogsImpl {
     SioWrappedRequest.request2sio(request)
   }
 }
+
+
+object RichRequestHeader {
+
+  def apply(rh: RequestHeader): Future[RichRequestHeader] = {
+    val _pwOpt = PersonWrapper.getFromRequest(rh)
+    SioReqMd.fromPwOpt(_pwOpt).map { srm =>
+      new RequestHeaderWrapper with RichRequestHeader {
+        override def underlying   = rh
+        override def pwOpt        = _pwOpt
+        override def sioReqMd     = srm
+      }
+    }
+  }
+}
+
+/** Вынос полей из [[AbstractRequestWithPwOpt]]. */
+trait RichRequestHeader extends RequestHeader {
+  def pwOpt: PwOpt_t
+  def sioReqMd: SioReqMd
+  def isSuperuser = PersonWrapper isSuperuser pwOpt
+  def isAuth = pwOpt.isDefined
+}
+
 
 /** Расширение play RequestHeader функциями S.io. */
 trait SioRequestHeader extends RequestHeader {
@@ -156,24 +173,6 @@ case class RequestWithPwOpt[A](pwOpt: PwOpt_t, request: Request[A], sioReqMd: Si
   extends AbstractRequestWithPwOpt(request)
 
 
-
-abstract class AbstractRequestWithDAuthz[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def dAuthz: MDomainAuthzT
-  def dkey = dAuthz.dkey
-}
-
-/**
- * При ограничении прав в рамках домена используется сий класс, как бы родственный и расширенный по
- * отношению к RequestWithPwOpt.
- * @param pwOpt Данные о текущем юзере.
- * @param dAuthz Данные об авторизации в рамках домена.
- * @param request Реквест.
- * @tparam A Подтип реквеста.
- */
-case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: Request[A], sioReqMd: SioReqMd)
-  extends AbstractRequestWithDAuthz(request)
-
-
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
   def shopId: String
@@ -182,11 +181,14 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
 
 /** Метаданные, относящиеся запросу. Сюда попадают данные, которые необходимы везде и требует асинхронных действий.
   * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
-  *                    [[models.MPerson]] и [[models.MPersonIdent]].
+  *                    [[MPerson]] и [[models.MPersonIdent]].
+  * @param billBallanceOpt Текущий денежный баланс узла.
+  * @param nodeUnseenEvtsCnt Кол-во новых событий у узла.
   */
 case class SioReqMd(
-  usernameOpt: Option[String] = None,
-  billBallanceOpt: Option[MBillBalance] = None
+  usernameOpt       : Option[String] = None,
+  billBallanceOpt   : Option[MBillBalance] = None,
+  nodeUnseenEvtsCnt : Option[Int] = None
 )
 object SioReqMd {
   /** Простая генерация srm на основе юзера. */
@@ -198,17 +200,69 @@ object SioReqMd {
 
   /** Генерация srm для юзера в рамках личного кабинета. */
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
+    // Получить кол-во непрочитанных сообщений для узла.
+    val newEvtsCntFut: Future[Int] = {
+      val args = EventsSearchArgs(
+        ownerId = Some(adnId),
+        isUnseen = Some(true)
+      )
+      MEvent.dynCount(args)
+        .map { _.toInt }
+    }
+    // Получить баланс узла.
     val bbOptFut = Future {
       DB.withConnection { implicit c =>
         MBillBalance.getByAdnId(adnId)
       }
-    }
+    }(AsyncUtil.jdbcExecutionContext)
+    // Собрать результат.
     for {
       usernameOpt <- PersonWrapper.findUserName(pwOpt)
       bbOpt       <- bbOptFut
+      newEvtCnt   <- newEvtsCntFut
     } yield {
-      SioReqMd(usernameOpt, bbOpt)
+      SioReqMd(
+        usernameOpt       = usernameOpt,
+        billBallanceOpt   = bbOpt,
+        nodeUnseenEvtsCnt = Some(newEvtCnt)
+      )
     }
   }
 
 }
+
+
+/** Враппер над RequestHeader. */
+trait RequestHeaderWrapper extends RequestHeader {
+  def underlying: RequestHeader
+  override def id             = underlying.id
+  override def secure         = underlying.secure
+  override def uri            = underlying.uri
+  override def remoteAddress  = underlying.remoteAddress
+  override def queryString    = underlying.queryString
+  override def method         = underlying.method
+  override def headers        = underlying.headers
+  override def path           = underlying.path
+  override def version        = underlying.version
+  override def tags           = underlying.tags
+}
+
+case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Nothing] with RequestHeaderWrapper {
+  override def body: Nothing = {
+    throw new UnsupportedOperationException("This is request headers wrapper. Body never awailable here.")
+  }
+}
+
+
+trait CsrfGet[R[_]] extends ActionBuilder[R] {
+  override protected def composeAction[A](action: Action[A]): Action[A] = {
+    CSRFAddToken( super.composeAction(action) )
+  }
+}
+
+trait CsrfPost[R[_]] extends ActionBuilder[R] {
+  override protected def composeAction[A](action: Action[A]): Action[A] = {
+    CSRFCheck( super.composeAction(action) )
+  }
+}
+

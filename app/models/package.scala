@@ -3,6 +3,8 @@ import io.suggest.model.geo
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
+import models.usr.EmailPwConfirmInfo
+import play.api.data.Form
 
 /**
  * Suggest.io
@@ -116,8 +118,6 @@ package object models {
 
   type SelectPolicy         = SelectPolicies.SelectPolicy
 
-  type Context              = util.Context
-  val  Context              = util.Context
   type BlockData            = common.IBlockMeta with ym.model.ad.IOffers with common.IColors
 
   val  BlocksConf           = util.blocks.BlocksConf
@@ -198,5 +198,15 @@ package object models {
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
 
   type ImgMetaI             = io.suggest.model.ImgMetaI
+
+
+  /** Тип формы для логина по email+пароль. */
+  type EmailPwLoginForm_t   = Form[(String, String)]
+
+  /** Тип формы для регистрации по email (шаг 1 - указание email). */
+  type EmailPwRegReqForm_t  = Form[String]
+
+  /** Тип формы для второго шагоа регистрации по email: заполнение данных о себе. */
+  type EmailPwConfirmForm_t = Form[EmailPwConfirmInfo]
 
 }

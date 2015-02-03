@@ -43,6 +43,7 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMa
   def onUnauth(request: RequestHeader): Future[Result] = {
     Future successful onUnauthBase(request)
   }
+
 }
 
 case class IsAuthC(obeyReturnPath: Boolean)

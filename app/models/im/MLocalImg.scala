@@ -17,6 +17,7 @@ import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util._
+import util.async.AsyncUtil
 import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
 import scala.concurrent.duration._
 import scala.collection.JavaConversions._

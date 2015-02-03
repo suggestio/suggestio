@@ -1,6 +1,8 @@
-@(adnNodes: Seq[MAdnNode], companies: Option[Map[String, MCompany]] = None, withDelims: Boolean = true)(implicit ctx: util.Context)
+@(adnNodes: Seq[MAdnNode], companies: Option[Map[String, MCompany]] = None,
+  withDelims: Boolean = true)(implicit ctx: Context)
 
 @* Инлайновый список узлов. *@
+@import ctx._
 
 @if(adnNodes.nonEmpty) {
 

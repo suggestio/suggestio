@@ -1,0 +1,7 @@
+@(ea: usr.EmailActivation)(implicit ctx: Context)
+
+@* Письмо со ссылкой для активации. *@
+
+<p>Регистрация suggest.io</p>
+
+<a href="@ctx.SC_URL_PREFIX@routes.Ident.emailReturn(ea)">Ссылка</a>

@@ -26,6 +26,9 @@ object Captcha extends KaptchaGenerator with PlayMacroLogsImpl {
   import play.api.data.Forms._
   import util.FormUtil._
 
+  val CAPTCHA_ID_FN     = "captchaId"
+  val CAPTCHA_TYPED_FN  = "captchaTyped"
+
   /** Маппер формы для hidden поля, содержащего id капчи. */
   val captchaIdM = nonEmptyText(maxLength = 16)
     .transform(strTrimSanitizeF, strIdentityF)
@@ -140,8 +143,9 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
 trait CaptchaValidator extends PlayMacroLogsI {
 
-  val CAPTCHA_ID_FN     = "captchaId"
-  val CAPTCHA_TYPED_FN  = "captchaTyped"
+  // Исторически, здесь эти весчи лежат:
+  def CAPTCHA_ID_FN     = Captcha.CAPTCHA_ID_FN
+  def CAPTCHA_TYPED_FN  = Captcha.CAPTCHA_TYPED_FN
 
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.

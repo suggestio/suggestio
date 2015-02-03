@@ -3,17 +3,20 @@ package models
 import akka.actor.ActorContext
 import anorm._
 import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
+import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
+import models.adv.AdvSavedEvent
 import org.joda.time.{Period, LocalDate, DateTime}
 import play.api.db.DB
-import util.PlayLazyMacroLogsImpl
+import util.event.{EventTypes, EventType}
+import util.{SqlModelSave, PlayLazyMacroLogsImpl}
 import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
 import AnormPgArray._
 import AnormPgInterval._
 import java.sql.Connection
 import java.util.Currency
+import util.event.SiowebNotifier.Implicts.sn
 
 /**
  * Suggest.io
@@ -87,6 +90,18 @@ object MAdv {
       .as(MAdv.AD_ID_PARSER *)
   }
 
+  /**
+   * Удалить все записи для рекламной карточки из всех моделей.
+   * @param adId id рекламной карточки.
+   * @return Кол-во удалённых рядов.
+   */
+  def deleteByAdId(adId: String)(implicit c: Connection): Int = {
+    ADV_MODELS.foldLeft(0) {
+      (counter, advModel) =>
+        advModel.deleteByAdId(adId) + counter
+    }
+  }
+
   /** Обработчик события удаления MAd. Стираются все adv-ряды из всех adv-моделей. */
   class DeleteAllAdvsOnAdDeleted(implicit current: play.api.Application) extends SnClassSubscriber with SNStaticSubscriber with PlayLazyMacroLogsImpl {
     import LOGGER._
@@ -102,13 +117,7 @@ object MAdv {
         case ade: AdDeletedEvent =>
           ade.mad.id.foreach { adId =>
             val totalDeleted = DB.withConnection { implicit c =>
-              ADV_MODELS.foldLeft(0) {
-                (counter, advModel) =>
-                  val modelDeleted = advModel.deleteByAdId(adId)
-                  if (modelDeleted > 0)
-                    debug(s"Deleted $modelDeleted advs for adId[$adId] in model ${advModel.getClass.getSimpleName}.")
-                  modelDeleted + counter
-              }
+              deleteByAdId(adId)
             }
             info(s"Deleted $totalDeleted advs for adId[$adId].")
           }
@@ -164,13 +173,82 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
 }
 
 
-object MAdvModes extends Enumeration {
-  type MAdvMode = Value
-  val OK      = Value("o")
-  val REQ     = Value("r")
-  val REFUSED = Value("e")
+/** Надстройка над реализациями [[MAdvI]] и [[util.SqlModelSave]]. */
+trait MAdvModelSave extends SqlModelSave with MAdvI {
 
-  def busyModes = Set(OK, REQ)
+  override type T <: MAdvModelSave
+
+  /**
+   * Породить уведомление после добавления текущей записи в базу.
+   * @return Новый экземпляр сабжа.
+   */
+  abstract override def saveInsert(implicit c: Connection): T = {
+    val res = super.saveInsert
+    val evt = AdvSavedEvent(res, isCreated = true)
+    sn.publish(evt)
+    res
+  }
+
+  /**
+   * Обновлить в таблице текущую запись.
+   * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
+   */
+  override def saveUpdate(implicit c: Connection): Int = 0
+}
+
+
+/** Статическая модель, описывающая разновидности размещений. */
+object MAdvModes extends Enumeration {
+  sealed trait ValT {
+    /** Строковой id типа. */
+    def strId: String
+
+    /** Тип события, сопутствующего этому экземпляру. */
+    def eventType: EventType
+
+    /**
+     * Владелец порождаемого события. Это receiver для req, и producer для ok и refused.
+     * @param adv Абстрактное размещение.
+     * @return adnId владельца события.
+     */
+    def eventOwner(adv: MAdvI): String
+
+    /**
+     * AdnId узла-источника события.
+     * @param adv Абстрактное размещение.
+     * @return AdnId узла.
+     */
+    def eventSource(adv: MAdvI): String
+  }
+
+  /** Быстрый mixin для req и ok размещений, говорящий системе, что owner'ом события является продьюсер. */
+  sealed trait EvtOwnerIsProd extends ValT {
+    override def eventOwner(adv: MAdvI): String = adv.prodAdnId
+    override def eventSource(adv: MAdvI): String = adv.rcvrAdnId
+  }
+
+  protected abstract sealed class Val(val strId: String) extends super.Val(strId) with ValT
+
+  type MAdvMode = Val
+
+  /** Заапрувленное размещение. */
+  val OK = new Val("o") with EvtOwnerIsProd {
+    override def eventType = EventTypes.AdvOutcomingOk
+  }
+
+  /** Запрос размещения. */
+  val REQ = new Val("r") {
+    override def eventType = EventTypes.AdvReqIncoming
+    override def eventOwner(adv: MAdvI) = adv.rcvrAdnId
+    override def eventSource(adv: MAdvI) = adv.prodAdnId
+  }
+
+  /** Отклонённое размение. */
+  val REFUSED = new Val("e") with EvtOwnerIsProd {
+    override def eventType = EventTypes.AdvOutcomingRefused
+  }
+
+  def busyModes: Set[MAdvMode] = Set(OK, REQ)
 }
 
 

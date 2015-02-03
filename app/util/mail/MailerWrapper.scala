@@ -5,8 +5,9 @@ import javax.mail.Authenticator
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
 import play.api.libs.mailer.{Email, MailerPlugin}
-import util.{AsyncUtil, PlayLazyMacroLogsImpl}
+import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.async.AsyncUtil
 
 import scala.concurrent.Future
 

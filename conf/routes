@@ -11,7 +11,7 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  controllers.MarketShowcase.geoSite
+GET  /                                  controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.veryEmpty)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
@@ -52,7 +52,7 @@ POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
 ## Супервайзинг рекламных карточек на подчинённых узлах
-GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
+GET  /m/lk/xadv/geo/wnd/:adId           controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
@@ -60,16 +60,27 @@ GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlav
 ## Супервайзинг узлов: публикация рекламы на подчинённых узлах.
 GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
-## Адвертайзинг: размещение рекламы на узлах-получателях
-GET  /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
-POST /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/xadv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
-## Размещение рекламы: обработка запросов размещения.
-POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
-POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 
-# ЛК: Рекламные карточки
+
+## Размещение рекламы (adv) на узлах-получателях
+GET  /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advForAd(adId)
+POST /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/xadv/geo/price/for/:adId     controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /m/lk/xadv/geo/for/node/:adnId     controllers.MarketAdv.showNodeAdvs(adnId)
+## Размещение рекламы: обработка запросов размещения.
+POST /m/lk/xadv/geo/req/:advReqId/refuse   controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /m/lk/xadv/geo/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
+
+## Размещение рекламы на внешних сервисах
+GET  /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTarget(adnId)
+POST /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTargetSubmit(adnId)
+GET  /ws/lk/xadv/ext/run                controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
+POST /m/lk/xadv/ext/tg/delete/:tgId     controllers.LkAdvExt.deleteTargetSubmit(tgId)
+GET  /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.forAd(adId)
+POST /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.advFormSubmit(adId)
+
+
+## ЛК: Рекламные карточки
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
@@ -79,7 +90,7 @@ POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubm
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
 GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
-GET  /m/lk/ws/:wsId/ad                  controllers.MarketAd.ws(wsId: String)
+GET  /ws/lk/ad/:wsId                    controllers.MarketAd.ws(wsId: String)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/_txns/adn/:adnId             controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)
@@ -90,16 +101,21 @@ GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeM
 
 POST  /error/occured/in/showcase        controllers.RemoteError.handleShowcaseError
 
-# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
+## Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/lk/c/usr/o/:ownerId/top         controllers.MarketCategory.topCatsOf(ownerId)
-# 2014.12.10: Больше не используется. Категории теперь набором галочек.
+## 2014.12.10: Больше не используется. Категории теперь набором галочек.
 GET  /m/lk/c/usr/c/:catId/dc            controllers.MarketCategory.directSubcatsOf(catId)
 
-# Обращение в тех.поддерку зареганного клиента sio-market.
+## Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
 POST /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
 GET  /m/support                         controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
 POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
+POST /m/support/geo/node/:adnId         controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
+
+## ЛК: нотификации (события)
+GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
+POST /m/lk/event/delete/:evtId          controllers.LkEvents.nodeEventDelete(evtId)
 
 
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
@@ -125,15 +141,18 @@ GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnI
 
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
+## Рендер ровно одной карточки.
+GET  /market/ad/one/html                controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /market/ad/one/img                 controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 
-GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
 ## Поиск по узлам
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState())
+GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
+
 
 # market+join: Присоединение к sio-market.
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
@@ -145,20 +164,7 @@ POST /market/join/callback              controllers.MarketJoin.callbackRequestSu
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
 
-GET  /sys                               controllers.Sys.index
-GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
-GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
-GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
-GET  /sys/addSite                       controllers.Sys.addSiteForm
-POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
-POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
-POST /sys/majorRebuild                  controllers.Sys.majorRebuild
-GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
-GET  /sys/siobix                        controllers.Sys.siobixIndex
-GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
-
-GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
-POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
+GET  /sys                               controllers.Application.sysIndex
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
@@ -192,6 +198,7 @@ GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
 POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
 POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
 # sys.ad
+GET  /sys/ad/:adId/show                 controllers.SysMarket.showAd(adId)
 GET  /sys/ad/:adId/rcvrs/analyze        controllers.SysMarket.analyzeAdRcvrs(adId)
 POST /sys/ad/:adId/rcvrs/reset          controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
 POST /sys/ad/:adId/rcvrs/clean          controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
@@ -306,7 +313,7 @@ POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnI
 ## Галереи картинок
 GET  /sys/gals                           controllers.SysGallery.showList(page: Int ?= 0)
 POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
-GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
+GET  /ws/sys/gals/:wsId                  controllers.SysGallery.ws(wsId)
 GET  /sys/gals/new                       controllers.SysGallery.createGal
 POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
 GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
@@ -318,6 +325,7 @@ POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySub
 GET  /sys/img                            controllers.SysImg.index(q: Option[String] ?= None)
 POST /sys/img/search                     controllers.SysImg.searchFormSubmit
 GET  /sys/img/show                       controllers.SysImg.showOne(i: im.MImg)
+POST /sys/img/delete                     controllers.SysImg.deleteOneSubmit(i: im.MImg)
 
 ## sys/AI
 GET  /sys/ai                             controllers.SysAi.index
@@ -338,33 +346,33 @@ GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты
-GET  /ident/login2/email_pw             controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /ident/login2/email_pw             controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /ident/logout2                     controllers.Ident.logout
+GET  /id                                controllers.Ident.mySioStartPage
+GET  /id/epw/login                      controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /id/epw/login                      controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /id/logout                         controllers.Ident.logout
 ## ident: Восстановление пароля.
-GET  /ident/pw/r                        controllers.Ident.recoverPwForm
-POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
-GET  /ident/pw/r/ok                     controllers.Ident.recoverPwAccepted(email: String)
-GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId)
-POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
+GET  /id/epw/recover                    controllers.Ident.recoverPwForm
+POST /id/epw/recover                    controllers.Ident.recoverPwFormSubmit
+GET  /id/epw/recover/sent               controllers.Ident.recoverPwAccepted(email: String)
+GET  /id/epw/resetpw/:eActId            controllers.Ident.recoverPwReturn(eActId)
+POST /id/epw/resetpw/:eActId            controllers.Ident.pwResetSubmit(eActId)
 ## ident: Сменить пароль
-GET  /ident/pw/change                   controllers.Ident.changePassword
-POST /ident/pw/change                   controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
-GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
+GET  /id/epw/chpw                       controllers.Ident.changePassword
+POST /id/epw/chpw                       controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
+GET  /id/rdr/me/somewhere               controllers.Ident.rdrUserSomewhere
+## ident: рега по email и паролю
+POST /id/epw/reg                        controllers.Ident.emailRegSubmit
+GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: usr.IEaEmailId)
+## ident: вход через внешнего провайдера
+GET  /id/via/:provider			        controllers.Ident.authenticate(provider)
 
 
 
 ### Барахло от Sio-v1 (не работает, в основном):
-# Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
-GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
+## Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 GET  /app/session/keepalive             controllers.Application.keepAliveSession
 
-## Callback'и инсталляторов и валидаторов сайтов.
-POST /js/add_domain                             controllers.Js.addDomain
-POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
-GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
-POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
 
 ## compat
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
@@ -377,4 +385,10 @@ GET     /help/:page                     controllers.Static.helpPage(page)
 GET     /blog                           controllers.Static.blogIndex
 GET     /blog/:path                     controllers.Static.blogPage(path)
 GET     /badbrowser                     controllers.Static.badbrowser
+
+
+## yeoman-play
+GET     /ui         com.tuplejump.playYeoman.Yeoman.index
+->	/ui/	    yeoman.Routes
+#GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
 

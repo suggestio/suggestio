@@ -28,7 +28,7 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 
@@ -152,7 +152,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    * Рендер унифицированной страницы добаления рекламной карточки.
    * @param adnId id узла рекламной сети.
    */
-  def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
       af = getSaveAdFormM(adnNode.adn.memberType, BlocksConf.DEFAULT.strictMapping),
@@ -175,7 +175,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   /** Сабмит формы добавления рекламной карточки товара/скидки.
     * @param adnId id магазина.
     */
-  def createAdSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+  def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
@@ -263,7 +263,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   }
 
 
-  private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+  private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
     import request.{producer, mad}
     val cats = getMMCats()
     implicit val ctx = implicitly[Context]
@@ -274,7 +274,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   }
 
 
-  private def renderFailedEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+  private def renderFailedEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
     renderEditFormWith(af) map {
       NotAcceptable(_)
     }
@@ -283,7 +283,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   /** Рендер страницы с формой редактирования рекламной карточки магазина.
     * @param adId id рекламной карточки.
     */
-  def editAd(adId: String) = CanEditAd(adId).async { implicit request =>
+  def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
     import request.mad
     val blockConf = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
     val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
@@ -299,7 +299,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
     */
-  def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
+  def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
     detectAdForm(request.producer) match {
       case Right((bc, formM)) =>
@@ -354,7 +354,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
   }
 
   /** Рендер окошка с подтверждением удаления рекламной карточки. */
-  def deleteWnd(adId: String) = CanEditAd(adId).async { implicit request =>
+  def deleteWnd(adId: String) = CanEditAdGet(adId).async { implicit request =>
     Ok(_deleteWndTpl(request.mad))
   }
 
@@ -363,7 +363,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    * @param adId id рекламы.
    * @return Редирект в магазин или ТЦ.
    */
-  def deleteSubmit(adId: String) = CanEditAd(adId).async { implicit request =>
+  def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
     MAd.deleteById(adId) map { _ =>
       val routeCall = routes.MarketLkAdn.showNodeAds(request.mad.producerId)
       Redirect(routeCall)
@@ -379,7 +379,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    */
   private def newTexts4search(newMadData: MAd, producer: MAdnNode): Future[Texts4Search] = {
     // Собираем названия родительских категорий:
-    val catNamesFut: Future[List[String]] = {
+    val catNamesFut: Future[List[String]] = if (newMadData.userCatId.nonEmpty) {
       val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
         val fut = MMartCategory.foldUpChain [List[String]] (catId, Nil) {
           (acc, e) =>
@@ -392,6 +392,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
         fut :: accFut
       }
       Future.reduce(futs) { _ ++ _ }
+    } else {
+      Future successful Nil
     }
     // Узнаём название узла-продьюсера:
     // Генерим общий результат:

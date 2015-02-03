@@ -26,7 +26,7 @@ import play.api.Play.{current, configuration}
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 
@@ -142,7 +142,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
-  def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
     val waOptFut = getWelcomeAdOpt(adnNode)
     val nodeLogoOpt = adnNode.logoImgOpt
@@ -159,7 +159,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
-  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     import request.adnNode
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(adnNode.adn).bindFromRequest().fold(

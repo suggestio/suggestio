@@ -1,7 +1,6 @@
 package util.cdn
 
 import play.api.mvc.{Results, Result, RequestHeader, Filter}
-import util.Context
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
 import play.api.Play.{current, configuration}
@@ -18,8 +17,16 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 object CorsUtil {
 
+  val IS_ENABLED = configuration.getBoolean("cors.enabled") getOrElse false
+
   /** Включен ли доступ к preflight-запросам? */
   val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed") getOrElse false
+
+}
+
+
+/** Статическая утиль, которая инициализируется только в случае [[CorsUtil]].IS_ENABLED. */
+object CorsUtil2 {
 
   def isPreFlight(r: RequestHeader) = {
     r.method.equalsIgnoreCase("OPTIONS") && r.headers.get("Access-Control-Request-Method").nonEmpty
@@ -72,27 +79,30 @@ object CorsUtil {
 }
 
 
-import CorsUtil._
-
-
 /** Фильтр. Должен без проблем инициализироваться, когда application not started. */
-object CorsFilter extends Filter {
+class CorsFilter extends Filter {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    if (CORS_PREFLIGHT_ALLOWED && isPreFlight(rh)) {
-      val result = if (CORS_PREFLIGHT_ALLOWED) {
-        Results.Ok.withHeaders(PREFLIGHT_CORS_HEADERS : _*)
+    import CorsUtil._
+    if (CorsUtil.IS_ENABLED) {
+      import CorsUtil2._
+      if (CORS_PREFLIGHT_ALLOWED && isPreFlight(rh)) {
+        val result = if (CORS_PREFLIGHT_ALLOWED) {
+          Results.Ok.withHeaders(PREFLIGHT_CORS_HEADERS : _*)
+        } else {
+          Results.NotFound
+        }
+        Future successful result
       } else {
-        Results.NotFound
+        val fut = f(rh)
+        val hs = SIMPLE_CORS_HEADERS
+        if (hs.nonEmpty)
+          fut.map { _.withHeaders(hs : _*) }
+        else
+          fut
       }
-      Future successful result
     } else {
-      val fut = f(rh)
-      val hs = SIMPLE_CORS_HEADERS
-      if (hs.nonEmpty)
-        fut.map { _.withHeaders(hs : _*) }
-      else
-        fut
+      f(rh)
     }
   }
 

@@ -318,3 +318,22 @@ wind.direction.north-east=north-east
 wind.direction.south-west=south-west
 wind.direction.south-east=south-east
 
+
+error.service.unknown=This website is not supported.
+error.required.at.least.one.adv.service=Choose at least one service from the list above.
+
+error.adv.ext.s2s.img.upload.refused=Remote server {0} refused to upload image.
+error.adv.ext.s2s.img.upload.failed=Failed to establish connection to remote server {0}. Unable to upload image.
+error.sio.internal=Internal suggest.io error.
+error.adv.ext.js.refused=Advertising refused or cancelled.
+
+e.event.not.found=Event not exists.
+
+reg.emailpw.email.subj=Confirm your registration in Suggest.io network
+
+adv.ext.ret.sc=My showcase
+adv.ext.ret.ad=This ad
+
+e.ext.adv.unathorized=User not authorized
+e.ext.adv.permissions=User have not permissions
+e.ext.adv.target.url.invalid=Invalid url

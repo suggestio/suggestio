@@ -46,9 +46,28 @@ trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
     }
   }
 }
-final case class CanReceiveAdvReq(advReqId: Int)
+
+
+case class RequestWithAdvReq[A](
+  request: Request[A],
+  advReq: MAdvReq,
+  rcvrNode: MAdnNode,
+  pwOpt: PwOpt_t,
+  sioReqMd: SioReqMd
+)
+  extends AbstractRequestWithPwOpt(request)
+
+
+sealed trait CanReceiveAdvReqBase2
   extends CanReceiveAdvReqBase
   with ExpireSession[RequestWithAdvReq]
 
-case class RequestWithAdvReq[A](request: Request[A], advReq: MAdvReq, rcvrNode: MAdnNode, pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-  extends AbstractRequestWithPwOpt(request)
+/** GET Запрос окна обработки запроса размещения. */
+case class CanReceiveAdvReqGet(advReqId: Int)
+  extends CanReceiveAdvReqBase2
+  with CsrfGet[RequestWithAdvReq]
+
+case class CanReceiveAdvReqPost(advReqId: Int)
+  extends CanReceiveAdvReqBase2
+  with CsrfPost[RequestWithAdvReq]
+

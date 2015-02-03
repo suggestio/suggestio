@@ -7,8 +7,32 @@ sm.geo.geo_position_obj = {};
 sm.geo.geo_position_obj.coords = {latitude : 59.9, longitude : 11.1, accuracy: 20 }
 
 
+Подготовка рабочей станции к первой сборке проекта
+=====================================
+npm install -g yo grunt bower
+Можно также попробовать без флага -g, но не факт, что всё будет работать как надо.
+
+Если в процессе работы npm вылетают ошибки типа
+  npm ERR! Failed to parse json
+  npm ERR! Unexpected token a
+  npm ERR! File: /home/user/.npm/tar/0.1.20/package/package.json
+то нужно удалить соотв. директорию, т.е. в данном примере
+$ rm -rf /home/user/.npm/tar
+
+Затем запустить sbt. В консоли sbt вбить команды:
+  npm install
+  bower install
+При ошибках работы bower можно попробовать удалить ./ui/bower_components.
+Инициализация yeoman завершена. Далее, можно переходить к обычному режиму работы:
+  update/run/compile/и т.д.
+
+Для создания/обновления idea-проекта нужно вызвать gen-idea.
+
+
 Deploy
 =====================================
+Использовать ci.cbca.ru. Для ручного деплоя алгоритм примерно следующий:
+
 sbt stage
 cd target/universal/stage
 rsync -avz -e ssh . www@osm01.suggest.io:sio2/sioweb21/

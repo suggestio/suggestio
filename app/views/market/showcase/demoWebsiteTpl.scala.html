@@ -6,7 +6,7 @@
 @import util.cdn.CdnUtil
 @import market.lk.adn._node._installScriptTpl
 
-<html>
+<html ng-app="todoApp">
 <head>
   <title>
     @* SEO: Пытаемся рисовать разные заголовки на разных страницах. *@
@@ -60,7 +60,6 @@
 
   @args.headAfter
 </head>
-
 
 <body class="sm-body @if(args.syncRender){ __sync }">
 

@@ -1,4 +1,4 @@
-@()(implicit ctx:util.Context)
+@()(implicit ctx: Context)
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -17,9 +17,6 @@
   <div class="page-cnt">
 
     <div class="i-list">
-
-      @btn(routes.Sys.dkeysListAll(), 40) { ОБЗОР<br/>САЙТОВ }
-      @btn(routes.Sys.siobixIndex(), 52) { КРАВЛЕР }
 
       @btn(routes.SysMarket.index(), 52) { МАРКЕТ }
       @btn(routes.SysGallery.showList(), 52) { ГАЛЕРЕИ }

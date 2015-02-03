@@ -9,11 +9,10 @@ package controllers
  */
 
 import play.api.mvc._
-import util.ContextT
 import util.acl.MaybeAuth
 import views.html.static._
 
-object Static extends SioController with ContextT {
+object Static extends SioControllerImpl {
 
   private def booklet = routes.Market.marketBooklet().url
 

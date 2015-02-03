@@ -1,0 +1,11 @@
+@(title: String, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов регистрации по email.
+   Судя по исходному дизайну: надо просто дёргать дизайн вышестоящего шаблона. *@
+
+@import views.html.ident._
+
+@identBase(
+  title = title,
+  headAfter = headAfter
+)(content)

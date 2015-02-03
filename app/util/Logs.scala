@@ -34,11 +34,14 @@ trait LazyLogger {
 trait PlayMacroLogsI {
   def LOGGER: MacroLogger
 }
-trait PlayMacroLogsImpl extends PlayMacroLogsI {
-  override val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+trait PlayMacroLogsDyn extends PlayMacroLogsI {
+  override def LOGGER = PlayMacroLogsImpl.getLogger(getClass)
 }
-trait PlayLazyMacroLogsImpl extends PlayMacroLogsI {
-  override lazy val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+trait PlayMacroLogsImpl extends PlayMacroLogsDyn {
+  override val LOGGER = super.LOGGER
+}
+trait PlayLazyMacroLogsImpl extends PlayMacroLogsDyn {
+  override lazy val LOGGER = super.LOGGER
 }
 
 

@@ -68,7 +68,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
     override def i18nLabelOf(bk: String) = "blocks.field." + bk
 
     /** Отрендерить редактор. */
-    override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable = {
+    override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
       editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
     }
   }
@@ -190,7 +190,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   }
 
   /** Отрендерить редактор. */
-  def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable
+  def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable
 
   // Mapping:
   def mappingsAcc: List[Mapping[_]]

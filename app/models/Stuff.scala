@@ -182,7 +182,7 @@ object BillingRightPanelLinks extends Enumeration {
 /** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/
 object LkLeftPanelLinks extends Enumeration {
   type LkLeftPanelLink = Value
-  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT  =  Value : LkLeftPanelLink
+  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT, LPL_EVENTS  =  Value : LkLeftPanelLink
 }
 
 

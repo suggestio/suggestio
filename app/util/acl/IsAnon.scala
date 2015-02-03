@@ -1,6 +1,7 @@
 package util.acl
 
 import play.api.mvc._
+import util.ident.IdentUtil
 import scala.concurrent.Future
 /**
  * Suggest.io
@@ -18,7 +19,7 @@ trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
         block(req1)
 
       case Some(pw) =>
-        controllers.Ident.redirectUserSomewhere(pw.personId)
+        IdentUtil.redirectUserSomewhere(pw.personId)
     }
   }
 }

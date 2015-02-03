@@ -437,3 +437,36 @@ case class AiMadRequest[A](
   sioReqMd  : SioReqMd
 ) extends AbstractRequestWithPwOpt(request)
 
+
+/** Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой. */
+trait IsSuperuserMadAbstract extends ActionBuilder[RequestWithAd] {
+  def adId: String
+
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+    val madOptFut = MAd.getById(adId)
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper isSuperuser pwOpt) {
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      madOptFut flatMap {
+        case Some(mad) =>
+          srmFut flatMap { srm =>
+            val req1 = RequestWithAd(mad, request, pwOpt, srm)
+            block(req1)
+          }
+        case None =>
+          madNotFound(request)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+  def madNotFound(request: Request[_]): Future[Result] = {
+    Future successful Results.NotFound("ad not found: " + adId)
+  }
+}
+/** ACL action builder на действия с указанной рекламной карточкой. */
+case class IsSuperuserMad(adId: String)
+  extends IsSuperuserMadAbstract
+  with ExpireSession[RequestWithAd]
+

@@ -52,9 +52,6 @@ sio.hostport.dflt = "suggest.io"
 # символов значения не имеет значение. [DFS]
 storage = "DFS"
 
-# dfs address/path for DFS model backends. See util.SiobixFs. Not related to hbase backend.
-siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
-
 
 ###############################################################################
 ## CDN
@@ -140,20 +137,6 @@ persona.audience.url = "http://localhost:9000"
 
 # Через какой сервис проверять сессию юзера. [https://verifier.login.persona.org/verify]
 persona.verify.url = "https://verifier.login.persona.org/verify"
-
-
-###############################################################################
-## DomainQi
-###############################################################################
-# Сколько времени максимум можно парсить страницу, возвращенную сайтом. [5000]
-domain.qi.parse.timeout_ms = 5000
-
-# Длина qi-идентификатора. Следует менять только при острой необходимости и с осторожностью. [8]
-#domain.qi.id.len = 8
-
-# Для тестирования: в детекторе установленного js на сайтах можно использовать иной домен suggest.io. [["suggest.io"]]
-#siojs.detector.hostnames = ["suggest.io"]
-#siojs.detector.hostnames = ["suggest.io", "test.suggest.io:9000", "localhost:9000"]
 
 
 ###############################################################################

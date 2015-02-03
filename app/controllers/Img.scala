@@ -2,7 +2,7 @@ package controllers
 
 import java.io.File
 
-import io.suggest.model.ImgWithTimestamp
+import _root_.util.async.AsyncUtil
 import models.im._
 import org.apache.commons.io.FileUtils
 import play.api.libs.Files.TemporaryFile
@@ -32,7 +32,7 @@ import scala.util.{Success, Failure}
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 

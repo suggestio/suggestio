@@ -187,6 +187,11 @@ leftMenuWidth   = 60
     width         135px
     text-overflow ellipsis
 
+  &_change-node
+    position      absolute
+    top           10px
+    right         30px
+
 .left-bar
   position          fixed
   top               0
@@ -201,6 +206,7 @@ leftMenuWidth   = 60
     padding-top (headerHeight)px
 
   &_menu-i
+    position      relative
     display       block
     height        60px
     color         #818284
@@ -218,6 +224,46 @@ leftMenuWidth   = 60
     color             white
     border-left       5px solid #f44040
     background-color  #58585a
+
+  &_menu-bubble
+    position absolute
+    top 5px
+    right 0px
+
+    display inline-block
+    width 21px
+    line-height 21px
+
+    text-align center
+    font-size 9px
+    color white
+
+
+  &_bottom
+    position absolute
+    bottom 0
+    left 0
+    width 100%
+
+  &_exit,
+  &_help
+    display block
+
+    cursor  pointer
+    color   #818284
+
+    font-size 12px
+    line-height 26px
+    text-transform  uppercase
+    text-decoration none
+    text-align  center
+
+    &:hover
+      color white
+
+  &_exit
+    padding-top 30px
+
 
 .right-bar
   position          fixed

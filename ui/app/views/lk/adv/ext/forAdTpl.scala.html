@@ -1,0 +1,43 @@
+@(mad: MAd, mnode: MAdnNode, targets: Seq[adv.MExtTarget], currentAdvs: Map[String, adv.MExtAdv], af: Form[_])(implicit ctx: Context)
+
+@* Страница со формой размещения рекламной карточки на внешних сервисах. *@
+
+@import ctx._
+@import helper._
+@import util.FC.tdRadialFc
+@import util.adv.ExtUtil.formForTarget
+
+@base(
+  title = "Внешнее размещение карточки",
+  mnode = mnode,
+  mad = mad
+) {
+
+  <div id="socialApp">
+
+  </div>
+
+  @targets.iterator.zipWithIndex.map { case (target, i) =>
+    @_createTargetTpl(target.adnId, formForTarget(target))
+  }
+
+  @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> "js-social-target-list" ) {
+
+    @af("adv").errors.map { error =>
+      <div class="event __bg-4 __icon-5">
+        <div class="event_t">Возникла проблема: @Messages(error.message, error.args)</div>
+      </div>
+    }
+
+    <a class="btn __size-M __minor add-target" id="socialApiAddTargetBtn" href="@routes.LkAdvExt.writeTarget(mnode.id.get)">Добавить цель...</a>
+    <hr class="delimiter __light">
+
+    <div class="btn-w __size-XS">
+      <input class="btn __size-M __major social-submit" type="submit" value="Начать размещение..." />
+    </div>
+
+  }
+
+
+
+}

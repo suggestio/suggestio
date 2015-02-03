@@ -13,8 +13,9 @@ import models._
 import org.joda.time.{Period, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
+import util.async.AsyncUtil
 import views.html.market.lk.adv._
-import util.{AsyncUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
@@ -214,7 +215,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Страница управления размещением рекламной карточки. */
-  def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
     renderAdvForm(adId, advFormM)
       .map { Ok(_) }
   }
@@ -231,7 +232,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
   private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
-                           (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
@@ -435,7 +436,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param adId id размещаемой рекламной карточки.
    * @return Инлайновый рендер отображаемой цены.
    */
-  def getAdvPriceSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     advFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
@@ -514,7 +515,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Сабмит формы размещения рекламной карточки. */
-  def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
     val formBinded = advFormM.bindFromRequest()
     formBinded.fold(
@@ -700,7 +701,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param advReqId id запроса на размещение.
    * @return 404 если что-то не найдено, иначе 200.
    */
-  def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReqGet(advReqId).async { implicit request =>
     _showAdvReq1(reqRefuseFormM, r)
       .map { _.fold(identity, Ok(_))}
   }
@@ -747,7 +748,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return 406 если причина слишком короткая или слишком длинная.
    *         302 если всё ок.
    */
-  def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     reqRefuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advReqRefuseSubmit($advReqId): Failed to bind refuse form:\n${formatFormErrors(formWithErrors)}")
@@ -771,7 +772,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param advReqId id одобряемого реквеста.
    * @return 302
    */
-  def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     Future {
       MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)

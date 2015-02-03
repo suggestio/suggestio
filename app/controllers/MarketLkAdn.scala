@@ -1,5 +1,8 @@
 package controllers
 
+import _root_.util.async.AsyncUtil
+import controllers.ident._
+import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import util.billing.Billing
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -28,7 +31,7 @@ import play.api.mvc.Security.username
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect with ChangePwAction {
+object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction {
 
   import LOGGER._
 
@@ -206,37 +209,49 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       }
 
-      // Карта размещений, чтобы определять размещена ли карточка где-либо или нет.
-      val ad2advMap = {
-        request.myNodeId.fold(Map.empty[String, MAdvI]) { myAdnId =>
-          val busyAdvs = DB.withConnection { implicit c =>
-            val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
-            val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
-            Seq(busyAdsOk, busyAdsReq)
+      // Собрать карту занятых размещением карточек.
+      val ad2advMapFut = {
+        request.myNodeId.fold(Future successful Map.empty[String, MAdvI]) { myAdnId =>
+          Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
+            Future {
+              DB.withConnection { implicit c =>
+                model.findNotExpiredRelatedTo(myAdnId)
+              }
+            }(AsyncUtil.jdbcExecutionContext)
+          } map { results =>
+            advs2adIdMap(results : _*)
           }
-          advs2adIdMap(busyAdvs : _*)
         }
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
-      val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
-        DB.withConnection { implicit c =>
-          MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+      // Параллельности это не добавляет, но позволяет разблокировать play defaultContext от блокировки из-за JDBC.
+      val canAdvFut: Future[Boolean] = {
+        if (isMyNode && adnNode.adn.isProducer) {
+          Future {
+            DB.withConnection { implicit c =>
+              MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+            }
+          }(AsyncUtil.jdbcExecutionContext)
+        } else {
+          Future successful false
         }
       }
 
       // Рендер результата, когда все карточки будут собраны.
       for {
-        mads <- madsFut
+        mads      <- madsFut
+        ad2advMap <- ad2advMapFut
+        canAdv    <- canAdvFut
       } yield {
         Ok(nodeAdsTpl(
-          node = adnNode,
-          mode = mode,
-          mads = mads,
-          isMyNode = isMyNode,
+          node        = adnNode,
+          mode        = mode,
+          mads        = mads,
+          isMyNode    = isMyNode,
           povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
-          canAdv = canAdv,
-          ad2advMap = ad2advMap
+          canAdv      = canAdv,
+          ad2advMap   = ad2advMap
         ))
       }
     }
@@ -523,16 +538,16 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
     Ok(userProfileEditTpl(
       adnNode = request.adnNode,
-      pf = Ident.changePasswordFormM,
+      pf = ChangePw.changePasswordFormM,
       r = r
     ))
   }
 
   /** Сабмит формы смены пароля. */
-  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
       NotAcceptable(userProfileEditTpl(
         adnNode = request.adnNode,

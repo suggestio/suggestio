@@ -1,0 +1,17 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон события успешного внешнего размещения. *@
+
+@import lk.event._
+
+@_successEvtBase(rargs) {
+
+  @rargs.advExtTgOpt.map { advExtTg =>
+    <div class="event_t">
+      <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
+    </div>
+  }
+
+  Статус: успешно
+
+}

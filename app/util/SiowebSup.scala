@@ -10,9 +10,7 @@ import concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
-import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
 import util.event.SiowebNotifier
-import util.urls_supply.SeedUrlsSupplier
 
 /**
  * Suggest.io
@@ -25,11 +23,11 @@ import util.urls_supply.SeedUrlsSupplier
 // Статический клиент к актору. Запускает всё дерево супервизора.
 object SiowebSup {
 
-  private val timeoutSec = 5.seconds
-  private implicit val timeout = Timeout(timeoutSec)
+  private def timeoutSec = 5.seconds
+  private implicit def timeout = Timeout(timeoutSec)
 
-  val actorName = "siowebSup"
-  val actorPath = Akka.system / actorName
+  def actorName = "siowebSup"
+  def actorPath = Akka.system / actorName
 
 
   /** Запуск супервизора в top-level. */
@@ -48,13 +46,6 @@ object SiowebSup {
     val sel = Akka.system.actorSelection(actorPath)
     Await.result(sel ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
   }
-
-  /**
-   * Выдать ref менеджера менеджера запросов в доменам-сайтам.
-   * @return ActorRef
-   */
-  def getDomainRequesterRef = getChildRef(DOMAIN_REQUESTER_NAME).get
-
 
   // Сообщение запроса дочернего процесса
   sealed case class GetChildRef(childName: String)
@@ -75,10 +66,7 @@ class SiowebSup extends Actor with Logs {
       throw new Exception("self.path==%s but it must be equal to val %s.actorPath = %s" format (self.path, SiowebSup.getClass.getSimpleName, actorPath))
     }
     // Запускаем все дочерние процессы.
-    DomainRequester.startLink(context)
-    NewsQueue4Play.startLinkSup(context)
     SiowebNotifier.startLink(context)
-    SeedUrlsSupplier.startLink(context)
     billing.StatBillingQueueActor.startLink(context)
     WsDispatcherActor.startLink(context)
   }

@@ -5,6 +5,8 @@ import io.suggest.model._
 import io.suggest.model.inx2._
 import io.suggest.ym.model.stat._
 import models.ai.MAiMadJmx
+import models.event.MEventJmx
+import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
 import util.SiowebEsUtil.client
 import util.adv.AdvUtilJmx
 import util.event.SiowebNotifier.Implicts.sn
@@ -32,12 +34,10 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MWelcomeAdJmx,
     new MAdJmx,
     new MAdnNodeJmx,
-    new MPictJmx,
-    new MObjectJmx,
     new MMartCategoryJmx,
     new EmailActivationJmx,
     new EmailPwIdentJmx,
-    new MozillaPersonaIdentJmx,
+    new MExtIdentJmx,
     new MPersonJmx,
     new MCompanyJmx,
     new MCalendarJmx,
@@ -47,6 +47,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MRemoteErrorJmx,
     new MAiMadJmx,
     new AdvUtilJmx,
+    new MEventJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,

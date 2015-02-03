@@ -35,7 +35,7 @@
 
   @* Отменить размещение рекламы с указанием причины. *@
   @form(
-    routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo),
+    CSRF( routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo) ),
     'id -> "advReqRefuse",
     'class -> "js-hidden"
   ) {
@@ -57,7 +57,7 @@
 
   @* Подтвердить размещение рекламы. *@
   @form(
-    routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = goBackTo),
+    CSRF( routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = goBackTo) ),
     'id -> "advReqAccept"
   ) {
     <div class="submit-w __size-S">

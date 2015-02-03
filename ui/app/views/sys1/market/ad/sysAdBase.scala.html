@@ -1,0 +1,19 @@
+@(title: String, hPathAfter:Option[Html] = None, nodeOpt: Option[MAdnNode] = None, headAfter: Option[Html] = None
+ )(content: Html)(implicit ctx: Context)
+
+@* Подложка для страниц, работающих с унифицированными adn-узлами. *@
+@import sys1.market._
+@import ctx._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@views.html.sys1.market.adn.adnBase(
+  title         = title + " | Карточки",
+  hPathAfter    = Some(hPathAfter1),
+  nodeOpt       = nodeOpt,
+  headAfter     = headAfter
+)(content)

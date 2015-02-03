@@ -2,6 +2,7 @@ import akka.actor.Cancellable
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
+import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
@@ -28,8 +29,7 @@ import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-//object Global extends GlobalSettings {
-object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter, DumpXffHeaders) {
+object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new DumpXffHeaders) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
@@ -194,16 +194,4 @@ object Global extends WithFilters(SioHTMLCompressorFilter(), CorsFilter, DumpXff
   }
 }
 
-
-/**
- * Defines a user-defined HTML compressor filter.
- */
-object SioHTMLCompressorFilter {
-
-  /**
-   * Сборка сжимающего html-фильтра.
-   * @return The HTML compressor filter.
-   */
-  def apply() = new HTMLCompressorFilter(HtmlCompressUtil.getForGlobalUsing)
-}
 

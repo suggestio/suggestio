@@ -82,7 +82,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
     * @return 200 Ok с рендером.
     *         406 Not Acceptable при ошибочной форме.
     */
-  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm(request.adnNode) match {
       case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(

@@ -77,14 +77,22 @@ final case class MAdvReq(
   showLevels    : Set[SinkShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   id            : Option[Int] = None
-) extends SqlModelSave[MAdvReq] with SqlModelDelete with MAdvI {
+) extends MAdvReqT with SqlModelDelete with MAdvModelSave {
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined
   override def companion = MAdvReq
   override def dateStatus = dateCreated
 
-  override def saveInsert(implicit c: Connection): MAdvReq = {
+}
+
+sealed trait MAdvReqT extends SqlModelSave with MAdvI {
+
+  override type T = MAdvReq
+
+  def prodContractId: Int
+
+  def saveInsert(implicit c: Connection): T = {
     SQL("INSERT INTO " + TABLE_NAME +
       "(ad_id, amount, currency_code, date_created, mode, show_levels, date_start, date_end, prod_contract_id, prod_adn_id, rcvr_adn_id) " +
       "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {showLevels}, {dateStart}, {dateEnd}, {prodContractId}, {prodAdnId}, {rcvrAdnId})")
@@ -93,11 +101,5 @@ final case class MAdvReq(
           'dateEnd -> dateEnd, 'prodContractId -> prodContractId, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId)
       .executeInsert(rowParser single)
   }
-
-  /**
-   * Обновление существующих данных не предусмотрено.
-   * @return Кол-во обновлённых рядов. Т.е. 0.
-   */
-  override def saveUpdate(implicit c: Connection): Int = 0
 
 }

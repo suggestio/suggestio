@@ -4,7 +4,9 @@ import java.io.File
 import java.nio.file.Files
 
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
+import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import play.api.Play, Play.{current, configuration}
+import play.api.mvc.Filter
 import play.twirl.api.HtmlFormat
 
 /**
@@ -108,4 +110,10 @@ object HtmlCompressUtil {
   def compressSvgText(svgText: String): String = html4svgCompressor.compress(svgText)
 
 }
+
+
+/** Реализация отключабельного play-фильтра. */
+class HtmlCompressFilter
+  extends HTMLCompressorFilter(HtmlCompressUtil.getForGlobalUsing)
+  with Filter
 

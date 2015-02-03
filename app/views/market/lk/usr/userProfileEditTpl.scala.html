@@ -2,7 +2,7 @@
 
 @* Страница редактирования профиля пользователя. *@
 
-@import ctx.lang
+@import ctx.{lang, request}
 @import market.lk._
 @import helper._
 @import util.FC.tdRadialFc
@@ -16,10 +16,10 @@
 @content = {
 
   @form(
-    routes.MarketLkAdn.changePasswordSubmit(
+    CSRF(routes.MarketLkAdn.changePasswordSubmit(
       adnId = adnNode.id.get,
       r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url)
-    ),
+    )),
     'id -> "userProfileEdit"
   ) {
     @inputPassword(

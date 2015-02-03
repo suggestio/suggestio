@@ -4,6 +4,7 @@ import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
 import models.im.MGallery
+import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future
@@ -30,8 +31,10 @@ object SiowebEsModel extends PlayLazyMacroLogsImpl {
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq(
-      MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
-      MRemoteError, MGallery, MAiMad
+      MPerson, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar,
+      MRemoteError, MGallery, MAiMad,
+      adv.MExtAdv, adv.MExtTarget,
+      event.MEvent
     )
   }
 

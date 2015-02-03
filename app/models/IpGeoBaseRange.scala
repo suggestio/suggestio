@@ -66,11 +66,13 @@ final case class IpGeoBaseRange(
   end         : InetAddress,
   countryIso2 : String,
   cityId      : Option[Int]
-) extends SqlModelSave[IpGeoBaseRange] with IpGeoBaseCityIdOpt {
+) extends SqlModelSave with IpGeoBaseCityIdOpt {
 
   override def hasId = false
+  override type T = IpGeoBaseRange
+  override def companion = IpGeoBaseRange
 
-  override def saveInsert(implicit c: Connection): IpGeoBaseRange = {
+  override def saveInsert(implicit c: Connection): T = {
     SQL(s"""INSERT INTO $TABLE_NAME(country_iso2, city_id, "start", "end") VALUES({countryIso2}, {cityId}, {start}, {end})""")
       .on('countryIso2 -> countryIso2, 'cityId -> cityId, 'start -> start, 'end -> end)
       .executeInsert(rowParser single)

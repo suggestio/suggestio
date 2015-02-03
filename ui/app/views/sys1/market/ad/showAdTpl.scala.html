@@ -1,0 +1,43 @@
+@(mad: MAd, producerOpt: Option[MAdnNode])(implicit ctx: Context)
+
+@sysAdBase(
+  title = "Карточка " + mad.id.get,
+  nodeOpt = producerOpt
+) {
+
+  <h1>Управление рекламной карточкой @mad.id</h1>
+
+  <p>Продьюсер карточки:
+    <a href="@routes.SysMarket.showAdnNode(mad.producerId)">
+      @if(producerOpt) {
+        Узел: @producerOpt.get.meta.name / @producerOpt.get.meta.town.
+      } else {
+        ошибочен!
+      }
+    </a>
+  </p>
+
+  <p>Размеры карточки: ширина=@mad.blockMeta.width высота=@mad.blockMeta.height css-пикселей.</p>
+
+  <p>
+    <a href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки...</a>
+  </p>
+
+  @defining(mad.receivers.size) { rcvrsCount =>
+    <p>Эта карточка сейчас @if(rcvrsCount > 0) {размещена на @rcvrsCount узлах} else {нигде не отображается}.
+      <a href="@routes.SysMarket.analyzeAdRcvrs(mad.id.get)">Проанализировать...</a>
+    </p>
+  }
+
+  <ul>
+    @defining( blk.OneAdQsArgs(mad.id.get, szMult = 1.0F) ) { qsArgs =>
+      <li>
+        <a href="@routes.MarketShowcase.onlyOneAd(qsArgs)">Отрендерить карточку в HTML x1.0</a>
+      </li>
+      <li>
+        <a href="@routes.MarketShowcase.onlyOneAdAsImage(qsArgs)">Отрендерить карточку в PNG x1.0</a>
+      </li>
+    }
+  </ul>
+
+}

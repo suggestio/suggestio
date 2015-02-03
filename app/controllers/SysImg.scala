@@ -6,8 +6,6 @@ import models.im.MImg
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
-import util.SiowebEsUtil.client
 import views.html.sys1.img._
 import play.api.data._, Forms._
 
@@ -91,6 +89,24 @@ object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
     // TODO Искать, где используется эта картинка.
     metaFut map { metaOpt =>
       Ok(showOneTpl(im, metaOpt))
+    }
+  }
+
+  /**
+   * Удалить указанную картинку из хранилища.
+   * @param im Картинка.
+   * @return Редирект.
+   */
+  def deleteOneSubmit(im: MImg) = IsSuperuser.async { implicit request =>
+    // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
+    im.delete map { _ =>
+      val (msg, rdr) = if (im.isOriginal) {
+        "Оригинал удалён." -> routes.SysImg.index()
+      } else {
+        "TODO Дериватив может остаться локально на других узлах." -> routes.SysImg.showOne(im.original)
+      }
+      Redirect(rdr)
+        .flashing("success" -> msg)
     }
   }
 

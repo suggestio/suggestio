@@ -35,9 +35,11 @@ final case class IpGeoBaseCity(
   region    : String,
   lat       : Double,
   lon       : Double
-) extends SqlModelSave[IpGeoBaseCity] {
+) extends SqlModelSave {
 
+  override def companion = IpGeoBaseCity
   override def hasId = true
+  override type T = IpGeoBaseCity
 
   override def saveInsert(implicit c: Connection): IpGeoBaseCity = {
     SQL(s"INSERT INTO $TABLE_NAME(id, city_name, region, lat, lon) VALUES({id}, {cityName}, {region}, {lat}, {lon})")

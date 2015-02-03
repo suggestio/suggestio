@@ -1,6 +1,6 @@
 package util.acl
 
-import models.{MPerson, MPersonLinks}
+import models.usr.{MPersonLinks, MPerson}
 import play.api.mvc._, Security.username
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl

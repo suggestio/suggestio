@@ -4,7 +4,8 @@ import io.suggest.ym.model.stat.MAdStat
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 import play.api.Logger
-import util.{EcParInfo, AsyncUtil, PlayMacroLogsImpl}
+import util.async.{EcParInfo, AsyncUtil}
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

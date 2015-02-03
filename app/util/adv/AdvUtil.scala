@@ -6,8 +6,9 @@ import models._
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.{AsyncUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
+import util.async.AsyncUtil
 import util.billing.MmpDailyBilling
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.Play.{current, configuration}

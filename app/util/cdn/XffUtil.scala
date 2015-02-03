@@ -1,7 +1,7 @@
 package util.cdn
 
-import play.api.mvc.{Result, RequestHeader, Filter}
-import util.PlayMacroLogsImpl
+import play.api.mvc.{Filter, Result, RequestHeader}
+import util.PlayLazyMacroLogsImpl
 import play.api.Play.{current, configuration}
 
 import scala.concurrent.Future
@@ -14,10 +14,12 @@ import scala.collection.JavaConversions._
  * Created: 17.10.14 14:55
  * Description: Дамп forwarded-хидеров для отладки интеграции с CDN.
  */
-object XffUtil {
 
-  val DUMP_FWD_HEADERS: Boolean = configuration.getBoolean("xff.dump.headers.enabled") getOrElse false
+object DumpXffHeaders {
 
+  val IS_ENABLED = configuration.getBoolean("xff.dump.headers.enabled") getOrElse false
+
+  /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */
   lazy val DUMP_HEADER_NAMES: Seq[String] = {
     configuration.getStringList("xff.dump.headers.names")
       .map(_.toSeq)
@@ -26,18 +28,13 @@ object XffUtil {
 
 }
 
-
-import XffUtil._
-
-
-object DumpXffHeaders extends Filter with PlayMacroLogsImpl {
-
-  import LOGGER._
+class DumpXffHeaders extends Filter with PlayLazyMacroLogsImpl {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
+    import DumpXffHeaders._
     val resultFut = f(rh)
     // Параллельно начинаем дампить хидеры в лог.
-    if (DUMP_FWD_HEADERS) {
+    if (IS_ENABLED) {
       val fwdHdrsIter = rh.headers
         .toMap
         .iterator
@@ -59,9 +56,10 @@ object DumpXffHeaders extends Filter with PlayMacroLogsImpl {
           sb.append('\n')
         }
         sb.setLength(sb.length - 1)
-        trace(sb.toString())
+        LOGGER.trace(sb.toString())
       }
     }
+    // Вернуть исходный результат.
     resultFut
   }
 

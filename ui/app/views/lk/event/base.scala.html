@@ -1,0 +1,12 @@
+@(title: String, nodeOpt: Option[MAdnNode], headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для страниц в разделе событий. *@
+
+@import market.lk._
+
+@lkBaseLayout(
+  title         = title,
+  nodeOpt       = nodeOpt,
+  backHref      = nodeOpt.flatMap(_.id).map(routes.MarketLkAdn.showAdnNode(_).url),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_EVENTS)
+)(content)

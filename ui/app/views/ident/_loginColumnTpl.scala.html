@@ -1,0 +1,13 @@
+@(lf: EmailPwLoginForm_t)(implicit ctx: Context)
+
+@* Колонка с формой логина через email-pw и соц.сети. *@
+
+@import ctx._
+
+<div>
+  @_loginFormTpl(lf)
+
+  <hr/>
+  или
+  TODO Вход через соц.сети.
+</div>
