@@ -2,6 +2,7 @@ package util.acl
 
 import play.api.mvc._
 import models._
+import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -93,9 +94,17 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] {
     }
   }
 }
-final case class CanEditAd(adId: String)
+/** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
+case class CanEditAdGet(adId: String)
   extends CanEditAdBase
   with ExpireSession[RequestWithAdAndProducer]
+  with CsrfGet[RequestWithAdAndProducer]
+
+/** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
+case class CanEditAdPost(adId: String)
+  extends CanEditAdBase
+  with ExpireSession[RequestWithAdAndProducer]
+  with CsrfPost[RequestWithAdAndProducer]
 
 
 

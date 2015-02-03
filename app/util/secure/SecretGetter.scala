@@ -52,17 +52,16 @@ trait SecretGetter extends PlayMacroLogsI {
       // В продакшене без ключа нельзя. Генерить его и в логи писать его тоже писать не стоит наверное.
       throw new IllegalStateException(
         s"""$errorMsg
-             |Cannot continue. Please add something like following in application.conf ON ALL PRODUCTION NODES:
-             |  $confKey = "......"
-             |Example secret is: $randomSecret
-             |Use same secret on ALL PRODUCTION NODES.""".stripMargin
+             |Cannot continue without secret key. Please add in your application.conf:
+             |$confKey = "$randomSecret"
+             |Use same value on ALL PRODUCTION NODES!""".stripMargin
       )
     } else {
       val result = randomSecret
       LOGGER.warn(
         s"""$warnMsg
-             |Please add something like this in your application.conf:
-             |  $confKey = "$result" """.stripMargin
+             |Please add this into application.conf:
+             |$confKey = "$result" """.stripMargin
       )
       result
     }

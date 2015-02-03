@@ -6,5 +6,5 @@
 
 @_targetFormTpl(
   tf          = tf,
-  submitCall  = routes.LkAdvExt.writeTargetSubmit(adnId)
+  submitCall  = CSRF(routes.LkAdvExt.writeTargetSubmit(adnId))
 )

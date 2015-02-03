@@ -8,7 +8,7 @@ import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
-import util.acl.{IsAdnNodeAdmin, AbstractRequestWithPwOpt, IsAuth}
+import util.acl._
 import util.mail.MailerWrapper
 import views.html.market.lk.support._
 import scala.concurrent.Future
@@ -46,7 +46,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
    * Отрендерить форму с запросом помощи с узла.
    * @return 200 Ок и страница с формой.
    */
-  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     _supportForm(Some(request.adnNode), r)
   }
 
@@ -76,7 +76,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
 
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
-  def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _supportFormSubmit(Some(request.adnNode), r)
   }
 

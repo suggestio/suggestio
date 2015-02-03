@@ -538,7 +538,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
     Ok(userProfileEditTpl(
       adnNode = request.adnNode,
       pf = ChangePw.changePasswordFormM,
@@ -547,7 +547,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   }
 
   /** Сабмит формы смены пароля. */
-  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
       NotAcceptable(userProfileEditTpl(
         adnNode = request.adnNode,

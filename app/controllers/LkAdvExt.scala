@@ -189,7 +189,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def writeTarget(adnId: String) = IsAdnNodeAdmin(adnId) { implicit request =>
+  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val form = ExtUtil.oneTargetFullFormM(adnId)
     Ok(_createTargetTpl(adnId, form))
   }

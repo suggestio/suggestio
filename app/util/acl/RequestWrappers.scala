@@ -6,6 +6,7 @@ import models.event.{EventsSearchArgs, MEvent}
 import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
+import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
@@ -249,6 +250,19 @@ trait RequestHeaderWrapper extends RequestHeader {
 case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Nothing] with RequestHeaderWrapper {
   override def body: Nothing = {
     throw new UnsupportedOperationException("This is request headers wrapper. Body never awailable here.")
+  }
+}
+
+
+trait CsrfGet[R[_]] extends ActionBuilder[R] {
+  override protected def composeAction[A](action: Action[A]): Action[A] = {
+    CSRFAddToken( super.composeAction(action) )
+  }
+}
+
+trait CsrfPost[R[_]] extends ActionBuilder[R] {
+  override protected def composeAction[A](action: Action[A]): Action[A] = {
+    CSRFCheck( super.composeAction(action) )
   }
 }
 

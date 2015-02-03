@@ -17,7 +17,7 @@
 )
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
-@form(call, 'id -> "promoOfferForm") {
+@form(CSRF(call), 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@

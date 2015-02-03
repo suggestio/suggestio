@@ -8,7 +8,7 @@
 @supportBase("СЛУЖБА ПОДДЕРЖКИ", nodeOpt = nodeOpt, r = ctx.r) {
 
 
-  @form( ctx.supportFormCall(nodeOpt.flatMap(_.id)) ) {
+  @form(CSRF( ctx.supportFormCall(nodeOpt.flatMap(_.id)) )) {
 
     <table class="input-w __size-L">
       @inputText(

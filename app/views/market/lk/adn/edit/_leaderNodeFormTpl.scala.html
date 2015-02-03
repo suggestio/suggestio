@@ -6,8 +6,9 @@
 @import util.FC.tdRadialFc
 @import util.img.GalleryUtil.GALLERY_LEN_MAX
 @import util.img.DynImgUtil
+@import ctx._
 
-@form(submitCall, 'id -> "profileEdit") {
+@form(CSRF(submitCall), 'id -> "profileEdit") {
 
   <div class="profile_logo-bar" id="logo">
     @defining(mf("logoImgId").value) { logoImgIdOpt =>

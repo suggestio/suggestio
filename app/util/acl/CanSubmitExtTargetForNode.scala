@@ -108,3 +108,4 @@ trait CanSubmitExtTargetForNodeBase extends ActionBuilder[ExtTargetSubmitRequest
 case class CanSubmitExtTargetForNode(adnId: String)
   extends CanSubmitExtTargetForNodeBase
   with ExpireSession[ExtTargetSubmitRequest]
+  with CsrfPost[ExtTargetSubmitRequest]
