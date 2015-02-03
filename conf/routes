@@ -74,7 +74,7 @@ POST /m/lk/xadv/geo/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSub
 ## Размещение рекламы на внешних сервисах
 GET  /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTarget(adnId)
 POST /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTargetSubmit(adnId)
-GET  /m/lk/xadv/ext/ws/run              controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
+GET  /ws/lk/xadv/ext/run                controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
 POST /m/lk/xadv/ext/tg/delete/:tgId     controllers.LkAdvExt.deleteTargetSubmit(tgId)
 GET  /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.forAd(adId)
 POST /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.advFormSubmit(adId)
@@ -90,7 +90,7 @@ POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubm
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
 GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
-GET  /m/lk/ws/:wsId/ad                  controllers.MarketAd.ws(wsId: String)
+GET  /ws/lk/ad/:wsId                    controllers.MarketAd.ws(wsId: String)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/_txns/adn/:adnId             controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)
@@ -313,7 +313,7 @@ POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnI
 ## Галереи картинок
 GET  /sys/gals                           controllers.SysGallery.showList(page: Int ?= 0)
 POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
-GET  /sys/gals/ws/:wsId                  controllers.SysGallery.ws(wsId)
+GET  /ws/sys/gals/:wsId                  controllers.SysGallery.ws(wsId)
 GET  /sys/gals/new                       controllers.SysGallery.createGal
 POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
 GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)

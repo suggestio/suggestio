@@ -701,7 +701,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param advReqId id запроса на размещение.
    * @return 404 если что-то не найдено, иначе 200.
    */
-  def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReqGet(advReqId).async { implicit request =>
     _showAdvReq1(reqRefuseFormM, r)
       .map { _.fold(identity, Ok(_))}
   }
@@ -748,7 +748,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return 406 если причина слишком короткая или слишком длинная.
    *         302 если всё ок.
    */
-  def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     reqRefuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advReqRefuseSubmit($advReqId): Failed to bind refuse form:\n${formatFormErrors(formWithErrors)}")
@@ -772,7 +772,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param advReqId id одобряемого реквеста.
    * @return 302
    */
-  def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     Future {
       MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
