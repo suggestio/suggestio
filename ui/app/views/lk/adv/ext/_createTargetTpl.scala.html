@@ -3,8 +3,9 @@
 @* Окошко для добавления новой внешней PR-цели. *@
 
 @import ctx._
+@import helper._
 
 @_targetFormTpl(
   tf          = tf,
-  submitCall  = CSRF(routes.LkAdvExt.writeTargetSubmit(adnId))
+  submitCall  = CSRF( routes.LkAdvExt.writeTargetSubmit(adnId) )
 )

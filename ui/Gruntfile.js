@@ -313,7 +313,7 @@ module.exports = function (grunt) {
           expand: true,
           dot: true,
           cwd: '<%= yeoman.app %>',
-          dest: '<%= yeoman.dist %>',
+          dest: '<%= yeoman.dist %>/../twirl',
           src: ['**/*.scala.html']
         }]
       },
