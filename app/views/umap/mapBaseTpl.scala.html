@@ -1,6 +1,7 @@
 @(args: UmapTplArgs)(implicit ctx: Context)
 
 @import ctx._
+@import helper._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.Application.keepAliveSession
@@ -254,7 +255,7 @@
             "urls": {
               "map": "/ru/map/{slug}_{pk}",
               "datalayer_view": "@args.dlGetUrl",
-              "map_update": "@routes.Umap.saveMapSettingsSubmit().url",
+              "map_update": "@CSRF( routes.Umap.saveMapSettingsSubmit() )",
               "map_old_url": "/ru/map/{username}/{slug}/",
               "ajax_proxy": "/ajax-proxy/?url={url}",
               "map_geojson": "/ru/map/{pk}/geojson/",

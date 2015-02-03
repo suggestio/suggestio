@@ -198,14 +198,10 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   }
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def deleteAdnNodeSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
     import request.adnNode
     adnNode
       .delete
-      .flatMap { isDeleted =>
-        adnNode.eraseResources
-          .map { _ => isDeleted }
-      }
       .filter(identity)
       .map { _ =>
         Redirect(routes.SysMarket.adnNodesList())
@@ -490,7 +486,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
 
 
   /** Страница с формой редактирования узла ADN. */
-  def editAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def editAdnNode(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     import request.adnNode
     val formFilled = adnNodeFormM.fill(adnNode)
     editAdnNodeBody(adnId, formFilled)
@@ -505,7 +501,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   }
 
   /** Самбит формы редактирования узла. */
-  def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
     import request.adnNode
     val formBinded = adnNodeFormM.bindFromRequest()
     formBinded.fold(
@@ -583,19 +579,15 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   )
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
-  def nodeOwnerInviteForm(adnId: String) = IsSuperuser.async { implicit request =>
+  def nodeOwnerInviteForm(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     val eActsFut = EmailActivation.findByKey(adnId)
-    MAdnNodeCache.getById(adnId) flatMap {
-      case Some(adnNode) =>
-        eActsFut map { eActs =>
-          Ok(nodeOwnerInvitesTpl(adnNode, nodeOwnerInviteFormM, eActs))
-        }
-      case None => martNotFound(adnId)
+    eActsFut map { eActs =>
+      Ok(nodeOwnerInvitesTpl(request.adnNode, nodeOwnerInviteFormM, eActs))
     }
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
     import request.adnNode
     nodeOwnerInviteFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -635,10 +627,6 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
 
 
   /* Магазины (арендаторы ТЦ). */
-
-  /** Рендер ошибки, если магазин не найден в базе. */
-  private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
-
 
   /** Отображение категорий яндекс-маркета */
   def showYmCats = IsSuperuser.async { implicit request =>
@@ -917,8 +905,6 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       }
     }
   }
-
-
 
 }
 

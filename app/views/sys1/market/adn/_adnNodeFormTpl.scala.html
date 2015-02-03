@@ -2,12 +2,13 @@
 
 @* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
+
 @import helper._
 @import ctx._
 @import util.FC.tdFc
 
+@form( CSRF(call) ) {
 
-@form(call) {
   @* ADN *@
   <table class="input-w __size-L">
     <td class="input-w_left">
@@ -20,7 +21,7 @@
         <select name="@mtField.name">
           <option disabled>Тип узла</option>
           @AdNetMemberTypes.values.map { anmt =>
-            <option value="@anmt.name" @if(mtField.value.exists(_ == anmt.name)) {selected}>@Messages("amt.of.type." + anmt.name)</option>
+            <option value="@anmt.name" @if(mtField.value contains anmt.name) {selected}>@Messages("amt.of.type." + anmt.name)</option>
           }
         </select>
       }
@@ -38,7 +39,7 @@
         <select name="@stiField.name">
           <option disabled>Тип узла</option>
           @AdnShownTypes.values.map { ast =>
-            <option value="@ast" @if(stiField.value.exists(_ == ast.toString)) {selected}>@Messages("amt.of.type." + ast)</option>
+            <option value="@ast" @if(stiField.value contains ast.toString) {selected}>@Messages("amt.of.type." + ast)</option>
           }
         </select>
       }
@@ -63,7 +64,7 @@
           <select name="@ciField.name">
             <option disabled>@Messages("Company")-@Messages("Owner")</option>
             @companies.map { mcompany =>
-              <option value="@mcompany.id"@if(mcompany.id.exists(_ == currCompanyId)) {selected}>@mcompany.meta.name</option>
+              <option value="@mcompany.id"@if(mcompany.id contains currCompanyId) {selected}>@mcompany.meta.name</option>
             }
           </select>
         }

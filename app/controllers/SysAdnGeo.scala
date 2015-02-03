@@ -8,7 +8,7 @@ import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
-import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnGeo, IsSuperuser, IsSuperuserAdnNode}
+import util.acl._
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
@@ -67,14 +67,14 @@ object SysAdnGeo extends SioControllerImpl with PlayLazyMacroLogsImpl {
   }
 
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
-  def createForNodeOsm(adnId: String) = IsSuperuserAdnNode(adnId).apply { implicit request =>
+  def createForNodeOsm(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
     val form = guessGeoLevel
       .fold(osmNodeFormM) { ngl => osmNodeFormM.fill((ngl, UrlParseResult("", null, -1))) }
     Ok(createAdnGeoOsmTpl(form, request.adnNode))
   }
 
   /** Сабмит формы создания фигуры на базе osm-объекта. */
-  def createForNodeOsmSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def createForNodeOsmSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"createForNodeOsmSubmit($adnId): "
     osmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>

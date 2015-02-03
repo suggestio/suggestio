@@ -12,7 +12,7 @@ import play.api.i18n.{Lang, Messages}
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import _root_.util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
+import _root_.util.acl._
 import views.html.umap._
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
@@ -37,7 +37,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = IsSuperuser.async { implicit request =>
+  def getAdnNodesMap = IsSuperuserGet.async { implicit request =>
     // Скачиваем все узлы из базы. TODO Закачать через кэш?
     val allNodesMapFut: Future[Map[AdnShownType, Seq[MAdnNode]]] = {
       val sargs = new AdnNodesSearchArgs {
@@ -70,7 +70,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
    * @param adnId id узла.
    * @return 200 OK и страница с картой.
    */
-  def getAdnNodeMap(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def getAdnNodeMap(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     val dlUrl = s"/sys/umap/node/$adnId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
       dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
@@ -160,7 +160,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит одного слоя на глобальной карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuser.async(parse.multipartFormData) { implicit request =>
+  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuserPost.async(parse.multipartFormData) { implicit request =>
     // Банальная проверка на доступ к этому экшену.
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
@@ -169,9 +169,10 @@ object Umap extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит одного слоя на карте узла. */
-  def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = IsSuperuserAdnNode(adnId).async(parse.multipartFormData) {
-    implicit request =>
+  def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = {
+    IsSuperuserAdnNodePost(adnId).async(parse.multipartFormData) { implicit request =>
       _saveMapDataLayer(ngl, request.adnNode.id){ _ => adnId }
+    }
   }
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
