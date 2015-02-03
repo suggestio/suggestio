@@ -167,7 +167,7 @@
     color       darkGray
 
     cursor      pointer
-    background  #e5e5e5
+    background  #c0c0c0
     border-radius 4px
     transition(all 0.2s ease-in-out 0s)
 
@@ -185,8 +185,26 @@
     box-sizing border-box
     width 28px
     height 28px
+    line-height 24px
 
-    borer 2ox solid #d6d6d6
+    border 2px solid #d6d6d6
+    border-radius 4px
+    cursor pointer
+
+    transition(all 0.2s ease-in-out 0s)
+
+    color #707070
+
+    font-size 18px
+    font-weight bold
+    text-align center
+    text-decoration none
+
+    &:hover
+      background-color  #9ad0b0
+      border-color  #9ad0b0
+      color white
+
 
   &_title.__js-open
     background-color  white
@@ -339,6 +357,7 @@ label
 
     content         "\0020"
     color           #00b893
+    background-color  white
     font-size       16px
     text-align      center
     border-radius   4px
@@ -361,6 +380,7 @@ label
 
     content         "\0020"
     color           #00b893
+    background-color white
     font-size       16px
     text-align      center
     border-radius   4px
@@ -428,6 +448,34 @@ label
 
   &_result-value
     font-size   15px
+
+/********************************************************************************************************************/
+/* Виджет выбора уровней размещения  */
+/********************************************************************************************************************/
+.levels-widget
+  margin  15px 0
+
+  &_t
+    color #484848
+    font-size 18px
+    font-weight normal
+
+  &_lst
+    margin-top 10px
+    padding 10px 20px
+    border-radius 10px
+    background-color #b9ead6
+
+  &_i
+    list-style none
+
+  &_i-descr
+    margin-bottom 10px
+    padding-left 35px
+    font-size 11px
+
+  &_gray
+    color #8d8d8d
 
 /********************************************************************************************************************/
 /* No photo  */

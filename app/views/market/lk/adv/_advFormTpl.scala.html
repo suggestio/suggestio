@@ -34,14 +34,14 @@
 @slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String) = {
   @* TODO Генерить label на основе sl. *@
   @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label) {
-    @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {data-checked="checked"}
+    @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {checked="checked"}
   }
 }
 
 @* Шаблон чекбокса для выбора sink'а вадачи. *@
 @sinkCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], sink: AdnSink) = {
   @sslCheckbox(maybeBusyAdv, midOpt, "sink." + sink.longName, label = Messages("adn.sink." + sink.longName)) {
-    @if(maybeBusyAdv.exists(_ hasOnSink sink)) {data-checked="checked"}
+    @if(maybeBusyAdv.exists(_ hasOnSink sink)) {checked="checked"}
   }
 }
 
@@ -54,7 +54,7 @@
   <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
 }
 
-@form( CSRF(routes.MarketAdv.advFormSubmit(adId)), 'id->"advsForm") {
+@form( CSRF(routes.MarketAdv.advFormSubmit(adId)), 'id->"advsForm", 'class->"adv-management_main-form") {
 @*form(routes.MarketAdv.getAdvPriceSubmit(adId)) *@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
   <input type="hidden" value="@routes.MarketAdv.getAdvPriceSubmit(adId)" id="advsPriceUpdateUrl">
 
@@ -117,30 +117,27 @@
                     </label>
                     <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
-                      <a class="link js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">
+
                         @an.node.meta.name
-                      </a>
+
                     </span>
                     <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">i</a>
                   } {
                     <div class="advm-node_block">
                       <div class="advm-node_left">
-                        <p class="block">Отображение</p>
+                        <p class="block">Уровни размещения</p>
                         <div class="block __margin-XS">
                           <hr class="delimiter __light"/>
                         </div>
                         @* Галочки уровней отображения. *@
                         @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран")
                         @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров")
+                        <div class="block __margin-XS"><hr class="delimiter __light"/></div>
                         <label class="block">
                           <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
                         </label>
                       </div>
-                      <div class="advm-node_right">
-                        <p class="block">Таргетинг</p>
-                        <div class="block __margin-XS">
-                          <hr class="delimiter __light"/>
-                        </div>
+                      <div class="hidden">
                         @an.node.adn.sinks.iterator.map { sink =>
                           @* Галочки sink'ов выдачи. *@
                           @sinkCheckbox(maybeBusyAdv, midOpt, sink)
@@ -174,7 +171,7 @@
 
         <div class="date-widget_options">
           <table class="prop">
-            <td class="prop_name">Срок размещение</td>
+            <td class="prop_name">Срок размещения</td>
             <td class="prop_value">
               <div class="input __size-S" >
                 <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
@@ -215,6 +212,36 @@
         </div>
 
       </div>
+
+      <aside class="levels-widget">
+        <h2 class="levels-widget_t">Уровни размещения</h2>
+        <ul class="levels-widget_lst">
+          <li class="levels-widget_i">
+            <label class="block">
+              <input type="checkbox"><span class="checkbox_title">Главный экран</span>
+            </label>
+            <div class="levels-widget_i-descr">
+              Вашу рекламу на Главном экране увидят все пользователи Sugest.io, которые находятся в заданных локациях.
+            </div>
+          </li>
+          <li class="levels-widget_i">
+            <label class="block">
+              <input type="checkbox"><span class="checkbox_title">Категории</span>
+            </label>
+            <div class="levels-widget_i-descr">
+              Рекламу в категориях увидят наиболее заинтересованные пользователи, которые ищут конкретные товары и услуги.
+            </div>
+          </li>
+          <li class="levels-widget_i">
+            <label class="block">
+              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">Каталог&nbsp;<span class="levels-widget_gray">(бесплатно)</span></span>
+            </label>
+            <div class="levels-widget_i-descr">
+              Реклама из персональных каталогов рекламодателей выводится в поисковой выдаче при запросах пользователей через строку  Life Search.  
+            </div>
+          </li>
+        </ul>
+      </aside>
 
   </div>
 }

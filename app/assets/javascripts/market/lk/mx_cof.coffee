@@ -1209,19 +1209,6 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
-      ###
-      $ '.lk input[type = "checkbox"]'
-      .filter ':enabled'
-      .each ()->
-        $this = $ this
-        checked = $this.attr 'data-checked'
-
-        if checked == 'checked'
-          this.checked = true
-        else
-          $this.removeAttr 'checked'
-      ###
-
       ## Набор чекбоксов, где можно выбрать только один вариант
       $ document
       .on 'click', '.js-one-checkbox', (e)->
