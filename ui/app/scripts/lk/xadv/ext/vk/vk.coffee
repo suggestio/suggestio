@@ -3,7 +3,6 @@ define ["SioPR"], (SioPR) ->
   SioPR = new SioPR()
 
   class Vk
-    API_ID = 4705589
     ACESS_LVL = 8197
 
     @serviceName: "Vk"
@@ -13,8 +12,12 @@ define ["SioPR"], (SioPR) ->
 
       window.vkAsyncInit = () =>
 
-        VK.init
-          apiId: API_ID
+        try
+          VK.init
+            apiId: @ctx._service.appId
+        catch error
+          @ctx._status = "error"
+          @complete()
 
         SioPR.registerService @ctx, @onComplete
 
