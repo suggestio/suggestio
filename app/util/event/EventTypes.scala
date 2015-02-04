@@ -79,4 +79,9 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
     override def template = _yourAdvRefusedEvtTpl
   }
 
+  /** Не удалась инициализация сервиса. Рендерим ошибку. */
+  val AdvServiceError: EventType = new Val("j") {
+    override def template = serviceErrorTpl
+  }
+
 }

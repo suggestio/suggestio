@@ -71,7 +71,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
     val evtsRndrFut = eventsFut.flatMap { mevents =>
       // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
       val madsMapFut        = LkEventsUtil.readEsModel(mevents, MAd)(_.argsInfo.adIdOpt)
-      val advExtTgsMapFut   = LkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIdOpt)
+      val advExtTgsMapFut   = LkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
       // Параллельно собираем карты размещений из всех adv-моделей.
       val advsReqMapFut     = LkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
@@ -105,7 +105,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
             val rArgs = event.RenderArgs(
               mevent        = mevent,
               adnNodeOpt    = ai.adnIdOpt.flatMap(nodesMap.get),
-              advExtTgOpt   = ai.advExtTgIdOpt.flatMap(advExtTgsMap.get),
+              advExtTgs   = ai.advExtTgIds.flatMap(advExtTgsMap.get),
               madOpt        = ai.adIdOpt.flatMap(madsMap.get),
               advReqOpt     = ai.advReqIdOpt.flatMap(advsReqMap.get),
               advOkOpt      = ai.advOkIdOpt.flatMap(advsOkMap.get),

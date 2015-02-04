@@ -133,8 +133,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         ownerId = args.request.producerId,
         id      = Some(replyTo)
       ),
-      advExtTgOpt = Some(args.target.target),
-      errors      = errors,
+      advExtTgs = Seq(args.target.target),
+      errors    = errors,
       withContainer = withContainer
     )
   }

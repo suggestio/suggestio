@@ -7,14 +7,21 @@
 
 @_errorEvtBase(rargs) {
 
-  @rargs.advExtTgs.map { advExtTg =>
-    <div class="event_t">
-      <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
-    </div>
-  }
-
   @rargs.errors.map { err =>
-    <p class="event_err-text">Ошибка: @Messages(err.msg, err.args: _*)</p>
+    <p class="event_err-text">Ошибка запуска сервиса@rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.i18nCode)&quot;}:
+      @Messages(err.msg, err.args: _*)
+    </p>
+
+    <div>
+      Следующие цели были пропущены:
+      <ul>
+        @rargs.advExtTgs.map { esrv =>
+          <li>
+            <a href="@esrv.url" target="_blank">@esrv.name.getOrElse(esrv.url)</a>
+          </li>
+        }
+      </ul>
+    </div>
 
     @* Если есть доп.информация, то её рендерим под катом *@
     @if(err.info) {

@@ -5,8 +5,13 @@ import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.js._
 import models.adv.js.ctx.MJsCtx
+import models.event.{MEventTmp, RenderArgs}
+import play.api.libs.json.JsString
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
+import util.event.EventTypes
+import util.jsa.JsAppendById
+import ExtUtil.RUNNER_EVENTS_DIV_ID
 
 /**
  * Suggest.io
@@ -86,10 +91,31 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
             }
             args.wsMediatorRef ! AddActors(tgActors)
 
-          // Не удалось инициализировать клиента для связи с сервисом.
+          // Не удалось инициализировать клиента для связи с сервисом. Отрендерить плашку события юзеру.
           case _ =>
-            // TODO Отрендерить ошибку связи с сервисом на экран юзеру!
             warn(s"Failed to initialize service ${args.service} client-side: ${ans.ctx2.error}")
+            val mevent = MEventTmp(
+              etype       = EventTypes.AdvServiceError,
+              ownerId     = args.request.producerId,
+              isCloseable = false,
+              isUnseen    = true
+            )
+            val rargs = RenderArgs(
+              mevent        = mevent,
+              withContainer = false,
+              adnNodeOpt    = Some(args.request.producer),
+              advExtTgs     = args.targets.map(_.target),
+              madOpt        = Some(args.request.mad),
+              extServiceOpt = Some(args.service)
+            )
+            val html = rargs.mevent.etype.render(rargs)
+            val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
+            val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
+            val cmd = JsCommand(
+              cmd       = jsa.renderToString(),
+              sendMode  = CmdSendModes.Async
+            )
+            sendCommand(cmd)
         }
         // Этот актор больше не нужен при любом раскладе.
         context.stop(self)

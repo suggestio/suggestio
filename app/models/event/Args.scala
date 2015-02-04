@@ -2,7 +2,7 @@ package models.event
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.{EsModel, EnumMaybeWithName}
-import models.adv.MExtTarget
+import models.adv.{MExtService, MExtTarget}
 import models._
 import org.elasticsearch.client.Client
 import play.api.libs.json._
@@ -54,12 +54,12 @@ object IArgsInfo {
 
   implicit def writes: Writes[IArgsInfo] = (
     (__ \ AdnId.strId).writeNullable[String] and
-    (__ \ AdvExtTarget.strId).writeNullable[String] and
+    (__ \ AdvExtTarget.strId).write[Seq[String]] and
     (__ \ AdId.strId).writeNullable[String] and
     (__ \ AdvOkId.strId).writeNullable[Int] and
     (__ \ AdvReqId.strId).writeNullable[Int] and
     (__ \ AdvRefuseId.strId).writeNullable[Int]
-  ){ s => (s.adnIdOpt, s.advExtTgIdOpt, s.adIdOpt, s.advOkIdOpt, s.advReqIdOpt, s.advRefuseIdOpt) }
+  ){ s => (s.adnIdOpt, s.advExtTgIds, s.adIdOpt, s.advOkIdOpt, s.advReqIdOpt, s.advRefuseIdOpt) }
 
 }
 
@@ -70,7 +70,7 @@ trait IArgsInfo extends IArgs with Event {
   def adnIdOpt: Option[String]
 
   /** id цели внешнего размещения, если есть. */
-  def advExtTgIdOpt: Option[String]
+  def advExtTgIds: Seq[String]
 
   /** Опциональный id рекламной карточки, с которой связано это событие. */
   def adIdOpt: Option[String]
@@ -83,7 +83,8 @@ trait IArgsInfo extends IArgs with Event {
   override def nonEmpty: Boolean
   override def isEmpty: Boolean
 
-  override def getClassifier: Classifier = List(adIdOpt, adIdOpt, advExtTgIdOpt)
+  // TODO Надо что-то с advExtTgIdOpt => Classifier. Текущий headOption() может вызвать логические ошибки в будущем.
+  override def getClassifier: Classifier = List(adIdOpt, adIdOpt, advExtTgIds.headOption)
 
 }
 
@@ -95,7 +96,7 @@ object ArgsInfo {
 
   implicit def reads: Reads[ArgsInfo] = (
     (__ \ AdnId.strId).readNullable[String] and
-    (__ \ AdvExtTarget.strId).readNullable[String] and
+    (__ \ AdvExtTarget.strId).read[Seq[String]] and
     (__ \ AdId.strId).readNullable[String] and
     (__ \ AdvOkId.strId).readNullable[Int] and
     (__ \ AdvReqId.strId).readNullable[Int] and
@@ -110,7 +111,11 @@ object ArgsInfo {
       } else {
         val f = ArgsInfo(
           adnIdOpt      = Option(jm get AdnId.strId).map(EsModel.stringParser),
-          advExtTgIdOpt = Option(jm get AdvExtTarget.strId).map(EsModel.stringParser),
+          advExtTgIds = Option(jm get AdvExtTarget.strId)
+            .iterator
+            .flatMap(EsModel.iteratorParser)
+            .map(EsModel.stringParser)
+            .toSeq,
           adIdOpt       = Option(jm get AdId.strId).map(EsModel.stringParser),
           advOkIdOpt    = Option(jm get AdvOkId.strId).map(EsModel.intParser),
           advReqIdOpt   = Option(jm get AdvReqId.strId).map(EsModel.intParser),
@@ -148,7 +153,7 @@ object ArgsInfo {
  */
 case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
-  advExtTgIdOpt   : Option[String]  = None,
+  advExtTgIds   : Seq[String]     = Nil,
   adIdOpt         : Option[String]  = None,
   advOkIdOpt      : Option[Int]     = None,
   advReqIdOpt     : Option[Int]     = None,
@@ -173,27 +178,29 @@ object EmptyArgsInfo extends ArgsInfo() {
  * @param withContainer Рендерить обрамляющий контейнер? [false] Контейнер используется при первичном рендере,
  *                      чтобы его потом перезаписывать через js innerHTML() содержимое этого контейнера.
  * @param adnNodeOpt Инстанс ноды, если событие связано с нодой.
- * @param advExtTgOpt Инстанс MExtTarget, если событие связано с ним.
+ * @param advExtTgs Инстанс MExtTarget, если событие связано с ним.
  * @param madOpt Инстанс MAd, если событие связано с этой рекламной карточкой.
+ * @param extServiceOpt Инфа по сервису размещения.
  * @param errors Экземпляры ошибок, если событие отображает текущие ошибки.
  */
 case class RenderArgs(
   mevent        : IEvent,
   withContainer : Boolean             = false,
   adnNodeOpt    : Option[MAdnNode]    = None,
-  advExtTgOpt   : Option[MExtTarget]  = None,
+  advExtTgs     : Seq[MExtTarget]     = Nil,
   madOpt        : Option[MAd]         = None,
   advOkOpt      : Option[MAdvOk]      = None,
   advReqOpt     : Option[MAdvReq]     = None,
   advRefuseOpt  : Option[MAdvRefuse]  = None,
+  extServiceOpt : Option[MExtService] = None,
   errors        : Seq[ErrorInfo]      = Nil
 ) extends IArgsInfo with EmptyProduct {
 
   def hasErrors = errors.nonEmpty
 
-  override def adnIdOpt = adnNodeOpt.flatMap(_.id)
-  override def adIdOpt  = madOpt.flatMap(_.id)
-  override def advExtTgIdOpt = advExtTgOpt.flatMap(_.id)
+  override def adnIdOpt       = adnNodeOpt.flatMap(_.id)
+  override def adIdOpt        = madOpt.flatMap(_.id)
+  override def advExtTgIds    = advExtTgs.flatMap(_.id)
 
   override def advOkIdOpt     = advOkOpt.flatMap(_.id)
   override def advReqIdOpt    = advReqOpt.flatMap(_.id)
