@@ -7,7 +7,7 @@ define ["SioPR"], (SioPR) ->
 
     @serviceName: "Facebook"
 
-    constructor: (@ws, ctx, onComplete) ->
+    constructor: (@ws, @ctx, @onComplete) ->
       console.log "Fb init"
 
       options =

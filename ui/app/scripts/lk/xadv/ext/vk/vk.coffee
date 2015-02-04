@@ -12,14 +12,6 @@ define ["SioPR"], (SioPR) ->
       console.log "vk init"
 
       window.vkAsyncInit = () =>
-        console.log "---api id----"
-        try
-          console.log @ctx
-          console.log @ctx._service.appId
-        catch error
-          console.log error
-        console.log "---api id----"
-
 
         VK.init
           apiId: API_ID

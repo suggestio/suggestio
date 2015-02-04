@@ -10,6 +10,7 @@ define([], function() {
 
       vk: "vk/vk",
       facebook: "fb/facebook",
+      twitter: "twitter/twitter",
     }
 
   });
