@@ -3,7 +3,7 @@ define ["SioPR"], (SioPR) ->
   SioPR = new SioPR()
 
   class Vk
-    API_ID = 4761539
+    API_ID = 4705589
     ACESS_LVL = 8197
 
     @serviceName: "Vk"

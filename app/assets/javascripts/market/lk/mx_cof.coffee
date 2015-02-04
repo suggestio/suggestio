@@ -974,8 +974,12 @@ PersonalCabinet =
   ##################################################################################################################
   advManagement: ()->
     # TODO зарефакторить
+    # выбранный город
     city = -1
+    # выбранный тип узлов
     type = -1
+    # информация по узлам, которые сейчас видит пользователь
+    activeNodesInfo = null
 
     # показать типы узлов текущего города
     showNodeTypes = ()->
@@ -1023,10 +1027,16 @@ PersonalCabinet =
         .attr 'value', value
 
     # проверяет все ли узлы данного типа в текущем городе выбраны и возвращает количество активных узлов + true || false
-    allNodesChecked = (_type)->
+    allNodesChecked = (_type, showLvl = false)->
       activeNodes = 0
       checked = true
-      $ ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:checkbox:enabled"
+
+      if showLvl
+        selector = ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input[data-show-level = #{showLvl}]:checkbox:enabled"
+      else
+        selector = ".js-select-node_w[data-city = #{city}][data-type = #{_type}] .js-slide-title input:checkbox:enabled"
+
+      $ selector
       .each ()->
         $this = $ this
         if $this.prop 'checked'
@@ -1057,11 +1067,12 @@ PersonalCabinet =
 
     # просматриваем галочки у узлов в текущем городе и меняем по ним информацию в типах узлов
     nodesObserver = ()->
+      updateLevelsWidget()
 
       $ ".js-select-type_w[data-city = #{city}] .js-select-type"
       .each ()->
         $this = $ this
-        thisType = $this.attr 'data-value'
+        thisType = $this.data 'value'
         if thisType < 0
           return true
         else
@@ -1086,6 +1097,66 @@ PersonalCabinet =
           .prop 'checked', nodesChecked.checked
           .attr 'value', nodesChecked.checked
 
+    ###*
+      обновляет массив информации по узлам, которые сейчас видит пользователь
+    ###
+    updateLevelsWidget = ()->
+      activeNodesInfo = new Array()
+
+      if $(".js-select-node_w:visible").size() > 0
+        $("#levelsWidget").show()
+      else
+        $("#levelsWidget").hide()
+        return false
+
+      $ ".js-select-node_w:visible .js-slide-cnt"
+      .each ()->
+        $node = $ this
+        $input = $node.find "input:checkbox:enabled"
+        nodeInfo = new Object()
+
+        $input.each ()->
+          $this = $ this
+          showLvl = $this.data "show-level"
+          checked = $this.prop "checked"
+          nodeInfo[showLvl] = checked
+          return true
+
+        activeNodesInfo.push nodeInfo
+
+      checkShowLvl()
+
+
+    ###*
+      По информации об активных узлах расставляем чекбоксы showLvlsWidget
+      0 - нет true checkbox'ов данного уровня размещения
+      1 - есть true checkbox'ы данного уровня размещения
+      2 - все checkbox'ы данного уровня размещения - true
+    ###
+    checkShowLvl = ()->
+      console.log "---check show lvl---"
+      # количество активных checkbox'ов Главный экран
+      onStartPageActiveCount = 0
+      onRcvrCatActiveCount = 0
+      for nodeInfo in activeNodesInfo
+        console.log nodeInfo
+        if nodeInfo.onStartPage == true then onStartPageActiveCount += 1
+        if nodeInfo.onRcvrCat == true then onRcvrCatActiveCount += 1
+
+      if onStartPageActiveCount == activeNodesInfo.length
+         $("#levelsWidget input[data-show-level = onStartPage]").prop("checked", true).next().removeClass("__bg-1")
+      else if onStartPageActiveCount > 0
+        $("#levelsWidget input[data-show-level = onStartPage]").prop("checked", true).next().addClass("__bg-1")
+      else
+         $("#levelsWidget input[data-show-level = onStartPage]").prop("checked", false).next().removeClass("__bg-1")
+
+      if onRcvrCatActiveCount == activeNodesInfo.length
+         $("#levelsWidget input[data-show-level = onRcvrCat]").prop("checked", true).next().removeClass("__bg-1")
+      else if onRcvrCatActiveCount > 0
+        $("#levelsWidget input[data-show-level = onRcvrCat]").prop("checked", true).next().addClass("__bg-1")
+      else
+        $("#levelsWidget input[data-show-level = onRcvrCat]").prop("checked", false).next().removeClass("__bg-1")
+
 
     $ document
     .on 'click', '.js-select-city', (e)->
@@ -1093,7 +1164,7 @@ PersonalCabinet =
       $title = $ '.js-city'
       $slideBlock = $this.closest '.js-slide-cnt'
       cityName = $this.text()
-      city = parseInt( $this.attr 'data-value' )
+      city = parseInt( $this.data 'value' )
 
       $title.text cityName
       PersonalCabinet.slideBlock.slideToggle $slideBlock
@@ -1102,10 +1173,11 @@ PersonalCabinet =
     $ document
     .on 'click', '.js-select-type', (e)->
       $this = $ this
-      type = $this.attr 'data-value'
+      type = $this.data "value"
 
       setActiveType()
       showNodes()
+      updateLevelsWidget()
 
     # чекбоксы у типов
     $ document
@@ -1117,7 +1189,7 @@ PersonalCabinet =
       e.stopPropagation()
       $this = $ this
       $selectType = $this.closest '.js-select-type'
-      type = parseInt( $selectType.attr 'data-value' )
+      type = parseInt( $selectType.data("value") )
       checked = $this.prop 'checked'
 
       setActiveType()
@@ -1159,7 +1231,7 @@ PersonalCabinet =
 
     # чекбоксы внутри узлов
     $ document
-    .on 'click', '.js-select-node_w .js-slide-cnt input', (e)->
+    .on 'change', '.js-select-node_w .js-slide-cnt input', (e)->
       e.stopPropagation()
       $this = $ this
       checked = $this.prop 'checked'
@@ -1179,6 +1251,20 @@ PersonalCabinet =
       setTimeout market.adv_form.update_price, 100
 
 
+    # чекбоксы у виджета справа
+    $ document
+    .on "change", "#levelsWidget input[type = checkbox]", (e)->
+      $this = $ this
+      value = $this.prop "checked"
+      showLvl = $this.data "show-level"
+      $activeNodeWrap = $ ".js-select-node_w:visible"
+      $input = $activeNodeWrap.find "input[data-show-level = #{showLvl}]"
+
+      $input.prop "checked", value
+      $input.trigger "change"
+
+
+    updateLevelsWidget()
 
   common:
 
@@ -2023,10 +2109,11 @@ market =
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
 
-
-      $('#advsFormBlock input:checkbox').bind 'change', () ->
+      $ document
+      .on "#advsFormBlock input:checkbox", "change", (e) ->
         $this = $ this
-        value = $this.attr 'value'
+        value = $this.prop "checked"
+        console.log "change event"
 
         if $this.is ':checkbox'
           if value == false

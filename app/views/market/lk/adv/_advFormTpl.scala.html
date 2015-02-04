@@ -14,9 +14,10 @@
 
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
-@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String)(busyAttrs: => Html) = {
+@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: String = "")(busyAttrs: => Html) = {
   <label class="block">
     <input type="checkbox"
+      @if(showLevel){data-show-level="@showLevel"}
       @maybeBusyAdv.fold {
         @* Рендер аттрибутов инпута когда существующего размещения ещё нет (т.е. всё можно размещать). *@
         name="@{NODES_KM}[@midOpt].@fnSuffix"
@@ -31,9 +32,9 @@
 }
 
 @* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
-@slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String) = {
+@slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String, showLevel: String) = {
   @* TODO Генерить label на основе sl. *@
-  @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label) {
+  @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label, showLevel) {
     @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {checked="checked"}
   }
 }
@@ -130,8 +131,8 @@
                           <hr class="delimiter __light"/>
                         </div>
                         @* Галочки уровней отображения. *@
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран")
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран", "onStartPage")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров", "onRcvrCat")
                         <div class="block __margin-XS"><hr class="delimiter __light"/></div>
                         <label class="block">
                           <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
@@ -213,12 +214,12 @@
 
       </div>
 
-      <aside class="levels-widget">
+      <aside class="levels-widget" id="levelsWidget">
         <h2 class="levels-widget_t">Уровни размещения</h2>
         <ul class="levels-widget_lst">
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox"><span class="checkbox_title">Главный экран</span>
+              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">Главный экран</span>
             </label>
             <div class="levels-widget_i-descr">
               Вашу рекламу на Главном экране увидят все пользователи Sugest.io, которые находятся в заданных локациях.
@@ -226,7 +227,7 @@
           </li>
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox"><span class="checkbox_title">Категории</span>
+              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">Категории</span>
             </label>
             <div class="levels-widget_i-descr">
               Рекламу в категориях увидят наиболее заинтересованные пользователи, которые ищут конкретные товары и услуги.
