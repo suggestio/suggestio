@@ -49,7 +49,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
   def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
-  def emailPwLoginFormSubmit(r: Option[String]) = IsAnon.async { implicit request =>
+  def emailPwLoginFormSubmit(r: Option[String]) = IsAnonPost.async { implicit request =>
     bruteForceProtected {
       emailPwLoginFormM.bindFromRequest().fold(
         {formWithErrors =>

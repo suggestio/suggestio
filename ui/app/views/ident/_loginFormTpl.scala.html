@@ -5,7 +5,7 @@
 @import helper._
 @import ctx._
 
-@form( routes.Ident.emailPwLoginFormSubmit() ) {
+@form(CSRF( routes.Ident.emailPwLoginFormSubmit() )) {
 
   @lf.globalError.map { ge =>
     <p class="error-msg">Ошибка: @Messages(ge.message)</p>

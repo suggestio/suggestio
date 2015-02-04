@@ -35,7 +35,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm(r: Option[String]) = IsAnon { implicit request =>
+  def emailPwLoginForm(r: Option[String]) = IsAnonGet { implicit request =>
     Ok(emailPwLoginFormTpl(EmailPwSubmit.emailPwLoginFormM, r))
   }
 
