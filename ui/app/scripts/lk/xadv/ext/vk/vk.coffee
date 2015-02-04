@@ -12,6 +12,15 @@ define ["SioPR"], (SioPR) ->
       console.log "vk init"
 
       window.vkAsyncInit = () =>
+        console.log "---api id----"
+        try
+          console.log @ctx
+          console.log @ctx._service.appId
+        catch error
+          console.log error
+        console.log "---api id----"
+
+
         VK.init
           apiId: API_ID
 
@@ -36,15 +45,18 @@ define ["SioPR"], (SioPR) ->
         fields: "can_post"
 
       callback = (data) =>
+        console.log "check group callback"
+        console.log data
         try
           canPost = data.response[0].can_post
-          console.log canPost
           if canPost == 1
             onSuccess()
           else
             @ctx._status = "error"
             @ctx._error =
               msg: "e.ext.adv.permissions.group"
+              args: ["#{data.response[0].name}"]
+
             @complete()
         catch error
           @ctx._status = "error"
