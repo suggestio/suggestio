@@ -10,7 +10,7 @@ import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import util.PlayMacroLogsI
-import util.acl.{CanConfirmEmailPwReg, AbstractRequestWithPwOpt, IsAnon}
+import util.acl._
 import util.mail.MailerWrapper
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
@@ -63,7 +63,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
    * @return emailRegFormBindFailed() при проблеме с маппингом формы.
    *         emailRequestOk() когда сообщение отправлено почтой.
    */
-  def emailRegSubmit = IsAnon.async { implicit request =>
+  def emailRegSubmit = IsAnonPost.async { implicit request =>
     emailRegFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
@@ -103,8 +103,14 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
 
 
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
-  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwReg(eaInfo).async { implicit request =>
+  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo).async { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
+    ???
+  }
+
+  /** Сабмит формы подтверждения регистрации по email. */
+  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo).async { implicit request =>
+    // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
     ???
   }
 

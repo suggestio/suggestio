@@ -57,7 +57,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
-  def mySioStartPage = IsAnon { implicit request =>
+  def mySioStartPage = IsAnonGet { implicit request =>
     val logForm = EmailPwSubmit.emailPwLoginFormM
     val regForm = EmailPwReg.emailRegFormM
     Ok(mySioStartTpl(

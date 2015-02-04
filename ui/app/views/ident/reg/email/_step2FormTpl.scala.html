@@ -1,4 +1,4 @@
-@(s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
+@(iea: usr.IEaEmailId, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
 
 @* Шаблон для формы ВТОРОГО ШАГА регистрации по email password.
    Юзер вводит пароль и прочую минимальную инфу, необходимую для завершения реги. *@
@@ -6,7 +6,7 @@
 @import helper._
 @import ctx._
 
-@form( ??? ) {
+@form(CSRF( routes.Ident.emailConfirmSubmit(iea) )) {
 
   @inputPassword(s2f("pw.pw1"), '_label -> "Введите пароль")
   @inputPassword(s2f("pw.pw1"), '_label -> "Повторите пароль")
