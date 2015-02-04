@@ -1169,6 +1169,8 @@ PersonalCabinet =
       $title.text cityName
       PersonalCabinet.slideBlock.slideToggle $slideBlock
       showNodeTypes()
+      updateLevelsWidget()
+      $(".js-select-type.__js-act").removeClass "__js-act"
 
     $ document
     .on 'click', '.js-select-type', (e)->
