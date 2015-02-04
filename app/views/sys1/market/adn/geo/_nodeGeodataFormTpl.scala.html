@@ -7,7 +7,7 @@
 @import util.FC.tdFc
 @import org.elasticsearch.common.unit.DistanceUnit
 
-@form( submitCall ) {
+@form( CSRF(submitCall) ) {
 
   <table class="input-w __size-L">
     @inputText(gf("point.lat"),  '_label -> "Широта")

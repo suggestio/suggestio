@@ -4,10 +4,11 @@
 
 @import ctx._
 @import stuff._
+@import helper._
 
 @geoBase("Редактировать гео.круг", nodeOpt = Some(adnNode)) {
 
-  @_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get)) )
 
   @_circleFormTpl(
     cf          = cf,

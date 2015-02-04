@@ -367,9 +367,18 @@ trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
 
   def geoNotFound = Results.NotFound(s"Geography $geoId not found for node $adnId.")
 }
-case class IsSuperuserAdnGeo(geoId: String, adnId: String)
-  extends IsSuperuserAdnGeoAbstract
-  with ExpireSession[AdnGeoRequest]
+trait IsSuperuserAdnGeoBase2 extends IsSuperuserAdnGeoAbstract with ExpireSession[AdnGeoRequest]
+/** ACL для su-экшенов, связанных с географией узлов. */
+case class IsSuperuserAdnGeo(geoId: String, adnId: String) extends IsSuperuserAdnGeoBase2
+/** ACL для исполнения su-экшенов, связанных с администрирования географии узлов,
+  * и содержащих в ответе формы, защищенные от CSRF. */
+case class IsSuperuserAdnGeoGet(geoId: String, adnId: String)
+  extends IsSuperuserAdnGeoBase2
+  with CsrfGet[AdnGeoRequest]
+/** ACL для POST'а от суперюзера географии с защитой от CSRF. */
+case class IsSuperuserAdnGeoPost(geoId: String, adnId: String)
+  extends IsSuperuserAdnGeoBase2
+  with CsrfPost[AdnGeoRequest]
 
 
 
