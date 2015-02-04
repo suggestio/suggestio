@@ -225,7 +225,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         target  = Some(targetFull),
         domain  = Seq(getDomain),
         status  = None,
-        error   = None
+        error   = None,
+        service = Some(args.target.target.service)
       )
       become(new HandleTargetState(mctx1))
     }
