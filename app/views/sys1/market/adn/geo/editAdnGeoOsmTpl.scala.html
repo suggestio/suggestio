@@ -2,10 +2,11 @@
 
 @import ctx._
 @import stuff._
+@import helper._
 
 @geoBase("Редактировать OSM-производную", nodeOpt = Some(adnNode)) {
 
-  @_deleteSmthFormBtnTpl( routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get)) )
 
   <p>Для импорта фигуры надо указать ссылку на сайт openstreetmap.org. Ссылка должна содержать указатель на конкретную фигуру.</p>
 

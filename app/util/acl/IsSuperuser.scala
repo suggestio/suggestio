@@ -19,7 +19,7 @@ import play.api.Play.current
  * Created: 16.10.13 13:48
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
-trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+trait IsSuperuserBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
   
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
@@ -44,12 +44,21 @@ trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with P
 
   def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result]
 }
-object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] with CookieCleanup[AbstractRequestWithPwOpt] {
+sealed trait IsSuperuserBase2
+  extends IsSuperuserBase
+  with ExpireSession[AbstractRequestWithPwOpt]
+  with CookieCleanup[AbstractRequestWithPwOpt]
+{
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     IsAuth.onUnauth(request)
   }
 }
-object IsSuperuserOr404 extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] {
+
+object IsSuperuser extends IsSuperuserBase2
+object IsSuperuserGet extends IsSuperuserBase2 with CsrfGet[AbstractRequestWithPwOpt]
+object IsSuperuserPost extends IsSuperuserBase2 with CsrfPost[AbstractRequestWithPwOpt]
+
+object IsSuperuserOr404 extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     http404Fut(request)
   }
@@ -82,13 +91,21 @@ trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
     }
   }
 }
+trait IsSuperuserAdnNodeBase2 extends IsSuperuserAdnNodeBase with ExpireSession[AbstractRequestForAdnNode]
+
 /**
  * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
  * @param adnId id рекламного узла, которым интересуется суперпользователь.
  */
-final case class IsSuperuserAdnNode(adnId: String)
-  extends IsSuperuserAdnNodeBase
-  with ExpireSession[AbstractRequestForAdnNode]
+case class IsSuperuserAdnNode(adnId: String) extends IsSuperuserAdnNodeBase2
+/** Аналог [[IsSuperuserAdnNode]] с выставлением CSRF-токена. */
+case class IsSuperuserAdnNodeGet(adnId: String)
+  extends IsSuperuserAdnNodeBase2
+  with CsrfGet[AbstractRequestForAdnNode]
+/** Аналог [[IsSuperuserAdnNode]] с проверкой CSRF-токена при сабмитах. */
+case class IsSuperuserAdnNodePost(adnId: String)
+  extends IsSuperuserAdnNodeBase2
+  with CsrfPost[AbstractRequestForAdnNode]
 
 
 
@@ -350,9 +367,18 @@ trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
 
   def geoNotFound = Results.NotFound(s"Geography $geoId not found for node $adnId.")
 }
-case class IsSuperuserAdnGeo(geoId: String, adnId: String)
-  extends IsSuperuserAdnGeoAbstract
-  with ExpireSession[AdnGeoRequest]
+trait IsSuperuserAdnGeoBase2 extends IsSuperuserAdnGeoAbstract with ExpireSession[AdnGeoRequest]
+/** ACL для su-экшенов, связанных с географией узлов. */
+case class IsSuperuserAdnGeo(geoId: String, adnId: String) extends IsSuperuserAdnGeoBase2
+/** ACL для исполнения su-экшенов, связанных с администрирования географии узлов,
+  * и содержащих в ответе формы, защищенные от CSRF. */
+case class IsSuperuserAdnGeoGet(geoId: String, adnId: String)
+  extends IsSuperuserAdnGeoBase2
+  with CsrfGet[AdnGeoRequest]
+/** ACL для POST'а от суперюзера географии с защитой от CSRF. */
+case class IsSuperuserAdnGeoPost(geoId: String, adnId: String)
+  extends IsSuperuserAdnGeoBase2
+  with CsrfPost[AdnGeoRequest]
 
 
 

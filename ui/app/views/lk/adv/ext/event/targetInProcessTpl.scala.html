@@ -6,7 +6,7 @@
 
 @_oneEvtBase(rargs, Some("__bg-1 __icon-6")) {
 
-  @rargs.advExtTgOpt.map { advExtTg =>
+  @rargs.advExtTgs.map { advExtTg =>
     <div class="event_t">@advExtTg.url</div>
   }
 

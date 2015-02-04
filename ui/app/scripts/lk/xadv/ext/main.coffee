@@ -23,14 +23,12 @@ define [], () ->
       console.log "ensureReady"
 
       requirejs(
-        ["vk", "facebook"]
+        ["vk", "facebook", "twitter"]
         () ->
           # регистрируем и инициализируем новые сервисы
           serviceList["count"] = arguments.length
           for index in [0...arguments.length]
             service = arguments[index]
-            console.log service
-            console.log service.serviceName
             serviceList[service.serviceName] = new service(ws, ctx, onComplete)
       )
 

@@ -24,6 +24,15 @@ trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
   }
 }
 
+trait IsAnonBase2 extends IsAnonBase with ExpireSession[AbstractRequestWithPwOpt]
+
 /** Реализация [[IsAnonBase]] с поддержкой [[ExpireSession]]. Такое необходимо, чтобы
   * в функциях логина выставлялся таймер после выставления personId в контроллере. */
-object IsAnon extends IsAnonBase with ExpireSession[AbstractRequestWithPwOpt]
+object IsAnon extends IsAnonBase2
+
+// CSRF:
+/** GET-запросы с выставлением CSRF-токена. */
+object IsAnonGet  extends IsAnonBase2 with CsrfGet[AbstractRequestWithPwOpt]
+
+/** POST-запросы с проверкой CSRF-токена, выставленного ранее через [[IsAnonGet]] или иной [[CsrfGet]]. */
+object IsAnonPost extends IsAnonBase2 with CsrfPost[AbstractRequestWithPwOpt]

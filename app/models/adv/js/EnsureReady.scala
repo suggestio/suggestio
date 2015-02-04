@@ -14,17 +14,20 @@ import Answer._
 
 /**
  * Запрос инициализации js-компонента с кодогенератором.
- * @param ctx1 Начальное состояние.
+ * @param mctx Начальное состояние.
+ * @param replyTo Кому ответ отправлять?
  */
-case class EnsureReadyAsk(mctx: MJsCtx) extends JsBuilder {
+case class EnsureReadyAsk(mctx: MJsCtx, replyTo: Option[String]) extends JsBuilder {
 
   override def js: String = {
-    new StringBuilder(128)
+    val sb = new StringBuilder(128)
       .append("SioPR.ensureReady(")
       .append( Json.toJson(mctx) )
       .append(',')
       .append("function(ctx2,sendF){sendF({")
-      .append(JsString(CTX2_FN)).append(":ctx2")
+    if (replyTo.isDefined)
+      sb.append(JsString(REPLY_TO_FN)).append(':').append(JsString(replyTo.get)).append(',')
+    sb.append(JsString(CTX2_FN)).append(":ctx2")
       .append("});});")
       .toString()
   }

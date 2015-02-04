@@ -3,17 +3,15 @@ package util.adv
 import _root_.util.PlayMacroLogsImpl
 import _root_.util.async.FsmActor
 import _root_.util.ws.SubscribeToWsDispatcher
-import _root_.util.SiowebEsUtil.client
 import akka.actor.{Actor, ActorRef, Props}
-import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+import scala.annotation.tailrec
 import scala.collection.immutable.Queue
-import scala.concurrent.Future
 import scala.util.{Random, Failure, Success}
 
 /**
@@ -26,7 +24,7 @@ object ExtAdvWsActor {
 
   /** Сборка конфигурации актора. */
   def props(out: ActorRef, eactx: IExtWsActorArgs): Props = {
-    Props(new ExtAdvWsActor(out, eactx))
+    Props(ExtAdvWsActor(out, eactx))
   }
 
 }
@@ -49,6 +47,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   /** Очередь команд для клиента. */
   protected var _queue = Queue[JsCommand]()
 
+  val rnd = new Random()
 
   /** Сериализация и отправка одной js-команды в веб-сокет. */
   def sendJsCommand(jsCmd: JsCommand): Unit = {
@@ -100,6 +99,14 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
     become(new WaitForTargetsState)
   }
 
+  /** Придумываем рандомный идентификатор для нового актора. По этому id будут роутится js-ответы. */
+  @tailrec final def guessChildName(): String = {
+    val actorName = Math.abs(rnd.nextLong()).toString
+    if ( context.child(actorName).isDefined )
+      guessChildName()
+    else
+      actorName
+  }
 
   /** Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии. */
   class WaitForTargetsState extends FsmState {
@@ -123,8 +130,23 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
           throw new IllegalStateException("No targets found in storage, but it should.")
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
-          become(new EnsureReadyState(targets))
+          // Сгруппировать таргеты по сервисам, запустить service-акторов, которые занимаются инициализацией клиентов сервисов.
+          val _mctx0 = MJsCtx()
+          targets.groupBy(_.target.service).foreach {
+            case (_service, _srvTgs) =>
+              trace(s"Starting service ${_service} actor with ${_srvTgs.size} targets...")
+              val actorArgs = new IExtAdvServiceActorArgs with IExtAdvArgsWrapperT {
+                override def service            = _service
+                override def targets            = _srvTgs
+                override def _eaArgsUnderlying  = eactx
+                override def mctx0              = _mctx0
+                override def wsMediatorRef      = self
+              }
+              context.actorOf(ExtServiceActor.props(actorArgs), name = guessChildName())
+            }
+          become(new SuperviseServiceActorsState)
         }
+
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
         become(new DummyState)
@@ -135,68 +157,11 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   }
 
 
-
-  /** Состояние диалога на этапе начальной инициализации. */
-  class EnsureReadyState(targets: ActorTargets_t) extends FsmState {
-
-    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Отправить запрос на подготовку к работе.
-      val mctx0 = MJsCtx(
-        domain = targets
-          .iterator
-          .map { tg => UrlUtil.url2dkey(tg.target.url) }
-          .toSet
-          .toSeq
-      )
-      val cmd = JsCommand(EnsureReadyAsk(mctx0), CmdSendModes.Async)
-      sendJsCommand(cmd)
-    }
-
-    override def receiverPart: Receive = {
-      // Пришел какой-то ответ на ensureReady
-      case Answer(replyToOpt, mctx1) if replyToOpt.isEmpty =>
-        val nextState = if (mctx1.status contains AnswerStatuses.Success) {
-          // Инициализация выполнена.
-          trace(s"$name: success. New context = $mctx1")
-          new SuperviseServiceActorsState(targets, mctx1)
-        } else {
-          // Проблемы при инициализации
-          error(s"$name: js returned error")    // TODO Выводить ошибку из контекста.
-          new DummyState
-        }
-        become(nextState)
-    }
-  }
-
-
-  /**
-   * Состояние перехода на обработку целей размещения.
-   * @param targets Цели, полученные из хранилища.
-   * @param mctx1 Состояние после начальной инициализации.
-   */
-  class SuperviseServiceActorsState(targets: ActorTargets_t, mctx1: MJsCtx) extends FsmState {
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Запускаем всех акторов для всех таргетов. Они сразу заполнят всю очередь запросами.
-      val rnd = new Random()
-      targets.foreach { tg =>
-        val args = new IExtAdvTargetActorArgs with IExtAdvArgsWrapperT {
-          override def mctx0    = mctx1
-          override def target   = tg
-          override def _eaArgsUnderlying = eactx
-        }
-        val props = ExtTargetActor.props(args)
-        // Придумываем рандомный идентификатор для нового актора. По этому id будут роутится js-ответы.
-        val actorName = Math.abs(rnd.nextLong()).toString
-        context.actorOf(props, name = actorName)
-      }
-    }
-
-    /** Обработка входящих сообщений: как от js, так и от акторов. */
+  /** Состояние обработки двунаправленного обмена сообщениями. */
+  class SuperviseServiceActorsState extends FsmState {
     override def receiverPart: Receive = {
       // Пришло сообщение из web-socket'а для указанного target-актора.
+      // C @-биндингом и unapply() пока есть проблемы. Поэтому достаём JsObject, парсим его, и уже тогда делаем последующие действия.
       case jso: JsObject =>
         try {
           val ans = jso.as[Answer]
@@ -222,6 +187,13 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
             sendJsCommand(jsCmd)
           case CmdSendModes.Queued =>
             enqueueCommand(jsCmd)
+        }
+
+      // Народ требует новых акторов.
+      case AddActors(actors) =>
+        debug(s"AddActors() with ${actors.size} actors from ${sender()}")
+        actors.foreach { props =>
+          context.actorOf(props, name = guessChildName())
         }
     }
   }

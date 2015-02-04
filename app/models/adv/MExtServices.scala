@@ -4,8 +4,9 @@ import java.net.URL
 
 import io.suggest.model.EnumMaybeWithName
 import io.suggest.util.UrlUtil
-import models.adv.js.ctx.JsCtx_t
-import play.api.libs.json.{JsString, JsObject}
+import models.adv.js.ctx.MJsCtx
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.Play._
 
 /**
@@ -18,7 +19,29 @@ import play.api.Play._
  */
 object MExtServices extends Enumeration with EnumMaybeWithName {
 
+  val NAME_FN   = "name"
+  val APP_ID_FN = "appId"
+
+  /** Десериализация из JSON. Всё можно прочитать по имени. */
+  implicit def reads: Reads[T] = {
+    (__ \ NAME_FN)
+      .read[String]
+      .map { withName }
+  }
+
+  /** Сериализация в JSON. */
+  implicit def writes: Writes[T] = (
+    (__ \ NAME_FN).write[String] and
+    (__ \ APP_ID_FN).writeNullable[String]
+  ){ s => (s.strId, s.APP_ID_OPT) }
+
+
+  /** Экземпляр модели. */
   protected abstract sealed class Val(val strId: String) extends super.Val(strId) {
+
+    /** id приложения на стороне сервиса. */
+    val APP_ID_OPT = configuration.getString(s"ext.adv.$strId.api.id")
+
     def i18nCode: String
     def isForHost(host: String): Boolean
     def normalizeTargetUrl(url: URL): String = {
@@ -27,10 +50,14 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
 
     /**
      * Бывает нужно закинуть в контекст какие-то данные для доступа к сервису или иные параметры.
-     * @param jso Исходный JSON контекст.
+     * @param mctx Исходный JSON контекст.
      * @return Обновлённый JSON контекст.
      */
-    def prepareContext(jso: JsCtx_t): JsCtx_t = jso
+    def prepareContext(mctx: MJsCtx): MJsCtx = {
+      mctx.copy(
+        service = Some(this)
+      )
+    }
 
     /**
      * Клиент прислал upload-ссылку. Нужно её проверить на валидность.
@@ -40,55 +67,46 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
     def checkImgUploadUrl(url: String): Boolean = false
   }
 
-  type MExtService = Val
-  override type T = MExtService
+  override type T = Val
 
 
   /** Сервис вконтакта. */
-  val VKONTAKTE: MExtService = new Val("vk") {
-    val APP_ID_OPT = configuration.getString("ext.adv.vk.api.id")
-
+  val VKONTAKTE: T = new Val("vk") {
     override def i18nCode = "VKontakte"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
     }
-    override def prepareContext(jso: JsCtx_t): JsCtx_t = {
-      val jso1 = super.prepareContext(jso)
-      APP_ID_OPT match {
-        case Some(apiId) =>
-          val v1 = Stream("appId" -> JsString(apiId)) ++ jso1.value.toStream
-          JsObject(v1)
-        case None =>
-          jso1
-      }
-    }
 
     override def checkImgUploadUrl(url: String): Boolean = {
-      try {
+      val v = try {
         new URL(url)
           .getHost
-          .contains(".vk.com")
+          .contains(".vk")
       } catch {
         case ex: Throwable => false
       }
+      v || super.checkImgUploadUrl(url)
     }
   }
 
+
   /** Сервис фейсбука. */
-  val FACEBOOK: MExtService = new Val("fb") {
+  val FACEBOOK: T = new Val("fb") {
     override def i18nCode = "Facebook"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?facebook\\.(com|net)$".r.pattern.matcher(host).matches()
     }
   }
 
+
   /** Сервис твиттера. */
-  val TWITTER: MExtService = new Val("tw") {
+  val TWITTER: T = new Val("tw") {
     override def i18nCode = "Twitter"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?twitter\\.com".r.pattern.matcher(host).matches()
     }
   }
+
 
   /**
    * Поиск подходящего сервиса для указанного хоста.

@@ -5,7 +5,7 @@
 @import helper._
 @import ctx._
 
-@form( submitCall ) {
+@form( CSRF(submitCall) ) {
 
   @_glevelSelectTpl( gf("glevel") )
   @inputText( gf("url") )

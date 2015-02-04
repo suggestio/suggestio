@@ -3,7 +3,6 @@ define ["SioPR"], (SioPR) ->
   SioPR = new SioPR()
 
   class Vk
-    API_ID = 4761539
     ACESS_LVL = 8197
 
     @serviceName: "Vk"
@@ -12,8 +11,13 @@ define ["SioPR"], (SioPR) ->
       console.log "vk init"
 
       window.vkAsyncInit = () =>
-        VK.init
-          apiId: API_ID
+
+        try
+          VK.init
+            apiId: @ctx._service.appId
+        catch error
+          @ctx._status = "error"
+          @complete()
 
         SioPR.registerService @ctx, @onComplete
 
@@ -30,6 +34,31 @@ define ["SioPR"], (SioPR) ->
 
       @onComplete @ctx, sendF
 
+    checkGroup: (onSuccess) ->
+      params =
+        group_id: @ctx.user_id
+        fields: "can_post"
+
+      callback = (data) =>
+        console.log "check group callback"
+        console.log data
+        try
+          canPost = data.response[0].can_post
+          if canPost == 1
+            onSuccess()
+          else
+            @ctx._status = "error"
+            @ctx._error =
+              msg: "e.ext.adv.permissions.group"
+              args: ["#{data.response[0].name}"]
+
+            @complete()
+        catch error
+          @ctx._status = "error"
+          @complete()
+
+      VK.Api.call "groups.getById", params, callback
+
     ###*
       записывает в контекст userId или groupId на стену, которого будет размещена запись
       @param {Object} callback функция, которая выполняется при успешном завершении
@@ -42,8 +71,11 @@ define ["SioPR"], (SioPR) ->
 
       callback = (data) =>
         try
-          if data.response.type == "group" then @ctx.is_group = true
           @ctx.user_id = data.response.object_id
+          if data.response.type == "group"
+            @ctx.is_group = true
+            @checkGroup onSuccess
+            return false
         catch error
           console.log error
 

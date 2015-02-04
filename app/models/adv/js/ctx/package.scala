@@ -13,5 +13,4 @@ package object ctx {
   type JsCtx_t    = JsObject
 
   type PictureUploadMode = PictureUploadModes.PictureUploadMode
-
 }

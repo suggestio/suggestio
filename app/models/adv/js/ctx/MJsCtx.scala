@@ -1,7 +1,7 @@
 package models.adv.js.ctx
 
 import io.suggest.model.EsModel.FieldsJsonAcc
-import models.adv.JsExtTarget
+import models.adv.{MExtServices, MExtService, JsExtTarget}
 import models.adv.js.{AnswerStatuses, AnswerStatus}
 import play.api.libs.json._
 
@@ -20,6 +20,7 @@ object MJsCtx {
   val TARGET_FN   = "_target"
   val STATUS_FN   = "_status"
   val DOMAIN_FN   = "_domain"
+  val SERVICE_FN  = "_service"
   val ERROR_FN    = "_error"
 
   /** Все поля, которые поддерживает контекст. Обычно -- все вышеперечисленные поля. */
@@ -41,6 +42,8 @@ object MJsCtx {
           domain = (json \ DOMAIN_FN)
             .asOpt[Seq[String]]
             .getOrElse(Seq.empty),
+          service = (json \ SERVICE_FN)
+            .asOpt[MExtService],
           error = (json \ ERROR_FN)
             .asOpt[JsErrorInfo],
           restCtx = {
@@ -69,6 +72,8 @@ object MJsCtx {
         acc ::= STATUS_FN -> Json.toJson(o.status.get)
       if (o.domain.nonEmpty)
         acc ::= DOMAIN_FN -> Json.toJson(o.domain)
+      if (o.service.nonEmpty)
+        acc ::= SERVICE_FN -> Json.toJson(o.service.get)(MExtServices.writes)
       if (o.error.nonEmpty)
         acc ::= ERROR_FN -> Json.toJson(o.error.get)
       // Объединение результата с restJson, если требуется.
@@ -102,6 +107,7 @@ case class MJsCtx(
   target    : Option[JsExtTarget]   = None,
   domain    : Seq[String]           = Seq.empty,
   status    : Option[AnswerStatus]  = None,
+  service   : Option[MExtService]   = None,
   error     : Option[JsErrorInfo]   = None,
   restCtx   : JsObject              = JsObject(Nil)
 )

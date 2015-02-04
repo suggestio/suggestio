@@ -3,8 +3,9 @@
 @import helper._
 @import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
+@import ctx._
 
-@form( routes.Ident.emailRegSubmit() ) {
+@form( CSRF(routes.Ident.emailRegSubmit()) ) {
 
   @rf.globalError.map { ge =>
     <p class="error-msg">Ошибка: @Messages(ge.message)</p>
