@@ -102,9 +102,9 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
   }
 
 
-  /** Юзер возвращается по ссылке из письма. */
+  /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwReg(eaInfo).async { implicit request =>
-    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.n
+    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
     ???
   }
 

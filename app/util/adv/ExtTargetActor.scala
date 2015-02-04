@@ -60,6 +60,7 @@ import ExtTargetActor._
 case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   extends FsmActor
   with PlayMacroLogsImpl
+  with MediatorSendCommand
 {
 
   import args.ctx
@@ -81,7 +82,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
 
   /** Значение replyTo в запросах клиенту. */
-  val replyTo = self.path.name
+  protected val replyTo = self.path.name
 
   /**
    * Сгенерить аргументы для рендера карточки в картинку.
@@ -103,10 +104,6 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   def getExtAdImgAbsUrl(szMult: SzMult_t = szMultDflt): String = {
     val args = getAdRenderArgs(szMult)
     Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAd(args).url
-  }
-
-  def sendCommand(jsc: JsCommand): Unit = {
-    context.parent ! jsc
   }
 
   def getDomain: String = UrlUtil.url2dkey(args.target.target.url)

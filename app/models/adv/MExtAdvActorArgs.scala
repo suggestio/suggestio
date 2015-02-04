@@ -1,5 +1,6 @@
 package models.adv
 
+import akka.actor.{Props, ActorRef}
 import models.Context
 import models.adv.js.ctx.MJsCtx
 import util.acl.RequestWithAdAndProducer
@@ -35,8 +36,9 @@ trait IExtWsActorArgs extends IExtActorArgs {
 }
 
 
-/** Параметры, передаваемые от общего актора к service-актору. */
-case class MExtAdvContext(
+/** Аргументы запуска актора, разговаривающего с ws. Этот актор будет выступать посредником (медиатором) между
+  * ws и акторами, исполняющими конкретные задачи. */
+case class MExtWsActorArgs(
   qs        : MExtAdvQs,
   request   : RequestWithAdAndProducer[_],
   targetsFut: Future[ActorTargets_t]
@@ -53,11 +55,41 @@ trait IExtAdvArgsWrapperT extends IExtActorArgs {
 }
 
 
-/** APIv2: Один подчинённый актор обслуживает только одну цель и обновляет GUI в рамках оной. */
-trait IExtAdvTargetActorArgs extends IExtActorArgs {
-  /** Цель, с которой нужно вести работу. */
-  def target  : MExtTargetInfoFull
-
-  /** Начальный контекст в рамках сервиса. */
+/** Интерфейс для поля mctx0 в аргументах запуска service-актора. */
+trait MCtx0 {
+  /** Начальный контекст. */
   def mctx0   : MJsCtx
 }
+
+
+/** Куда слать инфу, подлежащую к отправке в ws? */
+trait WsMediatorRef {
+  /** ActorRef актора-посредника между этим актором и ws. */
+  def wsMediatorRef: ActorRef
+}
+
+
+/** Аргументы для service-актора. */
+trait IExtAdvServiceActorArgs extends IExtActorArgs with WsMediatorRef with MCtx0 {
+
+  /** Текущий сервис, в рамках которого надо делать дела. */
+  def service: MExtService
+
+  /** Таргеты, относящиеся к сервису. */
+  def targets: Seq[MExtTargetInfoFull]
+}
+
+
+/** APIv2: Один подчинённый актор обслуживает только одну цель и обновляет GUI в рамках оной. */
+trait IExtAdvTargetActorArgs extends IExtActorArgs with WsMediatorRef with MCtx0 {
+  /** Цель, с которой нужно вести работу. */
+  def target  : MExtTargetInfoFull
+}
+
+
+
+/** Подчинённый актор уведомляет медиатора, что нужно подрядить к работе указанных акторов. */
+case class AddActors(
+  actors    : Iterable[Props]
+)
+

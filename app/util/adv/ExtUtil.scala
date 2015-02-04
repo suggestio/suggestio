@@ -2,6 +2,7 @@ package util.adv
 
 import java.net.URL
 import models.adv._
+import models.adv.js.JsCommand
 import play.api.data._, Forms._
 import util.FormUtil.{urlM, esIdUuidM}
 
@@ -70,5 +71,17 @@ object ExtUtil {
    * @return Экземпляр Form'ы для работы с одной целью.
    */
   def formForTarget(tg: MExtTarget) = oneTargetFullFormM(tg.adnId) fill (tg, None)
+
+}
+
+
+/** Поддержка sendCommand() через промежуточный актор. */
+trait MediatorSendCommand {
+
+  def args: WsMediatorRef
+
+  def sendCommand(jsc: JsCommand): Unit = {
+    args.wsMediatorRef ! jsc
+  }
 
 }
