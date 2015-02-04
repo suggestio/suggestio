@@ -30,6 +30,28 @@ define ["SioPR"], (SioPR) ->
 
       @onComplete @ctx, sendF
 
+    checkGroup: (onSuccess) ->
+      params =
+        group_id: @ctx.user_id
+        fields: "can_post"
+
+      callback = (data) =>
+        try
+          canPost = data.response[0].can_post
+          console.log canPost
+          if canPost == 1
+            onSuccess()
+          else
+            @ctx._status = "error"
+            @ctx._error =
+              msg: "e.ext.adv.permissions.group"
+            @complete()
+        catch error
+          @ctx._status = "error"
+          @complete()
+
+      VK.Api.call "groups.getById", params, callback
+
     ###*
       записывает в контекст userId или groupId на стену, которого будет размещена запись
       @param {Object} callback функция, которая выполняется при успешном завершении
@@ -42,8 +64,11 @@ define ["SioPR"], (SioPR) ->
 
       callback = (data) =>
         try
-          if data.response.type == "group" then @ctx.is_group = true
           @ctx.user_id = data.response.object_id
+          if data.response.type == "group"
+            @ctx.is_group = true
+            @checkGroup onSuccess
+            return false
         catch error
           console.log error
 

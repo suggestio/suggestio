@@ -346,4 +346,5 @@ adv.ext.ret.ad=Только эту карточку
 
 e.ext.adv.unathorized=Пользователь не авторизован
 e.ext.adv.permissions=Недостаточно прав
+e.ext.adv.permissions.group=Ваш пост не будет отображаться в группе
 e.ext.adv.target.url.invalid=Некорректный url цели
