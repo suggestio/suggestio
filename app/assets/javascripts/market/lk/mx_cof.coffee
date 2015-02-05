@@ -1134,12 +1134,10 @@ PersonalCabinet =
       2 - все checkbox'ы данного уровня размещения - true
     ###
     checkShowLvl = ()->
-      console.log "---check show lvl---"
       # количество активных checkbox'ов Главный экран
       onStartPageActiveCount = 0
       onRcvrCatActiveCount = 0
       for nodeInfo in activeNodesInfo
-        console.log nodeInfo
         if nodeInfo.onStartPage == true then onStartPageActiveCount += 1
         if nodeInfo.onRcvrCat == true then onRcvrCatActiveCount += 1
 
@@ -1234,9 +1232,11 @@ PersonalCabinet =
     # чекбоксы внутри узлов
     $ document
     .on 'change', '.js-select-node_w .js-slide-cnt input', (e)->
+      console.log "change in node"
       e.stopPropagation()
       $this = $ this
       checked = $this.prop 'checked'
+      $this.attr "value", checked
       $slideCnt = $this.closest '.js-slide-cnt'
       $slideWrap = $this.closest '.js-slide-w'
 

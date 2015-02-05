@@ -8,19 +8,20 @@
 
 @_oneEvtBase(rargs, Some("__bg-1 __icon-7 __with-preview-ad")) {
 
-  <p>
+  <div class="event_t">
     @rargs.adnNodeOpt.map { mnode =>
       @Messages(mnode.adn.singular)
-      @mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}
+      <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
     }
-  </p>
+  </div>
 
-  <p>
-    запрашивает размещение. Какую инфу тут выводить?
-    @rargs.advReqOpt.map { advReq =>
-      @_prettyDate(advReq.dateStatus)
-    }
-  </p>
+  запрашивает размещение. Какую инфу тут выводить?
+  @rargs.advReqOpt.map { advReq =>
+    @_prettyDate(advReq.dateStatus)
+  }
 
-  @_advAdFrameTpl(rargs)
+  <div class="event_ad-preview">
+    @_advAdFrameTpl(rargs)
+  </div>
+
 }
