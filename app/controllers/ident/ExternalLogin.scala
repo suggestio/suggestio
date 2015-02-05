@@ -4,7 +4,7 @@ import controllers.SioController
 import models.{ExternalCall, Context}
 import models.usr.{SsUserService, SsUser}
 import play.api.i18n.Messages
-import play.api.mvc.{Result, AnyContent, Call, RequestHeader}
+import play.api.mvc._
 import securesocial.controllers._
 import securesocial.controllers.ProviderControllerHelper.toUrl
 import securesocial.core.RuntimeEnvironment.Default
@@ -40,13 +40,13 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
   }
 
 
-  // Код handleAuth спасён из securesocial c целью отпиливания от грёбаных authentificator'ов,
-  // которые по сути являются переусложнёнными stateful-сессиями, которые придумал какой-то нехороший человек.
+  // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
+  // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
 
-  /*override def handleAuth(provider: String, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
+  override def handleAuth(provider: String, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
     handleExtAuth2(provider, redirectTo)
   }
-  def handleExtAuth2(provider: String, redirectTo: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  def handleExtAuth2(provider: String, redirectTo: Option[String])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     env.providers.get(provider).map {
@@ -64,47 +64,50 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
         }
         case authenticated: AuthenticationResult.Authenticated =>
           request.pwOpt match {
+            // Юзер был анонимом на момент логина.
             case None =>
               val profile = authenticated.profile
               env.userService.find(profile.providerId, profile.userId).flatMap { maybeExisting =>
                 val mode = if (maybeExisting.isDefined) SaveMode.LoggedIn else SaveMode.SignUp
-                env.userService.save(authenticated.profile, mode).flatMap { userForAction =>
+                env.userService.save(authenticated.profile, mode).map { userForAction =>
                   LOGGER.debug(s"handleAuth2(): user completed authentication: provider = ${profile.providerId}, userId: ${profile.userId}, mode = $mode")
                   val evt = if (mode == SaveMode.LoggedIn) new LoginEvent(userForAction) else new SignUpEvent(userForAction)
                   val sessionAfterEvents = Events.fire(evt).getOrElse(request.session)
-                  val session1 = cleanupSession(sessionAfterEvents)
-                  autorFut.flatMap { authenticator =>
-                    Redirect(toUrl(sessionAfterEvents))
-                      .withSession(session1)
-                      .startingAuthenticator(authenticator)
-                  }
+                  val session1 = cleanupSession(sessionAfterEvents) + (Security.username -> userForAction.personId)
+                  Redirect(toUrl(sessionAfterEvents))
+                    .withSession(session1)
                 }
               }
 
+            // Юзер был уже залогинен на моммент логина.
             case Some(pw) =>
+              // TODO Линковать с оригинальной учёткой?
+              ???
+              /*val modifiedSession = overrideOriginalUrl(request.session, redirectTo) + (Security.username -> pw.personId)
+              Redirect(toUrl(modifiedSession))
+                .withSession(cleanupSession(modifiedSession))
+                .touchingAuthenticator(updatedAuthenticator)
               for (
                 linked <- env.userService.link(currentUser, authenticated.profile);
                 updatedAuthenticator <- request.authenticator.get.updateUser(linked);
                 result <- {
-                  val modifiedSession = overrideOriginalUrl(request.session, redirectTo)
-                  Redirect(toUrl(modifiedSession))
-                    .withSession(cleanupSession(modifiedSession))
-                    .touchingAuthenticator(updatedAuthenticator)
+
                 }
               ) yield {
                 logger.debug(s"[securesocial] linked $currentUser to: providerId = ${authenticated.profile.providerId}")
                 result
-              }
+              }*/
           }
       } recover {
         case e =>
-          logger.error("Unable to log user in. An exception was thrown", e)
-          Redirect(env.routes.loginPageUrl).flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
+          LOGGER.error("Unable to log user in. An exception was thrown", e)
+          Redirect(env.routes.loginPageUrl)
+            .flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
       }
     } getOrElse {
       Future.successful(NotFound)
     }
-  }*/
+  }
 
 }
 
