@@ -82,6 +82,18 @@ trait BaseProviderController[U] extends SecureSocial[U] {
   }
 
   /**
+   * Remove sec dmitry@alterrussia.ruuresocial keys from session data.
+   * @param s Current session.
+   * @return Cleaned session.
+   */
+  protected def cleanupSession(s: Session): Session = {
+    val filteredKeys = Set(SecureSocial.OriginalUrlKey, IdentityProvider.SessionId, OAuth1Provider.CacheKey)
+    s.copy(
+      data = s.data.filterKeys { k => !(filteredKeys contains k) }
+    )
+  }
+
+  /**
    * Common method to handle GET and POST authentication requests
    *
    * @param provider the provider that needs to handle the flow
@@ -92,8 +104,6 @@ trait BaseProviderController[U] extends SecureSocial[U] {
   }
   def handleAuth1(provider: String, redirectTo: Option[String])(implicit request: IRequestWithUser[AnyContent]): Future[Result] = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val authenticationFlow = request.user.isEmpty
-    val modifiedSession = overrideOriginalUrl(request.session, redirectTo)
 
     env.providers.get(provider).map {
       _.authenticate().flatMap {
@@ -104,44 +114,44 @@ trait BaseProviderController[U] extends SecureSocial[U] {
           throw new AuthenticationException()
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
           redirectTo.map { url =>
-            flow.result.addToSession(SecureSocial.OriginalUrlKey -> url)
+            flow.result.addingToSession(SecureSocial.OriginalUrlKey -> url)
           } getOrElse flow.result
         }
         case authenticated: AuthenticationResult.Authenticated =>
-          if (authenticationFlow) {
-            val profile = authenticated.profile
-            env.userService.find(profile.providerId, profile.userId).flatMap { maybeExisting =>
-              val mode = if (maybeExisting.isDefined) SaveMode.LoggedIn else SaveMode.SignUp
-              env.userService.save(authenticated.profile, mode).flatMap { userForAction =>
-                logger.debug(s"[securesocial] user completed authentication: provider = ${profile.providerId}, userId: ${profile.userId}, mode = $mode")
-                val evt = if (mode == SaveMode.LoggedIn) new LoginEvent(userForAction) else new SignUpEvent(userForAction)
-                val sessionAfterEvents = Events.fire(evt).getOrElse(request.session)
-                import scala.concurrent.ExecutionContext.Implicits.global
-                builder().fromUser(userForAction).flatMap { authenticator =>
-                  Redirect(toUrl(sessionAfterEvents)).withSession(sessionAfterEvents -
-                    SecureSocial.OriginalUrlKey -
-                    IdentityProvider.SessionId -
-                    OAuth1Provider.CacheKey).startingAuthenticator(authenticator)
+          request.user match {
+            case None =>
+              val profile = authenticated.profile
+              env.userService.find(profile.providerId, profile.userId).flatMap { maybeExisting =>
+                val mode = if (maybeExisting.isDefined) SaveMode.LoggedIn else SaveMode.SignUp
+                env.userService.save(authenticated.profile, mode).flatMap { userForAction =>
+                  import scala.concurrent.ExecutionContext.Implicits.global
+                  val autorFut = builder().fromUser(userForAction)
+                  logger.debug(s"[securesocial] user completed authentication: provider = ${profile.providerId}, userId: ${profile.userId}, mode = $mode")
+                  val evt = if (mode == SaveMode.LoggedIn) new LoginEvent(userForAction) else new SignUpEvent(userForAction)
+                  val sessionAfterEvents = Events.fire(evt).getOrElse(request.session)
+                  val session1 = cleanupSession(sessionAfterEvents)
+                  autorFut.flatMap { authenticator =>
+                    Redirect(toUrl(sessionAfterEvents))
+                      .withSession(session1)
+                      .startingAuthenticator(authenticator)
+                  }
                 }
               }
-            }
-          } else {
-            request.user match {
-              case Some(currentUser) =>
-                for (
-                  linked <- env.userService.link(currentUser, authenticated.profile);
-                  updatedAuthenticator <- request.authenticator.get.updateUser(linked);
-                  result <- Redirect(toUrl(modifiedSession)).withSession(modifiedSession -
-                    SecureSocial.OriginalUrlKey -
-                    IdentityProvider.SessionId -
-                    OAuth1Provider.CacheKey).touchingAuthenticator(updatedAuthenticator)
-                ) yield {
-                  logger.debug(s"[securesocial] linked $currentUser to: providerId = ${authenticated.profile.providerId}")
-                  result
+
+            case Some(currentUser) =>
+              for (
+                linked <- env.userService.link(currentUser, authenticated.profile);
+                updatedAuthenticator <- request.authenticator.get.updateUser(linked);
+                result <- {
+                  val modifiedSession = overrideOriginalUrl(request.session, redirectTo)
+                  Redirect(toUrl(modifiedSession))
+                    .withSession(cleanupSession(modifiedSession))
+                    .touchingAuthenticator(updatedAuthenticator)
                 }
-              case _ =>
-                Future.successful(Unauthorized)
-            }
+              ) yield {
+                logger.debug(s"[securesocial] linked $currentUser to: providerId = ${authenticated.profile.providerId}")
+                result
+              }
           }
       } recover {
         case e =>

@@ -29,27 +29,27 @@ trait Authenticator[U] {
   /**
    * An id for this authenticator
    */
-  val id: String
+  def id: String
 
   /**
    * The user this authenticator represents
    */
-  val user: U
+  def user: U
 
   /**
    * The creation time
    */
-  val creationDate: DateTime
+  def creationDate: DateTime
 
   /**
    * The last used time
    */
-  val lastUsed: DateTime
+  def lastUsed: DateTime
 
   /**
    * The expiration date
    */
-  val expirationDate: DateTime
+  def expirationDate: DateTime
 
   /**
    * Checks if this authenticator is valid.

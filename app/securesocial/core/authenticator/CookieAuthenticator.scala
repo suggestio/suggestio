@@ -113,7 +113,7 @@ case class CookieAuthenticator[U](id: String, user: U, expirationDate: DateTime,
       javaContext.response().discardCookie(
         CookieAuthenticator.cookieName,
         CookieAuthenticator.cookiePath,
-        CookieAuthenticator.cookieDomain.getOrElse(null),
+        CookieAuthenticator.cookieDomain.orNull,
         CookieAuthenticator.cookieSecure
       )
     }
@@ -181,24 +181,24 @@ object CookieAuthenticator {
   val TransientKey = "securesocial.cookie.makeTransient"
 
   // default values
-  val DefaultCookieName = "id"
-  val DefaultCookiePath = "/"
-  val DefaultCookieHttpOnly = true
-  val Transient = None
-  val DefaultIdleTimeout = 30
-  val DefaultAbsoluteTimeout = 12 * 60
+  def DefaultCookieName = "id"
+  def DefaultCookiePath = "/"
+  def DefaultCookieHttpOnly = true
+  def Transient = None
+  def DefaultIdleTimeout = 30
+  def DefaultAbsoluteTimeout = 12 * 60
 
-  lazy val cookieName = Play.application.configuration.getString(CookieNameKey).getOrElse(DefaultCookieName)
-  lazy val cookiePath = Play.application.configuration.getString(CookiePathKey).getOrElse(
+  val cookieName = Play.application.configuration.getString(CookieNameKey).getOrElse(DefaultCookieName)
+  val cookiePath = Play.application.configuration.getString(CookiePathKey).getOrElse(
     Play.configuration.getString(ApplicationContext).getOrElse(DefaultCookiePath)
   )
-  lazy val cookieDomain = Play.application.configuration.getString(CookieDomainKey)
-  lazy val cookieSecure = IdentityProvider.sslEnabled
-  lazy val cookieHttpOnly = Play.application.configuration.getBoolean(CookieHttpOnlyKey).getOrElse(DefaultCookieHttpOnly)
-  lazy val idleTimeout = Play.application.configuration.getInt(IdleTimeoutKey).getOrElse(DefaultIdleTimeout)
-  lazy val absoluteTimeout = Play.application.configuration.getInt(AbsoluteTimeoutKey).getOrElse(DefaultAbsoluteTimeout)
-  lazy val absoluteTimeoutInSeconds = absoluteTimeout * 60
-  lazy val makeTransient = Play.application.configuration.getBoolean(TransientKey).getOrElse(true)
+  val cookieDomain = Play.application.configuration.getString(CookieDomainKey)
+  val cookieSecure = IdentityProvider.sslEnabled
+  val cookieHttpOnly = Play.application.configuration.getBoolean(CookieHttpOnlyKey).getOrElse(DefaultCookieHttpOnly)
+  val idleTimeout = Play.application.configuration.getInt(IdleTimeoutKey).getOrElse(DefaultIdleTimeout)
+  val absoluteTimeout = Play.application.configuration.getInt(AbsoluteTimeoutKey).getOrElse(DefaultAbsoluteTimeout)
+  val absoluteTimeoutInSeconds = absoluteTimeout * 60
+  val makeTransient = Play.application.configuration.getBoolean(TransientKey).getOrElse(true)
 
   val discardingCookie: DiscardingCookie = {
     DiscardingCookie(cookieName, cookiePath, cookieDomain, cookieSecure)
