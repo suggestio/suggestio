@@ -9,5 +9,9 @@
 
   <hr/>
   или
-  TODO Вход через соц.сети.
+  Вход через соц.сети.
+  @usr.IdProviders.values.iterator.map { idp =>
+    <a href="@routes.Ident.authenticate(idp.strId)">@idp</a>
+  }
+
 </div>

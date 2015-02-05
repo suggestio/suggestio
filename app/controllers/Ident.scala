@@ -45,7 +45,6 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
     Forbidden(emailPwLoginFormTpl(lf, r))
   }
 
-
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)

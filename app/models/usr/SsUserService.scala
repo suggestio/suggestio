@@ -3,10 +3,12 @@ package models.usr
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
 import securesocial.core.services.{SaveMode, UserService}
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.event.SiowebNotifier.Implicts.sn
 
 /**
  * Suggest.io
@@ -14,7 +16,9 @@ import util.SiowebEsUtil.client
  * Created: 02.02.15 14:56
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
-object SsUserService extends UserService[SsUser] {
+object SsUserService extends UserService[SsUser] with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /**
    * Finds a SocialUser that maches the specified id
@@ -23,7 +27,7 @@ object SsUserService extends UserService[SsUser] {
    * @param userId the user id
    * @return an optional profile
    */
-  override def find(providerId: String, userId: String): Future[Option[IProfile]] = {
+  override def find(providerId: String, userId: String): Future[Option[MExtIdent]] = {
     val prov = IdProviders.withName(providerId)
     MExtIdent.getByUserIdProv(prov, userId)
   }
@@ -45,7 +49,9 @@ object SsUserService extends UserService[SsUser] {
    *
    * @param uuid the token id
    */
-  override def deleteToken(uuid: String): Future[Option[MailToken]] = ???
+  override def deleteToken(uuid: String): Future[Option[MailToken]] = {
+    Future successful None
+  }
 
   /**
    * Returns an optional PasswordInfo instance for a given user
@@ -53,7 +59,9 @@ object SsUserService extends UserService[SsUser] {
    * @param user a user instance
    * @return returns an optional PasswordInfo
    */
-  override def passwordInfoFor(user: SsUser): Future[Option[PasswordInfo]] = ???
+  override def passwordInfoFor(user: SsUser): Future[Option[PasswordInfo]] = {
+    Future successful None
+  }
 
   /**
    * Saves a profile.  This method gets called when a user logs in, registers or changes his password.
@@ -62,7 +70,32 @@ object SsUserService extends UserService[SsUser] {
    * @param profile the user profile
    * @param mode a mode that tells you why the save method was called
    */
-  override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = ???
+  override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
+    if (mode is SaveMode.SignUp) {
+      // Зарегать нового юзера
+      MPerson(lang = "ru").save.flatMap { personId =>
+        // Сохранить данные идентификации через соц.сеть.
+        val mei = MExtIdent(
+          personId  = personId,
+          provider  = IdProviders.withName(profile.providerId),
+          userId    = profile.userId,
+          email     = profile.email
+        )
+        mei.save
+          .map { savedId => mei }
+      }
+
+    } else if (mode is SaveMode.LoggedIn) {
+      // Юзер уже был, как бы.
+      // TODO повторно обращаемся к find! Нужно пропатчить secureSocial, чтобы передавала some-результат find() внутри mode.LoggedIn()
+      find(profile.providerId, profile.userId)
+        .map { _.get }
+
+    } else {
+      // Смена пароля или что-то другое, чего не должно происходить через securesocial
+      throw new UnsupportedOperationException(s"save(mode = $mode) not implemented")
+    }
+  }
 
   /**
    * Links the current user to another profile

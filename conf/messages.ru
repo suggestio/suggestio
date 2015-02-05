@@ -30,6 +30,7 @@ Photo=Фото
 Logo=Лого
 Other=Другой
 Others=Другие
+Privacy.policy=Политика приватности
 
 requisites=Платёжные реквизиты для вывода средств
 
