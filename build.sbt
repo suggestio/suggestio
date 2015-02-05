@@ -30,7 +30,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.13.9-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.13.10-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
     exclude("org.w3c.css", "sac")
   ,
   // Логин через соц.сети
-  "io.suggest" %% "securesocial" % "3.1.0-SNAPSHOT"
+  "io.suggest" %% "securesocial" % "3.2.0-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
