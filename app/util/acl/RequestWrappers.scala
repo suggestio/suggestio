@@ -254,12 +254,14 @@ case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Not
 }
 
 
+/** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
 trait CsrfGet[R[_]] extends ActionBuilder[R] {
   override protected def composeAction[A](action: Action[A]): Action[A] = {
     CSRFAddToken( super.composeAction(action) )
   }
 }
 
+/** Аддон для action-builder'ов, добавляющий проверку CSRF-токена перед запуском экшена на исполнение. */
 trait CsrfPost[R[_]] extends ActionBuilder[R] {
   override protected def composeAction[A](action: Action[A]): Action[A] = {
     CSRFCheck( super.composeAction(action) )

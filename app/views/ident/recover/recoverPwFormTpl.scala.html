@@ -15,8 +15,10 @@
     <a class="popup_close f-right icon-icomoon js-close-popup" href="#"></a>
   </div>
 
-
-  @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
+  @* CSRF: На момент, когда защита сюда втыкалась, эта форма сабмиттилась только через XHR,
+     поэтому токен фактически не проверялся.
+     CSRF-токен начнёт работать, когда наконец появится поддержка отдельной страницы для рековера. *@
+  @form(CSRF(routes.Ident.recoverPwFormSubmit), 'class -> "recover-popup__content__form") {
     <div class="popup_cnt __index">
 
       <div class="popup_t __index">

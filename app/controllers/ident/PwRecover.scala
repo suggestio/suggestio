@@ -36,12 +36,12 @@ import PwRecover._
 trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl {
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
-  def recoverPwForm = IsAnon { implicit request =>
+  def recoverPwForm = IsAnonGet { implicit request =>
     Ok(recoverPwFormTpl(recoverPwFormM))
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = IsAnon.async { implicit request =>
+  def recoverPwFormSubmit = IsAnonPost.async { implicit request =>
     bruteForceProtected {
       val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
       formBinded.fold(
@@ -109,7 +109,7 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
   private def pwResetFormM = Form(passwordWithConfirmM)
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = CanRecoverPw(eActId).async { implicit request =>
+  def recoverPwReturn(eActId: String) = CanRecoverPwGet(eActId).async { implicit request =>
     MarketIndexAccess.getNodes map { nodes =>
       Ok(pwResetTpl(request.eAct, pwResetFormM, nodes))
     }
@@ -117,7 +117,7 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
-  def pwResetSubmit(eActId: String) = CanRecoverPw(eActId).async { implicit request =>
+  def pwResetSubmit(eActId: String) = CanRecoverPwPost(eActId).async { implicit request =>
     pwResetFormM.bindFromRequest().fold(
       {formWithErrors =>
         val nodesFut = MarketIndexAccess.getNodes

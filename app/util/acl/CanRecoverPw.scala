@@ -75,14 +75,6 @@ trait CanRecoverPwBase extends ActionBuilder[RecoverPwRequest] {
 }
 
 
-/**
- * Дефолтовая реализация [[CanRecoverPwBase]].
- * @param eActId id ключа активации.
- */
-case class CanRecoverPw(eActId: String)
-  extends CanRecoverPwBase
-
-
 /** Реквест активации. */
 case class RecoverPwRequest[A](
   request   : Request[A],
@@ -93,4 +85,16 @@ case class RecoverPwRequest[A](
 )
   extends AbstractRequestWithPwOpt(request)
 
+
+/**
+ * Дефолтовая реализация [[CanRecoverPwBase]].
+ * @param eActId id ключа активации.
+ */
+case class CanRecoverPw(eActId: String) extends CanRecoverPwBase
+
+/** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
+case class CanRecoverPwGet(eActId: String) extends CanRecoverPwBase with CsrfGet[RecoverPwRequest]
+
+/** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
+case class CanRecoverPwPost(eActId: String) extends CanRecoverPwBase with CsrfPost[RecoverPwRequest]
 
