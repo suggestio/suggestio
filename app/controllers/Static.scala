@@ -60,6 +60,15 @@ object Static extends SioControllerImpl {
 
 
   /**
+   * Страница с политикой приватности.
+   * @return 200 Ok и много букв.
+   */
+  def privacyPolicy = MaybeAuth { implicit request =>
+    Ok(privacyPolicyTpl())
+  }
+
+
+  /**
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
    * Без этого костыля, запрос html'ки просто подвисает.
    */

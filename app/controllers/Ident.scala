@@ -35,7 +35,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm(r: Option[String]) = IsAnon { implicit request =>
+  def emailPwLoginForm(r: Option[String]) = IsAnonGet { implicit request =>
     Ok(emailPwLoginFormTpl(EmailPwSubmit.emailPwLoginFormM, r))
   }
 
@@ -45,12 +45,10 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
     Forbidden(emailPwLoginFormTpl(lf, r))
   }
 
-
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
-
 
   /**
    * Стартовая страница my.suggest.io. Здесь лежит предложение логина/регистрации и возможно что-то ещё.
@@ -58,24 +56,11 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage = IsAnonGet { implicit request =>
-    val logForm = EmailPwSubmit.emailPwLoginFormM
-    val regForm = EmailPwReg.emailRegFormM
-    Ok(mySioStartTpl(
-      logForm = Some(logForm),
-      regForm = Some(regForm)
-    ))
+    val ctx = implicitly[Context]
+    val lc = _loginColumnTpl( EmailPwSubmit.emailPwLoginFormM )(ctx)
+    val rc = _regColumnTpl( EmailPwReg.emailRegFormM )(ctx)
+    Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
   }
-
-  /** Что рендерить при неудачном биндинге формы. */
-  override protected def emailRegFormBindFailed(formWithErrors: EmailPwRegReqForm_t)
-                                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Ok(mySioStartTpl(
-      regForm = Some(formWithErrors),
-      logForm = None
-    ))
-  }
-
-
 
 }
 

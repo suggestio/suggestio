@@ -94,7 +94,7 @@
               @* Вывести блямбу с кол-вом непрочитанных сообщений. *@
               @ctx.nodeUnseenEvtsCnt.map { cnt =>
                 @if(cnt > 0) {
-                  <span class="left-bar_menu-bubble" title="Новых событий: @cnt">(@cnt)</span>
+                  <span class="left-bar_menu-bubble" title="Новых событий: @cnt">@cnt</span>
                 }
               }
             </a>

@@ -138,11 +138,11 @@
                           <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
                         </label>
                       </div>
-                      <div class="hidden">
-                        @an.node.adn.sinks.iterator.map { sink =>
-                          @* Галочки sink'ов выдачи. *@
+                      <div>
+                        @* Галочки sink'ов выдачи. *@
+                        @*an.node.adn.sinks.iterator.map { sink =>
                           @sinkCheckbox(maybeBusyAdv, midOpt, sink)
-                        }
+                        }*@
                       </div>
                     </div>
                   }

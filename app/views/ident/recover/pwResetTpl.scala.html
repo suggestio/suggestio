@@ -14,7 +14,7 @@
       <a class="popup_close f-right icon-icomoon js-close-popup"></a>
     </div>
 
-    @form(routes.Ident.pwResetSubmit(eAct.id.get), 'id -> "pwResetPasswordForm") {
+    @form(CSRF(routes.Ident.pwResetSubmit(eAct.id.get)), 'id -> "pwResetPasswordForm") {
       <div class="popup_cnt __index">
 
         <div class="popup_t __index">

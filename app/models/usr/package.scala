@@ -1,7 +1,5 @@
 package models
 
-import securesocial.core.Profile
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,7 +8,7 @@ import securesocial.core.Profile
 package object usr {
 
   /** Тип экземпляра данных SecureSocial, вокруг которого крутится весь API SecureSocial. */
-  type SsUser = Profile
+  type SsUser = MExtIdent
 
   /** Тип экземпляра статической модели [[IdProviders]]. */
   type IdProvider = IdProviders.T
