@@ -43,7 +43,12 @@ object ExtTargetActor {
   }
 
   /** Дефолтовое значение szMult для рендера карточки, когда другого значения нет под рукой. */
-  def szMultDflt: SzMult_t = 2.0F
+  val szMultDflt: SzMult_t = {
+    configuration.getDouble("adv.ext.target.szMult.dflt") match {
+      case Some(x) => x.toFloat
+      case None    => 4.0F
+    }
+  }
 
 
   /** Формат картинки, из которой рендерится карточка. */

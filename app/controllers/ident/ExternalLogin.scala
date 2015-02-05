@@ -79,7 +79,7 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
                 }
               }
 
-            // Юзер был уже залогинен на моммент логина.
+            // Юзер был уже залогинен на suggest.io в момент нового логина.
             case Some(pw) =>
               // TODO Линковать с оригинальной учёткой?
               ???
