@@ -127,7 +127,7 @@ object AdnSinks extends Enumeration {
   }
 
   val SINK_GEO: AdnSink = new Val("g") {
-    override def longName: String = "gep"
+    override def longName: String = "geo"
     override def sioComissionDflt = 1.0F
   }
 
