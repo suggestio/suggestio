@@ -122,13 +122,12 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
-  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo).async { implicit request =>
+  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo) { implicit request =>
     // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
     // TODO Создать юзера, удалить активацию, создать новый узел-ресивер.
     val ctx = implicitly[Context]
     val col = _regSuccessColumnTpl()(ctx)
     Ok( mySioStartTpl(Seq(col))(ctx) )
-    ???
   }
 
 }
