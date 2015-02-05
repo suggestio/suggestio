@@ -51,31 +51,17 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
 
-
   /**
    * Стартовая страница my.suggest.io. Здесь лежит предложение логина/регистрации и возможно что-то ещё.
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage = IsAnonGet { implicit request =>
-    val logForm = EmailPwSubmit.emailPwLoginFormM
-    val regForm = EmailPwReg.emailRegFormM
-    Ok(mySioStartTpl(
-      logForm = Some(logForm),
-      regForm = Some(regForm)
-    ))
+    val ctx = implicitly[Context]
+    val lc = _loginColumnTpl( EmailPwSubmit.emailPwLoginFormM )(ctx)
+    val rc = _regColumnTpl( EmailPwReg.emailRegFormM )(ctx)
+    Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
   }
-
-  /** Что рендерить при неудачном биндинге формы. */
-  override protected def emailRegFormBindFailed(formWithErrors: EmailPwRegReqForm_t)
-                                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Ok(mySioStartTpl(
-      regForm = Some(formWithErrors),
-      logForm = None
-    ))
-  }
-
-
 
 }
 

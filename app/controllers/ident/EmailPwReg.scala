@@ -12,6 +12,7 @@ import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.acl._
 import util.mail.MailerWrapper
+import views.html.ident._
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
 
@@ -44,10 +45,6 @@ import EmailPwReg._
 
 trait EmailPwReg extends SioController with PlayMacroLogsI {
 
-  /** Что рендерить при неудачном биндинге формы. */
-  protected def emailRegFormBindFailed(formWithErrors: EmailPwRegReqForm_t)
-                                      (implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
-
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = MailerWrapper.instance
     msg.setFrom("welcome@suggest.io")
@@ -67,7 +64,9 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
     emailRegFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        emailRegFormBindFailed(formWithErrors)
+        val ctx = implicitly[Context]
+        val rc = _regColumnTpl(formWithErrors)(ctx)
+        NotAcceptable( mySioStartTpl(Seq(rc))(ctx) )
       },
       {email1 =>
         // Почта уже зарегана может?
