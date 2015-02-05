@@ -170,12 +170,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       tuple(
         "adnId"         -> esIdM,
         "advertise"     -> boolean,
-        "showLevel"     -> adSlsM,
-        "sink"          -> sinksM
+        "showLevel"     -> adSlsM
       )
-      .verifying("adv.node.at.least.one.sink.must.present", { m => m match {
-        case (_, isAdv, _, sinks)  =>  if (isAdv) sinks.nonEmpty else true
-      }})
     )
     Form[AdvFormValueM_t] (
       mapping(
@@ -184,9 +180,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       )
       {(nodesAdv, advPeriod) =>
         nodesAdv.foldLeft(List.empty[AdvFormEntry]) {
-          case (acc, (adnId, isAdv @ true, adSls, sinks) ) =>
-            val ssls = for(sl <- adSls; sink <- sinks) yield {
-              SinkShowLevels.withArgs(sink, sl)
+          case (acc, (adnId, isAdv @ true, adSls) ) =>
+            val ssls = for(sl <- adSls) yield {
+              SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
             }
             val result = AdvFormEntry(
               adnId       = adnId,
@@ -203,8 +199,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         l.headOption.map { first =>
           val nodesAdvs = l.map { e =>
             val adSls = e.showLevels.map(_.sl)
-            val sinks = e.showLevels.map(_.adnSink)
-            (e.adnId, e.advertise, adSls, sinks)
+            (e.adnId, e.advertise, adSls)
           }
           val dates = first.dateStart -> first.dateEnd
           nodesAdvs -> dates

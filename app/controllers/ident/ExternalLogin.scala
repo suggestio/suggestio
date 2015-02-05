@@ -3,12 +3,16 @@ package controllers.ident
 import controllers.SioController
 import models.{ExternalCall, Context}
 import models.usr.{SsUserService, SsUser}
+import play.api.i18n.Messages
 import play.api.mvc.{Result, AnyContent, Call, RequestHeader}
 import securesocial.controllers._
+import securesocial.controllers.ProviderControllerHelper.toUrl
 import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.providers.VkProvider
-import securesocial.core.services.{RoutesService, UserService}
-import securesocial.core.{IdentityProvider, RuntimeEnvironment, Profile}
+import securesocial.core.services.{SaveMode, RoutesService, UserService}
+import securesocial.core._
+import util.PlayMacroLogsI
+import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -20,7 +24,7 @@ import scala.concurrent.Future
  * Description: Поддержка логина через соц.сети или иные внешние сервисы.
  */
 
-trait ExternalLogin extends SioController with BaseProviderController[SsUser] {
+trait ExternalLogin extends SioController with BaseProviderController[SsUser] with PlayMacroLogsI {
 
   /** secure-social настраивается через этот Enviroment. */
   override implicit val env: RuntimeEnvironment[SsUser] = {
@@ -34,6 +38,73 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] {
       }
     }
   }
+
+
+  // Код handleAuth спасён из securesocial c целью отпиливания от грёбаных authentificator'ов,
+  // которые по сути являются переусложнёнными stateful-сессиями, которые придумал какой-то нехороший человек.
+
+  /*override def handleAuth(provider: String, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
+    handleExtAuth2(provider, redirectTo)
+  }
+  def handleExtAuth2(provider: String, redirectTo: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    env.providers.get(provider).map {
+      _.authenticate().flatMap {
+        case denied: AuthenticationResult.AccessDenied =>
+          Future.successful(Redirect(env.routes.loginPageUrl).flashing("error" -> Messages("securesocial.login.accessDenied")))
+        case failed: AuthenticationResult.Failed =>
+          LOGGER.error(s"[securesocial] authentication failed, reason: ${failed.error}")
+          throw new AuthenticationException()
+        case flow: AuthenticationResult.NavigationFlow => Future.successful {
+          redirectTo.map { url =>
+            flow.result
+              .addingToSession(SecureSocial.OriginalUrlKey -> url)
+          } getOrElse flow.result
+        }
+        case authenticated: AuthenticationResult.Authenticated =>
+          request.pwOpt match {
+            case None =>
+              val profile = authenticated.profile
+              env.userService.find(profile.providerId, profile.userId).flatMap { maybeExisting =>
+                val mode = if (maybeExisting.isDefined) SaveMode.LoggedIn else SaveMode.SignUp
+                env.userService.save(authenticated.profile, mode).flatMap { userForAction =>
+                  LOGGER.debug(s"handleAuth2(): user completed authentication: provider = ${profile.providerId}, userId: ${profile.userId}, mode = $mode")
+                  val evt = if (mode == SaveMode.LoggedIn) new LoginEvent(userForAction) else new SignUpEvent(userForAction)
+                  val sessionAfterEvents = Events.fire(evt).getOrElse(request.session)
+                  val session1 = cleanupSession(sessionAfterEvents)
+                  autorFut.flatMap { authenticator =>
+                    Redirect(toUrl(sessionAfterEvents))
+                      .withSession(session1)
+                      .startingAuthenticator(authenticator)
+                  }
+                }
+              }
+
+            case Some(pw) =>
+              for (
+                linked <- env.userService.link(currentUser, authenticated.profile);
+                updatedAuthenticator <- request.authenticator.get.updateUser(linked);
+                result <- {
+                  val modifiedSession = overrideOriginalUrl(request.session, redirectTo)
+                  Redirect(toUrl(modifiedSession))
+                    .withSession(cleanupSession(modifiedSession))
+                    .touchingAuthenticator(updatedAuthenticator)
+                }
+              ) yield {
+                logger.debug(s"[securesocial] linked $currentUser to: providerId = ${authenticated.profile.providerId}")
+                result
+              }
+          }
+      } recover {
+        case e =>
+          logger.error("Unable to log user in. An exception was thrown", e)
+          Redirect(env.routes.loginPageUrl).flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
+      }
+    } getOrElse {
+      Future.successful(NotFound)
+    }
+  }*/
 
 }
 
