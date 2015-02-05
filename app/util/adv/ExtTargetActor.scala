@@ -183,6 +183,21 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
+  def getPicCtx(szMult: SzMult_t): MPictureCtx = {
+    val sz0 = args.request.mad.blockMeta
+    val sz1 = PictureSizeCtx(
+      width  = (sz0.width * szMult).toInt,
+      height = (sz0.height * szMult).toInt
+    )
+    val adArgs = getAdRenderArgs(szMult)
+    val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adArgs).url
+    MPictureCtx(
+      size   = Some(sz1),
+      sioUrl = Some(url)
+    )
+  }
+
+
   /** Состояние начальной подготовки контекста.
     * Пока асинхронных и ресурсоёмких операций у нас тут нет, поэтому всё необходимое происходит в afterBecome(). */
   class PrepareZeroContextState(mctx0: MJsCtx) extends FsmState {
@@ -196,20 +211,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         content = MAdContentCtx.apply( args.request.mad ),
         scUrl   = Some( getScUrl(MExtReturns.ToAd) ),
         // Сразу вставить URL картинки в контекст.
-        picture = {
-          val szMult = szMultDflt
-          val sz0 = args.request.mad.blockMeta
-          val sz1 = PictureSizeCtx(
-            width  = (sz0.width * szMult).toInt,
-            height = (sz0.height * szMult).toInt
-          )
-          val adArgs = getAdRenderArgs(szMult)
-          val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adArgs).url
-          Some(MPictureCtx(
-            size   = Some(sz1),
-            sioUrl = Some(url)
-          ))
-        }
+        picture = Some( getPicCtx(szMultDflt) )
       )
       // Собираем инфу по цели размещения
       val targetFull = JsExtTarget(
@@ -323,9 +325,24 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
             new S2sRenderAd2ImgState(mctx0, ai.id, s2sCtx)
         }
       } else {
-        // TODO Добавить поддержку запроса ещё неск.карточек.
-        // Хз что делать. Видимо всё исправно уже.
-        new HandleTargetState(mctx0)
+        val maybeAdNeedNewPicUrl = mctx0.mads.find { madCtx =>
+          val picUrlOpt = madCtx.picture.flatMap(_.sioUrl)
+          picUrlOpt.isEmpty || picUrlOpt.exists(_.trim.isEmpty)
+        }
+        if (maybeAdNeedNewPicUrl.nonEmpty) {
+          // Требуется выставить новую ссылку на картинку в контекст
+          val madCtx1 = maybeAdNeedNewPicUrl.get.copy(picture = Some(getPicCtx(szMultDflt)))
+          val mads1 = mctx0.mads.map { madCtx =>
+            if (madCtx1.id == madCtx.id) madCtx1 else madCtx
+          }
+          val mctx1 = mctx0.copy(mads = mads1)
+          new FillContextState(mctx1)
+
+        } else {
+          // TODO Добавить поддержку запроса ещё неск.карточек.
+          // Хз что делать. Видимо всё исправно уже.
+          new HandleTargetState(mctx0)
+        }
       }
       become(nextState)
     }

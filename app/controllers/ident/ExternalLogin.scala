@@ -5,6 +5,7 @@ import models.{ExternalCall, Context}
 import models.usr.{SsUserService, SsUser}
 import play.api.i18n.Messages
 import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import securesocial.controllers._
 import securesocial.controllers.ProviderControllerHelper.toUrl
 import securesocial.core.RuntimeEnvironment.Default
@@ -12,7 +13,7 @@ import securesocial.core.providers.VkProvider
 import securesocial.core.services.{SaveMode, RoutesService, UserService}
 import securesocial.core._
 import util.PlayMacroLogsI
-import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
+import util.acl.MaybeAuth
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -44,11 +45,6 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
 
   override def handleAuth(provider: String, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
-    handleExtAuth2(provider, redirectTo)
-  }
-  def handleExtAuth2(provider: String, redirectTo: Option[String])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     env.providers.get(provider).map {
       _.authenticate().flatMap {
         case denied: AuthenticationResult.AccessDenied =>
@@ -63,9 +59,9 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
           } getOrElse flow.result
         }
         case authenticated: AuthenticationResult.Authenticated =>
-          request.pwOpt match {
+          /*request.pwOpt match {
             // Юзер был анонимом на момент логина.
-            case None =>
+            case None =>*/
               val profile = authenticated.profile
               env.userService.find(profile.providerId, profile.userId).flatMap { maybeExisting =>
                 val mode = if (maybeExisting.isDefined) SaveMode.LoggedIn else SaveMode.SignUp
@@ -80,10 +76,10 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
               }
 
             // Юзер был уже залогинен на моммент логина.
-            case Some(pw) =>
-              // TODO Линковать с оригинальной учёткой?
+            /*case Some(pw) =>
+              // TODO Линковать с оригинальной учёткой? Для этого нужно написать много букв, которые отработают MPerson.
               ???
-              /*val modifiedSession = overrideOriginalUrl(request.session, redirectTo) + (Security.username -> pw.personId)
+              val modifiedSession = overrideOriginalUrl(request.session, redirectTo) + (Security.username -> pw.personId)
               Redirect(toUrl(modifiedSession))
                 .withSession(cleanupSession(modifiedSession))
                 .touchingAuthenticator(updatedAuthenticator)
@@ -97,7 +93,7 @@ trait ExternalLogin extends SioController with BaseProviderController[SsUser] wi
                 logger.debug(s"[securesocial] linked $currentUser to: providerId = ${authenticated.profile.providerId}")
                 result
               }*/
-          }
+         //}
       } recover {
         case e =>
           LOGGER.error("Unable to log user in. An exception was thrown", e)
