@@ -2,17 +2,18 @@ package controllers.ident
 
 import controllers.SioController
 import models._
-import models.usr.{MPersonIdent, IEaEmailId, EmailActivation}
+import models.usr.{EmailPwConfirmInfo, MPersonIdent, IEaEmailId, EmailActivation}
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
-import util.PlayMacroLogsI
+import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import util.mail.MailerWrapper
 import views.html.ident._
+import views.html.ident.reg.{_epwConfirmColTpl, _regSuccessColumnTpl}
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
 
@@ -35,6 +36,16 @@ object EmailPwReg {
     )
     {(email1, _, _) => email1 }
     {email1 => Some((email1, "", ""))}
+  )
+
+  /** Форма подтверждения регистрации по email и паролю. */
+  def epwRegConfirmFormM: EmailPwConfirmForm_t = Form(
+    mapping(
+      "nodeName" -> FormUtil.nameM,
+      "password" -> FormUtil.passwordWithConfirmM
+    )
+    { EmailPwConfirmInfo.apply }
+    { EmailPwConfirmInfo.unapply }
   )
 
 }
@@ -102,14 +113,21 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
 
 
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
-  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo).async { implicit request =>
+  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo) { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
-    ???
+    val ctx = implicitly[Context]
+    val rc = _epwConfirmColTpl(request.ea, epwRegConfirmFormM)(ctx)
+    val page = mySioStartTpl( Seq(rc) )(ctx)
+    Ok(page)
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
   def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo).async { implicit request =>
     // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
+    // TODO Создать юзера, удалить активацию, создать новый узел-ресивер.
+    val ctx = implicitly[Context]
+    val col = _regSuccessColumnTpl()(ctx)
+    Ok( mySioStartTpl(Seq(col))(ctx) )
     ???
   }
 
