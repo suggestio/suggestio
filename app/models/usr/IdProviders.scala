@@ -1,6 +1,7 @@
 package models.usr
 
 import io.suggest.model.EnumMaybeWithName
+import play.api.mvc.{PathBindable, QueryStringBindable}
 import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.{FacebookProvider, VkProvider, TwitterProvider}
 
@@ -32,5 +33,19 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
   val Twitter: T    = new Val(TwitterProvider.Twitter) {
     override def ssAuthMethod = AuthenticationMethod.OAuth1
   }
+
+
+  implicit def pb = new PathBindable[IdProvider] {
+    override def bind(key: String, value: String): Either[String, IdProvider] = ???
+
+    override def unbind(key: String, value: IdProvider): String = ???
+  }
+
+  implicit def qsb = new QueryStringBindable[IdProvider] {
+    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IdProvider]] = ???
+
+    override def unbind(key: String, value: IdProvider): String = ???
+  }
+
 }
 

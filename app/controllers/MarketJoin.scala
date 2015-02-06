@@ -10,7 +10,7 @@ import util.billing.MmpDailyBilling
 import util.img._
 import util.mail.MailerWrapper
 import util.PlayMacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
+import util.acl.{MaybeAuthPost, MaybeAuthGet, AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
 import models._
 import views.html.market.join._
@@ -76,7 +76,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   }
 
   /** Рендер страницы с формой обратного звонка. */
-  def callbackRequest = MaybeAuth { implicit request =>
+  def callbackRequest = MaybeAuthGet { implicit request =>
     cacheControlShort {
       Ok(callbackRequestTpl(callbackRequestFormM))
     }
@@ -86,7 +86,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
    * Сабмит формы запроса обратного вызова.
    * @return
    */
-  def callbackRequestSubmit = MaybeAuth.async { implicit request =>
+  def callbackRequestSubmit = MaybeAuthPost.async { implicit request =>
     val formBinded = checkCaptcha( callbackRequestFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
@@ -291,7 +291,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
-  def joinAdvRequest = MaybeAuth { implicit request =>
+  def joinAdvRequest = MaybeAuthGet { implicit request =>
     cacheControlShort {
       Ok(joinAdvTpl(advJoinFormM))
     }
@@ -301,7 +301,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
    * Сабмит формы запроса присоединения к системе в качестве рекламодателя.
    * @return Редирект или 406 NotAcceptable.
    */
-  def joinAdvRequestSubmit = MaybeAuth.async { implicit request =>
+  def joinAdvRequestSubmit = MaybeAuthPost.async { implicit request =>
     val formBinded = checkCaptcha( advJoinFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>

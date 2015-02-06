@@ -67,7 +67,7 @@ object Market extends SioController with SiteMapXmlCtl {
         StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
         val adStat = new MAdStat(
           clientAddr  = request.remoteAddress,
-          action      = action.toString,
+          action      = action.toString(),
           ua          = request.headers.get(USER_AGENT),
           adIds       = Seq(adId),
           onNodeIdOpt = Some(martId),

@@ -14,7 +14,7 @@
   или
   Вход через соц.сети.
   @usr.IdProviders.values.iterator.map { idp =>
-    <a href="@routes.Ident.authenticate(idp.strId)">@idp</a>
+    <a href="@routes.Ident.idViaProvider(idp)">@idp</a>
   }
 
 </div>
