@@ -46,7 +46,7 @@ object ExtTargetActor {
   val szMultDflt: SzMult_t = {
     configuration.getDouble("adv.ext.target.szMult.dflt") match {
       case Some(x) => x.toFloat
-      case None    => 4.0F
+      case None    => 3.0F
     }
   }
 
