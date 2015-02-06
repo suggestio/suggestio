@@ -4,6 +4,8 @@
 @import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 @import ctx._
+@import util.FC.authFc
+
 
 @form( CSRF(routes.Ident.emailRegSubmit()) ) {
 
@@ -13,17 +15,38 @@
 
   @inputText(
     rf("email"),
-    '_label -> "e-mail"
+    '_label -> "e-mail",
+    'placeholder -> "E-mail"
   )
 
-  @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
-  @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-    <input type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-    <img src="@routes.Captcha.getCaptcha(captchaId)" alt="" />
-  }
 
-  <p>На электронную почту будет отправлено письмо с подтверждением регистрации.</p>
+  <div class="auth-page_input">
+    @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
+    @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
+      <img class="captcha_img" id="captchaImageRegistrationForm" src="@routes.Captcha.getCaptcha(captchaId)" alt="" />
+      <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageRegistrationForm" href=""></a>
+    }
+  </div>
 
-  <input type="submit" value="Отправить" />
+  @inputText(
+    rf(CAPTCHA_TYPED_FN),
+    '_label -> "Введите код с картинки",
+    'placeholder -> "Введите код с картинки"
+  )
+
+  <p class="auth-page_descr">
+    На электронную почту будет отправлено
+    письмо  с подтвержением регистрации.
+  </p>
+
+  <p class="auth-page_descr">
+    Приступая к работе с Suggest.io Вы
+    принимаете <a class="auth-page_link" href="#">Пользовательское соглашение</a>
+  </p>
+
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __minor" type="submit" value="Отправить" />
+  </div>
 
 }

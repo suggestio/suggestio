@@ -24,7 +24,7 @@ define ["SioPR"], (SioPR) ->
       window.fbAsyncInit = () =>
         FB.init options
 
-        SioPR.registerService ctx, onComplete
+        SioPR.registerService @ctx, onComplete
 
       @loadSdk document, 'script', 'facebook-jssdk'
 
@@ -95,10 +95,19 @@ define ["SioPR"], (SioPR) ->
           @ctx._status = "success"
         @complete()
 
-      options =
-        picture: @ctx._ads[0].rendered.sioUrl
-        message: @ctx._ads[0].content.fields[0].text
-        link: @ctx._target.href
+      try
+        options =
+          picture: @ctx._ads[0].rendered.sioUrl
+          message: @ctx._ads[0].content.fields[0].text
+          link: @ctx._target.href
+          name: "testName"
+          caption: "suggest.io"
+          description: "testDescription"
+          privacy:
+            value: "EVERYONE"
+      catch error
+        @ctx._status = "error"
+        @complete()
 
       FB.api(
         "/#{groupId}/feed"
@@ -111,10 +120,19 @@ define ["SioPR"], (SioPR) ->
       публикация на стене у текущего пользователя
     ###
     publicatePost: () ->
-      params =
-        message: @ctx._ads[0].content.fields[0].text
-        picture: @ctx._ads[0].rendered.sioUrl
-        link: @ctx._target.href
+      try
+        params =
+          picture: @ctx._ads[0].rendered.sioUrl
+          message: @ctx._ads[0].content.fields[0].text
+          link: @ctx._target.href
+          name: "testName"
+          caption: "suggest.io"
+          description: "testDescription"
+          privacy:
+            value: "EVERYONE"
+      catch error
+        @ctx._status = "_error"
+        @complete()
 
       callback = (response) =>
         if !response || response.error
