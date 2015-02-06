@@ -1,0 +1,16 @@
+@(elf: ExtRegConfirmForm_t)(implicit ctx: Context)
+
+@* Шаблон для формы ВТОРОГО ШАГА регистрации по email password.
+   Юзер вводит пароль и прочую минимальную инфу, необходимую для завершения реги. *@
+
+@import helper._
+@import ctx._
+
+@form(CSRF( ??? )) {
+
+  @inputText(elf("nodeName"), '_label -> "Название магазина")
+
+  <input type="submit" value="@Messages("Save")" />
+
+}
+

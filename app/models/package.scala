@@ -209,4 +209,7 @@ package object models {
   /** Тип формы для второго шагоа регистрации по email: заполнение данных о себе. */
   type EmailPwConfirmForm_t = Form[EmailPwConfirmInfo]
 
+  /** Тип формы для регистрации через внешнего провайдера. */
+  type ExtRegConfirmForm_t  = Form[String]
+
 }
