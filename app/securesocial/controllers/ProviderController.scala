@@ -40,7 +40,7 @@ class ProviderController(override implicit val env: RuntimeEnvironment[IProfile]
  * @tparam U the user type
  */
 trait BaseProviderController[U] extends SecureSocial[U] {
-  import securesocial.controllers.ProviderControllerHelper.{ logger, toUrl }
+  import securesocial.controllers.ProviderControllerHelper._
 
   /**
    * The authentication entry point for GET requests
@@ -57,20 +57,6 @@ trait BaseProviderController[U] extends SecureSocial[U] {
   def authenticateByPost(provider: String, redirectTo: Option[String] = None) = handleAuth(provider, redirectTo)
 
   /**
-   * Overrides the original url if neded
-   *
-   * @param session the current session
-   * @param redirectTo the url that overrides the originalUrl
-   * @return a session updated with the url
-   */
-  protected def overrideOriginalUrl(session: Session, redirectTo: Option[String]) = redirectTo match {
-    case Some(url) =>
-      session + (SecureSocial.OriginalUrlKey -> url)
-    case _ =>
-      session
-  }
-
-  /**
    * Find the AuthenticatorBuilder needed to start the authenticated session
    */
   protected def builder() = {
@@ -79,18 +65,6 @@ trait BaseProviderController[U] extends SecureSocial[U] {
       logger.error(s"[securesocial] missing CookieAuthenticatorBuilder")
       throw new AuthenticationException()
     }
-  }
-
-  /**
-   * Remove sec dmitry@alterrussia.ruuresocial keys from session data.
-   * @param s Current session.
-   * @return Cleaned session.
-   */
-  protected def cleanupSession(s: Session): Session = {
-    val filteredKeys = Set(SecureSocial.OriginalUrlKey, IdentityProvider.SessionId, OAuth1Provider.CacheKey)
-    s.copy(
-      data = s.data.filterKeys { k => !(filteredKeys contains k) }
-    )
   }
 
   /**
@@ -198,4 +172,33 @@ object ProviderControllerHelper extends LoggerImpl {
    * @return
    */
   def toUrl(session: Session) = session.get(SecureSocial.OriginalUrlKey).getOrElse(ProviderControllerHelper.landingUrl)
+
+
+  /**
+   * Overrides the original url if neded
+   *
+   * @param session the current session
+   * @param redirectTo the url that overrides the originalUrl
+   * @return a session updated with the url
+   */
+  def overrideOriginalUrl(session: Session, redirectTo: Option[String]) = redirectTo match {
+    case Some(url) =>
+      session + (SecureSocial.OriginalUrlKey -> url)
+    case _ =>
+      session
+  }
+
+
+  /**
+   * Remove securesocial keys from session data.
+   * @param s Current session.
+   * @return Cleaned session.
+   */
+  def cleanupSession(s: Session): Session = {
+    val filteredKeys = Set(SecureSocial.OriginalUrlKey, IdentityProvider.SessionId, OAuth1Provider.CacheKey)
+    s.copy(
+      data = s.data.filterKeys { k => !(filteredKeys contains k) }
+    )
+  }
+
 }

@@ -5,7 +5,7 @@ name := "securesocial"
 
 organization := "io.suggest"
 
-version := "3.2.0-SNAPSHOT"
+version := "3.3.0-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
