@@ -52,7 +52,7 @@ object ExtTargetActor {
 
 
   /** Формат картинки, из которой рендерится карточка. */
-  def imgFmt = OutImgFmts.PNG
+  def imgFmt = OutImgFmts.JPEG
 
   /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
   val MAX_FILL_CTX_TRIES = configuration.getInt("adv.ext.target.fillCtx.try.max") getOrElse 2

@@ -23,7 +23,7 @@ define [], () ->
       console.log "ensureReady"
 
       requirejs(
-        ["vk", "facebook", "twitter"]
+        ["vk", "facebook"]
         () ->
           # регистрируем и инициализируем новые сервисы
           serviceList["count"] = arguments.length
@@ -35,19 +35,12 @@ define [], () ->
     registerService: (ctx, onComplete) ->
       regServiceCount += 1
 
-      console.log "serviceList count = #{serviceList.count}"
-      console.log "reg service count = #{regServiceCount}"
-
       if regServiceCount == serviceList.count
         ctx._status = "success"
         onComplete ctx, sendF
 
     handleTarget: (ctx, onComplete) ->
       console.log "--handleTarget---"
-      console.log serviceList
-
-      console.log ctx
-
       if ctx._domain.indexOf("facebook.com") >= 0
         serviceList["Facebook"].handleTarget(ctx, onComplete)
 
