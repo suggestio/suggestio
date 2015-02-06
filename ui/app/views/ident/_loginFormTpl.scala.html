@@ -4,6 +4,7 @@
 
 @import helper._
 @import ctx._
+@import util.FC.authFc
 
 @form(CSRF( routes.Ident.emailPwLoginFormSubmit() )) {
 
@@ -24,13 +25,15 @@
     'placeholder -> "Пароль"
   )
 
+  <a class="auth-page_recover-password auth-page_link js-btn" href="@routes.Ident.recoverPwForm">Забыли<br/>пароль?</a>
+
   @checkbox(
     lf("remember_me"),
-    '_label -> "Запомнить меня"
+    '_text -> "Запомнить меня"
   )
 
-  <a class="login-popup__recover-password js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль</a>
-
-  <input type="submit" value="Войти" />
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __major" type="submit" value="Войти" />
+  </div>
 
 }

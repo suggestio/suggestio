@@ -2367,6 +2367,14 @@ th.__bg-head
 /* Страница логина и регистрации  */
 /********************************************************************************************************************/
 .auth-page
+  text-align  center
+  background-image url("/vassets/images/market/registration/bg_retina.jpg")
+  background-repeat no-repeat
+  background-size cover
+
+  .captcha_img
+    width 120px
+    height 30px
 
   &_logo-icon
     width 28px
@@ -2390,15 +2398,110 @@ th.__bg-head
     float left
     box-sizing  border-box
     width 320px
-    padding 0 10px
+    padding 0 50px
+    border-right 1px solid #555555
+    text-align left
+
+    &:last-of-type
+      border-color transparent
+
+  &_descr
+    margin 16px 0
+    padding 0 5px
+    text-align left
+    font-size 10px
+    color #9c9c9c
+
+  &_recover-password
+    float right
+    font-size 10px
+
+  &_delimiter
+    margin-bottom 30px
+    color #9c9c9c
+    position relative
+    text-align center
+
+    &:before
+      position absolute
+      top 50%
+      left 0
+      transform translate3d(0,-50%,0)
+
+      content " "
+      width 40%
+      height 1px
+
+      background-color #9c9c9c
+
+    &:after
+      position absolute
+      top 50%
+      right 0
+      transform translate3d(0,-50%,0)
+
+      content " "
+      width 40%
+      height 1px
+
+      background-color #9c9c9c
+
+  &_social-btn-lst
+    text-align center
+
+  &_social-btn
+    margin 0 12px
+    display inline-block
+    width 34px
+    line-height 30px
+
+    border 2px solid #cbcbcb
+    text-align center
+    border-radius 4px
+
+  &_link
+    color #7b89a4
+    text-decoration none
+
+    &:hover
+      text-decoration underline
 
   &_column-t
+    margin-bottom 40px
     font-size 16px
+    letter-spacing 8px
     font-weight bold
     text-transform uppercase
+    text-align center
 
   &_column-t.__color-1
     color #68b894
 
   &_column-t.__color-2
     color #dc3333
+
+  &_input
+    display block
+    margin 10px 0
+    overflow hidden
+
+    input
+      display block
+      width 100%
+      box-sizing border-box
+      padding 0 10px
+      line-height 26px
+      border 2px solid #cbcbcb
+
+      font-size 12px
+      color #cbcbcb
+      background transparent
+
+    input[type = checkbox] + span
+      font-size 10px
+
+    input[type = checkbox] + span:before
+      background-color transparent
+
+    input[type = checkbox]:checked + span:before
+      color #cbcbcb
