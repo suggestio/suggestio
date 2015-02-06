@@ -24,4 +24,5 @@ object IdentUtil {
     redirectCallUserSomewhere(personId) map { Results.Redirect }
   }
 
+  // TODO Нужен метод "инсталляции" нового юзера.
 }
