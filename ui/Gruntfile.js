@@ -141,8 +141,6 @@ module.exports = function (grunt) {
 
     // Empties folders to start fresh
     clean: {
-      // rm views from dist to prevent *.scala.html inclusion in assets
-      distviews: ['<%= yeoman.dist %>/views'],
       // rm dist builds
       dist: {
         files: [{
@@ -318,15 +316,6 @@ module.exports = function (grunt) {
           src: ['**/*.scala.html']
         }]
       },
-      'twirl-dist': {
-        files: [{
-          expand: true,
-          dot: true,
-          cwd: '<%= yeoman.dist %>',
-          dest: 'twirl',
-          src: ['**/*.scala.html']
-        }]
-      },
       dist: {
         files: [{
           expand: true,
@@ -450,9 +439,7 @@ module.exports = function (grunt) {
     'concat',
     'ngAnnotate',
     'copy:dist',
-    'copy:twirl-dist',
-    'replace:htmlmin',
-    'clean:distviews'
+    'replace:htmlmin'
   ]);
 
   grunt.registerTask('default', [
