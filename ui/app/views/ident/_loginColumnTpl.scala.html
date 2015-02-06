@@ -16,7 +16,7 @@
 
   <div class="auth-page_social-btn-lst">
     @usr.IdProviders.values.iterator.map { idp =>
-      <a class="auth-page_social-btn" href="@routes.Ident.idViaProvider(idp)">@idp</a>
+      <a class="auth-page_social-btn __@idp" href="@routes.Ident.idViaProvider(idp)"></a>
     }
   </div>
 

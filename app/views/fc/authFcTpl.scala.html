@@ -6,7 +6,7 @@
 @import views.html.helper._
 
 
-<label class="auth-page_input">
+<label class="auth-page_input @elements.args.get('_class) @if(elements.hasErrors) {__error}">
 
     @elements.input
 
