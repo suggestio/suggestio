@@ -39,7 +39,7 @@ object Market extends SioController with SiteMapXmlCtl {
       .withHeaders(CACHE_CONTROL -> "public, max-age=300")
   }*/
   // Пока отключено визуальное отображение рекламных узлов и формы логина - тут в экшене это всё тоже выпилено:
-  def index = MaybeAuth { implicit request =>
+  def index = MaybeAuthGet { implicit request =>
     cacheControlShort {
       Ok(indexTpl(
         lf = None,

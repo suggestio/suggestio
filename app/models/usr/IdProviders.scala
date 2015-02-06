@@ -9,11 +9,10 @@ import securesocial.core.providers.{FacebookProvider, VkProvider, TwitterProvide
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.02.15 18:54
- * Description:
+ * Description: Модель используемых в s.io провайдеров идентификации.
+ * Порядок экземпляров здесь определяет порядок оных на странице.
  */
 
-
-/** Поддерживаемые провайдеры идентификации. */
 object IdProviders extends Enumeration with EnumMaybeWithName {
 
   protected abstract class Val(val strId: String) extends super.Val(strId) {
@@ -35,16 +34,19 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
   }
 
 
-  implicit def pb = new PathBindable[IdProvider] {
-    override def bind(key: String, value: String): Either[String, IdProvider] = ???
+  implicit def pb(implicit strB: PathBindable[String]) = new PathBindable[IdProvider] {
+    override def bind(key: String, value: String): Either[String, IdProvider] = {
+      strB.bind(key, value).right.flatMap { provId =>
+        maybeWithName(provId) match {
+          case Some(prov) => Right(prov)
+          case None       => Left("e.id.unknown.provider")
+        }
+      }
+    }
 
-    override def unbind(key: String, value: IdProvider): String = ???
-  }
-
-  implicit def qsb = new QueryStringBindable[IdProvider] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IdProvider]] = ???
-
-    override def unbind(key: String, value: IdProvider): String = ???
+    override def unbind(key: String, value: IdProvider): String = {
+      strB.unbind(key, value.strId)
+    }
   }
 
 }

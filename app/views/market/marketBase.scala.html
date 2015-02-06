@@ -78,14 +78,15 @@
   <div class="footer __responsive __fill-1">
     <div class="footer_cnt __index">
 
-      @*<!--<div class="f-right footer_wifi">
-        Эффективная реклама в сетях WiFi Free
-      </div>-->@*
-
-      <span class="copyright-block __color-1 f-right">
+      <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
+
         @*&nbsp;|&nbsp;<a class="copyright-link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
+
+      <a class="auth-page_link" href="@routes.Market.marketBooklet">Как это работает?</a>
+
+      <a class="auth-page_adv-link" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
 
       @*<!--<div class="socials">
         <a class="fb" href="#">Facebook</a>
