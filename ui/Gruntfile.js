@@ -150,8 +150,8 @@ module.exports = function (grunt) {
           src: [
             '.tmp',
             '<%= yeoman.dist %>/**/*',
-            '!<%= yeoman.dist %>/.git{,*/}*',
-	    '<%= yeoman.dist %>/../twirl/**/*'
+	    //'<%= yeoman.dist %>/../twirl/**/*'
+            '!<%= yeoman.dist %>/.git{,*/}*'
           ]
         }]
       },
@@ -314,7 +314,7 @@ module.exports = function (grunt) {
           expand: true,
           dot: true,
           cwd: '<%= yeoman.app %>',
-          dest: '<%= yeoman.dist %>/../twirl',
+          dest: '<%= yeoman.dist %>',
           src: ['**/*.scala.html']
         }]
       },
@@ -430,9 +430,9 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build-dev', [
     'coffee:compile',
-    'newer:copy:twirl-dev',
     'copy:scripts',
-    'wiredep'
+    'wiredep',
+    'newer:copy:twirl-dev'
   ]);
 
   grunt.registerTask('build-js', [
@@ -450,8 +450,8 @@ module.exports = function (grunt) {
     'concat',
     'ngAnnotate',
     'copy:dist',
-    'replace:htmlmin',
     'copy:twirl-dist',
+    'replace:htmlmin',
     'clean:distviews'
   ]);
 
