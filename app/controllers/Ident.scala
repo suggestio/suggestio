@@ -19,7 +19,7 @@ import models._
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with CaptchaValidator
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator
 with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
   import LOGGER._
@@ -34,16 +34,6 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
   }
 
 
-  /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm(r: Option[String]) = IsAnonGet { implicit request =>
-    Ok(emailPwLoginFormTpl(EmailPwSubmit.emailPwLoginFormM, r))
-  }
-
-
-  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
-                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Forbidden(emailPwLoginFormTpl(lf, r))
-  }
 
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>

@@ -9,11 +9,10 @@ import securesocial.core.providers.{FacebookProvider, VkProvider, TwitterProvide
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.02.15 18:54
- * Description:
+ * Description: Модель используемых в s.io провайдеров идентификации.
+ * Порядок экземпляров здесь определяет порядок оных на странице.
  */
 
-
-/** Поддерживаемые провайдеры идентификации. */
 object IdProviders extends Enumeration with EnumMaybeWithName {
 
   protected abstract class Val(val strId: String) extends super.Val(strId) {

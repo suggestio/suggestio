@@ -12,6 +12,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.06.14 17:57
  * Description: Функции для сброса сессии при наступлении таймаута, и соотв.утиль для пролонгации сессии.
+ * 2014.feb.06: Из-за добавления в сессию securesocial, csrf-token и т.д. нужно аккуратнее работать с сессией,
+ * без использования withNewSession().
  */
 object ExpireSession extends PlayMacroLogsImpl {
 
@@ -74,30 +76,38 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
   import LOGGER._
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    val resultFut = super.invokeBlock(request, block)
-    resultFut map { result =>
+    super.invokeBlock(request, block) map { result =>
       val session0 = result.session(request)
-      if (session0.isEmpty) {
-        // Не заниматься ковырянием сессии, если она пустая.
-        result
+      val stkOpt = session0.get(SESSION_TSTAMP_KEY)
+      val currTstamp = currentTstamp
+      if (stkOpt.isEmpty) {
+        // Не заниматься ковырянием сессии, если юзер не залогинен.
+        // Уже ясно, что нет таймштампа в сессии. Значит она была только что выставлена в контроллере.
+        // Нужно выставить туда currTstamp, если username задан.
+        if (session0.data contains Security.username) {
+          val session1 = session0 + (SESSION_TSTAMP_KEY -> currTstamp.toString)
+          result.withSession(session1)
+        } else {
+          result
+        }
+
       } else {
-        val currTstamp = currentTstamp
-        session0
-          .get(SESSION_TSTAMP_KEY)
+        val newTsOpt = stkOpt
           .flatMap { parseTstamp }
-          // Уже ясно, что нет таймштампа в сессии. Значит это сессия в старом формате или она была только что выставлена в контроллере. Нужно выставить туда currTstamp.
-          .orElse { Some(currentTstamp) }
           // Отфильтровать устаревшие timestamp'ы.
           .filter { isTimestampValid(_, currTstamp) }
-          .fold {
-            // Таймштамп истёк -- стереть сессию.
+        val session1 = newTsOpt match {
+          case None =>
+            // Таймштамп истёк -- стереть из сессии таймштамп и username.
             trace("invokeBlock(): Erasing expired session for person " + session0.get(Security.username))
-            result.withNewSession
-          } { _ =>
-            // Есть таймштамп, значит пора залить новый (настоящий) таймштамп в сессию.
-            val session1 = withTimestamp(session0, currTstamp)
-            result.withSession(session1)
-          }
+            session0.copy(
+              data = session0.data.filterKeys { k =>  !(k == Security.username || k == SESSION_TSTAMP_KEY) }
+            )
+          case _ =>
+            // Есть таймштамп, значит пора залить новый (текущий) таймштамп в сессию.
+            withTimestamp(session0, currTstamp)
+        }
+        result withSession session1
       }
     }
   }

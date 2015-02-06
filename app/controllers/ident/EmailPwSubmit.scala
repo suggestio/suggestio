@@ -8,6 +8,7 @@ import util.acl._
 import util._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
+import views.html.ident.{mySioStartTpl, _loginColumnTpl}
 import scala.concurrent.Future
 import models._
 import play.api.mvc.Security.username
@@ -77,3 +78,27 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
 
 }
 
+
+/** Экшены для Ident-контроллера. */
+trait EmailPwLogin extends EmailPwSubmit {
+
+  /** Рендер страницы с возможностью логина по email и паролю. */
+  def emailPwLoginForm(r: Option[String]) = IsAnonGet { implicit request =>
+    val lf = emailPwLoginFormM
+    epwLoginPage(lf, r)
+  }
+
+  /** Общий код методов emailPwLoginForm() и emailSubmitError(). */
+  protected def epwLoginPage(lf: EmailPwLoginForm_t, r: Option[String])
+                            (implicit request: AbstractRequestWithPwOpt[_]): Result = {
+    val ctx = implicitly[Context]
+    val column = _loginColumnTpl(lf)(ctx)
+    Ok( mySioStartTpl(Seq(column))(ctx) )
+  }
+
+  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
+                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    epwLoginPage(lf, r)
+  }
+
+}

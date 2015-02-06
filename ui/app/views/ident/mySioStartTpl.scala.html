@@ -4,6 +4,8 @@
    Страница по дефолту отображает обе колонки, но это не обязательно.
    Если одна из форм не передана контроллером, то оставшаяся колонка должна отображаться по центру. *@
 
+@import util.cdn.CdnUtil
+
 @identBase("Вход") {
 
 
@@ -12,14 +14,14 @@
 
     <div class="body_cnt __responsive" id="centerContent">
 
-      <a class="index-page_logo-link auth-page_logo-icon" href="@routes.Ident.mySioStartPage" >
-        <img src='/assets/images/market/registration/logo-icon_retina.png'/>
+      <a class="index-page_logo-link auth-page_logo-icon" href="@routes.Ident.mySioStartPage()" >
+        <img src='@CdnUtil.asset("/images/market/registration/logo-icon_retina.png")'/>
       </a>
 
       <br/>
 
-      <a class="index-page_logo-link auth-page_logo-text" href="@routes.Ident.mySioStartPage" >
-        <img src='/assets/images/market/registration/logo-text_retina.png'/>
+      <a class="index-page_logo-link auth-page_logo-text" href="@routes.Ident.mySioStartPage()" >
+        <img src='@CdnUtil.asset("images/market/registration/logo-text_retina.png")'/>
       </a>
 
       <div class="auth-page_column-lst">
