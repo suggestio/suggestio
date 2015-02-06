@@ -32,12 +32,16 @@ trait MaybeAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
 }
 
-/** Сборка данных по текущей сессии юзера в реквест. */
-object MaybeAuth
+trait MaybeAuthBase2
   extends MaybeAuthAbstract
   with ExpireSession[AbstractRequestWithPwOpt]
   with CookieCleanup[AbstractRequestWithPwOpt]
 
+/** Сборка данных по текущей сессии юзера в реквест. */
+object MaybeAuth extends MaybeAuthBase2
+
+object MaybeAuthGet extends MaybeAuthBase2 with CsrfGet[AbstractRequestWithPwOpt]
+object MaybeAuthPost extends MaybeAuthBase2 with CsrfPost[AbstractRequestWithPwOpt]
 
 
 

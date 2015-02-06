@@ -227,5 +227,7 @@ object FC {
 
   implicit val tdRadialFc = FieldConstructor(tdRadialFcTpl.f)
 
+  implicit val authFc = FieldConstructor(authFcTpl.f)
+
 }
 

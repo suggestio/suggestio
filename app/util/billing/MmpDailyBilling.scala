@@ -228,7 +228,6 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
       .mapValues(_.head)                    // Там всегда один элемент из-за особенностей модели.
   }
 
-
   /**
    * Сохранить в БД реквесты размещения рекламных карточек.
    * @param mad рекламная карточка.
@@ -386,15 +385,19 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
       val rcvrTxns = advSsl
         .foldLeft( List.empty[MBillTxn] ) { case (acc, (sink, sinkShowLevels)) =>
           // Считаем комиссированную цену в рамках sink'а. Если sink'а нет, то пусть будет экзепшен и всё.
-          val msc = mscsMap(sink)
-          if (msc.sioComission > 0.998F) {
+          // 2015.feb.06: sink'и выдачи незаметно стали не нужны. Разрешаем дефолтовые значения, если тариф не задан.
+          val msc: Float = mscsMap.get(sink) match {
+            case Some(m) => m.sioComission
+            case None    => sink.sioComissionDflt
+          }
+          if (msc > 0.998F) {
             // Если комиссия около 100%, то не проводить транзакцию для ресивера.
             trace(s"$logPrefix Comission is near 100%. Dropping transaction")
             acc
           } else {
             // Размер комиссии допускает отправку денег ресиверу. Считаем комиссию, обновляем кошелёк, проводим транзакцию для ресивера.
             // Сначала надо вычистить долю расхода в рамках текущего sink'а.
-            val amount1 = (1.0F - msc.sioComission) * sinkAmount
+            val amount1 = (1.0F - msc) * sinkAmount
             assert(amount1 <= sinkAmount, "Comissioned amount must be less or equal than source amount.")
             val rcvrMbb = MBillBalance.getByAdnId(rcvrAdnId) getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
             assert(rcvrMbb.currencyCode == advReq.currencyCode, "Rcvr balance currency does not match to adv request")
@@ -403,14 +406,14 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
             val rcvrTxn = MBillTxn(
               contractId      = rcvrContractId,
               amount          = amount1,
-              comissionPc     = Some(msc.sioComission),
+              comissionPc     = Some(msc),
               datePaid        = advReq.dateCreated,
               txnUid          = s"$rcvrContractId-$advReqId-${sink.name}",
               paymentComment  = "Credit for adverise",
               dateProcessed   = now,
               currencyCodeOpt = Option(advReq.currencyCode)
             ).save
-            trace(s"${logPrefix}Credited receiver[$rcvrAdnId] contract=$rcvrContractId for $amount1 ${advReq.currencyCode}. sink=$sink/${msc.sioComission}; Balance was ${rcvrMbb.amount} become ${rcvrMbb2.amount} ; tnxId=${rcvrTxn.id.get}")
+            trace(s"${logPrefix}Credited receiver[$rcvrAdnId] contract=$rcvrContractId for $amount1 ${advReq.currencyCode}. sink=$sink/$msc; Balance was ${rcvrMbb.amount} become ${rcvrMbb2.amount} ; tnxId=${rcvrTxn.id.get}")
             rcvrTxn :: acc
           }
         }

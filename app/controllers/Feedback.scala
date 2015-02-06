@@ -42,7 +42,7 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with CaptchaVal
    * @param isAsync если true, то будет отрендерено inline. Если false, то на выходе будет страница.
    * @return Форма в виде страницы ИЛИ в виде inline-формы в зависимости от isAsync.
    */
-  def feedbackForm(isAsync:Boolean) = MaybeAuth { implicit request =>
+  def feedbackForm(isAsync:Boolean) = MaybeAuthGet { implicit request =>
     val render = if (isAsync) {
       _feedbackFormTpl(feedbackSubmitFormM)
     } else {
@@ -56,7 +56,7 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with CaptchaVal
    * Сабмит формы обратной связи. Отправить по email письмо на support@suggest.io.
    * @return Редирект куда-нибудь + flash.
    */
-  def feedbackFormSubmit = MaybeAuth { implicit request =>
+  def feedbackFormSubmit = MaybeAuthPost { implicit request =>
     import request.pwOpt
     val formBinded = checkCaptcha( feedbackSubmitFormM.bindFromRequest() )
     formBinded.fold(

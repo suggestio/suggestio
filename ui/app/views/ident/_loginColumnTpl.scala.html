@@ -10,11 +10,14 @@
 
   @_loginFormTpl(lf)
 
-  <hr/>
-  или
-  Вход через соц.сети.
-  @usr.IdProviders.values.iterator.map { idp =>
-    <a href="@routes.Ident.authenticate(idp.strId)">@idp</a>
-  }
+
+  <div class="auth-page_delimiter">или</div>
+
+
+  <div class="auth-page_social-btn-lst">
+    @usr.IdProviders.values.iterator.map { idp =>
+      <a class="auth-page_social-btn" href="@routes.Ident.idViaProvider(idp)">@idp</a>
+    }
+  </div>
 
 </div>

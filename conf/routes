@@ -365,8 +365,8 @@ POST /id/epw/reg                        controllers.Ident.emailRegSubmit
 GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: usr.IEaEmailId)
 POST /id/epw/reg/return                 controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
 ## ident: вход через внешнего провайдера
-GET  /id/via/:provider			        controllers.Ident.authenticate(provider, r: Option[String] ?= None)
-POST /id/via/:provider                  controllers.Ident.authenticateByPost(provider, r: Option[String] ?= None)
+GET  /id/via/:provider			        controllers.Ident.idViaProvider(provider: usr.IdProvider, r: Option[String] ?= None)
+POST /id/via/:provider                  controllers.Ident.idViaProviderByPost(provider: usr.IdProvider, r: Option[String] ?= None)
 
 
 ### Барахло от Sio-v1 (не работает, в основном):

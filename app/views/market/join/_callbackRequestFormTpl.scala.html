@@ -7,7 +7,7 @@
 @import io.suggest.util.StringUtil.randomId
 @import controllers.Captcha.DIGITS_CAPTCHA_LEN
 
-@form(submitCall, 'class->"adv-req-page_call-back-form") {
+@form(CSRF(submitCall), 'class -> "adv-req-page_call-back-form") {
 
     @inputText(
       crf("name"),

@@ -6,7 +6,7 @@
 @import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 
-@form(submitCall) {
+@form(CSRF(submitCall)) {
 
   <div class="popup_header __index">
     <a class="popup_close f-right icon-icomoon" href="@routes.Market.index"></a>

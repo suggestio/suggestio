@@ -141,8 +141,6 @@ module.exports = function (grunt) {
 
     // Empties folders to start fresh
     clean: {
-      // rm views from dist to prevent *.scala.html inclusion in assets
-      distviews: ['<%= yeoman.dist %>/views'],
       // rm dist builds
       dist: {
         files: [{
@@ -150,8 +148,8 @@ module.exports = function (grunt) {
           src: [
             '.tmp',
             '<%= yeoman.dist %>/**/*',
-            '!<%= yeoman.dist %>/.git{,*/}*',
-	    '<%= yeoman.dist %>/../twirl/**/*'
+	    //'<%= yeoman.dist %>/../twirl/**/*'
+            '!<%= yeoman.dist %>/.git{,*/}*'
           ]
         }]
       },
@@ -314,16 +312,7 @@ module.exports = function (grunt) {
           expand: true,
           dot: true,
           cwd: '<%= yeoman.app %>',
-          dest: '<%= yeoman.dist %>/../twirl',
-          src: ['**/*.scala.html']
-        }]
-      },
-      'twirl-dist': {
-        files: [{
-          expand: true,
-          dot: true,
-          cwd: '<%= yeoman.dist %>',
-          dest: 'twirl',
+          dest: '<%= yeoman.dist %>',
           src: ['**/*.scala.html']
         }]
       },
@@ -430,9 +419,9 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build-dev', [
     'coffee:compile',
-    'newer:copy:twirl-dev',
     'copy:scripts',
-    'wiredep'
+    'wiredep',
+    'newer:copy:twirl-dev'
   ]);
 
   grunt.registerTask('build-js', [
@@ -450,9 +439,7 @@ module.exports = function (grunt) {
     'concat',
     'ngAnnotate',
     'copy:dist',
-    'replace:htmlmin',
-    'copy:twirl-dist',
-    'clean:distviews'
+    'replace:htmlmin'
   ]);
 
   grunt.registerTask('default', [
