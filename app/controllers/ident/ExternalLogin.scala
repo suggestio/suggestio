@@ -50,9 +50,11 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
     env.providers.get(provider.strId).map {
       _.authenticate().flatMap {
         case denied: AuthenticationResult.AccessDenied =>
-          Future.successful(Redirect(env.routes.loginPageUrl).flashing("error" -> Messages("securesocial.login.accessDenied")))
+          val res = Redirect(env.routes.loginPageUrl)
+            .flashing("error" -> Messages("securesocial.login.accessDenied"))
+          Future successful res
         case failed: AuthenticationResult.Failed =>
-          LOGGER.error(s"[securesocial] authentication failed, reason: ${failed.error}")
+          LOGGER.error(s"authentication failed, reason: ${failed.error}")
           throw new AuthenticationException()
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
           redirectTo.map { url =>

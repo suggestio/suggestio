@@ -35,16 +35,19 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
   }
 
 
-  implicit def pb = new PathBindable[IdProvider] {
-    override def bind(key: String, value: String): Either[String, IdProvider] = ???
+  implicit def pb(implicit strB: PathBindable[String]) = new PathBindable[IdProvider] {
+    override def bind(key: String, value: String): Either[String, IdProvider] = {
+      strB.bind(key, value).right.flatMap { provId =>
+        maybeWithName(provId) match {
+          case Some(prov) => Right(prov)
+          case None       => Left("e.id.unknown.provider")
+        }
+      }
+    }
 
-    override def unbind(key: String, value: IdProvider): String = ???
-  }
-
-  implicit def qsb = new QueryStringBindable[IdProvider] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IdProvider]] = ???
-
-    override def unbind(key: String, value: IdProvider): String = ???
+    override def unbind(key: String, value: IdProvider): String = {
+      strB.unbind(key, value.strId)
+    }
   }
 
 }
