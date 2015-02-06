@@ -5,7 +5,12 @@
 
 @import market._
 
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href="/assets/stylesheets/market/lk_new-design/lk.css"/>
+
+}
+
 @marketBase(
   title     = title,
-  headAfter = headAfter
+  headAfter = Some(headAfter)
 )(content)

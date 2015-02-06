@@ -2390,12 +2390,12 @@ th.__bg-head
       width inherit
 
   &_column-lst
+    display table
     margin 60px auto 0
     overflow hidden
-    width 640px
 
   &_column
-    float left
+    display table-cell
     box-sizing  border-box
     width 320px
     padding 0 50px
@@ -2527,11 +2527,8 @@ th.__bg-head
 
   .auth-page
 
-    &_column-lst
-      width 100%
-
     &_column
-      float none
+      display block
       width 100%
       padding 0 10px
       border-right none
