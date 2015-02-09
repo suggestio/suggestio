@@ -18,6 +18,7 @@ import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRe
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import views.html.ident.mySioStartTpl
+import views.html.ident.reg._regSuccessColumnTpl
 import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
@@ -152,7 +153,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
       } recover {
         case e =>
           LOGGER.error("Unable to log user in. An exception was thrown", e)
-          Redirect(env.routes.loginPageUrl)
+          Redirect(routes.Ident.mySioStartPage())
             .flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
       }
     } getOrElse {
@@ -185,7 +186,12 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
         NotAcceptable( _idpConfirm(formWithErrors) )
       },
       {nodeName =>
-        NotImplemented("TODO, nodeName = " + nodeName)
+        // TODO Развернуть узел для юзера, и т.д.
+        val ctx = implicitly[Context]
+        val colHtml = _regSuccessColumnTpl()(ctx)
+        val html = mySioStartTpl(Seq(colHtml))(ctx)
+        NotImplemented(html)
+          .flashing("error" -> "Not implemented")
       }
     )
   }

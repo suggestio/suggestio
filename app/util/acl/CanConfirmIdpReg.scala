@@ -22,29 +22,38 @@ trait CanConfirmIdpRegBase extends ActionBuilder[AbstractRequestWithPwOpt] with 
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case Some(pw) =>
-        val pcntFut = MAdnNode.countByPersonId(pw.personId)
-          .map(_.toInt)
-        val hasExtIdent = MExtIdent.countByPersonId(pw.personId)
-          .map(_ > 0L)
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        pcntFut flatMap { pcnt =>
-          if (pcnt > 0) {
-            LOGGER.debug(s"User[${pw.personId}] already have $pcnt nodes. Refusing reg.confirmation.")
-            onAlreadyConfirmed(pw, request)
-          } else {
-            // Юзер пока не имеет узлов.
-            hasExtIdent flatMap {
-              case true =>
-                srmFut flatMap { srm =>
-                  val req1 = RequestWithPwOpt(pwOpt, request, srm)
-                  block(req1)
-                }
-
-              case false =>
-                LOGGER.debug(s"User[${pw.personId}] has no MExtIdents. IdP reg not allowed.")
-                onAlreadyConfirmed(pw, request)
+        // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
+        val hasAccess: Future[Boolean] = if (PersonWrapper isSuperuser pwOpt) {
+          Future successful true
+        } else {
+          val pcntFut = MAdnNode.countByPersonId(pw.personId)
+            .map(_.toInt)
+          val hasExtIdent = MExtIdent.countByPersonId(pw.personId)
+            .map(_ > 0L)
+          pcntFut flatMap { pcnt =>
+            if (pcnt > 0) {
+              LOGGER.debug(s"User[${pw.personId}] already have $pcnt nodes. Refusing reg.confirmation.")
+              Future successful false
+            } else {
+              // Юзер пока не имеет узлов. Проверить наличие идентов.
+              hasExtIdent.filter(identity).onFailure {
+                case ex: NoSuchElementException =>
+                  LOGGER.debug(s"User[${pw.personId}] has no MExtIdents. IdP reg not allowed.")
+              }
+              hasExtIdent
             }
           }
+        }
+        val srmFut = SioReqMd.fromPwOpt(pwOpt)
+        hasAccess flatMap {
+          case true =>
+            srmFut flatMap { srm =>
+              val req1 = RequestWithPwOpt(pwOpt, request, srm)
+              block(req1)
+            }
+
+          case false =>
+            onAlreadyConfirmed(pw, request)
         }
 
       case None =>
