@@ -2,10 +2,40 @@
 
 @* Страница, которая появляется, когда юзер успешно сабмиттит свой email на сервак. *@
 
+@import util.cdn.CdnUtil
+
+
 @base("Письмо отправлено") {
 
-  Письмо с подтверждением регистрации было отправлено на указанный email.
+  <div class="body __responsive auth-page">
 
-  Пройдите по ссылке в письме для завершения регистрации.
+    <div class="body_cnt __responsive" id="centerContent">
+
+      <a class="index-page_logo-link auth-page_logo-icon" href="@routes.Ident.mySioStartPage()" >
+        <img src='@CdnUtil.asset("/images/market/new-design/logo_retina.png")'/>
+      </a>
+
+      <br/>
+
+      <a class="index-page_logo-link auth-page_logo-text" href="@routes.Ident.mySioStartPage()" >
+        <img src='@CdnUtil.asset("/images/market/index/logo_retina.png")'/>
+      </a>
+
+      <div class="auth-page_column-lst">
+        <div class="email-success_t">
+          Письмо с подтверждением регистрации было отправлено на указанный email.
+        </div>
+        <div class="email-success_text">
+          Пройдите по ссылке в письме для завершения регистрации.
+        </div>
+        <div class="btn-w __size-M">
+          <a class="btn __size-M1 __major" href="@routes.Ident.mySioStartPage">Назад</a>
+        </div>
+
+      </div>
+
+
+    </div>
+  </div>
 
 }

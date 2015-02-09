@@ -5,12 +5,20 @@
 
 @import helper._
 @import ctx._
+@import util.FC.authFc
+
 
 @form( CSRF(routes.Ident.idpConfirmSubmit()) ) {
 
-  @inputText(elf("nodeName"), '_label -> "Название магазина")
+  @inputText(
+    elf("nodeName"),
+    'placeholder -> "Название магазина",
+    '_label -> "Название магазина"
+  )
 
-  <input type="submit" value="@Messages("Save")" />
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />
+  </div>
 
 }
 
