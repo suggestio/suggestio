@@ -3,10 +3,12 @@ package controllers.ident
 import controllers.{routes, CaptchaValidator, SioController}
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
+import play.twirl.api.Html
 import util.acl._
 import util._
 import util.ident.IdentUtil
 import util.mail.MailerWrapper
+import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
@@ -25,7 +27,10 @@ import FormUtil.passwordWithConfirmM
 
 object PwRecover {
 
-  def recoverPwFormM = EmailPwReg.emailRegFormM
+  /** Маппинг формы восстановления пароля. */
+  def recoverPwFormM: EmailPwRecoverForm_t = {
+    EmailPwReg.emailRegFormM
+  }
 
 }
 
@@ -35,9 +40,15 @@ import PwRecover._
 
 trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl {
 
+  protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+    val ctx = implicitly[Context]
+    val colHtml = _emailColTpl(form)(ctx)
+    mySioStartTpl(Seq(colHtml))(ctx)
+  }
+
   /** Запрос страницы с формой вспоминания пароля по email'у. */
   def recoverPwForm = IsAnonGet { implicit request =>
-    Ok(recoverPwFormTpl(recoverPwFormM))
+    Ok(_recoverPwStep1(recoverPwFormM))
   }
 
   /** Сабмит формы восстановления пароля. */
@@ -47,7 +58,7 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
       formBinded.fold(
         {formWithErrors =>
           LOGGER.debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
-          NotAcceptable(recoverPwFormTpl(formWithErrors))
+          NotAcceptable(_recoverPwStep1(formWithErrors))
         },
         {email1 =>
           // TODO Надо найти юзера в базах EmailPwIdent и MozPersonaIdent, и если есть, то отправить письмецо.
@@ -80,7 +91,6 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
                   msg.setRecipients(email1)
                   val ctx = implicitly[Context]
                   msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
-                  msg.setText( views.txt.ident.recover.emailPwRecoverTpl(eact2)(ctx) )
                   msg.setHtml( emailPwRecoverTpl(eact2)(ctx) )
                   msg.send()
                 }
@@ -102,17 +112,24 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят. */
   def recoverPwAccepted(email1: String) = MaybeAuth { implicit request =>
-    Ok(pwRecoverAcceptedTpl(email1))
+    val ctx = implicitly[Context]
+    val colHtml = _acceptedColTpl(email1)(ctx)
+    val html = mySioStartTpl(Seq(colHtml))(ctx)
+    Ok(html)
   }
 
   /** Форма сброса пароля. */
-  private def pwResetFormM = Form(passwordWithConfirmM)
+  private def pwResetFormM: PwResetForm_t = Form(passwordWithConfirmM)
+
+  protected def _pwReset(form: PwResetForm_t)(implicit request: RecoverPwRequest[_]): Html = {
+    val ctx = implicitly[Context]
+    val colHtml = _pwResetColTpl(form, request.eAct)(ctx)
+    mySioStartTpl(Seq(colHtml))(ctx)
+  }
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = CanRecoverPwGet(eActId).async { implicit request =>
-    MarketIndexAccess.getNodes map { nodes =>
-      Ok(pwResetTpl(request.eAct, pwResetFormM, nodes))
-    }
+  def recoverPwReturn(eActId: String) = CanRecoverPwGet(eActId) { implicit request =>
+    Ok(_pwReset(pwResetFormM))
   }
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
@@ -120,11 +137,8 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
   def pwResetSubmit(eActId: String) = CanRecoverPwPost(eActId).async { implicit request =>
     pwResetFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val nodesFut = MarketIndexAccess.getNodes
         LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        nodesFut map { nodes =>
-          NotAcceptable(pwResetTpl(request.eAct, formWithErrors, nodes))
-        }
+        NotAcceptable(_pwReset(formWithErrors))
       },
       {newPw =>
         val pwHash2 = MPersonIdent.mkHash(newPw)

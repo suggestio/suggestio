@@ -1,0 +1,38 @@
+@(prf: PwResetForm_t, ea: usr.EmailActivation)(implicit ctx: Context)
+
+@import ctx._
+@import helper._
+
+@form(CSRF(routes.Ident.pwResetSubmit(ea.id.get)), 'id -> "pwResetPasswordForm") {
+  <div class="popup_cnt __index">
+
+    <div class="popup_t __index">
+      Новый пароль
+    </div>
+
+    @defining( Messages("Type.new.password") ) { msg =>
+      @inputPassword(
+        prf("pw1"),
+        '_label       -> msg,
+        'placeholder  -> msg
+      )
+    }
+
+    @defining( Messages("Confirm.new.password") ) { msg =>
+      @inputPassword(
+        prf("pw2"),
+        '_label       -> msg,
+        'placeholder  -> msg
+      )
+    }
+
+  </div>
+
+  <div class="popup_footer __index">
+
+    <div class="btn-w __size-M">
+      <input class="siom-new-btn __size-XS __fill-1" type="submit" value='@Messages("Save")'/>
+    </div>
+
+  </div>
+}

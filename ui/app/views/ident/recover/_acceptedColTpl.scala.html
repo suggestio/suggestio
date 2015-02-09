@@ -1,7 +1,6 @@
 @(email: String)(implicit ctx: Context)
 
-@* Страница отображается, когда юзер засабмиттил форму восстановления пароля. *@
-@import ctx._
+@* Колонка с версткой сообщения об успехе при отправке сообщения восстановления пароля. *@
 
 <div class="popup_cnt __index-fix">
 
@@ -21,7 +20,7 @@
 <div class="popup_footer">
 
   <div class="btn-w __size-M">
-    <a class="siom-new-btn __color-2 __size-XS js-remove-popup">Назад</a>
+    <a class="siom-new-btn __color-2 __size-XS js-remove-popup" href="@routes.Ident.mySioStartPage()">Назад</a>
   </div>
 
 </div>

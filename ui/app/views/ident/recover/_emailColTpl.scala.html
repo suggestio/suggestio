@@ -1,0 +1,11 @@
+@(rf: EmailPwRegReqForm_t)(implicit ctx: Context)
+
+@* Колонка с формой восстановления пароля. Шаг 1: ввод email. *@
+
+<div class="auth-page_column">
+
+  <h2 class="auth-page_column-t __color-2">Восстановление пароля</h2>
+
+  @_emailFormTpl(rf)
+
+</div>

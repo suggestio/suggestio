@@ -206,6 +206,12 @@ package object models {
   /** Тип формы для регистрации по email (шаг 1 - указание email). */
   type EmailPwRegReqForm_t  = Form[String]
 
+  /** Тип формы для восстановления пароля. */
+  type EmailPwRecoverForm_t = Form[String]
+
+  /** Тип формы сброса забытого пароля. */
+  type PwResetForm_t        = Form[String]
+
   /** Тип формы для второго шагоа регистрации по email: заполнение данных о себе. */
   type EmailPwConfirmForm_t = Form[EmailPwConfirmInfo]
 

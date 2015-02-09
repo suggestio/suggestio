@@ -198,6 +198,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
 
 }
 
+
 object SsRoutesService extends RoutesService.Default {
 
   override def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
@@ -213,4 +214,7 @@ object SsRoutesService extends RoutesService.Default {
     absoluteUrl(relUrl)
   }
 
+  override def loginPageUrl(implicit req: RequestHeader): String = {
+    absoluteUrl( routes.Ident.emailPwLoginForm() )
+  }
 }
