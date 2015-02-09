@@ -573,4 +573,18 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     }
   }
 
+
+  import views.html.lk.adn.create._
+
+  /** Рендер страницы с формой создания нового узла (магазина). */
+  def createNode = IsAuthGet { implicit request =>
+    val form: UsrCreateNodeForm_t = ???
+    Ok(createTpl(form))
+  }
+
+  /** Сабмит формы создания нового узла для юзера. */
+  def createNodeSubmit = IsAuthPost.async { implicit request =>
+    ???
+  }
+
 }

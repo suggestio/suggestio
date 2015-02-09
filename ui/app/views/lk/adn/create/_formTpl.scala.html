@@ -1,0 +1,17 @@
+@(cf: UsrCreateNodeForm_t)(implicit ctx: Context)
+
+@import helper._
+@import ctx._
+
+@form( CSRF(routes.MarketLkAdn.createNodeSubmit()) ) {
+
+  @inputText(
+    cf("name"),
+    '_label -> "Название магазина"
+  )
+
+  Название можно изменить в любое время.
+
+  <input type="submit" value="@Messages("Create")" />
+
+}

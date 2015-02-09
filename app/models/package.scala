@@ -218,4 +218,7 @@ package object models {
   /** Тип формы для регистрации через внешнего провайдера. */
   type ExtRegConfirmForm_t  = Form[String]
 
+  /** Тип формы создания нового узла-магазина силами юзера. */
+  type UsrCreateNodeForm_t  = Form[String]
+
 }

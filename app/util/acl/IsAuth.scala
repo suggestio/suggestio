@@ -13,7 +13,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
 
-trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
@@ -46,8 +46,15 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMa
 
 }
 
-case class IsAuthC(obeyReturnPath: Boolean)
-  extends IsAuthAbstract
-  with ExpireSession[AbstractRequestWithPwOpt]
+/** Реализация IsAuth с возможностью задания значения поля obeyReturnPath. */
+case class IsAuthC(obeyReturnPath: Boolean = true) extends IsAuthBase with ExpireSession[AbstractRequestWithPwOpt]
 
-object IsAuth extends IsAuthC(true)
+
+/** Проверка на залогиненность юзера без CSRF-дейстий. */
+object IsAuth extends IsAuthC()
+
+/** Проверка на залогиненность юзера с выставлением CSRF-токена. */
+object IsAuthGet  extends IsAuthC() with CsrfGet[AbstractRequestWithPwOpt]
+
+/** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
+object IsAuthPost extends IsAuthC() with CsrfPost[AbstractRequestWithPwOpt]
