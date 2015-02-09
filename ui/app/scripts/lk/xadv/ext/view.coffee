@@ -49,6 +49,9 @@ define [], ()->
         action = $this.attr "action"
         data = $this.serialize()
 
+        # блокировка input'ов на время обработки формы
+        $this.find("input").prop "disabled", true
+
         $.ajax(
           type: "Post"
           url: action
@@ -56,6 +59,7 @@ define [], ()->
           statusCode:
             406: ()->
               $this.find(".js-social-target_it").addClass "__error"
+              $this.find("input").prop "disabled", false
           success: (data)->
             $data = $ data
             html = $data.html()
