@@ -6,15 +6,14 @@
 @import util.cdn.CdnUtil
 @import market.lk.adn._node._installScriptTpl
 
-<html ng-app="todoApp">
+<html>
 <head>
   <title>
     @* SEO: Пытаемся рисовать разные заголовки на разных страницах. *@
     @_nodeTitleTpl(args.nodeOpt)
     @if(args.nodeOpt) { | }
-    Suggest.io @* | Мобильная таргетированная реклама в Москве и СПБ, размещение рекламы в Интернете*@
-  </title>
-  @*<meta name="description" content="Система размещения таргетированной мобильной интернет-рекламы. Более 150 рекламных локаций в Москве и Санкт-Петербурге." />*@
+    Suggest.io</title>
+  
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   @if(!ctx.isIpad) {
@@ -34,22 +33,7 @@
     <meta name="fragment" content="!"/>
   }
 
-  @* Хз, насколько надежно html-compressor пропускает этот коммент. Вроде пока работает. *@
-  <!--[if IE]>
-  <link href="@CdnUtil.asset("images/icons/114.ico")" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-  <![endif]-->
-
-  <link rel="shortcut icon" href="@CdnUtil.asset("images/icons/114.ico")" />
-
-  <link href="@CdnUtil.asset("images/icons/57.png")" rel="apple-touch-icon" sizes="57x57" type="image/png" />
-  <link href="@CdnUtil.asset("images/icons/72_ios.png")" rel="apple-touch-icon" sizes="72x72" type="image/png" />
-  <link href="@CdnUtil.asset("images/icons/114_ios.png")" rel="apple-touch-icon" sizes="114x114" type="image/png" />
-  <link href="@CdnUtil.asset("images/icons/144_ios.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
-
-  <link href="@CdnUtil.asset("images/icons/228.png")" rel="icon" sizes="228x228" type="image/png" />
-
-  @* windows 8+ metro: *@
-  <meta name="msapplication-TileImage" content="@CdnUtil.asset("images/icons/144.png")" />
+  @static._faviconsTpl()
 
   @* fb, vk, pinterest, ff-android home-screen, etc.
      TODO: У OSM.org стоит тут 120х120px. Надо разобраться, какой размер сюда стоит втыкать.

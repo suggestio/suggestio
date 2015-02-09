@@ -7,8 +7,9 @@
 @import util.cdn.CdnUtil
 
 @headAfter = {
-<link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
 
+  @static._faviconsTpl()
 }
 
 @marketBase(
