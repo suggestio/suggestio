@@ -431,6 +431,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       MAdnNode(
         companyId = "",
         adn = AdNetMemberInfo(
+          isUser          = false,
           memberType      = AdNetMemberTypes.MART,
           rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
           shownTypeIdOpt  = Some(AdnShownTypes.MART.name),

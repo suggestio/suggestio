@@ -4,6 +4,7 @@ import java.net.URL
 import models.adv._
 import models.adv.js.JsCommand
 import play.api.data._, Forms._
+import util.FormUtil
 import util.FormUtil.{urlM, esIdUuidM}
 
 /**
@@ -38,14 +39,15 @@ object ExtUtil {
           (new URL(url), Some(srv)) }
       )
     mapping(
-      "url" -> tgUrlM,
-      "id"  -> optional(esIdUuidM)
+      "url"   -> tgUrlM,
+      "name"  -> FormUtil.toStrOptM(FormUtil.nameM),
+      "id"    -> optional(esIdUuidM)
     )
-    {case ((url, srv), idOpt) =>
-      MExtTarget(url = url, service = srv, adnId = adnId, id = idOpt)
+    {case ((url, srv), nameOpt, idOpt) =>
+      MExtTarget(url = url, service = srv, adnId = adnId, id = idOpt, name = nameOpt)
     }
     {tg =>
-      val res = ((tg.url, tg.service), tg.id)
+      val res = ((tg.url, tg.service), tg.name, tg.id)
       Some(res)
     }
   }

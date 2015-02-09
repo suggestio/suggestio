@@ -82,6 +82,6 @@ case class WkHtmlArgs(
   outFmt  : OutImgFmt = WkHtmlArgs.outFmtDflt,
   quality : Option[Int] = None,
   zoomOpt : Option[Float] = None,
-  plugins : Boolean = true
+  plugins : Boolean = false
 ) extends WkHtmlArgsT
 
