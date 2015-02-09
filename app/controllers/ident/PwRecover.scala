@@ -111,8 +111,9 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
     }
   }
 
-  /** Рендер страницы, отображаемой когда запрос восстановления пароля принят. */
-  def recoverPwAccepted(email1: String) = MaybeAuth { implicit request =>   // TODO Желательно добавить CSRF-проверку
+  /** Рендер страницы, отображаемой когда запрос восстановления пароля принят.
+    * CSRF используется, чтобы никому нельзя было слать ссылку с сообщением "ваш пароль выслан вам на почту". */
+  def recoverPwAccepted(email1: String) = MaybeAuthPost { implicit request =>
     val ctx = implicitly[Context]
     val colHtml = _acceptedColTpl(email1)(ctx)
     val html = mySioStartTpl(Seq(colHtml))(ctx)
