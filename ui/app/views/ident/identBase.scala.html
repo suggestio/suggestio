@@ -4,9 +4,10 @@
    Судя по исходному дизайну: надо просто дёргать дизайн вышестоящего шаблона. *@
 
 @import market._
+@import util.cdn.CdnUtil
 
 @headAfter = {
-  <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/market/lk_new-design/lk.css")"/>
+<link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
 
 }
 
