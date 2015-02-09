@@ -679,8 +679,8 @@ label
     transition(all 0.2s ease-in-out)
 
     &:hover
-      border-color white
-      color white
+      border-color #00B994
+      color #00B994
 
   &_column-t.__color-1
     color #68b894
@@ -705,6 +705,11 @@ label
       color #cbcbcb
       background transparent
 
+      &:focus
+        border-color #7B89A4
+        background-color white
+        color #363636
+
     input[type = checkbox] + span
       font-size 10px
 
@@ -717,6 +722,7 @@ label
   &_input.__error
 
     input
+      background-color  white
       border-color      #f44040
       color             #f44040
 
