@@ -1,6 +1,5 @@
 package io.suggest.ym.model.common
 
-import io.suggest.util.MacroLogsImplLazy
 import AdnRights._
 import io.suggest.ym.model.MAdnNode
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
@@ -25,9 +24,9 @@ object AdNetMemberTypes extends Enumeration {
     /** Дефолтовая ADN-конфигурация при создании узла. Заливается в поле [[io.suggest.ym.model.MAdnNode.adn]]. */
     override def getAdnInfoDflt = {
       AdNetMemberInfo(
-        memberType = this,
-        rights = adnRights,
-        showLevelsInfo = showLevels
+        memberType      = this,
+        rights          = adnRights,
+        showLevelsInfo  = showLevels
       )
     }
   }

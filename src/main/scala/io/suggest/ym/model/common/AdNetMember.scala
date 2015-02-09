@@ -36,6 +36,7 @@ object AdNetMember {
   val SUPERVISOR_ID_ESFN  = "supId"
   val MEMBER_TYPE_ESFN    = "mType"
   val RIGHTS_ESFN         = "rights"
+  val IS_USER_ESFN        = "isUser"
 
   /** Option[String] поле, содержит id узла-делегата размещения рекламных карточек.
     * К такому узлу рекламные карточки попадают на модерацию. */
@@ -186,6 +187,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     import FieldIndexingVariants.not_analyzed
     FieldObject(ADN_ESFN, enabled = true, properties = Seq(
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
+      FieldBoolean(IS_USER_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
@@ -209,6 +211,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
           case l: jl.Iterable[_] =>
             l.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
         },
+        isUser = Option(vm get IS_USER_ESFN).fold(false)(booleanParser),
         shownTypeIdOpt = Option(vm get SHOWN_TYPE_ID_ESFN) map stringParser,
         supId = Option(vm get SUPERVISOR_ID_ESFN) map stringParser,
         advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
@@ -486,6 +489,7 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
 /** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект.
   * @param memberType Тип участника. Например, магазин.
   * @param rights Права участника сети.
+  * @param isUser Узел созданный обычным юзером.
   * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
   * @param supId Опциональный id супер-узла.
@@ -499,6 +503,7 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
 case class AdNetMemberInfo(
   memberType      : AdNetMemberType,
   rights          : Set[AdnRight],
+  isUser          : Boolean = false,
   shownTypeIdOpt  : Option[String] = None,
   supId           : Option[String] = None,
   advDelegate     : Option[String] = None,
