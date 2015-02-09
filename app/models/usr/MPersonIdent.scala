@@ -160,6 +160,8 @@ object MPersonIdent extends PlayMacroLogsImpl {
   def checkHash(password: String, hash: String): Boolean = {
     SCryptUtil.check(password, hash)
   }
+
+  def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
 }
 
 
@@ -206,6 +208,9 @@ trait EsModelStaticIdentT extends EsModelStaticT {
   override type T <: MPersonIdent
 }
 trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
+
+  import MPersonIdent.personIdQuery
+
   def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
   def generateMappingStaticFields: List[Field] = MPersonIdent.generateMappingStaticFields
   def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
@@ -218,11 +223,17 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
    * @return Список подходящих результатов в неопределённом порядке.
    */
   def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val qb = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
     prepareSearch
-      .setQuery(qb)
+      .setQuery( personIdQuery(personId) )
       .execute()
       .map { searchResp2list }
+  }
+
+  def countByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    prepareCount
+      .setQuery( personIdQuery(personId) )
+      .execute()
+      .map { _.getCount }
   }
 }
 

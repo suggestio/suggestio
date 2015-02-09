@@ -367,6 +367,8 @@ POST /id/epw/reg/return                 controllers.Ident.emailConfirmSubmit(e: 
 ## ident: вход через внешнего провайдера
 GET  /id/via/:provider			        controllers.Ident.idViaProvider(provider: usr.IdProvider, r: Option[String] ?= None)
 POST /id/via/:provider                  controllers.Ident.idViaProviderByPost(provider: usr.IdProvider, r: Option[String] ?= None)
+GET  /id/reg/ext/confirm                controllers.Ident.idpConfirm
+POST /id/reg/ext/confirm                controllers.Ident.idpConfirmSubmit
 
 
 ### Барахло от Sio-v1 (не работает, в основном):

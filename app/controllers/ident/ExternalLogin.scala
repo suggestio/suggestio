@@ -1,20 +1,24 @@
 package controllers.ident
 
 import controllers.{routes, SioController}
-import models.{ExternalCall, Context}
+import models.{ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
+import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.providers.VkProvider
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
-import util.PlayMacroLogsI
-import util.acl.MaybeAuth
+import util.{FormUtil, PlayMacroLogsI}
+import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
+import views.html.ident.mySioStartTpl
+import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
@@ -58,12 +62,19 @@ object ExternalLogin {
     }
   }
 
+
+  /** Маппинг формы подтверждения регистрации через id-провайдера. */
+  def extRegConfirmFormM: ExtRegConfirmForm_t = {
+    Form(
+      "nodeName" -> FormUtil.nameM
+    )
+  }
+
 }
 
 import ExternalLogin._
 
 trait ExternalLogin extends SioController with PlayMacroLogsI {
-
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
@@ -124,12 +135,17 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
                 Future successful (ident -> false)
             }
             saveFut.flatMap { case (ident, isNew) =>
-              val rdrUrlFut = toUrl2(request.session, ident.personId)
-              val session1 = cleanupSession(request.session) + (Security.username -> ident.personId)
-              rdrUrlFut map { url =>
-                Redirect(url)
-                  .withSession(session1)
+              val rdrFut: Future[Result] = if (isNew) {
+                Redirect(routes.Ident.idpConfirm())
+              } else {
+                val rdrUrlFut = toUrl2(request.session, ident.personId)
+                rdrUrlFut map { url =>
+                  Redirect(url)
+                }
               }
+              val session1 = cleanupSession(request.session) + (Security.username -> ident.personId)
+              rdrFut
+                .map { _.withSession(session1) }
             }
           }
 
@@ -142,6 +158,36 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
     } getOrElse {
       Future.successful(NotFound)
     }
+  }
+
+
+  /**
+   * Юзер, залогинившийся через провайдера, хочет создать ноду.
+   * @return Страницу с колонкой подтверждения реги.
+   */
+  def idpConfirm = CanConfirmIdpRegGet { implicit request =>
+    val form = extRegConfirmFormM
+    Ok( _idpConfirm(form) )
+  }
+
+  /** Общий код рендера idpConfig вынесен сюда. */
+  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+    val ctx = implicitly[Context]
+    val colHtml = _columnTpl(form)(ctx)
+    mySioStartTpl(Seq(colHtml))(ctx)
+  }
+
+  /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
+  def idpConfirmSubmit = CanConfirmIdpRegPost.async { implicit request =>
+    extRegConfirmFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+        NotAcceptable( _idpConfirm(formWithErrors) )
+      },
+      {nodeName =>
+        NotImplemented("TODO, nodeName = " + nodeName)
+      }
+    )
   }
 
 }
