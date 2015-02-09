@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{routes, MarketLk, SioController}
+import controllers.SioController
 import models.usr.EmailPwIdent
 import play.api.data._
 import play.api.data.Forms._
@@ -8,6 +8,7 @@ import util.acl._
 import util._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
+import util.ident.IdentUtil
 import views.html.ident.{mySioStartTpl, _loginColumnTpl}
 import scala.concurrent.Future
 import models._
@@ -42,9 +43,7 @@ import EmailPwSubmit._
 trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForceProtectCtl {
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
-    MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
-      callOpt getOrElse routes.Market.index()
-    }
+    IdentUtil.redirectCallUserSomewhere(personId)
   }
 
   def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]

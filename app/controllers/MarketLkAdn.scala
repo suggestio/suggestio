@@ -37,6 +37,22 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
+  /** Список личных кабинетов юзера. */
+  def lkList = IsAuthC(obeyReturnPath = false).async { implicit request =>
+    val personId = request.pwOpt.get.personId
+    val adnmsFut = MAdnNode.findByPersonId(personId)
+    val allMartsMapFut = MAdnNode.getAll()
+      .map { mmarts => mmarts.map {mmart => mmart.id.get -> mmart}.toMap }
+    for {
+      adnms <- adnmsFut
+      allMartsMap <- allMartsMapFut
+    } yield {
+      val adnmsGrouped = adnms.groupBy(_.adn.memberType)
+        .mapValues(_.sortBy(_.meta.name.toLowerCase))
+      Ok(views.html.market.lk.lkList(adnmsGrouped, allMartsMap))
+    }
+  }
+
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
    * @param adnId id узла.

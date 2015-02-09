@@ -17,7 +17,7 @@
 
   @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
   @if(showBackBtn) {
-    @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+    @defining( if(isMyNode) Some(routes.MarketLkAdn.lkList()) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
       @backCallOpt.map { backCall =>
         <a class="btn __minor __size-M def-transition" href="@backCall">Сменить магазин</a>
       }

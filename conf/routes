@@ -21,18 +21,13 @@ GET  /captcha/digital/:captchaId        controllers.Captcha.getDigitalCaptcha(ca
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
-## Главная страница маркета (и сайта тоже).
-GET  /m                                 controllers.Market.index
-
 ## Разные заманушные статические странички.
 GET  /market/about                      controllers.Market.aboutMarket
 GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
 GET  /market/booklet                    controllers.Market.marketBooklet
-GET  /market/adn/:adnId/popup           controllers.Market.adnNodePopup(adnId)
 
 ## Входы в личные кабинеты
-POST /m/lk/login                        controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /m/lk/list                         controllers.MarketLk.lkList
+GET  /m/lk/list                         controllers.MarketLkAdn.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
@@ -149,9 +144,6 @@ GET  /market/ad/one/img                 controllers.MarketShowcase.onlyOneAdAsIm
 GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
 GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
-
-# Сбор статистики.
-POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 
 # market+join: Присоединение к sio-market.

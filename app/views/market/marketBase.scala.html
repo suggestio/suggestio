@@ -38,42 +38,11 @@
     <div class="flex overflow-scrolling">
       <div class="flex @if(ctx.isIpad || ctx.isIphone){ overflow-scrolling }" >
         <div id="popupsContainer">
-          @* Попап с формой логина *@
-          @if(!ctx.isAuth) {
-
-            <div class="popup __index def-transition js-hidden js-popup" id="emailPwLoginForm">
-
-              <div class="popup_header __index">
-                <a class="popup_close f-right icon-icomoon js-close-popup" href="#"></a>
-              </div>
-
-              @views.html.ident._emailPwLoginFormTpl(
-                lf = lf getOrElse controllers.ident.EmailPwSubmit.emailPwLoginFormM,
-                submitCall = routes.MarketLk.emailPwLoginFormSubmit()
-              )
-
-            </div>
-          }
-
           @popupContent
-
         </div>
       </div>
-
     </div>
   </div>
-
-
-  <!--<div class="slider-w">
-    <div class="slider_window">
-      <div class="slider_cnt" id="indexSlider"></div>
-    </div>
-    <div class="slider_controls">
-      <a class="slider_control __left-arrow icon-icomoon"></a>
-      <a class="slider_control __right-arrow icon-icomoon"></a>
-    </div>
-  </div>-->
-
 
   <div class="footer __responsive __fill-1">
     <div class="footer_cnt __index">
@@ -87,11 +56,6 @@
       <a class="auth-page_link" href="@ctx.SC_URL_PREFIX@routes.Market.marketBooklet">Как это работает?</a>
 
       <a class="auth-page_adv-link" href="@ctx.LK_URL_PREFIX@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
-
-      @*<!--<div class="socials">
-        <a class="fb" href="#">Facebook</a>
-        <a class="tw" href="#">Twitter</a>
-      </div>-->*@
 
     </div>
   </div>

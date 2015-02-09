@@ -46,13 +46,6 @@
             }
           }
         </p>
-        @adStatActionsSeq.map { case (asa, txt) =>
-          @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
-            @form( routes.Market.adStats(adnNodeId, adId = mad.id.get, action = asa.toString) ) {
-              <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">Имитировать @Messages(txt)</a>
-            }
-          }
-        }
       }
 
       @mad.id.flatMap(rcvrsMap.get).map { rcvrs =>
