@@ -2,4 +2,12 @@
 
 @* Подложка для market-join-шаблонов. *@
 
-@market.marketBase(title)(content)
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/market/lk_new-design/lk.css")"/>
+
+}
+
+@market.marketBase(
+  title = title,
+  headAfter = Some(headAfter)
+)(content)

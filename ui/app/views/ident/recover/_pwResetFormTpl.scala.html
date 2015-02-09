@@ -2,37 +2,33 @@
 
 @import ctx._
 @import helper._
+@import util.FC.authFc
+
 
 @form(CSRF(routes.Ident.pwResetSubmit(ea.id.get)), 'id -> "pwResetPasswordForm") {
-  <div class="popup_cnt __index">
 
-    <div class="popup_t __index">
-      Новый пароль
-    </div>
+  @prf.globalError.map { ge =>
+    <p class="error-msg">Ошибка: @Messages(ge.message)</p>
+  }
 
-    @defining( Messages("Type.new.password") ) { msg =>
-      @inputPassword(
-        prf("pw1"),
-        '_label       -> msg,
-        'placeholder  -> msg
-      )
-    }
+  @defining( Messages("Type.new.password") ) { msg =>
+    @inputPassword(
+      prf("pw1"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
 
-    @defining( Messages("Confirm.new.password") ) { msg =>
-      @inputPassword(
-        prf("pw2"),
-        '_label       -> msg,
-        'placeholder  -> msg
-      )
-    }
+  @defining( Messages("Confirm.new.password") ) { msg =>
+    @inputPassword(
+      prf("pw2"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
 
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __major" type="submit" value='@Messages("Save")'/>
   </div>
 
-  <div class="popup_footer __index">
-
-    <div class="btn-w __size-M">
-      <input class="siom-new-btn __size-XS __fill-1" type="submit" value='@Messages("Save")'/>
-    </div>
-
-  </div>
 }
