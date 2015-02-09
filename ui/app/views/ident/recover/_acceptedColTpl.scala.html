@@ -2,25 +2,15 @@
 
 @* Колонка с версткой сообщения об успехе при отправке сообщения восстановления пароля. *@
 
-<div class="popup_cnt __index-fix">
 
-  <div class="success-icon popup_success-icon"></div>
 
-  <h2 class="popup_t __index">
-    Запрос на восстановление одобрен
-  </h2>
-
-  <p class="block __margin-L __text-C">
-    На адрес <a class="link" href="mailto:@email">@email</a> будет отправлено письмо, содержащее ссылку для восстановления пароля.
+  <p class="email-success_t">
+    На адрес <a class="link" href="mailto:@email">@email</a> будет отправлено письмо,<br/> содержащее ссылку для восстановления пароля.<br/>
     Проверьте ваш почтовый ящик.
   </p>
 
-</div>
-
-<div class="popup_footer">
 
   <div class="btn-w __size-M">
-    <a class="siom-new-btn __color-2 __size-XS js-remove-popup" href="@routes.Ident.mySioStartPage()">Назад</a>
+    <a class="btn __size-M1 __minor" href="@routes.Ident.mySioStartPage()">Назад</a>
   </div>
 
-</div>
