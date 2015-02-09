@@ -34,15 +34,15 @@ trait CanConfirmIdpRegBase extends ActionBuilder[AbstractRequestWithPwOpt] with 
           } else {
             // Юзер пока не имеет узлов.
             hasExtIdent flatMap {
-              case false =>
-                LOGGER.debug(s"User[${pw.personId}] has no MExtIdents. IdP reg not allowed.")
-                onAlreadyConfirmed(pw, request)
-
               case true =>
                 srmFut flatMap { srm =>
                   val req1 = RequestWithPwOpt(pwOpt, request, srm)
                   block(req1)
                 }
+
+              case false =>
+                LOGGER.debug(s"User[${pw.personId}] has no MExtIdents. IdP reg not allowed.")
+                onAlreadyConfirmed(pw, request)
             }
           }
         }

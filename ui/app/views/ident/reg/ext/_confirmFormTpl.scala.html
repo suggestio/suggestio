@@ -6,7 +6,7 @@
 @import helper._
 @import ctx._
 
-@form(CSRF( ??? )) {
+@form( CSRF(routes.Ident.idpConfirmSubmit()) ) {
 
   @inputText(elf("nodeName"), '_label -> "Название магазина")
 

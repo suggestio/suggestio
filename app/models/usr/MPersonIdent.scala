@@ -124,10 +124,16 @@ object MPersonIdent extends PlayMacroLogsImpl {
       // TODO ограничить возвращаемые поля только необходимыми
       .execute()
       .map { searchResp =>
-        searchResp.getHits.getHits.map { hit =>
+        searchResp.getHits.getHits.flatMap { hit =>
+          val idOpt = Option(hit.getId)
+          val src = hit.getSource
+          val vsnOpt = rawVersion2versionOpt(hit.getVersion)
           hit.getType match {
             case EmailPwIdent.ES_TYPE_NAME =>
-              EmailPwIdent.deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion)).email
+              val email = EmailPwIdent.deserializeOne(idOpt, src, vsnOpt).email
+              Seq(email)
+            case MExtIdent.ES_TYPE_NAME =>
+              MExtIdent.deserializeOne(idOpt, src, vsnOpt).email
           }
         }
       }

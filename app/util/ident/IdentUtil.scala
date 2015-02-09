@@ -1,9 +1,11 @@
 package util.ident
 
 import controllers.{routes, MarketLk}
+import models.usr.MExtIdent
 import play.api.mvc._
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -14,8 +16,24 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 object IdentUtil {
 
   def redirectCallUserSomewhere(personId: String): Future[Call] = {
-    MarketLk.getMarketRdrCallFor(personId) map {
-      _ getOrElse routes.Market.index() // Был раньше Admin.index(), но кравлер пока выпилен ведь.
+    MarketLk.getMarketRdrCallFor(personId) flatMap {
+      // Уже ясно куда редиректить юзера
+      case Some(rdr) =>
+        Future successful rdr
+
+      // У юзера нет узлов
+      case None =>
+        // TODO Отправить на форму регистрации, если логин через внешнего id прова.
+        val idpIdsCntFut = MExtIdent.countByPersonId(personId)
+        idpIdsCntFut map {
+          // Есть идентификации через соц.сети. Вероятно, юзер не закончил регистрацию.
+          case n if n > 0L =>
+            routes.Ident.idpConfirm()
+
+          // Нет узлов, залогинился через emailPW, отправить в lkList
+          case _ =>
+            routes.MarketLk.lkList()
+        }
     }
   }
 
