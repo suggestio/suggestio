@@ -1,11 +1,8 @@
-@(adnNodes: Seq[MAdnNode])(implicit ctx: Context)
+@(reason: Option[String] = None)(implicit ctx: Context)
 
-@import market._
+@* Верстка страницы, которая отображает проблемы при восстановлении пароля. *@
 
-@* Страница сообщает о проблеме при восстановлении пароля. *@
-
-@popupContent = {
-
+@html = {
   <div class="popup js-popup __index" id="newPasswordForm">
 
     <div class="popup_header __index">
@@ -31,13 +28,6 @@
     </div>
 
   </div>
-
 }
 
-@marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
-
-  @_indexTpl(adnNodes)
-
-}
-
-
+@views.html.ident.mySioStartTpl(Seq(html))

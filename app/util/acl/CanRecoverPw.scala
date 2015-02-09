@@ -4,7 +4,7 @@ import models.usr.{EmailActivation, EmailPwIdent}
 import util._
 import play.api.mvc._
 import util.ident.IdentUtil
-import views.html.ident._, recover._
+import views.html.ident.recover._
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import models._
@@ -32,10 +32,9 @@ trait CanRecoverPwBase extends ActionBuilder[RecoverPwRequest] {
   def eActId: String
 
   protected def keyNotFound(implicit request: RequestHeader): Future[Result] = {
-    MarketIndexAccess.getNodes.map { nodes =>
-      implicit val ctx = new ContextImpl
-      Results.NotFound(pwRecoverFailedTpl(nodes))
-    }
+    implicit val ctx = new ContextImpl
+    val res = Results.NotFound(failedColTpl())
+    Future successful res
   }
 
   override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {

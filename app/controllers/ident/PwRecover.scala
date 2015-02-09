@@ -8,6 +8,7 @@ import util.acl._
 import util._
 import util.ident.IdentUtil
 import util.mail.MailerWrapper
+import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -102,7 +103,7 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
           } map { _ =>
             // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
             rmCaptcha(formBinded){
-              Redirect(routes.Ident.recoverPwAccepted(email1))
+              Redirect( CSRF(routes.Ident.recoverPwAccepted(email1)) )
             }
           }
         }
@@ -111,7 +112,7 @@ trait PwRecover extends SioController with PlayMacroLogsI with CaptchaValidator 
   }
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят. */
-  def recoverPwAccepted(email1: String) = MaybeAuth { implicit request =>
+  def recoverPwAccepted(email1: String) = MaybeAuthPost { implicit request =>
     val ctx = implicitly[Context]
     val colHtml = _acceptedColTpl(email1)(ctx)
     val html = mySioStartTpl(Seq(colHtml))(ctx)
