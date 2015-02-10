@@ -57,10 +57,15 @@ define [], ()->
           url: action
           data: data
           statusCode:
-            406: ()->
-              $this.find(".js-social-target_it").addClass "__error"
-              $this.find("input").prop "disabled", false
+            406: (data)->
+              console.log "406"
+              console.log data
+              $data = $ data.responseText
+              html = $data.html()
+              $this.html html
           success: (data)->
+            console.log "success"
+            console.log data
             $data = $ data
             html = $data.html()
             $this.html html

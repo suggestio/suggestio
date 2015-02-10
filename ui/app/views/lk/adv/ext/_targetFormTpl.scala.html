@@ -18,7 +18,13 @@
 
       <a class="social-target_delete close js-delete-social-target" href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>
 
-      <div class="social-target_name">
+      <div class="social-target_left">
+        @inputText(
+          tf("tg.name"),
+          '_label -> "Название",
+          '_class -> "js-social-target_it"
+        )
+
         @inputText(
           tf("tg.url"),
           '_label -> "Ссылка на группу",
@@ -26,16 +32,20 @@
         )
       </div>
 
-      <div class="social-target_option-lst">
+      <div class="social-target_right">
 
-        @defining( tf("return").value ) { v =>
-          @adv.MExtReturns.values.iterator.map { mret =>
-            <label class="social-target_option">
-              <input class="js-social-target_option" type="checkbox" data-xname="return" value="@mret" name="return" @if(v contains mret.strId) {checked="checked"}/>
-              <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
-            </label>
+        <div class="social-target_option-lst">
+
+          @defining( tf("return").value ) { v =>
+            @adv.MExtReturns.values.iterator.map { mret =>
+              <label class="social-target_option">
+                <input class="js-social-target_option" type="checkbox" data-xname="return" value="@mret" name="return" @if(v contains mret.strId) {checked="checked"}/>
+                <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
+              </label>
+            }
           }
-        }
+
+        </div>
 
       </div>
 
