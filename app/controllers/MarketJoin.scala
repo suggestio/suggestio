@@ -195,7 +195,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       meta = MCompanyMeta(name = companyName, officePhones = List(phone))
     )
     val node = MAdnNode(
-      companyId = "",
+      companyId = None,
       meta = AdnMMetadata(
         name            = companyName,
         address         = Option(address),

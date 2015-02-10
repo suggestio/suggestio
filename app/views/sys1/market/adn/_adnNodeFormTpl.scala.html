@@ -63,6 +63,7 @@
         @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
           <select name="@ciField.name">
             <option disabled>@Messages("Company")-@Messages("Owner")</option>
+            <option value=""></option>
             @companies.map { mcompany =>
               <option value="@mcompany.id"@if(mcompany.id contains currCompanyId) {selected}>@mcompany.meta.name</option>
             }

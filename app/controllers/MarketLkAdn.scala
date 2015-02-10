@@ -4,7 +4,7 @@ import _root_.util.async.AsyncUtil
 import controllers.ident._
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import util.billing.Billing
-import util.PlayMacroLogsImpl
+import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
 import play.api.Play.current
@@ -576,15 +576,31 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   import views.html.lk.adn.create._
 
+  /** Маппинг формы создания нового узла (магазина). */
+  private def createNodeFormM: UsrCreateNodeForm_t = {
+    // TODO Добавить капчу.
+    Form(
+      "name" -> FormUtil.nameM
+    )
+  }
+
   /** Рендер страницы с формой создания нового узла (магазина). */
   def createNode = IsAuthGet { implicit request =>
-    val form: UsrCreateNodeForm_t = ???
+    val form = createNodeFormM
     Ok(createTpl(form))
   }
 
   /** Сабмит формы создания нового узла для юзера. */
   def createNodeSubmit = IsAuthPost.async { implicit request =>
-    ???
+    createNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+        NotAcceptable(createTpl(formWithErrors))
+      },
+      {nodeName =>
+        ???
+      }
+    )
   }
 
 }

@@ -101,7 +101,7 @@
           @companies.map { _companies =>
             <td>
               <div class="siom-cell-cnt __size-M">
-                @_companies.get(adnNode.companyId).map { mc =>
+                @adnNode.companyId.flatMap(_companies.get).map { mc =>
                   <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
                 }
               </div>

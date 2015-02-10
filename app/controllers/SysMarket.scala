@@ -188,7 +188,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
     val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
-    val companyOptFut = MCompany.getById(adnNode.companyId)
+    val companyOptFut = adnNode.getCompany
     for {
       slaves <- slavesFut
       companyOpt <- companyOptFut
@@ -388,9 +388,9 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   private def personIdsKM = "personIds" -> personIdsM
 
   /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
-  def getAdnNodeFormM(companyM: Mapping[String]): Form[MAdnNode] = {
+  def getAdnNodeFormM(companyM: Mapping[String] = esIdM): Form[MAdnNode] = {
     Form(mapping(
-      "companyId" -> companyM, adnKM, metaKM, confKM, personIdsKM
+      "companyId" -> optional(companyM), adnKM, metaKM, confKM, personIdsKM
     )
     {(companyId, anmi, meta, conf, personIds) =>
       MAdnNode(
@@ -406,7 +406,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       Some((companyId, adn, meta, conf, personIds))
     })
   }
-  private def adnNodeFormM = getAdnNodeFormM(esIdM)
+  private def adnNodeFormM = getAdnNodeFormM()
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
     supIdOpt match {
@@ -429,7 +429,6 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     val dfltFormM = adnNodeFormM.fill(
       MAdnNode(
-        companyId = "",
         adn = AdNetMemberInfo(
           isUser          = false,
           memberType      = AdNetMemberTypes.MART,

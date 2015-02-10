@@ -244,7 +244,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
     previoslyExistedFut flatMap { previoslyExisted =>
       waSavedIdOptFut flatMap { waSavedIdOpt =>
         val adnNode = adnNode0.copy(
-          companyId = mcId,
+          companyId = Some(mcId),
           meta = adnNode0.meta.copy(
             welcomeAdId = waSavedIdOpt
           )
