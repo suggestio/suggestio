@@ -10,7 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
-import securesocial.core.providers.{FacebookProvider, VkProvider}
+import securesocial.core.providers.{TwitterProvider, FacebookProvider, VkProvider}
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
 import util.adn.NodesUtil
@@ -41,10 +41,10 @@ object ExternalLogin extends PlayMacroLogsDyn {
       override def userService: UserService[SsUser] = SsUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
-        val provs = Iterator(VkProvider, FacebookProvider)
+        val provs = Iterator(VkProvider, FacebookProvider, TwitterProvider)
           .flatMap { provSt =>
             try {
-              Seq( provSt(routes, cacheService, oauth2ClientFor(provSt.name)) )
+              Seq( provSt(routes, cacheService, httpService) )
             } catch {
               case ex: Throwable =>
                 LOGGER.warn("Cannot initialize " + provSt.getClass.getSimpleName, ex)

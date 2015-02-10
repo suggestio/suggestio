@@ -113,7 +113,7 @@ libraryDependencies ++= Seq(
     exclude("org.w3c.css", "sac")
   ,
   // Логин через соц.сети
-  "io.suggest" %% "securesocial" % "3.3.1-SNAPSHOT"
+  "io.suggest" %% "securesocial" % "3.4.0-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
