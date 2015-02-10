@@ -311,9 +311,10 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
     "supId"         -> optional(esIdM),
     "advDelegate"   -> optional(esIdM),
     "testNode"      -> boolean,
+    "isUser"        -> boolean,
     "sink"          -> adnSinksM
   )
-  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, sinks) =>
+  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, isUser, sinks) =>
     mt.getAdnInfoDflt.copy(
       isEnabled = isEnabled,
       rights    = rights,
@@ -322,12 +323,13 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       supId     = supId,
       advDelegate = advDgOpt,
       testNode  = isTestNode,
+      isUser    = isUser,
       sinks     = sinks
     )
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, sinks))
+    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, isUser, sinks))
   }
 
 
@@ -557,6 +559,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
         supId       = adnNode2.adn.supId,
         advDelegate = adnNode2.adn.advDelegate,
         testNode    = adnNode2.adn.testNode,
+        isUser      = adnNode2.adn.isUser,
         sinks       = adnNode2.adn.sinks
       ),
       conf = adnNode.conf.copy(
