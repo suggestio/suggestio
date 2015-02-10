@@ -279,8 +279,13 @@ module.exports = function (grunt) {
 	      return matchedWord + ' Bar';
 	    }
 	  },*/
-	  {from: /^\s+/mg, to: ''},
-	  {from: /\s\s+/mg, to: ' '}
+	  //{from: /@\*.*?\*@/mg, to: ''},  /* strip twirl comments - not tested. */
+	  {from: /^\s+/mg, to: ''},	    /* strip BOL offsets */
+	  {from: /\s\s+/mg, to: ' '},	    /* strip 2+ whitespaces */
+	  {from: />[\n\r]+/mg, to: '>'},    /* strip newlines after html tags */
+	  {from: /[\n\r]+}/mg, to: '}'},
+	  {from: '\s+\/>', to: ''}
+	  //{from: /}[\n\r]+/mg, to: '}'}   /* ломает импорты! */
 	]
       }
     },

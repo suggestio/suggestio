@@ -43,9 +43,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     val personId = request.pwOpt.get.personId
     val mnodesFut = MAdnNode.findByPersonId(personId)
     for {
-      mnodes <- mnodesFut
+      fromNodeOpt <- fromAdnId.fold(Future successful Option.empty[MAdnNode])(MAdnNodeCache.getById)
+      mnodes      <- mnodesFut
     } yield {
-      Ok(views.html.market.lk.lkList(mnodes, fromAdnId))
+      Ok(views.html.market.lk.lkList(mnodes, fromNodeOpt))
     }
   }
 

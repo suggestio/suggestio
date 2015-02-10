@@ -1,8 +1,8 @@
-@(mnodes: Seq[MAdnNode], currAdnId: Option[String])(implicit ctx: Context)
+@(mnodes: Seq[MAdnNode], currNode: Option[MAdnNode])(implicit ctx: Context)
 
 @* Список узлов (личных кабинетов) юзера. *@
 
-@lkBase("Моя рекламная сеть") {
+@lkBase("Моя рекламная сеть", nodeOpt = currNode) {
 
   <div class="viewport">
     <article class="page_cnt">
@@ -12,12 +12,14 @@
       <span class="node-list_size">@mnodes.size</span>
 
       <div class="node-list">
+        @defining( currNode.flatMap(_.id) ) { currAdnId =>
         @mnodes.map { mnode =>
           <div class="node-list_i">
             @* Текущему магазину добавлять класс __current. *@
             <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
                href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">@mnode.meta.name</a>
           </div>
+        }
         }
       </div>
 
