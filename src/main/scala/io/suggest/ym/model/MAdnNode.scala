@@ -41,10 +41,7 @@ object MAdnNode
 
   override protected def dummy(id: Option[String], version: Option[Long]) = {
     MAdnNode(
-      companyId = null,
-      personIds = Set.empty,
       adn = null,
-      meta = null,
       id = id,
       versionOpt = version
     )
