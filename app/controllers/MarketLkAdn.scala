@@ -39,18 +39,13 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /** Список личных кабинетов юзера. */
-  def lkList = IsAuthC(obeyReturnPath = false).async { implicit request =>
+  def lkList(fromAdnId: Option[String]) = IsAuthC(obeyReturnPath = false).async { implicit request =>
     val personId = request.pwOpt.get.personId
-    val adnmsFut = MAdnNode.findByPersonId(personId)
-    val allMartsMapFut = MAdnNode.getAll()
-      .map { mmarts => mmarts.map {mmart => mmart.id.get -> mmart}.toMap }
+    val mnodesFut = MAdnNode.findByPersonId(personId)
     for {
-      adnms <- adnmsFut
-      allMartsMap <- allMartsMapFut
+      mnodes <- mnodesFut
     } yield {
-      val adnmsGrouped = adnms.groupBy(_.adn.memberType)
-        .mapValues(_.sortBy(_.meta.name.toLowerCase))
-      Ok(views.html.market.lk.lkList(adnmsGrouped, allMartsMap))
+      Ok(views.html.market.lk.lkList(mnodes, fromAdnId))
     }
   }
 

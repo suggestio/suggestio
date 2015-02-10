@@ -47,7 +47,7 @@ object ExternalLogin extends PlayMacroLogsDyn {
               Seq( provSt(routes, cacheService, oauth2ClientFor(provSt.name)) )
             } catch {
               case ex: Throwable =>
-                LOGGER.warn("Cannot initialize provider " + provSt, ex)
+                LOGGER.warn("Cannot initialize " + provSt.getClass.getSimpleName, ex)
                 Nil
             }
           }

@@ -38,7 +38,7 @@
 <body class="lk">
 
     <header class="header">
-      <a class="header_logo-link" href="@routes.MarketLkAdn.lkList()">
+      <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
         <img class="header_logo-image" src='@routes.Assets.versioned("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
       </a>
 
@@ -63,7 +63,7 @@
       }*@
 
 
-      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList">Сменить магазин</a>
+      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">Сменить магазин</a>
 
     </header>
 

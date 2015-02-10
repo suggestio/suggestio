@@ -27,7 +27,7 @@ GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
 GET  /market/booklet                    controllers.Market.marketBooklet
 
 ## Входы в личные кабинеты
-GET  /m/lk/list                         controllers.MarketLkAdn.lkList
+GET  /m/lk/list                         controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/create/node                    controllers.MarketLkAdn.createNode
 GET  /lk/create/node                    controllers.MarketLkAdn.createNodeSubmit
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)

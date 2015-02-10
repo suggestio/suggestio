@@ -1,7 +1,6 @@
-@(ng: Map[AdNetMemberType, Seq[MAdnNode]], martsMap: Map[String, MAdnNode])(implicit ctx: Context)
+@(mnodes: Seq[MAdnNode], currAdnId: Option[String])(implicit ctx: Context)
 
-@* Список личных кабинетов юзера. *@
-@import AdNetMemberTypes._
+@* Список узлов (личных кабинетов) юзера. *@
 
 @lkBase("Моя рекламная сеть") {
 
@@ -10,28 +9,20 @@
 
       <h1 class="page_title">Выбор магазина</h1>
 
-      @* Обработка карты сделана через partial-функцию, чтобы при добавлении новых типов компилятор автоматом
-         выдавал warning при сборке. *@
-      @ng.map {
-        case (_, adnNodes) => {
-
-          <div class="node-list">
-            @adnNodes.zipWithIndex.map { case (adnNode, i) =>
-              <div class="node-list_i">
-                @* TODO текущему магазину добавлять класс __current для .node-list_i-link *@
-                <a class="node-list_i-link" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
-              </div>
-            }
+      <div class="node-list">
+        @mnodes.map { mnode =>
+          <div class="node-list_i">
+            @* TODO текущему магазину добавлять класс __current для .node-list_i-link *@
+            <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
+               href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">@mnode.meta.name</a>
           </div>
-
         }
-      }
+      </div>
 
       @* Кнопка создания магазина. *@
       <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">Добавить магазин</a>
 
     </article>
   </div>
-
 
 }
