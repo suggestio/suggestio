@@ -36,6 +36,9 @@ object MBillContract extends SqlModelStatic with FromJson {
 
   private def idFormatter = new DecimalFormat("000")
 
+  /** При создании контракта дефолтовое значение суффикса. */
+  lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("bill.contract.suffix.dflt") getOrElse "CEO"
+
   val ID_FN             = "id"
   val ADN_ID_FN         = "adn_id"
   val CRAND_FN          = "crand"
@@ -249,19 +252,24 @@ object MBillContract extends SqlModelStatic with FromJson {
     }
   }
 
+  /** Псевдослучайное число от 101 до 999. Избегаем нулей, чтобы не путали с буквой 'O'. */
+  def crand(): Int = {
+    rnd.nextInt(898) + 101
+  }
+
 }
 
 import MBillContract._
 
 final case class MBillContract(
   adnId         : String,
-  contractDate  : DateTime,
-  suffix        : Option[String] = None,
-  dateCreated   : DateTime = DateTime.now,
-  hiddenInfo    : Option[String] = None,
-  isActive      : Boolean = true,
-  crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
-  id            : Option[Int] = None
+  contractDate  : DateTime        = DateTime.now,
+  suffix        : Option[String]  = Some(MBillContract.CONTRACT_SUFFIX_DFLT),
+  dateCreated   : DateTime        = DateTime.now,
+  hiddenInfo    : Option[String]  = None,
+  isActive      : Boolean         = true,
+  crand         : Int             = MBillContract.crand(),
+  id            : Option[Int]     = None
 ) extends SqlModelSave with ToPlayJsonObj with SqlModelDelete {
 
   def hasId: Boolean = id.isDefined

@@ -1,4 +1,4 @@
-@(tf: Form[_], submitCall: Call)(implicit ctx: Context)
+@(tf: Form[_], submitCall: Call, tgOpt: Option[adv.MExtTarget])(implicit ctx: Context)
 
 @* Форма добавления новой цели. *@
 
@@ -25,8 +25,8 @@
           '_class -> "js-social-target_it"
         )
 
-        @* TODO добавлять класс __vk, __fb, __tw при определении соц сети по url *@
-        <div class="social-target_icon"></div>
+        @* Иконка соц-сети, если есть. *@
+        <div class="social-target_icon @tgOpt.map(tg =>"__" + tg.service)"></div>
 
         @inputText(
           tf("tg.url"),

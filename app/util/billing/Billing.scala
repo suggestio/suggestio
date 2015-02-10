@@ -49,12 +49,7 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
       MBillContract.lockTableWrite
       val currentContracts = MBillContract.findForAdn(adnId)
       if (currentContracts.isEmpty) {
-        val mbc = MBillContract(
-          adnId = adnId,
-          contractDate = DateTime.now(),
-          suffix = Some(SysMarketBilling.CONTRACT_SUFFIX_DFLT),
-          isActive = true
-        ).save
+        val mbc = MBillContract(adnId = adnId).save
         Some(mbc)
       } else {
         None

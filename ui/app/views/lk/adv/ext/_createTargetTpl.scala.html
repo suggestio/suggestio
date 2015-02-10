@@ -1,4 +1,4 @@
-@(adnId: String, tf: Form[_])(implicit ctx: Context)
+@(adnId: String, tf: Form[_], tgOpt: Option[adv.MExtTarget] = None)(implicit ctx: Context)
 
 @* Окошко для добавления новой внешней PR-цели. *@
 
@@ -7,5 +7,6 @@
 
 @_targetFormTpl(
   tf          = tf,
-  submitCall  = CSRF( routes.LkAdvExt.writeTargetSubmit(adnId) )
+  submitCall  = CSRF( routes.LkAdvExt.writeTargetSubmit(adnId) ),
+  tgOpt       = tgOpt
 )

@@ -3,11 +3,11 @@ package models
 import anorm._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.ToPlayJsonObj
-import io.suggest.util.MacroLogsImplLazy
 import play.api.libs.json.{JsString, JsNumber, JsObject}
 import util.SqlModelSave
 import java.sql.Connection
 import java.{util => ju}
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -33,6 +33,7 @@ object MBillMmpDaily extends FindByContract with FromJson {
   val WEEKEND_CAL_ID_FN = "weekend_cal_id"
   val PRIME_CAL_ID_FN   = "prime_cal_id"
   val ON_RCVR_CAT_FN    = "on_rcvr_cat"
+
 
   val rowParser = {
     get[Option[Int]](ID_FN) ~ get[Int](CONTRACT_ID_FN) ~ get[Float](MMP_WEEKDAY_FN) ~
@@ -81,6 +82,20 @@ object MBillMmpDaily extends FindByContract with FromJson {
         id            = Option(jmap get ID_FN) map intParser
       )
   }
+
+  object Dflts {
+    // Дефолтовые значения для формы создания нового mmp-тарификатора.
+    val CURRENCY_CODE   = configuration.getString("sys.mmp.daily.currency.code.dflt")
+      .fold(CurrencyCodeOpt.CURRENCY_CODE_DFLT)(_.toUpperCase)
+    val WEEKDAY         = configuration.getDouble("sys.mmp.daily.weekday.dflt").fold(1.0F)(_.toFloat)
+    val WEEKEND         = configuration.getDouble("sys.mmp.daily.weekend.dflt").fold(1.5F)(_.toFloat)
+    val PRIME           = configuration.getDouble("sys.mmp.daily.prime.dflt").fold(2.0F)(_.toFloat)
+    val ON_START_PAGE   = configuration.getDouble("sys.mmp.daily.on.startPage.dflt").fold(4.0F)(_.toFloat)
+    val ON_RCVR_CAT     = configuration.getDouble("sys.mmp.daily.on.rcvrCat.dflt").fold(2.0F)(_.toFloat)
+    val CAL_ID_WEEKEND  = configuration.getString("sys.mmp.daily.calId.weekend") getOrElse ""
+    val CAL_ID_PRIME    = configuration.getString("sys.mmp.daily.calId.prime") getOrElse CAL_ID_WEEKEND
+  }
+
 }
 
 
@@ -89,14 +104,14 @@ import MBillMmpDaily._
 
 final case class MBillMmpDaily(
   contractId    : Int,
-  mmpWeekday    : Float,
-  mmpWeekend    : Float,
-  mmpPrimetime  : Float,
-  onRcvrCat     : Float,
-  onStartPage   : Float,
-  weekendCalId  : String,
-  primeCalId    : String,
-  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
+  mmpWeekday    : Float   = MBillMmpDaily.Dflts.WEEKDAY,
+  mmpWeekend    : Float   = MBillMmpDaily.Dflts.WEEKEND,
+  mmpPrimetime  : Float   = MBillMmpDaily.Dflts.PRIME,
+  onRcvrCat     : Float   = MBillMmpDaily.Dflts.ON_RCVR_CAT,
+  onStartPage   : Float   = MBillMmpDaily.Dflts.ON_START_PAGE,
+  weekendCalId  : String  = MBillMmpDaily.Dflts.CAL_ID_WEEKEND,
+  primeCalId    : String  = MBillMmpDaily.Dflts.CAL_ID_PRIME,
+  currencyCode  : String  = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   id            : Option[Int] = None
 ) extends SqlModelSave with CurrencyCode with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
 

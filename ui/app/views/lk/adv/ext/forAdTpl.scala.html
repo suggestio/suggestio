@@ -18,7 +18,7 @@
   </div>
 
   @targets.iterator.zipWithIndex.map { case (target, i) =>
-    @_createTargetTpl(target.adnId, formForTarget(target))
+    @_createTargetTpl(target.adnId, formForTarget(target), Some(target))
   }
 
   @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> "js-social-target-list" ) {

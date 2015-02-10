@@ -25,29 +25,8 @@ object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  // Дефолтовые значения для формы создания нового mmp-тарификатора.
-  lazy val MMP_CURRENCY_CODE_DFLT = configuration.getString("sys.mmp.daily.currency.code.dflt")
-    .fold(CurrencyCodeOpt.CURRENCY_CODE_DFLT)(_.toUpperCase)
-  lazy val MMP_WEEKDAY_DFLT     = configuration.getDouble("sys.mmp.daily.weekday.dflt").fold(1.0F)(_.toFloat)
-  lazy val MMP_WEEKEND_DFLT     = configuration.getDouble("sys.mmp.daily.weekend.dflt").fold(1.5F)(_.toFloat)
-  lazy val MMP_PRIME_DFLT       = configuration.getDouble("sys.mmp.daily.prime.dflt").fold(2.0F)(_.toFloat)
-  lazy val MMP_ON_START_PAGE_DFLT = configuration.getDouble("sys.mmp.daily.on.startPage.dflt").fold(4.0F)(_.toFloat)
-  lazy val MMP_ON_RCVR_CAT_DFLT = configuration.getDouble("sys.mmp.daily.on.rcvrCat.dflt").fold(2.0F)(_.toFloat)
-  lazy val MMP_CAL_ID_WEEKEND   = configuration.getString("sys.mmp.daily.calId.weekend") getOrElse ""
-  lazy val MMP_CAL_ID_PRIME     = configuration.getString("sys.mmp.daily.calId.prime") getOrElse MMP_CAL_ID_WEEKEND
-
   def defaultMmpDaily = {
-    MBillMmpDaily(
-      contractId    = -1,
-      currencyCode  = MMP_CURRENCY_CODE_DFLT,
-      mmpWeekday    = MMP_WEEKDAY_DFLT,
-      mmpWeekend    = MMP_WEEKEND_DFLT,
-      mmpPrimetime  = MMP_PRIME_DFLT,
-      onRcvrCat     = MMP_ON_RCVR_CAT_DFLT,
-      onStartPage   = MMP_ON_START_PAGE_DFLT,
-      weekendCalId  = MMP_CAL_ID_WEEKEND,
-      primeCalId    = MMP_CAL_ID_PRIME
-    )
+    MBillMmpDaily(contractId = -1)
   }
 
   /** Маппинг формы для daly-тарификатора. */

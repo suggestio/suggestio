@@ -28,10 +28,6 @@ object SysMarketBilling extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** При создании контракта дефолтовое значение суффикса. */
-  lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("sys.billing.contract.suffix.dflt") getOrElse "CEO"
-
-
   /** Внутренний маппинг для даты LocalDate. */
   private def bDate = localDateM
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
@@ -101,10 +97,8 @@ object SysMarketBilling extends SioControllerImpl with PlayMacroLogsImpl {
     getNodeAndSupAsync(adnId) map {
       case Some((adnNode, supOpt)) =>
         val mbcStub = MBillContract(
-          adnId = adnId,
-          contractDate = DateTime.now,
-          suffix = Some(CONTRACT_SUFFIX_DFLT),
-          isActive = true
+          adnId         = adnId,
+          isActive      = true
         )
         val formM = contractFormM fill mbcStub
         Ok(createContractFormTpl(adnNode, supOpt, formM))

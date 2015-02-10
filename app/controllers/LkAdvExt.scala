@@ -205,14 +205,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(_createTargetTpl(adnId, formWithErrors))
+        NotAcceptable(_createTargetTpl(adnId, formWithErrors, request.tgExisting))
       },
       {case (tg, ret) =>
         tg.save.map { tgId =>
           // Вернуть форму с выставленным id.
           val tg2 = tg.copy(id = Some(tgId))
           val form = request.newTgForm fill (tg2, ret)
-          Ok(_createTargetTpl(adnId, form))
+          Ok(_createTargetTpl(adnId, form, Some(tg2)))
         }
       }
     )
