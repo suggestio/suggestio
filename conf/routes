@@ -331,6 +331,9 @@ POST /sys/ai/mad/edit/:id                controllers.SysAi.editMadAiSubmit(id)
 POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
 POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
 
+## sys/person
+GET  /sys/person/reg/email/show          controllers.SysPerson.showRegEmail
+GET  /sys/person/recover/email/show      controllers.SysPerson.showRecoverEmail
 
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           controllers.Application.corsPreflight(path)
