@@ -26,14 +26,10 @@ import scala.concurrent.Future
 /**
  * A Xing Provider
  */
-class XingProvider(
+case class XingProvider(
   routesService: RoutesService,
   cacheService: CacheService,
-  client: OAuth1Client) extends OAuth1Provider(
-  routesService,
-  cacheService,
-  client
-) {
+  client: OAuth1Client) extends OAuth1Provider {
   override val id = XingProvider.Xing
 
   override def fillProfile(info: OAuth1Info): Future[Profile] = {
@@ -55,9 +51,10 @@ class XingProvider(
   }
 }
 
-object XingProvider {
+object XingProvider extends OAuth1ProviderCompanion {
   val VerifyCredentials = "https://api.xing.com/v1/users/me"
   val Xing = "xing"
+  override def name: String = Xing
   val Id = "id"
   val Name = "display_name"
   val FirstName = "first_name"

@@ -26,14 +26,10 @@ import securesocial.core.services.{ RoutesService, CacheService, HttpService }
 /**
  * A Twitter Provider
  */
-class TwitterProvider(
+case class TwitterProvider(
   routesService: RoutesService,
   cacheService: CacheService,
-  client: OAuth1Client) extends OAuth1Provider(
-  routesService,
-  cacheService,
-  client
-) {
+  client: OAuth1Client) extends OAuth1Provider {
   override val id = TwitterProvider.Twitter
 
   override def fillProfile(info: OAuth1Info): Future[Profile] = {
@@ -51,10 +47,11 @@ class TwitterProvider(
   }
 }
 
-object TwitterProvider {
+object TwitterProvider extends OAuth1ProviderCompanion {
   val VerifyCredentials = "https://api.twitter.com/1.1/account/verify_credentials.json"
   val Twitter = "twitter"
   val Id = "id_str"
   val Name = "name"
+  override def name = Name
   val ProfileImage = "profile_image_url_https"
 }

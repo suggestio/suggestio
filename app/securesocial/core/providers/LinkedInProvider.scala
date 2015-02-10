@@ -26,15 +26,11 @@ import securesocial.core.services.{ RoutesService, CacheService, HttpService }
 /**
  * A LinkedIn Provider
  */
-class LinkedInProvider(
+case class LinkedInProvider(
   routesService: RoutesService,
   cacheService: CacheService,
   client: OAuth1Client //= new OAuth1Client.Default(ServiceInfoHelper.forProvider(LinkedInProvider.LinkedIn), httpService)
-  ) extends OAuth1Provider(
-  routesService,
-  cacheService,
-  client
-) {
+) extends OAuth1Provider {
   override val id = LinkedInProvider.LinkedIn
 
   override def fillProfile(info: OAuth1Info): Future[Profile] = {
@@ -68,9 +64,10 @@ class LinkedInProvider(
   }
 }
 
-object LinkedInProvider {
+object LinkedInProvider extends OAuth1ProviderCompanion {
   val Api = "https://api.linkedin.com/v1/people/~:(id,first-name,last-name,formatted-name,picture-url,email-address)?format=json"
   val LinkedIn = "linkedin"
+  override def name = LinkedIn
   val ErrorCode = "errorCode"
   val Message = "message"
   val RequestId = "requestId"

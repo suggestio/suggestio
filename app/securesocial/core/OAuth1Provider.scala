@@ -21,6 +21,7 @@ import play.api.libs.oauth._
 import play.api.mvc.{ AnyContent, Request }
 import play.api.mvc.Results.Redirect
 import oauth.signpost.exception.OAuthException
+import securesocial.util.LoggerImpl
 import scala.concurrent.{ ExecutionContext, Future }
 import securesocial.core.services.{ HttpService, RoutesService, CacheService }
 import play.api.libs.oauth.OAuth
@@ -102,9 +103,11 @@ object ServiceInfoHelper {
 /**
  * Base class for all OAuth1 providers
  */
-abstract class OAuth1Provider(routesService: RoutesService,
-    cacheService: CacheService, val client: OAuth1Client) extends IdentityProvider {
-  protected val logger = play.api.Logger(this.getClass.getName)
+trait OAuth1Provider extends IdentityProvider with LoggerImpl {
+
+  def routesService: RoutesService
+  def cacheService: CacheService
+  def client: OAuth1Client
 
   def authMethod = AuthenticationMethod.OAuth1
 
