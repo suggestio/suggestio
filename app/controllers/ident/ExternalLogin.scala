@@ -10,11 +10,11 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
-import securesocial.core.providers.VkProvider
+import securesocial.core.providers.{FacebookProvider, VkProvider}
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
 import util.adn.NodesUtil
-import util.{FormUtil, PlayMacroLogsI}
+import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
 import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
@@ -32,7 +32,7 @@ import scala.concurrent.Future
  * Description: Поддержка логина через соц.сети или иные внешние сервисы.
  */
 
-object ExternalLogin {
+object ExternalLogin extends PlayMacroLogsDyn {
 
   /** secure-social настраивается через этот Enviroment. */
   implicit protected val env: RuntimeEnvironment[SsUser] = {
@@ -40,9 +40,20 @@ object ExternalLogin {
       override lazy val routes: RoutesService = SsRoutesService
       override def userService: UserService[SsUser] = SsUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
-        ListMap(
-          include(new VkProvider(routes, cacheService, oauth2ClientFor(VkProvider.Vk)))
-        )
+        // Аккуратная инициализация доступных провайдеров и без дубликации кода.
+        val provs = Iterator(VkProvider, FacebookProvider)
+          .flatMap { provSt =>
+            try {
+              Seq( provSt(routes, cacheService, oauth2ClientFor(provSt.name)) )
+            } catch {
+              case ex: Throwable =>
+                LOGGER.warn("Cannot initialize provider " + provSt, ex)
+                Nil
+            }
+          }
+          .map(include)
+          .toSeq
+        ListMap(provs : _*)
       }
     }
   }
