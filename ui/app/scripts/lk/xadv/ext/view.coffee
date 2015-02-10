@@ -48,9 +48,10 @@ define [], ()->
         $this = $ e.currentTarget
         action = $this.attr "action"
         data = $this.serialize()
+        $input = $this.find("input")
 
         # блокировка input'ов на время обработки формы
-        $this.find("input").prop "disabled", true
+        $input.prop "disabled", true
 
         $.ajax(
           type: "Post"
@@ -58,14 +59,12 @@ define [], ()->
           data: data
           statusCode:
             406: (data)->
-              console.log "406"
-              console.log data
+              $input.prop "disabled", false
               $data = $ data.responseText
               html = $data.html()
               $this.html html
           success: (data)->
-            console.log "success"
-            console.log data
+            $input.prop "disabled", false
             $data = $ data
             html = $data.html()
             $this.html html
