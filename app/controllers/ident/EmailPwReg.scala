@@ -2,13 +2,13 @@ package controllers.ident
 
 import controllers.SioController
 import models._
-import models.usr.{EmailPwConfirmInfo, MPersonIdent, IEaEmailId, EmailActivation}
+import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.Result
+import play.api.mvc.{Security, Result}
 import util.adn.NodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
@@ -43,7 +43,7 @@ object EmailPwReg {
   def epwRegConfirmFormM: EmailPwConfirmForm_t = Form(
     mapping(
       "nodeName" -> FormUtil.nameM,
-      "password" -> FormUtil.passwordWithConfirmM
+      "pw"       -> FormUtil.passwordWithConfirmM
     )
     { EmailPwConfirmInfo.apply }
     { EmailPwConfirmInfo.unapply }
@@ -59,7 +59,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = MailerWrapper.instance
-    msg.setFrom("welcome@suggest.io")
+    msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.lang))  // TODO Заголовок в messages и сюда!
     msg.setHtml( emailRegMsgTpl(ea)(ctx) )
@@ -125,14 +125,29 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
     epwRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        ???
+        NotAcceptable(confirmTpl(request.ea, formWithErrors))
       },
       {data =>
-        // TODO Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
-        // Развернуть узел для юзера, отобразить страницу успехоты.
-        ???
-        NodesUtil.createUserNode(name = data.adnName, personId = request.pwOpt.get.personId) map { adnNode =>
-          Ok(regSuccessTpl(adnNode))
+        // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
+        MPerson(lang = request2lang.code).save flatMap { personId =>
+          // Развернуть узел для юзера
+          val adnNodeFut = NodesUtil.createUserNode(name = data.adnName, personId = personId)
+          // Сохранить новый epw-ident
+          val idSaveFut = EmailPwIdent(
+            email       = eaInfo.email,
+            personId    = personId,
+            pwHash      = MPersonIdent.mkHash(data.password),
+            isVerified  = true
+          ).save
+          for {
+            // И удалить текущую активацию
+            _         <- request.ea.delete
+            adnNode   <- adnNodeFut
+            _         <- idSaveFut
+          } yield {
+            Ok(regSuccessTpl(adnNode))
+              .withSession(Security.username -> personId)
+          }
         }
       }
     )

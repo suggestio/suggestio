@@ -8,8 +8,13 @@
 
 @form(CSRF( routes.Ident.emailConfirmSubmit(iea) )) {
 
+  @* Выводить ошибку неправильного ввода пароля. *@
+  @s2f("pw").errors.map { fe =>
+    @Messages(fe.message, fe.args)
+  }
+
   @inputPassword(s2f("pw.pw1"), '_label -> "Введите пароль")
-  @inputPassword(s2f("pw.pw1"), '_label -> "Повторите пароль")
+  @inputPassword(s2f("pw.pw2"), '_label -> "Повторите пароль")
 
   @inputText(s2f("nodeName"), '_label -> "Название магазина")
 

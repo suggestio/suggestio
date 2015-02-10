@@ -349,3 +349,6 @@ e.ext.adv.unathorized=Пользователь не авторизован
 e.ext.adv.permissions=Недостаточно прав
 e.ext.adv.permissions.group=Ваш пост не будет отображаться на странице {0}
 e.ext.adv.target.url.invalid=Некорректный url цели
+
+passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
+
