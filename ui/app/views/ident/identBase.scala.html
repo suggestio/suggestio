@@ -6,13 +6,14 @@
 @import market._
 @import util.cdn.CdnUtil
 
-@headAfter = {
+@headAfter1 = {
   <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
 
   @static._faviconsTpl()
+  @headAfter
 }
 
 @marketBase(
   title     = title,
-  headAfter = Some(headAfter)
+  headAfter = Some(headAfter1)
 )(content)

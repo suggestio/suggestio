@@ -13,12 +13,13 @@ import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.providers.VkProvider
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
+import util.adn.NodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import views.html.ident.mySioStartTpl
-import views.html.ident.reg._regSuccessColumnTpl
+import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
@@ -186,12 +187,10 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
         NotAcceptable( _idpConfirm(formWithErrors) )
       },
       {nodeName =>
-        // TODO Развернуть узел для юзера, и т.д.
-        val ctx = implicitly[Context]
-        val colHtml = _regSuccessColumnTpl()(ctx)
-        val html = mySioStartTpl(Seq(colHtml))(ctx)
-        NotImplemented(html)
-          .flashing("error" -> "Not implemented")
+        // Развернуть узел для юзера, отобразить страницу успехоты.
+        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId) map { adnNode =>
+          Ok(regSuccessTpl(adnNode))
+        }
       }
     )
   }

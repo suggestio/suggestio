@@ -1,0 +1,14 @@
+@(adnNode: MAdnNode)(implicit ctx: Context)
+
+@* Страница отображения успеха регистрации нового юзера и нового магаза. *@
+
+@import util.adn._
+
+@headAfter1 = {
+  <meta http-equiv="refresh" content="3; url=@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)"/>
+}
+
+@views.html.ident.mySioStartTpl(
+  columns   = Seq(_regSuccessColumnTpl()),
+  headAfter = Some(headAfter1)
+)

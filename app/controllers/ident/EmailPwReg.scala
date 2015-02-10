@@ -9,11 +9,12 @@ import controllers.Captcha._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
+import util.adn.NodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import util.mail.MailerWrapper
 import views.html.ident._
-import views.html.ident.reg.{_epwConfirmColTpl, _regSuccessColumnTpl}
+import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
 
@@ -115,19 +116,26 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo) { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
-    val ctx = implicitly[Context]
-    val rc = _epwConfirmColTpl(request.ea, epwRegConfirmFormM)(ctx)
-    val page = mySioStartTpl( Seq(rc) )(ctx)
-    Ok(page)
+    Ok(confirmTpl(request.ea, epwRegConfirmFormM))
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
-  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo) { implicit request =>
+  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo).async { implicit request =>
     // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
-    // TODO Создать юзера, удалить активацию, создать новый узел-ресивер.
-    val ctx = implicitly[Context]
-    val col = _regSuccessColumnTpl()(ctx)
-    Ok( mySioStartTpl(Seq(col))(ctx) )
+    epwRegConfirmFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        ???
+      },
+      {data =>
+        // TODO Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
+        // Развернуть узел для юзера, отобразить страницу успехоты.
+        ???
+        NodesUtil.createUserNode(name = data.adnName, personId = request.pwOpt.get.personId) map { adnNode =>
+          Ok(regSuccessTpl(adnNode))
+        }
+      }
+    )
   }
 
 }

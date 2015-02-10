@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
 import controllers.ident._
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
@@ -598,7 +599,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         NotAcceptable(createTpl(formWithErrors))
       },
       {nodeName =>
-        ???
+        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId) map { adnNode =>
+          Redirect( NodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
+            .flashing("success" -> "Создан новый магазин. Пожалуйста, заполните необходимые поля.")
+        }
       }
     )
   }

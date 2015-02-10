@@ -1,8 +1,10 @@
 package util.adn
 
+import controllers.routes
 import io.suggest.ym.model.common.{AdnMemberShowLevels, AdnRights, AdNetMemberTypes, AdNetMemberInfo}
 import models._
 import play.api.db.DB
+import play.api.mvc.Call
 import util.async.AsyncUtil
 
 import scala.concurrent.Future
@@ -22,7 +24,7 @@ import play.api.Play.{current, configuration}
 object NodesUtil {
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
-  val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.sl.statpage.limit.dflt") getOrElse 50
+  val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50
 
   /** Стартовый баланс узла. */
   val BILL_START_BALLANCE: Float = {
@@ -30,6 +32,11 @@ object NodesUtil {
       case Some(d) => d.toFloat
       case None    => 0F
     }
+  }
+
+  /** Куда отправлять юзера, когда тот создал новый узел? */
+  def userNodeCreatedRedirect(adnId: String): Call = {
+    routes.MarketLkAdnEdit.editAdnNode(adnId)
   }
 
   /**
@@ -56,14 +63,18 @@ object NodesUtil {
     )
   }
 
+  /**
+   * Инициализировать биллинг для пользовательского узла.
+   * @param adnId id узла.
+   * @return Фьючерс для синхронизации.
+   */
   def createUserNodeBilling(adnId: String): Future[_] = {
     Future {
       DB.withTransaction { implicit ctx =>
         val mbc = MBillContract(adnId = adnId).save
         val mbb = MBillBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
-        val mmp0 = MBillMmpDaily(
-          contractId = mbc.id.get
-        ).save
+        val mmp0 = MBillMmpDaily(contractId = mbc.id.get).save
+        // Можно возвращать все эти экземпляры в результате работы. Сейчас это не требуется, поэтому они висят так.
       }
     }(AsyncUtil.jdbcExecutionContext)
   }
