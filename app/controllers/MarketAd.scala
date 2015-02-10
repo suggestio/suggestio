@@ -450,7 +450,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
         }
         // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
         // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-        val prodSinks = request.producer.adn.sinks
+        val prodSinks = request.producer.adn.sinks + AdnSinks.SINK_GEO
         val ssls = prodSinks
           .map { SinkShowLevels.withArgs(_, sl) }
         trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")

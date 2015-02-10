@@ -5,10 +5,10 @@
 @import util.adn._
 
 @headAfter1 = {
-  <meta http-equiv="refresh" content="3; url=@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)"/>
+  <meta http-equiv="refresh" content="@NodesUtil.NODE_CREATED_SUCCESS_RDR_AFTER; url=@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)"/>
 }
 
 @views.html.ident.mySioStartTpl(
-  columns   = Seq(_regSuccessColumnTpl()),
+  columns   = Seq(_regSuccessColumnTpl(adnNode)),
   headAfter = Some(headAfter1)
 )

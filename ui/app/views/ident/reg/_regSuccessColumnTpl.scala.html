@@ -1,11 +1,12 @@
-@()(implicit ctx: Context)
+@(adnNode: MAdnNode)(implicit ctx: Context)
 
 @* Колонка рендерится, когда регистрация по email завершена успешно. *@
 
+@import util.adn._
 
 <div class="reg-success_t">Ваши данные приняты и сохранены.</div>
 
 <div class="reg-success_text">
   Через несколько секунд вас перебросит в ваш магазин.<br/>
-  Если перенаправление не произошло, нажмите <a class="link" href="@routes.Ident.rdrUserSomewhere()">здесь</a>.
+  Если перенаправление не произошло, нажмите <a class="link" href="@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)">здесь</a>.
 </div>

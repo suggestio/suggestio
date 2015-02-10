@@ -1,7 +1,7 @@
 package util.adn
 
 import controllers.routes
-import io.suggest.ym.model.common.{AdnMemberShowLevels, AdnRights, AdNetMemberTypes, AdNetMemberInfo}
+import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
 import play.api.db.DB
 import play.api.mvc.Call
@@ -34,6 +34,9 @@ object NodesUtil {
     }
   }
 
+  /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
+  val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec") getOrElse 5
+
   /** Куда отправлять юзера, когда тот создал новый узел? */
   def userNodeCreatedRedirect(adnId: String): Call = {
     routes.MarketLkAdnEdit.editAdnNode(adnId)
@@ -59,7 +62,10 @@ object NodesUtil {
         )
       ),
       personIds = Set(personId),
-      meta = AdnMMetadata(name = name)
+      meta = AdnMMetadata(name = name),
+      conf = NodeConf(
+        showInScNodesList = false
+      )
     )
   }
 
