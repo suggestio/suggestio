@@ -542,11 +542,12 @@ case class AdNetMemberInfo(
     var acc0: FieldsJsonAcc = List(
       MEMBER_TYPE_ESFN   -> JsString(memberType.toString()),
       TEST_NODE_ESFN     -> JsBoolean(testNode),
-      IS_ENABLED_ESFN    -> JsBoolean(isEnabled)
+      IS_ENABLED_ESFN    -> JsBoolean(isEnabled),
+      IS_USER_ESFN       -> JsBoolean(isUser)
     )
     if (rights.nonEmpty) {
       val rightsJson = rights.foldLeft[List[JsString]] (Nil) {
-        (acc, e) => JsString(e.toString) :: acc
+        (acc, e) => JsString(e.toString()) :: acc
       }
       acc0 ::= RIGHTS_ESFN -> JsArray(rightsJson)
     }
