@@ -13,33 +13,14 @@
       @* Обработка карты сделана через partial-функцию, чтобы при добавлении новых типов компилятор автоматом
          выдавал warning при сборке. *@
       @ng.map {
-        case (MART | RESTAURANT | RESTAURANT_SUP, adnNodes) => {
-          <div>
+        case (_, adnNodes) => {
 
+          <div class="node-list">
             @adnNodes.zipWithIndex.map { case (adnNode, i) =>
-
-              <a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)" class="">
-                <span class="number">@(i+1)</span>
-                <span class="name">@adnNode.meta.name</span>
-              </a>
-            }
-
-          </div>
-        }
-
-        case (SHOP, mshops) => {
-          <div class="lst">
-            @mshops.zipWithIndex.map { case (mshop, i) =>
-
-              <a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)" class="lst_node">
-                <span class="ft-XS color-light-strong">@(i+1)</span>
-                <strong class="lst_node-name ft-L">@mshop.meta.name</strong>
-                @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>
-                  <span class="ft-XM color-strong">&nbsp;/&nbsp;@mmart.meta.name</span>
-                }
-
-              </a>
-              <div class="border-line"></div>
+              <div class="node-list_i">
+                @* TODO текущему магазину добавлять класс __current для .node-list_i-link *@
+                <a class="node-list_i-link" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+              </div>
             }
           </div>
 
@@ -47,7 +28,7 @@
       }
 
       @* Кнопка создания магазина. *@
-      <a class="btn __size-M __helper-green" href="@routes.MarketLkAdn.createNode()">Добавить магазин</a>
+      <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">Добавить магазин</a>
 
     </article>
   </div>

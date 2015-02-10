@@ -760,3 +760,53 @@ label
 
       &:last-of-type
         margin-top 50px
+
+/********************************************************************************************************************/
+/* Список узлов */
+/********************************************************************************************************************/
+.node-list
+  counter-reset list
+
+  &_add-btn
+    margin-top 50px
+    margin-left 50px
+
+  &_i
+    line-height 38px
+    border-top 1px solid #d6d6d6
+
+    &:last-of-type
+      border-bottom 1px solid #d6d6d6
+
+  &_i-link
+    margin 2px 0
+
+    display block
+
+    font-size 16px
+    color #484848
+    text-decoration none
+
+    transition(all 0.2s ease-in-out)
+
+    &:hover
+      cursor pointer
+      background-color #f8f8f8
+
+    &:before
+      float left
+
+      display block
+      width 50px
+      padding-left 15px
+      box-sizing border-box
+
+      font-size 12px
+      font-weight normal
+      color #878787
+
+      counter-increment list
+      content           counter(list)
+
+  &_i-link.__current
+    font-weight bold
