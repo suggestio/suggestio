@@ -12,7 +12,7 @@
       <div class="node-list">
         @mnodes.map { mnode =>
           <div class="node-list_i">
-            @* TODO текущему магазину добавлять класс __current для .node-list_i-link *@
+            @* Текущему магазину добавлять класс __current. *@
             <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
                href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">@mnode.meta.name</a>
           </div>
