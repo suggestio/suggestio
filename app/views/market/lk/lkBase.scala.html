@@ -63,7 +63,7 @@
       }*@
 
 
-      <a class="btn __size-M __major header_change-node" href="#">Сменить магазин</a>
+      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList">Сменить магазин</a>
 
     </header>
 
@@ -111,6 +111,7 @@
       @adnIdOpt.map { adnId =>
         <a href="@routes.MarketLkAdn.userProfileEdit(adnId)">Редактировать профиль пользователя</a>
       }
+
       @content
 
     </section>

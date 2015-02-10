@@ -5,53 +5,52 @@
 
 @lkBase("Моя рекламная сеть") {
 
-  <div class="page-title">
-    <div class="page-title_cnt">
-      <a class="back-btn __hidden"></a>
-      ВЫБОР МАГАЗИНА
-    </div>
-  </div>
+  <div class="viewport">
+    <article class="page_cnt">
 
-  <div class="body_cnt">
+      <h1 class="page_title">Выбор магазина</h1>
 
-    @* Обработка карты сделана через partial-функцию, чтобы при добавлении новых типов компилятор автоматом
-       выдавал warning при сборке. *@
-    @ng.map {
-      case (MART | RESTAURANT | RESTAURANT_SUP, adnNodes) => {
-        <div>
+      @* Обработка карты сделана через partial-функцию, чтобы при добавлении новых типов компилятор автоматом
+         выдавал warning при сборке. *@
+      @ng.map {
+        case (MART | RESTAURANT | RESTAURANT_SUP, adnNodes) => {
+          <div>
 
-          @adnNodes.zipWithIndex.map { case (adnNode, i) =>
+            @adnNodes.zipWithIndex.map { case (adnNode, i) =>
 
-            <a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)" class="">
-              <span class="number">@(i+1)</span>
-              <span class="name">@adnNode.meta.name</span>
-            </a>
-          }
+              <a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)" class="">
+                <span class="number">@(i+1)</span>
+                <span class="name">@adnNode.meta.name</span>
+              </a>
+            }
 
-        </div>
+          </div>
+        }
+
+        case (SHOP, mshops) => {
+          <div class="lst">
+            @mshops.zipWithIndex.map { case (mshop, i) =>
+
+              <a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)" class="lst_node">
+                <span class="ft-XS color-light-strong">@(i+1)</span>
+                <strong class="lst_node-name ft-L">@mshop.meta.name</strong>
+                @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>
+                  <span class="ft-XM color-strong">&nbsp;/&nbsp;@mmart.meta.name</span>
+                }
+
+              </a>
+              <div class="border-line"></div>
+            }
+          </div>
+
+        }
       }
 
-      case (SHOP, mshops) => {
-        <div class="lst">
-          @mshops.zipWithIndex.map { case (mshop, i) =>
+      @* Кнопка создания магазина. *@
+      <a class="btn __size-M __helper-green" href="@routes.MarketLkAdn.createNode()">Добавить магазин</a>
 
-            <a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)" class="lst_node">
-              <span class="ft-XS color-light-strong">@(i+1)</span>
-              <strong class="lst_node-name ft-L">@mshop.meta.name</strong>
-              @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>
-                <span class="ft-XM color-strong">&nbsp;/&nbsp;@mmart.meta.name</span>
-              }
-
-            </a>
-            <div class="border-line"></div>
-          }
-        </div>
-
-      }
-    }
+    </article>
   </div>
 
-  @* Кнопка создания магазина. *@
-  <a href="@routes.MarketLkAdn.createNode()">Создать магазин...</a>
 
 }

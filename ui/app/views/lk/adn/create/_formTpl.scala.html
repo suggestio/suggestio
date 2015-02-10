@@ -2,16 +2,19 @@
 
 @import helper._
 @import ctx._
+@import util.FC.tdRadialFc
+
 
 @form( CSRF(routes.MarketLkAdn.createNodeSubmit()) ) {
 
   @inputText(
     cf("name"),
-    '_label -> "Название магазина"
+    '_label -> "Название магазина",
+    '_helper -> "Название можно изменить в любое время."
   )
 
-  Название можно изменить в любое время.
-
-  <input type="submit" value="@Messages("Create")" />
+  <div class="btn-w __size-M">
+    <input class="btn __size-M __major" type="submit" value="@Messages("Create")" />
+  </div>
 
 }
