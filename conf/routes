@@ -332,6 +332,7 @@ POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
 POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
 
 ## sys/person
+GET  /sys/person                         controllers.SysPerson.index
 GET  /sys/person/reg/email/show          controllers.SysPerson.showRegEmail
 GET  /sys/person/recover/email/show      controllers.SysPerson.showRecoverEmail
 

@@ -1,0 +1,18 @@
+@()(implicit ctx: Context)
+
+@* Заглавная страница раздела про юзеров s.io. *@
+
+@hPathAfter1 = {}
+
+@sysPersonBase(
+  title = "index",
+  hPathAfter = Some(hPathAfter1)
+) {
+
+  <h1>Раздел пока не готов...</h1>
+
+  Но уже сейчас можно посмотреть
+  <a href="@routes.SysPerson.showRegEmail()">email-сообщение регистрации</a>, и
+  <a href="@routes.SysPerson.showRecoverEmail()">email-сообщение восстановления пароля</a>.
+
+}

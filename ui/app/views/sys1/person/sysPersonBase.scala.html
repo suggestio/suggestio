@@ -1,0 +1,18 @@
+@(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Подложка для страниц, работающих с унифицированными adn-узлами. *@
+
+@import ctx._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysPerson.index()">Юзеры</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@sys1.sysBase(
+  title         = title + " | Юзеры",
+  hPathAfter    = Some(hPathAfter1),
+  headAfter     = headAfter
+)(content)
