@@ -5,6 +5,7 @@
 
 @import helper._
 @import ctx._
+@import util.FC.authFc
 
 @form(CSRF( routes.Ident.emailConfirmSubmit(iea) )) {
 
@@ -13,11 +14,26 @@
     @Messages(fe.message, fe.args)
   }
 
-  @inputPassword(s2f("pw.pw1"), '_label -> "Введите пароль")
-  @inputPassword(s2f("pw.pw2"), '_label -> "Повторите пароль")
+  @inputPassword(
+    s2f("pw.pw1"),
+    '_label -> "Введите пароль",
+    'placeholder -> "Введите пароль"
+  )
 
-  @inputText(s2f("nodeName"), '_label -> "Название магазина")
+  @inputPassword(
+    s2f("pw.pw2"),
+    '_label -> "Повторите пароль",
+    'placeholder -> "Повторите пароль"
+  )
 
-  <input type="submit" value="@Messages("Save")" />
+  @inputText(
+    s2f("nodeName"),
+    '_label -> "Название магазина",
+    'placeholder -> "Название магазина"
+  )
+
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />
+  </div>
 
 }

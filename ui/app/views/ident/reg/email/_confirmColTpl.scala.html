@@ -2,10 +2,14 @@
 
 @* Колонка с формой завершения регистрации по email и паролю. *@
 
-<div>
+<div class="auth-page_column">
+
+  <h2 class="auth-page_column-t __color-2">Регистрация</h2>
 
   @* Рисуем email пользователя как-то. *@
-  <input type="text" disabled="true" value="@ea.email" />
+  <label class="auth-page_input ">
+    <input type="text" disabled="true" value="@ea.email" />
+  </label>
 
   @* Рисуем форму завершения реги. *@
   @_step2FormTpl(ea, s2f)
