@@ -810,3 +810,69 @@ label
 
   &_i-link.__current
     font-weight bold
+
+/********************************************************************************************************************/
+/* Политика конфиденциальности */
+/********************************************************************************************************************/
+.privacy-policy
+  margin 0 auto 50px
+
+  border-radius 10px
+  min-width 320px
+  max-width 1024px
+  padding 20px 40px
+
+  background-color white
+  color #848484
+  text-align left
+
+  &_t
+    margin-bottom 40px
+
+    line-height 24px
+
+    font-family "heliosthin"
+    text-align center
+
+    color #F44040
+    font-size 24px
+
+  p
+    margin 13px 0
+
+  strong
+    font-weight bold
+    font-size 16px
+
+  li
+    margin 13px 0
+    list-style none
+
+  ol
+    counter-reset list1
+
+    li:before
+      counter-increment list1
+      content           counter(list1) ". "
+
+    ol
+      padding-left 30px
+      counter-reset list2
+
+      li:before
+        counter-increment list2
+        content           counter(list1) "." counter(list2) ". "
+
+      ol
+        counter-reset list3
+
+        li:before
+          counter-increment list3
+          content           counter(list1) "." counter(list2) "." counter(list3) ". "
+
+
+  ul
+    padding-left 30px
+
+    li:before
+      content "- " !important
