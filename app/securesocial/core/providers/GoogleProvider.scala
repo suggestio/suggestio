@@ -26,8 +26,9 @@ import scala.concurrent.Future
  * A Google OAuth2 Provider
  */
 
-object GoogleProvider {
+object GoogleProvider extends OAuth2ProviderCompanion {
   val Google = "google"
+  override def name = Google
 
   val UserInfoApi = "https://www.googleapis.com/plus/v1/people/me?fields=id,name,displayName,image,emails&access_token="
   val Error = "error"

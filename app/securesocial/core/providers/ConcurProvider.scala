@@ -130,8 +130,9 @@ case class ConcurProvider(routesService: RoutesService,
   }
 }
 
-object ConcurProvider {
+object ConcurProvider extends OAuth2ProviderCompanion {
   val Concur = "concur"
+  override def name = Concur
 
   val UserProfileApi = "https://www.concursolutions.com/api/user/v1.0/User/"
   val AccessToken = "Access_Token"

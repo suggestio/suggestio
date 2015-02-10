@@ -18,6 +18,7 @@ package securesocial.core.services
 
 import play.api.mvc.{ Call, RequestHeader }
 import securesocial.core.IdentityProvider
+import securesocial.util.{LoggerImpl, LazyLoggerImpl}
 
 /**
  * A RoutesService that resolves the routes for some of the pages
@@ -37,15 +38,14 @@ object RoutesService {
    * The default RoutesService implementation.  It points to the routes
    * defined by the built in controllers.
    */
-  class Default extends RoutesService {
-    private val logger = play.api.Logger("securesocial.core.DefaultRoutesService")
-    lazy val conf = play.api.Play.current.configuration
+  class Default extends RoutesService with LoggerImpl {
+    def conf = play.api.Play.current.configuration
 
-    val FaviconKey = "securesocial.faviconPath"
-    val JQueryKey = "securesocial.jqueryPath"
-    val CustomCssKey = "securesocial.customCssPath"
-    val DefaultFaviconPath = "images/favicon.png"
-    val DefaultJqueryPath = "javascripts/jquery-1.7.1.min.js"
+    def FaviconKey = "securesocial.faviconPath"
+    def JQueryKey = "securesocial.jqueryPath"
+    def CustomCssKey = "securesocial.customCssPath"
+    def DefaultFaviconPath = "images/favicon.png"
+    def DefaultJqueryPath = "javascripts/jquery-1.7.1.min.js"
 
     protected def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
       call.absoluteURL(IdentityProvider.sslEnabled)

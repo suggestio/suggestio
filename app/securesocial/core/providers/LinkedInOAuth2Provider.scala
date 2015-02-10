@@ -24,9 +24,10 @@ import scala.concurrent.Future
 /**
  * A LinkedIn Provider (OAuth2)
  */
-object LinkedInOAuth2Provider {
+object LinkedInOAuth2Provider extends OAuth2ProviderCompanion {
   val Api = "https://api.linkedin.com/v1/people/~:(id,first-name,last-name,formatted-name,picture-url,email-address)?format=json&oauth2_access_token="
   val LinkedIn = "linkedin"
+  override def name = LinkedIn
   val ErrorCode = "errorCode"
   val Message = "message"
   val RequestId = "requestId"

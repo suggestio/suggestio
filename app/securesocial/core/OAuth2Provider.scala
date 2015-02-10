@@ -76,7 +76,7 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
     client.exchangeCodeForToken(code, callbackUrl, buildInfo)
       .recover {
         case e =>
-          logger.error("[securesocial] error trying to get an access token for provider %s".format(id), e)
+          logger.error("[securesocial] error trying to get an access token for provider " + id, e)
           throw new AuthenticationException()
       }
   }

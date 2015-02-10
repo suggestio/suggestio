@@ -27,8 +27,10 @@ import scala.concurrent.Future
  * A Facebook Provider
  */
 
-object FacebookProvider {
+object FacebookProvider extends OAuth2ProviderCompanion {
+
   val Facebook = "facebook"
+  override def name = Facebook
 
   val MeApi = "https://graph.facebook.com/me?fields=name,first_name,last_name,picture.type(large),email&return_ssl_resources=1&access_token="
   val Error = "error"

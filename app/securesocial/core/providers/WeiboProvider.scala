@@ -26,8 +26,9 @@ import scala.concurrent.{ ExecutionContext, Future }
  * A Weibo provider
  */
 
-object WeiboProvider {
+object WeiboProvider extends OAuth2ProviderCompanion {
   val Weibo = "weibo"
+  override def name = Weibo
 
   val GetAuthenticatedUser = "https://api.weibo.com/2/users/show.json?uid=%s&access_token=%s"
   val AccessToken = "access_token"

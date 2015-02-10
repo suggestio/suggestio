@@ -10,9 +10,10 @@ import scala.concurrent.Future
  * A Vk provider
  */
 
-object VkProvider {
+object VkProvider extends OAuth2ProviderCompanion {
 
   val Vk = "vk"
+  override def name = Vk
 
   val GetProfilesApi = "https://api.vk.com/method/getProfiles?fields=uid,first_name,last_name,photo&access_token="
   val Response = "response"

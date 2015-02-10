@@ -25,8 +25,9 @@ import scala.concurrent.Future
  * An Instagram provider
  */
 
-object InstagramProvider {
+object InstagramProvider extends OAuth2ProviderCompanion {
   val Instagram = "instagram"
+  override def name = Instagram
 
   val GetAuthenticatedUser = "https://api.instagram.com/v1/users/self?access_token=%s"
   val AccessToken = "access_token"

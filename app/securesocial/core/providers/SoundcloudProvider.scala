@@ -67,6 +67,7 @@ case class SoundcloudProvider(routesService: RoutesService,
   }
 }
 
-object SoundcloudProvider {
+object SoundcloudProvider extends OAuth2ProviderCompanion {
   val Soundcloud = "soundcloud"
+  override def name = Soundcloud
 }

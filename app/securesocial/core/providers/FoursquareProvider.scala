@@ -25,8 +25,9 @@ import scala.concurrent.Future
  * A Foursquare provider
  */
 
-object FoursquareProvider {
+object FoursquareProvider extends OAuth2ProviderCompanion {
   val Foursquare = "foursquare"
+  override def name = Foursquare
 
   val GetAuthenticatedUser = "https://api.foursquare.com/v2/users/self?v=20140404oauth_token=%s"
   val AccessToken = "access_token"

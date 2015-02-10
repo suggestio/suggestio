@@ -59,9 +59,11 @@ case class DropboxProvider(routesService: RoutesService,
   }
 }
 
-object DropboxProvider {
-  val Api = "https://api.dropbox.com/1/account/info"
+object DropboxProvider extends OAuth2ProviderCompanion {
   val Dropbox = "dropbox"
+  override def name = Dropbox
+
+  val Api = "https://api.dropbox.com/1/account/info"
   val Id = "uid"
   val FormattedName = "display_name"
 }
