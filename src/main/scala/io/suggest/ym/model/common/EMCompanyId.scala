@@ -3,10 +3,10 @@ package io.suggest.ym.model.common
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
+import io.suggest.ym.model.MCompany
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
-import io.suggest.ym.model.MCompanySel
 import play.api.libs.json.JsString
 
 /**
@@ -25,7 +25,7 @@ import EMCompanyId._
 
 
 trait EMCompanyIdStatic extends EsModelStaticMutAkvT {
-  override type T <: EMCompanyId
+  override type T <: EMCompanyIdMut
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
@@ -34,7 +34,8 @@ trait EMCompanyIdStatic extends EsModelStaticMutAkvT {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (COMPANY_ID_ESFN, value)    => acc.companyId = stringParser(value)
+      case (COMPANY_ID_ESFN, value) =>
+        acc.companyId = Option(value).map(stringParser)
     }
   }
 
@@ -68,15 +69,21 @@ trait EMCompanyIdStatic extends EsModelStaticMutAkvT {
 }
 
 
-trait EMCompanyId extends EsModelPlayJsonT with MCompanySel {
-  override type T <: EMCompanyId
-
-  var companyId: String
-
+trait EMCompanyId extends EsModelPlayJsonT with MCompanyOptSel {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    COMPANY_ID_ESFN -> JsString(companyId) :: super.writeJsonFields(acc)
+    val acc1 = super.writeJsonFields(acc)
+    if (companyId.isDefined)
+      COMPANY_ID_ESFN -> JsString(companyId.get) :: acc1
+    else
+      acc1
   }
+}
 
+
+trait EMCompanyIdMut extends EMCompanyId {
+  override type T <: EMCompanyIdMut
+
+  var companyId: Option[String]
 }
 
 
@@ -126,4 +133,15 @@ trait CompanyIdsDsaDflt extends CompanyIdsDsa {
 trait CompanyIdsDsaWrapper extends CompanyIdsDsa with DynSearchArgsWrapper {
   override type WT <: CompanyIdsDsa
   override def companyIds = _dsArgsUnderlying.companyIds
+}
+
+
+trait MCompanyOptSel {
+  def companyId: Option[String]
+  def getCompany(implicit ec: ExecutionContext, client: Client): Future[Option[MCompany]] = {
+    companyId match {
+      case Some(id) => MCompany.getById(id)
+      case None     => Future successful None
+    }
+  }
 }

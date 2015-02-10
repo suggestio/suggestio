@@ -60,7 +60,8 @@ object MAdnNode
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String, ignoreResources: Boolean = false)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def deleteById(id: String, ignoreResources: Boolean = false)
+                         (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val delFut = super.deleteById(id, ignoreResources)
     delFut onSuccess { case isDeleted =>
       sn publish AdnNodeDeletedEvent(id, isDeleted)
@@ -72,22 +73,22 @@ object MAdnNode
 
 
 final case class MAdnNode(
-  var companyId     : String,
   var adn           : AdNetMemberInfo,
-  var meta          : AdnMMetadata = AdnMMetadata.DEFAULT,
-  var personIds     : Set[String] = Set.empty,
+  var companyId     : Option[String]    = None,
+  var meta          : AdnMMetadata      = AdnMMetadata.DEFAULT,
+  var personIds     : Set[String]       = Set.empty,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
-  var conf          : NodeConf = NodeConf.DEFAULT,
-  var gallery       : List[String] = Nil,
-  var geo           : AdnNodeGeodata = AdnNodeGeodata.empty,
-  var id            : Option[String] = None,
-  versionOpt        : Option[Long] = None
+  var conf          : NodeConf          = NodeConf.DEFAULT,
+  var gallery       : List[String]      = Nil,
+  var geo           : AdnNodeGeodata    = AdnNodeGeodata.empty,
+  var id            : Option[String]    = None,
+  versionOpt        : Option[Long]      = None
 )
   extends EsModelEmpty
   with EsModelT
-  with EMCompanyId
-  with EMPersonIds
   with EMAdNetMember
+  with EMCompanyIdMut
+  with EMPersonIds
   with EMLogoImgMut
   with EMAdnMMetadata
   with EMNodeConfMut

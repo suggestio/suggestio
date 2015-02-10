@@ -88,12 +88,6 @@ final case class MCompany(
 }
 
 
-trait MCompanySel {
-  def companyId: String
-  def company(implicit ec:ExecutionContext, client: Client) = getById(companyId)
-}
-
-
 trait MCompanyJmxMBean extends EsModelJMXMBeanI
 final class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
