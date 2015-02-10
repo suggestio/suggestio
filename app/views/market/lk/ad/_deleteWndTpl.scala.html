@@ -2,6 +2,9 @@
 
 @* Окошко с подтверждением удаления рекламной карточки. Загружается по ajax при нажатии на кнопку "удалить". *@
 
+@import helper._
+@import ctx._
+
 <div class="popup" id="remove-ad">
 
   <div class="popup_header">
@@ -16,7 +19,7 @@
 
     <div class="submit-w __size-S">
       <a class="siom-ac-btn __color-3 __ft-XM __size-M f-left js-close-popup">Отменить</a>
-      @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get), Some("__ft-XM __size-M f-right"))
+      @stuff._deleteSmthFormBtnTpl(CSRF(routes.MarketAd.deleteSubmit(mad.id.get)), Some("__ft-XM __size-M f-right"))
     </div>
 
   </div>
