@@ -52,6 +52,6 @@ object TwitterProvider extends OAuth1ProviderCompanion {
   val Twitter = "twitter"
   val Id = "id_str"
   val Name = "name"
-  override def name = Name
+  override def name = Twitter
   val ProfileImage = "profile_image_url_https"
 }
