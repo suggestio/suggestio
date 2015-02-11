@@ -14,7 +14,7 @@ import play.api.Play.{current, configuration}
 
 object ListBlock {
 
-  def mkBfText(bfName: String, offerNopt: Option[Int]): BfText = {
+  def mkBfText(bfName: String = Title.BF_NAME_DFLT, offerNopt: Option[Int] = None): BfText = {
     BfText(bfName, maxLen = 128, offerNopt = offerNopt)
   }
 
@@ -80,6 +80,7 @@ trait ListBlock extends ValT {
 }
 
 
+/** ListBlock с однотипными полями. */
 trait SingleListBlockT extends ListBlock {
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
@@ -189,8 +190,12 @@ trait TitleListBlockT extends SingleListBlockT {
   override def withBlockFieldsRev(af: AdFormM, acc0: List[BlockFieldT], count4render0: Int): List[BlockFieldT] = {
     // Нужно определить, сколько именно нужно рендерить полей.
     import controllers.ad.MarketAdFormUtil.{AD_K, OFFER_K}
-    val offersCountAd = af(s"$AD_K.$OFFER_K.$OFFER_K").indexes.max + 1
-    val offersCount = Math.max(OFFERS_COUNT_MIN, offersCountAd)
+    val allOfferNs = af(s"$AD_K.$OFFER_K.$OFFER_K").indexes
+    val offersCount = if (allOfferNs.nonEmpty) {
+      Math.max(OFFERS_COUNT_MIN, allOfferNs.max + 1)
+    } else {
+      OFFERS_COUNT_MIN
+    }
     super.withBlockFieldsRev(af, acc0, offersCount)
   }
 }
