@@ -1,5 +1,6 @@
 package models.usr
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._

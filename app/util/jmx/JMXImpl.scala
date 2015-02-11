@@ -9,6 +9,7 @@ import models.event.MEventJmx
 import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
 import util.SiowebEsUtil.client
 import util.adv.AdvUtilJmx
+import util.compat.BlockOffersRemoveText2Jmx
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
@@ -29,6 +30,9 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private val JMX_MODELS = List[JMXBase](
+    // compat
+    new BlockOffersRemoveText2Jmx,
+    // elasticsearch
     new MMartInxJmx,
     new MAdStatJmx,
     new MWelcomeAdJmx,

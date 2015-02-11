@@ -106,8 +106,7 @@ trait ScController extends SioController {
       val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
       mad.offers.iterator.flatMap { offer =>
         val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
-        val t2 = offer.text2.map { text2 => ("descr", text2, bc.descrBf, 25) }
-        val fields = t1 ++ t2
+        val fields = t1.toSeq
         fields.iterator.map { case (fid, aosf, bf, yoff) =>
           blk.FieldCssRenderArgs2(
             mad     = mad,

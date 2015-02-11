@@ -16,104 +16,22 @@ object ListBlock {
     BfText(bfName, maxLen = 128, offerNopt = offerNopt)
   }
 
-  val OFFERS_COUNT_DFLT = 3
+  def OFFERS_COUNT_DFLT = 3
 
 }
 
 
-/** Абстрактная платформа блока для списка пар. Работает с AOValueField, но можно снять это ограничение в будущем. */
-trait PairListBlock extends ValT {
-  type T1 <: AOValueField
-  type BfT1 <: BlockAOValueFieldT { type T = T1 }
-  def bf1(offerNopt: Option[Int]): BfT1
-
-  type T2 <: AOValueField
-  type BfT2 <: BlockAOValueFieldT { type T = T2 }
-  def bf2(offerNopt: Option[Int]): BfT2
-
+trait ListBlock extends ValT {
   /** Начало отсчета счетчика офферов. */
-  def N0 = 0
+  def N0: Int = 0
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
-  def offersCount: Int = ListBlock.OFFERS_COUNT_DFLT
+  def offersCount: Int
 
-
-  /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
-  abstract override def blockFieldsRev: List[BlockFieldT] = {
-    val acc0 = super.blockFieldsRev
-    (N0 until offersCount).foldLeft(acc0) {
-      (acc, offerN) =>
-        val offerNopt = Some(offerN)
-        val _bf1 = bf1(offerNopt)
-        val _bf2 = bf2(offerNopt)
-        _bf2 :: _bf1 :: acc
-    }
-  }
-
-
-
-  // Маппинг для одного элемента (оффера)
-  protected def offerMapping = tuple(
-    bf1(None).getOptionalStrictMappingKV,
-    bf2(None).getOptionalStrictMappingKV
-  )
-  // Маппинг для списка офферов.
-  protected def offersMapping = list(offerMapping)
-    .verifying("error.too.much", { _.size <= offersCount })
-    .transform[List[AOBlock]] (applyAOBlocks, unapplyAOBlocks)
-
-
-  /** Собрать AOBlock на основе куска выхлопа формы. */
-  protected def applyAOBlocks(l: List[(Option[T1], Option[T2])]): List[AOBlock] = {
-    l.iterator
-      // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
-      .zipWithIndex
-      // Выкинуть пустые офферы
-      .filter {
-        case ((titleOpt, priceOpt), _) =>
-          titleOpt.isDefined || priceOpt.isDefined
-      }
-      // Оставшиеся офферы завернуть в AOBlock
-      .map {
-        case ((v1Opt, v2Opt), i) =>
-          applyAOBlock(i, v1Opt, v2Opt)
-      }
-      .toList
-  }
-
-  protected def applyAOBlock(offerN: Int, v1: Option[T1], v2: Option[T2]): AOBlock
-
-
-  /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
-    * даже если были пропущены какие-то группы полей. */
-  protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]): List[(Option[T1], Option[T2])] = {
-    // без if isEmpty будет экзепшен в maxBy().
-    if (aoBlocks.isEmpty) {
-      Nil
-    } else {
-      // Вычисляем оптимальную длину списка результатов
-      val maxN = aoBlocks.maxBy(_.n).n
-      // Рисуем карту маппингов необходимой длины, ключ - это n.
-      val aoBlocksNS = aoBlocks
-        .map { aoBlock => aoBlock.n -> aoBlock }
-        .toMap
-      // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
-      (N0 to maxN)
-        .map { n =>
-          aoBlocksNS
-            .get(n)
-            .map { unapplyAOBlock }
-            .getOrElse(None -> None)
-        }
-        .toList
-    }
-  }
-
-  def unapplyAOBlock(blk: AOBlock): (Option[T1], Option[T2])
+  protected def offersMapping: Mapping[List[AOBlock]]
 
   // Mapping
   private def m = offersMapping.withPrefix("offer").withPrefix(key)
-
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -149,11 +67,95 @@ trait PairListBlock extends ValT {
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
+
 }
 
 
-/** Блок для списка title-descr. В целом аналогичен TitlePriceListBlockT. */
-trait TitleDescrListBlockT extends PairListBlock {
+trait SingleListBlockT extends ListBlock {
+
+  /** Макс кол-во офферов (макс.длина списка офферов). */
+  def offersCount: Int = 6
+
+  type T1 <: AOValueField
+  type BfT1 <: BlockAOValueFieldT { type T = T1 }
+  def bf1(offerNopt: Option[Int]): BfT1
+
+
+  /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
+  abstract override def blockFieldsRev: List[BlockFieldT] = {
+    val acc0 = super.blockFieldsRev
+    (N0 until offersCount).foldLeft(acc0) {
+      (acc, offerN) =>
+        val offerNopt = Some(offerN)
+        val _bf1 = bf1(offerNopt)
+        _bf1 :: acc
+    }
+  }
+
+  protected def offerMapping = {
+    mapping(
+      bf1(None).getOptionalStrictMappingKV
+    )(identity)(Some.apply)
+  }
+
+  // Маппинг для списка офферов.
+  protected def offersMapping = {
+    list(offerMapping)
+      //.transform[List[T1]] (_.flatMap(_.iterator), _.map(Some.apply))
+      .verifying("error.too.much", { _.size <= offersCount })
+      .transform[List[AOBlock]] (applyAOBlocks, unapplyAOBlocks)
+  }
+
+  /** Собрать AOBlock на основе куска выхлопа формы. */
+  protected def applyAOBlocks(l: List[Option[T1]]): List[AOBlock] = {
+    l.iterator
+      // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
+      .zipWithIndex
+      // Выкинуть пустые офферы
+      .filter {
+        case (titleOpt, _) => titleOpt.isDefined
+      }
+      // Оставшиеся офферы завернуть в AOBlock
+      .map {
+        case (v1Opt, i) => applyAOBlock(i, v1Opt)
+      }
+      .toList
+  }
+
+  protected def applyAOBlock(offerN: Int, v1: Option[T1]): AOBlock
+
+
+  /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
+    * даже если были пропущены какие-то группы полей. */
+  protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]): List[Option[T1]] = {
+    // без if isEmpty будет экзепшен в maxBy().
+    if (aoBlocks.isEmpty) {
+      Nil
+    } else {
+      // Вычисляем оптимальную длину списка результатов
+      val maxN = aoBlocks.maxBy(_.n).n
+      // Рисуем карту маппингов необходимой длины, ключ - это n.
+      val aoBlocksNS = aoBlocks.iterator
+        .map { aoBlock => aoBlock.n -> aoBlock }
+        .toMap
+      // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
+      (N0 to maxN)
+        .map { n =>
+          aoBlocksNS
+            .get(n)
+            .flatMap { unapplyAOBlock }
+        }
+        .toList
+    }
+  }
+
+  def unapplyAOBlock(blk: AOBlock): Option[T1]
+
+}
+
+
+/** List-блок для списка title. */
+trait TitleListBlockT extends SingleListBlockT {
 
   def TITLE_FN = Title.BF_NAME_DFLT
   override type T1 = AOStringField
@@ -161,18 +163,12 @@ trait TitleDescrListBlockT extends PairListBlock {
   override def bf1(offerNopt: Option[Int]) = ListBlock.mkBfText(TITLE_FN, offerNopt)
   def titleBf = bf1(None)
 
-  def DESCR_FN = Descr.BF_NAME_DFLT
-  override type T2 = AOStringField
-  override type BfT2 = BfText
-  override def bf2(offerNopt: Option[Int]) = ListBlock.mkBfText(DESCR_FN, offerNopt)
-  def descrBf = bf2(None)
-
-  override def applyAOBlock(offerN: Int, v1: Option[T1], v2: Option[T2]): AOBlock = {
-    AOBlock(n = offerN, text1 = v1, text2 = v2)
+  override protected def applyAOBlock(offerN: Int, v1: Option[T1]): AOBlock = {
+    AOBlock(n = offerN, text1 = v1)
   }
 
-  override def unapplyAOBlock(blk: AOBlock): (Option[T1], Option[T2]) = {
-    blk.text1 -> blk.text2
+  override def unapplyAOBlock(blk: AOBlock): Option[T1] = {
+    blk.text1
   }
+
 }
-

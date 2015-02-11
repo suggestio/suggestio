@@ -107,7 +107,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
   // Начало значений
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleDescrListBlockT with Href with IsWideBg
+  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleListBlockT with Href with IsWideBg
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait Block20t extends CommonBlock2T {

@@ -40,7 +40,7 @@
   @mad.offers.map { offer =>
 
       @renderText(offer.text1, "title", bc.titleBf, yoff = 0, offerN = offer.n, withStyle = isStylesInline)
-      @renderText(offer.text2, "descr", bc.descrBf, yoff = 25, offerN = offer.n, withStyle = isStylesInline)
+      @renderText(offer.text2, "descr", bc.titleBf, yoff = 25, offerN = offer.n, withStyle = isStylesInline)
 
   }
 
