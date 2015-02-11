@@ -136,7 +136,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         wideBg        = wctxOpt,
         inlineStyles  = true,
         szMult        = szMult,
-        withCssClasses = Seq("popup")
+        withCssClasses = Seq("__popup")
       )
       _single_offer_w_description(mad, producer = request.adnNode, args = args)
     }

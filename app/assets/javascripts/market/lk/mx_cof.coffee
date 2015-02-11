@@ -2306,11 +2306,22 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
+            $data = $ data
+            $data.find(".dotted-pattern").addClass "__popup"
+            $smBlock = $data.find ".sm-block"
+
+            mode = ""
+            console.log "wide mode = #{$smBlock.data("wide-bg")}"
+            if $smBlock.data("wide-bg")
+              mode = "__wide"
+              $data.find(".focused-ad_offer").addClass "__wide"
+              $data.find(".focused-ad_descr").addClass "__wide"
 
             $ '#adFullPreview'
             .remove()
             $ '#popupsContainer'
-            .append '<div class="popup" id="adFullPreview"><div class="popup_header"><a class="close f-right js-close-popup"></a></div><div class="popup_cnt"><div class="sio-mart-showcase">' + data + '</div></div></div>'
+            .append "<div class='popup' id='adFullPreview'><div class='popup_header'><a class='close f-right js-close-popup'></a></div><div class='popup_cnt'><div class='sio-mart-showcase #{mode}'>#{data}</div></div></div>"
+
             cbca.popup.showPopup '#adFullPreview'
 
         return false
