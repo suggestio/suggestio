@@ -60,13 +60,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * Рассчет ширины широкой картинки. Нужно снизить лишний трафик клиента, снизить нагрузку на хранилища картинок,
    * но отображать картинку как можно шире. Для этого используется квантование переданной ширины экрана устройства.
    * @param pxRatio Плотность пикселей.
-   * @param ctx Контекст запроса.
+   * @param deviceScreenOpt Параметры экрана, если известны.
    * @return Целочисленная ширина картинки.
    */
-  private def getWideWidth(pxRatio: DevPixelRatio)(implicit ctx: Context): Int = {
+  private def getWideWidth(pxRatio: DevPixelRatio, deviceScreenOpt: Option[DevScreen]): Int = {
     // TODO Следует лимитировать ширину по доступной ширине картинки при текущем szMult.
     val cssQuants = WIDE_WIDTHS_PX
-    val cssWidth = ctx.deviceScreenOpt match {
+    val cssWidth = deviceScreenOpt match {
       case Some(ds) =>
         normWideBgSz(ds.width, acc = cssQuants.head, variants = cssQuants.tail)
       case None =>
@@ -86,6 +86,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @return Фьючерс с данными по рендеру широкой фоновой картинки.
    */
   def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t)(implicit ctx: Context): Future[blk.WideBgRenderCtx] = {
+    wideBgImgArgs(bgImgInfo, bm, szMult, ctx.deviceScreenOpt)
+  }
+  def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t, deviceScreenOpt: Option[DevScreen]): Future[blk.WideBgRenderCtx] = {
     val iik = MImg( bgImgInfo.filename )
     val iikOrig = iik.original
     // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
@@ -93,11 +96,11 @@ object BgImg extends PlayLazyMacroLogsImpl {
       .getImageWH
       .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
-    val pxRatio = pxRatioDefaulted( ctx.deviceScreenOpt.flatMap(_.pixelRatioOpt) )
+    val pxRatio = pxRatioDefaulted( deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
     val tgtHeightReal = getWideHeight(bm, szMult, pxRatio)
     // Ширину экрана квантуем, получая ширину картинки.
-    val cropWidth = getWideWidth(pxRatio)
+    val cropWidth = getWideWidth(pxRatio, deviceScreenOpt)
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
