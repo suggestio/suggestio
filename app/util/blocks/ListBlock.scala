@@ -9,7 +9,7 @@ import play.api.Play.{current, configuration}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.05.14 22:02
  * Description: Утиль для блоков, которые содержат в себе списки офферов вместо одного оффера.
- * Почти всегда это блоки title+price.
+ * 2015.feb.11: Теперь блоки редактора одномерные, все текстовые.
  */
 
 object ListBlock {

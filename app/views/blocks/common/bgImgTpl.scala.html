@@ -8,11 +8,7 @@
 
 @if(!args.wideBg) {
 
-  @bc.getMadBgImg(mad).fold {
-    @* Нету картинки в карточке. Рендерим заглушку: *@
-    <div class="no-photo"></div>
-
-  } { imgInfo =>
+  @bc.getMadBgImg(mad).map { imgInfo =>
     @* Есть картинка в карточке. Рендерим img-тег: *@
     <img @cssClass.map { _cssClass => class="@_cssClass" }
       src="@bc.bgImgCallCdn(imgInfo, mad.blockMeta, args)"
