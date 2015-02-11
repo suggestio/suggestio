@@ -1,5 +1,9 @@
 package util.blocks
 
+import models.AdFormM
+import play.api.data.FormError
+import play.api.data.Mapping
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,8 +23,6 @@ object Width extends MergeBindAcc[Int] {
 
 
 import Width._
-import play.api.data.FormError
-import play.api.data.Mapping
 
 
 /** Базовый интерфейс для поля heightBf. */
@@ -31,7 +33,7 @@ trait WidthI {
 
 trait Width extends ValT with WidthI {
 
-  abstract override def blockFieldsRev: List[BlockFieldT] = widthBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = widthBf :: super.blockFieldsRev(af)
 
   override def widthBf = Width.BF_WIDTH_DFLT
 

@@ -25,12 +25,9 @@ import views.html.market.showcase._
 
 trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
-  /** Сборка маппинга формы рекламной карточки. */
-  protected def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM
-
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
   private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = {
-    getAdFormM(adCatIdsM, blockM)
+    MarketAdFormUtil.getAdFormM(adCatIdsM, blockM)
   }
 
   private def detectAdPreviewForm(adnNode: MAdnNode)(implicit request: Request[collection.Map[String, Seq[String]]]) = {

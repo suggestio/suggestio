@@ -2,6 +2,8 @@ package util.blocks
 
 import play.api.data._, Forms._
 import models._
+import play.api.Play.{current, configuration}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -16,9 +18,16 @@ object ListBlock {
     BfText(bfName, maxLen = 128, offerNopt = offerNopt)
   }
 
-  def OFFERS_COUNT_DFLT = 3
+  /** Минимальное кол-во полей, отрендеренных сразу. */
+  val OFFERS_COUNT_MIN = configuration.getInt("block.offers.count.min") getOrElse 3
+
+  /** Макс. кол-во полей вообще. */
+  val OFFERS_COUNT_MAX = configuration.getInt("block.offers.count.max") getOrElse 10
 
 }
+
+
+import ListBlock._
 
 
 trait ListBlock extends ValT {
@@ -26,7 +35,7 @@ trait ListBlock extends ValT {
   def N0: Int = 0
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
-  def offersCount: Int
+  def offersCountMax: Int
 
   protected def offersMapping: Mapping[List[AOBlock]]
 
@@ -74,22 +83,27 @@ trait ListBlock extends ValT {
 trait SingleListBlockT extends ListBlock {
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
-  def offersCount: Int = 6
+  def offersCountMax: Int = OFFERS_COUNT_MAX
 
   type T1 <: AOValueField
   type BfT1 <: BlockAOValueFieldT { type T = T1 }
   def bf1(offerNopt: Option[Int]): BfT1
 
-
-  /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
-  abstract override def blockFieldsRev: List[BlockFieldT] = {
-    val acc0 = super.blockFieldsRev
-    (N0 until offersCount).foldLeft(acc0) {
+  /** Реализация добавления отображаемых полей редактора. */
+  def withBlockFieldsRev(af: AdFormM, acc0: List[BlockFieldT], count4render: Int): List[BlockFieldT] = {
+    (N0 until count4render).foldLeft(acc0) {
       (acc, offerN) =>
         val offerNopt = Some(offerN)
         val _bf1 = bf1(offerNopt)
         _bf1 :: acc
     }
+  }
+
+  /** Генерация описания полей.
+    * У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
+    val acc0 = super.blockFieldsRev(af)
+    withBlockFieldsRev(af, acc0, offersCountMax)
   }
 
   protected def offerMapping = {
@@ -102,7 +116,7 @@ trait SingleListBlockT extends ListBlock {
   protected def offersMapping = {
     list(offerMapping)
       //.transform[List[T1]] (_.flatMap(_.iterator), _.map(Some.apply))
-      .verifying("error.too.much", { _.size <= offersCount })
+      .verifying("error.too.much", { _.size <= offersCountMax })
       .transform[List[AOBlock]] (applyAOBlocks, unapplyAOBlocks)
   }
 
@@ -171,4 +185,12 @@ trait TitleListBlockT extends SingleListBlockT {
     blk.text1
   }
 
+  /** Реализация добавления отображаемых полей редактора с учётом реально необходимого кол-ва полей. */
+  override def withBlockFieldsRev(af: AdFormM, acc0: List[BlockFieldT], count4render0: Int): List[BlockFieldT] = {
+    // Нужно определить, сколько именно нужно рендерить полей.
+    import controllers.ad.MarketAdFormUtil.{AD_K, OFFER_K}
+    val offersCountAd = af(s"$AD_K.$OFFER_K.$OFFER_K").indexes.max + 1
+    val offersCount = Math.max(OFFERS_COUNT_MIN, offersCountAd)
+    super.withBlockFieldsRev(af, acc0, offersCount)
+  }
 }

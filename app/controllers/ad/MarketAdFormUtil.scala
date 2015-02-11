@@ -4,7 +4,6 @@ import models._
 import models.blk.{FontSizes, AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
-import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.ad.RichDescr
 
@@ -15,9 +14,6 @@ import io.suggest.ym.model.ad.RichDescr
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
 object MarketAdFormUtil {
-
-  type AdFormMResult = (MAd, BlockImgMap)
-  type AdFormM = Form[AdFormMResult]
 
   type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
@@ -255,8 +251,29 @@ object MarketAdFormUtil {
     Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )
   }
 
+  val AD_K      = "ad"
+  val CAT_ID_K  = "catId"
+  val OFFER_K   = "offer"
 
-  val OFFER_K = "offer"
+  /**
+   * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
+   * @param catIdM маппер для id категории.
+   * @param blockM маппер для блоков.
+   * @return Маппинг формы, готовый к эксплуатации.
+   */
+  def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
+    Form(
+      AD_K -> mapping(
+        CAT_ID_K    -> catIdM,
+        OFFER_K     -> blockM,
+        "pattern"   -> coveringPatternM,
+        "descr"     -> richDescrOptM,
+        "bgColor"   -> colorM
+      )(adFormApply)(adFormUnapply)
+    )
+  }
+
+
 
   /**
    * Определить владельца категорий узла.

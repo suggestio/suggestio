@@ -5,6 +5,7 @@ import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
+import util.blocks.BlocksUtil.BlockImgMap
 
 /**
  * Suggest.io
@@ -220,5 +221,11 @@ package object models {
 
   /** Тип формы создания нового узла-магазина силами юзера. */
   type UsrCreateNodeForm_t  = Form[String]
+
+  /** Тип результата биндинга формы рекламной карточки. */
+  type AdFormMResult = (MAd, BlockImgMap)
+
+  /** Тип маппинга формы рекламной карточки. */
+  type AdFormM = Form[AdFormMResult]
 
 }

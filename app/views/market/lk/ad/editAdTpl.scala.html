@@ -1,4 +1,4 @@
-@(mad: MAd, mmcats: Seq[MMartCategory], af: Form[_], adnNode: MAdnNode, allBlocks: Seq[BlockConf])(implicit ctx: Context)
+@(mad: MAd, mmcats: Seq[MMartCategory], af: AdFormM, adnNode: MAdnNode)(implicit ctx: Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -15,8 +15,7 @@
     call = routes.MarketAd.editAdSubmit(mad.id.get),
     mmcats = mmcats,
     withBC  = Some(BlocksConf applyOrDefault mad.blockMeta.blockId),
-    adnNode = adnNode,
-    allBlocks = allBlocks
+    adnNode = adnNode
   )
 
 

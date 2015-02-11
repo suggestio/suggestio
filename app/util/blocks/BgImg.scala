@@ -362,6 +362,15 @@ trait BgImg extends ValT with SaveBgImgI {
   def BG_IMG_FN = BgImg.BG_IMG_FN
   def bgImgBf = BgImg.bgImgBf
 
+
+  /** Поиск поля картинки для указанного имени поля. */
+  override def getImgFieldForName(fn: String): Option[BfImage] = {
+    if (fn == BG_IMG_FN)
+      Some(bgImgBf)
+    else
+      super.getImgFieldForName(fn)
+  }
+
   override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
@@ -372,7 +381,7 @@ trait BgImg extends ValT with SaveBgImgI {
     )
   }
 
-  abstract override def blockFieldsRev: List[BlockFieldT] = bgImgBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = bgImgBf :: super.blockFieldsRev(af)
 
   // Mapping
   private def m = bgImgBf.getStrictMapping.withPrefix(bgImgBf.name).withPrefix(key)

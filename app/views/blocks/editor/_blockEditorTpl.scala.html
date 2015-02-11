@@ -1,4 +1,4 @@
-@(af: Form[_], withBC: Option[BlockConf] = None, formDataSer: Option[String] = None)(implicit ctx: Context)
+@(af: AdFormM, withBC: Option[BlockConf] = None, formDataSer: Option[String] = None)(implicit ctx: Context)
 
 @import util.blocks._
 
@@ -6,7 +6,7 @@
   @defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
 
     <div class="ad-block-editor">
-      @for(bf <- bc.blockFields) {
+      @for(bf <- bc.blockFields(af)) {
 
         <div class="edit-ad_block-field __@bf.name">
           @bf.renderEditorField(

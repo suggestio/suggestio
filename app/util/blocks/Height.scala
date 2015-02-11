@@ -1,5 +1,6 @@
 package util.blocks
 
+import models.AdFormM
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -34,7 +35,7 @@ trait HeightI {
 
 /** Если нужно добавление поля в blockFields (т.е. в форму редактора), то нужен этот трейт. */
 trait Height extends ValT with HeightI {
-  abstract override def blockFieldsRev: List[BlockFieldT] = heightBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = heightBf :: super.blockFieldsRev(af)
 
   override def heightBf = Height.BF_HEIGHT_DFLT
 

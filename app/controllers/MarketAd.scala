@@ -31,10 +31,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
 
   import LOGGER._
 
-  // Дублирующиеся куски маппина выносим за пределы метода.
-  val CAT_ID_K = "catId"
-  val AD_IMG_ID_K = "image_key"
-
   /** Сколько попыток сохранения карточки предпринимать при runtime-экзепшенах при сохранении?
     * Такие проблемы возникают при конфликте версий. */
   val SAVE_AD_RETRIES_MAX = configuration.getInt("ad.save.retries.max") getOrElse 7
@@ -66,24 +62,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
       case MART | RESTAURANT_SUP  => adCatIdsM
     }
     getAdFormM(catIdM, blockM)
-  }
-
-  /**
-   * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
-   * @param catIdM маппер для id категории.
-   * @param blockM маппер для блоков.
-   * @return Маппинг формы, готовый к эксплуатации.
-   */
-  override protected def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
-    Form(
-      "ad" -> mapping(
-        CAT_ID_K    -> catIdM,
-        OFFER_K     -> blockM,
-        "pattern"   -> coveringPatternM,
-        "descr"     -> richDescrOptM,
-        "bgColor"   -> colorM
-      )(adFormApply)(adFormUnapply)
-    )
   }
 
   /** Полный ключ доступа к полю bgImg в маппинге формы. */
@@ -228,36 +206,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
     }
   }
 
-  /** Выдать список блоков в корректном порядке: публичные + специфичные для узла. */
-  private def blocksFor(adnNode: MAdnNode): Seq[BlockConf] = {
-    val seq1 = BlocksConf.valuesShown
-    val ids0 = adnNode.conf.withBlocks
-    if (ids0.isEmpty) {
-      seq1
-    } else {
-      val allIds = seq1.map(_.id).toSet ++ ids0
-      val allBlocks = allIds
-        .toSeq
-        .flatMap { id =>
-          try {
-            Some(BlocksConf(id) : BlockConf)
-          } catch {
-            case ex: NoSuchElementException =>
-              error(s"blocksFor(node=${adnNode.id.get}): No such block: $id, looks like node.conf.withBlocks is invalid: ${adnNode.conf.withBlocks} ;; node text: ${adnNode.meta.name} / ${adnNode.meta.town}")
-              None
-          }
-        }
-      BlocksConf.orderBlocks(allBlocks)
-    }
-  }
-
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
     val cats = getMMCats()
     detectMainColorBg(af)
     cats map { mmcats =>
-      createAdTpl(mmcats, af, adnNode, withBC, blocksFor(adnNode))
+      createAdTpl(mmcats, af, adnNode, withBC)
     }
   }
 
@@ -268,7 +223,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
     cats map { mmcats =>
-      editAdTpl(mad, mmcats, af, producer, blocksFor(producer))(ctx)
+      editAdTpl(mad, mmcats, af, producer)(ctx)
     }
   }
 
@@ -535,9 +490,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong)
     IsAuth.async(bp) { implicit request =>
       bruteForceProtected {
-        val bc: BlockConf = BlocksConf(blockId)
-        bc.blockFieldForName(fn) match {
-          case Some(bfi: BfImage) =>
+        val bc = BlocksConf.applyOrDefault(blockId)
+        bc.getImgFieldForName(fn) match {
+          case Some(bfi) =>
             val resultFut = _handleTempImg(
               preserveUnknownFmt = false,
               runEarlyColorDetector = bfi.preDetectMainColor,
@@ -545,7 +500,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
             )
             resultFut
 
-          case _ => NotFound
+          case _ =>
+            warn(s"prepareBlockImg($blockId,$fn): Unknown img field requested. 404")
+            NotFound
         }
       }
     }

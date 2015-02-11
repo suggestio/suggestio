@@ -1,5 +1,6 @@
 package util.blocks
 
+import models.AdFormM
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -31,7 +32,7 @@ trait IsWideBg extends ValT with IsWideBgI {
 
   override def isWideBf: BfCheckbox = IsWideBg.IS_WIDE_BF_DFLT
 
-  abstract override def blockFieldsRev: List[BlockFieldT] = isWideBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = isWideBf :: super.blockFieldsRev(af)
 
   // Mapping
   private def m = isWideBf.getStrictMapping.withPrefix(isWideBf.name).withPrefix(key)

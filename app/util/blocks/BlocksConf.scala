@@ -68,7 +68,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
     override def i18nLabelOf(bk: String) = "blocks.field." + bk
 
     /** Отрендерить редактор. */
-    override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
+    override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
       editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
     }
   }
@@ -177,20 +177,18 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
    */
   def i18nLabelOf(bk: String): String
 
-
-  /** Stackable-trait заполняется в прямом порядке в отличии от списка [[blockFields]].
-    * Этот метод помогает заполнять список полей задом наперёд. */
-  def blockFieldsRev: List[BlockFieldT]
+  /** Stackable-trait: заполняется в прямом порядке в отличии от списка blockFields().
+    * Этот метод помогает заполнять список ВСЕХ полей задом наперёд. */
+  def blockFieldsRev(af: AdFormM): List[BlockFieldT]
 
   /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-  def blockFields: List[BlockFieldT] = blockFieldsRev.reverse
+  def blockFields(af: AdFormM): List[BlockFieldT] = blockFieldsRev(af).reverse
 
-  def blockFieldForName(n: String): Option[BlockFieldT] = {
-    blockFields.find(_.name equalsIgnoreCase n)
-  }
+  /** Поиск поля картинки для указанного имени поля. */
+  def getImgFieldForName(fn: String): Option[BfImage] = None
 
   /** Отрендерить редактор. */
-  def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable
+  def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable
 
   // Mapping:
   def mappingsAcc: List[Mapping[_]]
@@ -241,7 +239,7 @@ case class BindAcc(
 abstract class ValTWrapper(v: ValT) extends ValT {
   override def id = v.id
   override def i18nLabelOf(bk: String) = v.i18nLabelOf(bk)
-  override def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
     v.renderEditor(af, formDataSer)
   }
 }
@@ -249,7 +247,7 @@ abstract class ValTWrapper(v: ValT) extends ValT {
 
 /** Враппер понадобился из-за проблем со scala.Enumeration, который не даёт делать инстансы Val несколько раз. */
 trait ValTEmpty extends ValT {
-  override def blockFieldsRev: List[BlockFieldT] = Nil
+  override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = Nil
   override def unbind(value: BlockMapperResult): Map[String, String] = {
     Map.empty
   }

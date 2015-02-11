@@ -1,15 +1,10 @@
 package util.blocks
 
-import controllers.routes
-import io.suggest.ym.model.common.Imgs
 import models.im.MImg
-import play.api.mvc.Call
-import util.cdn.CdnUtil
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
-import play.api.data.{FormError, Mapping}
 import models._
 
 /**
@@ -90,57 +85,6 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
   def updateAcc(offerN: Int, acc0: BindAcc, bim: BlockImgMap) {
     acc0.bim ++= bim
-  }
-
-}
-
-
-
-object LogoImg {
-  val LOGO_IMG_FN = "logo"
-  val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, preserveFmt = true)  // Запилить отдельный конвертор для логотипов на карточках?
-}
-
-/** Функционал для сохранения вторичного логотипа рекламной карточки. */
-trait LogoImg extends ValT with ISaveImgs {
-  def LOGO_IMG_FN = LogoImg.LOGO_IMG_FN
-  def logoImgBf = LogoImg.logoImgBf
-
-  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
-    SaveImgUtil.saveImgsStatic(
-      fn = LOGO_IMG_FN,
-      newImgs = newImgs,
-      oldImgs = oldImgs,
-      supImgsFut = supImgsFut
-    )
-  }
-
-  abstract override def blockFieldsRev: List[BlockFieldT] = logoImgBf :: super.blockFieldsRev
-
-  // Mapping
-  private def m = logoImgBf.getStrictMapping.withPrefix(logoImgBf.name).withPrefix(key)
-
-  abstract override def mappingsAcc: List[Mapping[_]] = {
-    m :: super.mappingsAcc
-  }
-
-  abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
-    val maybeAcc0 = super.bindAcc(data)
-    val maybeBim = m.bind(data)
-    SaveImgUtil.mergeBindAcc(maybeAcc0, maybeBim)
-  }
-
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
-    val v = m.unbind( value.unapplyBIM(logoImgBf) )
-    super.unbind(value) ++ v
-  }
-
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
-    val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.unapplyBIM(logoImgBf)
-    val (cms, cfes) = m.unbindAndValidate(c)
-    (ms ++ cms) -> (fes ++ cfes)
   }
 
 }

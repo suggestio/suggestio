@@ -1,6 +1,6 @@
 package util.blocks
 
-import models.AOBlock
+import models.{AdFormM, AOBlock}
 import play.api.data.FormError
 import util.FormUtil
 
@@ -38,7 +38,7 @@ trait Href extends ValT {
 
   override def hrefBlock = true
 
-  abstract override def blockFieldsRev = hrefBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM) = hrefBf :: super.blockFieldsRev(af)
 
   private def m = hrefBf.getOptionalStrictMapping.withPrefix(hrefBf.name).withPrefix(key)
 

@@ -28,7 +28,7 @@ import Title._
 /** Базовый трейт для статических и динамических bfTitle. Добавляет поле в форму. */
 trait Title extends ValT {
   def titleBf: BfText = BF_TITLE_DFLT
-  abstract override def blockFieldsRev: List[BlockFieldT] = titleBf :: super.blockFieldsRev
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = titleBf :: super.blockFieldsRev(af)
 
   // Mapping
   private def m = titleBf.getOptionalStrictMapping.withPrefix(titleBf.name).withPrefix(key)
