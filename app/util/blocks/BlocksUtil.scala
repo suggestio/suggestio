@@ -145,19 +145,12 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: Iterable[FontSize]
-  def withFontSize = withFontSizes.nonEmpty
+  def withFontSize = true
   def fontSizeDflt: Option[Int]
-  def fontForSize(sz: Int): Option[FontSize] = withFontSizes.find(_.size == sz)
-  def lineHeightDflt: Option[Int] = fontSizeDflt.flatMap(fontForSize).map(_.lineHeight)
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
-  def getFontMapping = {
-    MarketAdFormUtil.getFontM(
-      withFontSizes = withFontSizes
-    )
-  }
+  def getFontMapping = MarketAdFormUtil.fontM
 
   def withCoords: Boolean
 }
@@ -218,7 +211,6 @@ case class BfText(
   minLen          : Int = 0,
   maxLen          : Int = 16000,
   withFontColor   : Boolean = true,
-  withFontSizes   : Iterable[FontSize] = FontSizes.valuesSorted,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
   withCoords      : Boolean = true,

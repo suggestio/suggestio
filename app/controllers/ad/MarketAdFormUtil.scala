@@ -1,7 +1,7 @@
 package controllers.ad
 
 import models._
-import models.blk.{AdColorFns, FontSize}
+import models.blk.{FontSizes, AdColorFns, FontSize}
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.blocks.BlocksUtil.BlockImgMap
@@ -42,27 +42,12 @@ object MarketAdFormUtil {
   }
 
 
-  private def fontSizeOptM(fontSizes: Iterable[FontSize]): Mapping[Option[FontSize]] = {
-    val hasFontSizes = fontSizes.nonEmpty
-    val (min, max) = if (hasFontSizes) {
-      val minSz = fontSizes.iterator.map(_.size).min
-      val maxSz = fontSizes.iterator.map(_.size).max
-      minSz -> maxSz
-    } else {
-      0 -> 0
-    }
-    optional(number(min = min, max = max))
-      .transform[Option[FontSize]](
-        {szOpt =>
-          if (hasFontSizes) {
-            szOpt flatMap { sz => fontSizes.find(_.size == sz) }
-          } else {
-            None
-          }
-        },
-        { _.map(_.size) }
-      )
-     .verifying("error.unavailable.font.size", { szOpt => !hasFontSizes || szOpt.isDefined })
+  /** Маппинг для размера шрифта. */
+  def fontSizeM: Mapping[FontSize] = {
+    number(min = FontSizes.min.size, max = FontSizes.max.size)
+      .transform [Option[FontSize]] (FontSizes.maybeWithSize, _.getOrElse(FontSizes.min).size)
+      .verifying("error.unavailable.font.size", _.isDefined)
+      .transform[FontSize](_.get, Some.apply)
   }
 
   /** Маппер для значения font.family. */
@@ -101,30 +86,28 @@ object MarketAdFormUtil {
 
   /**
    * Сборка маппинга для шрифта.
-   * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Iterable[FontSize]): Mapping[AOFieldFont] = {
+  def fontM: Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
-      "size"   -> fontSizeOptM(withFontSizes),
+      "size"   -> fontSizeM,
       "align"  -> textAlignOptM,
       "family" -> fontFamilyOptM
     )
     {(color, fsz, align, family) =>
       AOFieldFont(
         color  = color,
-        size   = fsz.map(_.size),
+        size   = Some(fsz.size),
         align  = align,
-        family = family,
-        lineHeight = fsz.map(_.lineHeight)
+        family = family
       )
     }
     {aoff =>
+      val fsz: FontSize = aoff.size
+        .flatMap { FontSizes.maybeWithSize }
+        .getOrElse { FontSizes.min }
       import aoff._
-      val fsz: Option[FontSize] = aoff.size.flatMap { sz =>
-        withFontSizes.find(_.size == sz)
-      }
       Some((color, fsz, align, family))
     }
   }

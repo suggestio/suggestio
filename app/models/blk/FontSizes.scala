@@ -50,12 +50,20 @@ object FontSizes extends Enumeration {
 
   /** Сортированный список значений FontSize.
     * values() тоже вроде бы сортирован, но по строковому имени, и является Set[Value]. А нам надо по id сортировку. */
-  val valuesSorted: List[FontSize] = {
-    values
-      .iterator
+  val valuesSorted: Iterable[FontSize] = {
+    values.iterator
       .map(value2val)
       .toList
       .sortBy(_.size)
+  }
+
+  def min = F10
+  def max = F84
+
+  def maybeWithSize(sz: Int): Option[FontSize] = {
+    values
+      .find(_.size == sz)
+      .map { value2val }
   }
 
 }
