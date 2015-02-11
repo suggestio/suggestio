@@ -64,7 +64,12 @@ trait CssRenderArgsT {
   def brArgs      : blk.RenderArgs
   def cssClasses  : Seq[String]
 }
-case class CssRenderArgs(mad: MAdT, brArgs: blk.RenderArgs, cssClasses: Seq[String] = Nil)
+object CssRenderArgs {
+  def apply(mad: MAdT, brArgs: blk.RenderArgs): CssRenderArgs = {
+    apply(mad, brArgs, brArgs.withCssClasses)
+  }
+}
+case class CssRenderArgs(mad: MAdT, brArgs: blk.RenderArgs, cssClasses: Seq[String])
   extends CssRenderArgsT
 
 

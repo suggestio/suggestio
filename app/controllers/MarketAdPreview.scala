@@ -97,10 +97,17 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
             } yield {
               mad.imgs = imgs
               val render = if (isFull) {
-                val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 2)
+                // TODO Нужна поддержка wideBg здесь.
+                val args = blk.RenderArgs(
+                  withEdit      = false,
+                  isStandalone  = false,
+                  inlineStyles  = true,
+                  szMult        = 2.0F,
+                  withCssClasses = Seq("popup")
+                )
                 _single_offer_w_description(mad, producer = request.adnNode, args = args)
               } else {
-                val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1)
+                val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1, inlineStyles = true)
                 _single_offer(mad, args = args)
               }
               Ok(render)
