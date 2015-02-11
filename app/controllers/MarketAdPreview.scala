@@ -98,34 +98,9 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
                 imgs = imgs
               )
               val renderFut: Future[Html] = if (isFull) {
-                val szMult = 2.0F
-                // Поддержка wideBg:
-                val wctxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
-                  if (mad.blockMeta.wide) {
-                    val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-                    bc.getMadBgImg(mad).fold(Future successful Option.empty[blk.WideBgRenderCtx]) { bgImgInfo =>
-                      BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)
-                        .map { Some.apply }
-                    }
-                  } else {
-                    Future successful None
-                  }
-                }
-                wctxOptFut map { wctxOpt =>
-                  val args = blk.RenderArgs(
-                    withEdit      = false,
-                    isStandalone  = false,
-                    wideBg        = wctxOpt,
-                    inlineStyles  = true,
-                    szMult        = szMult,
-                    withCssClasses = Seq("popup")
-                  )
-                  _single_offer_w_description(mad, producer = request.adnNode, args = args)
-                }
-
+                renderFull(mad)
               } else {
-                val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1, inlineStyles = true)
-                Future successful _single_offer(mad, args = args)
+                renderSmall(mad)
               }
               renderFut map { render =>
                 Ok(render)
@@ -137,6 +112,40 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
       case Left(formWithGlobalError) =>
         NotAcceptable("Form mode invalid")
     }
+  }
+
+  /** Рендер полноэкранного варианта отображения. */
+  private def renderFull(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+    val szMult = 2.0F
+    // Поддержка wideBg:
+    val wctxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
+      if (mad.blockMeta.wide) {
+        val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+        bc.getMadBgImg(mad).fold(Future successful Option.empty[blk.WideBgRenderCtx]) { bgImgInfo =>
+          BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)
+            .map { Some.apply }
+        }
+      } else {
+        Future successful None
+      }
+    }
+    wctxOptFut map { wctxOpt =>
+      val args = blk.RenderArgs(
+        withEdit      = false,
+        isStandalone  = false,
+        wideBg        = wctxOpt,
+        inlineStyles  = true,
+        szMult        = szMult,
+        withCssClasses = Seq("popup")
+      )
+      _single_offer_w_description(mad, producer = request.adnNode, args = args)
+    }
+  }
+
+  /** Рендер маленькой превьюшки, прямо в редакторе. */
+  private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+    val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1.0F, inlineStyles = true)
+    Future successful _single_offer(mad, args = args)
   }
 
 }
