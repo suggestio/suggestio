@@ -2,6 +2,66 @@
 
 @* Письмо со ссылкой для активации. *@
 
-<p>Регистрация suggest.io</p>
-
-<a href="@ctx.SC_URL_PREFIX@routes.Ident.emailReturn(ea)">Ссылка</a>
+<table border="0" cellpadding="0" cellspacing="0" style="max-width: 540px; min-width: 320px; font-family: 'Arial'; background-color: #eeeeee; color: #878787; font-size: 14px;">
+  <tr>
+    <td colspan="3" style="height: 72px; background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/logo-with-text.png")') no-repeat 30px bottom #333333;">
+    </td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td style="font-size: 18px; color: #484848; padding: 30px 0;">
+      Регистрация в Suggest.io
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td>
+      Здравствуйте
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td style="padding: 20px 0; border-bottom: 1px dashed #878787;">
+      Ваша регистрация в системе геонацеленной мобильной рекламы  <a style="color: #7b89a4;" href="suggest.io">Suggest.io</a> одобрена.
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td style="padding: 20px 0 10px;">
+      Для завершения регистрации перейдите по
+      <a style="color: #7b89a4;" href="@ctx.SC_URL_PREFIX@routes.Ident.emailReturn(ea)">ссылке</a>.
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td style="padding: 10px 0 20px; border-bottom: 1px dashed #878787;">
+      Если ссылка не открывается, вставьте в строку браузера
+      <br/>
+      <a style="color: #7b89a4;" href="@ctx.SC_URL_PREFIX@routes.Ident.emailReturn(ea)">@ctx.SC_URL_PREFIX@routes.Ident.emailReturn(ea)</a>
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td style="width: 40px;"></td>
+    <td style="padding: 20px 0;">
+      Если вы не регистрировались в <a style="color: #7b89a4;" href="suggest.io">Suggest.io</a>, просто удалите данное сообщение.
+    </td>
+    <td style="width: 40px;"></td>
+  </tr>
+  <tr>
+    <td colspan="3" style="padding: 0 40px 25px; border-bottom: 1px solid #afafaf; color: #b4b4b4; font-size: 11px">
+      Сообщение отправлено автоматически. Отвечать на него не требуется.
+    </td>
+  </tr>
+  <tr>
+    <td style="width: 40px; background: white;"></td>
+    <td style="font-size: 10px; color: #bdbdbd; padding-top: 5px; background: white;">
+      © 2011-2015 Suggest.io. Все права защищены
+    </td>
+    <td style="width: 40px; background: white;"></td>
+  </tr>
+</table>
