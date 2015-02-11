@@ -362,7 +362,7 @@ object AOFieldFont {
  * @param size Необязательный размер шрифта.
  */
 case class AOFieldFont(
-  color       : String,
+  color       : String = FONT_COLOR_DFLT,
   size        : Option[Int] = None,
   align       : Option[TextAlign] = None,
   family      : Option[String] = None
