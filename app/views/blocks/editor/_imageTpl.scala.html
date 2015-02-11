@@ -2,7 +2,6 @@
 
 @import ctx._
 
-@*<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>*@
 
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
@@ -29,6 +28,19 @@
       Обратите внимание, что на большинстве устройств в выдаче карточки могут увеличиваться в размерах вдвое. Поэтому, мы советуем выбираеть изображения, как минимум вдвое больших размеров, чем размер блока.
     </div>
 
+  </div>
+
+  <div class="lk-file-field_choose-color-pre-text">или</div>
+
+  <div class="lk-file-field_choose-color-w">
+    <div class="lk-file-field_choose-color-btn-w">
+      <a class="btn __size-M __minor js-custom-color" style='background-color: @af("ad.bgColor");'>
+        @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
+        <input id="adBgColor" type="hidden" name="ad.bgColor" value='@af("ad.bgColor")' />
+        Выбрать цвет
+      </a>
+    </div>
+    <div class="lk-file-field_choose-color-btn-t">Залейте однотонным цветом</div>
   </div>
 
 </div>

@@ -574,6 +574,46 @@ li
   font-size: 12px
   font-weight: bold
 
+.lk-file-field_choose-color-pre-text
+  position relative
+  margin 10px 0
+  line-height 10px
+  color #cbcbcb
+  text-align center
+
+  &:before,
+  &:after
+    position absolute
+    top 50%
+    transform translate3d(0,-50%,0)
+
+    width 45%
+    height 1px
+
+    content " "
+    font-size 10px
+    background-color #cbcbcb
+
+  &:before
+    left 0
+
+  &:after
+    right 0
+
+.lk-file-field_choose-color-w
+  display table
+  width 100%
+
+.lk-file-field_choose-color-btn-w,
+.lk-file-field_choose-color-btn-t
+  display table-cell
+  vertical-align middle
+
+.lk-file-field_choose-color-btn-t
+  color #838383
+  font-size 14px
+
+
 /* Редактор высоты блока */
 .block-height-editor
   height: 21px
