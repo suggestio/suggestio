@@ -34,11 +34,13 @@
 
   <div class="lk-file-field_choose-color-w">
     <div class="lk-file-field_choose-color-btn-w">
-      <a class="btn __size-M __minor js-custom-color" style='background-color: @af("ad.bgColor");'>
-        @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
-        <input id="adBgColor" type="hidden" name="ad.bgColor" value='@af("ad.bgColor")' />
-        Выбрать цвет
-      </a>
+      @defining( af("ad.bgColor").value.getOrElse("EEEEEE") ) { color =>
+        <a class="btn __size-M __minor js-custom-color" style='background-color: #@color;'>
+          @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
+          <input id="adBgColor" type="hidden" name="ad.bgColor" value='@color' />
+          Выбрать цвет
+        </a>
+      }
     </div>
     <div class="lk-file-field_choose-color-btn-t">Залейте однотонным цветом</div>
   </div>
