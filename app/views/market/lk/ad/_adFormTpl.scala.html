@@ -22,8 +22,6 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@
 
-  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)" />
-
   @market.lk.lkBlock("Выбор категории") {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
@@ -38,9 +36,8 @@
       @* Отображение превьюшки *@
       <div class="lk-ad-block-edit-form__preview">
 
-        @* TODO: в этот div надо рендерить превьюшку *@
-        <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)"/>
-        <input class="js-ad-block-full-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = true)"/>
+        <input class="js-ad-block-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = false))"/>
+        <input class="js-ad-block-full-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = true))"/>
 
         <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
 

@@ -15,7 +15,6 @@ import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.{WebSocket, Request}
 import play.api.Play.{current, configuration}
-import MMartCategory.CollectMMCatsAcc_t
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
@@ -28,7 +27,7 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
+object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview {
 
   import LOGGER._
 
@@ -75,7 +74,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
    * @param blockM маппер для блоков.
    * @return Маппинг формы, готовый к эксплуатации.
    */
-  def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
+  override protected def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       "ad" -> mapping(
         CAT_ID_K    -> catIdM,

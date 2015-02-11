@@ -47,8 +47,8 @@ trait IsAdnNodeAdminOptOrAuthBase extends ActionBuilder[RequestWithNodeOpt] with
       case None =>
         IsAuth.onUnauth(request)
     }
-
   }
+
 }
 
 

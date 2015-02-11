@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.PlayMacroLogsI
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.FormUtil._
@@ -19,24 +19,17 @@ import views.html.market.showcase._
  * Created: 23.04.14 10:11
  * Description: Контроллер для preview-функционала рекламных карточек. Используется в adForm-редакторе
  * для обновления рекламной карточки в реальном времени.
+ * 2015.feb.11: В этом контроллере так и остался ровно один экшен. Он был объединён с MarketAd через trait.
  */
 
-object MarketAdPreview extends SioController with PlayMacroLogsImpl {
-  import LOGGER._
+trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
-  /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
-    * в шаблон формы и для изоляции области видимости от другого кода. */
-  object PreviewFormDefaults {
-    /** Дефолтовый id картинки, когда она не задана. */
-    def IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
-
-    def TEXT_COLOR = "000000"
-  }
-
+  /** Сборка маппинга формы рекламной карточки. */
+  protected def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM
 
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
   private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = {
-    MarketAd.getAdFormM(adCatIdsM, blockM)
+    getAdFormM(adCatIdsM, blockM)
   }
 
   private def detectAdPreviewForm(adnNode: MAdnNode)(implicit request: Request[collection.Map[String, Seq[String]]]) = {
@@ -51,28 +44,27 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
     adModes.headOption.flatMap { adModeStr =>
       AdOfferTypes.maybeWithName(adModeStr)
     }.fold[Either[AdFormM, (BlockConf, AdFormM)]] {
-      warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
+      LOGGER.warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
       val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
         .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
       Left(form)
-    } {
-      case AdOfferTypes.BLOCK =>
-        val maybeBlockIdRaw = reqBody.get("ad.offer.blockId")
-        maybeBlockIdRaw
-          .getOrElse(Nil)
-          .headOption
-          .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
-          .filter { block => MarketAd.blockIdsFor(adnNode) contains block.id }
-          .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
-            // Задан пустой или скрытый/неправильный block_id.
-            warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
-            val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
-              .withGlobalError("ad.blockId.undefined.or.invalid")
-            Left(form)
-          } { blockConf =>
-            val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
-            Right(result)
-          }
+    } { case AdOfferTypes.BLOCK =>
+      val maybeBlockIdRaw = reqBody.get("ad.offer.blockId")
+      maybeBlockIdRaw
+        .getOrElse(Nil)
+        .headOption
+        .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
+        .filter { block => MarketAd.blockIdsFor(adnNode) contains block.id }
+        .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
+          // Задан пустой или скрытый/неправильный block_id.
+          LOGGER.warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
+          val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
+            .withGlobalError("ad.blockId.undefined.or.invalid")
+          Left(form)
+        } { blockConf =>
+          val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
+          Right(result)
+        }
     }
   }
 
@@ -87,7 +79,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
       case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
+            LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
             NotAcceptable("Preview form bind failed.")
           },
           {case (mad, bim) =>
