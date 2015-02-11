@@ -111,6 +111,13 @@ object BlocksEditorFields extends Enumeration {
     override type BFT = BfCheckbox
     override def fieldTemplate = _checkboxTpl
   }
+
+  /** специальный тип, подходит для вставляния левых шаблонов в набор полей редактора. */
+  val NoValue = new Val("noval") {
+    override type VT = None.type
+    override type BFT = BfNoValueT
+    override def fieldTemplate = _addStringFieldBtnTpl
+  }
 }
 
 import BlocksEditorFields._
@@ -350,6 +357,23 @@ case class BfCheckbox(
   }
 }
 
+
+/** Реализация полей-пустышек. */
+trait BfNoValueT extends BlockFieldT {
+  override type T = None.type
+  override def field = NoValue
+  override def mappingBase: Mapping[T] = optional(text).transform[T]({_ => None}, identity)
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+  override def defaultValue: Option[T] = None
+  override def fallbackValue: T = None
+  override def offerNopt: Option[Int] = None
+}
+
+
+/** Поле, которое не требует никакого значения для себя. Бывает полезно, когда надо вставить что-нибудь между полями. */
+case class BfAddStringField(name: String = "addTextField") extends BfNoValueT
 
 /** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
 case class BlockDataImpl(

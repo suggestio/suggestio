@@ -2,7 +2,7 @@
 
 @* Checkbox, принимающий значения true и false. *@
 
-<label >
+<label>
   @defining( af(bfNameBase) ) { sf =>
     <input  class="checkbox" type="checkbox" name="@sf.name"  @if( sf.value.orElse(bf.defaultValue).map(_.toString).exists(_ equalsIgnoreCase "true") ) {checked="checked"} value="true" />
     <span class="styled-checkbox"></span>&nbsp;@Messages(bc.i18nLabelOf(bf.name))

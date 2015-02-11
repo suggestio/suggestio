@@ -111,6 +111,7 @@ ngls.bu=Buildings
 ngls.td=Town districts
 ngls.to=Towns
 
+bf.text.example=Text {0}
 
 Input.text.from.picture=Input text from the picture
 error.captcha=Invalid human-check code
@@ -119,8 +120,6 @@ blocks.field.isWide=Display wide?
 blocks.field.height=Block height
 blocks.field.width=Block width
 blocks.field.title=Title
-blocks.field.text1=Text 1
-blocks.field.text2=Text 2
 blocks.field.logo=Logo
 blocks.field.lineColor=Line color
 blocks.field.bottomColor=Bottom color

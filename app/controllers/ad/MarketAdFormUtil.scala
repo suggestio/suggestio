@@ -261,7 +261,7 @@ object MarketAdFormUtil {
    * @param blockM маппер для блоков.
    * @return Маппинг формы, готовый к эксплуатации.
    */
-  def getAdFormM(catIdM: Mapping[Set[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
+  def getAdFormM(catIdM: Mapping[Set[String]] = adCatIdsNonEmptyM, blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
       AD_K -> mapping(
         CAT_ID_K    -> catIdM,

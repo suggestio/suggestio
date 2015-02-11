@@ -2,9 +2,11 @@ package controllers
 
 import models.im.MImg
 import org.joda.time.DateTime
+import play.api.i18n.Messages
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import util.PlayMacroLogsImpl
+import util.blocks.{LkEditorWsActor, ListBlock, BgImg, BlockMapperResult}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -18,7 +20,6 @@ import play.api.Play.{current, configuration}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import util.blocks.{BgImg, LkEditorWsActor, BlockMapperResult}
 import io.suggest.ym.model.common.Texts4Search
 
 /**
@@ -472,6 +473,38 @@ object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport
         Left(result)
       }
     )
+  }
+
+
+  /** Рендер нового блока редактора для ввода текста.
+    * @param offerN номер оффера
+    * @param height текущая высота карточки. Нужно для того, чтобы новый блок не оказался где-то не там.
+    * @param width Текущая ширина карточки.
+    * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
+    */
+  def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
+    val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
+    val bc = BlocksConf.Block20
+    // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
+    val madStub = MAd(
+      producerId = "",
+      offers = List(AOBlock(
+        n = offerN,
+        text1 = Some(AOStringField(
+          value = Messages("bf.text.example", offerN),
+          font = AOFieldFont(),
+          coords = Some(Coords2D(
+            x = height / 2,
+            y = width / 4
+          ))  // Coords2D
+        ))    // AOStringField
+      ))      // AOBlock
+    )         // MAd
+    val af = getAdFormM(blockM = bc.strictMapping)
+      .fill((madStub, Map.empty))
+    val nameBase = s"$AD_K.$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
+    val render = bfText.renderEditorField(nameBase, af, bc)
+    Ok(render)
   }
 
 

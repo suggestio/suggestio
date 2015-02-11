@@ -114,6 +114,7 @@ ngls.bu=Здания
 ngls.td=Районы городов
 ngls.to=Города
 
+bf.text.example=Текст {0}
 
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
@@ -123,8 +124,6 @@ blocks.field.height=Высота блока
 blocks.field.width=Ширина блока
 blocks.field.title=Заголовок
 blocks.field.bgImg=Фоновое изображение
-blocks.field.text1=Текст 1
-blocks.field.text2=Текст 2
 blocks.field.logo=Логотип
 blocks.field.lineColor=Цвет линии
 blocks.field.bottomColor=Цвет нижней заливки

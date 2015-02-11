@@ -88,6 +88,7 @@ GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
 GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
 GET  /ws/lk/ad/:wsId                    controllers.MarketAd.ws(wsId: String)
+GET  /m/lk/ad/new/field/text/:offerN    controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/_txns/adn/:adnId             controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)

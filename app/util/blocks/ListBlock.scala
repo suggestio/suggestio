@@ -196,6 +196,12 @@ trait TitleListBlockT extends SingleListBlockT {
     } else {
       OFFERS_COUNT_MIN
     }
-    super.withBlockFieldsRev(af, acc0, offersCount)
+    val acc1 = super.withBlockFieldsRev(af, acc0, offersCount)
+    // Добавить поле добавления нового текстового поля, если есть куда.
+    if (offersCount <= OFFERS_COUNT_MAX) {
+      BfAddStringField() :: acc1
+    } else {
+      acc1
+    }
   }
 }
