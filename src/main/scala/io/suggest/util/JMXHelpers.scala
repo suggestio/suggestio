@@ -43,8 +43,12 @@ trait JMXBase {
       fut: String
     } catch {
       case ex: Throwable =>
-        s"${ex.getClass.getSimpleName} occured: ${ex.getMessage}\n\n${ex.getStackTraceString}"
+        formatThrowable(ex)
     }
+  }
+
+  def formatThrowable(ex: Throwable) = {
+    s"${ex.getClass.getSimpleName} occured: ${ex.getMessage}\n\n${ex.getStackTrace.mkString("", "\n", "\n")}"
   }
 
 }

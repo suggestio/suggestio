@@ -202,7 +202,7 @@ object AOBlock {
 case class AOBlock(
   n             : Int,
   var text1     : Option[AOStringField] = None,
-  var text2     : Option[AOStringField] = None,
+  @deprecated("Use text1 on another offer instead", "2015.feb.11") var text2: Option[AOStringField] = None,
   var href      : Option[String] = None
 ) extends AdOfferT {
   @JsonIgnore
