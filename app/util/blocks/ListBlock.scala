@@ -19,7 +19,7 @@ object ListBlock {
   }
 
   /** Минимальное кол-во полей, отрендеренных сразу. */
-  val OFFERS_COUNT_MIN = configuration.getInt("block.offers.count.min") getOrElse 3
+  val OFFERS_COUNT_MIN = configuration.getInt("block.offers.count.min") getOrElse 6
 
   /** Макс. кол-во полей вообще. */
   val OFFERS_COUNT_MAX = configuration.getInt("block.offers.count.max") getOrElse 10
