@@ -8,19 +8,12 @@
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS)
 ) {
 
-  <div class="page-title __without-border">
-    <div class="page-title_cnt">
-      @title.toUpperCase
-      @* Отрендерить системную ссылку для суперюзера. *@
-      @madOpt.flatMap(_.id).map { madId =>
-        @if(ctx.isSuperuser) {
-          <a href="@routes.SysMarket.showAd(madId)">/sys</a>
-        }
-      }
-    </div>
+  <div class="viewport">
+    <article class="page_cnt __ad-editor">
+      <h1 class="page_title">@title</h1>
+      @content
+    </article>
   </div>
-
-  @content
 
   <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
 
