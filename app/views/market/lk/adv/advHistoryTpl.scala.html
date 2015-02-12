@@ -1,0 +1,15 @@
+@(mad: MAd, producer: MAdnNode, currAdvsArgs: CurrentAdvsTplArgs)(implicit ctx: Context)
+
+@* Страница с историей размещений этой рекламной карточки. *@
+
+@import market.lk._
+
+@lkBaseLayout(
+  title         = "История размещений рекламной карточки",
+  nodeOpt       = Some(producer),
+  backHref      = mad.id.map(madId => routes.MarketAdv.advForAd(madId).url)
+) {
+
+  @_currentAdvsListTpl(currAdvsArgs)
+
+}

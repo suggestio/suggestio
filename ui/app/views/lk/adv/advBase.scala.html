@@ -1,0 +1,13 @@
+@(title: String, mad: MAd, producer: MAdnNode, rightLink: LkAdvRightLink,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для adv-раздела ЛК. *@
+
+@market.lk.lkBaseLayout(
+  title         = title,
+  nodeOpt       = Some(producer),
+  backHref      = Some(routes.MarketLkAdn.showNodeAds(mad.producerId).url),
+  rightBar      = mad.id.map(madId => _rightNavTpl(madId, Some(rightLink))),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  headAfter     = headAfter
+)(content)

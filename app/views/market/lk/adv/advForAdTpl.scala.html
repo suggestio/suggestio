@@ -1,51 +1,24 @@
-@(mad: MAd, producerNode: MAdnNode, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
+@(mad: MAd, producer: MAdnNode, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
 
 @* Страница управления размещением рекламной карточки. *@
 @import ctx._
-@import market.lk._
-
-@rightBar = {
-
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __social" href="@routes.LkAdvExt.forAd(mad.id.get)">
-      <span>Разместить в соц.сети</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __geo __act">
-      <span>Разместить в геолокации</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
-
-  <div class="right-bar-price-widget">
-    <div class="right-bar-price-widget_cnt">
-      <h2 class="right-bar-price-widget_title">
-        Общий счет
-      </h2>
-      <p class="right-bar-price-widget_price-value js-pre-price">
-        0 р.
-      </p>
-      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">Отправить запрос</button>
-    </div>
-  </div>
-}
 
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
-
 }
 
 
-@market.lk.lkBaseLayout(
+@lk.adv.advBase(
   title         = "Управление рекламой",
-  nodeOpt       = Some(producerNode),
-  backHref      = Some(routes.MarketLkAdn.showAdnNode(mad.producerId).url),
-  rightBar      = Some(rightBar),
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  mad           = mad,
+  producer      = producer,
+  rightLink     = LkAdvRightLinks.LARL_GEO,
   headAfter     = Some(headAfter)
 ) {
 
-  @_currentAdvsTpl(currAdvsArgs)
+  @if( !currAdvsArgs.advs.isEmpty ){
+    @_currentAdvsListTpl(currAdvsArgs)
+  }
 
   @_advFormTpl(formArgs)
 

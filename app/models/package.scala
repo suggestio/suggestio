@@ -167,6 +167,7 @@ package object models {
   type NodeRightPanelLink   = NodeRightPanelLinks.NodeRightPanelLink
   type BillingRightPanelLink= BillingRightPanelLinks.BillingRightPanelLink
   type LkLeftPanelLink      = LkLeftPanelLinks.LkLeftPanelLink
+  type LkAdvRightLink       = LkAdvRightLinks.LkAdvRightLink
 
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
   type NodeGeoLevel         = NodeGeoLevels.NodeGeoLevel

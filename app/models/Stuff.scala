@@ -184,6 +184,10 @@ object LkLeftPanelLinks extends Enumeration {
   val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT, LPL_EVENTS  =  Value : LkLeftPanelLink
 }
 
+object LkAdvRightLinks extends Enumeration {
+  type LkAdvRightLink = Value
+  val LARL_GEO, LARL_EXT, LARL_HISTORY = Value : LkAdvRightLink
+}
 
 
 /** Исчерпывающая инфа по картинке, которую можно отрендерить в шаблоне ссылку. */

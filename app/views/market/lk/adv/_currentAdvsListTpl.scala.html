@@ -1,4 +1,4 @@
-@(advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+@(args: CurrentAdvsTplArgs)(implicit ctx: Context)
 
 @* Список размещений какой-то рекламной карточки. *@
 
@@ -6,11 +6,11 @@
 @import ctx._
 @import datetime._
 @import util.TplDataFormatUtil._
+@import args._
 
 @_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
   <div class="adv-status_i __@statusClass">
     <span class="ft-M light-gray f-left">@node.meta.name / @node.meta.town</span>
-    @*Messages("amt.of.type." + node.adn.shownTypeId)*@
     @content
   </div>
 }
