@@ -661,16 +661,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
 
   /**
    * Метод для краткого запуска скроллинга над моделью.
-   * @param query Поисковый запрос, по которому скроллим.
+   * @param queryOpt Поисковый запрос, по которому скроллим. Если None, то будет matchAll().
    * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
    * @param keepAliveMs TTL scroll-курсора на стороне ES.
    * @return Фьючерс, подлежащий дальнейшей обработке.
    */
-  def startScroll(query: QueryBuilder = QueryBuilders.matchAllQuery(), resultsPerScroll: Int = SCROLL_SIZE_DFLT,
+  def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
                   keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                  (implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
     prepareScroll(new TimeValue(keepAliveMs))
-      .setQuery(QueryBuilders.matchAllQuery())
+      .setQuery(queryOpt getOrElse QueryBuilders.matchAllQuery())
       .setSize(10)
       .setFetchSource(true)
       .execute()
@@ -685,9 +685,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @tparam A Тип аккамулятора.
    * @return Финальный аккамулятор.
    */
-  def foldLeft[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (f: (A, T) => A)(implicit ec: ExecutionContext, client: Client): Future[A] = {
-    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
+  def foldLeft[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
+                  queryOpt: Option[QueryBuilder] = None)(f: (A, T) => A)
+                 (implicit ec: ExecutionContext, client: Client): Future[A] = {
+    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
       .flatMap { searchResp =>
         foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -709,9 +710,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @tparam A Тип значения аккамулятора (без Future[]).
    * @return Фьючерс с результирующим аккамулятором.
    */
-  def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                      (f: (Future[A], T) => Future[A])(implicit ec: ExecutionContext, client: Client): Future[A] = {
-    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
+  def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
+                       queryOpt: Option[QueryBuilder] = None)(f: (Future[A], T) => Future[A])
+                      (implicit ec: ExecutionContext, client: Client): Future[A] = {
+    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
       .flatMap { searchResp =>
         foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -759,10 +761,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
    * @return Фьючес с кол-вом обработанных экземпляров модели.
    */
-  def updateAll(resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
+  def updateAll(resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
+                bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT, queryOpt: Option[QueryBuilder] = None)
                (f: T => Future[T])(implicit ec: ExecutionContext, client: Client): Future[Int] = {
     val logPrefix = s"update(${System.currentTimeMillis}): "
-    val bp = BulkProcessor.builder(client, new BulkProcessor.Listener {
+    val listener = new BulkProcessor.Listener {
       /** Перед отправкой каждого bulk-реквеста. */
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
         LOGGER.trace(s"${logPrefix}Going to execute bulk req with ${request.numberOfActions()} actions.")
@@ -777,7 +780,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
         LOGGER.error(s"${logPrefix}Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
       }
-    })
+    }
+    val bp = BulkProcessor.builder(client, listener)
       .setName(logPrefix)
       .setBulkActions(100)
       .build()
@@ -785,7 +789,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
     // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
     val counter = new AtomicInteger(0)
     // Аккамулятор фиксирован (не используется).
-    foldLeftAsync(None, resultsPerScroll, keepAliveMs) {
+    foldLeftAsync(None, resultsPerScroll, keepAliveMs, queryOpt) {
       (accFut, v) =>
         f(v) flatMap { v1 =>
           bp add v1.prepareIndex.request
