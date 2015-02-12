@@ -1,4 +1,4 @@
-@(mad: MAd, producer: MAdnNode, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
+@(mad: MAd, producer: MAdnNode, formArgs: AdvFormTplArgs)(implicit ctx: Context)
 
 @* Страница управления размещением рекламной карточки. *@
 @import ctx._
@@ -15,10 +15,6 @@
   rightLink     = LkAdvRightLinks.LARL_GEO,
   headAfter     = Some(headAfter)
 ) {
-
-  @if( !currAdvsArgs.advs.isEmpty ){
-    @_currentAdvsListTpl(currAdvsArgs)
-  }
 
   @_advFormTpl(formArgs)
 

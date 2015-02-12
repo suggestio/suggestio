@@ -320,17 +320,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         .sortBy(_.node.meta.name)
     }
 
-    // Продолжаем операции с собранными данными adv
-    // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
-    val currAdvsArgsFut = for {
-      adAdvInfo <- adAdvInfoFut
-      rcvrs     <- rcvrsReadyFut
-    } yield {
-      import adAdvInfo._
-      trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}]")
-      toAdvswArgs(adAdvInfo, rcvrs)
-    }
-
     // Строим карту уже занятых какими-то размещением узлы.
     val busyAdvsFut: Future[Map[String, MAdvI]] = adAdvInfoFut.map { adAdvInfo =>
       import adAdvInfo._
@@ -361,11 +350,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
     // Когда всё станет готово - рендерим результат.
     for {
-      currAdvsArgs  <- currAdvsArgsFut
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      advForAdTpl(request.mad, request.producer, currAdvsArgs, formArgs)
+      advForAdTpl(request.mad, request.producer, formArgs)
     }
   }
 
