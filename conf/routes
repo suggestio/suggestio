@@ -345,7 +345,7 @@ GET  /sitemap.xml                        controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты
-GET  /id                                controllers.Ident.mySioStartPage
+GET  /id                                controllers.Ident.mySioStartPage(r: Option[String] ?= None)
 GET  /id/epw/login                      controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
 POST /id/epw/login                      controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /id/logout                         controllers.Ident.logout

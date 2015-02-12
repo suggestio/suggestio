@@ -1,4 +1,4 @@
-@(lf: EmailPwLoginForm_t)(implicit ctx: Context)
+@(lf: EmailPwLoginForm_t, rr: Option[String])(implicit ctx: Context)
 
 @* Форма логина на странице. *@
 
@@ -6,7 +6,7 @@
 @import ctx._
 @import util.FC.authFc
 
-@form(CSRF( routes.Ident.emailPwLoginFormSubmit() )) {
+@form(CSRF( routes.Ident.emailPwLoginFormSubmit(rr) )) {
 
   @lf.globalError.map { ge =>
     <p class="error-msg">Ошибка: @Messages(ge.message)</p>

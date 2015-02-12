@@ -1,4 +1,4 @@
-@(lf: EmailPwLoginForm_t)(implicit ctx: Context)
+@(lf: EmailPwLoginForm_t, rr: Option[String])(implicit ctx: Context)
 
 @* Колонка с формой логина через email-pw и соц.сети. *@
 
@@ -8,7 +8,7 @@
 
   <h2 class="auth-page_column-t __color-1">Авторизация</h2>
 
-  @_loginFormTpl(lf)
+  @_loginFormTpl(lf, rr)
 
 
   <div class="auth-page_delimiter">или</div>

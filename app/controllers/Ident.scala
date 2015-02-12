@@ -42,12 +42,13 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
   /**
    * Стартовая страница my.suggest.io. Здесь лежит предложение логина/регистрации и возможно что-то ещё.
+   * @param r Возврат после логина куда?
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
-  def mySioStartPage = IsAnonGet { implicit request =>
+  def mySioStartPage(r: Option[String]) = IsAnonGet { implicit request =>
     val ctx = implicitly[Context]
-    val lc = _loginColumnTpl( EmailPwSubmit.emailPwLoginFormM )(ctx)
+    val lc = _loginColumnTpl(EmailPwSubmit.emailPwLoginFormM, r)(ctx)
     val rc = _regColumnTpl( EmailPwReg.emailRegFormM )(ctx)
     Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
   }

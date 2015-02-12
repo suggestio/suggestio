@@ -91,7 +91,7 @@ trait EmailPwLogin extends EmailPwSubmit {
   protected def epwLoginPage(lf: EmailPwLoginForm_t, r: Option[String])
                             (implicit request: AbstractRequestWithPwOpt[_]): Result = {
     val ctx = implicitly[Context]
-    val column = _loginColumnTpl(lf)(ctx)
+    val column = _loginColumnTpl(lf, r)(ctx)
     Ok( mySioStartTpl(Seq(column))(ctx) )
   }
 
