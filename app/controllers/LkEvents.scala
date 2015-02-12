@@ -3,7 +3,8 @@ package controllers
 import com.github.nscala_time.time.OrderingImplicits._
 import models._
 import models.adv.MExtTarget
-import models.event.{EventsSearchArgs, ArgsInfo, MEventTmp, MEvent}
+import models.event.search.MEventsSearchArgs
+import models.event.{ArgsInfo, MEventTmp, MEvent}
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.api.i18n.Messages
@@ -47,7 +48,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
     val offset = Math.min(OFFSET_MAX, offset0)
     // Запустить фетчинг событий из хранилища.
     // withVsn нужен из-за того, что у нас используется tryUpdate() для выставления isUnseen-флага.
-    val eventsSearch = new EventsSearchArgs(
+    val eventsSearch = MEventsSearchArgs(
       ownerId       = Some(adnId),
       returnVersion = Some(true),
       maxResults    = limit,

@@ -2,7 +2,8 @@ package util.acl
 
 import java.net.InetAddress
 
-import models.event.{EventsSearchArgs, MEvent}
+import models.event.MEvent
+import models.event.search.MEventsSearchArgs
 import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
@@ -202,9 +203,9 @@ object SioReqMd {
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
     // Получить кол-во непрочитанных сообщений для узла.
     val newEvtsCntFut: Future[Int] = {
-      val args = EventsSearchArgs(
-        ownerId = Some(adnId),
-        isUnseen = Some(true)
+      val args = MEventsSearchArgs(
+        ownerId     = Some(adnId),
+        onlyUnseen  = true
       )
       MEvent.dynCount(args)
         .map { _.toInt }
