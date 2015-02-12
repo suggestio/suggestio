@@ -14,10 +14,12 @@ import play.api.libs.functional.syntax._
 
 object MAdContentCtx {
 
-  val FIELDS_FN = "fields"
+  val FIELDS_FN       = "fields"
+  val TITLE_FN        = "title"
+  val DESCR_FN        = "descr"
 
   /** Делаем из инстанса рекламной карточки класс, пригодный для js-контекста. */
-  def apply(mad: MAdT): MAdContentCtx = {
+  def fromAd(mad: MAdT): MAdContentCtx = {
     MAdContentCtx(
       fields = mad.offers
         .iterator
@@ -25,28 +27,30 @@ object MAdContentCtx {
         .map { field => MAdContentField(
           text = FormUtil.strTrimSanitizeF(field.value)
         )}
-        .toSeq
+        .toSeq,
+      title = None,
+      descr = None
     )
   }
 
   /** mapping */
-  implicit def reads: Reads[MAdContentCtx] = {
-    (__ \ FIELDS_FN)
-      .readNullable[Seq[MAdContentField]]
-      .map { fs => MAdContentCtx(fs getOrElse Seq.empty) }
-  }
+  implicit def reads: Reads[MAdContentCtx] = (
+    (__ \ FIELDS_FN).readNullable[Seq[MAdContentField]].map(_ getOrElse Seq.empty) and
+    (__ \ TITLE_FN).readNullable[String] and
+    (__ \ DESCR_FN).readNullable[String]
+  )(apply _)
 
   /** unmapping */
-  implicit def writes: Writes[MAdContentCtx] = {
-    (__ \ FIELDS_FN)
-      .writeNullable[Seq[MAdContentField]]
-      .contramap { ctx => if (ctx.fields.isEmpty) None else Some(ctx.fields) }
-  }
+  implicit def writes: Writes[MAdContentCtx] = (
+    (__ \ FIELDS_FN).write[Seq[MAdContentField]] and
+    (__ \ TITLE_FN).writeNullable[String] and
+    (__ \ DESCR_FN).writeNullable[String]
+  )(unlift(unapply))
 
 }
 
 /** Сырой контент отной рекламной карточки. */
-case class MAdContentCtx(fields: Seq[MAdContentField])
+case class MAdContentCtx(fields: Seq[MAdContentField], title: Option[String], descr: Option[String])
 
 
 
