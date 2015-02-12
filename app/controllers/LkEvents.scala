@@ -107,7 +107,7 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
             val rArgs = event.RenderArgs(
               mevent        = mevent,
               adnNodeOpt    = ai.adnIdOpt.flatMap(nodesMap.get),
-              advExtTgs   = ai.advExtTgIds.flatMap(advExtTgsMap.get),
+              advExtTgs     = ai.advExtTgIds.flatMap(advExtTgsMap.get),
               madOpt        = ai.adIdOpt.flatMap(madsMap.get),
               advReqOpt     = ai.advReqIdOpt.flatMap(advsReqMap.get),
               advOkOpt      = ai.advOkIdOpt.flatMap(advsOkMap.get),

@@ -1,5 +1,6 @@
 package models.adv.js.ctx
 
+import _root_.util.FormUtil
 import models.MAdT
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -21,7 +22,9 @@ object MAdContentCtx {
       fields = mad.offers
         .iterator
         .flatMap { offer => offer.text1.iterator ++ offer.text2.iterator }
-        .map { field => MAdContentField(text = field.value) }
+        .map { field => MAdContentField(
+          text = FormUtil.strTrimSanitizeF(field.value)
+        )}
         .toSeq
     )
   }

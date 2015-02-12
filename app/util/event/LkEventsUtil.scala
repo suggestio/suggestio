@@ -117,28 +117,6 @@ object LkEventsUtil extends PlayMacroLogsDyn {
 
 
   /**
-   * Пометить все непрочитанные сообщения как прочитанные.
-   * @param mevents События, экземпляры [[models.event.MEvent]].
-   * @return Фьючерс для синхронизации.
-   */
-  def markUnseenAsSeen(mevents: Iterable[MEvent]): Future[_] = {
-    val iter = mevents
-      .iterator
-      .filter(_.isUnseen)
-    if (iter.nonEmpty) {
-      Future.traverse(iter) { mevt =>
-        val fut = MEvent.tryUpdate(mevt) {
-          _.copy(isUnseen = false)
-        }
-        fut.onFailure { case ex => LOGGER.error("Failed to mark event as 'seen': " + mevt, ex)}
-        fut
-      }
-    } else {
-      Future successful Nil
-    }
-  }
-
-  /**
    * Для указанного узла отметить все сообщения как прочитанные.
    * Т.к. событий может быть очень много, используем search scroll + put.
    * @param adnId id узла.
