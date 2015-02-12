@@ -13,6 +13,7 @@ import models._
 import org.joda.time.{Period, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
+import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
 import views.html.market.lk.adv._
 import util.PlayMacroLogsImpl
@@ -50,29 +51,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
   val CUSTOM_PERIOD = "custom"
-
-  /** Маппинг для sink'ов, т.е. для типов рекламных выдач. */
-  private def sinksM: Mapping[Set[AdnSink]] = {
-    tuple(
-      AdnSinks.SINK_WIFI.longName -> boolean,
-      AdnSinks.SINK_GEO.longName  -> boolean
-    )
-    .transform[Set[AdnSink]](
-      {case (withWifi, withGeo) =>
-        var acc = List.empty[AdnSink]
-        if (withWifi)
-          acc ::= AdnSinks.SINK_WIFI
-        if (withGeo)
-          acc ::= AdnSinks.SINK_GEO
-        acc.toSet
-      },
-      {sinks =>
-        val withWifi = sinks contains AdnSinks.SINK_WIFI
-        val withGeo = sinks contains AdnSinks.SINK_GEO
-        (withWifi, withGeo)
-      }
-    )
-  }
 
   /** Маппинг для вертикальных уровней отображения. */
   private def adSlsM: Mapping[Set[AdShowLevel]] = {
@@ -217,7 +195,27 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
   private case class AdAdvInfoResult(advsOk: List[MAdvOk], advsReq: List[MAdvReq], advsRefused: List[MAdvRefuse],
-                                     adnIdsReady: List[String], blockedSums: List[(Float, Currency)])
+                                     blockedSums: List[(Float, Currency)])
+
+  /**
+   * Очень асинхронно прочитать инфу по текущим размещениям карточки, вернув контейнер результатов.
+   * @param adId id рекламной карточки.
+   * @param limit Необязательный лимит.
+   * @return Фьючерс с контейнером результатов.
+   */
+  private def getAdAdvInfo(adId: String, limit: Int = CtlGeoAdvUtil.LIMIT_DFLT): Future[AdAdvInfoResult] = {
+    val advsOkFut  = CtlGeoAdvUtil.advFindNonExpiredByAdId(MAdvOk, adId, limit)
+    val advsReqFut = CtlGeoAdvUtil.advFindByAdId(MAdvReq, adId, limit)
+    val advsRefusedFut = CtlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
+    for {
+      blockedSums     <- CtlGeoAdvUtil.collectBlockedSums(adId)
+      advsOk          <- advsOkFut
+      advsReq         <- advsReqFut
+      advsRefused     <- advsRefusedFut
+    } yield {
+      AdAdvInfoResult(advsOk, advsReq, advsRefused, blockedSums)
+    }
+  }
 
   /**
    * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
@@ -237,28 +235,18 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         .toMap
     }
 
+    // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
+    val adnIdsReadyFut = CtlGeoAdvUtil.findAdnIdsMmpReady()
+
     // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
-    val adAdvInfoFut = Future {
-      DB.withConnection { implicit c =>
-        // Собираем всю инфу о размещении этой рекламной карточки
-        val advsOk = MAdvOk.findNotExpiredByAdId(adId)
-        // Определяем список узлов, которые проходят по adv_ok. Это можно через транзакции и контракты.
-        val advsReq = MAdvReq.findByAdId(adId)
-        val advsRefused = MAdvRefuse.findByAdId(adId)
-        // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
-        val adnIdsReady = MBillMmpDaily.findAllAdnIds
-        // Собираем инфу о заблокированных средствах, относящихся к этой карточке.
-        val blockedSums = MAdvReq.calculateBlockedSumForAd(adId)
-        AdAdvInfoResult(advsOk, advsReq, advsRefused, adnIdsReady, blockedSums)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
+    val adAdvInfoFut = getAdAdvInfo(adId)
 
     // Сразу запускаем в фоне генерацию старого формата передачи ресиверов в шаблон.
     val rcvrsReadyFut = for {
-      adAdvInfo <- adAdvInfoFut
-      rcvrs <- rcvrsAllFut
+      adnIdsReady <- adnIdsReadyFut
+      rcvrs       <- rcvrsAllFut
     } yield {
-      val adnIdsReadySet = adAdvInfo.adnIdsReady.toSet
+      val adnIdsReadySet = adnIdsReady.toSet
       // Выкинуть узлы, у которых нет своего тарифного плана.
       // TODO Нельзя публиковать прямо в городах. Нужно фильтровать тут и при сабмите.
       rcvrs filter { node => adnIdsReadySet contains node.id.get }

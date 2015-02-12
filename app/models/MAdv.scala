@@ -256,6 +256,9 @@ trait MAdvStatic extends SqlModelStatic {
 
   override type T <: MAdvI
 
+  /** Дефолтовое значение limit'а в методах. */
+  def LIMIT_DFLT = 100
+
   def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
     getByIdBase(id, policy, Some("AND date_end >= now()"))
   }
@@ -265,7 +268,7 @@ trait MAdvStatic extends SqlModelStatic {
    * @param adId id рекламной карточки, которую размещают.
    * @return Список найленных рядов в неопределённом порядке.
    */
-  def findByAdId(adId: String, limit: Int = 100, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+  def findByAdId(adId: String, limit: Int = LIMIT_DFLT, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE ad_id = {adId} LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
@@ -274,7 +277,7 @@ trait MAdvStatic extends SqlModelStatic {
    * @param adId id рекламной карточки.
    * @return Список подходящих под запрос рядов в произвольном порядке.
    */
-  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
+  def findNotExpiredByAdId(adId: String, limit: Int = LIMIT_DFLT, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE ad_id = {adId} AND date_end >= now() LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 

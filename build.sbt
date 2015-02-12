@@ -198,7 +198,18 @@ proguardSettings
 ProguardKeys.proguardVersion in Proguard := "5.2"
 
 ProguardKeys.options in Proguard ++= Seq(
-
+  // https://gist.github.com/cessationoftime/4029263
+  "-keep class * implements java.sql.Driver",
+  "-keep class scala.concurrent.stm.ccstm.CCSTM { *; }",
+  "-keep class akka.remote.RemoteActorRefProvider { *; }",
+  "-keep class akka.event.Logging$DefaultLogger { *; }",
+  "-keep class akka.event.Logging$LogExt { *; }",
+  "-keep class akka.event.slf4j.Slf4jEventHandler { *; }",
+  "-keep class akka.remote.netty.NettyRemoteTransport { *; }",
+  "-keep class akka.serialization.JavaSerializer { *; }",
+  "-keep class akka.serialization.ProtobufSerializer { *; }",
+  "-keep class com.google.protobuf.* { *; }" ,
+  // etc
   "-keep class * extends javax.xml.parsers.SAXParserFactory",
   "-keep public class org.apache.xerces.**",
   "-keep public class play.api.**",
