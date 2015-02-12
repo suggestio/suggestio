@@ -2,8 +2,8 @@
 
 @_textInputBaseTpl(bf, bc, bfNameBase, af, colorWithLabel = true) {
   @defining( af(bfNameBase + ".value") ) { ff =>
-    <div class="lk-text-field">
-      <div><textarea name="@ff.name" class="js-input-w-block-preview" maxlength="@bf.maxLen">@ff.value</textarea></div>
-    </div>
+
+        <textarea class="ad-field-editor_textarea js-input-w-block-preview" name="@ff.name" maxlength="@bf.maxLen">@ff.value</textarea>
+
   }
 }

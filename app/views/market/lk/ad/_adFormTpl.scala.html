@@ -22,13 +22,17 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@
 
-  @market.lk.lkBlock("Выбор категории") {
+  @market.lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
+    Выбор категории
+  } {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
 
 
   @* Для блока : превьюшка + редактор *@
-  @market.lk.lkBlock("Отображение рекламной карточки") {
+  @market.lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
+    Отображение рекламной карточки
+  } {
 
     @* Форма редактирования блока *@
     <div class="lk-ad-block-edit-form">
@@ -70,7 +74,9 @@
 
 
   @* HTML-редактор для ввода текстового описания. *@
-  @market.lk.lkBlock("Описание") {
+  @market.lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
+    Описание
+  } {
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
 

@@ -5,16 +5,13 @@
 @import helper._
 @import models.blk._
 
-@* TODO Надо бы выпилить этот пустой label, но вёрстка съезжает. *@
-<label class="ad-block-editor__fieldset_label">@*Messages(bc.i18nLabelOf(bf.name)) @bf.offerNopt.map(_ + 1)*@</label>
 
 <div class="lk-field-w-tools">
-  <div class="lk-field-w-tools__field">@content</div>
+
 
   @if( bf.withFontColor ) {
     <div class="lk-field-w-tools__tools lk-field-tools">
       <div class="lk-field-tools__inner">
-        <div class="lk-field-tools__top-white-line"></div>
 
         @if( bf.withFontFamily ) {
           @defining( bfNameBase + ".font.family") { ffname =>
@@ -65,5 +62,7 @@
       </div>
     </div>
   }
+
+  <div class="lk-field-w-tools__field">@content</div>
 
 </div>

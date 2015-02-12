@@ -1,8 +1,8 @@
-@(href: Option[Call] = None, open: Boolean = true)(title: Html)(cnt: Html)(implicit ctx: Context)
+@(href: Option[Call] = None, open: Boolean = true, cssClass: String = "")(title: Html)(cnt: Html)(implicit ctx: Context)
 
-<div class="slide-block js-slide-w">
+<div class="slide-block js-slide-w @cssClass">
 
-  <div class="slide-block_title js-slide-title">
+  <div class="slide-block_title js-slide-title @if(open){ __js-open }">
     @title
 
     @if(open) {

@@ -3,7 +3,9 @@
 @_textInputBaseTpl(bf, bc, bfNameBase, af, colorWithLabel = true) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
-      <div><input name="@pvf.name" type="text" value="@pvf.value.orElse(bf.defaultValue.map(_.value))" class="js-input-w-block-preview" maxlength="@bf.maxLen"/></div>
+      <div>
+        <input name="@pvf.name" type="text" value="@pvf.value.orElse(bf.defaultValue.map(_.value))" class="js-input-w-block-preview" maxlength="@bf.maxLen"/>
+      </div>
     </div>
   }
 }
