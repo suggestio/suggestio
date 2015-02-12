@@ -61,8 +61,7 @@ case class SysAdnNodeBillingArgs(
 
 case class CurrentAdvsTplArgs(
   advs: Seq[MAdvI],
-  adv2adn: Map[Int, MAdnNode],
-  blockedSums: Seq[(Float, Currency)]
+  adv2adn: Map[Int, MAdnNode]
 )
 
 /** Аргументы для рендера страницы управления рекламной карточкой с формой размещения оной. */

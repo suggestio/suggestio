@@ -10,14 +10,4 @@
 
 @if( !advs.isEmpty ){
   @_currentAdvsListTpl(advs, adv2adn)
-
-  @*Под данную рекламу заблокировано:
-  @if(blockedSums.isEmpty) {
-    @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
-  } else {
-    @blockedSums.map { case (amount, currency) =>
-      @formatPrice(amount, currency)
-    }
-  }*@
-
 }

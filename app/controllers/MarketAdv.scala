@@ -194,8 +194,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
-  private case class AdAdvInfoResult(advsOk: List[MAdvOk], advsReq: List[MAdvReq], advsRefused: List[MAdvRefuse],
-                                     blockedSums: List[(Float, Currency)])
+  private case class AdAdvInfoResult(advsOk: List[MAdvOk], advsReq: List[MAdvReq], advsRefused: List[MAdvRefuse])
 
   /**
    * Очень асинхронно прочитать инфу по текущим размещениям карточки, вернув контейнер результатов.
@@ -206,14 +205,12 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def getAdAdvInfo(adId: String, limit: Int = CtlGeoAdvUtil.LIMIT_DFLT): Future[AdAdvInfoResult] = {
     val advsOkFut  = CtlGeoAdvUtil.advFindNonExpiredByAdId(MAdvOk, adId, limit)
     val advsReqFut = CtlGeoAdvUtil.advFindByAdId(MAdvReq, adId, limit)
-    val advsRefusedFut = CtlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
     for {
-      blockedSums     <- CtlGeoAdvUtil.collectBlockedSums(adId)
+      advsRefused     <- CtlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
       advsOk          <- advsOkFut
       advsReq         <- advsReqFut
-      advsRefused     <- advsRefusedFut
     } yield {
-      AdAdvInfoResult(advsOk, advsReq, advsRefused, blockedSums)
+      AdAdvInfoResult(advsOk, advsReq, advsRefused)
     }
   }
 
@@ -321,11 +318,11 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       rcvrs     <- rcvrsReadyFut
     } yield {
       import adAdvInfo._
-      trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
+      trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}]")
       val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
       val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
       val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
-      CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
+      CurrentAdvsTplArgs(advs, adv2adnMap)
     }
 
     // Строим карту уже занятых какими-то размещением узлы.
