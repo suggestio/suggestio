@@ -8,19 +8,19 @@
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
 
-  @mad.offers.headOption.fold {
-    @bgImgTpl(mad, bc, args)
-  } { offer =>
-
-    @offer.href.map { href =>
-      <a href="@href" target="_blank">
-    }
-
+  @if(mad.offers.isEmpty) {
     @_block2BodyCommonTpl(mad, args, bc)
+  } else {
+    @defining(mad.offers.headOption.get) { offer =>
+      @offer.href.map { href =>
+      <a href="@href" target="_blank">
+      }
 
-    @if(offer.href.isDefined) {
-      </a>
+      @_block2BodyCommonTpl(mad, args, bc)
+
+      @if(offer.href.isDefined) {
+        </a>
+      }
     }
   }
-
 }

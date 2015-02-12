@@ -451,7 +451,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   /** Нулевая цена, передавая в соотв. шаблон. */
-  private val zeroPricing: MAdvPricing = {
+  private def zeroPricing: MAdvPricing = {
     val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
     val prices = List(curr -> 0F)
     MAdvPricing(prices, hasEnoughtMoney = true)
@@ -721,7 +721,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Маппинг формы отказа от размещения рекламной карточки. Указывать причину надо. */
-  private val reqRefuseFormM = {
+  private def reqRefuseFormM = {
     import play.api.data.Forms._
     Form(
       "reason" -> nonEmptyText(minLength = 2, maxLength = 256)
