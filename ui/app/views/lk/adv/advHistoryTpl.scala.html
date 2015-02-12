@@ -2,12 +2,13 @@
 
 @* Страница с историей размещений этой рекламной карточки. *@
 
-@import market.lk._
+@import market.lk.adv._
 
-@lkBaseLayout(
+@advBase(
   title         = "История размещений рекламной карточки",
-  nodeOpt       = Some(producer),
-  backHref      = mad.id.map(madId => routes.MarketAdv.advForAd(madId).url)
+  mad           = mad,
+  producer      = producer,
+  rightLink     = LkAdvRightLinks.LARL_HISTORY
 ) {
 
   @_currentAdvsListTpl(currAdvsArgs)

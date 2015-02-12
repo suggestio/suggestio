@@ -67,6 +67,7 @@ GET  /m/lk/xadv/geo/for/node/:adnId     controllers.MarketAdv.showNodeAdvs(adnId
 ## Размещение рекламы: обработка запросов размещения.
 POST /m/lk/xadv/geo/req/:advReqId/refuse   controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
 POST /m/lk/xadv/geo/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
+GET  /m/lk/xadv/history/:adId           controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах
 GET  /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTarget(adnId)

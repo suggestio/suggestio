@@ -16,6 +16,7 @@ import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
 import views.html.market.lk.adv._
+import views.html.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
@@ -214,6 +215,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MAdnNode]): CurrentAdvsTplArgs = {
+    import adAdvInfo._
+    val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
+    val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
+    val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
+    CurrentAdvsTplArgs(advs, adv2adnMap)
+  }
+
   /**
    * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
    * @param adId id рекламной карточки.
@@ -319,10 +328,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     } yield {
       import adAdvInfo._
       trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}]")
-      val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
-      val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
-      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
-      CurrentAdvsTplArgs(advs, adv2adnMap)
+      toAdvswArgs(adAdvInfo, rcvrs)
     }
 
     // Строим карту уже занятых какими-то размещением узлы.
@@ -770,6 +776,23 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
     isFreeOpt
       .fold(false) { _ && request.isSuperuser }
+  }
+
+
+  /**
+   * Отображение страницы истории размещений.
+   * @param adId id рекламной карточки, для которой рендерим страницу.
+   * @return 200 Ок со страницей.
+   */
+  def advHistory(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
+    val rcvrsAllFut = collectAllReceivers(request.producer)
+    for {
+      adAdvInfo <- getAdAdvInfo(adId)
+      rcvrs     <- rcvrsAllFut
+    } yield {
+      val args = toAdvswArgs(adAdvInfo, rcvrs)
+      Ok(advHistoryTpl(request.mad, request.producer, args))
+    }
   }
 
 }

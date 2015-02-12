@@ -25,13 +25,12 @@
         <div class="ovh hidden" id="adOperationHistory">
       }
 
+      @* dateStatus - одобрение, dateStart - начало размещения. *@
       @adv match {
         case advOk: MAdvOk => {
           @_single_status( "approved", node ) {
-            @*if(advOk.isOnline){ <a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a> }*@
             <span class="green">размещено</span> <span class="adv-status_i-time">@_prettyDate(advOk.dateStatus)</span>
           }
-          @* dateStatus - одобрение, dateStart - начало размещения. *@
         }
         case advReq: MAdvReq => {
           @_single_status( "pending", node ) {
