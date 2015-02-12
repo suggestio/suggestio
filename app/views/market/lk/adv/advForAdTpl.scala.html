@@ -3,6 +3,22 @@
 @* Страница управления размещением рекламной карточки. *@
 @import ctx._
 
+
+@rightBarAfter = {
+  <div class="right-bar-price-widget">
+    <div class="right-bar-price-widget_cnt">
+      <h2 class="right-bar-price-widget_title">
+        Общий счет
+      </h2>
+      <p class="right-bar-price-widget_price-value js-pre-price">
+        0 р.
+      </p>
+      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">Отправить запрос</button>
+    </div>
+  </div>
+}
+
+
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.css")'/>
 }
@@ -13,6 +29,7 @@
   mad           = mad,
   producer      = producer,
   rightLink     = LkAdvRightLinks.LARL_GEO,
+  rightAfter    = Some(rightBarAfter),
   headAfter     = Some(headAfter)
 ) {
 
