@@ -21,7 +21,7 @@
       <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
 
       @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
-      <a class="btn __size-M __minor js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">Кадрирование</a>
+      <a class="btn __size-M __minor js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">Кадрировать</a>
     </div>
 
     <div class="sm-note">
@@ -34,8 +34,8 @@
 
   <div class="lk-file-field_choose-color-w">
     <div class="lk-file-field_choose-color-btn-w">
-      @defining( af("ad.bgColor").value.getOrElse("EEEEEE") ) { color =>
-        <a class="btn __size-M __minor js-custom-color" style='background-color: #@color;'>
+      @defining( af("ad.bgColor").value.getOrElse("DAD9D9") ) { color =>
+        <a class="btn __size-L __minor js-custom-color" style='background-color: #@color;'>
           @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
           <input id="adBgColor" type="hidden" name="ad.bgColor" value='@color' />
           Выбрать цвет
@@ -46,3 +46,6 @@
   </div>
 
 </div>
+
+
+

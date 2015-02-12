@@ -120,8 +120,8 @@ Input.text.from.picture=Введите текст, изображенный на
 error.captcha=Неверный код проверки.
 
 blocks.field.isWide=Отображать на широкую?
-blocks.field.height=Высота блока
-blocks.field.width=Ширина блока
+blocks.field.height=Высота
+blocks.field.width=Ширина
 blocks.field.title=Заголовок
 blocks.field.bgImg=Фоновое изображение
 blocks.field.logo=Логотип

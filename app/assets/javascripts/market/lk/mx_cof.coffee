@@ -2143,6 +2143,8 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
+            console.log "---request preview---"
+            console.log data
 
             if is_with_auto_crop == true
               console.log 'необходим авто кроп'

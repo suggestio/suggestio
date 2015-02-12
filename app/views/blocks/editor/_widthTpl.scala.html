@@ -6,12 +6,12 @@
 
 @import ctx._
 
-<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
+<label class="block-height-editor_label">@Messages(bc.i18nLabelOf(bf.name))</label>
 
 <div class="block-height-editor js-block-height-editor">
 
-  <div class="block-height-editor__button js-block-width-editor-button" data-change-direction="decrease"><div></div></div>
-  <div class="block-height-editor__button block-height-editor__button_increase js-block-width-editor-button" data-change-direction="increase"><div></div></div>
+  <div class="block-height-editor_btn __decrease js-block-width-editor-button" data-change-direction="decrease"></div>
+  <div class="block-height-editor_btn __increase js-block-width-editor-button" data-change-direction="increase"></div>
 
   @defining( af(bfNameBase) ) { formField =>
     <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.availableVals.min" data-max-value="@bf.availableVals.max"/>
