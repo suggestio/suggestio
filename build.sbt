@@ -77,7 +77,7 @@ libraryDependencies ++= {
     "com.vividsolutions" % "jts" % "1.13",
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.+" % "test",
-    "org.scalatest" %% "scalatest" % "2.+" % "test"
+    "org.scalatest" %% "scalatest" % "2.2.+" % "test"   // Потом надо на 2.3 переключится.
   )
 }
 
