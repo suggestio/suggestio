@@ -1425,6 +1425,28 @@ PersonalCabinet =
 
       event = if isTouchDevice() then 'touchend' else 'click'
 
+      # добавление тектсового блока в редакторе карточки
+      $ document
+      .on "click", ".js-ad-editor_add-text-field-btn", (e) ->
+        e.preventDefault()
+        $this = $ this
+        href = $this.attr "href"
+        $field = $ ".js-ad-editor_field-title"
+
+        index = $field.size() + 1
+        height = $("input[name = 'ad.offer.height']").val()
+        width = $("input[name = 'ad.offer.width']").val()
+
+        jsRoutes.controllers.MarketAd.newTextField(index, height, width).ajax(
+          success: (data) ->
+            newHtml = "<div class='edit-ad_block-field __title js-ad-editor_field-title'>#{data}</div>"
+            $lastField = $field.filter ":last"
+            $lastField.after newHtml
+            # вызываем keyup, чтобы обновить превью
+            $lastField.find("textarea").trigger "keyup"
+        )
+
+      # выбор цвета для описания в редакторе карточки
       $ document
       .on "click", ".js-color-block", (e) ->
         e.preventDefault()
@@ -2143,9 +2165,6 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            console.log "---request preview---"
-            console.log data
-
             if is_with_auto_crop == true
               console.log 'необходим авто кроп'
             $('#adFormBlockPreview').html data

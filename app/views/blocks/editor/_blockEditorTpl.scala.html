@@ -8,7 +8,7 @@
     <div class="ad-block-editor">
       @for(bf <- bc.blockFields(af)) {
 
-        <div class="edit-ad_block-field __@bf.name">
+        <div class="edit-ad_block-field __@bf.name js-ad-editor_field-@bf.name">
           @bf.renderEditorField(
             af = af,
             bfNameBase = nameBase + bf.offerNopt.map(".offer[" + _ + "]").getOrElse("") + "." + bf.name,
