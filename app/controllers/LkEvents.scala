@@ -20,6 +20,7 @@ import play.api.Play.{current, configuration}
 import views.html.lk.event._
 
 import scala.concurrent.Future
+import scala.util.{Success, Failure}
 
 /**
  * Suggest.io
@@ -126,9 +127,17 @@ object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
       }
     }
 
-    // Автоматически помечать все непрочитанные сообщения как прочитанные:
-    eventsFut.onSuccess { case mevents =>
-      LkEventsUtil.markUnseenAsSeen(mevents)
+    // Автоматически помечать все сообщения как прочитанные при первом заходе на страницу событий:
+    if (offset == 0 && !inline) {
+      evtsRndrFut.onSuccess { case _ =>
+        LkEventsUtil.markAllSeenForNode(adnId) onComplete {
+          case Success(count) =>
+            if (count > 0)
+              trace(s"nodeIndex($adnId): $count events marked as read.")
+          case Failure(ex) =>
+            warn(s"nodeIndex($adnId): Failed to mark node events as seen", ex)
+        }
+      }
     }
 
     // Рендерим конечный результат: страница или же инлайн

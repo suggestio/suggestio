@@ -2,6 +2,7 @@ package util.event
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.ym.model.MAdnNodeGeo
+import models.event.search.MEventsSearchArgs
 import models.event.{MEvent, IEvent, ArgsInfo, MEventTmp}
 import models._
 import org.joda.time.DateTime
@@ -134,6 +135,26 @@ object LkEventsUtil extends PlayMacroLogsDyn {
       }
     } else {
       Future successful Nil
+    }
+  }
+
+  /**
+   * Для указанного узла отметить все сообщения как прочитанные.
+   * Т.к. событий может быть очень много, используем search scroll + put.
+   * @param adnId id узла.
+   * @return Фьючерс с кол-вом обновлённых элементов.
+   */
+  def markAllSeenForNode(adnId: String): Future[Int] = {
+    val searchArgs = MEventsSearchArgs(
+      ownerId = Some(adnId),
+      onlyUnseen = true
+    )
+    MEvent.updateAll(queryOpt = searchArgs.toEsQueryOpt) { mevent0 =>
+      val res = mevent0.copy(
+        isUnseen = false,
+        ttlDays = Some(MEvent.TTL_DAYS_SEEN)
+      )
+      Future successful res
     }
   }
 
