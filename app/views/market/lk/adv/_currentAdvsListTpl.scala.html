@@ -18,6 +18,10 @@
 <hr class="delimiter __light"/>
 <div class="adv-status_lst">
 
+  @if(advs.size == 0) {
+    История отсутствует.
+  }
+
   @advs.zipWithIndex.map { case(adv, i) =>
     @adv2adn.get(adv.id.get).map { node =>
 

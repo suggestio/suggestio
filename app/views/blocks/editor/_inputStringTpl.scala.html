@@ -1,15 +1,22 @@
 @(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-<div class="lk-text-field">
-  <label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
-  <div>
-    @defining( af(bfNameBase) ) { sf =>
-      <input name="@sf.name"
-             type="text"
-             value="@sf.value.orElse(bf.defaultValue)"
-             class="js-input-w-block-preview"
-             maxlength="@bf.maxLen"
-      />
-    }
-  </div>
-</div>
+
+@defining( af(bfNameBase) ) { sf =>
+  <table class="prop">
+    <td class="prop_name">
+      <label for="@sf.name">
+        @Messages(bc.i18nLabelOf(bf.name))
+      </label>
+    </td>
+    <td class="prop_value">
+      <div class="input " id="@sf.name">
+        <input name="@sf.name"
+               type="text"
+               value="@sf.value.orElse(bf.defaultValue)"
+               class="js-input-w-block-preview"
+               maxlength="@bf.maxLen"
+                />
+      </div>
+    </td>
+  </table>
+}
