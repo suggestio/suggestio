@@ -21,9 +21,11 @@
   @advs.zipWithIndex.map { case(adv, i) =>
     @adv2adn.get(adv.id.get).map { node =>
 
-      @if(i ==  1) {
+
+      @* вернуть, если нужно отображать только последню операцию или n последних операции
+      if(i ==  1) {
         <div class="ovh hidden" id="adOperationHistory">
-      }
+      }*@
 
       @* dateStatus - одобрение, dateStart - начало размещения. *@
       @adv match {
@@ -44,14 +46,17 @@
         }
       }
 
-      @if(i > 0 && i ==  advs.size - 1) {
+      @*вернуть, если нужно отображать только последню операцию или n последних операции
+          if(i > 0 && i ==  advs.size - 1) {
         </div>
-      }
+      }*@
 
     }
 
   }
 
 </div>
-<button class="btn __helper __size-S adv-status_btn f-right js-slide-btn" href="#adOperationHistory">Показать все</button>
+
+@* сворачивалка списка операции, вернуть при надобности *@
+@*<button class="btn __helper __size-S adv-status_btn f-right js-slide-btn" href="#adOperationHistory">Показать все</button>*@
 
