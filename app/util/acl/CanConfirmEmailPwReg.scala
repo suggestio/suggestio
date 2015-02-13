@@ -87,10 +87,10 @@ case class CanConfirmEmailPwReg(eaInfo: IEaEmailId)
 /** Реализация [[CanConfirmEmailPwRegBase]] c выставлением CSRF-token'а. */
 case class CanConfirmEmailPwRegGet(eaInfo: IEaEmailId)
   extends CanConfirmEmailPwRegBase
-  with CsrfGet[AbstractRequestWithPwOpt]
+  with CsrfGet[EmailPwRegConfirmRequest]
 
 /** Реализация [[CanConfirmEmailPwRegBase]] с проверкой выставленного ранее CSRF-токена. */
 case class CanConfirmEmailPwRegPost(eaInfo: IEaEmailId)
   extends CanConfirmEmailPwRegBase
-  with CsrfPost[AbstractRequestWithPwOpt]
+  with CsrfPost[EmailPwRegConfirmRequest]
 
