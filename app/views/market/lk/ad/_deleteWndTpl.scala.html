@@ -5,23 +5,19 @@
 @import helper._
 @import ctx._
 
-<div class="popup" id="remove-ad">
+<div class="popup js-popup __size-M js-hidden" id="remove-ad">
 
   <div class="popup_header">
     <a class="close f-right js-close-popup" href="@routes.MarketAd.editAd(mad.id.get)"></a>
   </div>
 
-  <div class="popup_cnt">
+  <h2 class="minor-title">
+    Рекламная карточка будет удалена из<br/>поисковой выдачи
+  </h2>
 
-    <div class="popup_t">
-      РЕКЛАМНАЯ КАРТОЧКА БУДЕТ УДАЛЕНА ИЗ<br/>ПОИСКОВОЙ ВЫДАЧИ
-    </div>
-
-    <div class="submit-w __size-S">
-      <a class="siom-ac-btn __color-3 __ft-XM __size-M f-left js-close-popup">Отменить</a>
-      @stuff._deleteSmthFormBtnTpl(CSRF(routes.MarketAd.deleteSubmit(mad.id.get)), Some("__ft-XM __size-M f-right"))
-    </div>
-
+  <div class="btn-w __size-M">
+    <a class="btn __size-M __minor js-close-popup">Отменить</a>
+    @stuff._deleteSmthFormBtnTpl(CSRF(routes.MarketAd.deleteSubmit(mad.id.get)), Some("__size-M __negative __list"), "inline-block")
   </div>
 
 </div>
