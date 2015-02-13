@@ -1,9 +1,10 @@
 package models.adv.js.ctx
 
-import _root_.util.FormUtil
-import models.MAdT
+import _root_.util.{TplDataFormatUtil, FormUtil}
+import models.{MAdnNode, MAdT}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -18,9 +19,16 @@ object MAdContentCtx {
   val TITLE_FN        = "title"
   val DESCR_FN        = "descr"
 
-  /** Делаем из инстанса рекламной карточки класс, пригодный для js-контекста. */
-  def fromAd(mad: MAdT): MAdContentCtx = {
+  val FROM_AD_DESCR_LEN = configuration.getInt("adv.ext.ad.content.descr.len") getOrElse 64
+
+  /** Делаем из инстанса рекламной карточки класс, пригодный для js-контекста.
+    * @param mad Рекламная карточка.
+    * @param producer Узел-продьюсер. Нужен для генерации title карточки.
+    * @return Экземпляр MAdContentCtx.
+    */
+  def fromAd(mad: MAdT, producer: MAdnNode): MAdContentCtx = {
     MAdContentCtx(
+      // Поля карточки -- это именно поля.
       fields = mad.offers
         .iterator
         .flatMap { offer => offer.text1.iterator ++ offer.text2.iterator }
@@ -28,8 +36,22 @@ object MAdContentCtx {
           text = FormUtil.strTrimSanitizeF(field.value)
         )}
         .toSeq,
-      title = None,
-      descr = None
+      // Заголовок карточки -- это заголовок узла.
+      title = {
+        val sb = new StringBuilder(128, producer.meta.name)
+        if (producer.meta.town.isDefined) {
+          sb.append(" / ")
+            .append(producer.meta.town.get)
+        }
+        Some(sb.toString())
+      },
+      // Дескрипшен карточки мы берём из начала long-дескрипшена карточки.
+      descr = mad.richDescrOpt.map { rd =>
+        // Выкинуть html-теги и пустоты по бокам.
+        val allPlain = FormUtil.strTrimSanitizeF(rd.text)
+        // Укоротить текст до скольки-то символов. Нужно найти точку срезания, чтобы не обрывать слово.
+        TplDataFormatUtil.strLimitLenNoTrailingWordPart(allPlain, FROM_AD_DESCR_LEN)
+      }
     )
   }
 

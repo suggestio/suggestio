@@ -213,7 +213,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       // Запустить заполнение контекста исходными данными по цели.
       val madCtx = MAdCtx(
         id      = args.request.mad.id.get,
-        content = MAdContentCtx.fromAd( args.request.mad ),
+        content = MAdContentCtx.fromAd( args.request.mad, args.request.producer ),
         scUrl   = Some( getScUrl(MExtReturns.ToAd) ),
         // Сразу вставить URL картинки в контекст.
         picture = Some( getPicCtx(szMultDflt) )

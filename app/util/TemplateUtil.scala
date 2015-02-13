@@ -177,6 +177,17 @@ object TplDataFormatUtil {
     }
   }
 
+  /**
+   * Лимитирование длины строки, но без обрывания слов на середине.
+   * @param str Исходная строка.
+   * @param len Желаемая длина строки.
+   * @return Новая строка или та же, если она слишком короткая, чтобы резать.
+   */
+  def strLimitLenNoTrailingWordPart(str: String, len: Int): String = {
+    // TODO Написать код движения к пробелу.
+    strLimitLen(str, len)
+  }
+
   private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
   def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
@@ -211,6 +222,7 @@ object TplDataFormatUtil {
     }
     Html(htmlStr)
   }
+
 }
 
 
