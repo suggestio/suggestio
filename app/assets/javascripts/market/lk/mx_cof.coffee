@@ -1393,6 +1393,25 @@ PersonalCabinet =
     ##################################################################################################################
     inputs: () ->
 
+      # форма регистрации на главной
+      $ document
+      .on "focus", "#indexRegForm input[name = email]", (e)->
+        $this = $ this
+        $regForm = $ "#indexRegForm"
+
+        $hiddenBlock = $regForm.find ".js-hidden"
+        $hiddenBlock.fadeIn()
+
+      $ document
+      .on "blur", "#indexRegForm input[name = email]", (e)->
+        $this = $ this
+        $regForm = $ "#indexRegForm"
+        value = $this.val().trim()
+
+        if !value
+          $hiddenBlock = $regForm.find ".js-hidden"
+          $hiddenBlock.fadeOut()
+
       #маска для телефонов
       if $().mask
         $ 'input[mask = tel]'

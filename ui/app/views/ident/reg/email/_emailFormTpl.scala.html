@@ -7,7 +7,7 @@
 @import util.FC.authFc
 
 
-@form( CSRF(routes.Ident.emailRegSubmit()) ) {
+@form( CSRF(routes.Ident.emailRegSubmit()), 'id -> "indexRegForm" ) {
 
   @rf.globalError.map { ge =>
     <p class="error-msg">Ошибка: @Messages(ge.message)</p>
@@ -21,21 +21,25 @@
   )
 
 
-  <div class="auth-page_input">
-    @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
-    @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-      <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-      <img class="captcha_img" id="captchaImageRegistrationForm" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt="" />
-      <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImageRegistrationForm" href=""></a>
-    }
-  </div>
+  <div class="js-hidden">
 
-  @inputText(
-    rf(CAPTCHA_TYPED_FN),
-    '_label -> "Введите код с картинки",
-    'type -> "tel",
-    'placeholder -> "Введите код с картинки"
-  )
+    <div class="auth-page_input">
+      @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
+      @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+        <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
+        <img class="captcha_img" id="captchaImageRegistrationForm" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt="" />
+        <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImageRegistrationForm" href=""></a>
+      }
+    </div>
+
+    @inputText(
+      rf(CAPTCHA_TYPED_FN),
+      '_label -> "Введите код с картинки",
+      'type -> "tel",
+      'placeholder -> "Введите код с картинки"
+    )
+
+  </div>
 
   <p class="auth-page_descr">
     На электронную почту будет отправлено
@@ -44,7 +48,7 @@
 
   <p class="auth-page_descr">
     Приступая к работе с Suggest.io Вы
-    принимаете <a class="auth-page_link" href="@routes.Static.privacyPolicy">Пользовательское соглашение</a>
+    соглашаетесь с <a class="auth-page_link" href="@routes.Static.privacyPolicy">Политикой конфиденциальности</a>
   </p>
 
   <div class="btn-w __size-M">
