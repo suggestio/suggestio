@@ -1448,8 +1448,11 @@ PersonalCabinet =
             newHtml = "<div class='edit-ad_block-field __title js-ad-editor_field-title'>#{data}</div>"
             $lastField = $field.filter ":last"
             $lastField.after newHtml
-            # вызываем keyup, чтобы обновить превью
+            # вызываем keyup, чтобы обновить превью, здесь неважно у какого элемента вызвать соыбтие
             $lastField.find("textarea").trigger "keyup"
+
+            $newLastField = $ ".js-ad-editor_field-title:last"
+            market.init_colorpickers $newLastField
         )
 
       # выбор цвета для описания в редакторе карточки
@@ -1596,9 +1599,6 @@ CbcaPopup =
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    console.log popupSelector
-    console.log popupHeight
-    console.log containerHeight
 
     if diffHeight > minTop*2 && $window.width() > 767
       top = Math.ceil( (containerHeight - popupHeight)/2 )
@@ -1758,12 +1758,19 @@ market =
       head = document.getElementsByTagName('head')
       head[0].appendChild(style_dom)
 
-  init_colorpickers : () ->
+  init_colorpickers : ($parent = false) ->
 
-    $ '.js-custom-color'
-    .each () ->
+    if $parent
+      $colorPickers = $parent.find ".js-custom-color"
+    else
+      $colorPickers = $ ".js-custom-color"
 
-      current_value = $(this).attr 'data-current-value'
+    console.log "$colorPickers size = #{$colorPickers.size()}"
+
+    $colorPickers.each () ->
+
+      $this = $ this
+      current_value = $this.data "current-value"
 
       cb = ( _this ) ->
         i = Math.random()
