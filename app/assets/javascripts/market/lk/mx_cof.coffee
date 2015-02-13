@@ -1401,6 +1401,7 @@ PersonalCabinet =
 
         $hiddenBlock = $regForm.find ".js-hidden"
         $hiddenBlock.fadeIn()
+        $regForm.find("#captchaReload").trigger "click"
 
       $ document
       .on "blur", "#indexRegForm input[name = email]", (e)->

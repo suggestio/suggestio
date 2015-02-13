@@ -27,7 +27,7 @@
       @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
       @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-        <img class="captcha_img" id="captchaImageRegistrationForm" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt="" />
+        <img class="captcha_img" id="captchaImageRegistrationForm" src="" alt="" />
         <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImageRegistrationForm" href=""></a>
       }
     </div>
