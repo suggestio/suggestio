@@ -7,7 +7,6 @@ import models.event.search.MEventsSearchArgs
 import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
-import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
@@ -254,37 +253,4 @@ case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Not
   }
 }
 
-
-/** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
-trait CsrfGet[R[_]] extends ActionBuilder[R] {
-
-  /*abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block).map { result =>
-      result.withHeaders(
-        HeaderNames.CACHE_CONTROL -> "private, max-age=1, must-revalidate",
-        HeaderNames.VARY          -> "Set-Cookie,Cookie"
-      )
-    }
-  }*/
-
-  override protected def composeAction[A](action: Action[A]): Action[A] = {
-    CSRFAddToken( super.composeAction(action) )
-  }
-}
-
-/** Аддон для action-builder'ов, добавляющий проверку CSRF-токена перед запуском экшена на исполнение. */
-trait CsrfPost[R[_]] extends ActionBuilder[R] {
-
-  /*abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block).map { result =>
-      result.withHeaders(
-        HeaderNames.CACHE_CONTROL -> "private, no-cache"
-      )
-    }
-  }*/
-
-  override protected def composeAction[A](action: Action[A]): Action[A] = {
-    CSRFCheck( super.composeAction(action) )
-  }
-}
 
