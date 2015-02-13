@@ -33,12 +33,12 @@
 
         @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
         @if( bf.withTextAlign ) {
-          @defining(bfNameBase + ".font.align") { aname =>
+          @defining(af(bfNameBase + ".font.align")) { field =>
           <div class="lk-field-tools__editor lk-field-tools__editor_align-editor align-editor js-align-editor">
-            <div class='ad-field-editor_align-text-btn __left js-ae-button @if(af(aname).value.contains("left")){__act}'  data-align="left"></div>
-            <div class='ad-field-editor_align-text-btn __center js-ae-button @if(af(aname).value == "center"){__act}' data-align="center"></div>
-            <div class='ad-field-editor_align-text-btn __right js-ae-button @if(af(aname).value == "right"){__act}' data-align="right"></div>
-            <input type="hidden" name="@aname" value="@af(aname).value"/>
+            <div class='ad-field-editor_align-text-btn __left js-ae-button @if(field.value contains "left"){__act}'  data-align="left"></div>
+            <div class='ad-field-editor_align-text-btn __center js-ae-button @if(field.value contains "center"){__act}' data-align="center"></div>
+            <div class='ad-field-editor_align-text-btn __right js-ae-button @if(field.value contains "right"){__act}' data-align="right"></div>
+            <input type="hidden" name="@field.name" value="@field.value"/>
           </div>
           }
         }
