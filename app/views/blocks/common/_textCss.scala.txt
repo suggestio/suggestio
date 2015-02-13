@@ -16,6 +16,7 @@
   color: #@aovf.font.color!important;
   @aovf.font.size.flatMap(blk.FontSizes.maybeWithSize).map { fsz =>
     font-size: @{fsz.size * brArgs.szMult}px!important;
+    @* TODO возможно стоит сделать font-size и line-height одинаковыми *@
     line-height: @{fsz.lineHeight * brArgs.szMult}px!important;
   }
   @aovf.font.family.map {ff =>font-family: @ff!important;}
