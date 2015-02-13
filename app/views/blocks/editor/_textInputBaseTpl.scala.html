@@ -35,9 +35,9 @@
         @if( bf.withTextAlign ) {
           @defining(bfNameBase + ".font.align") { aname =>
           <div class="lk-field-tools__editor lk-field-tools__editor_align-editor align-editor js-align-editor">
-            <div class="ad-field-editor_align-text-btn __left js-ae-button"  data-align="left"></div>
-            <div class="ad-field-editor_align-text-btn __center js-ae-button" data-align="center"></div>
-            <div class="ad-field-editor_align-text-btn __right js-ae-button" data-align="right"></div>
+            <div class='ad-field-editor_align-text-btn __left js-ae-button @if(af(aname).value.contains("left")){__act}'  data-align="left"></div>
+            <div class='ad-field-editor_align-text-btn __center js-ae-button @if(af(aname).value == "center"){__act}' data-align="center"></div>
+            <div class='ad-field-editor_align-text-btn __right js-ae-button @if(af(aname).value == "right"){__act}' data-align="right"></div>
             <input type="hidden" name="@aname" value="@af(aname).value"/>
           </div>
           }

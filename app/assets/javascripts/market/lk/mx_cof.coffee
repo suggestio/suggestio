@@ -1425,6 +1425,12 @@ PersonalCabinet =
 
       event = if isTouchDevice() then 'touchend' else 'click'
 
+      # клик по событию из списка
+      $ document
+      .on "click", ".js-event", (e)->
+        e.preventDefault()
+        console.log "on event click"
+
       # добавление тектсового блока в редакторе карточки
       $ document
       .on "click", ".js-ad-editor_add-text-field-btn", (e) ->
@@ -2195,24 +2201,28 @@ market =
       market.img.init_upload()
       market.img.crop.init_triggers()
 
-      $('.js-align-editor').each () ->
-        input = $(this).find 'input'
-        buttons = $(this).find '.js-ae-button'
 
-        buttons.bind 'click', () ->
-          align_value = $(this).attr 'data-align'
-          input.val align_value
+      $ document
+      .on "click", ".js-ae-button:not(.__act)", (e) ->
+        $this = $ this
+        $alignEditor = $this.closest ".js-align-editor"
+        $input = $alignEditor.find "input"
+        alignValue = $this.data "align"
+        $input.val alignValue
 
-          buttons.removeClass 'align-editor__button_active'
-          $(this).addClass 'align-editor__button_active'
+        $oldAct = $alignEditor.find ".js-ae-button.__act"
+        $oldAct.removeClass "__act"
+        $this.addClass "__act"
 
-          market.ad_form.queue_block_preview_request()
-
-
-      $('.js-custom-font-select, .js-custom-font-family-select').bind 'change', () ->
         market.ad_form.queue_block_preview_request()
 
-      $('.js-input-w-block-preview').bind 'keyup', () ->
+
+      $ document
+      .on "change", ".js-custom-font-select, .js-custom-font-family-select", () ->
+        market.ad_form.queue_block_preview_request()
+
+      $ document
+      .on "keyup", ".js-input-w-block-preview", () ->
         market.ad_form.queue_block_preview_request()
 
       $('.js-block-height-editor-button').bind 'click', () ->

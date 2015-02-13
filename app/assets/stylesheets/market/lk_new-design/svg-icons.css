@@ -462,7 +462,7 @@
   background-position: 0 0;
 }
 
-.ad-field-editor_align-text-btn:hover {
+.ad-field-editor_align-text-btn:hover, .ad-field-editor_align-text-btn.__act {
   background-position: 0 -64px;
 }
 
