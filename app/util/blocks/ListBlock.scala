@@ -15,7 +15,8 @@ import play.api.Play.{current, configuration}
 object ListBlock {
 
   def mkBfText(bfName: String = Title.BF_NAME_DFLT, offerNopt: Option[Int] = None): BfText = {
-    BfText(bfName, maxLen = 128, offerNopt = offerNopt)
+    // TODO Укорачивать слишком длинный текст
+    BfText(bfName, offerNopt = offerNopt)
   }
 
   /** Минимальное кол-во полей, отрендеренных сразу. */

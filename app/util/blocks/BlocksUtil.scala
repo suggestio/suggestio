@@ -216,7 +216,7 @@ case class BfText(
   offerNopt       : Option[Int] = None,
   defaultValue    : Option[AOStringField] = None,
   minLen          : Int = 0,
-  maxLen          : Int = 16000,
+  maxLen          : Int = 512,
   withFontColor   : Boolean = true,
   fontSizeDflt    : Option[Int] = None,
   withFontFamily  : Boolean = true,
