@@ -146,6 +146,7 @@ define ["SioPR"], (SioPR) ->
       post.attachments = attachments
 
       post.message = @ctx._ads[0].content.descr || " "
+      post.message += "\n#{@ctx._target.href}"
 
       callback = (data) =>
         if data.error
