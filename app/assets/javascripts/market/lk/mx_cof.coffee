@@ -1448,7 +1448,9 @@ PersonalCabinet =
       $ document
       .on "click", ".js-event", (e)->
         e.preventDefault()
-        console.log "on event click"
+        $this = $ this
+
+        $this.toggleClass "__act"
 
       # добавление тектсового блока в редакторе карточки
       $ document
@@ -2251,6 +2253,11 @@ market =
       $ document
       .on "keyup", ".js-input-w-block-preview", () ->
         market.ad_form.queue_block_preview_request()
+
+      $ document
+      .on "change", ".js-input-w-block-preview", () ->
+        market.ad_form.queue_block_preview_request()
+
 
       $('.js-block-height-editor-button').bind 'click', () ->
 
