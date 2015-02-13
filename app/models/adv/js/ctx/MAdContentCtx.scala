@@ -19,6 +19,7 @@ object MAdContentCtx {
   val TITLE_FN        = "title"
   val DESCR_FN        = "descr"
 
+  /** Желаемая длина дескрипшена, отправляемого в контекст. */
   val FROM_AD_DESCR_LEN = configuration.getInt("adv.ext.ad.content.descr.len") getOrElse 64
 
   /** Делаем из инстанса рекламной карточки класс, пригодный для js-контекста.

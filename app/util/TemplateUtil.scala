@@ -6,6 +6,7 @@ import models.Context
 import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
 import play.twirl.api.{HtmlFormat, Html}
+import scala.annotation.tailrec
 import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
@@ -180,12 +181,31 @@ object TplDataFormatUtil {
   /**
    * Лимитирование длины строки, но без обрывания слов на середине.
    * @param str Исходная строка.
-   * @param len Желаемая длина строки.
+   * @param len Желаемая минимальная длина строки.
    * @return Новая строка или та же, если она слишком короткая, чтобы резать.
    */
   def strLimitLenNoTrailingWordPart(str: String, len: Int): String = {
-    // TODO Написать код движения к пробелу.
-    strLimitLen(str, len)
+    val l = str.length
+    if (l <= len) {
+      str
+    } else {
+      @tailrec def tryI(i: Int): Int = {
+        if (i >= l) {
+          -1
+          // TODO Добавить проверку на символы пунктуации.
+        } else if (Character isWhitespace str.charAt(i)) {
+          i
+        } else {
+          tryI(i + 1)
+        }
+      }
+      val i1 = tryI(len)
+      if (i1 < 0) {
+        str
+      } else {
+        str.substring(0, i1) + ELLIPSIS
+      }
+    }
   }
 
   private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
