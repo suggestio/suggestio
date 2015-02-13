@@ -317,19 +317,22 @@ object FormUtil {
   def urlStrOptM = optional(urlStrM)
 
   /** Толерантный к проблемам маппинг ссылки. */
-  def urlStrOptTolerantM: Mapping[Option[String]] = optional(text)
-    .transform[Option[String]] (
-      {sOpt =>
-        sOpt.flatMap { s =>
-          val st = strTrimSanitizeF(s)
-          if (isValidUrl(st))
-            Some(st)
-          else
-            None
-        }
-      },
-      identity
-    )
+  def urlStrOptTolerantM: Mapping[Option[String]] = {
+    optional(text)
+      // TODO Как-то хреново отрабатывается тут ссылка. Если нет "http://" вначале, что всё, катастрофа и None.
+      .transform[Option[String]] (
+        {sOpt =>
+          sOpt.flatMap { s =>
+            val st = strTrimSanitizeF(s)
+            if (isValidUrl(st))
+              Some(st)
+            else
+              None
+          }
+        },
+        identity
+      )
+  }
 
   /** Маппер опционального form-поля с ссылкой в java.net.URL. */
   def urlOptM: Mapping[Option[URL]] = {
