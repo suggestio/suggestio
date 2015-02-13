@@ -95,14 +95,17 @@ define ["SioPR"], (SioPR) ->
           @ctx._status = "success"
         @complete()
 
+      description = @ctx._ads[0].content.descr || " "
+      title = @ctx._ads[0].content.title || " "
+
       try
         options =
           picture: @ctx._ads[0].rendered.sioUrl
           message: @ctx._ads[0].content.fields[0].text
           link: @ctx._target.href
-          name: "testName"
+          name: title
           caption: "suggest.io"
-          description: "testDescription"
+          description: description
           privacy:
             value: "EVERYONE"
       catch error
@@ -120,14 +123,20 @@ define ["SioPR"], (SioPR) ->
       публикация на стене у текущего пользователя
     ###
     publicatePost: () ->
+      console.log "--- publicate post ctx ---"
+      console.log @ctx
+
+      description = @ctx._ads[0].content.descr || " "
+      title = @ctx._ads[0].content.title || " "
+
       try
         params =
           picture: @ctx._ads[0].rendered.sioUrl
           message: @ctx._ads[0].content.fields[0].text
           link: @ctx._target.href
-          name: "testName"
+          name: title
           caption: "suggest.io"
-          description: "testDescription"
+          description: description
           privacy:
             value: "EVERYONE"
       catch error

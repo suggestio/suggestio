@@ -145,10 +145,7 @@ define ["SioPR"], (SioPR) ->
       post.owner_id = ownerId
       post.attachments = attachments
 
-      try
-        post.message = @ctx._ads[0].content.fields[0].text
-      catch error
-        console.log error
+      post.message = @ctx._ads[0].content.descr || " "
 
       callback = (data) =>
         if data.error
