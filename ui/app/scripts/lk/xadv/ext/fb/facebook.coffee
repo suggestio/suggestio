@@ -45,7 +45,7 @@ define ["SioPR"], (SioPR) ->
     login: () ->
 
       loginParams =
-        scope: "user_actions.news,user_photos,publish_actions"
+        scope: "publish_actions"
 
       FB.login(
         (response) =>

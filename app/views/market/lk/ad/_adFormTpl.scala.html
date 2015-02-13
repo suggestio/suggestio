@@ -47,14 +47,13 @@
 
         </div>
         <div class="clear"></div>
-
       </div>
 
       @* Отображение нужного редактора *@
       <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
+
         @blocks.editor._blockEditorTpl(af, withBC = withBC)
 
-        <hr class="delimiter __light" />
         @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
         <div class="edit-ad_pattern-w input-w">
           <div class="edit-ad_pattern-option">
@@ -80,13 +79,14 @@
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
 
+      @_selectColorTpl(af("ad.descr.bgColor"), label = "Цвет фона")
+
       <td class="input-w_tinymce-editor">
         <textarea class="js-tinymce" id="ad_descr_text" name="ad.descr.text">
           @af("ad.descr.text").value
         </textarea>
       </td>
 
-      @_selectColorTpl(af("ad.descr.bgColor"), label = "Цвет фона")
     </table>
 
   }

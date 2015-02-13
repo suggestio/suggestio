@@ -28,17 +28,19 @@
 
       $("#adBgColor").val(colors[0]);
 
-      $dom = $("#adFormDescriptionTable td:last");
+      $dom = $("#adFormDescriptionTable td:first");
+      html = "<div class='color-block_lst'>";
       for(index in colors) {
         color = colors[index];
-        html = "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
-        $dom.append(html);
+        html += "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
       }
+      html += "</div>";
+      $dom.append(html);
     };
 
     tinymce.init({
       selector: 'textarea.js-tinymce',
-      width: 615,
+      width: 660,
       height: 300,
       menubar: false,
       statusbar: false,
