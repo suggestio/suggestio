@@ -1439,7 +1439,7 @@ PersonalCabinet =
         href = $this.attr "href"
         $field = $ ".js-ad-editor_field-title"
 
-        index = $field.size() + 1
+        index = $field.size()
         height = $("input[name = 'ad.offer.height']").val()
         width = $("input[name = 'ad.offer.width']").val()
 
@@ -1448,11 +1448,11 @@ PersonalCabinet =
             newHtml = "<div class='edit-ad_block-field __title js-ad-editor_field-title'>#{data}</div>"
             $lastField = $field.filter ":last"
             $lastField.after newHtml
-            # вызываем keyup, чтобы обновить превью, здесь неважно у какого элемента вызвать соыбтие
-            $lastField.find("textarea").trigger "keyup"
 
             $newLastField = $ ".js-ad-editor_field-title:last"
             market.init_colorpickers $newLastField
+            # вызываем keyup, чтобы обновить превью
+            $newLastField.find("textarea").trigger "keyup"
         )
 
       # выбор цвета для описания в редакторе карточки
@@ -2184,8 +2184,9 @@ market =
             market.styles.init()
             $('.js-mvbl').draggable
               stop : () ->
-                connected_input = $(this).attr 'data-connected-input'
-                pos = $(this).position()
+                $this = $ this
+                connected_input = $this.data "connected-input"
+                pos = $this.position()
 
                 $('input[name=\'' + connected_input + '.coords.x\']').val pos['left']
                 $('input[name=\'' + connected_input + '.coords.y\']').val pos['top']
