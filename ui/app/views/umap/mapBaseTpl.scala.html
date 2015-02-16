@@ -3,10 +3,6 @@
 @import ctx._
 @import helper._
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.Application.keepAliveSession
-)
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -32,6 +28,9 @@
   <div id="storage-alert-container"></div>
   <div id="storage-tooltip-container"></div>
   <div id="map"></div>
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.Application.keepAliveSession
+  )
 
   @* Если карты узлов нет, значит идёт редактирование в рамках известного узла. *@
   @if(args.nodesMap.nonEmpty) {

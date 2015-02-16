@@ -1,5 +1,4 @@
 import akka.actor.Cancellable
-import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
 import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
@@ -18,7 +17,6 @@ import play.api.Play._
 import play.api._
 import scala.concurrent.duration._
 import models._
-import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
 
 /**
  * Suggest.io
