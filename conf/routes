@@ -16,10 +16,6 @@ GET  /                                  controllers.MarketShowcase.geoSite(a: Sc
 GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
 GET  /captcha/digital/:captchaId        controllers.Captcha.getDigitalCaptcha(captchaId)
 
-## Обратная связь.
-GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
-POST /feedback                          controllers.Feedback.feedbackFormSubmit
-
 ## Разные заманушные статические странички.
 GET  /market/about                      controllers.Market.aboutMarket
 GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
@@ -375,7 +371,6 @@ GET     /help/:page                     controllers.Static.helpPage(page)
 ## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
 GET     /blog                           controllers.Static.blogIndex
 GET     /blog/:path                     controllers.Static.blogPage(path)
-GET     /badbrowser                     controllers.Static.badbrowser
 GET     /privacy                        controllers.Static.privacyPolicy
 
 

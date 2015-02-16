@@ -12,7 +12,7 @@ import util.acl._
 import util.mail.MailerWrapper
 import views.html.market.lk.support._
 import scala.concurrent.Future
-import Feedback.FEEDBACK_RCVR_EMAILS
+import util.support.SupportUtil.FEEDBACK_RCVR_EMAILS
 import play.api.data._, Forms._
 
 /**

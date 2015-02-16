@@ -27,13 +27,6 @@ object Static extends SioControllerImpl {
   }
 
 
-  def badbrowser = MaybeAuth { implicit request =>
-    cacheControlShort {
-      Ok(badbrowserTpl())
-    }
-  }
-
-
   /** Страница /help. Пока редирект на буклет. Когда помощь появится, то её корень лучше всего сделать тут. */
   def help = Action { implicit request =>
     cacheControlShort {

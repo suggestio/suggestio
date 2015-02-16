@@ -269,6 +269,25 @@ module.exports = function (grunt) {
 
     // Вместо htmlmin, т.к. тот не работает ни разу. Эта поделка тоже не работает.
     replace: {
+      // Базово минифицировать все html и txt шаблоны.
+      tplmin: {
+	src: ['<%= yeoman.dist %>/**/*.txt'],
+	overwrite: true,
+	replacements: [
+	  {from: /@\*.*?\*@/mg, to: ''},    // strip twirl comments.
+	  {from: /^[ \t]+/mg, to: ''}	    // strip spaced BOL offsets
+	]
+      },
+      // Динамические css можно по-сильнее сжать
+      csstplmin: {
+	src: ['<%= yeoman.dist %>/**/*Css.scala.txt'],
+	overwrite: true,
+	replacements: [
+	  {from: /^\s+/mg, to: ''},	    // BOL offsets, empty lines
+	  {from: /}\s+}/mg, to: '}}'}
+	]
+      },
+      // По-жестче минифицировать html-шаблоны.
       htmlmin: {
 	src: ['<%= yeoman.dist %>/**/*.html'],  // source files array (supports minimatch)
 	overwrite: true,
@@ -279,8 +298,9 @@ module.exports = function (grunt) {
 	      return matchedWord + ' Bar';
 	    }
 	  },*/
-	  {from: /@\*.*?\*@/mg, to: ''},    /* strip twirl comments. */
-	  {from: /^\s+/mg, to: ''},	    /* strip BOL offsets */
+	  //{from: /@\*.*?\*@/mg, to: ''},  /* strip twirl comments. */
+	  //{from: /^\s+/mg, to: ''},	    /* strip BOL offsets, empty lines */
+	  {from: /^\s+/mg, to: ''},	    // strip BOL offsets
 	  {from: /\s\s+/mg, to: ' '},	    /* strip 2+ whitespaces */
 	  {from: />[\n\r]+/mg, to: '>'},    /* strip newlines after html tags */
 	  {from: /[\n\r]+}/mg, to: '}'},    /* irShowOneTpl fails to compile with this */
@@ -321,7 +341,7 @@ module.exports = function (grunt) {
           dot: true,
           cwd: '<%= yeoman.app %>',
           dest: '<%= yeoman.dist %>',
-          src: ['**/*.scala.html']
+          src: ['**/*.scala.*']
         }]
       },
       dist: {
@@ -447,6 +467,8 @@ module.exports = function (grunt) {
     'concat',
     'ngAnnotate',
     'copy:dist',
+    'replace:tplmin',
+    'replace:csstplmin',
     'replace:htmlmin'
   ]);
 
