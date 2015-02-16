@@ -36,8 +36,6 @@ POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeS
 POST /m/adn/img/logo/prepare            controllers.MarketLkAdnEdit.handleTempLogo
 POST /m/adn/img/gal/prepare             controllers.MarketLkAdnEdit.handleGallweryImg
 ## Базовый супервайзинг узлов
-GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
-POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
 GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
 GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
 POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
