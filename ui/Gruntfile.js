@@ -284,7 +284,10 @@ module.exports = function (grunt) {
 	  {from: /\s\s+/mg, to: ' '},	    /* strip 2+ whitespaces */
 	  {from: />[\n\r]+/mg, to: '>'},    /* strip newlines after html tags */
 	  {from: /[\n\r]+}/mg, to: '}'},
-	  {from: '\s+\/>', to: ''}
+	  //{from: /}}[\n\r]*$/, to: '}\n}\n'},
+	  //{from: /(^(?!}))[\n\r]+}/mg, to: '}'},
+	  //{from: /{[\n\r]+</, to: '{<'},
+	  {from: '\s+/?>', to: ''}
 	  //{from: /}[\n\r]+/mg, to: '}'}   /* ломает импорты! */
 	]
       }
