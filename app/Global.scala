@@ -69,7 +69,6 @@ object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new Du
   }
 
 
-
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(tried21: Boolean = false)(implicit client: Client): Future[_] = {
     val futInx = EsModel.ensureEsModelsIndices
@@ -142,7 +141,6 @@ object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new Du
   /** Выставить в MPerson id'шники суперпользователей. Для этого надо убедится, что все админские MPersonIdent'ы
     * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
   def resetSuperuserIds(implicit client: Client): Future[_] = {
-    import _root_.models._
     val logPrefix = "resetSuperuserIds(): "
     val se = MPersonIdent.SU_EMAILS
     trace(s"${logPrefix}There are ${se.size} superuser emails: [${se.mkString(", ")}]")

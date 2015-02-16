@@ -6,7 +6,6 @@ import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im.DevScreenT
-import util.blocks.BgImg
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
 import scala.annotation.tailrec
