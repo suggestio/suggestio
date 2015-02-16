@@ -1,7 +1,9 @@
 @(args: ScRenderArgs)(implicit ctx: Context)
-@import util.TplDataFormatUtil._
 
-@stuff.scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
+@import util.TplDataFormatUtil._
+@import util.showcase.ShowcaseUtil.TILES_BG_FILL_ALPHA
+
+@stuff._scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
 
   <div class="sm-grid-ads_container" id="smGridAdsContainer" @if(!args.syncRender) {data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"} >
     @* Заинлайненные рекламные карточки при синхронном рендере. *@
@@ -33,7 +35,7 @@
 
   .sm-grid-ads,
   .sm-grid-ads_loader-spinner-inner{
-    background-color: rgba(@{colorHex2rgb(args.bgColor).mkString(",")}, 0.2)!important;
+    background-color: rgba(@{colorHex2rgb(args.bgColor).mkString(",")},@TILES_BG_FILL_ALPHA)!important;
   }
 
 </style>

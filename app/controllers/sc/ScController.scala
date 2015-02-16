@@ -47,7 +47,7 @@ trait ScController extends SioController {
   protected def htmlAdsCssLink(args: Seq[AdCssArgs])(implicit ctx: Context): Html = {
     val call = routes.MarketShowcase.serveBlockCss(args)
     val call1 = CdnUtil.forCall(call)
-    views.html.market.showcase.stuff._cssLinkTpl(call1)
+    views.html.sc.stuff._cssLinkTpl(call1)
   }
 
 

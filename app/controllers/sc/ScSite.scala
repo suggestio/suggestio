@@ -4,7 +4,7 @@ import controllers.{routes, SioController}
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
-import views.html.market.showcase._
+import views.html.sc._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
@@ -71,7 +71,7 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
   protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     _getSiteRenderArgs map { args =>
       cacheControlShort {
-        Ok(demoWebsiteTpl(args))
+        Ok(siteTpl(args))
       }
     }
   }
@@ -104,7 +104,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
       override def nodeOpt = Some(request.adnNode)
     }
     cacheControlShort {
-      Ok(demoWebsiteTpl(args))
+      Ok(siteTpl(args))
     }
   }
 

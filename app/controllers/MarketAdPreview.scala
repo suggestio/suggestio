@@ -12,7 +12,7 @@ import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.{BgImg, BlockMapperResult}
-import views.html.market.showcase._
+import views.html.sc._
 
 /**
  * Suggest.io
@@ -135,14 +135,14 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         szMult        = szMult,
         withCssClasses = Seq("__popup")
       )
-      _single_offer_w_description(mad, producer = request.adnNode, args = args)
+      _adFullTpl(mad, producer = request.adnNode, args = args)
     }
   }
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
   private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
     val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1.0F, inlineStyles = true)
-    Future successful _single_offer(mad, args = args)
+    Future successful _adTpl(mad, args = args)
   }
 
 }

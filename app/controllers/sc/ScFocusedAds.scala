@@ -7,7 +7,7 @@ import util.showcase._
 import util.SiowebEsUtil.client
 import util.PlayMacroLogsI
 import util.acl._
-import views.html.market.showcase._
+import views.html.sc._
 import play.api.libs.json._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

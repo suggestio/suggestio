@@ -6,7 +6,7 @@ import play.api.Play.{current, configuration}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.02.15 17:01
- * Description: Утиль
+ * Description: Утиль для фидбэков и прочей обратной связи.
  */
 object SupportUtil {
 

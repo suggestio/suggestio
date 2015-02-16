@@ -7,7 +7,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import _root_.util.showcase._
 import util.acl._
-import views.html.market.showcase._
+import views.html.sc._
 import play.api.libs.json._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

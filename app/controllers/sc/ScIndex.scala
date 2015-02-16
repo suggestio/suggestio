@@ -10,7 +10,7 @@ import util.stat._
 import util.acl._
 import util.SiowebEsUtil.client
 import controllers.routes
-import views.html.market.showcase._
+import views.html.sc._
 import play.api.libs.json._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

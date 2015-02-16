@@ -3,7 +3,7 @@
 @* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
 @import ctx._
 @import market.lk._
-@import market.showcase._
+@import views.html.sc._
 @import controllers.adn.AdnShowTypes._
 
 @lkBaseLayout(
@@ -39,7 +39,7 @@
           <div class="advertising-requests_item">
             <div class="ads-list-block__preview">
               <div class="ads-list-block__preview-container">
-                @_single_offer(mad)
+                @_adTpl(mad)
                 </div>
               <div class="ads-list-block__zigzag-mask"></div>
               <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"

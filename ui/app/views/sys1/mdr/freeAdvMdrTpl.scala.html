@@ -4,7 +4,7 @@
    и содержит формы для одобрения и бана бесплатного размещения. *@
 
 @import ctx._
-@import market.showcase._
+@import views.html.sc._
 @import helper._
 @import util.FC.divFc
 
@@ -20,7 +20,7 @@
     @* Отобразить карточку целиком (задействовать другую колонку) *@
     <div class="ad-full-preview">
       <div class="sio-mart-showcase __relative">
-        @_single_offer_w_description(mad, producer = producer)
+        @_adFullTpl(mad, producer = producer)
       </div>
     </div>
 

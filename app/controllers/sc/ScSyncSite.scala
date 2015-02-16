@@ -8,7 +8,7 @@ import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
-import views.html.market.showcase.demoWebsiteTpl
+import views.html.sc.siteTpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
@@ -315,7 +315,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     }
 
     def resultFut = siteArgsFut map { args1 =>
-      Ok(demoWebsiteTpl(args1))
+      Ok(siteTpl(args1))
     }
 
   }

@@ -1,7 +1,7 @@
 @(msup: MAdnNode, mads: Seq[MAdT])(implicit ctx: Context)
 
 @import market.lk.ad._
-@import market.showcase._
+@import views.html.sc._
 
 @if(mads)  {
   @mads.zipWithIndex.map { case (mad, i) =>
@@ -14,7 +14,7 @@
         <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
 
         <div class="ads-list-block__preview-container">
-          @_single_offer(mad)
+          @_adTpl(mad)
         </div>
 
       </div>

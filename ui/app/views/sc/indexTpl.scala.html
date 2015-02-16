@@ -96,17 +96,17 @@
 
 @* Окно с выбором категорий *@
 @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
-  @_categories_w_search(args)
+  @_searchPanTpl(args)
 }
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @if(!args.syncRender) {
-  @_exit_screen(args)
+  @_exitTpl(args)
 }
 
 @* Окно с версткой гео-меню *@
 @if( !args.syncRender || args.jsStateOpt.exists(_.isNavScrOpened) ) {
-  @_geo_screen(args)
+  @_navPanTpl(args)
 }
 
 @if(!args.syncRender) {

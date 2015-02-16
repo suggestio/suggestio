@@ -12,7 +12,7 @@ import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.Html
 import util._
 import util.acl._
-import views.html.market.showcase._
+import views.html.sc._
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
@@ -106,7 +106,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     )
 
     def renderMad2html(mad: MAd): Html = {
-      _single_offer(mad, args = brArgs, isWithAction = true)(ctx)
+      _adTpl(mad, args = brArgs, isWithAction = true)(ctx)
     }
 
     def renderMadAsync(mad: MAd): Future[T]

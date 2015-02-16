@@ -3,7 +3,7 @@
 @* Подложка для шаблона окошка и полноразмерной превьюшкой карточки. *@
 
 @import ctx._
-@import market.showcase._
+@import views.html.sc._
 
 <div class="popup js-popup" id="advReqWind">
 
@@ -13,7 +13,7 @@
 
   <div class="popup_cnt __preview">
     <div class="sio-mart-showcase">
-      @_single_offer_w_description(
+      @_adFullTpl(
         mad      = mad,
         isWithAction = false,
         producer = adProducer,

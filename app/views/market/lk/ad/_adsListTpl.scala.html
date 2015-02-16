@@ -6,7 +6,7 @@
 
 @import ctx._
 @import AdShowLevels._
-@import market.showcase._
+@import views.html.sc._
 
 @mads.zipWithIndex.map { case (mad, i) =>
   @defining( i + startIndex ) { itemIndex =>
@@ -17,7 +17,7 @@
           @_adDisableReasonCoverTpl(mad.disableReason)
         }
         <div class="adv-item_preview-container">
-          @_single_offer(mad)
+          @_adTpl(mad)
         </div>
         <div class="adv-item_preview-border"></div>
       </div>

@@ -27,7 +27,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(new CorsFilter, new DumpXffHeaders) {
+object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new DumpXffHeaders) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._

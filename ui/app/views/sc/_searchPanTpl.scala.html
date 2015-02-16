@@ -1,5 +1,7 @@
 @(args: ScRenderArgs)(implicit ctx: Context)
 
+@* Панель поиска: текстового, фасетного по категориям, по рекламодателям (правая панель). *@
+
 @import util.TplDataFormatUtil._
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
@@ -22,7 +24,7 @@
 
   </div>
 
-  @_search_bar( args, "smSearch", "Быстрый поиск по предложениям" )
+  @_searchTextTpl( args, "smSearch", "Быстрый поиск по предложениям" )
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
     @* Панель с табами *@
@@ -57,7 +59,7 @@
     </div>
 
     @if(!args.syncRender || !isListTab) {
-      @_categoriesListTpl( args )
+      @_catsListTpl( args )
     }
     @if(!args.syncRender || isListTab) {
       @_shopsListTpl( args )

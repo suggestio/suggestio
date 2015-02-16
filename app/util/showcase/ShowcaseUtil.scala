@@ -23,10 +23,16 @@ import util.SiowebEsUtil.client
 object ShowcaseUtil {
 
   /** Отображать ли пустые категории? */
-  val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
+  val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse true
 
   /** Путь до ассета со скриптом выдачи. */
   val SHOWCASE_JS_ASSET = configuration.getString("showcase.js.asset.path") getOrElse "javascripts/market/showcase/showcase2.js"
+
+  /** Фон под рекламными карточками заполняется на основе цвета с добавление прозрачности от фона. */
+  val TILES_BG_FILL_ALPHA: Float = configuration.getDouble("showcase.tiles.bg.fill.ratio") match {
+    case Some(alpha) => alpha.toFloat
+    case None        => 0.8F
+  }
 
   def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
