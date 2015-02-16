@@ -9,7 +9,7 @@ import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
 import models.blk.{CssRenderArgsT, BlockWidths, FieldCssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util._
 import util.acl._
 import views.html.market.showcase._
@@ -105,7 +105,7 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       inlineStyles  = false
     )
 
-    def renderMad2html(mad: MAd): HtmlFormat.Appendable = {
+    def renderMad2html(mad: MAd): Html = {
       _single_offer(mad, args = brArgs, isWithAction = true)(ctx)
     }
 

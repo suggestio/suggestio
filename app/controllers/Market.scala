@@ -3,13 +3,11 @@ package controllers
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.Call
-import play.twirl.api.HtmlFormat
-import util._
+import play.twirl.api.Html
 import util.acl._
 import views.html.market._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -31,7 +29,7 @@ object Market extends SioController with SiteMapXmlCtl {
     import views.html.market.contract._
     val clangNorm = clang.toLowerCase.trim
     val ctx = implicitly[Context]
-    val textRenderOpt: Option[(HtmlFormat.Appendable, String)] = if (clangNorm startsWith "ru") {
+    val textRenderOpt: Option[(Html, String)] = if (clangNorm startsWith "ru") {
       val render = textRuTpl()(ctx)
       Some(render -> "ru")
     } else {

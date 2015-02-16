@@ -11,7 +11,7 @@ import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
-import play.twirl.api.{HtmlFormat, Template5}
+import play.twirl.api.{Html, Template5}
 
 /**
  * Suggest.io
@@ -48,8 +48,8 @@ import BlocksUtil._
 sealed trait BefValT { bv =>
   type VT
   type BFT <: BlockFieldT { type T = VT }
-  def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, HtmlFormat.Appendable]
-  def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, Html]
+  def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     fieldTemplate.render(bf, bfNameBase, af, bc, ctx)
   }
 }
@@ -141,7 +141,7 @@ trait BlockFieldT { that =>
   def getOptionalStrictMapping: Mapping[Option[T]] = optional(mappingBase)
   def getOptionalStrictMappingKV = name -> getOptionalStrictMapping
 
-  def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
+  def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html
 
   def offerNopt: Option[Int]
   def offerN = offerNopt getOrElse 0
@@ -189,7 +189,7 @@ case class BfHeight(
   override def field = BlocksEditorFields.Height
   override def fallbackValue: T = BlockHeights.H140.heightPx
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
@@ -204,7 +204,7 @@ case class BfWidth(
   availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
 ) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Width
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
   override def fallbackValue = BlockWidths.default.widthPx
@@ -241,7 +241,7 @@ case class BfText(
     font = defaultFont
   )
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 
@@ -271,7 +271,7 @@ case class BfString(
   override type T = String
   def strTransformF = strTrimSanitizeF
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 
@@ -318,7 +318,7 @@ case class BfImage(
   }
 
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
@@ -337,7 +337,7 @@ case class BfColor(
 
   override def field = BlocksEditorFields.Color
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
@@ -352,7 +352,7 @@ case class BfCheckbox(
   override type T = Boolean
   override def field = Checkbox
   override def mappingBase: Mapping[T] = boolean
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
@@ -363,7 +363,7 @@ trait BfNoValueT extends BlockFieldT {
   override type T = None.type
   override def field = NoValue
   override def mappingBase: Mapping[T] = optional(text).transform[T]({_ => None}, identity)
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
   override def defaultValue: Option[T] = None

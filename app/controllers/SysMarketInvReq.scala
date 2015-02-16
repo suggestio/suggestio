@@ -2,7 +2,7 @@ package controllers
 
 import models.usr.EmailActivation
 import play.api.mvc.{AnyContent, Result}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -180,7 +180,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
     nodeEditBody(request.mir)(Ok(_))
   }
 
-  private def nodeEditBody(mir: MInviteRequest)(onSuccess: HtmlFormat.Appendable => Result)
+  private def nodeEditBody(mir: MInviteRequest)(onSuccess: Html => Result)
                           (implicit request: MirRequest[AnyContent]): Future[Result] = {
     val mcOptFut = getCompanyOptFut(mir)
     val adnOptFut = getNodeOptFut(mir)

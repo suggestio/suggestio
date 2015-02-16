@@ -9,7 +9,7 @@ import models._
 import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
-import play.twirl.api.{HtmlFormat, Template3}
+import play.twirl.api.{Html, Template3}
 
 /**
  * Suggest.io
@@ -68,7 +68,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
     override def i18nLabelOf(bk: String) = "blocks.field." + bk
 
     /** Отрендерить редактор. */
-    override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
+    override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html = {
       editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
     }
   }
@@ -160,7 +160,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def hrefBlock = false
 
   /** Шаблон для рендера. */
-  def template: Template3[MAdT, blk.RenderArgs, Context, HtmlFormat.Appendable]
+  def template: Template3[MAdT, blk.RenderArgs, Context, Html]
 
   /** Набор маппингов для обработки данных от формы. */
   def strictMapping: Mapping[BlockMapperResult] = this
@@ -188,7 +188,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def getImgFieldForName(fn: String): Option[BfImage] = None
 
   /** Отрендерить редактор. */
-  def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable
+  def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html
 
   // Mapping:
   def mappingsAcc: List[Mapping[_]]
@@ -239,7 +239,7 @@ case class BindAcc(
 abstract class ValTWrapper(v: ValT) extends ValT {
   override def id = v.id
   override def i18nLabelOf(bk: String) = v.i18nLabelOf(bk)
-  override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): HtmlFormat.Appendable = {
+  override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html = {
     v.renderEditor(af, formDataSer)
   }
 }

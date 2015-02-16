@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.showcase._
 import util.acl._
 import ShowcaseUtil._
@@ -80,7 +80,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
 
 
   trait HtmlGeoIndexLogic extends GeoIndexLogic {
-    override type T = HtmlFormat.Appendable
+    override type T = Html
 
     implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
       h.flatMap(_.respHtmlFut)

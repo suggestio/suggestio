@@ -2,14 +2,13 @@ package controllers
 
 import io.suggest.ym.model.ad.FreeAdvStatus
 import org.elasticsearch.index.engine.VersionConflictEngineException
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
 import scala.concurrent.ExecutionContext.Implicits.global
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
 import views.html.sys1.mdr._
-import play.api.Play.{current, configuration}
 import models._
 import play.api.data.Form
 
@@ -72,7 +71,7 @@ object SysMdr extends SioControllerImpl with PlayMacroLogsImpl {
   }
 
   /** Рендер тела ответа. */
-  private def freeAdvMdrBody(adId: String, banForm: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
+  private def freeAdvMdrBody(adId: String, banForm: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     MAd.getById(adId) flatMap { madOpt =>
       val mad = madOpt.get
       MAdnNodeCache.getById(mad.producerId) map { producerOpt =>

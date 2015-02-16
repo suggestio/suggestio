@@ -3,7 +3,7 @@ package controllers
 import io.suggest.util.MacroLogsImpl
 import models.usr.EmailActivation
 import play.api.db.DB
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.acl._
 import models._
 import util.adv.AdvUtil
@@ -496,7 +496,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   }
 
   private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])
-                             (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[HtmlFormat.Appendable] = {
+                             (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Html] = {
     MCompany.getAll(maxResults = 1000) map { companies =>
       editAdnNodeFormTpl(request.adnNode, form, companies)
     }

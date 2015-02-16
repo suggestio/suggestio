@@ -6,7 +6,7 @@ import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
@@ -231,7 +231,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
   private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
-                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[HtmlFormat.Appendable] = {
+                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Html] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
@@ -681,7 +681,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   private def _showAdvReq1(refuseFormM: Form[String], r: Option[String])
-                          (implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, HtmlFormat.Appendable]] = {
+                          (implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, Html]] = {
     val madOptFut = MAd.getById(request.advReq.adId)
     val adProducerOptFut = madOptFut flatMap { madOpt =>
       val prodIdOpt = madOpt.map(_.producerId)

@@ -1,13 +1,13 @@
 package controllers
 
-import play.twirl.api.HtmlFormat
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 import views.html.sys1.market.billing.mmp.daily._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -72,7 +72,7 @@ object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
       .map(Ok(_))
   }
 
-  private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
     val mcalsFut = MCalendar.getAll()
     for {
       adnNodeOpt <- MAdnNodeCache.getById(request.contract.adnId)
@@ -114,7 +114,7 @@ object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
       .map(Ok(_))
   }
 
-  private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
     val mcalsFut = MCalendar.getAll()
     val syncResult = DB.withConnection { implicit c =>
       val mbmd = MBillMmpDaily.getById(mmpdId).get
