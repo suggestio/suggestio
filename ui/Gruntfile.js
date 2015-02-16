@@ -279,11 +279,11 @@ module.exports = function (grunt) {
 	      return matchedWord + ' Bar';
 	    }
 	  },*/
-	  //{from: /@\*.*?\*@/mg, to: ''},  /* strip twirl comments - not tested. */
+	  {from: /@\*.*?\*@/mg, to: ''},    /* strip twirl comments. */
 	  {from: /^\s+/mg, to: ''},	    /* strip BOL offsets */
 	  {from: /\s\s+/mg, to: ' '},	    /* strip 2+ whitespaces */
 	  {from: />[\n\r]+/mg, to: '>'},    /* strip newlines after html tags */
-	  {from: /[\n\r]+}/mg, to: '}'},
+	  {from: /[\n\r]+}/mg, to: '}'},    /* irShowOneTpl fails to compile with this */
 	  //{from: /}}[\n\r]*$/, to: '}\n}\n'},
 	  //{from: /(^(?!}))[\n\r]+}/mg, to: '}'},
 	  //{from: /{[\n\r]+</, to: '{<'},
