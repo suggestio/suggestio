@@ -32,7 +32,7 @@ object MAdContentCtx {
       // Поля карточки -- это именно поля.
       fields = mad.offers
         .iterator
-        .flatMap { offer => offer.text1.iterator ++ offer.text2.iterator }
+        .flatMap { offer => offer.text1.iterator }
         .map { field => MAdContentField(
           text = FormUtil.strTrimSanitizeF(field.value)
         )}

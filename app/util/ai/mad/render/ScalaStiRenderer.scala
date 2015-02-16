@@ -35,8 +35,7 @@ object ScalaStiRenderer extends MadAiRenderedT {
         .map { tplOffer =>
           val srcOffer = tgOffersMap.getOrElse(tplOffer.n, tplOffer)
           val off2 = srcOffer.copy(
-            text1 = renderTextFieldOpt(tplOffer.text1, args, srcOffer.text1),
-            text2 = renderTextFieldOpt(tplOffer.text2, args, srcOffer.text2)
+            text1 = renderTextFieldOpt(tplOffer.text1, args, srcOffer.text1)
           )
           offer2tuple(off2)
         }
