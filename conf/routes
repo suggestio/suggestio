@@ -156,9 +156,6 @@ POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSub
 GET  /market/join/callback              controllers.MarketJoin.callbackRequest
 POST /market/join/callback              controllers.MarketJoin.callbackRequestSubmit
 
-# Раздача текстов договора sio market.
-GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
-
 GET  /sys                               controllers.Application.sysIndex
 
 # sys.market
