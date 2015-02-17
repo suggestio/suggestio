@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.SioController
+import controllers.{CaptchaValidator, SioController}
 import models._
 import models.usr._
 import play.api.data.Form
@@ -55,7 +55,7 @@ object EmailPwReg {
 import EmailPwReg._
 
 
-trait EmailPwReg extends SioController with PlayMacroLogsI {
+trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator with SendPwRecoverEmail {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = MailerWrapper.instance
@@ -73,11 +73,12 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
    *         emailRequestOk() когда сообщение отправлено почтой.
    */
   def emailRegSubmit = IsAnonPost.async { implicit request =>
-    emailRegFormM.bindFromRequest().fold(
+    val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
+    form1.fold(
       {formWithErrors =>
         LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
         val ctx = implicitly[Context]
-        val rc = _regColumnTpl(formWithErrors)(ctx)
+        val rc = _regColumnTpl(formWithErrors, captchaShown = true)(ctx)
         NotAcceptable( mySioStartTpl(Seq(rc))(ctx) )
       },
       {email1 =>
@@ -98,10 +99,12 @@ trait EmailPwReg extends SioController with PlayMacroLogsI {
               emailRequestOk(Some(ea1))
             }
 
-          // Уже есть такой email в базе. Активация не требуется, вроде.
+          // Уже есть такой email в базе. Выслать восстановление пароля.
           case idents =>
             LOGGER.error(s"emailRegSubmit($email1): Email already exists.")
-            emailRequestOk(None)
+            sendRecoverMail(email1) flatMap { _ =>
+              emailRequestOk(None)
+            }
         }
       }
     )

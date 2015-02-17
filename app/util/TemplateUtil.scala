@@ -5,7 +5,8 @@ import java.util.Currency
 import models.Context
 import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
-import play.twirl.api.{HtmlFormat, Html}
+import play.api.libs.json.JsString
+import play.twirl.api.{Txt, HtmlFormat, Html}
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 import views.html.fc._
@@ -17,7 +18,7 @@ import views.html.helper.FieldConstructor
  * Created: 26.03.14 15:33
  * Description: Разная мелкая утиль для шаблонов.
  */
-object TplDataFormatUtil {
+object TplDataFormatUtil extends TplFormatUtilT {
 
   // Надо укорачивать валюту до минимума
   private val CURRENCY_FIXER_RUB = "руб\\.".r
@@ -260,6 +261,24 @@ object FC {
   implicit val tdRadialFc = FieldConstructor(tdRadialFcTpl.f)
 
   implicit val authFc = FieldConstructor(authFcTpl.f)
+
+}
+
+trait TplFormatUtilT {
+
+  implicit def html4email(html: Html): String = {
+    HtmlCompressUtil.compressForEmail(html)
+  }
+
+  implicit def html2jsStr(html: Html): JsString = {
+    JsString(
+      HtmlCompressUtil.compressForJson(html)
+    )
+  }
+
+  implicit def txt2str(txt: Txt): String = txt.body.trim
+
+  implicit def txt2jsStr(txt: Txt): JsString = JsString(txt)
 
 }
 

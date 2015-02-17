@@ -1,4 +1,4 @@
-@(rf: EmailPwRegReqForm_t)(implicit ctx: Context)
+@(rf: EmailPwRegReqForm_t, captchaShown: Boolean = false)(implicit ctx: Context)
 
 @* Колонка начала регистрации по email. *@
 
@@ -6,6 +6,6 @@
 
   <h2 class="auth-page_column-t __color-2">Регистрация</h2>
 
-  @reg.email._emailFormTpl(rf)
+  @reg.email._emailFormTpl(rf, captchaShown)
 
 </div>

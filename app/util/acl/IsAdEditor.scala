@@ -36,6 +36,27 @@ object IsAdEditor extends PlayMacroLogsImpl {
     trace(s"invokeBlock(): Ad not found: $adId")
     controllers.Application.http404Fut(request)
   }
+
+  /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */
+  def hasAdvUntilNow(adId: String, model: MAdvStatic): Future[Boolean] = {
+    Future {
+      DB.withConnection { implicit c =>
+        model.hasAdvUntilNow(adId)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+  }
+
+  /** Асинхронно параллельно обратится к [[models.MAdvOk]] и [[models.MAdvReq]] моделям инфой о наличии текущих размещений. */
+  def hasAdv(adId: String): Future[Boolean] = {
+    val hasAdvReqFut = hasAdvUntilNow(adId, MAdvReq)
+    for {
+      hasAdvOk  <- hasAdvUntilNow(adId, MAdvOk)
+      hasAdvReq <- hasAdvReqFut
+    } yield {
+      hasAdvOk || hasAdvReq
+    }
+  }
+
 }
 
 import IsAdEditor._
@@ -47,31 +68,13 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] {
   /** id рекламной карточки, которую клиент хочет поредактировать. */
   def adId: String
 
-  def hasAdvUntilNow(model: MAdvStatic): Future[Boolean] = {
-    Future {
-      DB.withConnection { implicit c =>
-        model.hasAdvUntilNow(adId)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-  }
-
-  def hasAdv: Future[Boolean] = {
-    val hasAdvReqFut = hasAdvUntilNow(MAdvReq)
-    for {
-      hasAdvOk  <- hasAdvUntilNow(MAdvOk)
-      hasAdvReq <- hasAdvReqFut
-    } yield {
-      hasAdvOk || hasAdvReq
-    }
-  }
-
   override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case Some(pw) =>
         val madOptFut = MAd.getById(adId)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        val hasAdvFut = hasAdv
+        val hasAdvFut = hasAdv(adId)
         madOptFut flatMap {
           case Some(mad) =>
             val adnNodeOpt = MAdnNodeCache.getById(mad.producerId)

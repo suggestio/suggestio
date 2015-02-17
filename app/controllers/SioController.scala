@@ -82,28 +82,15 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 }
 
 
+
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
-trait SioController extends Controller with ContextT {
+trait SioController extends Controller with ContextT with TplFormatUtilT {
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
   }
 
   implicit def sn = SiowebNotifier
-
-  implicit def html4email(html: Html): String = {
-    HtmlCompressUtil.compressForEmail(html)
-  }
-
-  implicit def html2jsStr(html: Html): JsString = {
-    JsString(
-      HtmlCompressUtil.compressForJson(html)
-    )
-  }
-
-  implicit def txt2str(txt: Txt): String = txt.body.trim
-
-  implicit def txt2jsStr(txt: Txt): JsString = JsString(txt)
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {

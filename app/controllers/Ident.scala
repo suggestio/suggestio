@@ -49,7 +49,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
   def mySioStartPage(r: Option[String]) = IsAnonGet { implicit request =>
     val ctx = implicitly[Context]
     val lc = _loginColumnTpl(EmailPwSubmit.emailPwLoginFormM, r)(ctx)
-    val rc = _regColumnTpl( EmailPwReg.emailRegFormM )(ctx)
+    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
     Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
   }
 
