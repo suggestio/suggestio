@@ -138,7 +138,7 @@ class LightTextCompressFilter extends Filter {
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     f(rh).flatMap { result =>
       if (isCompressable(result)) {
-        // TODO var надо заменить аккамулятором функции. Только не очень-то ясно, как делать mapFold для enumerator'а.
+        // TODO var надо заменить аккамулятором функции. Только не очень-то ясно, как делать map+fold для enumerator'а.
         var isOnStart = true
         val body1 = result.body.map { bodyPart =>
           if (isOnStart) {

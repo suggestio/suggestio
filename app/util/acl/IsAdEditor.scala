@@ -4,6 +4,7 @@ import play.api.mvc._
 import models._
 import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.acl.PersonWrapper.PwOpt_t
+import util.async.AsyncUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -43,54 +44,75 @@ import IsAdEditor._
 trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] {
   import LOGGER._
 
+  /** id рекламной карточки, которую клиент хочет поредактировать. */
   def adId: String
+
+  def hasAdvUntilNow(model: MAdvStatic): Future[Boolean] = {
+    Future {
+      DB.withConnection { implicit c =>
+        model.hasAdvUntilNow(adId)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+  }
+
+  def hasAdv: Future[Boolean] = {
+    val hasAdvReqFut = hasAdvUntilNow(MAdvReq)
+    for {
+      hasAdvOk  <- hasAdvUntilNow(MAdvOk)
+      hasAdvReq <- hasAdvReqFut
+    } yield {
+      hasAdvOk || hasAdvReq
+    }
+  }
+
   override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
-    val madOptFut = MAd.getById(adId)
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    madOptFut flatMap {
-      case Some(mad) =>
-        val hasAdv = DB.withConnection { implicit c =>
-          MAdvOk.hasAdvUntilNow(mad.id.get)  ||  MAdvReq.hasAdvUntilNow(mad.id.get)
-        }
-        val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
-        if (hasAdv && !isSuperuser) {
-          // Если объява уже где-то опубликована, то значит редактировать её нельзя.
-          forbiddenFut(adId, "Ad is advertised somewhere. Cannot edit during advertising.", request)
-        } else {
-          if (isSuperuser) {
-            MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
-              srmFut flatMap { srm =>
-                val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
-                block(req1)
+    pwOpt match {
+      case Some(pw) =>
+        val madOptFut = MAd.getById(adId)
+        val srmFut = SioReqMd.fromPwOpt(pwOpt)
+        val hasAdvFut = hasAdv
+        madOptFut flatMap {
+          case Some(mad) =>
+            val adnNodeOpt = MAdnNodeCache.getById(mad.producerId)
+            val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
+            hasAdvFut flatMap { hasAdv =>
+              if (hasAdv && !isSuperuser) {
+                // Если объява уже где-то опубликована, то значит редактировать её нельзя.
+                forbiddenFut(adId, "Ad is advertised somewhere. Cannot edit during advertising.", request)
+              } else {
+                if (isSuperuser) {
+                  MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+                    srmFut flatMap { srm =>
+                      val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
+                      block(req1)
+                    }
+                  }
+                } else {
+                  adnNodeOpt flatMap { adnNodeOpt =>
+                    adnNodeOpt
+                      .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
+                      .fold {
+                        debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[${mad.producerId}] admin.")
+                        forbiddenFut(adId, "No node admin rights", request)
+                      } { adnNode =>
+                        srmFut flatMap { srm =>
+                          val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode)
+                          block(req1)
+                        }
+                      }
+                  }
+                } // else
               }
             }
-          } else {
-            pwOpt match {
-              case Some(pw) =>
-                MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
-                  adnNodeOpt
-                    .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
-                    .fold {
-                      debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[${mad.producerId}] admin.")
-                      forbiddenFut(adId, "No node admin rights", request)
-                    } { adnNode =>
-                      srmFut flatMap { srm =>
-                        val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode)
-                        block(req1)
-                      }
-                    }
-                }
 
-              case None =>
-                debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Anonymous access prohibited.")
-                onUnauth(request, pwOpt)
-            }
-          }
+          case None =>
+            adNotFound(adId, request)
         }
 
+      // Анонимусу нельзя запрашивать редактирование карточки при любых обстоятельства.
       case None =>
-        adNotFound(adId, request)
+        IsAuth.onUnauth(request)
     }
   }
 }
