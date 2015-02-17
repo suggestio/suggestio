@@ -27,10 +27,13 @@ object OneAdQsArgs {
   // Суффиксы названий qs-полей.
   def AD_ID_SUF     = ".a"
   def SZ_MULT_SUF   = ".m"
+  def VSN_SUF       = ".v"
 
 
   /** routes qsb для сериализации/десериализации экземпляра [[OneAdQsArgs]]. */
-  implicit def qsb(implicit strB: QueryStringBindable[String], floatB: QueryStringBindable[Float]) = {
+  implicit def qsb(implicit strB: QueryStringBindable[String],
+                   floatB: QueryStringBindable[Float],
+                   longOptB: QueryStringBindable[Option[Long]]) = {
     new QueryStringBindable[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
@@ -39,13 +42,16 @@ object OneAdQsArgs {
         val keyDotted = if (!key.isEmpty) s"$key." else key
         for {
           params1       <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeImgId    <- strB.bind(key + AD_ID_SUF, params1)
+          maybeAdId     <- strB.bind(key + AD_ID_SUF, params1)
           maybeSzMult   <- floatB.bind(key + SZ_MULT_SUF, params1)
+          maybeVsnOpt   <- longOptB.bind(key + VSN_SUF, params1)
         } yield {
-          maybeImgId.right.flatMap { adId =>
-            maybeSzMult.right.map { szMult =>
-              new OneAdQsArgs(adId, szMult)
-            }
+          for {
+            adId    <- maybeAdId.right
+            szMult  <- maybeSzMult.right
+            vsnOpt  <- maybeVsnOpt.right
+          } yield {
+            OneAdQsArgs(adId, szMult, vsnOpt)
           }
         }
       }
@@ -53,7 +59,8 @@ object OneAdQsArgs {
       override def unbind(key: String, value: OneAdQsArgs): String = {
         val qss = List(
           strB.unbind(key + AD_ID_SUF, value.adId),
-          floatB.unbind(key + SZ_MULT_SUF, value.szMult)
+          floatB.unbind(key + SZ_MULT_SUF, value.szMult),
+          longOptB.unbind(key + VSN_SUF, value.vsnOpt)
         )
         val qs = qss.mkString("&")
         getQsbSigner(key).mkSigned(key, qs)
@@ -68,9 +75,12 @@ object OneAdQsArgs {
  * Параметры запроса рендера только одной карточки.
  * @param adId id запрашиваемой рекламной карточки.
  * @param szMult Мультипликатор размера карточки.
+ * @param vsnOpt Версия рекламной карточки.
+ *               Используется для подавления кеширования на клиентах при изменении карточки.
  */
 case class OneAdQsArgs(
   adId    : String,
-  szMult  : SzMult_t
+  szMult  : SzMult_t,
+  vsnOpt  : Option[Long] = None
 )
 

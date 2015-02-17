@@ -96,8 +96,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
    */
   def getAdRenderArgs(szMult: SzMult_t = szMultDflt) = {
     OneAdQsArgs(
-      adId = args.qs.adId,
-      szMult = szMult
+      adId    = args.qs.adId,
+      szMult  = szMult,
+      vsnOpt  = args.request.mad.versionOpt
     )
   }
 
