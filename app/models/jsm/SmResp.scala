@@ -131,10 +131,10 @@ trait NodeNameId extends SmJsonResp {
   def adnNode: MAdnNode
   override def toJsonAcc: FieldsJsonAcc = {
     val acc0 = super.toJsonAcc
-    val _node = adnNode
+    val mnode = adnNode
     val v = JsObject(Seq(
-      "name" -> JsString(_node.meta.name),
-      "_id"  -> JsString(_node.id getOrElse "")
+      "name" -> JsString(mnode.meta.name),
+      "_id"  -> JsString(mnode.id getOrElse "")
     ))
     adnNodeNameIdFn -> v :: acc0
   }

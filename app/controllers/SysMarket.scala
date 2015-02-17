@@ -623,8 +623,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
     msg.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.lang))
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
-    msg.setHtml( views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )
-    msg.setText( views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )
+    msg.setHtml( views.html.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )
     msg.send()
   }
 
@@ -663,13 +662,10 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   // отладка email-сообщений
 
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
-  def showEmailInviteMsg(adnId: String, isHtml: Boolean) = IsSuperuserAdnNode(adnId) { implicit request =>
+  def showEmailInviteMsg(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
     import request.adnNode
     val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
-    if (isHtml)
-      Ok(views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct))
-    else
-      Ok(views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct) : String)
+    Ok(views.html.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct))
   }
 
 
@@ -795,7 +791,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
 
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
-  def showShopEmailAdDisableMsg(adId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
+  def showShopEmailAdDisableMsg(adId: String) = IsSuperuser.async { implicit request =>
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         val mmartFut = mad.receivers.headOption match {
@@ -808,11 +804,7 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
           val adOwner = mshopOpt.orElse(mmartOpt).get
-          if (isHtml) {
-            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
-          } else {
-            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason): String)
-          }
+          Ok(views.html.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
         }
 
       case None => NotFound("ad not found: " + adId)
@@ -820,18 +812,10 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
   }
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
-  def showNodeOwnerEmailInvite(adnId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getById(adnId) map {
-      case Some(adnNode) =>
-        val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
-        val ctx = implicitly[Context]
-        if (isHtml)
-          Ok(views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx))
-        else
-          Ok(views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx) : String)
-
-      case None => martNotFound(adnId)
-    }
+  def showNodeOwnerEmailInvite(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
+    val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
+    val ctx = implicitly[Context]
+    Ok(views.html.lk.adn.invite.emailNodeOwnerInviteTpl(request.adnNode, eAct)(ctx))
   }
 
 

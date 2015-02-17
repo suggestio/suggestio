@@ -6,7 +6,7 @@
 @import models.stat.AdStatActionsTpl._
 @import ctx._
 @import helper._
-@import market.lk.ad._
+@import views.html.lk.ad._
 @import datetime._
 
 
@@ -31,9 +31,7 @@
       <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки</a>
       <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">ЛК создателя карточки</a>
       <p>Отобразить email-сообщение о деактивации:
-        @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>
-          <a class="blue-link" href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
-        }
+        <a class="blue-link" href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get)">HTML</a>
       </p>
 
       @nodeOpt.map { adnNode =>

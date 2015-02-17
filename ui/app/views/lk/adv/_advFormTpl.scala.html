@@ -74,7 +74,7 @@
     <h2 class="minor-title">Выбор города/ места</h2>
 
       @* Список городов. *@
-      @market.lk.lkBlockNewDesign( open = false ) {
+      @lk.lkBlockNewDesign( open = false ) {
         <div class="js-city">
           <span class="checkbox_title __major __no-input">Выберите город</span>
         </div>
@@ -111,7 +111,7 @@
               @defining( args.adnId2formIndex.get(adnId) ) { midOpt =>
               @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
                 @if(maybeBusyAdv.isEmpty) {
-                  @market.lk.lkBlockNewDesign( open = false ) {
+                  @lk.lkBlockNewDesign( open = false ) {
                     <label>
                       <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
                       <span class="styled-checkbox"></span>

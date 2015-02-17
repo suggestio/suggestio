@@ -1,11 +1,10 @@
 @(msup: MAdnNode, mslave:MAdnNode, mads: Seq[MAdT])(implicit ctx: Context)
 
 @* Шаблон отображения магазина для админа ТЦ. *@
-@import market.lk._
-
+@import views.html.lk._
+@import views.html.lk.adn.node._
 @import ctx._
 @import helper._
-@import market.lk.adn._node._
 @import util.acl.CanSuperviseNode._
 @import controllers.adn.AdnShowTypes._
 

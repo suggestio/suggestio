@@ -10,7 +10,7 @@ import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl._
 import util.mail.MailerWrapper
-import views.html.market.lk.support._
+import views.html.lk.support._
 import scala.concurrent.Future
 import util.support.SupportUtil.FEEDBACK_RCVR_EMAILS
 import play.api.data._, Forms._
@@ -104,7 +104,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
           msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
-          msg.setText( views.txt.market.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r) )
+          msg.setText( views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r) )
           msg.send()
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.

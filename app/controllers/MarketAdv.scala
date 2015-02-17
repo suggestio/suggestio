@@ -15,7 +15,6 @@ import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
-import views.html.market.lk.adv._
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future

@@ -7,7 +7,7 @@ import play.api.data._, Forms._
 import util.acl._
 import models._
 import util.mail.MailerWrapper
-import views.html.market.lk.adn._
+import views.html.lk.adn._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
@@ -99,8 +99,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
           msg.setFrom("no-reply@suggest.io")
           msg.setRecipients(emails : _*)
           val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
-          msg.setHtml( views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx) )
-          msg.setText( views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx) )
+          msg.setHtml( views.html.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx) )
           msg.send()
         }
       }
@@ -120,7 +119,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
       override def producerIds = listAdnId
     }
     MAd.dynSearchRt(req) map { mads =>
-      Ok(_node._slaveNodeAdsTpl(
+      Ok(node._slaveNodeAdsTpl(
         msup = request.supNode,
         mads = mads
       ))

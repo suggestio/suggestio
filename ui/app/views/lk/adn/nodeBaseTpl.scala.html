@@ -2,7 +2,7 @@
   popupContent:Option[Html] = None, rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 
-@import market.lk.adn._node._
+@import lk.adn.node._
 @import ctx._
 @import NodeRightPanelLinks._
 
@@ -43,7 +43,7 @@
 }
 
 
-@market.lk.lkBaseLayout(
+@lk.lkBaseLayout(
   title         = title,
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE),
   nodeOpt       = Some(node),

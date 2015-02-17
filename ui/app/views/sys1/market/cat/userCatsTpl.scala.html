@@ -16,7 +16,7 @@
     <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
   </div>
 
-  @market.lk.lkBlock("Категории") {
+  @lk.lkBlock("Категории") {
 
     <table class="siom-table __size-XL">
       @treeCats.map { case (level, cat) =>

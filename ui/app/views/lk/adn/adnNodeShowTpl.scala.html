@@ -1,4 +1,4 @@
-@(node: MAdnNode, slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
+@(mnode: MAdnNode, slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
   povAdnIdOpt: Option[String], advReqsCount: Long, showBackBtn: Boolean, showAdvsBtn: Boolean,
   welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: Context)
 
@@ -8,7 +8,7 @@
 
 @import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
 @import ctx._
-@import _node._
+@import node._
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
 
@@ -17,7 +17,7 @@
 
   @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
   @if(showBackBtn) {
-    @defining( if(isMyNode) Some(routes.MarketLkAdn.lkList(fromNode = node.id)) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+    @defining( if(isMyNode) Some(routes.MarketLkAdn.lkList(fromNode = mnode.id)) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
       @backCallOpt.map { backCall =>
         <a class="btn __minor __size-M def-transition" href="@backCall">Сменить магазин</a>
       }
@@ -25,10 +25,10 @@
   }
 
   <div class="profile_logo-bar">
-    @if(node.meta.color.isDefined) {
-      @node.logoImgOpt.map { img =>
-        <div class="image __size-L" style="background-color: #@node.meta.color;">
-          <img class="image_src" src="@DynImgUtil.imgCall(img.filename)" alt="@node.meta.name"/>
+    @if(mnode.meta.color.isDefined) {
+      @mnode.logoImgOpt.map { img =>
+        <div class="image __size-L" style="background-color: #@mnode.meta.color;">
+          <img class="image_src" src="@DynImgUtil.imgCall(img.filename)" alt="@mnode.meta.name"/>
         </div>
       }
     }
@@ -37,25 +37,25 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @market.lk.lkProp(){ Название } { @node.meta.name }
+    @lk.lkProp(){ Название } { @mnode.meta.name }
 
-    @if(node.meta.town.isDefined) {
-      @market.lk.lkProp(){ Адрес } { @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address} }
+    @if(mnode.meta.town.isDefined) {
+      @lk.lkProp(){ Адрес } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
     }
 
-    @if(node.meta.siteUrl.isDefined) {
-      @market.lk.lkProp(){ Сайт } { <a class="link" href="@node.meta.siteUrl" target="_blank">@node.meta.siteUrl</a> }
+    @if(mnode.meta.siteUrl.isDefined) {
+      @lk.lkProp(){ Сайт } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
     }
 
-    @if(node.meta.info.isDefined) {
-      @market.lk.lkProp(){ Информация о товарах или услугах } { @node.meta.info  }
+    @if(mnode.meta.info.isDefined) {
+      @lk.lkProp(){ Информация о товарах или услугах } { @mnode.meta.info  }
     }
 
 
-    @if(node.adn.isReceiver) {
+    @if(mnode.adn.isReceiver) {
       <hr class="delimiter __light"/>
-      @market.lk.lkProp(){ Суточный трафик } { @node.meta.humanTrafficAvg  }
-      @market.lk.lkProp(){ Описание аудитории } { @node.meta.audienceDescr  }
+      @lk.lkProp(){ Суточный трафик } { @mnode.meta.humanTrafficAvg  }
+      @lk.lkProp(){ Описание аудитории } { @mnode.meta.audienceDescr  }
 
       @* TODO добавить вывод картинки приветствия *@
 
@@ -65,7 +65,7 @@
         <div class="profile_photo-lst">
           <div class="js-photo-slider">
 
-            @node.gallery.map { imgId =>
+            @mnode.gallery.map { imgId =>
               <img class="profile_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
             }
 
@@ -84,7 +84,7 @@
         <span class="dark-gray ft-S">Основной<br/>цвет</span>
       </td>
       <td class="td __padding-S">
-        <div class="color" style="background-color: #@node.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+        <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
       </td>
       <td class="td __padding-S">
         <div class="delimiter __light __vertical js-vertical-line"></div>
@@ -96,7 +96,7 @@
         <span class="dark-gray ft-S">Цвет<br/>контента</span>
       </td>
       <td class="td __padding-S dark-gray">
-        <div class="color" style="background-color: #@node.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+        <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
       </td>
     </table>
 
@@ -105,12 +105,12 @@
 
   @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
   @*if(isMyNode) {
-  @defining(node.adn.isReceiver) { isRcvr =>
-  @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
+  @defining(mnode.adn.isReceiver) { isRcvr =>
+  @if(isRcvr || showAdvsBtn || mnode.adn.isSupervisor) {
   <div class="adn-title-buttons">
 
     @if(showAdvsBtn) {
-    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(mnode.id.get)">
       @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
       РЕКЛАМОДАТЕЛИ
     </a>
@@ -127,14 +127,14 @@
 
   @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
   @*if(isMyNode && !advertisers.isEmpty) {
-    @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
+    @_advertisersListTpl(advertisers, povAdnIdOpt = mnode.id)
   }*@
 
 
   @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
      Если этот узел не может супервайзить, то slaves должен быть пустым. *@
   @*if(isMyNode && !slaves.isEmpty) {
-    @_supShowNodesTpl(node, slaves)
+    @_supShowNodesTpl(mnode, slaves)
   }*@
 
 }@* content end *@
@@ -144,7 +144,7 @@
 @nodeBaseTpl(
   title         = "Ваш профиль",
   isMyNode      = isMyNode,
-  node          = node,
+  node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
   povAdnIdOpt   = povAdnIdOpt
 )(content)

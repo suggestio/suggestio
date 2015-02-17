@@ -3,9 +3,8 @@
 @* Шаблон-подложка для шаблонов саппорта в ЛК. *@
 
 @import ctx.lang
-@import market.lk._
 
-@lkBaseLayout(
+@lk.lkBaseLayout(
   title         = title,
   headAfter     = headAfter,
   backHref      = r  orElse  Some(nodeOpt.flatMap(_.id).fold(routes.Ident.rdrUserSomewhere)(routes.MarketLkAdn.showAdnNode(_)).url),

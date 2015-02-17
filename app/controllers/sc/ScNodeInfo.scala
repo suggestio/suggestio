@@ -11,7 +11,7 @@ import play.api.cache.Cache
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.CdnUtil
-import views.html.market.lk.adn._node._installScriptTpl
+import views.html.lk.adn.node._installScriptTpl
 import views.txt.sc._
 
 /**

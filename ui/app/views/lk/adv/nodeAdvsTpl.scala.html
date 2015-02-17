@@ -2,7 +2,7 @@
 
 @* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
 @import ctx._
-@import market.lk._
+@import views.html.lk._
 @import views.html.sc._
 @import controllers.adn.AdnShowTypes._
 
@@ -13,7 +13,7 @@
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE)
 ) {
 
-  @market.lk.lkBlock("На рассмотрении") {
+  @lk.lkBlock("На рассмотрении") {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">

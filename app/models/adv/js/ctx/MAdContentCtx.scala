@@ -10,7 +10,7 @@ import play.api.Play.{current, configuration}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 22.01.15 11:30
- * Description: 
+ * Description: Представление данных одной рекламной карточки для SioPR.
  */
 
 object MAdContentCtx {

@@ -2,9 +2,7 @@
 
 @* Базовый шаблон для страниц в разделе событий. *@
 
-@import market.lk._
-
-@lkBaseLayout(
+@lk.lkBaseLayout(
   title         = title,
   nodeOpt       = nodeOpt,
   backHref      = nodeOpt.flatMap(_.id).map(routes.MarketLkAdn.showAdnNode(_).url),

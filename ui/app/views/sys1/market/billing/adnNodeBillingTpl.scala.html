@@ -7,6 +7,7 @@
 @import args._
 @import util.TplDataFormatUtil._
 @import models.stat.AdStatActionsTpl._
+@import lk.lkBlock
 
 @billingBase("Биллинг", Some(adnNode)) {
 
@@ -16,7 +17,7 @@
     </p>
   }
 
-  @market.lk.lkBlock( s"Контракты(${contracts.size})" ) {
+  @lkBlock( s"Контракты(${contracts.size})" ) {
 
     @if(contracts.isEmpty) {
       <p>Пока нет заключенных договоров.</p>
@@ -206,7 +207,7 @@
     <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
   </div>
 
-  @market.lk.lkBlock("Транзакции("+txns.size+")") {
+  @lkBlock("Транзакции("+txns.size+")") {
 
     @if( txns.nonEmpty ) {
       <table class="siom-table __size-XL">

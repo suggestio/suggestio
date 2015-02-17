@@ -9,7 +9,7 @@ import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import views.html.market.lk.adn._
+import views.html.lk.adn._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._

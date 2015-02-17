@@ -14,8 +14,9 @@ import util.SiowebEsUtil.client
 import scala.concurrent.Future
 import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
 import io.suggest.model.EsModel
-import views.html.market.lk.adn._, _node._
-import views.html.market.lk.usr._
+import views.html.lk.adn._
+import views.html.lk.adn.node._
+import views.html.lk.usr._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
@@ -45,7 +46,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     for {
       mnodes      <- mnodesFut
     } yield {
-      Ok(views.html.market.lk.lkList(mnodes, request.mnodeOpt))
+      Ok(views.html.lk.lkList(mnodes, request.mnodeOpt))
     }
   }
 
@@ -150,7 +151,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         welcomeAdOpt    <- welcomeAdOptFut
       } yield {
         Ok(adnNodeShowTpl(
-          node          = adnNode,
+          mnode         = adnNode,
           slaves        = slaves,
           isMyNode      = isMyNode,
           advertisers   = advs,
@@ -257,7 +258,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         canAdv    <- canAdvFut
       } yield {
         Ok(nodeAdsTpl(
-          node        = adnNode,
+          mnode       = adnNode,
           mode        = mode,
           mads        = mads,
           isMyNode    = isMyNode,

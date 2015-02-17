@@ -24,7 +24,7 @@
 <div class="ovh">
 
   @adnNode.meta.address.map { address =>
-    @market.lk.lkProp(){ Адрес } {
+    @lk.lkProp(){ Адрес } {
       @Html(replaceEOLwithBR(address))
       @adnNode.meta.phone.map { phone =>
         тел. @phone
@@ -34,12 +34,12 @@
   }
 
   @adnNode.meta.humanTrafficAvg.map { htAvg =>
-    @market.lk.lkProp(){ Суточный трафик } { @formatIntHtml(htAvg) человек в сутки. }
+    @lk.lkProp(){ Суточный трафик } { @formatIntHtml(htAvg) человек в сутки. }
     <hr class="delimiter __light"/>
   }
 
   @adnNode.meta.audienceDescr.map { audDescr =>
-    @market.lk.lkProp(){ Описание аудитори } { @Html(audDescr) }
+    @lk.lkProp(){ Описание аудитории } { @Html(audDescr) }
   }
 
 </div>

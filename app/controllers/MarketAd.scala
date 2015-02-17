@@ -7,7 +7,7 @@ import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import util.PlayMacroLogsImpl
 import util.blocks.{LkEditorWsActor, ListBlock, BgImg, BlockMapperResult}
-import views.html.market.lk.ad._
+import views.html.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client

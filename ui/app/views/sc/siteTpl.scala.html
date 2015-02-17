@@ -4,7 +4,7 @@
 @import ctx._
 @import _root_.views.html.stuff._
 @import util.cdn.CdnUtil
-@import market.lk.adn._node._installScriptTpl
+@import lk.adn.node._installScriptTpl
 
 <html>
 <head>
@@ -13,7 +13,7 @@
     @_nodeTitleTpl(args.nodeOpt)
     @if(args.nodeOpt) { | }
     Suggest.io</title>
-  
+
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   @if(!ctx.isIpad) {
@@ -49,9 +49,9 @@
 
   @if(!args.syncRender) {
     <script type="text/javascript">
-@_installScriptTpl(args.adnId, mkPermanent = false);
-window.siomart_index = '@args.showcaseCall';
-window.with_geo = @args.withGeo;
+      @_installScriptTpl(args.adnId, mkPermanent = false);
+      window.siomart_index = '@args.showcaseCall';
+      window.with_geo = @args.withGeo;
     </script>
   }
   @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново

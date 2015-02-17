@@ -175,10 +175,10 @@ POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(
 # sys.market.mart
 GET  /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteForm(id: String)
 POST /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
-GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmailInvite(id, isHtml: Boolean)
+GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmailInvite(id)
 # sys.market.shop
-GET  /sys/market/shop/:id/eact          controllers.SysMarket.showEmailInviteMsg(id, isHtml: Boolean)
-GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
+GET  /sys/market/shop/:id/eact          controllers.SysMarket.showEmailInviteMsg(id)
+GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId)
 # sys.market.cats
 GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
 POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit

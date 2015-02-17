@@ -68,7 +68,7 @@
     @otherRcvrs.map { rcvr =>
       @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
 
-      @market.lk.lkBlockNewDesign(
+      @lk.lkBlockNewDesign(
         href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)),
         open = false
       ) { @rcvr.meta.name&nbsp;/&nbsp;<span class="ft-S light-gray">@rcvr.meta.town</span> } { }

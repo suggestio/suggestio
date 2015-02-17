@@ -6,6 +6,7 @@
 @import sys1.market.adn._
 @import util.FC.tdFc
 @import ctx._
+@import lk.lkBlock
 
 @hPathAfter1 = {
   / Инвайт на управление
@@ -17,7 +18,7 @@
   nodeOpt = Some(adnNode)
 ) {
 
-  @market.lk.lkBlock("Текущие владельцы ТЦ") {
+  @lkBlock("Текущие владельцы ТЦ") {
 
     @if(adnNode.personIds.isEmpty) {
       У этого ТЦ нет пользователей, имеющих права доступа.
@@ -27,7 +28,7 @@
 
   }
 
-  @market.lk.lkBlock("Текущие отправленные инвайты") {
+  @lkBlock("Текущие отправленные инвайты") {
 
     @if(!eActs.isEmpty) {
       <ul>@eActs.map { eAct =>
@@ -39,7 +40,7 @@
 
   }
 
-  @market.lk.lkBlock("Новый инвайт") {
+  @lkBlock("Новый инвайт") {
 
     Для отправки приглашения на управление ТЦ
     <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
@@ -55,11 +56,10 @@
 
   }
 
-  @market.lk.lkBlock("Отладка") {
+  @lkBlock("Отладка") {
 
     Отобразить тело invite-письма:
-    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get, isHtml = true)">HTML</a>
-    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get, isHtml = false)">TXT</a>
+    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get)">HTML</a>
 
   }
 

@@ -1,10 +1,12 @@
 @(adnNode: MAdnNode, slaves: Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
+
 @import ctx._
 @import helper._
 @import controllers.adn.AdnShowTypes._
 @import util.qsb._
+@import lk.lkBlock
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -66,11 +68,11 @@
     </p>
   }
 
-  @market.lk.lkBlock("Метаданные") {
+  @lkBlock("Метаданные") {
     @_nodeMetaTpl(adnNode.meta)
   }
 
-  @market.lk.lkBlock("Подчинённые узлы(" +slaves.size +")") {
+  @lkBlock("Подчинённые узлы(" +slaves.size +")") {
 
     @if(slaves.isEmpty) {
       <p class="color-light-strong">Нет подчинённых узлов.</p>
@@ -84,7 +86,7 @@
 
   }
 
-  @market.lk.lkBlock("Участие в рекламной сети") {
+  @lkBlock("Участие в рекламной сети") {
 
     <table class="color-light-strong">
       @tableRow("Права:") {
@@ -111,7 +113,7 @@
   }
 
 
-  @market.lk.lkBlock("Управление") {
+  @lkBlock("Управление") {
 
     @btn(
       href = routes.SysMarket.showAdnNodeAds(new AdSearch { override def producerIds = adnNode.id.toList }),
@@ -137,7 +139,7 @@
 
 
 
-  @market.lk.lkBlock("Модерация бесплатного размещения") {
+  @lkBlock("Модерация бесплатного размещения") {
 
     <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
     <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
@@ -145,12 +147,11 @@
   }
 
 
-  @market.lk.lkBlock("Отладка") {
+  @lkBlock("Отладка") {
 
     <p class="color-light-strong">
       Отобразить email-письмо инвайта:
-      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=true)">HTML</a>,
-      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=false)">TXT</a>
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get)">HTML</a>
     </p>
 
   }
