@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import models._
 import play.api.mvc.Security.username
-import play.api.i18n.{Lang, Messages}
+import play.api.i18n.Messages
 import util.SiowebEsUtil.client
 import util.FormUtil.passwordWithConfirmM
 
@@ -43,7 +43,8 @@ import PwRecover._
 trait SendPwRecoverEmail extends SioController {
 
   /**
-   * Отправка письма юзеру.
+   * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
+   * поэтому он реализован как аддон для контроллеров.
    * @param email1 email юзера.
    * @return Фьючерс для синхронизации.
    */
