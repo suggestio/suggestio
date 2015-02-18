@@ -67,5 +67,21 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
     )
   }
 
+  /**
+   * Обновить timestamp, уведомив ttl.
+   * @param tstamp1 Новый timestamp.
+   * @return Новый экземпляр [[LoginTimestamp]].
+   */
+  def withTstamp(tstamp1: Long): LoginTimestamp = {
+    val diff = tstamp1 - this.tstamp
+    val ttl1 = if (diff > 0L) {
+      ttl.minusTtl(diff.toInt)
+    } else {
+      LOGGER.warn(s"Negative timestamp update! diff=$diff ($tstamp -> $tstamp1). Check sio servers datetime!")
+      ttl
+    }
+    copy(tstamp = tstamp1, ttl = ttl1)
+  }
+
 }
 

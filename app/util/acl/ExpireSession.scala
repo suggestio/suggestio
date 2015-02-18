@@ -60,7 +60,7 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
             )
           // Есть таймштамп, значит пора залить новый (текущий) таймштамп в сессию.
           case Some(ts) =>
-            ts.copy(tstamp = currTstamp)
+            ts.withTstamp(currTstamp)
               .addToSession(session0)
         }
         result withSession session1

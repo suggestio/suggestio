@@ -51,8 +51,9 @@ object EmailPwSubmit {
       case None =>
         Future successful ""
     }
+    val ttl = Ttl(request.session)
     emailFut map { email1 =>
-      emailPwLoginFormM fill EpwLoginFormBind(email1, "", LongTtl)
+      emailPwLoginFormM fill EpwLoginFormBind(email1, "", ttl)
     }
   }
 

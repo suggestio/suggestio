@@ -53,6 +53,9 @@ sealed trait Ttl {
       case None    => acc0
     }
   }
+
+  /** Вычесть из состояния TTL указанное кол-во секунд, если требуется/возможно. */
+  def minusTtl(seconds: Int): Ttl = this
 }
 
 
@@ -61,7 +64,7 @@ object LongTtl extends Ttl {
   val SESSION_VALUE = "l"
 
   override val ttlSeconds: Long = {
-    configuration.getInt("login.session.long.ttl.days")
+    configuration.getInt("login.session.ttl.long.days")
       .getOrElse(14)   // первоначальный дефолт - две недели
       .days
       .toSeconds
@@ -74,7 +77,7 @@ object LongTtl extends Ttl {
 /** Стандартный короткий ttl. */
 object ShortTtl extends Ttl {
   override val ttlSeconds: Long = {
-    configuration.getInt("login.session.short.ttl.minutes")
+    configuration.getInt("login.session.ttl.short.minutes")
       .getOrElse(20)
       .minutes
       .toSeconds
@@ -84,8 +87,24 @@ object ShortTtl extends Ttl {
 }
 
 
+object CustomTtl {
+
+  /** Использовать жесткий ttl? Если да, то ttl логина будет привязан к исходному таймеру. */
+  val USE_HARD_TTL = configuration.getBoolean("login.session.ttl.custom.isHard") getOrElse false
+}
+
+
 /** Кастомный ttl, задаваемый извне, например внешним сервисом логина. */
 case class CustomTtl(ttlSeconds: Long) extends Ttl {
+  import CustomTtl._
+
   override def sessionValue: Option[String] = Some(ttlSeconds.toString)
+
+  override def minusTtl(seconds: Int): Ttl = {
+    if (USE_HARD_TTL)
+      copy(ttlSeconds = ttlSeconds - seconds)
+    else
+      super.minusTtl(seconds)
+  }
 }
 
