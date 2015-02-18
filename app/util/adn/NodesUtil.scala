@@ -3,6 +3,7 @@ package util.adn
 import controllers.routes
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
+import models.madn.NodeDfltColors
 import play.api.db.DB
 import play.api.mvc.Call
 import util.async.AsyncUtil
@@ -62,7 +63,14 @@ object NodesUtil {
         )
       ),
       personIds = Set(personId),
-      meta = AdnMMetadata(name = name),
+      meta = {
+        val dc = NodeDfltColors.getOneRandom()
+        AdnMMetadata(
+          name      = name,
+          color     = Some(dc.bgColor),
+          fgColor   = Some(dc.fgColor)
+        )
+      },
       conf = NodeConf(
         showInScNodesList = false
       )
@@ -77,9 +85,10 @@ object NodesUtil {
   def createUserNodeBilling(adnId: String): Future[_] = {
     Future {
       DB.withTransaction { implicit ctx =>
-        val mbc = MBillContract(adnId = adnId).save
-        val mbb = MBillBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
-        val mmp0 = MBillMmpDaily(contractId = mbc.id.get).save
+        MBillContract(adnId = adnId).save
+        MBillBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
+        // 2015.feb.18: Не надо создавать новый пользовательский узел как платный ресивер.
+        //val mmp0 = MBillMmpDaily(contractId = mbc.id.get).save
         // Можно возвращать все эти экземпляры в результате работы. Сейчас это не требуется, поэтому они висят так.
       }
     }(AsyncUtil.jdbcExecutionContext)
