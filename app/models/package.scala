@@ -203,9 +203,6 @@ package object models {
   type ImgMetaI             = io.suggest.model.ImgMetaI
 
 
-  /** Тип формы для логина по email+пароль. */
-  type EmailPwLoginForm_t   = Form[(String, String)]
-
   /** Тип формы для регистрации по email (шаг 1 - указание email). */
   type EmailPwRegReqForm_t  = Form[String]
 

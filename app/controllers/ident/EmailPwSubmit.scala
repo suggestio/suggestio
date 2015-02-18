@@ -1,7 +1,8 @@
 package controllers.ident
 
 import controllers.SioController
-import models.usr.EmailPwIdent
+import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
+import models.usr._
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
@@ -12,7 +13,6 @@ import util.ident.IdentUtil
 import views.html.ident.{mySioStartTpl, _loginColumnTpl}
 import scala.concurrent.Future
 import models._
-import play.api.mvc.Security.username
 import SiowebEsUtil.client
 import util.FormUtil.passwordM
 
@@ -27,14 +27,36 @@ object EmailPwSubmit {
 
   /** Форма логина по email и паролю. */
   def emailPwLoginFormM: EmailPwLoginForm_t = {
-    Form(tuple(
-      "email"    -> email,
-      "password" -> passwordM
-    ))
+    Form(
+      mapping(
+        "email"       -> email,
+        "password"    -> passwordM,
+        "remember_me" -> boolean.transform[Ttl](
+          { rme => if (rme) LongTtl else ShortTtl },
+          { _ == LongTtl }
+        )
+      )
+      { EpwLoginFormBind.apply }
+      { EpwLoginFormBind.unapply }
+    )
+  }
+
+  /** Маппинг формы epw-логина с забиванием дефолтовых значений. */
+  def emailPwLoginFormStubM(implicit request: RequestHeader): Future[EmailPwLoginForm_t] = {
+    // Пытаемся извлечь email из сессии.
+    val emailFut: Future[String] = request.session.get(Keys.PersonId.name) match {
+      case Some(personId) =>
+        EmailPwIdent.findByPersonId(personId)
+          .map { _.headOption.fold("")(_.email) }
+      case None =>
+        Future successful ""
+    }
+    emailFut map { email1 =>
+      emailPwLoginFormM fill EpwLoginFormBind(email1, "", LongTtl)
+    }
   }
 
 }
-
 
 import EmailPwSubmit._
 
@@ -51,23 +73,32 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = IsAnonPost.async { implicit request =>
     bruteForceProtected {
-      emailPwLoginFormM.bindFromRequest().fold(
+      val formBinded = emailPwLoginFormM.bindFromRequest()
+      formBinded.fold(
         {formWithErrors =>
           LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
           emailSubmitError(formWithErrors, r)
         },
-        {case (email1, pw1) =>
-          EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
-            if (epwOpt.exists(_.checkPassword(pw1))) {
+        {binded =>
+          EmailPwIdent.getByEmail(binded.email) flatMap { epwOpt =>
+            if (epwOpt.exists(_.checkPassword(binded.password))) {
               // Логин удался.
               // TODO Нужно дать возможность режима сессии "чужой компьютер".
               val personId = epwOpt.get.personId
-              RdrBackOrFut(r) { emailSubmitOkCall(personId) }
-                .map { _.withSession(username -> personId) }
+              val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
+              var addToSession: List[(String, String)] = List(
+                Keys.PersonId.name -> personId
+              )
+              // Реализация длинной сессии при наличии флага rememberMe.
+              addToSession = binded.ttl.addToSessionAcc(addToSession)
+              rdrFut
+                .map { _.addingToSession(addToSession : _*) }
             } else {
-              val lf = emailPwLoginFormM.fill(email1 -> "")
-              val lfe = lf.withGlobalError("error.unknown.email_pw")
-              emailSubmitError(lfe, r)
+              val binded1 = binded.copy(password = "")
+              val lf = formBinded
+                .fill(binded1)
+                .withGlobalError("error.unknown.email_pw")
+              emailSubmitError(lf, r)
             }
           }
         }
@@ -82,9 +113,10 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
 trait EmailPwLogin extends EmailPwSubmit {
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm(r: Option[String]) = IsAnonGet { implicit request =>
-    val lf = emailPwLoginFormM
-    epwLoginPage(lf, r)
+  def emailPwLoginForm(r: Option[String]) = IsAnonGet.async { implicit request =>
+    emailPwLoginFormStubM map { lf =>
+      epwLoginPage(lf, r)
+    }
   }
 
   /** Общий код методов emailPwLoginForm() и emailSubmitError(). */

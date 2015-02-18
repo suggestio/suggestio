@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{routes, CaptchaValidator, SioController}
+import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
 import play.twirl.api.Html
@@ -14,7 +15,6 @@ import views.html.ident.recover._
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import models._
-import play.api.mvc.Security.username
 import play.api.i18n.Messages
 import util.SiowebEsUtil.client
 import util.FormUtil.passwordWithConfirmM
@@ -166,7 +166,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
           _   <- request.eAct.delete
           rdr <- IdentUtil.redirectUserSomewhere(epw2.personId)
         } yield {
-          rdr.withSession(username -> epw2.personId)
+          rdr.withSession(Keys.PersonId.name -> epw2.personId)
             .flashing("success" -> "Новый пароль сохранён.")
         }
       }

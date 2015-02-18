@@ -2,13 +2,14 @@ package controllers.ident
 
 import controllers.{CaptchaValidator, SioController}
 import models._
+import models.msession.Keys
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
 import controllers.Captcha._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{Security, Result}
+import play.api.mvc.Result
 import util.adn.NodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
@@ -149,7 +150,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
             _         <- idSaveFut
           } yield {
             Ok(regSuccessTpl(adnNode))
-              .withSession(Security.username -> personId)
+              .withSession(Keys.PersonId.name -> personId)
           }
         }
       }

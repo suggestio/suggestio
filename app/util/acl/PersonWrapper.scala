@@ -1,7 +1,8 @@
 package util.acl
 
+import models.msession.{LoginTimestamp, Keys}
 import models.usr.{MPersonLinks, MPerson}
-import play.api.mvc._, Security.username
+import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
@@ -26,15 +27,14 @@ object PersonWrapper extends PlayMacroLogsImpl {
    * @return Option[PersonWrapper].
    */
   def getFromSession(implicit session: Session): PwOpt_t = {
-    session.get(username)
+    session.get(Keys.PersonId.name)
       // Если выставлен timestamp, то проверить валидность защищенного session ttl.
       .filter { personId =>
-        val tstampRawOpt = session.get(ExpireSession.SESSION_TSTAMP_KEY)
-        val result = tstampRawOpt
-          .flatMap { ExpireSession.parseTstamp }
-          .exists { ExpireSession.isTimestampValid(_) }
+        val tstampOpt = LoginTimestamp.fromSession(session)
+        val result = tstampOpt
+          .exists { _.isTimestampValid() }
         if (!result)
-          trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampRawOpt")
+          trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
         result
       }
       // Если всё ок, то завернуть в PersonWrapper.
@@ -65,8 +65,5 @@ object PersonWrapper extends PlayMacroLogsImpl {
  * @param personId id юзера
  */
 final case class PersonWrapper(personId: String) extends MPersonLinks {
-
-  // TODO Надо будет это оптимизировать. Если .person будет нужен почти везде, то надо запрос фьючерса отделить от Await
-  //      в отдельный val класса. На текущий момент этот вызов нигде не используется, поэтому целиком lazy.
   lazy val personOptFut = MPerson getById personId
 }

@@ -62,7 +62,7 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
   def createCaptchaImg(ctext: String): Array[Byte]
 
   val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds") getOrElse 1800
-  def COOKIE_FLAG_SECURE = ExpireSession.SECURE_SESSION
+  val COOKIE_FLAG_SECURE = configuration.getBoolean("captcha.cookie.secure") getOrElse Session.secure
 
   protected def _getCaptchaImg(captchaId: String, ctext: String)(implicit request: RequestHeader): Result = {
     val ctextCrypt = CaptchaUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
@@ -74,11 +74,11 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
         CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
       )
       .withCookies(Cookie(
-        name = cookieName(captchaId),
-        value = ctextCrypt,
-        maxAge = Some(COOKIE_MAXAGE_SECONDS),
-        httpOnly = true,
-        secure = COOKIE_FLAG_SECURE
+        name      = cookieName(captchaId),
+        value     = ctextCrypt,
+        maxAge    = Some(COOKIE_MAXAGE_SECONDS),
+        httpOnly  = true,
+        secure    = COOKIE_FLAG_SECURE
       ))
   }
 

@@ -1,12 +1,14 @@
 package controllers.ident
 
 import controllers.{routes, SioController}
+import models.msession.{CustomTtl, Keys}
 import models.{ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
 import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
@@ -24,6 +26,7 @@ import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -33,6 +36,14 @@ import scala.concurrent.Future
  */
 
 object ExternalLogin extends PlayMacroLogsDyn {
+
+  /** Фильтровать присылаемый ttl. */
+  val MAX_SESSION_TTL_SECONDS = {
+    configuration.getInt("login.ext.session.ttl.max.minutes")
+      .getOrElse(86400)
+      .minutes
+      .toSeconds
+  }
 
   /** secure-social настраивается через этот Enviroment. */
   implicit protected val env: RuntimeEnvironment[SsUser] = {
@@ -66,7 +77,7 @@ object ExternalLogin extends PlayMacroLogsDyn {
    * @return Ссылка в виде строки.
    */
   def toUrl2(ses: Session, personId: String): Future[String] = {
-    ses.get(SecureSocial.OriginalUrlKey) match {
+    ses.get(Keys.OrigUrl.name) match {
       case Some(url) =>
         Future successful url
       case None =>
@@ -121,7 +132,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
           redirectTo.map { url =>
             flow.result
-              .addingToSession(SecureSocial.OriginalUrlKey -> url)
+              .addingToSession(Keys.OrigUrl.name -> url)
           } getOrElse flow.result
         }
         case authenticated: AuthenticationResult.Authenticated =>
@@ -156,7 +167,14 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
                   Redirect(url)
                 }
               }
-              val session1 = cleanupSession(request.session) + (Security.username -> ident.personId)
+              // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
+              var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.name -> ident.personId)
+              addToSessionAcc = authenticated.profile.oAuth2Info
+                .flatMap { _.expiresIn }
+                .filter { _ <= MAX_SESSION_TTL_SECONDS }
+                .map { ein => CustomTtl(ein.toLong).addToSessionAcc(addToSessionAcc) }
+                .getOrElse { addToSessionAcc }
+              val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
               rdrFut
                 .map { _.withSession(session1) }
             }

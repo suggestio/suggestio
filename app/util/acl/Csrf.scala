@@ -5,6 +5,7 @@ import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import play.api.mvc._
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.language.higherKinds
 
 /**
  * Suggest.io

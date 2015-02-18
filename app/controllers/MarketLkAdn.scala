@@ -3,6 +3,7 @@ package controllers
 import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
 import controllers.ident._
+import models.msession.Keys
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
@@ -25,7 +26,6 @@ import play.api.libs.json._
 import io.suggest.ym.model.common.AdShowLevels
 import play.api.db.DB
 import play.api.mvc.{AnyContent, Result}
-import play.api.mvc.Security.username
 
 /**
  * Suggest.io
@@ -436,7 +436,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
                 Billing.maybeInitializeNodeBilling(adnId)
                 Redirect(routes.MarketLkAdn.showAdnNode(adnId))
                   .flashing("success" -> "Регистрация завершена.")
-                  .withSession(username -> personId)
+                  .withSession(Keys.PersonId.name -> personId)
               }
             }
           }

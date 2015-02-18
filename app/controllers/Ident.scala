@@ -46,11 +46,13 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
-  def mySioStartPage(r: Option[String]) = IsAnonGet { implicit request =>
+  def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
     val ctx = implicitly[Context]
-    val lc = _loginColumnTpl(EmailPwSubmit.emailPwLoginFormM, r)(ctx)
-    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
-    Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
+    EmailPwSubmit.emailPwLoginFormStubM.map { lf =>
+      val lc = _loginColumnTpl(lf, r)(ctx)
+      val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
+      Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
+    }
   }
 
 }
