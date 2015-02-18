@@ -328,7 +328,13 @@ wind.direction.north-east=северо-восточный
 wind.direction.south-west=юго-западный
 wind.direction.south-east=юго-восточный
 
+
 Vkontakte=ВКонтакте
+
+adv.ext.i.at.vk=Я ВКонтакте
+adv.ext.i.at.fb=Мой Facebook
+adv.ext.i.at.tw=Мой твиттер
+
 error.service.unknown=Этот сайт не поддерживается.
 error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.
 

@@ -199,9 +199,8 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
       },
       {nodeName =>
         // Развернуть узел для юзера, отобразить страницу успехоты.
-        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId) map { adnNode =>
-          Ok(regSuccessTpl(adnNode))
-        }
+        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId)
+          .map { adnNode => Ok(regSuccessTpl(adnNode)) }
       }
     )
   }

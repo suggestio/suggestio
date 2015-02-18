@@ -8,7 +8,7 @@
 @_errorEvtBase(rargs) {
 
   @rargs.errors.map { err =>
-    <p class="event_err-text">Ошибка запуска сервиса@rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.i18nCode)&quot;}:
+    <p class="event_err-text">Ошибка запуска сервиса@rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.nameI18N)&quot;}:
       @Messages(err.msg, err.args: _*)
     </p>
 

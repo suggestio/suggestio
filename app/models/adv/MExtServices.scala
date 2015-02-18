@@ -5,6 +5,7 @@ import java.net.URL
 import io.suggest.model.EnumMaybeWithName
 import io.suggest.util.UrlUtil
 import models.adv.js.ctx.MJsCtx
+import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play._
@@ -42,10 +43,32 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
     /** id приложения на стороне сервиса. */
     val APP_ID_OPT = configuration.getString(s"ext.adv.$strId.api.id")
 
-    def i18nCode: String
+    def nameI18N: String
+    def iAtServiceI18N: String = "adv.ext.i.at." + strId
+
     def isForHost(host: String): Boolean
     def normalizeTargetUrl(url: URL): String = {
       UrlUtil.normalize(url.toExternalForm)
+    }
+
+    def dfltTargetUrl: Option[String]
+
+    /**
+     * Создавать ли экземпляр этой модели для новых узлов?
+     * @param adnId id узла.
+     * @param lang язык. Для связи с Messages().
+     * @return Some с экземпляром [[MExtTarget]].
+     *         None, если по дефолту таргет создавать не надо.
+     */
+    def dfltTarget(adnId: String)(implicit lang: Lang): Option[MExtTarget] = {
+      dfltTargetUrl.map { url =>
+        MExtTarget(
+          url     = url,
+          adnId   = adnId,
+          service = this,
+          name    = Some(Messages(iAtServiceI18N))
+        )
+      }
     }
 
     /**
@@ -72,7 +95,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
 
   /** Сервис вконтакта. */
   val VKONTAKTE: T = new Val("vk") {
-    override def i18nCode = "VKontakte"
+    override def nameI18N = "VKontakte"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
     }
@@ -87,24 +110,28 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
       }
       v || super.checkImgUploadUrl(url)
     }
+
+    override def dfltTargetUrl = Some("https://vk.com/")
   }
 
 
   /** Сервис фейсбука. */
   val FACEBOOK: T = new Val("fb") {
-    override def i18nCode = "Facebook"
+    override def nameI18N = "Facebook"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?facebook\\.(com|net)$".r.pattern.matcher(host).matches()
     }
+    override def dfltTargetUrl = Some("https://facebook.com/me")
   }
 
 
   /** Сервис твиттера. */
   val TWITTER: T = new Val("tw") {
-    override def i18nCode = "Twitter"
+    override def nameI18N = "Twitter"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?twitter\\.com".r.pattern.matcher(host).matches()
     }
+    override def dfltTargetUrl = None
   }
 
 

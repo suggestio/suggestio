@@ -3,8 +3,10 @@ package util.adn
 import controllers.routes
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
+import models.adv.{MExtServices, MExtTarget}
 import models.madn.NodeDfltColors
 import play.api.db.DB
+import play.api.i18n.Lang
 import play.api.mvc.Call
 import util.async.AsyncUtil
 
@@ -95,22 +97,34 @@ object NodesUtil {
   }
 
   /**
+   * Создать дефолтовые таргеты для размещения в соц.сетях.
+   * @param adnId id узла.
+   * @return Фьючерс для синхронизации.
+   */
+  def createExtDfltTargets(adnId: String): Future[_] = {
+    val tgtsIter = MExtServices.values
+      .iterator
+      .flatMap { _.dfltTarget(adnId) }
+    Future.traverse(tgtsIter)(_.save)
+  }
+
+  /**
    * Создание нового узла для юзера. Узел должен быть готов к финансовой работе.
    * @param name Название узла.
    * @param personId id юзера-владельца.
    * @return Фьючерс с готовым инстансом нового существующего узла.
    */
-  def createUserNode(name: String, personId: String): Future[MAdnNode] = {
+  def createUserNode(name: String, personId: String)(implicit lang: Lang): Future[MAdnNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     val nodeSaveFut = inst.save
-    val billSaveFut = nodeSaveFut flatMap { adnId =>
-      createUserNodeBilling(adnId)
-    }
-    for {
-      adnId <- nodeSaveFut
-      _     <- billSaveFut
-    } yield {
-      inst.copy(id = Some(adnId))
+    nodeSaveFut flatMap { adnId =>
+      val billSaveFut = createUserNodeBilling(adnId)
+      for {
+        _ <- createExtDfltTargets(adnId)
+        _ <- billSaveFut
+      } yield {
+        inst.copy(id = Some(adnId))
+      }
     }
   }
 

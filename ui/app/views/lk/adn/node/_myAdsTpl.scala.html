@@ -76,11 +76,11 @@
           @faMdr.reason
         }
         </div><!-- .js-equal-height end -->
-          @if(canAdv) {
-              <a class="btn __size-XM __radial-major" href="@routes.MarketAdv.advForAd(mad.id.get)">
-                Управление
-              </a>
-          }
+        @if(canAdv) {
+          <a class="btn __size-XM __radial-major" href="@routes.LkAdvExt.forAd(mad.id.get)">
+            Управление
+          </a>
+        }
 
 
       } @* ads list*@
