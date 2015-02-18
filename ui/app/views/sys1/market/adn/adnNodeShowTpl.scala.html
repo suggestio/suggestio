@@ -133,12 +133,6 @@
   }
 
 
-
-  @* Категории в рамках узла возможны, но отключены до лучших времён. *@
-  @*<a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>*@
-
-
-
   @lkBlock("Модерация бесплатного размещения") {
 
     <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>

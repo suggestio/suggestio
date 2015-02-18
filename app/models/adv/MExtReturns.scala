@@ -35,14 +35,14 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
   /** Юзер должен возвращаться на выдачу размещающего. */
   val ToShowCase: MExtReturn = new Val("sc") {
     override def builder(): ReturnToScBuilder = {
-      new RetToNode with RetToFocusedAd {}
+      new RetToNode {}
     }
   }
 
   /** Юзер должен возвращаться на открытую рекламную карточку. */
   val ToAd: MExtReturn = new Val("ad") {
     override def builder(): ReturnToScBuilder = {
-      new RetToNode {}
+      new RetToNode with RetToFocusedAd {}
     }
   }
 

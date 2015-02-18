@@ -2,7 +2,6 @@ package util.acl
 
 import play.api.mvc._
 import models._
-import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
 import scala.concurrent.Future

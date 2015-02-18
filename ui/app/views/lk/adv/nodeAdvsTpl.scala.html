@@ -4,7 +4,6 @@
 @import ctx._
 @import views.html.lk._
 @import views.html.sc._
-@import controllers.adn.AdnShowTypes._
 
 @lkBaseLayout(
   title         = "Рекламодатели",
@@ -40,7 +39,7 @@
             <div class="ads-list-block__preview">
               <div class="ads-list-block__preview-container">
                 @_adTpl(mad)
-                </div>
+              </div>
               <div class="ads-list-block__zigzag-mask"></div>
               <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
