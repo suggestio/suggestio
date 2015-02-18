@@ -25,7 +25,8 @@ object Keys extends Enumeration with EnumMaybeWithName {
   val RememberMe    : T = new Val("r", true)
 
   /** Костыль к secure-social сохраняет ссылку для возврата юзера через session.
-    * Менять на что-то отличное от оригинала пока нельзя. */
+    * Менять на что-то отличное от оригинала можно только после проверки [[controllers.ident.ExternalLogin]]
+    * на безопасность переименования. */
   val OrigUrl       : T = new Val(SecureSocial.OriginalUrlKey, false)
 
 

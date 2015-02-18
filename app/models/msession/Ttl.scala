@@ -64,7 +64,7 @@ object LongTtl extends Ttl {
   val SESSION_VALUE = "l"
 
   override val ttlSeconds: Long = {
-    configuration.getInt("login.session.ttl.long.days")
+    configuration.getInt("login.ttl.long.days")
       .getOrElse(14)   // первоначальный дефолт - две недели
       .days
       .toSeconds
@@ -77,7 +77,7 @@ object LongTtl extends Ttl {
 /** Стандартный короткий ttl. */
 object ShortTtl extends Ttl {
   override val ttlSeconds: Long = {
-    configuration.getInt("login.session.ttl.short.minutes")
+    configuration.getInt("login.ttl.short.minutes")
       .getOrElse(20)
       .minutes
       .toSeconds
@@ -90,7 +90,7 @@ object ShortTtl extends Ttl {
 object CustomTtl {
 
   /** Использовать жесткий ttl? Если да, то ttl логина будет привязан к исходному таймеру. */
-  val USE_HARD_TTL = configuration.getBoolean("login.session.ttl.custom.isHard") getOrElse false
+  val USE_HARD_TTL = configuration.getBoolean("login.ttl.custom.isHard") getOrElse false
 }
 
 
