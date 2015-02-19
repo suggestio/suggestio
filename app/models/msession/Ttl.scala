@@ -65,7 +65,7 @@ object LongTtl extends Ttl {
 
   override val ttlSeconds: Long = {
     configuration.getInt("login.ttl.long.days")
-      .getOrElse(14)   // первоначальный дефолт - две недели
+      .getOrElse(7)   // первоначальный дефолт - неделя с продлением
       .days
       .toSeconds
   }
