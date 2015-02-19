@@ -41,7 +41,7 @@ object MAdContentCtx {
       title = {
         val sb = new StringBuilder(128, producer.meta.name)
         if (producer.meta.town.isDefined) {
-          sb.append(" / ")
+          sb.append(" | ")
             .append(producer.meta.town.get)
         }
         Some(sb.toString())
