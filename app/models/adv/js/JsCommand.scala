@@ -26,7 +26,6 @@ object JsCommand {
   def apply(jsBuilder: JsBuilder, sendMode: CmdSendMode): JsCommand = {
     JsCommand(jsBuilder.js, sendMode)
   }
-
 }
 
 

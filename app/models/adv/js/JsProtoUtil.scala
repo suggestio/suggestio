@@ -2,6 +2,7 @@ package models.adv.js
 
 import io.suggest.model.EnumMaybeWithName
 import play.api.libs.json._
+import play.api.Play.{configuration, current}
 
 /**
  * Suggest.io
@@ -10,6 +11,10 @@ import play.api.libs.json._
  * Description: Заготовки js-моделей протокола общения с adv-фронтендами.
  */
 
+object JsProtoUtil {
+  /** Название js-модуля для обращения к нему. */
+  val EXT_ADV_MODULE = configuration.getString("adv.ext.js.module.name") getOrElse "SioPR"
+}
 
 /** Компаньон абстрактных ask-builder'ов. */
 object JsBuilder {
