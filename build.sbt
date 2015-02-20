@@ -30,18 +30,13 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.17.0-SNAPSHOT" changing()
-    exclude("org.jruby", "jruby-complete")
-    exclude("org.slf4j", "slf4j-log4j12")
-    exclude("log4j", "log4j")
-    exclude("org.slf4j", "log4j-over-slf4j")
-    ,
-  "io.suggest" %% "util-play" % "2.4.0-SNAPSHOT"
+  "io.suggest" %% "util" % "2.0.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
+  "io.suggest" %% "advext-common" % "0.0.0-SNAPSHOT",
   // для разбора upload-частей, нужна помощь mime magic bytes
   "jmimemagic" % "jmimemagic" % "0.1.2"
     exclude("xml-apis", "xml-apis")

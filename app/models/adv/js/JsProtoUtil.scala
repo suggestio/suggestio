@@ -1,6 +1,6 @@
 package models.adv.js
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.adv.ext.model.MAnswerStatusesT
 import play.api.libs.json._
 import play.api.Play.{configuration, current}
 
@@ -35,37 +35,10 @@ trait JsBuilder {
 
 
 /** Статусы ответов js серверу. */
-object AnswerStatuses extends Enumeration with EnumMaybeWithName {
-
-  /** Класс-заготовка одного инстанса модели. */
-  protected abstract sealed class Val(val jsStr: String) extends super.Val(jsStr) {
-    def isSuccess: Boolean
-    def isError: Boolean
-  }
-
-  type AnswerStatus = Val
-  override type T = AnswerStatus
-
-  val Success: AnswerStatus = new Val("success") {
-    override def isSuccess  = true
-    override def isError    = false
-  }
-
-  val Error: AnswerStatus   = new Val("error") {
-    override def isSuccess  = false
-    override def isError    = true
-  }
-
-  /** Статус означает, что в контексте недостаточно данных для выполнения публикации.
-    * Возможно не хватает картинки, нужны доп.карточки или ещё чего-то. */
-  val FillContext: AnswerStatus = new Val("fillCtx") {
-    override def isSuccess  = false
-    override def isError    = false
-  }
-
+object AnswerStatuses extends MAnswerStatusesT {
 
   /** mapper в JSON. */
-  implicit def reads: Reads[AnswerStatus] = {
+  implicit def reads: Reads[T] = {
     __.read[String]
       .map(withName)
   }

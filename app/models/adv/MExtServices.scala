@@ -1,8 +1,7 @@
 package models.adv
 
 import java.net.URL
-
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.adv.ext.model._, MServices._
 import io.suggest.util.UrlUtil
 import models.adv.js.ctx.MJsCtx
 import play.api.i18n.{Messages, Lang}
@@ -18,27 +17,12 @@ import play.api.Play._
  * TODO ext.adv api v2: Модель осталась для совместимости, должна быть удалена или же стать неким каталогом скриптов,
  * либо ещё что-то...
  */
-object MExtServices extends Enumeration with EnumMaybeWithName {
+object MExtServices extends MServicesT {
 
-  val NAME_FN   = "name"
-  val APP_ID_FN = "appId"
-
-  /** Десериализация из JSON. Всё можно прочитать по имени. */
-  implicit def reads: Reads[T] = {
-    (__ \ NAME_FN)
-      .read[String]
-      .map { withName }
-  }
-
-  /** Сериализация в JSON. */
-  implicit def writes: Writes[T] = (
-    (__ \ NAME_FN).write[String] and
-    (__ \ APP_ID_FN).writeNullable[String]
-  ){ s => (s.strId, s.APP_ID_OPT) }
-
+  override type T = Val
 
   /** Экземпляр модели. */
-  protected abstract sealed class Val(val strId: String) extends super.Val(strId) {
+  protected abstract class Val(strId: String) extends super.Val(strId) {
 
     /** id приложения на стороне сервиса. */
     val APP_ID_OPT = configuration.getString(s"ext.adv.$strId.api.id")
@@ -90,11 +74,10 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
     def checkImgUploadUrl(url: String): Boolean = false
   }
 
-  override type T = Val
 
 
   /** Сервис вконтакта. */
-  val VKONTAKTE: T = new Val("vk") {
+  val VKONTAKTE: T = new Val(VKONTAKTE_ID) {
     override def nameI18N = "VKontakte"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
@@ -116,7 +99,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
 
 
   /** Сервис фейсбука. */
-  val FACEBOOK: T = new Val("fb") {
+  val FACEBOOK: T = new Val(FACEBOOK_ID) {
     override def nameI18N = "Facebook"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?facebook\\.(com|net)$".r.pattern.matcher(host).matches()
@@ -126,7 +109,7 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
 
 
   /** Сервис твиттера. */
-  val TWITTER: T = new Val("tw") {
+  val TWITTER: T = new Val(TWITTER_ID) {
     override def nameI18N = "Twitter"
     override def isForHost(host: String): Boolean = {
       "(?i)(www\\.)?twitter\\.com".r.pattern.matcher(host).matches()
@@ -145,5 +128,20 @@ object MExtServices extends Enumeration with EnumMaybeWithName {
       .find(_.isForHost(host))
       .map(value2val)
   }
+
+
+  /** Десериализация из JSON. Всё можно прочитать по имени. */
+  implicit def reads: Reads[T] = {
+    (__ \ NAME_FN)
+      .read[String]
+      .map { withName }
+  }
+
+  /** Сериализация в JSON. */
+  implicit def writes: Writes[T] = (
+    (__ \ NAME_FN).write[String] and
+    (__ \ APP_ID_FN).writeNullable[String]
+  ){ s => (s.strId, s.APP_ID_OPT) }
+
 
 }

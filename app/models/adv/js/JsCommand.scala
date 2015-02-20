@@ -1,5 +1,6 @@
 package models.adv.js
 
+import io.suggest.adv.ext.model.JsCommandFieldsT
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -11,10 +12,7 @@ import play.api.libs.functional.syntax._
  * На этом языке разговаривают ws-актор-супервизор с подчинёнными target-level-акторами.
  */
 
-object JsCommand {
-
-  val TYPE_FN = "type"
-  val DATA_FN = "data"
+object JsCommand extends JsCommandFieldsT {
 
   /** unmapper реализаций [[JsCommand]] в json. */
   implicit def writes: Writes[JsCommand] = (
