@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.17.0-SNAPSHOT"
+version := "2.0.0-SNAPSHOT"
 
 scalaVersion := "2.11.5"
 
@@ -30,6 +30,7 @@ libraryDependencies ++= {
   val bcVsn         = "1.46"
   val phantomVersion = "1.2.7"
   Seq(
+    "io.suggest" %% "model-enum-util" % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
