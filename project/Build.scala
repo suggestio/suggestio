@@ -8,10 +8,7 @@ import com.typesafe.sbt.web._
 
 object SiobixBuild extends Build {
 
-  lazy val util = Project(
-    id = "util",
-    base = file("util")
-  )
+  lazy val util = project
 
   /*lazy val cascadingEs2 = {
     val ces2 ="cascading-elasticsearch2"
@@ -28,30 +25,43 @@ object SiobixBuild extends Build {
     dependencies = Seq(util, cascadingEs2)
   )*/
 
-  lazy val utilPlay = Project(
-    id = "util-play",
-    base = file("util-play"),
-    dependencies = Seq(util)
-  )
+  lazy val advExtCommon = {
+    val name = "advext-common"
+    Project(
+      id = name,
+      base = file(name)
+    )
+  }
 
-  lazy val secureSocial = Project(
-    id = "securesocial",
-    base = file("securesocial")
-  )
-  .enablePlugins(play.PlayScala, SbtWeb)
+  lazy val advExtSjsRunner = {
+    val name = "advext-sjs-runner"
+    Project(
+      id = name,
+      base = file(name),
+      dependencies = Seq(advExtCommon)
+    )
+  }
 
-  lazy val web21 = Project(
-    id = "web21",
-    base = file("web21"),
-    dependencies = Seq(util, utilPlay, secureSocial)
-  )
-  .enablePlugins(play.PlayScala, SbtWeb)
+  lazy val utilPlay = {
+    val name = "util-play"
+    Project(
+      id = name,
+      base = file(name),
+      dependencies = Seq(util)
+    )
+  }
 
+  lazy val securesocial = project
+    .enablePlugins(play.PlayScala, SbtWeb)
+
+  lazy val web21 = project
+    .dependsOn(advExtCommon, util, utilPlay, securesocial)
+    .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val root = Project(
     id = "root",
     base = file(".")
   )
-  .aggregate(util, utilPlay, secureSocial, web21)
+  .aggregate(advExtCommon, advExtSjsRunner, util, utilPlay, securesocial, web21)
 
 }
