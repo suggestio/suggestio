@@ -9,7 +9,7 @@ import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
 
 import scala.concurrent.{Promise, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
  * Suggest.io

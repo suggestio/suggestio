@@ -1,8 +1,8 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.xadv.ext.js.runner.m.{MJsCommand, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MCommandTypes, MJsCommand, MJsCtx}
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
@@ -38,13 +38,13 @@ trait WsKeeper {
   private[this] def handleMessage(msg: MessageEvent): Unit = {
     // Десериализация
     val cmd = MJsCommand.fromString(msg.data.toString)
-    cmd.`type` match {
+    cmd.ctype match {
       // Это js. Нужно запустить его на исполнение.
-      case "js" =>
+      case MCommandTypes.JavaScript =>
         js.eval( cmd.data )
 
       // Вызов ensure ready. data содержит строку с MJsCtx внутри.
-      case "action" =>
+      case MCommandTypes.Action =>
         val mctx = MJsCtx.fromString(cmd.data)
         AdaptersSupport.handleAction(mctx) onComplete {
           // Успешное завершение действия
@@ -56,7 +56,7 @@ trait WsKeeper {
           // Асинхронный облом при исполнении запрошенного действия.
           case Failure(ex) =>
             val mctx2 = mctx.copy(
-              status = Some("error")    // TODO Отправлять ошибку
+              status = Some(MAnswerStatuses.Error)    // TODO Отправлять ошибку
             )
             val json = JSON.stringify(mctx2.toJson)
             console.error("Action failed: " + json)

@@ -9,7 +9,8 @@ scalaVersion := "2.11.5"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % "0.8.0",
-  "com.lihaoyi" %%% "upickle" % "0.2.+"
+  "io.suggest"    %% "advext-common"  % "0.0.0-SNAPSHOT",
+  "org.scala-js"  %%% "scalajs-dom"   % "0.8.0"
+  //"com.lihaoyi"   %%% "upickle"       % "0.2.+"
 )
 
