@@ -42,11 +42,12 @@ object SiobixBuild extends Build {
 
   lazy val advExtSjsRunner = {
     val name = "advext-sjs-runner"
-    Project(
-      id = name,
-      base = file(name),
-      dependencies = Seq(advExtCommon)
-    )
+    Project(id = name, base = file(name))
+      .dependsOn(advExtCommon)
+      .settings(
+        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile),
+        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (modelEnumUtil, Compile)
+      )
   }
 
   lazy val util = project
