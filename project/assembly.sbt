@@ -1,1 +1,0 @@
-../bixo/project/assembly.sbt

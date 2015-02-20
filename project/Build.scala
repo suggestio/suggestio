@@ -8,8 +8,6 @@ import com.typesafe.sbt.web._
 
 object SiobixBuild extends Build {
 
-  lazy val util = project
-
   /*lazy val cascadingEs2 = {
     val ces2 ="cascading-elasticsearch2"
     Project(
@@ -25,11 +23,20 @@ object SiobixBuild extends Build {
     dependencies = Seq(util, cascadingEs2)
   )*/
 
+  lazy val modelEnumUtil = {
+    val name = "model-enum-util"
+    Project(
+      id = name,
+      base = file(name)
+    )
+  }
+
   lazy val advExtCommon = {
     val name = "advext-common"
     Project(
       id = name,
-      base = file(name)
+      base = file(name),
+      dependencies = Seq(modelEnumUtil)
     )
   }
 
@@ -42,26 +49,29 @@ object SiobixBuild extends Build {
     )
   }
 
-  lazy val utilPlay = {
+  lazy val util = project
+    .dependsOn(modelEnumUtil)
+
+  /*lazy val utilPlay = {
     val name = "util-play"
     Project(
       id = name,
       base = file(name),
       dependencies = Seq(util)
     )
-  }
+  }*/
 
   lazy val securesocial = project
     .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val web21 = project
-    .dependsOn(advExtCommon, util, utilPlay, securesocial)
+    .dependsOn(advExtCommon, util, securesocial)
     .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val root = Project(
     id = "root",
     base = file(".")
   )
-  .aggregate(advExtCommon, advExtSjsRunner, util, utilPlay, securesocial, web21)
+  .aggregate(modelEnumUtil, advExtCommon, advExtSjsRunner, util, securesocial, web21)
 
 }
