@@ -31,6 +31,15 @@ object SiobixBuild extends Build {
     )
   }
 
+  lazy val modelEnumUtilPlay = {
+    val name = "model-enum-util-play"
+    Project(
+      id    = name,
+      base  = file(name),
+      dependencies = Seq(modelEnumUtil)
+    )
+  }
+
   lazy val advExtCommon = {
     val name = "advext-common"
     Project(
@@ -66,13 +75,13 @@ object SiobixBuild extends Build {
     .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val web21 = project
-    .dependsOn(advExtCommon, util, securesocial)
+    .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
     .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val root = Project(
     id = "root",
     base = file(".")
   )
-  .aggregate(modelEnumUtil, advExtCommon, advExtSjsRunner, util, securesocial, web21)
+  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, util, securesocial, web21)
 
 }
