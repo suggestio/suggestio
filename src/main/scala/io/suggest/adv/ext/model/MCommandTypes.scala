@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model
 
-import io.suggest.model.{LightEnumeration, ILightEnumeration}
+import io.suggest.model.{EnumMaybeWithName, LightEnumeration, ILightEnumeration}
 
 /**
  * Suggest.io
@@ -23,7 +23,7 @@ import JsCommandTypes._
 trait MCommandTypesBaseT extends ILightEnumeration {
 
   protected trait ValT extends super.ValT {
-    def ctype: String
+    val ctype: String
   }
 
   override type T <: ValT
@@ -37,15 +37,8 @@ trait MCommandTypesBaseT extends ILightEnumeration {
 }
 
 
-/** Абстрактная реализация легковесной модели MCommandTypes без использования коллекция и т.д. */
+/** Абстрактная легковесная реализация модели MCommandTypes без использования коллекций и т.д. */
 trait MCommandTypesLightT extends MCommandTypesBaseT with LightEnumeration {
-  protected sealed class Val(val ctype: String) extends ValT
-
-  override type T = Val
-
-  override val JavaScript: T  = new Val(CTYPE_JS)
-  override val Action: T      = new Val(CTYPE_ACTION)
-
   override def maybeWithName(n: String): Option[T] = {
     n match {
       case JavaScript.ctype => Some(JavaScript)
@@ -54,3 +47,16 @@ trait MCommandTypesLightT extends MCommandTypesBaseT with LightEnumeration {
     }
   }
 }
+
+
+/** Трейт реализации модели [[MCommandTypesBaseT]] на базе scala.Enumeration. */
+trait MCommandTypesT extends Enumeration with MCommandTypesBaseT with EnumMaybeWithName {
+  protected class Val(val ctype: String) extends super.Val(ctype) with ValT
+
+  override type T = Val
+
+  override val JavaScript: T  = new Val(CTYPE_JS)
+  override val Action: T      = new Val(CTYPE_ACTION)
+
+}
+

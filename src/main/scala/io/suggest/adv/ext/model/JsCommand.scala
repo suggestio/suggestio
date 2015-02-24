@@ -6,11 +6,11 @@ package io.suggest.adv.ext.model
  * Created: 20.02.15 13:56
  * Description: Общий код клиентских и серверных моделей JsCommand
  */
-trait JsCommandFieldsT {
+object JsCommand {
 
-  def TYPE_FN       = "t"
-  def DATA_FN       = "d"
-  def REPLY_TO_FN   = "r"
-
+  def TYPE_FN       = "a"
+  def JS_CODE_FN    = "b"
+  def REPLY_TO_FN   = "c"
+  def MCTX_FN       = "d"
 }
 
