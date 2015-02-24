@@ -27,10 +27,14 @@ object AdaptersSupport {
    * @return Фьючерс с исходящим контекстом.
    */
   def handleAction(mctx: MJsCtx): Future[MJsCtx] = {
-    mctx.action match {
-      case "ensureReady" => ensureReady(mctx)
+    findAdapter(mctx) match {
+      case Some(adapter) =>
+        mctx.action.processAction(adapter, mctx)
+      case None =>
+        Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domain.mkString(", "))
     }
   }
+
 
   def findAdapter(mctx: MJsCtx): Option[IAdapter] = {
     findAdapter1(mctx.domain, adapters.length, i = 0)
@@ -70,19 +74,6 @@ object AdaptersSupport {
         false
     } else {
       len > 0
-    }
-  }
-
-  /** Сервер просит инициализировать клиент под указанные домены. */
-  def ensureReady(mctx: MJsCtx): Future[MJsCtx] = {
-    // Ищем подходящий адаптер для всех запрошенных доменов.
-    // TODO Переписать find() без использования scala-коллекций и их API:
-    val adapterOpt = findAdapter(mctx)
-    adapterOpt match {
-      case Some(adapter) =>
-        adapter.ensureReady(mctx)
-      case None =>
-        Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domain.mkString(", "))
     }
   }
 

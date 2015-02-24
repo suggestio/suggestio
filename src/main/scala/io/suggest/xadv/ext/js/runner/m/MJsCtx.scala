@@ -18,7 +18,7 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
   def fromDyn(dyn: js.Dynamic): MJsCtx = {
     val d = dyn.asInstanceOf[js.Dictionary[js.Dynamic]]
     MJsCtx(
-      action = d.get(ACTION_FN).toString,
+      action = MAskActions.withName( d.get(ACTION_FN).toString ),
       service = MServiceInfo.fromDyn(d.get(SERVICE_FN).get),
       domain = d.get(DOMAIN_FN) match {
         case Some(domainsRaw) =>
@@ -36,7 +36,7 @@ import MJsCtx._
 
 
 case class MJsCtx(
-  action  : String,
+  action  : MAskAction,
   service : MServiceInfo,
   domain  : js.Array[String],
   status  : Option[MAnswerStatus]  = None
@@ -44,7 +44,7 @@ case class MJsCtx(
 
   def toJson: js.Dynamic = {
     val lit = js.Dynamic.literal()
-    lit.updateDynamic(ACTION_FN)(action)
+    lit.updateDynamic(ACTION_FN)(action.strId)
     lit.updateDynamic(SERVICE_FN)(service.toJson)
     if (domain.nonEmpty)
       lit.updateDynamic(DOMAIN_FN)(domain)
