@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MCommandTypes, MJsCommand, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m._
+import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -38,34 +39,34 @@ trait WsKeeper {
   private[this] def handleMessage(msg: MessageEvent): Unit = {
     // Десериализация
     val cmd = MJsCommand.fromString(msg.data.toString)
-    cmd.ctype match {
+    dom.console.info("Command deserialized: " + cmd)
+    cmd match {
       // Это js. Нужно запустить его на исполнение.
-      case MCommandTypes.JavaScript =>
-        js.eval( cmd.data )
+      case cmd: MJsCommand =>
+        js.eval( cmd.jsCode )
 
       // Вызов ensure ready. data содержит строку с MJsCtx внутри.
-      case MCommandTypes.Action =>
-        val mctx = MJsCtx.fromString(cmd.data)
-        AdaptersSupport.handleAction(mctx) onComplete {
+      case cmd: MActionCmd =>
+        AdaptersSupport.handleAction(cmd.mctx) onComplete {
           // Успешное завершение действия
           case Success(mctx1) =>
-            val json = JSON.stringify(mctx1.toJson)
+            val ans = MAnswer(
+              replyTo = cmd.replyTo,
+              mctx    = mctx1
+            )
+            val json = JSON.stringify(ans)
             console.info("Action finished: " + json)
             _ws.send(json)
 
           // Асинхронный облом при исполнении запрошенного действия.
           case Failure(ex) =>
-            val mctx2 = mctx.copy(
+            val mctx2 = cmd.mctx.copy(
               status = Some(MAnswerStatuses.Error)    // TODO Отправлять ошибку
             )
             val json = JSON.stringify(mctx2.toJson)
             console.error("Action failed: " + json)
             _ws.send(json)
         }
-
-      // Неизвестное сообщение.
-      case other =>
-        console.error("Unexpected ws-message received: " + cmd)
     }
   }
 

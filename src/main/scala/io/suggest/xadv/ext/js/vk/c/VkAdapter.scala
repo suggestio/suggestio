@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c
 
 import java.util.concurrent.TimeoutException
-import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.vk.m.VkInitOptions
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
@@ -28,9 +28,14 @@ class VkAdapter extends IAdapter {
     val p = Promise[MJsCtx]()
     // Создать обработчик событие инициализации.
     dom.window.vkAsyncInit = {() =>
-      val opts = VkInitOptions(mctx0.service.appId.get)
+      val apiId = mctx0.service.appId.orNull
+      dom.console.log("vkAsyncInit() called. apiId = " + apiId)
+      val opts = VkInitOptions(apiId)
       VK.init(opts)
-      p success mctx0
+      // Начальная инициализация vk openapi.js вроде бы завершена. Пора запустить возврат результата.
+      p success mctx0.copy(
+        status = Some(MAnswerStatuses.Success)
+      )
     }
     // Добавить тег со ссылкой на open-api. Это запустит процесс в фоне.
     Future {
@@ -41,7 +46,11 @@ class VkAdapter extends IAdapter {
     }
     // Отрабатываем таймаут загрузки скрипта вконтакта
     dom.setTimeout(
-      { () => p.failure(new TimeoutException("Failed to load script")) },
+      {() =>
+        // js однопоточный, поэтому никаких race conditions между двумя нижеследующими строками тут быть не может:
+        if (!p.isCompleted)
+          p failure new TimeoutException("Failed to load script")
+      },
       10000
     )
     // Вернуть фьючерс результата
@@ -61,7 +70,8 @@ class VkAdapter extends IAdapter {
     // Создать тег скрипта и добавить его в свежесозданный div
     val el = dom.document.createElement("script")
     el.setAttribute("type",  "text/javascript")
-    el.setAttribute("src",   "//vk.com/js/api/openapi.js")
+    // Всегда долбимся на https. Это работает без проблем с file:///, а на мастере всегда https.
+    el.setAttribute("src", "https://vk.com/js/api/openapi.js")
     dom.document
       .getElementById(divName)
       .appendChild(el)

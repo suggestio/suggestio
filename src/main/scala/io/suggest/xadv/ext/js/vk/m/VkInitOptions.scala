@@ -15,7 +15,7 @@ object VkInitOptions {
 
   implicit def opts2json(opts: VkInitOptions): js.Dynamic = {
     js.Dynamic.literal(
-      appId = opts.appId
+      apiId = opts.appId
     )
   }
 
