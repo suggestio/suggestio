@@ -24,7 +24,6 @@ import MAnswerStatuses._
 /** Базовый интерфейс модели, независящий ни от чего. */
 trait MAnswerStatusesBaseT extends ILightEnumeration {
 
-
   protected trait ValT extends super.ValT {
     def jsStr: String
     def isSuccess: Boolean
