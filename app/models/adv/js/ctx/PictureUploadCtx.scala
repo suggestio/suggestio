@@ -1,6 +1,6 @@
 package models.adv.js.ctx
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.model.{EnumJsonReadsT, EnumMaybeWithName}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -83,7 +83,8 @@ case class S2sPictureUpload(url: String, partName: String) extends PictureUpload
 
 
 /** Значения режимов аплоада картинок. */
-object PictureUploadModes extends Enumeration with EnumMaybeWithName {
+// TODO Выпилить эту модель наверное надо?
+object PictureUploadModes extends Enumeration with EnumMaybeWithName with EnumJsonReadsT {
 
   /** Экземпляр modes-модели. */
   protected sealed class Val(val jsName: String) extends super.Val(jsName)
@@ -93,13 +94,6 @@ object PictureUploadModes extends Enumeration with EnumMaybeWithName {
 
   /** Сервер s.io должен отправить http-запрос на сервер сервиса. */
   val S2s: PictureUploadMode = new Val("s2s")
-
-
-  /** JSON mapper */
-  implicit def reads: Reads[PictureUploadMode] = {
-    __.read[String]
-      .map(withName)
-  }
 
   /** JSON unmapper */
   implicit def writes: Writes[PictureUploadMode] = {

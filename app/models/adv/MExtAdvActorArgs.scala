@@ -70,7 +70,7 @@ trait WsMediatorRef {
 
 
 /** Аргументы для service-актора. */
-trait IExtAdvServiceActorArgs extends IExtActorArgs with WsMediatorRef with MCtx0 {
+trait IExtAdvServiceActorArgs extends IExtActorArgs with WsMediatorRef {
 
   /** Текущий сервис, в рамках которого надо делать дела. */
   def service: MExtService

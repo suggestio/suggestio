@@ -3,7 +3,7 @@ package models.adv.js.ctx
 import io.suggest.adv.ext.model.ctx.MJsCtxFieldsT
 import io.suggest.model.EsModel.FieldsJsonAcc
 import models.adv.{MExtServices, MExtService, JsExtTarget}
-import models.adv.js.AnswerStatus
+import models.adv.js.{MJsAction, AnswerStatus}
 import play.api.libs.json._
 
 /**
@@ -17,6 +17,7 @@ import play.api.libs.json._
  */
 object MJsCtx extends MJsCtxFieldsT {
 
+  override val ACTION_FN  = super.ACTION_FN
   override val ADS_FN     = super.ADS_FN
   override val TARGET_FN  = super.TARGET_FN
   override val STATUS_FN  = super.STATUS_FN
@@ -25,7 +26,7 @@ object MJsCtx extends MJsCtxFieldsT {
   override val ERROR_FN   = super.ERROR_FN
 
   /** Все поля, которые поддерживает контекст. Обычно -- все вышеперечисленные поля. */
-  def ALL_FIELDS = Set(ADS_FN, TARGET_FN, STATUS_FN, DOMAIN_FN, SERVICE_FN, ERROR_FN)
+  def ALL_FIELDS = Set(ACTION_FN, ADS_FN, TARGET_FN, STATUS_FN, DOMAIN_FN, SERVICE_FN, ERROR_FN)
 
   /** Извлекатель контекста из JSON. Т.к. в json могут быть посторонние для сервера данные, нужно
     * парсить контекст аккуратно. */
@@ -33,6 +34,8 @@ object MJsCtx extends MJsCtxFieldsT {
     override def reads(json: JsValue): JsResult[MJsCtx] = {
       try {
         val ctx = MJsCtx(
+          action = (json \ ACTION_FN)
+            .asOpt[MJsAction],
           mads = (json \ ADS_FN)
             .asOpt[Seq[MAdCtx]]
             .getOrElse(Seq.empty),
@@ -66,6 +69,8 @@ object MJsCtx extends MJsCtxFieldsT {
   implicit def writes = new Writes[MJsCtx] {
     override def writes(o: MJsCtx): JsValue = {
       var acc: FieldsJsonAcc = Nil
+      if (o.action.nonEmpty)
+        acc ::= ACTION_FN -> Json.toJson(o.action.get)
       if (o.mads.nonEmpty)
         acc ::= ADS_FN -> Json.toJson(o.mads)
       if (o.target.nonEmpty)
@@ -100,12 +105,14 @@ object MJsCtx extends MJsCtxFieldsT {
 
 /**
  * Полноценный контекст, удобный для редактирования через copy().
+ * @param action Текущее действие. Выставляется сервером, и возвращается назад клиентом.
  * @param mads Данные по рекламным карточкам.
  * @param target Данные по текущей цели.
  * @param domain Нормализованное доменное имя.
  * @param restCtx JsObject, содержащий остаточный context, которые не парсится сервером.
  */
 case class MJsCtx(
+  action    : Option[MJsAction],
   mads      : Seq[MAdCtx]           = Seq.empty,
   target    : Option[JsExtTarget]   = None,
   domain    : Seq[String]           = Seq.empty,

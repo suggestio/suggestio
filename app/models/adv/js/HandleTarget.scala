@@ -11,19 +11,12 @@ import Answer._
  * Description: Общение на тему HandleTarget: ask и answer.
  */
 
-case class HandleTargetAsk(mctx: MJsCtx, replyTo: Option[String]) extends JsBuilder {
+case class HandleTargetAsk(
+  mctx0     : MJsCtx,
+  replyTo   : Option[String],
+  sendMode  : CmdSendMode = CmdSendModes.Queued
+) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
-  override def js: String = {
-    val sb = new StringBuilder(512)
-      .append("SioPR.handleTarget(")
-      .append( Json.toJson(mctx) )
-      .append(',')
-      .append("function(ctx2,sendF){sendF({")
-    if (replyTo.isDefined)
-      sb.append(JsString(REPLY_TO_FN)).append(':').append(JsString(replyTo.get)).append(',')
-    sb.append(JsString(CTX2_FN)).append(":ctx2")
-      .append("});});")
-      .toString()
-  }
+  override def action = MJsActions.HandleTarget
 
 }

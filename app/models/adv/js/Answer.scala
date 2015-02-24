@@ -1,8 +1,11 @@
 package models.adv.js
 
+import io.suggest.adv.ext.model.{JsCommand, MAnswerStatusesT}
+import io.suggest.model.EnumJsonReadsT
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,10 +17,10 @@ object Answer {
 
   // Названия полей JSON-ответа.
   /** Поле с JSON нового состояние системы (новым контекстом). */
-  val CTX2_FN = "ctx2"
+  val CTX2_FN = JsCommand.MCTX_FN
 
   /** На какое действие ответ. Для самоконтроля. */
-  val REPLY_TO_FN   = "replyTo"
+  val REPLY_TO_FN   = JsCommand.REPLY_TO_FN
 
   /** JSON-парсер для ответов. */
   implicit def reads: Reads[Answer] = (
@@ -60,4 +63,8 @@ trait IAnswer {
 /** Экземпляр одного распарсенного ответа в рамках сервиса. */
 case class Answer(replyTo: Option[String], ctx2: MJsCtx)
   extends IAnswer
+
+
+/** Статусы ответов js серверу. */
+object AnswerStatuses extends MAnswerStatusesT with EnumJsonReadsT
 

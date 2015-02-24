@@ -14,22 +14,15 @@ import Answer._
 
 /**
  * Запрос инициализации js-компонента с кодогенератором.
- * @param mctx Начальное состояние.
+ * @param mctx0 Начальное состояние.
  * @param replyTo Кому ответ отправлять?
  */
-case class EnsureReadyAsk(mctx: MJsCtx, replyTo: Option[String]) extends JsBuilder {
+case class EnsureReadyAsk(
+  mctx0     : MJsCtx,
+  replyTo   : Option[String],
+  sendMode  : CmdSendMode = CmdSendModes.Async
+) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
-  override def js: String = {
-    val sb = new StringBuilder(128)
-      .append("SioPR.ensureReady(")
-      .append( Json.toJson(mctx) )
-      .append(',')
-      .append("function(ctx2,sendF){sendF({")
-    if (replyTo.isDefined)
-      sb.append(JsString(REPLY_TO_FN)).append(':').append(JsString(replyTo.get)).append(',')
-    sb.append(JsString(CTX2_FN)).append(":ctx2")
-      .append("});});")
-      .toString()
-  }
+  override def action = MJsActions.EnsureReady
 
 }
