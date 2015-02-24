@@ -1,9 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c
 
 import java.util.concurrent.TimeoutException
-
-import io.suggest.xadv.ext.js.runner.c.IAdapter
-import io.suggest.xadv.ext.js.runner.m.MJsCtx
+import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.vk.m.VkInitOptions
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._

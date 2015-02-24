@@ -2,7 +2,6 @@ package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MAskActionLightBaseT
 import io.suggest.adv.ext.model.ctx.MAskActions._
-import io.suggest.xadv.ext.js.runner.c.IAdapter
 
 import scala.concurrent.Future
 
@@ -14,6 +13,10 @@ import scala.concurrent.Future
  */
 object MAskActions extends MAskActionLightBaseT {
 
+  /**
+   * Абстрактный экземпляр модели.
+   * @param strId Строкой id экземпляра (ключ экземпляра).
+   */
   protected abstract class Val(val strId: String) extends ValT {
     /**
      * Запустить экшен на исполнение.
@@ -26,11 +29,13 @@ object MAskActions extends MAskActionLightBaseT {
 
   override type T = Val
 
+
   override val EnsureReady: T = new Val(ENSURE_READY) {
     override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = {
       adapter.ensureReady(mctx)
     }
   }
+
 
   override val HandleTarget: T = new Val(HANDLE_TARGET) {
     override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = ???
