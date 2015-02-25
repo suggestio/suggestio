@@ -14,3 +14,5 @@ libraryDependencies ++= Seq(
   //"com.lihaoyi"   %%% "upickle"       % "0.2.+"
 )
 
+persistLauncher in Compile := true
+

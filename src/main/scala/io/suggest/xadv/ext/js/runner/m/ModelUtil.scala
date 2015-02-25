@@ -21,3 +21,8 @@ trait FromStringT {
   }
 
 }
+
+trait IToJson {
+  def toJson: js.Dynamic
+}
+

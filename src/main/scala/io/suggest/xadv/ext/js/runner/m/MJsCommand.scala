@@ -3,7 +3,6 @@ package io.suggest.xadv.ext.js.runner.m
 import io.suggest.adv.ext.model.MCommandTypesLightT
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.JsCommandTypes._
-import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
@@ -66,7 +65,6 @@ object MCommandTypes extends MCommandTypesLightT {
 
   override val JavaScript: T = new Val(CTYPE_JS) {
     override def dyn2cmd(d: js.Dictionary[js.Dynamic]): Option[MJsCommand] = {
-      dom.console.info("Parsing javascript cmd...")
       d.get(JS_CODE_FN).map { jsCodeDyn =>
         MJsCommand(
           jsCode = jsCodeDyn.toString
@@ -77,7 +75,6 @@ object MCommandTypes extends MCommandTypesLightT {
 
   override val Action: T = new Val(CTYPE_ACTION) {
     override def dyn2cmd(d: Dictionary[js.Dynamic]): Option[MActionCmd] = {
-      dom.console.info("Parsing json action cmd...")
       d.get(MCTX_FN).map { mctxDyn =>
         MActionCmd(
           mctx    = MJsCtx.fromDyn(mctxDyn),

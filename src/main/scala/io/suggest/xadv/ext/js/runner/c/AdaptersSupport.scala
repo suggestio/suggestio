@@ -21,7 +21,7 @@ object AdaptersSupport {
       case Some(adapter) =>
         mctx.action.processAction(adapter, mctx)
       case None =>
-        Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domain.mkString(", "))
+        Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domains.mkString(", "))
     }
   }
 

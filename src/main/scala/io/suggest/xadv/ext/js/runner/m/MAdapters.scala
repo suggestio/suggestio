@@ -16,38 +16,15 @@ import scala.scalajs.js
 object MAdapters {
 
   /** Доступные адаптеры. Пока такая заглушка скорее, на будущее. */
-  private[this] val adapters = js.Array[IAdapter](
+  private[this] val adapters = Seq[IAdapter](
     new VkAdapter
   )
 
 
   /** Поиск подходящего адаптера-исполнителя под контекст запроса. */
   def findAdapter(mctx: MJsCtx): Option[IAdapter] = {
-    findAdapter1(mctx.domain, adapters.length, i = 0)
-  }
-
-  @tailrec
-  private def findAdapter1(domains: js.Array[String], len: Int, i: Int): Option[IAdapter] = {
-    if (i < len) {
-      val res = try {
-        val adapter = adapters(i)
-        // Проверить, подходит ли адаптер
-        if (adapter.isMyDomains(domains))
-          Some(adapter)
-        else
-          None
-      } catch {
-        case ex: Throwable =>
-          dom.console.error(ex.getMessage)
-          None
-      }
-      if (res.isEmpty)
-        findAdapter1(domains, len, i = i + 1)
-      else
-        res
-    } else {
-      dom.console.warn("Not found adapter for domains requested: " + domains)
-      None
+    adapters.find { adapter =>
+      adapter.isMyDomains(mctx.domains)
     }
   }
 
@@ -64,21 +41,12 @@ trait IAdapter {
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
   def ensureReady(mctx0: MJsCtx): Future[MJsCtx]
 
-  /** Враппер над isMyDomain(), позволяющий быстро и решительно обойти массив доменов. */
-  def isMyDomains(domains: js.Array[String]): Boolean = {
-    _isMyDomains(domains, len = domains.length, i = 0)
-  }
+  /** Запуск обработки одной цели. */
+  def handleTarget(mctx0: MJsCtx): Future[MJsCtx]
 
-  @tailrec
-  private def _isMyDomains(domains: js.Array[String], len: Int, i: Int = 0): Boolean = {
-    if (i < len) {
-      if (isMyDomain(domains(i)))
-        _isMyDomains(domains, len, i = i + 1)
-      else
-        false
-    } else {
-      len > 0
-    }
+  /** Враппер над isMyDomain(), позволяющий быстро и решительно обойти массив доменов. */
+  def isMyDomains(domains: Seq[String]): Boolean = {
+    domains forall isMyDomain
   }
 
 }

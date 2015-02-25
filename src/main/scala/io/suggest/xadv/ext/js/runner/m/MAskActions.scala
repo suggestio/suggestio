@@ -38,7 +38,9 @@ object MAskActions extends MAskActionLightBaseT {
 
 
   override val HandleTarget: T = new Val(HANDLE_TARGET) {
-    override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = ???
+    override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = {
+      adapter.handleTarget(mctx)
+    }
   }
 
 }

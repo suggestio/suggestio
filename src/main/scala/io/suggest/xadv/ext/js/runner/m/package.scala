@@ -15,4 +15,5 @@ package object m {
 
   type MAskAction       = MAskActions.T
 
+  type MPicUploadMode   = MPicUploadModes.T
 }
