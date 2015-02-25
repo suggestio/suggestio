@@ -5,8 +5,14 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt._
 import com.typesafe.sbt.web._
+import com.typesafe.sbt.web.Import._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import com.typesafe.sbt.packager.Keys._
 
 object SiobixBuild extends Build {
+
+  /** Куда складывать скомпиленные scalajs-результаты в web-проектах. */
+  val scalajsOutputDir = Def.settingKey[File]("directory for javascript files output by scalajs") 
 
   /*lazy val cascadingEs2 = {
     val ces2 ="cascading-elasticsearch2"
@@ -76,12 +82,35 @@ object SiobixBuild extends Build {
 
   lazy val web21 = project
     .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
+    .aggregate(advExtSjsRunner)
     .enablePlugins(play.PlayScala, SbtWeb)
+    .settings(
+      // TODO Нужно заюзать assetsTarget или 
+      scalajsOutputDir := (WebKeys.public in Assets).value / "javascripts",
+      compile in Compile <<= (compile in Compile) dependsOn (fastOptJS in (advExtSjsRunner, Compile)) dependsOn copySourceMapsTask,
+      dist <<= dist dependsOn (fullOptJS in (advExtSjsRunner, Compile)),
+      stage <<= stage dependsOn (fullOptJS in (advExtSjsRunner, Compile))
+    )
+    .settings(
+      Seq(packageJSDependencies, packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
+        crossTarget in (advExtSjsRunner, Compile, packageJSKey) := scalajsOutputDir.value
+      } : _*
+    )
 
   lazy val root = Project(
     id = "root",
     base = file(".")
   )
   .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, util, securesocial, web21)
+
+
+
+  val copySourceMapsTask = Def.task {
+    val scalaFiles = (Seq(advExtCommon.base, advExtSjsRunner.base) ** ("*.scala")).get
+    for (scalaFile <- scalaFiles) {
+      val target = new File((classDirectory in Compile).value, scalaFile.getPath)
+      IO.copyFile(scalaFile, target)
+    }
+  }
 
 }
