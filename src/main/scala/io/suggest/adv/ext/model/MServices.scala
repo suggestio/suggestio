@@ -22,7 +22,7 @@ object MServices {
 
 trait MServicesBaseT extends ILightEnumeration {
   protected trait ValT extends super.ValT {
-    def strId: String
+    val strId: String
   }
 
   override type T <: ValT
@@ -51,13 +51,6 @@ import MServices._
 
 /** Легковесная реализации модели сервисов без использования scala-коллекций. */
 trait MServicesLightT extends MServicesBaseT with LightEnumeration {
-  protected class Val(val strId: String) extends ValT
-  override type T = Val
-
-  override val FACEBOOK: T = new Val(FACEBOOK_ID)
-  override val VKONTAKTE: T = new Val(VKONTAKTE_ID)
-  override val TWITTER: T = new Val(TWITTER_ID)
-
   override def maybeWithName(n: String): Option[T] = {
     n match {
       case FACEBOOK.strId   => Some(FACEBOOK)
