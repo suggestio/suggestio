@@ -2,6 +2,7 @@ package models.adv.js.ctx
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json._
+import io.suggest.adv.ext.model.ctx.MErrorInfo._
 
 /**
  * Suggest.io
@@ -10,9 +11,6 @@ import play.api.libs.json._
  * Description: Инфа по ошибке, присланная из JSON.
  */
 object JsErrorInfo {
-
-  val MSG_FN  = "msg"
-  val ARGS_FN = "args"
 
   /** Все поддерживаемые моделью поля JSON. */
   def FIELDS = Set(MSG_FN, ARGS_FN)

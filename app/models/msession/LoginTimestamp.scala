@@ -77,7 +77,8 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
     val ttl1 = if (diff > 0L) {
       ttl.minusTtl(diff.toInt)
     } else {
-      LOGGER.warn(s"Negative timestamp update! diff=$diff ($tstamp -> $tstamp1). Check sio servers datetime!")
+      if (diff < 0L)
+        LOGGER.warn(s"Negative timestamp update! diff=$diff ($tstamp -> $tstamp1). Check sio servers datetime!")
       ttl
     }
     copy(tstamp = tstamp1, ttl = ttl1)

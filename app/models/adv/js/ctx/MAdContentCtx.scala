@@ -5,6 +5,7 @@ import models.{MAdnNode, MAdT}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play.{current, configuration}
+import io.suggest.adv.ext.model.ctx.MAdContentCtx._
 
 /**
  * Suggest.io
@@ -14,10 +15,6 @@ import play.api.Play.{current, configuration}
  */
 
 object MAdContentCtx {
-
-  val FIELDS_FN       = "fields"
-  val TITLE_FN        = "title"
-  val DESCR_FN        = "descr"
 
   /** Желаемая длина дескрипшена, отправляемого в контекст. */
   val FROM_AD_DESCR_LEN = configuration.getInt("adv.ext.ad.content.descr.len") getOrElse 192
@@ -76,9 +73,9 @@ object MAdContentCtx {
 case class MAdContentCtx(fields: Seq[MAdContentField], title: Option[String], descr: Option[String])
 
 
+import io.suggest.adv.ext.model.ctx.MAdContentField._
 
 object MAdContentField {
-  val TEXT_FN = "text"
 
   implicit def reads: Reads[MAdContentField] = {
     (__ \ TEXT_FN)

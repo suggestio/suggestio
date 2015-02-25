@@ -2,6 +2,7 @@ package models.adv.js.ctx
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.adv.ext.model.ctx.MAdCtx._
 
 /**
  * Suggest.io
@@ -11,13 +12,6 @@ import play.api.libs.functional.syntax._
  */
 
 object MAdCtx {
-
-  // Названия полей.
-  val ID_FN       = "_id"
-  val PICTURE_FN  = "rendered"
-  val CONTENT_FN  = "content"
-  val SC_URL_FN   = "scUrl"
-
 
   /** json-маппинг сериализованного элемента MAdCtx. */
   implicit def madCtxReads: Reads[MAdCtx] = (

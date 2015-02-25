@@ -337,10 +337,11 @@ adv.ext.i.at.tw=Мой твиттер
 
 error.service.unknown=Этот сайт не поддерживается.
 error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.
-
+e.js.script.load.failed=Не удалось загрузить {0}. Возник таймаут соединения ({1} мс).
+e.dom.update=Не удаётся изменить содержимое текущей страницы. {0} {1}
 error.adv.ext.s2s.img.upload.refused=Сервер {0} отказал в загрузке картинки.
 error.adv.ext.s2s.img.upload.failed=Не удалось установить соединение с сервером {0}. Нельзя загрузить картинку.
-error.sio.internal=Внутренняя ошибка suggest.io.
+error.sio.internal=Внутренняя ошибка suggest.io. {0} {1}
 error.adv.ext.js.refused=Размещение прервано или отменено.
 
 e.event.not.found=Событие не найдено.

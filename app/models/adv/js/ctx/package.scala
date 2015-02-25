@@ -12,5 +12,5 @@ package object ctx {
   /** Тип контекста, которым обменивается сервер и js-подсистема. */
   type JsCtx_t    = JsObject
 
-  type PictureUploadMode = PictureUploadModes.PictureUploadMode
+  type PictureUploadMode = PictureUploadModes.T
 }

@@ -3,6 +3,7 @@ package models.adv.js.ctx
 import models.MImgSizeT
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.adv.ext.model.ctx.Size2dCtx._
 
 /**
  * Suggest.io
@@ -12,9 +13,6 @@ import play.api.libs.functional.syntax._
  * Он закидывается в context силами js подсистемы ext adv.
  */
 object PictureSizeCtx {
-
-  val WIDTH_FN = "width"
-  val HEIGHT_FN = "height"
 
   /** mapper из json. */
   implicit def reads: Reads[PictureSizeCtx] = (
