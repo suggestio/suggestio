@@ -3,7 +3,6 @@ package io.suggest.xadv.ext.js.runner.m
 import io.suggest.adv.ext.model.MCommandTypesLightT
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.JsCommandTypes._
-
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
 

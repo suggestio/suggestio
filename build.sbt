@@ -1,5 +1,3 @@
-enablePlugins(ScalaJSPlugin)
-
 organization := "io.suggest"
 
 name := "advext-sjs-runner"

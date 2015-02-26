@@ -74,7 +74,7 @@ trait WsKeeper {
             error = Some {
               ex match {
                 case ei: MErrorInfoT  => ei
-                case _                => MErrorInfo("error.sio.internal", Seq(ex.getClass, ex.getMessage))
+                case _                => MErrorInfo("error.sio.internal", Seq(ex.getClass.getName, ex.getMessage))
               }
             }
           )

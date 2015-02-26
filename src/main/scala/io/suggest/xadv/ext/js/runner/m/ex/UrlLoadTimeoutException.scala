@@ -10,5 +10,5 @@ import io.suggest.xadv.ext.js.runner.m.MErrorInfoT
  */
 case class UrlLoadTimeoutException(url: String, timeoutMs: Int) extends RuntimeException with MErrorInfoT {
   override def msg: String = "e.url.load.failed"
-  override def args: Seq[Any] = Seq(url, timeoutMs)
+  override def args: Seq[String] = Seq(url, timeoutMs.toString)
 }

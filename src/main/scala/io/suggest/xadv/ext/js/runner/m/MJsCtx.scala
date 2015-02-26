@@ -73,6 +73,8 @@ trait MJsCtxT {
       lit.updateDynamic(DOMAIN_FN)(domains)
     if (status.nonEmpty)
       lit.updateDynamic(STATUS_FN)(status.get.jsStr)
+    if (error.nonEmpty)
+      lit.updateDynamic(ERROR_FN)(error.get.toJson)
     if (custom.nonEmpty)
       lit.updateDynamic(CUSTOM_FN)(customJson)
     lit
@@ -105,7 +107,7 @@ import io.suggest.adv.ext.model.ctx.MErrorInfo._
 
 trait MErrorInfoT {
   def msg: String
-  def args: Seq[Any]
+  def args: Seq[String]
 
   def toJson: js.Dynamic = {
     val lit = js.Dynamic.literal()
@@ -113,10 +115,11 @@ trait MErrorInfoT {
     lit.updateDynamic(ARGS_FN)(args)
     lit
   }
+
 }
 
 case class MErrorInfo(
   msg   : String,
-  args  : Seq[Any] = Seq.empty
+  args  : Seq[String] = Seq.empty
 ) extends MErrorInfoT
 

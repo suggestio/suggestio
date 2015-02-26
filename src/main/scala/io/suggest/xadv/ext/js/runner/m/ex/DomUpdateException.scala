@@ -10,7 +10,7 @@ import io.suggest.xadv.ext.js.runner.m.MErrorInfoT
  */
 case class DomUpdateException(underlying: Throwable = null) extends IllegalStateException with MErrorInfoT {
   override def msg: String = "e.dom.update"
-  override def args: Seq[Any] = {
+  override def args: Seq[String] = {
     if (underlying != null)
       Seq(underlying.getClass.getName, underlying.getMessage)
     else
