@@ -85,17 +85,27 @@ object SiobixBuild extends Build {
     .aggregate(advExtSjsRunner)
     .enablePlugins(play.PlayScala, SbtWeb)
     .settings(
-      // TODO Нужно заюзать assetsTarget или 
-      scalajsOutputDir := (WebKeys.public in Assets).value / "javascripts",
-      compile in Compile <<= (compile in Compile) dependsOn (fastOptJS in (advExtSjsRunner, Compile)) dependsOn copySourceMapsTask,
-      dist <<= dist dependsOn (fullOptJS in (advExtSjsRunner, Compile)),
-      stage <<= stage dependsOn (fullOptJS in (advExtSjsRunner, Compile))
+      Seq(
+        scalajsOutputDir := (sourceManaged in Assets).value,
+        sourceGenerators in Assets += Def.task {
+          // TODO List + :: не компилируется тут почему-то.
+          // TODO Вынос "in (advExtSjsRunner, Compile)).value.data" за скобки не компилится.
+          val acc = Seq(
+            (packageScalaJSLauncher in (advExtSjsRunner, Compile)).value.data,
+            (fastOptJS in (advExtSjsRunner, Compile)).value.data,
+            (fullOptJS in (advExtSjsRunner, Compile)).value.data
+          )
+          val depsFile = (packageJSDependencies in (advExtSjsRunner, Compile)).value
+          if (depsFile.exists)  acc ++ Seq(depsFile)  else  acc
+        }.taskValue
+      ) ++ (
+        Seq(packageJSDependencies, packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
+          // advExtSjsRunner должен компилить результаты в web21/target/web поддиректорию вместо своей стандартной.
+          crossTarget in (advExtSjsRunner, Compile, packageJSKey) := scalajsOutputDir.value
+        }
+      ) : _*
     )
-    .settings(
-      Seq(packageJSDependencies, packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
-        crossTarget in (advExtSjsRunner, Compile, packageJSKey) := scalajsOutputDir.value
-      } : _*
-    )
+    
 
   lazy val root = Project(
     id = "root",
