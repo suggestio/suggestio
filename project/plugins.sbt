@@ -54,5 +54,5 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
-//addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.2.3")
+addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.2.3")
 
