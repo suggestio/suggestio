@@ -1,13 +1,11 @@
+import com.typesafe.sbt.web.pipeline.Pipeline
+import play.PlayScala
 import sbt._
 import Keys._
-import play.Play.autoImport._
-import PlayKeys._
-import play.twirl.sbt.Import._
-import play.twirl.sbt._
 import com.typesafe.sbt.web._
-import com.typesafe.sbt.web.Import._
+import com.typesafe.sbt.web.SbtWeb.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import com.typesafe.sbt.packager.Keys._
+import com.typesafe.sbt.SbtNativePackager._
 
 object SiobixBuild extends Build {
 
@@ -78,29 +76,47 @@ object SiobixBuild extends Build {
   }*/
 
   lazy val securesocial = project
-    .enablePlugins(play.PlayScala, SbtWeb)
+    .enablePlugins(PlayScala, SbtWeb)
+
+
+  def _sourceMapTask(tk: TaskKey[Attributed[File]]) = Def.task[Seq[File]] {
+    val path = (sbt.Keys.artifactPath in(advExtSjsRunner, Compile, tk)).value.getAbsolutePath + ".map"
+    Seq(new File(path))
+  }
+
+  def _sjsResultsDev = Def.task[Seq[File]] {
+    // Не надо пытаться тут делать вынос "in (advExtSjsRunner, Compile)).value.data" за скобки: уже пробовал, не компилит.
+    Seq(
+      (packageScalaJSLauncher in (advExtSjsRunner, Compile)).value.data,
+      (fastOptJS in (advExtSjsRunner, Compile)).value.data
+    )
+  }
+
+  def _sjsResultsProd = Def.task[Seq[File]] {
+    val acc = List(
+      (fullOptJS in (advExtSjsRunner, Compile)).value.data
+    )
+    val depsFile = (packageJSDependencies in (advExtSjsRunner, Compile)).value
+    if (depsFile.exists)  depsFile :: acc  else  acc
+  }
 
   lazy val web21 = project
     .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
     .aggregate(advExtSjsRunner)
-    .enablePlugins(play.PlayScala, SbtWeb)
+    .enablePlugins(PlayScala, SbtWeb)
     .settings(
       Seq(
+        // Подцепляем результаты fastOptJS к сборке sbt-web.
         scalajsOutputDir := (sourceManaged in Assets).value,
-        sourceGenerators in Assets += Def.task {
-          // TODO List + :: не компилируется тут почему-то.
-          // TODO Вынос "in (advExtSjsRunner, Compile)).value.data" за скобки не компилится.
-          val acc = Seq(
-            (packageScalaJSLauncher in (advExtSjsRunner, Compile)).value.data,
-            (fastOptJS in (advExtSjsRunner, Compile)).value.data,
-            (fullOptJS in (advExtSjsRunner, Compile)).value.data
-          )
-          val depsFile = (packageJSDependencies in (advExtSjsRunner, Compile)).value
-          if (depsFile.exists)  acc ++ Seq(depsFile)  else  acc
-        }.taskValue
-      ) ++ (
+        sourceGenerators in Assets += _sourceMapTask(fastOptJS).taskValue,
+        sourceGenerators in Assets += _sjsResultsDev.taskValue
+      ) ++ inConfig(Universal)(Seq(
+        // TODO (не пашет!) Надо только в режиме stage/dist собираем тяжелый fullOptJS. Шаблоны сами должны разруливать это через Play.isProd.
+        sourceGenerators in Assets += _sourceMapTask(fullOptJS).taskValue,
+        sourceGenerators in Assets += _sjsResultsProd.taskValue
+      )) ++ (
+        // advExtSjsRunner всегда должен складывать результаты финальной компиляции в web21/target/web поддиректорию вместо своей стандартной.
         Seq(packageJSDependencies, packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
-          // advExtSjsRunner должен компилить результаты в web21/target/web поддиректорию вместо своей стандартной.
           crossTarget in (advExtSjsRunner, Compile, packageJSKey) := scalajsOutputDir.value
         }
       ) : _*
