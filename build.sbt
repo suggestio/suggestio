@@ -174,7 +174,7 @@ excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 
 // sbt-web
-pipelineStages := Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
+pipelineStages ++= Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
 
 testOptions in Test += Tests.Argument("-oF")
 

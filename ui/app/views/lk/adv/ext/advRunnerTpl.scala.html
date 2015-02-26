@@ -3,7 +3,7 @@
 @* Страница с идущими размещениями на внешних сервисах. *@
 
 @import util.adv.ExtUtil._
-
+@import play.api.Play.{isProd, current}
 
 @base(
   title = "Размещение рекламной карточки на внешних сервисах",
@@ -17,7 +17,8 @@
 
   <input id="socialApiConnection" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
 
-
   <div id="@RUNNER_EVENTS_DIV_ID"></div>
 
+  <script src="@routes.Assets.versioned("advext-sjs-runner-" + (if(isProd) "" else "fast") + "opt.js")"></script>
+  <script src="@routes.Assets.versioned("advext-sjs-runner-launcher.js")"></script>
 }

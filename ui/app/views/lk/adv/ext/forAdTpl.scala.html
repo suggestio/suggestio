@@ -7,10 +7,17 @@
 @import util.FC.tdRadialFc
 @import util.adv.ExtUtil.formForTarget
 
+
+@headAfter = {
+  <script data-main="@routes.Assets.versioned("scripts/lk/xadv/ext/siopr.js")"
+          src="@routes.Assets.versioned("scripts/require.js")"></script>
+}
+
 @base(
-  title = "Внешнее размещение карточки",
-  mnode = mnode,
-  mad = mad
+  title     = "Внешнее размещение карточки",
+  mnode     = mnode,
+  mad       = mad,
+  headAfter = Some(headAfter)
 ) {
 
   <div id="socialApp">
