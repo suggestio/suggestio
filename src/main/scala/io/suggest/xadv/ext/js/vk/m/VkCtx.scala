@@ -13,13 +13,17 @@ import scala.scalajs.js.WrappedDictionary
  */
 object VkCtx {
 
-  def LOGIN_FN = "a"
+  def LOGIN_FN      = "a"
+  def TG_VK_ID_FN   = "b"
 
   /** Десериализовать контекст. */
   def fromDyn(raw: js.Any): VkCtx = {
-    val d = raw.asInstanceOf[JSON] : WrappedDictionary[js.Dynamic]
+    val d = raw.asInstanceOf[JSON] : WrappedDictionary[js.Any]
     VkCtx(
-      login = d.get(LOGIN_FN).map(VkLoginResult.fromJson)
+      login = d.get(LOGIN_FN)
+        .map(VkLoginResult.fromJson),
+      tgVkId = d.get(TG_VK_ID_FN)
+        .asInstanceOf[Option[Long]]
     )
   }
 
@@ -35,21 +39,23 @@ object VkCtx {
 import VkCtx._
 
 
-/** Абстрактный экземпляр модели. */
-trait VkCtxT {
-  /** id цели размещения на стороне вконтакта. Резолвится через API utils.resolveScreenName. */
-  def login: Option[VkLoginResult]
+/**
+ * Экземпляр модели контекста vk.
+ * @param login Данные по логину.
+ * @param tgVkId id цели размещения на стороне вконтакта. Резолвится через API utils.resolveScreenName.
+ */
+case class VkCtx(
+  login   : Option[VkLoginResult],
+  tgVkId  : Option[Long] = None
+) {
 
   /** Сериализация в JSON (js.Dynamic). */
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
+  def toJson: js.Dictionary[js.Any] = {
+    val d = js.Dictionary.empty[js.Any]
     if (login.isDefined)
-      lit.updateDynamic(LOGIN_FN)(login.get.toJson)
-    lit
+      d.update(LOGIN_FN, login.get.toJson)
+    if (tgVkId.isDefined)
+      d.update(TG_VK_ID_FN, tgVkId.get)
+    d
   }
 }
-
-
-case class VkCtx(
-  login: Option[VkLoginResult]
-) extends VkCtxT

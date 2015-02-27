@@ -11,21 +11,18 @@ import scala.scalajs.js
  * Description: Обертка ответа на запрос. Этот ответ отправляется на сервер.
  */
 
-object MAnswer {
-  implicit def answer2dyn(ans: MAnswer): js.Dynamic = ans.toJson
-}
-
 case class MAnswer(
   replyTo: Option[String],
   mctx: MJsCtx
 ) {
 
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
+  def toJson: js.Dictionary[js.Any] = {
+    val d = js.Dictionary[js.Any](
+      JsCommand.MCTX_FN -> mctx.toJson
+    )
     if (replyTo.isDefined)
-      lit.updateDynamic(JsCommand.REPLY_TO_FN)(replyTo.get)
-    lit.updateDynamic(JsCommand.MCTX_FN)(mctx.toJson)
-    lit
+      d.update(JsCommand.REPLY_TO_FN, replyTo.get)
+    d
   }
 
 }

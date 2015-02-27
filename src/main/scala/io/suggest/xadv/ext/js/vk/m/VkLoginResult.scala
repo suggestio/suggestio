@@ -40,7 +40,7 @@ object VkLoginResult {
    * @return None если логин не удался. Some с инфой по текущему юзеру.
    */
   def maybeFromResp(raw: JSON): Option[VkLoginResult] = {
-    val d = raw : WrappedDictionary[js.Dynamic]
+    val d = raw : WrappedDictionary[js.Any]
     d.get("session")
       .filter(v => v != null && !js.isUndefined(v))
       .map { sessionRaw =>
@@ -55,7 +55,7 @@ object VkLoginResult {
       }
   }
   
-  def fromJson(raw: js.Dynamic): VkLoginResult = {
+  def fromJson(raw: js.Any): VkLoginResult = {
     val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
     VkLoginResult(
       vkId = d(VK_ID_FN),

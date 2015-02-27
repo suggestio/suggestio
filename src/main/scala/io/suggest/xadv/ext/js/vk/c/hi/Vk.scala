@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.vk.c.hi
 
 import io.suggest.xadv.ext.js.runner.m.ex.LoginApiException
 import io.suggest.xadv.ext.js.vk.c.low._
-import io.suggest.xadv.ext.js.vk.m.{VkInitOptions, VkLoginResult}
+import io.suggest.xadv.ext.js.vk.m._
 
 import scala.concurrent.{Future, Promise}
 
@@ -33,7 +33,21 @@ object Vk {
 
 
 object VkApi {
-  // TODO wall.post
+
+  /**
+   * Отрезолвить имя во внутренний id.
+   * @param args Параметры вызова.
+   * @see [[https://vk.com/dev/utils.resolveScreenName]]
+   * @return Фьючерс с результатом вызова.
+   */
+  def resolveScreenName(args: VkResolveScreenNameArgs): Future[VkResolveScreenNameResult] = {
+    val p = Promise[VkResolveScreenNameResult]()
+    VkLow.Api.call("utils.resolveScreenName", args.toJson, { resp: JSON =>
+      p failure new Exception("Not implemented: " + resp)
+    })
+    p.future
+  }
+
 }
 
 

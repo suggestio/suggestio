@@ -10,7 +10,7 @@ import scala.scalajs.js
  */
 package object low {
 
-  type JSON = js.Dictionary[js.Dynamic]
+  type JSON = js.Dictionary[js.Any]
 
   type Callback = js.Function1[JSON, _]
 

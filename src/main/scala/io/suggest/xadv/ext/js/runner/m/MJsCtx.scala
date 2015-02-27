@@ -20,16 +20,20 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
     val d = dyn.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     MJsCtx(
       action = MAskActions.withName( d.get(ACTION_FN).get.toString ),
-      mads = d.get(ADS_FN).map {
+      mads = d.get(ADS_FN)
+        .map {
           _.asInstanceOf[js.Array[js.Dynamic]]
             .toSeq
             .map(MAdCtx.fromDyn)
         }
         .getOrElse(Seq.empty),
+      target = d.get(TARGET_FN)
+        .map(MExtTarget.fromJson),
       service = MServiceInfo.fromDyn(d(SERVICE_FN)),
       domains = d.get(DOMAIN_FN)
         .map { _.asInstanceOf[js.Array[String]].toSeq }
-        .getOrElse(Nil)
+        .getOrElse(Nil),
+      custom = d.get(CUSTOM_FN)
       // status и error игнорим, ибо они только исходящие
     )
   }
@@ -54,6 +58,9 @@ trait MJsCtxT {
   /** Домены, которых касается запрос. */
   def domains : Seq[String]
 
+  /** Описание текущей цели, если есть. */
+  def target  : Option[MExtTarget]
+
   /** Статус исполнения результата. */
   def status  : Option[MAnswerStatus]
 
@@ -63,21 +70,24 @@ trait MJsCtxT {
   /** Произвольные данные, выставляемые адаптером в рамках текущего запроса. */
   def custom  : Option[js.Any]
 
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(ACTION_FN)(action.strId)
+  def toJson: js.Dictionary[js.Any] = {
+    val d = js.Dictionary[js.Any] (
+      ACTION_FN   -> action.strId,
+      SERVICE_FN  -> service.toJson
+    )
     if (mads.nonEmpty)
-      lit.updateDynamic(ADS_FN)(mads.map(_.toJson))
-    lit.updateDynamic(SERVICE_FN)(service.toJson)
+      d.update(ADS_FN, mads.map(_.toJson))
     if (domains.nonEmpty)
-      lit.updateDynamic(DOMAIN_FN)(domains)
+      d.update(DOMAIN_FN, domains)
+    if (target.nonEmpty)
+      d.update(TARGET_FN, target.get.toJson)
     if (status.nonEmpty)
-      lit.updateDynamic(STATUS_FN)(status.get.jsStr)
+      d.update(STATUS_FN, status.get.jsStr)
     if (error.nonEmpty)
-      lit.updateDynamic(ERROR_FN)(error.get.toJson)
+      d.update(ERROR_FN, error.get.toJson)
     if (custom.nonEmpty)
-      lit.updateDynamic(CUSTOM_FN)(custom.get)
-    lit
+      d.update(CUSTOM_FN, custom.get)
+    d
   }
 }
 
@@ -87,9 +97,11 @@ case class MJsCtx(
   mads    : Seq[MAdCtx],
   service : MServiceInfo,
   domains : Seq[String],
+  target  : Option[MExtTarget],
+  custom  : Option[js.Any],
+  // Необязательные параметры -- только для исходящего контекста, на входе не парсим.
   status  : Option[MAnswerStatus] = None,
-  error   : Option[MErrorInfoT] = None,
-  custom  : Option[js.Any] = None
+  error   : Option[MErrorInfoT] = None
 ) extends MJsCtxT
 
 

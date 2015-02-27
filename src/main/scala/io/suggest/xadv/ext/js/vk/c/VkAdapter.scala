@@ -3,8 +3,7 @@ package io.suggest.xadv.ext.js.vk.c
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, LoginCancelledException, DomUpdateException, UrlLoadTimeoutException}
 import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
-import io.suggest.xadv.ext.js.vk.c.low.VkLow
-import io.suggest.xadv.ext.js.vk.m.{VkCtx, VkWindow, VkLoginResult, VkInitOptions}
+import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
 
@@ -80,9 +79,12 @@ class VkAdapter extends IAdapter {
       } onComplete {
         // init завершился, инфа по залогиненности получена.
         case Success(loginStatusOpt) =>
+          val vkCtx = VkCtx(
+            login = loginStatusOpt
+          )
           p success mctx0.copy(
             status = Some(MAnswerStatuses.Success),
-            custom = loginStatusOpt.map(_.toJson)
+            custom = Some(vkCtx.toJson)
           )
         // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
         case Failure(ex) =>
@@ -114,14 +116,14 @@ class VkAdapter extends IAdapter {
 
   /** Запуск обработки одной цели. */
   override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
-    loggedIn [MJsCtx] (VkCtx.maybeFromDyn(mctx0.custom)) { vkCtx =>
+    loggedIn [MJsCtx](mctx0) { vkCtx =>
+      // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
       if (mctx0.mads.headOption.flatMap(_.picture).flatMap(_.saved).isDefined) {
-        // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
         dom.console.log("vk.handleTarget() picture already uploaded. publishing.")
         ???
       } else if (mctx0.mads.nonEmpty) {
         dom.console.log("vk.handleTarget(): Requesing s2s pic upload.")
-        ???
+        step1(mctx0, vkCtx)
       } else {
         // TODO Should never happen. Нет карточек для размещения.
         ???
@@ -140,31 +142,85 @@ class VkAdapter extends IAdapter {
 
   /**
    * Произвести вызов указанного callback'a, предварительно убедившись, что юзер залогинен.
-   * @param vkCtxOpt Исходный контекст.
+   * @param mctx0 Исходный контекст.
    * @param f callback. Вызывается когда очевидно, что юзер залогинен.
    * @tparam T Тип результата callback'а и этого метода.
    * @return Фьючерс с результатом callback'а или ошибкой.
    */
-  protected def loggedIn[T](vkCtxOpt: Option[VkCtx])(f: VkCtx => Future[T]): Future[T] = {
+  protected def loggedIn[T](mctx0: MJsCtx)(f: VkCtx => Future[T]): Future[T] = {
+    val vkCtxOpt = VkCtx.maybeFromDyn(mctx0.custom)
     val loginOpt = vkCtxOpt.flatMap(_.login)
-    if (loginOpt.isEmpty) {
-      // Юзер не залогинен.
-      runLogin().flatMap { loginCtx =>
-        val ctx1 = vkCtxOpt match {
-          case Some(vkCtx) =>
-            // Залить новую инфу по логину во внутренний контекст
-            vkCtx.copy(login = Some(loginCtx))
-          case None =>
-            // should never happen
-            VkCtx(login = Some(loginCtx))
+    loginOpt match {
+      // Юзер не залогинен. Запустить процедуру логина.
+      case None =>
+        runLogin().flatMap { loginCtx =>
+          val vkCtx1 = vkCtxOpt match {
+            case Some(vkCtx) =>
+              // Залить новую инфу по логину во внутренний контекст
+              vkCtx.copy(login = Some(loginCtx))
+            case None =>
+              // should never happen
+              VkCtx(login = Some(loginCtx))
+          }
+          f(vkCtx1)
         }
-        f(ctx1)
-      }
 
-    } else {
       // Юзер залогинен уже. Сразу дергаем callback.
-      f(vkCtxOpt.get)
+      case _ =>
+        f(vkCtxOpt.get)
     }
+  }
+
+
+  /**
+   * Извлечь screen-имя из ссылки на страницу-цель размещения.
+   * @param url Ссылка на страницу-цель размещения.
+   * @return Опциональный результат.
+   */
+  protected def extractScreenName(url: String): Option[String] = {
+    val regex = "(?i)^https?://(www\\.)?vk(ontakte)\\.(ru|com)/([_a-z0-9-]){1,64}".r
+    url match {
+      case regex(_, _, _, screenName) => Some(screenName)
+      case _ => None
+    }
+  }
+
+  protected def getTargetVkId(screenNameOpt: Option[String], vkCtx: VkCtx): Future[Long] = {
+    screenNameOpt match {
+      case Some(screenName) =>
+        val args = VkResolveScreenNameArgs(screenName)
+        val sname = Vk.Api.resolveScreenName(args)
+        // TODO Нужно проверить права на постинг в указанную группу, если группа в результате.
+        // TODO Нужно проверить права на постинг, если другие виды страниц.
+        sname.map(_.vkId)
+
+      case None =>
+        val vkId = vkCtx.login.get.vkId.toLong
+        Future successful vkId
+    }
+  }
+
+  /**
+   * Первый шаг постинга на стену.
+   * Метод производит действия, связанные с загрузкой картинки в хранилище внешнего сервиса.
+   *
+   * Подготовка к публикации идёт в несколько шагов:
+   * - Извлечение имени из url.
+   * - Резолвинг имени в vk id.
+   * - Получения url сервера для upload POST.
+   * - Отправка нового контекста на сервер.
+   * Возможен так же вариант, когда нет прав на постинг на указанную страницу.
+   * @param mctx0 Исходный контекст.
+   * @return Фьючерс с новым контекстом.
+   */
+  protected def step1(mctx0: MJsCtx, vkCtx: VkCtx): Future[MJsCtx] = {
+    // Извлечь имя из target.url
+    val tg = mctx0.target.get
+    val screenNameOpt = extractScreenName(tg.tgUrl)
+    // Отрезолвить имя
+    val tgVkIdFut = getTargetVkId(screenNameOpt, vkCtx)
+    // Узнать url для POST'а картинки.
+    ???
   }
 
 }
