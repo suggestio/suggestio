@@ -81,3 +81,11 @@ object MErrorInfo {
   def ARGS_FN = "args"
 }
 
+
+trait MExtTargetT {
+  def URL_FN          = "url"
+  /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
+  def ON_CLICK_URL_FN = "href"
+  def NAME_FN         = "name"
+}
+
