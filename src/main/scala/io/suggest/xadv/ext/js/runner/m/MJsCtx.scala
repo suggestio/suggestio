@@ -61,7 +61,7 @@ trait MJsCtxT {
   def error   : Option[MErrorInfoT]
 
   /** Произвольные данные, выставляемые адаптером в рамках текущего запроса. */
-  def custom  : Map[String, String]
+  def custom  : Option[js.Any]
 
   def toJson: js.Dynamic = {
     val lit = js.Dynamic.literal()
@@ -76,18 +76,9 @@ trait MJsCtxT {
     if (error.nonEmpty)
       lit.updateDynamic(ERROR_FN)(error.get.toJson)
     if (custom.nonEmpty)
-      lit.updateDynamic(CUSTOM_FN)(customJson)
+      lit.updateDynamic(CUSTOM_FN)(custom.get)
     lit
   }
-
-  def customJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    custom foreach {
-      case (k, v) => lit.updateDynamic(k)(v)
-    }
-    lit
-  }
-
 }
 
 /** Дефолтовая реализация контекста. */
@@ -98,7 +89,7 @@ case class MJsCtx(
   domains : Seq[String],
   status  : Option[MAnswerStatus] = None,
   error   : Option[MErrorInfoT] = None,
-  custom  : Map[String, String] = Map.empty
+  custom  : Option[js.Any] = None
 ) extends MJsCtxT
 
 

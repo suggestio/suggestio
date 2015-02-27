@@ -1,15 +1,16 @@
 package io.suggest.xadv.ext.js.vk.c
 
-import io.suggest.xadv.ext.js.runner.m.ex.{DomUpdateException, UrlLoadTimeoutException}
+import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, LoginCancelledException, DomUpdateException, UrlLoadTimeoutException}
 import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.c.low.VkLow
-import io.suggest.xadv.ext.js.vk.m.VkInitOptions
+import io.suggest.xadv.ext.js.vk.m.{VkCtx, VkWindow, VkLoginResult, VkInitOptions}
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
 
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -69,14 +70,26 @@ class VkAdapter extends IAdapter {
   override def ensureReady(mctx0: MJsCtx): Future[MJsCtx] = {
     val p = Promise[MJsCtx]()
     // Создать обработчик событие инициализации.
-    dom.window.vkAsyncInit = {() =>
+    val window: VkWindow = dom.window
+    window.vkAsyncInit = {() =>
       val apiId = mctx0.service.appId.orNull
       val opts = VkInitOptions(apiId)
-      VkLow.init(opts)
-      // Начальная инициализация vk openapi.js вроде бы завершена. Пора запустить возврат результата.
-      p success mctx0.copy(
-        status = Some(MAnswerStatuses.Success)
-      )
+      Vk.init(opts).flatMap { _ =>
+        // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
+        Vk.Auth.getLoginStatus
+      } onComplete {
+        // init завершился, инфа по залогиненности получена.
+        case Success(loginStatusOpt) =>
+          p success mctx0.copy(
+            status = Some(MAnswerStatuses.Success),
+            custom = loginStatusOpt.map(_.toJson)
+          )
+        // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
+        case Failure(ex) =>
+          p failure ApiInitException(ex)
+      }
+      // Освободить память браузера от хранения этой функции.
+      window.vkAsyncInit = null
     }
     // Добавить тег со ссылкой на open-api. Это запустит процесс в фоне.
     Future {
@@ -101,22 +114,56 @@ class VkAdapter extends IAdapter {
 
   /** Запуск обработки одной цели. */
   override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
-    // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
-    if (mctx0.mads.headOption.flatMap(_.picture).flatMap(_.saved).isDefined) {
-      dom.console.log("vk.handleTarget() picture already uploaded. publishing.")
-      ???
-    } else if (mctx0.mads.nonEmpty) {
-      dom.console.log("vk.handleTarget(): Requesing s2s pic upload.")
-      runLogin()
-    } else {
-      // TODO Should never occur...
-      ???
+    loggedIn [MJsCtx] (VkCtx.maybeFromDyn(mctx0.custom)) { vkCtx =>
+      if (mctx0.mads.headOption.flatMap(_.picture).flatMap(_.saved).isDefined) {
+        // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
+        dom.console.log("vk.handleTarget() picture already uploaded. publishing.")
+        ???
+      } else if (mctx0.mads.nonEmpty) {
+        dom.console.log("vk.handleTarget(): Requesing s2s pic upload.")
+        ???
+      } else {
+        // TODO Should never happen. Нет карточек для размещения.
+        ???
+      }
     }
   }
 
-  protected def runLogin(): Future[MJsCtx] = {
-    Vk.Auth.login(ACCESS_LEVEL) map { res =>
-      ???
+  protected def runLogin(): Future[VkLoginResult] = {
+    Vk.Auth.login(ACCESS_LEVEL) flatMap {
+      case None =>
+        Future failed LoginCancelledException()
+      case Some(login) =>
+        Future successful login
+    }
+  }
+
+  /**
+   * Произвести вызов указанного callback'a, предварительно убедившись, что юзер залогинен.
+   * @param vkCtxOpt Исходный контекст.
+   * @param f callback. Вызывается когда очевидно, что юзер залогинен.
+   * @tparam T Тип результата callback'а и этого метода.
+   * @return Фьючерс с результатом callback'а или ошибкой.
+   */
+  protected def loggedIn[T](vkCtxOpt: Option[VkCtx])(f: VkCtx => Future[T]): Future[T] = {
+    val loginOpt = vkCtxOpt.flatMap(_.login)
+    if (loginOpt.isEmpty) {
+      // Юзер не залогинен.
+      runLogin().flatMap { loginCtx =>
+        val ctx1 = vkCtxOpt match {
+          case Some(vkCtx) =>
+            // Залить новую инфу по логину во внутренний контекст
+            vkCtx.copy(login = Some(loginCtx))
+          case None =>
+            // should never happen
+            VkCtx(login = Some(loginCtx))
+        }
+        f(ctx1)
+      }
+
+    } else {
+      // Юзер залогинен уже. Сразу дергаем callback.
+      f(vkCtxOpt.get)
     }
   }
 
