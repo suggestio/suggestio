@@ -1,5 +1,6 @@
 package models.adv
 
+import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
 import io.suggest.util.JacksonWrapper
@@ -153,15 +154,15 @@ trait IExtTarget {
     var acc: FieldsJsonAcc = List(
       URL_ESFN            -> JsString(url)
     )
-
+    // name
     val _name = name
     if (_name.isDefined)
       acc ::= NAME_ESFN -> JsString(_name.get)
-
+    // ctxData
     val _ctxData = ctxData
     if (_ctxData.nonEmpty)
       acc ::= CTX_DATA_ESFN -> _ctxData.get
-
+    // результат
     acc
   }
 
@@ -176,14 +177,7 @@ trait IExtTargetWrapper extends IExtTarget {
 }
 
 
-object JsExtTarget {
-
-  val URL_FN          = "url"
-
-  /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
-  val ON_CLICK_URL_FN = "href"
-
-  val NAME_FN         = "name"
+object JsExtTarget extends MExtTargetT {
 
   /** mapper из JSON. */
   implicit def reads: Reads[JsExtTarget] = (
