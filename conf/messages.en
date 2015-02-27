@@ -344,6 +344,8 @@ e.ext.adv.unathorized=User not authorized
 e.ext.adv.permissions=User have not permissions
 e.ext.adv.permissions.group=Your message will not be displayed on the page {0}
 e.ext.adv.target.url.invalid=Invalid url
+e.ext.adv.api.login=Failed to complete login procedure: {0} ({1}: {2})
+e.adv.ext.api.init=Failed to get remote service client online. ({1}: {2})
 
 passwords.do.not.match=Passwords does not match. Please try again.
 

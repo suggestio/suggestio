@@ -355,6 +355,8 @@ e.ext.adv.unathorized=Пользователь не авторизован
 e.ext.adv.permissions=Недостаточно прав
 e.ext.adv.permissions.group=Ваш пост не будет отображаться на странице {0}
 e.ext.adv.target.url.invalid=Некорректный url цели
+e.ext.adv.api.login=Возникла ошибка в процедуре логина: {0} ({1}: {2})
+e.adv.ext.api.init=Не удалось инициализировать клиент. ({1}: {2})
 
 passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
 
