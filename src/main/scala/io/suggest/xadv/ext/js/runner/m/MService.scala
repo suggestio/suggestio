@@ -29,8 +29,7 @@ object MServiceInfo extends FromStringT {
 
   override type T = MServiceInfo
 
-  def fromDyn(raw: js.Dynamic): MServiceInfo = {
-    // TODO WrappedDictionary тянет за собой scala.collections, т.к. является реализацией mutable.Map.
+  def fromJson(raw: js.Any): MServiceInfo = {
     val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
     MServiceInfo(
       service = MServices.withName( d(NAME_FN) ),
@@ -41,14 +40,14 @@ object MServiceInfo extends FromStringT {
 }
 
 
-case class MServiceInfo(service: MService, appId: Option[String]) {
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(NAME_FN)(service.strId)
-    if (appId.isDefined) {
-      lit.updateDynamic(APP_ID_FN)(appId.get)
-    }
-    lit
+case class MServiceInfo(service: MService, appId: Option[String]) extends IToJsonDict {
+  override def toJson = {
+    val d = js.Dictionary[js.Any](
+      NAME_FN -> service.strId
+    )
+    if (appId.isDefined)
+      d.update(APP_ID_FN, appId.get)
+    d
   }
 }
 

@@ -15,7 +15,7 @@ import io.suggest.adv.ext.model.ctx.PicUploadCtx._
 object MPictureUploadCtx extends FromStringT {
   override type T = MPicUploadCtxT
 
-  override def fromDyn(raw: Dynamic): T = {
+  override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     val modeOpt = d.get(MODE_FN)
       .map(_.toString)
@@ -34,23 +34,21 @@ object MPictureUploadCtx extends FromStringT {
 
 
 /** Общий код всех возможных типов аплода. */
-trait MPicUploadCtxT {
+trait MPicUploadCtxT extends IToJsonDict {
   def mode: MPicUploadMode
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(MODE_FN)(mode.jsName)
-    lit
-  }
+  override def toJson = js.Dictionary[js.Any](
+    MODE_FN -> mode.jsName
+  )
 }
 
 case class MPicS2sUploadCtx(url: String, partName: String) extends MPicUploadCtxT {
   override def mode = MPicUploadModes.S2s
 
-  override def toJson: js.Dynamic = {
-    val lit = super.toJson
-    lit.updateDynamic(URL_FN)(url)
-    lit.updateDynamic(PART_NAME_FN)(partName)
-    lit
+  override def toJson = {
+    val d = super.toJson
+    d.update(URL_FN, url)
+    d.update(PART_NAME_FN, partName)
+    d
   }
 }
 

@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
+import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
 import scala.scalajs.js
@@ -29,7 +30,9 @@ import scala.scalajs.js.WrappedDictionary
  *    nickname: ""
  */
 
-object VkLoginResult {
+object VkLoginResult extends FromJsonT {
+
+  override type T = VkLoginResult
 
   def VK_ID_FN = "a"
   def NAME_FN  = "b"
@@ -39,7 +42,7 @@ object VkLoginResult {
    * @param raw JSON-выхлоп vk api
    * @return None если логин не удался. Some с инфой по текущему юзеру.
    */
-  def maybeFromResp(raw: JSON): Option[VkLoginResult] = {
+  def maybeFromResp(raw: JSON): Option[T] = {
     val d = raw : WrappedDictionary[js.Any]
     d.get("session")
       .filter(v => v != null && !js.isUndefined(v))
@@ -55,7 +58,7 @@ object VkLoginResult {
       }
   }
   
-  def fromJson(raw: js.Any): VkLoginResult = {
+  override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
     VkLoginResult(
       vkId = d(VK_ID_FN),
@@ -84,9 +87,9 @@ object VkLoginResult {
 
 import VkLoginResult._
 
-case class VkLoginResult(vkId: String, name: Option[String]) {
-  def toJson: js.Any = {
-    val d = js.Dictionary[String](
+case class VkLoginResult(vkId: String, name: Option[String]) extends IToJsonDict {
+  override def toJson = {
+    val d = js.Dictionary[js.Any](
       VK_ID_FN -> vkId
     )
     if (name.isDefined)

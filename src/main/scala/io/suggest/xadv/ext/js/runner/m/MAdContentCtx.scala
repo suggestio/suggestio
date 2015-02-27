@@ -14,13 +14,13 @@ import io.suggest.adv.ext.model.ctx.MAdContentCtx._
 object MAdContentCtx extends FromStringT {
   override type T = MAdContentCtx
 
-  override def fromDyn(raw: js.Dynamic): T = {
+  override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     MAdContentCtx(
       fields = d(FIELDS_FN)
         .asInstanceOf[js.Array[js.Dynamic]]
         .toSeq
-        .map(MAdContentField.fromDyn),
+        .map(MAdContentField.fromJson),
       title = d.get(TITLE_FN)
         .map(_.toString),
       descr = d.get(DESCR_FN)
@@ -34,17 +34,17 @@ case class MAdContentCtx(
   fields: Seq[MAdContentField],
   title: Option[String],
   descr: Option[String]
-) {
+) extends IToJsonDict {
 
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
+  def toJson = {
+    val d = js.Dictionary.empty[js.Any]
     if (fields.nonEmpty)
-      lit.updateDynamic(FIELDS_FN)(fields.map(_.toJson))
+      d.update(FIELDS_FN, fields.map(_.toJson))
     if (title.nonEmpty)
-      lit.updateDynamic(TITLE_FN)(title.get)
+      d.update(TITLE_FN, title.get)
     if (descr.nonEmpty)
-      lit.updateDynamic(DESCR_FN)(descr.get)
-    lit
+      d.update(DESCR_FN, descr.get)
+    d
   }
 }
 
@@ -53,7 +53,7 @@ import io.suggest.adv.ext.model.ctx.MAdContentField._
 
 object MAdContentField extends FromStringT {
   override type T = MAdContentField
-  override def fromDyn(raw: js.Dynamic): T = {
+  override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
     MAdContentField(
       text = d(TEXT_FN)
@@ -61,10 +61,8 @@ object MAdContentField extends FromStringT {
   }
 }
 
-case class MAdContentField(text: String) {
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(TEXT_FN)(text)
-    lit
-  }
+case class MAdContentField(text: String) extends IToJsonDict {
+  def toJson = js.Dictionary[js.Any](
+    TEXT_FN -> text
+  )
 }

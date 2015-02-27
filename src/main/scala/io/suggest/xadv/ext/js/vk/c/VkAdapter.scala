@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c
 
-import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, LoginCancelledException, DomUpdateException, UrlLoadTimeoutException}
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, IAdapter, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.ex._
+import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
@@ -190,9 +190,10 @@ class VkAdapter extends IAdapter {
       case Some(screenName) =>
         val args = VkResolveScreenNameArgs(screenName)
         val sname = Vk.Api.resolveScreenName(args)
-        // TODO Нужно проверить права на постинг в указанную группу, если группа в результате.
-        // TODO Нужно проверить права на постинг, если другие виды страниц.
-        sname.map(_.vkId)
+        // Сразу запускаем проверку прав на постинг.
+        sname
+          .flatMap(ensureCanPostInto)
+          .map(_.vkId)
 
       case None =>
         val vkId = vkCtx.login.get.vkId.toLong
@@ -201,12 +202,47 @@ class VkAdapter extends IAdapter {
   }
 
   /**
+   * Асинхронно проверить возможность постинга на указанную vk-цель (страницу).
+   * @param vktg Инфа по таргету.
+   * @return Future.successful с исходником.
+   *         Future.failed если постить нельзя.
+   */
+  protected def ensureCanPostInto(vktg: VkResolveScreenNameResult): Future[VkResolveScreenNameResult] = {
+    if (vktg.vkType == "group") {
+      // Надо проверить, есть ли права на постинг в эту группу.
+      val grArgs = VkGroupGetByIdArgs(groupId = vktg.vkId, fields = VkGroupGetByIdArgs.CAN_POST_FN)
+      Vk.Api.groupGetById(grArgs) flatMap { res =>
+        if (res.canPost.exists(identity) && res.deactivated.isEmpty)
+          Future successful vktg
+        else
+          Future failed PostingProhibitedException(res.name)
+      }
+
+    } else {
+      // Это не группа. Проверять права на другие объекты заранее не умеем.
+      Future successful vktg
+    }
+  }
+
+
+  /**
+   * Узнать URL для заливки картинки.
+   * @param vkTgId id таргета на стороне vk.
+   * @return Фьючерс со ссылкой для заливки.
+   */
+  protected def getWallUploadUrl(vkTgId: Long): Future[String] = {
+    ???
+  }
+
+
+  /**
    * Первый шаг постинга на стену.
    * Метод производит действия, связанные с загрузкой картинки в хранилище внешнего сервиса.
    *
    * Подготовка к публикации идёт в несколько шагов:
    * - Извлечение имени из url.
    * - Резолвинг имени в vk id.
+   * - Проверка прав на постинг в запрошенную цель.
    * - Получения url сервера для upload POST.
    * - Отправка нового контекста на сервер.
    * Возможен так же вариант, когда нет прав на постинг на указанную страницу.
@@ -218,9 +254,29 @@ class VkAdapter extends IAdapter {
     val tg = mctx0.target.get
     val screenNameOpt = extractScreenName(tg.tgUrl)
     // Отрезолвить имя
-    val tgVkIdFut = getTargetVkId(screenNameOpt, vkCtx)
-    // Узнать url для POST'а картинки.
-    ???
+    getTargetVkId(screenNameOpt, vkCtx)
+      // Узнать url для POST'а картинки.
+      .map { VkPhotosGetWallUploadServerArgs.apply }
+      .flatMap { Vk.Api.photosGetWallUploadServer }
+      // Залить ссылку в контекст.
+      .map { res =>
+        val ulCtx = MPicS2sUploadCtx(
+          url = res.uploadUrl,
+          partName = "photo"
+        )
+        mctx0.copy(
+          mads = mctx0.mads.map { mad =>
+            val someUlCtx = Some(ulCtx)
+            val pic1 = mad.picture match {
+              case Some(ctx) => ctx.copy(upload = someUlCtx)
+              case None      => MAdPictureCtx(upload = someUlCtx)
+            }
+            mad.copy(picture = Some(pic1))
+          },
+          status = Some(MAnswerStatuses.FillContext),
+          custom = Some(vkCtx.toJson)
+        )
+      }
   }
 
 }

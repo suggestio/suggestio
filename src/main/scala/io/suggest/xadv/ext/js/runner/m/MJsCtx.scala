@@ -16,7 +16,7 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
 
   override type T = MJsCtx
 
-  def fromDyn(dyn: js.Dynamic): MJsCtx = {
+  override def fromJson(dyn: js.Any): MJsCtx = {
     val d = dyn.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     MJsCtx(
       action = MAskActions.withName( d.get(ACTION_FN).get.toString ),
@@ -24,12 +24,12 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
         .map {
           _.asInstanceOf[js.Array[js.Dynamic]]
             .toSeq
-            .map(MAdCtx.fromDyn)
+            .map(MAdCtx.fromJson)
         }
         .getOrElse(Seq.empty),
       target = d.get(TARGET_FN)
         .map(MExtTarget.fromJson),
-      service = MServiceInfo.fromDyn(d(SERVICE_FN)),
+      service = MServiceInfo.fromJson(d(SERVICE_FN)),
       domains = d.get(DOMAIN_FN)
         .map { _.asInstanceOf[js.Array[String]].toSeq }
         .getOrElse(Nil),
@@ -45,7 +45,7 @@ import MJsCtx._
 
 
 /** Минимальный интерфейс контекста. */
-trait MJsCtxT {
+trait MJsCtxT extends IToJsonDict {
   /** Текущее действо. */
   def action  : MAskAction
 
@@ -70,7 +70,7 @@ trait MJsCtxT {
   /** Произвольные данные, выставляемые адаптером в рамках текущего запроса. */
   def custom  : Option[js.Any]
 
-  def toJson: js.Dictionary[js.Any] = {
+  override def toJson: js.Dictionary[js.Any] = {
     val d = js.Dictionary[js.Any] (
       ACTION_FN   -> action.strId,
       SERVICE_FN  -> service.toJson
@@ -108,17 +108,14 @@ case class MJsCtx(
 import io.suggest.adv.ext.model.ctx.MErrorInfo._
 
 
-trait MErrorInfoT {
+trait MErrorInfoT extends IToJsonDict {
   def msg: String
   def args: Seq[String]
 
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(MSG_FN)(msg)
-    lit.updateDynamic(ARGS_FN)(args)
-    lit
-  }
-
+  def toJson = js.Dictionary[js.Any](
+    MSG_FN -> msg,
+    ARGS_FN -> args
+  )
 }
 
 case class MErrorInfo(

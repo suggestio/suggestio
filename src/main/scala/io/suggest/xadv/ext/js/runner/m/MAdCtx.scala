@@ -14,13 +14,13 @@ import scala.scalajs.js.WrappedDictionary
 object MAdCtx extends FromStringT {
   override type T = MAdCtx
 
-  override def fromDyn(dyn: js.Dynamic): T = {
+  override def fromJson(dyn: js.Any): T = {
     val d = dyn.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     MAdCtx(
       madId   = d(ID_FN).toString,
-      content = MAdContentCtx.fromDyn( d(CONTENT_FN) ),
+      content = MAdContentCtx.fromJson( d(CONTENT_FN) ),
       picture = d.get(PICTURE_FN)
-        .map { MAdPictureCtx.fromDyn },
+        .map { MAdPictureCtx.fromJson },
       scUrl   = d.get(SC_URL_FN)
         .map(_.toString)
     )
@@ -33,16 +33,17 @@ case class MAdCtx(
   content : MAdContentCtx,
   picture : Option[MAdPictureCtx],
   scUrl   : Option[String]
-) {
+) extends IToJsonDict {
 
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(ID_FN)(madId)
-    lit.updateDynamic(CONTENT_FN)(content.toJson)
+  override def toJson = {
+    val d = js.Dictionary[js.Any](
+      ID_FN       -> madId,
+      CONTENT_FN  -> content.toJson
+    )
     if (picture.nonEmpty)
-      lit.updateDynamic(PICTURE_FN)(picture.get.toJson)
+      d.update(PICTURE_FN, picture.get.toJson)
     if (scUrl.isDefined)
-      lit.updateDynamic(SC_URL_FN)(scUrl.get)
-    lit
+      d.update(SC_URL_FN, scUrl.get)
+    d
   }
 }

@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c.hi
 
-import io.suggest.xadv.ext.js.runner.m.ex.LoginApiException
+import io.suggest.xadv.ext.js.runner.m.{IToJsonDict, FromJsonT}
+import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 import io.suggest.xadv.ext.js.vk.c.low._
 import io.suggest.xadv.ext.js.vk.m._
 
@@ -13,6 +14,7 @@ import scala.concurrent.{Future, Promise}
  * Description: Hi-level надстройка над слишком низкоуровневым и примитивным API вконтакта.
  */
 object Vk {
+
   def Api = VkApi
   def Auth = VkApiAuth
 
@@ -26,13 +28,40 @@ object Vk {
    */
   def init(opts: VkInitOptions): Future[_] = {
     Future {
-      VkLow.init(opts)
+      VkLow.init(opts.toJson)
     }
   }
 }
 
 
+/** Безопасные обертки над vk js http-API. */
 object VkApi {
+
+  /**
+   * Враппер для производства вызова к vk api.
+   * @param method Вызываемый метод.
+   * @param args Параметры вызова.
+   * @param model Модель, занимающаяся десериализацией результатов.
+   * @tparam T1 Тип результата.
+   * @return Фьючерс с результатом.
+   */
+  protected def mkCall[T1](method: String, args: IToJsonDict, model: FromJsonT { type T = T1 }): Future[T1] = {
+    val p = Promise[T1]()
+    try {
+      VkLow.Api.call(method, args.toJson, { resp: JSON =>
+        try {
+          val res = model.fromJson(resp)
+          p success res
+        } catch {
+          case ex: Throwable =>
+            p failure ApiException(method, ex)
+        }
+      })
+    } catch {
+      case ex: Throwable => p failure ApiException(method, ex)
+    }
+    p.future
+  }
 
   /**
    * Отрезолвить имя во внутренний id.
@@ -41,11 +70,20 @@ object VkApi {
    * @return Фьючерс с результатом вызова.
    */
   def resolveScreenName(args: VkResolveScreenNameArgs): Future[VkResolveScreenNameResult] = {
-    val p = Promise[VkResolveScreenNameResult]()
-    VkLow.Api.call("utils.resolveScreenName", args.toJson, { resp: JSON =>
-      p failure new Exception("Not implemented: " + resp)
-    })
-    p.future
+    mkCall("utils.resolveScreenName", args, VkResolveScreenNameResult)
+  }
+
+  /**
+   * Получить инфу по группе.
+   * @param args Параметры вызова.
+   * @return Фьючерс с результатом.
+   */
+  def groupGetById(args: VkGroupGetByIdArgs): Future[VkGroupGetByIdResult] = {
+    mkCall("groups.getById", args, VkGroupGetByIdResult)
+  }
+
+  def photosGetWallUploadServer(args: VkPhotosGetWallUploadServerArgs): Future[VkPhotosGetWallUploadServerResult] = {
+    mkCall("photos.getWallUploadServer", args, VkPhotosGetWallUploadServerResult)
   }
 
 }

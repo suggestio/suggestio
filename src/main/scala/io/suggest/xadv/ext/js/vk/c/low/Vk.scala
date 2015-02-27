@@ -13,7 +13,7 @@ import scala.scalajs.js.annotation.JSName
 /** Описываем глобально-доступный объект VK и его API. */
 @JSName("VK")
 object VkLow extends js.Object {
-  def init(options: js.Dynamic): Unit = js.native
+  def init(options: js.Dictionary[js.Any]): Unit = js.native
   def Api: VkApi = js.native
   def Auth: VkAuth = js.native
 }

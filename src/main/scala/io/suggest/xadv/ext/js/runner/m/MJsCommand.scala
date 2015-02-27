@@ -17,7 +17,7 @@ object MJsCommand extends FromStringT {
 
   override type T = ICmd
 
-  def fromDyn(raw: js.Dynamic): T = {
+  def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Dynamic]]
     d.get(TYPE_FN)
       .map(_.toString)
@@ -76,7 +76,7 @@ object MCommandTypes extends MCommandTypesLightT {
     override def dyn2cmd(d: Dictionary[js.Dynamic]): Option[MActionCmd] = {
       d.get(MCTX_FN).map { mctxDyn =>
         MActionCmd(
-          mctx    = MJsCtx.fromDyn(mctxDyn),
+          mctx    = MJsCtx.fromJson(mctxDyn),
           replyTo = d.get(REPLY_TO_FN).map(_.toString)
         )
       }

@@ -16,18 +16,16 @@ object MSize2D extends FromStringT {
 
   override type T = MSize2D
 
-  override def fromDyn(raw: js.Dynamic): T = {
+  override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[Int]] : WrappedDictionary[Int]
     MSize2D(width = d(WIDTH_FN), height = d(HEIGHT_FN))
   }
 }
 
-case class MSize2D(width: Int, height: Int) {
-  def toJson: js.Dynamic = {
-    val lit = js.Dynamic.literal()
-    lit.updateDynamic(WIDTH_FN)(width)
-    lit.updateDynamic(HEIGHT_FN)(height)
-    lit
-  }
+case class MSize2D(width: Int, height: Int) extends IToJsonDict {
+  override def toJson = js.Dictionary[js.Any](
+    WIDTH_FN  -> width,
+    HEIGHT_FN -> height
+  )
 }
 

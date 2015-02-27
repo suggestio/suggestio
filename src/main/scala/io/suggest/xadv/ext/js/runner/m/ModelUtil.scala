@@ -9,20 +9,26 @@ import scala.scalajs.js
  * Description: утиль для ускорения построения моделей.
  */
 
-/** Добавить метод fromString() в статическую модель, поддерживающую десериализацию fromDyn(). */
-trait FromStringT {
-
+trait FromJsonT {
   type T
-
-  def fromDyn(raw: js.Dynamic): T
-
-  def fromString(s: String): T = {
-    fromDyn( js.JSON.parse(s) )
-  }
-
+  def fromJson(raw: js.Any): T
 }
 
+
+/** Добавить метод fromString() в статическую модель, поддерживающую десериализацию fromDyn(). */
+trait FromStringT extends FromJsonT {
+  def fromString(s: String): T = {
+    fromJson( js.JSON.parse(s) )
+  }
+}
+
+/** Интерфейс сериализации в JSON. */
 trait IToJson {
-  def toJson: js.Dynamic
+  def toJson: js.Any
+}
+
+/** Интерфейс сериализации в JSON object. */
+trait IToJsonDict extends IToJson {
+  def toJson: js.Dictionary[js.Any]
 }
 
