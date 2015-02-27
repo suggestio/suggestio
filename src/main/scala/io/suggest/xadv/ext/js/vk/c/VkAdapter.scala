@@ -264,15 +264,16 @@ class VkAdapter extends IAdapter {
           url = res.uploadUrl,
           partName = "photo"
         )
+        val mads1 = mctx0.mads.map { mad =>
+          val someUlCtx = Some(ulCtx)
+          val pic1 = mad.picture match {
+            case Some(ctx) => ctx.copy(upload = someUlCtx)
+            case None      => MAdPictureCtx(upload = someUlCtx)
+          }
+          mad.copy(picture = Some(pic1))
+        }
         mctx0.copy(
-          mads = mctx0.mads.map { mad =>
-            val someUlCtx = Some(ulCtx)
-            val pic1 = mad.picture match {
-              case Some(ctx) => ctx.copy(upload = someUlCtx)
-              case None      => MAdPictureCtx(upload = someUlCtx)
-            }
-            mad.copy(picture = Some(pic1))
-          },
+          mads   = mads1,
           status = Some(MAnswerStatuses.FillContext),
           custom = Some(vkCtx.toJson)
         )
