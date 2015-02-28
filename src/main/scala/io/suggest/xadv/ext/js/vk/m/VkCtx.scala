@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
+import io.suggest.xadv.ext.js.runner.m.IToJsonDict
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
 import scala.scalajs.js
@@ -47,10 +48,10 @@ import VkCtx._
 case class VkCtx(
   login   : Option[VkLoginResult],
   tgVkId  : Option[Long] = None
-) {
+) extends IToJsonDict {
 
   /** Сериализация в JSON (js.Dynamic). */
-  def toJson: js.Dictionary[js.Any] = {
+  override def toJson: js.Dictionary[js.Any] = {
     val d = js.Dictionary.empty[js.Any]
     if (login.isDefined)
       d.update(LOGIN_FN, login.get.toJson)

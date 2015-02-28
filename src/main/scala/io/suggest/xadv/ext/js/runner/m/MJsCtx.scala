@@ -75,8 +75,10 @@ trait MJsCtxT extends IToJsonDict {
       ACTION_FN   -> action.strId,
       SERVICE_FN  -> service.toJson
     )
-    if (mads.nonEmpty)
-      d.update(ADS_FN, mads.map(_.toJson))
+    if (mads.nonEmpty) {
+      val madsSer = mads.map(_.toJson)
+      d.update(ADS_FN, madsSer)
+    }
     if (domains.nonEmpty)
       d.update(DOMAIN_FN, domains)
     if (target.nonEmpty)
@@ -113,7 +115,7 @@ trait MErrorInfoT extends IToJsonDict {
   def args: Seq[String]
 
   def toJson = js.Dictionary[js.Any](
-    MSG_FN -> msg,
+    MSG_FN  -> msg,
     ARGS_FN -> args
   )
 }

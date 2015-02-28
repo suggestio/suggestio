@@ -22,6 +22,7 @@ trait FromStringT extends FromJsonT {
   }
 }
 
+
 /** Интерфейс сериализации в JSON. */
 trait IToJson {
   def toJson: js.Any

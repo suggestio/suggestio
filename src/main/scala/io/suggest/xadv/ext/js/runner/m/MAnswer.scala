@@ -12,8 +12,8 @@ import scala.scalajs.js
  */
 
 case class MAnswer(
-  replyTo: Option[String],
-  mctx: MJsCtx
+  replyTo : Option[String],
+  mctx    : MJsCtx
 ) {
 
   def toJson: js.Dictionary[js.Any] = {

@@ -226,16 +226,6 @@ class VkAdapter extends IAdapter {
 
 
   /**
-   * Узнать URL для заливки картинки.
-   * @param vkTgId id таргета на стороне vk.
-   * @return Фьючерс со ссылкой для заливки.
-   */
-  protected def getWallUploadUrl(vkTgId: Long): Future[String] = {
-    ???
-  }
-
-
-  /**
    * Первый шаг постинга на стену.
    * Метод производит действия, связанные с загрузкой картинки в хранилище внешнего сервиса.
    *
