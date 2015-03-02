@@ -340,13 +340,14 @@ reg.emailpw.email.subj=Confirm your registration in Suggest.io network
 adv.ext.ret.sc=My showcase
 adv.ext.ret.ad=This ad
 
-e.ext.adv.unathorized=User not authorized
-e.ext.adv.permissions=User have not permissions
-e.ext.adv.permissions.group=Your message will not be displayed on the page {0}
-e.ext.adv.target.url.invalid=Invalid url
-e.ext.adv.api.login=Failed to complete login procedure: {0} ({1}: {2})
-e.adv.ext.api.init=Failed to get remote service client online. ({1}: {2})
-e.adv.ext.api=Error during talking with remote service: {0} ({1}: {2})
+e.ext.adv.unathorized=User not authorized.
+e.ext.adv.permissions=User have not permissions.
+e.ext.adv.permissions.group=Your message will not be displayed on the page {0}.
+e.ext.adv.target.url.invalid=Invalid url.
+e.ext.adv.api.login=Failed to complete login procedure: {0} ({1}: {2}).
+e.adv.ext.api.init=Failed to get remote service client online. ({1}: {2}).
+e.adv.ext.api=Error during talking with remote service: {0} ({1}: {2}).
+e.adv.ext.adp.internal=Internal error in {1} client: {2}.
 
 passwords.do.not.match=Passwords does not match. Please try again.
 
