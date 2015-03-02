@@ -18,7 +18,7 @@ object VkGroupGetByIdArgs {
 
   def CAN_POST_FN = "can_post"
 
-  def apply(groupId: Long, fields: String): VkGroupGetByIdArgs = {
+  def apply(groupId: UserId_t, fields: String): VkGroupGetByIdArgs = {
     apply(groupId.toString, fields)
   }
 }
