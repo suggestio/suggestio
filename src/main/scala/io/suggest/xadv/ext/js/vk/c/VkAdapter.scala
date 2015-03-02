@@ -25,7 +25,7 @@ object VkAdapter {
 
   /** Относится ли указанный домен к текущему клиенту? */
   def isMyDomain(domain: String): Boolean = {
-    domain.matches("(www\\.)?vk(ontakte)?\\.(ru|com)")
+    domain matches "(www\\.)?vk(ontakte)?\\.(ru|com)"
   }
 
   private def SCRIPT_LOAD_TIMEOUT_MS = 10000
