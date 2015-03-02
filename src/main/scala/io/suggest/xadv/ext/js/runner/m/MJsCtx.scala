@@ -4,6 +4,7 @@ import io.suggest.adv.ext.model.ctx.MJsCtxFieldsT
 
 import scala.scalajs.js
 import scala.scalajs.js.WrappedDictionary
+import js.JSConverters._
 
 /**
  * Suggest.io
@@ -77,10 +78,10 @@ trait MJsCtxT extends IToJsonDict {
     )
     if (mads.nonEmpty) {
       val madsSer = mads.map(_.toJson)
-      d.update(ADS_FN, madsSer)
+      d.update(ADS_FN, madsSer.toJSArray)
     }
     if (domains.nonEmpty)
-      d.update(DOMAIN_FN, domains)
+      d.update(DOMAIN_FN, domains.toJSArray)
     if (target.nonEmpty)
       d.update(TARGET_FN, target.get.toJson)
     if (status.nonEmpty)
@@ -116,7 +117,7 @@ trait MErrorInfoT extends IToJsonDict {
 
   def toJson = js.Dictionary[js.Any](
     MSG_FN  -> msg,
-    ARGS_FN -> args
+    ARGS_FN -> args.toJSArray
   )
 }
 

@@ -29,17 +29,17 @@ object MAskActions extends MAskActionLightBaseT {
 
   override type T = Val
 
-
+  /** Запрос инициализации клиента. */
   override val EnsureReady: T = new Val(ENSURE_READY) {
     override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = {
-      adapter.ensureReady(mctx)
+      adapter.ensureReadySafe(mctx)
     }
   }
 
-
+  /** Запрос размещения цели. */
   override val HandleTarget: T = new Val(HANDLE_TARGET) {
     override def processAction(adapter: IAdapter, mctx: MJsCtx): Future[MJsCtx] = {
-      adapter.handleTarget(mctx)
+      adapter.handleTargetSafe(mctx)
     }
   }
 

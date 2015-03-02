@@ -12,7 +12,7 @@ import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
  * Description:
  */
 
-case class VkPhotosGetWallUploadServerArgs(userId: Long) extends IToJsonDict {
+case class VkPhotosGetWallUploadServerArgs(userId: UserId_t) extends IToJsonDict {
   override def toJson = Dictionary[Any](
     "user_id" -> userId
   )

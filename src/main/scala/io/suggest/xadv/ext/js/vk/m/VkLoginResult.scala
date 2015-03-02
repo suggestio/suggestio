@@ -52,7 +52,10 @@ object VkLoginResult extends FromJsonT {
         val userDic = d.get("user")
           .fold [WrappedDictionary[String]] (WrappedDictionary.empty) (_.asInstanceOf[js.Dictionary[String]])
         VkLoginResult(
-          vkId = userDic.get("id").orElse(sessionDic.get("mid").map(_.toString)).get,
+          // TODO Небезопасно, т.к. от vk всегда приходит строка.
+          vkId = userDic.get("id")
+            .orElse { sessionDic.get("mid").map(_.toString) }
+            .get.toInt,
           name = getName(userDic)
         )
       }
@@ -61,7 +64,7 @@ object VkLoginResult extends FromJsonT {
   override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
     VkLoginResult(
-      vkId = d(VK_ID_FN),
+      vkId = d(VK_ID_FN).asInstanceOf[Int],
       name = d.get(NAME_FN)
     )
   }
@@ -87,7 +90,7 @@ object VkLoginResult extends FromJsonT {
 
 import VkLoginResult._
 
-case class VkLoginResult(vkId: String, name: Option[String]) extends IToJsonDict {
+case class VkLoginResult(vkId: UserId_t, name: Option[String]) extends IToJsonDict {
   override def toJson = {
     val d = js.Dictionary[js.Any](
       VK_ID_FN -> vkId

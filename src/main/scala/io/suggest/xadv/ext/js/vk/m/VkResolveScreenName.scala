@@ -33,19 +33,15 @@ case class VkResolveScreenNameArgs(screenName: String) extends IToJsonDict {
 
 object VkResolveScreenNameResult extends FromJsonT {
 
-  override type T = VkResolveScreenNameResult
+  override type T = VkTargetInfo
 
   /** Десериализация ответа API. */
   override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Any]] : WrappedDictionary[js.Any]
-    VkResolveScreenNameResult(
-      vkType  = d("type").toString,
-      vkId    = d("object_id").asInstanceOf[Long]
+    VkTargetInfo(
+      tgType = VkTargetTypes.withName( d("type").toString ),
+      id     = d("object_id").asInstanceOf[Int]
     )
   }
 
 }
-
-/** Результат вызовы resolveScreenName(). */
-case class VkResolveScreenNameResult(vkType: String, vkId: Long)
-

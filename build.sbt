@@ -8,9 +8,12 @@ version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   "io.suggest"    %% "advext-common"  % "0.0.0-SNAPSHOT",
-  "org.scala-js"  %%% "scalajs-dom"   % "0.8.0"
-  //"com.lihaoyi"   %%% "upickle"       % "0.2.+"
+  "org.scala-js"  %%% "scalajs-dom"   % "0.8.0",
+  //"com.lihaoyi"   %%% "upickle"       % "0.2.+",
+  "org.monifu" %%% "minitest" % "0.11" % "test"
 )
 
 persistLauncher in Compile := true
+
+testFrameworks += new TestFramework("minitest.runner.Framework")
 

@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import scala.scalajs.js
+import js.JSConverters._
 import scala.scalajs.js.WrappedDictionary
 import io.suggest.adv.ext.model.ctx.MAdContentCtx._
 
@@ -39,7 +40,7 @@ case class MAdContentCtx(
   def toJson = {
     val d = js.Dictionary.empty[js.Any]
     if (fields.nonEmpty)
-      d.update(FIELDS_FN, fields.map(_.toJson))
+      d.update(FIELDS_FN, fields.iterator.map(_.toJson).toJSArray)
     if (title.nonEmpty)
       d.update(TITLE_FN, title.get)
     if (descr.nonEmpty)

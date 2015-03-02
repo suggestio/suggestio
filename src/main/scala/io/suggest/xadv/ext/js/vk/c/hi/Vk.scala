@@ -69,7 +69,7 @@ object VkApi {
    * @see [[https://vk.com/dev/utils.resolveScreenName]]
    * @return Фьючерс с результатом вызова.
    */
-  def resolveScreenName(args: VkResolveScreenNameArgs): Future[VkResolveScreenNameResult] = {
+  def resolveScreenName(args: VkResolveScreenNameArgs): Future[VkTargetInfo] = {
     mkCall("utils.resolveScreenName", args, VkResolveScreenNameResult)
   }
 
@@ -82,10 +82,28 @@ object VkApi {
     mkCall("groups.getById", args, VkGroupGetByIdResult)
   }
 
-  def photosGetWallUploadServer(args: VkPhotosGetWallUploadServerArgs): Future[VkPhotosGetWallUploadServerResult] = {
+  /**
+   * Получить ссылку для загрузки картинки.
+   * @param args Аргументы вызова метода.
+   * @return Фьючерс с результатом вызова.
+   */
+  def photosGetWallUploadServer(args: VkPhotosGetWallUploadServerArgs) = {
     mkCall("photos.getWallUploadServer", args, VkPhotosGetWallUploadServerResult)
   }
 
+  /**
+   * Присоединить загруженную картинку к стене указанного аккаунта.
+   * @param args Аргументы вызова метода.
+   * @return Фьючес с результатом вызова.
+   */
+  def saveWallPhoto(args: VkSaveWallPhotoArgs) = mkCall("photos.saveWallPhoto", args, VkSaveWallPhotoResult)
+
+  /**
+   * Постинг описаного сообщения на стену указанного vk-объекта.
+   * @param args Параметры вызова.
+   * @return Фьючерс с результом вызова.
+   */
+  def wallPost(args: VkWallPostArgs) = mkCall("wall.post", args, VkWallPostResult)
 }
 
 
