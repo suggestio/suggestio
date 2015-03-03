@@ -274,7 +274,7 @@ Yeoman.yeomanSettings ++ Yeoman.withTemplates
 // У плагина sbt-filter почему-то фильтры наоборот работают. Об этом в README сказано.
 // https://github.com/rgcottrell/sbt-filter
 includeFilter in filter := {
-  "*.md5.md5" || "*.scala.*" ||
+  "*.md5.md5" || "*.scala.*" || "*.scala" ||
   "*.js.src.js" || "*.js.src.js.md5" ||
   "*.coffee" || "*.coffee.md5" || "*.coffee.map" ||
   "*.styl" || "*.styl.md5" ||
