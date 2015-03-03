@@ -126,7 +126,7 @@ trait MErrorInfoT extends IToJsonDict {
       d.update(ARGS_FN, _args.toJSArray)
     // info
     val _info = info
-    if (_info.isEmpty)
+    if (_info.nonEmpty)
       d.update(INFO_FN, _info.get)
     // return
     d

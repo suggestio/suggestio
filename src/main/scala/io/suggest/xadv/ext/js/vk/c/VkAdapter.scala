@@ -28,7 +28,7 @@ object VkAdapter {
     domain matches "(www\\.)?vk(ontakte)?\\.(ru|com)"
   }
 
-  private def SCRIPT_LOAD_TIMEOUT_MS = 10000
+  private def SCRIPT_LOAD_TIMEOUT_MS = 6000
 
   private def SCRIPT_URL = "https://vk.com/js/api/openapi.js"
 
