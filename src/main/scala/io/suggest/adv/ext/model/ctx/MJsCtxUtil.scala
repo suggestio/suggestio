@@ -77,8 +77,12 @@ object PicUploadCtx {
 }
 
 object MErrorInfo {
-  def MSG_FN  = "msg"
-  def ARGS_FN = "args"
+  /** Название поля с кодом сообщения об ошибке. */
+  def MSG_FN        = "m"
+  /** Название поля с массивом параметров рендера сообщения. */
+  def ARGS_FN       = "a"
+  /** Название поля с технической информаций по ошибке в виде произвольного JSON. */
+  def INFO_FN       = "i"
 }
 
 
