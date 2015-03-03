@@ -7,7 +7,6 @@ import play.api.mvc._
 import util.ident.IdentUtil
 import views.html.ident._
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.concurrent.Future
 import models._
 
 /**

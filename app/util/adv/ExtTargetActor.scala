@@ -150,10 +150,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     val html = rargs.mevent.etype.render(rargs)
     val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
     val jsa = InnerHtmlById(replyTo, htmlStr)
-    val cmd = JsCommand(
-      cmd       = jsa.renderToString(),
-      sendMode  = CmdSendModes.Async
-    )
+    val cmd = JsCmd( jsa.renderToString() )
     sendCommand(cmd)
   }
 
@@ -167,10 +164,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       val html = etype.render(rargs)
       val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
       val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
-      val cmd = JsCommand(
-        cmd       = jsa.renderToString(),
-        sendMode  = CmdSendModes.Async
-      )
+      val cmd = JsCmd( jsa.renderToString() )
       sendCommand(cmd)
     }
 
@@ -248,8 +242,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   class HandleTargetState(mctx0: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val cmd = JsCommand(
-        jsBuilder = HandleTargetAsk(mctx0, replyTo = Some(replyTo)),
+      val cmd = HandleTargetAsk(
+        mctx0     = mctx0,
+        replyTo   = Some(replyTo),
         sendMode  = CmdSendModes.Queued
       )
       sendCommand(cmd)
@@ -268,7 +263,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           ErrorInfo(
             msg = jserr.msg,
             args = jserr.args,
-            info = Some(jserr.other.toString())
+            info = jserr.other.map(_.toString)
           )
         case None =>
           ErrorInfo(

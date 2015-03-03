@@ -60,6 +60,7 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
       super.afterBecome()
       // Отправить запрос на подготовку к работе.
       val mctx0 = MJsCtx(
+        action = Some(MJsActions.EnsureReady),
         domain = args.targets
           .iterator
           .map { tg => UrlUtil.url2dkey(tg.target.url) }
@@ -67,8 +68,7 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
           .toSeq,
         service = Some(args.service)
       )
-      val jsAsk = EnsureReadyAsk(mctx0, replyTo = Some(replyTo))
-      val cmd = JsCommand(jsAsk, CmdSendModes.Queued)
+      val cmd = EnsureReadyAsk(mctx0, replyTo = Some(replyTo))
       sendCommand(cmd)
     }
 
@@ -111,9 +111,8 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
             val html = rargs.mevent.etype.render(rargs)
             val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
             val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
-            val cmd = JsCommand(
-              cmd       = jsa.renderToString(),
-              sendMode  = CmdSendModes.Async
+            val cmd = JsCmd(
+              jsCode = jsa.renderToString()
             )
             sendCommand(cmd)
         }
@@ -121,6 +120,5 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
         context.stop(self)
     }
   }
-
 
 }

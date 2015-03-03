@@ -325,10 +325,11 @@ adv.ext.i.at.tw=My twitter
 
 error.service.unknown=This website is not supported.
 error.required.at.least.one.adv.service=Choose at least one service from the list above.
+e.url.load.failed=Unable to load "{0}". Timeout occured ({1} ms).
 
 error.adv.ext.s2s.img.upload.refused=Remote server {0} refused to upload image.
 error.adv.ext.s2s.img.upload.failed=Failed to establish connection to remote server {0}. Unable to upload image.
-error.sio.internal=Internal suggest.io error.
+error.sio.internal=Internal suggest.io error. {0} {1}
 error.adv.ext.js.refused=Advertising refused or cancelled.
 
 e.event.not.found=Event not exists.
@@ -338,10 +339,15 @@ reg.emailpw.email.subj=Confirm your registration in Suggest.io network
 adv.ext.ret.sc=My showcase
 adv.ext.ret.ad=This ad
 
-e.ext.adv.unathorized=User not authorized
-e.ext.adv.permissions=User have not permissions
-e.ext.adv.permissions.group=Your message will not be displayed on the page {0}
-e.ext.adv.target.url.invalid=Invalid url
+e.ext.adv.unathorized=User not authorized.
+e.ext.adv.permissions=User have not permissions.
+e.ext.adv.permissions.group=Your message will not be displayed on the page {0}.
+e.ext.adv.target.url.invalid=Invalid url.
+e.adv.ext.api.login=Failed to complete login procedure.
+e.adv.ext.api.init=Failed to get remote service client online.
+e.adv.ext.api=Error during talking with remote service.
+e.adv.ext.adp.internal=Internal error in {1} client.
+e.adv.ext.dom.update=Cannot update current page.
 
 passwords.do.not.match=Passwords does not match. Please try again.
 

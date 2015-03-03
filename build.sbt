@@ -30,18 +30,14 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.17.0-SNAPSHOT" changing()
-    exclude("org.jruby", "jruby-complete")
-    exclude("org.slf4j", "slf4j-log4j12")
-    exclude("log4j", "log4j")
-    exclude("org.slf4j", "log4j-over-slf4j")
-    ,
-  "io.suggest" %% "util-play" % "2.4.0-SNAPSHOT"
+  "io.suggest" %% "util" % "2.0.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
+  "io.suggest" %% "advext-common" % "0.0.0-SNAPSHOT",
+  "io.suggest" %% "model-enum-util" % "0.0.0-SNAPSHOT",
   // для разбора upload-частей, нужна помощь mime magic bytes
   "jmimemagic" % "jmimemagic" % "0.1.2"
     exclude("xml-apis", "xml-apis")
@@ -123,7 +119,8 @@ libraryDependencies ++= Seq(
     exclude("org.w3c.css", "sac")
 )
 
-play.Play.projectSettings
+// 2015.feb.26 Не надо этого делать, иначе в sio/2/Build.scala начинается тихий конфликт с доп.сеттингами оттуда.
+//play.Play.projectSettings
 
 
 // Добавляем задачу сжатия всех сгенеренных js/css файлов.
@@ -177,7 +174,7 @@ excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 
 // sbt-web
-pipelineStages := Seq(rjs, digest, simpleUrlUpdate, digest, gzip)
+pipelineStages ++= Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
 
 testOptions in Test += Tests.Argument("-oF")
 
@@ -272,4 +269,17 @@ javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 //routesGenerator := InjectedRoutesGenerator
 
 Yeoman.yeomanSettings ++ Yeoman.withTemplates
+
+// Вычистить гарантировано ненунжные ассеты. Они появляются из-за двойного вызова sbt-digest.
+// У плагина sbt-filter почему-то фильтры наоборот работают. Об этом в README сказано.
+// https://github.com/rgcottrell/sbt-filter
+includeFilter in filter := {
+  "*.md5.md5" || "*.scala.*" || "*.scala" ||
+  "*.js.src.js" || "*.js.src.js.md5" ||
+  "*.coffee" || "*.coffee.md5" || "*.coffee.map" ||
+  "*.styl" || "*.styl.md5" ||
+  "*.less" || "*.less.md5" ||
+  "*-fastopt.js" || "*-fastopt.js.map" || "*-fastopt.js.md5" ||  // scala.js дебажный хлам в финальном билде не нужен.
+  new PatternFilter("\\.*[a-f\\d]{32}-[a-f\\d]{32}-.+\\.[_\\w\\d.]+".r.pattern)   // Нужно фильтровать ассеты с двумя чексуммами в имени.
+}
 

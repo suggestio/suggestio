@@ -2,6 +2,7 @@ package models.adv.js.ctx
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.adv.ext.model.ctx.MAdPictureCtx._
 
 /**
  * Suggest.io
@@ -11,11 +12,6 @@ import play.api.libs.functional.syntax._
  */
 
 object MPictureCtx {
-
-  val SIZE_FN     = "size"
-  val UPLOAD_FN   = "upload"
-  val SIO_URL_FN  = "sioUrl"
-  val SAVED_FN    = "saved"
 
   /** mapper из JSON. */
   implicit def reads: Reads[MPictureCtx] = (

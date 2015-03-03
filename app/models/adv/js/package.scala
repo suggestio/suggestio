@@ -7,8 +7,11 @@ package models.adv
  */
 package object js {
 
-  type AnswerStatus = AnswerStatuses.AnswerStatus
+  type AnswerStatus = AnswerStatuses.T
 
-  type CmdSendMode  = CmdSendModes.CmdSendMode
+  type CmdSendMode  = CmdSendModes.T
 
+  type MJsCmdType   = MJsCmdTypes.T
+
+  type MJsAction    = MJsActions.T
 }

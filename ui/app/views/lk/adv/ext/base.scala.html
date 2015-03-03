@@ -3,16 +3,10 @@
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
 
-@headAfter = {
-  <script data-main="@routes.Assets.versioned("scripts/lk/xadv/ext/siopr.js")"
-          src="@routes.Assets.versioned("scripts/require.js")"></script>
-}
-
-
 @lk.adv.advBase(
   title     = title,
   mad       = mad,
   producer  = mnode,
   rightLink = LkAdvRightLinks.LARL_EXT,
-  headAfter = Some(headAfter)
+  headAfter = headAfter
 )(content)

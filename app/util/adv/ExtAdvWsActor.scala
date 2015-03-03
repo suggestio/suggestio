@@ -45,18 +45,18 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   protected var _jsAskLock: Boolean = false
 
   /** Очередь команд для клиента. */
-  protected var _queue = Queue[JsCommand]()
+  protected var _queue = Queue[IWsCmd]()
 
   val rnd = new Random()
 
   /** Сериализация и отправка одной js-команды в веб-сокет. */
-  def sendJsCommand(jsCmd: JsCommand): Unit = {
+  def sendJsCommand(jsCmd: IWsCmd): Unit = {
     out ! Json.toJson(jsCmd)
   }
 
   /** Получена js-команда от какого-то актора. Нужно в зависимости от ситуации отправить её в очередь
     * или же отправить немедлено, выставив флаг блокировки. */
-  def enqueueCommand(ask: JsCommand): Unit = {
+  def enqueueCommand(ask: IWsCmd): Unit = {
     if (_jsAskLock) {
       // Клиент отрабатывает другой ask. Значит отправить в очередь.
       trace("Asking still locked. 1 command queued.")
@@ -131,7 +131,6 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
           // Сгруппировать таргеты по сервисам, запустить service-акторов, которые занимаются инициализацией клиентов сервисов.
-          val _mctx0 = MJsCtx()
           targets.groupBy(_.target.service).foreach {
             case (_service, _srvTgs) =>
               trace(s"Starting service ${_service} actor with ${_srvTgs.size} targets...")
@@ -139,7 +138,6 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
                 override def service            = _service
                 override def targets            = _srvTgs
                 override def _eaArgsUnderlying  = eactx
-                override def mctx0              = _mctx0
                 override def wsMediatorRef      = self
               }
               context.actorOf(ExtServiceActor.props(actorArgs), name = guessChildName())
@@ -181,12 +179,12 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
         }
 
       // Подчинённый актор хочет отправить js-код для исполнения на клиенте.
-      case jsCmd: JsCommand =>
-        jsCmd.sendMode match {
+      case wsCmd: IWsCmd =>
+        wsCmd.sendMode match {
           case CmdSendModes.Async =>
-            sendJsCommand(jsCmd)
+            sendJsCommand(wsCmd)
           case CmdSendModes.Queued =>
-            enqueueCommand(jsCmd)
+            enqueueCommand(wsCmd)
         }
 
       // Народ требует новых акторов.

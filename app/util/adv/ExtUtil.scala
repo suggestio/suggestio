@@ -2,7 +2,7 @@ package util.adv
 
 import java.net.URL
 import models.adv._
-import models.adv.js.JsCommand
+import models.adv.js.IWsCmd
 import play.api.data._, Forms._
 import util.FormUtil
 import util.FormUtil.{urlM, esIdUuidM}
@@ -82,8 +82,8 @@ trait MediatorSendCommand {
 
   def args: WsMediatorRef
 
-  def sendCommand(jsc: JsCommand): Unit = {
-    args.wsMediatorRef ! jsc
+  def sendCommand(cmd: IWsCmd): Unit = {
+    args.wsMediatorRef ! cmd
   }
 
 }
