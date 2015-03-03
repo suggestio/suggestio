@@ -338,7 +338,6 @@ adv.ext.i.at.tw=Мой твиттер
 error.service.unknown=Этот сайт не поддерживается.
 error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.
 e.js.script.load.failed=Не удалось загрузить {0}. Возник таймаут соединения ({1} мс).
-e.dom.update=Не удаётся изменить содержимое текущей страницы. {0} {1}
 error.adv.ext.s2s.img.upload.refused=Сервер {0} отказал в загрузке картинки.
 error.adv.ext.s2s.img.upload.failed=Не удалось установить соединение с сервером {0}. Нельзя загрузить картинку.
 error.sio.internal=Внутренняя ошибка suggest.io. {0} {1}
@@ -355,10 +354,11 @@ e.ext.adv.unathorized=Пользователь не авторизован.
 e.ext.adv.permissions=Недостаточно прав.
 e.ext.adv.permissions.group=Ваш пост не будет отображаться на странице {0}.
 e.ext.adv.target.url.invalid=Некорректный url цели.
-e.ext.adv.api.login=Возникла ошибка в процедуре логина: {0} ({1}: {2}).
-e.adv.ext.api.init=Не удалось инициализировать клиент. ({0}: {1}).
-e.adv.ext.api=Ошибка взаимодействия с сервисом: {0} ({1}: {2}).
-e.adv.ext.adp.internal=Внутренняя ошибка в клиенте {1}: {2}.
+e.adv.ext.api.login=Возникла ошибка в процедуре логина.
+e.adv.ext.api.init=Не удалось инициализировать клиент.
+e.adv.ext.api=Ошибка взаимодействия с сервисом.
+e.adv.ext.adp.internal=Внутренняя ошибка в клиенте {1}.
+e.adv.ext.dom.update=Не удаётся изменить содержимое текущей страницы.
 
 passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
 

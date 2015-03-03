@@ -263,7 +263,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           ErrorInfo(
             msg = jserr.msg,
             args = jserr.args,
-            info = Some(jserr.other.toString())
+            info = jserr.other.map(_.toString)
           )
         case None =>
           ErrorInfo(
