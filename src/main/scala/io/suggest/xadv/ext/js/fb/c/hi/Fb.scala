@@ -1,10 +1,13 @@
 package io.suggest.xadv.ext.js.fb.c.hi
 
 import io.suggest.xadv.ext.js.fb.c.low.FbLow
-import io.suggest.xadv.ext.js.fb.m.FbInitOptions
+import io.suggest.xadv.ext.js.fb.m._
+import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
+import scala.scalajs.js.{Dictionary, Any}
 
 /**
  * Suggest.io
@@ -15,6 +18,8 @@ import scala.concurrent.Future
 
 object Fb {
 
+  private def HTTP_POST = "POST"
+
   /**
    * Высокоуровневая асинхронная инициализация facebook js API.
    * @param opts Экземпляр параметров инициализации.
@@ -24,6 +29,68 @@ object Fb {
     Future {
       FbLow init opts.toJson
     }
+  }
+
+  /**
+   * Запустить процедура залогинивания юзера в пейсбук.
+   * @param args Параметры логина.
+   * @return Future.successful с результатом успешного логина.
+   *         Future.failed если не удалось запустить логин или распарсить результат.
+   */
+  def login(args: FbLoginArgs): Future[FbLoginResult] = {
+    val p = Promise[FbLoginResult]()
+    try {
+      FbLow.login(
+        {resp: Dictionary[Any] =>
+          try {
+            p success FbLoginResult.fromLoginResp(resp)
+          } catch {
+            case ex: Throwable =>
+              p failure LoginApiException("Failed to process FB.login() result.", ex)
+          }
+        },
+        args.toJson
+      )
+    } catch {
+      case ex: Throwable =>
+        p failure LoginApiException("Failed to call FB.login().", ex)
+    }
+    p.future
+  }
+
+
+  /** Высокоуровневый вызов к API. */
+  protected def apiCallSafe[T1](httpMethod: String, path: String, args: IToJsonDict, model: FromJsonT { type T = T1 }): Future[T1] = {
+    val p = Promise[T1]()
+    try {
+      FbLow.api(
+        path        = path,
+        httpMethod  = httpMethod,
+        args        = args.toJson,
+        callback    = {resp: Dictionary[Any] =>
+          try {
+            p success model.fromJson(resp)
+          } catch {
+            case ex: Throwable =>
+              p failure ApiException(s"$httpMethod $path result")
+          }
+        }
+      )
+    } catch {
+      case ex: Throwable =>
+        p failure ApiException(s"$httpMethod $path call", ex)
+    }
+    p.future
+  }
+
+
+  def mkPost(fbTg: IFbTarget, args: FbPost) = {
+    apiCallSafe(
+      httpMethod = HTTP_POST,
+      path  = s"/${fbTg.id}/feed",
+      args  = args,
+      model = FbPostResult
+    )
   }
 
 }

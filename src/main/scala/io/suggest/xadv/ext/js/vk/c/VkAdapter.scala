@@ -218,7 +218,7 @@ class VkAdapter extends IAdapter {
         if (res.canPost.exists(identity) && res.deactivated.isEmpty)
           Future successful vktg
         else
-          Future failed PostingProhibitedException(res.name)
+          Future failed PostingProhibitedException(res.name, Some(res.toString))
       }
 
     } else {

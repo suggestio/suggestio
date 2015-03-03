@@ -114,15 +114,28 @@ import io.suggest.adv.ext.model.ctx.MErrorInfo._
 trait MErrorInfoT extends IToJsonDict {
   def msg: String
   def args: Seq[String]
+  def info: Option[js.Any]
 
-  def toJson = js.Dictionary[js.Any](
-    MSG_FN  -> msg,
-    ARGS_FN -> args.toJSArray
-  )
+  def toJson = {
+    val d = js.Dictionary[js.Any](
+      MSG_FN  -> msg
+    )
+    // args
+    val _args = args
+    if (_args.nonEmpty)
+      d.update(ARGS_FN, _args.toJSArray)
+    // info
+    val _info = info
+    if (_info.isEmpty)
+      d.update(INFO_FN, _info.get)
+    // return
+    d
+  }
 }
 
 case class MErrorInfo(
   msg   : String,
-  args  : Seq[String] = Seq.empty
+  args  : Seq[String] = Seq.empty,
+  info  : Option[js.Any] = None
 ) extends MErrorInfoT
 

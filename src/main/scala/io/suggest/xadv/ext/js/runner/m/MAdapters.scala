@@ -1,11 +1,9 @@
 package io.suggest.xadv.ext.js.runner.m
 
+import io.suggest.xadv.ext.js.fb.c.FbAdapter
 import io.suggest.xadv.ext.js.vk.c.VkAdapter
-import org.scalajs.dom
 
-import scala.annotation.tailrec
 import scala.concurrent.Future
-import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -17,7 +15,8 @@ object MAdapters {
 
   /** Доступные адаптеры. Пока такая заглушка скорее, на будущее. */
   private[this] val adapters = Seq[IAdapter](
-    new VkAdapter
+    new VkAdapter,
+    new FbAdapter
   )
 
 

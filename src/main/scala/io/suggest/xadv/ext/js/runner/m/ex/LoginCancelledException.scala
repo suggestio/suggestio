@@ -11,4 +11,5 @@ import io.suggest.xadv.ext.js.runner.m.MErrorInfoT
 case class LoginCancelledException() extends Exception with MErrorInfoT {
   override def msg: String = "e.ext.adv.unathorized"
   override def args: Seq[String] = Seq.empty
+  override def info = None
 }

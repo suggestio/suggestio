@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.fb.c
 
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
-import io.suggest.xadv.ext.js.runner.m.ex.{UrlLoadTimeoutException, DomUpdateException, ApiInitException}
+import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MJsCtx, IAdapter}
 import org.scalajs.dom
 
@@ -27,6 +27,8 @@ object FbAdapter {
   /** Добавить тег со скриптом загрузки facebook js sdk. */
   private def addScriptTag(): Unit = {
     val d = dom.document
+    // TODO Надо ли вообще проверять наличие скрипта?
+    // У макса была какая-то костыльная проверка, сюда она перекочевала в упрощенном виде.
     val id = "facebook-jssdk"
     if (d.getElementById(id) == null) {
       val tag = d.createElement("script")
@@ -48,7 +50,7 @@ class FbAdapter extends IAdapter {
 
   /** Относится ли указанный домен к текущему клиенту? */
   override def isMyDomain(domain: String): Boolean = {
-    domain matches "^https?://(www\\.)?facebook.(com|net)/.*"
+    domain matches "(www\\.)?facebook.(com|net)"
   }
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
@@ -69,7 +71,7 @@ class FbAdapter extends IAdapter {
         case Failure(ex) =>
           p failure ApiInitException(ex)
       }
-      // Вычищаем эту фунцкию из памяти браузера.
+      // Вычищаем эту функцию из памяти браузера.
       window.fbAsyncInit = null
     }
     // Добавить скрипт facebook.js на страницу
@@ -90,7 +92,55 @@ class FbAdapter extends IAdapter {
     p.future
   }
 
+  /**
+   * Запуск логина и обрабока ошибок.
+   * @return Фьючерс с выверенным результатом логина.
+   */
+  protected def doLogin(): Future[FbLoginResult] = {
+    val args = FbLoginArgs(
+      scope = FbLoginArgs.SCOPE_PUBLISH_ACTIONS
+    )
+    Fb.login(args) flatMap { res =>
+      if (res.hasAuthResp)
+        Future successful res
+      else
+        Future failed LoginCancelledException()
+    }
+  }
+
+  /** Сборка и публикация поста. */
+  protected def publishPost(mctx0: MJsCtx, tgInfo: IFbTarget): Future[_] = {
+    // TODO Заимплеменчена обработка только первой карточки
+    val mad = mctx0.mads.head
+    val args = FbPost(
+      picture = mad.picture.flatMap(_.url),
+      message = None, //Some( mad.content.fields.iterator.map(_.text).mkString("\n") ),
+      link    = Some( mctx0.target.get.onClickUrl ),
+      name    = mad.content.title,
+      descr   = mad.content.descr
+    )
+    Fb.mkPost(tgInfo, args)
+      .flatMap { res =>
+        res.error match {
+          case some if some.isDefined =>
+            Future failed PostingProhibitedException(tgInfo.id, some)
+          case _ =>
+            Future successful res
+        }
+      }
+  }
+
   /** Запуск обработки одной цели. */
-  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = ???
+  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
+    // TODO Нужно оформить код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
+    doLogin() flatMap { _ =>
+      val tgInfo = FbTarget fromUrl mctx0.target.get.tgUrl
+      publishPost(mctx0, tgInfo)
+    } map { res =>
+      mctx0.copy(
+        status = Some(MAnswerStatuses.Success)
+      )
+    }
+  }
 
 }

@@ -24,18 +24,18 @@ object FbLow extends js.Object {
    * @param callback Функция реакции на результат логина.
    */
   def login(callback: js.Function1[js.Dictionary[js.Any], _],
-            params: js.Dictionary[js.Any] ): Unit = js.native
+            args: js.Dictionary[js.Any] ): Unit = js.native
 
   /**
    * Вызов к Facebook HTTP API.
    * @param path HTTP-путь для запроса.
    * @param httpMethod HTTP-метод для запроса.
-   * @param option JSON-параметры вызова.
+   * @param args JSON-параметры вызова.
    * @param callback Реакция на результат вызова.
    */
-  def api(path: String,
-          httpMethod: String,
-          option: js.Dictionary[js.Any],
-          callback: js.Function1[js.Dictionary[js.Any], _] ): Unit = js.native
+  def api(path        : String,
+          httpMethod  : String,
+          args        : js.Dictionary[js.Any],
+          callback    : js.Function1[js.Dictionary[js.Any], _] ): Unit = js.native
 
 }
