@@ -1,6 +1,7 @@
 package models.adv.js.ctx
 
 import io.suggest.model.EsModel.FieldsJsonAcc
+import models.event.IErrorInfo
 import play.api.libs.json._
 import io.suggest.adv.ext.model.ctx.MErrorInfo._
 
@@ -54,4 +55,6 @@ case class JsErrorInfo(
   msg   : String,
   args  : Seq[String]       = Seq.empty,
   other : Option[JsValue]   = None
-)
+) extends IErrorInfo {
+  override def info: Option[String] = other.map(_.toString())
+}

@@ -193,7 +193,7 @@ case class RenderArgs(
   advReqOpt     : Option[MAdvReq]     = None,
   advRefuseOpt  : Option[MAdvRefuse]  = None,
   extServiceOpt : Option[MExtService] = None,
-  errors        : Seq[ErrorInfo]      = Nil
+  errors        : Seq[IErrorInfo]     = Nil
 ) extends IArgsInfo with EmptyProduct {
 
   def hasErrors = errors.nonEmpty
@@ -222,6 +222,13 @@ trait EmptyProduct extends Product {
 }
 
 
+/** Интерфейс сообщения об ошибке. */
+trait IErrorInfo {
+  def msg  : String
+  def args : Seq[Any]
+  def info : Option[String]
+}
+
 /**
  * Инфа по ошибке.
  * @param msg Сообщение или его код в messages.
@@ -230,6 +237,7 @@ trait EmptyProduct extends Product {
  */
 case class ErrorInfo(
   msg   : String,
-  args  : Seq[Any] = Nil,
-  info  : Option[String] = None
-)
+  args  : Seq[Any]        = Nil,
+  info  : Option[String]  = None
+) extends IErrorInfo
+

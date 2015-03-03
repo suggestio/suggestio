@@ -8,21 +8,24 @@
 @_errorEvtBase(rargs) {
 
   @rargs.errors.map { err =>
-    <p class="event_err-text">Ошибка запуска сервиса@rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.nameI18N)&quot;}:
+    <p class="event_err-text">Ошибка запуска сервиса
+      @rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.nameI18N)&quot;}:
       @Messages(err.msg, err.args: _*)
     </p>
+  }
 
-    <div>
-      Следующие цели были пропущены:
-      <ul>
-        @rargs.advExtTgs.map { esrv =>
-          <li>
-            <a href="@esrv.url" target="_blank">@esrv.name.getOrElse(esrv.url)</a>
-          </li>
-        }
-      </ul>
-    </div>
+  <div>
+    Следующие цели были пропущены:
+    <ul>
+      @rargs.advExtTgs.map { esrv =>
+        <li>
+          <a href="@esrv.url" target="_blank">@esrv.name.getOrElse(esrv.url)</a>
+        </li>
+      }
+    </ul>
+  </div>
 
+  @rargs.errors.map { err =>
     @* Если есть доп.информация, то её рендерим под катом *@
     @if(err.info) {
       <p class="dark-link js-social-show-error">Показать технические подробности ошибки.</p>
@@ -31,4 +34,5 @@
       </div>
     }
   }
+
 }

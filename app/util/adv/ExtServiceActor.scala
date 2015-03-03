@@ -5,7 +5,7 @@ import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.js._
 import models.adv.js.ctx.MJsCtx
-import models.event.{MEventTmp, RenderArgs}
+import models.event.{ErrorInfo, MEventTmp, RenderArgs}
 import play.api.libs.json.JsString
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
@@ -106,7 +106,8 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
               adnNodeOpt    = Some(args.request.producer),
               advExtTgs     = args.targets.map(_.target),
               madOpt        = Some(args.request.mad),
-              extServiceOpt = Some(args.service)
+              extServiceOpt = Some(args.service),
+              errors        = ans.ctx2.error.toSeq
             )
             val html = rargs.mevent.etype.render(rargs)
             val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
