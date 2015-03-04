@@ -143,7 +143,7 @@ object VkApiAuth {
    * @return Фьючерс с результатами логина.
    */
   def login(accessLevel: Int): Future[Option[VkLoginResult]] = {
-    wrapped("login")(VkLow.Auth.login)
+    wrapped("login")(VkLow.Auth.login(_, accessLevel))
   }
 
 

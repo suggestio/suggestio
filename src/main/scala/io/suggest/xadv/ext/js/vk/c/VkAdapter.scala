@@ -197,7 +197,7 @@ class VkAdapter extends IAdapter {
 
       case None =>
         val vti = VkTargetInfo(
-          id = vkCtx.login.get.vkId.toInt,
+          id = vkCtx.login.get.vkId,
           tgType = VkTargetTypes.User
         )
         Future successful vti

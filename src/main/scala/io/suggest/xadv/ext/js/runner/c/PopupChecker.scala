@@ -30,7 +30,6 @@ object PopupChecker {
     } catch {
       case ex: Throwable =>
         dom.window.addEventListener("message", sioPopupOpened(_: dom.MessageEvent), false)
-        // Надо попробовать задействовать https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         dom.console.error("Popup window are unavailable: %s: %s", ex.getClass.getSimpleName, ex.getMessage)
         false
     }

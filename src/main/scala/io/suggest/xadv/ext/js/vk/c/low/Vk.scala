@@ -27,6 +27,6 @@ class VkApi extends js.Object {
 
 /** Интерфейс содержимого VK.Auth. */
 class VkAuth extends js.Object {
-  def login(callback: Callback): Unit = js.native
+  def login(callback: Callback, accessLevel: Int): Unit = js.native
   def getLoginStatus(callback: Callback): Unit = js.native
 }
