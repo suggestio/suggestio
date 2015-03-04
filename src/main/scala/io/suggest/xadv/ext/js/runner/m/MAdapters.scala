@@ -22,8 +22,13 @@ object MAdapters {
 
   /** Поиск подходящего адаптера-исполнителя под контекст запроса. */
   def findAdapter(mctx: MJsCtx): Option[IAdapter] = {
-    adapters.find { adapter =>
-      adapter.isMyDomains(mctx.domains)
+    val ds = mctx.domains
+    if (ds.nonEmpty) {
+      adapters.find { adapter =>
+        adapter isMyDomains ds
+      }
+    } else {
+      None
     }
   }
 

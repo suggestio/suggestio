@@ -59,7 +59,7 @@ class FbAdapter extends IAdapter {
     // Подписаться на событие загрузки скрипта.
     val window: FbWindow = dom.window
     window.fbAsyncInit = { () =>
-      val appId = mctx0.service.appId.orNull
+      val appId = mctx0.service.get.appId.orNull
       val opts = FbInitOptions(appId)
       Fb.init(opts) onComplete {
         // Инициализация удалась.

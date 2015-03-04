@@ -17,11 +17,17 @@ object AdaptersSupport {
    * @return Фьючерс с исходящим контекстом.
    */
   def handleAction(mctx: MJsCtx): Future[MJsCtx] = {
-    MAdapters.findAdapter(mctx) match {
-      case Some(adapter) =>
-        mctx.action.processAction(adapter, mctx)
-      case None =>
-        Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domains.mkString(", "))
+    if (mctx.action.adapterRequired) {
+      MAdapters.findAdapter(mctx) match {
+        case Some(adapter) =>
+          mctx.action.processAction(adapter, mctx)
+        case None =>
+          Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domains.mkString(", "))
+      }
+
+    } else {
+      // Не требуется адаптера. Значит передаем null вместо адаптера.
+      mctx.action.processAction(adapter = null, mctx)
     }
   }
 

@@ -30,7 +30,8 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
         .getOrElse(Seq.empty),
       target = d.get(TARGET_FN)
         .map(MExtTarget.fromJson),
-      service = MServiceInfo.fromJson(d(SERVICE_FN)),
+      service = d.get(SERVICE_FN)
+        .map(MServiceInfo.fromJson),
       domains = d.get(DOMAIN_FN)
         .map { _.asInstanceOf[js.Array[String]].toSeq }
         .getOrElse(Nil),
@@ -54,7 +55,7 @@ trait MJsCtxT extends IToJsonDict {
   def mads    : Seq[MAdCtx]
 
   /** Текущий сервис и инфа по нему. */
-  def service : MServiceInfo
+  def service : Option[MServiceInfo]
 
   /** Домены, которых касается запрос. */
   def domains : Seq[String]
@@ -73,9 +74,10 @@ trait MJsCtxT extends IToJsonDict {
 
   override def toJson: js.Dictionary[js.Any] = {
     val d = js.Dictionary[js.Any] (
-      ACTION_FN   -> action.strId,
-      SERVICE_FN  -> service.toJson
+      ACTION_FN   -> action.strId
     )
+    if (service.nonEmpty)
+      d.update(SERVICE_FN, service.get.toJson)
     if (mads.nonEmpty) {
       val madsSer = mads.map(_.toJson)
       d.update(ADS_FN, madsSer.toJSArray)
@@ -98,7 +100,7 @@ trait MJsCtxT extends IToJsonDict {
 case class MJsCtx(
   action  : MAskAction,
   mads    : Seq[MAdCtx],
-  service : MServiceInfo,
+  service : Option[MServiceInfo],
   domains : Seq[String],
   target  : Option[MExtTarget],
   custom  : Option[js.Any],

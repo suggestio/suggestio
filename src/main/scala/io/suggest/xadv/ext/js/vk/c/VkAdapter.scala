@@ -71,7 +71,7 @@ class VkAdapter extends IAdapter {
     // Создать обработчик событие инициализации.
     val window: VkWindow = dom.window
     window.vkAsyncInit = {() =>
-      val apiId = mctx0.service.appId.orNull
+      val apiId = mctx0.service.get.appId.orNull
       val opts = VkInitOptions(apiId)
       Vk.init(opts).flatMap { _ =>
         // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
