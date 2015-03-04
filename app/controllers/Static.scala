@@ -9,7 +9,7 @@ package controllers
  */
 
 import play.api.mvc._
-import util.acl.MaybeAuth
+import util.acl.{IsSuperuser, MaybeAuth}
 import views.html.static._
 
 object Static extends SioControllerImpl {
@@ -76,6 +76,18 @@ object Static extends SioControllerImpl {
   def tinymceColorpicker(filename: String) = Action { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
       .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+  }
+
+  /**
+   * Доступ к привилегированным ассетам.
+   * @param path Путь.
+   * @param asset filename.
+   * @return Экшен раздачи ассетов.
+   */
+  // TODO Вместо редиректа возвращать 403.
+  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuperuser.async { implicit request =>
+    Assets.versioned(path, asset)
+      .apply(request)
   }
 
 }
