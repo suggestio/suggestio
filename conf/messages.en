@@ -341,7 +341,7 @@ adv.ext.ret.ad=This ad
 
 e.ext.adv.unathorized=User not authorized.
 e.ext.adv.permissions=User have not permissions.
-e.ext.adv.permissions.group=You have no permissions for posting on the page "{0}".
+e.ext.adv.permissions.group=No permissions for posting on the page "{0}".
 e.ext.adv.target.url.invalid=Invalid url.
 e.adv.ext.api.login=Failed to complete login procedure.
 e.adv.ext.api.init=Failed to get remote service client online.

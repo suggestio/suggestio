@@ -352,7 +352,7 @@ adv.ext.ret.ad=Только эту карточку
 
 e.ext.adv.unathorized=Пользователь не авторизован.
 e.ext.adv.permissions=Недостаточно прав.
-e.ext.adv.permissions.group=У вас недостаточно прав для постинга на странице "{0}".
+e.ext.adv.permissions.group=Недостаточно прав для постинга на странице "{0}".
 e.ext.adv.target.url.invalid=Некорректный url цели.
 e.adv.ext.api.login=Возникла ошибка в процедуре логина.
 e.adv.ext.api.init=Не удалось инициализировать клиент.
