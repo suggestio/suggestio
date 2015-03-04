@@ -52,8 +52,10 @@ object ExternalLogin extends PlayMacroLogsDyn {
       override def userService: UserService[SsUser] = SsUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
-        val provs = Iterator(VkProvider, FacebookProvider, TwitterProvider)
-          .flatMap { provSt =>
+        val provs = IdProviders.values
+          .iterator
+          .flatMap { prov =>
+            val provSt = prov.ssProviderCompanion
             try {
               Seq( provSt(routes, cacheService, httpService) )
             } catch {
