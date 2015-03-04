@@ -19,7 +19,7 @@ object FbTarget {
    */
   def fromUrl(url: String): IFbTarget = {
     val path = new URI(url).getPath
-    val groupRe = "/groups/([^/?&]+)".r
+    val groupRe = "/groups/([^/?&]+).*".r
     path match {
       case groupRe(groupId) => FbTgGroupId(groupId)
       case _                => FbTgMe()
