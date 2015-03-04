@@ -1,5 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c
 
+import java.net.URI
+
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
@@ -180,9 +182,10 @@ class VkAdapter extends IAdapter {
    * @return Опциональный результат.
    */
   protected def extractScreenName(url: String): Option[String] = {
-    val regex = "(?i)^https?://(www\\.)?vk(ontakte)\\.(ru|com)/([_a-z0-9-]){1,64}".r
-    url match {
-      case regex(_, _, _, screenName) => Some(screenName)
+    val path = new URI(url).getPath
+    val regex = "^/([_a-zA-Z0-9-]{1,64}).*".r
+    path match {
+      case regex(screenName) => Some(screenName)
       case _ => None
     }
   }
@@ -197,8 +200,9 @@ class VkAdapter extends IAdapter {
 
       case None =>
         val vti = VkTargetInfo(
-          id = vkCtx.login.get.vkId,
-          tgType = VkTargetTypes.User
+          id      = vkCtx.login.get.vkId,
+          tgType  = VkTargetTypes.User,
+          name    = None
         )
         Future successful vti
     }
@@ -211,14 +215,18 @@ class VkAdapter extends IAdapter {
    *         Future.failed если постить нельзя.
    */
   protected def ensureCanPostInto(vktg: VkTargetInfo): Future[VkTargetInfo] = {
-    if (vktg.tgType == VkTargetTypes.Group) {
+    if (vktg.tgType.isGroup) {
       // Надо проверить, есть ли права на постинг в эту группу.
       val grArgs = VkGroupGetByIdArgs(groupId = vktg.id, fields = VkGroupGetByIdArgs.CAN_POST_FN)
       Vk.Api.groupGetById(grArgs) flatMap { res =>
-        if (res.canPost.exists(identity) && res.deactivated.isEmpty)
-          Future successful vktg
-        else
-          Future failed PostingProhibitedException(res.name, Some(res.toString))
+        if (res.canPost.exists(identity) && res.deactivated.isEmpty) {
+          val vktg1 = vktg.copy(
+            name = Some(res.name)
+          )
+          Future successful vktg1
+        } else {
+          Future failed PostingProhibitedException(res.name, info = Some(res.toString))
+        }
       }
 
     } else {
@@ -325,7 +333,7 @@ class VkAdapter extends IAdapter {
     }
     // Готовим целевого адресата
     val tgInfo = vkCtx.tgInfo.get
-    val ownerId = if (tgInfo.tgType == VkTargetTypes.Group)
+    val ownerId = if (tgInfo.tgType.isGroup)
       -tgInfo.id
     else
       tgInfo.id
@@ -345,7 +353,17 @@ class VkAdapter extends IAdapter {
       attachments = attachments,
       message     = Some(msg)
     )
-    Vk.Api.wallPost(postArgs)
+    Vk.Api.wallPost(postArgs) flatMap { res =>
+      // Если сервер вернул ошибку, то закончить на этом.
+      if (res.error.isDefined) {
+        Future failed PostingProhibitedException(
+          tgTitle = tgInfo.name getOrElse tgInfo.id.toString,
+          info = res.error
+        )
+      } else {
+        Future successful res
+      }
+    }
   }
 
 }

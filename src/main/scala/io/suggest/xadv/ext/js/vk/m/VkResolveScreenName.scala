@@ -38,9 +38,11 @@ object VkResolveScreenNameResult extends FromJsonT {
   /** Десериализация ответа API. */
   override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Any]] : WrappedDictionary[js.Any]
+    val r = d("response").asInstanceOf[js.Dictionary[js.Any]]
     VkTargetInfo(
-      tgType = VkTargetTypes.withName( d("type").toString ),
-      id     = d("object_id").asInstanceOf[Int]
+      tgType = VkTargetTypes.withName( r("type").toString ),
+      id     = r("object_id").asInstanceOf[Int],
+      name   = None
     )
   }
 
