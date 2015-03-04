@@ -11,5 +11,9 @@
   </head>
   <body>
     <p>@Messages("Checking.your.browser")</p>
+    <script type="text/javascript">
+        window.opener.postMessage("reloaded", "*");
+        window.close();
+    </script>
   </body>
 </html>
