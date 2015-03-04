@@ -329,7 +329,7 @@ wind.direction.south-west=юго-западный
 wind.direction.south-east=юго-восточный
 
 
-Vkontakte=ВКонтакте
+VKontakte=ВКонтакте
 
 adv.ext.i.at.vk=Я ВКонтакте
 adv.ext.i.at.fb=Мой Facebook
@@ -363,3 +363,4 @@ e.url.load.failed=Таймаут загрузки URL "{0}". Истекло вр
 
 passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
 
+Checking.your.browser=Тестируем ваш браузер...

@@ -1,9 +1,9 @@
 package controllers
 
 /**
- * User: Alexander Pestrikov <alexander.pestrikov@cbca.ru>
- * Date: 16.05.13
- * Time: 13:34
+ * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ *          Alexander Pestrikov <alexander.pestrikov@cbca.ru>
+ * Date: 16.05.13 13:34
  * Статика всякая.
  * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
  */
@@ -57,9 +57,17 @@ object Static extends SioControllerImpl {
    * @return 200 Ok и много букв.
    */
   def privacyPolicy = MaybeAuth { implicit request =>
-    Ok(privacyPolicyTpl())
+    Ok(privacyPolicyTpl()).withHeaders(
+      CACHE_CONTROL -> "public, max-age=600"
+    )
   }
 
+  /** Содержимое проверочного попап-окна. */
+  def popupCheckContent = MaybeAuth { implicit request =>
+    Ok(popupCheckTpl()).withHeaders(
+      CACHE_CONTROL -> "public, max-age=86400"
+    )
+  }
 
   /**
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20

@@ -372,10 +372,11 @@ GET     /help/:page                     controllers.Static.helpPage(page)
 GET     /blog                           controllers.Static.blogIndex
 GET     /blog/:path                     controllers.Static.blogPage(path)
 GET     /privacy                        controllers.Static.privacyPolicy
+GET     /st/popup/check                 controllers.Static.popupCheckContent
 
 
 ## yeoman-play
-GET     /ui         com.tuplejump.playYeoman.Yeoman.index
-->	/ui/	    yeoman.Routes
+#GET     /ui         com.tuplejump.playYeoman.Yeoman.index
+#->	     /ui/	     yeoman.Routes
 #GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
 

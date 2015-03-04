@@ -3,6 +3,8 @@
 @* Страница с идущими размещениями на внешних сервисах. *@
 
 @import util.adv.ExtUtil._
+@import ctx._
+@import helper._
 
 @base(
   title = "Размещение рекламной карточки на внешних сервисах",
@@ -17,6 +19,11 @@
   <input id="socialApiConnection" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
 
   <div id="@RUNNER_EVENTS_DIV_ID"></div>
+
+  @* Скрипты, необходимые для работы системы. *@
+  @javascriptRouter("jsRoutes")(
+    routes.javascript.Static.popupCheckContent
+  )
 
   @_runnerScriptTpl(async = false)
   <script src="@routes.Assets.versioned("advext-sjs-runner-launcher.js")"></script>
