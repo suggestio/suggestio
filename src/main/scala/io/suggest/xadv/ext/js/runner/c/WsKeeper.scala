@@ -29,8 +29,11 @@ trait WsKeeper {
   protected[this] def startWs(wsUrl: String): Unit = {
     val ws = new WebSocket(wsUrl)
     _ws = ws
-    ws.onmessage = handleMessage(_: MessageEvent)
     // TODO Делать реконнект при проблеме со связью.
+    // Сразу запускаем проверку на доступность popup'а
+    // TODO Отсылать результат на сервер и отключать ws.
+    dom.console.log("popupCheck result =", PopupChecker.isPopupAvailable())
+    ws.onmessage = handleMessage(_: MessageEvent)
   }
 
   /**
