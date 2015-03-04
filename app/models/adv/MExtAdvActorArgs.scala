@@ -77,6 +77,9 @@ trait IExtAdvServiceActorArgs extends IExtActorArgs with WsMediatorRef {
 
   /** Таргеты, относящиеся к сервису. */
   def targets: Seq[MExtTargetInfoFull]
+
+  /** Начальный контекст. */
+  def mctx0: MJsCtx
 }
 
 

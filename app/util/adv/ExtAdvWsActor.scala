@@ -2,13 +2,17 @@ package util.adv
 
 import _root_.util.PlayMacroLogsImpl
 import _root_.util.async.FsmActor
+import _root_.util.event.EventTypes
+import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
 import akka.actor.{Actor, ActorRef, Props}
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
+import models.event.{RenderArgs, MEventTmp}
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import ExtUtil.RUNNER_EVENTS_DIV_ID
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
@@ -96,7 +100,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
 
   override def preStart(): Unit = {
     super.preStart()
-    become(new WaitForTargetsState)
+    become(new JsInitState)
   }
 
   /** Придумываем рандомный идентификатор для нового актора. По этому id будут роутится js-ответы. */
@@ -108,8 +112,71 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
       actorName
   }
 
+  /** Отрендерить и отправить на экран событие, описанное параметрами рендера. */
+  protected def sendRenderEvent(rargs: RenderArgs): Unit = {
+    import eactx.ctx
+    val html = rargs.mevent.etype.render(rargs)
+    val htmlStr = JsString(html.body)     // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
+    val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
+    val cmd = JsCmd(
+      jsCode = jsa.renderToString()
+    )
+    sendJsCommand(cmd)
+  }
+
+
+  /** Отправить запрос системе на инициализацию. */
+  class JsInitState extends FsmState {
+    /** Необходимо отправить запрос инициализации. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // Отправить в ws запрос базовой инициализации системы.
+      val mctx0 = MJsCtx(
+        action = Some(MJsActions.Init)
+      )
+      val ask = InitAsk(mctx0)
+      sendJsCommand(ask)
+    }
+
+    override def receiverPart: Receive = {
+      case jso: JsObject =>
+        val ans = jso.as[Answer]
+        val nextState: FsmState = ans.ctx2.status match {
+          // js подтвердил успешную инициализацию.
+          case Some(AnswerStatuses.Success) =>
+            trace("Global js init ok. Going to targets.")
+            new WaitForTargetsState(ans.ctx2)
+
+          // Нет сообщения об успехе. Значит, что-то не так (попапы блокируются например), и нужно уведомить юзера об этом.
+          case _ =>
+            error("Global js init failed: " + ans.ctx2.error)
+            // отрендерить юзеру сообщение о проблеме.
+            // TODO Пока поддерживается только отображение проблемы с блокировкой попапов. Нужно определять ошибку, и рендерить необходимый шаблон.
+            val mevent = MEventTmp(
+              etype       = EventTypes.BrowserBlockPopupsError,
+              ownerId     = eactx.request.producerId,
+              isCloseable = false,
+              isUnseen    = true
+            )
+            val rargs = RenderArgs(
+              mevent        = mevent,
+              withContainer = false,
+              adnNodeOpt    = Some(eactx.request.producer),
+              advExtTgs     = Seq.empty,
+              madOpt        = Some(eactx.request.mad),
+              extServiceOpt = None,
+              errors        = ans.ctx2.error.toSeq
+            )
+            sendRenderEvent(rargs)
+            new DummyState
+        }
+        become(nextState)
+    }
+  }
+
+
   /** Состояние ожидания асинхронных данных по целям для размещения, запущенных в предыдущем состоянии. */
-  class WaitForTargetsState extends FsmState {
+  class WaitForTargetsState(mctx0: MJsCtx) extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
@@ -130,6 +197,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
           throw new IllegalStateException("No targets found in storage, but it should.")
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
+          val mctx1 = mctx0.copy(status = None, action = None)
           // Сгруппировать таргеты по сервисам, запустить service-акторов, которые занимаются инициализацией клиентов сервисов.
           targets.groupBy(_.target.service).foreach {
             case (_service, _srvTgs) =>
@@ -139,6 +207,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
                 override def targets            = _srvTgs
                 override def _eaArgsUnderlying  = eactx
                 override def wsMediatorRef      = self
+                override def mctx0              = mctx1
               }
               context.actorOf(ExtServiceActor.props(actorArgs), name = guessChildName())
             }
@@ -147,6 +216,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
 
       case TargetsFailed(ex) =>
         error(s"$name: Failed to aquire targers", ex)
+        // TODO Рендерить ошибку на экран юзеру.
         become(new DummyState)
     }
 

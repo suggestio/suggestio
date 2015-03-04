@@ -4,8 +4,7 @@ import akka.actor.Props
 import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.js._
-import models.adv.js.ctx.MJsCtx
-import models.event.{ErrorInfo, MEventTmp, RenderArgs}
+import models.event.{MEventTmp, RenderArgs}
 import play.api.libs.json.JsString
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
@@ -59,7 +58,7 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Отправить запрос на подготовку к работе.
-      val mctx0 = MJsCtx(
+      val mctx0 = args.mctx0.copy(
         action = Some(MJsActions.EnsureReady),
         domain = args.targets
           .iterator

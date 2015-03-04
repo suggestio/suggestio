@@ -84,4 +84,9 @@ object EventTypes extends Enumeration with EnumMaybeWithName {
     override def template = serviceErrorTpl
   }
 
+  /** Браузер блокирует всплывающие окна. */
+  val BrowserBlockPopupsError: EventType = new Val("k") {
+    override def template = popupsBlockedTpl
+  }
+
 }

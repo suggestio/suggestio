@@ -1,0 +1,11 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон для ext.adv-события юзеру о том, что его браузер блокирует попапы. *@
+
+@import lk.event._
+@import ctx._
+
+@* TODO Вместо ошибки использовать предупреждение (желтое). *@
+@_errorEvtBase(rargs) {
+  <p class="event_err-text">@Messages("e.adv.ext.your.browser.block.popups")</p>
+}
