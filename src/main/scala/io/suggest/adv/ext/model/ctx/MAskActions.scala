@@ -16,6 +16,9 @@ object MAskActions {
   /** Значение поля mctx.action для запроса обработки одной цели размещения. */
   def HANDLE_TARGET   = "b"
 
+  /** Базовая инициализация системы без конкретных адаптеров. */
+  def INIT            = "c"
+
 }
 
 
@@ -30,6 +33,8 @@ trait MAskActionsBaseT extends ILightEnumeration {
   }
 
   override type T <: ValT
+
+  val Init: T
 
   /** Запрос подготовки к работе в рамках доменов. */
   val EnsureReady: T
@@ -46,6 +51,7 @@ trait MAskActionsT extends Enumeration with EnumMaybeWithName with MAskActionsBa
 
   override type T = Val
 
+  override val Init: T          = new Val(INIT)
   override val EnsureReady: T   = new Val(ENSURE_READY)
   override val HandleTarget: T  = new Val(HANDLE_TARGET)
 }
@@ -58,6 +64,7 @@ trait MAskActionLightBaseT extends MAskActionsBaseT with LightEnumeration {
     n match {
       case HandleTarget.strId   => Some(HandleTarget)
       case EnsureReady.strId    => Some(EnsureReady)
+      case Init.strId           => Some(Init)
       case _                    => None
     }
   }
