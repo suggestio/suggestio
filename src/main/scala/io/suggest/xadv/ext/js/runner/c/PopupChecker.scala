@@ -29,16 +29,23 @@ object PopupChecker {
 
     } catch {
       case ex: Throwable =>
-        dom.window.addEventListener("message", {evt: dom.MessageEvent =>
-          dom.console.warn("dom msg received: %s", evt)
-          if (evt.data == ("reloaded" : js.Any)) {
-            // TODO Нужно реагировать на разблокировку попапов: рестартовать текущий процесс БЕЗ перезагрузки страницы.
-            dom.document.location.reload()
-          }
-        }, false)
+        dom.window.addEventListener("message", sioPopupOpened(_: dom.MessageEvent), false)
         // Надо попробовать задействовать https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         dom.console.error("Popup window are unavailable: %s: %s", ex.getClass.getSimpleName, ex.getMessage)
         false
+    }
+  }
+
+
+  /**
+   * Юзер разблокировал блокировщик попапов.
+   * @param evt Событие сообщения.
+   */
+  protected def sioPopupOpened(evt: dom.MessageEvent): Unit = {
+    dom.console.log("DOM msg received: [", evt.data, "] from", evt.source)
+    if (evt.data == ("reloaded" : js.Any)) {
+      // TODO Нужно реагировать на разблокировку попапов: рестартовать текущий процесс БЕЗ перезагрузки страницы.
+      dom.document.location.reload()
     }
   }
 
