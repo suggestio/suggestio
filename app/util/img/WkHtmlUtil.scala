@@ -110,6 +110,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    * @return Фьючерс с байтами картинки.
    */
   def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt): Future[Array[Byte]] = {
+    // TODO Добавить поддержку adArgs.wideOpt для генерации широкой картинки карточки.
     val wkArgs = WkHtmlArgs(
       src     = adImgLocalUrl(adArgs),
       imgSize = MImgInfoMeta(

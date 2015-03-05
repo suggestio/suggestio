@@ -25,6 +25,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    */
   def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId) { implicit request =>
     import request.mad
+    // TODO Добавить генерация wideCtx из args.
     val bc: BlockConf = BlocksConf applyOrDefault mad.blockMeta.blockId
     val brArgs = blk.RenderArgs(
       szMult        = args.szMult,

@@ -99,6 +99,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       adId    = args.qs.adId,
       szMult  = szMult,
       vsnOpt  = args.request.mad.versionOpt
+      // TODO Добавить заполнение параметра wideOpt на основе данных соц.сети.
     )
   }
 
