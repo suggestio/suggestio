@@ -1,21 +1,25 @@
 package models.adv
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModelT, EsModelPlayJsonT, EsModelStaticT}
+import io.suggest.model._
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
-import util.PlayMacroLogsImpl
+import io.suggest.ym.model.common.EsDynSearchStatic
+import models.adv.search.etg.IExtTargetSearchArgs
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.joda.time.DateTime
+import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.model.EsModel.stringParser
 
 import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext}
 
 import java.{util => ju}
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -25,7 +29,7 @@ import java.{util => ju}
  * Он содержит целевую ссылку, id обнаруженного сервиса, дату добавление и прочее.
  */
 
-object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
+object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IExtTargetSearchArgs] {
 
   override type T = MExtTarget
 
@@ -42,6 +46,9 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
   /** В поле с этим именем хранятся контекстные данные, заданные js'ом. */
   val CTX_DATA_ESFN     = "stored"
 
+  /** Поле даты создания. Было добавлено только 2014.mar.05, из-за необходимости сортировки. */
+  val DATE_CREATED_ESFN = "dc"
+
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -56,7 +63,8 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
       FieldString(SERVICE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldObject(CTX_DATA_ESFN, enabled = false, properties = Nil)
+      FieldObject(CTX_DATA_ESFN, enabled = false, properties = Nil),
+      FieldDate(DATE_CREATED_ESFN, index = null, include_in_all = false)
     )
   }
 
@@ -73,7 +81,10 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
       url         = stringParser(m(URL_ESFN)),
       service     = MExtServices.withName( stringParser(m(SERVICE_ID_ESFN)) ),
       adnId       = stringParser(m(ADN_ID_ESFN)),
-      name        = m.get(NAME_ESFN).map(stringParser),
+      name        = m.get(NAME_ESFN)
+        .map(stringParser),
+      dateCreated = m.get(DATE_CREATED_ESFN)
+        .fold(DateTime.now)(EsModel.dateTimeParser),
       ctxData     = m.get(CTX_DATA_ESFN).flatMap {
         case jm: ju.Map[_, _] =>
           if (jm.isEmpty) {
@@ -88,24 +99,6 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl {
     )
   }
 
-
-  def adnIdQuery(adnId: String) = QueryBuilders.termQuery(ADN_ID_ESFN, adnId)
-
-  /**
-   * Поиск для выбранного узла.
-   * @param adnId id узла ADN.
-   * @return Последовательность результатов в неопределённом порядке.
-   */
-  def findByAdnId(adnId: String, limit: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                 (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
-      .setQuery(adnIdQuery(adnId))
-      .setSize(limit)
-      .setFrom(offset)
-      .execute()
-      .map { searchResp2list }
-  }
-
 }
 
 
@@ -116,10 +109,11 @@ case class MExtTarget(
   url           : String,
   service       : MExtService,
   adnId         : String,
-  name          : Option[String] = None,
-  ctxData       : Option[JsObject] = None,
-  versionOpt    : Option[Long] = None,
-  id            : Option[String] = None
+  name          : Option[String]    = None,
+  dateCreated   : DateTime          = DateTime.now,
+  ctxData       : Option[JsObject]  = None,
+  versionOpt    : Option[Long]      = None,
+  id            : Option[String]    = None
 ) extends EsModelT with EsModelPlayJsonT with IExtTarget {
 
   override type T = this.type
@@ -128,9 +122,20 @@ case class MExtTarget(
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     SERVICE_ID_ESFN   -> JsString(service.strId) ::
     ADN_ID_ESFN       -> JsString(adnId) ::
+    DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated) ::
     toJsTargetPlayJsonFields
   }
 
+}
+
+
+// Поддержка JMX для ES-модели.
+trait MExtTargetJmxMBean extends EsModelJMXMBeanI
+final class MExtTargetJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MExtTargetJmxMBean
+{
+  override def companion = MExtTarget
 }
 
 

@@ -2,6 +2,8 @@ package controllers
 
 import models._
 import models.adv._
+import models.adv.search.etg.ExtTargetSearchArgs
+import org.elasticsearch.search.sort.SortOrder
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
@@ -76,7 +78,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   }
 
   private def _forAdRender(adId: String, form: Form_t)(implicit request: RequestWithAdAndProducer[_]): Future[Html] = {
-    val targetsFut = MExtTarget.findByAdnId(request.producerId)
+    val targetsFut: Future[Seq[MExtTarget]] = {
+      val args = ExtTargetSearchArgs(
+        adnId       = request.producer.id,
+        sortByDate  = Some(SortOrder.ASC),
+        maxResults  = 100
+      )
+      MExtTarget.dynSearch(args)
+    }
     val currentAdvsFut = MExtAdv.findForAd(adId)
       .map { advs =>
         advs.iterator

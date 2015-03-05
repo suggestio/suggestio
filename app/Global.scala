@@ -71,14 +71,15 @@ object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new Du
 
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(tried21: Boolean = false)(implicit client: Client): Future[_] = {
-    val futInx = EsModel.ensureEsModelsIndices
+    val esModels = SiowebEsModel.ES_MODELS
+    val futInx = EsModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)
       case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
     val futMappings = futInx flatMap { _ =>
-      SiowebEsModel.putAllMappings
+      SiowebEsModel.putAllMappings(esModels)
     }
     futMappings onComplete {
       case Success(_)  => info(logPrefix + "Finishied successfully.")

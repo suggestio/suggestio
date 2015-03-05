@@ -4,6 +4,7 @@ import io.suggest.ym.model._
 import io.suggest.model._
 import io.suggest.model.inx2._
 import io.suggest.ym.model.stat._
+import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
 import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
@@ -50,6 +51,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MAiMadJmx,
     new AdvUtilJmx,
     new MEventJmx,
+    new MExtTargetJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,

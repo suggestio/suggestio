@@ -12,6 +12,6 @@ package object adv {
   /** Тип списка целей для обработки. */
   type ActorTargets_t   = List[MExtTargetInfoFull]
 
-  type MExtService = MExtServices.T
+  type MExtService      = MExtServices.T
 
 }

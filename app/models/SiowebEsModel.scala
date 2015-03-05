@@ -6,11 +6,10 @@ import models.ai.MAiMad
 import models.im.MGallery
 import models.usr.{MExtIdent, MPerson, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import util.{PlayLazyMacroLogsImpl, SiowebEsUtil}
+import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future
 import org.elasticsearch.client.Client
 import play.api.Play.{current, configuration}
-import org.slf4j.LoggerFactory
 import scala.util.{Failure, Success}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
@@ -21,9 +20,7 @@ import scala.concurrent.duration._
  * Created: 24.02.14 17:43
  * Description: Дополнительная утиль для ES-моделей.
  */
-object SiowebEsModel extends PlayLazyMacroLogsImpl {
-
-  import LOGGER._
+object SiowebEsModel extends PlayMacroLogsDyn {
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
@@ -42,17 +39,17 @@ object SiowebEsModel extends PlayLazyMacroLogsImpl {
     EsModel.errorIfIncorrectModels(ES_MODELS)
 
   /** Отправить маппинги всех моделей в хранилище. */
-  def putAllMappings(implicit client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit client: Client): Future[Boolean] = {
     val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
-    LoggerFactory.getLogger(getClass).trace("putAllMappings(): ignoreExists = " + ignoreExist)
-    EsModel.putAllMappings(ES_MODELS, ignoreExist)
+    LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
+    EsModel.putAllMappings(models, ignoreExist)
   }
 
 
   /** Запуск импорта данных ES-моделей из удалённого источника (es-кластера) в текущий.
     * Для подключения к стороннему кластеру будет использоваться transport client, не подключающийся к кластеру. */
   def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelCommonStaticT] = ES_MODELS): Future[CopyContentResult] = {
-    val logger = play.api.Logger(getClass)
+    val logger = LOGGER
     val logPrefix = "importModelsFromRemote():"
     val esModelsCount = esModels.size
     logger.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
@@ -60,7 +57,7 @@ object SiowebEsModel extends PlayLazyMacroLogsImpl {
       SioEsUtil.newTransportClient(addrs, clusterName = None)
     } catch {
       case ex: Throwable =>
-        error(s"Failed to create transport client: addrs=$addrs", ex)
+        logger.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
     val toClient = SiowebEsUtil.client
