@@ -109,7 +109,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    * @param fmt Целевой формат.
    * @return Фьючерс с байтами картинки.
    */
-  def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt = OutImgFmts.PNG): Future[Array[Byte]] = {
+  def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt): Future[Array[Byte]] = {
     val wkArgs = WkHtmlArgs(
       src     = adImgLocalUrl(adArgs),
       imgSize = MImgInfoMeta(

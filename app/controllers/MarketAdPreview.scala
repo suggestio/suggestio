@@ -114,12 +114,14 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
   /** Рендер полноэкранного варианта отображения. */
   private def renderFull(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
     val szMult = 2.0F
+    // Используем один и тот же контекст в нескольких рендерах сразу:
+    val ctx = implicitly[Context]
     // Поддержка wideBg:
     val wctxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
       if (mad.blockMeta.wide) {
         val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
         bc.getMadBgImg(mad).fold(Future successful Option.empty[blk.WideBgRenderCtx]) { bgImgInfo =>
-          BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)
+          BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)(ctx)
             .map { Some.apply }
         }
       } else {
@@ -135,7 +137,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         szMult        = szMult,
         withCssClasses = Seq("__popup")
       )
-      _adFullTpl(mad, producer = request.adnNode, args = args)
+      _adFullTpl(mad, producer = request.adnNode, args = args)(ctx)
     }
   }
 

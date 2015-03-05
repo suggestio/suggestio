@@ -16,7 +16,7 @@ import util.secure.SecretGetter
 object OneAdQsArgs {
 
   /** Статический секретный ключ для подписывания запросов. */
-  private[models] val SIGN_SECRET: String = {
+  private[this] val SIGN_SECRET: String = {
     val sg = new SecretGetter with PlayLazyMacroLogsImpl {
       override val confKey = "only.one.ad.qs.sign.key"
       override def useRandomIfMissing = isProd
