@@ -4,10 +4,10 @@
 ## Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
 ## Без этого костыля, запрос html'ки просто подвисает. Регэксп нужен на случай обработки со стороны simple-url-replace.
 GET  /vassets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/$fn<[^/]*index\.html>      controllers.Static.tinymceColorpicker(fn)
-GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf).*>       controllers.Static.vassetsSudo(path="/public", file: Asset)
+## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
+GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       controllers.Static.vassetsSudo(path="/public", file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
-GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
@@ -380,4 +380,8 @@ GET     /st/popup/check                 controllers.Static.popupCheckContent
 #GET     /ui         com.tuplejump.playYeoman.Yeoman.index
 #->	     /ui/	     yeoman.Routes
 #GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
+
+## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
+GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       controllers.Static.assetsSudo(path="/public", file: Asset)
+GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
