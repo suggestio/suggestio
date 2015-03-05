@@ -306,8 +306,8 @@ object EsModel extends MacroLogsImpl {
   }
 
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(implicit ec:ExecutionContext, client: Client): Future[_] = {
-    val indices = ES_MODELS.map { esModel =>
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit ec:ExecutionContext, client: Client): Future[_] = {
+    val indices = models.map { esModel =>
       esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
     }.toMap
     Future.traverse(indices) {
