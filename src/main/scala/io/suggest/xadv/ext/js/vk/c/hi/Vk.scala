@@ -54,11 +54,11 @@ object VkApi {
           p success res
         } catch {
           case ex: Throwable =>
-            p failure ApiException(method, ex)
+            p failure ApiException(method, ex, Some(resp))
         }
       })
     } catch {
-      case ex: Throwable => p failure ApiException(method, ex)
+      case ex: Throwable => p failure ApiException(method, ex, None)
     }
     p.future
   }

@@ -72,13 +72,13 @@ object Fb {
             p success model.fromJson(resp)
           } catch {
             case ex: Throwable =>
-              p failure ApiException(s"$httpMethod $path result")
+              p failure ApiException(s"$httpMethod $path result", ex, Some(resp))
           }
         }
       )
     } catch {
       case ex: Throwable =>
-        p failure ApiException(s"$httpMethod $path call", ex)
+        p failure ApiException(s"$httpMethod $path call", ex, None)
     }
     p.future
   }
