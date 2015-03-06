@@ -131,7 +131,6 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     wctxOptFut map { wctxOpt =>
       val args = blk.RenderArgs(
         withEdit      = false,
-        isStandalone  = false,
         wideBg        = wctxOpt,
         inlineStyles  = true,
         szMult        = szMult,
@@ -143,8 +142,8 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
   private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
-    val args = blk.RenderArgs(withEdit = true, isStandalone = false, szMult = 1.0F, inlineStyles = true)
-    Future successful _adTpl(mad, args = args)
+    val args = blk.RenderArgs(withEdit = true, szMult = 1.0F, inlineStyles = true)
+    Future successful _adNormalTpl(mad, args = args)
   }
 
 }

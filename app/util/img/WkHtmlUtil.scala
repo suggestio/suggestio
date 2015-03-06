@@ -4,11 +4,13 @@ import java.io.File
 import java.nio.file.Files
 
 import controllers.routes
+import io.suggest.img.ImgCrop
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.blk.OneAdQsArgs
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
+import util.blocks.BgImg
 import util.xplay.PlayUtil.httpPort
 import models.im._
 
@@ -111,14 +113,29 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    */
   def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt): Future[Array[Byte]] = {
     // TODO Добавить поддержку adArgs.wideOpt для генерации широкой картинки карточки.
+    val width  = (sourceAdSz.width * adArgs.szMult).toInt
+    val height = (sourceAdSz.height * adArgs.szMult).toInt
+    val (cropOpt, scrWidth) = adArgs.wideOpt match {
+      // Запрошен широкий рендер. Нужно рассчитать кроп и размер экрана с учётом квантования фоновой картинки.
+      case Some(wide) =>
+        val c = ImgCrop(
+          width   = width,
+          height  = height,
+          offY    = 0,
+          offX    = width / 2
+        )
+        (Some(c), width * 2)
+
+      // Обычный рендер (не-wide).
+      case None =>
+        (None, width)
+    }
     val wkArgs = WkHtmlArgs(
-      src     = adImgLocalUrl(adArgs),
-      imgSize = MImgInfoMeta(
-        height = (sourceAdSz.height * adArgs.szMult).toInt,
-        width  = (sourceAdSz.width * adArgs.szMult).toInt
-      ),
-      outFmt  = fmt,
-      plugins = false
+      src         = adImgLocalUrl(adArgs),
+      scrSz       = MImgInfoMeta(width = scrWidth, height = height),
+      outFmt      = fmt,
+      plugins     = false,
+      crop        = cropOpt
     )
     WkHtmlUtil.html2imgSimpleCached(wkArgs)
   }

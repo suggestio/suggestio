@@ -1,11 +1,20 @@
-@(mad: MAdT, isWithAction : Boolean = false, args: blk.RenderArgs = blk.RenderArgs.DEFAULT)(implicit ctx: Context)
+@(mad: MAdT, args: blk.RenderArgs)(implicit ctx: Context)
 
-@import util.TplDataFormatUtil._
-@import AdNetMemberTypes.MART
-@import util.blocks._
+@* Рендер тела открытой карточки: картинка, поля. *@
 
-@defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
-  <div @if( isWithAction && (!bc.hrefBlock || !mad.offers.exists(_.href.isDefined)) ) { class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
-    @bc.renderBlock(mad, args)
-  </div>
+@import models.blk.AdColorFns._
+
+@* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
+@args.wideBg.map { wideBg =>
+  <img src="@wideBg.dynImgCall" class="bg" alt=""
+    @mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
+    height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
+  />
+
+  <div class="dotted-pattern __id-@{mad.id}" style="height: @{wideBg.szCss.height}px;"></div>
 }
+
+<div class="focused-ad_offer">
+  @_adNormalTpl(mad, isWithAction = false, args)
+</div>
+

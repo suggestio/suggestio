@@ -2,7 +2,7 @@ package models.im
 
 import java.io.File
 
-import models.MImgSizeT
+import models.{ImgCrop, MImgSizeT}
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsDyn
 
@@ -44,18 +44,36 @@ import WkHtmlArgs._
 /** Абстрактные аргументы для вызова wkhtml2image. */
 trait WkHtmlArgsT {
 
+  /** Ссыка на страницу, которую надо отрендерить. */
   def src     : String
-  def imgSize : MImgSizeT
+
+  /** 2015.03.06 ЭТО 100% !!ОБЯЗАТЕЛЬНЫЙ!! размер окна браузера и картинки (если кроп не задан).
+    * В доках обязательность этого параметра не отражена толком, а --height в man вообще не упоминается. */
+  def scrSz : MImgSizeT
+
+  /** Качество сжатия результирующей картинки. */
   def quality : Option[Int]
+
+  /** Формат сохраняемой картинки. */
   def outFmt  : OutImgFmt
+
+  /** Отмасштабировать страницу? */
   def zoomOpt : Option[Float]
+
+  /** Разрешить браузерные плагины? */
   def plugins : Boolean
+
+  /** Необязательный кроп. */
+  def crop    : Option[ImgCrop]
+
+  /** Разрешать ли wkhtml переопределять заданную ширину? Нужно patched Qt version installed. */
+  def smartWidth: Boolean
 
   /** Сборка строки вызова wkhtml2image. */
   def toCmdLineArgs(acc0: List[String] = Nil): List[String] = {
     var l =
-      "--width" :: imgSize.width.toString ::
-      "--height" :: imgSize.height.toString ::
+      "--width" :: scrSz.width.toString ::
+      "--height" :: scrSz.height.toString ::
       src ::
       acc0
     if (quality.isDefined)
@@ -66,22 +84,36 @@ trait WkHtmlArgsT {
       l ::= "--disable-plugins"
     if (CACHE_DIR.isDefined)
       l = "--cache-dir" :: CACHE_DIR.get :: l
+    if (crop.isDefined) {
+      val c = crop.get
+      l = "--crop-x" :: c.offX.toString ::
+        "--crop-y" :: c.offY.toString ::
+        "--crop-w" :: c.width.toString ::
+        "--crop-h" :: c.height.toString ::
+        l
+    }
+    if (!smartWidth)
+      l ::= "--disable-smart-width"
     l
   }
 
   /** Название проги wkhtml2image и аргументы. Можно сразу отправлять на исполнение. */
-  def toCmdLine(acc0: List[String] = Nil): List[String] = WKHTML2IMG :: toCmdLineArgs(acc0)
+  def toCmdLine(acc0: List[String] = Nil): List[String] = {
+    WKHTML2IMG :: toCmdLineArgs(acc0)
+  }
 
 }
 
 
 /** Реализация аргументов для вызова wkhtml. */
 case class WkHtmlArgs(
-  src     : String,
-  imgSize : MImgSizeT,
-  outFmt  : OutImgFmt = WkHtmlArgs.outFmtDflt,
-  quality : Option[Int] = None,
-  zoomOpt : Option[Float] = None,
-  plugins : Boolean = false
+  src         : String,
+  scrSz       : MImgSizeT,
+  outFmt      : OutImgFmt         = WkHtmlArgs.outFmtDflt,
+  quality     : Option[Int]       = None,
+  zoomOpt     : Option[Float]     = None,
+  plugins     : Boolean           = false,
+  crop        : Option[ImgCrop]   = None,
+  smartWidth  : Boolean           = true
 ) extends WkHtmlArgsT
 

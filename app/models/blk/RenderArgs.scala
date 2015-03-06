@@ -25,20 +25,20 @@ object RenderArgs {
  * Параметры рендера блока.
  * Всегда immutable класс!
  * @param withEdit Рендерим в редакторе.
- * @param isStandalone Рендерим блок как отдельную страницу? Отрабатывается через blocksBase.
  * @param szMult Мультипликатор размеров карточки.
  * @param wideBg Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
  *               вне блока, широким, а тело блока сдвинуто согласно кропу.
  * @param inlineStyles Рендерить стили инлайново?
  * @param withCssClasses Дополнительные css-классы, которые относятся к рендеру.
+ * @param blockStyle Стили для div .sm-block.
  */
 case class RenderArgs(
-  szMult        : SzMult_t,
-  withEdit      : Boolean = false,
-  isStandalone  : Boolean = false,
-  wideBg        : Option[WideBgRenderCtx] = None,
-  inlineStyles  : Boolean = true,
-  withCssClasses: Seq[String] = Nil
+  szMult          : SzMult_t,
+  withEdit        : Boolean                 = false,
+  wideBg          : Option[WideBgRenderCtx] = None,
+  inlineStyles    : Boolean                 = true,
+  withCssClasses  : Seq[String]             = Nil,
+  blockStyle      : Option[String]          = None
 )
 
 

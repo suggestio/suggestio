@@ -1,43 +1,11 @@
-@(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None,
-  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT)(content: Html)(implicit ctx: Context)
 
-@* База для шаблонов блоков. *@
-
-@import util.cdn.CdnUtil
-
-@if(args.isStandalone) {
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
-<head>
-
-  <title>@pageTitle.getOrElse("Suggest.io")</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-  <meta name="viewport" content="@if(ctx.isIpad) {width=640, initial-scale = 1} else {width=320,initial-scale = 1},user-scalable=no"/>
-
-  @* Тут надо логотип узла рекламной сети? *@
-  <link rel="shortcut icon" type="image/png" href="@CdnUtil.asset("images/favicon.ico")">
-
-  @headAfter
-  <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
-
-  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase.css")'/>
-  <script src="@CdnUtil.asset("javascripts/market/lk/mx_dev.js")"></script>
-  <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
-
-
-</head>
-<body style="position: relative; display: inline-block; margin: 0; overflow: hidden;">
-}
-
-@* Тут постоянный div блока выдачи. Сюда рендерится блок. *@
+@* Тут постоянная часть верстки блоков карточек в выдаче. *@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.withCssClasses"
      data-width="@((mad.blockMeta.width * args.szMult).toInt)" data-height="@((mad.blockMeta.height * args.szMult).toInt)"
-     data-mad-id="@mad.id" data-wide-bg="@args.wideBg.isDefined" >
+     data-mad-id="@mad.id" data-wide-bg="@args.wideBg.isDefined"
+     @args.blockStyle.map { bst =>style="@bst"}> @* Можно в теории заюзать что-то типа .orElse(args.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")) *@
   @content
 </div>
 
-@if(args.isStandalone) {
-</body>
-</html>
-}
+

@@ -155,9 +155,9 @@ object ShowcaseUtil {
       wideBgCtxOptFut map { wideBgCtxOpt =>
         blk.RenderArgs(
           withEdit      = false,
-          isStandalone  = false,
           szMult        = szMult,
           wideBg        = wideBgCtxOpt
+          // Макс заимплементил wide bg на js. Но это похоже на костыль, логичнее это сделать где-то на сервере... Но не тут наверное...
         )
       }
 
@@ -165,7 +165,6 @@ object ShowcaseUtil {
       // Возвращаем результат
       val bra = blk.RenderArgs(
         withEdit      = false,
-        isStandalone  = false,
         szMult        = szMult,
         wideBg        = None
       )

@@ -1,23 +1,9 @@
-@(mad: MAdT, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0,
+@(mad: MAdT, producer: MAdnNode, adIndex: Int = 0, adsCount: Int = 0,
   args: blk.RenderArgs = blk.RenderArgs.DOUBLE_SIZED_ARGS)(implicit ctx: Context)
 
-@import models.blk.AdColorFns._
+@* Рендер тела страница открытой рекламной карточки вместе с дескрипшеном. *@
 
-
-@* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
-@args.wideBg.map { wideBg =>
-  <img src="@wideBg.dynImgCall" class="bg" alt=""
-    @mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
-    height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
-  />
-
-  <div class="dotted-pattern __id-@{mad.id}" style="height: @{wideBg.szCss.height}px;"></div>
-}
-
-<div class="focused-ad_offer">
-  @_adTpl(mad, isWithAction = false, args)
-</div>
-
+@_adTpl(mad, args)
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>

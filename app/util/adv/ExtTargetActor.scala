@@ -9,7 +9,7 @@ import models.Context
 import models.adv.js._
 import models.adv.{JsExtTarget, MExtReturn, MExtReturns, IExtAdvTargetActorArgs}
 import models.adv.js.ctx._
-import models.blk.{SzMult_t, OneAdQsArgs}
+import models.blk.{OneAdWideQsArgs, SzMult_t, OneAdQsArgs}
 import models.event.{ErrorInfo, MEventTmp, RenderArgs}
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
@@ -98,8 +98,12 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     OneAdQsArgs(
       adId    = args.qs.adId,
       szMult  = szMult,
-      vsnOpt  = args.request.mad.versionOpt
-      // TODO Добавить заполнение параметра wideOpt на основе данных соц.сети.
+      vsnOpt  = args.request.mad.versionOpt,
+      wideOpt = args.target.target.service.advPostMaxSz.map { msz =>
+        OneAdWideQsArgs(
+          width = msz.width
+        )
+      }
     )
   }
 
