@@ -77,6 +77,7 @@ class VkAdapter extends IAdapter {
       val opts = VkInitOptions(apiId)
       Vk.init(opts).flatMap { _ =>
         // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
+        // TODO Проверить пермишшены через account.getAppPermissions()
         Vk.Auth.getLoginStatus
       } onComplete {
         // init завершился, инфа по залогиненности получена.
