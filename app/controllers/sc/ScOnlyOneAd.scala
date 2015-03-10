@@ -36,7 +36,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
       bgImgInfo   <- bc.getMadBgImg(mad)
     } yield {
       val dscr = DevScreen(
-        width = wide.width,
+        width  = (wide.width * args.szMult).toInt,
         height = (mad.blockMeta.height * args.szMult).toInt,
         pixelRatioOpt = None    // TODO А какой надо выставлять?
       )
