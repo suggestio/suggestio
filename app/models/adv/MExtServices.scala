@@ -106,8 +106,9 @@ object MExtServices extends MServicesT {
     /**
      * Максимальные размеры картинки при постинге во вконтакт в соц.сеть в css-пикселях.
      * Система будет пытаться вписать картинку в этот размер.
+     * У вконтакта экспирементальная макс.ширина - 601px почему-то.
      * @see [[https://vk.com/vkrazmer]]
-     * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]]
+     * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]] хрень?
      * @return Экземпляр 2D-размеров.
      */
     override def advPostMaxSz = Some( MImgInfoMeta(width = 1000, height = 700) )
@@ -121,6 +122,9 @@ object MExtServices extends MServicesT {
       "(?i)(www\\.)?facebook\\.(com|net)$".r.pattern.matcher(host).matches()
     }
     override def dfltTargetUrl = Some("https://facebook.com/me")
+
+    /** Параметры картинки для размещения. */
+    override def advPostMaxSz = Some( MImgInfoMeta(width = 487, height = 255) )
   }
 
 

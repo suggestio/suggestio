@@ -381,7 +381,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       super.afterBecome()
       // Запустить в фоне генерацию картинки и отправку её на удалённый сервер.
       val renderArgs = getAdRenderArgs(szMult)
-      WkHtmlUtil.renderAd2img(renderArgs, args.request.mad.blockMeta, imgFmt)
+      WkHtmlUtil.renderAd2img(renderArgs, args.request.mad, imgFmt)
         .onComplete {
           case Success(imgBytes)  =>  self ! new Ad2ImgRenderOk(imgBytes)
           case result             =>  self ! result

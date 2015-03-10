@@ -69,7 +69,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    */
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
     val fmt = OutImgFmts.JPEG
-    WkHtmlUtil.renderAd2img(adArgs, request.mad.blockMeta, fmt)
+    WkHtmlUtil.renderAd2img(adArgs, request.mad, fmt)
       .map { imgBytes =>
         Ok(imgBytes).withHeaders(
           CONTENT_TYPE -> fmt.mime

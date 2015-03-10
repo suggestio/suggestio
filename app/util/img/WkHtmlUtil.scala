@@ -6,11 +6,12 @@ import java.nio.file.Files
 import controllers.routes
 import io.suggest.img.ImgCrop
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
+import models.MAdT
 import models.blk.OneAdQsArgs
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
-import util.blocks.BgImg
+import util.blocks.{BlocksConf, BgImg}
 import util.xplay.PlayUtil.httpPort
 import models.im._
 
@@ -107,37 +108,71 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
   /**
    * Рендер указанной рекламной карточки
    * @param adArgs Данные по рендеру.
-   * @param sourceAdSz Исходный размер карточки.
+   * @param mad карточка для рендера.
    * @param fmt Целевой формат.
    * @return Фьючерс с байтами картинки.
    */
-  def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt): Future[Array[Byte]] = {
-    // TODO Добавить поддержку adArgs.wideOpt для генерации широкой картинки карточки.
-    val width  = (sourceAdSz.width * adArgs.szMult).toInt
+  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT, fmt: OutImgFmt): Future[Array[Byte]] = {
+    val sourceAdSz = mad.blockMeta
+    // Высота отрендеренной карточки с учетом мультипликатора
+    lazy val width0 = (sourceAdSz.width * adArgs.szMult).toInt
     val height = (sourceAdSz.height * adArgs.szMult).toInt
-    val (cropOpt, scrWidth) = adArgs.wideOpt match {
-      // Запрошен широкий рендер. Нужно рассчитать кроп и размер экрана с учётом квантования фоновой картинки.
+    val fut = adArgs.wideOpt match {
+      // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
       case Some(wide) =>
-        val c = ImgCrop(
-          width   = width,
-          height  = height,
-          offY    = 0,
-          offX    = width / 2
-        )
-        (Some(c), width * 2)
+        // Внешняя полная ширина отрендеренной широкой карточки.
+        val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
+        val wideWidth0 = (wide.width * adArgs.szMult).toInt
+        val bgImgInfoOpt = bc.getMadBgImg(mad)
+        val cropInfoOptFut = bgImgInfoOpt.fold {
+          Future successful Option.empty[ImgCrop]
+        } { bgImgInfo =>
+          val bgImg = MImg(bgImgInfo.filename)
+          val wideWh = MImgInfoMeta(height = height, width = wideWidth0)
+          BgImg.getAbsCropOrFail(bgImg, wideWh)
+            .map { Some.apply }
+        }
+        cropInfoOptFut map { cropOpt =>
+          cropOpt.fold {
+            // Нет предложенного кропа.
+            val extWidth = BgImg.normWideWidthBgSz(wideWidth0)
+            (extWidth, Option.empty[ImgCrop])
+          } { crop =>
+            val extWidth = crop.width
+            if (extWidth <= wideWidth0) {
+              // Предложенный кроп фоновой картинки не превышает запрошенный размер.
+              extWidth -> None
+            } else /*if (extWidth > wide.width)*/ {
+              // Требуется кроп отрендеренной карточки, т.к. предложенный кроп BgImg шире, чем запрошенный размер картинки.
+              val cs = Some(ImgCrop(
+                width   = wideWidth0,
+                height  = height,
+                offX    = (extWidth - wideWidth0) / 2,
+                offY    = 0
+              ))
+              extWidth -> cs
+            }
+          }
+        } recover { case ex: NoSuchElementException =>
+          (width0, None)
+        }
 
-      // Обычный рендер (не-wide).
+      // Без wide, значит можно рендерить карточку as-is.
       case None =>
-        (None, width)
+        Future successful (width0, None)
     }
-    val wkArgs = WkHtmlArgs(
-      src         = adImgLocalUrl(adArgs),
-      scrSz       = MImgInfoMeta(width = scrWidth, height = height),
-      outFmt      = fmt,
-      plugins     = false,
-      crop        = cropOpt
-    )
-    WkHtmlUtil.html2imgSimpleCached(wkArgs)
+
+    // Запускаем генерацию результата
+    fut flatMap { case (extWidth, cropOpt) =>
+      val wkArgs = WkHtmlArgs(
+        src         = adImgLocalUrl(adArgs),
+        scrSz       = MImgInfoMeta(width = extWidth, height = height),
+        outFmt      = fmt,
+        plugins     = false,
+        crop        = cropOpt
+      )
+      WkHtmlUtil.html2imgSimpleCached(wkArgs)
+    }
   }
 
 }
