@@ -4,6 +4,7 @@ import io.suggest.xadv.ext.js.runner.m.{IToJsonDict, FromJsonT}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 import io.suggest.xadv.ext.js.vk.c.low._
 import io.suggest.xadv.ext.js.vk.m._
+import org.scalajs.dom
 
 import scala.concurrent.{Future, Promise}
 
@@ -48,7 +49,8 @@ object VkApi {
   protected def mkCall[T1](method: String, args: IToJsonDict, model: FromJsonT { type T = T1 }): Future[T1] = {
     val p = Promise[T1]()
     try {
-      VkLow.Api.call(method, args.toJson, { resp: JSON =>
+      val argsJson = args.toJson
+      VkLow.Api.call(method, argsJson, { resp: JSON =>
         try {
           val res = model.fromJson(resp)
           p success res
@@ -57,6 +59,7 @@ object VkApi {
             p failure ApiException(method, ex, Some(resp))
         }
       })
+      dom.console.info("Asynced VK.Api.call(", method, ",", argsJson, ") |", model.getClass.getName)
     } catch {
       case ex: Throwable => p failure ApiException(method, ex, None)
     }

@@ -159,13 +159,14 @@ class VkAdapter extends IAdapter {
       // Юзер не залогинен. Запустить процедуру логина.
       case None =>
         runLogin().flatMap { loginCtx =>
+          val some = Some(loginCtx)
           val vkCtx1 = vkCtxOpt match {
             case Some(vkCtx) =>
               // Залить новую инфу по логину во внутренний контекст
-              vkCtx.copy(login = Some(loginCtx))
+              vkCtx.copy(login = some)
             case None =>
               // should never happen
-              VkCtx(login = Some(loginCtx))
+              VkCtx(login = some)
           }
           f(vkCtx1)
         }
