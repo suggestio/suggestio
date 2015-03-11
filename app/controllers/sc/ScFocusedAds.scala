@@ -182,7 +182,12 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         Future.traverse(mads.zipWithIndex) { case (mad, i) =>
           ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
             .map { brArgs =>
-              val brArgs1 = brArgs.copy(inlineStyles = false, withCssClasses = _addCssClasses)
+              val brArgs1 = brArgs.copy(
+                inlineStyles    = false,
+                withCssClasses  = _addCssClasses,
+                // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js.
+                blockStyle      = brArgs.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")
+              )
               AdAndBrArgs(mad, brArgs1) -> i
             }
         } map { resUnsorted =>

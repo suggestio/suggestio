@@ -99,14 +99,13 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     /** Параметры для рендера блоков плитки. */
     lazy val brArgs = blk.RenderArgs(
       withEdit      = false,
-      isStandalone  = false,
       wideBg        = None,
       szMult        = tileArgs.szMult,
       inlineStyles  = false
     )
 
     def renderMad2html(mad: MAd): Html = {
-      _adTpl(mad, args = brArgs, isWithAction = true)(ctx)
+      _adNormalTpl(mad, args = brArgs, isWithAction = true)(ctx)
     }
 
     def renderMadAsync(mad: MAd): Future[T]

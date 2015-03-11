@@ -3,7 +3,9 @@ package models.adv
 import java.net.URL
 import io.suggest.adv.ext.model._, MServices._
 import io.suggest.util.UrlUtil
+import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.adv.js.ctx.MJsCtx
+import models.blk.SzMult_t
 import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -72,6 +74,19 @@ object MExtServices extends MServicesT {
      * @return true если upload-ссылка корректная. Иначе false.
      */
     def checkImgUploadUrl(url: String): Boolean = false
+
+    /**
+     * Максимальные размеры картинки при постинге в соц.сеть в css-пикселях.
+     * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
+     */
+    def advPostMaxSz: Option[MImgSizeT] = None
+
+    /**
+     * Мультипликатор размера для экспортируемых на сервис карточек.
+     * @return SzMult_t.
+     */
+    def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
+      .fold(1.0F)(_.toFloat)
   }
 
 
@@ -80,7 +95,7 @@ object MExtServices extends MServicesT {
   val VKONTAKTE: T = new Val(VKONTAKTE_ID) {
     override def nameI18N = "VKontakte"
     override def isForHost(host: String): Boolean = {
-      "(?i)(www\\.)?vk(ontakte)?\\.(com|ru)$".r.pattern.matcher(host).find()
+      "(?i)(www\\.)?vk(ontakte)?\\.(com|ru|me)$".r.pattern.matcher(host).find()
     }
 
     override def checkImgUploadUrl(url: String): Boolean = {
@@ -95,6 +110,16 @@ object MExtServices extends MServicesT {
     }
 
     override def dfltTargetUrl = Some("https://vk.com/")
+
+    /**
+     * Максимальные размеры картинки при постинге во вконтакт в соц.сеть в css-пикселях.
+     * Система будет пытаться вписать картинку в этот размер.
+     * У вконтакта экспирементальная макс.ширина - 601px почему-то.
+     * @see [[https://vk.com/vkrazmer]]
+     * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]] хрень?
+     * @return Экземпляр 2D-размеров.
+     */
+    override def advPostMaxSz = Some( MImgInfoMeta(width = 1100, height = 700) )
   }
 
 
@@ -105,6 +130,9 @@ object MExtServices extends MServicesT {
       "(?i)(www\\.)?facebook\\.(com|net)$".r.pattern.matcher(host).matches()
     }
     override def dfltTargetUrl = Some("https://facebook.com/me")
+
+    /** Параметры картинки для размещения. */
+    override def advPostMaxSz = Some( MImgInfoMeta(width = 487, height = 255) )
   }
 
 

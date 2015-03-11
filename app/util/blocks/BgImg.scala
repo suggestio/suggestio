@@ -65,14 +65,56 @@ object BgImg extends PlayLazyMacroLogsImpl {
    */
   private def getWideWidth(pxRatio: DevPixelRatio, deviceScreenOpt: Option[DevScreen]): Int = {
     // TODO Следует лимитировать ширину по доступной ширине картинки при текущем szMult.
-    val cssQuants = WIDE_WIDTHS_PX
     val cssWidth = deviceScreenOpt match {
       case Some(ds) =>
-        normWideBgSz(ds.width, acc = cssQuants.head, variants = cssQuants.tail)
+        normWideWidthBgSz(ds.width)
       case None =>
-        cssQuants.last
+        WIDE_WIDTHS_PX.last
     }
     (cssWidth * pxRatio.pixelRatio).toInt
+  }
+
+
+  /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
+  def getAbsCropOrFail(iik: MAnyImgT, wideWh: MImgSizeT): Future[ImgCrop] = {
+    iik.cropOpt match {
+      case Some(crop0) =>
+        val origWhFut = iik.original
+          .getImageWH
+          .map(_.get)  // Будет Future.failed при проблеме - так и надо.
+        updateCrop0(crop0, wideWh, origWhFut)
+      case None =>
+        Future failed new NoSuchElementException("No default crop is here.")
+    }
+  }
+  /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
+  def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT]): Future[ImgCrop] = {
+    origWhFut.map { origWh =>
+      // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
+      // Результат должен изнутри быть вписан в исходник по размерам.
+      val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
+      val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
+      val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
+      val w = (wideWh.width * rszRatio).toInt
+      val h = (wideWh.height * rszRatio).toInt
+      ImgCrop(
+        width = w, height = h,
+        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
+        offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = w, oiSz = origWh.width, rszRatio = rszRatio),
+        offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = h, oiSz = origWh.height, rszRatio = rszRatio)
+      )
+    }
+  }
+  /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
+  def getWideCropInfo(iik: MAnyImgT, wideWh: MImgSizeT): Future[ImgCropInfo] = {
+    getAbsCropOrFail(iik, wideWh)
+      .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
+      .recover { case ex: Exception =>
+        warn(s"Failed to read image[${iik.fileName}] WH", ex)
+        // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
+        val c = ImgCrop(width = wideWh.width, height = wideWh.height, 0, 0)
+        ImgCropInfo(c, isCenter = true)
+      }
   }
 
   /**
@@ -91,10 +133,6 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def wideBgImgArgs(bgImgInfo: MImgInfoT, bm: BlockMeta, szMult: SzMult_t, deviceScreenOpt: Option[DevScreen]): Future[blk.WideBgRenderCtx] = {
     val iik = MImg( bgImgInfo.filename )
     val iikOrig = iik.original
-    // Считываем размеры исходной картинки. Они необходимы для рассчета целевой высоты и для сдвига кропа в сторону исходного кропа.
-    val origWhFut = iikOrig
-      .getImageWH
-      .map(_.get)   // Будет Future.failed при проблеме - так и надо.
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
@@ -104,57 +142,34 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
+      // 2015.mar.11: Вписать откропанное изображение в примерно необходимые размеры. До это кроп был внутри ресайза.
+      AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = 0) /*, Seq(ImResizeFlags.FillArea)*/ ),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
       bgc.chromaSubSampling,
       bgc.imQualityOp
     )
+    val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
+    val cropInfoFut = getWideCropInfo(iik, wideWh)
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOps2Fut = iik.cropOpt.fold [Future[List[ImOp]]] {
-      Future failed new NoSuchElementException("No default crop is here.")
-    } { crop0 =>
-      origWhFut.map { origWh =>
-        // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
-        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
-        val rszRatio = origWh.height.toFloat / tgtHeightReal.toFloat
-        val crop1 = ImgCrop(
-          width = cropWidth,
-          height = tgtHeightReal,
-          offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = cropWidth, oiSz = origWh.width, rszRatio = rszRatio),
-          offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = tgtHeightReal, oiSz = origWh.height, rszRatio = rszRatio)
-        )
-        AbsCropOp(crop1) :: imOps0
+    val imOps2Fut = cropInfoFut
+      .map { cropInfo =>
+        if (cropInfo.isCenter) {
+          warn(s"Failed to read image[${iikOrig.fileName}] WH")
+          // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
+          ImGravities.Center ::  AbsCropOp(cropInfo.crop) ::  imOps0
+        } else {
+          AbsCropOp(cropInfo.crop) :: imOps0
+        }
       }
-    }.recover {
-      case ex: Exception =>
-        warn(s"Failed to read image[${iikOrig.fileName}] WH", ex)
-        // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
-        ImGravities.Center ::
-        AbsCropOp(ImgCrop(width = cropWidth, height = tgtHeightReal, 0, 0)) ::
-        imOps0
-    }
 
-    // Считаем параметры отображения отображаемой
-    val szCss: MImgInfoMeta = {
-      val dpr = DevPixelRatios.MDPI
-      // Нужно высчитывать горизонтальный размер после AbsResizeOp. Пока лень этим заниматься.
-      val h1 = if (dpr == pxRatio)  tgtHeightReal  else  getWideHeight(bm, szMult, dpr)
-      MImgInfoMeta(h1, width = -1)
-    }
-
-    imOps2Fut map { imOps2 =>
-      val imOps: List[ImOp] = {
-        // В общих чертах вписать изображение в примерно необходимые размеры:
-        val rszOp = AbsResizeOp(
-          MImgInfoMeta(height = tgtHeightReal, width = 0),
-          Seq(ImResizeFlags.FillArea)
-        )
-        rszOp :: imOps2
-      }
+    for {
+      imOps2 <- imOps2Fut
+    } yield {
       blk.WideBgRenderCtx(
-        szCss       = szCss,
-        dynCallArgs = iik.copy(dynImgOps = imOps)
+        szCss       = wideWh,
+        dynCallArgs = iik.copy(dynImgOps = imOps2)
       )
     }
   }
@@ -231,6 +246,12 @@ object BgImg extends PlayLazyMacroLogsImpl {
     } else {
       acc
     }
+  }
+  def normWideBgSz(minSz: Int, variants: Iterable[Int]): Int = {
+    normWideBgSz(minSz, variants.head, variants = variants.tail)
+  }
+  def normWideWidthBgSz(minSz: Int): Int = {
+    normWideBgSz(minSz, WIDE_WIDTHS_PX)
   }
 
   /**

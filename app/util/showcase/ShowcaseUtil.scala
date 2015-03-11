@@ -155,9 +155,9 @@ object ShowcaseUtil {
       wideBgCtxOptFut map { wideBgCtxOpt =>
         blk.RenderArgs(
           withEdit      = false,
-          isStandalone  = false,
           szMult        = szMult,
           wideBg        = wideBgCtxOpt
+          // Макс заимплементил wide bg на js. Но это похоже на костыль, логичнее это сделать где-то на сервере... Но не тут наверное...
         )
       }
 
@@ -165,7 +165,6 @@ object ShowcaseUtil {
       // Возвращаем результат
       val bra = blk.RenderArgs(
         withEdit      = false,
-        isStandalone  = false,
         szMult        = szMult,
         wideBg        = None
       )
@@ -194,7 +193,7 @@ object ShowcaseUtil {
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
   val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse 1
 
-  val MIN_W1 = -1F
+  def MIN_W1 = -1F
 
   val MIN_SZ_MULT = TILES_SZ_MULTS.last
 

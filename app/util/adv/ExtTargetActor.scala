@@ -5,11 +5,11 @@ import java.io.ByteArrayOutputStream
 import akka.actor.Props
 import controllers.routes
 import io.suggest.util.UrlUtil
-import models.Context
+import models.{MImgSizeT, Context}
 import models.adv.js._
 import models.adv.{JsExtTarget, MExtReturn, MExtReturns, IExtAdvTargetActorArgs}
 import models.adv.js.ctx._
-import models.blk.{SzMult_t, OneAdQsArgs}
+import models.blk.{OneAdWideQsArgs, SzMult_t, OneAdQsArgs}
 import models.event.{ErrorInfo, MEventTmp, RenderArgs}
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
@@ -23,7 +23,7 @@ import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 import util.event.{EventType, EventTypes}
-import util.img.WkHtmlUtil
+import util.img.AdRenderUtil
 import util.jsa.{InnerHtmlById, JsAppendById}
 import ExtUtil.RUNNER_EVENTS_DIV_ID
 
@@ -41,15 +41,6 @@ object ExtTargetActor {
   def props(args: IExtAdvTargetActorArgs): Props = {
     Props(ExtTargetActor(args))
   }
-
-  /** Дефолтовое значение szMult для рендера карточки, когда другого значения нет под рукой. */
-  val szMultDflt: SzMult_t = {
-    configuration.getDouble("adv.ext.target.szMult.dflt") match {
-      case Some(x) => x.toFloat
-      case None    => 3.0F
-    }
-  }
-
 
   /** Формат картинки, из которой рендерится карточка. */
   def imgFmt = OutImgFmts.JPEG
@@ -89,29 +80,48 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   /** Значение replyTo в запросах клиенту. */
   protected val replyTo = self.path.name
 
-  /**
-   * Сгенерить аргументы для рендера карточки в картинку.
-   * @param szMult Мультипликатор размера.
-   * @return Экземпляр [[models.blk.OneAdQsArgs]], готовый к эксплуатации.
-   */
-  def getAdRenderArgs(szMult: SzMult_t = szMultDflt) = {
-    OneAdQsArgs(
-      adId    = args.qs.adId,
-      szMult  = szMult,
-      vsnOpt  = args.request.mad.versionOpt
-      // TODO Добавить заполнение параметра wideOpt на основе данных соц.сети.
+  protected def mad = args.request.mad
+  protected def service = args.target.target.service
+
+  /** Инфа по картинке кодируется этим классом. */
+  protected case class PicInfo(wide: Option[OneAdWideQsArgs], width: Int, height: Int, szMult: SzMult_t) extends MImgSizeT
+
+  /** Инфа по рендеру карточки в картинке. */
+  protected val madRenderInfo: PicInfo = {
+    // Вычисляем мультипликатор размера исходя из отношения высот.
+    val hDiff = service.advPostMaxSz match {
+      case Some(sz) => sz.height.toFloat / mad.blockMeta.height.toFloat
+      case None     => 1.0F
+    }
+    // Нужно домножить на минимально необходимый размер для сервиса.
+    // TODO Проквантовать полученный szMult?
+    val szMult1 = hDiff * service.szMult
+    // Вычислить необходимость и ширину широкого отображения.
+    val wideWidthOpt = service.advPostMaxSz
+      .map(_.width)
+      .filter { pmWidth =>  mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.1F }
+    PicInfo(
+      wide   = wideWidthOpt.map { OneAdWideQsArgs.apply },
+      width  = wideWidthOpt.getOrElse((mad.blockMeta.width * szMult1).toInt),
+      height = (service.advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
+      szMult = szMult1
     )
   }
 
   /**
-   * Сгенерить абсолютную ссылку на картинку отрендеренной карточки.
-   * @param szMult Мультипликатор размера.
-   * @return Строка-ссылка.
+   * Сгенерить аргументы для рендера карточки в картинку.
+   * @return Экземпляр [[models.blk.OneAdQsArgs]], готовый к эксплуатации.
    */
-  def getExtAdImgAbsUrl(szMult: SzMult_t = szMultDflt): String = {
-    val args = getAdRenderArgs(szMult)
-    Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAd(args).url
+  protected def adRenderArgs = {
+    val mri = madRenderInfo
+    OneAdQsArgs(
+      adId    = args.qs.adId,
+      szMult  = mri.szMult,
+      vsnOpt  = mad.versionOpt,
+      wideOpt = mri.wide
+    )
   }
+
 
   def getDomain: String = UrlUtil.url2dkey(args.target.target.url)
 
@@ -124,8 +134,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   def getScUrl(ret: MExtReturn): String = {
     ret.builder()
       .setAdnId( args.target.target.adnId )
-      .setFocusedAdId( args.request.mad.idOrNull )
-      .setFocusedProducerId( args.request.mad.producerId )
+      .setFocusedAdId( mad.idOrNull )
+      .setFocusedProducerId( mad.producerId )
       .toAbsUrl
   }
 
@@ -184,14 +194,14 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 
-  def getPicCtx(szMult: SzMult_t): MPictureCtx = {
-    val sz0 = args.request.mad.blockMeta
+  /** JSON-контекст инфы по картинке текущей карточки. */
+  protected def jsPicCtx: MPictureCtx = {
+    val mri = madRenderInfo
     val sz1 = PictureSizeCtx(
-      width  = (sz0.width * szMult).toInt,
-      height = (sz0.height * szMult).toInt
+      width  = mri.width,
+      height = mri.height
     )
-    val adArgs = getAdRenderArgs(szMult)
-    val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adArgs).url
+    val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adRenderArgs).url
     MPictureCtx(
       size   = Some(sz1),
       sioUrl = Some(url)
@@ -208,11 +218,11 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       super.afterBecome()
       // Запустить заполнение контекста исходными данными по цели.
       val madCtx = MAdCtx(
-        id      = args.request.mad.id.get,
-        content = MAdContentCtx.fromAd( args.request.mad, args.request.producer ),
+        id      = mad.id.get,
+        content = MAdContentCtx.fromAd( mad, args.request.producer ),
         scUrl   = Some( getScUrl(MExtReturns.ToAd) ),
         // Сразу вставить URL картинки в контекст.
-        picture = Some( getPicCtx(szMultDflt) )
+        picture = Some( jsPicCtx )
       )
       // Собираем инфу по цели размещения
       val targetFull = JsExtTarget(
@@ -226,7 +236,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         domain  = Seq(getDomain),
         status  = None,
         error   = None,
-        service = Some(args.target.target.service)
+        service = Some(service)
       )
       become(new HandleTargetState(mctx1))
     }
@@ -333,7 +343,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         }
         if (maybeAdNeedNewPicUrl.nonEmpty) {
           // Требуется выставить новую ссылку на картинку в контекст
-          val madCtx1 = maybeAdNeedNewPicUrl.get.copy(picture = Some(getPicCtx(szMultDflt)))
+          val madCtx1 = maybeAdNeedNewPicUrl.get.copy(picture = Some(jsPicCtx))
           val mads1 = mctx0.mads.map { madCtx =>
             if (madCtx1.id == madCtx.id) madCtx1 else madCtx
           }
@@ -360,9 +370,6 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     /** На какое состояние переключаться надо, когда картинка отрендерилась? */
     def getNextStateOk(okRes: Ad2ImgRenderOk): FsmState
 
-    // TODO нужно вычислять на основе данных, присланных клиентом.
-    def szMult: SzMult_t = szMultDflt
-
     def renderWkhtmlError(ex: Throwable): Unit = {
       val err = ErrorInfo(
         msg  = "error.sio.internal",
@@ -376,8 +383,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Запустить в фоне генерацию картинки и отправку её на удалённый сервер.
-      val renderArgs = getAdRenderArgs(szMult)
-      WkHtmlUtil.renderAd2img(renderArgs, args.request.mad.blockMeta, imgFmt)
+      AdRenderUtil.renderAd2img(adRenderArgs, mad, imgFmt)
         .onComplete {
           case Success(imgBytes)  =>  self ! new Ad2ImgRenderOk(imgBytes)
           case result             =>  self ! result
@@ -467,12 +473,12 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Собрать POST-запрос и запустить его на исполнение
-      val boundary = "----------BOUNDARY--" + args.request.mad.id.getOrElse("BoUnDaRy-_-")
+      val boundary = "----------BOUNDARY--" + mad.id.getOrElse("BoUnDaRy-_-")
       val entity = MultipartEntityBuilder.create()
         .setBoundary(boundary)
       val fmt = imgFmt
       val partCt = ContentType.create(fmt.mime)
-      val partFilename = args.qs.adId + "-" + args.request.mad.versionOpt.getOrElse(0L) + "." + fmt.name
+      val partFilename = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name
       val partBody = new ByteArrayBody(imgBytes, partCt, partFilename)
       entity.addPart(uploadCtx.partName, partBody)
       val baos = new ByteArrayOutputStream((imgBytes.length * 1.1F).toInt)

@@ -1,0 +1,31 @@
+@(title: Option[String] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Шаблон для рендера ровно одной карточки на экране. *@
+
+@import util.cdn.CdnUtil
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
+<head>
+
+  <title>@title.getOrElse("Suggest.io")</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <meta name="viewport" content="@if(ctx.isIpad) {width=640, initial-scale = 1} else {width=320,initial-scale = 1},user-scalable=no"/>
+
+  @* Тут надо логотип узла рекламной сети? *@
+  <link rel="shortcut icon" type="image/png" href="@CdnUtil.asset("images/favicon.ico")">
+
+  <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
+
+  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase.css")'/>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
+
+  @headAfter
+</head>
+
+<body style="position: relative; display: inline-block; margin: 0; overflow: hidden;">
+  @content
+</body>
+</html>

@@ -162,15 +162,37 @@ object DynImgUtil extends PlayMacroLogsImpl {
     op.addImage(out.getAbsolutePath)
     val cmd = new ConvertCmd()
     cmd.setAsyncMode(true)
-    val listener = new Im4jAsyncSuccessProcessListener
-    cmd.addProcessEventListener(listener)
-    trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
-    cmd run op
-    val resFut = listener.future
-    resFut onSuccess { case _ =>
-      trace("convert(): Result is " + out.length + " bytes")
+    val opStr = op.toString
+    // Бывает, что происходят двойные одинаковые вызовы из-за слишком сильной параллельности в работе системы.
+    // Пытаемся подавить двойные вызовы через короткий Cache.
+    val p = Promise[Int]()
+    val pfut = p.future
+    try {
+      Cache.getAs [Future[Int]] (opStr) match {
+        case None =>
+          // Немедленно заливаем в кеш сие
+          Cache.set(opStr, pfut, expiration = 10)
+          // Запускаем генерацию картинки.
+          val listener = new Im4jAsyncSuccessProcessListener
+          cmd.addProcessEventListener(listener)
+          trace("convert(): " + cmd.getCommand.mkString(" ") + " " + opStr)
+          cmd run op
+          val resFut = listener.future
+          resFut onSuccess { case res =>
+            trace(s"convert(): returned $res, result ${out.length} bytes")
+          }
+          p completeWith resFut
+        // Обработчик картинки уже в кеше. На этом и закончить.
+        case Some(res) =>
+          p completeWith res
+      }
+
+    } catch {
+      case ex: Throwable =>
+        p failure ex
     }
-    resFut
+
+    pfut
   }
 
 

@@ -6,9 +6,10 @@ import models.blk.OneAdQsArgs
 import models.im.OutImgFmts
 import util.PlayMacroLogsI
 import util.acl.GetAnyAd
-import util.blocks.BlocksConf
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.img.WkHtmlUtil
+import util.img.AdRenderUtil
+import views.html.blocks.common.standaloneTpl
+import views.html.sc._adTpl
 
 /**
  * Suggest.io
@@ -23,18 +24,28 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    * @param args Настройки выборки и отображения результата.
    * @return 200 Ок с отрендеренной страницей-карточкой.
    */
-  def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId) { implicit request =>
+  def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId).async { implicit request =>
     import request.mad
-    // TODO Добавить генерация wideCtx из args.
-    val bc: BlockConf = BlocksConf applyOrDefault mad.blockMeta.blockId
-    val brArgs = blk.RenderArgs(
-      szMult        = args.szMult,
-      isStandalone  = true,
-      withEdit      = false,
-      inlineStyles  = true
-    )
-    cacheControlShort {
-      Ok( bc.renderBlock(mad, brArgs) )
+    val wideOptFut = AdRenderUtil.getWideCtxOpt(mad, args)
+    // Рендер, когда асинхронные операции будут завершены.
+    wideOptFut map { wideCtxOpt =>
+      val brArgs = blk.RenderArgs(
+        szMult        = args.szMult,
+        withEdit      = false,
+        inlineStyles  = true,
+        wideBg        = wideCtxOpt,
+        blockStyle    = wideCtxOpt.map { wideCtx =>
+          // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
+          val blockWidth = (mad.blockMeta.width * args.szMult).toInt
+          val leftPx = (wideCtx.szCss.width - blockWidth) / 2
+          s"position: absolute; top: 0px; left: ${leftPx}px;"
+        }
+      )
+      // TODO Нужен title, на основе имени узла-продьюсера например.
+      val render = standaloneTpl() {
+        _adTpl(mad, brArgs)
+      }
+      Ok(render)
     }
   }
 
@@ -46,7 +57,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    */
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
     val fmt = OutImgFmts.JPEG
-    WkHtmlUtil.renderAd2img(adArgs, request.mad.blockMeta, fmt)
+    AdRenderUtil.renderAd2img(adArgs, request.mad, fmt)
       .map { imgBytes =>
         Ok(imgBytes).withHeaders(
           CONTENT_TYPE -> fmt.mime

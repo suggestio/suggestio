@@ -1,6 +1,5 @@
 package models.blk
 
-import io.suggest.ym.model.common.MImgSizeT
 import play.api.Play._
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl

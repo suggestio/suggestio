@@ -3,13 +3,9 @@ package util.img
 import java.io.File
 import java.nio.file.Files
 
-import controllers.routes
-import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
-import models.blk.OneAdQsArgs
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
-import util.xplay.PlayUtil.httpPort
 import models.im._
 
 import scala.concurrent.{Promise, Future}
@@ -91,36 +87,6 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
     if (result != 0) {
       throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
     }
-  }
-
-  /**
-   * Генерации абсолютной ссылки на отрендеренную в картинку рекламную карточку.
-   * @param adArgs Параметры рендера.
-   * @return Строка с абсолютной ссылкой на локалхост.
-   */
-  def adImgLocalUrl(adArgs: OneAdQsArgs): String = {
-    "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url
-  }
-
-  /**
-   * Рендер указанной рекламной карточки
-   * @param adArgs Данные по рендеру.
-   * @param sourceAdSz Исходный размер карточки.
-   * @param fmt Целевой формат.
-   * @return Фьючерс с байтами картинки.
-   */
-  def renderAd2img(adArgs: OneAdQsArgs, sourceAdSz: MImgSizeT, fmt: OutImgFmt): Future[Array[Byte]] = {
-    // TODO Добавить поддержку adArgs.wideOpt для генерации широкой картинки карточки.
-    val wkArgs = WkHtmlArgs(
-      src     = adImgLocalUrl(adArgs),
-      imgSize = MImgInfoMeta(
-        height = (sourceAdSz.height * adArgs.szMult).toInt,
-        width  = (sourceAdSz.width * adArgs.szMult).toInt
-      ),
-      outFmt  = fmt,
-      plugins = false
-    )
-    WkHtmlUtil.html2imgSimpleCached(wkArgs)
   }
 
 }
