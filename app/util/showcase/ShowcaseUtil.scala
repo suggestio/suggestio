@@ -193,7 +193,7 @@ object ShowcaseUtil {
   val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
   val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse 1
 
-  val MIN_W1 = -1F
+  def MIN_W1 = -1F
 
   val MIN_SZ_MULT = TILES_SZ_MULTS.last
 

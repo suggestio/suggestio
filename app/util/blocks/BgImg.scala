@@ -91,11 +91,14 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT]): Future[ImgCrop] = {
     origWhFut.map { origWh =>
       // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
-      // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
-      val rszRatio = origWh.height.toFloat / wideWh.height.toFloat
+      // Результат должен изнутри быть вписан в исходник по размерам.
+      val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
+      val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
+      val rszRatio  = Math.min(rszRatioH, rszRatioV)
       ImgCrop(
         width = wideWh.width,
         height = wideWh.height,
+        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
         offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = wideWh.width, oiSz = origWh.width, rszRatio = rszRatio),
         offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = wideWh.height, oiSz = origWh.height, rszRatio = rszRatio)
       )
@@ -145,8 +148,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
       bgc.imQualityOp
     )
     val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
+    val cropInfoFut = getWideCropInfo(iik, wideWh)
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOps2Fut = getWideCropInfo(iik, wideWh)
+    val imOps2Fut = cropInfoFut
       .map { cropInfo =>
         if (cropInfo.isCenter) {
           warn(s"Failed to read image[${iikOrig.fileName}] WH")
@@ -158,14 +162,16 @@ object BgImg extends PlayLazyMacroLogsImpl {
       }
 
     // Считаем параметры отображения отображаемой
-    val szCss: MImgInfoMeta = {
+    val szCssFut = cropInfoFut.map { cropInfo =>
       val dpr = DevPixelRatios.MDPI
-      // Нужно высчитывать горизонтальный размер после AbsResizeOp. Пока лень этим заниматься.
       val h1 = if (dpr == pxRatio)  tgtHeightReal  else  getWideHeight(bm, szMult, dpr)
-      MImgInfoMeta(h1, width = -1)
+      MImgInfoMeta(height = h1, width = cropInfo.crop.width)
     }
 
-    imOps2Fut map { imOps2 =>
+    for {
+      imOps2 <- imOps2Fut
+      szCss  <- szCssFut
+    } yield {
       val imOps: List[ImOp] = {
         // В общих чертах вписать изображение в примерно необходимые размеры:
         val rszOp = AbsResizeOp(

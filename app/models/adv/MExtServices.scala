@@ -5,6 +5,7 @@ import io.suggest.adv.ext.model._, MServices._
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.adv.js.ctx.MJsCtx
+import models.blk.SzMult_t
 import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -79,6 +80,13 @@ object MExtServices extends MServicesT {
      * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
      */
     def advPostMaxSz: Option[MImgSizeT] = None
+
+    /**
+     * Мультипликатор размера для экспортируемых на сервис карточек.
+     * @return SzMult_t.
+     */
+    def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
+      .fold(1.0F)(_.toFloat)
   }
 
 
@@ -111,7 +119,7 @@ object MExtServices extends MServicesT {
      * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]] хрень?
      * @return Экземпляр 2D-размеров.
      */
-    override def advPostMaxSz = Some( MImgInfoMeta(width = 1000, height = 700) )
+    override def advPostMaxSz = Some( MImgInfoMeta(width = 1100, height = 700) )
   }
 
 
