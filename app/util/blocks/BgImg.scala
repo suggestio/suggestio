@@ -90,17 +90,18 @@ object BgImg extends PlayLazyMacroLogsImpl {
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
   def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT]): Future[ImgCrop] = {
     origWhFut.map { origWh =>
-      // Есть ширина-длина сырца. Нужно сделать кроп с центром как можно ближе к центру исходного кропа, а не к центру картинки.
+      // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
       // Результат должен изнутри быть вписан в исходник по размерам.
       val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
       val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
-      val rszRatio  = Math.min(rszRatioH, rszRatioV)
+      val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
+      val w = (wideWh.width * rszRatio).toInt
+      val h = (wideWh.height * rszRatio).toInt
       ImgCrop(
-        width = wideWh.width,
-        height = wideWh.height,
-        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном:
-        offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = wideWh.width, oiSz = origWh.width, rszRatio = rszRatio),
-        offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = wideWh.height, oiSz = origWh.height, rszRatio = rszRatio)
+        width = w, height = h,
+        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
+        offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = w, oiSz = origWh.width, rszRatio = rszRatio),
+        offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = h, oiSz = origWh.height, rszRatio = rszRatio)
       )
     }
   }
@@ -141,6 +142,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
+      // 2015.mar.11: Вписать откропанное изображение в примерно необходимые размеры. До это кроп был внутри ресайза.
+      AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = 0) /*, Seq(ImResizeFlags.FillArea)*/ ),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
@@ -161,28 +164,12 @@ object BgImg extends PlayLazyMacroLogsImpl {
         }
       }
 
-    // Считаем параметры отображения отображаемой
-    val szCssFut = cropInfoFut.map { cropInfo =>
-      val dpr = DevPixelRatios.MDPI
-      val h1 = if (dpr == pxRatio)  tgtHeightReal  else  getWideHeight(bm, szMult, dpr)
-      MImgInfoMeta(height = h1, width = cropInfo.crop.width)
-    }
-
     for {
       imOps2 <- imOps2Fut
-      szCss  <- szCssFut
     } yield {
-      val imOps: List[ImOp] = {
-        // В общих чертах вписать изображение в примерно необходимые размеры:
-        val rszOp = AbsResizeOp(
-          MImgInfoMeta(height = tgtHeightReal, width = 0),
-          Seq(ImResizeFlags.FillArea)
-        )
-        rszOp :: imOps2
-      }
       blk.WideBgRenderCtx(
-        szCss       = szCss,
-        dynCallArgs = iik.copy(dynImgOps = imOps)
+        szCss       = wideWh,
+        dynCallArgs = iik.copy(dynImgOps = imOps2)
       )
     }
   }

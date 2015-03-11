@@ -62,62 +62,26 @@ object AdRenderUtil {
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = (sourceAdSz.width * adArgs.szMult).toInt
     val height = (sourceAdSz.height * adArgs.szMult).toInt
-    val fut = adArgs.wideOpt match {
+    val extWidth = adArgs.wideOpt match {
       // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
       case Some(wide) =>
         // Внешняя полная ширина отрендеренной широкой карточки.
-        val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
-        val wideWidth0 = wide.width
-        val bgImgInfoOpt = bc.getMadBgImg(mad)
-        val cropInfoOptFut = bgImgInfoOpt.fold {
-          Future successful Option.empty[ImgCrop]
-        } { bgImgInfo =>
-          val bgImg = MImg(bgImgInfo.filename)
-          val wideWh = MImgInfoMeta(height = height, width = wideWidth0)
-          BgImg.getAbsCropOrFail(bgImg, wideWh)
-            .map { Some.apply }
-        }
-        cropInfoOptFut map { cropOpt =>
-          cropOpt.fold {
-            // Нет предложенного кропа.
-            val extWidth = BgImg.normWideWidthBgSz(wideWidth0)
-            (extWidth, Option.empty[ImgCrop])
-          } { crop =>
-            val extWidth = crop.width
-            if (extWidth <= wideWidth0) {
-              // Предложенный кроп фоновой картинки не превышает запрошенный размер.
-              extWidth -> None
-            } else /*if (extWidth > wide.width)*/ {
-              // Требуется кроп отрендеренной карточки, т.к. предложенный кроп BgImg шире, чем запрошенный размер картинки.
-              val cs = Some(ImgCrop(
-                width   = wideWidth0,
-                height  = height,
-                offX    = (extWidth - wideWidth0) / 2,
-                offY    = 0
-              ))
-              extWidth -> cs
-            }
-          }
-        } recover { case ex: NoSuchElementException =>
-          (width0, None)
-        }
+        wide.width
 
       // Без wide, значит можно рендерить карточку as-is.
       case None =>
-        Future successful (width0, None)
+        width0
     }
 
     // Запускаем генерацию результата
-    fut flatMap { case (extWidth, cropOpt) =>
-      val wkArgs = WkHtmlArgs(
-        src         = adImgLocalUrl(adArgs),
-        scrSz       = MImgInfoMeta(width = extWidth, height = height),
-        outFmt      = fmt,
-        plugins     = false,
-        crop        = cropOpt
-      )
-      WkHtmlUtil.html2imgSimpleCached(wkArgs)
-    }
+    val wkArgs = WkHtmlArgs(
+      src         = adImgLocalUrl(adArgs),
+      scrSz       = MImgInfoMeta(width = extWidth, height = height),
+      outFmt      = fmt,
+      plugins     = false
+      //crop        = cropOpt
+    )
+    WkHtmlUtil.html2imgSimpleCached(wkArgs)
   }
 
 

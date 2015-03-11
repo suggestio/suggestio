@@ -110,6 +110,7 @@ object ImResizeFlags extends Enumeration {
   val IgnoreAspectRatio: ImResizeFlag   = Val('!', 'a')
   val OnlyShrinkLarger: ImResizeFlag    = Val('>', 'b')
   val OnlyEnlargeSmaller: ImResizeFlag  = Val('<', 'c')
+  /** resize the image based on the smallest fitting dimension. */
   val FillArea: ImResizeFlag            = Val('^', 'd')
   // Другие режимы ресайза тут пока опущены, т.к. не подходят для AbsResize, а другой пока нет.
 
