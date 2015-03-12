@@ -341,13 +341,10 @@ class VkAdapter extends IAdapter {
       tgInfo.id
     // Текст надписи на стене под картинкой.
     val msg = {
-      val descrIter = mctx.mads.headOption
+      mctx.mads.headOption
         .flatMap { mad0 => mad0.content.descr }
         .iterator
-      val urlIter = mctx.target
-        .map(_.onClickUrl)
-        .iterator
-      (descrIter ++ urlIter).mkString("\n")
+        .mkString("\n")
     }
     // Объединяем все данные для поста.
     val postArgs = VkWallPostArgs(
