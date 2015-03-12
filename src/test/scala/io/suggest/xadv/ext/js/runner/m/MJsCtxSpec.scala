@@ -34,7 +34,7 @@ object MJsCtxSpec extends SimpleTestSuite {
     val ctx0 = MJsCtx(
       action = MAskActions.EnsureReady,
       mads = Seq(mad),
-      service = MServiceInfo(MServices.VKONTAKTE, appId = Some("12312332")),
+      service = Some( MServiceInfo(MServices.VKONTAKTE, appId = Some("12312332")) ),
       domains = Seq("vk.com"),
       target = Some(MExtTarget(
         tgUrl = "http://vk.com/soddom123",
