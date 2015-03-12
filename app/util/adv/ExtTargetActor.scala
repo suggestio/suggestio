@@ -87,7 +87,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   protected case class PicInfo(wide: Option[OneAdWideQsArgs], width: Int, height: Int, szMult: SzMult_t) extends MImgSizeT
 
   /** Инфа по рендеру карточки в картинке. */
-  protected val madRenderInfo: PicInfo = {
+  protected lazy val madRenderInfo: PicInfo = {
     // Вычисляем мультипликатор размера исходя из отношения высот.
     val srv = service
     val advPostMaxSz = srv.advPostMaxSz
@@ -99,13 +99,11 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     // TODO Проквантовать полученный szMult?
     val szMult1 = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = srv.advExtWidePosting(mad)
+    val wideWidthOpt = srv.advExtWidePosting(mad, szMult1)
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
-      wide   = wideWidthOpt.map { qs0 =>
-        qs0.copy(width = (qs0.width * szMult1).toInt)
-      },
-      width  = (wideWidthOpt.fold(mad.blockMeta.width)(_.width) * szMult1).toInt,
+      wide   = wideWidthOpt,
+      width  = wideWidthOpt.fold { (mad.blockMeta.width * szMult1).toInt } (_.width),
       height = (advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
       szMult = szMult1
     )

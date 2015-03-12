@@ -90,11 +90,14 @@ object MExtServices extends MServicesT {
       .fold(1.0F)(_.toFloat)
 
     /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
-    def advExtWidePosting(mad: MAd): Option[OneAdWideQsArgs] = {
-      if (isAdvExtWide(mad))
-        advPostMaxSz.map { sz => OneAdWideQsArgs(width = sz.width) }
-      else
+    def advExtWidePosting(mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
+      if (isAdvExtWide(mad)) {
+        advPostMaxSz.map { sz =>
+          OneAdWideQsArgs(width = (sz.width * szMult).toInt)
+        }
+      } else {
         None
+      }
     }
     def isAdvExtWide(mad: MAd): Boolean = {
       mad.blockMeta.wide
@@ -155,9 +158,6 @@ object MExtServices extends MServicesT {
 
     /** В фейсбук если не постить горизонтально, то будет убожество. */
     override def isAdvExtWide(mad: MAd): Boolean = true
-
-    /** Разрешен ли и необходим ли wide-постинг? */
-    override def advExtWidePosting(mad: MAd) = Some(OneAdWideQsArgs(width = ADV_EXT_WIDTH))
   }
 
 
