@@ -99,13 +99,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     // TODO Проквантовать полученный szMult?
     val szMult1 = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = srv.advPostMaxSz
-      //.filter { _ => mad.blockMeta.wide }
-      .map(_.width)
-      .filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
+    val wideWidthOpt = srv.advExtWidePosting(mad)
+      //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
-      wide   = wideWidthOpt.map { OneAdWideQsArgs.apply },
-      width  = (wideWidthOpt.getOrElse(mad.blockMeta.width) * szMult1).toInt,
+      wide   = wideWidthOpt.map { qs0 =>
+        qs0.copy(width = (qs0.width * szMult1).toInt)
+      },
+      width  = (wideWidthOpt.fold(mad.blockMeta.width)(_.width) * szMult1).toInt,
       height = (advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
       szMult = szMult1
     )

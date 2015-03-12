@@ -89,7 +89,7 @@ object MExtServices extends MServicesT {
     def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
       .fold(1.0F)(_.toFloat)
 
-    /** Разрешен ли и необходим ли wide-постинг? */
+    /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
     def advExtWidePosting(mad: MAd): Option[OneAdWideQsArgs] = {
       if (isAdvExtWide(mad))
         advPostMaxSz.map { sz => OneAdWideQsArgs(width = sz.width) }
@@ -151,7 +151,7 @@ object MExtServices extends MServicesT {
     override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
 
     /** Очень сурово жмётся всё. */
-    override def szMult: SzMult_t = 1.0F  // TODO 2.0 когда пофиксим
+    override def szMult: SzMult_t = 2.0F
 
     /** В фейсбук если не постить горизонтально, то будет убожество. */
     override def isAdvExtWide(mad: MAd): Boolean = true
