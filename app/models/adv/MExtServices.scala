@@ -133,6 +133,7 @@ object MExtServices extends MServicesT {
 
     /** Параметры картинки для размещения. */
     override def advPostMaxSz = Some( MImgInfoMeta(width = 487, height = 255) )
+    override def szMult: SzMult_t = 2.0F
   }
 
 

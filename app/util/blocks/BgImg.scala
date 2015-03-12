@@ -76,7 +76,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
     }
   }
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
-  def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT]): Future[ImgCrop] = {
+  private def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT]): Future[ImgCrop] = {
     origWhFut.map { origWh =>
       // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
       // Результат должен изнутри быть вписан в исходник по размерам.
@@ -94,7 +94,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
     }
   }
   /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
-  def getWideCropInfo(iik: MAnyImgT, wideWh: MImgSizeT): Future[ImgCropInfo] = {
+  private def getWideCropInfo(iik: MAnyImgT, wideWh: MImgSizeT): Future[ImgCropInfo] = {
     getAbsCropOrFail(iik, wideWh)
       .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
       .recover { case ex: Exception =>
