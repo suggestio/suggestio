@@ -86,8 +86,11 @@ object MExtServices extends MServicesT {
      * Мультипликатор размера для экспортируемых на сервис карточек.
      * @return SzMult_t.
      */
-    def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
-      .fold(1.0F)(_.toFloat)
+    final def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
+      .fold(szMultDflt)(_.toFloat)
+
+    /** Дефолтовое значение szMult, если в конфиге не задано. */
+    def szMultDflt: SzMult_t = 1.0F
 
     /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
     def advExtWidePosting(mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
@@ -153,10 +156,7 @@ object MExtServices extends MServicesT {
     /** Параметры картинки для размещения. */
     override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
 
-    /** Очень сурово жмётся всё. */
-    override def szMult: SzMult_t = 2.0F
-
-    /** В фейсбук если не постить горизонтально, то будет убожество. */
+    /** В фейсбук если не постить горизонтально, то будет совсем убожество. */
     override def isAdvExtWide(mad: MAd): Boolean = true
   }
 
