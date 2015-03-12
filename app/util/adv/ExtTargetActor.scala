@@ -98,8 +98,10 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     val szMult1 = hDiff * service.szMult
     // Вычислить необходимость и ширину широкого отображения.
     val wideWidthOpt = service.advPostMaxSz
+      .filter { _ => mad.blockMeta.wide }
       .map(_.width)
-      .filter { pmWidth =>  mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.1F }
+      // Заменено на упрощенный фильтр, указанный выше.
+      //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.1F }
     PicInfo(
       wide   = wideWidthOpt.map { OneAdWideQsArgs.apply },
       width  = wideWidthOpt.getOrElse((mad.blockMeta.width * szMult1).toInt),
