@@ -45,33 +45,21 @@ object BgImg extends PlayLazyMacroLogsImpl {
       .sorted
   }
 
-  /**
-   * Рассчет высоты широкой картинки.
-   * @param bm Метаданные блока.
-   * @param szMult Мультипликатор размера, заданный контроллером.
-   * @param pxRatio Плотность пикселей экрана.
-   * @return Целочисленная высота.
-   */
-  private def getWideHeight(bm: BlockMeta, szMult: SzMult_t, pxRatio: DevPixelRatio): Int = {
-    (bm.height * szMult * pxRatio.pixelRatio).toInt
-  }
 
   /**
    * Рассчет ширины широкой картинки. Нужно снизить лишний трафик клиента, снизить нагрузку на хранилища картинок,
    * но отображать картинку как можно шире. Для этого используется квантование переданной ширины экрана устройства.
-   * @param pxRatio Плотность пикселей.
    * @param deviceScreenOpt Параметры экрана, если известны.
    * @return Целочисленная ширина картинки.
    */
-  private def getWideWidth(pxRatio: DevPixelRatio, deviceScreenOpt: Option[DevScreen]): Int = {
+  private def getWideWidthCss(deviceScreenOpt: Option[DevScreen]): Int = {
     // TODO Следует лимитировать ширину по доступной ширине картинки при текущем szMult.
-    val cssWidth = deviceScreenOpt match {
+    deviceScreenOpt match {
       case Some(ds) =>
         normWideWidthBgSz(ds.width)
       case None =>
         WIDE_WIDTHS_PX.last
     }
-    (cssWidth * pxRatio.pixelRatio).toInt
   }
 
 
@@ -136,9 +124,11 @@ object BgImg extends PlayLazyMacroLogsImpl {
     // Собираем хвост параметров сжатия.
     val pxRatio = pxRatioDefaulted( deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val tgtHeightReal = getWideHeight(bm, szMult, pxRatio)
+    val tgtHeightCssRaw = bm.height * szMult
+    val tgtHeightReal = (tgtHeightCssRaw * pxRatio.pixelRatio).toInt
     // Ширину экрана квантуем, получая ширину картинки.
-    val cropWidth = getWideWidth(pxRatio, deviceScreenOpt)
+    val cropWidthCssPx = getWideWidthCss(deviceScreenOpt)
+    val cropWidth = (cropWidthCssPx * pxRatio.pixelRatio).toInt
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
@@ -163,12 +153,18 @@ object BgImg extends PlayLazyMacroLogsImpl {
           AbsCropOp(cropInfo.crop) :: imOps0
         }
       }
-
+    // Вычислить размер картинки в css-пикселях.
+    val szCss = MImgInfoMeta(
+      height = tgtHeightCssRaw.toInt,
+      width  = cropWidthCssPx
+    )
+    // Дождаться результатов рассчета картинки и вернуть контейнер с результатами.
     for {
       imOps2 <- imOps2Fut
     } yield {
       blk.WideBgRenderCtx(
-        szCss       = wideWh,
+        szCss       = szCss,
+        szReal      = wideWh,
         dynCallArgs = iik.copy(dynImgOps = imOps2)
       )
     }

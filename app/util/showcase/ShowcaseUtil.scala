@@ -149,8 +149,8 @@ object ShowcaseUtil {
       case None       => TILES_SZ_MULTS.last
     }
     if (mad.blockMeta.wide) {
-      // Нужно получить данные для рендера широкой карточки.
       val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
+      // Нужно получить данные для рендера широкой карточки.
       val wideBgCtxOptFut = bc.wideBgImgArgs(mad, szMult)
       wideBgCtxOptFut map { wideBgCtxOpt =>
         blk.RenderArgs(
@@ -291,12 +291,11 @@ object ShowcaseUtil {
     } else {
       Iterator(FOCUSED_SZ_MULT) ++ szMultIter0
     }
-    val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator)
-      .filter { szMult =>
-        // Проверяем, влезает ли ширина на экран при таком раскладе?
-        val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
-        w1 >= MIN_W1
-      }
+    val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator).filter { szMult =>
+      // Проверяем, влезает ли ширина на экран при таком раскладе?
+      val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
+      w1 >= MIN_W1
+    }
     if (maxHiter.isEmpty)
       MIN_SZ_MULT
     else
