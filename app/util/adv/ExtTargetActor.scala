@@ -89,22 +89,24 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   /** Инфа по рендеру карточки в картинке. */
   protected val madRenderInfo: PicInfo = {
     // Вычисляем мультипликатор размера исходя из отношения высот.
-    val hDiff = service.advPostMaxSz match {
+    val srv = service
+    val advPostMaxSz = srv.advPostMaxSz
+    val hDiff = advPostMaxSz match {
       case Some(sz) => sz.height.toFloat / mad.blockMeta.height.toFloat
       case None     => 1.0F
     }
     // Нужно домножить на минимально необходимый размер для сервиса.
     // TODO Проквантовать полученный szMult?
-    val szMult1 = hDiff * service.szMult
+    val szMult1 = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = service.advPostMaxSz
+    val wideWidthOpt = srv.advPostMaxSz
       //.filter { _ => mad.blockMeta.wide }
       .map(_.width)
       .filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt.map { OneAdWideQsArgs.apply },
-      width  = wideWidthOpt.getOrElse((mad.blockMeta.width * szMult1).toInt),
-      height = (service.advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
+      width  = (wideWidthOpt.getOrElse(mad.blockMeta.width) * szMult1).toInt,
+      height = (advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
       szMult = szMult1
     )
   }

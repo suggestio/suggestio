@@ -4,8 +4,9 @@ import java.net.URL
 import io.suggest.adv.ext.model._, MServices._
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
+import models.MAd
 import models.adv.js.ctx.MJsCtx
-import models.blk.SzMult_t
+import models.blk.{OneAdWideQsArgs, SzMult_t}
 import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -87,6 +88,17 @@ object MExtServices extends MServicesT {
      */
     def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
       .fold(1.0F)(_.toFloat)
+
+    /** Разрешен ли и необходим ли wide-постинг? */
+    def advExtWidePosting(mad: MAd): Option[OneAdWideQsArgs] = {
+      if (isAdvExtWide(mad))
+        advPostMaxSz.map { sz => OneAdWideQsArgs(width = sz.width) }
+      else
+        None
+    }
+    def isAdvExtWide(mad: MAd): Boolean = {
+      mad.blockMeta.wide
+    }
   }
 
 
@@ -131,9 +143,21 @@ object MExtServices extends MServicesT {
     }
     override def dfltTargetUrl = Some("https://facebook.com/me")
 
+    // Размеры картинки при постинге.
+    def ADV_EXT_WIDTH = 487
+    def ADV_EXT_HEIGHT = 255
+
     /** Параметры картинки для размещения. */
-    override def advPostMaxSz = Some( MImgInfoMeta(width = 487, height = 255) )
-    override def szMult: SzMult_t = 2.0F
+    override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
+
+    /** Очень сурово жмётся всё. */
+    override def szMult: SzMult_t = 1.0F  // TODO 2.0 когда пофиксим
+
+    /** В фейсбук если не постить горизонтально, то будет убожество. */
+    override def isAdvExtWide(mad: MAd): Boolean = true
+
+    /** Разрешен ли и необходим ли wide-постинг? */
+    override def advExtWidePosting(mad: MAd) = Some(OneAdWideQsArgs(width = ADV_EXT_WIDTH))
   }
 
 
