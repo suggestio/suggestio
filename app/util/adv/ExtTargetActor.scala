@@ -97,15 +97,15 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     }
     // Нужно домножить на минимально необходимый размер для сервиса.
     // TODO Проквантовать полученный szMult?
-    val szMult1 = hDiff * srv.szMult
+    val szMultV = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = srv.advExtWidePosting(mad, szMult1)
+    val wideWidthOpt = srv.advExtWidePosting(mad)
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,
-      width  = wideWidthOpt.fold { (mad.blockMeta.width * szMult1).toInt } (_.width),
-      height = (advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMult1).toInt,
-      szMult = szMult1
+      width  = wideWidthOpt.fold { (mad.blockMeta.width * srv.szMult).toInt } (_.width),
+      height = (advPostMaxSz.fold(mad.blockMeta.height)(_.height) * szMultV).toInt,
+      szMult = szMultV
     )
   }
 

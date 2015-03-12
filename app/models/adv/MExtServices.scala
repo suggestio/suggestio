@@ -154,7 +154,7 @@ object MExtServices extends MServicesT {
     override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
 
     /** Очень сурово жмётся всё. */
-    override def szMult: SzMult_t = 1.0F  // TODO 2.0 когда будет пофикшено масштабирование wide-картинки.
+    override def szMult: SzMult_t = 2.0F
 
     /** В фейсбук если не постить горизонтально, то будет убожество. */
     override def isAdvExtWide(mad: MAd): Boolean = true
