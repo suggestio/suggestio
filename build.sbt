@@ -7,7 +7,7 @@ organization := "io.suggest"
 
 version := "3.4.0-SNAPSHOT"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 
 generateRefReverseRouter := false
