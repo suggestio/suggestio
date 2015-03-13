@@ -1,7 +1,6 @@
 package util.img
 
 import controllers.routes
-import io.suggest.img.ImgCrop
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.{MAd, MAdT}
 import models.blk.{WideBgRenderCtx, OneAdQsArgs}
