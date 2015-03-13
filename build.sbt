@@ -2,7 +2,7 @@ organization := "io.suggest"
 
 name := "advext-sjs-runner"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 version := "0.0.0-SNAPSHOT"
 
