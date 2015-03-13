@@ -15,7 +15,7 @@ version := "1.0-SNAPSHOT"
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
