@@ -51,14 +51,21 @@ object SiobixBuild extends Build {
     )
   }
 
+  /** scala-js-проектик для вьюшек, то бишь для скриптования веб-интерфейса системы внешнего размещения карточек. */
+  lazy val advExtSjsView = {
+    val name = "advext-sjs-view"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
   lazy val advExtSjsRunner = {
     val name = "advext-sjs-runner"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
       .dependsOn(advExtCommon)
       .settings(
-        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile),
-        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (modelEnumUtil, Compile)
+        Seq(advExtCommon, modelEnumUtil)
+          .map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile))  : _*
       )
   }
 
@@ -78,7 +85,7 @@ object SiobixBuild extends Build {
     .enablePlugins(PlayScala, SbtWeb)
 
   lazy val web21 = project
-    .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
+    .dependsOn(advExtCommon, advExtSjsView, util, securesocial, modelEnumUtilPlay)
     .aggregate(advExtSjsRunner)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
@@ -91,7 +98,7 @@ object SiobixBuild extends Build {
     id = "root",
     base = file(".")
   )
-  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, util, securesocial, web21)
+  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsView, advExtSjsRunner, util, securesocial, web21)
 
 
 

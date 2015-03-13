@@ -50,7 +50,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 
 addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.1")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
