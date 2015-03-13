@@ -276,6 +276,15 @@ object BgImg extends PlayLazyMacroLogsImpl {
     Math.max(0, resRaw)
   }
 
+  /**
+   * Трансляция одного кропа по одной оси на новый размер.
+   * @param ocOffCoord Сдвиг по текущей оси исходного кропа. Например crop.offX для оси X.
+   * @param ocSz Размер исходного кропа по текущей оси. Например crop.width для оси X.
+   * @param targetSz Целевой размер нового кропа (новый width).
+   * @param oiSz Полный размер изображения по текущей оси. origWh.width для оси Х.
+   * @param rszRatio Используемый коэффициент масштабирования карточки и изображения размера задается здесь.
+   * @return Новое значение offset'а для кропа.
+   */
   def translatedCropOffset(ocOffCoord: Int, ocSz: Int, targetSz: Int, oiSz: Int, rszRatio: Float): Int = {
     val newCoordFloat = centerNearestLineSeg1D(
       centerCoord = (ocOffCoord + ocSz / 2) / rszRatio,

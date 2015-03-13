@@ -1,5 +1,6 @@
 package models.blk
 
+import models.im.{OutImgFmts, OutImgFmt}
 import play.api.Play._
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
@@ -28,14 +29,18 @@ object OneAdQsArgs {
   def AD_ID_SUF     = ".a"
   def SZ_MULT_SUF   = ".m"
   def VSN_SUF       = ".v"
+  def IMG_FMT_SUF   = ".f"
   def WIDE_SUF      = ".w"
-
 
   /** routes qsb для сериализации/десериализации экземпляра [[OneAdQsArgs]]. */
   implicit def qsb(implicit strB: QueryStringBindable[String],
-                   floatB: QueryStringBindable[Float],
-                   longOptB: QueryStringBindable[Option[Long]],
-                   wideOptB: QueryStringBindable[Option[OneAdWideQsArgs]]) = {
+                   floatB   : QueryStringBindable[SzMult_t],
+                   longOptB : QueryStringBindable[Option[Long]],
+                   wideOptB : QueryStringBindable[Option[OneAdWideQsArgs]],
+                   // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
+                   // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
+                   // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
+                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]) = {
     new QueryStringBindable[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
@@ -43,19 +48,22 @@ object OneAdQsArgs {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdQsArgs]] = {
         val keyDotted = if (!key.isEmpty) s"$key." else key
         for {
-          params1       <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeAdId     <- strB.bind(key + AD_ID_SUF, params1)
-          maybeSzMult   <- floatB.bind(key + SZ_MULT_SUF, params1)
-          maybeVsnOpt   <- longOptB.bind(key + VSN_SUF, params1)
-          maybeWideOpt  <- wideOptB.bind(key + WIDE_SUF, params1)
+          params1         <- getQsbSigner(key).signedOrNone(keyDotted, params)
+          maybeAdId       <- strB.bind(key + AD_ID_SUF, params1)
+          maybeSzMult     <- floatB.bind(key + SZ_MULT_SUF, params1)
+          maybeVsnOpt     <- longOptB.bind(key + VSN_SUF, params1)
+          maybeImgFmtOpt  <- imgFmtB.bind(key + IMG_FMT_SUF, params1)
+          maybeWideOpt    <- wideOptB.bind(key + WIDE_SUF, params1)
         } yield {
           for {
-            adId    <- maybeAdId.right
-            szMult  <- maybeSzMult.right
-            vsnOpt  <- maybeVsnOpt.right
-            wideOpt <- maybeWideOpt.right
+            adId        <- maybeAdId.right
+            szMult      <- maybeSzMult.right
+            vsnOpt      <- maybeVsnOpt.right
+            imgFmtOpt   <- maybeImgFmtOpt.right
+            wideOpt     <- maybeWideOpt.right
           } yield {
-            OneAdQsArgs(adId, szMult, vsnOpt, wideOpt)
+            val imgFmt = imgFmtOpt getOrElse OutImgFmts.JPEG
+            OneAdQsArgs(adId, szMult, vsnOpt, imgFmt, wideOpt)
           }
         }
       }
@@ -65,6 +73,7 @@ object OneAdQsArgs {
           strB.unbind(key + AD_ID_SUF,      value.adId),
           floatB.unbind(key + SZ_MULT_SUF,  value.szMult),
           longOptB.unbind(key + VSN_SUF,    value.vsnOpt),
+          imgFmtB.unbind(key + IMG_FMT_SUF, Some(value.imgFmt)),
           wideOptB.unbind(key + WIDE_SUF,   value.wideOpt)
         )
         val qs = qss.mkString("&")
@@ -82,12 +91,16 @@ object OneAdQsArgs {
  * @param szMult Мультипликатор размера карточки.
  * @param vsnOpt Версия рекламной карточки.
  *               Используется для подавления кеширования на клиентах при изменении карточки.
+ * @param imgFmt 2015.mar.13 Формат выходной картинки. Он не используется, если рендер карточки в картинку не требуется.
+ *               Но всё же обязателен для упрощения кода в других местах. Потом, может быть, модели аргументов для
+ *               html и img рендера будут разделены, для избежания подобных странностей API.
  * @param wideOpt 2015.mar.05 Контейнер для задания парамеров широкого рендера.
  */
 case class OneAdQsArgs(
   adId    : String,
   szMult  : SzMult_t,
   vsnOpt  : Option[Long],
+  imgFmt  : OutImgFmt,
   wideOpt : Option[OneAdWideQsArgs] = None
 )
 
@@ -101,6 +114,7 @@ object OneAdWideQsArgs {
   /** Поддержка биндинга в routes и в qsb. */
   implicit def qsb(implicit intB: QueryStringBindable[Int]) = new QueryStringBindable[OneAdWideQsArgs] {
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
+      // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.
       for {
         maybeWidth <- intB.bind(key + WIDTH_SUF, params)
       } yield {

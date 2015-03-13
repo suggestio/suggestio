@@ -3,7 +3,6 @@ package controllers.sc
 import controllers.SioController
 import models._
 import models.blk.OneAdQsArgs
-import models.im.OutImgFmts
 import util.PlayMacroLogsI
 import util.acl.GetAnyAd
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -56,11 +55,10 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    * @return 200 Ok с картинкой.
    */
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
-    val fmt = OutImgFmts.JPEG
-    AdRenderUtil.renderAd2img(adArgs, request.mad, fmt)
+    AdRenderUtil.renderAd2img(adArgs, request.mad)
       .map { imgBytes =>
         Ok(imgBytes).withHeaders(
-          CONTENT_TYPE -> fmt.mime
+          CONTENT_TYPE -> adArgs.imgFmt.mime
         )
       }
   }

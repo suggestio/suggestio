@@ -1,5 +1,7 @@
 @(mad: MAd, producerOpt: Option[MAdnNode])(implicit ctx: Context)
 
+@import models.im.OutImgFmts.JPEG
+
 @sysAdBase(
   title = "Карточка " + mad.id.get,
   nodeOpt = producerOpt
@@ -31,7 +33,7 @@
 
   <ul>
     @defining( 1.0F ) { szMult =>
-    @defining( blk.OneAdQsArgs(mad.id.get, szMult, mad.versionOpt) ) { qsArgs =>
+    @defining( blk.OneAdQsArgs(mad.id.get, szMult, mad.versionOpt, JPEG) ) { qsArgs =>
       <li>
         <a href="@routes.MarketShowcase.onlyOneAd(qsArgs)">Отрендерить карточку в HTML x@szMult</a>
       </li>

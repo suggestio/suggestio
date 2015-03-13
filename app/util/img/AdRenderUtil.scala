@@ -54,10 +54,9 @@ object AdRenderUtil {
    * Рендер указанной рекламной карточки
    * @param adArgs Данные по рендеру.
    * @param mad карточка для рендера.
-   * @param fmt Целевой формат.
    * @return Фьючерс с байтами картинки.
    */
-  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT, fmt: OutImgFmt): Future[Array[Byte]] = {
+  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[Array[Byte]] = {
     val sourceAdSz = mad.blockMeta
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = (sourceAdSz.width * adArgs.szMult).toInt
@@ -77,7 +76,7 @@ object AdRenderUtil {
     val wkArgs = WkHtmlArgs(
       src         = adImgLocalUrl(adArgs),
       scrSz       = MImgInfoMeta(width = extWidth, height = height),
-      outFmt      = fmt,
+      outFmt      = adArgs.imgFmt,
       plugins     = false
       //crop        = cropOpt
     )

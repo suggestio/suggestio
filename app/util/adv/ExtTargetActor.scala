@@ -119,6 +119,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       adId    = args.qs.adId,
       szMult  = mri.szMult,
       vsnOpt  = mad.versionOpt,
+      imgFmt  = service.imgFmt,
       wideOpt = mri.wide
     )
   }
@@ -384,7 +385,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Запустить в фоне генерацию картинки и отправку её на удалённый сервер.
-      AdRenderUtil.renderAd2img(adRenderArgs, mad, imgFmt)
+      AdRenderUtil.renderAd2img(adRenderArgs, mad)
         .onComplete {
           case Success(imgBytes)  =>  self ! new Ad2ImgRenderOk(imgBytes)
           case result             =>  self ! result

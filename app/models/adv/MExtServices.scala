@@ -7,6 +7,7 @@ import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.MAd
 import models.adv.js.ctx.MJsCtx
 import models.blk.{OneAdWideQsArgs, SzMult_t}
+import models.im.{OutImgFmts, OutImgFmt}
 import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -105,6 +106,9 @@ object MExtServices extends MServicesT {
     def isAdvExtWide(mad: MAd): Boolean = {
       mad.blockMeta.wide
     }
+
+    /** Предпочитаемый формат рендера в картинку загружаемой карточки. */
+    def imgFmt: OutImgFmt = OutImgFmts.JPEG
   }
 
 
@@ -156,8 +160,11 @@ object MExtServices extends MServicesT {
     /** Параметры картинки для размещения. */
     override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
 
-    /** В фейсбук если не постить горизонтально, то будет совсем убожество. */
-    override def isAdvExtWide(mad: MAd): Boolean = true
+    /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */
+    override def isAdvExtWide(mad: MAd) = true
+
+    /** akamaihd пересжимает любую полученную картинку. Поэтому надо бы постить сжатую без потерь. */
+    override def imgFmt = OutImgFmts.PNG
   }
 
 

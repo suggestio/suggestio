@@ -24,6 +24,6 @@ package object im {
 
   type DevScreenOrientation = DevScreenOrientations.DevScreenOrientation
 
-  type OutImgFmt            = OutImgFmts.OutImgFmt
+  type OutImgFmt            = OutImgFmts.T
 
 }
