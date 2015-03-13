@@ -1,10 +1,11 @@
 package models.adv
 
 import java.net.URL
+import _root_.util.blocks.{BlocksConf, BgImg}
 import io.suggest.adv.ext.model._, MServices._
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
-import models.MAd
+import models.{MAdT, MAd}
 import models.adv.js.ctx.MJsCtx
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 import models.im.{OutImgFmts, OutImgFmt}

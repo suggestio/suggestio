@@ -22,6 +22,7 @@ import play.api.libs.ws.{WSResponse, WS}
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
+import util.blocks.BgImg
 import util.event.{EventType, EventTypes}
 import util.img.AdRenderUtil
 import util.jsa.{InnerHtmlById, JsAppendById}
@@ -100,7 +101,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     // TODO Проквантовать полученный szMult?
     val szMultV = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = srv.advExtWidePosting(tgUrl, mad)
+    // 2015.mar.13: Запрет для wide-рендера карточек без картинки. Пока эта функция не работает как надо.
+    val wideWidthOpt = BgImg.getBgImg(mad)
+      .flatMap { _ => srv.advExtWidePosting(tgUrl, mad) }
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,

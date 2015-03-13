@@ -294,6 +294,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
     newCoordFloat.toInt
   }
 
+  /** Быстрый экстрактор фоновой картинки. */
+  def getBgImg(mad: MAdT) = BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
 
   /**
    * Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
