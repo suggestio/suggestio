@@ -73,10 +73,12 @@ object AdRenderUtil {
     }
 
     // Запускаем генерацию результата
+    val fmt = adArgs.imgFmt
     val wkArgs = WkHtmlArgs(
       src         = adImgLocalUrl(adArgs),
       scrSz       = MImgInfoMeta(width = extWidth, height = height),
-      outFmt      = adArgs.imgFmt,
+      outFmt      = fmt,
+      quality     = fmt.wkHtmlQuality,
       plugins     = false
       //crop        = cropOpt
     )

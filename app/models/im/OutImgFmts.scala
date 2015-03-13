@@ -19,6 +19,8 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
    */
   protected abstract class Val(val name: String) extends super.Val(name) {
     def mime: String
+    /** Качество сжатия, передаваемое в wkhtmltoimage и смежные тулзы.  */
+    def wkHtmlQuality: Option[Int] = None
   }
 
   override type T = Val
@@ -29,6 +31,9 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
 
   val PNG: T = new Val("png") {
     override def mime = "image/png"
+
+    /** png quality = 0 дает максимальное сжатие без потерь. */
+    override def wkHtmlQuality = Some(0)
   }
 
   val GIF: T = new Val("gif") {
