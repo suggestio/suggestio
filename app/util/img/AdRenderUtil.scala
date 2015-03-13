@@ -61,17 +61,10 @@ object AdRenderUtil {
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = (sourceAdSz.width * adArgs.szMult).toInt
     val height = (sourceAdSz.height * adArgs.szMult).toInt
-    val extWidth = adArgs.wideOpt match {
-      // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
-      case Some(wide) =>
-        // Внешняя полная ширина отрендеренной широкой карточки.
-        wide.width
-
-      // Без wide, значит можно рендерить карточку as-is.
-      case None =>
-        width0
-    }
-
+    // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
+    // Внешняя полная ширина отрендеренной широкой карточки.
+    // Если Без wide, значит можно рендерить карточку as-is.
+    val extWidth = adArgs.wideOpt.fold(width0)(_.width)
     // Запускаем генерацию результата
     val fmt = adArgs.imgFmt
     val wkArgs = WkHtmlArgs(

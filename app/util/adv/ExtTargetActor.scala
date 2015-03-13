@@ -90,7 +90,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   protected lazy val madRenderInfo: PicInfo = {
     // Вычисляем мультипликатор размера исходя из отношения высот.
     val srv = service
-    val advPostMaxSz = srv.advPostMaxSz
+    val tgUrl = args.target.target.url
+    val advPostMaxSz = srv.advPostMaxSz(tgUrl)
     val hDiff = advPostMaxSz match {
       case Some(sz) => sz.height.toFloat / mad.blockMeta.height.toFloat
       case None     => 1.0F
@@ -99,7 +100,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     // TODO Проквантовать полученный szMult?
     val szMultV = hDiff * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
-    val wideWidthOpt = srv.advExtWidePosting(mad)
+    val wideWidthOpt = srv.advExtWidePosting(tgUrl, mad)
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,

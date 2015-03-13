@@ -81,7 +81,7 @@ object MExtServices extends MServicesT {
      * Максимальные размеры картинки при постинге в соц.сеть в css-пикселях.
      * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
      */
-    def advPostMaxSz: Option[MImgSizeT] = None
+    def advPostMaxSz(tgUrl: String): Option[MImgSizeT] = None
 
     /**
      * Мультипликатор размера для экспортируемых на сервис карточек.
@@ -94,9 +94,9 @@ object MExtServices extends MServicesT {
     def szMultDflt: SzMult_t = 1.0F
 
     /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
-    def advExtWidePosting(mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
+    def advExtWidePosting(tgUrl: String, mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
       if (isAdvExtWide(mad)) {
-        advPostMaxSz.map { sz =>
+        advPostMaxSz(tgUrl).map { sz =>
           OneAdWideQsArgs(width = (sz.width * szMult).toInt)
         }
       } else {
@@ -141,7 +141,7 @@ object MExtServices extends MServicesT {
      * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]] хрень?
      * @return Экземпляр 2D-размеров.
      */
-    override def advPostMaxSz = Some( MImgInfoMeta(width = 1100, height = 700) )
+    override def advPostMaxSz(tgUrl: String) = Some( MImgInfoMeta(width = 1100, height = 700) )
   }
 
 
@@ -153,12 +153,26 @@ object MExtServices extends MServicesT {
     }
     override def dfltTargetUrl = Some("https://facebook.com/me")
 
-    // Размеры картинки при постинге.
-    def ADV_EXT_WIDTH = 487
-    def ADV_EXT_HEIGHT = 255
+    // Размеры картинки при постинге на страницу юзера.
+    def ADV_EXT_USER_WIDTH    = 487
+    def ADV_EXT_USER_HEIGHT   = 255
+    def ADV_EXT_USER_SZ       = MImgInfoMeta(width = ADV_EXT_USER_WIDTH, height = ADV_EXT_USER_HEIGHT)
+
+    // Размеры картинки при постинге на страницу группы.
+    def ADV_EXT_GROUP_WIDTH   = 470
+    def ADV_EXT_GROUP_HEIGHT  = 246
+    def ADV_EXT_GROUP_SZ      = MImgInfoMeta(width = ADV_EXT_GROUP_WIDTH, height = ADV_EXT_GROUP_HEIGHT)
 
     /** Параметры картинки для размещения. */
-    override def advPostMaxSz = Some( MImgInfoMeta(width = ADV_EXT_WIDTH, height = ADV_EXT_HEIGHT) )
+    override def advPostMaxSz(tgUrl: String): Option[MImgSizeT] = {
+      // TODO Узнать и добавить размеры для event'ов и прочего.
+      val sz = if (tgUrl contains "/groups/") {
+        ADV_EXT_GROUP_SZ
+      } else {
+        ADV_EXT_USER_SZ
+      }
+      Some(sz)
+    }
 
     /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */
     override def isAdvExtWide(mad: MAd) = true
