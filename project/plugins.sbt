@@ -9,5 +9,5 @@ resolvers ++= Seq(
   Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
 )
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.1")
 
