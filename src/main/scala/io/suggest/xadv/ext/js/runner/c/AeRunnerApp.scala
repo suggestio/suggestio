@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.runner.c
 
 import io.suggest.xadv.ext.js.runner.m.ex.CustomException
 import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MJsCtx}
+import io.suggest.xadv.ext.js.runner.v.Page
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -21,6 +22,7 @@ object AeRunnerApp extends js.JSApp with WsKeeper {
   override def main(): Unit = {
     val wsUrl = dom.document.getElementById("socialApiConnection").getAttribute("value")
     startWs(wsUrl)
+    Page.bindPageEvents()
   }
 
 
