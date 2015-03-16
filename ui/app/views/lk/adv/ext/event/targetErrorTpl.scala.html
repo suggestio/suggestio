@@ -4,6 +4,7 @@
 
 @import lk.event._
 @import ctx._
+@import io.suggest.adv.ext.view.RunnerPage._
 
 @_errorEvtBase(rargs) {
 
@@ -18,7 +19,7 @@
 
     @* Если есть доп.информация, то её рендерим под катом *@
     @if(err.info) {
-      <p class="dark-link js-social-show-error">Показать технические подробности ошибки.</p>
+      <p class="dark-link @CLASS_JSLINK_SHOW_ERROR">Показать технические подробности ошибки.</p>
       <div style="display: none;">
         @err.info
       </div>

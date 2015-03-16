@@ -5,56 +5,34 @@
 @import ctx._
 @import helper._
 @import util.FC.tdRadialFc
+@import io.suggest.adv.ext.view.FormPage._
 
-@form(submitCall, 'class -> "js-social_add-target-form") {
 
-  @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
+@* Форма редактирования одной цели: название, ссылка. *@
+@form(submitCall, 'class -> CLASS_ONE_TARGET_FORM_INNER) {
 
   @defining( tf("tg.id").value ) { tgId =>
+    @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
     <input type="hidden" name="tg.id" data-xname="tg_id" value="@tgId" />
 
-
-    <div class="social-target">
-
-      <a class="social-target_delete close js-delete-social-target" href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>
-
-      <div class="social-target_left">
-        @inputText(
-          tf("tg.name"),
-          '_label -> "Название",
-          '_class -> "js-social-target_it"
-        )
-
-        @* Иконка соц-сети, если есть. *@
-        <div class="social-target_icon @tgOpt.map(tg =>"__" + tg.service)"></div>
-
-        @inputText(
-          tf("tg.url"),
-          '_label -> "Ссылка на группу",
-          '_class -> "js-social-target_it"
-        )
-      </div>
-
-      <div class="social-target_right">
-
-        <div class="social-target_option-lst">
-
-          @defining( tf("return").value ) { v =>
-            @adv.MExtReturns.values.iterator.map { mret =>
-              <label class="social-target_option">
-                <input class="js-social-target_option" type="checkbox" data-xname="return" value="@mret" name="return" @if(v contains mret.strId) {checked="checked"}/>
-                <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
-              </label>
-            }
-          }
-
-        </div>
-
-      </div>
-
-
-    </div>
-
+    <a class="social-target_delete close @CLASS_DELETE_TARGET_BTN" href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>
   }
+
+  <div class="social-target_left">
+    @inputText(
+      tf("tg.name"),
+      '_label -> "Название",
+      '_class -> CLASS_ONE_TARGET_INPUT
+    )
+
+    @* Иконка соц-сети, если есть. *@
+    <div class="social-target_icon @tgOpt.map(tg =>"__" + tg.service)"></div>
+
+    @inputText(
+      tf("tg.url"),
+      '_label -> "Ссылка на страницу",
+      '_class -> CLASS_ONE_TARGET_INPUT
+    )
+  </div> @* .social-target-left *@
 
 }

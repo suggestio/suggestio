@@ -6,29 +6,26 @@
 @import helper._
 @import util.FC.tdRadialFc
 @import util.adv.ExtUtil.formForTarget
-
-
-@headAfter = {
-  <script data-main="@routes.Assets.versioned("scripts/lk/xadv/ext/siopr.js")"
-          src="@routes.Assets.versioned("scripts/require.js")"></script>
-}
+@import io.suggest.adv.ext.view.FormPage._
+@import stuff._
 
 @base(
   title     = "Внешнее размещение карточки",
   mnode     = mnode,
-  mad       = mad,
-  headAfter = Some(headAfter)
+  mad       = mad
 ) {
 
-  <div id="socialApp">
+  @* Этот div для сборки общей формы и сабмита. *@
+  <div id="socialApp"></div>
 
+  @* Список целей. *@
+  <div id="eaTargets">
+    @targets.iterator.zipWithIndex.map { case (target, i) =>
+      @_createTargetTpl(target.adnId, formForTarget(target), Some(target))
+    }
   </div>
 
-  @targets.iterator.zipWithIndex.map { case (target, i) =>
-    @_createTargetTpl(target.adnId, formForTarget(target), Some(target))
-  }
-
-  @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> "js-social-target-list" ) {
+  @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> ID_ADV_FORM ) {
 
     @af("adv").errors.map { error =>
       <div class="event __bg-4 __icon-5">
@@ -36,7 +33,8 @@
       </div>
     }
 
-    <a class="btn __size-M __minor add-target" id="socialApiAddTargetBtn" href="@routes.LkAdvExt.writeTarget(mnode.id.get)">Добавить цель...</a>
+    @* Кнопка добавления цели к данной форме не относится. *@
+    <a class="btn __size-M __minor add-target" id="@ID_ADD_TARGET_LINK" href="@routes.LkAdvExt.writeTarget(mnode.id.get)">Добавить цель...</a>
     <hr class="delimiter __light">
 
     <div class="btn-w __size-XS">
@@ -45,8 +43,7 @@
 
   }
 
-  @* В фоне запускаем зарузку жирненького скрипта, который будет использовать на следующем шаге.
-     На случай, если браузер не поддерживает async, то вызов внизу страницы не должен тормозить рендер. *@
-  @_runnerScriptTpl(async = true)
+  @* Скрипт siopr.js объявлялся изначально в head. *@
+  @_sjsScript("advext-sjs-form", withLauncherJs = true)
 
 }

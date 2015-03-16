@@ -1,6 +1,7 @@
 package util.adv
 
 import java.net.URL
+import io.suggest.adv.ext.view.RunnerPage
 import models.adv._
 import models.adv.js.IWsCmd
 import play.api.data._, Forms._
@@ -16,7 +17,8 @@ import util.FormUtil.{urlM, esIdUuidM}
 object ExtUtil {
 
   /** id div'а в который надо рендерить события размещения. */
-  val RUNNER_EVENTS_DIV_ID = "adv-events"
+  // Сделать его deprecated?
+  def RUNNER_EVENTS_DIV_ID = RunnerPage.ID_EVTS_CONTAINER
 
   /* С вложенными формами ext.adv есть проблемы: они вложенные. */
 

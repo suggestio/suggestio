@@ -1,0 +1,7 @@
+@(prefix: String, withLauncherJs: Boolean = false)
+@import play.api.Play.{isProd, current}
+
+<script src="@routes.Assets.versioned(prefix + (if(isProd) "-" else "-fast") + "opt.js")"></script>
+@if( withLauncherJs ) {
+  <script src="@routes.Assets.versioned(prefix + "-launcher.js")"></script>
+}

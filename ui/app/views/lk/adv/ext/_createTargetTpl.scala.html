@@ -1,12 +1,36 @@
 @(adnId: String, tf: Form[_], tgOpt: Option[adv.MExtTarget] = None)(implicit ctx: Context)
 
-@* Окошко для добавления новой внешней PR-цели. *@
+@* div, появляющийся при добавлении новой внешней PR-цели. *@
 
 @import ctx._
 @import helper._
+@import util.FC.tdRadialFc
+@import io.suggest.adv.ext.view.FormPage._
 
-@_targetFormTpl(
-  tf          = tf,
-  submitCall  = CSRF( routes.LkAdvExt.writeTargetSubmit(adnId) ),
-  tgOpt       = tgOpt
-)
+@* div.social-target формы одной цели в списке + чекбоксы для внешней формы. *@
+<div class="@CLASS_ONE_TARGET_CONTAINER">
+
+  @_targetFormTpl(
+    tf          = tf,
+    submitCall  = CSRF( routes.LkAdvExt.writeTargetSubmit(adnId) ),
+    tgOpt       = tgOpt
+  )
+
+  <div class="social-target_right">
+
+    <div class="social-target_option-lst">
+
+      @defining( tf("return").value ) { v =>
+        @adv.MExtReturns.values.iterator.map { mret =>
+          <label class="social-target_option">
+            <input class="js-social-target_option" type="checkbox" data-xname="return" value="@mret" name="return" @if(v contains mret.strId) {checked="checked"}/>
+            <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)
+          </label>
+        }
+      }
+
+    </div>
+
+  </div> @* .social-target-right *@
+
+</div> @* .social-target *@
