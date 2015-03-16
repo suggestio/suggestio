@@ -51,11 +51,15 @@ object SiobixBuild extends Build {
     )
   }
 
-  /** scala-js-проектик для вьюшек, то бишь для скриптования веб-интерфейса системы внешнего размещения карточек. */
-  lazy val advExtSjsView = {
-    val name = "advext-sjs-view"
+  /** scala-js для формы внешнего размещения карточек. */
+  lazy val advExtSjsForm = {
+    val name = "advext-sjs-form"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
+      .dependsOn(advExtCommon)
+      .settings(
+        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile)
+      )
   }
 
   lazy val advExtSjsRunner = {
@@ -84,21 +88,24 @@ object SiobixBuild extends Build {
   lazy val securesocial = project
     .enablePlugins(PlayScala, SbtWeb)
 
+  /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(advExtCommon, advExtSjsView, util, securesocial, modelEnumUtilPlay)
-    .aggregate(advExtSjsRunner)
+    // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
+    .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
+    .aggregate(advExtSjsRunner, advExtSjsForm)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
-      scalaJSProjects := Seq(advExtSjsRunner),
+      scalaJSProjects := Seq(advExtSjsRunner, advExtSjsForm),
       pipelineStages += scalaJSProd
     )
+  
 
 
   lazy val root = Project(
     id = "root",
     base = file(".")
   )
-  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsView, advExtSjsRunner, util, securesocial, web21)
+  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, advExtSjsForm, util, securesocial, web21)
 
 
 
