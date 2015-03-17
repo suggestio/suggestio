@@ -88,7 +88,7 @@ object MExtServices extends MServicesT {
      * Мультипликатор размера для экспортируемых на сервис карточек.
      * @return SzMult_t.
      */
-    final def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
+    val szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
       .fold(szMultDflt)(_.toFloat)
 
     /** Дефолтовое значение szMult, если в конфиге не задано. */
@@ -108,8 +108,12 @@ object MExtServices extends MServicesT {
       mad.blockMeta.wide
     }
 
-    /** Предпочитаемый формат рендера в картинку загружаемой карточки. */
-    def imgFmt: OutImgFmt = OutImgFmts.JPEG
+    /** Формат рендера в картинку загружаемой карточки. */
+    val imgFmt: OutImgFmt = configuration.getString(s"ext.adv.$strId.fmt")
+      .fold(imgFmtDflt)(OutImgFmts.withName)
+
+    /** Дефолтовый формат изображения, если не задан в конфиге. */
+    def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
   }
 
 
@@ -179,10 +183,10 @@ object MExtServices extends MServicesT {
     override def isAdvExtWide(mad: MAd) = true
 
     // akamaihd пересжимает jpeg в jpeg, png в png. Если ШГ, то надо слать увеличенный jpeg.
-    override def imgFmt = OutImgFmts.PNG
+    override def imgFmtDflt = OutImgFmts.PNG
 
     /** Дефолтовое значение szMult, если в конфиге не задано. */
-    override def szMultDflt: SzMult_t = 2.0F
+    override def szMultDflt: SzMult_t = 1.0F
   }
 
 
