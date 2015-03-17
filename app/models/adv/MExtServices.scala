@@ -179,10 +179,10 @@ object MExtServices extends MServicesT {
     override def isAdvExtWide(mad: MAd) = true
 
     // akamaihd пересжимает jpeg в jpeg, png в png. Если ШГ, то надо слать увеличенный jpeg.
-    //override def imgFmt = OutImgFmts.PNG
+    override def imgFmt = OutImgFmts.PNG
 
     /** Дефолтовое значение szMult, если в конфиге не задано. */
-    override def szMultDflt: SzMult_t = 4.0F
+    override def szMultDflt: SzMult_t = 2.0F
   }
 
 
