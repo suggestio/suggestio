@@ -28,4 +28,8 @@ object FormPage {
 
   /** Класс редактируемых юзером полей формы одной цели. */
   def CLASS_ONE_TARGET_INPUT = "js-social-target_it"
+
+  /** Класс для галочек размещения, отвечающих за return, т.е. ссылку возврата. */
+  def CLASS_ONE_TARGET_INPUT_RETURN_CHECKBOX = "js-social-target_option"
+
 }
