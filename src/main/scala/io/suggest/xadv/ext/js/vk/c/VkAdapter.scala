@@ -23,7 +23,7 @@ import scala.util.{Failure, Success}
 object VkAdapter {
 
   /** bitmask разрешений на доступ к API. */
-  private def ACCESS_LEVEL = 8197
+  private def ACCESS_LEVEL = 8196
 
   /** Относится ли указанный домен к текущему клиенту? */
   def isMyDomain(domain: String): Boolean = {
