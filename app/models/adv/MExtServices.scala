@@ -182,7 +182,7 @@ object MExtServices extends MServicesT {
     //override def imgFmt = OutImgFmts.PNG
 
     /** Дефолтовое значение szMult, если в конфиге не задано. */
-    override def szMultDflt: SzMult_t = 2.0F
+    override def szMultDflt: SzMult_t = 4.0F
   }
 
 
