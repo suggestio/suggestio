@@ -67,28 +67,48 @@ class VkAdapter extends IAdapter {
     VkAdapter.isMyDomain(domain)
   }
 
-  /** Инициализация адаптера, когда API уже инициализировано. */
-  protected def headlessInit(): Future[Option[VkLoginResult]] = {
+  /**
+   * Инициализация адаптера без каких-либо вмешательств в GUI.
+   * Вызывается, когда нижележащее API уже инициализировано и готово.
+   * @return Фьючерс с новым VkCtx.
+   */
+  protected def headlessInit(): Future[VkCtx] = {
     // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
     // TODO Проверить пермишшены через account.getAppPermissions()
     val lsFut = Vk.Auth.getLoginStatus
+      .recover { case ex: Throwable =>
+        // Подавляем любые ошибки, т.к. эта функция в общем некритична, хоть и намекает на неработоспособность API.
+        dom.console.warn("VK Cannot getLoginStatus(): " + ex.getClass.getSimpleName + " " + ex.getMessage)
+        None
+      }
     // В фоне запускаем получение текущих прав приложения, хоть они могут и не пригодится.
     val appPermsFut = Vk.Api.getAppPermissions()
-    lsFut flatMap {
+    val ls2Fut = lsFut flatMap {
       // Залогиненный юзер, но у приложения может не хватать прав, что позволит считать его незалогиненным.
-      case lsSome @ Some(ls) =>
-        appPermsFut.map { appPerms =>
-          if ((appPerms.bitMask & ACCESS_LEVEL) == ACCESS_LEVEL) {
-            // Юзер выдал необзодмые права доступа.
-            lsSome
-          } else {
-            // Юзер пока не выдал необходимые права доступа для приложения.
-            None
+      case lsSome if lsSome.isDefined =>
+        // Возможно, юзер ранее уже подтвердил все необходмые права доступа приложению. И только тогда считаем его залогиненным.
+        appPermsFut
+          // Отмаппить полученные права на простое "да/нет".
+          .map { appPerms =>
+            (appPerms.bitMask & ACCESS_LEVEL) == ACCESS_LEVEL
           }
-        }
-      // Это незалогиненный юзер, его права нам не важны.
+          // Подавляем возможные ошибки, т.к. эта проверка некритична.
+          .recover { case ex: Throwable =>
+            dom.console.warn("VK Cannot getAppPermissions(): " + ex.getClass.getName + " " + ex.getMessage)
+            false
+          }
+          // Генеря результат, мы определяем необходимо ли вызывать login() на след.шаге.
+          .map { hasPerms =>
+            lsSome.filter(_ => hasPerms)
+          }
+
+      // Это незалогиненный юзер или произошла ошика getLoginStatus. login() будет вызван на след.шаге.
       case None =>
         Future successful None
+    }
+    // Собираем контекст
+    ls2Fut map { lsOpt =>
+      VkCtx(login = lsOpt)
     }
   }
 
@@ -104,10 +124,7 @@ class VkAdapter extends IAdapter {
         .flatMap { _ => headlessInit() }
         .onComplete {
           // init завершился, инфа по залогиненности получена.
-          case Success(loginStatusOpt) =>
-            val vkCtx = VkCtx(
-              login = loginStatusOpt
-            )
+          case Success(vkCtx) =>
             p success mctx0.copy(
               status = Some(MAnswerStatuses.Success),
               custom = Some(vkCtx.toJson)
