@@ -4,6 +4,8 @@ import java.net.URI
 
 import io.suggest.model.LightEnumeration
 
+import scala.util.matching.Regex
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -18,12 +20,24 @@ object FbTarget {
    * @return Экземпляр [[IFbTarget]].
    */
   def fromUrl(url: String): IFbTarget = {
-    val path = new URI(url).getPath
-    val groupRe = "/groups/([^/?&]+).*".r
-    path match {
-      case groupRe(groupId) => FbTgGroupId(groupId)
-      case _                => FbTgMe()
+    val uri = new URI(url)
+    val path = uri.getPath + "?" + uri.getQuery
+    // Быстрая разборка path по регэкспу
+    def unapplyIdRe(re: String): Option[String] = {
+      re.r.unapplySeq(path)
+        .flatMap(_.lastOption)
     }
+    // Попробовать разные варианты извлечения id из tg url path.
+    val id = unapplyIdRe("/groups?/([^/?&]+).*")
+      .orElse { unapplyIdRe("/events?/([^/?&]+).*") }
+      .orElse { unapplyIdRe("/pages?/[^/]+/([^/?&]+).*") }
+      .orElse { unapplyIdRe("/profiles?\\.php\\?(.+?&)?id=([0-9]+).*") }
+      .orElse { unapplyIdRe("/([^/?&]+).*") }
+      // TODO Нужен более гибкий обработчик ссылки на главную. Чтобы отлавливал / и ?
+      .orElse { if (path == "/") Some("me") else None }
+      // TODO Надо отрабатывать/возвращать ошибки, а не гасить их через подстановку "/me".
+      .getOrElse("me")
+    FbId(id = id)
   }
 
 }
@@ -33,39 +47,7 @@ object FbTarget {
 trait IFbTarget {
   /** Идентификатор объекта. */
   def id: String
-
-  /** Тип объекта фейсбука. */
-  def fbType: FbTgType
 }
 
 /** Группа фейсбука и её id. */
-case class FbTgGroupId(id: String) extends IFbTarget {
-  override def fbType = FbTgTypes.Group
-}
-
-/** Самому себе постим. */
-case class FbTgMe() extends IFbTarget {
-  override def id = "me"
-  override def fbType = FbTgTypes.User
-}
-
-
-/** Типы объектов FB. */
-object FbTgTypes extends LightEnumeration {
-  protected sealed class Val(val strId: String) extends ValT
-
-  override type T = Val
-
-  object Group extends Val("g")
-  object User  extends Val("u")
-
-  // TODO Добавить типы page и event. + реализацию в парсинге.
-
-  override def maybeWithName(n: String): Option[T] = {
-    n match {
-      case Group.strId => Some(Group)
-      case User.strId  => Some(User)
-      case _           => None
-    }
-  }
-}
+case class FbId(id: String) extends IFbTarget

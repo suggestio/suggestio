@@ -7,6 +7,4 @@ package io.suggest.xadv.ext.js.fb
  */
 package object m {
 
-  type FbTgType     = FbTgTypes.T
-
 }
