@@ -13,5 +13,6 @@ scala.js 0.6.0:
 
 scala.Enumeration + fullOptJS	    => +52 KiB (достоверно)
 scala.collections		    => ~ +80 KiB (наверное примерно)
-s"" string interpolator без уже подключенных коллекций =>
-  +24 KiB (достоверно)
+
+s"" string interpolator без уже подключенных коллекций => +24 KiB (достоверно).
+  С уже включенными коллекциями и StringBuilder'ами -- +400 байт.
