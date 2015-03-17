@@ -12,7 +12,9 @@ import org.scalatest._
  */
 class UuidUtilTest extends FlatSpec with Matchers {
 
-  UuidUtil.getClass.getSimpleName should "serialize and deserialize UUIDs to bytes" in {
+  private def cn = UuidUtil.getClass.getSimpleName
+
+  cn should "serialize and deserialize UUIDs to bytes" in {
     def ed: Unit = {
       val uuid = UUID.randomUUID()
       val uuidBytes = uuidToBytes(uuid)
@@ -33,6 +35,11 @@ class UuidUtilTest extends FlatSpec with Matchers {
   it should "deserialize garbaged id" in {
     base64ToUuid("onhyBuwLQX-o0wb54EnAHA/c=0x1200d&a=1600x1200_431_0&i=a&h=&d=a&j=b&f=70") shouldEqual base64ToUuid("onhyBuwLQX-o0wb54EnAHA")
   }
+
+  // TODO Не отрабатывается реальный сериализованный uuid, взятый со страниц проекта, пишет что длины не хватает (EOF Exception)
+  /*it should "deserialize AUwmoZDPxREC6sYH-YrU" in {
+    assert( isUuidStrValid("AUwmoZDPxREC6sYH-YrU") )
+  }*/
 
   private def times(f: => Any, t: Int = 100): Unit = {
     for(i <- 0 to t) {
