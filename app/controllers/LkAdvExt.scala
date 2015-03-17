@@ -4,6 +4,7 @@ import models._
 import models.adv._
 import models.adv.search.etg.ExtTargetSearchArgs
 import org.elasticsearch.search.sort.SortOrder
+import play.api.i18n.Messages
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
@@ -199,8 +200,10 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
    * @return 200 Ok с отрендеренной формой.
    */
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
-    val form = ExtUtil.oneTargetFullFormM(adnId)
-    Ok(_createTargetTpl(adnId, form))
+    val ctx = implicitly[Context]
+    val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
+      .fill( ("", Some(Messages("New.target")(ctx.lang)), None) )
+    Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
 
 
@@ -214,14 +217,14 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(_createTargetTpl(adnId, formWithErrors, request.tgExisting))
+        NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
       },
       {case (tg, ret) =>
         tg.save.map { tgId =>
           // Вернуть форму с выставленным id.
           val tg2 = tg.copy(id = Some(tgId))
           val form = request.newTgForm fill (tg2, ret)
-          Ok(_createTargetTpl(adnId, form, Some(tg2)))
+          Ok(_targetFormTpl(adnId, form, Some(tg2)))
         }
       }
     )

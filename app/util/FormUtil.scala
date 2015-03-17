@@ -119,7 +119,8 @@ object FormUtil {
     .transform(strTrimSanitizeF, strIdentityF)
     .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
 
-  /** Тоже самое, что и esIdM, но пытается декодировать UUID из id. */
+  /** Тоже самое, что и esIdM, но пытается декодировать UUID из id.
+    * id, сгенеренные es, тут не прокатят! */
   def esIdUuidM = esIdM.verifying("error.invalid.uuid", UuidUtil.isUuidStrValid(_))
 
   /** Маппинг для номера этажа в ТЦ. */

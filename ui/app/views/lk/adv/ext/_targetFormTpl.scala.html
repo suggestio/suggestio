@@ -1,4 +1,4 @@
-@(tf: Form[_], submitCall: Call, tgOpt: Option[adv.MExtTarget])(implicit ctx: Context)
+@(adnId: String, tf: Form[_], tgOpt: Option[adv.MExtTarget])(implicit ctx: Context)
 
 @* Форма добавления новой цели. *@
 
@@ -9,7 +9,7 @@
 
 
 @* Форма редактирования одной цели: название, ссылка. *@
-@form(submitCall, 'class -> CLASS_ONE_TARGET_FORM_INNER) {
+@form(CSRF(routes.LkAdvExt.writeTargetSubmit(adnId)), 'class -> CLASS_ONE_TARGET_FORM_INNER) {
 
   @defining( tf("tg.id").value ) { tgId =>
     @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@

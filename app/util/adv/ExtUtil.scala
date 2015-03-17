@@ -6,7 +6,7 @@ import models.adv._
 import models.adv.js.IWsCmd
 import play.api.data._, Forms._
 import util.FormUtil
-import util.FormUtil.{urlM, esIdUuidM}
+import util.FormUtil.{urlM, esIdM}
 
 /**
  * Suggest.io
@@ -22,9 +22,9 @@ object ExtUtil {
 
   /* С вложенными формами ext.adv есть проблемы: они вложенные. */
 
-  /** Маппинг для данных одного target'а. */
-  def targetM(adnId: String): Mapping[MExtTarget] = {
-    val tgUrlM = urlM
+  /** Маппинг для ссылки на цель. */
+  def tgFullUrlM = {
+    urlM
       .transform[(URL, Option[MExtService])] (
         {url =>
           url -> MExtServices.findForHost(url.getHost)
@@ -40,11 +40,16 @@ object ExtUtil {
         {case (url, srv) =>
           (new URL(url), Some(srv)) }
       )
-    mapping(
-      "url"   -> tgUrlM,
-      "name"  -> FormUtil.toStrOptM(FormUtil.nameM),
-      "id"    -> optional(esIdUuidM)
-    )
+  }
+
+  def URL_FN = "url"
+  def urlKM  = URL_FN -> tgFullUrlM
+  def nameKM = "name" -> FormUtil.toStrOptM(FormUtil.nameM)
+  def idKM   = "id"   -> optional(esIdM)
+
+  /** Маппинг для данных одного target'а. */
+  def targetM(adnId: String): Mapping[MExtTarget] = {
+    mapping(urlKM, nameKM, idKM)
     {case ((url, srv), nameOpt, idOpt) =>
       MExtTarget(url = url, service = srv, adnId = adnId, id = idOpt, name = nameOpt)
     }
@@ -54,11 +59,16 @@ object ExtUtil {
     }
   }
 
-  /** Маппинг для одной цели вместе с настройками return'а. */
+  /** Когда target не нужен, а нужен сырой доступ к данным маппинга, можно задействовать это. */
+  def rawTargetM(adnId: String) = tuple(URL_FN -> text, nameKM, idKM)
+
+  def returnKM = "return" -> optional(MExtReturns.mapping)
+
+  /** Полный маппинг для одной цели вместе с настройками return'а. */
   def oneTargetFullM(adnId: String) = {
     tuple(
       "tg"      -> targetM(adnId),
-      "return"  -> optional(MExtReturns.mapping)
+      returnKM
     )
   }
 
@@ -68,6 +78,10 @@ object ExtUtil {
    * @return Экземпляр формы.
    */
   def oneTargetFullFormM(adnId: String) = Form(oneTargetFullM(adnId))
+
+  def oneRawTargetFullFormM(adnId: String) = Form(
+    "tg" -> rawTargetM(adnId)
+  )
 
   /**
    * Шаблоны для сборки дефолтовых форм на лету используют этот метод.
