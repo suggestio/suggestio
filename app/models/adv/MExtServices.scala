@@ -178,8 +178,11 @@ object MExtServices extends MServicesT {
     /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */
     override def isAdvExtWide(mad: MAd) = true
 
-    /** akamaihd пересжимает любую полученную картинку. Поэтому надо бы постить сжатую без потерь. */
-    override def imgFmt = OutImgFmts.PNG
+    // akamaihd пересжимает jpeg в jpeg, png в png. Если ШГ, то надо слать увеличенный jpeg.
+    //override def imgFmt = OutImgFmts.PNG
+
+    /** Дефолтовое значение szMult, если в конфиге не задано. */
+    override def szMultDflt: SzMult_t = 2.0F
   }
 
 
