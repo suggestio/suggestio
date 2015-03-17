@@ -62,12 +62,13 @@ object ExtUtil {
   /** Когда target не нужен, а нужен сырой доступ к данным маппинга, можно задействовать это. */
   def rawTargetM(adnId: String) = tuple(URL_FN -> text, nameKM, idKM)
 
+  def TG_FN    = "tg"
   def returnKM = "return" -> optional(MExtReturns.mapping)
 
   /** Полный маппинг для одной цели вместе с настройками return'а. */
   def oneTargetFullM(adnId: String) = {
     tuple(
-      "tg"      -> targetM(adnId),
+      TG_FN     -> targetM(adnId),
       returnKM
     )
   }
@@ -80,7 +81,7 @@ object ExtUtil {
   def oneTargetFullFormM(adnId: String) = Form(oneTargetFullM(adnId))
 
   def oneRawTargetFullFormM(adnId: String) = Form(
-    "tg" -> rawTargetM(adnId)
+    TG_FN -> rawTargetM(adnId)
   )
 
   /**
