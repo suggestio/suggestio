@@ -67,6 +67,31 @@ class VkAdapter extends IAdapter {
     VkAdapter.isMyDomain(domain)
   }
 
+  /** Инициализация адаптера, когда API уже инициализировано. */
+  protected def headlessInit(): Future[Option[VkLoginResult]] = {
+    // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
+    // TODO Проверить пермишшены через account.getAppPermissions()
+    val lsFut = Vk.Auth.getLoginStatus
+    // В фоне запускаем получение текущих прав приложения, хоть они могут и не пригодится.
+    val appPermsFut = Vk.Api.getAppPermissions()
+    lsFut flatMap {
+      // Залогиненный юзер, но у приложения может не хватать прав, что позволит считать его незалогиненным.
+      case lsSome @ Some(ls) =>
+        appPermsFut.map { appPerms =>
+          if ((appPerms.bitMask & ACCESS_LEVEL) == ACCESS_LEVEL) {
+            // Юзер выдал необзодмые права доступа.
+            lsSome
+          } else {
+            // Юзер пока не выдал необходимые права доступа для приложения.
+            None
+          }
+        }
+      // Это незалогиненный юзер, его права нам не важны.
+      case None =>
+        Future successful None
+    }
+  }
+
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу. */
   override def ensureReady(mctx0: MJsCtx): Future[MJsCtx] = {
     val p = Promise[MJsCtx]()
@@ -75,24 +100,22 @@ class VkAdapter extends IAdapter {
     window.vkAsyncInit = {() =>
       val apiId = mctx0.service.get.appId.orNull
       val opts = VkInitOptions(apiId)
-      Vk.init(opts).flatMap { _ =>
-        // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
-        // TODO Проверить пермишшены через account.getAppPermissions()
-        Vk.Auth.getLoginStatus
-      } onComplete {
-        // init завершился, инфа по залогиненности получена.
-        case Success(loginStatusOpt) =>
-          val vkCtx = VkCtx(
-            login = loginStatusOpt
-          )
-          p success mctx0.copy(
-            status = Some(MAnswerStatuses.Success),
-            custom = Some(vkCtx.toJson)
-          )
-        // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
-        case Failure(ex) =>
-          p failure ApiInitException(ex)
-      }
+      Vk.init(opts)
+        .flatMap { _ => headlessInit() }
+        .onComplete {
+          // init завершился, инфа по залогиненности получена.
+          case Success(loginStatusOpt) =>
+            val vkCtx = VkCtx(
+              login = loginStatusOpt
+            )
+            p success mctx0.copy(
+              status = Some(MAnswerStatuses.Success),
+              custom = Some(vkCtx.toJson)
+            )
+          // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
+          case Failure(ex) =>
+            p failure ApiInitException(ex)
+        }
       // Освободить память браузера от хранения этой функции.
       window.vkAsyncInit = null
     }

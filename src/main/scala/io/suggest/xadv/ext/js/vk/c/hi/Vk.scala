@@ -107,6 +107,15 @@ object VkApi {
    * @return Фьючерс с результом вызова.
    */
   def wallPost(args: VkWallPostArgs) = mkCall("wall.post", args, VkWallPostResult)
+
+  /**
+   * Запросить текущие разрешения приложения.
+   * @param args Параметры вызова.
+   * @return Фьючерс с результатом вызова.
+   */
+  def getAppPermissions(args: VkGetAppPermissionsArgs = VkGetAppPermissionsArgs()) = {
+    mkCall("account.getAppPermissions", args, VkGetAppPermissionsResult)
+  }
 }
 
 
