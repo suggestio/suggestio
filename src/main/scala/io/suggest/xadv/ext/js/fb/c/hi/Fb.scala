@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.fb.c.hi
 
 import io.suggest.xadv.ext.js.fb.c.low.FbLow
 import io.suggest.xadv.ext.js.fb.m._
-import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.xadv.ext.js.runner.m.{ToJsonDictDummy, FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -18,7 +18,8 @@ import scala.scalajs.js.{Dictionary, Any}
 
 object Fb {
 
-  private def HTTP_POST = "POST"
+  private def HTTP_GET   = "GET"
+  private def HTTP_POST  = "POST"
 
   /**
    * Высокоуровневая асинхронная инициализация facebook js API.
@@ -84,12 +85,23 @@ object Fb {
   }
 
 
-  def mkPost(fbTg: IFbTarget, args: FbPost) = {
+  def mkPost(fbTg: String, args: FbPost) = {
     apiCallSafe(
       httpMethod = HTTP_POST,
-      path  = s"/${fbTg.id}/feed",
+      path  = s"/$fbTg/feed",
       args  = args,
       model = FbPostResult
+    )
+  }
+
+
+  /** Получить инфу по абстрактному fb-узлу. */
+  def getNodeInfo(args: FbNodeInfoArgs): Future[FbNodeInfoResult] = {
+    apiCallSafe(
+      httpMethod  = HTTP_GET,
+      path        = args.toPath,
+      args        = new ToJsonDictDummy,
+      model       = FbNodeInfoResult
     )
   }
 

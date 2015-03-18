@@ -16,9 +16,10 @@ case class FbPost(
   link      : Option[String],
   name      : Option[String],
   descr     : Option[String],
+  accessToken: Option[String]   = None,
   caption   : Option[String]    = Some("suggest.io"),
   privacy   : Option[FbPrivacy] = Some(FbPrivacy())
-) extends IToJsonDict {
+) extends IToJsonDict with IFbAccessTokenOpt {
 
   override def toJson: Dictionary[Any] = {
     val d = Dictionary.empty[Any]
@@ -32,6 +33,8 @@ case class FbPost(
       d.update("name", name.get)
     if (descr.nonEmpty)
       d.update("description", descr.get)
+    if (accessToken.nonEmpty)
+      d.update("access_token", accessToken.get)
     if (caption.nonEmpty)
       d.update("caption", caption.get)
     if (privacy.nonEmpty)
@@ -55,7 +58,10 @@ object FbPostResult extends FromJsonT {
   override def fromJson(raw: Any): T = {
     val d = raw.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
     FbPostResult(
-      postId = d.get("post_id").map(_.toString),
+      // Обычно id созданного поста приходит
+      postId = d.get("id")
+        .orElse { d.get("post_id") }    // TODO После обновления api это поле ещё где-нить встречается?
+        .map(_.toString),
       error  = d.get("error")
     )
   }

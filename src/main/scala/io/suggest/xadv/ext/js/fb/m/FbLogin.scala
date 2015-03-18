@@ -12,8 +12,15 @@ import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
  * Description: Модель параметров запуска процедуры логина.
  */
 object FbLoginArgs {
+
   /** Разрешение на публикацию. */
   def SCOPE_PUBLISH_ACTIONS = "publish_actions"
+
+  /** Разрешение на доступ к страницам. */
+  def SCOPE_MANAGE_PAGES    = "manage_pages"
+
+  /** Все перечисленные права доступа одной строкой. */
+  def ALL_RIGHTS = SCOPE_PUBLISH_ACTIONS + "," + SCOPE_MANAGE_PAGES
 }
 
 

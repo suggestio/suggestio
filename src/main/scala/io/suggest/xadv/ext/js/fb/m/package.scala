@@ -7,4 +7,6 @@ package io.suggest.xadv.ext.js.fb
  */
 package object m {
 
+  type FbNodeType = FbNodeTypes.T
+
 }

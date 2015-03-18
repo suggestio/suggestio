@@ -29,7 +29,10 @@ object FbTargetSpec extends SimpleTestSuite {
   /** Запуск теста. */
   private def t(path: String, id: String): Unit = {
     val url = path2url(path)
-    assertEquals(fromUrl(url).id, id)
+    assertEquals(
+      fromUrl(url).map(_.nodeId),
+      Some(id)
+    )
   }
 
 
@@ -70,12 +73,17 @@ object FbTargetSpec extends SimpleTestSuite {
   }
 
   // Эта русскоязычная ссылка реальная, взята из /pages
-  test("Page URL: https://www.facebook.com/pages/%D0%9C%D1%8E%D0%B7%D0%B8%D0%BA%D0%BB-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8/1622992914594739") {
+  test("Page %encoded URL: https://www.facebook.com/pages/%D0%9C%D1%8E%D0%B7%D0%B8%D0%BA%D0%BB-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8/1622992914594739") {
     t(
       "https://www.facebook.com/pages/%D0%9C%D1%8E%D0%B7%D0%B8%D0%BA%D0%BB-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8/1622992914594739",
       "1622992914594739"
     )
   }
+
+  test("Page %encoded URL: https://www.facebook.com/pages/Бар-Анка/1574446066106309") {
+    t("https://www.facebook.com/pages/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0/1574446066106309", "1574446066106309")
+  }
+
 
   // URL-неймы, т.е. ссылка в корне.
   test("Named URL (simple): /hellocbca?ref=hl") {

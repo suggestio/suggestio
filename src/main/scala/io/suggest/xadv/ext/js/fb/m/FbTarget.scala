@@ -2,10 +2,6 @@ package io.suggest.xadv.ext.js.fb.m
 
 import java.net.URI
 
-import io.suggest.model.LightEnumeration
-
-import scala.util.matching.Regex
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,37 +13,59 @@ object FbTarget {
   /**
    * Десериализовать из URL.
    * @param url Ссылка.
-   * @return Экземпляр [[IFbTarget]].
+   * @return None если ссылка непонятна совсем.
+   *         Some([[FbTarget]]), если удалось извлечь какую-то инфу из ссылки.
    */
-  def fromUrl(url: String): IFbTarget = {
+  def fromUrl(url: String): Option[FbTarget] = {
     val uri = new URI(url)
-    val path = uri.getPath + "?" + uri.getQuery
+    val path = uri.getPath + "?" + uri.getQuery   // TODO Должен же быть getFile() какой-нить для URI!
     // Быстрая разборка path по регэкспу
     def unapplyIdRe(re: String): Option[String] = {
       re.r.unapplySeq(path)
         .flatMap(_.lastOption)
     }
     // Попробовать разные варианты извлечения id из tg url path.
-    val id = unapplyIdRe("/groups?/([^/?&]+).*")
-      .orElse { unapplyIdRe("/events?/([^/?&]+).*") }
-      .orElse { unapplyIdRe("/pages?/[^/]+/([^/?&]+).*") }
-      .orElse { unapplyIdRe("/profiles?\\.php\\?(.+?&)?id=([0-9]+).*") }
-      .orElse { unapplyIdRe("/([^/?&]+).*") }
-      // TODO Нужен более гибкий обработчик ссылки на главную. Чтобы отлавливал / и ?
-      .orElse { if (path == "/") Some("me") else None }
-      // TODO Надо отрабатывать/возвращать ошибки, а не гасить их через подстановку "/me".
-      .getOrElse("me")
-    FbId(id = id)
+    // начинаем с группы, хотя TODO наверное лучше бы со страницы или профиля юзера
+    unapplyIdRe("/groups?/([^/?&]+).*")
+      .map { FbTarget(_, Some(FbNodeTypes.Group)) }
+      .orElse {
+        unapplyIdRe("/events?/([^/?&]+).*")
+          .map { FbTarget(_, Some(FbNodeTypes.Event)) }
+      }
+      // Тестируем на страницу
+      .orElse {
+        unapplyIdRe("/pages?/[^/]+/([^/?&]+).*")
+          .map { FbTarget(_, Some(FbNodeTypes.Page)) }
+      }
+      // Тестируем на юзера
+      .orElse {
+        unapplyIdRe("/profiles?\\.php\\?(.+?&)?id=([0-9]+).*")
+          .orElse { if (path matches "^/?([?#].*)?") Some("me") else None }
+          .map { FbTarget(_, Some(FbNodeTypes.User)) }
+      }
+      // Тестируем на наличие короткого имени узла в пути.
+      .orElse {
+        unapplyIdRe("/([^/?&]+).*")
+          .map { FbTarget(_, None) }
+      }
   }
 
 }
 
 
-/** Интерфейс экземпляра модели. */
-trait IFbTarget {
-  /** Идентификатор объекта. */
-  def id: String
+/** Интерфейс экземпляра модели с полем id fb-узла. */
+trait IFbNodeId {
+
+  /** Идентификатор узла графа Facebook. */
+  def nodeId: String
+
 }
 
-/** Группа фейсбука и её id. */
-case class FbId(id: String) extends IFbTarget
+
+/**
+ * Инфа по запрошенному узлу фейсбука.
+ * @param nodeId fb id узла.
+ * @param nodeType Тип узла, если известен.
+ */
+case class FbTarget(nodeId: String, nodeType: Option[FbNodeType]) extends IFbNodeId
+

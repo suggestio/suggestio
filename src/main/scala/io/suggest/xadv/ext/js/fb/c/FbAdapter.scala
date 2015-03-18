@@ -98,7 +98,7 @@ class FbAdapter extends IAdapter {
    */
   protected def doLogin(): Future[FbLoginResult] = {
     val args = FbLoginArgs(
-      scope = FbLoginArgs.SCOPE_PUBLISH_ACTIONS
+      scope = FbLoginArgs.ALL_RIGHTS
     )
     Fb.login(args) flatMap { res =>
       if (res.hasAuthResp)
@@ -109,24 +109,84 @@ class FbAdapter extends IAdapter {
   }
 
   /** Сборка и публикация поста. */
-  protected def publishPost(mctx0: MJsCtx, tgInfo: IFbTarget): Future[_] = {
+  protected def publishPost(mctx0: MJsCtx, tgInfo: IFbPostingInfo): Future[_] = {
     // TODO Заимплеменчена обработка только первой карточки
     val mad = mctx0.mads.head
     val args = FbPost(
-      picture = mad.picture.flatMap(_.url),
-      message = None, //Some( mad.content.fields.iterator.map(_.text).mkString("\n") ),
-      link    = Some( mctx0.target.get.onClickUrl ),
-      name    = mad.content.title,
-      descr   = mad.content.descr
+      picture     = mad.picture.flatMap(_.url),
+      message     = None, //Some( mad.content.fields.iterator.map(_.text).mkString("\n") ),
+      link        = Some( mctx0.target.get.onClickUrl ),
+      name        = mad.content.title,
+      descr       = mad.content.descr,
+      accessToken = tgInfo.accessToken
     )
-    Fb.mkPost(tgInfo, args)
+    Fb.mkPost(tgInfo.nodeId, args)
       .flatMap { res =>
         res.error match {
           case some if some.isDefined =>
-            Future failed PostingProhibitedException(tgInfo.id, some)
+            Future failed PostingProhibitedException(tgInfo.nodeId, some)
           case _ =>
             Future successful res
         }
+      }
+  }
+
+  /**
+   * Узнать тип указанной ноды через API.
+   * @param fbId id узла.
+   * @return None если не удалось определить id узла.
+   *         Some с данными по цели, которые удалось уточнить. Там МОЖЕТ БЫТЬ id узла.
+   */
+  protected def getNodeType(fbId: String): Future[Option[FbTarget]] = {
+    val args = FbNodeInfoArgs(
+      id        = fbId,
+      fields    = FbNodeInfoArgs.FIELDS_ONLY_ID,
+      metadata  = true
+    )
+    Fb.getNodeInfo(args)
+      .map { resp =>
+        val ntOpt = resp.metadata
+          .flatMap(_.nodeType)
+          .orElse {
+            // Если всё еще нет типа, но есть ошибка, то по ней бывает можно определить тип.
+            resp.error
+              .filter { e => e.code contains 803 }    // Ошибка 803 говорит, что у юзера нельзя сдирать инфу.
+              .map { _ => FbNodeTypes.User }
+          }
+        if (ntOpt.isEmpty)
+          dom.console.warn("Unable to get node type from getNodeInfo(%s) resp %s", args.toString, resp.toString)
+        val res = FbTarget(
+          nodeId        = resp.nodeId.getOrElse(fbId),
+          nodeType  = ntOpt
+        )
+        Some(res)
+      // recover() для подавления любых возможных ошибок.
+      }.recover {
+        case ex: Throwable =>
+          dom.console.warn("Failed to getNodeInfo(%s) or parse result: %s %s", args.toString, ex.getClass.getSimpleName, ex.getMessage)
+          None
+      }
+  }
+
+  /**
+   * Получить access_token для постинга на указанный узел.
+   * @param fbId id узла, для которого требуется токен.
+   * @return None если не удалось получить токен.
+   *         Some с токеном, когда всё ок.
+   */
+  protected def getAccessToken(fbId: String): Future[Option[String]] = {
+    val args = FbNodeInfoArgs(
+      id          = fbId,
+      fields      = FbNodeInfoArgs.FIELDS_ONLY_ID,
+      metadata    = false,
+      accessToken = true
+    )
+    Fb.getNodeInfo(args)
+      .map { resp =>
+        // Если нет токена в ответе, то скорее всего там указана ошибка. Её рендерим в логи для отладки.
+        if (resp.error.isDefined)
+          dom.console.warn("Failed to acquire access token: %s => error %s", args.toString, resp.error.toString)
+        resp.accessToken
       }
   }
 
@@ -134,9 +194,41 @@ class FbAdapter extends IAdapter {
   override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
     // TODO Нужно оформить код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
     doLogin() flatMap { _ =>
-      val tgInfo = FbTarget fromUrl mctx0.target.get.tgUrl
+      // Первый шаг - определяем по узлу данные.
+      val tgInfoOpt = FbTarget.fromUrl( mctx0.target.get.tgUrl )
+      tgInfoOpt match {
+        // Неизвестный URL. Завершаемся.
+        case None =>
+          Future failed new UnknownTgUrlException
+        case Some(info) =>
+          if (info.nodeType.isEmpty) {
+            // id узла есть, но тип не известен. Нужно запустить определение типа указанной цели.
+            getNodeType(info.nodeId)
+              .map { _ getOrElse info }
+          } else {
+            Future successful info
+          }
+      }
+
+    } flatMap { fbTg =>
+      // Второй шаг: Запрашиваем специальный access_token, если требуется.
+      if (fbTg.nodeType contains FbNodeTypes.Page) {
+        // Для постинга на страницу нужно запросить page access token.
+        getAccessToken(fbTg.nodeId)
+          .map { pageAcTokOpt =>
+            FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = pageAcTokOpt)
+          }
+      } else {
+        val res = FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = None)
+        Future successful res
+      }
+
+    } flatMap { tgInfo =>
+      // Третий шаг - запуск публикации поста.
       publishPost(mctx0, tgInfo)
+
     } map { res =>
+      // Если всё ок, вернут результат.
       mctx0.copy(
         status = Some(MAnswerStatuses.Success)
       )

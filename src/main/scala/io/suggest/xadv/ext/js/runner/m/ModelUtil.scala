@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import scala.scalajs.js
+import scala.scalajs.js.Dictionary
 
 /**
  * Suggest.io
@@ -33,3 +34,10 @@ trait IToJsonDict extends IToJson {
   def toJson: js.Dictionary[js.Any]
 }
 
+
+/** Пустая реализация [[IToJsonDict]]. */
+class ToJsonDictDummy extends IToJsonDict {
+  override def toJson: Dictionary[js.Any] = {
+    Dictionary.empty
+  }
+}
