@@ -19,7 +19,10 @@ import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
 
 object FbNodeInfoArgs {
 
-  def FIELDS_ONLY_ID = Seq("id")
+  def ID_FN = "id"
+  def ACCESS_TOKEN_FN = "access_token"
+
+  def FIELDS_ONLY_ID = Seq(ID_FN)
   def FIELDS_ALL     = Seq.empty
 
 }
@@ -30,12 +33,10 @@ object FbNodeInfoArgs {
  * @param fields Запрашиваемые поля. Безопасно вызывать [] (все поля) и [id] (только id).
  *               По умолчанию -- все поля.
  * @param metadata Запрашивать метаданные?
- * @param accessToken Запросить access token?
  */
 case class FbNodeInfoArgs(
   id          : String,
   fields      : Seq[String] = FbNodeInfoArgs.FIELDS_ALL,
-  accessToken : Boolean     = false,
   metadata    : Boolean     = false
 ) {
 
@@ -47,8 +48,6 @@ case class FbNodeInfoArgs(
       qsAcc ::= "fields=" + fields.mkString(",")
     if (metadata)
       qsAcc ::= "metadata=1"
-    if (accessToken)
-      qsAcc ::= "access_token=1"
     // Собираем итоговую строку.
     var acc = "/" + id
     if (qsAcc.nonEmpty)

@@ -177,9 +177,8 @@ class FbAdapter extends IAdapter {
   protected def getAccessToken(fbId: String): Future[Option[String]] = {
     val args = FbNodeInfoArgs(
       id          = fbId,
-      fields      = FbNodeInfoArgs.FIELDS_ONLY_ID,
-      metadata    = false,
-      accessToken = true
+      fields      = Seq(FbNodeInfoArgs.ACCESS_TOKEN_FN),
+      metadata    = false
     )
     Fb.getNodeInfo(args)
       .map { resp =>
