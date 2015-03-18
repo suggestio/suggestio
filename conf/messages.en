@@ -349,6 +349,7 @@ e.adv.ext.api=Error during talking with remote service.
 e.adv.ext.adp.internal=Internal error in {1} client.
 e.adv.ext.dom.update=Cannot update current page.
 e.adv.ext.your.browser.block.popups=Your browser is blocking popup windows. You need to allow all popups on Suggest.io and retry.
+e.adv.ext.unknown.tg.url=Suggest.io cannot understand target link you provided. Please check link correctness.
 New.target=New target
 
 passwords.do.not.match=Passwords does not match. Please try again.
