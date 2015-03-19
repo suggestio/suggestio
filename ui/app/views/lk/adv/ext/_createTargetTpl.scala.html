@@ -18,7 +18,7 @@
 
       @defining( tf("return").value ) { v =>
         @adv.MExtReturns.values.iterator.map { mret =>
-          <label class="social-target_option">
+          <label class="social-target_option" title="@Messages(mret.i18nCode + ".hint")">
             <input class="@CLASS_ONE_TARGET_INPUT_RETURN_CHECKBOX" type="checkbox" value="@mret"
                    name="return" @if(v contains mret.strId) {checked="checked"}/>
             <span class="styled-checkbox"></span>&nbsp;@Messages(mret.i18nCode)

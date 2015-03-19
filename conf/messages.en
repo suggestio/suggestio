@@ -33,6 +33,8 @@ Others=Others
 Privacy.policy=Privacy policy
 Status=Status
 Error=Error
+Page.link=Link to web-page
+Problem.occured=A problem occured
 
 requisites=Payment details for withdrawal
 
@@ -339,7 +341,9 @@ e.event.not.found=Event not exists.
 reg.emailpw.email.subj=Confirm your registration in Suggest.io network
 
 adv.ext.ret.sc=My showcase
+adv.ext.ret.sc.hint=Link to your shop's showcase will be attached to deployed content.
 adv.ext.ret.ad=This ad
+adv.ext.ret.ad.hint=Link to current (this) content will be attached to deployed content.
 
 e.ext.adv.unathorized=User not authorized.
 e.ext.adv.permissions=User have not permissions.
@@ -358,6 +362,12 @@ status.success=success
 Show.tech.error.info=Show technical error
 e.adv.ext.service.startup.error=Service startup error
 Following.targets.skipped=The following targets has been skipped
+Adv.on.ext.services.running=Deploying content to external services
+Adv.ext=External content deployment
+Add.target=Add target
+Adv.deploy.now=Deploy now
+adv.ext.tg.name.hint=Target name, any you want. Displayed only for current shop owner (owners).
+adv.ext.tg.url.hint=Link to any supported profile/page/group/event/etc in Facebook or vk.com. Copy-paste it from your browser location bar.
 
 passwords.do.not.match=Passwords does not match. Please try again.
 
