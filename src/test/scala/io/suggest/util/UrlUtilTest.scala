@@ -31,14 +31,14 @@ class UrlUtilTest extends FlatSpec with Matchers {
 
 
   "decodeUrl()" should "decode valid URLs as-is" in {
-    decodeUrl("https://suggest.io/a_b_c/d") shouldEqual "https://suggest.io/a_b_c/d"
-    decodeUrl("https://suggest.io/a%20bc/") shouldEqual "https://suggest.io/a bc/"
-    decodeUrl("https://suggest.io/%20%20")  shouldEqual  "https://suggest.io/  "
+    pcDecodeSafe("https://suggest.io/a_b_c/d") shouldEqual "https://suggest.io/a_b_c/d"
+    pcDecodeSafe("https://suggest.io/a%20bc/") shouldEqual "https://suggest.io/a bc/"
+    pcDecodeSafe("https://suggest.io/%20%20")  shouldEqual  "https://suggest.io/  "
   }
 
   it should  "not crash on wrong-encoded URLs" in {
-    decodeUrl("https://suggest.io/абвг")    shouldEqual "https://suggest.io/абвг"
-    decodeUrl("https://suggest.io/%20абвг") shouldEqual "https://suggest.io/ абвг"
+    pcDecodeSafe("https://suggest.io/абвг")    shouldEqual "https://suggest.io/абвг"
+    pcDecodeSafe("https://suggest.io/%20абвг") shouldEqual "https://suggest.io/ абвг"
   }
 
 
@@ -84,20 +84,42 @@ class UrlUtilTest extends FlatSpec with Matchers {
     normalize(" шарага.рф/гоги/2 ") shouldEqual "http://xn--80aaal7d3b.xn--p1ai/%D0%B3%D0%BE%D0%B3%D0%B8/2"
   }
 
-  "humanizeUrl()" should "make comples URLs human-readable" in {
+  "humanizeUrl()" should "make simple english URLs human-readable (keep unchanged)" in {
     humanizeUrl("http://ya.ru/lol") shouldEqual "http://ya.ru/lol"
     humanizeUrl("https://ya.ru/lol") shouldEqual "https://ya.ru/lol"
+  }
+  it should "make IDN-hostnames in URLs human-readable" in {
     humanizeUrl("http://xn--80aaal7d3b.xn--p1ai/") shouldEqual "http://шарага.рф/"
     humanizeUrl("http://xn--80aaal7d3b.xn--p1ai/123") shouldEqual "http://шарага.рф/123"
   }
+  it should "make %-encoded URL path/qs in URLs human-readeable" in {
+    humanizeUrl("https://www.facebook.com/pages/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0/1574446066106309") shouldEqual
+      "https://www.facebook.com/pages/Бар-Анка/1574446066106309"
+  }
+  it should "humanize IDN and %-encoded parts in single URL" in {
+    humanizeUrl("https://www.xn--80aaal7d3b.xn--p1ai/p/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0-11/123?q=%D0%91%D0%B0%D1%80") shouldEqual
+      "https://www.шарага.рф/p/Бар-Анка-11/123?q=Бар"
+  }
 
-  "humanizeUrlAggressive()" should "make stripper human-readable URLs" in {
+
+  "humanizeUrlAggressive()" should "make short and humanized URLs from simple english URLs (only strip common proto)" in {
     humanizeUrlAggressive("http://ya.ru/") shouldEqual "ya.ru"
     humanizeUrlAggressive("http://ya.ru/lol") shouldEqual "ya.ru/lol"
+    humanizeUrlAggressive("http://www.ya.ru/lol") shouldEqual "ya.ru/lol"
     humanizeUrlAggressive("https://ya.ru/lol") shouldEqual "ya.ru/lol"
     humanizeUrlAggressive("ftp://ya.ru/lol") shouldEqual "FTP://ya.ru/lol"
+  }
+  it should "humanize IDNinied URLs" in {
     humanizeUrlAggressive("http://xn--80aaal7d3b.xn--p1ai/") shouldEqual "шарага.рф"
     humanizeUrlAggressive("http://xn--80aaal7d3b.xn--p1ai/123") shouldEqual "шарага.рф/123"
+  }
+  it should "humanize and minimize facebook russian page URL" in {
+    humanizeUrlAggressive("https://www.facebook.com/pages/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0/1574446066106309") shouldEqual
+      "facebook.com/pages/Бар-Анка/1574446066106309"
+  }
+  it should "humanize IDN and %-encoded parts in single URL" in {
+    humanizeUrlAggressive("http://www.xn--80aaal7d3b.xn--p1ai/p/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0-11/123?q=%D0%91%D0%B0%D1%80") shouldEqual
+      "шарага.рф/p/Бар-Анка-11/123?q=Бар"
   }
 
 

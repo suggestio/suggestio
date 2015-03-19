@@ -18,15 +18,12 @@ object UrlUtil extends Serializable {
   @transient private lazy val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
-  val INSTANCE = this
-
   // Ссылки, которые не должны преобразовываться при абсолютизации ссылки.
   private val IGNORED_PROTOCOL_PATTERN = "(?i)^\\s*(javascript|mailto|about|ftp|feed|news):".r.pattern
 
   // Тут какие-то костыли для percent-encoding http://en.wikipedia.org/wiki/Percent-encoding
   private val RESERVED_QUERY_CHARS = "%&;=:?#"
   private val RESERVED_PATH_CHARS  = "%/?#"
-  private val HEX_CODES = "0123456789abcdefABCDEF"
 
   // Для матчинга относительного пути типа "/xx/../" внутри URL path.
   // Также матчит /../ в начале URL path. Оба должны быть отреплейсены в "/"
@@ -189,10 +186,13 @@ object UrlUtil extends Serializable {
     if ( !((proto equalsIgnoreCase "http") || (proto equalsIgnoreCase "https")) ) {
       sb.append(proto.toUpperCase).append("://")
     }
-    humanizeUrlHost(url, sb)
+    // Резать www. в начале.
+    val host = stripHostnameWww(url.getHost)
+    humanizeUrlHost(host, sb)
+    humanizeUrlPort(url, sb)
     val file = url.getFile
     if (file != null && !file.isEmpty && file != "/") {
-      sb append file
+      humanizeUrlFile(file, sb)
     }
     sb.toString()
   }
@@ -208,17 +208,26 @@ object UrlUtil extends Serializable {
   def humanizeUrl(url: URL): String = {
     val sb = new StringBuilder(128)
     sb.append(url.getProtocol).append("://")
-    humanizeUrlHost(url, sb)
-    sb.append(url.getFile)
+    humanizeUrlHost(url.getHost, sb)
+    humanizeUrlPort(url, sb)
+    humanizeUrlFile(url.getFile, sb)
     sb.toString()
   }
 
-  private def humanizeUrlHost(url: URL, sb: StringBuilder) {
-    sb append IDNA.toUnicode(url.getHost)
+  private def humanizeUrlHost(host: String, sb: StringBuilder) {
+    sb append IDNA.toUnicode(host)
+  }
+
+  private def humanizeUrlPort(url: URL, sb: StringBuilder): Unit = {
     val port = url.getPort
     if (port > 0 && port != url.getDefaultPort) {
       sb.append(":").append(port)
     }
+  }
+
+  /** Хумнизация части ссылки, которая path + query. */
+  private def humanizeUrlFile(urlFile: String, sb: StringBuilder): Unit = {
+    sb append pcDecodeSafe(urlFile)
   }
 
   // URL normalizer - система нормализации ссылок, которая будет далее использоваться в энтерпрайзе.
@@ -229,7 +238,7 @@ object UrlUtil extends Serializable {
    * @param codepoint Int
    * @return "%0D%AF"
    */
-  private def encodeCodePoint(codepoint:Int) : String = {
+  private def encodeCodePoint(codepoint: Int): String = {
     try {
       val codepoints = Array(codepoint)
       val bytes = new String(codepoints, 0, 1).getBytes("UTF-8")
@@ -276,32 +285,17 @@ object UrlUtil extends Serializable {
 
 
   /**
-   * Раскодировать ссылку, закодированную в percent-encoding.
-   * @param url
+   * Раскодировать ссылку или её часть, закодированную в percent-encoding.
+   * При проблемах раскодирания будет возвращена исходная строка.
+   * @param encoded Строка, закодированная через percent encoding.
    */
-  def decodeUrl(url:String) : String = {
-    var offset = 0
-    var url1:String = null
-    while ({offset = url.indexOf('%', offset); offset != -1}) {
-      offset += 1
-      val needEscaping = if (offset > url.length - 2)
-        true
-      else if (HEX_CODES.indexOf(url.charAt(offset)) == -1 || HEX_CODES.indexOf(url.charAt(offset+1)) == -1)
-        true
-      else
-        false
-      if (needEscaping) {
-        url1 = url.substring(0, offset) + "25" + url.substring(offset)
-        offset += 1
-      }
-    }
-
+  def pcDecodeSafe(encoded: String): String = {
     try {
-      URLDecoder.decode(url, "UTF-8")
+      URLDecoder.decode(encoded, "UTF-8")
     } catch {
       case e:UnsupportedEncodingException =>
-        error("Cannot decode " + url + " , returning as-is.", e)
-        url
+        error("Cannot decode " + encoded + " , returning as-is.", e)
+        encoded
     }
   }
 
@@ -343,7 +337,7 @@ object UrlUtil extends Serializable {
 
     val newPath = path.split('/').foldLeft(new StringBuilder) { (acc, pathPart) =>
       if (pathPart.length > 0)
-        acc.append('/').append(encodeUrlComponent(decodeUrl(pathPart), RESERVED_PATH_CHARS))
+        acc.append('/').append(encodeUrlComponent(pcDecodeSafe(pathPart), RESERVED_PATH_CHARS))
       else
         acc
     }
@@ -401,7 +395,7 @@ object UrlUtil extends Serializable {
       ""
   }
 
-  private def normalizeQueryPart(qpart:String) = encodeUrlComponent(decodeUrl(qpart) , RESERVED_QUERY_CHARS)
+  private def normalizeQueryPart(qpart:String) = encodeUrlComponent(pcDecodeSafe(qpart) , RESERVED_QUERY_CHARS)
 
 
   /**
