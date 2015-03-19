@@ -1,16 +1,17 @@
 @(cf: UsrCreateNodeForm_t)(implicit ctx: Context)
 
+@* Форма создания нового узла через личный кабинет. *@
+
 @import helper._
 @import ctx._
 @import util.FC.tdRadialFc
-
 
 @form( CSRF(routes.MarketLkAdn.createNodeSubmit()) ) {
 
   @inputText(
     cf("name"),
-    '_label -> "Название магазина",
-    '_helper -> "Название можно изменить в любое время."
+    '_label  -> Messages("Node.name"),
+    '_helper -> Messages("Node.name.hint")
   )
 
   <div class="btn-w __size-M">

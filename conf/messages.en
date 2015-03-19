@@ -416,3 +416,9 @@ Disable.reason=Disable reason
 Switch.shop=Switch shop
 Ad.cards=Promo cards
 
+My.ad.net=My ad network
+Choose.node=Choose shop
+Create.node=Create shop
+Node.name=Shop name
+Node.name.hint=Shop name may be changed any time later.
+

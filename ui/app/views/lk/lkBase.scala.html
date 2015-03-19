@@ -1,10 +1,9 @@
 @(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None,
   headAfter:Option[Html] = None, popupContent: Option[Html] = None,
-  povAdnId: Option[String] = None)(content: Html)(implicit ctx: Context)
+  povAdnId: Option[String] = None, showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
 
-@* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
-   - Параметр headAfter содержит дополнения к телу тега head.
-*@
+@* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин). *@
+
 @import ctx._
 @import stuff._
 @import LkLeftPanelLinks._
@@ -55,7 +54,9 @@
         }
       </div>
 
-      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
+      @if(showSwitchNodeBtn) {
+        <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
+      }
 
     </header>
 

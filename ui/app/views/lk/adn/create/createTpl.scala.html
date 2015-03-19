@@ -2,6 +2,8 @@
 
 @* Страница с формой создания нового магазина. *@
 
-@base("Создать магазин") {
+@import ctx.lang
+
+@base( Messages("Create.node") ) {
   @_formTpl(cf)
 }
