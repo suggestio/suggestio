@@ -12,17 +12,13 @@
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
 
-
-@content = {
-
-  @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
-  @if(showBackBtn) {
-    @defining( if(isMyNode) Some(routes.MarketLkAdn.lkList(fromNode = mnode.id)) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
-      @backCallOpt.map { backCall =>
-        <a class="btn __minor __size-M def-transition" href="@backCall">Сменить магазин</a>
-      }
-    }
-  }
+@nodeBaseTpl(
+  title         = "Ваш профиль",
+  isMyNode      = isMyNode,
+  node          = mnode,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
+  povAdnIdOpt   = povAdnIdOpt
+) {
 
   <div class="profile_logo-bar">
     @if(mnode.meta.color.isDefined) {
@@ -137,14 +133,5 @@
     @_supShowNodesTpl(mnode, slaves)
   }*@
 
-}@* content end *@
+}
 
-
-
-@nodeBaseTpl(
-  title         = "Ваш профиль",
-  isMyNode      = isMyNode,
-  node          = mnode,
-  rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
-  povAdnIdOpt   = povAdnIdOpt
-)(content)

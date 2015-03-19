@@ -12,12 +12,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>
-    @title
-    @if(nodeOpt) { | }
-    @_nodeTitleTpl(nodeOpt)
-    | market | Suggest.io
-  </title>
+  <title>@title @if(nodeOpt){ | } @_nodeTitleTpl(nodeOpt) | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -26,7 +21,6 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase_previews.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/lightbox/css/lightbox.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk_new-design/lk.css")'/>
 
@@ -61,12 +55,7 @@
         }
       </div>
 
-      @*ctx.usernameOpt.map { username =>
-        <a class="header_logout light-gray dark-link" href="@routes.Ident.logout" title="Выйти">@username</a>
-      }*@
-
-
-      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">Сменить магазин</a>
+      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
 
     </header>
 
@@ -75,7 +64,7 @@
 
       @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
       @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-        <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+        <div style="display: none;" class="status-bar ft-L __@if(flashStatus == "success") {good} else {bad}">
           <div class="status-bar_cnt">
             @flashMsg
           </div>
@@ -85,15 +74,15 @@
       <aside class="left-bar">
         @adnIdOpt.map { adnId =>
           <nav class="left-bar_menu">
-            <a class="left-bar_menu-i __cards@if(leftCurrEl contains LPL_ADS){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="Рекламные карточки"></a>
+            <a class="left-bar_menu-i __cards@if(leftCurrEl contains LPL_ADS){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="@Messages("Ad.cards")"></a>
             <hr class="delimiter"/>
-            <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="Профиль"></a>
+            <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="@Messages("Profile")"></a>
             <hr class="delimiter"/>
             @if(ctx.billBalanceOpt) {
-              <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="Биллинг"></a>
+              <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="@Messages("Billing")"></a>
               <hr class="delimiter"/>
             }
-            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="События">
+            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="@Messages("Events")">
               @* Вывести блямбу с кол-вом непрочитанных сообщений. *@
               @ctx.nodeUnseenEvtsCnt.map { cnt =>
                 @if(cnt > 0) {
@@ -105,15 +94,11 @@
           </nav>
         }
         <div class="left-bar_bottom">
-          <a class="left-bar_exit js-btn" href="#logoutPopup">Выход</a>
+          <a class="left-bar_exit js-btn" href="#logoutPopup">@Messages("Logout")</a>
           <hr class="delimiter"/>
-          <a class="left-bar_help">Помощь</a>
+          <a class="left-bar_help">@Messages("Help")</a>
         </div>
       </aside>
-
-      @adnIdOpt.map { adnId =>
-        <a href="@routes.MarketLkAdn.userProfileEdit(adnId)">Редактировать профиль пользователя</a>
-      }
 
       @content
 
@@ -126,12 +111,10 @@
       <div class="popup_header">
         <a class="close f-right js-close-popup" href="#"></a>
       </div>
-      <h2 class="minor-title">
-        Покинуть suggest.io?
-      </h2>
+      <h2 class="minor-title">@Messages("Logout.suggest.io")</h2>
       <div class="btn-w __size-M">
-        <a class="btn __minor __size-M js-close-popup">Отмена</a>
-        <a class="btn __major __size-M __list" href="@routes.Ident.logout">Выйти</a>
+        <a class="btn __minor __size-M js-close-popup">@Messages("Cancel")</a>
+        <a class="btn __major __size-M __list" href="@routes.Ident.logout">@Messages("Logout")</a>
       </div>
     </div>
 
@@ -139,7 +122,6 @@
   </aside>
 
 
-  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>

@@ -40,6 +40,12 @@ Cancel=Cancel
 Description=Description
 Height=Height
 Width=Width
+Profile=Profile
+Billing=Billing
+Events=Events
+Logout=Logout
+Help=Help
+Logout.suggest.io=Escape Suggest.io?
 
 requisites=Payment details for withdrawal
 
@@ -406,4 +412,7 @@ Fill.by.single.color=Fill by single color
 Ad.large.bg.img.info=Note that on most devices displayed cards may increase in size by half. Therefore, we advise to choose image, at least twice larger than the block size.
 
 Disable.reason=Disable reason
+
+Switch.shop=Switch shop
+Ad.cards=Promo cards
 
