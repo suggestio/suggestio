@@ -13,7 +13,7 @@
 
   @defining( tf("tg.id").value ) { tgId =>
     @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
-    <input type="hidden" name="tg.id" data-xname="tg_id" value="@tgId" />
+    <input type="hidden" name="tg.id" value="@tgId" />
 
     <a class="social-target_delete close @CLASS_DELETE_TARGET_BTN" title="@Messages("Delete") (@Messages("without.confirmation"))"
        href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>

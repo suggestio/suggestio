@@ -370,6 +370,9 @@ Adv.deploy.now=Deploy now
 adv.ext.tg.name.hint=Target name, any you want. Displayed only for current shop owner (owners).
 adv.ext.tg.url.hint=Link to any supported profile/page/group/event/etc in Facebook or vk.com. Copy-paste it from your browser location bar.
 
+Adv.deploy.in.process=Promo-card deployment in process.
+Do.not.close.current.page.until.deploy.finish=Do not close current page until deployment finishes.
+
 Adv.in.ext.services=Deploy into social nets
 Adv.in.geo.node=Publish in geolocations
 Adv.history=Publishing history

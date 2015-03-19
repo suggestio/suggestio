@@ -13,9 +13,8 @@
   mad   = mad
 ) {
 
-  Идёт размещение рекламной карточки.
-  Не закрывайте эту вкладку до завершения процесса.
-
+  @Messages("Adv.deploy.in.process")...
+  @Messages("Do.not.close.current.page.until.deploy.finish").
 
   <input id="@ID_WS_URL" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
 
