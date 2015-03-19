@@ -9,7 +9,7 @@
 @_oneEvtBase(rargs, Some("__bg-1 __icon-6")) {
 
   @rargs.advExtTgs.map { advExtTg =>
-    @_hrefTitleTpl(advExtTg.url, withAnchor = false)
+    @_hrefTitleTpl(advExtTg, withAnchor = false)
   }
 
   @Messages("Status"): @Messages("in.progress")
