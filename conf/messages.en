@@ -27,6 +27,7 @@ Uninstall=Uninstall
 Town=Town
 Phone=Phone
 Photo=Photo
+Node.photos=Shop photos
 Logo=Logo
 Other=Other
 Others=Others
@@ -46,6 +47,8 @@ Events=Events
 Logout=Logout
 Help=Help
 Logout.suggest.io=Escape Suggest.io?
+Balance=Balance
+Info.about.prods.and.svcs=Information about products and services
 
 requisites=Payment details for withdrawal
 
@@ -421,4 +424,10 @@ Choose.node=Choose shop
 Create.node=Create shop
 Node.name=Shop name
 Node.name.hint=Shop name may be changed any time later.
+
+Main.br.color=Main<br/>color
+Bg.color.of.sc.hint=Background color of showcase body and header, where logo displayed.
+
+Content.br.color=Content<br/>color
+Fg.color.of.sc.hint=Color of text, icons and buttons in showcase.
 

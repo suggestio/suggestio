@@ -1,13 +1,15 @@
 @(adnId: String)(implicit ctx: Context)
 
 @* Рисуем баланс на счете, если есть счёт. *@
+
 @import util.TplDataFormatUtil._
+@import ctx.lang
 
 @ctx.billBalanceOpt.map { mbb =>
 
-  @* href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" *@
-  <a class="header_billing" href="@routes.MarketLkBilling.paymentRequsites(adnId)">
-    <span class="ft-S header_billing-t">Баланс</span><span class=" ft-L">@formatPrice(mbb.amount, mbb.currency)</span>
+  @* href="@routes.MarketLkBilling.paymentRequsites(adnId)" *@
+  <a class="header_billing" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">
+    <span class="ft-S header_billing-t">@Messages("Balance")</span><span class=" ft-L">@formatPrice(mbb.amount, mbb.currency)</span>
   </a>
 
 }

@@ -13,7 +13,7 @@
 @import util.img.DynImgUtil
 
 @nodeBaseTpl(
-  title         = "Ваш профиль",
+  title         = mnode.meta.name + " | " + Messages("Profile"),
   isMyNode      = isMyNode,
   node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
@@ -33,31 +33,31 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @lk.lkProp(){ Название } { @mnode.meta.name }
+    @lk.lkProp() { @Messages("Name") } { @mnode.meta.name }
 
     @if(mnode.meta.town.isDefined) {
-      @lk.lkProp(){ Адрес } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
+      @lk.lkProp(){ @Messages("Address") } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
     }
 
     @if(mnode.meta.siteUrl.isDefined) {
-      @lk.lkProp(){ Сайт } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
+      @lk.lkProp(){ @Messages("Site") } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
     }
 
     @if(mnode.meta.info.isDefined) {
-      @lk.lkProp(){ Информация о товарах или услугах } { @mnode.meta.info  }
+      @lk.lkProp(){ @Messages("Info.about.prods.and.svcs") } { @mnode.meta.info  }
     }
 
 
     @if(mnode.adn.isReceiver) {
       <hr class="delimiter __light"/>
-      @lk.lkProp(){ Суточный трафик } { @mnode.meta.humanTrafficAvg  }
-      @lk.lkProp(){ Описание аудитории } { @mnode.meta.audienceDescr  }
+      @lk.lkProp(){ @Messages("Daily.people.traffic") } { @mnode.meta.humanTrafficAvg  }
+      @lk.lkProp(){ @Messages("Audience.descr") } { @mnode.meta.audienceDescr  }
 
       @* TODO добавить вывод картинки приветствия *@
 
       <hr class="delimiter __light"/>
       <div class="prop">
-        <p class="prop_name __block">Фотографии объекта:</p>
+        <p class="prop_name __block">@Messages("Node.photos"):</p>
         <div class="profile_photo-lst">
           <div class="js-photo-slider">
 
@@ -73,31 +73,38 @@
     <hr class="delimiter __light"/>
 
     <table class="prop">
-      <td class="prop_name td">
-        Цвет фона шапки где будет располагаться ваш логотип
-      </td>
-      <td class="td __color-title">
-        <span class="dark-gray ft-S">Основной<br/>цвет</span>
-      </td>
-      <td class="td __padding-S">
-        <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
-      </td>
-      <td class="td __padding-S">
-        <div class="delimiter __light __vertical js-vertical-line"></div>
-      </td>
-      <td class="td __padding-S prop_name">
-        Цвет текста и иконок категорий в ленте выдачи
-      </td>
-      <td class="td __color-title">
-        <span class="dark-gray ft-S">Цвет<br/>контента</span>
-      </td>
-      <td class="td __padding-S dark-gray">
-        <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
-      </td>
+      <tr>
+        <td class="prop_name td">
+          @Messages("Bg.color.of.sc.hint")
+        </td>
+        <td class="td __color-title">
+          <span class="dark-gray ft-S">@Html(Messages("Main.br.color"))</span>
+        </td>
+        <td class="td __padding-S">
+          <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+        </td>
+        <td class="td __padding-S">
+          <div class="delimiter __light __vertical js-vertical-line"></div>
+        </td>
+        <td class="td __padding-S prop_name">
+          @Messages("Fg.color.of.sc.hint")
+        </td>
+        <td class="td __color-title">
+          <span class="dark-gray ft-S">@Html(Messages("Content.br.color"))</span>
+        </td>
+        <td class="td __padding-S dark-gray">
+          <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+        </td>
+      </tr>
     </table>
 
   </div>
 
+
+  @**
+   ** Отключенные неподдерживаемые функции ЛК. Возможно, они не понадобятся уже. А может и понадобятся...
+   ** Супервайз, виджеты узла-ресивера и т.д, скрипт выдачи для сайта.
+   **@
 
   @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
   @*if(isMyNode) {

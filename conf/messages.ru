@@ -27,6 +27,7 @@ Uninstall=Деинсталлировать
 Town=Город
 Phone=Телефон
 Photo=Фото
+Node.photos=Фотографии магазина
 Logo=Лого
 Other=Другой
 Others=Другие
@@ -46,6 +47,8 @@ Events=События
 Logout=Выход
 Help=Помощь
 Logout.suggest.io=Покинуть Suggest.io?
+Balance=Баланс
+Info.about.prods.and.svcs=Информация о товарах и услугах
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -431,4 +434,10 @@ Choose.node=Выверите магазин
 Create.node=Создать магазин
 Node.name=Название магазина
 Node.name.hint=Название можно изменить в любое время.
+
+Main.br.color=Основной</br>цвет
+Bg.color.of.sc.hint=Цвет фона выдачи и шапки, где будет располагаться ваш логотип.
+
+Content.br.color=Цвет<br/>контента
+Fg.color.of.sc.hint=Цвет текст, иконок и кнопок в выдаче.
 
