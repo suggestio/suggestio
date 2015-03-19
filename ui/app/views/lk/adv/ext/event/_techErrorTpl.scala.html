@@ -1,0 +1,13 @@
+@(err: event.IErrorInfo)(implicit ctx: Context)
+
+@* inline-шаблон для ссылки на технические подробности ошибки. *@
+
+@import ctx.lang
+@import io.suggest.adv.ext.view.RunnerPage.CLASS_JSLINK_SHOW_ERROR
+
+@if(err.info) {
+  <p class="dark-link @CLASS_JSLINK_SHOW_ERROR">@Messages("Show.tech.error.info").</p>
+  <div style="display: none;">
+    @err.info
+  </div>
+}

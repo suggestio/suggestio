@@ -31,6 +31,8 @@ Logo=Лого
 Other=Другой
 Others=Другие
 Privacy.policy=Политика приватности
+Status=Статус
+Error=Ошибка
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -363,6 +365,11 @@ e.url.load.failed=Таймаут загрузки URL "{0}". Истекло вр
 e.adv.ext.your.browser.block.popups=Ваш браузер блокирует всплывающие окна. Вам необходимо разрешить все всплывающие окна для suggest.io и повторить попытку.
 e.adv.ext.unknown.tg.url=Suggest.io не понимает указанную ссылку. Пожалуйста, проверьте правильность ссылки на целевую страницу.
 New.target=Новая цель
+in.progress=в процессе...
+status.success=успешно
+Show.tech.error.info=Показать технические подробности ошибки
+e.adv.ext.service.startup.error=Ошибка запуска сервиса
+Following.targets.skipped=Следующие цели были пропущены
 
 passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
 

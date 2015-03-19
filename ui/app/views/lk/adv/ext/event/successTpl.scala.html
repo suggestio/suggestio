@@ -2,6 +2,7 @@
 
 @* Шаблон события успешного внешнего размещения. *@
 
+@import ctx.lang
 @import lk.event._
 @import io.suggest.util.UrlUtil
 
@@ -11,6 +12,6 @@
     @_hrefTitleTpl(advExtTg.url)
   }
 
-  Статус: успешно
+  @Messages("Status"): @Messages("status.success")
 
 }

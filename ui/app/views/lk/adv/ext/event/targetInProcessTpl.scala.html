@@ -2,6 +2,7 @@
 
 @* Шаблон события о идущем внешнего размещения по одной цели. *@
 
+@import ctx.lang
 @import lk.event._
 @import io.suggest.util.UrlUtil
 
@@ -11,7 +12,7 @@
     @_hrefTitleTpl(advExtTg.url, withAnchor = false)
   }
 
-  Статус: в процессе
+  @Messages("Status"): @Messages("in.progress")
 
 }
 

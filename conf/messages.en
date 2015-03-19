@@ -31,6 +31,8 @@ Logo=Logo
 Other=Other
 Others=Others
 Privacy.policy=Privacy policy
+Status=Status
+Error=Error
 
 requisites=Payment details for withdrawal
 
@@ -351,6 +353,11 @@ e.adv.ext.dom.update=Cannot update current page.
 e.adv.ext.your.browser.block.popups=Your browser is blocking popup windows. You need to allow all popups on Suggest.io and retry.
 e.adv.ext.unknown.tg.url=Suggest.io cannot understand target link you provided. Please check link correctness.
 New.target=New target
+in.progress=in progress...
+status.success=success
+Show.tech.error.info=Show technical error
+e.adv.ext.service.startup.error=Service startup error
+Following.targets.skipped=The following targets has been skipped
 
 passwords.do.not.match=Passwords does not match. Please try again.
 
