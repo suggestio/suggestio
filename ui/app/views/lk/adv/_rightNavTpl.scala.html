@@ -4,15 +4,15 @@
 
 <nav class="right-bar_menu">
   <a class="right-bar_menu-i __social@if(curr contains LARL_EXT){ __act}" href="@routes.LkAdvExt.forAd(madId)">
-    <span>Разместить в соц.сети</span>
+    <span>@Messages("Adv.in.ext.services")</span>
   </a>
   <hr class="delimiter"/>
   <a class="right-bar_menu-i __geo@if(curr contains LARL_GEO){ __act}" href="@routes.MarketAdv.advForAd(madId)">
-    <span>Разместить в геолокации</span>
+    <span>@Messages("Adv.in.geo.node")</span>
   </a>
   <hr class="delimiter"/>
   <a class="right-bar_menu-i __history@if(curr contains LARL_HISTORY){ __act}" href="@routes.MarketAdv.advHistory(madId)">
-    <span>История размещений</span>
+    <span>@Messages("Adv.history")</span>
   </a>
   <hr class="delimiter"/>
 </nav>

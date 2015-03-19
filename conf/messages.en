@@ -35,6 +35,7 @@ Status=Status
 Error=Error
 Page.link=Link to web-page
 Problem.occured=A problem occured
+without.confirmation=without confirmation
 
 requisites=Payment details for withdrawal
 
@@ -343,7 +344,7 @@ reg.emailpw.email.subj=Confirm your registration in Suggest.io network
 adv.ext.ret.sc=My showcase
 adv.ext.ret.sc.hint=Link to your shop's showcase will be attached to deployed content.
 adv.ext.ret.ad=This ad
-adv.ext.ret.ad.hint=Link to current (this) content will be attached to deployed content.
+adv.ext.ret.ad.hint=Link to current (this) promo-card will be attached to deployed content.
 
 e.ext.adv.unathorized=User not authorized.
 e.ext.adv.permissions=User have not permissions.
@@ -362,12 +363,31 @@ status.success=success
 Show.tech.error.info=Show technical error
 e.adv.ext.service.startup.error=Service startup error
 Following.targets.skipped=The following targets has been skipped
-Adv.on.ext.services.running=Deploying content to external services
-Adv.ext=External content deployment
+Adv.on.ext.services.running=Deploying promo-card to external services
+Adv.ext=External promo-card deployment
 Add.target=Add target
 Adv.deploy.now=Deploy now
 adv.ext.tg.name.hint=Target name, any you want. Displayed only for current shop owner (owners).
 adv.ext.tg.url.hint=Link to any supported profile/page/group/event/etc in Facebook or vk.com. Copy-paste it from your browser location bar.
+
+Adv.in.ext.services=Deploy into social nets
+Adv.in.geo.node=Publish in geolocations
+Adv.history=Publishing history
+
+Create.br.ad=Create<br/>promo-card
+Ad.cards=Promotional cards
+You.can.look.on.ads.in=You can look on your ads in
+_ad.showcase.link=your promo showcase
+
+Ads.all=All cards
+Ads.on.review=On review
+Ads.published=Published
+
+Click.to.see.information=Click to see information
+Adv.accepted=Advertising accepted
+
+
+ad.Manage=Управление
 
 passwords.do.not.match=Passwords does not match. Please try again.
 

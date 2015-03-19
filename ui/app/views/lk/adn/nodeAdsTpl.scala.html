@@ -8,15 +8,15 @@
 @rightBar = {
   <nav class="right-bar_menu">
     <a class="right-bar_menu-i __all-cards __act" >
-      <span>Все карточки</span>
+      <span>@Messages("Ads.all")</span>
     </a>
     <hr class="delimiter"/>
     <a class="right-bar_menu-i __in-process">
-      <span>На рассмотрении</span>
+      <span>@Messages("Ads.on.review")</span>
     </a>
     <hr class="delimiter"/>
     <a class="right-bar_menu-i __active-cards">
-      <span>Размещенные</span>
+      <span>@Messages("Ads.published")</span>
     </a>
     <hr class="delimiter"/>
   </nav>
@@ -24,7 +24,7 @@
 
 
 @lk.lkBaseLayout(
-  title         = "Рекламные карточки",
+  title         = Messages("Ad.cards"),
   nodeOpt       = Some(mnode),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   rightBar      = Some(rightBar),
@@ -42,7 +42,8 @@
     @if(isMyNode) {
       <div class="sm-note">
         @mnode.adn.memberType.nodeAdmSiteCall(mnode).map { siteCall =>
-          Вы можете посмотреть, как выглядят ваши к карточки в <a class="blue-link" target="_blank" href="@siteCall">рекламной выдаче</a>
+          @Messages("You.can.look.on.ads.in")
+          <a class="blue-link" target="_blank" href="@siteCall">@Messages("_ad.showcase.link")</a>.
         }
       </div>
     }

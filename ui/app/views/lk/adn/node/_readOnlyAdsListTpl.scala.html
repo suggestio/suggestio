@@ -22,11 +22,7 @@
       @* Рендерим ссылку, которая что-то отображает. *@
       @wndAnchor(mad.id.get, advIdOpt = advOpt.flatMap(_.id)) {
         @* Для advOk выводим, что карточка принята к размещению. В остальных случаях предлагаем ознакомится с информацией. *@
-        @advOpt.filter(_.isInstanceOf[MAdvOk]).fold {
-          Нажмите для просмотра информации
-        } { advOk =>
-          Принята к размещению
-        }
+        @Messages( if (advOpt.exists(_.isInstanceOf[MAdvOk])) "Adv.accepted" else "Click.to.see.information" )
       }
 
     } @* defining advOpt *@
