@@ -1,0 +1,16 @@
+@(sysCall: => Option[Call])(content: Html)(implicit ctx: Context)
+
+@* Шаблон правой навигационной панели в личного кабинета.
+   Тут не вся панель, а только nav-часть, которая сверху. *@
+
+<nav class="right-bar_menu">
+  @content
+
+  @* Для суперюзеров надо отображать всегда возможность перехода в /sys/ *@
+  @if(ctx.isSuperuser) {
+    @_navItemTpl(
+      title = "System",
+      href  = sysCall orElse Some(routes.SysMarket.index())
+    )
+  }
+</nav>

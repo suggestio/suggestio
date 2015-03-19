@@ -5,39 +5,45 @@
 @import lk.adn.node._
 @import ctx._
 @import NodeRightPanelLinks._
+@import lk.right._
 
-@rightBar1 = {
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __show-profile@if(rightCurrEl == RPL_NODE){ __act}" href="@routes.MarketLkAdn.showAdnNode(node.id.get)">
-      <span>Профиль</span>
-    </a>
-    <hr class="delimiter"/>
-    @if(isMyNode) {
-      <a class="right-bar_menu-i __edit-profile@if(rightCurrEl == RPL_NODE_EDIT){ __act}" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">
-        <span>Редактировать профиль</span>
-      </a>
-      <hr class="delimiter"/>
-      <a class="right-bar_menu-i __change-pass@if(rightCurrEl == RPL_USER_EDIT){ __act}" href="@routes.MarketLkAdn.userProfileEdit(node.id.get, r = ctx.r)">
-        <span>@Messages("Password.change")</span>
-      </a>
-      <hr class="delimiter"/>
+@rightBarBody(adnId: String) = {
+  @_navItemTpl(
+    title = Messages("Profile"),
+    href  = Some( routes.MarketLkAdn.showAdnNode(adnId) ),
+    css   = Seq("__show-profile", if(rightCurrEl == RPL_NODE) "__act" else "")
+  )
 
-      @if(node.adn.isReceiver) {
-        <a class="right-bar_menu-i" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
-          <span>Рекламодатели</span>
-        </a>
-        <hr class="delimiter"/>
-      }
+  @if(isMyNode) {
+    @_navItemTpl(
+      title = Messages("Edit.profile"),
+      href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
+      css   = Seq("__edit-profile", if(rightCurrEl == RPL_NODE_EDIT) "__act" else "")
+    )
 
-      @if(isSuperuser) {
-        <a class="right-bar_menu-i" href="@routes.SysMarket.showAdnNode(node.id.get)">
-          <span>System</span>
-        </a>
-        <hr class="delimiter"/>
-      }
+    @_navItemTpl(
+      title = Messages("Password.change"),
+      href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
+      css   = Seq("__change-pass", if(rightCurrEl == RPL_USER_EDIT) "__act" else "")
+    )
+
+    @if(node.adn.isReceiver) {
+      @_navItemTpl(
+        title = Messages("Advertisers"),
+        href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
+        css   = if (rightCurrEl == RPL_ADVERTISERS) Seq("__act") else Nil
+      )
     }
+  }
+}
 
-  </nav>
+@* Билдим содержимое правой панели. *@
+@rightBar1 = {
+  @node.id.map { adnId =>
+    @_navTpl( Some(routes.SysMarket.showAdnNode(adnId)) ) {
+      @rightBarBody(adnId)
+    }
+  }
 
   @rightBarAfter
 }

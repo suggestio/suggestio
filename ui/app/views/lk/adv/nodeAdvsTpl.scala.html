@@ -4,12 +4,13 @@
 @import ctx._
 @import views.html.lk._
 @import views.html.sc._
+@import NodeRightPanelLinks._
 
-@lkBaseLayout(
-  title         = "Рекламодатели",
-  nodeOpt       = Some(adnNode),
-  backHref      = adnNode.id.map(adnId => routes.MarketLkAdn.showAdnNode(adnId).url),
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE)
+@adn.nodeBaseTpl(
+  title         = Messages("Advertisers"),
+  node          = adnNode,
+  rightCurrEl   = RPL_ADVERTISERS,
+  isMyNode      = true
 ) {
 
   @lk.lkBlock("На рассмотрении") {

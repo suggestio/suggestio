@@ -1,0 +1,10 @@
+@(title: String, href: Option[Call] = None, css: Seq[String] = Nil, delimAfter: Boolean = true)(implicit ctx: Context)
+
+@* Шаблон одного item'а правой панели. *@
+
+<a class="right-bar_menu-i @css.iterator.filter(!_.isEmpty).mkString(" ")" @href.map { href1 =>href="@href1" }>
+  <span>@title</span>
+</a>
+@if(delimAfter) {
+  <hr class="delimiter"/>
+}
