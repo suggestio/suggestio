@@ -36,6 +36,10 @@ Error=Error
 Page.link=Link to web-page
 Problem.occured=A problem occured
 without.confirmation=without confirmation
+Cancel=Cancel
+Description=Description
+Height=Height
+Width=Width
 
 requisites=Payment details for withdrawal
 
@@ -122,21 +126,10 @@ Input.text.from.picture=Input text from the picture
 error.captcha=Invalid human-check code
 
 blocks.field.isWide=Display wide?
-blocks.field.height=Block height
-blocks.field.width=Block width
 blocks.field.title=Title
-blocks.field.logo=Logo
-blocks.field.lineColor=Line color
-blocks.field.bottomColor=Bottom color
-blocks.field.topColor=Top color
-blocks.field.descr=Description
-blocks.field.saleMaskColor=SALE mask color
 blocks.field.bgColor=Background color
-blocks.field.circleFillColor=Circles fill color
-blocks.field.borderColor=Border color
-blocks.field.maskColor=Mask color
-blocks.field.fillColor=Fill color
 blocks.field.href=External url address
+Add.text.block=Add text block
 
 ad.stat.action.v=View
 ad.stat.action.c=Click
@@ -395,3 +388,22 @@ ad.Manage=Управление
 passwords.do.not.match=Passwords does not match. Please try again.
 
 Checking.your.browser=Checking your browser...
+
+
+Ad.card.edit=Editing promo-card
+Ad.card.create=Creating promo-card
+Ad.card.will.be.deleted=Promo-card will be removed.
+Choose.category=Choose category
+Ad.layout=Promo-card layout
+Ad.edit.pattern=Pattern
+Ad.edit.pattern.color=Pattern color
+Bg.color=Background color
+Upload.file=Upload file
+Upload.br.file=Upload<br/>file
+Crop=Crop
+Choose.color=Choose color
+Fill.by.single.color=Fill by single color
+Ad.large.bg.img.info=Note that on most devices displayed cards may increase in size by half. Therefore, we advise to choose image, at least twice larger than the block size.
+
+Disable.reason=Disable reason
+

@@ -3,35 +3,21 @@
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
 
-@adFormBase("Редактирование рекламной карточки", adnNode, madOpt = Some(mad)) {
+@* При редактировании надо отображать ещё кнопку удаления. *@
+@bottomLeft = {
+  <div class="f-left remove-btn">
+    <a class="btn __size-M __negative js-btn" href="@routes.MarketAd.deleteWnd(mad.id.get)">@Messages("Delete")</a>
+  </div>
+}
 
-
+@adFormBase(Messages("Ad.card.edit"), adnNode, madOpt = Some(mad), bottomLeft = Some(bottomLeft)) {
 
   @_adFormTpl(
-    af = af,
-    call = routes.MarketAd.editAdSubmit(mad.id.get),
-    mmcats = mmcats,
+    af      = af,
+    call    = routes.MarketAd.editAdSubmit(mad.id.get),
+    mmcats  = mmcats,
     withBC  = Some(BlocksConf applyOrDefault mad.blockMeta.blockId),
     adnNode = adnNode
   )
-
-
-    <div class="submit-w __size-M">
-
-      <div class="f-left remove-btn">
-        <a class="btn __size-M __negative js-btn" href="@routes.MarketAd.deleteWnd(mad.id.get)">Удалить</a>
-      </div>
-
-      <div class="f-right save-btn">
-        <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
-      </div>
-
-      <div class="f-right preview-btn">
-        <a class="btn __size-M __minor js-ad-preview-button">Предпросмотр</a>
-      </div>
-
-    </div>
-
-
 
 }

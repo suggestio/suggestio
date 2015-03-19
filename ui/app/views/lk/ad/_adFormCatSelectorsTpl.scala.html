@@ -1,12 +1,14 @@
-@(cats: Seq[MMartCategory], af: Form[_])(implicit ctx: Context)
+@(cats: Seq[MMartCategory], af: AdFormM)(implicit ctx: Context)
 
 @* Механизм задания/изменения категории рекламной карточки. *@
 
 @import helper._
 
+@defining( af("ad.catId") ) { rootField =>
+
 @* Input для id выбранной категории. *@
 <div class="categories-select" id="cat-select">
-  @defining( af("ad.catId").indexes.flatMap { i => af(s"ad.catId[$i]").value }.toSet ) { catIds =>
+  @defining( rootField.indexes.flatMap { i => af(s"ad.catId[$i]").value }.toSet ) { catIds =>
     @cats.iterator.zipWithIndex.map { case (mmcat, i) =>
       <label class="edit-ad_category-checkbox-w">
         <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id"
@@ -18,6 +20,10 @@
   }
 </div>
 
-@if(!af.errors("ad.catId").isEmpty) {
-  <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">Выберите категорию</div>
+@rootField.error.map { error =>
+  <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">
+    @Messages(error.message, error.args : _*)
+  </div>
 }
+
+} @* defining rootField *@

@@ -1,8 +1,8 @@
 @(af: AdFormM, call: Call, mmcats: Seq[MMartCategory], withBC: Option[BlockConf], adnNode: MAdnNode)(implicit ctx: Context)
 
 @* Рендер формы редактирования произвольной рекламы.
- * offerType - предпочитаемый тип оффера, когда он неизвестен.
- *@
+ * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
+
 @import ctx._
 @import helper._
 @import AdOfferTypes._
@@ -19,19 +19,20 @@
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
 @form(CSRF(call), 'id -> "promoOfferForm") {
 
-  @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
-  @*af.globalError*@
+  @* Бывает, что у формы задана ошибка верхнего уровня. TODO А такое теперь возможно вообще?
+    @af.globalError
+  *@
 
-  @lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
-    Выбор категории
+  @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
+    @Messages("Choose.category")
   } {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
 
 
   @* Для блока : превьюшка + редактор *@
-  @lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
-    Отображение рекламной карточки
+  @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
+    @Messages("Ad.layout")
   } {
 
     @* Форма редактирования блока *@
@@ -57,10 +58,10 @@
         @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
         <div class="edit-ad_pattern-w input-w">
           <div class="edit-ad_pattern-option">
-            @checkbox(af("ad.pattern.enabled"), '_label -> "Паттерн")
+            @checkbox(af("ad.pattern.enabled"), '_label -> Messages("Ad.edit.pattern") )
           </div>
           <div class="edit-ad_pattern-color">
-            @_selectColorTpl(af("ad.pattern.color"), label = "Цвет паттерна")
+            @_selectColorTpl(af("ad.pattern.color"), label = Messages("Ad.edit.pattern.color") )
           </div>
         </div>
       </div>
@@ -74,24 +75,27 @@
 
   @* HTML-редактор для ввода текстового описания. *@
   @lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
-    Описание
+    @Messages("Description")
   } {
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
 
-      @_selectColorTpl(af("ad.descr.bgColor"), label = "Цвет фона")
+      @_selectColorTpl(af("ad.descr.bgColor"), label = Messages("Bg.color"))
 
       <td class="input-w_tinymce-editor">
-        <textarea class="js-tinymce" id="ad_descr_text" name="ad.descr.text">
-          @af("ad.descr.text").value
-        </textarea>
+        @defining( "ad.descr.text" ) { name =>
+          <textarea class="js-tinymce" id="ad_descr_text" name="@name">
+            @af(name).value
+          </textarea>
+        }
       </td>
 
     </table>
 
   }
 
-  @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
+  @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки.
+     TODO Режимы были упраздены, по факту остался только один редактор. Нужно аккуратно выпилить это отовсюду. *@
   <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
 
 

@@ -1,4 +1,4 @@
-@(title: String, adnNode: MAdnNode, madOpt: Option[MAd])(content: Html)(implicit ctx: Context)
+@(title: String, adnNode: MAdnNode, madOpt: Option[MAd] = None, bottomLeft: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
@@ -12,6 +12,18 @@
     <article class="page_cnt __ad-editor">
       <h1 class="page_title">@title</h1>
       @content
+
+      @* Снизу отображаются кнопки общего управления карточкой в целом. *@
+      <div class="submit-w __size-M">
+        @bottomLeft
+        <div class="f-right save-btn">
+          <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">@Messages("Save")</a>
+        </div>
+        <div class="f-right preview-btn">
+          <a class="btn __size-M __minor js-ad-preview-button">@Messages("Preview")</a>
+        </div>
+      </div>
+
     </article>
   </div>
 
@@ -49,7 +61,7 @@
       content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '@blk.FontSizes.values.iterator.map {fs =>@{fs.size}px@if(!fs.isLast){ }}',
       style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
-      language: 'RU_ru',
+      language: 'RU_ru', @* TODO Нужно разобраться с языками и локалями, и понять что тут за параметр такой. *@
       font_size_style_values: '1px,2px',
       setup: function(editor) {
         return editor.on('init', function(e) {

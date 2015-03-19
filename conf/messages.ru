@@ -36,6 +36,10 @@ Error=Ошибка
 Page.link=Ссылка на страницу
 Problem.occured=Возникла проблема
 without.confirmation=без подтверждения
+Cancel=Отмена
+Description=Описание
+Height=Высота
+Width=Ширина
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -125,22 +129,10 @@ Input.text.from.picture=Введите текст, изображенный на
 error.captcha=Неверный код проверки.
 
 blocks.field.isWide=Отображать на широкую?
-blocks.field.height=Высота
-blocks.field.width=Ширина
 blocks.field.title=Заголовок
-blocks.field.bgImg=Фоновое изображение
-blocks.field.logo=Логотип
-blocks.field.lineColor=Цвет линии
-blocks.field.bottomColor=Цвет нижней заливки
-blocks.field.topColor=Цвет верхней заливки
-blocks.field.descr=Описание
-blocks.field.saleMaskColor=Цвет маски SALE
 blocks.field.bgColor=Цвет фона
-blocks.field.circleFillColor=Цвет заливки кружков
-blocks.field.borderColor=Цвет бордюра
-blocks.field.maskColor=Цвет маски
-blocks.field.fillColor=Цвет заливки
 blocks.field.href=Ссылка на внешний ресурс
+Add.text.block=Добавить текстовый блок
 
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
@@ -406,3 +398,22 @@ ad.Manage=Управление
 passwords.do.not.match=Пароли не совпадают. Попробуйте снова.
 
 Checking.your.browser=Тестируем ваш браузер...
+
+
+Ad.card.edit=Редактирование рекламной карточки
+Ad.card.create=Создание рекламной карточки
+Ad.card.will.be.deleted=Рекламная карточка будет удалена.
+Choose.category=Выбор категории
+Ad.layout=Макет рекламной карточки
+Ad.edit.pattern=Паттерн
+Ad.edit.pattern.color=Цвет паттерна
+Bg.color=Цвет фона
+Upload.file=Загрузить файл
+Upload.br.file=Загрузить<br/>файл
+Crop=Кадрировать
+Choose.color=Выберите цвет
+Fill.by.single.color=Залейте однотонным цветом
+Ad.large.bg.img.info=Обратите внимание, что на большинстве устройств в выдаче карточки могут увеличиваться в размерах вдвое. Поэтому, мы советуем выбирать изображения, как минимум вдвое больших размеров, чем размер блока.
+
+Disable.reason=Причина отключения
+

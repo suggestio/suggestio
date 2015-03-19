@@ -3,31 +3,14 @@
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
 
+@adFormBase(Messages("Ad.card.create"), adnNode) {
 
-@adFormBase("Создание рекламной карточки", adnNode, madOpt = None) {
-
-
-          @_adFormTpl(
-            af      = af,
-            call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
-            mmcats  = mmcats,
-            withBC  = withBC,
-            adnNode = adnNode
-          )
-
-
-          <div class="submit-w __size-M">
-
-
-            <div class="f-right save-btn">
-              <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
-            </div>
-
-            <div class="f-right preview-btn">
-              <a class="btn __size-M __minor js-ad-preview-button">Предпросмотр</a>
-            </div>
-
-          </div>
-
+  @_adFormTpl(
+    af      = af,
+    call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
+    mmcats  = mmcats,
+    withBC  = withBC,
+    adnNode = adnNode
+  )
 
 }
