@@ -84,9 +84,9 @@ class DateParseUtilTest extends FlatSpec with Matchers {
 
   it should "generate valid month names for RUSSIAN" in {
     val f = monthNamesLocalized(_:Short, locale_ru)
-    f(1) shouldEqual List("январь", "янв")
-    f(2) shouldEqual List("февраль", "фев")
-    f(9) shouldEqual List("сентябрь", "сен")
+    f(1) shouldEqual List("января", "янв")
+    f(2) shouldEqual List("февраля", "фев")
+    f(9) shouldEqual List("сентября", "сен")
   }
 
 
@@ -102,7 +102,7 @@ class DateParseUtilTest extends FlatSpec with Matchers {
     val map = monthNamesTrgmDict(locale_ru)
     map("янв") shouldEqual Set(1)
     map(" ян") shouldEqual Set(1)
-    map("брь") shouldEqual Set(9,10,11,12)
+    map("бря") shouldEqual Set(9,10,11,12)
   }
 
 
@@ -110,7 +110,7 @@ class DateParseUtilTest extends FlatSpec with Matchers {
     val d = datesTrgmMap
     d("янв")   shouldEqual Set(1)
     d("jan")   shouldEqual Set(1)
-    d("брь")   shouldEqual Set(9,10,11,12)
+    d("бря")   shouldEqual Set(9,10,11,12)
   }
 
 
