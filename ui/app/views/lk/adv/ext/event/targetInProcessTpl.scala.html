@@ -3,11 +3,12 @@
 @* Шаблон события о идущем внешнего размещения по одной цели. *@
 
 @import lk.event._
+@import io.suggest.util.UrlUtil
 
 @_oneEvtBase(rargs, Some("__bg-1 __icon-6")) {
 
   @rargs.advExtTgs.map { advExtTg =>
-    <div class="event_t">@advExtTg.url</div>
+    @_hrefTitleTpl(advExtTg.url, withAnchor = false)
   }
 
   Статус: в процессе

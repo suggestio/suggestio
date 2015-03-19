@@ -1,0 +1,11 @@
+@(tgUrl: String, withAnchor: Boolean = true)
+
+@* Шаблон типичного заголовка данных по цели. *@
+
+@import io.suggest.util.UrlUtil
+
+<div class="event_t">
+  @if(withAnchor) {<a href="@tgUrl" target="_blank">}
+    @UrlUtil.humanizeUrlAggressive( tgUrl )
+  @if(withAnchor) {</a>}
+</div>

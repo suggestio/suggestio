@@ -23,6 +23,7 @@ import play.api.Play.{current, configuration}
  * Created: 10.02.15 9:53
  * Description: Утиль для работы с нодами. Появилось, когда понадобилась функция создания пользовательского узла
  * в нескольких контроллерах.
+ * 2015.mar.18: Для новосозданного узла нужно создавать начальные рекламные карточки.
  */
 object NodesUtil {
 
@@ -39,6 +40,14 @@ object NodesUtil {
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
   val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec") getOrElse 5
+
+  // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
+  /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
+  //val NODE_ID_INIT_ADS_SOURCE = configuration.getString("user.node.created.mads.import.from.adn_id")
+
+  /** Кол-во карточек для импорта из дефолтового узла. */
+  //val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count") getOrElse 1
+
 
   /** Куда отправлять юзера, когда тот создал новый узел? */
   def userNodeCreatedRedirect(adnId: String): Call = {

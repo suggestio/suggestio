@@ -3,13 +3,12 @@
 @* Шаблон события успешного внешнего размещения. *@
 
 @import lk.event._
+@import io.suggest.util.UrlUtil
 
 @_successEvtBase(rargs) {
 
   @rargs.advExtTgs.map { advExtTg =>
-    <div class="event_t">
-      <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
-    </div>
+    @_hrefTitleTpl(advExtTg.url)
   }
 
   Статус: успешно

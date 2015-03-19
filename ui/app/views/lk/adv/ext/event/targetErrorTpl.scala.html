@@ -9,9 +9,7 @@
 @_errorEvtBase(rargs) {
 
   @rargs.advExtTgs.map { advExtTg =>
-    <div class="event_t">
-      <a href="@advExtTg.url" target="_blank">@advExtTg.url</a>
-    </div>
+    @_hrefTitleTpl(advExtTg.url)
   }
 
   @rargs.errors.map { err =>

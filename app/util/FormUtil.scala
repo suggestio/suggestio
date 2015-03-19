@@ -305,7 +305,7 @@ object FormUtil {
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
-  def urlNormalizeSafeF = {s: String =>
+  def urlNormalizeSafe(s: String): String = {
     try {
       UrlUtil.normalize(s)
     } catch {
@@ -313,7 +313,7 @@ object FormUtil {
     }
   }
   def urlStrM = nonEmptyText(minLength = 8)
-    .transform[String](strTrimF andThen urlNormalizeSafeF, UrlUtil.humanizeUrl)
+    .transform[String](strTrimF andThen urlNormalizeSafe, UrlUtil.humanizeUrl)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   def urlStrOptM = optional(urlStrM)
 
@@ -343,14 +343,16 @@ object FormUtil {
       .transform [Option[URL]] (
         {rawOpt =>
           rawOpt.flatMap { raw =>
+            val url1 = urlNormalizeSafe(raw)
+            val url2 = if (url1.isEmpty) raw else url1
             try {
-              Some(new URL(raw))
+              Some(new URL(url2))
             } catch {
               case ex: MalformedURLException => None
             }
           }
         },
-        { _.map(_.toExternalForm) }
+        { _.map(UrlUtil.humanizeUrl) }
       )
   }
   /** Маппер form-поля с ссылкой в java.net.URL. */
