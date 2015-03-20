@@ -15,7 +15,7 @@
     @if( rargs.mevent.id ) {
       <form action="@routes.LkEvents.nodeEventDelete(rargs.mevent.id.get)" method="POST">
     }
-      <input class="event_close close" type="submit" value="" title="Скрыть событие" />
+      <input class="event_close close" type="submit" value="" title="@Messages("Hide.event")" />
     @if(rargs.mevent.id) {
       </form>
     }

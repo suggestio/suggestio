@@ -2,8 +2,10 @@
 
 @* Уведомление о том, что есть такая кнопка: добавить магазин. *@
 
+@import ctx.lang
+
 @_oneEvtBase(rargs, Some("__bg-2 __icon-2")) {
   <div class="event_t">
-    Используя кнопку "Добавить магазин", вы всегда можете... трам-пам-пам.
+    @Messages("Using.add.shop.btn.you.can")
   </div>
 }
