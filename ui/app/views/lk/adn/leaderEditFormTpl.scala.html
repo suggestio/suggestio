@@ -12,13 +12,10 @@
   @_popupTpl(id = Some("editHelp")) {
     <h2 class="colors-help_t">@Html( Messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
     <div class="colors-help_cnt">
-      <span class="colors-help_icons-text">Цвет текста<br/>и иконок</span>
-      <span class="colors-help_background-text">Цвет фона<br/>и шапки</span>
+      <span class="colors-help_icons-text">@Html( Messages("Color.or.text.and.icons", "<br/>") )</span>
+      <span class="colors-help_background-text">@Html( Messages("Color.of.bg.and.caption", "<br/>") )</span>
     </div>
-    <p class="colors-help_descr">
-      Для более высокой читабельночти вашего контента<br/>
-      выбирайте цвета контрастные друг от друга
-    </p>
+    <p class="colors-help_descr">@Html( Messages("Use.contrast.colors.hint", "<br/>") )</p>
   }
 
 }

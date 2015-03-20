@@ -439,3 +439,7 @@ Upload.logo=Upload{0}logo
 Upload.photo=Upload photo
 Add.photo=Add{0}photo
 
+Color.of.text.and.icons=Color of{0} text and{0} icons
+Color.of.bg.and.caption=Color of{0} background{0} and caption
+Use.contrast.colors.hint=For maximum readability of your content{0} you should use contrast colors.
+
