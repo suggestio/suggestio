@@ -44,6 +44,10 @@ trait CurrencyCodeOpt extends CurrencyCode {
   def currencyCode = currencyCodeOpt getOrElse CurrencyCodeOpt.CURRENCY_CODE_DFLT
 }
 
+object CurrencyCodeDflt extends CurrencyCode {
+  override def currencyCode = CurrencyCodeOpt.CURRENCY_CODE_DFLT
+}
+
 
 /** У шаблона [[views.html.sys1.market.billing.adnNodeBillingTpl]] очень много параметров со сложными типам.
   * Тут удобный контейнер для всей кучи параметров шаблона. */

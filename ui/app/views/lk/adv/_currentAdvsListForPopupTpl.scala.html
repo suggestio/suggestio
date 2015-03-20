@@ -9,51 +9,50 @@
 
 @_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
   <div class="adv-status_i __in-popup __@statusClass">
-    <span class="light-gray">@node.meta.name / @node.meta.town </span>
-    @*Messages("amt.of.type." + node.adn.shownTypeId)*@
+    <span class="light-gray">@node.meta.name@if(node.meta.town){ / @node.meta.town }</span>
     @content
   </div>
 }
 
-  @advs.zipWithIndex.map { case(adv, i) =>
+@advs.zipWithIndex.map { case(adv, i) =>
 
-    @if(i == 2) {
-      <div class="ovh" id="transactionsHistoryInPopup" style="display: none;">
-    }
-    @adv2adn.get(adv.id.get).map { node =>
+  @if(i == 2) {
+    <div class="ovh" id="transactionsHistoryInPopup" style="display: none;">
+  }
+  @adv2adn.get(adv.id.get).map { node =>
 
-      @adv match {
+    @adv match {
 
-        case advOk: MAdvOk => {
-          @_single_status( "approved", node ) {
-            @*if(advOk.isOnline){ <a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a> }*@
-            размещено @_prettyDate(advOk.dateStatus)
-          }
-          @* dateStatus - одобрение, dateStart - начало размещения. *@
+      case advOk: MAdvOk => {
+        @_single_status( "approved", node ) {
+          @Messages("Approved._adv") @_prettyDate(advOk.dateStatus)
         }
-        case advReq: MAdvReq => {
-          @_single_status( "pending", node ) {
-            на рассмотрении @_prettyDate(advReq.dateStatus)
-          }
+        @* dateStatus - одобрение, dateStart - начало размещения. *@
+      }
+      case advReq: MAdvReq => {
+        @_single_status( "pending", node ) {
+          @Messages("Under.consideration") @_prettyDate(advReq.dateStatus)
         }
-        case advRefused: MAdvRefuse => {
-          @_single_status( "declined", node ) {
-            отказано @*advRefused.reason*@ @_prettyDate(advRefused.dateStatus)
-          }
+      }
+      case advRefused: MAdvRefuse => {
+        @* TODO Где отображается причина отказа? *@
+        @_single_status( "declined", node ) {
+          @Messages("Denied") @_prettyDate(advRefused.dateStatus)
         }
-
       }
 
     }
 
-    @if(i == 2 && advs.length > 3) {
-      </div>
-    }
-
   }
 
-  @if(advs.length > 3) {
-    <span class="gray-but-smallest advs-statuses__transactions-btn">
-      <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">История операций</a>
-    </span>
+  @if(i == 2 && advs.length > 3) {
+    </div>
   }
+
+}
+
+@if(advs.length > 3) {
+  <span class="gray-but-smallest advs-statuses__transactions-btn">
+    <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">@Messages("Transactions.history")</a>
+  </span>
+}

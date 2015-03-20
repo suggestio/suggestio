@@ -1,19 +1,20 @@
 @(mad: MAd, producer: MAdnNode, formArgs: AdvFormTplArgs)(implicit ctx: Context)
 
 @* Страница управления размещением рекламной карточки. *@
-@import ctx._
 
+@import ctx._
+@import util.TplDataFormatUtil._
 
 @rightBarAfter = {
   <div class="right-bar-price-widget">
     <div class="right-bar-price-widget_cnt">
       <h2 class="right-bar-price-widget_title">
-        Общий счет
+        @Messages("Total.amount._money")
       </h2>
       <p class="right-bar-price-widget_price-value js-pre-price">
-        0 р.
+        @formatPrice(0F, CurrencyCodeDflt.currency)
       </p>
-      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">Отправить запрос</button>
+      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">@Messages("Send.request")</button>
     </div>
   </div>
 }
@@ -25,7 +26,7 @@
 
 
 @lk.adv.advBase(
-  title         = "Управление рекламой",
+  title         = Messages("Geo.adv"),
   mad           = mad,
   producer      = producer,
   rightLink     = LkAdvRightLinks.LARL_GEO,

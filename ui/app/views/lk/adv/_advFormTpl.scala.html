@@ -14,7 +14,7 @@
 
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
-@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: String = "")(busyAttrs: => Html) = {
+@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: Option[String] = None)(busyAttrs: => Html) = {
   <label class="block">
     <input type="checkbox"
       @if(showLevel){data-show-level="@showLevel"}
@@ -34,17 +34,11 @@
 @* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
 @slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String, showLevel: String) = {
   @* TODO Генерить label на основе sl. *@
-  @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label, showLevel) {
+  @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label, Some(showLevel)) {
     @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {checked="checked"}
   }
 }
 
-@* Шаблон чекбокса для выбора sink'а вадачи. *@
-@sinkCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], sink: AdnSink) = {
-  @sslCheckbox(maybeBusyAdv, midOpt, "sink." + sink.longName, label = Messages("adn.sink." + sink.longName)) {
-    @if(maybeBusyAdv.exists(_ hasOnSink sink)) {checked="checked"}
-  }
-}
 
 <hr class="delimiter __light"/>
 
@@ -52,7 +46,7 @@
 
 @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
 @af.globalError.map { ge =>
-  <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
+  <p>@Messages("Problem.occured"): @Messages(ge.message, ge.args : _*)</p>
 }
 
 @form( CSRF(routes.MarketAdv.advFormSubmit(adId)), 'id->"advsForm", 'class->"adv-management_main-form") {
@@ -76,7 +70,7 @@
       @* Список городов. *@
       @lk.lkBlockNewDesign( open = false ) {
         <div class="js-city">
-          <span class="checkbox_title __major __no-input">Выберите город</span>
+          <span class="checkbox_title __major __no-input">@Messages("Select.town")</span>
         </div>
       } {
         @args.cities.map { city =>
@@ -89,7 +83,7 @@
         <div class="select-tab_lst js-select-type_w" data-city="@city.i">
           <div class="select-tab_i js-select-type" data-value="-1">
             <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
-            <span class="select-tab_i-title">Все места</span>
+            <span class="select-tab_i-title">@Messages("All.places")</span>
           </div>
           @city.cats.map { cat =>
             <div class="select-tab_i js-select-type" data-value="@cat.i">
@@ -118,24 +112,22 @@
                     </label>
                     <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
-
-                        @an.node.meta.name
-
+                      @an.node.meta.name
                     </span>
                     <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">i</a>
                   } {
                     <div class="advm-node_block">
                       <div class="advm-node_left">
-                        <p class="block">Уровни размещения</p>
+                        <p class="block">@Messages("Adv.levels")</p>
                         <div class="block __margin-XS">
                           <hr class="delimiter __light"/>
                         </div>
                         @* Галочки уровней отображения. *@
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, "Главный экран", "onStartPage")
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, "Категории товаров", "onRcvrCat")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, Messages("Main.screen"), "onStartPage")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, Messages("Product.categories"), "onRcvrCat")
                         <div class="block __margin-XS"><hr class="delimiter __light"/></div>
                         <label class="block">
-                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">Каталог</span>
+                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@Messages("Catalog")</span>
                         </label>
                       </div>
                     </div>
@@ -145,7 +137,7 @@
                     <span class="checkbox_title __major">
                       <a href="#" class="link">@an.node.meta.name</a>
                     </span>
-                    <span class="ft-S light-gray"> (размещено)</span>
+                    <span class="ft-S light-gray"> (@Messages("advertised"))</span>
                   </div>
                 }
               } @* lkBlockNewDesign cnt *@
@@ -160,13 +152,13 @@
 
 
     <div class="adv-management_right-bar">
-      <h2 class="minor-title">Выбор даты</h2>
+      <h2 class="minor-title">@Messages("Date.choosing")</h2>
 
       <div class="date-widget">
 
         <div class="date-widget_options">
           <table class="prop">
-            <td class="prop_name">Срок размещения</td>
+            <td class="prop_name">@Messages("Advertising.period")</td>
             <td class="prop_value">
               <div class="input __size-S" >
                 <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
@@ -180,7 +172,7 @@
             </td>
           </table>
           <table class="prop" id="advManagementDateStart">
-            <td class="prop_name">Дата начала</td>
+            <td class="prop_name">@Messages("Date.start")</td>
             <td class="prop_value">
               <div class="input __size-S">
                 <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
@@ -188,51 +180,51 @@
             </td>
           </table>
           <table class="prop" id="advManagementDateEnd">
-            <td class="prop_name">Дата окончания</td>
+            <td class="prop_name">@Messages("Date.end")</td>
             <td class="prop_value">
               <div class="input __size-S">
                 <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
               </div>
             </td>
           </table>
-        </div><!-- .date-widget_options end -->
+        </div>
 
         <div class="date-widget_result">
           <div class="block __margin-S">
-            Ваша карточка будет размещена
+            @Messages("Your.ad.will.adv")
           </div>
           <div class="date-widget_result-value">
-            с&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;по&nbsp;<span id="advManagementDateEndValue"></span>
+            @Messages("from._date")с&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;@Messages("till._date")&nbsp;<span id="advManagementDateEndValue"></span>
           </div>
         </div>
 
       </div>
 
       <aside class="levels-widget" id="levelsWidget">
-        <h2 class="levels-widget_t">Уровни размещения</h2>
+        <h2 class="levels-widget_t">@Messages("Adv.levels")</h2>
         <ul class="levels-widget_lst">
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">Главный экран</span>
+              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">@Messages("Main.screen")</span>
             </label>
             <div class="levels-widget_i-descr">
-              Вашу рекламу на Главном экране увидят все пользователи Sugest.io, которые находятся в заданных локациях.
+              @Messages("Your.ad.will.see.all.sio.users.in.geolocs")
             </div>
           </li>
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">Категории</span>
+              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">@Messages("Categories")</span>
             </label>
             <div class="levels-widget_i-descr">
-              Рекламу в категориях увидят наиболее заинтересованные пользователи, которые ищут конкретные товары и услуги.
+              @Messages("Ad.will.seen.by.interested.in.cats.users")
             </div>
           </li>
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">Каталог</span>
+              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">@Messages("Catalog")</span>
             </label>
             <div class="levels-widget_i-descr">
-              Реклама из персональных каталогов рекламодателей выводится в поисковой выдаче при запросах пользователей через строку  Life Search.  
+              @Messages("Catalog.ads.will.be.seen.by.walkers")
             </div>
           </li>
         </ul>
