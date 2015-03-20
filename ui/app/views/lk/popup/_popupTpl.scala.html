@@ -2,12 +2,14 @@
 
 @* Все попапы в ЛК имеют что-то общее. Тут общая верстка всех попапов. *@
 
+@import ctx._
 @import util.tpl.CssFormat._
 
 <div class="popup js-popup@if(hidden){ js-hidden}@classesPreSpaced(css)"
      @id.map { id1 =>id="@id1"}> @* Если в одну строчку все эти аттрибуты, то оно не парсится правильно. *@
   <div class="popup_header">
-    <a class="close f-right js-close-popup" href="#"></a>
+    @* TODO Добавить CSRF? *@
+    <a class="close f-right js-close-popup" href="@routes.Ident.logout()"></a>
   </div>
   @content
 </div>

@@ -6,8 +6,8 @@
 
 @import ctx._
 @import stuff._
-@import LkLeftPanelLinks._
 @import lk.popup._
+@import lk.left._
 
 <!DOCTYPE html>
 <html>
@@ -72,34 +72,7 @@
         </div>
       }
 
-      <aside class="left-bar">
-        @adnIdOpt.map { adnId =>
-          <nav class="left-bar_menu">
-            <a class="left-bar_menu-i __cards@if(leftCurrEl contains LPL_ADS){ __act}" href="@routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId)" title="@Messages("Ad.cards")"></a>
-            <hr class="delimiter"/>
-            <a class="left-bar_menu-i __profile@if(leftCurrEl contains LPL_NODE){ __act}"  href="@routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId)" title="@Messages("Profile")"></a>
-            <hr class="delimiter"/>
-            @if(ctx.billBalanceOpt) {
-              <a class="left-bar_menu-i __billing@if(leftCurrEl contains LPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)" title="@Messages("Billing")"></a>
-              <hr class="delimiter"/>
-            }
-            <a class="left-bar_menu-i __events@if(leftCurrEl contains LPL_EVENTS){ __act}" href="@routes.LkEvents.nodeIndex(adnId)" title="@Messages("Events")">
-              @* Вывести блямбу с кол-вом непрочитанных сообщений. *@
-              @ctx.nodeUnseenEvtsCnt.map { cnt =>
-                @if(cnt > 0) {
-                  <span class="left-bar_menu-bubble" title="Новых событий: @cnt">@cnt</span>
-                }
-              }
-            </a>
-            <hr class="delimiter"/>
-          </nav>
-        }
-        <div class="left-bar_bottom">
-          <a class="left-bar_exit js-btn" href="#logoutPopup">@Messages("Logout")</a>
-          <hr class="delimiter"/>
-          <a class="left-bar_help">@Messages("Help")</a>
-        </div>
-      </aside>
+      @_nodeLeftBarTpl(adnIdOpt, leftCurrEl, povAdnId)
 
       @content
 

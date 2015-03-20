@@ -458,3 +458,4 @@ Bill.account.and.tariffs=Счет и тарифные планы
 Transactions.history=История операций
 Add.funds=Пополнить баланс
 
+New.events.cnt={0} новых событий
