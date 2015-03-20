@@ -1,18 +1,28 @@
 @(madId: String, curr: Option[LkAdvRightLink] = None)(implicit ctx: Context)
 
 @import LkAdvRightLinks._
+@import ctx.lang
+@import lk.right._
+@import util.tpl.CssFormat._
 
-<nav class="right-bar_menu">
-  <a class="right-bar_menu-i __social@if(curr contains LARL_EXT){ __act}" href="@routes.LkAdvExt.forAd(madId)">
-    <span>@Messages("Adv.in.ext.services")</span>
-  </a>
-  <hr class="delimiter"/>
-  <a class="right-bar_menu-i __geo@if(curr contains LARL_GEO){ __act}" href="@routes.MarketAdv.advForAd(madId)">
-    <span>@Messages("Adv.in.geo.node")</span>
-  </a>
-  <hr class="delimiter"/>
-  <a class="right-bar_menu-i __history@if(curr contains LARL_HISTORY){ __act}" href="@routes.MarketAdv.advHistory(madId)">
-    <span>@Messages("Adv.history")</span>
-  </a>
-  <hr class="delimiter"/>
-</nav>
+@_navTpl( Some(routes.SysMarket.showAd(madId)) ) {
+
+  @_navItemTpl(
+    title = Messages("Adv.in.ext.services"),
+    href  = Some( routes.LkAdvExt.forAd(madId) ),
+    css   = classesAct(curr contains LARL_EXT, "__social")
+  )
+
+  @_navItemTpl(
+    title = Messages("Adv.in.geo.node"),
+    href  = Some( routes.MarketAdv.advForAd(madId) ),
+    css   = classesAct(curr contains LARL_GEO, "__geo")
+  )
+
+  @_navItemTpl(
+    title = Messages("Adv.history"),
+    href  = Some( routes.MarketAdv.advHistory(madId) ),
+    css   = classesAct(curr contains LARL_HISTORY, "__history")
+  )
+
+}

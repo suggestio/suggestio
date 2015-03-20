@@ -383,9 +383,9 @@ adv.ext.tg.url.hint=Link to any supported profile/page/group/event/etc in Facebo
 Adv.deploy.in.process=Promo-card deployment in process.
 Do.not.close.current.page.until.deploy.finish=Do not close current page until deployment finishes.
 
-Adv.in.ext.services=Deploy into social nets
-Adv.in.geo.node=Publish in geolocations
-Adv.history=Publishing history
+Adv.in.ext.services=Deploy into social networks
+Adv.in.geo.node=Advertise in geolocations
+Adv.history=Advertising history
 
 Create.ad=Create{0}promo-card
 Ad.cards=Promotional cards
@@ -509,7 +509,7 @@ Date.choosing=Date choosing
 Advertising.period=Advertising period
 Date.start=Start date
 Date.end=End date
-Your.ad.will.adv=Your promo-card will be advertised from
+Your.ad.will.adv=Your promo-card will be advertised
 from._date=from
 till._date=till
 Your.ad.will.see.all.sio.users.in.geolocs=Your ad will be seen by all Suggest.io users in requested locations.
