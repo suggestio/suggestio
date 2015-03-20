@@ -443,9 +443,11 @@ Advertisers=Рекламодатели
 
 Info.about.D0.choosing.color.solution=Информация о выборе{0}цветового решения
 
-Upload.logo=Загрузить{0}логотип
-Upload.photo=Загрузить фотографию
-Add.photo=Добавить{0}фотографию
+Upload.logo=Загрузить{0} логотип
+Upload.photo=Загрузить{0} фотографию
+Upload.image=Загрузить{0} изображение
+Add.photo=Добавить{0} фотографию
+Welcome.bg.hint=Фон приветствия, фоновая картинка, на ней будет располагаться логотип или знак
 
 Color.or.text.and.icons=Цвет текста{0} и иконок
 Color.of.bg.and.caption=Цвет фона{0} и шапки

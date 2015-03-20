@@ -435,9 +435,11 @@ Advertisers=Advertisers
 
 Info.about.D0.choosing.color.solution=How to choose{0}color solution
 
-Upload.logo=Upload{0}logo
-Upload.photo=Upload photo
-Add.photo=Add{0}photo
+Upload.logo=Upload{0} logo
+Upload.photo=Upload{0} photo
+Upload.image=Upload{0} image
+Add.photo=Add{0} photo
+Welcome.bg.hint=Welcome background: your logo will be displayed ahead of it.
 
 Color.of.text.and.icons=Color of{0} text and{0} icons
 Color.of.bg.and.caption=Color of{0} background{0} and caption
