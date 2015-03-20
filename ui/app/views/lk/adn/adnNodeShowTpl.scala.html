@@ -115,7 +115,7 @@
     @if(showAdvsBtn) {
     <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(mnode.id.get)">
       @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-      РЕКЛАМОДАТЕЛИ
+      @Messages("Advertisers") @ * Тут был капслок * @
     </a>
     }
 
