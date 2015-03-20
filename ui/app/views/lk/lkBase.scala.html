@@ -30,53 +30,53 @@
   @headAfter
 </head>
 
-@defining( nodeOpt.flatMap(_.id)) { adnIdOpt =>
 <body class="lk">
+@defining( nodeOpt.flatMap(_.id) ) { adnIdOpt =>
 
-    <header class="header">
-      <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
-        <img class="header_logo-image" src='@routes.Assets.versioned("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
-      </a>
+  <header class="header">
+    <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
+      <img class="header_logo-image" src='@routes.Assets.versioned("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
+    </a>
 
-      <div class="header_cnt">
+    <div class="header_cnt">
 
-        @if(nodeOpt.isEmpty) {
-          <img class="header_logo-text" src='@routes.Assets.versioned("images/market/index/logo_retina.png")' width="101" height="26"/>
-        } else {
-          @nodeOpt.map { node =>
-            <span class="header_logo-text">@node.meta.name</span>
-          }
+      @if(nodeOpt.isEmpty) {
+        <img class="header_logo-text" src='@routes.Assets.versioned("images/market/index/logo_retina.png")' width="101" height="26"/>
+      } else {
+        @nodeOpt.map { node =>
+          <span class="header_logo-text">@node.meta.name</span>
         }
-
-        @adnIdOpt.map { adnId =>
-          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-          @billing._billBallanceWidgetTpl(adnId)
-        }
-      </div>
-
-      @if(showSwitchNodeBtn) {
-        <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
       }
 
-    </header>
+      @adnIdOpt.map { adnId =>
+        @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+        @billing._billBallanceWidgetTpl(adnId)
+      }
+    </div>
+
+    @if(showSwitchNodeBtn) {
+      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
+    }
+
+  </header>
 
 
-    <section class="page">
+  <section class="page">
 
-      @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
-      @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-        <div style="display: none;" class="status-bar ft-L __@if(flashStatus == "success") {good} else {bad}">
-          <div class="status-bar_cnt">
-            @flashMsg
-          </div>
+    @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+    @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+      <div style="display: none;" class="status-bar ft-L __@if(flashStatus == "success") {good} else {bad}">
+        <div class="status-bar_cnt">
+          @flashMsg
         </div>
-      }
+      </div>
+    }
 
-      @_nodeLeftBarTpl(adnIdOpt, leftCurrEl, povAdnId)
+    @_nodeLeftBarTpl(adnIdOpt, leftCurrEl, povAdnId)
 
-      @content
+    @content
 
-    </section>
+  </section>
 
 
   <aside class="popups popups-container" id="popupsContainer">
@@ -98,6 +98,6 @@
   <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
 
-</body>
 }
+</body>
 </html>

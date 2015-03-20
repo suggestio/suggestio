@@ -10,8 +10,10 @@
   </nav>
 
   <div class="left-bar_bottom">
-    <a class="left-bar_exit js-btn" href="#logoutPopup">@Messages("Logout")</a>
-    <hr class="delimiter"/>
+    @if(ctx.isAuth) {
+      <a class="left-bar_exit js-btn" href="#logoutPopup">@Messages("Logout")</a>
+      <hr class="delimiter"/>
+    }
     <a class="left-bar_help">@Messages("Help")</a>
   </div>
 </aside>

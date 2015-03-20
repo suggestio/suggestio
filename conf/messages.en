@@ -400,7 +400,7 @@ Click.to.see.information=Click to see information
 Adv.accepted=Advertising accepted
 
 
-ad.Manage=Управление
+ad.Manage=Manage
 
 passwords.do.not.match=Passwords does not match. Please try again.
 
@@ -456,7 +456,7 @@ Bill.account.and.tariffs=Account and tariffs
 Transactions.history=Transactions history
 Add.funds=Add funds
 Total.funds=Total funds
-Funds.available=Available funds
+Available.funds=Available funds
 Blocked=Blocked
 My.node.tariff.rate=My shop tariff plan rate
 Adv.tariff.rates=Ad deployment tariff plan rates
@@ -465,7 +465,7 @@ Week.days=Week{0}days
 Weekend=Weekend
 Minimal.module=Minimal{0}module
 scheme.left=scheme{0}left
-Agreement.btw.CBCA.and.node.tariffs.for.year=Agreement between the company CBCA and {1} "{2}" identified tariff plans for {3}.
+Agreement.btw.CBCA.and.node.tariffs.for.year=Agreement between the company CBCA and {0} "{1}" identified tariff plans for {2}.
 
 day24h=day
 
@@ -522,4 +522,7 @@ Using.add.shop.btn.you.can=Using "add shop" button, you always can create new sh
 Start.your.work.with.ads.mgr=Start your work with simple and clever ad manager. Using it, you can rapidly create and update your promo-cards, advertise them on other Suggest Ad Network nodes and deploy into popular social networking services like Facebook.
 Hide.event=Hide event
 Geotargeted.ad=Geotargeted ad
+
+Select.your.lang=Select your language
+This.lang=English (US)
 

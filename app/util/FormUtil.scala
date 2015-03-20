@@ -22,6 +22,8 @@ import java.sql.SQLException
 import java.io._
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
+import play.api.i18n.Lang
+import play.api.Play.current
 import scala.collection.GenTraversableOnce
 import java.util.Currency
 
@@ -709,6 +711,19 @@ object FormUtil {
       .toSeq
       .groupBy(_._1)
       .mapValues { _.map { _._2 } }
+  }
+
+
+  /** Маппер опционального языка интерфейса suggest.io */
+  def uiLangOptM(langCurr: Option[Lang] = None): Mapping[Option[Lang]] = {
+    text(maxLength = 5)
+      .transform [Option[Lang]] (Lang.get, _.orElse(langCurr).getOrElse(Lang.defaultLang).code)
+  }
+  /** Маппер языка интерфейса. */
+  def uiLangM(langCurr: Option[Lang] = None): Mapping[Lang] = {
+    uiLangOptM(langCurr)
+      .verifying("error.required", _.isDefined)
+      .transform [Lang] (_.get, Some.apply)
   }
 
 }

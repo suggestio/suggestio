@@ -355,6 +355,9 @@ POST /id/via/:provider                  controllers.Ident.idViaProviderByPost(pr
 GET  /id/reg/ext/confirm                controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                controllers.Ident.idpConfirmSubmit
 
+## Языки и локализация
+GET  /lang                              controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
+POST /lang                              controllers.LkLang.selectLangSubmit(r: Option[String])
 
 ### Барахло от Sio-v1 (не работает, в основном):
 ## Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.

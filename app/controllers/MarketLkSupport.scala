@@ -25,6 +25,8 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
+  // TODO Объеденить node и не-node вызовы в единые экшены.
+  // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.
 
   /** Маппинг для формы обращения в саппорт. */
   private def supportFormM = {

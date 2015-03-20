@@ -97,7 +97,7 @@ trait Context extends MyHostsT {
   // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
   //      Для этого надо override implicit def lang(implicit request: RequestHeader) в SioController.
   //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
-  implicit def lang: Lang
+  implicit val lang: Lang
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.path)
@@ -236,7 +236,7 @@ trait Context extends MyHostsT {
 
 // Непосредственные реализации контекстов. Расширять их API в обход trait Context не имеет смысла.
 
-/** Контекст времён комбинируемых ActionBuilder'ов. */
+/** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2(
   implicit val request: RichRequestHeader,
   implicit val lang: Lang
@@ -246,7 +246,7 @@ case class Context2(
 }
 
 
-/** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
+/** Упрощенная запасная реализация контекста, используемая в минимальных условиях и вручную. */
 case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
   def sioReqMdOpt: Option[SioReqMd] = None
