@@ -10,8 +10,8 @@
       <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg"
              data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true"
              data-action="@routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
-      <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.file")">
-        <span>@Html(Messages("Upload.br.file"))</span>
+      <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.file", " ")">
+	<span>@Html( Messages("Upload.file", "<br/>") )</span>
       </a>
     </div>
   </div>

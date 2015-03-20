@@ -28,6 +28,7 @@ Town=Город
 Phone=Телефон
 Photo=Фото
 Node.photos=Фотографии магазина
+Welcome.screen=Экран приветствия
 Logo=Лого
 Other=Другой
 Others=Другие
@@ -169,7 +170,6 @@ Audience.descr=Описание аудитории
 Daily.people.traffic=Суточный трафик
 Office.phone.number=Офисный телефон
 Your.IR.accepted=Ваш запрос на подключение к системе принят.
-
 
 lk.sl.enable_ad=Выводить
 lk.sl.d=Первый экран
@@ -390,7 +390,7 @@ Adv.in.ext.services=Разместить в соц.сети
 Adv.in.geo.node=Разместить в геолокации
 Adv.history=История размещений
 
-Create.br.ad=Создать<br/>карточку
+Create.ad=Создать{0}карточку
 Ad.cards=Рекламные карточки
 You.can.look.on.ads.in=Вы можете посмотреть, как выглядят ваши к карточки в
 _ad.showcase.link=рекламной выдаче
@@ -417,8 +417,7 @@ Ad.layout=Макет рекламной карточки
 Ad.edit.pattern=Паттерн
 Ad.edit.pattern.color=Цвет паттерна
 Bg.color=Цвет фона
-Upload.file=Загрузить файл
-Upload.br.file=Загрузить<br/>файл
+Upload.file=Загрузить{0}файл
 Crop=Кадрировать
 Choose.color=Выберите цвет
 Fill.by.single.color=Залейте однотонным цветом
@@ -435,10 +434,16 @@ Create.node=Создать магазин
 Node.name=Название магазина
 Node.name.hint=Название можно изменить в любое время.
 
-Main.br.color=Основной</br>цвет
-Bg.color.of.sc.hint=Цвет фона выдачи и шапки, где будет располагаться ваш логотип.
-Content.br.color=Цвет<br/>контента
-Fg.color.of.sc.hint=Цвет текст, иконок и кнопок в выдаче.
+Main.color=Основной{0}цвет
+Bg.color.of.sc.hint=Цвет фона и шапки, где будет располагаться ваш логотип
+Content.color=Цвет{0}контента
+Fg.color.of.sc.hint=Цвет текста, иконок и кнопок
 Edit.profile=Редактировать профиль
 Advertisers=Рекламодатели
+
+Info.about.D0.choosing.color.solution=Информация о выборе{0}цветового решения
+
+Upload.logo=Загрузить{0}логотип
+Upload.photo=Загрузить фотографию
+Add.photo=Добавить{0}фотографию
 

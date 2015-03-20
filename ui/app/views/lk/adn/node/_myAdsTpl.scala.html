@@ -20,7 +20,7 @@
 
 
     <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(node.id.get)">
-      <span>@Html(Messages("Create.br.ad"))</span>
+      <span>@Html( Messages("Create.ad", "<br/>") )</span>
     </a>
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>

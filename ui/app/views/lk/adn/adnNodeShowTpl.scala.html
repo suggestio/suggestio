@@ -60,11 +60,9 @@
         <p class="prop_name __block">@Messages("Node.photos"):</p>
         <div class="profile_photo-lst">
           <div class="js-photo-slider">
-
             @mnode.gallery.map { imgId =>
               <img class="profile_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
             }
-
           </div>
         </div>
       </div>
@@ -78,7 +76,7 @@
           @Messages("Bg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-          <span class="dark-gray ft-S">@Html(Messages("Main.br.color"))</span>
+	  <span class="dark-gray ft-S">@Html( Messages("Main.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S">
           <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
@@ -90,7 +88,7 @@
           @Messages("Fg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-          <span class="dark-gray ft-S">@Html(Messages("Content.br.color"))</span>
+	  <span class="dark-gray ft-S">@Html( Messages("Content.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S dark-gray">
           <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>

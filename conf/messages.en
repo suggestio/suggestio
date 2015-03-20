@@ -28,6 +28,7 @@ Town=Town
 Phone=Phone
 Photo=Photo
 Node.photos=Shop photos
+Welcome.screen=Welcome screen
 Logo=Logo
 Other=Other
 Others=Others
@@ -101,7 +102,7 @@ amts.of.type.f=Town areas
 amts.of.type.g=Others buildings
 
 editing.of.amt.profile.s=Shop profile edit
-editing.of.amt.profile.m=Mhop profile edit
+editing.of.amt.profile.m=Mart profile edit
 editing.of.amt.profile.r=Restaurant profile edit
 editing.of.amt.profile.R=Supervisor profile edit
 editing.of.amt.profile.a=Transport node profile edit
@@ -379,7 +380,7 @@ Adv.in.ext.services=Deploy into social nets
 Adv.in.geo.node=Publish in geolocations
 Adv.history=Publishing history
 
-Create.br.ad=Create<br/>promo-card
+Create.ad=Create{0}promo-card
 Ad.cards=Promotional cards
 You.can.look.on.ads.in=You can look on your ads in
 _ad.showcase.link=your promo showcase
@@ -408,7 +409,6 @@ Ad.edit.pattern=Pattern
 Ad.edit.pattern.color=Pattern color
 Bg.color=Background color
 Upload.file=Upload file
-Upload.br.file=Upload<br/>file
 Crop=Crop
 Choose.color=Choose color
 Fill.by.single.color=Fill by single color
@@ -425,11 +425,17 @@ Create.node=Create shop
 Node.name=Shop name
 Node.name.hint=Shop name may be changed any time later.
 
-Main.br.color=Main<br/>color
+Main.color=Main{0}color
 Bg.color.of.sc.hint=Background color of showcase body and header, where logo displayed.
 
-Content.br.color=Content<br/>color
+Content.color=Content{0}color
 Fg.color.of.sc.hint=Color of text, icons and buttons in showcase.
 Edit.profile=Edit profile
 Advertisers=Advertisers
+
+Info.about.D0.choosing.color.solution=How to choose{0}color solution
+
+Upload.logo=Upload{0}logo
+Upload.photo=Upload photo
+Add.photo=Add{0}photo
 

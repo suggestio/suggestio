@@ -1,0 +1,13 @@
+@(css: TraversableOnce[String] = Nil, id: Option[String] = None, hidden: Boolean = true)(content: Html)(implicit ctx: Context)
+
+@* Все попапы в ЛК имеют что-то общее. Тут общая верстка всех попапов. *@
+
+@import util.tpl.CssFormat._
+
+<div class="popup js-popup@if(hidden){ js-hidden}@classesPreSpaced(css)"
+     @id.map { id1 =>id="@id1"}> @* Если в одну строчку все эти аттрибуты, то оно не парсится правильно. *@
+  <div class="popup_header">
+    <a class="close f-right js-close-popup" href="#"></a>
+  </div>
+  @content
+</div>

@@ -3,16 +3,14 @@
 @* Рендер страницы редактирования узла, имеющего высокий статус, т.е. супервизора или ресивера. *@
 @import ctx._
 @import edit._
+@import lk.popup._
 
 @popupContent = {
-  <div class="popup js-hidden js-popup" id="editHelp">
-    <div class="popup_header">
-      <a class="close f-right js-close-popup"></a>
-    </div>
-    <h2 class="colors-help_t">
-      Информация о выборе<br/>
-      цветового решения
-    </h2>
+
+  @* Этот попап появляется при щелчке на знак вопроса где-то внизу формы редактора.
+     Его контент надо вынести на отдельную страницу. *@
+  @_popupTpl(id = Some("editHelp")) {
+    <h2 class="colors-help_t">@Html( Messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
     <div class="colors-help_cnt">
       <span class="colors-help_icons-text">Цвет текста<br/>и иконок</span>
       <span class="colors-help_background-text">Цвет фона<br/>и шапки</span>
@@ -21,33 +19,34 @@
       Для более высокой читабельночти вашего контента<br/>
       выбирайте цвета контрастные друг от друга
     </p>
-  </div>
+  }
+
 }
+
 
 @rightBarAfter = {
   <div class="right-bar_bottom">
-    <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">Сохранить</a>
+    <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">@Messages("Save")</a>
   </div>
 }
 
-@content = {
+
+@nodeBaseTpl(
+  title         = Messages("Edit.profile"),
+  node          = node,
+  isMyNode      = true,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
+  rightBarAfter = Some(rightBarAfter),
+  popupContent  = Some(popupContent)
+) {
 
   @_leaderNodeFormTpl(
-    adnId = node.id.get,
-    btnText = Messages("Save"),
-    mf = mf,
-    submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(node.id.get),
-    welcomeAdOpt = welcomeAdOpt,
-    nodeInfo = node.adn
+    adnId         = node.id.get,
+    btnText       = Messages("Save"),
+    mf            = mf,
+    submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(node.id.get),
+    welcomeAdOpt  = welcomeAdOpt,
+    nodeInfo      = node.adn
   )
 
 }
-
-@nodeBaseTpl(
-  title     = "Ваш профиль",
-  node      = node,
-  isMyNode  = true,
-  rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
-  rightBarAfter = Some(rightBarAfter),
-  popupContent = Some(popupContent)
-)(content)
