@@ -13,23 +13,16 @@
   isMyNode      = true
 ) {
 
-  @lk.lkBlock("На рассмотрении") {
+  @lk.lkBlock( Messages("Under.consideration") ) {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">
-        <p class="color-light-strong ft-XS">В этом разделе
-          появляются запросы
-          на размещение
-          рекламных карточек.
-          Расценки на размещение
-          прописаны в договоре
-          с компанией cbca.
+        <p class="color-light-strong ft-XS">
+          @Messages("This.page.contains.incoming.adv.reqs")
+          @Messages("Adv.rates.wrote.in.CBCA.contract")
         </p>
         <p class="color-light-strong ft-XS">
-          Нажмите на карточку
-          для детального просмотра
-          и утверждения, либо
-          отклонения.
+          @Messages("Click.on.card.for.info.consider")
         </p>
       </div>
 
@@ -44,9 +37,7 @@
               <div class="ads-list-block__zigzag-mask"></div>
               <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
-                Нажмите для<br/>
-                просмотра<br/>
-                информации
+                @Html( Messages("Click.for.more.info", "<br/>") )
               </a>
             </div>
           </div>

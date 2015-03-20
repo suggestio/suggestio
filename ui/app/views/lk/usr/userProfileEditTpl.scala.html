@@ -13,7 +13,13 @@
   </div>
 }
 
-@content = {
+@adn.nodeBaseTpl(
+  title         = Messages("User.profile.edit"),
+  node          = adnNode,
+  isMyNode      = true,
+  rightCurrEl   = NodeRightPanelLinks.RPL_USER_EDIT,
+  rightBarAfter = Some(rightBarAfter)
+) {
 
   @form(
     CSRF(routes.MarketLkAdn.changePasswordSubmit(
@@ -40,12 +46,3 @@
   }
 
 }
-
-
-@adn.nodeBaseTpl(
-  title         = "Редактирование профиля пользователя",
-  node          = adnNode,
-  isMyNode      = true,
-  rightCurrEl   = NodeRightPanelLinks.RPL_USER_EDIT,
-  rightBarAfter = Some(rightBarAfter)
-)(content)

@@ -50,6 +50,12 @@ Help=Help
 Logout.suggest.io=Escape Suggest.io?
 Balance=Balance
 Info.about.prods.and.svcs=Information about products and services
+Date=Date
+Amount._money=Amount
+Bill.id=ID
+Bill.details=Details
+Show.more=Show more
+No.records=No records
 
 requisites=Payment details for withdrawal
 
@@ -468,4 +474,11 @@ dow.fr=fr
 dow.su=su
 
 New.events.cnt={0} new events
+User.profile.edit=Edit user profile
+
+Under.consideration=Under consideration
+This.page.contains.incoming.adv.reqs=Incoming promo-card placement requests apper in this page.
+Adv.rates.wrote.in.CBCA.contract=Prices for placement prescribed in the contract with the company CBCA.
+Click.on.card.for.info.consider=Click on promo-card for detailed information, and for approving or refusing placement.
+Click.for.more.info=Click to{0} see more{0} information
 

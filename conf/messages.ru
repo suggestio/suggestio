@@ -50,6 +50,12 @@ Help=Помощь
 Logout.suggest.io=Покинуть Suggest.io?
 Balance=Баланс
 Info.about.prods.and.svcs=Информация о товарах и услугах
+Date=Дата
+Amount._money=Сумма
+Bill.id=Номер
+Bill.details=Основание
+Show.more=Показать ещё
+No.records=Нет записей
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -477,4 +483,11 @@ dow.fr=пт
 dow.su=вс
 
 New.events.cnt={0} новых событий
+User.profile.edit=Редактирование профиля пользователя
+
+Under.consideration=На рассмотрении
+This.page.contains.incoming.adv.reqs=В этом разделе появляются запросы на размещение рекламных карточек.
+Adv.rates.wrote.in.CBCA.contract=Расценки на размещение прописаны в договоре с компанией CBCA.
+Click.on.card.for.info.consider=Нажмите на карточку для детального просмотра и утверждения, либо отклонения.
+Click.for.more.info=Нажмите для{0} просмотра{0} информации
 

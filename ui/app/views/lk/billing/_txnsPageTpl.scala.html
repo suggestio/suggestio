@@ -13,16 +13,16 @@
     <table class="table __width-XL" id="transactionsHistory">
       <tr>
         <td class="td __gray __size-M __radial-first">
-          Номер
+          @Messages("Bill.id")
         </td>
         <td class="td __gray __size-M">
-          Основание
+          @Messages("Bill.details")
         </td>
         <td class="td __gray __size-M">
-          Дата
+          @Messages("Date")
         </td>
         <td class="td __gray __size-M __radial-last">
-          Сумма
+          @Messages("Amount._money")
         </td>
       </tr>
 
@@ -53,21 +53,19 @@
 
     @if(txns.size >= TXNS_PER_PAGE) {
       <div class="btn-w __size-M">
-        <a class="btn __size-S __radial-major" id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Показать ещё</a>
+        <a class="btn __size-S __radial-major" id="getTransactions" href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">@Messages("Show.more")</a>
       </div>
     }
 
   } else {
-
-    Нет записей.
-
+    @Messages("No.records").
   }
 
 }
 
 
 @billingBaseTpl(
-  title         = "История операции",
+  title         = Messages("Transactions.history"),
   node          = adnNode,
   rightCurrEl   = BillingRightPanelLinks.RPL_TRANSACTIONS
 )(content)
