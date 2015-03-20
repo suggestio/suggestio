@@ -6,8 +6,11 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 
-
-@content = {
+@billingBaseTpl(
+  title         = Messages("Billing"),
+  node          = adnNode,
+  rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
+) {
 
   @ctx.billBalanceOpt.map { mbb =>
 
@@ -15,17 +18,17 @@
 
     <div class="billing_money-info">
       <div class="billing_all-money">
-        <span class="light-gray">Всего на счете</span>
+        <span class="light-gray">@Messages("Total.funds")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</div>
       </div>
 
       <div class="billing_available-money">
-        <span class="light-gray">Доступно для операции</span>
+        <span class="light-gray">@Messages("Available.funds")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.amount, mbb.currency)</div>
       </div>
 
       <div class="billing_locked-money">
-        <span class="light-gray">Заблокировано</span>
+        <span class="light-gray">@Messages("Blocked")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.blocked, mbb.currency)</div>
       </div>
     </div>
@@ -35,7 +38,7 @@
   @if(!mmpDailyTariffs.isEmpty) {
 
     <h2 class="minor-title">
-      Ставка тарифных планов моего магазина
+      @Messages("My.node.tariff.rate")
     </h2>
     <hr class="delimiter __light"/>
 
@@ -53,16 +56,9 @@
   @if(!otherRcvrs.isEmpty) {
 
     <h2 class="minor-title">
-      Ставка тарифных планов рекламного размещения
+      @Messages("Adv.tariff.rates")
     </h2>
     <hr class="delimiter __light"/>
-
-    <!-- TODO привязать к верстке логику -->
-    <!--<div class="tab_lst">
-      <a class="tab_i __js-act">Все</a>
-      <a class="tab_i">Санкт-Петербург</a>
-      <a class="tab_i">Москва</a>
-    </div>-->
 
     @* Пока без вкладок, просто сплошным списком. *@
     @otherRcvrs.map { rcvr =>
@@ -71,7 +67,10 @@
       @lk.lkBlockNewDesign(
         href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)),
         open = false
-      ) { @rcvr.meta.name&nbsp;/&nbsp;<span class="ft-S light-gray">@rcvr.meta.town</span> } { }
+      ) {
+        @rcvr.meta.name
+        @rcvr.meta.town.map { town => / <span class="ft-S light-gray">@town</span>}
+      } { }
 
     }
 
@@ -79,9 +78,3 @@
 
 }
 
-
-@billingBaseTpl(
-  title         = "Биллинг",
-  node          = adnNode,
-  rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
-)(content)

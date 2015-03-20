@@ -457,5 +457,24 @@ Use.contrast.colors.hint=Для более высокой читабельнос
 Bill.account.and.tariffs=Счет и тарифные планы
 Transactions.history=История операций
 Add.funds=Пополнить баланс
+Total.funds=Всего на счете
+Available.funds=Доступно для операций
+Blocked=Заблокировано
+My.node.tariff.rate=Ставка тарифных планов моего магазина
+Adv.tariff.rates=Ставки тарифных планов рекламного размещения
+Holidays.primetime=Праздники/праймтайм
+Week.days=Будние{0}дни
+Weekend=Выходные{0}дни
+Minimal.module=Минимальный{0}модуль
+scheme.left=на{0}схеме{0}слева
+Agreement.btw.CBCA.and.node.tariffs.for.year=Cоглашением между компанией CBCA и {0} "{1}" определены тарифные планы на {2} год.
+
+day24h=сутки
+
+dow.mo=пн
+dow.th=чт
+dow.fr=пт
+dow.su=вс
 
 New.events.cnt={0} новых событий
+

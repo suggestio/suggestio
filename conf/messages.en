@@ -448,6 +448,24 @@ Use.contrast.colors.hint=For maximum readability of your content{0} you should u
 Bill.account.and.tariffs=Account and tariffs
 Transactions.history=Transactions history
 Add.funds=Add funds
+Total.funds=Total funds
+Funds.available=Available funds
+Blocked=Blocked
+My.node.tariff.rate=My shop tariff plan rate
+Adv.tariff.rates=Ad deployment tariff plan rates
+Holidays.primetime=Holidays/primetime
+Week.days=Week{0}days
+Weekend=Weekend
+Minimal.module=Minimal{0}module
+scheme.left=scheme{0}left
+Agreement.btw.CBCA.and.node.tariffs.for.year=Agreement between the company CBCA and {1} "{2}" identified tariff plans for {3}.
+
+day24h=day
+
+dow.mo=mo
+dow.th=th
+dow.fr=fr
+dow.su=su
 
 New.events.cnt={0} new events
 

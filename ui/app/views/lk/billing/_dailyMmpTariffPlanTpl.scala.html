@@ -14,43 +14,43 @@
     <tr>
       <td colspan="2">&nbsp;</td>
       <td class="td tariff_info-title">
-        Будние&nbsp;дни:&nbsp;пн-чт
+        @Html( Messages("Week.days", "&nbsp;") ):&nbsp;@Messages("dow.mo")-@Messages("dow.th")
       </td>
       <td></td>
       <td class="td tariff_info-title">
-        Выходние&nbsp;дни:&nbsp;пт-вс
+        @Html( Messages("Weekend", "&nbsp;") ):&nbsp;@Messages("dow.fr")-@Messages("dow.su")
       </td>
       <td></td>
       <td class="td tariff_info-title">
-        Праздники/праймтайм
+        @Messages("Holidays/primetime")
       </td>
     </tr>
     <tr>
       <td class="td tariff_green ft-XS white">
-        Минимальный&nbsp;модуль<br/>
-        (на&nbsp;схеме&nbsp;слева)
+        @Html( Messages("Minimal.module", "&nbsp;") )<br/>(@Html( Messages("scheme.left", "&nbsp") ))
       </td>
       <td class="td"></td>
       @defining( mbmd.currency ) { currency =>
+      @defining( Messages("day24h") ) { sutkiI18n =>
 
         <td class="td tariff_info-value">
-          @formatPrice(mbmd.mmpWeekday, currency)/сутки
+          @formatPrice(mbmd.mmpWeekday, currency)/@sutkiI18n
         </td>
         <td class="td"></td>
         <td class="td tariff_info-value">
-          @formatPrice(mbmd.mmpWeekend, currency)/сутки
+          @formatPrice(mbmd.mmpWeekend, currency)/@sutkiI18n
         </td>
         <td class="td"></td>
         <td class="td tariff_info-value">
-          @formatPrice(mbmd.mmpPrimetime, currency)/сутки
+          @formatPrice(mbmd.mmpPrimetime, currency)/@sutkiI18n
         </td>
+      } @* Слово "сутки" на текущем языке. *@
       }
     </tr>
     <tr>
       <td colspan="2"></td>
       <td class="td light-gray ft-XS" colspan="5">
-        Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.shownTypeId) @adnNode.meta.name
-        определены тарифные планы на @ctx.now.getYear год.
+        @Messages("Agreement.btw.CBCA.and.node.tariffs.for.year", Messages("amt.of.type." + adnNode.adn.shownTypeId), adnNode.meta.name, ctx.now.getYear)
       </td>
     </tr>
   </table>
