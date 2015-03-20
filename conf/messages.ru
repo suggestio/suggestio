@@ -453,3 +453,8 @@ Color.or.text.and.icons=Цвет текста{0} и иконок
 Color.of.bg.and.caption=Цвет фона{0} и шапки
 Use.contrast.colors.hint=Для более высокой читабельности вашего контента{0} выбирайте цвета контрастные друг от друга.
 
+
+Bill.account.and.tariffs=Счет и тарифные планы
+Transactions.history=История операций
+Add.funds=Пополнить баланс
+

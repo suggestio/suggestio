@@ -1,24 +1,36 @@
 @(title: String, node: MAdnNode, rightCurrEl: BillingRightPanelLink)(content: Html)(implicit ctx: Context)
 
+@* Базовый шаблон для шаблонов биллинга в личном кабинете. *@
+
 @import ctx._
 @import BillingRightPanelLinks._
-
+@import lk.right._
+@import util.tpl.CssFormat._
 
 @rightBar = {
-  <nav class="right-bar_menu">
-    <a class="right-bar_menu-i __node-billing @if(rightCurrEl == RPL_BILLING){ __act}" href="@routes.MarketLkBilling.showAdnNodeBilling(node.id.get)">
-      <span>Биллинг тарифных планов</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __transactions-history @if(rightCurrEl == RPL_TRANSACTIONS){ __act}" href="@routes.MarketLkBilling._txnsList(node.id.get)">
-      <span>История операций</span>
-    </a>
-    <hr class="delimiter"/>
-    <a class="right-bar_menu-i __requisites @if(rightCurrEl == RPL_REQUISITES){ __act}" href="@routes.MarketLkBilling.paymentRequsites(node.id.get)">
-      <span>Пополнить баланс</span>
-    </a>
-    <hr class="delimiter"/>
-  </nav>
+  @node.id.map { adnId =>
+    @_navTpl(sysCall = Some(routes.SysMarketBilling.billingFor(adnId)) ) {
+
+      @_navItemTpl(
+        title = Messages("Bill.account.and.tariffs"),
+        href  = Some( routes.MarketLkBilling.showAdnNodeBilling(adnId) ),
+        css   = classesAct(rightCurrEl == RPL_BILLING, "__node-billing")
+      )
+
+      @_navItemTpl(
+        title = Messages("Transactions.history"),
+        href  = Some( routes.MarketLkBilling._txnsList(adnId) ),
+        css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
+      )
+
+      @_navItemTpl(
+        title = Messages("Add.funds"),
+        href  = Some( routes.MarketLkBilling.paymentRequsites(adnId) ),
+        css   = classesAct(rightCurrEl == RPL_REQUISITES, "__requisites")
+      )
+
+    }
+  }
 }
 
 

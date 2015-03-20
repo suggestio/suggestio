@@ -17,4 +17,14 @@ object CssFormat {
       .flatMap { cc => Seq(" ", cc) }
   }
 
+
+  /** Список css-классов с возможносью опционального добавления act-класса.
+    * Используется при рендере панелей с текущим выбранным элементом панели. */
+  def classesAct(isAct: Boolean, other: String*): Iterator[String] = {
+    var i0 = other.iterator
+    if (isAct)
+      i0 ++= Iterator("__act")
+    i0
+  }
+
 }

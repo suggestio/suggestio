@@ -2,10 +2,12 @@
 
 @* Виджет-список узлов, которые например поставляют рекламу текущему узлу. *@
 
+@import ctx.lang
+
 <div class="advs-nodes advs-nodes_lk-mode">
 
   <div class="advs-nodes__hat">
-    Рекламодатели
+    @Messages("Advertisers")
   </div>
 
   @advertisers.zipWithIndex.map { case (mnode, i) =>

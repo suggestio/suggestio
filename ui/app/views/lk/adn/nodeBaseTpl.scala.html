@@ -6,32 +6,33 @@
 @import ctx._
 @import NodeRightPanelLinks._
 @import lk.right._
+@import util.tpl.CssFormat._
 
 @rightBarBody(adnId: String) = {
   @_navItemTpl(
     title = Messages("Profile"),
     href  = Some( routes.MarketLkAdn.showAdnNode(adnId) ),
-    css   = Seq("__show-profile", if(rightCurrEl == RPL_NODE) "__act" else "")
+    css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
   )
 
   @if(isMyNode) {
     @_navItemTpl(
       title = Messages("Edit.profile"),
       href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
-      css   = Seq("__edit-profile", if(rightCurrEl == RPL_NODE_EDIT) "__act" else "")
+      css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
     )
 
     @_navItemTpl(
       title = Messages("Password.change"),
       href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
-      css   = Seq("__change-pass", if(rightCurrEl == RPL_USER_EDIT) "__act" else "")
+      css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
     )
 
     @if(node.adn.isReceiver) {
       @_navItemTpl(
         title = Messages("Advertisers"),
         href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
-        css   = if (rightCurrEl == RPL_ADVERTISERS) Seq("__act") else Nil
+        css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
       )
     }
   }
