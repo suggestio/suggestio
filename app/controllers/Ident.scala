@@ -30,6 +30,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
    * @return Редирект на главную, ибо анонимусу идти больше некуда.
    */
+  // TODO Добавить CSRF
   def logout = Action { implicit request =>
     Redirect(MAIN_PAGE_CALL)
       .withNewSession

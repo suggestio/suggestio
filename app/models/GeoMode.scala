@@ -3,6 +3,7 @@ package models
 import java.net.InetAddress
 import io.suggest.model.geo
 import io.suggest.model.geo.{GeoDistanceQuery, Distance}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.cache.Cache
 import play.api.db.DB
@@ -12,7 +13,7 @@ import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
 import util.async.AsyncUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -177,9 +178,9 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   override def toQsStringOpt = Some("ip")
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
-    Future {
-      val ra = getRemoteAddr
-      ip2rangeCity(ra) map { result =>
+    val ra = getRemoteAddr
+    ip2rangeCity(ra).map { resultOpt =>
+      resultOpt.map { result =>
         new GeoSearchInfo {
           override def geoPoint = result.city.geoPoint
           override def geoDistanceQuery = {
@@ -202,7 +203,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           }
         }
       }
-    }(AsyncUtil.jdbcExecutionContext)     // future()
+    }
   }
 
   override def isExact: Boolean = false
@@ -229,28 +230,34 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     }
   }
 
-  def ip2rangeCity(ip: String): Option[Ip2RangeResult] = {
+  def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
     // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
+    type T = Option[Ip2RangeResult]
+    val p = Promise[T]()
     val ck = ip + ".gipq"
-    Cache.getOrElse(ck, CACHE_TTL_SECONDS) {
-      val result = DB.withConnection { implicit c =>
-        IpGeoBaseRange.findForIp(InetAddress getByName ip)
-          .headOption
-          .flatMap { ipRange =>
-          ipRange.cityOpt map { city =>
-            Ip2RangeResult(city, ipRange)
-          }
-        }
+    val fut = p.future
+    Cache.getAs[Future[T]](ck) match {
+      // Как обычно, инфы в кеше нет.
+      case None =>
+        Cache.set(ck, fut, CACHE_TTL_SECONDS)
+        val ipgbResFut = Future {
+          DB.withConnection { implicit c =>
+            IpGeoBaseRange.findForIp(InetAddress getByName ip)
+              .headOption
+              .flatMap { ipRange =>
+                ipRange.cityOpt map { city =>
+                  Ip2RangeResult(city, ipRange)
+                }
+              }
+          } // DB
+        }(AsyncUtil.jdbcExecutionContext)
+        p completeWith ipgbResFut
 
-      } // DB
-      lazy val logPrefix = s"ip2rangeCity($ip): "
-      if (result.isEmpty) {
-        warn(logPrefix + "IP not found in ipgeobase.")
-      } else {
-        trace(logPrefix + "Candidate city: " + result.get.city.cityName)
-      }
-      result
-    }   // Cache
+      // Уже есть необходимая инфа в кеше.
+      case Some(fut1) =>
+        p completeWith fut1
+    }
+    fut
   }
 
   override def exactGeodata: Option[geo.GeoPoint] = None
@@ -286,26 +293,26 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
   override def toQsStringOpt = Some(s"${geoPoint.lat},${geoPoint.lon}")
 
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
-    val result = new GeoSearchInfo {
-      override def geoPoint: geo.GeoPoint = gl.geoPoint
-      override def geoDistanceQuery = GeoDistanceQuery(
-        center      = gl.geoPoint,
-        distanceMin = None,
-        distanceMax = GeoLocation.DISTANCE_DFLT
-      )
-      override def exactGeopoint = Some(gl.geoPoint)
-      lazy val ipGeoloc = {
-        val ra = GeoIp.getRemoteAddr
-        GeoIp.ip2rangeCity(ra)
+    val ra = GeoIp.getRemoteAddr
+    GeoIp.ip2rangeCity(ra) map { _ipGeoLoc =>
+      val res = new GeoSearchInfo {
+        override def geoPoint: geo.GeoPoint = gl.geoPoint
+        override def geoDistanceQuery = GeoDistanceQuery(
+          center      = gl.geoPoint,
+          distanceMin = None,
+          distanceMax = GeoLocation.DISTANCE_DFLT
+        )
+        override def exactGeopoint = Some(gl.geoPoint)
+
+        override def ipGeopoint: Option[geo.GeoPoint] = {
+          _ipGeoLoc map { _.city.geoPoint }
+        }
+        override def cityName = _ipGeoLoc.map(_.city.cityName)
+        override def countryIso2 = _ipGeoLoc.map(_.range.countryIso2)
+        override def isLocalClient = false
       }
-      override def ipGeopoint: Option[geo.GeoPoint] = {
-        ipGeoloc map { _.city.geoPoint }
-      }
-      override def cityName = ipGeoloc.map(_.city.cityName)
-      override def countryIso2 = ipGeoloc.map(_.range.countryIso2)
-      override def isLocalClient = false
+      Some(res)
     }
-    Future successful Some(result)
   }
 
   override def isExact: Boolean = true

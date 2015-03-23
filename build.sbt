@@ -63,6 +63,7 @@ libraryDependencies ++= Seq(
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
   "com.vividsolutions" % "jts" % "1.13",
+  //"com.sanoma.cda" %% "maxmind-geoip2-scala" % "1.3.5",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // radius

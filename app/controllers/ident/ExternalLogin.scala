@@ -140,9 +140,12 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
           // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
           val profile = authenticated.profile
           MExtIdent.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
-            val saveFut: Future[(MExtIdent, Boolean)] = maybeExisting match {
+            // Сохраняем, если требуется. В результате приходит также новосохранный MPerson.
+            val saveFut: Future[(MExtIdent, Option[MPerson])] = maybeExisting match {
               case None =>
-                MPerson(lang = request2lang.code).save.flatMap { personId =>
+                val mperson0 = MPerson(lang = request2lang.code)
+                val mpersonSaveFut = mperson0.save
+                val meiFut = mpersonSaveFut.flatMap { personId =>
                   // Сохранить данные идентификации через соц.сеть.
                   val mei = MExtIdent(
                     personId  = personId,
@@ -152,14 +155,30 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
                   )
                   val save2Fut = mei.save
                   LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
-                  save2Fut.map { savedId => mei -> true }
+                  save2Fut.map { savedId => mei }
+                }
+                val mpersonFut = mpersonSaveFut.map { personId =>
+                  mperson0.copy(id = Some(personId))
+                }
+                for {
+                  mei       <- meiFut
+                  mperson   <- mpersonFut
+                } yield {
+                  (mei, Some(mperson))
                 }
 
+              // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
               case Some(ident) =>
                 LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
-                Future successful (ident -> false)
+                Future successful (ident -> None)
             }
-            saveFut.flatMap { case (ident, isNew) =>
+            saveFut.flatMap { case (ident, newMpersonOpt) =>
+              // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
+              val mpersonOptFut = newMpersonOpt match {
+                case None => MPerson.getById(ident.personId)
+                case some => Future successful some
+              }
+              val isNew = newMpersonOpt.isDefined
               val rdrFut: Future[Result] = if (isNew) {
                 Redirect(routes.Ident.idpConfirm())
               } else {
@@ -176,8 +195,9 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
                 .map { ein => CustomTtl(ein.toLong).addToSessionAcc(addToSessionAcc) }
                 .getOrElse { addToSessionAcc }
               val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
-              rdrFut
+              val resFut = rdrFut
                 .map { _.withSession(session1) }
+              IdentBase.setLangCookie2(resFut, mpersonOptFut)
             }
           }
 

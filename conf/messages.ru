@@ -69,6 +69,7 @@ Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль
 Confirm.new.password=Подтвердите новый пароль
 New.password=Новый пароль
+New.password.saved=Новый пароль сохранен.
 
 Color=Цвет
 Colors=Цвета

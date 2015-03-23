@@ -69,6 +69,7 @@ Password.reset=Password reset
 Type.new.password=Type new password
 Confirm.new.password=Confirm new password
 New.password=New password
+New.password.saved=New password saved.
 
 Color=Color
 Colors=Colors

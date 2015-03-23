@@ -17,6 +17,7 @@ import util.mail.MailerWrapper
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
+import play.api.Play.current
 
 import scala.concurrent.Future
 
@@ -130,7 +131,8 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
       },
       {data =>
         // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
-        MPerson(lang = request2lang.code).save flatMap { personId =>
+        val lang = request2lang
+        MPerson(lang = lang.code).save flatMap { personId =>
           // Развернуть узел для юзера
           val adnNodeFut = NodesUtil.createUserNode(name = data.adnName, personId = personId)
           // Сохранить новый epw-ident
@@ -140,18 +142,21 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
             pwHash      = MPersonIdent.mkHash(data.password),
             isVerified  = true
           ).save
-          for {
-            // И удалить текущую активацию
-            _         <- request.ea.delete
-            adnNode   <- adnNodeFut
-            _         <- idSaveFut
-          } yield {
+          // Рендерим результат запроса сразу как только нода будет готова к использованию.
+          val resFut = adnNodeFut map { adnNode =>
             Ok(regSuccessTpl(adnNode))
-              .withSession(Keys.PersonId.name -> personId)
+              .addingToSession(Keys.PersonId.name -> personId)
+              .withLang(lang)
           }
-        }
+          // Дожидаемся завершения всех операций и возвращаем результат.
+          request.ea.delete flatMap { _ =>
+            idSaveFut flatMap { _ =>
+              resFut
+            }
+          }
+        }  // Mperson.save
       }
-    )
+    )   // Form.fold
   }
 
 }

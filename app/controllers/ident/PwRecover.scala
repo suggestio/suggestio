@@ -168,13 +168,19 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
       {newPw =>
         val pwHash2 = MPersonIdent.mkHash(newPw)
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
-        for {
-          _   <- epw2.save
-          _   <- request.eAct.delete
-          rdr <- IdentUtil.redirectUserSomewhere(epw2.personId)
-        } yield {
-          rdr.withSession(Keys.PersonId.name -> epw2.personId)
-            .flashing("success" -> "Новый пароль сохранён.")
+        // Запускаем сохранение новых данных по паролю
+        val updateFut = epw2.save flatMap { _ =>
+          request.eAct.delete
+        }
+        // Генерить ответ как только появляется возможность.
+        val resFut = IdentUtil.redirectUserSomewhere(epw2.personId) map { rdr =>
+          rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
+            .flashing("success" -> "New.password.saved")
+        }
+        val res2Fut = IdentBase.setLangCookie1(resFut, epw2.personId)
+        // Дожидаемся завершения всех асинхронных операций и возвращаем результат.
+        updateFut flatMap { _ =>
+          res2Fut
         }
       }
     )

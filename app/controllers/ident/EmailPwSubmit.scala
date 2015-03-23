@@ -83,16 +83,20 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
           EmailPwIdent.getByEmail(binded.email) flatMap { epwOpt =>
             if (epwOpt.exists(_.checkPassword(binded.password))) {
               // Логин удался.
-              // TODO Нужно дать возможность режима сессии "чужой компьютер".
               val personId = epwOpt.get.personId
+              val mpersonOptFut = MPerson.getById(personId)
               val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
               var addToSession: List[(String, String)] = List(
                 Keys.PersonId.name -> personId
               )
               // Реализация длинной сессии при наличии флага rememberMe.
               addToSession = binded.ttl.addToSessionAcc(addToSession)
-              rdrFut
-                .map { _.addingToSession(addToSession : _*) }
+              val rdrFut2 = rdrFut.map { rdr =>
+                rdr.addingToSession(addToSession : _*)
+              }
+              // Выставить язык, сохраненный ранее в MPerson
+              IdentBase.setLangCookie2(rdrFut2, mpersonOptFut)
+
             } else {
               val binded1 = binded.copy(password = "")
               val lf = formBinded
