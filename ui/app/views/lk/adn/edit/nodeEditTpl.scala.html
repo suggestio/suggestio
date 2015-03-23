@@ -1,9 +1,9 @@
-@(node: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: Context)
+@(mnode: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: Context)
 
 @* Рендер страницы редактирования узла, имеющего высокий статус, т.е. супервизора или ресивера. *@
 @import ctx._
-@import edit._
 @import lk.popup._
+@import lk.adn._
 
 @popupContent = {
 
@@ -12,7 +12,7 @@
   @_popupTpl(id = Some("editHelp")) {
     <h2 class="colors-help_t">@Html( Messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
     <div class="colors-help_cnt">
-      <span class="colors-help_icons-text">@Html( Messages("Color.or.text.and.icons", "<br/>") )</span>
+      <span class="colors-help_icons-text">@Html( Messages("Color.of.text.and.icons", "<br/>") )</span>
       <span class="colors-help_background-text">@Html( Messages("Color.of.bg.and.caption", "<br/>") )</span>
     </div>
     <p class="colors-help_descr">@Html( Messages("Use.contrast.colors.hint", "<br/>") )</p>
@@ -30,7 +30,7 @@
 
 @nodeBaseTpl(
   title         = Messages("Edit.profile"),
-  node          = node,
+  node          = mnode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
   rightBarAfter = Some(rightBarAfter),
@@ -38,12 +38,12 @@
 ) {
 
   @_leaderNodeFormTpl(
-    adnId         = node.id.get,
+    adnId         = mnode.id.get,
     btnText       = Messages("Save"),
     mf            = mf,
-    submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(node.id.get),
+    submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(mnode.id.get),
     welcomeAdOpt  = welcomeAdOpt,
-    nodeInfo      = node.adn
+    nodeInfo      = mnode.adn
   )
 
 }

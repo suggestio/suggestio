@@ -25,7 +25,7 @@ GET  /market/booklet                    controllers.Market.marketBooklet
 ## Входы в личные кабинеты
 GET  /m/lk/list                         controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/create/node                    controllers.MarketLkAdn.createNode
-GET  /lk/create/node                    controllers.MarketLkAdn.createNodeSubmit
+POST /lk/create/node                    controllers.MarketLkAdn.createNodeSubmit
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)

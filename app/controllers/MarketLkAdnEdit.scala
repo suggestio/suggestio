@@ -2,6 +2,7 @@ package controllers
 
 import models.im.MImg
 import play.core.parsers.Multipart
+import play.twirl.api.Html
 import util.img.LogoUtil.LogoOpt_t
 import util.img._
 import util.PlayMacroLogsImpl
@@ -9,7 +10,7 @@ import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import views.html.lk.adn._
+import views.html.lk.adn.edit._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
@@ -17,6 +18,8 @@ import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -149,11 +152,21 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       .map { img => MImg(img.filename) }
     val gallerryIks = gallery2iiks( adnNode.gallery )
     val formNotFilled = nodeFormM(adnNode.adn)
-    waOptFut map { welcomeAdOpt =>
+    val formFilledFut = waOptFut map { welcomeAdOpt =>
       val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
       val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
-      val formFilled = formNotFilled fill fmr
-      Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
+      formNotFilled fill fmr
+    }
+    formFilledFut flatMap { formFilled =>
+      _editAdnNode(formFilled, waOptFut)
+        .map { Ok(_) }
+    }
+  }
+
+  protected def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
+                            (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+    waOptFut map { welcomeAdOpt =>
+      nodeEditTpl(request.adnNode, form, welcomeAdOpt)
     }
   }
 
@@ -164,11 +177,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(adnNode.adn).bindFromRequest().fold(
       {formWithErrors =>
-        val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
+        val waOptFut = getWelcomeAdOpt(request.adnNode)
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        welcomeAdOptFut map { welcomeAdOpt =>
-          NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
-        }
+        _editAdnNode(formWithErrors, waOptFut)
+          .map { NotAcceptable(_) }
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
