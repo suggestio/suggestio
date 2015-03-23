@@ -8,7 +8,7 @@
 @form(CSRF(routes.Ident.pwResetSubmit(ea.id.get)), 'id -> "pwResetPasswordForm") {
 
   @prf.globalError.map { ge =>
-    <p class="error-msg">Ошибка: @Messages(ge.message)</p>
+    <p class="error-msg">@Messages("Error"): @Messages(ge.message)</p>
   }
 
   @defining( Messages("Type.new.password") ) { msg =>

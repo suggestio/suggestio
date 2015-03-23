@@ -3,11 +3,16 @@
 @* Колонка рендерится, когда регистрация по email завершена успешно. *@
 
 @import util.adn._
+@import ctx.lang
 
-<div class="reg-success_t">Ваши данные приняты и сохранены.</div>
+<div class="reg-success_t">@Messages("Your.identity.accepted.saved").</div>
 
 <div class="reg-success_text">
-  Через несколько секунд вас перебросит в ваш магазин.<br/>
-  Если перенаправление не произошло, нажмите
-  <a class="link" href="@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)">@Messages("here")</a>.
+  @Messages("In.seconds.you.ll.rdr.to.your.shop")
+  <br/>
+  @Html(Messages(
+    "If.no.rdr.click.here",
+    s"""<a class="link" href="${NodesUtil.userNodeCreatedRedirect(adnNode.id.get)}">""",
+    "</a>"
+  ))
 </div>

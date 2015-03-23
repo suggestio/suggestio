@@ -11,31 +11,35 @@
 
 @form(CSRF(routes.Ident.recoverPwFormSubmit), 'class -> "recover-popup__content__form") {
 
+  @defining( Messages("Email.used.during.registration") ) { msg =>
     @inputText(
       rf("email"),
-      '_label       -> "Электронная почта, указанная при регистрации:",
-      'placeholder  -> "Электронная почта, указанная при регистрации",
+      '_label       -> (msg + ":"),
+      'placeholder  -> msg,
       'type         -> "email"
     )
+  }
 
-    @* Капча *@
-    <div class="captcha">
-      @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-        <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-        <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt=""/>
-        <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImage" href=""></a>
-      }
-    </div>
+  @* Капча *@
+  <div class="captcha">
+    @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt=""/>
+      <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImage" href=""></a>
+    }
+  </div>
 
+  @defining( Messages("Input.text.from.picture") ) { msg =>
     @inputText(
       rf(CAPTCHA_TYPED_FN),
-      '_label       -> Messages("Input.text.from.picture"),
-      'type -> "tel",
-      'placeholder  -> "Введите текст с картинки"
+      '_label       -> msg,
+      'type         -> "tel",
+      'placeholder  -> msg
     )
+  }
 
-    <div class="btn-w __size-M">
-      <input class="btn __size-M1 __minor" type="submit" value='Отправить'/>
-    </div>
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __minor" type="submit" value="@Messages("Send")"/>
+  </div>
 
 }

@@ -265,7 +265,6 @@ email_us_at=Email us at
 
 or_fill_the_form=or fill the form below
 your_name=Your name
-your_email=Your email
 your_message=Your message
 about_step_one=We are Suggest.io. We are working on the best user search.
 about_step_two=Just type in your website address to start using Suggest.io. Our robots will crawl your website automaticly.
@@ -312,7 +311,7 @@ mappers.url.hostname_prohibited=This site cannot be indexed.
 
 
 f.feedback_sent_success=Thank you! Your message is sent to suggest.io developers.
-send=Send
+Send=Send
 
 
 c.s.search_query.empty=Empty search query. What are you looking for?
@@ -550,5 +549,15 @@ Password.recovery.in=Password recovery in {0}
 Sys.rcvd.pw.recover.request={0} geotargeted ad system received password restore request for your account:
 To.recover.password.use.this.link=Open {0}this link{1} to reset password for your account.
 
-here=здесь
+Type=Type
+
+To.addr.msg.sent.with.recover.link=To emai {0} message will be sent{1}, containing link for password recovery.
+Check.your.mailbox=Please, check your mailbox.
+Email.used.during.registration=Email address, used during registration
+Your.identity.accepted.saved=Your identity data accepted and saved
+In.seconds.you.ll.rdr.to.your.shop=In several seconds you will be redirected into your shop.
+If.no.rdr.click.here=If redirection doesn't occur, click {0}here{1}.
+Mailbox.ll.be.mailed.with.reg.confirm.msg=Your mailbox will be mailed with sign-up confirmation message.
+Getting.started.with.sio.you.agreed.with.policy=Getting started with Suggest.io, you agree to the {0}privacy policy{1}.
+Your.email.addr=Your email address
 

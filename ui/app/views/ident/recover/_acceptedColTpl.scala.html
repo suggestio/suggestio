@@ -2,15 +2,18 @@
 
 @* Колонка с версткой сообщения об успехе при отправке сообщения восстановления пароля. *@
 
+@import ctx.lang
 
+<p class="email-success_t">
+  @Html(Messages(
+    "To.addr.msg.sent.with.recover.link",
+    s"""<a class="link" href="mailto:$email">$email</a>""",
+    "<br/>"
+  ))
+  <br/>
+  @Messages("Check.your.mailbox")
+</p>
 
-  <p class="email-success_t">
-    На адрес <a class="link" href="mailto:@email">@email</a> будет отправлено письмо,<br/> содержащее ссылку для восстановления пароля.<br/>
-    Проверьте ваш почтовый ящик.
-  </p>
-
-
-  <div class="btn-w __size-M">
-    <a class="btn __size-M1 __minor" href="@routes.Ident.mySioStartPage()">Назад</a>
-  </div>
-
+<div class="btn-w __size-M">
+  <a class="btn __size-M1 __minor" href="@routes.Ident.mySioStartPage()">@Messages("Go.back")</a>
+</div>
