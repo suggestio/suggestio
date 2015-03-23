@@ -95,10 +95,17 @@ trait SendPwRecoverEmail extends SioController {
 
 trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl {
 
+  protected def _outer(html: Html)(implicit ctx: Context): Html = {
+    mySioStartTpl(
+      title     = Messages("Password.recovery")(ctx.lang),
+      columns   = Seq(html)
+    )(ctx)
+  }
+
   protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
     val ctx = implicitly[Context]
     val colHtml = _emailColTpl(form)(ctx)
-    mySioStartTpl(Seq(colHtml))(ctx)
+    _outer(colHtml)(ctx)
   }
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
@@ -132,7 +139,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
   def recoverPwAccepted(email1: String) = MaybeAuthPost { implicit request =>
     val ctx = implicitly[Context]
     val colHtml = _acceptedColTpl(email1)(ctx)
-    val html = mySioStartTpl(Seq(colHtml))(ctx)
+    val html = _outer(colHtml)(ctx)
     Ok(html)
   }
 
@@ -142,7 +149,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
   protected def _pwReset(form: PwResetForm_t)(implicit request: RecoverPwRequest[_]): Html = {
     val ctx = implicitly[Context]
     val colHtml = _pwResetColTpl(form, request.eAct)(ctx)
-    mySioStartTpl(Seq(colHtml))(ctx)
+    _outer(colHtml)(ctx)
   }
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */

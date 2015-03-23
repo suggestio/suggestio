@@ -2,10 +2,12 @@
 
 @* Колонка начала регистрации по email. *@
 
+@import ctx.lang
+
 <div class="auth-page_column">
 
-  <h2 class="auth-page_column-t __color-2">Регистрация</h2>
+  <h2 class="auth-page_column-t __color-2">@Messages("Sign.up")</h2>
 
-  @reg.email._emailFormTpl(rf, captchaShown)
+  @_emailFormTpl(rf, captchaShown)
 
 </div>

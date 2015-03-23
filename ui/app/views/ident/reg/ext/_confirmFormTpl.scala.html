@@ -7,14 +7,15 @@
 @import ctx._
 @import util.FC.authFc
 
-
 @form( CSRF(routes.Ident.idpConfirmSubmit()) ) {
 
-  @inputText(
-    elf("nodeName"),
-    'placeholder -> "Название магазина",
-    '_label -> "Название магазина"
-  )
+  @defining( Messages("Node.name") ) { msg =>
+    @inputText(
+      elf("nodeName"),
+      'placeholder  -> msg,
+      '_label       -> msg
+    )
+  }
 
   <div class="btn-w __size-M">
     <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />

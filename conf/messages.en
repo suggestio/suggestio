@@ -524,5 +524,21 @@ Hide.event=Hide event
 Geotargeted.ad=Geotargeted ad
 
 Select.your.lang=Select your language
-This.lang=English (US)
+This.lang=English
+
+Login.page.title=Login
+Login=Sign in
+Remember.me=Remember me
+Forgot.password=Forgot{0} password?
+Recover.password=Recover password?
+Password.recovery=Password recovery
+Recovery.key.expired=Recovery key expired
+or.used.cannot.recover.pw=or already used. Cannot continue password recovery.
+Sign.up=Sign up
+Password=Password
+Go.back=Go back
+Epw.reg.msg.sent=Email message with sign-up confirmation sent to your mailbox.
+Epw.follow.msg.link.to.finish=Follow link from sent message to finish registration.
+
+here=здесь
 

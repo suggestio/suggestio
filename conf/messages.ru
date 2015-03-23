@@ -535,3 +535,19 @@ Geotargeted.ad=Геотаргетированная реклама
 Select.your.lang=Выберите свой язык
 This.lang=Русский
 
+Login.page.title=Вход
+Login=Войти
+Remember.me=Запомнить меня
+Forgot.password=Забыли пароль?
+Recover.password=Восстановить пароль?
+Password.recovery=Восстановление пароля
+Recovery.key.expired=Ключ восстановления истёк
+or.used.cannot.recover.pw=или уже использован. Невозможно продолжить восстановление пароля.
+Sign.up=Регистрация
+Password=Пароль
+Go.back=Назад
+Epw.reg.msg.sent=Письмо с подтверждением регистрации было отправлено на указанный email.
+Epw.follow.msg.link.to.finish=Пройдите по ссылке в письме для завершения регистрации.
+
+here=здесь
+

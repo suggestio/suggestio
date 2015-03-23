@@ -1,0 +1,9 @@
+@(rf: EmailPwRegReqForm_t, captchaShown: Boolean = false)(implicit ctx: Context)
+
+@import views.html.ident._
+@import ctx.lang
+
+@mySioStartTpl(
+  title   = Messages("Sign.up"),
+  columns = Seq( _regColumnTpl(rf, captchaShown) )
+)

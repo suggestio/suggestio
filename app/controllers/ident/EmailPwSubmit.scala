@@ -10,9 +10,8 @@ import util._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.ident.IdentUtil
-import views.html.ident.{mySioStartTpl, _loginColumnTpl}
+import views.html.ident.login.epw._
 import scala.concurrent.Future
-import models._
 import SiowebEsUtil.client
 import util.FormUtil.passwordM
 
@@ -123,9 +122,7 @@ trait EmailPwLogin extends EmailPwSubmit {
   /** Общий код методов emailPwLoginForm() и emailSubmitError(). */
   protected def epwLoginPage(lf: EmailPwLoginForm_t, r: Option[String])
                             (implicit request: AbstractRequestWithPwOpt[_]): Result = {
-    val ctx = implicitly[Context]
-    val column = _loginColumnTpl(lf, r)(ctx)
-    Ok( mySioStartTpl(Seq(column))(ctx) )
+    Ok( loginTpl(lf, r) )
   }
 
   override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])

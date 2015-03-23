@@ -12,7 +12,6 @@ import play.api.Play.{current, configuration}
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
-import securesocial.core.providers.{TwitterProvider, FacebookProvider, VkProvider}
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
 import util.adn.NodesUtil
@@ -205,9 +204,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
 
   /** Общий код рендера idpConfig вынесен сюда. */
   protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
-    val ctx = implicitly[Context]
-    val colHtml = _columnTpl(form)(ctx)
-    mySioStartTpl(Seq(colHtml))(ctx)
+    confirmTpl(form)
   }
 
   /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */

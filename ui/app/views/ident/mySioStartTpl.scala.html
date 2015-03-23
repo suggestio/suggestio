@@ -1,4 +1,4 @@
-@(columns: Seq[Html], headAfter: Option[Html] = None)(implicit ctx: Context)
+@(title: String, columns: Seq[Html], headAfter: Option[Html] = None)(implicit ctx: Context)
 
 @* Начальная страница для юзера, заходящего на my.suggest.io: логин или регистрация на одной странице.
    Страница по дефолту отображает обе колонки, но это не обязательно.
@@ -6,7 +6,7 @@
 
 @import util.cdn.CdnUtil
 
-@identBase("Вход", headAfter = headAfter) {
+@identBase(title, headAfter = headAfter) {
 
   @* Сюда приходят отрендеренные колонки. Нужно их расположить как-то на экране. *@
   <div class="body __responsive auth-page">

@@ -2,6 +2,10 @@
 
 @* Страница с колонкой-формой подтверждения реги по email-pw *@
 
-@views.html.ident.mySioStartTpl(
+@import views.html.ident._
+@import ctx.lang
+
+@mySioStartTpl(
+  title   = Messages("Sign.up"),
   columns = Seq(_confirmColTpl(ea, s2f))
 )

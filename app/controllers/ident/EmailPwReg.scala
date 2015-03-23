@@ -78,9 +78,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
     form1.fold(
       {formWithErrors =>
         LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        val ctx = implicitly[Context]
-        val rc = _regColumnTpl(formWithErrors, captchaShown = true)(ctx)
-        NotAcceptable( mySioStartTpl(Seq(rc))(ctx) )
+        NotAcceptable( epwRegTpl(formWithErrors, captchaShown = true) )
       },
       {email1 =>
         // Почта уже зарегана может?

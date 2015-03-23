@@ -1,6 +1,7 @@
 package controllers
 
 import controllers.ident._
+import play.api.i18n.Messages
 import util.acl._
 import util._
 import play.api.mvc._
@@ -8,6 +9,8 @@ import util.ident.IdentUtil
 import views.html.ident._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
+import views.html.ident.login.epw._loginColumnTpl
+import views.html.ident.reg.email._regColumnTpl
 
 /**
  * Suggest.io
@@ -46,11 +49,13 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
+    val formFut = EmailPwSubmit.emailPwLoginFormStubM
     val ctx = implicitly[Context]
-    EmailPwSubmit.emailPwLoginFormStubM.map { lf =>
+    val title = Messages("Login.page.title")(ctx.lang)
+    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
+    formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)
-      val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
-      Ok( mySioStartTpl( Seq(lc, rc) )(ctx) )
+      Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
     }
   }
 

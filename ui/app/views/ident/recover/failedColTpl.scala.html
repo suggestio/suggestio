@@ -2,6 +2,9 @@
 
 @* Верстка страницы, которая отображает проблемы при восстановлении пароля. *@
 
+@import ctx.lang
+@import views.html.ident._
+
 @html = {
   <div class="popup js-popup __index" id="newPasswordForm">
 
@@ -12,17 +15,17 @@
     <div class="popup_cnt __index-fix">
 
       <div class="popup_t __index">
-        Ошибка
+        @Messages("Error")
       </div>
 
       <div class="error-icon popup_error-icon"></div>
 
       <p class="block __margin-M __text-C">
-        Ключ восстановления истёк<br/>или уже использован. Невозможно продолжить восстановление пароля.
+        @Messages("Recovery.key.expired")<br/>@Messages("or.used.cannot.recover.pw")
       </p>
 
       <p class="block __margin-M __text-C">
-        <a class="js-btn link" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+        <a class="js-btn link" href="@routes.Ident.recoverPwForm">@Messages("Recover.password")</a>
       </p>
 
     </div>
@@ -30,4 +33,7 @@
   </div>
 }
 
-@views.html.ident.mySioStartTpl(Seq(html))
+@mySioStartTpl(
+  title   = Messages("Password.recovery"),
+  columns = Seq(html)
+)
