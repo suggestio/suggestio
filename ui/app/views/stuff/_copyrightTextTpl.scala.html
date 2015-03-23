@@ -1,5 +1,7 @@
 @(withLink: Boolean)(implicit ctx: Context)
 
+@import ctx.lang
+
 &copy; 2012-@ctx.now.getYear
 
 @if(withLink){
