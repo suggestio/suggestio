@@ -238,7 +238,7 @@ ai.ch.descr.cbrf.xml=Парсер валютных котировок XML API с
 live_search_for_your_website=Живой поиск для вашего сайта
 site_indexation_caption_initial=ЗАПУСК ИНДЕКСАЦИИ
 site_indexation_caption=ИНДЕКСАЦИЯ САЙТА
-all_rights_reserved=Все права защищены
+All.rights.reserved=Все права защищены
 
 locale=ru_RU
 
@@ -548,6 +548,15 @@ Password=Пароль
 Go.back=Назад
 Epw.reg.msg.sent=Письмо с подтверждением регистрации было отправлено на указанный email.
 Epw.follow.msg.link.to.finish=Пройдите по ссылке в письме для завершения регистрации.
+Sign.up.to=Регистрация в {0}
+Hello=Здравствуйте
+Msg.sent.auto.noreply=Сообщение отправлено автоматически. Отвечать на него не требуется.
+Your.reg.in.sio.confirmed=Ваша регистрация в системе геонацеленной мобильной рекламы {1} одобрена.
+If.link.not.open.cp.link.to.browser=Если ссылка не открывается, вставьте в строку браузера:
+If.you.not.epw.reg.delete.msg=Если вы не регистрировались в {0}, просто удалите данное сообщение.
+Password.recovery.in=Восстановление пароля в {0}
+Sys.rcvd.pw.recover.request=Система геонацеленной мобильной рекламы {0} получила запрос на восстановление пароля к вашей учетной записи:
+To.recover.password.use.this.link=Для восстановления пароля перейдите по {0}ссылке{1}.
 
 here=здесь
 

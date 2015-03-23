@@ -1,0 +1,31 @@
+@(title: String)(content: Html)(implicit ctx: Context)
+
+@* Заголовка HTML-письма от sio. *@
+
+@import ctx.lang
+@import util.cdn.CdnUtil.asset
+
+<table border="0" cellpadding="0" cellspacing="0"
+       style="max-width: 540px; min-width: 320px; font-family: 'Arial'; background-color: #eeeeee; color: #878787; font-size: 14px;">
+  @_wideRowTpl(s"""height: 72px; background: url('${asset("images/market/mail/logo-with-text.png")}') no-repeat 30px bottom #333333;""")()
+
+  @_rowTpl( "font-size: 18px; color: #484848; padding: 30px 0;" ) {
+    @title
+  }
+
+  @_rowTpl() {
+    @Messages("Hello")!
+  }
+
+  @content
+
+  @_wideRowTpl("""padding: 0 40px 25px; border-bottom: 1px solid #afafaf; color: #b4b4b4; font-size: 11px""") {
+    @Messages("Msg.sent.auto.noreply")
+  }
+
+  @_rowTpl("font-size: 10px; color: #bdbdbd; padding-top: 5px; background: white;", Some("background: white;")) {
+    © 2011-@ctx.now.getYear
+    <a style="color: #7b89a4;" href="@ctx.SC_URL_PREFIX@MAIN_PAGE_CALL">Suggest.io</a>.
+    @Messages("All.rights.reserved")
+  }
+</table>
