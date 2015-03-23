@@ -60,12 +60,15 @@ No.records=No records
 
 requisites=Payment details for withdrawal
 
+Type.password=Type password
+Retype.password=Retype password
 Password.change=Password change
 Password.recovery=Password recovery
 Type.current.password=Type current password
 Password.reset=Password reset
 Type.new.password=Type new password
 Confirm.new.password=Confirm new password
+New.password=New password
 
 Color=Color
 Colors=Colors

@@ -14,23 +14,29 @@
     @Messages(fe.message, fe.args)
   }
 
-  @inputPassword(
-    s2f("pw.pw1"),
-    '_label -> "Введите пароль",
-    'placeholder -> "Введите пароль"
-  )
+  @defining( Messages("Type.password") ) { msg =>
+    @inputPassword(
+      s2f("pw.pw1"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
 
-  @inputPassword(
-    s2f("pw.pw2"),
-    '_label -> "Повторите пароль",
-    'placeholder -> "Повторите пароль"
-  )
+  @defining( Messages("Retype.password") ) { msg =>
+    @inputPassword(
+      s2f("pw.pw2"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
 
-  @inputText(
-    s2f("nodeName"),
-    '_label -> "Название магазина",
-    'placeholder -> "Название магазина"
-  )
+  @defining( Messages("Node.name") ) { msg =>
+    @inputText(
+      s2f("nodeName"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
 
   <div class="btn-w __size-M">
     <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />

@@ -2,10 +2,9 @@
 
 @* Колонка с формой восстановления пароля. Шаг 1: ввод email. *@
 
+@import ctx.lang
+
 <div class="auth-page_column">
-
-  <h2 class="auth-page_column-t __color-2">Новый пароль</h2>
-
+  <h2 class="auth-page_column-t __color-2">@Messages("New.password")</h2>
   @_pwResetFormTpl(prf, ea)
-
 </div>

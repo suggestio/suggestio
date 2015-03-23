@@ -60,12 +60,15 @@ No.records=Нет записей
 
 requisites=Платёжные реквизиты для вывода средств
 
+Type.password=Введите пароль
+Retype.password=Повторите пароль
 Password.change=Смена пароля
 Password.recovery=Восстановление пароля
 Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль
 Confirm.new.password=Подтвердите новый пароль
+New.password=Новый пароль
 
 Color=Цвет
 Colors=Цвета
@@ -568,4 +571,3 @@ If.no.rdr.click.here=Если перенаправление не произош
 Mailbox.ll.be.mailed.with.reg.confirm.msg=На электронную почту будет отправлено письмо с подтвержением регистрации.
 Getting.started.with.sio.you.agreed.with.policy=Приступая к работе с Suggest.io, Вы соглашаетесь с {0}Политикой конфиденциальности{1}.
 Your.email.addr=Ваш адрес email
-

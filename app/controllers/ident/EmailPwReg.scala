@@ -14,7 +14,6 @@ import util.adn.NodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import util.mail.MailerWrapper
-import views.html.ident._
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
