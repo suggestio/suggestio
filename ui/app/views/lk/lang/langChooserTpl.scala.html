@@ -1,7 +1,8 @@
 @(english: Lang, lf: Form[Lang], isNowEnglish: Boolean, langs: Seq[Lang], nodeOpt: Option[MAdnNode],
   rr: Option[String])(implicit ctx: Context)
 
-@* Страница с выбором языка для пользователя. *@
+@* Страница с выбором языка для пользователя.
+   Скрываем кнопку смены магазина, чтобы не сбивать людей. *@
 
 @import lk._
 @import ctx.{lang => currLang, request}
@@ -9,21 +10,14 @@
 @import util.FC.langSelectFc
 
 @lkBaseLayout(
-  title   = Messages("Select.your.lang")(english) + (if(!isNowEnglish) {" / " + Messages("Select.your.lang")} else ""),
-  nodeOpt = nodeOpt
+  title   = Messages("Select.your.lang")(english) + (if(!isNowEnglish) {" | " + Messages("Select.your.lang")} else ""),
+  nodeOpt = nodeOpt,
+  showSwitchNodeBtn = false
 ) {
-@defining("allLangsDiv") { rootId =>
 
-  <style>
-    #@rootId label {
-      padding: 20px 50px 20px 5px;
-      font-size: 20px;
-    }
-  </style>
-
-  <div id="@rootId">
+  <div id="allLangsDiv">
     @form( CSRF(routes.LkLang.selectLangSubmit(rr)) ) {
-      @* TODO Сделать автопереключение. Кнопку завернуть в noscript-тег. *@
+      @* TODO Сделать автопереключение. Кнопку завернуть наверное в noscript-тег. *@
       @inputRadioGroup(
         lf("lang"),
         options = langs.map { l => l.code -> Messages("This.lang")(l) }
@@ -36,5 +30,4 @@
     }
   </div>
 
-}
 }

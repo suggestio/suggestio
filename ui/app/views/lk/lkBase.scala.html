@@ -12,7 +12,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>@title @if(nodeOpt){ | } @_nodeTitleTpl(nodeOpt) | Suggest.io</title>
+  <title>@title @if(nodeOpt){ | @_nodeTitleTpl(nodeOpt) } | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -54,7 +54,7 @@
       }
     </div>
 
-    @if(showSwitchNodeBtn) {
+    @if(showSwitchNodeBtn && ctx.isAuth) {
       <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
     }
 
