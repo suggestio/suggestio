@@ -72,9 +72,8 @@ object AdRenderUtil {
       outFmt      = fmt,
       quality     = fmt.wkHtmlQuality,
       plugins     = false
-      //crop        = cropOpt
     )
-    WkHtmlUtil.html2imgSimpleCached(wkArgs)
+    wkArgs.renderCached
   }
 
 

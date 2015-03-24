@@ -42,20 +42,7 @@ import WkHtmlArgs._
 
 
 /** Абстрактные аргументы для вызова wkhtml2image. */
-trait WkHtmlArgsT {
-
-  /** Ссыка на страницу, которую надо отрендерить. */
-  def src     : String
-
-  /** 2015.03.06 ЭТО 100% !!ОБЯЗАТЕЛЬНЫЙ!! размер окна браузера и картинки (если кроп не задан).
-    * В доках обязательность этого параметра не отражена толком, а --height в man вообще не упоминается. */
-  def scrSz : MImgSizeT
-
-  /** Качество сжатия результирующей картинки. */
-  def quality : Option[Int]
-
-  /** Формат сохраняемой картинки. */
-  def outFmt  : OutImgFmt
+trait WkHtmlArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn {
 
   /** Отмасштабировать страницу? */
   def zoomOpt : Option[Float]
@@ -102,6 +89,21 @@ trait WkHtmlArgsT {
     WKHTML2IMG :: toCmdLineArgs(acc0)
   }
 
+
+  /** Синхронный рендер с помощью WkHtml2image. */
+  override def renderSync(dstFile: File): Unit = {
+    val cmdargs = toCmdLine(List(dstFile.getAbsolutePath))
+    val now = System.currentTimeMillis()
+    // TODO Асинхронно запускать сие?
+    val p = Runtime.getRuntime.exec(cmdargs.toArray)
+    val result = p.waitFor()
+    val tookMs = System.currentTimeMillis() - now
+    lazy val cmd = cmdargs.mkString(" ")
+    LOGGER.trace(cmd + "  ===>>>  " + result + " ; took = " + tookMs + "ms")
+    if (result != 0) {
+      throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
+    }
+  }
 }
 
 
