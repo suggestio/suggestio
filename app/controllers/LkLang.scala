@@ -61,7 +61,7 @@ object LkLang extends SioController with PlayMacroLogsImpl {
   }
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
-  def selectLangSubmit(r: Option[String]) = MaybeAuthPost.async { implicit request =>
+  def selectLangSubmit(r: Option[String]) = MaybeAuthPost { implicit request =>
     chooseLangFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
@@ -83,10 +83,12 @@ object LkLang extends SioController with PlayMacroLogsImpl {
           case None =>
             Future successful None
         }
-        saveUserLangFut map { _ =>
-          RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
-            .withLang(newLang)
+        saveUserLangFut onFailure {
+          case ex: Throwable  =>  error("Failed to save lang for mperson", ex)
         }
+        // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
+        RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
+          .withLang(newLang)
       }
     )
   }
