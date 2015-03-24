@@ -66,14 +66,13 @@ object AdRenderUtil {
     val extWidth = adArgs.wideOpt.fold(width0)(_.width)
     // Запускаем генерацию результата
     val fmt = adArgs.imgFmt
-    val wkArgs = WkHtmlArgs(
+    val renderArgs = AdRenderArgs.RENDERER.forArgs(
       src         = adImgLocalUrl(adArgs),
       scrSz       = MImgInfoMeta(width = extWidth, height = height),
       outFmt      = fmt,
-      quality     = fmt.wkHtmlQuality,
-      plugins     = false
+      quality     = fmt.wkHtmlQuality
     )
-    wkArgs.renderCached
+    renderArgs.renderCached
   }
 
 

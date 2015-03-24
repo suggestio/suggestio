@@ -13,7 +13,7 @@ import util.PlayMacroLogsDyn
  * Description: Модель параметров для вызова wkhtml2image.
  */
 
-object WkHtmlArgs extends PlayMacroLogsDyn {
+object WkHtmlArgs extends PlayMacroLogsDyn with IAdRendererCompanion {
 
   /** Название/путь к утили, вызываемой из командной строки. */
   val WKHTML2IMG = configuration.getString("wkhtml.toimg.prog.name") getOrElse "wkhtmltoimage"
@@ -32,9 +32,9 @@ object WkHtmlArgs extends PlayMacroLogsDyn {
     }
   }
 
-  /** Дефолтовый формат сохраняемой картинки. */
-  def outFmtDflt = OutImgFmts.PNG
-
+  override def forArgs(src: String, scrSz: MImgSizeT, quality: Option[Int], outFmt: OutImgFmt): IAdRenderArgs = {
+    apply(src = src, scrSz = scrSz, quality = quality, outFmt = outFmt)
+  }
 }
 
 
@@ -93,16 +93,7 @@ trait WkHtmlArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn {
   /** Синхронный рендер с помощью WkHtml2image. */
   override def renderSync(dstFile: File): Unit = {
     val cmdargs = toCmdLine(List(dstFile.getAbsolutePath))
-    val now = System.currentTimeMillis()
-    // TODO Асинхронно запускать сие?
-    val p = Runtime.getRuntime.exec(cmdargs.toArray)
-    val result = p.waitFor()
-    val tookMs = System.currentTimeMillis() - now
-    lazy val cmd = cmdargs.mkString(" ")
-    LOGGER.trace(cmd + "  ===>>>  " + result + " ; took = " + tookMs + "ms")
-    if (result != 0) {
-      throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
-    }
+    exec(cmdargs.toArray)
   }
 }
 
@@ -111,7 +102,7 @@ trait WkHtmlArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn {
 case class WkHtmlArgs(
   src         : String,
   scrSz       : MImgSizeT,
-  outFmt      : OutImgFmt         = WkHtmlArgs.outFmtDflt,
+  outFmt      : OutImgFmt         = AdRenderArgs.OUT_FMT_DFLT,
   quality     : Option[Int]       = None,
   zoomOpt     : Option[Float]     = None,
   plugins     : Boolean           = false,

@@ -5,6 +5,7 @@ import java.nio.file.Files
 
 import models.MImgSizeT
 import play.api.Play.{current, configuration}
+import util.PlayMacroLogsI
 import util.async.AsyncUtil
 import util.xplay.CacheUtil
 import scala.concurrent.Future
@@ -22,6 +23,17 @@ object AdRenderArgs {
   /** Сколько кешировать в памяти сгенеренную картинку. Картинки жирные и нужны недолго, поэтому следует и
     * кеширование снизить до минимума. Это позволит избежать DoS-атаки. */
   val CACHE_TTL_SECONDS = configuration.getInt("ad.render.cache.ttl.seconds") getOrElse 5
+
+  /** Дефолтовый формат сохраняемой картинки. */
+  val OUT_FMT_DFLT = configuration.getString("ad.render.img.fmt.dflt")
+    .fold(OutImgFmts.PNG) { OutImgFmts.withName }
+
+  /** Используемый по умолчанию рендерер. Влияет на дефолтовый рендеринг карточки. */
+  val RENDERER: IAdRendererCompanion = {
+    configuration.getString("ad.render.renderer.class")
+      .map(Class.forName(_).asInstanceOf[IAdRendererCompanion])
+      .getOrElse(WkHtmlArgs)
+  }
 
 }
 
@@ -59,10 +71,22 @@ trait IAdRenderArgs {
 
 
 /** Надстройка над [[IAdRenderArgs]] для поддержки рендера внешней софтиной в указанный файл. */
-trait IAdRenderArgsSyncFile extends IAdRenderArgs {
+trait IAdRenderArgsSyncFile extends IAdRenderArgs with PlayMacroLogsI {
 
   /** Синхронный рендер. */
   def renderSync(dstFile: File): Unit
+
+  protected def exec(args: Array[String]): Unit = {
+    val now = System.currentTimeMillis()
+    val p = Runtime.getRuntime.exec(args)
+    val result = p.waitFor()
+    val tookMs = System.currentTimeMillis() - now
+    lazy val cmd = args.mkString(" ")
+    LOGGER.trace(cmd + "  ===>>>  " + result + " ; took = " + tookMs + "ms")
+    if (result != 0) {
+      throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
+    }
+  }
 
   /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */
   override def render: Future[Array[Byte]] = {
@@ -77,5 +101,11 @@ trait IAdRenderArgsSyncFile extends IAdRenderArgs {
     }
     fut
   }
+}
+
+
+/** Интерфейс компаньона-генератора параметров. Полезен для доступа к абстрактному рендереру. */
+trait IAdRendererCompanion {
+  def forArgs(src: String, scrSz: MImgSizeT, quality : Option[Int], outFmt: OutImgFmt): IAdRenderArgs
 }
 
