@@ -1,6 +1,7 @@
 package controllers
 
 import controllers.ident._
+import models.msession.Keys
 import play.api.i18n.Messages
 import util.acl._
 import util._
@@ -33,7 +34,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
   // TODO Добавить CSRF
   def logout = Action { implicit request =>
     Redirect(MAIN_PAGE_CALL)
-      .withNewSession
+      .removingFromSession(Keys.PersonId.name, Keys.Timestamp.name)
   }
 
 

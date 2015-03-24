@@ -262,6 +262,8 @@ object FC {
 
   implicit val authFc = FieldConstructor(authFcTpl.f)
 
+  implicit def langSelectFc = FieldConstructor(langSelectFcTpl.f)
+
 }
 
 trait TplFormatUtilT {
