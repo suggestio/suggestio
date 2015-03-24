@@ -1,6 +1,8 @@
 @(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @import stuff._
+@import ctx._
+@import helper._
 
 @* base-шаблон для системной панели suggest.io. *@
 <!DOCTYPE html>
@@ -24,9 +26,7 @@
             <img src='@routes.Assets.versioned("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
           </a>
           @ctx.usernameOpt.map { username =>
-
-              <a class="logout-btn" href="@routes.Ident.logout"></a>
-
+            <a class="logout-btn" href="@CSRF(routes.Ident.logout())"></a>
           }
         </div>
 

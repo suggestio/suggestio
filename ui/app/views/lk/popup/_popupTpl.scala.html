@@ -4,12 +4,12 @@
 
 @import ctx._
 @import util.tpl.CssFormat._
+@import helper._
 
 <div class="popup js-popup@if(hidden){ js-hidden}@classesPreSpaced(css)"
-     @id.map { id1 =>id="@id1"}> @* Если в одну строчку все эти аттрибуты, то оно не парсится правильно. *@
+  @id.map { id1 =>id="@id1"}> @* Если в одну строчку все эти аттрибуты, то оно не парсится правильно. *@
   <div class="popup_header">
-    @* TODO Добавить CSRF? *@
-    <a class="close f-right js-close-popup" href="@routes.Ident.logout()"></a>
+    <a class="close f-right js-close-popup" href="@request.path"></a>
   </div>
   @content
 </div>

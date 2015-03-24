@@ -264,7 +264,7 @@
               "datalayer_update": "@args.dlUpdateUrl",
               "map_delete": "/ru/map/{map_id}/update/delete/",
               "map_create": "/ru/map/create/",
-              "logout": "/ru/logout/",
+              "logout": "@CSRF(routes.Ident.logout())",
               "routing": "http://map.project-osrm.org/?loc={lat},{lng}&hl={locale}",
               "datalayer_create": "@routes.Umap.createMapDataLayer()",
               "map_clone": "/ru/map/{map_id}/update/clone/",

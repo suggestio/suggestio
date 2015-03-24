@@ -539,6 +539,7 @@ How.it.works=Как это работает
 
 Select.your.lang=Выберите свой язык
 This.lang=Русский
+Switch.lang=Сменить язык
 
 Login.page.title=Вход
 Login=Войти
