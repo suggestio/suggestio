@@ -432,6 +432,7 @@ Ad.cards=Promo cards
 My.ad.net=My ad network
 Choose.node=Choose shop
 Create.node=Create shop
+You.have.no.nodes.create.first=Currently you have no shops in your account. It's time to create first shop.
 Node.name=Shop name
 Node.name.hint=Shop name may be changed any time later.
 

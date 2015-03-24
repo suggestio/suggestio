@@ -18,14 +18,19 @@
       <span class="node-list_size">@mnodes.size</span>
 
       <div class="node-list">
-        @defining( currNode.flatMap(_.id) ) { currAdnId =>
-        @mnodes.map { mnode =>
-          <div class="node-list_i">
-            @* Текущему магазину добавлять класс __current. *@
-            <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
-               href="@routes.MarketLkAdn.showNodeAds(mnode.id.get)">@mnode.meta.name</a>
-          </div>
-        }
+        @if(mnodes.nonEmpty) {
+          @defining( currNode.flatMap(_.id) ) { currAdnId =>
+          @mnodes.map { mnode =>
+            <div class="node-list_i">
+              @* Текущему магазину добавлять класс __current. *@
+              <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
+                 href="@routes.MarketLkAdn.showNodeAds(mnode.id.get)">@mnode.meta.name</a>
+            </div>
+          }
+          }
+
+        } else {
+          @Messages("You.have.no.nodes.create.first")
         }
       </div>
 
