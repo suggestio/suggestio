@@ -69,8 +69,7 @@ object AdRenderUtil {
     val renderArgs = AdRenderArgs.RENDERER.forArgs(
       src         = adImgLocalUrl(adArgs),
       scrSz       = MImgInfoMeta(width = extWidth, height = height),
-      outFmt      = fmt,
-      quality     = fmt.wkHtmlQuality
+      outFmt      = fmt
     )
     renderArgs.renderCached
   }

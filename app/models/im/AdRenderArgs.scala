@@ -24,10 +24,6 @@ object AdRenderArgs {
     * кеширование снизить до минимума. Это позволит избежать DoS-атаки. */
   val CACHE_TTL_SECONDS = configuration.getInt("ad.render.cache.ttl.seconds") getOrElse 5
 
-  /** Дефолтовый формат сохраняемой картинки. */
-  val OUT_FMT_DFLT = configuration.getString("ad.render.img.fmt.dflt")
-    .fold(OutImgFmts.PNG) { OutImgFmts.withName }
-
   /** Используемый по умолчанию рендерер. Влияет на дефолтовый рендеринг карточки. */
   val RENDERER: IAdRendererCompanion = {
     val ck = "ad.render.renderer.dflt"
@@ -116,6 +112,12 @@ trait IAdRenderArgsSyncFile extends IAdRenderArgs with PlayMacroLogsI {
 
 /** Интерфейс компаньона-генератора параметров. Полезен для доступа к абстрактному рендереру. */
 trait IAdRendererCompanion {
-  def forArgs(src: String, scrSz: MImgSizeT, quality : Option[Int], outFmt: OutImgFmt): IAdRenderArgs
+  /** Дефолтовое значение quality, если не задано. */
+  def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = None
+
+  def forArgs(src: String, scrSz: MImgSizeT, outFmt: OutImgFmt): IAdRenderArgs = {
+    forArgs(src = src, scrSz = scrSz, outFmt = outFmt, quality = qualityDflt(scrSz, outFmt))
+  }
+  def forArgs(src: String, scrSz: MImgSizeT, outFmt: OutImgFmt, quality : Option[Int]): IAdRenderArgs
 }
 

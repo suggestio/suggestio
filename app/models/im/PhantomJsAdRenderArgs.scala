@@ -15,7 +15,16 @@ import views.txt.js.phantom._
 
 object PhantomJsAdRenderArgs extends IAdRendererCompanion {
 
-  override def forArgs(src: String, scrSz: MImgSizeT, quality: Option[Int], outFmt: OutImgFmt): IAdRenderArgs = {
+
+  /** Дефолтовое значение quality, если не задано. */
+  override def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = {
+    fmt match {
+      case OutImgFmts.JPEG => Some(94)
+      case _               => super.qualityDflt(scrSz, fmt)
+    }
+  }
+
+  override def forArgs(src: String, scrSz: MImgSizeT, outFmt: OutImgFmt, quality: Option[Int] = None): IAdRenderArgs = {
     apply(src = src,  scrSz = scrSz,  outFmt = outFmt,  quality = quality)
   }
 }
@@ -64,7 +73,7 @@ trait PhantomJsAdRenderArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn
 case class PhantomJsAdRenderArgs(
   src         : String,
   scrSz       : MImgSizeT,
-  outFmt      : OutImgFmt         = AdRenderArgs.OUT_FMT_DFLT,
-  quality     : Option[Int]       = None
+  outFmt      : OutImgFmt,
+  quality     : Option[Int]
 ) extends PhantomJsAdRenderArgsT
 

@@ -32,7 +32,16 @@ object WkHtmlArgs extends PlayMacroLogsDyn with IAdRendererCompanion {
     }
   }
 
-  override def forArgs(src: String, scrSz: MImgSizeT, quality: Option[Int], outFmt: OutImgFmt): IAdRenderArgs = {
+
+  /** Дефолтовое значение quality, если не задано. */
+  override def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = {
+    fmt match {
+      case OutImgFmts.PNG => Some(0)
+      case _              => super.qualityDflt(scrSz, fmt)
+    }
+  }
+
+  override def forArgs(src: String, scrSz: MImgSizeT, outFmt: OutImgFmt, quality: Option[Int] = None): IAdRenderArgs = {
     apply(src = src, scrSz = scrSz, quality = quality, outFmt = outFmt)
   }
 }
@@ -102,8 +111,8 @@ trait WkHtmlArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn {
 case class WkHtmlArgs(
   src         : String,
   scrSz       : MImgSizeT,
-  outFmt      : OutImgFmt         = AdRenderArgs.OUT_FMT_DFLT,
-  quality     : Option[Int]       = None,
+  outFmt      : OutImgFmt,
+  quality     : Option[Int],
   zoomOpt     : Option[Float]     = None,
   plugins     : Boolean           = false,
   crop        : Option[ImgCrop]   = None,
