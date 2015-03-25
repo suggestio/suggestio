@@ -30,10 +30,20 @@ object AdRenderArgs {
 
   /** Используемый по умолчанию рендерер. Влияет на дефолтовый рендеринг карточки. */
   val RENDERER: IAdRendererCompanion = {
-    configuration.getString("ad.render.renderer.class")
-      .map(Class.forName(_).asInstanceOf[IAdRendererCompanion])
-      .getOrElse(WkHtmlArgs)
+    val ck = "ad.render.renderer.dflt"
+    configuration.getString(ck)
+      .fold [IAdRendererCompanion] (WkHtmlArgs) { raw =>
+        if (raw startsWith "wkhtml") {
+          WkHtmlArgs
+        } else if (raw startsWith "phantom") {
+          PhantomJsAdRenderArgs
+        } else {
+          throw new IllegalArgumentException("Unknown ad2img renderer: " + ck + " = " + raw)
+        }
+      }
   }
+
+  // TODO safe render, который сначала пытается запустить дефолтовый (предпочитаемый) рендер, а при ошибке -- другие доступные.
 
 }
 

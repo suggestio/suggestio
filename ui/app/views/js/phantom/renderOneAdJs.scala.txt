@@ -1,0 +1,26 @@
+@(args: im.PhantomJsAdRenderArgsT, outImgPath: String)
+
+@* js для генерации инструкций для phantom.js, чтобы тот отрендерил карточку в картинку.
+   http://stackoverflow.com/a/26144062
+   http://phantomjs.org/api/webpage/method/render.html
+*@
+
+@import args._
+
+var width = @scrSz.width;
+var height = @scrSz.height;
+var webpage = require('webpage');
+
+page = webpage.create();
+
+page.viewportSize = {width: @scrSz.width, height: @scrSz.height};
+page.open('@src', function(status) {
+  @* console.log(status); *@
+  page.evaluate(function() {
+    document.body.style.width  = @scrSz.width + "px";
+    document.body.style.height = @scrSz.height + "px";
+  });
+  page.clipRect = {top: 0, left: 0, width: @scrSz.width, height: @scrSz.height};
+  page.render('@outImgPath', {format: '@outFmt'@if(quality){, quality: '@quality'}});
+  phantom.exit();
+});

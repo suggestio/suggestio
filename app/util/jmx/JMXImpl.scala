@@ -68,7 +68,10 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
       try {
         srv.registerMBean(jmxMB, jmxMB.jmxName)
       } catch {
-        case ex: Exception => error("Cannot register " + jmxMB, ex)
+        case _: javax.management.InstanceAlreadyExistsException =>
+          warn("Instance already registered: " + jmxMB)
+        case ex: Exception =>
+          error("Cannot register " + jmxMB, ex)
       }
     }
   }
