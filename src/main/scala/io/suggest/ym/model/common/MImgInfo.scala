@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
+import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.model.EsModel
 import play.api.libs.json._
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -78,10 +79,7 @@ object MImgInfoMeta {
 import MImgInfoMeta._
 
 /** Интерфейс для класса, который будет хранить размер картинки. */
-trait MImgSizeT {
-  def height: Int
-  def width: Int
-
+trait MImgSizeT extends ISize2di {
   def isSmallerThan(sz: MImgSizeT): Boolean = {
     height < sz.height  &&  width < sz.width
   }
