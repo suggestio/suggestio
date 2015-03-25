@@ -74,7 +74,7 @@ object SiobixBuild extends Build {
   }
 
   lazy val util = project
-    .dependsOn(modelEnumUtil)
+    .dependsOn(modelEnumUtil, advExtCommon)
 
   /*lazy val utilPlay = {
     val name = "util-play"
