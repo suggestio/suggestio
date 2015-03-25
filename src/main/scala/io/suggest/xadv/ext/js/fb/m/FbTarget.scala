@@ -2,13 +2,25 @@ package io.suggest.xadv.ext.js.fb.m
 
 import java.net.URI
 
+import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+
+import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.03.15 13:48
  * Description: Модель представления цели размещения на основе ссылки.
  */
-object FbTarget {
+object FbTarget extends FromJsonT {
+
+  /** Название поля значения nodeId в JSON-представлении. */
+  def NODE_ID_FN   = "i"
+
+  /** Название необязательного поля типа узла fb-графа. */
+  def NODE_TYPE_FN = "t"
+
+  override type T = FbTarget
 
   /**
    * Десериализовать из URL.
@@ -50,6 +62,17 @@ object FbTarget {
       }
   }
 
+  /** Десериализация из переносимого JSON-представления. */
+  override def fromJson(raw: Any): T = {
+    val d = raw.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
+    FbTarget(
+      nodeId    = d(NODE_ID_FN).toString,
+      nodeType  = d.get(NODE_TYPE_FN)
+        .map(_.toString)
+        .flatMap(FbNodeTypes.maybeWithName)
+    )
+  }
+
 }
 
 
@@ -62,10 +85,27 @@ trait IFbNodeId {
 }
 
 
+import FbTarget._
+
+
 /**
  * Инфа по запрошенному узлу фейсбука.
  * @param nodeId fb id узла.
  * @param nodeType Тип узла, если известен.
  */
-case class FbTarget(nodeId: String, nodeType: Option[FbNodeType]) extends IFbNodeId
+case class FbTarget(
+  nodeId    : String,
+  nodeType  : Option[FbNodeType]
+) extends IFbNodeId with IToJsonDict {
+
+  /** Сериализация в переносимое JSON-представление. */
+  override def toJson: Dictionary[Any] = {
+    val d = Dictionary[Any](
+      NODE_ID_FN -> nodeId
+    )
+    if (nodeType.isDefined)
+      d.update(NODE_TYPE_FN, nodeType.get.mdType)
+    d
+  }
+}
 

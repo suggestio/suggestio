@@ -3,7 +3,7 @@ package io.suggest.xadv.ext.js.fb.c
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.m.ex._
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MJsCtx, IAdapter}
+import io.suggest.xadv.ext.js.runner.m._
 import org.scalajs.dom
 
 import scala.concurrent.{Promise, Future}
@@ -188,41 +188,100 @@ class FbAdapter extends IAdapter {
         resp.accessToken
       }
   }
+  
+  /** Определение типа целевого таргета. */
+  protected def detectTgNodeType(target: MExtTarget): Future[FbTarget] = {
+    // Первый шаг - определяем по узлу данные.
+    val tgInfoOpt = FbTarget.fromUrl( target.tgUrl )
+    tgInfoOpt match {
+      // Неизвестный URL. Завершаемся.
+      case None =>
+        Future failed new UnknownTgUrlException
+      case Some(info) =>
+        if (info.nodeType.isEmpty) {
+          // id узла есть, но тип не известен. Нужно запустить определение типа указанной цели.
+          getNodeType(info.nodeId)
+            .map { _ getOrElse info }
+        } else {
+          Future successful info
+        }
+    }
+  }
 
-  /** Запуск обработки одной цели. */
-  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
-    // TODO Нужно оформить код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
-    doLogin() flatMap { _ =>
-      // Первый шаг - определяем по узлу данные.
-      val tgInfoOpt = FbTarget.fromUrl( mctx0.target.get.tgUrl )
-      tgInfoOpt match {
-        // Неизвестный URL. Завершаемся.
-        case None =>
-          Future failed new UnknownTgUrlException
-        case Some(info) =>
-          if (info.nodeType.isEmpty) {
-            // id узла есть, но тип не известен. Нужно запустить определение типа указанной цели.
-            getNodeType(info.nodeId)
-              .map { _ getOrElse info }
-          } else {
-            Future successful info
-          }
+  /** Подготовить данные по цели к публикации.
+    * Запрашиваем специальный access_token, если требуется. */
+  protected def mkTgInfo(fbTg: FbTarget): Future[FbTgPostingInfo] = {
+    if (fbTg.nodeType contains FbNodeTypes.Page) {
+      // Для постинга на страницу нужно запросить page access token.
+      getAccessToken(fbTg.nodeId)
+        .map { pageAcTokOpt =>
+        FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = pageAcTokOpt)
       }
+    } else {
+      val res = FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = None)
+      Future successful res
+    }
+  }
+
+  /** Является ли текущие размер картинки подходящими под тип. */
+  protected def isPicSzOk(hasPicSzOpt: Option[IMSize2D], typeSzOpt: Option[FbWallImgSize]): Boolean = {
+    val resOpt = for {
+      picSz  <- hasPicSzOpt
+      typeSz <- typeSzOpt
+    } yield {
+      picSz sizeWhEquals typeSz
+    }
+    resOpt contains true
+  }
+
+  /** Убедится, что размер картинки подходит под требования системы.
+    * @param mctx0 Начальный контекст
+    * @return Right() если не требуется изменять размер картинки.
+    *         Left() с fillCtx-контекстом, который будет отправлен на сервер.
+    */
+  protected def ensureImgSz(fbTg: FbTarget, mctx0: MJsCtx): Either[MJsCtx, _] = {
+    val picSzOpt = mctx0.mads
+      .headOption
+      .flatMap(_.picture)
+      .flatMap(_.size)
+    val fbWallImgSizeOpt = fbTg.nodeType
+      .map(_.wallImgSz)
+    if (picSzOpt.isEmpty || isPicSzOk(picSzOpt, fbWallImgSizeOpt)) {
+      Right(None)
+
+    } else {
+      Left(mctx0.copy(
+        status = Some( MAnswerStatuses.FillContext ),
+        custom = Some( FbCtx(fbTg = fbTg).toJson ),
+        mads = mctx0.mads.map { mad =>
+          mad.copy(
+            picture = Some( MAdPictureCtx(size = fbWallImgSizeOpt) )
+          )
+        }
+      ))
+    }
+  }
+
+
+  // TODO Нужно оформить нижеследующий код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
+
+  /** Первый шаг, который заканчивается переходом на step2() либо fillCtx. */
+  protected def step1(mctx0: MJsCtx): Future[MJsCtx] = {
+    doLogin() flatMap { _ =>
+      detectTgNodeType(mctx0.target.get)
 
     } flatMap { fbTg =>
-      // Второй шаг: Запрашиваем специальный access_token, если требуется.
-      if (fbTg.nodeType contains FbNodeTypes.Page) {
-        // Для постинга на страницу нужно запросить page access token.
-        getAccessToken(fbTg.nodeId)
-          .map { pageAcTokOpt =>
-            FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = pageAcTokOpt)
-          }
-      } else {
-        val res = FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = None)
-        Future successful res
+      ensureImgSz(fbTg, mctx0) match {
+        case Left(mctx1) => Future successful mctx1
+        case _           => step2(FbCtx(fbTg), mctx0)
       }
+    }
+  }
 
-    } flatMap { tgInfo =>
+  /** Второй шаг -- это шаг публикации. */
+  protected def step2(fbCtx: FbCtx, mctx0: MJsCtx): Future[MJsCtx] = {
+    // Второй шаг: получение доп.данных по цели для публикации, если необходимо.
+    mkTgInfo(fbCtx.fbTg) flatMap { tgInfo =>
       // Третий шаг - запуск публикации поста.
       publishPost(mctx0, tgInfo)
 
@@ -231,6 +290,14 @@ class FbAdapter extends IAdapter {
       mctx0.copy(
         status = Some(MAnswerStatuses.Success)
       )
+    }
+  }
+
+  /** Запуск обработки одной цели. */
+  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
+    mctx0.custom.map(FbCtx.fromJson) match {
+      case None         => step1(mctx0)
+      case Some(fbCtx)  => step2(fbCtx, mctx0)
     }
   }
 

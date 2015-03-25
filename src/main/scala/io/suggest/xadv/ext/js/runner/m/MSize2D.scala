@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.Size2dCtx._
+import io.suggest.adv.ext.model.im.ISize2di
 
 import scala.scalajs.js
 import scala.scalajs.js.WrappedDictionary
@@ -22,10 +23,12 @@ object MSize2D extends FromStringT {
   }
 }
 
-case class MSize2D(width: Int, height: Int) extends IToJsonDict {
+trait IMSize2D extends IToJsonDict with ISize2di {
   override def toJson = js.Dictionary[js.Any](
     WIDTH_FN  -> width,
     HEIGHT_FN -> height
   )
 }
+
+case class MSize2D(width: Int, height: Int) extends IMSize2D
 

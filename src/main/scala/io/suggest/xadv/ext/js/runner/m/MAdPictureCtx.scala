@@ -28,7 +28,7 @@ object MAdPictureCtx extends FromStringT {
 
 
 case class MAdPictureCtx(
-  size    : Option[MSize2D]         = None,
+  size    : Option[IMSize2D]        = None,
   upload  : Option[MPicUploadCtxT]  = None,
   url     : Option[String]          = None,
   saved   : Option[String]          = None

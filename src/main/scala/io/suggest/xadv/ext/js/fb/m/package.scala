@@ -9,4 +9,6 @@ package object m {
 
   type FbNodeType = FbNodeTypes.T
 
+  type FbWallImgSize  = FbWallImgSizes.T
+
 }

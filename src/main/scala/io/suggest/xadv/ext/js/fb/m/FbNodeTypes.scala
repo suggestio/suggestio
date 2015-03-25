@@ -16,13 +16,16 @@ object FbNodeTypes extends LightEnumeration {
    */
   sealed protected class Val(val mdType: String) extends ValT {
     def needPageToken: Boolean = false
+    def wallImgSz: FbWallImgSize = FbWallImgSizes.Community
   }
 
   /** Тип значений модели. */
   override type T = Val
 
   /** Юзер, т.е. человек. */
-  val User: T = new Val("user")
+  val User: T = new Val("user") {
+    override def wallImgSz = FbWallImgSizes.User
+  }
 
   /** Страница, т.е. некий "сайт". */
   val Page: T = new Val("page") {
