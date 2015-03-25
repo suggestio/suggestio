@@ -85,7 +85,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   protected def service = args.target.target.service
 
   /** Инфа по картинке кодируется этим классом. */
-  protected case class PicInfo(wide: Option[OneAdWideQsArgs], width: Int, height: Int, szMult: SzMult_t) extends MImgSizeT
+  protected case class PicInfo(wide: Option[OneAdWideQsArgs], width: Int, height: Int, szMult: SzMult_t)
+    extends MImgSizeT
 
   /** Инфа по рендеру карточки в картинке. */
   protected lazy val madRenderInfo: PicInfo = {
@@ -345,11 +346,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       } else {
         val maybeAdNeedNewPicUrl = mctx0.mads.find { madCtx =>
           val picUrlOpt = madCtx.picture.flatMap(_.sioUrl)
-          picUrlOpt.isEmpty || picUrlOpt.exists(_.trim.isEmpty)
+          picUrlOpt.isEmpty || picUrlOpt.exists(_.isEmpty)
         }
         if (maybeAdNeedNewPicUrl.nonEmpty) {
           // Требуется выставить новую ссылку на картинку в контекст
-          val madCtx1 = maybeAdNeedNewPicUrl.get.copy(picture = Some(jsPicCtx))
+          val madCtx1 = maybeAdNeedNewPicUrl.get.copy(
+            picture = Some(jsPicCtx)
+          )
           val mads1 = mctx0.mads.map { madCtx =>
             if (madCtx1.id == madCtx.id) madCtx1 else madCtx
           }

@@ -36,6 +36,7 @@ object WkHtmlArgs extends PlayMacroLogsDyn with IAdRendererCompanion {
   /** Дефолтовое значение quality, если не задано. */
   override def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = {
     fmt match {
+      // Для усиления сжатия PNG нужно выставлять "--quality 0" для wkhtmltoimage. Это уменьшает размер в несколько раз.
       case OutImgFmts.PNG => Some(0)
       case _              => super.qualityDflt(scrSz, fmt)
     }

@@ -3,6 +3,7 @@ package models.adv
 import java.net.URL
 import _root_.util.blocks.{BlocksConf, BgImg}
 import io.suggest.adv.ext.model._, MServices._
+import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.{MAdT, MAd}
@@ -82,7 +83,7 @@ object MExtServices extends MServicesT {
      * Максимальные размеры картинки при постинге в соц.сеть в css-пикселях.
      * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
      */
-    def advPostMaxSz(tgUrl: String): Option[MImgSizeT] = None
+    def advPostMaxSz(tgUrl: String): Option[ISize2di] = None
 
     /**
      * Мультипликатор размера для экспортируемых на сервис карточек.
