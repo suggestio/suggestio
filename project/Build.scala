@@ -105,6 +105,9 @@ object SiobixBuild extends Build {
     id = "root",
     base = file(".")
   )
+  .settings(
+    scalaVersion := "2.11.6"
+  )
   .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, advExtSjsForm, util, securesocial, web21)
 
 

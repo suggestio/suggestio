@@ -50,9 +50,9 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 
 addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.1")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.2")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
-addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.2.3")
+addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.2.4")
 
