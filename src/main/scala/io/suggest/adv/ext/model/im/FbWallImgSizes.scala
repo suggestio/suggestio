@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model.im
 
-import io.suggest.model.IVeryLightEnumeration
+import io.suggest.model._
 
 /**
  * Suggest.io
@@ -8,39 +8,63 @@ import io.suggest.model.IVeryLightEnumeration
  * Created: 25.03.15 15:50
  * Description: Шаблон статической модели размеров картинок Facebook.
  */
-trait FbWallImgSizesBaseT extends IVeryLightEnumeration {
+trait FbWallImgSizesBaseT extends ServiceSizesEnumBaseT {
 
-  protected trait ValT extends super.ValT with ISize2di
+  // алиасы (названия) размеров.
+  def FB_SZ_COMMUNITY_ALIAS = "fbc"
+  def FB_SZ_USER_ALIAS      = "fbu"
 
-  protected trait CommunityValT extends ValT {
+  protected trait FbCommunityValT extends ValT {
     override def width  = 470
     override def height = 246
   }
 
-  protected trait UserValT extends ValT {
+  protected trait FbUserValT extends ValT {
     override def width  = 487
     override def height = 255
   }
 
-  override type T <: ValT
-
   /** Community-страницы: page, event, group. */
-  val Community: T
+  val FbCommunityLink: T
 
   /** Пользовательские страницы. У них немного другие размеры. */
-  val User: T
+  val FbUserLink: T
+
+}
 
 
-  def maybeWithSize(sz: ISize2di): Option[T] = {
-    maybeWithSize(width = sz.width,  height = sz.height)
+/** Абстрактная реализация размеров link-картинок Facebook через [[scala.Enumeration]]. */
+trait FbWallImgSizesScalaEnumT extends ServiceSizesEnumScalaT with FbWallImgSizesBaseT {
+  override val FbCommunityLink: T = new Val(FB_SZ_COMMUNITY_ALIAS) with FbCommunityValT
+  override val FbUserLink: T      = new Val(FB_SZ_USER_ALIAS) with FbUserValT
+}
+
+
+/** Заготовка Light-модели. Её можно ещё допилить. */
+trait FbWallImgSizeLightBaseT extends FbWallImgSizesBaseT with ServiceSizesEnumLightT {
+  protected trait FbCommunityValT extends super.FbCommunityValT {
+    override def szAlias = FB_SZ_COMMUNITY_ALIAS
   }
-  def maybeWithSize(width: Int, height: Int): Option[T] = {
-    if (width == Community.width && height == Community.height)
-      Some(Community)
-    else if (width == User.width && height == User.height)
-      Some(User)
+  protected trait FbUserValT extends super.FbUserValT {
+    override def szAlias = FB_SZ_USER_ALIAS
+  }
+
+  override def maybeWithName(n: String): Option[T] = {
+    if (FbCommunityLink.szAlias == n)
+      Some(FbCommunityLink)
+    else if (FbUserLink.szAlias == n)
+      Some(FbUserLink)
     else
-      None
+      super.maybeWithName(n)
   }
+}
+
+/** Абстрактная Light-реализация размером facebook. Допиливать её уже проблематично. */
+trait FbWallImgSizesLightT extends FbWallImgSizeLightBaseT {
+
+  override type T = ValT
+
+  override val FbCommunityLink: T = new ValT with FbCommunityValT
+  override val FbUserLink: T = new ValT with FbUserValT
 
 }
