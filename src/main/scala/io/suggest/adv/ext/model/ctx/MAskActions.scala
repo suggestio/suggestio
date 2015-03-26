@@ -30,6 +30,8 @@ trait MAskActionsBaseT extends ILightEnumeration {
 
   trait ValT extends super.ValT {
     val strId: String
+
+    override def toString = strId
   }
 
   override type T <: ValT

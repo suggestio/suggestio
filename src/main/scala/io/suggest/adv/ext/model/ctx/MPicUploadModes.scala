@@ -12,6 +12,7 @@ trait MPicUploadModesT extends ILightEnumeration {
   
   protected trait ValT extends super.ValT {
     val jsName: String
+    override def toString = jsName
   }
 
   override type T <: ValT
