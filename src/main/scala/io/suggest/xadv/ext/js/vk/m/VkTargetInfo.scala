@@ -56,6 +56,7 @@ case class VkTargetInfo(id: UserId_t, tgType: VkTargetType, name: Option[String]
  */
 object VkTargetTypes extends LightEnumeration {
   sealed protected trait ValT extends super.ValT {
+    def vkName: String
     def isUser: Boolean = false
     def isGroup: Boolean = !isUser
   }
@@ -64,7 +65,9 @@ object VkTargetTypes extends LightEnumeration {
    * Экземпляр модели.
    * @param vkName Название в терминах вконтакта.
    */
-  protected sealed class Val(val vkName: String) extends ValT
+  protected sealed class Val(val vkName: String) extends ValT {
+    override def toString = vkName
+  }
 
 
   override type T = Val
