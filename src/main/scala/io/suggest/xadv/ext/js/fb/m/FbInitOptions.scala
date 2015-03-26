@@ -10,6 +10,24 @@ import scala.scalajs.js.{Any, Dictionary}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.03.15 18:04
  * Description: Модель параметров инициализации fb js клиента.
+ */
+
+object FbInitOptions {
+
+  /**
+   * Используемая версия Fb api.
+   * @see [[https://developers.facebook.com/docs/apps/changelog]]
+   */
+  def API_VSN = "v2.2"
+
+}
+
+
+import FbInitOptions._
+
+
+/**
+ * Экземпляр модели.
  * @param appId id аппликухи.
  */
 case class FbInitOptions(
@@ -21,7 +39,7 @@ case class FbInitOptions(
       "appId"   -> appId,
       "xfbml"   -> true,
       "cookie"  -> true,
-      "version" -> "v2.2"
+      "version" -> API_VSN
     )
   }
 }

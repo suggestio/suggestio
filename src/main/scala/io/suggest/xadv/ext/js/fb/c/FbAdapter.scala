@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.fb.c
 
+import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.m.ex._
@@ -223,39 +224,38 @@ class FbAdapter extends IAdapter {
     }
   }
 
-  /** Является ли текущие размер картинки подходящими под тип. */
-  protected def isPicSzOk(hasPicSzOpt: Option[IMSize2D], typeSzOpt: Option[FbWallImgSize]): Boolean = {
-    val resOpt = for {
-      picSz  <- hasPicSzOpt
-      typeSz <- typeSzOpt
-    } yield {
-      picSz sizeWhEquals typeSz
-    }
-    resOpt contains true
-  }
-
   /** Убедится, что размер картинки подходит под требования системы.
     * @param mctx0 Начальный контекст
     * @return Right() если не требуется изменять размер картинки.
     *         Left() с fillCtx-контекстом, который будет отправлен на сервер.
     */
   protected def ensureImgSz(fbTg: FbTarget, mctx0: MJsCtx): Either[MJsCtx, _] = {
+    // TODO Сейчас проверяется только первая карточка
     val picSzOpt = mctx0.mads
       .headOption
       .flatMap(_.picture)
-      .flatMap(_.size)
-    val fbWallImgSizeOpt = fbTg.nodeType
-      .map(_.wallImgSz)
-    if (picSzOpt.isEmpty || isPicSzOk(picSzOpt, fbWallImgSizeOpt)) {
+      .flatMap(_.sizeId)
+      .flatMap(FbWallImgSizes.maybeWithName)
+    val nt = fbTg.nodeType
+    val fbWallImgSizeOpt = nt.map(_.wallImgSz)
+    if (picSzOpt.isEmpty || fbWallImgSizeOpt.exists(_.szAlias == picSzOpt.get.szAlias) ) {
+      dom.console.info("Current img size %s is ok for fb node type %s", picSzOpt.toString, nt.toString)
+      // Сервер прислал инфу по картинке в правильном формате
       Right(None)
 
     } else {
+      dom.console.info("Current img size %s is NOT ok for fb node type %s. Req to update img size to %s", picSzOpt.toString,
+        nt.toString, fbWallImgSizeOpt.toString)
+      // Формат картинки не подходит, но серверу доступен другой подходящий размер.
       Left(mctx0.copy(
         status = Some( MAnswerStatuses.FillContext ),
         custom = Some( FbCtx(fbTg = fbTg).toJson ),
         mads = mctx0.mads.map { mad =>
+          // TODO Когда неск.карточек, то им нужно ведь разные размеры выставлять.
           mad.copy(
-            picture = Some( MAdPictureCtx(size = fbWallImgSizeOpt) )
+            picture = Some( MAdPictureCtx(
+              sizeId = fbWallImgSizeOpt.map(_.szAlias)
+            ))
           )
         }
       ))

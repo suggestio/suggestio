@@ -18,7 +18,7 @@ object MAdPictureCtx extends FromStringT {
   override def fromJson(raw: js.Any): T = {
     val d = raw.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
     MAdPictureCtx(
-      size    = d.get(SIZE_FN).map(MSize2D.fromJson),
+      sizeId  = d.get(SIZE_FN).map(_.toString),
       upload  = d.get(UPLOAD_FN).map(MPictureUploadCtx.fromJson),
       url     = d.get(SIO_URL_FN).map(_.toString),
       saved   = d.get(SAVED_FN).map(_.toString)
@@ -26,9 +26,15 @@ object MAdPictureCtx extends FromStringT {
   }
 }
 
-
+/**
+ * Экземпляр распарсенного контекста картинки.
+ * @param sizeId id размера в рамках размерной линейки сервиса.
+ * @param upload Инфа по загрузке картинки в хранилище сервиса, если есть.
+ * @param url Ссылка.
+ * @param saved Инфа по сохраненной загруженной картинке в хранилище сервиса.
+ */
 case class MAdPictureCtx(
-  size    : Option[IMSize2D]        = None,
+  sizeId  : Option[String]          = None,
   upload  : Option[MPicUploadCtxT]  = None,
   url     : Option[String]          = None,
   saved   : Option[String]          = None
@@ -36,8 +42,8 @@ case class MAdPictureCtx(
 
   override def toJson = {
     val d = js.Dictionary.empty[js.Any]
-    if (size.isDefined)
-      d.update(SIZE_FN, size.get.toJson)
+    if (sizeId.isDefined)
+      d.update(SIZE_FN, sizeId.get)
     if (upload.isDefined)
       d.update(UPLOAD_FN, upload.get.toJson)
     if (url.isDefined)

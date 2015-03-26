@@ -23,7 +23,7 @@ object MJsCtxSpec extends SimpleTestSuite {
         descr = Some("as dfaSDFASDF awefawef w3f aw3 wf awf asfawef awefa wef awef awef awefawefawef234")
       ),
       picture = Some(MAdPictureCtx(
-        size = Some(MSize2D(600, 600)),
+        sizeId = Some("someSizeId"),
         upload = Some(MPicS2sUploadCtx(url = "http://pu.vk.com/asdasdasd", partName = "photo")),
         url = Some("http://www.suggest.io/pic4a/123123"),
         saved = Some("{asdasd: 4535}")
