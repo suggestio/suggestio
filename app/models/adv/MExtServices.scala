@@ -3,7 +3,7 @@ package models.adv
 import java.net.URL
 import _root_.util.blocks.{BlocksConf, BgImg}
 import io.suggest.adv.ext.model._, MServices._
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.adv.ext.model.im.{VkWallImgSizesScalaEnumT, FbWallImgSizesScalaEnumT, INamedSize2di, ISize2di}
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import models.{MAdT, MAd}
@@ -83,7 +83,10 @@ object MExtServices extends MServicesT {
      * Максимальные размеры картинки при постинге в соц.сеть в css-пикселях.
      * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
      */
-    def advPostMaxSz(tgUrl: String): Option[ISize2di] = None
+    def advPostMaxSz(tgUrl: String): INamedSize2di
+    
+    /** Найти стандартный (в рамках сервиса) размер картинки. */
+    def postImgSzWithName(n: String): Option[INamedSize2di]
 
     /**
      * Мультипликатор размера для экспортируемых на сервис карточек.
@@ -98,9 +101,9 @@ object MExtServices extends MServicesT {
     /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
     def advExtWidePosting(tgUrl: String, mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
       if (isAdvExtWide(mad)) {
-        advPostMaxSz(tgUrl).map { sz =>
-          OneAdWideQsArgs(width = (sz.width * szMult).toInt)
-        }
+        val sz = advPostMaxSz(tgUrl)
+        val v = OneAdWideQsArgs(width = (sz.width * szMult).toInt)
+        Some(v)
       } else {
         None
       }
@@ -147,7 +150,12 @@ object MExtServices extends MServicesT {
      * @see [[https://pp.vk.me/c617930/v617930261/4b62/S2KQ45_JHM0.jpg]] хрень?
      * @return Экземпляр 2D-размеров.
      */
-    override def advPostMaxSz(tgUrl: String) = Some( MImgInfoMeta(width = 1100, height = 700) )
+    override def advPostMaxSz(tgUrl: String) = VkImgSizes.VkWallDflt
+
+    /** Найти стандартный (в рамках сервиса) размер картинки. */
+    override def postImgSzWithName(n: String): Option[INamedSize2di] = {
+      VkImgSizes.maybeWithName(n)
+    }
   }
 
 
@@ -159,25 +167,22 @@ object MExtServices extends MServicesT {
     }
     override def dfltTargetUrl = Some("https://facebook.com/me")
 
-    // Размеры картинки при постинге на страницу юзера.
-    def ADV_EXT_USER_WIDTH    = 487
-    def ADV_EXT_USER_HEIGHT   = 255
-    def ADV_EXT_USER_SZ       = MImgInfoMeta(width = ADV_EXT_USER_WIDTH, height = ADV_EXT_USER_HEIGHT)
-
-    // Размеры картинки при постинге на страницу группы.
-    def ADV_EXT_GROUP_WIDTH   = 470
-    def ADV_EXT_GROUP_HEIGHT  = 246
-    def ADV_EXT_GROUP_SZ      = MImgInfoMeta(width = ADV_EXT_GROUP_WIDTH, height = ADV_EXT_GROUP_HEIGHT)
-
     /** Параметры картинки для размещения. */
-    override def advPostMaxSz(tgUrl: String): Option[MImgSizeT] = {
-      // TODO Узнать и добавить размеры для event'ов и прочего.
-      val sz = if (tgUrl contains "/groups/") {
-        ADV_EXT_GROUP_SZ
+    override def advPostMaxSz(tgUrl: String): INamedSize2di = {
+      // TODO Узнать и добавить размеры для корня и /me.
+      val path = new URL(tgUrl).getPath
+      if ( (path startsWith "/me") || (path == "/") ||
+           (path startsWith  "/groups/") || (tgUrl startsWith "/pages/") ||
+           (tgUrl startsWith "/events/") || !(tgUrl startsWith "/profile.php") ) {
+        FbImgSizes.FbCommunityLink
       } else {
-        ADV_EXT_USER_SZ
+        FbImgSizes.FbUserLink
       }
-      Some(sz)
+    }
+
+    /** Найти стандартный (в рамках сервиса) размер картинки. */
+    override def postImgSzWithName(n: String): Option[INamedSize2di] = {
+      FbImgSizes.maybeWithName(n)
     }
 
     /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */
@@ -198,6 +203,11 @@ object MExtServices extends MServicesT {
       "(?i)(www\\.)?twitter\\.com".r.pattern.matcher(host).matches()
     }
     override def dfltTargetUrl = None
+
+    /** Найти стандартный (в рамках сервиса) размер картинки. */
+    override def postImgSzWithName(n: String) = ???  // TODO
+
+    override def advPostMaxSz(tgUrl: String) = ???    // TODO
   }
 
 
@@ -226,5 +236,12 @@ object MExtServices extends MServicesT {
     (__ \ APP_ID_FN).writeNullable[String]
   ){ s => (s.strId, s.APP_ID_OPT) }
 
-
 }
+
+
+/** Реализация модели размеров картинок фейсбука. */
+object FbImgSizes extends FbWallImgSizesScalaEnumT
+
+/** Реализация модели размеров картинок vk. */
+object VkImgSizes extends VkWallImgSizesScalaEnumT
+
