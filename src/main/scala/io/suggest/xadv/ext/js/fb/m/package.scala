@@ -7,8 +7,14 @@ package io.suggest.xadv.ext.js.fb
  */
 package object m {
 
-  type FbNodeType = FbNodeTypes.T
+  type FbNodeType               = FbNodeTypes.T
 
-  type FbWallImgSize  = FbWallImgSizes.T
+  type FbWallImgSize            = FbWallImgSizes.T
+
+  type FbLoginStatus            = FbLoginStatuses.T
+
+  type FbPermission             = FbPermissions.T
+
+  type FbPermissionStatus       = FbPermissionStatuses.T
 
 }

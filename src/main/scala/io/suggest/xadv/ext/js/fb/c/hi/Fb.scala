@@ -5,7 +5,6 @@ import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.m.{ToJsonDictDummy, FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.js.{Dictionary, Any}
 
@@ -26,10 +25,30 @@ object Fb {
    * @param opts Экземпляр параметров инициализации.
    * @return Фьчерс
    */
-  def init(opts: FbInitOptions): Future[_] = {
-    Future {
-      FbLow init opts.toJson
+  def init(opts: FbInitOptions) = FbLow.init( opts.toJson )
+
+  /**
+   * Враппер для вызова login-функций.
+   * @param f Функция, вызывающая login-логику FbLow.
+   *          Первый аргумент этой функции -- callback-функция.
+   * @return Фьючерс с результатом.
+   */
+  protected def _loginWrapper(f: (Function[Dictionary[Any], _]) => Unit): Future[FbLoginResult] = {
+    val p = Promise[FbLoginResult]()
+    try {
+      f { resp: Dictionary[Any] =>
+        try {
+          p success FbLoginResult.fromLoginResp(resp)
+        } catch {
+          case ex: Throwable =>
+            p failure LoginApiException("Failed to process FB.login() result.", ex)
+        }
+      }
+    } catch {
+      case ex: Throwable =>
+        p failure LoginApiException("Failed to call FB.login().", ex)
     }
+    p.future
   }
 
   /**
@@ -39,29 +58,37 @@ object Fb {
    *         Future.failed если не удалось запустить логин или распарсить результат.
    */
   def login(args: FbLoginArgs): Future[FbLoginResult] = {
-    val p = Promise[FbLoginResult]()
-    try {
-      FbLow.login(
-        {resp: Dictionary[Any] =>
-          try {
-            p success FbLoginResult.fromLoginResp(resp)
-          } catch {
-            case ex: Throwable =>
-              p failure LoginApiException("Failed to process FB.login() result.", ex)
-          }
-        },
-        args.toJson
-      )
-    } catch {
-      case ex: Throwable =>
-        p failure LoginApiException("Failed to call FB.login().", ex)
+    _loginWrapper {
+      FbLow.login(_, args.toJson)
     }
-    p.future
+  }
+
+
+  /**
+   * Асинхронно узнать/запросить инфу по текущей залогиненности юзера.
+   * @param force Форсировать запрос с fb-сервера, игнорируя закешированные результаты?
+   * @return Тоже, что и login().
+   */
+  def getLoginStatus(force: Boolean = false): Future[FbLoginResult] = {
+    _loginWrapper {
+      FbLow.getLoginStatus(_, force)
+    }
+  }
+
+  /**
+   * Синхронно получить объект с данными по недавнему вызову login() / getLoginStatus().
+   * @return Опциональный распарсенный результат работы.
+   *         При ошибках будет exception.
+   */
+  def getAuthResponse(): Option[FbAuthResponse] = {
+    Option( FbLow.getAuthResponse() )
+      .map { FbAuthResponse.fromJson }
   }
 
 
   /** Высокоуровневый вызов к API. */
-  protected def apiCallSafe[T1](httpMethod: String, path: String, args: IToJsonDict, model: FromJsonT { type T = T1 }): Future[T1] = {
+  protected def apiCallSafe[T1](httpMethod: String, path: String, args: IToJsonDict,
+                                model: FromJsonT { type T = T1 } ): Future[T1] = {
     val p = Promise[T1]()
     try {
       FbLow.api(
@@ -102,6 +129,19 @@ object Fb {
       path        = args.toPath,
       args        = new ToJsonDictDummy,
       model       = FbNodeInfoResult
+    )
+  }
+
+  /** Получить инфу по выставленным пермишшенам приложения у юзера. */
+  def getPermissions(args: FbGetPermissionsArgs): Future[FbGetPermissionsResult] = {
+    var reqPath: String = "/" + args.userId + "/permissions"
+    if (args.accessToken.nonEmpty)
+      reqPath = reqPath + "?access_token=" + args.accessToken.get
+    apiCallSafe(
+      httpMethod  = HTTP_GET,
+      path        = reqPath,
+      args        = new ToJsonDictDummy,
+      model       = FbGetPermissionsResult
     )
   }
 

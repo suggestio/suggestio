@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.xadv.ext.js.runner.m.IToJsonDict
+import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
 
 import scala.scalajs.js
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
@@ -11,43 +11,48 @@ import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
  * Created: 03.03.15 11:09
  * Description: Модель параметров запуска процедуры логина.
  */
-object FbLoginArgs {
 
-  /** Разрешение на публикацию. */
-  def SCOPE_PUBLISH_ACTIONS = "publish_actions"
-
-  /** Разрешение на доступ к страницам. */
-  def SCOPE_MANAGE_PAGES    = "manage_pages"
-
-  /** Все перечисленные права доступа одной строкой. */
-  def ALL_RIGHTS = SCOPE_PUBLISH_ACTIONS + "," + SCOPE_MANAGE_PAGES
-}
-
-
-case class FbLoginArgs(scope: String) extends IToJsonDict {
+case class FbLoginArgs(
+  scope         : String,
+  returnScopes  : Boolean
+) extends IToJsonDict {
   override def toJson: Dictionary[Any] = {
     Dictionary[Any](
-      "scope" -> scope
+      "scope"         -> scope,
+      "return_scopes" -> returnScopes
     )
   }
 }
 
 
+/**
+ * Модель результатов вызовов login() и getLoginStatus().
+ * @see [[https://developers.facebook.com/docs/reference/javascript/FB.getLoginStatus#response_and_session_objects]]
+ */
 object FbLoginResult {
 
   /**
-   * Десериализация из fb login response.
+   * Десериализация из fb login response:
    * @param resp Результат работы FB.login().
    * @return Экземпляр [[FbLoginResult]].
    */
   def fromLoginResp(resp: js.Dictionary[js.Any]): FbLoginResult = {
     val d = resp: WrappedDictionary[js.Any]
     FbLoginResult(
-      hasAuthResp = d contains "authResponse"
+      status = d.get("status")
+        .flatMap { v => FbLoginStatuses.maybeWithName(v.toString) }
+        .get,
+      authResp = d.get("authResponse")
+        .map(FbAuthResponse.fromJson)
     )
   }
 
 }
 
 /** Результат логина. */
-case class FbLoginResult(hasAuthResp: Boolean)
+case class FbLoginResult(
+  status    : FbLoginStatus,
+  authResp  : Option[FbAuthResponse]
+)
+
+

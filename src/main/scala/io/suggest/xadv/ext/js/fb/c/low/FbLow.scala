@@ -27,6 +27,23 @@ object FbLow extends js.Object {
             args: js.Dictionary[js.Any] ): Unit = js.native
 
   /**
+   * Запустить асинхронное получение
+   * @param callback function(response)
+   * @param force Force reloading the login status (default false).
+   */
+  def getLoginStatus(callback: js.Function1[js.Dictionary[js.Any], _],
+                     force: Boolean = js.native): Unit = js.native
+
+  /**
+   * Синхронно получить текущий (последний) экземпляр объекта authResponse,
+   * полученные ранее через login/getLoginStatus.
+   * @see [[https://developers.facebook.com/docs/reference/javascript/FB.getAuthResponse]]
+   * @see [[https://developers.facebook.com/docs/reference/javascript/FB.getLoginStatus#response_and_session_objects]]
+   * @return Экземпляр JSON authResponse или null.
+   */
+  def getAuthResponse(): js.Dictionary[js.Any] = js.native
+
+  /**
    * Вызов к Facebook HTTP API.
    * @param path HTTP-путь для запроса.
    * @param httpMethod HTTP-метод для запроса.

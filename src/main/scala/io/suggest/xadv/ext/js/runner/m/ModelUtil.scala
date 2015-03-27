@@ -15,6 +15,14 @@ trait FromJsonT {
   def fromJson(raw: js.Any): T
 }
 
+trait MaybeFromJsonT extends FromJsonT {
+  def maybeFromJson(raw: js.Any): Option[T]
+
+  override def fromJson(raw: js.Any): T = {
+    maybeFromJson(raw).get
+  }
+}
+
 
 /** Добавить метод fromString() в статическую модель, поддерживающую десериализацию fromDyn(). */
 trait FromStringT extends FromJsonT {
