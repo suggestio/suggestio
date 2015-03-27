@@ -32,9 +32,16 @@ object Page {
   }
 
   /** Запустить этот код, когда страница будет готова. */
-  def onReady(f: () => Unit): Unit = {
+  def onReady(f: () => _): Unit = {
     jQuery(dom.document)
-      .ready(f: js.Function0[Unit])
+      .ready(f: js.Function0[_])
+  }
+
+
+  /** Запустить переданный код при закрытии/обновлении страницы. */
+  def onClose(f: () => _): Unit = {
+    jQuery(dom.window)
+      .on("beforeunload", f: js.Function0[_])
   }
 
 }

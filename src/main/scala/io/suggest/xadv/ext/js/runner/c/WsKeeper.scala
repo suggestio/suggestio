@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c
 
 import io.suggest.xadv.ext.js.runner.m._
+import io.suggest.xadv.ext.js.runner.v.Page
 import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
 import scala.concurrent.Future
@@ -30,9 +31,14 @@ trait WsKeeper {
       ws        = ws,
       adapters  = adapters
     )
-    // TODO Делать реконнект при проблеме со связью.
-    // TODO Закрывать ws при закрытии текущей страницы.
     ws.onmessage = handleMessage(_: MessageEvent, appState)
+    // TODO Делать реконнект при проблеме со связью. Но сначала нужна серверная поддержка восстановления состояния.
+    //      Firefox < 27 рвал ws-коннекшены по клавише ESC.
+    // Закрывать сокет при закрытии текущей страницы.
+    Page.onClose { () =>
+      // Закрываем сокет через appState, чтобы избежать возможных проблем в будущем с заменой экземпляров ws в состоянии.
+      appState.ws.close()
+    }
     // Ссылка больше не нужна. Удалить её из верстки, в т.ч. в целях безопасности.
     wsEl.removeAttribute(attr)
   }

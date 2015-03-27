@@ -1,6 +1,5 @@
 package io.suggest.xadv.ext.js.fb.c
 
-import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.m.ex._
@@ -20,7 +19,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object FbAdapter {
 
   /** Таймаут загрузки скрипта. */
-  def SCRIPT_LOAD_TIMEOUT = 10000
+  def SCRIPT_LOAD_TIMEOUT_MS = 10000
 
   /** Ссылка на скрипт. */
   def SCRIPT_URL = "https://connect.facebook.net/en_US/sdk.js"
@@ -71,6 +70,7 @@ class FbAdapter extends IAdapter {
         // Возник облом при инициализации.
         case Failure(ex) =>
           p failure ApiInitException(ex)
+          dom.console.error("FbAdapter: Fb.init() failed: " + ex.getClass.getName + ": " + ex.getMessage)
       }
       // Вычищаем эту функцию из памяти браузера.
       window.fbAsyncInit = null
@@ -81,14 +81,18 @@ class FbAdapter extends IAdapter {
     } catch {
       case ex: Throwable =>
         p failure DomUpdateException(ex)
+        dom.console.error("FbAdapter: addScriptTag() failed: " + ex.getClass.getName + ": " + ex.getMessage)
     }
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
+    val t = SCRIPT_LOAD_TIMEOUT_MS
     dom.setTimeout(
       {() =>
-        if (!p.isCompleted)
-          p failure UrlLoadTimeoutException(SCRIPT_URL, SCRIPT_LOAD_TIMEOUT)
+        if (!p.isCompleted) {
+          p failure UrlLoadTimeoutException(SCRIPT_URL, t)
+          dom.console.error("FbAdapter: timeout %s ms occured during ensureReady()", t)
+        }
       },
-      SCRIPT_LOAD_TIMEOUT
+      t
     )
     p.future
   }

@@ -13,9 +13,7 @@ import scala.scalajs.js.WrappedDictionary
  * Description: Модель поддерживаемых сервисов.
  */
 object MServices extends MServicesLightT {
-  sealed protected class Val(val strId: String) extends ValT /*{
-    def customFromDynamic(raw: js.Dynamic): Option[IToJson] = None
-  }*/
+  sealed protected class Val(val strId: String) extends ValT
 
   override type T = Val
 
