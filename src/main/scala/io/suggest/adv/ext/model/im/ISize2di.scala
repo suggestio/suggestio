@@ -27,7 +27,7 @@ trait INamedSize2di extends ISize2di {
   /** Алиас (название) размера. */
   def szAlias: String
 
-  override def toString: String = "Sz2D(" + szAlias + ",w=" + width + ";h=" + height + ")"
+  override def toString = "Sz2D(" + szAlias + ",w=" + width + ";h=" + height + ")"
 }
 
 

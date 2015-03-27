@@ -28,6 +28,7 @@ trait MAnswerStatusesBaseT extends ILightEnumeration {
     def jsStr: String
     def isSuccess: Boolean
     def isError: Boolean
+    override def toString = jsStr
   }
 
   override type T <: ValT

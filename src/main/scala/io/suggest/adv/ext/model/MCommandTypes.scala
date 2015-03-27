@@ -24,6 +24,7 @@ trait MCommandTypesBaseT extends ILightEnumeration {
 
   protected trait ValT extends super.ValT {
     val ctype: String
+    override def toString = ctype
   }
 
   override type T <: ValT

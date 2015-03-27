@@ -23,6 +23,7 @@ object MServices {
 trait MServicesBaseT extends ILightEnumeration {
   protected trait ValT extends super.ValT {
     val strId: String
+    override def toString = strId
   }
 
   override type T <: ValT
