@@ -71,7 +71,7 @@ trait WsKeeper {
 
       // Вызов ensure ready. data содержит строку с MJsCtx внутри.
       case cmd: MActionCmd =>
-        val fut = AdaptersSupport.handleAction(cmd.mctx, appState.adapters)
+        val fut = AdaptersSupport.handleAction(cmd.mctx, appState)
         // Если успех, то логгируем результат.
         fut onSuccess { case mctx2 =>
           console.info("Action finished. New ctx = " + mctx2)

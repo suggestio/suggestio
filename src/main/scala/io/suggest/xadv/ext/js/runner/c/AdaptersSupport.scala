@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.xadv.ext.js.runner.m.{IAdapter, MAdapters, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{MAppState, MAdapters, MJsCtx}
 import scala.concurrent.Future
 
 /**
@@ -16,18 +16,23 @@ object AdaptersSupport {
    * @param mctx Контекст, пришедший в запросе.
    * @return Фьючерс с исходящим контекстом.
    */
-  def handleAction(mctx: MJsCtx, adapters: Seq[IAdapter]): Future[MJsCtx] = {
+  def handleAction(mctx: MJsCtx, appState: MAppState): Future[MJsCtx] = {
+    // Сборка контекста текущего экшена.
+    val actx = ActionContextImpl(
+      app = appState.appContext,
+      mctx0 = mctx
+    )
     if (mctx.action.adapterRequired) {
-      MAdapters.findAdapterFor(mctx, adapters) match {
+      MAdapters.findAdapterFor(mctx, appState.adapters) match {
         case Some(adapter) =>
-          mctx.action.processAction(adapter, mctx)
+          mctx.action.processAction(adapter, actx)
         case None =>
           Future failed new NoSuchElementException("No adapter exist for domains: " + mctx.domains.mkString(", "))
       }
 
     } else {
       // Не требуется адаптера. Значит передаем null вместо адаптера.
-      mctx.action.processAction(adapter = null, mctx)
+      mctx.action.processAction(adapter = null, actx)
     }
   }
 

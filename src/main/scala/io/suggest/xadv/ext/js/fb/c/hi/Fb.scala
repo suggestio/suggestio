@@ -5,7 +5,7 @@ import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.m.{ToJsonDictDummy, FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{ExecutionContext, Promise, Future}
 import scala.scalajs.js.{Dictionary, Any}
 
 /**
@@ -22,10 +22,15 @@ object Fb {
 
   /**
    * Высокоуровневая асинхронная инициализация facebook js API.
+   * Используется Future{} для упрощения обработки ошибок при асинхронной инициализации.
    * @param opts Экземпляр параметров инициализации.
    * @return Фьчерс
    */
-  def init(opts: FbInitOptions) = FbLow.init( opts.toJson )
+  def init(opts: FbInitOptions)(implicit ec: ExecutionContext): Future[Unit] = {
+    Future {
+      FbLow.init(opts.toJson)
+    }
+  }
 
   /**
    * Враппер для вызова login-функций.

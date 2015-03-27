@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.fb.c
 
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
+import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
 import org.scalajs.dom
@@ -61,10 +62,12 @@ class FbAdapter extends IAdapter {
       .flatMap(_.appId)
       .orNull
     val opts = FbInitOptions(appId)
-    Fb.init(opts)
+    val initFut = Fb.init(opts)
 
     // Сразу запрашиваем инфу по fb-залогиненности текущего юзера и права доступа.
-    val loginStatusFut = Fb.getLoginStatus()
+    val loginStatusFut = initFut flatMap { _ =>
+      Fb.getLoginStatus()
+    }
 
     // Когда появится инфа о залогиненном юзере, то нужно запросить текущие пермишшены.
     val permissionsFut = loginStatusFut
@@ -111,7 +114,8 @@ class FbAdapter extends IAdapter {
 
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  override def ensureReady(mctx0: MJsCtx): Future[MJsCtx] = {
+  override def ensureReady(actx: IActionContext): Future[MJsCtx] = {
+    val mctx0 = actx.mctx0
     val p = Promise[MJsCtx]()
     // Подписаться на событие загрузки скрипта.
     val window: FbWindow = dom.window
@@ -391,7 +395,8 @@ class FbAdapter extends IAdapter {
   }
 
   /** Запуск обработки одной цели. */
-  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
+  override def handleTarget(actx: IActionContext): Future[MJsCtx] = {
+    val mctx0 = actx.mctx0
     val fbCtxOpt = mctx0.custom.map(FbCtx.fromJson)
     val hasTg = fbCtxOpt.exists(_.fbTg.isDefined)
     if (hasTg) {

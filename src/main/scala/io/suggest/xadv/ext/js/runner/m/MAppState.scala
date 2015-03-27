@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.runner.m
 
+import io.suggest.xadv.ext.js.runner.c.{AppContextImpl, IAppContext}
 import org.scalajs.dom.WebSocket
 
 /**
@@ -15,4 +16,10 @@ import org.scalajs.dom.WebSocket
 case class MAppState(
   ws        : WebSocket,
   adapters  : List[IAdapter]
-)
+) {
+
+  /** Расшаренный глобальный контекст приложения. */
+  val appContext: IAppContext = new AppContextImpl
+
+}
+

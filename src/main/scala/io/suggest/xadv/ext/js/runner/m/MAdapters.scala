@@ -1,5 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
+import io.suggest.xadv.ext.js.runner.c.IActionContext
+
 import scala.concurrent.Future
 
 /**
@@ -34,7 +36,7 @@ trait IAdapter {
   def isMyDomain(domain: String): Boolean
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  def ensureReady(mctx0: MJsCtx): Future[MJsCtx]
+  def ensureReady(actx: IActionContext): Future[MJsCtx]
 
   /** Враппер для простого перехвата синхронных исключений в асинхронных экшенах. */
   protected def safe[T](f: => Future[T]): Future[T] = {
@@ -46,8 +48,8 @@ trait IAdapter {
     }
   }
 
-  def ensureReadySafe(mctx0: MJsCtx): Future[MJsCtx] = safe {
-    ensureReady(mctx0)
+  def ensureReadySafe(actx: IActionContext): Future[MJsCtx] = safe {
+    ensureReady(actx)
   }
 
 
@@ -58,15 +60,15 @@ trait IAdapter {
 
 
   /** Запуск обработки одной цели. */
-  def handleTarget(mctx0: MJsCtx): Future[MJsCtx]
+  def handleTarget(actx: IActionContext): Future[MJsCtx]
 
   /**
    * Враппер над handleTarget(), но отрабатывающий возможные экзешены до наступления асинхронной части.
-   * @param mctx0 Исходный контекст.
+   * @param actx Исходный контекст.
    * @return Асинхронный результат с новым контекстом.
    */
-  def handleTargetSafe(mctx0: MJsCtx): Future[MJsCtx] = safe {
-    handleTarget(mctx0)
+  def handleTargetSafe(actx: IActionContext): Future[MJsCtx] = safe {
+    handleTarget(actx)
   }
 
 }

@@ -34,10 +34,10 @@ object AeRunnerApp extends js.JSApp with WsKeeper {
 
 
   /** Инициализация системы по запросу сервера sio. */
-  def init(mctx0: MJsCtx): Future[MJsCtx] = {
+  def init(actx: IActionContext): Future[MJsCtx] = {
     try {
       if (PopupChecker.isPopupAvailable()) {
-        Future successful mctx0.copy(
+        Future successful actx.mctx0.copy(
           status = Some(MAnswerStatuses.Success)
         )
 

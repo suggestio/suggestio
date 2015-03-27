@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.vk.c
 
 import java.net.URI
 
+import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
@@ -113,7 +114,8 @@ class VkAdapter extends IAdapter {
   }
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу. */
-  override def ensureReady(mctx0: MJsCtx): Future[MJsCtx] = {
+  override def ensureReady(actx: IActionContext): Future[MJsCtx] = {
+    val mctx0 = actx.mctx0
     val p = Promise[MJsCtx]()
     // Создать обработчик событие инициализации.
     val window: VkWindow = dom.window
@@ -158,10 +160,15 @@ class VkAdapter extends IAdapter {
 
 
   /** Запуск обработки одной цели. */
-  override def handleTarget(mctx0: MJsCtx): Future[MJsCtx] = {
+  override def handleTarget(actx: IActionContext): Future[MJsCtx] = {
+    val mctx0 = actx.mctx0
     loggedIn [MJsCtx](mctx0) { vkCtx =>
       // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
-      if (mctx0.mads.headOption.flatMap(_.picture).flatMap(_.saved).isDefined) {
+      val savedOpt = mctx0.mads
+        .headOption
+        .flatMap(_.picture)
+        .flatMap(_.saved)
+      if (savedOpt.isDefined) {
         dom.console.log("vk.handleTarget() picture already uploaded. publishing.")
         step2(mctx0, vkCtx)
 
