@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.xadv.ext.js.runner.m.{MAdapters, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{IAdapter, MAdapters, MJsCtx}
 import scala.concurrent.Future
 
 /**
@@ -16,9 +16,9 @@ object AdaptersSupport {
    * @param mctx Контекст, пришедший в запросе.
    * @return Фьючерс с исходящим контекстом.
    */
-  def handleAction(mctx: MJsCtx): Future[MJsCtx] = {
+  def handleAction(mctx: MJsCtx, adapters: Seq[IAdapter]): Future[MJsCtx] = {
     if (mctx.action.adapterRequired) {
-      MAdapters.findAdapter(mctx) match {
+      MAdapters.findAdapterFor(mctx, adapters) match {
         case Some(adapter) =>
           mctx.action.processAction(adapter, mctx)
         case None =>

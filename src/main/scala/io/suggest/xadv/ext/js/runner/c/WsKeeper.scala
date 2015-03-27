@@ -17,27 +17,31 @@ import scala.util.{Failure, Success}
  * Description: Обслуживание web-socket'a. Открытие, получение и отправка данных.
  * Работает по принципу статического актора.
  */
+// FIXME 2015.mar.27 Этот модуль по названию относится только к ws, хотя по сути в нем вся логика приложения. Это неправильно.
 trait WsKeeper {
 
-  /** Вебсокет. Скрыт от посторонних глаз. */
-  private[this] var _ws: WebSocket = null
-
-  /**
-   * Запуск вебсокета.
-   * @param wsUrl ссылка для связи с сервером.
-   */
-  protected[this] def startWs(wsUrl: String): Unit = {
+  /** Запуск вебсокета. */
+  protected[this] def startWs(adapters: List[IAdapter]): Unit = {
+    val wsEl = dom.document.getElementById("socialApiConnection")
+    val attr = "value"
+    val wsUrl = wsEl.getAttribute(attr)
     val ws = new WebSocket(wsUrl)
-    _ws = ws
+    val appState = MAppState(
+      ws        = ws,
+      adapters  = adapters
+    )
     // TODO Делать реконнект при проблеме со связью.
-    ws.onmessage = handleMessage(_: MessageEvent)
+    // TODO Закрывать ws при закрытии текущей страницы.
+    ws.onmessage = handleMessage(_: MessageEvent, appState)
+    // Ссылка больше не нужна. Удалить её из верстки, в т.ч. в целях безопасности.
+    wsEl.removeAttribute(attr)
   }
 
   /**
    * Асинхронная обработка сообщений от sio.
    * @param msg Входящее сообщение.
    */
-  private[this] def handleMessage(msg: MessageEvent): Future[_] = {
+  private[this] def handleMessage(msg: MessageEvent, appState: MAppState): Future[_] = {
     // Форсируем асинхронное исполнение, чтобы можно было унифицировать обработку ошибок.
     // Десериализация полученной команды:
     val cmdFut = Future {
@@ -61,7 +65,7 @@ trait WsKeeper {
 
       // Вызов ensure ready. data содержит строку с MJsCtx внутри.
       case cmd: MActionCmd =>
-        val fut = AdaptersSupport.handleAction(cmd.mctx)
+        val fut = AdaptersSupport.handleAction(cmd.mctx, appState.adapters)
         // Если успех, то логгируем результат.
         fut onSuccess { case mctx2 =>
           console.info("Action finished. New ctx = " + mctx2)
@@ -86,7 +90,7 @@ trait WsKeeper {
             mctx    = mctx2
           )
           val json = JSON.stringify(ans.toJson)
-          _ws.send(json)
+          appState.ws.send(json)
         }
         fut
     }

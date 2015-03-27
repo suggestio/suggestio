@@ -1,27 +1,18 @@
 package io.suggest.xadv.ext.js.runner.m
 
-import io.suggest.xadv.ext.js.fb.c.FbAdapter
-import io.suggest.xadv.ext.js.vk.c.VkAdapter
-
 import scala.concurrent.Future
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.02.15 13:18
- * Description: Модель допустимых адаптеров. Вынос кода из c.AdaptersSupport.
+ * Description: Модель допустимых адаптеров и работа с ней.
+ * Данные о текущих адаптерах хранятся в модели [[MAppState]].
  */
 object MAdapters {
 
-  /** Доступные адаптеры. Пока такая заглушка скорее, на будущее. */
-  private[this] val adapters = Seq[IAdapter](
-    new VkAdapter,
-    new FbAdapter
-  )
-
-
   /** Поиск подходящего адаптера-исполнителя под контекст запроса. */
-  def findAdapter(mctx: MJsCtx): Option[IAdapter] = {
+  def findAdapterFor(mctx: MJsCtx, adapters: Seq[IAdapter]): Option[IAdapter] = {
     val ds = mctx.domains
     if (ds.nonEmpty) {
       adapters.find { adapter =>

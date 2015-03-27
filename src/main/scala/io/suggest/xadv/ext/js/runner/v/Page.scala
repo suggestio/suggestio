@@ -1,7 +1,10 @@
 package io.suggest.xadv.ext.js.runner.v
 
 import io.suggest.adv.ext.view.RunnerPage._
+import org.scalajs.dom
 import org.scalajs.jquery._
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -26,6 +29,12 @@ object Page {
           .next()
           .slideToggle()
     })
+  }
+
+  /** Запустить этот код, когда страница будет готова. */
+  def onReady(f: () => Unit): Unit = {
+    jQuery(dom.document)
+      .ready(f: js.Function0[Unit])
   }
 
 }

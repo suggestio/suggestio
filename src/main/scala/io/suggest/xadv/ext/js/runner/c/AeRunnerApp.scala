@@ -1,9 +1,10 @@
 package io.suggest.xadv.ext.js.runner.c
 
+import io.suggest.xadv.ext.js.fb.c.FbAdapter
 import io.suggest.xadv.ext.js.runner.m.ex.CustomException
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{IAdapter, MAnswerStatuses, MJsCtx}
 import io.suggest.xadv.ext.js.runner.v.Page
-import org.scalajs.dom
+import io.suggest.xadv.ext.js.vk.c.VkAdapter
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -20,9 +21,15 @@ object AeRunnerApp extends js.JSApp with WsKeeper {
   /** Запуск системы происходит здесь. */
   @JSExport
   override def main(): Unit = {
-    val wsUrl = dom.document.getElementById("socialApiConnection").getAttribute("value")
-    startWs(wsUrl)
-    Page.bindPageEvents()
+    val adapters = List[IAdapter](
+      new VkAdapter,
+      new FbAdapter
+    )
+    // Нижеследующий код зависит от dom и вызывается из document.ready.
+    Page.onReady { () =>
+      startWs(adapters)
+      Page.bindPageEvents()
+    }
   }
 
 
