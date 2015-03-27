@@ -33,7 +33,7 @@ object ExtServiceActor {
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
-trait ExtServiceActorLogic extends FsmActor with MediatorSendCommand with ExtServiceActorEnv  {
+trait ExtServiceActorLogic extends FsmActor with MediatorSendCommand with ExtServiceActorEnv {
 
   /** Абстрактный state инициализации сервиса. */
   trait EnsureServiceStateStub extends FsmState {
@@ -112,23 +112,6 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
   /** Запуск инициализации клиента для одного сервиса. */
   class EnsureServiceState extends EnsureServiceStateStub {
 
-    /** При переходе на это состояние надо отправить запрос на инициализацию в рамках таргета. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Отправить запрос на подготовку к работе.
-      val mctx0 = args.mctx0.copy(
-        action = Some(MJsActions.EnsureReady),
-        domain = args.targets
-          .iterator
-          .map { tg => UrlUtil.url2dkey(tg.target.url) }
-          .toSet
-          .toSeq,
-        service = Some(service)
-      )
-      val cmd = EnsureReadyAsk(mctx0, replyTo = Some(replyTo))
-      sendCommand(cmd)
-    }
-
     /** Обработка успешного ответа. */
     override def handleSuccessAnswer(ans: Answer): Unit = {
       val tgActors = args.targets.map { tg =>
@@ -174,23 +157,6 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
       context.stop(self)
     }
 
-    /** Ожидаем получения результата инициализации. */
-    override def receiverPart: Receive = {
-      // Супервизор прислал распарсенный ws-ответ от js по текущему сервису.
-      case ans: Answer if ans.ctx2.status.nonEmpty =>
-        ans.ctx2.status.get match {
-          // Клиент успешно завершил инициализацию. Нужно собрать акторов и отправить их ws-медиатору.
-          case AnswerStatuses.Success =>
-            trace("Successful answer received from client, preparing tg-actors...")
-            handleSuccessAnswer(ans)
-
-          // Не удалось инициализировать клиента для связи с сервисом. Отрендерить плашку события юзеру.
-          case _ =>
-            warn(s"Failed to initialize service ${args.service} client-side: ${ans.ctx2.error}")
-            handleInvalidAnswer(ans)
-        }
-        handleInitFinished()
-    }
   }
 
 }
