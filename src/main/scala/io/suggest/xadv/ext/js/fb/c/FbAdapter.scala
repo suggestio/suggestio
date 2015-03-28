@@ -71,7 +71,9 @@ class FbAdapter extends IAdapter {
 
     // Когда появится инфа о залогиненном юзере, то нужно запросить текущие пермишшены.
     val permissionsFut = loginStatusFut
+      // Анализировать новых юзеров смысла нет
       .filter { _.status.isAppConnected }
+      // У известного юзера надо извлечь данные о текущих пермишшенах и его fb userID.
       .map { ls =>
         for {
           authResp  <- ls.authResp
@@ -81,19 +83,21 @@ class FbAdapter extends IAdapter {
           (userId, atok)
         }
       }
-      .filter { _.isDefined }
+      // Если там ничего нет, то тоже приостановить обработку.
       .map { _.get }
+      // Если есть текущий токен и userId, то воспользоваться ими для получения списка текущих прав.
       .flatMap { case (userId, atok) =>
         val permArgs = FbGetPermissionsArgs(userId = userId, accessToken = Some(atok))
         Fb.getPermissions(permArgs)
           .map { resp =>
             resp.data
               .iterator
-              .filter { _.status.isGranted }
-              .map { _.permission }
+              .filter { _.status.isGranted }    // Нужны только заапрувленные права
+              .map { _.permission }             // Отбросить состояние права, оставить только само право.
               .toSeq
           }
       }
+      // Если обработка была приостановлена, то вернуть пустой список прав.
       .recover {
         case ex: NoSuchElementException =>
           Nil
