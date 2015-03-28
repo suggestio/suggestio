@@ -36,7 +36,7 @@ trait IAdapter {
   def isMyDomain(domain: String): Boolean
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  def ensureReady(actx: IActionContext): Future[MJsCtx]
+  def ensureReady(implicit actx: IActionContext): Future[MJsCtx]
 
   /** Враппер для простого перехвата синхронных исключений в асинхронных экшенах. */
   protected def safe[T](f: => Future[T]): Future[T] = {
@@ -48,8 +48,10 @@ trait IAdapter {
     }
   }
 
-  def ensureReadySafe(actx: IActionContext): Future[MJsCtx] = safe {
-    ensureReady(actx)
+  def ensureReadySafe(implicit actx: IActionContext): Future[MJsCtx] = {
+    safe {
+      ensureReady
+    }
   }
 
 
@@ -60,15 +62,17 @@ trait IAdapter {
 
 
   /** Запуск обработки одной цели. */
-  def handleTarget(actx: IActionContext): Future[MJsCtx]
+  def handleTarget(implicit actx: IActionContext): Future[MJsCtx]
 
   /**
    * Враппер над handleTarget(), но отрабатывающий возможные экзешены до наступления асинхронной части.
    * @param actx Исходный контекст.
    * @return Асинхронный результат с новым контекстом.
    */
-  def handleTargetSafe(actx: IActionContext): Future[MJsCtx] = safe {
-    handleTarget(actx)
+  def handleTargetSafe(implicit actx: IActionContext): Future[MJsCtx] = {
+    safe {
+      handleTarget
+    }
   }
 
 }

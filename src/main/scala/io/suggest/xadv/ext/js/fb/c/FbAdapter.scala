@@ -118,7 +118,7 @@ class FbAdapter extends IAdapter {
 
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  override def ensureReady(actx: IActionContext): Future[MJsCtx] = {
+  override def ensureReady(implicit actx: IActionContext): Future[MJsCtx] = {
     val mctx0 = actx.mctx0
     val p = Promise[MJsCtx]()
     // Подписаться на событие загрузки скрипта.
@@ -167,7 +167,7 @@ class FbAdapter extends IAdapter {
    * Запуск логина и обрабока ошибок.
    * @return Фьючерс с выверенным результатом логина.
    */
-  protected def doLogin(fbCtxOpt: Option[FbCtx]): Future[FbCtx] = {
+  protected def doLogin(fbCtxOpt: Option[FbCtx])(implicit actx: IActionContext): Future[FbCtx] = {
     val allNeedPerms = FbPermissions.wantPublishPerms
     // TODO Нужно Fb.getAuthResponse подключить к работе. Но лучше вынести это всё в нормальный fsm и делать логин в ensureReady().
     val needPerms = fbCtxOpt.fold(allNeedPerms) { fbCtx =>
@@ -180,7 +180,11 @@ class FbAdapter extends IAdapter {
         scope = FbPermissions.permsToString( needPerms ),
         returnScopes = true
       )
-      Fb.login(args) flatMap { res =>
+      // Отправляем попап логина в очередь на экран.
+      actx.app.popupQueue.enqueue { () =>
+        Fb.login(args)
+
+      }.flatMap { res =>
         // TODO Нужно вернуть новый fb-контекст с имеющимеся пермишшеннами из res.grantedPermissions
         res.authResp
           .filter { _ => res.status.isAppConnected }
@@ -364,7 +368,8 @@ class FbAdapter extends IAdapter {
   // TODO Нужно оформить нижеследующий код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
 
   /** Первый шаг, который заканчивается переходом на step2() либо fillCtx. */
-  protected def step1(fbCtxOpt0: Option[FbCtx], mctx0: MJsCtx): Future[MJsCtx] = {
+  protected def step1(fbCtxOpt0: Option[FbCtx])(implicit actx: IActionContext): Future[MJsCtx] = {
+    import actx.mctx0
     val fbCtx1Fut = doLogin(fbCtxOpt0)
     val fbTgFut = fbCtx1Fut flatMap { _ =>
       detectTgNodeType(mctx0.target.get)
@@ -377,14 +382,15 @@ class FbAdapter extends IAdapter {
           case _ =>
             val someTg = Some(fbTg)
             val fbCtx2 = fbCtx1.copy(fbTg = someTg)
-            step2(fbCtx2, mctx0)
+            step2(fbCtx2)
         }
       }
     }
   }
 
   /** Второй шаг -- это шаг публикации. */
-  protected def step2(fbCtx: FbCtx, mctx0: MJsCtx): Future[MJsCtx] = {
+  protected def step2(fbCtx: FbCtx)(implicit actx: IActionContext): Future[MJsCtx] = {
+    import actx.mctx0
     // Второй шаг: получение доп.данных по цели для публикации, если необходимо.
     mkTgInfo(fbCtx.fbTg.get, fbCtx) flatMap { tgInfo =>
       // Третий шаг - запуск публикации поста.
@@ -399,14 +405,14 @@ class FbAdapter extends IAdapter {
   }
 
   /** Запуск обработки одной цели. */
-  override def handleTarget(actx: IActionContext): Future[MJsCtx] = {
-    val mctx0 = actx.mctx0
+  override def handleTarget(implicit actx: IActionContext): Future[MJsCtx] = {
+    import actx.mctx0
     val fbCtxOpt = mctx0.custom.map(FbCtx.fromJson)
     val hasTg = fbCtxOpt.exists(_.fbTg.isDefined)
-    if (hasTg) {
-      step2(fbCtxOpt.get, mctx0)
+    if (!hasTg) {
+      step1(fbCtxOpt)
     } else {
-      step1(fbCtxOpt, mctx0)
+      step2(fbCtxOpt.get)
     }
   }
 

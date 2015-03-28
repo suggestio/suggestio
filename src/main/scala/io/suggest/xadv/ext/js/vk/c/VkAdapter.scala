@@ -69,19 +69,24 @@ class VkAdapter extends IAdapter {
   }
 
   /**
-   * Инициализация адаптера без каких-либо вмешательств в GUI.
+   * Инициализация адаптера и данных по юзеру.
    * Вызывается, когда нижележащее API уже инициализировано и готово.
    * @return Фьючерс с новым VkCtx.
    */
-  protected def headlessInit(): Future[VkCtx] = {
+  protected def doInit(implicit actx: IActionContext): Future[VkCtx] = {
+    val apiId = actx.mctx0
+      .service
+      .flatMap(_.appId)
+      .orNull
+    val initFut = Vk.init( VkInitOptions(apiId) )
     // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
-    // TODO Проверить пермишшены через account.getAppPermissions()
-    val lsFut = Vk.Auth.getLoginStatus
-      .recover { case ex: Throwable =>
-        // Подавляем любые ошибки, т.к. эта функция в общем некритична, хоть и намекает на неработоспособность API.
-        dom.console.warn("VK Cannot getLoginStatus(): " + ex.getClass.getSimpleName + " " + ex.getMessage)
-        None
-      }
+    val lsFut = initFut flatMap { _ =>
+      Vk.Auth.getLoginStatus
+    } recover { case ex: Throwable =>
+      // Подавляем любые ошибки, т.к. эта функция в общем некритична, хоть и намекает на неработоспособность API.
+      dom.console.warn("VK Cannot getLoginStatus(): %s: %s", ex.getClass.getSimpleName, ex.getMessage)
+      None
+    }
     // В фоне запускаем получение текущих прав приложения, хоть они могут и не пригодится.
     val appPermsFut = Vk.Api.getAppPermissions()
     val ls2Fut = lsFut flatMap {
@@ -95,7 +100,7 @@ class VkAdapter extends IAdapter {
           }
           // Подавляем возможные ошибки, т.к. эта проверка некритична.
           .recover { case ex: Throwable =>
-            dom.console.warn("VK Cannot getAppPermissions(): " + ex.getClass.getName + " " + ex.getMessage)
+            dom.console.warn("VK Cannot getAppPermissions(): %s: %s", ex.getClass.getName, ex.getMessage)
             false
           }
           // Генеря результат, мы определяем необходимо ли вызывать login() на след.шаге.
@@ -114,27 +119,23 @@ class VkAdapter extends IAdapter {
   }
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу. */
-  override def ensureReady(actx: IActionContext): Future[MJsCtx] = {
+  override def ensureReady(implicit actx: IActionContext): Future[MJsCtx] = {
     val mctx0 = actx.mctx0
     val p = Promise[MJsCtx]()
     // Создать обработчик событие инициализации.
     val window: VkWindow = dom.window
     window.vkAsyncInit = {() =>
-      val apiId = mctx0.service.get.appId.orNull
-      val opts = VkInitOptions(apiId)
-      Vk.init(opts)
-        .flatMap { _ => headlessInit() }
-        .onComplete {
-          // init завершился, инфа по залогиненности получена.
-          case Success(vkCtx) =>
-            p success mctx0.copy(
-              status = Some(MAnswerStatuses.Success),
-              custom = Some(vkCtx.toJson)
-            )
-          // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
-          case Failure(ex) =>
-            p failure ApiInitException(ex)
-        }
+      doInit onComplete {
+        // Инициализация завершена, инфа по залогиненности получена.
+        case Success(vkCtx) =>
+          p success mctx0.copy(
+            status = Some(MAnswerStatuses.Success),
+            custom = Some(vkCtx.toJson)
+          )
+        // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
+        case Failure(ex) =>
+          p failure ApiInitException(ex)
+      }
       // Освободить память браузера от хранения этой функции.
       window.vkAsyncInit = null
     }
@@ -160,7 +161,7 @@ class VkAdapter extends IAdapter {
 
 
   /** Запуск обработки одной цели. */
-  override def handleTarget(actx: IActionContext): Future[MJsCtx] = {
+  override def handleTarget(implicit actx: IActionContext): Future[MJsCtx] = {
     val mctx0 = actx.mctx0
     loggedIn [MJsCtx](mctx0) { vkCtx =>
       // Публикация идёт в два шага: загрузка картинки силами сервера s.io и публикация записи с картинкой.
@@ -170,11 +171,11 @@ class VkAdapter extends IAdapter {
         .flatMap(_.saved)
       if (savedOpt.isDefined) {
         dom.console.log("vk.handleTarget() picture already uploaded. publishing.")
-        step2(mctx0, vkCtx)
+        step2(vkCtx)
 
       } else if (mctx0.mads.nonEmpty) {
         dom.console.log("vk.handleTarget(): Requesing s2s pic upload.")
-        step1(mctx0, vkCtx)
+        step1(vkCtx)
 
       } else {
         // Should never happen. Нет карточек для размещения.
@@ -183,8 +184,10 @@ class VkAdapter extends IAdapter {
     }
   }
 
-  protected def runLogin(): Future[VkLoginResult] = {
-    Vk.Auth.login(ACCESS_LEVEL) flatMap {
+  protected def runLogin()(implicit actx: IActionContext): Future[VkLoginResult] = {
+    actx.app.popupQueue.enqueue { () =>
+      Vk.Auth.login(ACCESS_LEVEL)
+    } flatMap {
       case None =>
         Future failed LoginCancelledException()
       case Some(login) =>
@@ -199,7 +202,7 @@ class VkAdapter extends IAdapter {
    * @tparam T Тип результата callback'а и этого метода.
    * @return Фьючерс с результатом callback'а или ошибкой.
    */
-  protected def loggedIn[T](mctx0: MJsCtx)(f: VkCtx => Future[T]): Future[T] = {
+  protected def loggedIn[T](mctx0: MJsCtx)(f: VkCtx => Future[T])(implicit actx: IActionContext): Future[T] = {
     val vkCtxOpt = VkCtx.maybeFromDyn(mctx0.custom)
     val loginOpt = vkCtxOpt.flatMap(_.login)
     loginOpt match {
@@ -208,12 +211,10 @@ class VkAdapter extends IAdapter {
         runLogin().flatMap { loginCtx =>
           val some = Some(loginCtx)
           val vkCtx1 = vkCtxOpt match {
-            case Some(vkCtx) =>
-              // Залить новую инфу по логину во внутренний контекст
-              vkCtx.copy(login = some)
-            case None =>
-              // should never happen
-              VkCtx(login = some)
+            // Залить новую инфу по логину во внутренний контекст
+            case Some(vkCtx)  =>   vkCtx.copy(login = some)
+            // should never happen
+            case None         =>   VkCtx(login = some)
           }
           f(vkCtx1)
         }
@@ -296,10 +297,10 @@ class VkAdapter extends IAdapter {
    * - Получения url сервера для upload POST.
    * - Отправка нового контекста на сервер.
    * Возможен так же вариант, когда нет прав на постинг на указанную страницу.
-   * @param mctx0 Исходный контекст.
    * @return Фьючерс с новым контекстом.
    */
-  protected def step1(mctx0: MJsCtx, vkCtx: VkCtx): Future[MJsCtx] = {
+  protected def step1(vkCtx: VkCtx)(implicit actx: IActionContext): Future[MJsCtx] = {
+    import actx.mctx0
     // Извлечь имя из target.url
     val tg = mctx0.target.get
     val screenNameOpt = extractScreenName(tg.tgUrl)
@@ -343,16 +344,16 @@ class VkAdapter extends IAdapter {
    * Это шаг 2 (второй вызов handleTarget() сервером sio).
    * Здесь нужно на основе данных в контексте нужно сформировать запрос присоединения загруженной картинки
    * к стене цели, и затем произвести публикацию записи на стене.
-   * @param mctx Исходный контекст.
    * @param vkCtx Исходный внутренний контекст vk-адаптера.
    * @return Фьючерс с новым контекстом.
    */
-  protected def step2(mctx: MJsCtx, vkCtx: VkCtx): Future[MJsCtx] = {
-    saveWallPhotos(mctx, vkCtx)
-      .flatMap { mkWallPost(mctx, vkCtx, _) }
+  protected def step2(vkCtx: VkCtx)(implicit actx: IActionContext): Future[MJsCtx] = {
+    import actx.mctx0
+    saveWallPhotos(mctx0, vkCtx)
+      .flatMap { mkWallPost(vkCtx, _) }
       .map { postRes =>
         // TODO Передать на сервер ссылку или иные данные, присланные в результате.
-        mctx.copy(
+        mctx0.copy(
           status = Some(MAnswerStatuses.Success)
         )
       }
@@ -373,8 +374,10 @@ class VkAdapter extends IAdapter {
   }
 
   /** Запостить сообщение на стену на основе собранных данных. */
-  protected def mkWallPost(mctx: MJsCtx, vkCtx: VkCtx, photos: Seq[VkSaveWallPhotoResult]): Future[VkWallPostResult] = {
-    val ocUrl = mctx.target.get.onClickUrl
+  protected def mkWallPost(vkCtx: VkCtx, photos: Seq[VkSaveWallPhotoResult])
+                          (implicit actx: IActionContext): Future[VkWallPostResult] = {
+    import actx.mctx0
+    val ocUrl = mctx0.target.get.onClickUrl
     // Готовим содержимое картинки.
     val attachments = {
       val photoIdsIter = photos.iterator.map { _.id }
@@ -388,7 +391,7 @@ class VkAdapter extends IAdapter {
       tgInfo.id
     // Текст надписи на стене под картинкой.
     val msg = {
-      mctx.mads.headOption
+      mctx0.mads.headOption
         .flatMap { mad0 => mad0.content.descr }
         .iterator
         .mkString("\n")
@@ -399,7 +402,10 @@ class VkAdapter extends IAdapter {
       attachments = attachments,
       message     = Some(msg)
     )
-    Vk.Api.wallPost(postArgs) flatMap { res =>
+    // Отобразить vk-попап подтверждения постинга и обработать результат.
+    actx.app.popupQueue.enqueue { () =>
+      Vk.Api.wallPost(postArgs)
+    } flatMap { res =>
       // Если сервер вернул ошибку, то закончить на этом.
       if (res.error.isDefined) {
         Future failed PostingProhibitedException(
