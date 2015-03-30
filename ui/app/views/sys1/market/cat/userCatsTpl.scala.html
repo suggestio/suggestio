@@ -4,6 +4,7 @@
 @import org.apache.commons.lang3.StringUtils.leftPad
 @import helper._
 @import controllers.MarketCategory.CAN_INSTALL_MART_CATS
+@import ctx.lang
 
 @userCatBase("Категории", adnId = ownerId) {
 
@@ -23,7 +24,7 @@
         <tr>
             <td>
               <div class="siom-cell-cnt __size-M ovh">
-                <a style="margin-left: @((level - 1)*35)px" class="siom-ac-btn __color-3 __size-M __ft-XM f-left" href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@cat.name</a>
+                <a style="margin-left: @((level - 1)*35)px" class="siom-ac-btn __color-3 __size-M __ft-XM f-left" href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@Messages(cat.name)</a>
               </div>
               <div class="border-line"></div>
             </td>
@@ -35,7 +36,9 @@
             </td>
             <td>
               <div class="siom-cell-cnt __size-M ovh">
-                <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left" href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@Messages("Edit")">@Messages("Edit")</a>
+                @defining( Messages("Edit") ) { edMsg =>
+                  <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left" href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@edMsg">@edMsg</a>
+                }
               </div>
               <div class="border-line"></div>
             </td>

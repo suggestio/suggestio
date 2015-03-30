@@ -57,6 +57,8 @@ Bill.details=Details
 Show.more=Show more
 Show.all=Show all
 No.records=No records
+Nothing.found=Nothing found
+Quick.search.for.offers=Quick search for offers
 
 requisites=Payment details for withdrawal
 
@@ -508,6 +510,7 @@ Main.screen=Main screen
 Product.categories=Product categories
 Categories=Categories
 Catalog=Catalog
+List=List
 advertised=advertised
 Date.choosing=Date choosing
 Advertising.period=Advertising period
@@ -535,6 +538,7 @@ Switch.lang=Switch language
 
 Login.page.title=Login
 Login=Sign in
+Login.to.sio=Login to suggest.io
 Remember.me=Remember me
 Forgot.password=Forgot{0} password?
 Recover.password=Recover password?
@@ -568,4 +572,18 @@ If.no.rdr.click.here=If redirection doesn't occur, click {0}here{1}.
 Mailbox.ll.be.mailed.with.reg.confirm.msg=Your mailbox will be mailed with sign-up confirmation message.
 Getting.started.with.sio.you.agreed.with.policy=Getting started with Suggest.io, you agree to the {0}privacy policy{1}.
 Your.email.addr=Your email address
+
+Clothing=Clothing
+Footwear=Footwear
+Tourism.and.recreation=Tourism & recreation
+Electronics=Electronics
+Sporting.goods=Sporting goods
+Cosmetics=Cosmetics
+Homeware=Homeware
+Cafes.and.restaurants=Cafes & restaurants
+Gastronomy=Gastronomy
+Info=Info
+
+About.sio=About s.io
+Detect.geolocation=Detect geolocation
 

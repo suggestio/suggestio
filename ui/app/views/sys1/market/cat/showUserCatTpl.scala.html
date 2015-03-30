@@ -2,9 +2,11 @@
 
 @* Отображение пользовательской категории *@
 
+@import ctx.lang
+
 @userCatBase(mmcat.name, adnId = mmcat.ownerId) {
 
-  <p>Название: <b>@mmcat.name</b></p>
+  <p>Название: <b>@Messages(mmcat.name)</b></p>
   <p>YM-категория: <span title="ymCatId = @ymCat.id">@ymCat.name</span> :: @if(mmcat.ymCatPtr.inherit) {+наследовать подкатегории}</p>
   @if(mmcat.position < Int.MaxValue) {
     <p>Позиция при ручной выдаче: <b>@mmcat.position</b></p>

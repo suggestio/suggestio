@@ -3,6 +3,7 @@
 @* Панель поиска: текстового, фасетного по категориям, по рекламодателям (правая панель). *@
 
 @import util.TplDataFormatUtil._
+@import ctx.lang
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
 
@@ -24,7 +25,7 @@
 
   </div>
 
-  @_searchTextTpl( args, "smSearch", "Быстрый поиск по предложениям" )
+  @_searchTextTpl( args, "smSearch")
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
     @* Панель с табами *@
@@ -37,7 +38,7 @@
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">КАТЕГОРИИ</div>
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@Messages("Categories").toUpperCase</div>
         </div>
         @if(args.jsStateOpt) {
           </a>
@@ -48,7 +49,7 @@
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-right @if(!isListTab) {__inactive}" id="smShopsTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">СПИСОК</div>
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@Messages("List").toUpperCase</div>
         </div>
         @if(args.jsStateOpt) {
           </a>

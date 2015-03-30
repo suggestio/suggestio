@@ -1,5 +1,7 @@
 @(args: ScRenderArgs)(implicit ctx: Context)
 
+@import ctx.lang
+
 @stuff._scrollableContainerTpl( "sm-categories", "smCategories",  style = Some(stuff._bgcolor( args.bgColor, false ).toString + "height: 83%;") ){
 
   <div class="categories-list">
@@ -19,7 +21,7 @@
           @svg._catIconTpl( mmcat.cssClass, args.fgColor )
         </div>
 
-        <div class="categorie_name" style="color: #@args.fgColor;">@mmcat.name</div>
+        <div class="categorie_name" style="color: #@args.fgColor;">@Messages(mmcat.name)</div>
 
       </span>
       @if(!isDisabled && args.jsStateOpt) {

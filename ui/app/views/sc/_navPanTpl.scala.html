@@ -26,7 +26,7 @@
       <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoRefresh(args.fgColor)</div>
       <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
       <span id="smGeoLocationLabel" style="color: #@args.fgColor;">
-        @args.adnNodeCurrentGeo.fold("Определить местоположение")(_.meta.name)
+        @args.adnNodeCurrentGeo.fold( Messages("Detect.geolocation") )( _.meta.name )
       </span>
     </div>
   </div>

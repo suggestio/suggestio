@@ -57,6 +57,8 @@ Bill.details=Основание
 Show.more=Показать ещё
 Show.all=Показать всё
 No.records=Нет записей
+Nothing.found=Ничего не найдено
+Quick.search.for.offers=Быстрый поиск по предложениям
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -517,6 +519,7 @@ Main.screen=Главный экран
 Product.categories=Категории товаров
 Categories=Категории
 Catalog=Каталог
+List=Список
 advertised=размещено
 Date.choosing=Выбор даты
 Advertising.period=Срок размещения
@@ -544,6 +547,7 @@ Switch.lang=Сменить язык
 
 Login.page.title=Вход
 Login=Войти
+Login.to.sio=Вход в suggest.io
 Remember.me=Запомнить меня
 Forgot.password=Забыли{0} пароль?
 Recover.password=Восстановить пароль?
@@ -576,3 +580,18 @@ If.no.rdr.click.here=Если перенаправление не произош
 Mailbox.ll.be.mailed.with.reg.confirm.msg=На электронную почту будет отправлено письмо с подтвержением регистрации.
 Getting.started.with.sio.you.agreed.with.policy=Приступая к работе с Suggest.io, Вы соглашаетесь с {0}Политикой конфиденциальности{1}.
 Your.email.addr=Ваш адрес email
+
+Clothing=Одежда
+Footwear=Обувь
+Tourism.and.recreation=Туризм и отдых
+Electronics=Электроника
+Sporting.goods=Спорттовары
+Cosmetics=Косметика
+Homeware=Товары для дома
+Cafes.and.restaurants=Кафе и рестораны
+Gastronomy=Гастрономия
+Info=Инфо
+
+About.sio=О проекте
+Detect.geolocation=Определить местоположение
+
