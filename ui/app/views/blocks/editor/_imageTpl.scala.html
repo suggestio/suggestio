@@ -5,28 +5,30 @@
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
-  <div class="f-left" id="cardPhoto">
-    <div class="image __size-L f-left js-image-upload" >
-      <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg"
-             data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true"
-             data-action="@routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
-      <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.file", " ")">
-	<span>@Html( Messages("Upload.file", "<br/>") )</span>
-      </a>
-    </div>
-  </div>
-
-  <div class="edit-ad_image-upload-helper">
-
-    <div id="blockImage@bf.name">
-      <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
-
-      @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
-      <a class="btn __size-M __minor __crop js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">@Messages("Crop")</a>
+  <div style="overflow: hidden;">
+    <div class="f-left" id="cardPhoto">
+      <div class="image __size-L f-left js-image-upload" >
+        <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg"
+               data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true"
+               data-action="@routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
+        <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.file", " ")">
+	  <span>@Html( Messages("Upload.file", "<br/>") )</span>
+        </a>
+      </div>
     </div>
 
-    <div class="sm-note">@Messages("Ad.large.bg.img.info")</div>
+    <div class="edit-ad_image-upload-helper">
 
+      <div id="blockImage@bf.name">
+        <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
+
+        @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
+        <a class="btn __size-M __minor __crop js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">@Messages("Crop")</a>
+      </div>
+
+      <div class="sm-note">@Messages("Ad.large.bg.img.info")</div>
+
+    </div>
   </div>
 
   <div class="lk-file-field_choose-color-pre-text">@Messages("or")</div>
