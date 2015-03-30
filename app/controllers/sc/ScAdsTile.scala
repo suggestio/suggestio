@@ -20,6 +20,7 @@ import SiowebEsUtil.client
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
+import _root_.util.blocks.BgImg.szMulted
 
 /**
  * Suggest.io
@@ -60,8 +61,8 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     val cssAppendFut = logic.jsAppendAdsCss
     val tileArgs = logic.tileArgs
     // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
-    val setCellSizeJsa = SetCellSize((BlockWidths.NARROW.widthPx * tileArgs.szMult).toInt)
-    val setCellPaddingJsa = SetCellPadding((ShowcaseUtil.TILE_PADDING_CSSPX * tileArgs.szMult).toInt)
+    val setCellSizeJsa = SetCellSize( szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult) )
+    val setCellPaddingJsa = SetCellPadding( szMulted(ShowcaseUtil.TILE_PADDING_CSSPX, tileArgs.szMult) )
     // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
     val resultFut = for {
       smRcvResp <- smRcvRespFut

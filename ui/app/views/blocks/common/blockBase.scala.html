@@ -1,8 +1,10 @@
 @(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT)(content: Html)(implicit ctx: Context)
 
+@import util.blocks.BgImg.szMulted
+
 @* Тут постоянная часть верстки блоков карточек в выдаче. *@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.withCssClasses"
-     data-width="@((mad.blockMeta.width * args.szMult).toInt)" data-height="@((mad.blockMeta.height * args.szMult).toInt)"
+     data-width="@szMulted(mad.blockMeta.width, args.szMult)" data-height="@szMulted(mad.blockMeta.height, args.szMult)"
      data-mad-id="@mad.id" data-wide-bg="@args.wideBg.isDefined"
      @args.blockStyle.map { bst =>style="@bst"}> @* Можно в теории заюзать что-то типа .orElse(args.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")) *@
   @content

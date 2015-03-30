@@ -39,7 +39,7 @@ object AdRenderUtil {
     } yield {
       val dscr = DevScreen(
         width  = wide.width,
-        height = (mad.blockMeta.height * args.szMult).toInt,
+        height = BgImg.szMulted(mad.blockMeta.height, args.szMult),
         pixelRatioOpt = None    // TODO А какой надо выставлять?
       )
       BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, args.szMult, Some(dscr))
@@ -58,8 +58,8 @@ object AdRenderUtil {
   def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[Array[Byte]] = {
     val sourceAdSz = mad.blockMeta
     // Высота отрендеренной карточки с учетом мультипликатора
-    lazy val width0 = (sourceAdSz.width * adArgs.szMult).toInt
-    val height = (sourceAdSz.height * adArgs.szMult).toInt
+    lazy val width0 = BgImg.szMulted(sourceAdSz.width, adArgs.szMult)
+    val height = BgImg.szMulted(sourceAdSz.height, adArgs.szMult)
     // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
     // Внешняя полная ширина отрендеренной широкой карточки.
     // Если Без wide, значит можно рендерить карточку as-is.

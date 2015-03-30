@@ -9,6 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.img.AdRenderUtil
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
+import util.blocks.BgImg.szMulted
 
 /**
  * Suggest.io
@@ -35,7 +36,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
         wideBg        = wideCtxOpt,
         blockStyle    = wideCtxOpt.map { wideCtx =>
           // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
-          val blockWidth = (mad.blockMeta.width * args.szMult).toInt
+          val blockWidth = szMulted(mad.blockMeta.width, args.szMult)
           val leftPx = (wideCtx.szCss.width - blockWidth) / 2
           s"position: absolute; top: 0px; left: ${leftPx}px;"
         }

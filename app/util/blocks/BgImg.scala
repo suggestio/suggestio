@@ -63,6 +63,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
 
+  def szMulted(origPx: Int, szMult: SzMult_t): Int = {
+    szMulted(origPx.toFloat, szMult)
+  }
+  def szMulted(origPx: SzMult_t, szMult: SzMult_t): Int = {
+    Math.round(origPx * szMult)
+  }
+
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
   def getAbsCropOrFail(iik: MAnyImgT, wideWh: MImgSizeT): Future[ImgCrop] = {
     iik.cropOpt match {
@@ -83,8 +90,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
       val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
       val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
       val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
-      val w = (wideWh.width * rszRatio).toInt
-      val h = (wideWh.height * rszRatio).toInt
+      val w = szMulted(wideWh.width, rszRatio)
+      val h = szMulted(wideWh.height, rszRatio)
       ImgCrop(
         width = w, height = h,
         // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
@@ -125,10 +132,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
     val pxRatio = pxRatioDefaulted( deviceScreenOpt.flatMap(_.pixelRatioOpt) )
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
     val tgtHeightCssRaw = bm.height * szMult
-    val tgtHeightReal = (tgtHeightCssRaw * pxRatio.pixelRatio).toInt
+    val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
     // Ширину экрана квантуем, получая ширину картинки.
     val cropWidthCssPx = getWideWidthCss(deviceScreenOpt)
-    val cropWidth = (cropWidthCssPx * pxRatio.pixelRatio).toInt
+    val cropWidth = szMulted(cropWidthCssPx, pxRatio.pixelRatio)
     // Начинаем собирать список трансформаций по ресайзу:
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
@@ -211,8 +218,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): MImgInfoMeta = {
     val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatioOpt)
     MImgInfoMeta(
-      height = (blockMeta.height * imgResMult).toInt,
-      width  = (blockMeta.width * imgResMult).toInt
+      height = szMulted(blockMeta.height, imgResMult),
+      width  = szMulted(blockMeta.width, imgResMult)
     )
   }
 

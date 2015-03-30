@@ -4,12 +4,12 @@
 @import args._
 @import models.blk.AdColorFns._
 @import util.TplDataFormatUtil._
-@import util.blocks.BgImg.BG_IMG_FN
+@import util.blocks.BgImg.{BG_IMG_FN, szMulted}
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {
-  width: @((mad.blockMeta.width * brArgs.szMult).toInt)px;
-  height: @((mad.blockMeta.height * brArgs.szMult).toInt)px;
+  width: @szMulted(mad.blockMeta.width, brArgs.szMult)px;
+  height: @szMulted(mad.blockMeta.height, brArgs.szMult)px;
   @if(!(mad.imgs contains BG_IMG_FN)) {
     @mad.colors.get(IMG_BG_COLOR_FN.name).map { bgColor =>background-color: #@bgColor;}
   }

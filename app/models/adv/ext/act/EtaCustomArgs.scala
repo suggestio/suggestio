@@ -43,8 +43,8 @@ trait EtaCustomArgsBase extends ExtTargetActorEnv {
         //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
       PicInfo(
         wide   = wideWidthOpt,
-        width  = wideWidthOpt.fold { (mad.blockMeta.width * srv.szMult).toInt } (_.width),
-        height = (sz.height * szMultV).toInt,
+        width  = wideWidthOpt.fold { BgImg.szMulted(mad.blockMeta.width, srv.szMult) } (_.width),
+        height = BgImg.szMulted(sz.height, szMultV),
         szMult = szMultV,
         stdSz  = sz
       )

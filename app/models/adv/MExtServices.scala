@@ -102,7 +102,9 @@ object MExtServices extends MServicesT {
     def advExtWidePosting(tgUrl: String, mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
       if (isAdvExtWide(mad)) {
         val sz = advPostMaxSz(tgUrl)
-        val v = OneAdWideQsArgs(width = (sz.width * szMult).toInt)
+        val v = OneAdWideQsArgs(
+          width = BgImg.szMulted(sz.width, szMult)
+        )
         Some(v)
       } else {
         None

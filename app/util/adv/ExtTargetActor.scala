@@ -24,6 +24,7 @@ import util.event.{EventType, EventTypes}
 import util.img.AdRenderUtil
 import util.jsa.{InnerHtmlById, JsAppendById}
 import ExtUtil.RUNNER_EVENTS_DIV_ID
+import util.blocks.BgImg.szMulted
 
 import scala.util.{Failure, Success}
 
@@ -429,7 +430,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       val partFilename = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name
       val partBody = new ByteArrayBody(imgBytes, partCt, partFilename)
       entity.addPart(uploadCtx.partName, partBody)
-      val baos = new ByteArrayOutputStream((imgBytes.length * 1.1F).toInt)
+      val baos = new ByteArrayOutputStream( szMulted(imgBytes.length, 1.1F) )
       val resp = entity.build()
       resp.writeTo(baos)
       WS.url(uploadCtx.url)

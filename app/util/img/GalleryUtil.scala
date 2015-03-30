@@ -7,6 +7,7 @@ import play.api.data.Forms._
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.blocks.BgImg.szMulted
 
 import scala.concurrent.Future
 
@@ -68,8 +69,8 @@ object GalleryUtil {
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
     // TODO Height должен быть необязательный, но максимум 200 пикселей.
     val newSz = MImgInfoMeta(
-      width  = (LK_NODE_GALLERY_SHOW_WIDTH_PX * devPixelRatio.pixelRatio).toInt,
-      height = (LK_NODE_GALLERY_SHOW_HEIGHT_PX * devPixelRatio.pixelRatio).toInt
+      width  = szMulted(LK_NODE_GALLERY_SHOW_WIDTH_PX,  devPixelRatio.pixelRatio),
+      height = szMulted(LK_NODE_GALLERY_SHOW_HEIGHT_PX, devPixelRatio.pixelRatio)
     )
     var imOps: List[ImOp] = List(
       AbsResizeOp(newSz, ImResizeFlags.IgnoreAspectRatio),

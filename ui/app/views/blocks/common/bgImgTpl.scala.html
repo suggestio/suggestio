@@ -2,6 +2,7 @@
   dfltImg: Option[String] = None,  alt: Option[String] = None,  style: Option[String] = None)(implicit ctx: Context)
 
 @import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
+@import util.blocks.BgImg.szMulted
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
@@ -17,7 +18,7 @@
            style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
         }
       }
-      alt="@alt" width="@(mad.blockMeta.width * args.szMult)" height="@(mad.blockMeta.height * args.szMult)"
+      alt="@alt" width="@szMulted(mad.blockMeta.width, args.szMult)" height="@szMulted(mad.blockMeta.height, args.szMult)"
     />
   }
 
