@@ -172,7 +172,9 @@ class FbAdapter extends IAdapter {
     // TODO Нужно Fb.getAuthResponse подключить к работе. Но лучше вынести это всё в нормальный fsm и делать логин в ensureReady().
     val needPerms = fbCtxOpt.fold(allNeedPerms) { fbCtx =>
       // Вычитаем коллекции без использования Set
-      allNeedPerms.filter { perm => !(fbCtx.hasPerms contains perm) }
+      allNeedPerms.filter { perm =>
+        !(fbCtx.hasPerms contains perm)
+      }
     }
     if (needPerms.nonEmpty) {
       // Есть недостающие пермишшены. Нужно запросить login() с недостающими пермишшенами.
@@ -189,13 +191,12 @@ class FbAdapter extends IAdapter {
         // TODO Нужно вернуть новый fb-контекст с имеющимеся пермишшеннами из res.grantedPermissions
         res.authResp
           .filter { _ => res.status.isAppConnected }
-          .map { authResp =>
+          .fold [Future[FbCtx]] {
+            Future failed LoginCancelledException()
+          } { authResp =>
             val grPerms = authResp.grantedScopes
             val fbctx1 = FbCtx(hasPerms = grPerms)
             Future successful fbctx1
-          }
-          .getOrElse {
-            Future failed LoginCancelledException()
           }
       }
 
