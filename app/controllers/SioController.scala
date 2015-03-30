@@ -3,15 +3,14 @@ package controllers
 import java.io.File
 import java.net.JarURLConnection
 
+import io.suggest.event.SioNotifierStaticClientI
 import models.Context
 import org.joda.time.DateTime
-import play.api.cache.Cache
+import play.api.i18n.Lang
 import play.api.mvc._
-import play.twirl.api.{Html, Txt, TxtFormat, HtmlFormat}
 import util._
-import util.acl.SioRequestHeader
 import util.ws.WsDispatcherActor
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Future
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
@@ -19,9 +18,9 @@ import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
 import models._
-import play.api.libs.json.JsString
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
+import scala.language.implicitConversions
 
 import scala.util.{Failure, Success}
 
@@ -90,7 +89,7 @@ trait SioController extends Controller with ContextT with TplFormatUtilT {
     Future.successful(sr)
   }
 
-  implicit def sn = SiowebNotifier
+  implicit def sn: SioNotifierStaticClientI = SiowebNotifier.Implicts.sn
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {
@@ -130,6 +129,24 @@ trait SioController extends Controller with ContextT with TplFormatUtilT {
       "no-cache"
     }
     r.withHeaders(CACHE_CONTROL -> v)
+  }
+
+  /** 2015.mar.30: Если в выбранном языке не указана страна, то нужно её туда прикрутить.
+    * Появилось после добавления кодов стран к языкам messages. У части людей остались старые кукисы. */
+
+   override implicit def request2lang(implicit request: RequestHeader): Lang = {
+    val lang0 = super.request2lang
+    if (!lang0.country.isEmpty) {
+      lang0
+    } else {
+      // Нужно трансформировать язык к локаль исходя из доступных messages-локалей
+      val avails = Lang.availables
+      avails
+        .find { _.language == lang0.language }
+        .orElse { Lang.get("en-US") }
+        .orElse { avails.headOption }
+        .getOrElse { Lang.defaultLang }
+    }
   }
 
 }
