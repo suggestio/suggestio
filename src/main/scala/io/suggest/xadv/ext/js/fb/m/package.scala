@@ -17,4 +17,6 @@ package object m {
 
   type FbPermissionStatus       = FbPermissionStatuses.T
 
+  type FbAuthType               = FbAuthTypes.T
+
 }

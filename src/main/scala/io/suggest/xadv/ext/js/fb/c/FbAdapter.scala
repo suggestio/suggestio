@@ -177,8 +177,9 @@ class FbAdapter extends IAdapter {
     if (needPerms.nonEmpty) {
       // Есть недостающие пермишшены. Нужно запросить login() с недостающими пермишшенами.
       val args = FbLoginArgs(
-        scope = FbPermissions.permsToString( needPerms ),
-        returnScopes = true
+        scopes        = needPerms,
+        returnScopes  = Some(true),
+        authType      = Some(FbAuthTypes.ReRequest)
       )
       // Отправляем попап логина в очередь на экран.
       actx.app.popupQueue.enqueue { () =>

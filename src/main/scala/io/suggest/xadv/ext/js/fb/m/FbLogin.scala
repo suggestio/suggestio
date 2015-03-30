@@ -13,14 +13,19 @@ import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
  */
 
 case class FbLoginArgs(
-  scope         : String,
-  returnScopes  : Boolean
+  scopes        : TraversableOnce[FbPermission] = Nil,
+  returnScopes  : Option[Boolean] = None,
+  authType      : Option[FbAuthType] = None
 ) extends IToJsonDict {
   override def toJson: Dictionary[Any] = {
-    Dictionary[Any](
-      "scope"         -> scope,
-      "return_scopes" -> returnScopes
-    )
+    val d = Dictionary[Any]()
+    if (scopes.nonEmpty)
+      d.update("scope", FbPermissions.permsToString(scopes))
+    if (returnScopes.nonEmpty)
+      d.update("return_scopes", returnScopes.get)
+    if (authType.nonEmpty)
+      d.update("auth_type", authType.get.fbType)
+    d
   }
 }
 
