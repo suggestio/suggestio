@@ -1,1 +1,4 @@
-network.host: 10.0.0.223
+#network.host: 10.0.0.223
+transport.tcp.port: 9301
+http.port: 9201
+node.name" "sioX-web"
