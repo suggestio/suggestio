@@ -19,10 +19,10 @@ import Answer._
  */
 case class EnsureReadyAsk(
   mctx0     : MJsCtx,
-  replyTo   : Option[String],
-  sendMode  : CmdSendMode = CmdSendModes.Async
+  replyTo   : Option[String]
 ) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
+  override def sendMode = CmdSendModes.Async
   override def action = MJsActions.EnsureReady
 
 }

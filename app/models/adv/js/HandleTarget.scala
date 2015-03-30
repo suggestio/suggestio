@@ -13,10 +13,10 @@ import Answer._
 
 case class HandleTargetAsk(
   mctx0     : MJsCtx,
-  replyTo   : Option[String],
-  sendMode  : CmdSendMode = CmdSendModes.Queued
+  replyTo   : Option[String]
 ) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
+  override def sendMode = CmdSendModes.Async
   override def action = MJsActions.HandleTarget
 
 }

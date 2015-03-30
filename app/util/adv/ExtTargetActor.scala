@@ -190,8 +190,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       super.afterBecome()
       val cmd = HandleTargetAsk(
         mctx0     = mctx0,
-        replyTo   = Some(replyTo),
-        sendMode  = CmdSendModes.Queued
+        replyTo   = Some(replyTo)
       )
       sendCommand(cmd)
     }
