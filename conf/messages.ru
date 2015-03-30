@@ -591,6 +591,15 @@ Homeware=Товары для дома
 Cafes.and.restaurants=Кафе и рестораны
 Gastronomy=Гастрономия
 Info=Инфо
+Fitness=Фитнесс
+Services=Услуги
+Theatres=Театры
+Sport=Спорт
+Spa.and.massage=Спа и массаж
+Realty=Недвижимость
+Museums.and.exhibitions=Музеи и выставки
+Cinema=Кино
+Banking=Банки
 
 About.sio=О проекте
 Detect.geolocation=Определить местоположение
