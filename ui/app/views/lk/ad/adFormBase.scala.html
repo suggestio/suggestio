@@ -61,7 +61,11 @@
       content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '@blk.FontSizes.values.iterator.map {fs =>@{fs.size}px@if(!fs.isLast){ }}',
       style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
-      language: 'RU_ru', @* TODO Нужно разобраться с языками и локалями, и понять что тут за параметр такой. *@
+      @if(ctx.lang.language != "en") {
+        @defining( ctx.lang.toLocale ) { locale =>
+	  language: '@{locale.getCountry}_@{locale.getLanguage}',
+	}
+      }
       font_size_style_values: '1px,2px',
       setup: function(editor) {
         return editor.on('init', function(e) {

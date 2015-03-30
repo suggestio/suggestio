@@ -55,8 +55,8 @@
       }
     </div>
 
-    <a class="lang-widget" title="Switch language@if(ctx.lang.code != "en") { | @Messages("Switch.lang")}"
-       href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.lang.code</a>
+    <a class="lang-widget" title="Switch language@if(ctx.lang.language != "en") { | @Messages("Switch.lang")}"
+       href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.lang.language</a>
 
     @if(showSwitchNodeBtn && ctx.isAuth) {
       <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>

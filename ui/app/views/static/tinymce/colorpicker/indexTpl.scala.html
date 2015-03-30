@@ -1,12 +1,14 @@
-@()
+@()(implicit ctx: Context)
+
+@import ctx.lang
+
 <!DOCTYPE html>
 <html>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <head>
     <script type="text/javascript" src="colorpic.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.min.css" />
-    <title>Выбор цвета</title>
-    </script>
+    <title>@Messages("Choose.color")</title>
   </head>
   <body>
     
@@ -38,7 +40,7 @@
                 <div id="selector13" class="selector" style="background-color: #9028FE;"></div>
             </div>
             <div class="io">
-                <label>HEX</label>
+                <label>hex</label>
                 <input id="hex" type="text" value="" />
 
               <div style="opacity: 0; height: 63px;">
@@ -60,9 +62,9 @@
             </div>
             <div id="color"></div>
             <div class="right">
-                <a id="cancel" class="btn cancel" href="#">Отмена</a>
-                <a id="submit2" class="btn submit" href="#">Цвет фона</a>
-                <a id="submit" class="btn submit" href="#">Цвет текста</a>
+                <a id="cancel" class="btn cancel" href="#">@Messages("Cancel")</a>
+                <a id="submit2" class="btn submit" href="#">@Messages("Bg.color")</a>
+                <a id="submit" class="btn submit" href="#">@Messages("Text.color")</a>
             </div>
         </div>
     </div>

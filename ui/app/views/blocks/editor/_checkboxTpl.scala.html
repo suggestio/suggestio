@@ -2,6 +2,8 @@
 
 @* Checkbox, принимающий значения true и false. *@
 
+@import ctx.lang
+
 <label>
   @defining( af(bfNameBase) ) { sf =>
     <input  class="checkbox" type="checkbox" name="@sf.name"  @if( sf.value.orElse(bf.defaultValue).map(_.toString).exists(_ equalsIgnoreCase "true") ) {checked="checked"} value="true" />

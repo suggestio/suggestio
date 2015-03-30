@@ -443,6 +443,7 @@ Bg.color.of.sc.hint=Background color of showcase body and header, where logo dis
 
 Content.color=Content{0}color
 Fg.color.of.sc.hint=Color of text, icons and buttons in showcase.
+Text.color=Text color
 Edit.profile=Edit profile
 Advertisers=Advertisers
 

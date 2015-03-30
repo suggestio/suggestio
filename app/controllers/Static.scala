@@ -75,7 +75,7 @@ object Static extends SioControllerImpl {
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
    * Без этого костыля, запрос html'ки просто подвисает.
    */
-  def tinymceColorpicker(filename: String) = Action { implicit request =>
+  def tinymceColorpicker(filename: String) = MaybeAuth { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
       .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
   }

@@ -151,7 +151,7 @@ bf.text.example=Текст {0}
 Input.text.from.picture=Введите текст, изображенный на картинке
 error.captcha=Неверный код проверки.
 
-blocks.field.isWide=Отображать на широкую?
+blocks.field.isWide=Использовать широкоформатное отображение?
 blocks.field.title=Заголовок
 blocks.field.bgColor=Цвет фона
 blocks.field.href=Ссылка на внешний ресурс
@@ -451,6 +451,7 @@ Main.color=Основной{0}цвет
 Bg.color.of.sc.hint=Цвет фона и шапки, где будет располагаться ваш логотип
 Content.color=Цвет{0}контента
 Fg.color.of.sc.hint=Цвет текста, иконок и кнопок
+Text.color=Цвет текста
 Edit.profile=Редактировать профиль
 Advertisers=Рекламодатели
 
