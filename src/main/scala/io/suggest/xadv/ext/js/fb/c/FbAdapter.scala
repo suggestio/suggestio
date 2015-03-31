@@ -56,21 +56,37 @@ class FbAdapter extends IAdapter {
   }
 
   /** Инициализация системы  */
-  protected def headlessInit(mctx0: MJsCtx): Future[FbCtx] = {
+  protected def headlessInit(implicit actx: IActionContext): Future[FbJsCtxT] = {
     // Запускаем инициализацию FB API.
-    val appId = mctx0.service
+    val appId = actx.mctx0.service
       .flatMap(_.appId)
       .orNull
     val opts = FbInitOptions(appId)
     val initFut = Fb.init(opts)
 
     // Сразу запрашиваем инфу по fb-залогиненности текущего юзера и права доступа.
-    val loginStatusFut = initFut flatMap { _ =>
+    val loginStatusEarlyFut = initFut flatMap { _ =>
       Fb.getLoginStatus()
     }
 
-    // Когда появится инфа о залогиненном юзере, то нужно запросить текущие пермишшены.
-    val permissionsFut = loginStatusFut
+    // Если юзер не подключил приложение или не залогинен в facebook, то надо вызывать окно FB-логина без каких-либо конкретных прав.
+    val loginStatusFut = loginStatusEarlyFut
+      .filter { _.status.isAppConnected }
+      .recoverWith { case ex: Throwable =>
+        // Отправляем окно FB-логина в очередь на отображение.
+        val res = actx.app.popupQueue.enqueue { () =>
+          val args = FbLoginArgs(
+            returnScopes  = Some(true)
+          )
+          Fb.login(args)
+        }
+        if (!ex.isInstanceOf[NoSuchElementException])
+          dom.console.warn("FB failed to getLoginStatus(): %s: %s", ex.getClass.getName, ex.getMessage)
+        res
+      }
+
+    // Когда появится инфа о текущем залогиненном юзере, то нужно запросить уже доступные пермишшены.
+    val hasPermsFut = loginStatusFut
       // Анализировать новых юзеров смысла нет
       .filter { _.status.isAppConnected }
       // У известного юзера надо извлечь данные о текущих пермишшенах и его fb userID.
@@ -98,40 +114,97 @@ class FbAdapter extends IAdapter {
           }
       }
       // Если обработка была приостановлена, то вернуть пустой список прав.
-      .recover {
-        case ex: NoSuchElementException =>
-          Nil
+      .recoverWith {
         case ex: Throwable =>
-          dom.console.warn("FbAdapter.headlessInit(): Failed to request fb permissions: %s: %s", ex.getClass.getName, ex.getMessage)
-          Nil
+          if (!ex.isInstanceOf[NoSuchElementException])
+            dom.console.warn("FbAdapter.headlessInit(): Failed to request fb permissions: %s: %s", ex.getClass.getName, ex.getMessage)
+          Future failed LoginCancelledException()
       }
+
+    // Параллельно вычисляем данные по целям.
+    val newTargetsFut = loginStatusFut.flatMap { loginStatus =>
+      Future.traverse( actx.mctx0.svcTargets ) { tg =>
+        detectTgNodeType(tg)
+          .map { FbExtTarget(tg, _) }
+      }
+    }
+    // Вычисляем необходимые для целей пермишшены на основе имеющегося списка целей.
+    val tgsWantPermsFut = newTargetsFut map { tgts =>
+      tgts.iterator
+        .flatMap { _.fbTgUnderlying.nodeType }
+        .flatMap { _.publishPerms }
+        .toSet
+    }
+
+    // Вычисляем недостающие пермишшены, которые нужно запросить у юзера.
+    val needPermsFut = for {
+      hasPerms      <- hasPermsFut
+      tgsWantPerms  <- tgsWantPermsFut
+    } yield {
+      tgsWantPerms -- hasPerms
+    }
+
+    // Отправляем попап логина в очередь на экран.
+    val askPermsFut = needPermsFut
+      .filter { _.nonEmpty }
+      .flatMap { needPerms =>
+        actx.app.popupQueue.enqueue { () =>
+          val args = FbLoginArgs(
+            scopes        = needPerms,
+            returnScopes  = Some(true),
+            authType      = Some(FbAuthTypes.ReRequest)
+          )
+          Fb.login(args)
+        }
+      }
+      .recoverWith {
+        case ex: NoSuchElementException =>  loginStatusFut
+      }
+
+    // Какие пермишшены есть в наличии теперь?
+    val hasPerms2Fut = askPermsFut
+      .filter { ls =>
+        ls.status.isAppConnected  &&  ls.authResp.flatMap(_.grantedScopesRaw).isDefined
+      }
+      .recoverWith {
+        case ex: NoSuchElementException =>  loginStatusFut
+      }
+      .map { ls =>
+        ls.authResp
+          .fold [Seq[FbPermission]] (Nil) (_.grantedScopes)
+      }
+
+    // Собираем fb-контекст.
+    val fbCtxFut = hasPerms2Fut map { hasPerms =>
+      FbCtx(hasPerms = hasPerms)
+    }
 
     // Формируем и возвращаем результирующий внутренний контекст.
     for {
-      hasPerms <- permissionsFut
+      _fbCtx  <- fbCtxFut
+      tgts    <- newTargetsFut
     } yield {
-      FbCtx(
-        hasPerms = hasPerms
-      )
+      new FbJsCtxT {
+        override def jsCtxUnderlying  = actx.mctx0
+        override def fbCtx            = _fbCtx
+        override def status           = Some(MAnswerStatuses.Success)
+        override def svcTargets       = tgts
+      }
     }
   }
 
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  override def ensureReady(implicit actx: IActionContext): Future[MJsCtx] = {
-    val mctx0 = actx.mctx0
-    val p = Promise[MJsCtx]()
+  override def ensureReady(implicit actx: IActionContext): Future[MJsCtxT] = {
+    val p = Promise[MJsCtxT]()
     // Подписаться на событие загрузки скрипта.
     val window: FbWindow = dom.window
     window.fbAsyncInit = { () =>
       // Запускаем инициализацию.
-      headlessInit(mctx0) andThen {
+      headlessInit andThen {
         // Инициализация удалась
-        case Success(fbctx) =>
-          p success mctx0.copy(
-            status = Some(MAnswerStatuses.Success),
-            custom = Some(fbctx.toJson)
-          )
+        case Success(fbJsCtx) =>
+          p success fbJsCtx
         // Возник облом при инициализации.
         case Failure(ex) =>
           p failure ApiInitException(ex)
@@ -207,7 +280,7 @@ class FbAdapter extends IAdapter {
   }
 
   /** Сборка и публикация поста. */
-  protected def publishPost(mctx0: MJsCtx, tgInfo: IFbPostingInfo): Future[_] = {
+  protected def publishPost(mctx0: FbJsCtx, tgInfo: IFbPostingInfo): Future[_] = {
     // TODO Заимплеменчена обработка только первой карточки
     val mad = mctx0.mads.head
     val args = FbPost(
@@ -278,17 +351,16 @@ class FbAdapter extends IAdapter {
       fields      = Seq(FbNodeInfoArgs.ACCESS_TOKEN_FN),
       metadata    = false
     )
-    Fb.getNodeInfo(args)
-      .map { resp =>
-        // Если нет токена в ответе, то скорее всего там указана ошибка. Её рендерим в логи для отладки.
-        if (resp.error.isDefined)
-          dom.console.warn("Failed to acquire access token: %s => error %s", args.toString, resp.error.toString)
-        resp.accessToken
-      }
+    Fb.getNodeInfo(args) map { resp =>
+      // Если нет токена в ответе, то скорее всего там указана ошибка. Её рендерим в логи для отладки.
+      if (resp.error.isDefined)
+        dom.console.warn("Failed to acquire access token: %s => error %s", args.toString, resp.error.toString)
+      resp.accessToken
+    }
   }
   
   /** Определение типа целевого таргета. */
-  protected def detectTgNodeType(target: MExtTarget): Future[FbTarget] = {
+  protected def detectTgNodeType(target: IMExtTarget): Future[FbTarget] = {
     // Первый шаг - определяем по узлу данные.
     val tgInfoOpt = FbTarget.fromUrl( target.tgUrl )
     tgInfoOpt match {
@@ -308,23 +380,24 @@ class FbAdapter extends IAdapter {
 
   /** Подготовить данные по цели к публикации.
     * Запрашиваем специальный access_token, если требуется. */
-  protected def mkTgInfo(fbTg: FbTarget, fbCtx: FbCtx): Future[FbTgPostingInfo] = {
-    // TODO Прерывать процесс, если page, но нет ни manage_pages, ни publish_pages.
-    if ( fbTg.nodeType.contains(FbNodeTypes.Page)  &&
-         fbCtx.hasPerms.contains(FbPermissions.ManagePages) ) {
-      // Для постинга на страницу нужно запросить page access token.
-      getAccessToken(fbTg.nodeId)
-        .map { pageAcTokOpt =>
-        FbTgPostingInfo(nodeId = fbTg.nodeId, accessToken = pageAcTokOpt)
-      }
+  protected def mkTgInfo(fbTg: IFbTarget, fbCtx: FbCtx): Future[FbTgPostingInfo] = {
+    // TODO Прерывать процесс, если page, но нет ни manage_pages, ни publish_pages?
+    val accTokOptFut: Future[Option[String]] = {
+      if ( fbTg.nodeType.contains(FbNodeTypes.Page)  &&  fbCtx.hasPerms.contains(FbPermissions.ManagePages) ) {
+        // Для постинга на страницу нужно запросить page access token.
+        getAccessToken(fbTg.nodeId)
 
-    } else {
-      // Нет возможности/надобности постить от имени страницы. Попытаться запостить от имени юзера.
-      val res = FbTgPostingInfo(
+      } else {
+        // Нет возможности/надобности постить от имени страницы. Попытаться запостить от имени юзера.
+        val acTokOpt = Fb.getAuthResponse().flatMap(_.accessToken)
+        Future successful acTokOpt
+      }
+    }
+    accTokOptFut map { tokOpt =>
+      FbTgPostingInfo(
         nodeId      = fbTg.nodeId,
-        accessToken = Fb.getAuthResponse().flatMap(_.accessToken)
+        accessToken = tokOpt
       )
-      Future successful res
     }
   }
 
@@ -333,7 +406,7 @@ class FbAdapter extends IAdapter {
     * @return Right() если не требуется изменять размер картинки.
     *         Left() с fillCtx-контекстом, который будет отправлен на сервер.
     */
-  protected def ensureImgSz(fbTg: FbTarget, mctx0: MJsCtx): Either[MJsCtx, _] = {
+  protected def ensureImgSz(fbTg: IFbTarget, mctx0: FbJsCtx): Either[MJsCtxT, _] = {
     // TODO Сейчас проверяется только первая карточка
     val picSzOpt = mctx0.mads
       .headOption
@@ -348,21 +421,30 @@ class FbAdapter extends IAdapter {
       Right(None)
 
     } else {
+      // Формат картинки не подходит, но серверу доступен другой подходящий размер.
       dom.console.info("Current img size %s is NOT OK for fb node type %s. Req to update img size to %s", picSzOpt.toString,
         nt.toString, fbWallImgSizeOpt.toString)
-      // Формат картинки не подходит, но серверу доступен другой подходящий размер.
-      Left(mctx0.copy(
-        status = Some( MAnswerStatuses.FillContext ),
-        custom = Some( FbCtx(fbTg = Some(fbTg)).toJson ),
-        mads = mctx0.mads.map { mad =>
-          // TODO Когда неск.карточек, то им нужно ведь разные размеры выставлять.
-          mad.copy(
-            picture = Some( MAdPictureCtx(
-              sizeId = fbWallImgSizeOpt.map(_.szAlias)
-            ))
+      // Генерим результирующий контекст на основе текущего контекста.
+      val res = new FbJsCtxWrapperT {
+        override val jsCtxUnderlying = mctx0
+        override val fbCtx: FbCtx = {
+          mctx0.fbCtx.copy(
+            step = Some(2)
           )
         }
-      ))
+        override val status = Some( MAnswerStatuses.FillContext )
+        override val mads: Seq[MAdCtx] = {
+          mctx0.mads.map { mad =>
+            // TODO Когда неск.карточек, то им нужно ведь разные размеры выставлять.
+            mad.copy(
+              picture = Some( MAdPictureCtx(
+                sizeId = fbWallImgSizeOpt.map(_.szAlias)
+              ))
+            )
+          }
+        }
+      }
+      Left(res)
     }
   }
 
@@ -370,51 +452,41 @@ class FbAdapter extends IAdapter {
   // TODO Нужно оформить нижеследующий код как полноценный FSM с next_state. Логин вызывать однократно в ensureReady() в blocking-режиме.
 
   /** Первый шаг, который заканчивается переходом на step2() либо fillCtx. */
-  protected def step1(fbCtxOpt0: Option[FbCtx])(implicit actx: IActionContext): Future[MJsCtx] = {
-    import actx.mctx0
-    val fbCtx1Fut = doLogin(fbCtxOpt0)
-    val fbTgFut = fbCtx1Fut flatMap { _ =>
-      detectTgNodeType(mctx0.target.get)
-    }
-    fbCtx1Fut flatMap { fbCtx1 =>
-      fbTgFut flatMap { fbTg =>
-        ensureImgSz(fbTg, mctx0) match {
-          case Left(mctx1) =>
-            Future successful mctx1
-          case _ =>
-            val someTg = Some(fbTg)
-            val fbCtx2 = fbCtx1.copy(fbTg = someTg)
-            step2(fbCtx2)
-        }
-      }
+  protected def step1(mctx0: FbJsCtx)(implicit actx: IActionContext): Future[MJsCtxT] = {
+    val fbTg = mctx0.target.get
+    ensureImgSz(fbTg, mctx0) match {
+      case Left(mctx1) =>
+        Future successful mctx1
+      case _ =>
+        step2(mctx0)
     }
   }
 
   /** Второй шаг -- это шаг публикации. */
-  protected def step2(fbCtx: FbCtx)(implicit actx: IActionContext): Future[MJsCtx] = {
-    import actx.mctx0
+  protected def step2(mctx0: FbJsCtx)(implicit actx: IActionContext): Future[MJsCtxT] = {
+    val fbCtx = mctx0.fbCtx
     // Второй шаг: получение доп.данных по цели для публикации, если необходимо.
-    mkTgInfo(fbCtx.fbTg.get, fbCtx) flatMap { tgInfo =>
+    mkTgInfo(mctx0.target.get, fbCtx) flatMap { tgInfo =>
       // Третий шаг - запуск публикации поста.
       publishPost(mctx0, tgInfo)
 
     } map { res =>
       // Если всё ок, вернут результат.
-      mctx0.copy(
+      mctx0.jsCtxUnderlying.copy(
         status = Some(MAnswerStatuses.Success)
       )
     }
   }
 
   /** Запуск обработки одной цели. */
-  override def handleTarget(implicit actx: IActionContext): Future[MJsCtx] = {
-    import actx.mctx0
-    val fbCtxOpt = mctx0.custom.map(FbCtx.fromJson)
-    val hasTg = fbCtxOpt.exists(_.fbTg.isDefined)
-    if (!hasTg) {
-      step1(fbCtxOpt)
-    } else {
-      step2(fbCtxOpt.get)
+  override def handleTarget(implicit actx: IActionContext): Future[MJsCtxT] = {
+    val mctx0 = FbJsCtx(actx.mctx0)
+    // fb-context был выставлен в ensureReady()
+    mctx0.fbCtx.step match {
+      case Some(2) =>
+        step2(mctx0)
+      case _ =>
+        step1(mctx0)
     }
   }
 

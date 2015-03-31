@@ -13,7 +13,7 @@ import scala.scalajs.js
 
 case class MAnswer(
   replyTo : Option[String],
-  mctx    : MJsCtx
+  mctx    : MJsCtxT
 ) {
 
   def toJson: js.Dictionary[js.Any] = {

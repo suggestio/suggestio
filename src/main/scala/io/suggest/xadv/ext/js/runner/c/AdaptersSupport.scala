@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.xadv.ext.js.runner.m.{MAppState, MAdapters, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, MAppState, MAdapters, MJsCtx}
 import scala.concurrent.Future
 
 /**
@@ -16,7 +16,7 @@ object AdaptersSupport {
    * @param mctx Контекст, пришедший в запросе.
    * @return Фьючерс с исходящим контекстом.
    */
-  def handleAction(mctx: MJsCtx, appState: MAppState): Future[MJsCtx] = {
+  def handleAction(mctx: MJsCtx, appState: MAppState): Future[MJsCtxT] = {
     // Сборка контекста текущего экшена.
     val actx = ActionContextImpl(
       app = appState.appContext,

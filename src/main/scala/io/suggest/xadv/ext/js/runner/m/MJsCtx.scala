@@ -2,9 +2,8 @@ package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MJsCtxFieldsT
 
-import scala.scalajs.js
-import scala.scalajs.js.WrappedDictionary
-import js.JSConverters._
+import scala.scalajs.js.{WrappedDictionary, Dictionary, Any, Array}
+import scala.scalajs.js.JSConverters._
 
 /**
  * Suggest.io
@@ -17,13 +16,13 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
 
   override type T = MJsCtx
 
-  override def fromJson(dyn: js.Any): MJsCtx = {
-    val d = dyn.asInstanceOf[js.Dictionary[js.Dynamic]] : WrappedDictionary[js.Dynamic]
+  override def fromJson(dyn: Any): MJsCtx = {
+    val d = dyn.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
     MJsCtx(
       action = MAskActions.withName( d.get(ACTION_FN).get.toString ),
       mads = d.get(ADS_FN)
         .map {
-          _.asInstanceOf[js.Array[js.Dynamic]]
+          _.asInstanceOf[Array[Any]]
             .toSeq
             .map(MAdCtx.fromJson)
         }
@@ -33,9 +32,14 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
       service = d.get(SERVICE_FN)
         .map(MServiceInfo.fromJson),
       domains = d.get(DOMAIN_FN)
-        .map { _.asInstanceOf[js.Array[String]].toSeq }
+        .map { _.asInstanceOf[Array[String]].toSeq }
         .getOrElse(Nil),
-      custom = d.get(CUSTOM_FN)
+      custom = d.get(CUSTOM_FN),
+      svcTargets = d.get(SVC_TARGETS_FN)
+        .iterator
+        .flatMap { _.asInstanceOf[Array[Any]].iterator }
+        .map { MExtTarget.fromJson }
+        .toSeq
       // status и error игнорим, ибо они только исходящие
     )
   }
@@ -61,7 +65,7 @@ trait MJsCtxT extends IToJsonDict {
   def domains : Seq[String]
 
   /** Описание текущей цели, если есть. */
-  def target  : Option[MExtTarget]
+  def target  : Option[IMExtTarget]
 
   /** Статус исполнения результата. */
   def status  : Option[MAnswerStatus]
@@ -70,43 +74,82 @@ trait MJsCtxT extends IToJsonDict {
   def error   : Option[MErrorInfoT]
 
   /** Произвольные данные, выставляемые адаптером в рамках текущего запроса. */
-  def custom  : Option[js.Any]
+  def custom  : Option[Any]
 
-  override def toJson: js.Dictionary[js.Any] = {
-    val d = js.Dictionary[js.Any] (
+  def svcTargets: Seq[IMExtTarget]
+
+  override final def toJson: Dictionary[Any] = {
+    val d = Dictionary[Any] (
       ACTION_FN   -> action.strId
     )
-    if (service.nonEmpty)
-      d.update(SERVICE_FN, service.get.toJson)
-    if (mads.nonEmpty) {
-      val madsSer = mads.map(_.toJson)
+
+    val _service = service
+    if (_service.nonEmpty)
+      d.update(SERVICE_FN, _service.get.toJson)
+
+    val _mads = mads
+    if (_mads.nonEmpty) {
+      val madsSer = _mads.map(_.toJson)
       d.update(ADS_FN, madsSer.toJSArray)
     }
-    if (domains.nonEmpty)
-      d.update(DOMAIN_FN, domains.toJSArray)
-    if (target.nonEmpty)
-      d.update(TARGET_FN, target.get.toJson)
-    if (status.nonEmpty)
-      d.update(STATUS_FN, status.get.jsStr)
-    if (error.nonEmpty)
-      d.update(ERROR_FN, error.get.toJson)
-    if (custom.nonEmpty)
-      d.update(CUSTOM_FN, custom.get)
+
+    val _domains = domains
+    if (_domains.nonEmpty)
+      d.update(DOMAIN_FN, _domains.toJSArray)
+
+    val _target = target
+    if (_target.nonEmpty)
+      d.update(TARGET_FN, _target.get.toJson)
+
+    val _status = status
+    if (_status.nonEmpty)
+      d.update(STATUS_FN, _status.get.jsStr)
+
+    val _error = error
+    if (_error.nonEmpty)
+      d.update(ERROR_FN, _error.get.toJson)
+
+    val _custom = custom
+    if (_custom.nonEmpty)
+      d.update(CUSTOM_FN, _custom.get)
+
+    val _svcTargets = svcTargets
+    if (_svcTargets.nonEmpty)
+      d.update(SVC_TARGETS_FN, _svcTargets.iterator.map(_.toJson).toJSArray)
+
     d
   }
 }
 
+
+/** Враппер над контекстом. */
+trait MJsCtxWrapperT extends MJsCtxT {
+  def jsCtxUnderlying: MJsCtxT
+
+  override def action   = jsCtxUnderlying.action
+  override def custom   = jsCtxUnderlying.custom
+  override def target   = jsCtxUnderlying.target
+  override def error    = jsCtxUnderlying.error
+  override def svcTargets = jsCtxUnderlying.svcTargets
+  override def mads     = jsCtxUnderlying.mads
+  override def domains  = jsCtxUnderlying.domains
+  override def service  = jsCtxUnderlying.service
+  override def status   = jsCtxUnderlying.status
+}
+
+
 /** Дефолтовая реализация контекста. */
 case class MJsCtx(
-  action  : MAskAction,
-  mads    : Seq[MAdCtx],
-  service : Option[MServiceInfo],
-  domains : Seq[String],
-  target  : Option[MExtTarget],
-  custom  : Option[js.Any],
+  action      : MAskAction,
+  mads        : Seq[MAdCtx],
+  service     : Option[MServiceInfo],
+  domains     : Seq[String],
+  target      : Option[IMExtTarget],
+  custom      : Option[Any],
   // Необязательные параметры -- только для исходящего контекста, на входе не парсим.
-  status  : Option[MAnswerStatus] = None,
-  error   : Option[MErrorInfoT] = None
+  status      : Option[MAnswerStatus] = None,
+  error       : Option[MErrorInfoT] = None,
+  svcTargets  : Seq[IMExtTarget] = Nil
 ) extends MJsCtxT
 
 
@@ -116,10 +159,10 @@ import io.suggest.adv.ext.model.ctx.MErrorInfo._
 trait MErrorInfoT extends IToJsonDict {
   def msg: String
   def args: Seq[String]
-  def info: Option[js.Any]
+  def info: Option[Any]
 
   def toJson = {
-    val d = js.Dictionary[js.Any](
+    val d = Dictionary[Any](
       MSG_FN  -> msg
     )
     // args
@@ -138,6 +181,6 @@ trait MErrorInfoT extends IToJsonDict {
 case class MErrorInfo(
   msg   : String,
   args  : Seq[String] = Seq.empty,
-  info  : Option[js.Any] = None
+  info  : Option[Any] = None
 ) extends MErrorInfoT
 

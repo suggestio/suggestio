@@ -21,7 +21,7 @@ object MAskActions extends MAskActionLightBaseT {
      * @param actx Контекст текущего экшена.
      * @return Фьючерс с новым контекстом.
      */
-    def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtx]
+    def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtxT]
 
     /** А требуется ли адаптер для исполнения действа? */
     def adapterRequired: Boolean
@@ -29,8 +29,8 @@ object MAskActions extends MAskActionLightBaseT {
 
   sealed protected trait AdHocAction extends ValT {
     override def adapterRequired = false
-    def processAction(actx: IActionContext): Future[MJsCtx]
-    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtx] = {
+    def processAction(actx: IActionContext): Future[MJsCtxT]
+    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtxT] = {
       processAction(actx)
     }
   }
@@ -45,14 +45,14 @@ object MAskActions extends MAskActionLightBaseT {
 
 
   override val Init: T = new Val(INIT) with AdHocAction {
-    override def processAction(actx: IActionContext): Future[MJsCtx] = {
+    override def processAction(actx: IActionContext): Future[MJsCtxT] = {
       AeRunnerApp.init(actx)
     }
   }
 
   /** Запрос инициализации клиента. */
   override val EnsureReady: T = new Val(ENSURE_READY) {
-    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtx] = {
+    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtxT] = {
       adapter.ensureReadySafe(actx)
     }
     override def adapterRequired = true
@@ -60,7 +60,7 @@ object MAskActions extends MAskActionLightBaseT {
 
   /** Запрос размещения цели. */
   override val HandleTarget: T = new Val(HANDLE_TARGET) {
-    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtx] = {
+    override def processAction(adapter: IAdapter, actx: IActionContext): Future[MJsCtxT] = {
       adapter.handleTargetSafe(actx)
     }
     override def adapterRequired = true

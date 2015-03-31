@@ -16,19 +16,20 @@ object FbCtx extends FromJsonT {
   override type T = FbCtx
 
   /** Имя сериализованного поля c инфой по таргету. */
-  def FB_TG_FN      = "g"
   def HAS_PERMS_FN  = "p"
+  def STEP_FN       = "s"
 
   /** Десериализация контекста из JSON. */
   override def fromJson(raw: Any): T = {
     val d = raw.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
     FbCtx(
-      fbTg = d.get(FB_TG_FN)
-        .map(FbTarget.fromJson),
       hasPerms = d.get(HAS_PERMS_FN)
-        .fold (Seq.empty[FbPermission]) (FbPermissions.permsFromJson)
+        .fold (Seq.empty[FbPermission]) (FbPermissions.permsFromJson),
+      step = d.get(STEP_FN)
+        .map(_.asInstanceOf[Int])
     )
   }
+
 }
 
 
@@ -36,8 +37,8 @@ import FbCtx._
 
 
 case class FbCtx(
-  fbTg        : Option[FbTarget]  = None,
-  hasPerms    : Seq[FbPermission] = Nil
+  hasPerms    : Seq[FbPermission] = Nil,
+  step        : Option[Int]       = None
 ) extends IToJsonDict {
 
   def nonEmpty: Boolean = {
@@ -53,10 +54,10 @@ case class FbCtx(
   /** Сериализация экземпляра контекста в JSON. */
   override def toJson: Dictionary[Any] = {
     val d = Dictionary[Any]()
-    if (fbTg.isDefined)
-      d.update(FB_TG_FN, fbTg.get.toJson)
     if (hasPerms.nonEmpty)
       d.update(HAS_PERMS_FN, FbPermissions.permsToJson(hasPerms) )
+    if (step.isDefined)
+      d.update(STEP_FN, step.get)
     d
   }
 

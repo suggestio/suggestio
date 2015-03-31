@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.fb.m
 
 import java.net.URI
 
-import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.xadv.ext.js.runner.m.{IMExtTargetWrapper, IMExtTarget, FromJsonT, IToJsonDict}
 
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
 
@@ -78,14 +78,39 @@ object FbTarget extends FromJsonT {
 
 /** Интерфейс экземпляра модели с полем id fb-узла. */
 trait IFbNodeId {
-
   /** Идентификатор узла графа Facebook. */
   def nodeId: String
-
 }
 
 
 import FbTarget._
+
+
+trait IFbTarget extends IFbNodeId with IToJsonDict {
+  def nodeType  : Option[FbNodeType]
+
+}
+
+trait FbTargetT extends IFbTarget {
+ 
+  /** Сериализация в переносимое JSON-представление. */
+  override def toJson: Dictionary[Any] = {
+    val d = Dictionary[Any](
+      NODE_ID_FN -> nodeId
+    )
+    if (nodeType.isDefined)
+      d.update(NODE_TYPE_FN, nodeType.get.mdType)
+    d
+  } 
+}
+
+/** Враппер для таргета. */
+trait FbTargetWrapperT extends IFbTarget {
+  def fbTgUnderlying: IFbTarget
+
+  override def nodeType = fbTgUnderlying.nodeType
+  override def nodeId = fbTgUnderlying.nodeId
+}
 
 
 /**
@@ -96,16 +121,5 @@ import FbTarget._
 case class FbTarget(
   nodeId    : String,
   nodeType  : Option[FbNodeType]
-) extends IFbNodeId with IToJsonDict {
-
-  /** Сериализация в переносимое JSON-представление. */
-  override def toJson: Dictionary[Any] = {
-    val d = Dictionary[Any](
-      NODE_ID_FN -> nodeId
-    )
-    if (nodeType.isDefined)
-      d.update(NODE_TYPE_FN, nodeType.get.mdType)
-    d
-  }
-}
+) extends FbTargetT
 
