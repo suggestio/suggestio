@@ -12,8 +12,8 @@ trait VkWallImgSizesBaseT extends ServiceSizesEnumBaseT {
   def VK_WALL_IMG_SIZE_DFLT_ALIAS = "vk1"
 
   protected trait VkWallDfltValT extends ValT {
-    override def height = 1100
-    override def width  = 700
+    override def height = 700
+    override def width  = 1100
   }
 
   /** Community-страницы: page, event, group. */
