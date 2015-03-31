@@ -134,7 +134,7 @@ trait DynSearchArgs {
 
   /** Построение выхлопа метода toString(). */
   def toStringBuilder: StringBuilder = {
-    new StringBuilder(sbInitSize, mySimpleName).append(' ').append('\n')
+    new StringBuilder(sbInitSize, mySimpleName).append('{')
   }
 
   override def toString: String = {
