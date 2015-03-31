@@ -8,15 +8,16 @@ package io.suggest.adv.ext.model.ctx
  */
 trait MJsCtxFieldsT {
 
-  def ACTION_FN   = "a"
-  def ADS_FN      = "b"
-  def TARGET_FN   = "c"
-  def STATUS_FN   = "d"
-  def DOMAIN_FN   = "e"
-  def SERVICE_FN  = "f"
-  def ERROR_FN    = "g"
-  def CUSTOM_FN   = "h"
-
+  def ACTION_FN         = "a"
+  def ADS_FN            = "b"
+  def TARGET_FN         = "c"
+  def STATUS_FN         = "d"
+  def DOMAIN_FN         = "e"
+  def SERVICE_FN        = "f"
+  def ERROR_FN          = "g"
+  def CUSTOM_FN         = "h"
+  /** Название поля, которое содержит все цели сразу. */
+  def SVC_TARGETS_FN    = "i"
 }
 
 
@@ -87,9 +88,21 @@ object MErrorInfo {
 
 
 trait MExtTargetT {
+
+  /** id текущей цели на стороне хранилища suggest.io. */
+  def ID_FN           = "id"
+
+  /** Ссылка на цель, забитая юзером в форму. */
   def URL_FN          = "url"
+
   /** В поле с этим именем хранится адрес, на который надобно перекинуть юзера. */
   def ON_CLICK_URL_FN = "href"
+
+  /** Название цели, если задано/определено. Может перезаписываться на стороне js. */
   def NAME_FN         = "name"
+
+  /** Метаданные цели, составляемые и обрабатываемые на стороне js в произвольном формате. */
+  def CUSTOM_FN       = "custom"
+
 }
 

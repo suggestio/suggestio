@@ -1,7 +1,5 @@
 package io.suggest.adv.ext.model.im
 
-import io.suggest.model._
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
