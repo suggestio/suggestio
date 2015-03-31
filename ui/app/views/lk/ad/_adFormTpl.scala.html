@@ -11,7 +11,6 @@
 
 
 @helper.javascriptRouter("jsRoutes")(
-  routes.javascript.MarketCategory.topCatsOf,
   routes.javascript.MarketCategory.directSubcatsOf,
   routes.javascript.MarketAd.newTextField
 )
@@ -44,9 +43,8 @@
         <input class="js-ad-block-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = false))"/>
         <input class="js-ad-block-full-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = true))"/>
 
-        <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
+        <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview"></div>
 
-        </div>
         <div class="clear"></div>
       </div>
 

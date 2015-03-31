@@ -95,7 +95,6 @@ GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeM
 POST  /error/occured/in/showcase        controllers.RemoteError.handleShowcaseError
 
 ## Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
-GET  /m/lk/c/usr/o/:ownerId/top         controllers.MarketCategory.topCatsOf(ownerId)
 ## 2014.12.10: Больше не используется. Категории теперь набором галочек.
 GET  /m/lk/c/usr/c/:catId/dc            controllers.MarketCategory.directSubcatsOf(catId)
 

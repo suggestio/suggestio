@@ -152,15 +152,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
       }
     }
   }
-
-  /** JSON: Выдать прямые подкатегории для указанной категории либо категории верхнего уровня для
-    * указанного ТЦ/магазина/etc. Вернуть json array со списком необходимых категорий. */
-  def topCatsOf(ownerId: String) = Action.async { implicit request =>
-    MMartCategory.findTopForOwner(ownerId).map { cats =>
-      Ok(renderCatsJson(cats))
-    }
-  }
-
+  
   /**
    * Найти прямые подкатегории по отношению к указанной.
    * @param catId id родительской категории.
