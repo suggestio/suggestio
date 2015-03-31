@@ -160,15 +160,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
         // Сразу вставить URL картинки в контекст.
         picture = Some( _customArgs.jsPicCtx )
       )
-      // Собираем инфу по цели размещения
-      val targetFull = JsExtTarget(
-        target      = args.target.target,
-        onClickUrl  = getScUrl(args.target.returnTo)
-      )
-      // Собираем новый context
+      // Собираем новый context. Поле target было выставленно в service-акторе.
       val mctx1 = mctx0.copy(
         mads    = Seq(madCtx),
-        target  = Some(targetFull),
         domain  = Seq(getDomain),
         status  = None,
         error   = None,

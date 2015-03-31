@@ -148,9 +148,6 @@ trait IExtTarget {
   /** Опциональное название по мнению пользователя. */
   def name: Option[String]
 
-  /** Произвольные данные контекста, заданные на стороне js. */
-  def ctxData: Option[JsObject]
-
   /** Генерация экземпляра play.json.JsObject на основе имеющихся данных. */
   def toJsTargetPlayJson: JsObject = JsObject(toJsTargetPlayJsonFields)
 
@@ -163,10 +160,6 @@ trait IExtTarget {
     val _name = name
     if (_name.isDefined)
       acc ::= NAME_ESFN -> JsString(_name.get)
-    // ctxData
-    val _ctxData = ctxData
-    if (_ctxData.nonEmpty)
-      acc ::= CTX_DATA_ESFN -> _ctxData.get
     // результат
     acc
   }
@@ -177,7 +170,6 @@ trait IExtTarget {
 trait IExtTargetWrapper extends IExtTarget {
   def _targetUnderlying: IExtTarget
   override def url = _targetUnderlying.url
-  override def ctxData = _targetUnderlying.ctxData
   override def name = _targetUnderlying.name
 }
 
@@ -186,38 +178,30 @@ object JsExtTarget extends MExtTargetT {
 
   /** mapper из JSON. */
   implicit def reads: Reads[JsExtTarget] = (
+    (__ \ ID_FN).read[String] and
     (__ \ URL_FN).read[String] and
     (__ \ ON_CLICK_URL_FN).read[String] and
-    (__ \ NAME_FN).readNullable[String]
-  )(apply(_, _, _))
+    (__ \ NAME_FN).readNullable[String] and
+    (__ \ CUSTOM_FN).readNullable[JsValue]
+  )(apply _)
 
   /** unmapper в JSON. */
   implicit def writes: Writes[JsExtTarget] = (
+    (__ \ ID_FN).write[String] and
     (__ \ URL_FN).write[String] and
     (__ \ ON_CLICK_URL_FN).write[String] and
-    (__ \ NAME_FN).writeNullable[String]
+    (__ \ NAME_FN).writeNullable[String] and
+    (__ \ CUSTOM_FN).writeNullable[JsValue]
   )(unlift(unapply))
-
-  
-  def apply(target: IExtTarget, onClickUrl: String): JsExtTarget = {
-    apply(
-      url         = target.url,
-      onClickUrl  = onClickUrl,
-      name        = target.name
-    )
-  }
 
 }
 
 /** Модель того, что лежит в ext adv js ctx._target. */
 case class JsExtTarget(
+  id          : String,
   url         : String,
   onClickUrl  : String,
-  name        : Option[String] = None
-) extends IExtTarget {
-
-  // TODO Произвольные данные контекста, заданные на стороне js.
-  override def ctxData: Option[JsObject] = None
-
-}
+  name        : Option[String] = None,
+  custom      : Option[JsValue] = None
+) extends IExtTarget
 
