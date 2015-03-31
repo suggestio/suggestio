@@ -12,13 +12,16 @@ import SiowebEsUtil.client
  * Created: 17.04.14 17:03
  * Description: Генератор дерева категорий для ТЦ и прочая утиль для этого.
  */
+
+// TODO Выпилить наверное это надо.
+
 object MartCategories {
 
   /** Отправить в хранилище дефолтовое для ТЦ дерево категорий. */
   def saveDefaultMartCatsFor(ownerId: String = MMartCategory.DEFAULT_OWNER_ID): Future[Seq[String]] = {
     val catSaveFuts: Seq[Future[String]] = Seq(
       MMartCategory(
-        name = "Одежда",
+        name = "Clothing",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "a", inherit = false),
         parentId = None,
@@ -27,7 +30,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Обувь",
+        name = "Footwear",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "a5", inherit = true),
         parentId = None,
@@ -36,7 +39,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Туризм и отдых",
+        name = "Tourism.and.recreation",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "d", inherit = true),
         parentId = None,
@@ -45,7 +48,7 @@ object MartCategories {
         includeInAll = false
       ).save,
       MMartCategory(
-        name = "Электроника",
+        name = "Electronics",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "h", inherit = true),
         parentId = None,
@@ -54,7 +57,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Спорттовары",
+        name = "Sporting goods",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "e", inherit = true),
         parentId = None,
@@ -63,7 +66,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Косметика",
+        name = "Cosmetics",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "a3", inherit = true),
         parentId = None,
@@ -72,7 +75,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Товары для дома",
+        name = "Homeware",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "5", inherit = true),
         parentId = None,
@@ -81,7 +84,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Кафе и рестораны",
+        name = "Cafes.and.restaurants",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "6", inherit = false),
         parentId = None,
@@ -90,7 +93,7 @@ object MartCategories {
         includeInAll = true
       ).save,
       MMartCategory(
-        name = "Гастрономия",
+        name = "Gastronomy",
         ownerId = ownerId,
         ymCatPtr = MMartYmCatPtr(ycId = "c", inherit = true),
         parentId = None,
