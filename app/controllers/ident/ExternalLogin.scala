@@ -15,6 +15,7 @@ import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
 import util.adn.NodesUtil
+import util.xplay.LangUtil
 import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
 import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -197,7 +198,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
               val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
               val resFut = rdrFut
                 .map { _.withSession(session1) }
-              IdentBase.setLangCookie2(resFut, mpersonOptFut)
+              LangUtil.setLangCookie2(resFut, mpersonOptFut)
             }
           }
 

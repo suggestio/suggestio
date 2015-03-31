@@ -10,6 +10,7 @@ import util._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.ident.IdentUtil
+import util.xplay.LangUtil
 import views.html.ident.login.epw._
 import scala.concurrent.Future
 import SiowebEsUtil.client
@@ -95,7 +96,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
                 rdr.addingToSession(addToSession : _*)
               }
               // Выставить язык, сохраненный ранее в MPerson
-              IdentBase.setLangCookie2(rdrFut2, mpersonOptFut)
+              LangUtil.setLangCookie2(rdrFut2, mpersonOptFut)
 
             } else {
               val binded1 = binded.copy(password = "")

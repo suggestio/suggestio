@@ -1,21 +1,20 @@
-package controllers.ident
+package util.xplay
 
 import models.usr.MPerson
 import play.api.i18n.Lang
 import play.api.mvc.Result
-import play.api.Play.current
-import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
+import util.SiowebEsUtil.client
+import play.api.Play.current
 import scala.concurrent.Future
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.03.15 18:39
- * Description: Утиль ident-контроллера.
+ * Description: Утиль для поддержки языков.
  */
-object IdentBase {
+object LangUtil {
 
   /** Выставить lang.cookie. */
   def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {

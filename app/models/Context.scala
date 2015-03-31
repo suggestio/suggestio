@@ -91,12 +91,15 @@ trait ContextT {
   */
 trait Context extends MyHostsT {
 
-  implicit def request: RequestHeader
-  implicit def pwOpt: PwOpt_t
+  // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
-  // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
-  //      Для этого надо override implicit def lang(implicit request: RequestHeader) в SioController.
-  //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
+  /** Данные текущего реквеста. */
+  implicit val request: RequestHeader
+
+  /** Данные о текущем юзере. */
+  def pwOpt: PwOpt_t
+
+  /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val lang: Lang
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
@@ -184,7 +187,7 @@ trait Context extends MyHostsT {
 
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
   lazy val wsUrlPrefix: String = {
-    val sb = new StringBuilder("ws")
+    val sb = new StringBuilder(32, "ws")
     if (isSecure)
       sb.append('s')
     sb.append("://")
@@ -241,7 +244,7 @@ case class Context2(
   implicit val request: RichRequestHeader,
   implicit val lang: Lang
 ) extends Context {
-  implicit def pwOpt: PwOpt_t = request.pwOpt
+  def pwOpt: PwOpt_t = request.pwOpt
   val sioReqMdOpt: Option[SioReqMd] = Some(request.sioReqMd)
 }
 

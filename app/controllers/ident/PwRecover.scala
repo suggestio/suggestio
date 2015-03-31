@@ -9,6 +9,7 @@ import util.PlayMacroLogsI
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.MailerWrapper
+import util.xplay.LangUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
@@ -177,7 +178,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
           rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
             .flashing("success" -> "New.password.saved")
         }
-        val res2Fut = IdentBase.setLangCookie1(resFut, epw2.personId)
+        val res2Fut = LangUtil.setLangCookie1(resFut, epw2.personId)
         // Дожидаемся завершения всех асинхронных операций и возвращаем результат.
         updateFut flatMap { _ =>
           res2Fut

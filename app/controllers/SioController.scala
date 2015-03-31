@@ -10,6 +10,7 @@ import play.api.i18n.Lang
 import play.api.mvc._
 import util._
 import util.ws.WsDispatcherActor
+import util.xplay.LangUtil
 import scala.concurrent.Future
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
@@ -133,8 +134,14 @@ trait SioController extends Controller with ContextT with TplFormatUtilT {
 
   /** 2015.mar.30: Если в выбранном языке не указана страна, то нужно её туда прикрутить.
     * Появилось после добавления кодов стран к языкам messages. У части людей остались старые кукисы. */
-
    override implicit def request2lang(implicit request: RequestHeader): Lang = {
+    // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
+    // Тут должна быть проверка экземпляра реквеста http://www.mariussoutier.com/blog/2012/12/11/playframework-routes-part-2-advanced/
+    // На уровне action builder'ов должна быть поддержка выставления языка из url qs.
+    // Это решит все возможные проблемы с языками.
+    /*val lang0 = request.getQueryString(LangUtil.LANG_QS_ARG_NAME)
+      .flatMap { Lang.get }
+      .getOrElse { super.request2lang }*/
     val lang0 = super.request2lang
     if (!lang0.country.isEmpty) {
       lang0

@@ -10,7 +10,7 @@ package controllers
 
 import play.api.Play.{isProd, current}
 import play.api.mvc._
-import util.acl.{IsSuperuserOr404, IsSuperuser, MaybeAuth}
+import util.acl.{IsSuperuserOr404, MaybeAuth}
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
