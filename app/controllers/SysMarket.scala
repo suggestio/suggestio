@@ -21,6 +21,7 @@ import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.Messages
+import controllers.sysctl._
 
 /**
  * Suggest.io
@@ -28,7 +29,7 @@ import play.api.i18n.Messages
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompat {
+object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall {
 
   import LOGGER._
 

@@ -1,0 +1,22 @@
+@(adnId: String, langs: Seq[Lang], ff: Form[_])(implicit ctx: Context)
+
+@* Верстка формы установки дефолтовых карточек на текущий узел. *@
+
+@import helper._
+@import ctx._
+
+@form( CSRF(routes.SysMarket.installDfltMadsSubmit(adnId)) ) {
+
+  @select(
+    ff("lang"),
+    options = langs.map(l => l.code -> Messages("This.lang")(l)),
+    '_label -> "Локализация"
+  )
+
+  @inputText(
+    ff("count"),
+    '_label -> "Кол-во устанавливаемых карточек"
+  )
+
+  <input type="submit" value="@Messages("Install")" />
+}

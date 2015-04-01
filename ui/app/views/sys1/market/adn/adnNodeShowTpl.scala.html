@@ -128,7 +128,12 @@
     @btn(
       href = routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get),
       paddingPx = 28
-    ) { Инвайты на<br/>управление<br/> узлом }
+    ) { Инвайты на<br/>управление<br/>узлом }
+
+    @btn(
+      href = routes.SysMarket.installDfltMads(adnNode.id.get),
+      paddingPx = 28
+    ) { Установка<br/>дефолтовых<br/>карточек }
 
   }
 

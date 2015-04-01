@@ -1,0 +1,17 @@
+@(title: String, mnode: MAdnNode, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Подложка для sys.adn.install-шаблонов. *@
+
+@import sys1.market.adn._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@adnBase(
+  title       = title,
+  nodeOpt     = Some(mnode),
+  hPathAfter  = Some(hPathAfter1)
+)(content)

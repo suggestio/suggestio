@@ -317,6 +317,10 @@ POST /sys/ai/mad/edit/:id                controllers.SysAi.editMadAiSubmit(id)
 POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
 POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
 
+## sys.adn.install
+GET  /sys/adn/inst/mads/:adnId           controllers.SysMarket.installDfltMads(adnId)
+POST /sys/adn/inst/mads/:adnId           controllers.SysMarket.installDfltMadsSubmit(adnId)
+
 ## sys/person
 GET  /sys/person                         controllers.SysPerson.index
 GET  /sys/person/reg/email/show          controllers.SysPerson.showRegEmail

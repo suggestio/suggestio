@@ -1,0 +1,17 @@
+@(langs: Seq[Lang], mnode: MAdnNode, ff: Form[_], srcNodes: Seq[MAdnNode])(implicit ctx: Context)
+
+@* Страница с формой установки дефолтовых карточек на текущий узел. *@
+
+@ibase(
+  title = "Установка дефолт-карточек на узел " + mnode.meta.name,
+  mnode = mnode
+) {
+
+  Установка карточек с @srcNodes.size узлов:
+  @srcNodes.map { srcNode =>
+    <a href="@routes.SysMarket.showAdnNode(srcNode.id.get)">@srcNode.meta.name</a>,
+  }
+
+  @_instDfltMadsFormTpl(mnode.id.get, langs, ff)
+
+}

@@ -1,13 +1,17 @@
 package util.adn
 
 import controllers.routes
-import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
+import io.suggest.ym.model.ad.{AdsSearchArgsDflt, AdsSearchArgsWrapper, AdsSearchArgsT}
+import io.suggest.ym.model.common.{SlNameTokenStr, NodeConf, AdnMemberShowLevels}
 import models._
 import models.adv.{MExtServices, MExtTarget}
 import models.madn.NodeDfltColors
+import org.joda.time.DateTime
 import play.api.db.DB
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, Lang}
+import play.api.i18n.Messages.Message
 import play.api.mvc.Call
+import util.{PlayMacroLogsImpl, PlayMacroLogsDyn}
 import util.async.AsyncUtil
 
 import scala.concurrent.Future
@@ -17,6 +21,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import play.api.Play.{current, configuration}
 
+import scala.util.Random
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -25,7 +31,9 @@ import play.api.Play.{current, configuration}
  * в нескольких контроллерах.
  * 2015.mar.18: Для новосозданного узла нужно создавать начальные рекламные карточки.
  */
-object NodesUtil {
+object NodesUtil extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
   val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50
@@ -43,10 +51,10 @@ object NodesUtil {
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
-  //val NODE_ID_INIT_ADS_SOURCE = configuration.getString("user.node.created.mads.import.from.adn_id")
+  val ADN_IDS_INIT_ADS_SOURCE = configuration.getStringSeq("user.node.created.mads.import.from.adn_ids") getOrElse Nil
 
   /** Кол-во карточек для импорта из дефолтового узла. */
-  //val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count") getOrElse 1
+  val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count") getOrElse 1
 
 
   /** Куда отправлять юзера, когда тот создал новый узел? */
@@ -128,13 +136,77 @@ object NodesUtil {
     val nodeSaveFut = inst.save
     nodeSaveFut flatMap { adnId =>
       val billSaveFut = createUserNodeBilling(adnId)
+      val madsCreateFut = installDfltMads(adnId)
       for {
         _ <- createExtDfltTargets(adnId)
         _ <- billSaveFut
+        _ <- madsCreateFut
       } yield {
         inst.copy(id = Some(adnId))
       }
     }
+  }
+
+
+  /** Установить дефолтовые карточки. */
+  def installDfltMads(adnId: String, count: Int = INIT_ADS_COUNT)(implicit lang: Lang): Future[Seq[String]] = {
+    lazy val logPrefix = s"installDfltMads($adnId):"
+    (Future successful ADN_IDS_INIT_ADS_SOURCE)
+      // Если нет продьюсеров, значит функция отключена. Это будет перехвачено в recover()
+      .filter { _.nonEmpty }
+      // Собрать id карточек, относящиеся к заданным узлам-источникам.
+      .flatMap { prodIds =>
+        val dsa0 = new AdsSearchArgsDflt {
+          override def producerIds = prodIds
+          override val maxResults = Math.max(50, count * 2)
+          override def offset = 0
+        }
+        MAd.dynSearchIds(dsa0)
+      }
+      // Случайно выбрать из списка id карточек только указанное кол-во карточек.
+      .flatMap { madIds =>
+        val count = madIds.size
+        val rnd = new Random()
+        val madIds2 = (0 until Math.min(count, count))
+          .iterator
+          .map { _ =>  madIds( rnd.nextInt(count) ) }
+        MAd.multiGet(madIds2)
+      }
+      // Обновить карточки
+      .flatMap { mads0 =>
+        trace(s"$logPrefix Will install ${mads0.size} ads: [${mads0.iterator.flatMap(_.id).mkString(", ")}]")
+        Future.traverse(mads0) { mad0 =>
+          // Создать новую карточку на базе текущей.
+          val mad1 = mad0.copy(
+            id          = None,
+            versionOpt  = None,
+            dateCreated = DateTime.now(),
+            dateEdited  = None,
+            producerId  = adnId,
+            alienRsc    = true,
+            receivers   = Map(
+              adnId -> AdReceiverInfo(adnId, Set(SinkShowLevels.GEO_START_PAGE_SL))
+            ),
+            // Нужно локализовать текстовые поля с использование lang.
+            offers = mad0.offers.map { offer =>
+              offer.copy(
+                text1 = offer.text1.map { aosf =>
+                  aosf.copy(
+                    value = Messages(aosf.value)
+                  )
+                }
+              )
+            }
+            // TODO Нужно проверить содержимое поля text4search.
+          )
+          mad1.save
+        }
+      }
+      // Если не было adnId узлов-источников, то
+      .recover { case ex: NoSuchElementException =>
+        LOGGER.warn("Node default ads installer is disabled!")
+        Nil
+      }
   }
 
 }
