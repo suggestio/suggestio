@@ -14,7 +14,7 @@ object FbNodeTypes extends LightEnumeration {
   protected sealed trait ValT extends super.ValT {
     val mdType: String
     def needPageToken: Boolean = false
-    def wallImgSz: FbWallImgSize = FbWallImgSizes.FbCommunityLink
+    def wallImgSz: FbWallImgSize = FbWallImgSizes.FbPostLink
     override def toString = mdType
     def publishPerms: Seq[FbPermission]
   }
@@ -30,14 +30,18 @@ object FbNodeTypes extends LightEnumeration {
     override def publishPerms = Seq(FbPermissions.PublishActions)
   }
 
+  /** Помесь Val и PublishActionsT. Чисто для оптимизации. */
+  protected class ValDflt(val mdType: String) extends ValT with PublishActionsT
+
+
   /** Тип значений модели. */
-  override type T = Val
+  override type T = ValT
 
 
   /** Юзер, т.е. человек. */
-  val User: T = new Val("user") with PublishActionsT {
-    override def wallImgSz = FbWallImgSizes.FbUserLink
-  }
+  val User: T = new ValDflt("user") /*{
+    override def wallImgSz = FbWallImgSizes.FbDashboardLink
+  }*/
 
   /** Страница, т.е. некий "сайт". */
   val Page: T = new Val("page") {
@@ -46,10 +50,10 @@ object FbNodeTypes extends LightEnumeration {
   }
 
   /** Группа юзеров. */
-  val Group: T = new Val("group") with PublishActionsT
+  val Group: T = new ValDflt("group")
 
   /** Календарное событие. Редкость. */
-  val Event: T = new Val("event") with PublishActionsT
+  val Event: T = new ValDflt("event")
 
 
   /** Все значения этой модели в виде последовательности. */
