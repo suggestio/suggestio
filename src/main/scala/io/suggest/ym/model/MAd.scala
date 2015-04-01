@@ -149,22 +149,22 @@ object MAd
 
 final case class MAd(
   var producerId    : String,
-  var offers        : List[AOBlock] = Nil,
-  var imgs          : Imgs_t = Map.empty,
-  var blockMeta     : BlockMeta = BlockMeta.DEFAULT,
-  var receivers     : Receivers_t = Map.empty,
-  var prio          : Option[Int] = None,
-  var id            : Option[String] = None,
-  var userCatId     : Set[String] = Set.empty,
-  var texts4search  : Texts4Search = Texts4Search.EMPTY,
+  var offers        : List[AOBlock]       = Nil,
+  var imgs          : Imgs_t              = Map.empty,
+  var blockMeta     : BlockMeta           = BlockMeta.DEFAULT,
+  var receivers     : Receivers_t         = Map.empty,
+  var prio          : Option[Int]         = None,
+  var id            : Option[String]      = None,
+  var userCatId     : Set[String]         = Set.empty,
+  var texts4search  : Texts4Search        = Texts4Search.EMPTY,
   var colors        : Map[String, String] = Map.empty,
   var disableReason : List[DisableReason] = Nil,
-  var richDescrOpt  : Option[RichDescr] = None,
-  var dateCreated   : DateTime = DateTime.now,
-  var dateEdited    : Option[DateTime] = None,
-  var moderation    : ModerationInfo = ModerationInfo(),
-  var alienRsc      : Boolean = false,
-  var versionOpt    : Option[Long] = None
+  var richDescrOpt  : Option[RichDescr]   = None,
+  var dateCreated   : DateTime            = DateTime.now,
+  var dateEdited    : Option[DateTime]    = None,
+  var moderation    : ModerationInfo      = ModerationInfo.EMPTY,
+  var alienRsc      : Boolean             = false,
+  var versionOpt    : Option[Long]        = None
 )
   extends EsModelEmpty
   with EsModelT

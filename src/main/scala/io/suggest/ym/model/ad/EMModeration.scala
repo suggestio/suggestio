@@ -160,6 +160,8 @@ object ModerationInfo {
         freeAdv = Option(jmap.get(FREE_ADV_ESFN)).map(FreeAdvStatus.deserialize)
       )
   }
+
+  val EMPTY = ModerationInfo()
 }
 
 /**
