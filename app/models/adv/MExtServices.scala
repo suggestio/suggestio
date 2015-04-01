@@ -176,9 +176,9 @@ object MExtServices extends MServicesT {
       if ( (path startsWith "/me") || (path == "/") ||
            (path startsWith  "/groups/") || (tgUrl startsWith "/pages/") ||
            (tgUrl startsWith "/events/") || !(tgUrl startsWith "/profile.php") ) {
-        FbImgSizes.FbCommunityLink
+        FbImgSizes.FbPostLink
       } else {
-        FbImgSizes.FbUserLink
+        FbImgSizes.FbDashboardLink
       }
     }
 
