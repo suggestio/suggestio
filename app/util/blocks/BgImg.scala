@@ -140,7 +140,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
     val bgc = pxRatio.bgCompression
     val imOps0 = List[ImOp](
       // 2015.mar.11: Вписать откропанное изображение в примерно необходимые размеры. До это кроп был внутри ресайза.
-      AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = cropWidth) , Seq(ImResizeFlags.FillArea) ),
+      AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = 0) /*, Seq(ImResizeFlags.FillArea)*/ ),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
