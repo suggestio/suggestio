@@ -196,23 +196,25 @@ class FbAdapter extends IAdapter {
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
   override def ensureReady(implicit actx: IActionContext): Future[MJsCtxT] = {
+    // В этот promise будет закинут результат.
     val p = Promise[MJsCtxT]()
+    // Чтобы зафиксировать таймаут загрузки скрипта fb, используется второй promise:
+    val scriptLoadP = Promise[Null]()
     // Подписаться на событие загрузки скрипта.
     val window: FbWindow = dom.window
     window.fbAsyncInit = { () =>
+      // FB-скрипт загружен. Сообщаем об этом контейнеру scriptLoadPromise.
+      scriptLoadP success null
       // Запускаем инициализацию.
-      headlessInit andThen {
-        // Инициализация удалась
-        case Success(fbJsCtx) =>
-          p success fbJsCtx
-        // Возник облом при инициализации.
-        case Failure(ex) =>
-          p failure ApiInitException(ex)
+      val initFut = headlessInit
+        // Любое исключение завернуть в ApiInitException
+        .recoverWith { case ex: Throwable =>
           dom.console.error("FbAdapter: Fb.init() failed: " + ex.getClass.getName + ": " + ex.getMessage)
-      } onComplete { case _ =>
-        // Вычищаем эту функцию из памяти браузера.
-        window.fbAsyncInit = null
-      }
+          Future failed ApiInitException(ex)
+        }
+      p completeWith initFut
+      // Вычищаем эту функцию из памяти браузера, когда она подходит к концу.
+      window.fbAsyncInit = null
     }
     // Добавить скрипт facebook.js на страницу
     try {
@@ -226,7 +228,7 @@ class FbAdapter extends IAdapter {
     val t = SCRIPT_LOAD_TIMEOUT_MS
     dom.setTimeout(
       {() =>
-        if (!p.isCompleted) {
+        if (!scriptLoadP.isCompleted) {
           p failure UrlLoadTimeoutException(SCRIPT_URL, t)
           dom.console.error("FbAdapter: timeout %s ms occured during ensureReady()", t)
         }
@@ -236,48 +238,6 @@ class FbAdapter extends IAdapter {
     p.future
   }
 
-  /**
-   * Запуск логина и обрабока ошибок.
-   * @return Фьючерс с выверенным результатом логина.
-   */
-  protected def doLogin(fbCtxOpt: Option[FbCtx])(implicit actx: IActionContext): Future[FbCtx] = {
-    val allNeedPerms = FbPermissions.wantPublishPerms
-    // TODO Нужно Fb.getAuthResponse подключить к работе. Но лучше вынести это всё в нормальный fsm и делать логин в ensureReady().
-    val needPerms = fbCtxOpt.fold(allNeedPerms) { fbCtx =>
-      // Вычитаем коллекции без использования Set
-      allNeedPerms.filter { perm =>
-        !(fbCtx.hasPerms contains perm)
-      }
-    }
-    if (needPerms.nonEmpty) {
-      // Есть недостающие пермишшены. Нужно запросить login() с недостающими пермишшенами.
-      val args = FbLoginArgs(
-        scopes        = needPerms,
-        returnScopes  = Some(true),
-        authType      = Some(FbAuthTypes.ReRequest)
-      )
-      // Отправляем попап логина в очередь на экран.
-      actx.app.popupQueue.enqueue { () =>
-        Fb.login(args)
-
-      }.flatMap { res =>
-        // TODO Нужно вернуть новый fb-контекст с имеющимеся пермишшеннами из res.grantedPermissions
-        res.authResp
-          .filter { _ => res.status.isAppConnected }
-          .fold [Future[FbCtx]] {
-            Future failed LoginCancelledException()
-          } { authResp =>
-            val grPerms = authResp.grantedScopes
-            val fbctx1 = FbCtx(hasPerms = grPerms)
-            Future successful fbctx1
-          }
-      }
-
-    } else {
-      // Все необходимые пермишшены уже доступны прямо сейчас. Значит и юзер залогинен, и можно обойтись без логина.
-      Future successful fbCtxOpt.get
-    }
-  }
 
   /** Сборка и публикация поста. */
   protected def publishPost(mctx0: FbJsCtx, tgInfo: IFbPostingInfo): Future[_] = {
