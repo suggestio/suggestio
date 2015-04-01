@@ -30,7 +30,7 @@ object FbGetPermissionsResult extends FromJsonT {
             .flatMap { FbPermissionState.maybeFromJson }
             .toSeq
         case None =>
-          Seq.empty
+          Nil
       }
     )
   }

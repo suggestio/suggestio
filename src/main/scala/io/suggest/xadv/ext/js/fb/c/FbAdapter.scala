@@ -84,9 +84,15 @@ class FbAdapter extends IAdapter {
           dom.console.warn("FB failed to getLoginStatus(): %s: %s", ex.getClass.getName, ex.getMessage)
         res
       }
+      .filter { _.status.isAppConnected }
+      .recoverWith { case ex: Throwable =>
+        if (!ex.isInstanceOf[NoSuchElementException])
+          dom.console.warn("FbAdapter.headlessInit(): Failed to request fb permissions: %s: %s", ex.getClass.getName, ex.getMessage)
+        Future failed LoginCancelledException()
+      }
 
     // Когда появится инфа о текущем залогиненном юзере, то нужно запросить уже доступные пермишшены.
-    val hasPermsFut = loginStatusFut
+    val earlyHasPermsFut = loginStatusFut
       // Анализировать новых юзеров смысла нет
       .filter { _.status.isAppConnected }
       // У известного юзера надо извлечь данные о текущих пермишшенах и его fb userID.
@@ -113,16 +119,15 @@ class FbAdapter extends IAdapter {
               .toSeq
           }
       }
-      // Если обработка была приостановлена, то вернуть пустой список прав.
-      .recoverWith {
-        case ex: Throwable =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            dom.console.warn("FbAdapter.headlessInit(): Failed to request fb permissions: %s: %s", ex.getClass.getName, ex.getMessage)
-          Future failed LoginCancelledException()
+
+    val hasPermsFut = earlyHasPermsFut
+      .recoverWith { case ex: NoSuchElementException =>
+        loginStatusFut
+          .map { _.authResp.get.grantedScopes }
       }
 
     // Параллельно вычисляем данные по целям.
-    val newTargetsFut = loginStatusFut.flatMap { loginStatus =>
+    val newTargetsFut = loginStatusFut.flatMap { _ =>
       Future.traverse( actx.mctx0.svcTargets ) { tg =>
         detectTgNodeType(tg)
           .map { FbExtTarget(tg, _) }
@@ -141,13 +146,16 @@ class FbAdapter extends IAdapter {
       hasPerms      <- hasPermsFut
       tgsWantPerms  <- tgsWantPermsFut
     } yield {
-      tgsWantPerms -- hasPerms
+      val res = tgsWantPerms -- hasPerms
+      println("I have perms = " + hasPerms.mkString(",") + " ; tg want perms = " + tgsWantPerms.mkString(",") + " ; so, need perms = " + res.mkString(","))
+      res
     }
 
-    // Отправляем попап логина в очередь на экран.
-    val askPermsFut = needPermsFut
+    // Отправляем попап логина в очередь на экран для получения новых пермишеннов, если такое требуется.
+    val hasPerms2Fut = needPermsFut
       .filter { _.nonEmpty }
       .flatMap { needPerms =>
+        println("Asking for new FB permissions: " + needPerms.mkString(", "))
         actx.app.popupQueue.enqueue { () =>
           val args = FbLoginArgs(
             scopes        = needPerms,
@@ -155,23 +163,13 @@ class FbAdapter extends IAdapter {
             authType      = Some(FbAuthTypes.ReRequest)
           )
           Fb.login(args)
+            .map { _.authResp.fold [Seq[FbPermission]] (Nil) (_.grantedScopes) }
         }
       }
       .recoverWith {
-        case ex: NoSuchElementException =>  loginStatusFut
-      }
-
-    // Какие пермишшены есть в наличии теперь?
-    val hasPerms2Fut = askPermsFut
-      .filter { ls =>
-        ls.status.isAppConnected  &&  ls.authResp.flatMap(_.grantedScopesRaw).isDefined
-      }
-      .recoverWith {
-        case ex: NoSuchElementException =>  loginStatusFut
-      }
-      .map { ls =>
-        ls.authResp
-          .fold [Seq[FbPermission]] (Nil) (_.grantedScopes)
+        case ex: NoSuchElementException =>
+          println("Permissing request is not needed. Skipping.")
+          hasPermsFut
       }
 
     // Собираем fb-контекст.
