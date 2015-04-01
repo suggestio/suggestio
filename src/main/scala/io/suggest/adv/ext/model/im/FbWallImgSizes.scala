@@ -23,10 +23,10 @@ trait FbWallImgSizesBaseT extends ServiceSizesEnumBaseT {
   }
 
   /** Community-страницы: page, event, group. */
-  val FbPostLink: T
+  def FbPostLink: T
 
   /** На страница dashboard (facebook.com/) все картинки имеют чуть меньший размер. */
-  val FbDashboardLink: T
+  def FbDashboardLink: T
 
 }
 
@@ -48,12 +48,16 @@ trait FbWallImgSizeLightBaseT extends FbWallImgSizesBaseT with ServiceSizesEnumL
   }
 
   override def maybeWithName(n: String): Option[T] = {
-    if (FbPostLink.szAlias == n)
-      Some(FbPostLink)
-    else if (FbDashboardLink.szAlias == n)
-      Some(FbDashboardLink)
-    else
-      super.maybeWithName(n)
+    val fbPostLink = FbPostLink
+    if (fbPostLink.szAlias == n)
+      Some(fbPostLink)
+    else {
+      val fbDashLink = FbDashboardLink
+      if (fbDashLink.szAlias == n)
+        Some(fbDashLink)
+      else
+        super.maybeWithName(n)
+    }
   }
 }
 
@@ -63,6 +67,6 @@ trait FbWallImgSizesLightT extends FbWallImgSizeLightBaseT {
   override type T = ValT
 
   override val FbPostLink: T = new ValT with FbCommunityValT
-  override val FbDashboardLink: T = new ValT with FbUserValT
+  override lazy val FbDashboardLink: T = new ValT with FbUserValT
 
 }
