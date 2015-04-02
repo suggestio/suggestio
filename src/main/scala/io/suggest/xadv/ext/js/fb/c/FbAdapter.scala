@@ -3,14 +3,11 @@ package io.suggest.xadv.ext.js.fb.c
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.c.IActionContext
+import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
 import org.scalajs.dom
-// В целях оптимизации нижеследующие, почти все синхронные, операции над фьючерсом объединяются через runNow.
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-
-import scala.concurrent.{Promise, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -18,45 +15,27 @@ import scala.util.{Failure, Success}
  * Created: 02.03.15 17:24
  * Description: Адаптер для постинга в facebook.
  */
-object FbAdapter {
 
-  /** Таймаут загрузки скрипта. */
-  def SCRIPT_LOAD_TIMEOUT_MS = 10000
+class FbAdapter extends IAdapter with AsyncInitAdp {
 
-  /** Ссылка на скрипт. */
-  def SCRIPT_URL = "https://connect.facebook.net/en_US/sdk.js"
+  override type Ctx_t = FbJsCtxT
 
-  /** Добавить тег со скриптом загрузки facebook js sdk. */
-  private def addScriptTag(): Unit = {
-    val d = dom.document
-    // TODO Надо ли вообще проверять наличие скрипта?
-    // У макса была какая-то костыльная проверка, сюда она перекочевала в упрощенном виде.
-    val id = "facebook-jssdk"
-    if (d.getElementById(id) == null) {
-      val tag = d.createElement("script")
-      tag.setAttribute("async", true.toString)
-      tag.setAttribute("type", "text/javascript")
-      tag.setAttribute("src", SCRIPT_URL)
-      d.getElementsByTagName("body")(0)
-        .appendChild(tag)
-    }
-  }
-
-}
-
-
-import FbAdapter._
-
-
-class FbAdapter extends IAdapter {
+  override def SCRIPT_URL = "https://connect.facebook.net/en_US/sdk.js"
+  override def SCRIT_TAG_ID: String = "fb-jssdk"
+  override def SCRIPT_LOAD_TIMEOUT_MS = 10000
 
   /** Относится ли указанный домен к текущему клиенту? */
   override def isMyDomain(domain: String): Boolean = {
     domain matches "(www\\.)?facebook.(com|net)"
   }
 
-  /** Инициализация системы  */
-  protected def headlessInit(implicit actx: IActionContext): Future[FbJsCtxT] = {
+  override def setInitHandler(handler: () => _): Unit = {
+    val wnd: FbWindow = dom.window
+    wnd.fbAsyncInit = handler
+  }
+
+  /** Эта инициализация вызывается, когда скрипт загружен. */
+  override def serviceScriptLoaded(implicit actx: IActionContext): Future[Ctx_t] = {
     // Запускаем инициализацию FB API.
     val appId = actx.mctx0.service
       .flatMap(_.appId)
@@ -189,51 +168,6 @@ class FbAdapter extends IAdapter {
         override def svcTargets       = tgts
       }
     }
-  }
-
-
-  /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
-  override def ensureReady(implicit actx: IActionContext): Future[MJsCtxT] = {
-    // В этот promise будет закинут результат.
-    val p = Promise[MJsCtxT]()
-    // Чтобы зафиксировать таймаут загрузки скрипта fb, используется второй promise:
-    val scriptLoadP = Promise[Null]()
-    // Подписаться на событие загрузки скрипта.
-    val window: FbWindow = dom.window
-    window.fbAsyncInit = { () =>
-      // FB-скрипт загружен. Сообщаем об этом контейнеру scriptLoadPromise.
-      scriptLoadP success null
-      // Запускаем инициализацию.
-      val initFut = headlessInit
-        // Любое исключение завернуть в ApiInitException
-        .recoverWith { case ex: Throwable =>
-          dom.console.error("FbAdapter: Fb.init() failed: " + ex.getClass.getName + ": " + ex.getMessage)
-          Future failed ApiInitException(ex)
-        }
-      p completeWith initFut
-      // Вычищаем эту функцию из памяти браузера, когда она подходит к концу.
-      window.fbAsyncInit = null
-    }
-    // Добавить скрипт facebook.js на страницу
-    try {
-      addScriptTag()
-    } catch {
-      case ex: Throwable =>
-        p failure DomUpdateException(ex)
-        dom.console.error("FbAdapter: addScriptTag() failed: " + ex.getClass.getName + ": " + ex.getMessage)
-    }
-    // Среагировать на слишком долгую загрузку скрипта таймаутом.
-    val t = SCRIPT_LOAD_TIMEOUT_MS
-    dom.setTimeout(
-      {() =>
-        if (!scriptLoadP.isCompleted) {
-          p failure UrlLoadTimeoutException(SCRIPT_URL, t)
-          dom.console.error("FbAdapter: timeout %s ms occured during ensureReady()", t)
-        }
-      },
-      t
-    )
-    p.future
   }
 
 
