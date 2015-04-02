@@ -35,138 +35,7 @@ class FbAdapter extends AsyncInitAdp {
 
   /** Эта инициализация вызывается, когда скрипт загружен. */
   override def serviceScriptLoaded(implicit actx: IActionContext): Future[Ctx_t] = {
-    // Запускаем инициализацию FB API.
-    val appId = actx.mctx0.service
-      .flatMap(_.appId)
-      .orNull
-    val opts = FbInitOptions(appId)
-    val initFut = Fb.init(opts)
-
-    // Сразу запрашиваем инфу по fb-залогиненности текущего юзера и права доступа.
-    val loginStatusEarlyFut = initFut flatMap { _ =>
-      Fb.getLoginStatus()
-    }
-
-    // Если юзер не подключил приложение или не залогинен в facebook, то надо вызывать окно FB-логина без каких-либо конкретных прав.
-    val loginStatusFut = loginStatusEarlyFut
-      .filter { _.status.isAppConnected }
-      .recoverWith { case ex: Throwable =>
-        // Отправляем окно FB-логина в очередь на отображение.
-        val res = actx.app.popupQueue.enqueue { () =>
-          val args = FbLoginArgs(
-            returnScopes  = Some(true)
-          )
-          Fb.login(args)
-        }
-        if (!ex.isInstanceOf[NoSuchElementException])
-          dom.console.warn("FB failed to getLoginStatus(): %s: %s", ex.getClass.getName, ex.getMessage)
-        res
-      }
-      .filter { _.status.isAppConnected }
-      .recoverWith { case ex: Throwable =>
-        if (!ex.isInstanceOf[NoSuchElementException])
-          dom.console.warn("FbAdapter: Failed to Fb.login() w/o perms: %s: %s", ex.getClass.getName, ex.getMessage)
-        Future failed LoginCancelledException()
-      }
-
-    // Когда появится инфа о текущем залогиненном юзере, то нужно запросить уже доступные пермишшены.
-    val earlyHasPermsFut = loginStatusFut
-      // Анализировать новых юзеров смысла нет
-      .filter { _.status.isAppConnected }
-      // У известного юзера надо извлечь данные о текущих пермишшенах и его fb userID.
-      .map { ls =>
-        for {
-          authResp  <- ls.authResp
-          userId    <- authResp.userId
-          atok      <- authResp.accessToken
-        } yield {
-          (userId, atok)
-        }
-      }
-      // Если там ничего нет, то тоже приостановить обработку.
-      .map { _.get }
-      // Если есть текущий токен и userId, то воспользоваться ими для получения списка текущих прав.
-      .flatMap { case (userId, atok) =>
-        val permArgs = FbGetPermissionsArgs(userId = userId, accessToken = Some(atok))
-        Fb.getPermissions(permArgs)
-          .map { resp =>
-            resp.data
-              .iterator
-              .filter { _.status.isGranted }    // Нужны только заапрувленные права
-              .map { _.permission }             // Отбросить состояние права, оставить только само право.
-              .toSeq
-          }
-      }
-
-    val hasPermsFut = earlyHasPermsFut
-      .recoverWith { case ex: NoSuchElementException =>
-        loginStatusFut
-          .map { _.authResp.get.grantedScopes }
-      }
-
-    // Параллельно вычисляем данные по целям.
-    val newTargetsFut = loginStatusFut.flatMap { _ =>
-      Future.traverse( actx.mctx0.svcTargets ) { tg =>
-        detectTgNodeType(tg)
-          .map { FbExtTarget(tg, _) }
-      }
-    }
-    // Вычисляем необходимые для целей пермишшены на основе имеющегося списка целей.
-    val tgsWantPermsFut = newTargetsFut map { tgts =>
-      tgts.iterator
-        .flatMap { _.fbTgUnderlying.nodeType }
-        .flatMap { _.publishPerms }
-        .toSet
-    }
-
-    // Вычисляем недостающие пермишшены, которые нужно запросить у юзера.
-    val needPermsFut = for {
-      hasPerms      <- hasPermsFut
-      tgsWantPerms  <- tgsWantPermsFut
-    } yield {
-      val res = tgsWantPerms -- hasPerms
-      println("I have perms = " + hasPerms.mkString(",") + " ; tg want perms = " + tgsWantPerms.mkString(",") + " ; so, need perms = " + res.mkString(","))
-      res
-    }
-
-    // Отправляем попап логина в очередь на экран для получения новых пермишеннов, если такое требуется.
-    val hasPerms2Fut = needPermsFut
-      .filter { _.nonEmpty }
-      .flatMap { needPerms =>
-        println("Asking for new FB permissions: " + needPerms.mkString(", "))
-        actx.app.popupQueue.enqueue { () =>
-          val args = FbLoginArgs(
-            scopes        = needPerms,
-            returnScopes  = Some(true),
-            authType      = Some(FbAuthTypes.ReRequest)
-          )
-          Fb.login(args)
-            .map { _.authResp.fold [Seq[FbPermission]] (Nil) (_.grantedScopes) }
-        }
-      }
-      .recoverWith {
-        case ex: NoSuchElementException =>
-          println("Permissing request is not needed. Skipping.")
-          hasPermsFut
-      }
-
-    // Собираем fb-контекст.
-    val fbCtxFut = hasPerms2Fut map { hasPerms =>
-      FbCtx(hasPerms = hasPerms)
-    }
-
-    // Формируем и возвращаем результирующий внутренний контекст.
-    for {
-      _fbCtx  <- fbCtxFut
-      tgts    <- newTargetsFut
-    } yield {
-      new FbJsCtxT {
-        override def jsCtxUnderlying  = actx.mctx0
-        override def fbCtx            = _fbCtx
-        override def status           = Some(MAnswerStatuses.Success)
-        override def svcTargets       = tgts
-      }
-    }
+    new FbInit().main()
   }
 
 
@@ -194,43 +63,6 @@ class FbAdapter extends AsyncInitAdp {
   }
 
   /**
-   * Узнать тип указанной ноды через API.
-   * @param fbId id узла.
-   * @return None если не удалось определить id узла.
-   *         Some с данными по цели, которые удалось уточнить. Там МОЖЕТ БЫТЬ id узла.
-   */
-  protected def getNodeType(fbId: String): Future[Option[FbTarget]] = {
-    val args = FbNodeInfoArgs(
-      id        = fbId,
-      fields    = FbNodeInfoArgs.FIELDS_ONLY_ID,
-      metadata  = true
-    )
-    Fb.getNodeInfo(args)
-      .map { resp =>
-        val ntOpt = resp.metadata
-          .flatMap(_.nodeType)
-          .orElse {
-            // Если всё еще нет типа, но есть ошибка, то по ней бывает можно определить тип.
-            resp.error
-              .filter { e => e.code contains 803 }    // Ошибка 803 говорит, что у юзера нельзя сдирать инфу.
-              .map { _ => FbNodeTypes.User }
-          }
-        if (ntOpt.isEmpty)
-          dom.console.warn("Unable to get node type from getNodeInfo(%s) resp %s", args.toString, resp.toString)
-        val res = FbTarget(
-          nodeId        = resp.nodeId.getOrElse(fbId),
-          nodeType  = ntOpt
-        )
-        Some(res)
-      // recover() для подавления любых возможных ошибок.
-      }.recover {
-        case ex: Throwable =>
-          dom.console.warn("Failed to getNodeInfo(%s) or parse result: %s %s", args.toString, ex.getClass.getSimpleName, ex.getMessage)
-          None
-      }
-  }
-
-  /**
    * Получить access_token для постинга на указанный узел.
    * @param fbId id узла, для которого требуется токен.
    * @return None если не удалось получить токен.
@@ -250,24 +82,6 @@ class FbAdapter extends AsyncInitAdp {
     }
   }
   
-  /** Определение типа целевого таргета. */
-  protected def detectTgNodeType(target: IMExtTarget): Future[FbTarget] = {
-    // Первый шаг - определяем по узлу данные.
-    val tgInfoOpt = FbTarget.fromUrl( target.tgUrl )
-    tgInfoOpt match {
-      // Неизвестный URL. Завершаемся.
-      case None =>
-        Future failed new UnknownTgUrlException
-      case Some(info) =>
-        if (info.nodeType.isEmpty) {
-          // id узла есть, но тип не известен. Нужно запустить определение типа указанной цели.
-          getNodeType(info.nodeId)
-            .map { _ getOrElse info }
-        } else {
-          Future successful info
-        }
-    }
-  }
 
   /** Подготовить данные по цели к публикации.
     * Запрашиваем специальный access_token, если требуется. */
