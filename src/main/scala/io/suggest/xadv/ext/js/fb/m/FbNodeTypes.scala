@@ -25,13 +25,10 @@ object FbNodeTypes extends LightEnumeration {
    */
   sealed protected abstract class Val(val mdType: String) extends ValT
 
-  /** Реализация поля publishPerms с правом publish_actions. */
-  sealed trait PublishActionsT extends ValT {
+  /** Помесь Val с выставленными дефолтовыми publishPerms(). Чисто для укорачивания кода и оптимизации. */
+  sealed protected class ValDflt(val mdType: String) extends ValT {
     override def publishPerms = Seq(FbPermissions.PublishActions)
   }
-
-  /** Помесь Val и PublishActionsT. Чисто для оптимизации. */
-  protected class ValDflt(val mdType: String) extends ValT with PublishActionsT
 
 
   /** Тип значений модели. */
@@ -39,9 +36,7 @@ object FbNodeTypes extends LightEnumeration {
 
 
   /** Юзер, т.е. человек. */
-  val User: T = new ValDflt("user") /*{
-    override def wallImgSz = FbWallImgSizes.FbDashboardLink
-  }*/
+  val User: T = new ValDflt("user")
 
   /** Страница, т.е. некий "сайт". */
   val Page: T = new Val("page") {
