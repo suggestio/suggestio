@@ -10,8 +10,9 @@ import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
+import scala.scalajs.concurrent.JSExecutionContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -52,6 +53,7 @@ class VkAdapter extends AsyncInitAdp {
     dom.window.vkAsyncInit = handler
   }
 
+  override implicit def execCtx: ExecutionContext = JSExecutionContext.queue
 
   /** Добавить тег скрипта по особой уличной методике вконтакта. */
   override def addScriptTag(): Unit = {
@@ -83,7 +85,12 @@ class VkAdapter extends AsyncInitAdp {
       None
     }
     // В фоне запускаем получение текущих прав приложения, хоть они могут и не пригодится.
-    val appPermsFut = Vk.Api.getAppPermissions()
+    val appPermsFut = initFut flatMap { _ =>
+      Vk.Api.getAppPermissions()
+    }
+    appPermsFut onFailure { case ex: Throwable =>
+      dom.console.warn("vk.api.getPermissions() failed: " + ex.getClass.getName + ": " + ex.getMessage)
+    }
     val ls2Fut = lsFut flatMap {
       // Залогиненный юзер, но у приложения может не хватать прав, что позволит считать его незалогиненным.
       case lsSome if lsSome.isDefined =>
