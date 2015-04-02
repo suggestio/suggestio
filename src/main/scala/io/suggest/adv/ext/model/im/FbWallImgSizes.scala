@@ -28,7 +28,7 @@ trait FbWallImgSizesBaseT extends ServiceSizesEnumBaseT {
 }
 
 
-/** Абстрактная реализация размеров link-картинок Facebook через [[scala.Enumeration]]. */
+/** Абстрактная реализация размеров link-картинок Facebook через scala.Enumeration. */
 trait FbWallImgSizesScalaEnumT extends ServiceSizesEnumScalaT with FbWallImgSizesBaseT {
   override val FbPostLink: T  = new Val(FB_SZ_COMMUNITY_ALIAS) with FbPostLinkValT
 }
