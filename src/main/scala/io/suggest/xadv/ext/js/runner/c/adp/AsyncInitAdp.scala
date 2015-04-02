@@ -4,6 +4,7 @@ import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{UrlLoadTimeoutException, DomUpdateException, ApiInitException}
 import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IAdapter}
 import org.scalajs.dom
+import org.scalajs.dom.Element
 
 import scala.concurrent.{ExecutionContext, Promise, Future}
 import scala.scalajs.concurrent.JSExecutionContext.runNow
@@ -39,35 +40,39 @@ trait AsyncInitAdp extends IAdapter {
   /** Эта инициализация вызывается, когда скрипт загружен. */
   def serviceScriptLoaded(implicit actx: IActionContext): Future[Ctx_t]
 
-  /** id создаваемого js тега, чтобы гарантировано избегать ситуации с двойным добавлением тега. */
-  def SCRIT_TAG_ID: String
-
   /** Таймаут загрузки скрипта. */
-  def SCRIPT_LOAD_TIMEOUT_MS = 10000
+  def SCRIPT_LOAD_TIMEOUT_MS: Int = 10000
 
-  /** Добавить тег скрипта, если ещё не добавлен. */
-  protected def ensureScriptTagAdded(): Unit = {
-    val d = dom.document
-    val id = SCRIT_TAG_ID
-    if (d.getElementById(id) == null) {
-      val tag = d.createElement("script")
-      tag.setAttribute("async", true.toString)
-      tag.setAttribute("type", "text/javascript")
-      tag.setAttribute("src", SCRIPT_URL)
-      d.getElementsByTagName("body")(0)
-        .appendChild(tag)
-    }
+  /** Сборка тега со скриптом. */
+  def createScriptTag(): Element = {
+    val tag = dom.document.createElement("script")
+    tag.setAttribute("async", true.toString)
+    tag.setAttribute("type", "text/javascript")
+    tag.setAttribute("src", SCRIPT_URL)
+    tag
+  }
+
+  /** Добавление указанного (обычно script) тега в DOM. */
+  def appendScriptTag(tag: Element): Unit = {
+    dom.document
+      .getElementsByTagName("body")(0)
+      .appendChild(tag)
+  }
+
+  /** Собрать и добавить тег скрипта в DOM. */
+  def addScriptTag(): Unit = {
+    appendScriptTag( createScriptTag() )
   }
 
   /** Запуск инициализации клиента. Добавляется необходимый js на страницу,  */
   override def ensureReady(implicit actx: IActionContext): Future[MJsCtxT] = {
     // В этот promise будет закинут результат.
     val p = Promise[MJsCtxT]()
-    // Чтобы зафиксировать таймаут загрузки скрипта fb, используется второй promise:
+    // Чтобы зафиксировать таймаут загрузки API скрипта сервиса, используется второй promise:
     val scriptLoadP = Promise[Null]()
     // Подписаться на событие загрузки скрипта.
     setInitHandler { () =>
-      // FB-скрипт загружен. Сообщаем об этом контейнеру scriptLoadPromise.
+      // Скрипт загружен. Сообщаем об этом контейнеру scriptLoadPromise.
       scriptLoadP success null
       // Запускаем инициализацию.
       val initFut = serviceScriptLoaded
@@ -80,9 +85,9 @@ trait AsyncInitAdp extends IAdapter {
       // Вычищаем эту функцию из памяти браузера, когда она подходит к концу.
       setInitHandler(null)
     }
-    // Добавить скрипт facebook.js на страницу
+    // Добавить скрипт API сервиса на страницу
     try {
-      ensureScriptTagAdded()
+      addScriptTag()
     } catch {
       case ex: Throwable =>
         p failure DomUpdateException(ex)

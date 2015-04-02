@@ -3,6 +3,7 @@ package io.suggest.xadv.ext.js.vk.c
 import java.net.URI
 
 import io.suggest.xadv.ext.js.runner.c.IActionContext
+import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
@@ -10,9 +11,7 @@ import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
 
-import scala.concurrent.{Promise, Future}
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -31,41 +30,37 @@ object VkAdapter {
     domain matches "(www\\.)?vk(ontakte)?\\.(ru|com)"
   }
 
-  private def SCRIPT_LOAD_TIMEOUT_MS = 6000
-
-  private def SCRIPT_URL = "https://vk.com/js/api/openapi.js"
-
-  /** Добавить необходимые теги для загрузки. Максимум один раз. */
-  private def addOpenApiScript(): Unit = {
-    // Создать div для добавления туда скрипта. Так зачем-то было сделано в оригинале.
-    val div = dom.document.createElement("div")
-    val divName = "vk_api_transport"
-    div.setAttribute("id", divName)
-    dom.document
-      .getElementsByTagName("body")(0)
-      .appendChild(div)
-
-    // Создать тег скрипта и добавить его в свежесозданный div
-    val el = dom.document.createElement("script")
-    el.setAttribute("type",  "text/javascript")
-    // Всегда долбимся на https. Это работает без проблем с file:///, а на мастере всегда https.
-    el.setAttribute("src", SCRIPT_URL)
-    el.setAttribute("async", true.toString)
-    dom.document
-      .getElementById(divName)
-      .appendChild(el)
-  }
 }
 
 
 import VkAdapter._
 
 
-class VkAdapter extends IAdapter {
+class VkAdapter extends AsyncInitAdp {
+
+  override type Ctx_t = MJsCtxT
+
+  override def SCRIPT_URL: String = "https://vk.com/js/api/openapi.js"
+  override def SCRIPT_LOAD_TIMEOUT_MS = 6000
 
   /** Относится ли указанный домен к текущему клиенту? */
   override def isMyDomain(domain: String): Boolean = {
     VkAdapter.isMyDomain(domain)
+  }
+
+  override def setInitHandler(handler: () => _): Unit = {
+    dom.window.vkAsyncInit = handler
+  }
+
+
+  /** Добавить тег скрипта по особой уличной методике вконтакта. */
+  override def addScriptTag(): Unit = {
+    println("addScriptTag() vk")
+    // Требуется создавать этот div. Пруф https://vk.com/dev/openapi
+    val div = dom.document.createElement("div")
+    div.setAttribute("id", "vk_api_transport")
+    div.appendChild(createScriptTag())
+    appendScriptTag(div)
   }
 
   /**
@@ -73,7 +68,7 @@ class VkAdapter extends IAdapter {
    * Вызывается, когда нижележащее API уже инициализировано и готово.
    * @return Фьючерс с новым VkCtx.
    */
-  protected def doInit(implicit actx: IActionContext): Future[VkCtx] = {
+  override def serviceScriptLoaded(implicit actx: IActionContext): Future[Ctx_t] = {
     val apiId = actx.mctx0
       .service
       .flatMap(_.appId)
@@ -114,50 +109,12 @@ class VkAdapter extends IAdapter {
     }
     // Собираем контекст
     ls2Fut map { lsOpt =>
-      VkCtx(login = lsOpt)
+      actx.mctx0.copy(
+        status = Some( MAnswerStatuses.Success ),
+        custom = Some( VkCtx(login = lsOpt).toJson )
+      )
     }
   }
-
-  /** Запуск инициализации клиента. Добавляется необходимый js на страницу. */
-  override def ensureReady(implicit actx: IActionContext): Future[MJsCtx] = {
-    val mctx0 = actx.mctx0
-    val p = Promise[MJsCtx]()
-    // Создать обработчик событие инициализации.
-    val window: VkWindow = dom.window
-    window.vkAsyncInit = {() =>
-      doInit onComplete {
-        // Инициализация завершена, инфа по залогиненности получена.
-        case Success(vkCtx) =>
-          p success mctx0.copy(
-            status = Some(MAnswerStatuses.Success),
-            custom = Some(vkCtx.toJson)
-          )
-        // Какая-то из двух операций не удалась. Не важно какая -- суть одна: api не работает.
-        case Failure(ex) =>
-          p failure ApiInitException(ex)
-      }
-      // Освободить память браузера от хранения этой функции.
-      window.vkAsyncInit = null
-    }
-    // Добавить тег со ссылкой на open-api. Это запустит процесс в фоне.
-    Future {
-      addOpenApiScript()
-    } onFailure { case ex =>
-      p failure DomUpdateException(ex)
-    }
-    // Отрабатываем таймаут загрузки скрипта вконтакта
-    dom.setTimeout(
-      {() =>
-        // js однопоточный, поэтому никаких race conditions между двумя нижеследующими строками тут быть не может:
-        if (!p.isCompleted)
-          p failure UrlLoadTimeoutException(SCRIPT_URL, SCRIPT_LOAD_TIMEOUT_MS)
-      },
-      SCRIPT_LOAD_TIMEOUT_MS
-    )
-    // Вернуть фьючерс результата
-    p.future
-  }
-
 
 
   /** Запуск обработки одной цели. */

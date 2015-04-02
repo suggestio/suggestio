@@ -16,12 +16,11 @@ import scala.concurrent.Future
  * Description: Адаптер для постинга в facebook.
  */
 
-class FbAdapter extends IAdapter with AsyncInitAdp {
+class FbAdapter extends AsyncInitAdp {
 
   override type Ctx_t = FbJsCtxT
 
   override def SCRIPT_URL = "https://connect.facebook.net/en_US/sdk.js"
-  override def SCRIT_TAG_ID: String = "fb-jssdk"
   override def SCRIPT_LOAD_TIMEOUT_MS = 10000
 
   /** Относится ли указанный домен к текущему клиенту? */
