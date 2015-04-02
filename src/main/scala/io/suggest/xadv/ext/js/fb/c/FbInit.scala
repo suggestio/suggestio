@@ -112,9 +112,10 @@ class FbInit(implicit val actx: IActionContext) extends LazyPermsInit {
   /** Запускалка всего вышеперечисленного. */
   def main(): Future[Ctx_t] = {
     // Формируем и возвращаем результирующий внутренний контекст.
+    val tgtsFut = newTargetsFut
     for {
       _fbCtx  <- customCtx
-      tgts    <- newTargetsFut
+      tgts    <- tgtsFut
     } yield {
       new FbJsCtxT {
         override def jsCtxUnderlying  = actx.mctx0

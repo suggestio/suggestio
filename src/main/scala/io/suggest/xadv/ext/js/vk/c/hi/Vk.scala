@@ -27,7 +27,7 @@ object Vk {
    * @param opts Настройки клиента.
    * @return Фьчерс.
    */
-  def init(opts: VkInitOptions): Future[_] = {
+  def init(opts: VkInitOptions): Future[Unit] = {
     Future {
       VkLow.init(opts.toJson)
     }

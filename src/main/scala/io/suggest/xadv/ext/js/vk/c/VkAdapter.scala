@@ -70,56 +70,7 @@ class VkAdapter extends AsyncInitAdp {
    * @return Фьючерс с новым VkCtx.
    */
   override def serviceScriptLoaded(implicit actx: IActionContext): Future[Ctx_t] = {
-    val apiId = actx.mctx0
-      .service
-      .flatMap(_.appId)
-      .orNull
-    val initFut = Vk.init( VkInitOptions(apiId) )
-    // Начальная инициализация vk openapi.js вроде бы завершена. Можно узнать на тему залогиненности клиента.
-    val lsFut = initFut flatMap { _ =>
-      Vk.Auth.getLoginStatus
-    } recover { case ex: Throwable =>
-      // Подавляем любые ошибки, т.к. эта функция в общем некритична, хоть и намекает на неработоспособность API.
-      dom.console.warn("VK Cannot getLoginStatus(): %s: %s", ex.getClass.getSimpleName, ex.getMessage)
-      None
-    }
-    // В фоне запускаем получение текущих прав приложения, хоть они могут и не пригодится.
-    val appPermsFut = initFut flatMap { _ =>
-      Vk.Api.getAppPermissions()
-    }
-    appPermsFut onFailure { case ex: Throwable =>
-      dom.console.warn("vk.api.getPermissions() failed: " + ex.getClass.getName + ": " + ex.getMessage)
-    }
-    val ls2Fut = lsFut flatMap {
-      // Залогиненный юзер, но у приложения может не хватать прав, что позволит считать его незалогиненным.
-      case lsSome if lsSome.isDefined =>
-        // Возможно, юзер ранее уже подтвердил все необходмые права доступа приложению. И только тогда считаем его залогиненным.
-        appPermsFut
-          // Отмаппить полученные права на простое "да/нет".
-          .map { appPerms =>
-            (appPerms.bitMask & ACCESS_LEVEL) == ACCESS_LEVEL
-          }
-          // Подавляем возможные ошибки, т.к. эта проверка некритична.
-          .recover { case ex: Throwable =>
-            dom.console.warn("VK Cannot getAppPermissions(): %s: %s", ex.getClass.getName, ex.getMessage)
-            false
-          }
-          // Генеря результат, мы определяем необходимо ли вызывать login() на след.шаге.
-          .map { hasPerms =>
-            lsSome.filter(_ => hasPerms)
-          }
-
-      // Это незалогиненный юзер или произошла ошика getLoginStatus. login() будет вызван на след.шаге.
-      case None =>
-        Future successful None
-    }
-    // Собираем контекст
-    ls2Fut map { lsOpt =>
-      actx.mctx0.copy(
-        status = Some( MAnswerStatuses.Success ),
-        custom = Some( VkCtx(login = lsOpt).toJson )
-      )
-    }
+    new VkInit().main()
   }
 
 
