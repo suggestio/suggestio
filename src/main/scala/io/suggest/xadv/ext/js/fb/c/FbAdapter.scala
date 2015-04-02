@@ -65,7 +65,7 @@ class FbAdapter extends AsyncInitAdp {
       .filter { _.status.isAppConnected }
       .recoverWith { case ex: Throwable =>
         if (!ex.isInstanceOf[NoSuchElementException])
-          dom.console.warn("FbAdapter.headlessInit(): Failed to request fb permissions: %s: %s", ex.getClass.getName, ex.getMessage)
+          dom.console.warn("FbAdapter: Failed to Fb.login() w/o perms: %s: %s", ex.getClass.getName, ex.getMessage)
         Future failed LoginCancelledException()
       }
 

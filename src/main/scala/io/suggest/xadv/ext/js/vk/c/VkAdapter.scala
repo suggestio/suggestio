@@ -57,7 +57,6 @@ class VkAdapter extends AsyncInitAdp {
 
   /** Добавить тег скрипта по особой уличной методике вконтакта. */
   override def addScriptTag(): Unit = {
-    println("addScriptTag() vk")
     // Требуется создавать этот div. Пруф https://vk.com/dev/openapi
     val div = dom.document.createElement("div")
     div.setAttribute("id", "vk_api_transport")
