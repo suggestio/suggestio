@@ -170,17 +170,7 @@ object MExtServices extends MServicesT {
     override def dfltTargetUrl = Some("https://facebook.com/me")
 
     /** Параметры картинки для размещения. */
-    override def advPostMaxSz(tgUrl: String): INamedSize2di = {
-      // TODO Узнать и добавить размеры для корня и /me.
-      val path = new URL(tgUrl).getPath
-      if ( (path startsWith "/me") || (path == "/") ||
-           (path startsWith  "/groups/") || (tgUrl startsWith "/pages/") ||
-           (tgUrl startsWith "/events/") || !(tgUrl startsWith "/profile.php") ) {
-        FbImgSizes.FbPostLink
-      } else {
-        FbImgSizes.FbDashboardLink
-      }
-    }
+    override def advPostMaxSz(tgUrl: String): INamedSize2di = FbImgSizes.FbPostLink
 
     /** Найти стандартный (в рамках сервиса) размер картинки. */
     override def postImgSzWithName(n: String): Option[INamedSize2di] = {
