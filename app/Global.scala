@@ -5,10 +5,11 @@ import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
-import util.cdn.{DumpXffHeaders, CorsFilter}
+import util.cdn.DumpXffHeaders
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.showcase.ScStatSaver
+import util.xplay.SecHeadersFilter
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -27,7 +28,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(new HtmlCompressFilter, new CorsFilter, new DumpXffHeaders) {
+object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, SecHeadersFilter()) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
