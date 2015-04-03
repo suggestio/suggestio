@@ -3,8 +3,7 @@ package io.suggest.xadv.ext.js.runner.m
 import io.suggest.adv.ext.model.MCommandTypesLightT
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.JsCommandTypes._
-import scala.scalajs.js
-import scala.scalajs.js.Dictionary
+import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 
 /**
  * Suggest.io
@@ -17,8 +16,8 @@ object MJsCommand extends FromStringT {
 
   override type T = ICmd
 
-  def fromJson(raw: js.Any): T = {
-    val d = raw.asInstanceOf[js.Dictionary[js.Dynamic]]
+  def fromJson(raw: Any): T = {
+    val d = raw.asInstanceOf[Dictionary[Any]]
     d.get(TYPE_FN)
       .map(_.toString)
       .flatMap(MCommandTypes.maybeWithName)
@@ -38,7 +37,7 @@ sealed trait ICmd {
  * Экземпляр полученной js-команды (js-кода) по ws от sio-сервера.
  * @param jsCode Тело команды в виде строки.
  */
-case class MJsCommand(jsCode: String) extends ICmd {
+case class MJsCommand(jsCode: String, isPopup: Boolean) extends ICmd {
   override def ctype = MCommandTypes.JavaScript
 }
 
@@ -57,23 +56,26 @@ object MCommandTypes extends MCommandTypesLightT {
      * @return Some(ICmd), если всё ок. Иначе None либо exception.
      */
     // TODO Наверное убрать Option?
-    def dyn2cmd(d: js.Dictionary[js.Dynamic]): Option[ICmd]
+    def dyn2cmd(d: Dictionary[Any]): Option[ICmd]
   }
 
   override type T = Val
 
   override val JavaScript: T = new Val(CTYPE_JS) {
-    override def dyn2cmd(d: js.Dictionary[js.Dynamic]): Option[MJsCommand] = {
+    override def dyn2cmd(dr: Dictionary[Any]): Option[MJsCommand] = {
+      val d = dr: WrappedDictionary[Any]
       d.get(JS_CODE_FN).map { jsCodeDyn =>
         MJsCommand(
-          jsCode = jsCodeDyn.toString
+          jsCode = jsCodeDyn.toString,
+          isPopup = d.get(IS_POPUP_FN)
+            .fold(false)(_.asInstanceOf[Boolean])
         )
       }
     }
   }
 
   override val Action: T = new Val(CTYPE_ACTION) {
-    override def dyn2cmd(d: Dictionary[js.Dynamic]): Option[MActionCmd] = {
+    override def dyn2cmd(d: Dictionary[Any]): Option[MActionCmd] = {
       d.get(MCTX_FN).map { mctxDyn =>
         MActionCmd(
           mctx    = MJsCtx.fromJson(mctxDyn),

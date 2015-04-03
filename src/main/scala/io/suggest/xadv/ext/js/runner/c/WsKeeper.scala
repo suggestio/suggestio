@@ -5,7 +5,7 @@ import io.suggest.xadv.ext.js.runner.v.Page
 import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
@@ -65,9 +65,15 @@ trait WsKeeper {
     cmdFut flatMap {
       // Это js. Нужно запустить его на исполнение.
       case cmd: MJsCommand =>
-        Future {
-          js.eval(cmd.jsCode)
+        val fn = { () =>
+          Future {
+            js.eval(cmd.jsCode)
+          }
         }
+        if (cmd.isPopup)
+          appState.appContext.popupQueue.enqueue(fn)
+        else
+          fn()
 
       // Вызов ensure ready. data содержит строку с MJsCtx внутри.
       case cmd: MActionCmd =>

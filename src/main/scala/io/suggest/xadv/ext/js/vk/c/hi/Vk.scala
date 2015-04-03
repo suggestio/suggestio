@@ -59,7 +59,7 @@ object VkApi {
             p failure ApiException(method, ex, Some(resp))
         }
       })
-      dom.console.info("Asynced VK.Api.call(", method, ",", argsJson, ") |", model.getClass.getName)
+      dom.console.info("Asynced VK.Api.call(%s,%s) | %s", method, argsJson, model.getClass.getName)
     } catch {
       case ex: Throwable => p failure ApiException(method, ex, None)
     }
