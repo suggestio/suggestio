@@ -14,4 +14,6 @@ package object m {
    * Можно Double, если Int не хватит. */
   type UserId_t     = Int
 
+  type VkPerm       = VkPerms.T
+
 }

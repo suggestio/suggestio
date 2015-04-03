@@ -80,10 +80,10 @@ trait LazyPermsInit {
     }
     .filter { isAppConnected }
     .recoverWith { case ex: Throwable =>
-    if (!ex.isInstanceOf[NoSuchElementException])
-      dom.console.warn(getClass.getSimpleName + " failed to Fb.login() w/o perms: %s: %s", ex.getClass.getName, ex.getMessage)
-    Future failed LoginCancelledException()
-  }
+      if (!ex.isInstanceOf[NoSuchElementException])
+        dom.console.warn(getClass.getSimpleName + " failed to Fb.login() w/o perms: %s: %s", ex.getClass.getName, ex.getMessage)
+      Future failed LoginCancelledException()
+    }
 
   
   /** Тип пермишшена. */
