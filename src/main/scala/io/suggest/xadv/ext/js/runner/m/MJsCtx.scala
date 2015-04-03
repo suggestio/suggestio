@@ -119,6 +119,24 @@ trait MJsCtxT extends IToJsonDict {
 
     d
   }
+
+  override def toString: String = {
+    var acc = "MJsCtxT(" + action
+    if (mads.nonEmpty)
+      acc = acc + ",mads=" + mads.toString()
+    if (service.nonEmpty)
+      acc = acc + ",svc=" + service.get.toString
+    if (domains.nonEmpty)
+      acc = acc + ",domains=[" + domains.mkString(",") + "]"
+    if (status.nonEmpty)
+      acc = acc + ",status=" + status.get
+    if (error.nonEmpty)
+      acc = acc + ",error=" + error.get
+    if (custom.nonEmpty)
+      acc = acc + ",custom=" + custom.get
+    acc += ")"
+    acc
+  }
 }
 
 
@@ -175,6 +193,10 @@ trait MErrorInfoT extends IToJsonDict {
       d.update(INFO_FN, _info.get)
     // return
     d
+  }
+
+  override def toString: String = {
+    "MErrorInfo(" + msg + "," + args + "," + info + ")"
   }
 }
 
