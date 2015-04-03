@@ -189,6 +189,10 @@ sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
 final case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
   extends AdnNodeAccessBase
   with ExpireSession[RequestForAdnNode]
+final case class AdnNodeAccessGet(adnId: String, povAdnIdOpt: Option[String])
+  extends AdnNodeAccessBase
+  with ExpireSession[RequestForAdnNode]
+  with CsrfGet[RequestForAdnNode]
 
 
 case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNode], isMyNode: Boolean,

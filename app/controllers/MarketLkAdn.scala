@@ -57,7 +57,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
    *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
    */
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
-    AdnNodeAccess(adnId, povAdnIdOpt).async { implicit request =>
+    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
       // Супервайзинг узла приводит к рендеру ещё одного виджета
       val slavesFut: Future[Seq[MAdnNode]] = if(isMyNode && request.adnNode.adn.isSupervisor) {
@@ -176,7 +176,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
    * @return 200 Ok + страница ЛК со списком карточек.
    */
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
-    AdnNodeAccess(adnId, povAdnIdOpt).async { implicit request =>
+    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
