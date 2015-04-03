@@ -2,7 +2,7 @@ package controllers
 
 import models._
 import models.adv._
-import models.adv.ext.act.ActorPathQs
+import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.Messages
@@ -15,11 +15,11 @@ import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.adv.{ExtUtil, ExtAdvWsActor}
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.lk.adv.ext._
 import play.api.Play.{current, configuration}
+import play.api.libs.concurrent.Akka.system
 
 import scala.concurrent.Future
 
@@ -254,15 +254,22 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   /**
    * Возвращение юзера после oauth1-авторизации, запрошенной указанным актором.
    * Всё действо происходит внутри попапа.
-   * @param tgId id цели. Для ACL в первую очередь.
+   * @param adnId id узла. Используется для ACL.
    * @param actorInfoQs Инфа по актору для связи с ним.
    * @return Что актор пожелает.
    *         В норме -- закрытие попапа с выставление шифрованного access-token'а в куку.
    */
-  private def oauth1PopupReturn(tgId: String, actorInfoQs: ActorPathQs) = CanAccessExtTarget(tgId).async { implicit request =>
-    ???
+  private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    trace(s"${request.method} oauth1return($adnId, $actorInfoQs): " + request.uri)
+    val msg = OAuthVerifier(
+      request.getQueryString("oauth_verifier")
+    )
+    system.actorSelection(actorInfoQs.path) ! msg
+    // TODO Закрыть текущее окно
+    // TODO Выставить в сессию access_token, полученный от актора.
+    Ok("TODO")
   }
-  def oauth1PopupReturnGet(tgId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(tgId, actorInfoQs)
-  def oauth1PopupReturnPost(tgId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(tgId, actorInfoQs)
+  def oauth1PopupReturnGet(adnId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(adnId, actorInfoQs)
+  def oauth1PopupReturnPost(adnId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(adnId, actorInfoQs)
 
 }

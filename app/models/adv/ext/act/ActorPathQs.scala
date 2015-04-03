@@ -58,7 +58,7 @@ object ActorPathQs extends PlayMacroLogsDyn {
 
       /** Сериализация. */
       override def unbind(key: String, value: ActorPathQs): String = {
-        val qsRaw = strB.unbind(key + PATH_SUF, value.path.toStringWithoutAddress)
+        val qsRaw = strB.unbind(key + PATH_SUF, value.path.toSerializationFormat)   // TODO Срезать префикс akka://application/system/
         getQsbSigner(key).mkSigned(key, qsRaw)
       }
     }

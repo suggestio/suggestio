@@ -1,6 +1,7 @@
 package models.adv
 
 import java.net.URL
+import _root_.util.adv.{OAuth1ServiceActor, ExtServiceActor, IServiceActorCompanion}
 import _root_.util.blocks.BgImg
 import io.suggest.adv.ext.model._, MServices._
 import io.suggest.adv.ext.model.im.{VkWallImgSizesScalaEnumT, FbWallImgSizesScalaEnumT, INamedSize2di}
@@ -133,6 +134,10 @@ object MExtServices extends MServicesT {
 
     /** В каких размерах должно открываться окно авторизации OAuth1. */
     def oauth1PopupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
+
+    /** Какой ext-adv-актор использовать для взаимодействия с сервисом?
+      * По дефолту: использовать js API. */
+    def extAdvServiceActor: IServiceActorCompanion
   }
 
 
@@ -171,6 +176,9 @@ object MExtServices extends MServicesT {
     override def postImgSzWithName(n: String): Option[INamedSize2di] = {
       VkImgSizes.maybeWithName(n)
     }
+
+    /** VK работает через openapi.js. */
+    override def extAdvServiceActor = ExtServiceActor
   }
 
 
@@ -198,6 +206,9 @@ object MExtServices extends MServicesT {
 
     /** Дефолтовое значение szMult, если в конфиге не задано. */
     override def szMultDflt: SzMult_t = 1.0F
+
+    /** FB работает через js API. */
+    override def extAdvServiceActor = ExtServiceActor
   }
 
 
@@ -236,12 +247,16 @@ object MExtServices extends MServicesT {
         ServiceInfo(
           requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
           accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
-          authorizationURL = configuration.getString(cp + ".authorizationUrl") getOrElse "https://api.twitter.com/oauth/authorize",
+          // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
+          authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
           oauth1Key
         ),
         use10a = true
       )
     }
+
+    /** twitter работает через OAuth1. */
+    override def extAdvServiceActor = OAuth1ServiceActor
   }
 
 

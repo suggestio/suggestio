@@ -1,6 +1,5 @@
 package util.adv
 
-import akka.actor.Props
 import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
@@ -22,13 +21,7 @@ import ExtUtil.RUNNER_EVENTS_DIV_ID
  * Когда инициализация сервиса завершена, супервизор получает список целей, готовых к дальнейшей обработке.
  */
 
-object ExtServiceActor {
-
-  def props(args: IExtAdvServiceActorArgs): Props = {
-    Props(ExtServiceActor(args))
-  }
-
-}
+object ExtServiceActor extends IServiceActorCompanion
 
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику

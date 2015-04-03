@@ -209,7 +209,8 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
                 override def wsMediatorRef      = self
                 override def mctx0              = mctx1
               }
-              context.actorOf(ExtServiceActor.props(actorArgs), name = guessChildName())
+              val aprops = _service.extAdvServiceActor.props(actorArgs)
+              context.actorOf(aprops, name = guessChildName())
             }
           become(new SuperviseServiceActorsState)
         }
@@ -266,6 +267,14 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
     }
   }
 
-
 }
 
+
+/** Трейт для service-компаниона. */
+trait IServiceActorCompanion {
+  def apply(args: IExtAdvServiceActorArgs): Actor
+
+  def props(args: IExtAdvServiceActorArgs): Props = {
+    Props(apply(args))
+  }
+}
