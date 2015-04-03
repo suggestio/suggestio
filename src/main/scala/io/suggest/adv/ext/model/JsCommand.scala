@@ -12,5 +12,6 @@ object JsCommand {
   def JS_CODE_FN    = "b"
   def REPLY_TO_FN   = "c"
   def MCTX_FN       = "d"
+  def IS_POPUP_FN   = "e"
 }
 
