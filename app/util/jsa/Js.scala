@@ -51,8 +51,9 @@ object Js {
 
 /** Интерфейс для js-экшенов. Экшен должен поддерживать рендер себя в голый js. */
 trait JsAction {
+  def sbInitSz: Int = 64
   def renderJsAction(sb: StringBuilder): StringBuilder = sb
-  def renderToString(sb: StringBuilder = new StringBuilder(64)): String = {
+  def renderToString(sb: StringBuilder = new StringBuilder(sbInitSz)): String = {
     renderJsAction(sb)
       .toString()
   }

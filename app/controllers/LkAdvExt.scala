@@ -2,6 +2,7 @@ package controllers
 
 import models._
 import models.adv._
+import models.adv.ext.act.ActorPathQs
 import models.adv.search.etg.ExtTargetSearchArgs
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.Messages
@@ -249,5 +250,19 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
     }
   }
 
+
+  /**
+   * Возвращение юзера после oauth1-авторизации, запрошенной указанным актором.
+   * Всё действо происходит внутри попапа.
+   * @param tgId id цели. Для ACL в первую очередь.
+   * @param actorInfoQs Инфа по актору для связи с ним.
+   * @return Что актор пожелает.
+   *         В норме -- закрытие попапа с выставление шифрованного access-token'а в куку.
+   */
+  private def oauth1PopupReturn(tgId: String, actorInfoQs: ActorPathQs) = CanAccessExtTarget(tgId).async { implicit request =>
+    ???
+  }
+  def oauth1PopupReturnGet(tgId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(tgId, actorInfoQs)
+  def oauth1PopupReturnPost(tgId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(tgId, actorInfoQs)
 
 }

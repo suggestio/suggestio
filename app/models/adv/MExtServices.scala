@@ -1,12 +1,12 @@
 package models.adv
 
 import java.net.URL
-import _root_.util.blocks.{BlocksConf, BgImg}
+import _root_.util.blocks.BgImg
 import io.suggest.adv.ext.model._, MServices._
-import io.suggest.adv.ext.model.im.{VkWallImgSizesScalaEnumT, FbWallImgSizesScalaEnumT, INamedSize2di, ISize2di}
+import io.suggest.adv.ext.model.im.{VkWallImgSizesScalaEnumT, FbWallImgSizesScalaEnumT, INamedSize2di}
 import io.suggest.util.UrlUtil
-import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
-import models.{MAdT, MAd}
+import io.suggest.ym.model.common.MImgInfoMeta
+import models.{MImgSizeT, MAd}
 import models.adv.js.ctx.MJsCtx
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 import models.im.{OutImgFmts, OutImgFmt}
@@ -14,6 +14,7 @@ import play.api.i18n.{Messages, Lang}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play._
+import play.api.libs.oauth.{ServiceInfo, OAuth, ConsumerKey}
 
 /**
  * Suggest.io
@@ -120,6 +121,18 @@ object MExtServices extends MServicesT {
 
     /** Дефолтовый формат изображения, если не задан в конфиге. */
     def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
+
+    // Опциональная поддержка oauth 1.
+    /** Поддерживается ли oauth1? Этим можно проверять возможность вызова остальных oauth1-методов. */
+    def hasOAuth1: Boolean = false
+    /** Доступ к фасаду oauth1, если поддерживается.
+      * Если не поддерживается, то будет экзепшен. */
+    def oauth1Client: OAuth = throw new UnsupportedOperationException("oauth1 is not supported by " + strId)
+    /** Быстрый доступ к ключу сервиса. */
+    def oauth1Key: ConsumerKey = oauth1Client.info.key
+
+    /** В каких размерах должно открываться окно авторизации OAuth1. */
+    def oauth1PopupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
   }
 
 
@@ -200,6 +213,35 @@ object MExtServices extends MServicesT {
     override def postImgSzWithName(n: String) = ???  // TODO
 
     override def advPostMaxSz(tgUrl: String) = ???    // TODO
+
+    /** Твиттер всегда умеет oauth1. */
+    override def hasOAuth1: Boolean = true
+
+    /** Префикс ключей конфигурации. Конфиг расшарен с secure-social. */
+    def confPrefix = "securesocial.twitter"
+
+    /** Ключи приложения для доступа к public API. */
+    override lazy val oauth1Key: ConsumerKey = {
+      val cp = confPrefix
+      ConsumerKey(
+        key     = configuration.getString(cp + ".consumerKey").get,
+        secret  = configuration.getString(cp + ".consumerSecret").get
+      )
+    }
+
+    /** Синхронный OAuth1-клиент для твиттера */
+    override lazy val oauth1Client: OAuth = {
+      val cp = confPrefix
+      OAuth(
+        ServiceInfo(
+          requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
+          accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
+          authorizationURL = configuration.getString(cp + ".authorizationUrl") getOrElse "https://api.twitter.com/oauth/authorize",
+          oauth1Key
+        ),
+        use10a = true
+      )
+    }
   }
 
 

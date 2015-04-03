@@ -34,6 +34,7 @@ import scala.util.{Failure, Success}
  * Created: 22.01.15 14:35
  * Description: ext adv API v2: Актор, занимающийся одной целью и только.
  * Пришел на смену ExtServiceActor, который перебирал цели в рамках одного сервиса.
+ * Этот актор взаимодействует с сервисами через JS API и браузер пользователя.
  */
 object ExtTargetActor {
 

@@ -1,7 +1,7 @@
 package util.secure
 
 import java.security.SecureRandom
-import play.api.Play.{current, configuration}
+import play.api.Play.{current, configuration, isProd}
 import util.PlayMacroLogsI
 
 import scala.annotation.tailrec
@@ -19,8 +19,9 @@ trait SecretGetter extends PlayMacroLogsI {
   def confKey: String
   
   def getRandom = new Random(new SecureRandom())
-  
-  def useRandomIfMissing: Boolean
+
+  /** Кажется, этот параметр надо переименовать. Т.к. он по сути работает задом наперед. */
+  def useRandomIfMissing: Boolean = isProd
 
   def secretKeyLen: Int = 64
 

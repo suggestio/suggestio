@@ -48,13 +48,19 @@ trait IJsCmd extends IWsCmd {
   /** JavaScript код на исполнение. */
   def jsCode: String
 
+  /** Если этот код открывает popup window, то тут должно быть true.
+    * js отправит попап в очередь попапов. */
+  def isPopup: Boolean
+
   override def toJsonAcc: FieldsJsonAcc = {
-    JS_CODE_FN -> Json.toJson(jsCode) :: super.toJsonAcc
+    JS_CODE_FN -> Json.toJson(jsCode) ::
+    IS_POPUP_FN -> JsBoolean(isPopup) ::
+    super.toJsonAcc
   }
 }
 
 /** Дефолтовая реализация [[IJsCmd]]. */
-case class JsCmd(jsCode: String) extends IJsCmd {
+case class JsCmd(jsCode: String, isPopup: Boolean = false) extends IJsCmd {
   def sendMode = CmdSendModes.Async
 }
 

@@ -10,6 +10,7 @@ import scala.concurrent.Future
  * Created: 03.04.15 11:43
  * Description: Для защиты от XSS и других видов атак используются специальные заголовки.
  * Этот фильтр расставляет необходимые заголовки в ответы.
+ * Наверное эта логика потом будет перемещена на уровень action builder'ов, чтобы повысить гибкость системы.
  * @see [[https://www.playframework.com/documentation/2.3.3/SecurityHeaders]]
  */
 

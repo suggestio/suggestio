@@ -70,6 +70,8 @@ GET  /ws/lk/xadv/ext/run                controllers.LkAdvExt.wsRun(x: adv.MExtAd
 POST /m/lk/xadv/ext/tg/delete/:tgId     controllers.LkAdvExt.deleteTargetSubmit(tgId)
 GET  /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.forAd(adId)
 POST /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.advFormSubmit(adId)
+GET  /lk/xadv/ext/oauth1/ret/:tgId      controllers.LkAdvExt.oauth1PopupReturnGet(tgId, actorInfoQs: adv.ext.act.ActorPathQs)
+POST /lk/xadv/ext/oauth1/ret/:tgId      controllers.LkAdvExt.oauth1PopupReturnPost(tgId, actorInfoQs: adv.ext.act.ActorPathQs)
 
 
 ## ЛК: Рекламные карточки
