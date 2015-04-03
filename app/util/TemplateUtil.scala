@@ -129,12 +129,11 @@ object TplDataFormatUtil extends TplFormatUtilT {
   /** Отформатировать валюту. */
   def formatCurrency(currency: Currency)(implicit ctx: Context): String = {
     // TODO Надо бы дедублицировать это с частями formatPrice()
-    // TODO Надо прогонять код через currency formatter, чтобы учитывать локаль?
-    val fmt0 = currency.getSymbol()   // TODO Надо передавать сюда локаль клиента через аргумент.
     currency.getCurrencyCode match {
-      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, Regex.quoteReplacement("р."))
-      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, Regex.quoteReplacement("$"))
-      case other => fmt0
+      case "RUB" if ctx.lang.language == "ru" =>
+        "р."    // Заменяем "руб." на "р."
+      case other =>
+        currency.getSymbol(ctx.lang.toLocale)
     }
   }
 

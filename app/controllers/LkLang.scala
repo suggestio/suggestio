@@ -45,15 +45,18 @@ object LkLang extends SioController with PlayMacroLogsImpl {
 
 
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String])(implicit ctx: Context): Html = {
-    val enCode = "en"
-    val english = Lang(enCode)
     val langs = Lang.availables
       .sortBy(_.code)
+    val english = langs
+      .filter(_.language == "en")
+      .sortBy(_.country == "US")
+      .headOption
+      .getOrElse { Lang.defaultLang }
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
     langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.langStr == enCode,
+      isNowEnglish = ctx.lang.language == "en",
       langs   = langs,
       nodeOpt = nodeOpt,
       rr      = r

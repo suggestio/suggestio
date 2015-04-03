@@ -170,8 +170,6 @@ trait Context extends MyHostsT {
   lazy val isIpad: Boolean = uaMatches(Context.isIpadRe)
   lazy val isIphone: Boolean = uaMatches(Context.isIphoneRe)
 
-  def langStr = lang.language
-
   lazy val canAddSites: Boolean = current.configuration.getBoolean("can_add_sites") getOrElse true
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
