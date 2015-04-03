@@ -136,6 +136,7 @@ object VkApiAuth {
     try {
       f { res: JSON =>
         try {
+          // TODO Вконтактовский js не умеет отрабатывать собственные ошибки. Нужно таймаут какой-то выставлять на запросы?
           p success VkLoginResult.maybeFromResp(res)
         } catch {
           case ex: Throwable =>
