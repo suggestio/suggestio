@@ -27,11 +27,11 @@ object SiowebEsModel extends PlayMacroLogsDyn {
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    EsModel.ES_MODELS ++ Seq(
+    EsModel.ES_MODELS ++ Seq[EsModelCommonStaticT](
       MPerson, EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtAdv, adv.MExtTarget,
-      event.MEvent//, sec.MAsymKey
+      event.MEvent, sec.MAsymKey
     )
   }
 
