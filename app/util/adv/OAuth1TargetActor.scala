@@ -1,6 +1,7 @@
 package util.adv
 
-import models.adv.IExtAdvTargetActorArgs
+import akka.actor.Props
+import models.adv.IOAuth1AdvTargetActorArgs
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 
@@ -18,7 +19,17 @@ import util.async.FsmActor
  * один уже готовый access token.
  * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
  */
-class OAuth1TargetActor(val args: IExtAdvTargetActorArgs)
+
+object OAuth1TargetActor {
+
+  def props(args: IOAuth1AdvTargetActorArgs): Props = {
+    Props(OAuth1TargetActor(args))
+  }
+
+}
+
+
+case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   extends FsmActor
   with MediatorSendCommand
   with PlayMacroLogsImpl

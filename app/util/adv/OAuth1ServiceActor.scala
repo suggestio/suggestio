@@ -1,10 +1,12 @@
 package util.adv
 
 import controllers.routes
-import models.adv.IExtAdvServiceActorArgs
+import models.adv.{AddActors, IExtAdvArgsWrapperT, IOAuth1AdvTargetActorArgs, IExtAdvServiceActorArgs}
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.js.JsCmd
+import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
+import oauth.signpost.exception.OAuthException
 import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.{AsyncUtil, FsmActor}
@@ -24,11 +26,11 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 object OAuth1ServiceActor extends IServiceActorCompanion
 
-
 case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   extends FsmActor
   with MediatorSendCommand
   with PlayMacroLogsImpl
+  with ExtServiceActorUtil
 {
 
   import LOGGER._
@@ -53,6 +55,34 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   }
 
 
+  /** Псевдоасинхронный запрос какого-то токена у удаленного сервиса. */
+  protected def askToken(f: => Either[OAuthException, RequestToken]): Unit = {
+    Future(f)(AsyncUtil.singleThreadIoContext)
+      // Завернуть результат в правильный Future.
+      .flatMap {
+        case Right(reqTok)  => Future successful reqTok
+        case Left(ex)       => Future failed ex
+      }
+      // Сообщить текущему актору о результатах.
+      .onComplete {
+        case Success(res)   => self ! SuccessToken(res)
+        case failure        => self ! failure
+      }
+  }
+
+  /**
+   * Рендер ошибки, возникшей в ходе инициализации сервиса.
+   * @param ex Исключение. Как правило, это экземпляр OAuthException.
+   */
+  protected def renderInitFailed(ex: Throwable): Unit = {
+    serviceInitFailedRender(
+      errors = Seq(ErrorInfo(
+        msg = "e.adv.ext.api.init",
+        info = Some(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+      ))
+    )
+  }
+
   /**
    * Состояние запроса request token'а.
    * Нужно отправить в твиттер запрос на получение одноразового токена.
@@ -61,28 +91,16 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
    */
   class AskRequestTokenState extends FsmState {
 
-    /** Фьючерс с результатом запрос request token'а у твиттера. */
-    lazy val reqTokFut = {
-      val returnCall = routes.LkAdvExt.oauth1PopupReturnGet(
-        adnId = args.request.producerId,
-        actorInfoQs = ActorPathQs(self.path)
-      )
-      val returnUrl = "http://127.0.0.1:9000" + returnCall.url    // TODO Брать URL_PREFIX из конфигов или откуда-нить ещё
-      val fut = Future {
-        client.retrieveRequestToken(returnUrl)
-      }(AsyncUtil.singleThreadIoContext)
-      fut.flatMap {
-        case Right(reqTok)  => Future successful reqTok
-        case Left(ex)       => Future failed ex
-      }
-    }
-
     /** Запустить запрос реквест-токена и дожидаться результата. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      reqTokFut onComplete {
-        case Success(reqTok)  => self ! SuccessToken(reqTok)
-        case res              => self ! res
+      askToken {
+        val returnCall = routes.LkAdvExt.oauth1PopupReturnGet(
+          adnId = args.request.producerId,
+          actorInfoQs = ActorPathQs(self.path)
+        )
+        val returnUrl = "http://127.0.0.1:9000" + returnCall.url // TODO Брать URL_PREFIX из конфигов или откуда-нить ещё
+        client.retrieveRequestToken(returnUrl)
       }
     }
 
@@ -95,7 +113,9 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
       case Failure(ex) =>
         error("Failed to ask request token", ex)
-        // TODO Нужно отрендерить ошибку инициализации twitter-сервиса по ws.
+        // Отрендерить ошибку инициализации twitter-сервиса по ws.
+        renderInitFailed(ex)
+        // Пока возможностей типа "попробовать снова" нет, поэтому сразу завершаемся.
         harakiri()
     }
   }
@@ -109,7 +129,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // TODO Нужно отправить команду для отображения попапа с логином в твиттер (попап в порядке очереди).
+      // Нужно отправить команду для отображения попапа с логином в твиттер (попап в порядке очереди).
       val wndSz = args.service.oauth1PopupWndSz
       val someFalse = Some(false)
       val jsa = JsWindowOpen(
@@ -138,32 +158,63 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   }
 
 
+  /** Состояние получения access_token'а. */
   class RetrieveAccessTokenState(reqTok: RequestToken, verifier: String) extends FsmState {
 
-    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
+    /** Надо запросить токен у удаленного сервиса. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // TODO Дедублицировать этот код с кодом выше.
-      val acTokFut = Future {
+      askToken {
         client.retrieveAccessToken(reqTok, verifier)
-      }(AsyncUtil.singleThreadIoContext)
-        .flatMap {
-          case Right(acTok)   => Future successful acTok
-          case Left(ex)       => Future failed ex
-        }
-      acTokFut onComplete {
-        case Success(acTok) => self ! SuccessToken(acTok)
-        case other => self ! other
       }
     }
 
+    /** Отработать результат запроса access_token'а. Т.е. выполнить завершение инициализации. */
     override def receiverPart: Receive = {
-      case resp =>
-        trace("received resp: " + resp)
+      case SuccessToken(acTok) =>
+        trace("Have fresh access_token: " + acTok)
+        become(new StartTargetActorsState(acTok))
+
+      case Failure(ex) =>
+        error("Failed to get new access token", ex)
+        // Нарисовать юзеру на экране ошибку инициализации сервиса.
+        renderInitFailed(ex)
+        harakiri()
     }
 
   }
 
+
+  /** Состояние запуска oauth1-target-акторов при наличии готового access-token'а. */
+  class StartTargetActorsState(acTok: RequestToken) extends FsmState {
+    /** При входе в состояние надо запустить всех акторов для всех имеющихся целей. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // Собрать target-акторов
+      val tgActors = args.targets.map { tg =>
+        trace("Creating oauth1-target-actor for tg = " + tg)
+        val mctx3 = args.mctx0.copy(
+          svcTargets = Nil,
+          status = None,
+          target = Some( tg2jsTg(tg) )
+        )
+        val actorArgs = new IOAuth1AdvTargetActorArgs with IExtAdvArgsWrapperT {
+          override def mctx0              = mctx3
+          override def target             = tg
+          override def _eaArgsUnderlying  = args
+          override def wsMediatorRef      = args.wsMediatorRef
+          override def accessToken        = acTok
+        }
+        OAuth1TargetActor.props(actorArgs)
+      }
+      args.wsMediatorRef ! AddActors(tgActors)
+      // Дело сделано, на этом наверное всё...
+      harakiri()
+    }
+
+    override def receiverPart: Receive = PartialFunction.empty
+  }
+
   /** Статически-типизированный контейнер токена-результата вместо Success(). */
-  case class SuccessToken(token: RequestToken)
+  protected[this] case class SuccessToken(token: RequestToken)
 }

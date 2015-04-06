@@ -26,7 +26,7 @@ object ExtServiceActor extends IServiceActorCompanion
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
-trait ExtServiceActorLogic extends FsmActor with MediatorSendCommand with ExtServiceActorEnv {
+trait ExtServiceActorLogic extends FsmActor with ISendCommand with ExtServiceActorEnv with ExtServiceActorUtil {
 
   /** Абстрактный state инициализации сервиса. */
   trait EnsureServiceStateStub extends FsmState {
@@ -44,18 +44,7 @@ trait ExtServiceActorLogic extends FsmActor with MediatorSendCommand with ExtSer
           .toSeq,
         service = Some(service),
         // Заливаем в контекст все имеющиеся цели. js обдумает их и вернет список возможно в каком-то модифицированном виде.
-        svcTargets = args.targets.map { tg =>
-          JsExtTarget(
-            id   = tg.target.id.get,
-            url  = tg.target.url,
-            name = tg.target.name,
-            onClickUrl = tg.returnTo.builder()
-              .setAdnId( tg.target.adnId )
-              .setFocusedAdId( args.request.mad.id.get )
-              .setFocusedProducerId( args.request.producerId )
-              .toAbsUrl
-          )
-        }
+        svcTargets = args.targets.map(tg2jsTg)
       )
       val cmd = EnsureReadyAsk(mctx0, replyTo = Some(replyTo))
       sendCommand(cmd)
@@ -98,7 +87,6 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
   with MediatorSendCommand
 { actor =>
 
-  import args.ctx   // Нужно для рендера шаблонов событий
   import LOGGER._
 
   override protected var _state: FsmState = new DummyState
@@ -166,36 +154,16 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
     }
 
     /** Обработка ответа с ошибкой. */
-    override def handleInvalidAnswer(ans: Answer): Unit ={
-      val mevent = MEventTmp(
-        etype       = EventTypes.AdvServiceError,
-        ownerId     = args.request.producerId,
-        isCloseable = false,
-        isUnseen    = true
+    override def handleInvalidAnswer(ans: Answer): Unit = {
+      serviceInitFailedRender(
+        errors = ans.ctx2.error.toSeq
       )
-      val rargs = RenderArgs(
-        mevent        = mevent,
-        withContainer = false,
-        adnNodeOpt    = Some(args.request.producer),
-        advExtTgs     = args.targets.map(_.target),
-        madOpt        = Some(args.request.mad),
-        extServiceOpt = Some(args.service),
-        errors        = ans.ctx2.error.toSeq
-      )
-      val html = rargs.mevent.etype.render(rargs)
-      val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-      val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
-      val cmd = JsCmd(
-        jsCode = jsa.renderToString()
-      )
-      sendCommand(cmd)
     }
 
     override def handleInitFinished(): Unit = {
       // Этот актор больше не нужен при любом раскладе.
       context.stop(self)
     }
-
   }
 
 }

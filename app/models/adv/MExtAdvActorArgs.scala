@@ -3,6 +3,7 @@ package models.adv
 import akka.actor.{Props, ActorRef}
 import models.Context
 import models.adv.js.ctx.MJsCtx
+import play.api.libs.oauth.RequestToken
 import util.acl.RequestWithAdAndProducer
 
 import scala.concurrent.Future
@@ -83,12 +84,18 @@ trait IExtAdvServiceActorArgs extends IExtActorArgs with WsMediatorRef {
 }
 
 
-/** APIv2: Один подчинённый актор обслуживает только одну цель и обновляет GUI в рамках оной. */
+/** Аргументы для target-актора, который обслуживает только одну jsapi-цель. */
 trait IExtAdvTargetActorArgs extends IExtActorArgs with WsMediatorRef with MCtx0 {
   /** Цель, с которой нужно вести работу. */
   def target  : MExtTargetInfoFull
 }
 
+
+/** Аргументы для target-актора, который обслуживает одну oauth1-цель. */
+trait IOAuth1AdvTargetActorArgs extends IExtAdvTargetActorArgs {
+  /** Токен для доступа. */
+  def accessToken: RequestToken
+}
 
 
 /** Подчинённый актор уведомляет медиатора, что нужно подрядить к работе указанных акторов. */
