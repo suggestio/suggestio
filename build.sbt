@@ -25,9 +25,9 @@ libraryDependencies ++= {
   val akkaVsn       = "2.3.4"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.+"
-  val playVsn       = "2.4.0-M2"
+  val playVsn       = "2.4.0-M3"
   val morphVsn      = "1.3-SNAPSHOT"
-  val bcVsn         = "1.46"
+  val bcVsn         = "1.52"
   val phantomVersion = "1.2.7"
   Seq(
     "io.suggest" %% "model-enum-util" % "0.0.0-SNAPSHOT",
@@ -50,16 +50,13 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn
       exclude("xerces", "xercesImpl")
-      exclude("org.bouncycastle", "bcmail-jdk15") // заменим ниже на *-jdk16
+      exclude("org.bouncycastle", "bcmail-jdk15") // не нужно нам вскрывать зашифрованные архивы и pdf'ки.
       exclude("org.bouncycastle", "bcprov-jdk15")
       exclude("org.ow2.asm", "asm-debug-all")
       exclude("edu.ucar", "netcdf")
       exclude("commons-logging", "commons-logging")
       exclude("de.l3s.boilerpipe", "boilerpipe")
     ,
-    // apache tika хочет bouncycastle для вскрытия негодных pdf'ов.
-    "org.bouncycastle" % "bcmail-jdk16" % bcVsn,
-    "org.bouncycastle" % "bcprov-jdk16" % bcVsn,
     // Для разбора csv от яндекс-маркета используем сий простой парсер, т.к. tika смотрит на всё, как на веб-страницу.
     "com.github.tototoshi" %% "scala-csv" % "1.0.0",
     // akka
