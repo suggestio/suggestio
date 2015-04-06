@@ -16,14 +16,16 @@
  */
 package securesocial.core.providers.utils
 
+import com.google.inject.Inject
 import play.api.Play.current
 import play.api.i18n.{ Lang, Messages }
 import play.api.libs.concurrent.Akka
-import play.api.libs.mailer.{ MailerPlugin, Email }
+import play.api.libs.mailer.{MailerClient, Email}
 import play.api.mvc.RequestHeader
 import play.twirl.api.{ Txt, Html }
 import securesocial.controllers.MailTemplates
 import securesocial.core.IProfile
+import play.api.i18n.Messages.Implicits._
 
 /**
  * A helper trait to send email notifications
@@ -39,6 +41,10 @@ trait Mailer {
 }
 
 object Mailer {
+
+  @Inject
+  val client: MailerClient = null
+
   /**
    * The default mailer implementation
    *
@@ -102,7 +108,7 @@ object Mailer {
           bodyText = body._1.map(_.body),
           bodyHtml = body._2.map(_.body)
         )
-        MailerPlugin.send(mail)
+        client.send(mail)
       }
     }
   }

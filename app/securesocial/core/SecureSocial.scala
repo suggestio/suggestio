@@ -17,7 +17,7 @@
 package securesocial.core
 
 import play.api.mvc._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.Json
 import play.api.http.HeaderNames
 import scala.concurrent.{ ExecutionContext, Future }
@@ -32,7 +32,7 @@ import play.api.mvc.Result
  * if available.
  *
  */
-trait SecureSocial[U] extends Controller {
+trait SecureSocial[U] extends Controller with I18nSupport {
   implicit val env: RuntimeEnvironment[U]
 
   /** A Forbidden response for ajax clients */

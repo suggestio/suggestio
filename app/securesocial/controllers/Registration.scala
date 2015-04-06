@@ -18,7 +18,7 @@ package securesocial.controllers
 
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.filters.csrf._
 import play.api.mvc.Action
 import securesocial.core._
@@ -34,7 +34,7 @@ import scala.concurrent.{ Await, Future }
  *
  * @param env the environment
  */
-class Registration(override implicit val env: RuntimeEnvironment[IProfile]) extends BaseRegistration[IProfile]
+class Registration(val messagesApi: MessagesApi, override implicit val env: RuntimeEnvironment[IProfile]) extends BaseRegistration[IProfile]
 
 /**
  * A trait that provides the means to handle user registration

@@ -16,6 +16,7 @@
  */
 package securesocial.controllers
 
+import play.api.i18n.MessagesApi
 import securesocial.core._
 import securesocial.core.utils._
 import play.api.Play
@@ -29,7 +30,7 @@ import play.filters.csrf._
  *
  * @param env An environment
  */
-class LoginPage(override implicit val env: RuntimeEnvironment[IProfile]) extends BaseLoginPage[IProfile]
+class LoginPage(val messagesApi: MessagesApi, override implicit val env: RuntimeEnvironment[IProfile]) extends BaseLoginPage[IProfile]
 
 /**
  * The trait that defines the login page controller

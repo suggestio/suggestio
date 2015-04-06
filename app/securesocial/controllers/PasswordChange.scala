@@ -22,7 +22,7 @@ import play.api.Play
 import play.api.data.Form
 import play.api.data.Forms._
 import securesocial.core.providers.utils.PasswordValidator
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import play.filters.csrf._
 
@@ -31,7 +31,7 @@ import play.filters.csrf._
  *
  * @param env An environment
  */
-class PasswordChange(override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordChange[IProfile]
+class PasswordChange(val messagesApi: MessagesApi, override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordChange[IProfile]
 
 /**
  * A trait that defines the password change functionality
@@ -134,10 +134,10 @@ trait BasePasswordChange[U] extends SecureSocial[U] {
             env.userService.updatePasswordInfo(request.user, newPasswordInfo).map {
               case Some(u) =>
                 env.mailer.sendPasswordChangedNotice(u)(request, userLang)
-                val result = Redirect(onHandlePasswordChangeGoTo).flashing(Success -> Messages(OkMessage)(userLang))
+                val result = Redirect(onHandlePasswordChangeGoTo).flashing(Success -> Messages(OkMessage))
                 Events.fire(new PasswordChangeEvent(request.user)).map(result.withSession).getOrElse(result)
               case None =>
-                Redirect(onHandlePasswordChangeGoTo).flashing(Error -> Messages("securesocial.password.error")(userLang))
+                Redirect(onHandlePasswordChangeGoTo).flashing(Error -> Messages("securesocial.password.error"))
             }
           }
         )

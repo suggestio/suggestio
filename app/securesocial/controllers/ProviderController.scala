@@ -18,7 +18,7 @@ package securesocial.controllers
 
 import play.api.Play
 import play.api.Play.current
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc._
 import securesocial.core._
 import securesocial.core.authenticator.CookieAuthenticator
@@ -31,7 +31,7 @@ import scala.concurrent.Future
 /**
  * A default controller that uses the GenericProfile as the user type
  */
-class ProviderController(override implicit val env: RuntimeEnvironment[IProfile])
+class ProviderController(val messagesApi: MessagesApi, override implicit val env: RuntimeEnvironment[IProfile])
   extends BaseProviderController[IProfile]
 
 /**

@@ -18,7 +18,7 @@ package securesocial.controllers
 
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.filters.csrf._
 import play.api.mvc.Action
 import securesocial.core._
@@ -33,7 +33,7 @@ import scala.concurrent.Future
  *
  * @param env an environment
  */
-class PasswordReset(override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordReset[IProfile]
+class PasswordReset(val messagesApi: MessagesApi, override implicit val env: RuntimeEnvironment[IProfile]) extends BasePasswordReset[IProfile]
 
 /**
  * The trait that provides the Password Reset functionality

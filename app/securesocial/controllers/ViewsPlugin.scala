@@ -21,6 +21,8 @@ import play.api.i18n.Lang
 import play.api.mvc.RequestHeader
 import play.twirl.api.{ Html, Txt }
 import securesocial.core.{IProfile, RuntimeEnvironment}
+import play.api.i18n.Messages.Implicits._
+import play.api.Play.current
 
 /**
  * A trait that provides the pages for SecureSocial
@@ -130,6 +132,7 @@ trait MailTemplates {
 }
 
 object ViewTemplates {
+
   /**
    * The default views.
    */
