@@ -19,6 +19,7 @@ import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
+import util.img.ImgFormUtil.logoKM
 
 import scala.concurrent.Future
 
@@ -41,7 +42,6 @@ with BruteForceProtectCtl {
     mib * 1024 * 1024
   }
 
-  def logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid")
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM

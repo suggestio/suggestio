@@ -1,13 +1,12 @@
 package controllers
 
-import models.Context
-import models.crawl.SiteMapUrlT
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import util.acl._
 import util.cdn.CorsUtil
 import play.api.i18n.MessagesApi
 import play.api.Play, Play.{current, configuration}
+import util.seo.SiteMapUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import views.html.static.sitemap._
@@ -60,18 +59,13 @@ class Application(val messagesApi: MessagesApi) extends SioControllerImpl {
   }
 
 
-  /** Источники для наполнения sitemap.xml */
-  private def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = {
-    Seq(MarketShowcase, Market, MarketJoin)
-  }
-
   /**
    * Раздача сайт-мапы.
    * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
    */
   def siteMapXml = MaybeAuth { implicit request =>
     implicit val ctx = getContext2
-    val enums = SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
+    val enums = SiteMapUtil.SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
     val urls = Enumerator.interleave(enums)
       .map { _urlTpl(_) }
     // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:
@@ -99,8 +93,3 @@ class Application(val messagesApi: MessagesApi) extends SioControllerImpl {
 
 }
 
-/** Интерфейс для контроллеров, которые раздают страницы, подлежащие публикации в sitemap.xml. */
-trait SiteMapXmlCtl {
-  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT]
-}

@@ -2,12 +2,12 @@ package controllers
 
 import io.suggest.ym.model.ad.FreeAdvStatus
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
 import scala.concurrent.ExecutionContext.Implicits.global
 import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 import views.html.sys1.mdr._
 import models._
 import play.api.data.Form
@@ -20,7 +20,7 @@ import scala.concurrent.Future
  * Created: 19.06.14 10:45
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  */
-object SysMdr extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMdr(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

@@ -8,7 +8,7 @@ import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
 import _root_.util.geo.umap._
 import models._
-import play.api.i18n.{Lang, Messages}
+import play.api.i18n.{MessagesApi, Messages}
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -28,7 +28,7 @@ import scala.concurrent.Future
  * Created: 15.09.14 12:09
  * Description: Контроллер для umap-backend'ов.
  */
-object Umap extends SioController with PlayMacroLogsImpl {
+class Umap(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -131,7 +131,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
     }
     val resp = JsObject(Seq(
       "type"      -> JsString("FeatureCollection"),
-      "_storage"  -> layerJson(ngl, request2lang),
+      "_storage"  -> layerJson(ngl),
       "features"  -> JsArray(features)
     ))
     Ok(resp)
@@ -272,7 +272,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
         } else {
           trace(logPrefix + "Layer saved without problems.")
         }
-        val resp = layerJson(ngl, request2lang)
+        val resp = layerJson(ngl)
         Ok(resp)
 
       } recoverWith {
@@ -308,7 +308,7 @@ object Umap extends SioController with PlayMacroLogsImpl {
 
 
   /** Рендер json'а, описывающего геослой. */
-  private def layerJson(ngl: NodeGeoLevel, lang: Lang): JsObject = {
+  private def layerJson(ngl: NodeGeoLevel)(implicit lang: Messages): JsObject = {
     JsObject(Seq(
       "name"          -> JsString( Messages("ngls." + ngl.esfn)(lang) ),
       "id"            -> JsNumber(ngl.id),

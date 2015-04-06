@@ -274,7 +274,7 @@ ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.N
 javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
-//routesGenerator := InjectedRoutesGenerator
+routesGenerator := InjectedRoutesGenerator
 
 Yeoman.yeomanSettings ++ Yeoman.withTemplates
 

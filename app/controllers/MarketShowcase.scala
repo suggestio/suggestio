@@ -15,4 +15,4 @@ import util._
  */
 class MarketShowcase(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl
 with SNStaticSubscriberDummy with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
-with ScSyncSiteGeo with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScSitemapsXml with ScOnlyOneAd
+with ScSyncSiteGeo with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScOnlyOneAd

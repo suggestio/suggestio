@@ -37,6 +37,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     * появившиеся в ходе ошибочной логики. */
   private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
 
+  def logoKM = getLogoKM("adn.logo.invalid")
 
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 

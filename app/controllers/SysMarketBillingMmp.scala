@@ -25,10 +25,6 @@ class SysMarketBillingMmp(val messagesApi: MessagesApi) extends SioControllerImp
 
   import LOGGER._
 
-  def defaultMmpDaily = {
-    MBillMmpDaily(contractId = -1)
-  }
-
   /** Маппинг формы для daly-тарификатора. */
   private def mmpDailyFormM = {
     val floatGreaterThan1 = floatM.verifying(_ >= 1.0F)
@@ -66,7 +62,7 @@ class SysMarketBillingMmp(val messagesApi: MessagesApi) extends SioControllerImp
     * @param contractId номер договора.
     */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    val mmpStub = defaultMmpDaily
+    val mmpStub = MBillMmpDaily(contractId = -1)
     val formM = mmpDailyFormM fill mmpStub
     _createMmpDaily(formM)
       .map(Ok(_))

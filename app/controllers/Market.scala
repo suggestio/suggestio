@@ -1,13 +1,8 @@
 package controllers
 
-import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import play.api.i18n.MessagesApi
-import play.api.libs.iteratee.Enumerator
-import play.api.mvc.Call
 import util.acl._
 import views.html.market._
-import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -17,7 +12,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * не доросли до отдельных контроллеров.
  */
 
-class Market(val messagesApi: MessagesApi) extends SioController with SiteMapXmlCtl {
+class Market(val messagesApi: MessagesApi) extends SioController {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>
@@ -37,19 +32,6 @@ class Market(val messagesApi: MessagesApi) extends SioController with SiteMapXml
   def marketBooklet = MaybeAuth { implicit request =>
     cacheControlShort {
       Ok(marketBookletTpl())
-    }
-  }
-
-  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
-    Enumerator[Call](
-      routes.Market.marketBooklet()
-    ) map { call =>
-      SiteMapUrl(
-        loc = ctx.SC_URL_PREFIX + call.url,
-        lastMod = Some( SioControllerUtil.PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
-        changeFreq = Some( ChangeFreqs.weekly )
-      )
     }
   }
 

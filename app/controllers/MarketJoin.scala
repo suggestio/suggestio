@@ -1,11 +1,9 @@
 package controllers
 
 import models.CallBackReqCallTimes.CallBackReqCallTime
-import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.usr.EmailActivation
 import org.joda.time.DateTime
-import play.api.i18n.Messages
-import play.api.libs.iteratee.Enumerator
+import play.api.i18n.{MessagesApi, Messages}
 import util.billing.MmpDailyBilling
 import util.img._
 import util.mail.MailerWrapper
@@ -19,8 +17,7 @@ import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import MarketLkAdnEdit.logoKM
-import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import util.img.ImgFormUtil.logoKM
 import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 
 /**
@@ -29,7 +26,7 @@ import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator with SiteMapXmlCtl {
+class MarketJoin(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with CaptchaValidator {
 
   import LOGGER._
 
@@ -126,22 +123,6 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     }
   }
 
-  private def unapplyAudDescr(mir: MInviteRequest): String = {
-    mir.adnNode
-      .flatMap {
-        _.left.map(_.meta.audienceDescr)
-         .left.getOrElse(None)
-      }
-      .getOrElse("")
-  }
-  private def unapplyHumanTraffic(mir: MInviteRequest): Int = {
-    mir.adnNode
-      .flatMap {
-         _.left.map(_.meta.humanTrafficAvg)
-          .left.getOrElse(None)
-      }
-      .getOrElse(0)
-  }
   private def unapplyAddress(mir: MInviteRequest): String = {
     mir.adnNode
       .flatMap {
@@ -162,10 +143,6 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.map(_.meta.officePhones.headOption)
       .left.getOrElse(None)
       .getOrElse("")
-  }
-  private def unapplyPayReqs(mir: MInviteRequest): Option[String] = {
-    mir.payReqs
-      .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
   }
 
   private def unapplyEmail(mir: MInviteRequest): String = {
@@ -220,7 +197,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     val mbb = MBillBalance(adnId = "", amount = 0F)
     val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
       // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
-      val mmp = SysMarketBillingMmp.defaultMmpDaily
+      val mmp = MBillMmpDaily(contractId = -1)
       Some(Left(mmp))
     } else {
       None
@@ -351,20 +328,6 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     val mir1 = mir0.copy(id = Some(irId))
     msg.setText( views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx) )
     msg.send()
-  }
-
-
-  /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
-    Enumerator(
-      routes.MarketJoin.joinAdvRequest()
-    ) map { call =>
-      SiteMapUrl(
-        loc = ctx.SC_URL_PREFIX + call.url,
-        lastMod = Some( PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
-        changeFreq = Some( ChangeFreqs.weekly )
-      )
-    }
   }
 
 }
