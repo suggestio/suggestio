@@ -4,17 +4,14 @@ import com.github.nscala_time.time.OrderingImplicits._
 import models._
 import models.adv.MExtTarget
 import models.event.search.MEventsSearchArgs
-import models.event.{ArgsInfo, MEventTmp, MEvent}
+import models.event.MEvent
 import org.joda.time.DateTime
-import play.api.db.DB
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.async.AsyncUtil
-import util.event.{LkEventsUtil, EventTypes}
-import util.event.SiowebNotifier.Implicts.sn
+import util.event.LkEventsUtil
 import util.SiowebEsUtil.client
 import play.api.Play.{current, configuration}
 import views.html.lk.event._
@@ -29,7 +26,7 @@ import scala.util.{Success, Failure}
  * Description: Контроллер раздела уведомлений в личном кабинете.
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
-object LkEvents extends SioControllerImpl with PlayMacroLogsImpl {
+class LkEvents(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

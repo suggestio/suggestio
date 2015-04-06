@@ -3,16 +3,14 @@ package controllers
 import models.Context
 import models.usr.MPerson
 import play.api.data.Form
-import play.api.i18n.Lang
-import play.api.mvc.Result
+import play.api.i18n.{MessagesApi, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, MaybeAuthGet, MaybeAuthPost}
+import util.acl.{MaybeAuthGet, MaybeAuthPost}
 import views.html.lk.lang._
 import play.api.Play.current
 import util.FormUtil.uiLangM
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
@@ -24,7 +22,7 @@ import scala.concurrent.Future
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-object LkLang extends SioController with PlayMacroLogsImpl {
+class LkLang(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -39,7 +37,8 @@ object LkLang extends SioController with PlayMacroLogsImpl {
   /** Рендер страницы выбора языка. */
   def showLangSwitcher(r: Option[String]) = MaybeAuthGet { implicit request =>
     val ctx = implicitly[Context]
-    val langForm = chooseLangFormM(ctx.lang).fill(ctx.lang)
+    val l0 = ctx.lang.lang
+    val langForm = chooseLangFormM(l0).fill(l0)
     Ok( _showLangSwitcher(langForm, r)(ctx) )
   }
 
@@ -56,7 +55,7 @@ object LkLang extends SioController with PlayMacroLogsImpl {
     langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.lang.language == "en",
+      isNowEnglish = ctx.lang.lang.language == "en",
       langs   = langs,
       nodeOpt = nodeOpt,
       rr      = r

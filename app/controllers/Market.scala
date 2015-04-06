@@ -1,9 +1,9 @@
 package controllers
 
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
+import play.api.i18n.MessagesApi
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.Call
-import play.twirl.api.Html
 import util.acl._
 import views.html.market._
 import models._
@@ -17,7 +17,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * не доросли до отдельных контроллеров.
  */
 
-object Market extends SioController with SiteMapXmlCtl {
+class Market(val messagesApi: MessagesApi) extends SioController with SiteMapXmlCtl {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>

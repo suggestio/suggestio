@@ -6,7 +6,7 @@ import java.net.JarURLConnection
 import io.suggest.event.SioNotifierStaticClientI
 import models.Context
 import org.joda.time.DateTime
-import play.api.i18n.Lang
+import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
 import util.ws.WsDispatcherActor
@@ -84,7 +84,7 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
-trait SioController extends Controller with ContextT with TplFormatUtilT {
+trait SioController extends Controller with ContextT with TplFormatUtilT with I18nSupport {
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)

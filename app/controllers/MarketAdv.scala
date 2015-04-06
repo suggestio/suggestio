@@ -4,7 +4,7 @@ import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
 import util.SiowebEsUtil.client
@@ -32,7 +32,7 @@ import play.api.data._, Forms._
  * - узел 1 размещает рекламу на других узлах (форма, сабмит и т.д.).
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
-object MarketAdv extends SioController with PlayMacroLogsImpl {
+class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -281,7 +281,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
 
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
-    val userLang = request2lang
+    implicit val ctx = implicitly[Context]
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[AdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
@@ -305,7 +305,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.pluralNoTown)(userLang),
+                name = Messages(ast.pluralNoTown)(ctx.lang),
                 i = i
               )
             }
@@ -329,7 +329,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
     val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
-      .map(ps => ps -> Messages("adv.period." + ps)(userLang))
+      .map(ps => ps -> Messages("adv.period." + ps)(ctx.lang))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
@@ -338,10 +338,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       busyAdvs        <- busyAdvsFut
     } yield {
       AdvFormTplArgs(
-        adId = adId,
-        af = form,
-        busyAdvs = busyAdvs,
-        cities = cities,
+        adId            = adId,
+        af              = form,
+        busyAdvs        = busyAdvs,
+        cities          = cities,
         adnId2formIndex = adnId2indexMap,
         advPeriodsAvail = advPeriodsAvailable
       )
@@ -352,7 +352,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      advForAdTpl(request.mad, request.producer, formArgs)
+      advForAdTpl(request.mad, request.producer, formArgs)(ctx)
     }
   }
 

@@ -1,6 +1,7 @@
 package controllers
 
 import play.api.data._
+import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket
 import play.core.parsers.Multipart
@@ -8,7 +9,6 @@ import util.img.{ImgFormUtil, SysGalEditWsActor}
 import util.{FormUtil, PlayMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{IsSuperuserGallery, PersonWrapper, IsSuperuser}
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import models.im.{MImg, MGallery}
 import play.api.Play.{current, configuration}
@@ -24,7 +24,7 @@ import scala.concurrent.Future
  * Created: 06.11.14 18:48
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
-object SysGallery extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
+class SysGallery(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 

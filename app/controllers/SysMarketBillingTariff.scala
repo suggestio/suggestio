@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -20,7 +21,7 @@ import io.suggest.ym.parsers.Price
  * Created: 20.04.14 21:12
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
-object SysMarketBillingTariff extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingTariff(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

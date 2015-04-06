@@ -2,9 +2,10 @@ package util.mail
 
 import javax.mail.Authenticator
 
+import com.google.inject.Inject
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
-import play.api.libs.mailer.{Email, MailerPlugin}
+import play.api.libs.mailer.{MailerClient, Email, MailerPlugin}
 import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
@@ -85,6 +86,9 @@ trait EmailBuilderShared extends EmailBuilder {
 /** Билдер для play-mailer'а. */
 class PlayMailerEmailBuilder extends EmailBuilderShared {
 
+  @Inject
+  val client: MailerClient = null
+
   override def send(): Unit = {
     val email = Email(
       subject   = _subject.get,
@@ -94,7 +98,7 @@ class PlayMailerEmailBuilder extends EmailBuilderShared {
       bodyHtml  = _html,
       replyTo   = _replyTo
     )
-    MailerPlugin.send(email)
+    client.send(email)
   }
 }
 

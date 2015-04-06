@@ -143,9 +143,7 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
 trait CaptchaValidator extends PlayMacroLogsI {
 
-  // Исторически, здесь эти весчи лежат:
-  def CAPTCHA_ID_FN     = Captcha.CAPTCHA_ID_FN
-  def CAPTCHA_TYPED_FN  = Captcha.CAPTCHA_TYPED_FN
+  import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.
@@ -154,8 +152,8 @@ trait CaptchaValidator extends PlayMacroLogsI {
   def checkCaptcha[T](form: Form[T])(implicit request: RequestHeader): Form[T] = {
     val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
       form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
-        val cookieName = Captcha.cookieName(captchaId)
-        request.cookies.get(cookieName)
+        val _cookieName = Captcha.cookieName(captchaId)
+        request.cookies.get(_cookieName)
           .filter { cookie =>
             try {
               val ivMaterial = Captcha.ivMaterial(captchaId)

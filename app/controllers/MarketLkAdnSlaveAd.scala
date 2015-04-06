@@ -1,6 +1,7 @@
 package controllers
 
 import models.usr.MPersonIdent
+import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.FormUtil._
 import play.api.data._, Forms._
@@ -18,7 +19,7 @@ import util.SiowebEsUtil.client
  * Description: Контроллер для взаимодействия с рекламными карточками подчинённых узлов.
  * Это всё относится к узлам-супервизорам.
  */
-object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
+class MarketLkAdnSlaveAd(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 

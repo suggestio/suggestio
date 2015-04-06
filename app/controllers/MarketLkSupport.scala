@@ -2,9 +2,9 @@ package controllers
 
 import models._
 import models.usr.MPersonIdent
+import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
@@ -21,7 +21,7 @@ import play.api.data._, Forms._
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
+class MarketLkSupport(val messagesApi: MessagesApi) extends SioController with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 

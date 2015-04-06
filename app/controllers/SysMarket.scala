@@ -20,7 +20,7 @@ import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.{Result, Call, AnyContent}
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import controllers.sysctl._
 
 /**
@@ -29,7 +29,7 @@ import controllers.sysctl._
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall {
+class SysMarket(val messagesApi: MessagesApi) extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall {
 
   import LOGGER._
 
@@ -570,10 +570,6 @@ object SysMarket extends SioControllerImpl with MacroLogsImpl with ShopMartCompa
       )
     )
   }
-
-  /* Торговые центры и площади. */
-
-  private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
 
   // Инвайты на управление ТЦ

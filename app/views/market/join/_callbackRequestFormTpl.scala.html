@@ -3,9 +3,8 @@
 @import ctx._
 @import helper._
 @import util.FC.radialFc
-@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import controllers.Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN, DIGITS_CAPTCHA_LEN}
 @import io.suggest.util.StringUtil.randomId
-@import controllers.Captcha.DIGITS_CAPTCHA_LEN
 
 @form(CSRF(submitCall), 'class -> "adv-req-page_call-back-form") {
 

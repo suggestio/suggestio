@@ -9,12 +9,13 @@ package controllers
  */
 
 import play.api.Play.{isProd, current}
+import play.api.i18n.MessagesApi
 import play.api.mvc._
 import util.acl.{IsSuperuserOr404, MaybeAuth}
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-object Static extends SioControllerImpl {
+class Static(val messagesApi: MessagesApi) extends SioControllerImpl {
 
   private def booklet = routes.Market.marketBooklet().url
 

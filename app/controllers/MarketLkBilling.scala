@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -17,7 +18,7 @@ import play.api.Play.{current, configuration}
  * Created: 18.04.14 18:23
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
-object MarketLkBilling extends SioController with PlayMacroLogsImpl {
+class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 

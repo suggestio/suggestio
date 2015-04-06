@@ -1,10 +1,10 @@
 package controllers
 
+import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
 import util.ai.mad.MadAiUtil
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data._, Forms._
@@ -20,7 +20,7 @@ import scala.util.matching.Regex
  * Description: Управление системами автоматической генерации контента.
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
-object SysAi extends SioControllerImpl with SysAiMadT {
+class SysAi(val messagesApi: MessagesApi) extends SioControllerImpl with SysAiMadT {
 
   import views.html.sys1.ai._
 

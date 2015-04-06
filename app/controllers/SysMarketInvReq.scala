@@ -1,6 +1,7 @@
 package controllers
 
 import models.usr.EmailActivation
+import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
 import util.acl._
@@ -22,7 +23,7 @@ import SysMarket.companyFormM
  * v2: Нужен многошаговый и удобный мастер создания узлов со всеми контрактами и инвайтами, отметками о ходе
  * обработки запроса и т.д.
  */
-object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketInvReq(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

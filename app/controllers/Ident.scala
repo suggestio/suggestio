@@ -2,7 +2,7 @@ package controllers
 
 import controllers.ident._
 import models.msession.Keys
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import util.acl._
 import util._
 import play.api.mvc._
@@ -22,8 +22,8 @@ import views.html.ident.reg.email._regColumnTpl
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator
-with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
+class Ident(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with EmailPwLogin
+with CaptchaValidator with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
   import LOGGER._
 

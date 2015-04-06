@@ -2,11 +2,11 @@ package controllers
 
 import models.{RemoteErrorTypes, GeoIp, MRemoteError}
 import play.api.data._, Forms._
+import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.FormUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{BruteForceProtectCtl, SioAction}
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 
 /**
@@ -16,7 +16,7 @@ import util.SiowebEsUtil.client
  * Description: Сборка js-ошибок с клиентов и сохранение оных в модель.
  * Клиенты могут слать всякую хрень.
  */
-object RemoteError extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl {
+class RemoteError(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl {
 
   import LOGGER._
 

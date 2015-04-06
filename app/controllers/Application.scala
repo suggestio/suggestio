@@ -4,20 +4,16 @@ import models.Context
 import models.crawl.SiteMapUrlT
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.cdn.CorsUtil
-import play.api.i18n.Lang
+import play.api.i18n.MessagesApi
 import play.api.Play, Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import util.SiowebEsUtil.client
 import views.html.static.sitemap._
 import views.html.sys1._
 
-object Application extends SioControllerImpl with PlayMacroLogsImpl {
-
-  import LOGGER._
+class Application(val messagesApi: MessagesApi) extends SioControllerImpl {
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS = configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {
@@ -37,36 +33,6 @@ object Application extends SioControllerImpl with PlayMacroLogsImpl {
         CONTENT_TYPE  -> "text/plain; charset=utf-8",
         CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
       )
-  }
-
-  /** Запрос смены языка UI. */
-  def change_locale(locale: String) = MaybeAuth.async { implicit request =>
-    val referrer = request.headers.get(REFERER).getOrElse("/")
-    trace("Change user lang to : " + locale)
-    // TODO Проверять язык по списку доступных.
-    val lang1 = Lang(locale)
-    val resp0 = Redirect(referrer).withLang(lang1)
-    // Нужно сохранять смену языка в БД, если юзер залогинен.
-    if (request.isAuth) {
-      val pw = request.pwOpt.get
-      val langCode = lang1.language
-      pw.personOptFut.flatMap {
-        case Some(person) =>
-          val person2 = person.copy(
-            lang = langCode
-          )
-          person2.save
-            .map {_ => resp0 }
-
-        case None =>
-          // TODO Внезапно неизвесный юзер с правильными кукисами в сессии.
-          // Нужно сбросить ему сессию и выставить куку с иной локалью.
-          warn(s"User with valid session personId=${pw.personId} not found in DB! Resetting session...")
-          resp0.withNewSession
-      }
-    } else {
-      resp0
-    }
   }
 
   /**

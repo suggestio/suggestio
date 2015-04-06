@@ -5,6 +5,7 @@ import _root_.util.async.AsyncUtil
 import controllers.ident._
 import models.msession.Keys
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
+import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
@@ -13,8 +14,6 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
-import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
-import io.suggest.model.EsModel
 import views.html.lk.adn._
 import views.html.lk.adn.node._
 import views.html.lk.usr._
@@ -33,7 +32,8 @@ import play.api.mvc.{AnyContent, Result}
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction {
+class MarketLkAdn(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl
+with ChangePwAction {
 
   import LOGGER._
 

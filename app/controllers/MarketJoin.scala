@@ -21,6 +21,7 @@ import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import MarketLkAdnEdit.logoKM
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
+import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 
 /**
  * Suggest.io

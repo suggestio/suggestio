@@ -1,6 +1,7 @@
 package controllers
 
 import models.im.MImg
+import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.img.LogoUtil.LogoOpt_t
@@ -29,7 +30,8 @@ import scala.concurrent.Future
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
+class MarketLkAdnEdit(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport
+with BruteForceProtectCtl {
 
   import LOGGER._
 

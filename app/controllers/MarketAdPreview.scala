@@ -10,7 +10,6 @@ import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
-import MarketAdFormUtil._
 import util.blocks.{BgImg, BlockMapperResult}
 import views.html.sc._
 
@@ -34,6 +33,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     maybeGetAdPreviewFormM(adnNode, request.body)
   }
 
+  protected def blockIdsFor(adnNode: MAdnNode): Set[Int]
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def maybeGetAdPreviewFormM(adnNode: MAdnNode, reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
@@ -52,7 +52,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         .getOrElse(Nil)
         .headOption
         .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
-        .filter { block => MarketAd.blockIdsFor(adnNode) contains block.id }
+        .filter { block => blockIdsFor(adnNode) contains block.id }
         .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
           // Задан пустой или скрытый/неправильный block_id.
           LOGGER.warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)

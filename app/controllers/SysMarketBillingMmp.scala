@@ -1,11 +1,11 @@
 package controllers
 
+import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
 import play.api.Play.current
 import views.html.sys1.market.billing.mmp.daily._
@@ -21,7 +21,7 @@ import scala.concurrent.Future
  * Created: 27.05.14 12:07
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
-object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingMmp(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

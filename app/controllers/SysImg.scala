@@ -3,6 +3,7 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import models.im.MImg
+import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -17,7 +18,7 @@ import play.api.data._, Forms._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
-object SysImg extends SioControllerImpl with PlayMacroLogsImpl {
+class SysImg(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

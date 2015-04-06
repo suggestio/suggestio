@@ -2,6 +2,7 @@ package controllers
 
 import _root_.util.{MartCategories, PlayMacroLogsImpl}
 import play.api.data._, Forms._
+import play.api.i18n.MessagesApi
 import util.FormUtil._
 import models._
 import util.SiowebEsUtil.client
@@ -19,7 +20,7 @@ import play.api.Play.{current, configuration}
  * Created: 05.03.14 10:14
  * Description: Контроллер управления категориями магазина/ТЦ.
  */
-object MarketCategory extends SioController with PlayMacroLogsImpl {
+class MarketCategory(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
