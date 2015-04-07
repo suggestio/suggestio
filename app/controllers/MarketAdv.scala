@@ -47,9 +47,6 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
     "freeAdv" -> optional(boolean)
   )
 
-  /** Ключ маппинга для списка узлов. */
-  val NODES_KM = "node"
-
   /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
   val CUSTOM_PERIOD = "custom"
 
@@ -154,7 +151,7 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
     )
     Form[AdvFormValueM_t] (
       mapping(
-        NODES_KM -> nodesM,
+        "node"   -> nodesM,
         "period" -> advPeriodM
       )
       {(nodesAdv, advPeriod) =>
@@ -261,8 +258,8 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
     // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
     val adnId2indexMapFut: Future[Map[String, Int]] = rcvrsReadyFut map { rcvrs =>
       // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
-      val formIndex2adnIdMap0 = form(NODES_KM).indexes
-        .flatMap { fi => form(s"$NODES_KM[$fi].adnId").value.map(fi -> _) }
+      val formIndex2adnIdMap0 = form("node").indexes
+        .flatMap { fi => form(s"node[$fi].adnId").value.map(fi -> _) }
         .toMap
       val missingRcvrIds = rcvrs.flatMap(_.id).toSet -- formIndex2adnIdMap0.valuesIterator
       // Делаем источник допустимых index'ов, которые могут быть в list-mapping'е.
@@ -306,7 +303,7 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.pluralNoTown)(ctx.lang),
+                name = Messages(ast.pluralNoTown)(ctx.messages),
                 i = i
               )
             }
@@ -330,7 +327,7 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
     val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
-      .map(ps => ps -> Messages("adv.period." + ps)(ctx.lang))
+      .map(ps => ps -> Messages("adv.period." + ps)(ctx.messages))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[AdvFormTplArgs] = for {

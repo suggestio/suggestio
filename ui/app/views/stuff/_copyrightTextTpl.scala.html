@@ -1,10 +1,10 @@
 @(withLink: Boolean)(implicit ctx: Context)
 
-@import ctx.lang
+@import ctx.messages
 
 &copy; 2012-@ctx.now.getYear
 
 @if(withLink){
   <a href="http://suggest.io/">}Suggest.io@if(withLink){</a>
 }.
-@Messages("All.rights.reserved")
+@messages("All.rights.reserved")

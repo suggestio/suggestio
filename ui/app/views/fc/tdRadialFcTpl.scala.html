@@ -8,7 +8,7 @@
 <table class="prop">
   <td class="prop_name">
     <label for="@elements.id">
-      @elements.label(elements.lang)
+      @elements.label
 
       @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
         <span class="required-icon">*</span>

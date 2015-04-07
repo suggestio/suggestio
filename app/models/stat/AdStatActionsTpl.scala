@@ -15,7 +15,7 @@ object AdStatActionsTpl {
   def adStatActionsSeq(implicit ctx: Context): Seq[(ScStatAction, String)] = {
     import ctx._
     ScStatActions.onlyBillableIter
-      .map { v  =>  v -> Messages(v.i18nCode) }
+      .map { v  =>  v -> messages(v.i18nCode) }
       .toSeq
   }
 
@@ -24,7 +24,7 @@ object AdStatActionsTpl {
     ScStatActions.onlyBillableIter
       .map { v =>
         val i18n = v.i18nCode
-        v.toString -> Messages(i18n)
+        v.toString -> messages(i18n)
       }
       .toSeq
   }

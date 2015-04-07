@@ -32,26 +32,14 @@ GET  /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNode
 POST /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /m/adn/img/logo/prepare            @controllers.MarketLkAdnEdit.handleTempLogo
 POST /m/adn/img/gal/prepare             @controllers.MarketLkAdnEdit.handleGallweryImg
-## Базовый супервайзинг узлов
-GET  /m/lk/adn/slave/:adnId             @controllers.MarketLkAdn.showSlave(adnId)
-GET  /m/lk/adn/slave/:adnId/on-off      @controllers.MarketLkAdn.nodeOnOffForm(adnId)
-POST /m/lk/adn/slave/:adnId/on-off      @controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
 ## Принятие приглашения на управления узлом.
 GET  /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 ## Редактирования профиля юзера из личного кабинета узла.
 GET  /m/lk/adn/:adnId/usr/edit          @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /m/lk/adn/:adnId/usr/pwchange      @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
-## Супервайзинг рекламных карточек на подчинённых узлах
+## Окно для георазмещения рекламных карточек
 GET  /m/lk/xadv/geo/wnd/:adId           @controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
-POST /m/lk/adn/slave/:adnId/set/tla     @controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
-GET  /m/lk/adn/ad/slave/:adId           @controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
-POST /m/lk/adn/ad/slave/:adId/hide      @controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
-GET  /m/lk/adn/:adnId/_ads              @controllers.MarketLkAdnSlaveAd._showSlaveAds(adnId)
-## Супервайзинг узлов: публикация рекламы на подчинённых узлах.
-GET  /m/lk/adn/ad/slave/:adId/publish   @controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
-POST /m/lk/adn/ad/slave/:adId/publish   @controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
-
 
 ## Размещение рекламы (adv) на узлах-получателях
 GET  /m/lk/xadv/geo/for/:adId           @controllers.MarketAdv.advForAd(adId)

@@ -23,7 +23,7 @@
   *@
 
   @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
-    @Messages("Choose.category")
+    @messages("Choose.category")
   } {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
@@ -31,7 +31,7 @@
 
   @* Для блока : превьюшка + редактор *@
   @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
-    @Messages("Ad.layout")
+    @messages("Ad.layout")
   } {
 
     @* Форма редактирования блока *@
@@ -56,10 +56,10 @@
         @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
         <div class="edit-ad_pattern-w input-w">
           <div class="edit-ad_pattern-option">
-            @checkbox(af("ad.pattern.enabled"), '_label -> Messages("Ad.edit.pattern") )
+            @checkbox(af("ad.pattern.enabled"), '_label -> messages("Ad.edit.pattern") )
           </div>
           <div class="edit-ad_pattern-color">
-            @_selectColorTpl(af("ad.pattern.color"), label = Messages("Ad.edit.pattern.color") )
+            @_selectColorTpl(af("ad.pattern.color"), label = messages("Ad.edit.pattern.color") )
           </div>
         </div>
       </div>
@@ -73,12 +73,12 @@
 
   @* HTML-редактор для ввода текстового описания. *@
   @lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
-    @Messages("Description")
+    @messages("Description")
   } {
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
 
-      @_selectColorTpl(af("ad.descr.bgColor"), label = Messages("Bg.color"))
+      @_selectColorTpl(af("ad.descr.bgColor"), label = messages("Bg.color"))
 
       <td class="input-w_tinymce-editor">
         @defining( "ad.descr.text" ) { name =>

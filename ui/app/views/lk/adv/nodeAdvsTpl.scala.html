@@ -1,28 +1,28 @@
 @(adnNode: MAdnNode, advsWithAds: Seq[(MAdvReq, MAd)])(implicit ctx: Context)
 
 @* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
-@import ctx._
 @import views.html.lk._
 @import views.html.sc._
 @import NodeRightPanelLinks._
+@import ctx._
 
 @adn.nodeBaseTpl(
-  title         = Messages("Advertisers"),
+  title         = messages("Advertisers"),
   node          = adnNode,
   rightCurrEl   = RPL_ADVERTISERS,
   isMyNode      = true
 ) {
 
-  @lk.lkBlock( Messages("Under.consideration") ) {
+  @lk.lkBlock( messages("Under.consideration") ) {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">
         <p class="color-light-strong ft-XS">
-          @Messages("This.page.contains.incoming.adv.reqs")
-          @Messages("Adv.rates.wrote.in.CBCA.contract")
+          @messages("This.page.contains.incoming.adv.reqs")
+          @messages("Adv.rates.wrote.in.CBCA.contract")
         </p>
         <p class="color-light-strong ft-XS">
-          @Messages("Click.on.card.for.info.consider")
+          @messages("Click.on.card.for.info.consider")
         </p>
       </div>
 
@@ -37,7 +37,7 @@
               <div class="ads-list-block__zigzag-mask"></div>
               <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
-                @Html( Messages("Click.for.more.info", "<br/>") )
+                @Html( messages("Click.for.more.info", "<br/>") )
               </a>
             </div>
           </div>

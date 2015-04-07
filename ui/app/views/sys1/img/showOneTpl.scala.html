@@ -46,8 +46,8 @@
           <td>img ops</td>
           <td>
             @img.dynImgOps.iterator.map { op =>
-              <strong title="@op.opCode">@Messages("im.op." + op.opCode.strId)</strong>:
-              @op.unwrappedValue  @op.i18nValueCode.map(Messages(_))  (@op.qsValue)
+              <strong title="@op.opCode">@messages("im.op." + op.opCode.strId)</strong>:
+              @op.unwrappedValue  @op.i18nValueCode.map(messages(_))  (@op.qsValue)
               <br/>
             }
           </td>

@@ -124,7 +124,7 @@ object TplDataFormatUtil extends TplFormatUtilT {
   /** Отформатировать валюту. */
   def formatCurrency(currency: Currency)(implicit ctx: Context): String = {
     // TODO Надо бы дедублицировать это с частями formatPrice()
-    val lang = ctx.lang.lang
+    val lang = ctx.messages.lang
     currency.getCurrencyCode match {
       case "RUB" if lang.language == "ru" =>
         "р."    // Заменяем "руб." на "р."

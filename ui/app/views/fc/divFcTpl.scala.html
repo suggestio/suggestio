@@ -10,7 +10,7 @@
 
   @if(elements.label.toString.size > 0) {
     <label class="lk-field__name" for="@elements.id">
-      @elements.label(elements.lang)
+      @elements.label
       @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
         <span class="required-icon">*</span>
       }

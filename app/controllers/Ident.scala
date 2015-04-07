@@ -53,7 +53,7 @@ with CaptchaValidator with ChangePw with PwRecover with EmailPwReg with External
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
     val formFut = EmailPwSubmit.emailPwLoginFormStubM
     val ctx = implicitly[Context]
-    val title = Messages("Login.page.title")(ctx.lang)
+    val title = Messages("Login.page.title")(ctx.messages)
     val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
     formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)

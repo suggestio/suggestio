@@ -203,7 +203,7 @@ class LkAdvExt(val messagesApi: MessagesApi) extends SioControllerImpl with Play
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
-      .fill( ("", Some(Messages("New.target")(ctx.lang)), None) )
+      .fill( ("", Some(Messages("New.target")(ctx.messages)), None) )
     Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
 

@@ -13,7 +13,7 @@
     case Some("sys-checkbox") => {
 
       <td class="input-w_left">
-        <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)</label>
+        <label class="input-w_prop-name" for="@elements.id">@elements.label</label>
       </td>
 
       <td>
@@ -27,7 +27,7 @@
     case _ => {
 
       <td class="input-w_left">
-        <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)
+        <label class="input-w_prop-name" for="@elements.id">@elements.label
           @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
           <span class="required-icon">*</span>
           }

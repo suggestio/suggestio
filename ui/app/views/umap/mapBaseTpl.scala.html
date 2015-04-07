@@ -38,13 +38,13 @@
       @defining( args.nodesMap.toSeq ) { nodesSeq =>
         <div class="custom-ui_btn-lst js-select-label">
           @nodesSeq.map { case (ast, _) =>
-            <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">@Messages("amts.of.type." + ast.name)</button>
+            <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">@messages("amts.of.type." + ast.name)</button>
           }
         </div>
 
         @nodesSeq.map { case (ast, nodes) =>
           <select class="js-select-id" data-label="@ast.id">
-            <option value="0">Выберите @Messages("amt.of.type." + ast.name)</option>
+            <option value="0">Выберите @messages("amt.of.type." + ast.name)</option>
             @nodes.iterator.zipWithIndex.map { case (adnNode, i) =>
               <option value="@adnNode.id">@adnNode.meta.name / @adnNode.meta.town</option>
             }

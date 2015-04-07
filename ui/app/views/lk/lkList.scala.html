@@ -2,10 +2,10 @@
 
 @* Список узлов (личных кабинетов) юзера. *@
 
-@import ctx.lang
+@import ctx.messages
 
 @lkBase(
-  title   = Messages("My.ad.net"),
+  title   = messages("My.ad.net"),
   nodeOpt = currNode,
   showSwitchNodeBtn = false
 ) {
@@ -13,7 +13,7 @@
   <div class="viewport">
     <article class="page_cnt">
 
-      <h1 class="page_title">@Messages("Choose.node")</h1>
+      <h1 class="page_title">@messages("Choose.node")</h1>
 
       <span class="node-list_size">@mnodes.size</span>
 
@@ -30,12 +30,12 @@
           }
 
         } else {
-          @Messages("You.have.no.nodes.create.first")
+          @messages("You.have.no.nodes.create.first")
         }
       </div>
 
       @* Кнопка создания магазина. *@
-      <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">@Messages("Create.node")...</a>
+      <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">@messages("Create.node")...</a>
 
     </article>
   </div>

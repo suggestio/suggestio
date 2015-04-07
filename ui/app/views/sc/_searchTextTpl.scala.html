@@ -1,15 +1,15 @@
 @(args: ScRenderArgs, id: String)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
-@import ctx.lang
+@import ctx.messages
 
 <div class="sm-search-bar" id="@{id}Bar" style="@stuff._bgcolor( args.bgColor )">
 
   <div class="sm-search-bar_field" id="@{id}" style="@stuff._bgcolor( args.bgColor, true, 0.5 ); border-color: #@args.fgColor;">
     <div class="sm-search-bar_wrapper">
-      <input class="sm-search-bar_input" id="@{id}Field" type="text" placeholder="@Messages("Quick.search.for.offers")"/>
+      <input class="sm-search-bar_input" id="@{id}Field" type="text" placeholder="@messages("Quick.search.for.offers")"/>
     </div>
-    <div class="sm-search-bar_message" id="@{id}Em">@Messages("Nothing.found")</div>
+    <div class="sm-search-bar_message" id="@{id}Em">@messages("Nothing.found")</div>
   </div>
 
 </div>

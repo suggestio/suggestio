@@ -12,7 +12,7 @@
 
   <p class="paragraph __size-M color-light-strong ft-S">
     <strong class="color-strong">
-      @Messages("Adv.request.from")
+      @messages("Adv.request.from")
       <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
     </strong>
   </p>
@@ -20,10 +20,10 @@
   <p class="paragraph __size-M color-light-strong ft-XS">
     С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)<br/>
     @if( advReq.hasOnAdSl(AdShowLevels.LVL_CATS) ) {
-      + @Messages("Adv.in.cats")<br/>
+      + @messages("Adv.in.cats")<br/>
     }
     @if( advReq.hasOnAdSl(AdShowLevels.LVL_START_PAGE) ) {
-      + @Messages("Adv.on.main.screen")
+      + @messages("Adv.on.main.screen")
     }
 
   </p>
@@ -43,17 +43,17 @@
     @textarea(
       refuseFormM("reason"),
       '_label       -> "",
-      'placeholder  -> Messages("Write.refuse.reason")
+      'placeholder  -> messages("Write.refuse.reason")
     )
 
     <div class="submit-w __size-S">
 
       <a class="siom-ac-btn __color-3 __size-M __ft-XM f-left js-adv-req-forms" >
-        @Messages("Cancel")
+        @messages("Cancel")
       </a>
 
       <a class="siom-ac-btn __color-4 __size-M __ft-XM f-right js-submit-btn">
-        @Messages("Send.rejection")
+        @messages("Send.rejection")
       </a>
 
     </div>
@@ -68,10 +68,10 @@
     <div class="submit-w __size-S">
 
       <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left js-adv-req-forms">
-        @Messages("Cancel.adv")
+        @messages("Cancel.adv")
       </a>
 
-      <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@Messages("Approve._adv")</a>
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@messages("Approve._adv")</a>
 
     </div>
 

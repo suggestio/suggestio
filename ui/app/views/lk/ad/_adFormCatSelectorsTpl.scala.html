@@ -3,7 +3,7 @@
 @* Механизм задания/изменения категории рекламной карточки. *@
 
 @import helper._
-@import ctx.lang
+@import ctx.messages
 
 @defining( af("ad.catId") ) { rootField =>
 
@@ -14,7 +14,7 @@
       <label class="edit-ad_category-checkbox-w">
         <input type="checkbox" name="ad.catId[@i]" value="@mmcat.id"
                @if(catIds contains mmcat.id.get) {checked="checked"} />
-        <span class="styled-checkbox edit-ad_category-checkbox-title">@Messages(mmcat.name)</span>
+        <span class="styled-checkbox edit-ad_category-checkbox-title">@messages(mmcat.name)</span>
       </label>
     }
     <div class="triger"></div>
@@ -23,7 +23,7 @@
 
 @rootField.error.map { error =>
   <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">
-    @Messages(error.message, error.args : _*)
+    @messages(error.message, error.args : _*)
   </div>
 }
 

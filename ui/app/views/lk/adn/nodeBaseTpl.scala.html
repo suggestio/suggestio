@@ -10,27 +10,27 @@
 
 @rightBarBody(adnId: String) = {
   @_navItemTpl(
-    title = Messages("Profile"),
+    title = messages("Profile"),
     href  = Some( routes.MarketLkAdn.showAdnNode(adnId) ),
     css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
   )
 
   @if(isMyNode) {
     @_navItemTpl(
-      title = Messages("Edit.profile"),
+      title = messages("Edit.profile"),
       href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
       css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
     )
 
     @_navItemTpl(
-      title = Messages("Password.change"),
+      title = messages("Password.change"),
       href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
       css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
     )
 
     @if(node.adn.isReceiver) {
       @_navItemTpl(
-        title = Messages("Advertisers"),
+        title = messages("Advertisers"),
         href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
         css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
       )

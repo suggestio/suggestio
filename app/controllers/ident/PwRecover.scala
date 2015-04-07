@@ -79,7 +79,7 @@ trait SendPwRecoverEmail extends SioController {
             msg.setFrom("no-reply@suggest.io")
             msg.setRecipients(email1)
             val ctx = implicitly[Context]
-            msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
+            msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.messages))
             msg.setHtml(emailPwRecoverTpl(eact2)(ctx))
             msg.send()
           }
@@ -99,7 +99,7 @@ with SetLangCookieUtil {
 
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
     mySioStartTpl(
-      title     = Messages("Password.recovery")(ctx.lang),
+      title     = Messages("Password.recovery")(ctx.messages),
       columns   = Seq(html)
     )(ctx)
   }

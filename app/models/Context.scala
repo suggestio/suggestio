@@ -100,7 +100,7 @@ trait Context extends MyHostsT {
   def pwOpt: PwOpt_t
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
-  implicit val lang: Messages
+  implicit val messages: Messages
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.path)
@@ -240,7 +240,7 @@ trait Context extends MyHostsT {
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2(
   implicit val request: RichRequestHeader,
-  implicit val lang: Messages
+  implicit val messages: Messages
 ) extends Context {
   def pwOpt: PwOpt_t = request.pwOpt
   val sioReqMdOpt: Option[SioReqMd] = Some(request.sioReqMd)
@@ -248,7 +248,7 @@ case class Context2(
 
 
 /** Упрощенная запасная реализация контекста, используемая в минимальных условиях и вручную. */
-case class ContextImpl(implicit val request: RequestHeader, val lang: Messages) extends Context {
+case class ContextImpl(implicit val request: RequestHeader, val messages: Messages) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
   def sioReqMdOpt: Option[SioReqMd] = None
 }

@@ -308,7 +308,7 @@ trait SmSendEmailInvite extends SioController {
     // Собираем и отправляем письмо адресату
     val msg = MailerWrapper.instance
     val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-    msg.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.lang))
+    msg.setSubject("Suggest.io | " + Messages("Your")(ctx.messages) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.messages))
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setHtml( views.html.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )

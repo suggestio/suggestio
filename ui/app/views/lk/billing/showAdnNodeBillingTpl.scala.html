@@ -7,7 +7,7 @@
 @import datetime._
 
 @billingBaseTpl(
-  title         = Messages("Billing"),
+  title         = messages("Billing"),
   node          = adnNode,
   rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
 ) {
@@ -18,17 +18,17 @@
 
     <div class="billing_money-info">
       <div class="billing_all-money">
-        <span class="light-gray">@Messages("Total.funds")</span>
+        <span class="light-gray">@messages("Total.funds")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</div>
       </div>
 
       <div class="billing_available-money">
-        <span class="light-gray">@Messages("Available.funds")</span>
+        <span class="light-gray">@messages("Available.funds")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.amount, mbb.currency)</div>
       </div>
 
       <div class="billing_locked-money">
-        <span class="light-gray">@Messages("Blocked")</span>
+        <span class="light-gray">@messages("Blocked")</span>
         <div class="dark-gray billing_money-value">@formatPrice(mbb.blocked, mbb.currency)</div>
       </div>
     </div>
@@ -38,7 +38,7 @@
   @if(!mmpDailyTariffs.isEmpty) {
 
     <h2 class="minor-title">
-      @Messages("My.node.tariff.rate")
+      @messages("My.node.tariff.rate")
     </h2>
     <hr class="delimiter __light"/>
 
@@ -56,7 +56,7 @@
   @if(!otherRcvrs.isEmpty) {
 
     <h2 class="minor-title">
-      @Messages("Adv.tariff.rates")
+      @messages("Adv.tariff.rates")
     </h2>
     <hr class="delimiter __light"/>
 

@@ -1,26 +1,26 @@
 @(madId: String, curr: Option[LkAdvRightLink] = None)(implicit ctx: Context)
 
 @import LkAdvRightLinks._
-@import ctx.lang
+@import ctx.messages
 @import lk.right._
 @import util.tpl.CssFormat._
 
 @_navTpl( Some(routes.SysMarket.showAd(madId)) ) {
 
   @_navItemTpl(
-    title = Messages("Adv.in.ext.services"),
+    title = messages("Adv.in.ext.services"),
     href  = Some( routes.LkAdvExt.forAd(madId) ),
     css   = classesAct(curr contains LARL_EXT, "__social")
   )
 
   @_navItemTpl(
-    title = Messages("Adv.in.geo.node"),
+    title = messages("Adv.in.geo.node"),
     href  = Some( routes.MarketAdv.advForAd(madId) ),
     css   = classesAct(curr contains LARL_GEO, "__geo")
   )
 
   @_navItemTpl(
-    title = Messages("Adv.history"),
+    title = messages("Adv.history"),
     href  = Some( routes.MarketAdv.advHistory(madId) ),
     css   = classesAct(curr contains LARL_HISTORY, "__history")
   )

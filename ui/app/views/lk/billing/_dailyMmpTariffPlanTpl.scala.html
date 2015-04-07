@@ -14,24 +14,24 @@
     <tr>
       <td colspan="2">&nbsp;</td>
       <td class="td tariff_info-title">
-        @Html( Messages("Week.days", "&nbsp;") ):&nbsp;@Messages("dow.mo")-@Messages("dow.th")
+        @Html( messages("Week.days", "&nbsp;") ):&nbsp;@messages("dow.mo")-@messages("dow.th")
       </td>
       <td></td>
       <td class="td tariff_info-title">
-        @Html( Messages("Weekend", "&nbsp;") ):&nbsp;@Messages("dow.fr")-@Messages("dow.su")
+        @Html( messages("Weekend", "&nbsp;") ):&nbsp;@messages("dow.fr")-@messages("dow.su")
       </td>
       <td></td>
       <td class="td tariff_info-title">
-        @Messages("Holidays/primetime")
+        @messages("Holidays/primetime")
       </td>
     </tr>
     <tr>
       <td class="td tariff_green ft-XS white">
-        @Html( Messages("Minimal.module", "&nbsp;") )<br/>(@Html( Messages("scheme.left", "&nbsp") ))
+        @Html( messages("Minimal.module", "&nbsp;") )<br/>(@Html( messages("scheme.left", "&nbsp") ))
       </td>
       <td class="td"></td>
       @defining( mbmd.currency ) { currency =>
-      @defining( Messages("day24h") ) { sutkiI18n =>
+      @defining( messages("day24h") ) { sutkiI18n =>
 
         <td class="td tariff_info-value">
           @formatPrice(mbmd.mmpWeekday, currency)/@sutkiI18n
@@ -50,7 +50,7 @@
     <tr>
       <td colspan="2"></td>
       <td class="td light-gray ft-XS" colspan="5">
-        @Messages("Agreement.btw.CBCA.and.node.tariffs.for.year", Messages("amt.of.type." + adnNode.adn.shownTypeId), adnNode.meta.name, ctx.now.getYear)
+        @messages("Agreement.btw.CBCA.and.node.tariffs.for.year", messages("amt.of.type." + adnNode.adn.shownTypeId), adnNode.meta.name, ctx.now.getYear)
       </td>
     </tr>
   </table>

@@ -90,13 +90,14 @@ class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with P
 
   /** Подгрузка страницы из списка транзакций. */
   def _txnsList(adnId: String, page: Int) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    val offset = page * TXNS_PER_PAGE
+    val tpp = TXNS_PER_PAGE
+    val offset = page * tpp
     val txns = DB.withConnection { implicit c =>
       val mbcs = MBillContract.findForAdn(adnId, isActive = None)
       val mbcIds = mbcs.flatMap(_.id).toSet
-      MBillTxn.findForContracts(mbcIds, limit = TXNS_PER_PAGE, offset = offset)
+      MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
     }
-    Ok(_txnsPageTpl(request.adnNode, txns, page))
+    Ok(_txnsPageTpl(request.adnNode, txns, currPage = page, txnsPerPage = tpp))
   }
 
 

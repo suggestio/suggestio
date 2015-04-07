@@ -9,12 +9,12 @@
   <div class="right-bar-price-widget">
     <div class="right-bar-price-widget_cnt">
       <h2 class="right-bar-price-widget_title">
-        @Messages("Total.amount._money")
+        @messages("Total.amount._money")
       </h2>
       <p class="right-bar-price-widget_price-value js-pre-price">
         @formatPrice(0F, CurrencyCodeDflt.currency)
       </p>
-      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">@Messages("Send.request")</button>
+      <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">@messages("Send.request")</button>
     </div>
   </div>
 }
@@ -26,7 +26,7 @@
 
 
 @advBase(
-  title         = Messages("Geo.adv"),
+  title         = messages("Geo.adv"),
   mad           = mad,
   producer      = producer,
   rightLink     = LkAdvRightLinks.LARL_GEO,

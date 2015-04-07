@@ -37,7 +37,7 @@ class LkLang(val messagesApi: MessagesApi) extends SioController with PlayMacroL
   /** Рендер страницы выбора языка. */
   def showLangSwitcher(r: Option[String]) = MaybeAuthGet { implicit request =>
     val ctx = implicitly[Context]
-    val l0 = ctx.lang.lang
+    val l0 = ctx.messages.lang
     val langForm = chooseLangFormM(l0).fill(l0)
     Ok( _showLangSwitcher(langForm, r)(ctx) )
   }
@@ -55,7 +55,7 @@ class LkLang(val messagesApi: MessagesApi) extends SioController with PlayMacroL
     langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.lang.lang.language == "en",
+      isNowEnglish = ctx.messages.lang.language == "en",
       langs   = langs,
       nodeOpt = nodeOpt,
       rr      = r

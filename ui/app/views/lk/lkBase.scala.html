@@ -55,11 +55,11 @@
       }
     </div>
 
-    <a class="lang-widget" title="Switch language@if(ctx.lang.language != "en") { | @Messages("Switch.lang")}"
+    <a class="lang-widget" title="Switch language@if(messages.language != "en") { | @messages("Switch.lang")}"
        href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.lang.language</a>
 
     @if(showSwitchNodeBtn && ctx.isAuth) {
-      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@Messages("Switch.shop")</a>
+      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@messages("Switch.shop")</a>
     }
 
   </header>
@@ -86,10 +86,10 @@
   <aside class="popups popups-container" id="popupsContainer">
 
     @_popupTpl(css = Seq("__size-M"), id = Some("logoutPopup")) {
-      <h2 class="minor-title">@Messages("Logout.suggest.io")</h2>
+      <h2 class="minor-title">@messages("Logout.suggest.io")</h2>
       <div class="btn-w __size-M">
-        <a class="btn __minor __size-M js-close-popup">@Messages("Cancel")</a>
-        <a class="btn __major __size-M __list" href="@CSRF(routes.Ident.logout())">@Messages("Logout")</a>
+        <a class="btn __minor __size-M js-close-popup">@messages("Cancel")</a>
+        <a class="btn __major __size-M __list" href="@CSRF(routes.Ident.logout())">@messages("Logout")</a>
       </div>
     }
 

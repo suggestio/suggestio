@@ -61,7 +61,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
     val msg = MailerWrapper.instance
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
-    msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.lang))  // TODO Заголовок в messages и сюда!
+    msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.messages))  // TODO Заголовок в messages и сюда!
     msg.setHtml( emailRegMsgTpl(ea)(ctx) )
     msg.send()
   }

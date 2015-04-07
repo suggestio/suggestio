@@ -5,12 +5,12 @@
    Скрываем кнопку смены магазина, чтобы не сбивать людей. *@
 
 @import lk._
-@import ctx.{lang => currLang, request}
+@import ctx.{messages, request}
 @import helper._
 @import util.FC.langSelectFc
 
 @lkBaseLayout(
-  title   = Messages("Select.your.lang")(english) + (if(!isNowEnglish) {" | " + Messages("Select.your.lang")} else ""),
+  title   = messages("Select.your.lang")(english) + (if(!isNowEnglish) {" | " + messages("Select.your.lang")} else ""),
   nodeOpt = nodeOpt,
   showSwitchNodeBtn = false
 ) {
@@ -20,12 +20,12 @@
       @* TODO Сделать автопереключение. Кнопку завернуть наверное в noscript-тег. *@
       @inputRadioGroup(
         lf("lang"),
-        options = langs.map { l => l.code -> Messages("This.lang")(l) }
+        options = langs.map { l => l.code -> messages("This.lang")(l) }
       )
       <br/>
 
       <div class="btn-w __size-M">
-        <input class="btn __size-M1 __major" type="submit" value="Save@if(!isNowEnglish) { | @Messages("Save")}" />
+        <input class="btn __size-M1 __major" type="submit" value="Save@if(!isNowEnglish) { | @messages("Save")}" />
       </div>
     }
   </div>

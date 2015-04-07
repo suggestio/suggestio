@@ -52,7 +52,7 @@ trait SysNodeInstall extends SioController with PlayMacroLogsI {
     implicit val ctx = implicitly[Context]
     val fd = FormData(
       count = NodesUtil.INIT_ADS_COUNT,
-      lang  = ctx.lang.lang
+      lang  = ctx.messages.lang
     )
     val form = mkForm.fill(fd)
     _installRender(form)(ctx, request)

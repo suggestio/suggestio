@@ -3,13 +3,13 @@
 @* Рисуем баланс на счете, если есть счёт. *@
 
 @import util.TplDataFormatUtil._
-@import ctx.lang
+@import ctx.messages
 
 @ctx.billBalanceOpt.map { mbb =>
 
   @* href="@routes.MarketLkBilling.paymentRequsites(adnId)" *@
   <a class="header_billing" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">
-    <span class="ft-S header_billing-t">@Messages("Balance")</span><span class=" ft-L">@formatPrice(mbb.amount, mbb.currency)</span>
+    <span class="ft-S header_billing-t">@messages("Balance")</span><span class=" ft-L">@formatPrice(mbb.amount, mbb.currency)</span>
   </a>
 
 }
