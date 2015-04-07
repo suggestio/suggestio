@@ -45,6 +45,15 @@ case class MActionCmd(mctx: MJsCtx, replyTo: Option[String]) extends ICmd {
   override def ctype = MCommandTypes.Action
 }
 
+/** Распарсенная команда чтения данных из хранилища браузера по ключу. */
+case class MGetStorageCmd(key: String, replyTo: String) extends ICmd {
+  override def ctype = MCommandTypes.GetStorage
+}
+
+case class MSetStorageCmd(key: String, value: Option[String]) extends ICmd {
+  override def ctype: MCommandType = ???
+}
+
 
 /** Известные системе типы команд. */
 object MCommandTypes extends MCommandTypesLightT {
@@ -76,10 +85,35 @@ object MCommandTypes extends MCommandTypesLightT {
 
   override val Action: T = new Val(CTYPE_ACTION) {
     override def dyn2cmd(d: Dictionary[Any]): Option[MActionCmd] = {
-      d.get(MCTX_FN).map { mctxDyn =>
+      val dr = d : WrappedDictionary[Any]
+      dr.get(MCTX_FN).map { mctxDyn =>
         MActionCmd(
           mctx    = MJsCtx.fromJson(mctxDyn),
           replyTo = d.get(REPLY_TO_FN).map(_.toString)
+        )
+      }
+    }
+  }
+
+  override val GetStorage: T = new Val(CTYPE_GET_STORAGE) {
+    override def dyn2cmd(d: Dictionary[Any]): Option[MGetStorageCmd] = {
+      val dr = d : WrappedDictionary[Any]
+      dr.get(KEY_FN).map { keyRaw =>
+        MGetStorageCmd(
+          key     = keyRaw.toString,
+          replyTo = dr(REPLY_TO_FN).toString
+        )
+      }
+    }
+  }
+
+  override val SetStorage: T = new Val(CTYPE_SET_STORAGE) {
+    override def dyn2cmd(d: Dictionary[Any]): Option[ICmd] = {
+      val dr = d: WrappedDictionary[Any]
+      dr.get(KEY_FN).map { k =>
+        MSetStorageCmd(
+          key   = k.toString,
+          value = dr.get(VALUE_FN).map(_.toString)
         )
       }
     }

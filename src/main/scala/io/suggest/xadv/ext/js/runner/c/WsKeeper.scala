@@ -8,7 +8,8 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.scalajs.js
-import scala.scalajs.js.JSON
+import scala.scalajs.js.{JSON, Array, Any}
+import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success}
 
 /**
@@ -47,7 +48,7 @@ trait WsKeeper {
    * Асинхронная обработка сообщений от sio.
    * @param msg Входящее сообщение.
    */
-  private[this] def handleMessage(msg: MessageEvent, appState: MAppState): Future[_] = {
+  private[this] def handleMessage(msg: MessageEvent, appState: MAppState): Unit = {
     // Форсируем асинхронное исполнение, чтобы можно было унифицировать обработку ошибок.
     // Десериализация полученной команды:
     val cmdFut = Future {
@@ -62,7 +63,7 @@ trait WsKeeper {
     }
 
     // В зависимости от полученной команды принять решение какое-то.
-    cmdFut flatMap {
+    cmdFut onSuccess {
       // Это js. Нужно запустить его на исполнение.
       case cmd: MJsCommand =>
         val fn = { () =>
@@ -97,15 +98,39 @@ trait WsKeeper {
 
         } foreach { mctx2 =>
           // Отправить новый контекст серверу через ws.
-          val ans = MAnswer(
-            replyTo = cmd.replyTo,
-            mctx    = mctx2
+          val ans = MAnswerCtx(
+            replyTo   = cmd.replyTo,
+            mctx      = mctx2
           )
-          val json = JSON.stringify(ans.toJson)
-          appState.ws.send(json)
+          sendAnswer(ans, appState)
         }
         fut
+
+      // Запрос чтения из хранилища браузера.
+      case cmd: MGetStorageCmd =>
+        val raw = dom.localStorage.getItem(cmd.key)
+        val resp: Array[Any] = if (raw != null) Array(raw) else Array()
+        val ans = MAnswer(
+          replyTo = Some(cmd.replyTo),
+          value   = resp
+        )
+        sendAnswer(ans, appState)
+
+      // Запрос сервера на запись/удаление элемента по ключу.
+      case cmd: MSetStorageCmd =>
+        val stor = dom.localStorage
+        cmd.value match {
+          case Some(v) => stor.setItem(cmd.key, v)
+          case None    => stor.removeItem(cmd.key)
+        }
     }
+  }
+
+
+  /** Укороченная в плане кода отправка ответа на sio-сервер. */
+  private def sendAnswer(ans: IAnswer, appState: MAppState): Unit = {
+    val json = JSON.stringify(ans.toJson)
+    appState.ws.send(json)
   }
 
 }
