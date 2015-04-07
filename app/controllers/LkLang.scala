@@ -23,7 +23,11 @@ import scala.concurrent.Future
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-class LkLang @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class LkLang @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioController with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

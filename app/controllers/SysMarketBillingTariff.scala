@@ -22,7 +22,11 @@ import io.suggest.ym.parsers.Price
  * Created: 20.04.14 21:12
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
-class SysMarketBillingTariff @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingTariff @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

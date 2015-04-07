@@ -20,7 +20,11 @@ import play.api.Play.{current, configuration}
  * Created: 18.04.14 18:23
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
-class MarketLkBilling @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class MarketLkBilling @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioController with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

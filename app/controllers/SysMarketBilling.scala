@@ -25,7 +25,11 @@ import util.billing.Billing
  * Created: 18.04.14 12:39
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
-class SysMarketBilling @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBilling @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

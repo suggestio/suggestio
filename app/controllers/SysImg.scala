@@ -19,7 +19,11 @@ import play.api.data._, Forms._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
-class SysImg @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysImg @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

@@ -21,7 +21,11 @@ import scala.concurrent.Future
  * Created: 19.06.14 10:45
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  */
-class SysMdr @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMdr @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

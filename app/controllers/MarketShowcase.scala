@@ -13,6 +13,19 @@ import util._
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-class MarketShowcase @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl
-with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
-with ScSyncSiteGeo with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScOnlyOneAd
+class MarketShowcase @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with ScSiteNode
+  with ScSiteGeo
+  with ScNodeInfo
+  with ScIndexGeo
+  with ScIndexNode
+  with ScSyncSiteGeo
+  with ScAdsTile
+  with ScFocusedAds
+  with ScNodesList
+  with ScBlockCss
+  with ScOnlyOneAd

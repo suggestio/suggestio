@@ -17,7 +17,11 @@ import util.SiowebEsUtil.client
  * Description: Сборка js-ошибок с клиентов и сохранение оных в модель.
  * Клиенты могут слать всякую хрень.
  */
-class RemoteError @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl {
+class RemoteError @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl
+{
 
   import LOGGER._
 

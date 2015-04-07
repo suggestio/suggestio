@@ -12,7 +12,11 @@ import play.api.libs.concurrent.Execution.Implicits._
 import views.html.static.sitemap._
 import views.html.sys1._
 
-class Application @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl {
+class Application @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl
+{
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS = configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {

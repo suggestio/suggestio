@@ -16,7 +16,11 @@ import util.acl.{IsSuperuserOr404, MaybeAuth}
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-class Static @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl {
+class Static @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl
+{
 
   private def booklet = routes.Market.marketBooklet().url
 

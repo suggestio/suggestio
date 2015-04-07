@@ -34,7 +34,11 @@ import play.api.data._, Forms._
  * - узел 1 размещает рекламу на других узлах (форма, сабмит и т.д.).
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
-class MarketAdv @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class MarketAdv @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

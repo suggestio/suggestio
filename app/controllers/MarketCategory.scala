@@ -21,7 +21,11 @@ import play.api.Play.{current, configuration}
  * Created: 05.03.14 10:14
  * Description: Контроллер управления категориями магазина/ТЦ.
  */
-class MarketCategory @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class MarketCategory @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioController with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

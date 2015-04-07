@@ -32,7 +32,11 @@ import scala.concurrent.Future
  * иных сервисах, занимающихся PR-деятельстью.
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
-class LkAdvExt @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class LkAdvExt @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

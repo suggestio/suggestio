@@ -14,7 +14,11 @@ import views.html.sys1.person._
  * Created: 10.02.15 18:13
  * Description: sys-контроллер для доступа к юзерам.
  */
-class SysPerson @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl {
+class SysPerson @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl
+{
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = EmailActivation(

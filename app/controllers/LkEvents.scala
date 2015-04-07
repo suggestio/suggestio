@@ -27,7 +27,11 @@ import scala.util.{Success, Failure}
  * Description: Контроллер раздела уведомлений в личном кабинете.
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
-class LkEvents @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class LkEvents @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

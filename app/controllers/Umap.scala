@@ -29,7 +29,11 @@ import scala.concurrent.Future
  * Created: 15.09.14 12:09
  * Description: Контроллер для umap-backend'ов.
  */
-class Umap @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class Umap @Inject() (
+  override val messagesApi: MessagesApi
+)
+  extends SioControllerImpl with PlayMacroLogsImpl
+{
 
   import LOGGER._
 
