@@ -6,6 +6,7 @@ import io.suggest.ym.model.common.AdnNodeGeodata
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
+import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
@@ -26,7 +27,12 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-class SysAdnGeo @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayLazyMacroLogsImpl {
+class SysAdnGeo @Inject() (
+  override val messagesApi: MessagesApi,
+  implicit val ws: WSClient
+)
+  extends SioControllerImpl with PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 

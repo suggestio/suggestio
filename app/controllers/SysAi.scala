@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import play.api.i18n.MessagesApi
+import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
@@ -21,7 +22,12 @@ import scala.util.matching.Regex
  * Description: Управление системами автоматической генерации контента.
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
-class SysAi @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with SysAiMadT {
+class SysAi @Inject() (
+  override val messagesApi: MessagesApi,
+  implicit val ws: WSClient
+)
+  extends SioControllerImpl with SysAiMadT
+{
 
   import views.html.sys1.ai._
 
@@ -38,6 +44,8 @@ trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
 
   import views.html.sys1.ai.mad._
   import LOGGER._
+
+  implicit def ws: WSClient
 
   /** Заглавная страница генераторов рекламных карточек. */
   def madIndex = IsSuperuser.async { implicit request =>

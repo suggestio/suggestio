@@ -3,8 +3,7 @@ package util.ws
 import java.io.{FileOutputStream, File}
 
 import play.api.libs.iteratee.Iteratee
-import play.api.libs.ws.{WSResponseHeaders, WS}
-import play.api.Play.current
+import play.api.libs.ws.{WSClient, WSResponseHeaders}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
@@ -16,6 +15,9 @@ import scala.concurrent.Future
  * Description: Короткий способ асинхронно отфетчить ссылку в файл.
  */
 trait HttpGetToFile {
+
+  /** Клиент play-ws. */
+  def ws: WSClient
 
   /** Ссылка для фетчинга. */
   def urlStr: String
@@ -49,7 +51,7 @@ trait HttpGetToFile {
    *         Future с экзепшеном в иных случаях.
    */
   def request(): Future[(WSResponseHeaders, File)] = {
-    val respFut = WS.url(urlStr)
+    val respFut = ws.url(urlStr)
       .withFollowRedirects(followRedirects)
       .getStream()
     respFut.flatMap { case (headers, body) =>
