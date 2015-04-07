@@ -6,7 +6,7 @@
 
 @defining( colorField.value.orElse(default).getOrElse("FFFFFF") ) { colorValue =>
   <div class="lk-color-select @className">
-    <label class="lk-color-select__label @if( !withLabel ){ lk-color-select__label_hidden }">@Messages("Color"):</label>
+    <label class="lk-color-select__label @if( !withLabel ){ lk-color-select__label_hidden }">@messages("Color"):</label>
 
     <div class="ad-field-editor_color-btn js-custom-color" data-current-value="#@colorValue" style="background-color: #@colorValue;">&nbsp;
       <input type="hidden" name="@colorField.name" value="@colorValue"/>

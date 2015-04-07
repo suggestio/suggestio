@@ -2,9 +2,10 @@ package util.mail
 
 import javax.mail.Authenticator
 
+import com.google.inject.{ImplementedBy, Singleton, Inject}
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
-import play.api.libs.mailer.{Email, MailerPlugin}
+import play.api.libs.mailer.{MailerClient, Email}
 import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
@@ -83,7 +84,7 @@ trait EmailBuilderShared extends EmailBuilder {
 
 
 /** Билдер для play-mailer'а. */
-class PlayMailerEmailBuilder extends EmailBuilderShared {
+class PlayMailerEmailBuilder(client: MailerClient) extends EmailBuilderShared {
 
   override def send(): Unit = {
     val email = Email(
@@ -94,7 +95,7 @@ class PlayMailerEmailBuilder extends EmailBuilderShared {
       bodyHtml  = _html,
       replyTo   = _replyTo
     )
-    MailerPlugin.send(email)
+    client.send(email)
   }
 }
 
@@ -140,7 +141,16 @@ class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared with 
 }
 
 
-object MailerWrapper {
+@ImplementedBy(classOf[MailerWrapper])
+trait IMailerWrapper {
+  def instance: EmailBuilder
+}
+
+@Singleton
+class MailerWrapper @Inject() (client: MailerClient) extends IMailerWrapper {
+
+  /** Использовать ли play mailer для отправки электронной почты? */
+  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer") getOrElse true
 
   /** Неизменяемая резидентная инфа по fallback'у. */
   private lazy val fallBackInfo: FallbackState = {
@@ -152,13 +162,11 @@ object MailerWrapper {
     )
   }
 
-  /** Использовать ли play mailer для отправки электронной почты? */
-  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer") getOrElse true
 
   /** Выдать инстанс EmailBuilder'а, который позволит собрать письмо и отправить. */
   def instance: EmailBuilder = {
-    if (USE_PLAY_MAILER) {
-      new PlayMailerEmailBuilder()
+    if (USE_PLAY_MAILER && client != null) {
+      new PlayMailerEmailBuilder(client)
     } else {
       new CommonsEmailBuilder(fallBackInfo)
     }

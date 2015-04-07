@@ -21,7 +21,7 @@
     } { galName =>
       @* Название отключенной галереи. *@
       <td class="input-w_left">
-        <label class="input-w_prop-name">Название:</label>
+        <label class="input-w_prop-name">@messages("Name"):</label>
       </td>
       <td>
         <input type="text" disabled value="@galName" title="Нельзя менять идентификатор уже существующей галереи."/>
@@ -45,7 +45,7 @@
     <td id="imgs">
   
       @gf("gallery").errors.map { error =>
-        <p class="block __margin-M red">Ошибка: @Messages(error.message, error.args: _*)</p>
+        <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
       }
 
       <div class="image __size-M f-left js-image-upload" >

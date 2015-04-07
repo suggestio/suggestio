@@ -12,19 +12,19 @@
     @_navTpl(sysCall = Some(routes.SysMarketBilling.billingFor(adnId)) ) {
 
       @_navItemTpl(
-        title = Messages("Bill.account.and.tariffs"),
+        title = messages("Bill.account.and.tariffs"),
         href  = Some( routes.MarketLkBilling.showAdnNodeBilling(adnId) ),
         css   = classesAct(rightCurrEl == RPL_BILLING, "__node-billing")
       )
 
       @_navItemTpl(
-        title = Messages("Transactions.history"),
+        title = messages("Transactions.history"),
         href  = Some( routes.MarketLkBilling._txnsList(adnId) ),
         css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
       )
 
       @_navItemTpl(
-        title = Messages("Add.funds"),
+        title = messages("Add.funds"),
         href  = Some( routes.MarketLkBilling.paymentRequsites(adnId) ),
         css   = classesAct(rightCurrEl == RPL_REQUISITES, "__requisites")
       )

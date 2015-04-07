@@ -5,12 +5,12 @@
 @import sys1.market.adn._
 
 @hPathAfter1 = {
-  / Узел / @Messages("Edit")
+  / Узел / @messages("Edit")
 }
 
-@irBase(Messages("Edit"), hPathAfter=Some(hPathAfter1), mirOpt = Some(mir)) {
+@irBase(messages("Edit"), hPathAfter=Some(hPathAfter1), mirOpt = Some(mir)) {
   @_adnNodeFormTpl(
-    btnText = Messages("Save"),
+    btnText = messages("Save"),
     af = af,
     call = routes.SysMarketInvReq.nodeEditFormSubmit(mir.id.get),
     companies = Seq(company)

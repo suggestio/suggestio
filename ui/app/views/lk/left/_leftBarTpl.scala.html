@@ -2,7 +2,7 @@
 
 @* Шаблон левой панели, вынесен из lkBase. *@
 
-@import ctx.lang
+@import ctx.messages
 
 <aside class="left-bar">
   <nav class="left-bar_menu">
@@ -11,9 +11,9 @@
 
   <div class="left-bar_bottom">
     @if(ctx.isAuth) {
-      <a class="left-bar_exit js-btn" href="#logoutPopup">@Messages("Logout")</a>
+      <a class="left-bar_exit js-btn" href="#logoutPopup">@messages("Logout")</a>
       <hr class="delimiter"/>
     }
-    <a class="left-bar_help">@Messages("Help")</a>
+    <a class="left-bar_help">@messages("Help")</a>
   </div>
 </aside>

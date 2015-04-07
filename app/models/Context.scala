@@ -7,7 +7,7 @@ import io.suggest.util.UuidUtil
 import models.im.DevScreen
 import org.joda.time.DateTime
 import play.api.Play
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, Lang}
 import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration}
 import util.acl._, PersonWrapper.PwOpt_t
@@ -80,7 +80,7 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit final def getContext2(implicit request: RichRequestHeader, lang: Lang): Context = {
+  implicit final def getContext2(implicit request: RichRequestHeader, lang: Messages): Context = {
     Context2()
   }
 }
@@ -100,7 +100,7 @@ trait Context extends MyHostsT {
   def pwOpt: PwOpt_t
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
-  implicit val lang: Lang
+  implicit val messages: Messages
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.path)
@@ -240,7 +240,7 @@ trait Context extends MyHostsT {
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2(
   implicit val request: RichRequestHeader,
-  implicit val lang: Lang
+  implicit val messages: Messages
 ) extends Context {
   def pwOpt: PwOpt_t = request.pwOpt
   val sioReqMdOpt: Option[SioReqMd] = Some(request.sioReqMd)
@@ -248,7 +248,7 @@ case class Context2(
 
 
 /** Упрощенная запасная реализация контекста, используемая в минимальных условиях и вручную. */
-case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
+case class ContextImpl(implicit val request: RequestHeader, val messages: Messages) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
   def sioReqMdOpt: Option[SioReqMd] = None
 }

@@ -10,26 +10,26 @@
     <tr>
       <th class="siom-cell-head __text-align-1">
         <div class="siom-cell-cnt __size-M">
-          <strong class="color-strong">@Messages("Name")</strong>
+          <strong class="color-strong">@messages("Name")</strong>
         </div>
         <div class="border-line"></div>
       </th>
       <th class="siom-cell-head __text-align-1">
         <div class="siom-cell-cnt __size-M">
-          <strong class="color-strong">@Messages("Type")</strong>
+          <strong class="color-strong">@messages("Type")</strong>
         </div>
         <div class="border-line"></div>
       </th>
       <th class="siom-cell-head __text-align-1">
         <div class="siom-cell-cnt __size-M">&nbsp;
-          <strong class="color-strong">@Messages("Town")</strong>
+          <strong class="color-strong">@messages("Town")</strong>
         </div>
         <div class="border-line"></div>
       </th>
       @if(companies.isDefined) {
         <th class="siom-cell-head __text-align-1">
           <div class="siom-cell-cnt __size-M">
-            <strong class="color-strong">@Messages("Company")</strong>
+            <strong class="color-strong">@messages("Company")</strong>
           </div>
           <div class="border-line"></div>
         </th>
@@ -48,7 +48,7 @@
           <td>
             <div class="siom-cell-cnt __size-M">
               <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(shownTypeId))">
-                @Messages("amts.of.type." + shownTypeId)
+                @messages("amts.of.type." + shownTypeId)
               </a>
             </div>
             <div class="border-line"></div>
@@ -88,7 +88,7 @@
           </td>
           <td>
             <div class="siom-cell-cnt __size-M">
-              @Messages("amt.of.type." + adnNode.adn.shownTypeId)
+              @messages("amt.of.type." + adnNode.adn.shownTypeId)
             </div>
             <div class="border-line"></div>
           </td>

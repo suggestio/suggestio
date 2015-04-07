@@ -16,7 +16,7 @@
 
   @select(
     gf("parentAdnId"),
-    options = options(("" -> "") :: nodesMap.mapValues(adnNode => Messages("amt.of.type." + adnNode.adn.shownTypeId) + ": " + adnNode.meta.name + " (" + adnNode.meta.town.getOrElse("") + ")").toList.sortBy(_._2)  :  _*),
+    options = options(("" -> "") :: nodesMap.mapValues(adnNode => messages("amt.of.type." + adnNode.adn.shownTypeId) + ": " + adnNode.meta.name + " (" + adnNode.meta.town.getOrElse("") + ")").toList.sortBy(_._2)  :  _*),
     'title -> "adn_id геородителя"
   )
 

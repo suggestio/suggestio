@@ -2,7 +2,7 @@
 
 @* Реализация левой панели для ноды. *@
 
-@import ctx.lang
+@import ctx.messages
 @import LkLeftPanelLinks._
 @import util.tpl.CssFormat._
 
@@ -10,34 +10,34 @@
   @adnIdOpt.map { adnId =>
 
     @_leftBarItemTpl(
-      title = Messages("Ad.cards"),
+      title = messages("Ad.cards"),
       href  = routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId),
       css   = classesAct(leftCurrEl contains LPL_ADS, "__cards")
     )()
 
     @_leftBarItemTpl(
-      title = Messages("Profile"),
+      title = messages("Profile"),
       href  = routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId),
       css   = classesAct(leftCurrEl contains LPL_NODE, "__profile")
     )()
 
     @if(ctx.billBalanceOpt) {
       @_leftBarItemTpl(
-        title = Messages("Billing"),
+        title = messages("Billing"),
         href  = routes.MarketLkBilling.showAdnNodeBilling(adnId),
         css   = classesAct(leftCurrEl contains LPL_BILLING, "__billing")
       )()
     }
 
     @_leftBarItemTpl(
-      title = Messages("Events"),
+      title = messages("Events"),
       href  = routes.LkEvents.nodeIndex(adnId),
       css   = classesAct(leftCurrEl contains LPL_EVENTS, "__events")
     ) {
       @* Заметный кружок с кол-вом непрочитанных сообщений. *@
       @ctx.nodeUnseenEvtsCnt.map { cnt =>
         @if(cnt > 0) {
-          <span class="left-bar_menu-bubble" title="@Messages("New.events.cnt", cnt)">@cnt</span>
+          <span class="left-bar_menu-bubble" title="@messages("New.events.cnt", cnt)">@cnt</span>
         }
       }
     }

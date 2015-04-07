@@ -9,7 +9,7 @@
 @form(submitCall) {
 
   @tf.globalError.map { ge =>
-    <p><b>Серьёзная проблема</b>: @Messages(ge.message, ge.args : _*)</p>
+    <p><b>Серьёзная проблема</b>: @messages(ge.message, ge.args : _*)</p>
   }
 
   <table class="input-w __size-L">

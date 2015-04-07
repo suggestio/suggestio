@@ -9,11 +9,11 @@
 
 @_ptableTpl() {
 
-  @_ptableRowTpl(Messages("Name") + ":") {
+  @_ptableRowTpl(messages("Name") + ":") {
     @mcm.name
   }
 
-  @_ptableRowTpl(Messages("Created") + ":") {
+  @_ptableRowTpl(messages("Created") + ":") {
     @_prettyDate(mcm.dateCreated, withSpan = true)
   }
 

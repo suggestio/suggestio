@@ -1,11 +1,12 @@
 package controllers
 
+import com.google.inject.Inject
 import models._
 import models.adv._
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import org.elasticsearch.search.sort.SortOrder
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
@@ -31,7 +32,7 @@ import scala.concurrent.Future
  * иных сервисах, занимающихся PR-деятельстью.
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
-object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
+class LkAdvExt @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -203,7 +204,7 @@ object LkAdvExt extends SioControllerImpl with PlayMacroLogsImpl {
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
-      .fill( ("", Some(Messages("New.target")(ctx.lang)), None) )
+      .fill( ("", Some(Messages("New.target")(ctx.messages)), None) )
     Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
 

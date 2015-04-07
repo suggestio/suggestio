@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{routes, CaptchaValidator, SioController}
+import controllers.{IMailer, routes, CaptchaValidator, SioController}
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
@@ -8,8 +8,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
 import util.ident.IdentUtil
-import util.mail.MailerWrapper
-import util.xplay.LangUtil
+import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
@@ -41,7 +40,7 @@ import PwRecover._
 
 
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
-trait SendPwRecoverEmail extends SioController {
+trait SendPwRecoverEmail extends SioController with IMailer {
 
   /**
    * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
@@ -75,11 +74,11 @@ trait SendPwRecoverEmail extends SioController {
               id = Some(eaId)
             )
             // Можно отправлять письмецо на ящик.
-            val msg = MailerWrapper.instance
+            val msg = mailer.instance
             msg.setFrom("no-reply@suggest.io")
             msg.setRecipients(email1)
             val ctx = implicitly[Context]
-            msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
+            msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.messages))
             msg.setHtml(emailPwRecoverTpl(eact2)(ctx))
             msg.send()
           }
@@ -94,11 +93,12 @@ trait SendPwRecoverEmail extends SioController {
 }
 
 
-trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl {
+trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl
+with SetLangCookieUtil {
 
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
     mySioStartTpl(
-      title     = Messages("Password.recovery")(ctx.lang),
+      title     = Messages("Password.recovery")(ctx.messages),
       columns   = Seq(html)
     )(ctx)
   }
@@ -178,7 +178,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
           rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
             .flashing("success" -> "New.password.saved")
         }
-        val res2Fut = LangUtil.setLangCookie1(resFut, epw2.personId)
+        val res2Fut = setLangCookie1(resFut, epw2.personId)
         // Дожидаемся завершения всех асинхронных операций и возвращаем результат.
         updateFut flatMap { _ =>
           res2Fut

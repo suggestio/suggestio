@@ -10,17 +10,17 @@
 @rightBar = {
   @_navTpl( sysCall = mnode.id.map(routes.SysMarket.showAdnNode) ) {
     @_navItemTpl(
-      title = Messages("Ads.all"),
+      title = messages("Ads.all"),
       css   = Seq("__all-cards", "__act")
     )
 
     @_navItemTpl(
-      title = Messages("Ads.on.review"),
+      title = messages("Ads.on.review"),
       css   = Seq("__in-process")
     )
 
     @_navItemTpl(
-      title = Messages("Ads.published"),
+      title = messages("Ads.published"),
       css   = Seq("__active-cards")
     )
   }
@@ -28,7 +28,7 @@
 
 
 @lk.lkBaseLayout(
-  title         = Messages("Ad.cards"),
+  title         = messages("Ad.cards"),
   nodeOpt       = Some(mnode),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   rightBar      = Some(rightBar),
@@ -46,8 +46,8 @@
     @if(isMyNode) {
       <div class="sm-note">
         @mnode.adn.memberType.nodeAdmSiteCall(mnode).map { siteCall =>
-          @Messages("You.can.look.on.ads.in")
-          <a class="blue-link" target="_blank" href="@siteCall">@Messages("_ad.showcase.link")</a>.
+          @messages("You.can.look.on.ads.in")
+          <a class="blue-link" target="_blank" href="@siteCall">@messages("_ad.showcase.link")</a>.
         }
       </div>
     }

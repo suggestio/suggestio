@@ -6,9 +6,9 @@
 @mmpBase("Создание посуточного mmp-тарификатора", mbc = mbc, nodeOpt = nodeOpt) {
 
   @_mmpDailyFormTpl(
-    mdf = mdf,
-    btnText = Messages("Create"),
-    mcals = mcals,
+    mdf        = mdf,
+    btnText    = messages("Create"),
+    mcals      = mcals,
     submitCall = routes.SysMarketBillingMmp.createMmpDailySubmit(mbc.id.get)
   )
 

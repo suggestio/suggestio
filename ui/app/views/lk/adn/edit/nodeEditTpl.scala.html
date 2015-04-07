@@ -10,12 +10,12 @@
   @* Этот попап появляется при щелчке на знак вопроса где-то внизу формы редактора.
      Его контент надо вынести на отдельную страницу. *@
   @_popupTpl(id = Some("editHelp")) {
-    <h2 class="colors-help_t">@Html( Messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
+    <h2 class="colors-help_t">@Html( messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
     <div class="colors-help_cnt">
-      <span class="colors-help_icons-text">@Html( Messages("Color.of.text.and.icons", "<br/>") )</span>
-      <span class="colors-help_background-text">@Html( Messages("Color.of.bg.and.caption", "<br/>") )</span>
+      <span class="colors-help_icons-text">@Html( messages("Color.of.text.and.icons", "<br/>") )</span>
+      <span class="colors-help_background-text">@Html( messages("Color.of.bg.and.caption", "<br/>") )</span>
     </div>
-    <p class="colors-help_descr">@Html( Messages("Use.contrast.colors.hint", "<br/>") )</p>
+    <p class="colors-help_descr">@Html( messages("Use.contrast.colors.hint", "<br/>") )</p>
   }
 
 }
@@ -23,13 +23,13 @@
 
 @rightBarAfter = {
   <div class="right-bar_bottom">
-    <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">@Messages("Save")</a>
+    <a class="btn __size-M __major js-submit-btn" data-for="#profileEdit">@messages("Save")</a>
   </div>
 }
 
 
 @nodeBaseTpl(
-  title         = Messages("Edit.profile"),
+  title         = messages("Edit.profile"),
   node          = mnode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
@@ -39,7 +39,7 @@
 
   @_leaderNodeFormTpl(
     adnId         = mnode.id.get,
-    btnText       = Messages("Save"),
+    btnText       = messages("Save"),
     mf            = mf,
     submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(mnode.id.get),
     welcomeAdOpt  = welcomeAdOpt,

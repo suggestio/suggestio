@@ -41,7 +41,7 @@
               @form(routes.SysAi.runMadAi(mai.id.get)) {
                 <input type="submit" value="Выполнить" /><br/>
               }
-              <a href="@routes.SysAi.editMadAi(mai.id.get)">@Messages("Edit")...</a>
+              <a href="@routes.SysAi.editMadAi(mai.id.get)">@messages("Edit")...</a>
             </td>
             <td>
               @mai.sources.map { src =>

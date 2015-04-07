@@ -10,7 +10,7 @@
 
   <div class="event_t">
     @rargs.adnNodeOpt.map { mnode =>
-      @Messages(mnode.adn.singular)
+      @messages(mnode.adn.singular)
       <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
     }
   </div>

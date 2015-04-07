@@ -3,24 +3,24 @@
 @import ctx._
 @import helper._
 @import util.FC.radialFc
-@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN, DIGITS_CAPTCHA_LEN}
 @import io.suggest.util.StringUtil.randomId
-@import controllers.Captcha.DIGITS_CAPTCHA_LEN
 
 @form(CSRF(submitCall), 'class -> "adv-req-page_call-back-form") {
 
-    @inputText(
-      crf("name"),
-      '_class -> "__transparent",
-      'placeholder -> "Имя"
-    )
+  @* TODO Name нужно вставить в смысле имени, а не в смысле названия. *@
+  @inputText(
+    crf("name"),
+    '_class       -> "__transparent",
+    'placeholder  -> "Имя"
+  )
 
     @inputText(
       crf("phone"),
-      '_class -> "__transparent",
-      'type -> "tel",
-      'mask -> "tel",
-      'placeholder -> "Телефон"
+      '_class       -> "__transparent",
+      'type         -> "tel",
+      'mask         -> "tel",
+      'placeholder  -> messages("Phone")
     )
 
     <div class="adv-req-page_call-time">
@@ -51,8 +51,8 @@
 
     @inputText(
       crf(CAPTCHA_TYPED_FN),
-      '_class -> "__transparent",
-      'type -> "tel",
+      '_class      -> "__transparent",
+      'type        -> "tel",
       'placeholder -> s"Введите $DIGITS_CAPTCHA_LEN цифр, изображенных на картинке"
     )
 

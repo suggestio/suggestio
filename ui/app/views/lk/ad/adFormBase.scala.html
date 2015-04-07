@@ -2,7 +2,7 @@
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
-@import ctx.lang
+@import ctx.messages
 
 @lk.lkBase(
   title         = title,
@@ -19,10 +19,10 @@
       <div class="submit-w __size-M">
         @bottomLeft
         <div class="f-right save-btn">
-          <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">@Messages("Save")</a>
+          <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">@messages("Save")</a>
         </div>
         <div class="f-right preview-btn">
-          <a class="btn __size-M __minor js-ad-preview-button">@Messages("Preview")</a>
+          <a class="btn __size-M __minor js-ad-preview-button">@messages("Preview")</a>
         </div>
       </div>
 
@@ -63,10 +63,10 @@
       content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '@blk.FontSizes.values.iterator.map {fs =>@{fs.size}px@if(!fs.isLast){ }}',
       style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
-      @if(ctx.lang.language != "en") {
-        @defining( ctx.lang.toLocale ) { locale =>
-	  language: '@{locale.getCountry}_@{locale.getLanguage}',
-	}
+      @if(messages.lang.language != "en") {
+        @defining( messages.lang.toLocale ) { locale =>
+          language: '@{locale.getCountry}_@{locale.getLanguage}',
+        }
       }
       font_size_style_values: '1px,2px',
       setup: function(editor) {

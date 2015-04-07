@@ -3,17 +3,16 @@ package controllers
 import java.io.File
 import java.net.JarURLConnection
 
+import akka.actor.ActorSystem
 import io.suggest.event.SioNotifierStaticClientI
-import models.Context
 import org.joda.time.DateTime
-import play.api.i18n.Lang
+import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
+import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
-import util.xplay.LangUtil
 import scala.concurrent.Future
 import util.event.SiowebNotifier
-import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -84,7 +83,7 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
-trait SioController extends Controller with ContextT with TplFormatUtilT {
+trait SioController extends Controller with ContextT with TplFormatUtilT with I18nSupport {
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
@@ -94,17 +93,12 @@ trait SioController extends Controller with ContextT with TplFormatUtilT {
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {
-    formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n")
+    formWithErrors.errors
+      .iterator
+      .map { e => "  " + e.key + " -> " + e.message }
+      .mkString("\n")
   }
   
-  /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
-  def http404AdHoc(implicit request: RequestHeader): Result = {
-    http404ctx(ContextImpl())
-  }
-
-  def http404ctx(implicit ctx: Context): Result = {
-    NotFound(views.html.static.http404Tpl())
-  }
 
   // Обработка возвратов (?r=/../.../..) либо редиректов.
   /** Вернуть редирект через ?r=/... либо через указанный вызов. */
@@ -175,6 +169,9 @@ trait MyConfName {
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
 trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 
+  /** akka system, приходящая в контроллер через DI. */
+  def actorSystem: ActorSystem
+
   /** Сколько асинхронных попыток предпринимать. */
   val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
   def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 15
@@ -192,7 +189,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
           wsActorRef ! msg
         case other =>
           if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
-            Akka.system.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
+            actorSystem.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
               _notifyWs(wsId, msg, counter + 1)
             }
             other match {
@@ -213,15 +210,6 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 }
 
 
-/** 
- * Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
- *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
- *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
- */
-
-
-
-
 
 /** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.
   * После унификации в web21 этот контроллер наверное уже не будет нужен. */
@@ -231,4 +219,10 @@ trait ShopMartCompat {
 
   def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
   def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdType(martId, AdNetMemberTypes.MART)
+}
+
+
+/** Интерфейс для mailer'а.  */
+trait IMailer {
+  def mailer: IMailerWrapper
 }

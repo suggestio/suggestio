@@ -7,6 +7,7 @@ import models.ai._
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
+import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
 import util.ws.HttpGetToFile
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -98,7 +99,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param madAi id рекламной карточки.
    * @return Фьючерс с отрендеренными карточками, которые ещё не сохранены.
    */
-  def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
+  def dryRun(madAi: MAiMad)(implicit ws1: WSClient): Future[Seq[MAd]] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val urlRenderCtx = new UrlRenderContextBeanImpl()
     val renderArgsFut = Future.traverse( madAi.sources ) { source =>
@@ -107,6 +108,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
         .add("ctx", urlRenderCtx, raw = true)
         .render()
       val getter = new HttpGetToFile {
+        override def ws = ws1
         override def followRedirects = false
         override def urlStr = url
       }
@@ -147,7 +149,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param madAi Данные по сборке карточек.
    * @return Фьючерс для синхронизации.
    */
-  def run(madAi: MAiMad): Future[_] = {
+  def run(madAi: MAiMad)(implicit ws: WSClient): Future[_] = {
     // Сохранить целевые карточки
     dryRun(madAi) flatMap { madsRendered =>
       Future.traverse(madsRendered)(_.save)

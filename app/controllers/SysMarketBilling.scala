@@ -1,15 +1,16 @@
 package controllers
 
+import com.google.inject.Inject
 import models.MBillContract.LegalContractId
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
 import util.acl.{IsSuperuserContractNode, AbstractRequestWithPwOpt, IsSuperuser}
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 import views.html.sys1.market.billing._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -24,7 +25,7 @@ import util.billing.Billing
  * Created: 18.04.14 12:39
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
-object SysMarketBilling extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBilling @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

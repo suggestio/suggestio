@@ -1,15 +1,16 @@
 package controllers
 
+import com.google.inject.Inject
 import models._
 import models.usr.MPersonIdent
+import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl._
-import util.mail.MailerWrapper
+import util.mail.IMailerWrapper
 import views.html.lk.support._
 import scala.concurrent.Future
 import util.support.SupportUtil.FEEDBACK_RCVR_EMAILS
@@ -21,7 +22,12 @@ import play.api.data._, Forms._
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
+class MarketLkSupport @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioController with PlayLazyMacroLogsImpl with IMailer
+{
 
   import LOGGER._
 
@@ -98,7 +104,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
       {lsr =>
         val userEmailsFut = MPersonIdent.findAllEmails(request.pwOpt.get.personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
-        val msg = MailerWrapper.instance
+        val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
         msg.setFrom("no-reply@suggest.io")
         msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
@@ -144,7 +150,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
         val emailsFut = MPersonIdent.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         // собираем письмо админам s.io
-        val msg = MailerWrapper.instance
+        val msg = mailer.instance
         msg.setSubject("sio-market: Запрос геолокации для узла " + request.adnNode.meta.name + request.adnNode.meta.town.fold("")(" / " + _))
         msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
         msg.setFrom("no-reply@suggest.io")

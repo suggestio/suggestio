@@ -1,12 +1,14 @@
 package controllers
 
+import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import util.acl._
 import util._
 import play.api.mvc._
 import util.ident.IdentUtil
+import util.mail.IMailerWrapper
 import views.html.ident._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
@@ -22,8 +24,13 @@ import views.html.ident.reg.email._regColumnTpl
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator
-with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
+class Ident @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator with ChangePw with PwRecover
+  with EmailPwReg with ExternalLogin
+{
 
   import LOGGER._
 
@@ -53,7 +60,7 @@ with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
     val formFut = EmailPwSubmit.emailPwLoginFormStubM
     val ctx = implicitly[Context]
-    val title = Messages("Login.page.title")(ctx.lang)
+    val title = Messages("Login.page.title")(ctx.messages)
     val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
     formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)

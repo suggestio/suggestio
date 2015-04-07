@@ -21,7 +21,7 @@
         <div class="image __logo __size-L js-preview">
           <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
           <img class="image_src" src="@DynImgUtil.imgCall(imgId)"/>
-          <a class="image_remove-btn js-remove-image" title="@Messages("Delete")">
+          <a class="image_remove-btn js-remove-image" title="@messages("Delete")">
             <span></span>
           </a>
         </div>
@@ -34,8 +34,8 @@
           previewRoot   = "#logo",
           previewClass  = "__logo __size-L"
         )
-        <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.logo", " ")">
-         <span>@Html( Messages("Upload.logo", "<br/>") )</span>
+        <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.logo", " ")">
+         <span>@Html( messages("Upload.logo", "<br/>") )</span>
         </a>
       </div>
 
@@ -46,33 +46,33 @@
     <hr class="delimiter __light"/>
 
     @mf.globalError.map { errors =>
-      <p class="block __margin-M red">@Messages("Error"): @Messages(errors.message)</p>
+      <p class="block __margin-M red">@messages("Error"): @messages(errors.message)</p>
     }
 
     @inputText(
       mf("meta.name"),
-      '_label -> Messages("Name")
+      '_label -> messages("Name")
     )
 
     @inputText(
       mf("meta.town"),
-      '_label -> Messages("Town")
+      '_label -> messages("Town")
     )
 
     @textarea(
       mf("meta.address"),
-      '_label -> Messages("Address")
+      '_label -> messages("Address")
     )
 
     @inputText(
       mf("meta.siteUrl"),
-      '_label -> Messages("Site")
+      '_label -> messages("Site")
     )
 
     @if(nodeInfo.isProducer || nodeInfo.isReceiver) {
       @textarea(
         mf("meta.info"),
-        '_label -> Messages("Info.about.prods.and.svcs")
+        '_label -> messages("Info.about.prods.and.svcs")
       )
     }
 
@@ -81,27 +81,27 @@
     @if(nodeInfo.isReceiver) {
       @inputText(
         mf("meta.humanTrafficAvg"),
-        '_label -> Messages("Daily.people.traffic")
+        '_label -> messages("Daily.people.traffic")
       )
 
       @textarea(
         mf("meta.audienceDescr"),
-        '_label -> Messages("Audience.descr")
+        '_label -> messages("Audience.descr")
       )
       <hr class="delimiter __light"/>
 
       <div class="prop" >
-        <p class="prop_name __block">@Messages("Welcome.screen"):</p>
+        <p class="prop_name __block">@messages("Welcome.screen"):</p>
         @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
       </div>
 
       <hr class="delimiter __light"/>
 
       <div class="prop" id="profileGallery">
-        <p class="prop_name __block">@Messages("Node.photos"):</p>
+        <p class="prop_name __block">@messages("Node.photos"):</p>
 
         @mf("gallery").errors.map { error =>
-          <p class="block __margin-M red">@Messages("Error"): @Messages(error.message, error.args: _*)</p>
+          <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
         }
 
         <div class="image __size-M f-left js-image-upload" >
@@ -113,8 +113,8 @@
             previewClass  = "__size-M f-left",
             editBtnClass  = "image_edit-btn js-crop-image-btn"
           )
-          <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.photo")">
-            <span>@Html( Messages("Add.photo", "<br/>") )</span>
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">
+            <span>@Html( messages("Add.photo", "<br/>") )</span>
           </a>
         </div>
 
@@ -126,7 +126,7 @@
                 <div class="image __size-M f-left js-preview">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-                  <a class="image_edit-btn js-crop-image-btn" title="@Messages("Delete")">
+                  <a class="image_edit-btn js-crop-image-btn" title="@messages("Delete")">
                     <span></span>
                   </a>
                 </div>
@@ -143,10 +143,10 @@
     <table class="prop">
       <tr>
         <td class="prop_name td">
-          @Messages("Bg.color.of.sc.hint")
+          @messages("Bg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( Messages("Main.color", "<br/>") )</span>
+	  <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S">
           @defining( mf("meta.color").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
@@ -159,11 +159,11 @@
           <div class="delimiter __light __vertical js-vertical-line"></div>
         </td>
         <td class="td __padding-S prop_name">
-          @Messages("Fg.color.of.sc.hint")
+          @messages("Fg.color.of.sc.hint")
           <a class="link js-btn" href="#editHelp">?</a>
         </td>
         <td class="td __color-title">
-          <span class="dark-gray ft-S">@Html( Messages("Content.color", "<br/>") )</span>
+          <span class="dark-gray ft-S">@Html( messages("Content.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S dark-gray">
           @defining( mf("meta.fgColor").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>

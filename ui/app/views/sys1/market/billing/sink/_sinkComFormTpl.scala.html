@@ -9,7 +9,7 @@
 
   @select(
     sf("sink"),
-    options = AdnSinks.ordered.map(s => s.name -> Messages("adn.sink." + s.longName) ),
+    options = AdnSinks.ordered.map(s => s.name -> messages("adn.sink." + s.longName) ),
     '_label -> "Выдача"
   )
 

@@ -1,10 +1,11 @@
 package controllers
 
+import com.google.inject.Inject
 import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
 import util.SiowebEsUtil.client
@@ -15,6 +16,7 @@ import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
+import util.xplay.SioHttpErrorHandler
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
@@ -32,7 +34,7 @@ import play.api.data._, Forms._
  * - узел 1 размещает рекламу на других узлах (форма, сабмит и т.д.).
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
-object MarketAdv extends SioController with PlayMacroLogsImpl {
+class MarketAdv @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -45,9 +47,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def freeAdvFormM: Form[Option[Boolean]] = Form(
     "freeAdv" -> optional(boolean)
   )
-
-  /** Ключ маппинга для списка узлов. */
-  val NODES_KM = "node"
 
   /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
   val CUSTOM_PERIOD = "custom"
@@ -153,7 +152,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     )
     Form[AdvFormValueM_t] (
       mapping(
-        NODES_KM -> nodesM,
+        "node"   -> nodesM,
         "period" -> advPeriodM
       )
       {(nodesAdv, advPeriod) =>
@@ -260,8 +259,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
     val adnId2indexMapFut: Future[Map[String, Int]] = rcvrsReadyFut map { rcvrs =>
       // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
-      val formIndex2adnIdMap0 = form(NODES_KM).indexes
-        .flatMap { fi => form(s"$NODES_KM[$fi].adnId").value.map(fi -> _) }
+      val formIndex2adnIdMap0 = form("node").indexes
+        .flatMap { fi => form(s"node[$fi].adnId").value.map(fi -> _) }
         .toMap
       val missingRcvrIds = rcvrs.flatMap(_.id).toSet -- formIndex2adnIdMap0.valuesIterator
       // Делаем источник допустимых index'ов, которые могут быть в list-mapping'е.
@@ -281,7 +280,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
 
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
-    val userLang = request2lang
+    implicit val ctx = implicitly[Context]
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[AdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
@@ -305,7 +304,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.pluralNoTown)(userLang),
+                name = Messages(ast.pluralNoTown)(ctx.messages),
                 i = i
               )
             }
@@ -329,7 +328,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
     val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
-      .map(ps => ps -> Messages("adv.period." + ps)(userLang))
+      .map(ps => ps -> Messages("adv.period." + ps)(ctx.messages))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
@@ -338,10 +337,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       busyAdvs        <- busyAdvsFut
     } yield {
       AdvFormTplArgs(
-        adId = adId,
-        af = form,
-        busyAdvs = busyAdvs,
-        cities = cities,
+        adId            = adId,
+        af              = form,
+        busyAdvs        = busyAdvs,
+        cities          = cities,
         adnId2formIndex = adnId2indexMap,
         advPeriodsAvail = advPeriodsAvailable
       )
@@ -352,7 +351,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      advForAdTpl(request.mad, request.producer, formArgs)
+      advForAdTpl(request.mad, request.producer, formArgs)(ctx)
     }
   }
 
@@ -701,7 +700,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       } else {
         val advReqId = request.advReq.id.get
         warn(s"_showAdvReq1($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
-        Left(http404AdHoc)
+        Left(SioHttpErrorHandler.http404ctx)
       }
     }
   }

@@ -13,7 +13,7 @@
   }
 
   @rargs.errors.map { err =>
-    <p class="event_err-text">@Messages("Error"): @Messages(err.msg, err.args: _*)</p>
+    <p class="event_err-text">@messages("Error"): @messages(err.msg, err.args: _*)</p>
     @_techErrorTpl(err)
   }
 }

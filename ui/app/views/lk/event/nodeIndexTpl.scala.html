@@ -3,9 +3,9 @@
 @* Страница со списком событий одного узла. Рендером каждого события заправляет контроллер, т.к.
    для разных событий нужны разные шаблоны. *@
 
-@import ctx.lang
+@import ctx.messages
 
-@base(Messages("Events"), nodeOpt = Some(mnode)) {
+@base(messages("Events"), nodeOpt = Some(mnode)) {
 
   @_eventsListTpl(evts)
 

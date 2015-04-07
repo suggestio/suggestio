@@ -21,11 +21,12 @@ object OsmClient {
    * @param id Числовой id запрашиваемого osm-объекта.
    * @return Полученный и распарсенный osm-объект.
    */
-  def fetchElement(typ: OsmElemType, id: Long): Future[OsmObject] = {
+  def fetchElement(typ: OsmElemType, id: Long)(implicit ws1: WSClient): Future[OsmObject] = {
     val fetcher = new HttpGetToFile {
-      override def urlStr: String = typ.xmlUrl(id)
-      override def followRedirects: Boolean = false
-      override def statusCodeInvalidException(resp: WSResponseHeaders): Exception = {
+      override def ws = ws1
+      override def urlStr = typ.xmlUrl(id)
+      override def followRedirects = false
+      override def statusCodeInvalidException(resp: WSResponseHeaders) = {
         OsmClientStatusCodeInvalidException(resp.status)
       }
     }

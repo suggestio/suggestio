@@ -19,13 +19,15 @@ scalaVersion := "2.11.6"
 
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
-libraryDependencies ++= Seq(
+libraryDependencies ++= {
+ val bcVsn = "1.52"
+ Seq(
   jdbc exclude("com.h2database", "h2"),
-  anorm,
+  "com.typesafe.play" %% "anorm" % "2.4.0-M3",
   cache,
   json,
   ws exclude("commons-logging", "commons-logging"),
-  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.4.0-M2-SNAPSHOT",
+  "com.typesafe.play" %% "play-mailer" % "3.0.0-SNAPSHOT",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
@@ -75,6 +77,11 @@ libraryDependencies ++= Seq(
   "net.jpountz.lz4" % "lz4" % "1.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
+  // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.
+  "org.bouncycastle" % "bcpg-jdk15on"   % bcVsn,
+  "org.bouncycastle" % "bcmail-jdk15on" % bcVsn,
+  "org.bouncycastle" % "bcprov-jdk15on" % bcVsn,
+  "io.trbl.bcpg" % "bcpg-simple-jdk15on" % "1.51.0",
   // svg. batik довольно кривой, exclude(batik-ext) не пашет, приходится сочинять чудеса.
   "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7" intransitive(),
   "org.apache.xmlgraphics" % "batik-dom" % "1.7" intransitive(),
@@ -118,7 +125,7 @@ libraryDependencies ++= Seq(
   "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
-)
+)}
 
 // 2015.feb.26 Не надо этого делать, иначе в sio/2/Build.scala начинается тихий конфликт с доп.сеттингами оттуда.
 //play.Play.projectSettings
@@ -267,7 +274,7 @@ ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.N
 javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
-//routesGenerator := InjectedRoutesGenerator
+routesGenerator := InjectedRoutesGenerator
 
 Yeoman.yeomanSettings ++ Yeoman.withTemplates
 

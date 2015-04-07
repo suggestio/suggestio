@@ -14,7 +14,7 @@
     @_companyMetaTpl(mc.meta)
 
     <a class="edit-btn __ft-XS __color-1" href="@routes.SysMarket.companyEditForm(mc.id.get)">
-      @Messages("Edit")
+      @messages("Edit")
     </a>
 
     @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get), btnClass = Option("__size-M __ft-XM"), formClass = "f-right")

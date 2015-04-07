@@ -1,11 +1,12 @@
 package controllers
 
+import com.google.inject.Inject
+import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.db.DB
 import play.api.Play.current
 import views.html.sys1.market.billing.mmp.daily._
@@ -21,13 +22,9 @@ import scala.concurrent.Future
  * Created: 27.05.14 12:07
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
-object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingMmp @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
-
-  def defaultMmpDaily = {
-    MBillMmpDaily(contractId = -1)
-  }
 
   /** Маппинг формы для daly-тарификатора. */
   private def mmpDailyFormM = {
@@ -66,7 +63,7 @@ object SysMarketBillingMmp extends SioControllerImpl with PlayMacroLogsImpl {
     * @param contractId номер договора.
     */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    val mmpStub = defaultMmpDaily
+    val mmpStub = MBillMmpDaily(contractId = -1)
     val formM = mmpDailyFormM fill mmpStub
     _createMmpDaily(formM)
       .map(Ok(_))

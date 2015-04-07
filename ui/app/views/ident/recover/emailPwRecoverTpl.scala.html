@@ -4,16 +4,16 @@
 @import ctx._
 @import views.html.email._
 
-@emailBaseTpl( Messages("Password.recovery.in", "Suggest.io") ) {
+@emailBaseTpl( messages("Password.recovery.in", "Suggest.io") ) {
 
   @_rowTpl("padding: 20px 0; border-bottom: 1px dashed #878787;") {
-    @Messages("Sys.rcvd.pw.recover.request", "Suggest.io")
+    @messages("Sys.rcvd.pw.recover.request", "Suggest.io")
     <br/>
     <strong>@eAct.email</strong>
   }
 
   @_rowTpl("padding: 20px 0 10px;") {
-    @Html(Messages(
+    @Html(messages(
       "To.recover.password.use.this.link",
       s"""<a style="color: #7b89a4;" href="${ctx.LK_URL_PREFIX}${routes.Ident.recoverPwReturn(eAct.id.get)}">""",
       "</a>"
@@ -21,7 +21,7 @@
   }
 
   @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
-    @Messages("If.link.not.open.cp.link.to.browser")
+    @messages("If.link.not.open.cp.link.to.browser")
     <br/>
     <span style="color: #7b89a4;">@ctx.LK_URL_PREFIX@routes.Ident.recoverPwReturn(eAct.id.get)</span>
   }

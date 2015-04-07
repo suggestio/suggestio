@@ -2,7 +2,7 @@
 
 @* Рендер плашки с номером этажа и секции. *@
 
-@import ctx.lang
+@import ctx.messages
 
 <table class="siom-table __size-M">
   <tr>
@@ -10,7 +10,7 @@
       <div class="table-cell-cnt __size-S">
         <strong class="__with-place-icon color-strong" style="padding-left: 30px;">
           @node.meta.floor.map { floor =>
-            @floor&nbsp;@Messages("Floor")
+            @floor&nbsp;@messages("Floor")
           }
         </strong>
       </div>
@@ -19,7 +19,7 @@
     <td class="siom-table-cell __vertical-cnt">
       <div class="border-line __vertical f-left js-vertical-line"></div>
       <div class="table-cell-cnt __size-S">
-        <span class="ft-XS color-light-strong">@Messages("Section"):</span>
+        <span class="ft-XS color-light-strong">@messages("Section"):</span>
         <strong class="ft-XS color-strong">@node.meta.section</strong>
       </div>
 

@@ -2,10 +2,12 @@
 
 @* Уведомление о том, что есть такая кнопка: добавить магазин. *@
 
+@import ctx.messages
+
 <a class="event_w" href="@routes.MarketLkAdn.showNodeAds(rargs.mevent.ownerId)">
   @_oneEvtBase(rargs, Some("__bg-1 __icon-1")) {
     <div class="event_t">
-      @Messages("Start.your.work.with.ads.mgr")
+      @messages("Start.your.work.with.ads.mgr")
     </div>
   }
 </a>

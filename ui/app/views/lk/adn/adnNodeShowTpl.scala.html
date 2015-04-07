@@ -6,14 +6,14 @@
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
    Если !isMyNode, то юзер смотрит чужой нередактируемый узел. *@
 
-@import controllers.MarketShowcase.SITE_BGCOLOR_DFLT
+@import util.showcase.ShowcaseUtil.SITE_BGCOLOR_DFLT
 @import ctx._
 @import node._
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
 
 @nodeBaseTpl(
-  title         = mnode.meta.name + " | " + Messages("Profile"),
+  title         = mnode.meta.name + " | " + messages("Profile"),
   isMyNode      = isMyNode,
   node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
@@ -33,31 +33,31 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @lk.lkProp() { @Messages("Name") } { @mnode.meta.name }
+    @lk.lkProp() { @messages("Name") } { @mnode.meta.name }
 
     @if(mnode.meta.town.isDefined) {
-      @lk.lkProp(){ @Messages("Address") } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
+      @lk.lkProp(){ @messages("Address") } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
     }
 
     @if(mnode.meta.siteUrl.isDefined) {
-      @lk.lkProp(){ @Messages("Site") } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
+      @lk.lkProp(){ @messages("Site") } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
     }
 
     @if(mnode.meta.info.isDefined) {
-      @lk.lkProp(){ @Messages("Info.about.prods.and.svcs") } { @mnode.meta.info  }
+      @lk.lkProp(){ @messages("Info.about.prods.and.svcs") } { @mnode.meta.info  }
     }
 
 
     @if(mnode.adn.isReceiver) {
       <hr class="delimiter __light"/>
-      @lk.lkProp(){ @Messages("Daily.people.traffic") } { @mnode.meta.humanTrafficAvg  }
-      @lk.lkProp(){ @Messages("Audience.descr") } { @mnode.meta.audienceDescr  }
+      @lk.lkProp(){ @messages("Daily.people.traffic") } { @mnode.meta.humanTrafficAvg  }
+      @lk.lkProp(){ @messages("Audience.descr") } { @mnode.meta.audienceDescr  }
 
       @* TODO добавить вывод картинки приветствия *@
 
       <hr class="delimiter __light"/>
       <div class="prop">
-        <p class="prop_name __block">@Messages("Node.photos"):</p>
+        <p class="prop_name __block">@messages("Node.photos"):</p>
         <div class="profile_photo-lst">
           <div class="js-photo-slider">
             @mnode.gallery.map { imgId =>
@@ -73,10 +73,10 @@
     <table class="prop">
       <tr>
         <td class="prop_name td">
-          @Messages("Bg.color.of.sc.hint")
+          @messages("Bg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( Messages("Main.color", "<br/>") )</span>
+	  <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S">
           <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
@@ -85,10 +85,10 @@
           <div class="delimiter __light __vertical js-vertical-line"></div>
         </td>
         <td class="td __padding-S prop_name">
-          @Messages("Fg.color.of.sc.hint")
+          @messages("Fg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( Messages("Content.color", "<br/>") )</span>
+	  <span class="dark-gray ft-S">@Html( messages("Content.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S dark-gray">
           <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
@@ -113,7 +113,7 @@
     @if(showAdvsBtn) {
     <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(mnode.id.get)">
       @if(advReqsCount > 0) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
-      @Messages("Advertisers") @ * Тут был капслок * @
+      @messages("Advertisers") @ * Тут был капслок * @
     </a>
     }
 

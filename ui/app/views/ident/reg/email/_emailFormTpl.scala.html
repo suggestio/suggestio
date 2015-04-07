@@ -1,7 +1,7 @@
 @(rf: EmailPwRegReqForm_t, captchaShown: Boolean = false)(implicit ctx: Context)
 
 @import helper._
-@import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 @import ctx._
 @import util.FC.authFc
@@ -10,14 +10,14 @@
 @form( CSRF(routes.Ident.emailRegSubmit()), 'id -> "indexRegForm" ) {
 
   @rf.globalError.map { ge =>
-    <p class="error-msg">@Messages("Error"): @Messages(ge.message)</p>
+    <p class="error-msg">@messages("Error"): @messages(ge.message)</p>
   }
 
   @inputText(
     rf("email"),
     '_label       -> "e-mail",
     'type         -> "email",
-    'placeholder  -> Messages("Your.email.addr")
+    'placeholder  -> messages("Your.email.addr")
   )
 
 
@@ -33,7 +33,7 @@
       }
     </div>
 
-    @defining( Messages("Input.text.from.picture") ) { msg =>
+    @defining( messages("Input.text.from.picture") ) { msg =>
       @inputText(
         rf(CAPTCHA_TYPED_FN),
         '_label       -> msg,
@@ -45,11 +45,11 @@
   </div>
 
   <p class="auth-page_descr">
-    @Messages("Mailbox.ll.be.mailed.with.reg.confirm.msg")
+    @messages("Mailbox.ll.be.mailed.with.reg.confirm.msg")
   </p>
 
   <p class="auth-page_descr">
-    @Html(Messages(
+    @Html(messages(
       "Getting.started.with.sio.you.agreed.with.policy",
       s"""<a class="auth-page_link" href="${routes.Static.privacyPolicy()}">""",
       "</a>"
@@ -57,7 +57,7 @@
   </p>
 
   <div class="btn-w __size-M">
-    <input class="btn __size-M1 __minor" type="submit" value="@Messages("Send")" />
+    <input class="btn __size-M1 __minor" type="submit" value="@messages("Send")" />
   </div>
 
 }

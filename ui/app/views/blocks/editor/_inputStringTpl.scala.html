@@ -1,12 +1,12 @@
 @(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-@import ctx.lang
+@import ctx.messages
 
 @defining( af(bfNameBase) ) { sf =>
   <table class="prop">
     <td class="prop_name">
       <label for="@sf.name">
-        @Messages(bc.i18nLabelOf(bf.name))
+        @messages(bc.i18nLabelOf(bf.name))
       </label>
     </td>
     <td class="prop_value">

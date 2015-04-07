@@ -1,18 +1,17 @@
 package controllers
 
+import com.google.inject.Inject
 import models.Context
 import models.usr.MPerson
 import play.api.data.Form
-import play.api.i18n.Lang
-import play.api.mvc.Result
+import play.api.i18n.{MessagesApi, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, MaybeAuthGet, MaybeAuthPost}
+import util.acl.{MaybeAuthGet, MaybeAuthPost}
 import views.html.lk.lang._
 import play.api.Play.current
 import util.FormUtil.uiLangM
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
@@ -24,10 +23,9 @@ import scala.concurrent.Future
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-object LkLang extends SioController with PlayMacroLogsImpl {
+class LkLang @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
-
 
   private def chooseLangFormM(implicit currLang: Lang): Form[Lang] = {
     Form(
@@ -39,7 +37,8 @@ object LkLang extends SioController with PlayMacroLogsImpl {
   /** Рендер страницы выбора языка. */
   def showLangSwitcher(r: Option[String]) = MaybeAuthGet { implicit request =>
     val ctx = implicitly[Context]
-    val langForm = chooseLangFormM(ctx.lang).fill(ctx.lang)
+    val l0 = ctx.messages.lang
+    val langForm = chooseLangFormM(l0).fill(l0)
     Ok( _showLangSwitcher(langForm, r)(ctx) )
   }
 
@@ -47,16 +46,17 @@ object LkLang extends SioController with PlayMacroLogsImpl {
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String])(implicit ctx: Context): Html = {
     val langs = Lang.availables
       .sortBy(_.code)
-    val english = langs
+    val englishLang = langs
       .filter(_.language == "en")
       .sortBy(_.country == "US")
       .headOption
       .getOrElse { Lang.defaultLang }
+    val english = ctx.messages.copy(lang = englishLang)
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
     langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.lang.language == "en",
+      isNowEnglish = ctx.messages.lang.language == "en",
       langs   = langs,
       nodeOpt = nodeOpt,
       rr      = r

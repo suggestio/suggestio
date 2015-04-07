@@ -6,10 +6,10 @@
 @import market.contract._
 @import ctx._
 
-@table_fieldset(label:String, clazz:String)(input:Html) = {
+@table_fieldset(label: String, clazz: String)(input:Html) = {
 <table class="input-w __size-L @clazz">
   <td class="input-w_left">
-    <label class="input-w_prop-name" for="adnNodeName">@label</label>
+    <label class="input-w_prop-name" for="adnNodeName">@label:</label>
   </td>
 
   <td>
@@ -46,7 +46,7 @@
         @market.contract._inviteWidgetTpl(iaf)
       }
 
-      @table_fieldset(Messages("amt.of.type." + adnNode.adn.shownTypeId) + ":", "__disabled"){
+      @table_fieldset(messages("amt.of.type." + adnNode.adn.shownTypeId), "__disabled"){
         <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
       }
 
@@ -57,11 +57,11 @@
       @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
       @if(!ctx.isAuth) {
 
-        @table_fieldset("Пароль:", ""){
+        @table_fieldset(messages("Password"), ""){
           <input type="password" name="password.pw1"/>
         }
 
-        @table_fieldset("Подтвердите пароль:", ""){
+        @table_fieldset(messages("Confirm.password"), ""){
           <input type="password" name="password.pw2"/>
 
         }
@@ -73,7 +73,7 @@
         </div>
 
         <div class="submit-w __size-L __invite-form">
-          <input class="siom-ac-btn __color-2 __size-M __ft-XM f-left" type="submit" valu="@Messages("Продолжить")" />
+          <input class="siom-ac-btn __color-2 __size-M __ft-XM f-left" type="submit" valu="@messages("Продолжить")" />
         </div>
       }
 

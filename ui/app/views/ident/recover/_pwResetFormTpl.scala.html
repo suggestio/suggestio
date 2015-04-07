@@ -8,10 +8,10 @@
 @form(CSRF(routes.Ident.pwResetSubmit(ea.id.get)), 'id -> "pwResetPasswordForm") {
 
   @prf.globalError.map { ge =>
-    <p class="error-msg">@Messages("Error"): @Messages(ge.message)</p>
+    <p class="error-msg">@messages("Error"): @messages(ge.message)</p>
   }
 
-  @defining( Messages("Type.new.password") ) { msg =>
+  @defining( messages("Type.new.password") ) { msg =>
     @inputPassword(
       prf("pw1"),
       '_label       -> msg,
@@ -19,7 +19,7 @@
     )
   }
 
-  @defining( Messages("Confirm.new.password") ) { msg =>
+  @defining( messages("Confirm.new.password") ) { msg =>
     @inputPassword(
       prf("pw2"),
       '_label       -> msg,
@@ -28,7 +28,7 @@
   }
 
   <div class="btn-w __size-M">
-    <input class="btn __size-M1 __major" type="submit" value='@Messages("Save")'/>
+    <input class="btn __size-M1 __major" type="submit" value='@messages("Save")'/>
   </div>
 
 }

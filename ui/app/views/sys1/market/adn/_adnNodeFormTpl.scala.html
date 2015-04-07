@@ -21,7 +21,7 @@
         <select name="@mtField.name">
           <option disabled>Тип узла</option>
           @AdNetMemberTypes.values.map { anmt =>
-            <option value="@anmt.name" @if(mtField.value contains anmt.name) {selected}>@Messages("amt.of.type." + anmt.name)</option>
+            <option value="@anmt.name" @if(mtField.value contains anmt.name) {selected}>@messages("amt.of.type." + anmt.name)</option>
           }
         </select>
       }
@@ -39,7 +39,7 @@
         <select name="@stiField.name">
           <option disabled>Тип узла</option>
           @AdnShownTypes.values.map { ast =>
-            <option value="@ast" @if(stiField.value contains ast.toString) {selected}>@Messages("amt.of.type." + ast)</option>
+            <option value="@ast" @if(stiField.value contains ast.toString) {selected}>@messages("amt.of.type." + ast)</option>
           }
         </select>
       }
@@ -62,7 +62,7 @@
       @defining(af("companyId")) { ciField =>
         @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
           <select name="@ciField.name">
-            <option disabled>@Messages("Company")-@Messages("Owner")</option>
+            <option disabled>@messages("Company")-@messages("Owner")</option>
             <option value=""></option>
             @companies.map { mcompany =>
               <option value="@mcompany.id"@if(mcompany.id contains currCompanyId) {selected}>@mcompany.meta.name</option>
@@ -138,7 +138,7 @@
 
   <p>Формат: 'd = 1, m = 20, h = 5'.<br/>
   @AdShowLevels.values.map { sl =>
-    @sl.name -- @Messages("lk.sl." + sl.name),
+    @sl.name -- @messages("lk.sl." + sl.name),
   }</p>
 
   <table class="input-w __size-L">
@@ -165,7 +165,7 @@
     @AdnSinks.ordered.map { sink =>
       @checkbox(
         af("adn.sink." + sink.longName),
-        '_label -> Messages("adn.sink." + sink.longName)
+        '_label -> messages("adn.sink." + sink.longName)
       )
     }
   </table>

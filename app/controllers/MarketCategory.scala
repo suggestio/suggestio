@@ -1,7 +1,9 @@
 package controllers
 
 import _root_.util.{MartCategories, PlayMacroLogsImpl}
+import com.google.inject.Inject
 import play.api.data._, Forms._
+import play.api.i18n.MessagesApi
 import util.FormUtil._
 import models._
 import util.SiowebEsUtil.client
@@ -19,12 +21,9 @@ import play.api.Play.{current, configuration}
  * Created: 05.03.14 10:14
  * Description: Контроллер управления категориями магазина/ТЦ.
  */
-object MarketCategory extends SioController with PlayMacroLogsImpl {
+class MarketCategory @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
-
-  /** Кнопка установки стандартных глобальных категорий должна нажиматься только единожды. */
-  def CAN_INSTALL_MART_CATS = configuration.getBoolean("cats.install.mart.allowed") getOrElse false
 
   /** Маппинг для формы создания/редактирования пользовательской категории. */
   private def catFormM = Form(mapping(
@@ -167,7 +166,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
 
   /** Установить набор пользовательских категорий в указанный узел рекламной сети (обычно ТЦ). */
   def installMartCategories(adnId: String) = IsSuperuser.async { implicit request =>
-    if (CAN_INSTALL_MART_CATS) {
+    if (MMartCategory.CAN_INSTALL_MART_CATS) {
       MartCategories.saveDefaultMartCatsFor(adnId) map { catIds =>
         Redirect(routes.MarketCategory.showCatsFor(adnId))
           .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")

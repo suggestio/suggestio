@@ -20,7 +20,7 @@
 
 
     <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(node.id.get)">
-      <span>@Html( Messages("Create.ad", "<br/>") )</span>
+      <span>@Html( messages("Create.ad", "<br/>") )</span>
     </a>
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>
@@ -46,7 +46,7 @@
             }
             @* Суперюзеры могут редактировать даже опубликованные карточки. *@
             @if(ctx.isSuperuser) {
-              <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">@Messages("Edit")</a>
+              <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">@messages("Edit")</a>
             }
         }
 
@@ -65,7 +65,7 @@
                            data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
                            @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {checked="checked"}
                            />
-                          <span class="styled-checkbox"></span>&nbsp;@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + sl.name))
+                          <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + sl.name))
                   </label>
                 }
               }
@@ -78,7 +78,7 @@
         </div><!-- .js-equal-height end -->
         @if(canAdv) {
           <a class="btn __size-XM __radial-major" href="@routes.LkAdvExt.forAd(mad.id.get)">
-            @Messages("ad.Manage")
+            @messages("ad.Manage")
           </a>
         }
 

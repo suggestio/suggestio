@@ -2,11 +2,12 @@
 
 @* Уведомление о том, что на узле нету геотаргетировнной составляющей. *@
 
+@import ctx.messages
 @import helper._
 
 @_oneEvtBase(rargs, Some("__bg-3 __icon-3")) {
 
-  <div class="event_t">@Messages("Geotargeted.ad")</div>
+  <div class="event_t">@messages("Geotargeted.ad")</div>
 
   @* TODO Нужно нормальное описание, а не то, что в дизайне *@
 
@@ -28,7 +29,7 @@
         <textarea name="info"
                   placeholder="Введите информацию об объекте, которую вы хотели бы сообщить.">
         </textarea>
-        <input type="submit" value="@Messages("Send.request")" />
+        <input type="submit" value="@messages("Send.request")" />
       }
     }
   }

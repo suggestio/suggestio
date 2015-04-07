@@ -3,385 +3,372 @@
 
 ## Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
 ## Без этого костыля, запрос html'ки просто подвисает. Регэксп нужен на случай обработки со стороны simple-url-replace.
-GET  /vassets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/$fn<[^/]*index\.html>      controllers.Static.tinymceColorpicker(fn)
+GET  /vassets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/$fn<[^/]*index\.html>      @controllers.Static.tinymceColorpicker(fn)
 ## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
-GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       controllers.Static.vassetsSudo(path="/public", file: Asset)
+GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
-GET  /vassets/*file                     controllers.Assets.versioned(path="/public", file: Asset)
+GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.veryEmpty)
+GET  /                                  @controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.veryEmpty)
 
 ## Генераторы капч
-GET  /captcha/get/:captchaId            controllers.Captcha.getCaptcha(captchaId)
-GET  /captcha/digital/:captchaId        controllers.Captcha.getDigitalCaptcha(captchaId)
+GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId)
+GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId)
 
 ## Разные заманушные статические странички.
-GET  /market/about                      controllers.Market.aboutMarket
-GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
-GET  /market/booklet                    controllers.Market.marketBooklet
+GET  /market/about                      @controllers.Market.aboutMarket
+GET  /market/about-for-ad-makers        @controllers.Market.aboutForAdMakers
+GET  /market/booklet                    @controllers.Market.marketBooklet
 
 ## Входы в личные кабинеты
-GET  /m/lk/list                         controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
-GET  /lk/create/node                    controllers.MarketLkAdn.createNode
-POST /lk/create/node                    controllers.MarketLkAdn.createNodeSubmit
-GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
-GET  /m/lk/adn/:adnId/ads               controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
-GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
-POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
-POST /m/adn/img/logo/prepare            controllers.MarketLkAdnEdit.handleTempLogo
-POST /m/adn/img/gal/prepare             controllers.MarketLkAdnEdit.handleGallweryImg
-## Базовый супервайзинг узлов
-GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
-GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
-POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
+GET  /m/lk/list                         @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
+GET  /lk/create/node                    @controllers.MarketLkAdn.createNode
+POST /lk/create/node                    @controllers.MarketLkAdn.createNodeSubmit
+GET  /m/lk/adn/:adnId                   @controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/ads               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNode(adnId)
+POST /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
+POST /m/adn/img/logo/prepare            @controllers.MarketLkAdnEdit.handleTempLogo
+POST /m/adn/img/gal/prepare             @controllers.MarketLkAdnEdit.handleGallweryImg
 ## Принятие приглашения на управления узлом.
-GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
-POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+GET  /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
+POST /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 ## Редактирования профиля юзера из личного кабинета узла.
-GET  /m/lk/adn/:adnId/usr/edit          controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
-POST /m/lk/adn/:adnId/usr/pwchange      controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
-## Супервайзинг рекламных карточек на подчинённых узлах
-GET  /m/lk/xadv/geo/wnd/:adId           controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
-POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
-GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
-POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
-GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlaveAds(adnId)
-## Супервайзинг узлов: публикация рекламы на подчинённых узлах.
-GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
-POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
-
+GET  /m/lk/adn/:adnId/usr/edit          @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
+POST /m/lk/adn/:adnId/usr/pwchange      @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
+## Окно для георазмещения рекламных карточек
+GET  /m/lk/xadv/geo/wnd/:adId           @controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 
 ## Размещение рекламы (adv) на узлах-получателях
-GET  /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advForAd(adId)
-POST /m/lk/xadv/geo/for/:adId           controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/xadv/geo/price/for/:adId     controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/xadv/geo/for/node/:adnId     controllers.MarketAdv.showNodeAdvs(adnId)
+GET  /m/lk/xadv/geo/for/:adId           @controllers.MarketAdv.advForAd(adId)
+POST /m/lk/xadv/geo/for/:adId           @controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/xadv/geo/price/for/:adId     @controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /m/lk/xadv/geo/for/node/:adnId     @controllers.MarketAdv.showNodeAdvs(adnId)
 ## Размещение рекламы: обработка запросов размещения.
-POST /m/lk/xadv/geo/req/:advReqId/refuse   controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
-POST /m/lk/xadv/geo/req/:advReqId/accept   controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
-GET  /m/lk/xadv/history/:adId           controllers.MarketAdv.advHistory(adId)
+POST /m/lk/xadv/geo/req/:advReqId/refuse   @controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /m/lk/xadv/geo/req/:advReqId/accept   @controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
+GET  /m/lk/xadv/history/:adId           @controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах
-GET  /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTarget(adnId)
-POST /m/lk/xadv/ext/tg/write/:adnId     controllers.LkAdvExt.writeTargetSubmit(adnId)
-GET  /ws/lk/xadv/ext/run                controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
-POST /m/lk/xadv/ext/tg/delete/:tgId     controllers.LkAdvExt.deleteTargetSubmit(tgId)
-GET  /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.forAd(adId)
-POST /m/lk/xadv/ext/ad/:adId            controllers.LkAdvExt.advFormSubmit(adId)
-GET  /lk/xadv/ext/oauth1/ret/:adnId     controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
-POST /lk/xadv/ext/oauth1/ret/:adnId     controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+GET  /m/lk/xadv/ext/tg/write/:adnId     @controllers.LkAdvExt.writeTarget(adnId)
+POST /m/lk/xadv/ext/tg/write/:adnId     @controllers.LkAdvExt.writeTargetSubmit(adnId)
+GET  /ws/lk/xadv/ext/run                @controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
+POST /m/lk/xadv/ext/tg/delete/:tgId     @controllers.LkAdvExt.deleteTargetSubmit(tgId)
+GET  /m/lk/xadv/ext/ad/:adId            @controllers.LkAdvExt.forAd(adId)
+POST /m/lk/xadv/ext/ad/:adId            @controllers.LkAdvExt.advFormSubmit(adId)
+GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
 
 ## ЛК: Рекламные карточки
-POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
-GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
-POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
-POST /m/lk/ap/:adnId/preview            controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /m/lk/ai/:blockId/:fn              controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
-POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
-GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
-POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
-GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
-GET  /ws/lk/ad/:wsId                    controllers.MarketAd.ws(wsId: String)
-GET  /m/lk/ad/new/field/text/:offerN    controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
+POST /m/lk/ad/:adId/delete              @controllers.MarketAd.deleteSubmit(adId)
+GET  /m/lk/adn/:adnId/ad/new            @controllers.MarketAd.createAd(adnId)
+POST /m/lk/adn/:adnId/ad/new            @controllers.MarketAd.createAdSubmit(adnId)
+POST /m/lk/ap/:adnId/preview            @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
+POST /m/lk/ai/:blockId/:fn              @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
+POST /m/lk/sa/:adId/update/show         @controllers.MarketAd.updateShowLevelSubmit(adId)
+GET  /m/lk/ad/:adId/edit                @controllers.MarketAd.editAd(adId)
+POST /m/lk/ad/:adId/edit                @controllers.MarketAd.editAdSubmit(adId)
+GET  /m/lk/ad/:adId/delete              @controllers.MarketAd.deleteWnd(adId)
+GET  /ws/lk/ad/:wsId                    @controllers.MarketAd.ws(wsId: String)
+GET  /m/lk/ad/new/field/text/:offerN    @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 # lk.billing
-GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
-GET  /m/lk/_txns/adn/:adnId             controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)
-GET  /m/lk/bill/adn/:adnId/pay/bank     controllers.MarketLkBilling.paymentRequsites(adnId)
+GET  /m/lk/bill/adn/:adnId              @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
+GET  /m/lk/_txns/adn/:adnId             @controllers.MarketLkBilling._txnsList(adnId, page: Int ?= 0)
+GET  /m/lk/bill/adn/:adnId/pay/bank     @controllers.MarketLkBilling.paymentRequsites(adnId)
 # lk.billing: рендер списка тарифных сеток MBillMmpDaily для указанного узла
-GET  /m/lk/bill/adn/:adnId/mbmds        controllers.MarketLkBilling._renderNodeMbmds(adnId)
-GET  /m/lk/bill/adn/:adnId/mbmds/win    controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
+GET  /m/lk/bill/adn/:adnId/mbmds        @controllers.MarketLkBilling._renderNodeMbmds(adnId)
+GET  /m/lk/bill/adn/:adnId/mbmds/win    @controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
 
-POST  /error/occured/in/showcase        controllers.RemoteError.handleShowcaseError
+POST  /error/occured/in/showcase        @controllers.RemoteError.handleShowcaseError
 
 ## Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 ## 2014.12.10: Больше не используется. Категории теперь набором галочек.
-GET  /m/lk/c/usr/c/:catId/dc            controllers.MarketCategory.directSubcatsOf(catId)
+GET  /m/lk/c/usr/c/:catId/dc            @controllers.MarketCategory.directSubcatsOf(catId)
 
 ## Обращение в тех.поддерку зареганного клиента sio-market.
-GET  /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
-POST /m/lk/support/:adnId               controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
-GET  /m/support                         controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
-POST /m/support                         controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
-POST /m/support/geo/node/:adnId         controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
+GET  /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
+POST /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
+GET  /m/support                         @controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
+POST /m/support                         @controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
+POST /m/support/geo/node/:adnId         @controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
 
 ## ЛК: нотификации (события)
-GET  /m/lk/events/:adnId                controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
-POST /m/lk/event/delete/:evtId          controllers.LkEvents.nodeEventDelete(evtId)
+GET  /m/lk/events/:adnId                @controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
+POST /m/lk/event/delete/:evtId          @controllers.LkEvents.nodeEventDelete(evtId)
 
 
-GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
-POST /img/crop                          controllers.Img.imgCropSubmit
-GET  /img/dyn                           controllers.Img.dynImg(i: im.MImg)
+GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
+POST /img/crop                          @controllers.Img.imgCropSubmit
+GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImg)
 
 
 # Витрина market'а и её экшены
-GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
+GET  /market/site/:adnId                @controllers.MarketShowcase.demoWebSite(adnId)
+GET  /market/index/:adnId               @controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
 
-GET  /blk/css                           controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
+GET  /blk/css                           @controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
 
-GET  /m/lk/showcase/site/:adnId         controllers.MarketShowcase.myAdsSite(adnId)
-GET  /m/lk/showcase/index/:adnId        controllers.MarketShowcase.myAdsShowcase(adnId)
+GET  /m/lk/showcase/site/:adnId         @controllers.MarketShowcase.myAdsSite(adnId)
+GET  /m/lk/showcase/index/:adnId        @controllers.MarketShowcase.myAdsShowcase(adnId)
 
-GET  /market/geo/site                   controllers.MarketShowcase.rdrToGeoSite
-GET  /market/geo/index                  controllers.MarketShowcase.geoShowcase(a: ScReqArgs ?= ScReqArgs.empty)
+GET  /market/geo/site                   @controllers.MarketShowcase.rdrToGeoSite
+GET  /market/geo/index                  @controllers.MarketShowcase.geoShowcase(a: ScReqArgs ?= ScReqArgs.empty)
 
-GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
-GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
-GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
+GET  /market/script/:adnId              @controllers.MarketShowcase.nodeSiteScript(adnId)
+GET  /market/node_icon/:adnId           @controllers.MarketShowcase.nodeIconJs(adnId)
+GET  /market/node_data/:adnId           @controllers.MarketShowcase.nodeData(adnId)
 
-GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
-GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
+GET  /market/ads                        @controllers.MarketShowcase.findAds(a: AdSearch)
+GET  /market/fads                       @controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 ## Рендер ровно одной карточки.
-GET  /market/ad/one/html                controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
-GET  /market/ad/one/img                 controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)
+GET  /market/ad/one/html                @controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 
 ## Поиск по узлам
-GET  /market/nodes/search               controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
+GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /market/geo/syncsite               controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
+GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
 
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
-GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
-POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
-GET  /market/join/callback              controllers.MarketJoin.callbackRequest
-POST /market/join/callback              controllers.MarketJoin.callbackRequestSubmit
+GET  /market/join/success               @controllers.MarketJoin.joinRequestSuccess
+GET  /market/join/xadv                  @controllers.MarketJoin.joinAdvRequest
+POST /market/join/xadv                  @controllers.MarketJoin.joinAdvRequestSubmit
+GET  /market/join/callback              @controllers.MarketJoin.callbackRequest
+POST /market/join/callback              @controllers.MarketJoin.callbackRequestSubmit
 
-GET  /sys                               controllers.Application.sysIndex
+GET  /sys                               @controllers.Application.sysIndex
 
 # sys.market
-GET  /sys/market                        controllers.SysMarket.index
+GET  /sys/market                        @controllers.SysMarket.index
 # sys.market.company
-GET  /sys/market/companies              controllers.SysMarket.companiesList
-GET  /sys/market/company/add            controllers.SysMarket.companyAddForm(c: Option[MCompany] ?= None)
-POST /sys/market/company/add            controllers.SysMarket.companyAddFormSubmit
-GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id: String, r: Option[String] ?= None)
-POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: String, r: Option[String] ?= None)
-POST /sys/market/company/:id/delete     controllers.SysMarket.companyDeleteSubmit(id: String)
-GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: String)
+GET  /sys/market/companies              @controllers.SysMarket.companiesList
+GET  /sys/market/company/add            @controllers.SysMarket.companyAddForm(c: Option[MCompany] ?= None)
+POST /sys/market/company/add            @controllers.SysMarket.companyAddFormSubmit
+GET  /sys/market/company/:id/edit       @controllers.SysMarket.companyEditForm(id: String, r: Option[String] ?= None)
+POST /sys/market/company/:id/edit       @controllers.SysMarket.companyEditFormSubmit(id: String, r: Option[String] ?= None)
+POST /sys/market/company/:id/delete     @controllers.SysMarket.companyDeleteSubmit(id: String)
+GET  /sys/market/company/:id            @controllers.SysMarket.companyShow(id: String)
 # sys.market.adn
-GET  /sys/market/adn/:adnId             controllers.SysMarket.showAdnNode(adnId)
-GET  /sys/market/adns                   controllers.SysMarket.adnNodesList(anmt: Option[String] ?= None)
-GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
-POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
-POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/ads                    controllers.SysMarket.showAdnNodeAds(a: AdSearch)
-POST /sys/market/ad/:adId/rm/rcvr       controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
-GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
-POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
+GET  /sys/market/adn/:adnId             @controllers.SysMarket.showAdnNode(adnId)
+GET  /sys/market/adns                   @controllers.SysMarket.adnNodesList(anmt: Option[String] ?= None)
+GET  /sys/market/create/adn             @controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
+POST /sys/market/create/adn             @controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
+POST /sys/market/adn/:adnId/delete      @controllers.SysMarket.deleteAdnNodeSubmit(adnId)
+GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: AdSearch)
+POST /sys/market/ad/:adId/rm/rcvr       @controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
+GET  /sys/market/adn/:adnId/edit        @controllers.SysMarket.editAdnNode(adnId)
+POST /sys/market/adn/:adnId/edit        @controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
-GET  /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteForm(id: String)
-POST /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
-GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmailInvite(id)
+GET  /sys/market/adn/:id/invite         @controllers.SysMarket.nodeOwnerInviteForm(id: String)
+POST /sys/market/adn/:id/invite         @controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
+GET  /sys/market/adn/:id/invite/email   @controllers.SysMarket.showNodeOwnerEmailInvite(id)
 # sys.market.shop
-GET  /sys/market/shop/:id/eact          controllers.SysMarket.showEmailInviteMsg(id)
-GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId)
+GET  /sys/market/shop/:id/eact          @controllers.SysMarket.showEmailInviteMsg(id)
+GET  /sys/market/s/ad/:adId/email       @controllers.SysMarket.showShopEmailAdDisableMsg(adId)
 # sys.market.cats
-GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
-POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
-POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
+GET  /sys/market/cats/ym                @controllers.SysMarket.showYmCats
+POST /sys/market/cats/ym/reset          @controllers.SysMarket.resetYmCatsSubmit
+POST /sys/market/cats/ym/import         @controllers.SysMarket.importYmCatsSubmit
 # sys.ad
-GET  /sys/ad/:adId/show                 controllers.SysMarket.showAd(adId)
-GET  /sys/ad/:adId/rcvrs/analyze        controllers.SysMarket.analyzeAdRcvrs(adId)
-POST /sys/ad/:adId/rcvrs/reset          controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
-POST /sys/ad/:adId/rcvrs/clean          controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
+GET  /sys/ad/:adId/show                 @controllers.SysMarket.showAd(adId)
+GET  /sys/ad/:adId/rcvrs/analyze        @controllers.SysMarket.analyzeAdRcvrs(adId)
+POST /sys/ad/:adId/rcvrs/reset          @controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
+POST /sys/ad/:adId/rcvrs/clean          @controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
 
-GET  /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
-POST /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
-GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(catId)
-GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
-GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
-POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
-POST /sys/market/cats/usr/:ownerId/inst/m  controllers.MarketCategory.installMartCategories(ownerId)
-POST /sys/market/cats/usr/d/:catId      controllers.MarketCategory.deleteUserCatSubmit(catId)
+GET  /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
+POST /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
+GET  /sys/market/cats/usr/c/:catId      @controllers.MarketCategory.showUserCat(catId)
+GET  /sys/market/cats/usr/:ownerId      @controllers.MarketCategory.showCatsFor(ownerId)
+GET  /sys/market/cats/usr/e/:catId      @controllers.MarketCategory.editUserCatForm(catId)
+POST /sys/market/cats/usr/e/:catId      @controllers.MarketCategory.editUserCatFormSubmit(catId)
+POST /sys/market/cats/usr/:ownerId/inst/m  @controllers.MarketCategory.installMartCategories(ownerId)
+POST /sys/market/cats/usr/d/:catId      @controllers.MarketCategory.deleteUserCatSubmit(catId)
 # sys.market.billing
-GET  /sys/market/billing                controllers.SysMarketBilling.index
-GET  /sys/market/b/show/:adnId          controllers.SysMarketBilling.billingFor(adnId)
-GET  /sys/market/b/contract/new/:adnId  controllers.SysMarketBilling.createContractForm(adnId)
-POST /sys/market/b/contract/new         controllers.SysMarketBilling.createContractFormSubmit
-GET  /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContractForm(cId: Int)
-POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContractFormSubmit(cId: Int)
+GET  /sys/market/billing                @controllers.SysMarketBilling.index
+GET  /sys/market/b/show/:adnId          @controllers.SysMarketBilling.billingFor(adnId)
+GET  /sys/market/b/contract/new/:adnId  @controllers.SysMarketBilling.createContractForm(adnId)
+POST /sys/market/b/contract/new         @controllers.SysMarketBilling.createContractFormSubmit
+GET  /sys/market/b/contract/edit/:cId   @controllers.SysMarketBilling.editContractForm(cId: Int)
+POST /sys/market/b/contract/edit/:cId   @controllers.SysMarketBilling.editContractFormSubmit(cId: Int)
 ## Платежи обрабатываются вне контекста узлов, ибо при входящем платеже никто не знает, к кому он относится.
-GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
-POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
-POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
+GET  /sys/market/b/payment/new          @controllers.SysMarketBilling.incomingPaymentForm
+POST /sys/market/b/payment/new          @controllers.SysMarketBilling.incomingPaymentFormSubmit
+POST /sys/market/b/payment/new/confirm  @controllers.SysMarketBilling.confirmIncomingPaymentSubmit
 ## Тарифы: абонплата
-GET  /sys/market/btf/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
-POST /sys/market/btf/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
-GET  /sys/market/btf/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
-POST /sys/market/btf/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
-POST /sys/market/btf/delete/:tariffId    controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
+GET  /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
+POST /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
+GET  /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
+POST /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
+POST /sys/market/btf/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
 ## Тарифы: просмотры/переходы (stat-тарифы)
-GET  /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addStatTariff(contractId: Int)
-POST /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
-GET  /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
-POST /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
-POST /sys/market/bts/delete/:tariffId    controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
+GET  /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariff(contractId: Int)
+POST /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
+GET  /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
+POST /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
+POST /sys/market/bts/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
 ## Тарифы: посуточные mmp
-GET  /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)
-POST /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
-GET  /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
-POST /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
-POST /sys/market/tmmp/daily/delete/:mmpId controllers.SysMarketBillingMmp.deleteMmpDailySubmit(mmpId: Int)
+GET  /sys/market/tmmp/daily/new/:mbcId   @controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)
+POST /sys/market/tmmp/daily/new/:mbcId   @controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
+GET  /sys/market/tmmp/daily/edit/:mbmdId @controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
+POST /sys/market/tmmp/daily/edit/:mbmdId @controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
+POST /sys/market/tmmp/daily/delete/:mmpId @controllers.SysMarketBillingMmp.deleteMmpDailySubmit(mmpId: Int)
 ## sys: Календари
-GET  /sys/cal                            controllers.SysCalendar.showCalendars
-POST /sys/cal/new/tpl                    controllers.SysCalendar.newCalendarFromTemplateSubmit
-POST /sys/cal/new                        controllers.SysCalendar.createCalendarSubmit
-GET  /sys/cal/edit/:calId                controllers.SysCalendar.editCalendar(calId)
-POST /sys/cal/edit/:calId                controllers.SysCalendar.editCalendarSubmit(calId)
-GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(calId)
+GET  /sys/cal                            @controllers.SysCalendar.showCalendars
+POST /sys/cal/new/tpl                    @controllers.SysCalendar.newCalendarFromTemplateSubmit
+POST /sys/cal/new                        @controllers.SysCalendar.createCalendarSubmit
+GET  /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendar(calId)
+POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSubmit(calId)
+GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
 
 ## sys: invreq - обработка входящих реквестов на подключение.
-GET  /sys/ir                             controllers.SysMarketInvReq.index
-GET  /sys/ir/show/:mirId                 controllers.SysMarketInvReq.showIR(mirId)
-POST /sys/ir/delete/:mirId               controllers.SysMarketInvReq.deleteIR(mirId)
-GET  /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEdit(mirId)
-POST /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEditFormSubmit(mirId)
-POST /sys/ir/install/:mirId/company      controllers.SysMarketInvReq.companyInstallSubmit(mirId)
-POST /sys/ir/uninstall/:mirId/company    controllers.SysMarketInvReq.companyUninstallSubmit(mirId)
-GET  /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEdit(mirId)
-POST /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEditFormSubmit(mirId)
-POST /sys/ir/install/:mirId/node         controllers.SysMarketInvReq.nodeInstallSubmit(mirId)
-POST /sys/ir/uninstall/:mirId/node       controllers.SysMarketInvReq.nodeUninstallSubmit(mirId)
-POST /sys/ir/install/:mirId/eact         controllers.SysMarketInvReq.eactInstallSubmit(mirId)
+GET  /sys/ir                             @controllers.SysMarketInvReq.index
+GET  /sys/ir/show/:mirId                 @controllers.SysMarketInvReq.showIR(mirId)
+POST /sys/ir/delete/:mirId               @controllers.SysMarketInvReq.deleteIR(mirId)
+GET  /sys/ir/edit/:mirId/company         @controllers.SysMarketInvReq.companyEdit(mirId)
+POST /sys/ir/edit/:mirId/company         @controllers.SysMarketInvReq.companyEditFormSubmit(mirId)
+POST /sys/ir/install/:mirId/company      @controllers.SysMarketInvReq.companyInstallSubmit(mirId)
+POST /sys/ir/uninstall/:mirId/company    @controllers.SysMarketInvReq.companyUninstallSubmit(mirId)
+GET  /sys/ir/edit/:mirId/node            @controllers.SysMarketInvReq.nodeEdit(mirId)
+POST /sys/ir/edit/:mirId/node            @controllers.SysMarketInvReq.nodeEditFormSubmit(mirId)
+POST /sys/ir/install/:mirId/node         @controllers.SysMarketInvReq.nodeInstallSubmit(mirId)
+POST /sys/ir/uninstall/:mirId/node       @controllers.SysMarketInvReq.nodeUninstallSubmit(mirId)
+POST /sys/ir/install/:mirId/eact         @controllers.SysMarketInvReq.eactInstallSubmit(mirId)
 
 ## sys: mdr - модерация контента
-GET  /sys/mdr                            controllers.SysMdr.index
-GET  /sys/mdr/freeAdvs                   controllers.SysMdr.freeAdvs(a: MdrSearchArgs ?= MdrSearchArgs(), hideAdId: Option[String] ?= None)
-GET  /sys/mdr/freeAdv/:adId              controllers.SysMdr.freeAdvMdr(adId)
-POST /sys/mdr/freeAdv/:adId/accept       controllers.SysMdr.freeAdvMdrAccept(adId)
-POST /sys/mdr/freeAdv/:adId/ban          controllers.SysMdr.freeAdvMdrBan(adId)
+GET  /sys/mdr                            @controllers.SysMdr.index
+GET  /sys/mdr/freeAdvs                   @controllers.SysMdr.freeAdvs(a: MdrSearchArgs ?= MdrSearchArgs(), hideAdId: Option[String] ?= None)
+GET  /sys/mdr/freeAdv/:adId              @controllers.SysMdr.freeAdvMdr(adId)
+POST /sys/mdr/freeAdv/:adId/accept       @controllers.SysMdr.freeAdvMdrAccept(adId)
+POST /sys/mdr/freeAdv/:adId/ban          @controllers.SysMdr.freeAdvMdrBan(adId)
 
 ## sys: sink comission
-GET  /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSinkCom(contractId: Int)
-POST /sys/m/b/sink/comm/new/:contractId  controllers.SysMarketBilling.createSinkComSubmit(contractId: Int)
-GET  /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkCom(scId: Int)
-POST /sys/m/b/sink/comm/edit/:scId       controllers.SysMarketBilling.editSinkComSubmit(scId: Int)
-POST /sys/m/b/sink/comm/del/:scId        controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)
+GET  /sys/m/b/sink/comm/new/:contractId  @controllers.SysMarketBilling.createSinkCom(contractId: Int)
+POST /sys/m/b/sink/comm/new/:contractId  @controllers.SysMarketBilling.createSinkComSubmit(contractId: Int)
+GET  /sys/m/b/sink/comm/edit/:scId       @controllers.SysMarketBilling.editSinkCom(scId: Int)
+POST /sys/m/b/sink/comm/edit/:scId       @controllers.SysMarketBilling.editSinkComSubmit(scId: Int)
+POST /sys/m/b/sink/comm/del/:scId        @controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)
 
 ## sys adn geo
-GET  /sys/adn/geo/all/:adnId             controllers.SysAdnGeo.forNode(adnId)
+GET  /sys/adn/geo/all/:adnId             @controllers.SysAdnGeo.forNode(adnId)
 ## MAdnNodeGeo
-GET  /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsm(adnId)
-POST /sys/adn/geo/add/:adnId/osm         controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
-POST /sys/adn/geo/del/:geoId             controllers.SysAdnGeo.deleteSubmit(geoId, adnId)
-GET  /sys/adn/geo/edit/:geoId            controllers.SysAdnGeo.editNodeOsm(geoId, adnId)
-POST /sys/adn/geo/edit/:geoId/osm        controllers.SysAdnGeo.editNodeOsmSubmit(geoId, adnId)
-GET  /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircle(adnId)
-POST /sys/adn/geo/add/:adnId/crcl        controllers.SysAdnGeo.createCircleSubmit(adnId)
-GET  /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircle(geoId, adnId)
-POST /sys/adn/geo/edit/:geoId/crcl       controllers.SysAdnGeo.editCircleSubmit(geoId, adnId)
-GET  /sys/adn/geo/json/:geoId            controllers.SysAdnGeo.showGeoJson(geoId, adnId)
+GET  /sys/adn/geo/add/:adnId/osm         @controllers.SysAdnGeo.createForNodeOsm(adnId)
+POST /sys/adn/geo/add/:adnId/osm         @controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
+POST /sys/adn/geo/del/:geoId             @controllers.SysAdnGeo.deleteSubmit(geoId, adnId)
+GET  /sys/adn/geo/edit/:geoId            @controllers.SysAdnGeo.editNodeOsm(geoId, adnId)
+POST /sys/adn/geo/edit/:geoId/osm        @controllers.SysAdnGeo.editNodeOsmSubmit(geoId, adnId)
+GET  /sys/adn/geo/add/:adnId/crcl        @controllers.SysAdnGeo.createCircle(adnId)
+POST /sys/adn/geo/add/:adnId/crcl        @controllers.SysAdnGeo.createCircleSubmit(adnId)
+GET  /sys/adn/geo/edit/:geoId/crcl       @controllers.SysAdnGeo.editCircle(geoId, adnId)
+POST /sys/adn/geo/edit/:geoId/crcl       @controllers.SysAdnGeo.editCircleSubmit(geoId, adnId)
+GET  /sys/adn/geo/json/:geoId            @controllers.SysAdnGeo.showGeoJson(geoId, adnId)
 ## node geodata
-GET  /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodata(adnId)
-GET  /sys/adn/geodata/propose/:adnId     controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
-POST /sys/adn/geodata/edit/:adnId        controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
+GET  /sys/adn/geodata/edit/:adnId        @controllers.SysAdnGeo.editAdnNodeGeodata(adnId)
+GET  /sys/adn/geodata/propose/:adnId     @controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
+POST /sys/adn/geodata/edit/:adnId        @controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
 
 ## Карта umap
-GET  /sys/umap/nodes                     controllers.Umap.getAdnNodesMap
-GET  /sys/umap/nodes/datalayer           controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
-POST /sys/umap/nodes/settings            controllers.Umap.saveMapSettingsSubmit
-POST /sys/umap/nodes/datalayer           controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
-POST /sys/umap/nodes/datalayer/new       controllers.Umap.createMapDataLayer
-GET  /sys/umap/node/:adnId               controllers.Umap.getAdnNodeMap(adnId)
-GET  /sys/umap/node/:adnId/datalayer     controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
-POST /sys/umap/node/:adnId/datalayer     controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
+GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap
+GET  /sys/umap/nodes/datalayer           @controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/settings            @controllers.Umap.saveMapSettingsSubmit
+POST /sys/umap/nodes/datalayer           @controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/datalayer/new       @controllers.Umap.createMapDataLayer
+GET  /sys/umap/node/:adnId               @controllers.Umap.getAdnNodeMap(adnId)
+GET  /sys/umap/node/:adnId/datalayer     @controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
+POST /sys/umap/node/:adnId/datalayer     @controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
 
 ## Галереи картинок
-GET  /sys/gals                           controllers.SysGallery.showList(page: Int ?= 0)
-POST /sys/gals/upload/:wsId              controllers.SysGallery.uploadImg(wsId)
-GET  /ws/sys/gals/:wsId                  controllers.SysGallery.ws(wsId)
-GET  /sys/gals/new                       controllers.SysGallery.createGal
-POST /sys/gals/new                       controllers.SysGallery.createGalSubmit
-GET  /sys/gals/show/one/:galId           controllers.SysGallery.showOne(galId)
-GET  /sys/gals/edit/:galId               controllers.SysGallery.editGal(galId)
-POST /sys/gals/edit/:galId               controllers.SysGallery.editGalSubmit(galId)
-POST /sys/gals/delete/:galId             controllers.SysGallery.deleteGallerySubmit(galId)
+GET  /sys/gals                           @controllers.SysGallery.showList(page: Int ?= 0)
+POST /sys/gals/upload/:wsId              @controllers.SysGallery.uploadImg(wsId)
+GET  /ws/sys/gals/:wsId                  @controllers.SysGallery.ws(wsId)
+GET  /sys/gals/new                       @controllers.SysGallery.createGal
+POST /sys/gals/new                       @controllers.SysGallery.createGalSubmit
+GET  /sys/gals/show/one/:galId           @controllers.SysGallery.showOne(galId)
+GET  /sys/gals/edit/:galId               @controllers.SysGallery.editGal(galId)
+POST /sys/gals/edit/:galId               @controllers.SysGallery.editGalSubmit(galId)
+POST /sys/gals/delete/:galId             @controllers.SysGallery.deleteGallerySubmit(galId)
 
 ## sys/Картинки
-GET  /sys/img                            controllers.SysImg.index(q: Option[String] ?= None)
-POST /sys/img/search                     controllers.SysImg.searchFormSubmit
-GET  /sys/img/show                       controllers.SysImg.showOne(i: im.MImg)
-POST /sys/img/delete                     controllers.SysImg.deleteOneSubmit(i: im.MImg)
+GET  /sys/img                            @controllers.SysImg.index(q: Option[String] ?= None)
+POST /sys/img/search                     @controllers.SysImg.searchFormSubmit
+GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImg)
+POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImg)
 
 ## sys/AI
-GET  /sys/ai                             controllers.SysAi.index
-GET  /sys/ai/mad                         controllers.SysAi.madIndex
-GET  /sys/ai/mad/create                  controllers.SysAi.createMadAi
-POST /sys/ai/mad/create                  controllers.SysAi.createMadAiSubmit
-GET  /sys/ai/mad/edit/:id                controllers.SysAi.editMadAi(id)
-POST /sys/ai/mad/edit/:id                controllers.SysAi.editMadAiSubmit(id)
-POST /sys/ai/mad/run/:id                 controllers.SysAi.runMadAi(id)
-POST /sys/ai/mad/delete/:id              controllers.SysAi.deleteMadAi(id)
+GET  /sys/ai                             @controllers.SysAi.index
+GET  /sys/ai/mad                         @controllers.SysAi.madIndex
+GET  /sys/ai/mad/create                  @controllers.SysAi.createMadAi
+POST /sys/ai/mad/create                  @controllers.SysAi.createMadAiSubmit
+GET  /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAi(id)
+POST /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAiSubmit(id)
+POST /sys/ai/mad/run/:id                 @controllers.SysAi.runMadAi(id)
+POST /sys/ai/mad/delete/:id              @controllers.SysAi.deleteMadAi(id)
 
 ## sys.adn.install
-GET  /sys/adn/inst/mads/:adnId           controllers.SysMarket.installDfltMads(adnId)
-POST /sys/adn/inst/mads/:adnId           controllers.SysMarket.installDfltMadsSubmit(adnId)
+GET  /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMads(adnId)
+POST /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMadsSubmit(adnId)
 
 ## sys/person
-GET  /sys/person                         controllers.SysPerson.index
-GET  /sys/person/reg/email/show          controllers.SysPerson.showRegEmail
-GET  /sys/person/recover/email/show      controllers.SysPerson.showRecoverEmail
+GET  /sys/person                         @controllers.SysPerson.index
+GET  /sys/person/reg/email/show          @controllers.SysPerson.showRegEmail
+GET  /sys/person/recover/email/show      @controllers.SysPerson.showRecoverEmail
 
 ## Cross-Origin resource sharing: preflight request:
-OPTIONS /*path                           controllers.Application.corsPreflight(path)
+OPTIONS /*path                           @controllers.Application.corsPreflight(path)
 
-GET  /robots.txt                         controllers.Application.robotsTxt
-GET  /sitemap.xml                        controllers.Application.siteMapXml
+GET  /robots.txt                         @controllers.Application.robotsTxt
+GET  /sitemap.xml                        @controllers.Application.siteMapXml
 
 
 ## ident: логины/логауты
-GET  /id                                controllers.Ident.mySioStartPage(r: Option[String] ?= None)
-GET  /id/epw/login                      controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /id/epw/login                      controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
-GET  /id/logout                         controllers.Ident.logout
+GET  /id                                @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
+GET  /id/epw/login                      @controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /id/epw/login                      @controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /id/logout                         @controllers.Ident.logout
 ## ident: Восстановление пароля.
-GET  /id/epw/recover                    controllers.Ident.recoverPwForm
-POST /id/epw/recover                    controllers.Ident.recoverPwFormSubmit
-GET  /id/epw/recover/sent               controllers.Ident.recoverPwAccepted(email: String)
-GET  /id/epw/resetpw/:eActId            controllers.Ident.recoverPwReturn(eActId)
-POST /id/epw/resetpw/:eActId            controllers.Ident.pwResetSubmit(eActId)
+GET  /id/epw/recover                    @controllers.Ident.recoverPwForm
+POST /id/epw/recover                    @controllers.Ident.recoverPwFormSubmit
+GET  /id/epw/recover/sent               @controllers.Ident.recoverPwAccepted(email: String)
+GET  /id/epw/resetpw/:eActId            @controllers.Ident.recoverPwReturn(eActId)
+POST /id/epw/resetpw/:eActId            @controllers.Ident.pwResetSubmit(eActId)
 ## ident: Сменить пароль
-GET  /id/epw/chpw                       controllers.Ident.changePassword
-POST /id/epw/chpw                       controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
-GET  /id/rdr/me/somewhere               controllers.Ident.rdrUserSomewhere
+GET  /id/epw/chpw                       @controllers.Ident.changePassword
+POST /id/epw/chpw                       @controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
+GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
 ## ident: рега по email и паролю
-POST /id/epw/reg                        controllers.Ident.emailRegSubmit
-GET  /id/epw/reg/return                 controllers.Ident.emailReturn(e: usr.IEaEmailId)
-POST /id/epw/reg/return                 controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
+POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
+GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: usr.IEaEmailId)
+POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
 ## ident: вход через внешнего провайдера
-GET  /id/via/:provider			        controllers.Ident.idViaProvider(provider: usr.IdProvider, r: Option[String] ?= None)
-POST /id/via/:provider                  controllers.Ident.idViaProviderByPost(provider: usr.IdProvider, r: Option[String] ?= None)
-GET  /id/reg/ext/confirm                controllers.Ident.idpConfirm
-POST /id/reg/ext/confirm                controllers.Ident.idpConfirmSubmit
+GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: usr.IdProvider, r: Option[String] ?= None)
+POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: usr.IdProvider, r: Option[String] ?= None)
+GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
+POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 
 ## Языки и локализация
-GET  /lang                              controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
-POST /lang                              controllers.LkLang.selectLangSubmit(r: Option[String])
+GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
+POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
 
 ### Барахло от Sio-v1 (не работает, в основном):
 ## Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
-GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
-GET  /app/session/keepalive             controllers.Application.keepAliveSession
+GET  /app/session/keepalive             @controllers.Application.keepAliveSession
 
 
 ## compat
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
-GET     /about                          controllers.Static.about
-GET     /showcase                       controllers.Static.showcase
+GET     /about                          @controllers.Static.about
+GET     /showcase                       @controllers.Static.showcase
 ## help редиректит на буклет.
-GET     /help                           controllers.Static.help
-GET     /help/:page                     controllers.Static.helpPage(page)
+GET     /help                           @controllers.Static.help
+GET     /help/:page                     @controllers.Static.helpPage(page)
 ## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
-GET     /blog                           controllers.Static.blogIndex
-GET     /blog/:path                     controllers.Static.blogPage(path)
-GET     /privacy                        controllers.Static.privacyPolicy
-GET     /st/popup/check                 controllers.Static.popupCheckContent
+GET     /blog                           @controllers.Static.blogIndex
+GET     /blog/:path                     @controllers.Static.blogPage(path)
+GET     /privacy                        @controllers.Static.privacyPolicy
+GET     /st/popup/check                 @controllers.Static.popupCheckContent
 
 
 ## yeoman-play
@@ -390,6 +377,6 @@ GET     /st/popup/check                 controllers.Static.popupCheckContent
 #GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
 
 ## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
-GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       controllers.Static.assetsSudo(path="/public", file: Asset)
-GET  /assets/*file                      controllers.Assets.at(path="/public", file)
+GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path="/public", file: Asset)
+GET  /assets/*file                      @controllers.Assets.at(path="/public", file)
 

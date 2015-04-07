@@ -40,7 +40,6 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
     MAdnNodeCache,
     deleteAdsOnAdnNodeDeleteSNSC,
-    controllers.MarketShowcase,
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
     new MBillContract.DelContractsWhenAdnNodeDeleted,

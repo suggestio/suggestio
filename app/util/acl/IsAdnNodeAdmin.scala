@@ -3,6 +3,7 @@ package util.acl
 import io.suggest.util.MacroLogsI
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.xplay.SioHttpErrorHandler
 import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
@@ -78,7 +79,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
   }
 
   def nodeNotFound(adnId: String)(implicit request: RequestHeader): Future[Result] = {
-    controllers.Application.http404Fut
+    SioHttpErrorHandler.http404Fut
   }
 }
 

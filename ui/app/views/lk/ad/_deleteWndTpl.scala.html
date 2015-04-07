@@ -11,10 +11,10 @@
     <a class="close f-right js-close-popup" href="@routes.MarketAd.editAd(mad.id.get)"></a>
   </div>
 
-  <h2 class="minor-title">@Messages("Ad.card.will.be.deleted")</h2>
+  <h2 class="minor-title">@messages("Ad.card.will.be.deleted")</h2>
 
   <div class="btn-w __size-M">
-    <a class="btn __size-M __minor js-close-popup">@Messages("Cancel")</a>
+    <a class="btn __size-M __minor js-close-popup">@messages("Cancel")</a>
     @stuff._deleteSmthFormBtnTpl(CSRF(routes.MarketAd.deleteSubmit(mad.id.get)), Some("__size-M __negative __list"), "inline-block")
   </div>
 

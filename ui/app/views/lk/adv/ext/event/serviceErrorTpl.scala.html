@@ -9,14 +9,14 @@
 @_errorEvtBase(rargs) {
 
   @rargs.errors.map { err =>
-    <p class="event_err-text">@Messages("e.adv.ext.service.startup.error")
-      @rargs.extServiceOpt.map { esrv => &quot;@Messages(esrv.nameI18N)&quot;}:
-      @Messages(err.msg, err.args: _*)
+    <p class="event_err-text">@messages("e.adv.ext.service.startup.error")
+      @rargs.extServiceOpt.map { esrv => &quot;@messages(esrv.nameI18N)&quot;}:
+      @messages(err.msg, err.args: _*)
     </p>
   }
 
   <div>
-    @Messages("Following.targets.skipped"):
+    @messages("Following.targets.skipped"):
     <ul>
       @rargs.advExtTgs.map { esrv =>
         <li>

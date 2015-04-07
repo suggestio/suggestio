@@ -2,7 +2,7 @@
 
 @* Заголовка HTML-письма от sio. *@
 
-@import ctx.lang
+@import ctx.messages
 @import util.cdn.CdnUtil.asset
 
 <table border="0" cellpadding="0" cellspacing="0"
@@ -14,18 +14,18 @@
   }
 
   @_rowTpl() {
-    @Messages("Hello")!
+    @messages("Hello")!
   }
 
   @content
 
   @_wideRowTpl("""padding: 0 40px 25px; border-bottom: 1px solid #afafaf; color: #b4b4b4; font-size: 11px""") {
-    @Messages("Msg.sent.auto.noreply")
+    @messages("Msg.sent.auto.noreply")
   }
 
   @_rowTpl("font-size: 10px; color: #bdbdbd; padding-top: 5px; background: white;", Some("background: white;")) {
     © 2011-@ctx.now.getYear
     <a style="color: #7b89a4;" href="@ctx.SC_URL_PREFIX@MAIN_PAGE_CALL">Suggest.io</a>.
-    @Messages("All.rights.reserved")
+    @messages("All.rights.reserved")
   }
 </table>

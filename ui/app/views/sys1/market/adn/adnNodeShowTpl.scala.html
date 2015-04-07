@@ -42,10 +42,10 @@
 ) {
 
   <div class="sys_t">
-    @Messages("amt.of.type." + adnNode.adn.shownTypeId):
+    @messages("amt.of.type." + adnNode.adn.shownTypeId):
     @adnNode.meta.nameShort
 
-    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
+    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@messages("Edit")</a>
   </div>
 
   <div class="i-list">
@@ -64,7 +64,7 @@
 
   @company.map { mc =>
     <p class="paragraph __size-M color-light-strong">
-      @Messages("Company")-@Messages("Owner"): <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
+      @messages("Company")-@messages("Owner"): <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
     </p>
   }
 

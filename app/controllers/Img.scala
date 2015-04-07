@@ -2,18 +2,21 @@ package controllers
 
 import java.io.File
 
+import akka.actor.ActorSystem
+import com.google.inject.Inject
+import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
 import models.im._
 import org.apache.commons.io.FileUtils
+import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import _root_.util._
 import play.api.libs.concurrent.Execution.Implicits._
-import org.joda.time.{ReadableInstant, DateTime, Instant}
+import org.joda.time.{ReadableInstant, DateTime}
 import play.api.Play, Play.{current, configuration}
 import util.acl._
 import util.img._
-import play.api.libs.json._
 import scala.concurrent.duration._
 import net.sf.jmimemagic.{MagicMatch, Magic}
 import scala.concurrent.Future
@@ -32,7 +35,12 @@ import scala.util.{Success, Failure}
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
+class Img @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
+{
 
   import LOGGER._
 
@@ -64,26 +72,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   }
 
 
-  /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
-  private def withoutMs(timestampMs: Long): Instant = {
-    val ims = timestampMs % 1000L
-    new Instant(timestampMs - ims)
-  }
-
-
-  /**
-   * Проверить значение If-Modified-Since в реквесте.
-   * true - not modified, false иначе.
-   */
-  private def isModifiedSinceCached(modelTstampMs: ReadableInstant)(implicit request: RequestHeader): Boolean = {
-    request.headers.get(IF_MODIFIED_SINCE)
-      .fold(false)(isModifiedSinceCached(modelTstampMs, _))
-  }
-  private def isModifiedSinceCached(modelTstampMs: ReadableInstant, ims: String): Boolean = {
-    DateTimeUtil.parseRfcDate(ims)
-      .exists { dt => !(modelTstampMs isAfter dt) }
-  }
-
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
@@ -113,23 +101,6 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
   }
-
-  /** Выдать json ошибку по поводу картинки. */
-  def jsonImgError(msg: String) = JsObject(Seq(
-    "status" -> JsString("error"),
-    "msg"    -> JsString(msg) // TODO Добавить бы поддержку lang.
-  ))
-
-
-  /** Ответ на присланную для предобработки картинку. */
-  private[controllers] def jsonTempOk(filename: String, imgUrl: Call) = {
-    JsObject(List(
-      "status"     -> JsString("ok"),
-      "image_key"  -> JsString(filename),
-      "image_link" -> JsString(imgUrl.url)
-    ))
-  }
-
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
@@ -187,7 +158,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
                 val img = MImg(localImg.rowKey, imOps)
                 DynImgUtil.imgCall(img)
               }
-              Ok( Img.jsonTempOk(croppedImgFileName, previewCall) )
+              Ok( jsonTempOk(croppedImgFileName, previewCall) )
             }
 
           case None =>
@@ -301,9 +272,9 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
             val mptmp = MLocalImg()
             FileUtils.writeStringToFile(mptmp.file, newSvg)
-            Ok( Img.jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg)) )
+            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg)) )
           } else {
-            val reply = Img.jsonImgError("SVG format invalid or not supported.")
+            val reply = jsonImgError("SVG format invalid or not supported.")
             NotAcceptable(reply)
           }
 
@@ -328,7 +299,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             val imOps = List(_imgRszPreviewOp)
             val im = MImg(mptmp.rowKey, imOps)
             val res2Fut = imgPrepareFut map { _ =>
-              Ok( Img.jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
+              Ok( jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
             }
             // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {
@@ -345,14 +316,14 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
           } catch {
             case ex: Throwable =>
               LOGGER.debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-              val reply = Img.jsonImgError("Unsupported picture format.")
+              val reply = jsonImgError("Unsupported picture format.")
               NotAcceptable(reply)
           }
         }
 
       // В реквесте не найдена именованая часть, содержащая картинку.
       case None =>
-        val reply = Img.jsonImgError("picture part not found in request.")
+        val reply = jsonImgError("picture part not found in request.")
         NotAcceptable(reply)
     }
 

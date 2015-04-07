@@ -87,7 +87,7 @@
               @if( adnNode.adn.isReceiver ) {
                 @defining( adnNode.adn.sinks -- mscs.map(_.sink) ) { missingSinks =>
                   @missingSinks.map { sink =>
-                    <p class="error">Необходимо <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">добавить тариф</a> на выдачи: @Messages("adn.sink." + sink.longName)!<p/>
+                    <p class="error">Необходимо <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">добавить тариф</a> на выдачи: @messages("adn.sink." + sink.longName)!<p/>
                   }
                 }
               }
@@ -103,12 +103,12 @@
                   @mscs.map { msc =>
                     <tr>
                       <td>@msc.id</td>
-                      <td>@Messages("adn.sink." + msc.sink.longName)</td>
+                      <td>@messages("adn.sink." + msc.sink.longName)</td>
                       <td>@msc.sioComission</td>
                       <td>
-                        <a href="@routes.SysMarketBilling.editSinkCom(msc.id.get)">@Messages("Edit")</a>
+                        <a href="@routes.SysMarketBilling.editSinkCom(msc.id.get)">@messages("Edit")</a>
                         @if(!(adnNode.adn.sinks contains msc.sink) ) {
-                          Это тариф НЕ используется: узел не имеет доступа к @Messages("adn.sink." + msc.sink.longName).
+                          Это тариф НЕ используется: узел не имеет доступа к @messages("adn.sink." + msc.sink.longName).
                         }
                       </td>
                     </tr>
@@ -147,7 +147,7 @@
                     <td>@tariff.fee @tariff.feeCC</td>
                     <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
                     <td>
-                      <a class="blue-link" href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
+                      <a class="blue-link" href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@messages("Edit")</a>
                     </td>
                   </tr>
                   }
@@ -182,10 +182,10 @@
                       <td>@tariff.isEnabled</td>
                       <td>@tariff.name</td>
                       <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
-                      <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(tariff.debitFor.i18nCode)}</td>
+                      <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @messages(tariff.debitFor.i18nCode)}</td>
                       <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
                       <td>
-                        <a class="blue-link" href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>
+                        <a class="blue-link" href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@messages("Edit")</a>
                       </td>
                     </tr>
                   }

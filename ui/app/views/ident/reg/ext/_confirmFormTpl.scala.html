@@ -9,7 +9,7 @@
 
 @form( CSRF(routes.Ident.idpConfirmSubmit()) ) {
 
-  @defining( Messages("Node.name") ) { msg =>
+  @defining( messages("Node.name") ) { msg =>
     @inputText(
       elf("nodeName"),
       'placeholder  -> msg,
@@ -18,7 +18,7 @@
   }
 
   <div class="btn-w __size-M">
-    <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />
+    <input class="btn __size-M1 __major" type="submit" value="@messages("Save")" />
   </div>
 
 }

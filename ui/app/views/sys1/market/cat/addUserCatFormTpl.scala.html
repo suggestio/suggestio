@@ -7,12 +7,12 @@
 
   @parentOpt.map { parent =>
     Родительская категория:
-    <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@Messages(parent.name)</a>
+    <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@messages(parent.name)</a>
   }
 
   @_userCatFormTpl(
     cf = cf,
     call = routes.MarketCategory.addUserCatFormSubmit(Some(ownerId), parentOpt.map(_.id.get)),
-    btnText = Messages("Create")
+    btnText = messages("Create")
   )
 }

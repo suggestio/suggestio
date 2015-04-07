@@ -2,7 +2,7 @@
 
 @* Страница редактирования профиля пользователя. *@
 
-@import ctx.{lang, request}
+@import ctx.{messages, request}
 @import views.html.lk._
 @import helper._
 @import util.FC.tdRadialFc
@@ -14,7 +14,7 @@
 }
 
 @adn.nodeBaseTpl(
-  title         = Messages("User.profile.edit"),
+  title         = messages("User.profile.edit"),
   node          = adnNode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_USER_EDIT,
@@ -30,17 +30,17 @@
   ) {
     @inputPassword(
       pf("old"),
-      '_label -> Messages("Type.current.password")
+      '_label -> messages("Type.current.password")
     )
 
     @inputPassword(
       pf("new.pw1"),
-      '_label -> Messages("Type.new.password")
+      '_label -> messages("Type.new.password")
     )
 
     @inputPassword(
       pf("new.pw2"),
-      '_label -> Messages("Confirm.new.password")
+      '_label -> messages("Confirm.new.password")
     )
 
   }

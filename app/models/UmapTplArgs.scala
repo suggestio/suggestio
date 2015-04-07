@@ -12,7 +12,7 @@ import play.api.libs.json._
 
 object UmapTplArgs {
 
-  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit lang: Lang): JsArray = {
+  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit lang: Messages): JsArray = {
     val lvls = ngls.map { ngl =>
       JsObject(Seq(
         "displayOnLoad" -> JsBoolean(true),
@@ -39,7 +39,7 @@ case class UmapTplArgs(
   title: String,
   ngls: Seq[NodeGeoLevel]
 ) {
-  def nglsJson(implicit lang: Lang) = UmapTplArgs.nodeGeoLevelsJson(ngls)
+  def nglsJson(implicit lang: Messages) = UmapTplArgs.nodeGeoLevelsJson(ngls)
 
 }
 

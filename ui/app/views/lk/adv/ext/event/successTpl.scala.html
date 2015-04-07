@@ -2,7 +2,7 @@
 
 @* Шаблон события успешного внешнего размещения. *@
 
-@import ctx.lang
+@import ctx.messages
 @import lk.event._
 @import io.suggest.util.UrlUtil
 
@@ -12,6 +12,6 @@
     @_hrefTitleTpl(advExtTg)
   }
 
-  @Messages("Status"): @Messages("status.success")
+  @messages("Status"): @messages("status.success")
 
 }

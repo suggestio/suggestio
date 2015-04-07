@@ -1,3 +1,2 @@
 @(b: Boolean)(implicit ctx: Context)
-@import ctx._
-@(if(b) Messages("Yes") else Messages("No"))
+@ctx.messages(if(b) "Yes" else "No")

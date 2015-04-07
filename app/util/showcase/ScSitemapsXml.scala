@@ -1,17 +1,17 @@
-package controllers.sc
+package util.showcase
 
-import controllers.SiteMapXmlCtl
 import io.suggest.model.EsModel
+import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.MAd
-import models.{ScJsState, AdSearch, Context}
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
+import models.{AdSearch, Context, ScJsState}
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Enumerator
 import play.api.mvc.QueryStringBindable
 import util.SiowebEsUtil.client
-import io.suggest.util.SioEsUtil.laFuture2sFuture
+import util.seo.SiteMapXmlCtl
 
 /**
  * Suggest.io
@@ -23,7 +23,7 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
  * - Если изменялось сегодня, то hourly. Это простимулирует кравлер просмотреть документ сегодня.
  * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
 */
-trait ScSitemapsXml extends ScSiteGeo with SiteMapXmlCtl {
+class ScSitemapsXml extends SiteMapXmlCtl {
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.

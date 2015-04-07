@@ -1,7 +1,7 @@
 package util.xplay
 
 import models.usr.MPerson
-import play.api.i18n.Lang
+import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.Result
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -14,7 +14,7 @@ import scala.concurrent.Future
  * Created: 23.03.15 18:39
  * Description: Утиль для поддержки языков.
  */
-object LangUtil {
+trait SetLangCookieUtil extends I18nSupport {
 
   /** Выставить lang.cookie. */
   def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {

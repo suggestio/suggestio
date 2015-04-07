@@ -8,7 +8,6 @@ import org.joda.time.format.DateTimeFormat
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, HtmlFormat, Html}
 import scala.annotation.tailrec
-import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
 
@@ -19,10 +18,6 @@ import views.html.helper.FieldConstructor
  * Description: Разная мелкая утиль для шаблонов.
  */
 object TplDataFormatUtil extends TplFormatUtilT {
-
-  // Надо укорачивать валюту до минимума
-  private val CURRENCY_FIXER_RUB = "руб\\.".r
-  private val CURRENCY_FIXER_USD = "USD".r
 
   val ELLIPSIS = "…"
 
@@ -129,11 +124,12 @@ object TplDataFormatUtil extends TplFormatUtilT {
   /** Отформатировать валюту. */
   def formatCurrency(currency: Currency)(implicit ctx: Context): String = {
     // TODO Надо бы дедублицировать это с частями formatPrice()
+    val lang = ctx.messages.lang
     currency.getCurrencyCode match {
-      case "RUB" if ctx.lang.language == "ru" =>
+      case "RUB" if lang.language == "ru" =>
         "р."    // Заменяем "руб." на "р."
       case other =>
-        currency.getSymbol(ctx.lang.toLocale)
+        currency.getSymbol(lang.toLocale)
     }
   }
 
@@ -265,7 +261,10 @@ object FC {
 
 }
 
+/** Приведение разных текстовых форматов к минифицированным строкам. */
 trait TplFormatUtilT {
+
+  import scala.language.implicitConversions
 
   implicit def html4email(html: Html): String = {
     HtmlCompressUtil.compressForEmail(html)

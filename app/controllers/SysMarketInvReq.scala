@@ -1,17 +1,20 @@
 package controllers
 
+import com.google.inject.Inject
+import controllers.sysctl.SmSendEmailInvite
 import models.usr.EmailActivation
+import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import models._
+import util.mail.IMailerWrapper
 import scala.concurrent.Future
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
-import util.event.SiowebNotifier.Implicts.sn
-import SysMarket.companyFormM
+import sysctl.SysMarketUtil._
 
 /**
  * Suggest.io
@@ -22,7 +25,12 @@ import SysMarket.companyFormM
  * v2: Нужен многошаговый и удобный мастер создания узлов со всеми контрактами и инвайтами, отметками о ходе
  * обработки запроса и т.д.
  */
-object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketInvReq @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite
+{
 
   import LOGGER._
 
@@ -81,7 +89,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
       },
       {mc2 =>
         MInviteRequest.tryUpdate(mir) { mir0 =>
-          val mc3 = SysMarket.updateCompany(mc, mc2)
+          val mc3 = updateCompany(mc, mc2)
           mir0.copy(
             company = Left(mc3)
           )
@@ -172,7 +180,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
   /** Форма для редактирования узла, но вместо id компании может быть любой мусор. */
   private def adnNodeFormM = {
     import play.api.data._, Forms._
-    SysMarket.getAdnNodeFormM(text(maxLength = 40))
+    getAdnNodeFormM(text(maxLength = 40))
   }
 
   /** Запрос страницы с формой редактирования заготовки узла. */
@@ -213,7 +221,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
       {adnNode2 =>
         MInviteRequest.tryUpdate(mir) { mir0 =>
           val adnNode3 = mir0.adnNode.fold [MAdnNode] (adnNode2) { adnNodeEith =>
-            SysMarket.updateAdnNode(adnNodeEith.left.get, adnNode2)
+            updateAdnNode(adnNodeEith.left.get, adnNode2)
           }
           mir0.copy(
             adnNode = Some(Left(adnNode3))
@@ -328,7 +336,7 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
           eact.save flatMap { eaId =>
             val ea1 = eact.copy(id = Option(eaId))
             val sendEmailFut = Future {
-              SysMarket.sendEmailInvite(ea1, adnNode)
+              sendEmailInvite(ea1, adnNode)
             }
             val updFut = sendEmailFut flatMap { _ =>
               // Пора переключить состояние mir
@@ -418,14 +426,6 @@ object SysMarketInvReq extends SioControllerImpl with PlayMacroLogsImpl {
     }
   }
 
-  private def isEactLeft(mirId: String) = new IsSuperuserMir(mirId) {
-    override def mirStateInvalidMsg: String = {
-      "MIR.eact is installed, but action possible only for already NOT-installed EAct. Go back and press F5."
-    }
-    override def isMirStateOk(mir: MInviteRequest): Boolean = {
-      super.isMirStateOk(mir) && mir.emailAct.exists(_.isLeft)
-    }
-  }
   private def isNodeEactLeft(mirId: String) = new IsSuperuserMir(mirId) {
     override def mirStateInvalidMsg: String = {
       "MIR.eact is already installed OR node NOT installed, but action possible only for already NOT-installed EAct and installed node. Go back and press F5."

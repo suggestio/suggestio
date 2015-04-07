@@ -1,14 +1,17 @@
 package controllers
 
+import com.google.inject.Inject
+import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
+import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
 import play.api.db.DB
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import play.api.mvc.{RequestHeader, Result}
+import play.api.mvc.Result
 import play.api.Play.{current, configuration}
 
 /**
@@ -17,7 +20,7 @@ import play.api.Play.{current, configuration}
  * Created: 18.04.14 18:23
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
-object MarketLkBilling extends SioController with PlayMacroLogsImpl {
+class MarketLkBilling @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -35,7 +38,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
 
       case None =>
         // Нет заключенных договоров, оплата невозможна.
-        http404AdHoc
+        SioHttpErrorHandler.http404ctx
     }
   }
 
@@ -81,20 +84,21 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
-        http404AdHoc
+        SioHttpErrorHandler.http404ctx
     }
   }
 
 
   /** Подгрузка страницы из списка транзакций. */
   def _txnsList(adnId: String, page: Int) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    val offset = page * TXNS_PER_PAGE
+    val tpp = TXNS_PER_PAGE
+    val offset = page * tpp
     val txns = DB.withConnection { implicit c =>
       val mbcs = MBillContract.findForAdn(adnId, isActive = None)
       val mbcIds = mbcs.flatMap(_.id).toSet
-      MBillTxn.findForContracts(mbcIds, limit = TXNS_PER_PAGE, offset = offset)
+      MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
     }
-    Ok(_txnsPageTpl(request.adnNode, txns, page))
+    Ok(_txnsPageTpl(request.adnNode, txns, currPage = page, txnsPerPage = tpp))
   }
 
 
@@ -105,7 +109,8 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
    * @param f функция вызова рендера результата.
    * @return Фьючерс с результатом. Если нет узла, то 404.
    */
-  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)(implicit request: RequestHeader): Future[Result] = {
+  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)
+                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val adnNodeFut = MAdnNodeCache.getById(adnId)
     val mbdms = DB.withConnection { implicit c =>
@@ -117,8 +122,8 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
     adnNodeFut.map {
       case Some(adnNode) =>
         f(mbdms, adnNode)
-
-      case None => http404AdHoc
+      case None =>
+        SioHttpErrorHandler.http404ctx
     }
   }
 

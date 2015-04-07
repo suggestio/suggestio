@@ -1,15 +1,17 @@
 package controllers
 
+import com.google.inject.Inject
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.ym.model.common.AdnNodeGeodata
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
+import play.api.i18n.MessagesApi
+import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.SiowebEsUtil.client
 import util.acl._
-import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.OsmElemTypes.OsmElemType
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient, OsmParsers}
@@ -25,7 +27,12 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-object SysAdnGeo extends SioControllerImpl with PlayLazyMacroLogsImpl {
+class SysAdnGeo @Inject() (
+  override val messagesApi: MessagesApi,
+  implicit val ws: WSClient
+)
+  extends SioControllerImpl with PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 

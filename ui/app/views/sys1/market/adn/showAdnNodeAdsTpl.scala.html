@@ -20,7 +20,7 @@
 }
 
 @adnBase(
-  title	      = Messages("Ad.cards"),
+  title	      = messages("Ad.cards"),
   headAfter   = Some(headAfter),
   hPathAfter  = Some(hPathAfter1),
   nodeOpt     = nodeOpt
@@ -66,7 +66,7 @@
       @mad.id.flatMap(ad2advMap.get).map { advs =>
         @advs.map { adv =>
           <p>
-            @Messages("adv.mode." + adv.mode)
+            @messages("adv.mode." + adv.mode)
             @adv.maybeOk.map { advOk =>
               @if(advOk.isAuto) {авто}
             }размещение

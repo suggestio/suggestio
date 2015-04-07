@@ -9,7 +9,6 @@
 @import util.FC.tdFc
 @import util.DateTimePrettyPrinter._
 @import args._
-@import controllers.MarketAdv.{CUSTOM_PERIOD, NODES_KM}
 @import AdnShownTypes._
 
 
@@ -20,7 +19,7 @@
       @if(showLevel){data-show-level="@showLevel"}
       @maybeBusyAdv.fold {
         @* Рендер аттрибутов инпута когда существующего размещения ещё нет (т.е. всё можно размещать). *@
-        name="@{NODES_KM}[@midOpt].@fnSuffix"
+        name="node[@midOpt].@fnSuffix"
         value="false"
       } { busyAdv =>
         @* Рендер атрибутов инпута, если размещение уже было сделано ранее. *@
@@ -46,7 +45,7 @@
 
 @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
 @af.globalError.map { ge =>
-  <p>@Messages("Problem.occured"): @Messages(ge.message, ge.args : _*)</p>
+  <p>@messages("Problem.occured"): @messages(ge.message, ge.args : _*)</p>
 }
 
 @form( CSRF(routes.MarketAdv.advFormSubmit(adId)), 'id->"advsForm", 'class->"adv-management_main-form") {
@@ -70,7 +69,7 @@
       @* Список городов. *@
       @lk.lkBlockNewDesign( open = false ) {
         <div class="js-city">
-          <span class="checkbox_title __major __no-input">@Messages("Select.town")</span>
+          <span class="checkbox_title __major __no-input">@messages("Select.town")</span>
         </div>
       } {
         @args.cities.map { city =>
@@ -83,7 +82,7 @@
         <div class="select-tab_lst js-select-type_w" data-city="@city.i">
           <div class="select-tab_i js-select-type" data-value="-1">
             <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
-            <span class="select-tab_i-title">@Messages("All.places")</span>
+            <span class="select-tab_i-title">@messages("All.places")</span>
           </div>
           @city.cats.map { cat =>
             <div class="select-tab_i js-select-type" data-value="@cat.i">
@@ -107,10 +106,10 @@
                 @if(maybeBusyAdv.isEmpty) {
                   @lk.lkBlockNewDesign( open = false ) {
                     <label>
-                      <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                      <input type="checkbox" name="node[@midOpt].advertise" value="false"/>
                       <span class="styled-checkbox"></span>
                     </label>
-                    <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
+                    <input type="hidden" name="node[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
                       @an.node.meta.name
                     </span>
@@ -118,16 +117,16 @@
                   } {
                     <div class="advm-node_block">
                       <div class="advm-node_left">
-                        <p class="block">@Messages("Adv.levels")</p>
+                        <p class="block">@messages("Adv.levels")</p>
                         <div class="block __margin-XS">
                           <hr class="delimiter __light"/>
                         </div>
                         @* Галочки уровней отображения. *@
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, Messages("Main.screen"), "onStartPage")
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, Messages("Product.categories"), "onRcvrCat")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, messages("Main.screen"), "onStartPage")
+                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, messages("Product.categories"), "onRcvrCat")
                         <div class="block __margin-XS"><hr class="delimiter __light"/></div>
                         <label class="block">
-                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@Messages("Catalog")</span>
+                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@messages("Catalog")</span>
                         </label>
                       </div>
                     </div>
@@ -137,7 +136,7 @@
                     <span class="checkbox_title __major">
                       <a href="#" class="link">@an.node.meta.name</a>
                     </span>
-                    <span class="ft-S light-gray"> (@Messages("advertised"))</span>
+                    <span class="ft-S light-gray"> (@messages("advertised"))</span>
                   </div>
                 }
               } @* lkBlockNewDesign cnt *@
@@ -152,13 +151,13 @@
 
 
     <div class="adv-management_right-bar">
-      <h2 class="minor-title">@Messages("Date.choosing")</h2>
+      <h2 class="minor-title">@messages("Date.choosing")</h2>
 
       <div class="date-widget">
 
         <div class="date-widget_options">
           <table class="prop">
-            <td class="prop_name">@Messages("Advertising.period")</td>
+            <td class="prop_name">@messages("Advertising.period")</td>
             <td class="prop_value">
               <div class="input __size-S" >
                 <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
@@ -172,7 +171,7 @@
             </td>
           </table>
           <table class="prop" id="advManagementDateStart">
-            <td class="prop_name">@Messages("Date.start")</td>
+            <td class="prop_name">@messages("Date.start")</td>
             <td class="prop_value">
               <div class="input __size-S">
                 <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
@@ -180,7 +179,7 @@
             </td>
           </table>
           <table class="prop" id="advManagementDateEnd">
-            <td class="prop_name">@Messages("Date.end")</td>
+            <td class="prop_name">@messages("Date.end")</td>
             <td class="prop_value">
               <div class="input __size-S">
                 <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
@@ -191,40 +190,40 @@
 
         <div class="date-widget_result">
           <div class="block __margin-S">
-            @Messages("Your.ad.will.adv")
+            @messages("Your.ad.will.adv")
           </div>
           <div class="date-widget_result-value">
-            @Messages("from._date")&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;@Messages("till._date")&nbsp;<span id="advManagementDateEndValue"></span>
+            @messages("from._date")&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;@messages("till._date")&nbsp;<span id="advManagementDateEndValue"></span>
           </div>
         </div>
 
       </div>
 
       <aside class="levels-widget" id="levelsWidget">
-        <h2 class="levels-widget_t">@Messages("Adv.levels")</h2>
+        <h2 class="levels-widget_t">@messages("Adv.levels")</h2>
         <ul class="levels-widget_lst">
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">@Messages("Main.screen")</span>
+              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">@messages("Main.screen")</span>
             </label>
             <div class="levels-widget_i-descr">
-              @Messages("Your.ad.will.see.all.sio.users.in.geolocs")
+              @messages("Your.ad.will.see.all.sio.users.in.geolocs")
             </div>
           </li>
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">@Messages("Categories")</span>
+              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">@messages("Categories")</span>
             </label>
             <div class="levels-widget_i-descr">
-              @Messages("Ad.will.seen.by.interested.in.cats.users")
+              @messages("Ad.will.seen.by.interested.in.cats.users")
             </div>
           </li>
           <li class="levels-widget_i">
             <label class="block">
-              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">@Messages("Catalog")</span>
+              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">@messages("Catalog")</span>
             </label>
             <div class="levels-widget_i-descr">
-              @Messages("Catalog.ads.will.be.seen.by.walkers")
+              @messages("Catalog.ads.will.be.seen.by.walkers")
             </div>
           </li>
         </ul>

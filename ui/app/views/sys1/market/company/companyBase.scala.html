@@ -5,13 +5,13 @@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysMarket.companiesList">@Messages("Companies")</a>
+  / <a class="blue-link" href="@routes.SysMarket.companiesList">@messages("Companies")</a>
   @hPathAfter.getOrElse {
     / @title
   }
 }
 
 @marketBase(
-  title = title + " | " + Messages("Companies"),
+  title = title + " | " + messages("Companies"),
   hPathAfter = Some(hPathAfter1)
 )(content)

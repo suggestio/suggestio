@@ -4,7 +4,6 @@
 
 @import ctx._
 @import helper._
-@import controllers.MarketLkAdn.MARKET_CONTRACT_AGREE_FN
 @import util.FC.checkboxFc
 
 <div class="contract-widget">
@@ -22,9 +21,9 @@
 
   <table cellpadding="0" cellspacing="0" class="input-wrap">
     @checkbox(
-      ff(MARKET_CONTRACT_AGREE_FN),
+      ff("contractAgreed"),
       '_label -> "Я согласен с условиями договора.",
-      'class -> "contract-widget__input"
+      'class  -> "contract-widget__input"
     )
   </table>
 </div>

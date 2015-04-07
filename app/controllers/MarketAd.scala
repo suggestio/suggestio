@@ -1,8 +1,10 @@
 package controllers
 
+import akka.actor.ActorSystem
+import com.google.inject.Inject
 import models.im.MImg
 import org.joda.time.DateTime
-import play.api.i18n.{Lang, Messages}
+import play.api.i18n.{MessagesApi, Lang, Messages}
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import util.PlayMacroLogsImpl
@@ -28,7 +30,12 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview {
+class MarketAd @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview
+{
 
   import LOGGER._
 

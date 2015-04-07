@@ -2,7 +2,7 @@
 
 @* Верстка страницы, которая отображает проблемы при восстановлении пароля. *@
 
-@import ctx.lang
+@import ctx.messages
 @import views.html.ident._
 
 @html = {
@@ -15,17 +15,17 @@
     <div class="popup_cnt __index-fix">
 
       <div class="popup_t __index">
-        @Messages("Error")
+        @messages("Error")
       </div>
 
       <div class="error-icon popup_error-icon"></div>
 
       <p class="block __margin-M __text-C">
-        @Messages("Recovery.key.expired")<br/>@Messages("or.used.cannot.recover.pw")
+        @messages("Recovery.key.expired")<br/>@messages("or.used.cannot.recover.pw")
       </p>
 
       <p class="block __margin-M __text-C">
-        <a class="js-btn link" href="@routes.Ident.recoverPwForm">@Messages("Recover.password")</a>
+        <a class="js-btn link" href="@routes.Ident.recoverPwForm">@messages("Recover.password")</a>
       </p>
 
     </div>
@@ -34,6 +34,6 @@
 }
 
 @mySioStartTpl(
-  title   = Messages("Password.recovery"),
+  title   = messages("Password.recovery"),
   columns = Seq(html)
 )

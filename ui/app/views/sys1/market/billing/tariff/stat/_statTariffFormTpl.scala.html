@@ -11,11 +11,11 @@
 @form(submitCall) {
 
   @stf.globalError.map { ge =>
-    <p><b>Серьёзная проблема</b>: @Messages(ge.message, ge.args : _*)</p>
+    <p><b>Серьёзная проблема</b>: @messages(ge.message, ge.args : _*)</p>
   }
 
   <table class="input-w __size-L">
-    @inputText(stf("name"), '_label -> "Название")
+    @inputText(stf("name"), '_label -> messages("Name"))
   </table>
 
   <table class="input-w __size-L">

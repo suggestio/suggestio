@@ -1,6 +1,9 @@
 package controllers
 
+import akka.actor.ActorSystem
+import com.google.inject.Inject
 import models.im.MImg
+import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.img.LogoUtil.LogoOpt_t
@@ -18,6 +21,7 @@ import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
+import util.img.ImgFormUtil.logoKM
 
 import scala.concurrent.Future
 
@@ -29,7 +33,12 @@ import scala.concurrent.Future
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
+class MarketLkAdnEdit @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
+{
 
   import LOGGER._
 
@@ -39,7 +48,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     mib * 1024 * 1024
   }
 
-  def logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid")
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM

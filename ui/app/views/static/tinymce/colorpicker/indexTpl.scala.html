@@ -1,6 +1,6 @@
 @()(implicit ctx: Context)
 
-@import ctx.lang
+@import ctx.messages
 
 <!DOCTYPE html>
 <html>
@@ -8,7 +8,7 @@
 <head>
     <script type="text/javascript" src="colorpic.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.min.css" />
-    <title>@Messages("Choose.color")</title>
+    <title>@messages("Choose.color")</title>
   </head>
   <body>
     
@@ -62,9 +62,9 @@
             </div>
             <div id="color"></div>
             <div class="right">
-                <a id="cancel" class="btn cancel" href="#">@Messages("Cancel")</a>
-                <a id="submit2" class="btn submit" href="#">@Messages("Bg.color")</a>
-                <a id="submit" class="btn submit" href="#">@Messages("Text.color")</a>
+                <a id="cancel" class="btn cancel" href="#">@messages("Cancel")</a>
+                <a id="submit2" class="btn submit" href="#">@messages("Bg.color")</a>
+                <a id="submit" class="btn submit" href="#">@messages("Text.color")</a>
             </div>
         </div>
     </div>

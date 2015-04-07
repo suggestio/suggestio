@@ -1,4 +1,4 @@
-import akka.actor.Cancellable
+import akka.actor.{ActorSystem, Cancellable}
 import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
 import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
@@ -8,8 +8,9 @@ import play.api.mvc.{Result, WithFilters, RequestHeader}
 import util.cdn.DumpXffHeaders
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
+import util.secure.PgpUtil
 import util.showcase.ScStatSaver
-import util.xplay.SecHeadersFilter
+import util.xplay.{SioHttpErrorHandler, SecHeadersFilter}
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -49,15 +50,23 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     }
     ensureScryptNoJni()
     // Запускаем супервизора
-    SiowebSup.startLink
+    val akka = app.injector.instanceOf[ActorSystem]
+    SiowebSup.startLink(akka)
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
-    val fut = esNodeFut map {
+    val esClientFut = esNodeFut map {
       _.client()
-    } flatMap { implicit esClient =>
+    }
+    val fut = esClientFut flatMap { implicit esClient =>
       initializeEsModels() map { _ => esClient }
     } flatMap { implicit esClient =>
       resetSuperuserIds map { _ => esClient }
     }
+
+    // Инициализировать связку ключей, если необходимо.
+    esClientFut onSuccess { case esClient =>
+      PgpUtil.maybeInit()(esClient)
+    }
+
     JMXImpl.registerAll()
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
@@ -106,13 +115,14 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     ScStatSaver.BACKEND.close()
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.close()
+    // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
+    JMXImpl.unregisterAll()
     val esCloseFut = Future {
       SiowebEsUtil.stopNode()
     }
 
     // В текущем потоке: Исполняем синхронные задачи завершения работы...
     super.onStop(app)
-    JMXImpl.unregisterAll()
     // Остановить таймеры
     synchronized {
       Crontab.stopTimers(cronTimers)
@@ -133,7 +143,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     trace(request.path + " - 404")
     maybeApplication match {
       case Some(app) if app.mode == Mode.Prod =>
-        _root_.controllers.Application.http404Fut(request)
+        SioHttpErrorHandler.http404Fut(request)
 
       // При разработке следует выводить нормальное 404.
       case _ => super.onHandlerNotFound(request)

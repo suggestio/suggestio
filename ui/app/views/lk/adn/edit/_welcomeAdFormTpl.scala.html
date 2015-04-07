@@ -7,7 +7,7 @@
 
 <table class="prop">
   <tr>
-    <td class="prop_name td">@Messages("Welcome.bg.hint")</td>
+    <td class="prop_name td">@messages("Welcome.bg.hint")</td>
     <td class="td" id="welcomeImage">
       @defining(mf("welcomeImgId").value) { imgIdOpt =>
 
@@ -16,7 +16,7 @@
             <div class="image __size-M js-preview">
               <input class="js-image-key" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
               <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-              <a class="image_remove-btn js-remove-image" title="@Messages("Delete")">
+              <a class="image_remove-btn js-remove-image" title="@messages("Delete")">
                 <span></span>
               </a>
             </div>
@@ -30,19 +30,13 @@
             previewRoot   = "#welcomeImage",
             previewClass  = "__size-M f-left"
           )
-          <a class="image_add-btn js-file-upload-btn" title="@Messages("Upload.image")">
-            <span>@Html( Messages("Upload.image", "<br/>") )</span>
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.image")">
+            <span>@Html( messages("Upload.image", "<br/>") )</span>
           </a>
         </div>
       }
     </td>
 
-    @* 2015.mar.20: Эта подсказка наверное не нужна. Либо, не нужна верхняя. Или, верхнюю надо разделить на две. *@
-    @*<td class="prop_name td">
-      Логотип или знак будет
-      накладываться на фон
-      картинки приветствия
-    </td>*@
     <td class="td"></td>
   </tr>
 </table>

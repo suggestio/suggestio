@@ -2,9 +2,11 @@ package controllers
 
 import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
+import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
+import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
@@ -13,17 +15,12 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
-import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
-import io.suggest.model.EsModel
 import views.html.lk.adn._
-import views.html.lk.adn.node._
 import views.html.lk.usr._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
-import play.api.libs.json._
-import io.suggest.ym.model.common.AdShowLevels
 import play.api.db.DB
 import play.api.mvc.{AnyContent, Result}
 
@@ -33,11 +30,10 @@ import play.api.mvc.{AnyContent, Result}
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction {
+class MarketLkAdn @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl
+with BruteForceProtectCtl with ChangePwAction {
 
   import LOGGER._
-
-  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuth(fromAdnId).async { implicit request =>
@@ -279,108 +275,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     }.toMap
   }
 
-
-  /** Маппинг формы включения/выключения магазина. */
-  private def nodeOnOffFormM = Form(tuple(
-    "isEnabled" -> boolean,
-    "reason"    -> optional(hideEntityReasonM)
-  ))
-
-
-  /**
-   * Рендер блока с формой отключения подчинённого узла.
-   * @param adnId id отключаемого узла.
-   * @return 200 с формой указания причины отключения узла.
-   *         404 если узел не найден.
-   */
-  def nodeOnOffForm(adnId: String) = CanSuperviseNode(adnId).apply { implicit request =>
-    import request.slaveNode
-    val formBinded = nodeOnOffFormM.fill((false, slaveNode.adn.disableReason))
-    Ok(_nodeOnOffFormTpl(slaveNode, formBinded))
-  }
-
-  /**
-   * Супервизор подсети включает/выключает состояние узла.
-   * @param shopId id узла.
-   * @return 200 Ok если всё ок.
-   */
-  def nodeOnOffSubmit(shopId: String) = CanSuperviseNode(shopId).async { implicit request =>
-    nodeOnOffFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"nodeOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Bad request body.")
-      },
-      {case (isEnabled, reason) =>
-        request.slaveNode.setIsEnabled(isEnabled, reason) map { _ =>
-          val reply = JsObject(Seq(
-            "isEnabled" -> JsBoolean(isEnabled),
-            "shopId" -> JsString(shopId)
-          ))
-          Ok(reply)
-        }
-      }
-    )
-  }
-  
-  
-  
-  /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
-    * на верхнем уровне ТЦ. */
-  private def nodeTopLevelFormM = Form(
-    "isEnabled" -> boolean
-  )
-
-  /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
-  def setSlaveTopLevelAvailable(adnId: String) = CanSuperviseNode(adnId).async { implicit request =>
-    nodeTopLevelFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"shopSetTopLevel($adnId): Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Cannot parse req body.")
-      },
-      {isTopEnabled =>
-        MAdnNode.tryUpdate(request.slaveNode) { slaveNode =>
-          val out0 = slaveNode.adn.showLevelsInfo.out
-          val out1 = if (isTopEnabled) {
-            out0 + (AdShowLevels.LVL_START_PAGE -> 1)
-          } else {
-            out0 - AdShowLevels.LVL_START_PAGE
-          }
-          slaveNode.copy(
-            adn = slaveNode.adn.copy(
-              showLevelsInfo = slaveNode.adn.showLevelsInfo.copy(
-                out = out1
-              )
-            )
-          )
-        } map { _ =>
-          Ok("updated ok")
-        }
-      }
-    )
-  }
-
-
-
-  /**
-   * Отобразить страницу по подчинённому узлу.
-   * @param adnId id под-узла.
-   */
-  def showSlave(adnId: String) = CanViewSlave(adnId).async { implicit request =>
-    import request.{slaveNode, supNode}
-    val req = new AdSearch {
-      override def receiverIds = List(request.supNode.id.get)
-      override def producerIds = List(adnId)
-    }
-    MAd.dynSearchRt(req) map { mads =>
-      Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
-    }
-  }
-
-
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
   private def nodeOwnerInviteAcceptM = Form(tuple(
-    MARKET_CONTRACT_AGREE_FN -> boolean
+    "contractAgreed" -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
   ))

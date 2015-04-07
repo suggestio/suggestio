@@ -19,7 +19,7 @@
 <div class="adv-status_lst">
 
   @if(advs.size == 0) {
-    @Messages("No.history")
+    @messages("No.history")
   }
 
   @advs.zipWithIndex.map { case(adv, i) =>
@@ -29,18 +29,18 @@
       @adv match {
         case advOk: MAdvOk => {
           @_single_status( "approved", node ) {
-            <span class="green">@Messages("Approved._adv")</span> <span class="adv-status_i-time">@_prettyDate(advOk.dateStatus)</span>
+            <span class="green">@messages("Approved._adv")</span> <span class="adv-status_i-time">@_prettyDate(advOk.dateStatus)</span>
           }
         }
         case advReq: MAdvReq => {
           @_single_status( "pending", node ) {
-            @Messages("Under.consideration") <span class="adv-status_i-time">@_prettyDate(advReq.dateStatus)</span>
+            @messages("Under.consideration") <span class="adv-status_i-time">@_prettyDate(advReq.dateStatus)</span>
           }
         }
         case advRefused: MAdvRefuse => {
           @* TODO А где reason должен отображаться? *@
           @_single_status( "declined", node ) {
-            <span class="red">@Messages("Denied")</span> <span class="adv-status_i-time">@_prettyDate(advRefused.dateStatus)</span>
+            <span class="red">@messages("Denied")</span> <span class="adv-status_i-time">@_prettyDate(advRefused.dateStatus)</span>
           }
         }
       }
@@ -52,5 +52,5 @@
 </div>
 
 @* сворачивалка списка операции, вернуть при надобности *@
-@*<button class="btn __helper __size-S adv-status_btn f-right js-slide-btn" href="#adOperationHistory">@Messages("Show.all")</button>*@
+@*<button class="btn __helper __size-S adv-status_btn f-right js-slide-btn" href="#adOperationHistory">@messages("Show.all")</button>*@
 

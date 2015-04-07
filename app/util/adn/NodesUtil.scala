@@ -1,17 +1,16 @@
 package util.adn
 
 import controllers.routes
-import io.suggest.ym.model.ad.{AdsSearchArgsDflt, AdsSearchArgsWrapper, AdsSearchArgsT}
-import io.suggest.ym.model.common.{SlNameTokenStr, NodeConf, AdnMemberShowLevels}
+import io.suggest.ym.model.ad.AdsSearchArgsDflt
+import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
-import models.adv.{MExtServices, MExtTarget}
+import models.adv.MExtServices
 import models.madn.NodeDfltColors
 import org.joda.time.DateTime
 import play.api.db.DB
-import play.api.i18n.{Messages, Lang}
-import play.api.i18n.Messages.Message
+import play.api.i18n.Messages
 import play.api.mvc.Call
-import util.{PlayMacroLogsImpl, PlayMacroLogsDyn}
+import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
 
 import scala.concurrent.Future
@@ -118,7 +117,7 @@ object NodesUtil extends PlayMacroLogsImpl {
    * @param adnId id узла.
    * @return Фьючерс для синхронизации.
    */
-  def createExtDfltTargets(adnId: String): Future[_] = {
+  def createExtDfltTargets(adnId: String)(implicit lang: Messages): Future[_] = {
     val tgtsIter = MExtServices.values
       .iterator
       .flatMap { _.dfltTarget(adnId) }
@@ -131,7 +130,7 @@ object NodesUtil extends PlayMacroLogsImpl {
    * @param personId id юзера-владельца.
    * @return Фьючерс с готовым инстансом нового существующего узла.
    */
-  def createUserNode(name: String, personId: String)(implicit lang: Lang): Future[MAdnNode] = {
+  def createUserNode(name: String, personId: String)(implicit lang: Messages): Future[MAdnNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     val nodeSaveFut = inst.save
     nodeSaveFut flatMap { adnId =>
@@ -149,7 +148,7 @@ object NodesUtil extends PlayMacroLogsImpl {
 
 
   /** Установить дефолтовые карточки. */
-  def installDfltMads(adnId: String, count: Int = INIT_ADS_COUNT)(implicit lang: Lang): Future[Seq[String]] = {
+  def installDfltMads(adnId: String, count: Int = INIT_ADS_COUNT)(implicit lang: Messages): Future[Seq[String]] = {
     lazy val logPrefix = s"installDfltMads($adnId):"
     (Future successful ADN_IDS_INIT_ADS_SOURCE)
       // Если нет продьюсеров, значит функция отключена. Это будет перехвачено в recover()

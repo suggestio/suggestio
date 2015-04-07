@@ -22,7 +22,9 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 03.04.15 21:23
  * Description: service-level actor для подготовки OAuth1 к работе в рамках одного oauth1-сервиса.
  * Актор занимается инициализацией состояния OAuth1-контекста, а именно получением access_token'а.
- * Токен хранится в куках у клиента, но нужно производить проверку его.
+ * TODO Ранее полученный токен хранится в куках у клиента, но нужно производить проверку его.
+ *
+ * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
  */
 object OAuth1ServiceActor extends IServiceActorCompanion
 
@@ -173,6 +175,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     override def receiverPart: Receive = {
       case SuccessToken(acTok) =>
         trace("Have fresh access_token: " + acTok)
+        // TODO Зашифровать и сохранить токен в HTML5 localStorage.
         become(new StartTargetActorsState(acTok))
 
       case Failure(ex) =>

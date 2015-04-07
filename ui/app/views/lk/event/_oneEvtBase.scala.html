@@ -2,6 +2,7 @@
 
 @* Очень-очень базовый и минимальный шаблон для абсолютно любой нотификации в системе. *@
 @import helper._
+@import ctx.messages
 
 @if(rargs.withContainer) {
   <div id="@rargs.mevent.id">
@@ -15,7 +16,7 @@
     @if( rargs.mevent.id ) {
       <form action="@routes.LkEvents.nodeEventDelete(rargs.mevent.id.get)" method="POST">
     }
-      <input class="event_close close" type="submit" value="" title="@Messages("Hide.event")" />
+      <input class="event_close close" type="submit" value="" title="@messages("Hide.event")" />
     @if(rargs.mevent.id) {
       </form>
     }

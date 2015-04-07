@@ -64,7 +64,7 @@
                   НЕ отображается на карте.
                 </span>
               }
-              <a href="@if(geo.isCircle){@routes.SysAdnGeo.editCircle(geo.id.get, geo.adnId)} else {@routes.SysAdnGeo.editNodeOsm(geo.id.get, geo.adnId)}">@Messages("Edit")</a>
+              <a href="@if(geo.isCircle){@routes.SysAdnGeo.editCircle(geo.id.get, geo.adnId)} else {@routes.SysAdnGeo.editNodeOsm(geo.id.get, geo.adnId)}">@messages("Edit")</a>
             </td>
           </tr>
         }

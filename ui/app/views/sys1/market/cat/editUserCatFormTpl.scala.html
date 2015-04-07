@@ -4,19 +4,19 @@
 @import ctx._
 
 @userCatBase(
-  title = Messages(mmcat.name) + " " + Messages("Edit"),
+  title = messages(mmcat.name) + " " + messages("Edit"),
   adnId = mmcat.ownerId
 ) {
 
-  <p>@Messages("Edit") категории <a href="@routes.MarketCategory.showUserCat(mmcat.id.get)">@Messages(mmcat.name)</a>.</p>
+  <p>@messages("Edit") категории <a href="@routes.MarketCategory.showUserCat(mmcat.id.get)">@messages(mmcat.name)</a>.</p>
   @parentOpt.map { parent =>
-    <p>Родительская категория: <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@Messages(parent.name)</a>.</p>
+    <p>Родительская категория: <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@messages(parent.name)</a>.</p>
   }
 
   @_userCatFormTpl(
     cf = cf,
     call = routes.MarketCategory.editUserCatFormSubmit(mmcat.id.get),
-    btnText = Messages("Save")
+    btnText = messages("Save")
   )
 
   <br/><br/><br/><br/><br/><br/>

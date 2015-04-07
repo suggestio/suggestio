@@ -16,7 +16,7 @@
       </p>
     }
     @mirs.groupBy(_.reqType).map { case (reqType, tMirs) =>
-      <strong class="color-strong">@Messages(reqType.l10n)</strong>
+      <strong class="color-strong">@messages(reqType.l10n)</strong>
         @tMirs.map { mir =>
           <p class="paragraph __size-M">
             <a class="blue-link" href="@routes.SysMarketInvReq.showIR(mir.id.get)">

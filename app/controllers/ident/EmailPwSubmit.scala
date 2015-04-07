@@ -10,7 +10,7 @@ import util._
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.ident.IdentUtil
-import util.xplay.LangUtil
+import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
 import scala.concurrent.Future
 import SiowebEsUtil.client
@@ -63,7 +63,7 @@ import EmailPwSubmit._
 
 
 /** Добавить обработчик сабмита формы логина по email и паролю в контроллер. */
-trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForceProtectCtl {
+trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForceProtectCtl with SetLangCookieUtil {
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
     IdentUtil.redirectCallUserSomewhere(personId)
@@ -96,7 +96,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
                 rdr.addingToSession(addToSession : _*)
               }
               // Выставить язык, сохраненный ранее в MPerson
-              LangUtil.setLangCookie2(rdrFut2, mpersonOptFut)
+              setLangCookie2(rdrFut2, mpersonOptFut)
 
             } else {
               val binded1 = binded.copy(password = "")

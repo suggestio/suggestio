@@ -3,7 +3,7 @@
 @* Панель поиска: текстового, фасетного по категориям, по рекламодателям (правая панель). *@
 
 @import util.TplDataFormatUtil._
-@import ctx.lang
+@import ctx.messages
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
 
@@ -38,7 +38,7 @@
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@Messages("Categories").toUpperCase</div>
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@messages("Categories").toUpperCase</div>
         </div>
         @if(args.jsStateOpt) {
           </a>
@@ -49,7 +49,7 @@
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-right @if(!isListTab) {__inactive}" id="smShopsTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@Messages("List").toUpperCase</div>
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@messages("List").toUpperCase</div>
         </div>
         @if(args.jsStateOpt) {
           </a>

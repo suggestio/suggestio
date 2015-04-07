@@ -9,9 +9,9 @@
   @stuff._deleteSmthFormBtnTpl( CSRF(routes.SysMarket.deleteAdnNodeSubmit(adnNode.id.get)) )
 
   @_adnNodeFormTpl(
-    af = af,
+    af	      = af,
     companies = companies,
-    call = routes.SysMarket.editAdnNodeSubmit(adnNode.id.get),
-    btnText = Messages("Save")
+    call      = routes.SysMarket.editAdnNodeSubmit(adnNode.id.get),
+    btnText   = messages("Save")
   )
 }

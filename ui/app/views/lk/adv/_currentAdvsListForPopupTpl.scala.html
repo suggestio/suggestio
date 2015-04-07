@@ -25,19 +25,19 @@
 
       case advOk: MAdvOk => {
         @_single_status( "approved", node ) {
-          @Messages("Approved._adv") @_prettyDate(advOk.dateStatus)
+          @messages("Approved._adv") @_prettyDate(advOk.dateStatus)
         }
         @* dateStatus - одобрение, dateStart - начало размещения. *@
       }
       case advReq: MAdvReq => {
         @_single_status( "pending", node ) {
-          @Messages("Under.consideration") @_prettyDate(advReq.dateStatus)
+          @messages("Under.consideration") @_prettyDate(advReq.dateStatus)
         }
       }
       case advRefused: MAdvRefuse => {
         @* TODO Где отображается причина отказа? *@
         @_single_status( "declined", node ) {
-          @Messages("Denied") @_prettyDate(advRefused.dateStatus)
+          @messages("Denied") @_prettyDate(advRefused.dateStatus)
         }
       }
 
@@ -53,6 +53,6 @@
 
 @if(advs.length > 3) {
   <span class="gray-but-smallest advs-statuses__transactions-btn">
-    <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">@Messages("Transactions.history")</a>
+    <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">@messages("Transactions.history")</a>
   </span>
 }
