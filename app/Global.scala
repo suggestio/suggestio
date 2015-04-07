@@ -114,13 +114,14 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     ScStatSaver.BACKEND.close()
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.close()
+    // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
+    JMXImpl.unregisterAll()
     val esCloseFut = Future {
       SiowebEsUtil.stopNode()
     }
 
     // В текущем потоке: Исполняем синхронные задачи завершения работы...
     super.onStop(app)
-    JMXImpl.unregisterAll()
     // Остановить таймеры
     synchronized {
       Crontab.stopTimers(cronTimers)

@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import play.api.data._, Forms._
@@ -21,7 +22,7 @@ import io.suggest.ym.parsers.Price
  * Created: 20.04.14 21:12
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
-class SysMarketBillingTariff(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingTariff @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

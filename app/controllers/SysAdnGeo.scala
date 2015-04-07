@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.ym.model.common.AdnNodeGeodata
 import org.elasticsearch.common.unit.DistanceUnit
@@ -25,7 +26,7 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
-class SysAdnGeo(val messagesApi: MessagesApi) extends SioControllerImpl with PlayLazyMacroLogsImpl {
+class SysAdnGeo @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 

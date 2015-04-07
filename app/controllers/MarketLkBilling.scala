@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -10,7 +11,7 @@ import play.api.db.DB
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import play.api.mvc.{RequestHeader, Result}
+import play.api.mvc.Result
 import play.api.Play.{current, configuration}
 
 /**
@@ -19,7 +20,7 @@ import play.api.Play.{current, configuration}
  * Created: 18.04.14 18:23
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
-class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class MarketLkBilling @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 

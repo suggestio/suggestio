@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models._
 import models.usr.MPersonIdent
 import play.api.i18n.MessagesApi
@@ -21,7 +22,7 @@ import play.api.data._, Forms._
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-class MarketLkSupport(val messagesApi: MessagesApi) extends SioController with PlayLazyMacroLogsImpl {
+class MarketLkSupport @Inject() (val messagesApi: MessagesApi) extends SioController with PlayLazyMacroLogsImpl {
 
   import LOGGER._
 

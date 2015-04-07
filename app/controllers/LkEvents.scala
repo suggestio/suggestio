@@ -1,6 +1,7 @@
 package controllers
 
 import com.github.nscala_time.time.OrderingImplicits._
+import com.google.inject.Inject
 import models._
 import models.adv.MExtTarget
 import models.event.search.MEventsSearchArgs
@@ -26,7 +27,7 @@ import scala.util.{Success, Failure}
  * Description: Контроллер раздела уведомлений в личном кабинете.
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
-class LkEvents(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class LkEvents @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

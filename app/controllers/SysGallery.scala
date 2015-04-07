@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
@@ -24,7 +25,7 @@ import scala.concurrent.Future
  * Created: 06.11.14 18:48
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
-class SysGallery(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
+class SysGallery @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 

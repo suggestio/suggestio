@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models._
 import models.adv._
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
@@ -31,7 +32,7 @@ import scala.concurrent.Future
  * иных сервисах, занимающихся PR-деятельстью.
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
-class LkAdvExt(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class LkAdvExt @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

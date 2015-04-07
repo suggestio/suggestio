@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.Context
 import models.usr.MPerson
 import play.api.data.Form
@@ -22,10 +23,9 @@ import scala.concurrent.Future
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
-class LkLang(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class LkLang @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
-
 
   private def chooseLangFormM(implicit currLang: Lang): Form[Lang] = {
     Form(

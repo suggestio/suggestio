@@ -2,6 +2,7 @@ package controllers
 
 import java.nio.file.Files
 
+import com.google.inject.Inject
 import io.suggest.model.geo.{PointGs, GsTypes}
 import org.elasticsearch.action.bulk.BulkResponse
 import play.api.libs.Files.TemporaryFile
@@ -28,7 +29,7 @@ import scala.concurrent.Future
  * Created: 15.09.14 12:09
  * Description: Контроллер для umap-backend'ов.
  */
-class Umap(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class Umap @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

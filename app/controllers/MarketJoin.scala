@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.CallBackReqCallTimes.CallBackReqCallTime
 import models.usr.EmailActivation
 import org.joda.time.DateTime
@@ -26,10 +27,9 @@ import util.img.ImgFormUtil.logoKM
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-class MarketJoin(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with CaptchaValidator {
+class MarketJoin @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with CaptchaValidator {
 
   import LOGGER._
-
 
   /** Маппинг формы запроса обратного звонка с капчей, именем, телефоном и временем прозвона. */
   private def callbackRequestFormM = {

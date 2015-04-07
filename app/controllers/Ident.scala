@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
 import play.api.i18n.{MessagesApi, Messages}
@@ -22,7 +23,7 @@ import views.html.ident.reg.email._regColumnTpl
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
-class Ident(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with EmailPwLogin
+class Ident @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with EmailPwLogin
 with CaptchaValidator with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
 
   import LOGGER._

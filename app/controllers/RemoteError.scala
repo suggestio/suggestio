@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.{RemoteErrorTypes, GeoIp, MRemoteError}
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
@@ -16,7 +17,7 @@ import util.SiowebEsUtil.client
  * Description: Сборка js-ошибок с клиентов и сохранение оных в модель.
  * Клиенты могут слать всякую хрень.
  */
-class RemoteError(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl {
+class RemoteError @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl {
 
   import LOGGER._
 

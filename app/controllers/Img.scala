@@ -2,6 +2,7 @@ package controllers
 
 import java.io.File
 
+import com.google.inject.Inject
 import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
 import models.im._
@@ -33,7 +34,8 @@ import scala.util.{Success, Failure}
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-class Img(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl {
+class Img @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport
+with BruteForceProtectCtl {
 
   import LOGGER._
 

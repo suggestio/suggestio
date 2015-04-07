@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
@@ -20,7 +21,7 @@ import scala.util.matching.Regex
  * Description: Управление системами автоматической генерации контента.
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
-class SysAi(val messagesApi: MessagesApi) extends SioControllerImpl with SysAiMadT {
+class SysAi @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with SysAiMadT {
 
   import views.html.sys1.ai._
 

@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.im.MImg
 import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
@@ -31,8 +32,8 @@ import scala.concurrent.Future
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-class MarketLkAdnEdit(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport
-with BruteForceProtectCtl {
+class MarketLkAdnEdit @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl
+with TempImgSupport with BruteForceProtectCtl {
 
   import LOGGER._
 

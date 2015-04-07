@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.i18n.MessagesApi
 import util.acl._
 import views.html.market._
@@ -12,7 +13,7 @@ import views.html.market._
  * не доросли до отдельных контроллеров.
  */
 
-class Market(val messagesApi: MessagesApi) extends SioController {
+class Market @Inject() (val messagesApi: MessagesApi) extends SioController {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>

@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import controllers.sc._
 import play.api.i18n.MessagesApi
 import util._
@@ -12,6 +13,6 @@ import util._
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-class MarketShowcase(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl
+class MarketShowcase @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl
 with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
 with ScSyncSiteGeo with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScOnlyOneAd

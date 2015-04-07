@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import io.suggest.util.MacroLogsImpl
 import models.usr.EmailActivation
 import play.api.db.DB
@@ -26,8 +27,8 @@ import sysctl.SysMarketUtil._
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-class SysMarket(val messagesApi: MessagesApi) extends SioControllerImpl with MacroLogsImpl with ShopMartCompat
-with SysNodeInstall with SmSendEmailInvite {
+class SysMarket @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with MacroLogsImpl
+with ShopMartCompat with SysNodeInstall with SmSendEmailInvite {
 
   import LOGGER._
 

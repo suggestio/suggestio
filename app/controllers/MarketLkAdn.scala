@@ -2,6 +2,7 @@ package controllers
 
 import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
+import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
 import models.usr.{MPerson, EmailActivation, EmailPwIdent}
@@ -29,8 +30,8 @@ import play.api.mvc.{AnyContent, Result}
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-class MarketLkAdn(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl
-with ChangePwAction {
+class MarketLkAdn @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl
+with BruteForceProtectCtl with ChangePwAction {
 
   import LOGGER._
 

@@ -1,6 +1,7 @@
 package controllers
 
 import _root_.util.{MartCategories, PlayMacroLogsImpl}
+import com.google.inject.Inject
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import util.FormUtil._
@@ -20,7 +21,7 @@ import play.api.Play.{current, configuration}
  * Created: 05.03.14 10:14
  * Description: Контроллер управления категориями магазина/ТЦ.
  */
-class MarketCategory(val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
+class MarketCategory @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 

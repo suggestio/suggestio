@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -21,7 +22,7 @@ import scala.concurrent.Future
  * Created: 27.05.14 12:07
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
-class SysMarketBillingMmp(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysMarketBillingMmp @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

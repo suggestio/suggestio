@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
 import org.joda.time.format.ISOPeriodFormat
@@ -33,7 +34,7 @@ import play.api.data._, Forms._
  * - узел 1 размещает рекламу на других узлах (форма, сабмит и т.д.).
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
-class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class MarketAdv @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 

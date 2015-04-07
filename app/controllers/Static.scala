@@ -8,6 +8,7 @@ package controllers
  * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
  */
 
+import com.google.inject.Inject
 import play.api.Play.{isProd, current}
 import play.api.i18n.MessagesApi
 import play.api.mvc._
@@ -15,7 +16,7 @@ import util.acl.{IsSuperuserOr404, MaybeAuth}
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-class Static(val messagesApi: MessagesApi) extends SioControllerImpl {
+class Static @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl {
 
   private def booklet = routes.Market.marketBooklet().url
 

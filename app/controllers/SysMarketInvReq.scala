@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import controllers.sysctl.SmSendEmailInvite
 import models.usr.EmailActivation
 import play.api.i18n.MessagesApi
@@ -23,7 +24,7 @@ import sysctl.SysMarketUtil._
  * v2: Нужен многошаговый и удобный мастер создания узлов со всеми контрактами и инвайтами, отметками о ходе
  * обработки запроса и т.д.
  */
-class SysMarketInvReq(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite {
+class SysMarketInvReq @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite {
 
   import LOGGER._
 

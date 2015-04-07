@@ -2,6 +2,7 @@ package controllers
 
 import java.net.{MalformedURLException, URL}
 
+import com.google.inject.Inject
 import models.im.MImg
 import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
@@ -18,7 +19,7 @@ import play.api.data._, Forms._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
-class SysImg(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
+class SysImg @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl {
 
   import LOGGER._
 
