@@ -28,9 +28,9 @@ object LsDataTypes extends Enumeration {
   }
 
   /** JSON-парсер с привязкой к названию поля. */
-  def readsKv: Reads[T] = {
-    (__ \ LS_DATA_TYPE_FN).read(reads)
-  }
+  def readsKv = (__ \ LS_DATA_TYPE_FN).read(reads)
+
+  def writesKv = (__ \ LS_DATA_TYPE_FN).write[T]
 
 }
 

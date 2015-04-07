@@ -1,8 +1,10 @@
 package util.adv
 
 import java.net.URL
+import akka.actor.Actor
 import io.suggest.adv.ext.view.RunnerPage
 import models.adv._
+import models.adv.ext.act.ExtActorEnv
 import models.adv.js.{JsCmd, IWsCmd}
 import models.event.{RenderArgs, MEventTmp, IErrorInfo}
 import play.api.data._, Forms._
@@ -163,4 +165,10 @@ trait ExtServiceActorUtil extends ISendCommand {
     )
   }
 
+}
+
+
+/** Готовое к использованию значение полей replyTo в jscmd-запросах. */
+trait ReplyTo extends Actor with ExtActorEnv {
+  override def replyTo = self.path.name
 }

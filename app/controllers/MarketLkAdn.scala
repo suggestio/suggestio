@@ -31,7 +31,7 @@ import play.api.mvc.{AnyContent, Result}
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi
 )
   extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction
 {

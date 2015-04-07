@@ -1,13 +1,17 @@
 package util.adv
 
+import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
+
 import controllers.routes
-import models.adv.{AddActors, IExtAdvArgsWrapperT, IOAuth1AdvTargetActorArgs, IExtAdvServiceActorArgs}
-import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
-import models.adv.js.JsCmd
+import models.adv._
+import models.adv.ext.act.{ExtServiceActorEnv, ExtActorEnv, OAuthVerifier, ActorPathQs}
+import models.adv.js.{GetStorageCmd, SetStorageCmd, JsCmd}
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
+import models.ls.LsOAuth1Info
 import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
+import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.{AsyncUtil, FsmActor}
@@ -33,6 +37,8 @@ object OAuth1ServiceActor extends IServiceActorCompanion
 
 case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   extends FsmActor
+  with ReplyTo
+  with ExtServiceActorEnv
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with ExtServiceActorUtil
@@ -52,6 +58,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
   lazy val lsCryptoKey = MAsymKey.getById(PgpUtil.LOCAL_STOR_KEY_ID)
+    .map(_.get)
 
   /** Ключ для хранения секретов access_token'а, относящихся к юзеру. */
   lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.pwOpt.fold("__ANON__")(_.personId)}"
@@ -62,7 +69,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {
     super.preStart()
-    become(new AskRequestTokenState)
+    become(new AskRequestTokenState(userHaveInvalTok = false))
   }
 
 
@@ -94,13 +101,32 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     )
   }
 
+
+  /** Запросить ранее сохраненный access_token из браузера клиента. */
+  class GetSavedAcTokFromUserState extends FsmState {
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      val jsCmd = GetStorageCmd(
+        key     = lsValueKey,
+        replyTo = Some(replyTo)
+      )
+      sendCommand(jsCmd)
+      // TODO Нужен timeout на случай проблем
+    }
+
+    override def receiverPart: Receive = {
+      ???
+    }
+  }
+
+
   /**
    * Состояние запроса request token'а.
    * Нужно отправить в твиттер запрос на получение одноразового токена.
    * Одновременно, на стороне юзера открыть попап, который откроет экшен, связанный с этим актором
    * для получения HTTP-редиректа. Ссылка будет сгенерена этим актором.
    */
-  class AskRequestTokenState extends FsmState {
+  class AskRequestTokenState(userHaveInvalTok: Boolean) extends FsmState {
 
     /** Запустить запрос реквест-токена и дожидаться результата. */
     override def afterBecome(): Unit = {
@@ -120,7 +146,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       // Сервис выдал одноразовый request token. Надо отредиректить юзера, используя этот токен.
       case SuccessToken(reqTok) =>
         trace("Got request token: " + reqTok.token)
-        become(new RemoteUserAuthorizeState(reqTok))
+        become(new RemoteUserAuthorizeState(reqTok, userHaveInvalTok))
 
       case Failure(ex) =>
         error("Failed to ask request token", ex)
@@ -136,7 +162,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
    * Состояние отправки юзера на авторизацию в сервис и возврата назад.
    * @param reqTok Полученный токен.
    */
-  class RemoteUserAuthorizeState(reqTok: RequestToken) extends FsmState {
+  class RemoteUserAuthorizeState(reqTok: RequestToken, userHaveInvalTok: Boolean) extends FsmState {
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -165,12 +191,42 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
         become(new RetrieveAccessTokenState(reqTok, verifier))
       case other =>
         warn("msg rcvrd " + other)
+        // TODO Вывалить ошибку инициализации юзеру
+        if (userHaveInvalTok) {
+          // Стереть текущий токен из localStorage юзера.
+          val jsCmd = SetStorageCmd(key = lsValueKey, value = None)
+          sendCommand(jsCmd)
+        }
     }
   }
 
 
   /** Состояние получения access_token'а. */
   class RetrieveAccessTokenState(reqTok: RequestToken, verifier: String) extends FsmState {
+
+    /** Сохранение access_token'а на клиенте. */
+    def saveAcTokOnClient(acTok: RequestToken): Unit = {
+      args.request.pwOpt.foreach { pw =>
+        lsCryptoKey onSuccess { case pgpKey =>
+          // Сериализовать accessToken вместе с метаданными
+          val info = LsOAuth1Info(acTok, pw.personId, timestamp = System.currentTimeMillis())
+          val json = Json.toJson(info).toString()
+          // Зашифровать всё с помощью PGP.
+          val baos = new ByteArrayOutputStream(1024)
+          PgpUtil.encryptForSelf(
+            data = new ByteArrayInputStream(json.getBytes()),
+            key  = pgpKey,
+            out  = baos
+          )
+          // Сохранить шифротекст на клиенте.
+          val jsCmd = SetStorageCmd(
+            key   = lsValueKey,
+            value = Some(new String(baos.toByteArray))
+          )
+          sendCommand(jsCmd)
+        }
+      }
+    }
 
     /** Надо запросить токен у удаленного сервиса. */
     override def afterBecome(): Unit = {
@@ -184,10 +240,8 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     override def receiverPart: Receive = {
       case SuccessToken(acTok) =>
         trace("Have fresh access_token: " + acTok)
-        // TODO Зашифровать и сохранить токен в HTML5 localStorage.
-        lsCryptoKey onSuccess { case pgpKey =>
-          ???
-        }
+        // Зашифровать и сохранить токен в HTML5 localStorage:
+        saveAcTokOnClient(acTok)
         become(new StartTargetActorsState(acTok))
 
       case Failure(ex) =>

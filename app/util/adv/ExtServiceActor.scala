@@ -83,6 +83,7 @@ trait ExtServiceActorLogic extends FsmActor with ISendCommand with ExtServiceAct
 case class ExtServiceActor(args: IExtAdvServiceActorArgs)
   extends ExtServiceActorLogic
   with ExtServiceActorEnv
+  with ReplyTo
   with PlayMacroLogsImpl
   with MediatorSendCommand
 { actor =>
@@ -94,8 +95,6 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
   /** Ресивер для всех состояний. */
   override def allStatesReceiver: Receive = PartialFunction.empty
   override def receive = allStatesReceiver
-
-  override def replyTo = self.path.name
 
   override def preStart(): Unit = {
     super.preStart()

@@ -1,10 +1,9 @@
 package models.ls
 
-import models.usr.OAuthReqTokUtil
+import models.usr.OAuthReqTokUtil.{reads => oartReads, writes => oartWrites}
 import play.api.libs.oauth.RequestToken
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import LsDataTypes.LS_DATA_TYPE_FN
 
 /**
  * Suggest.io
@@ -19,22 +18,34 @@ object LsOAuth1Info {
   def PERSON_ID_FN    = "p"
   def TIMESTAMP_FN    = "t"
 
+  /** Десериализация из JSON с валидацией типа. */
   implicit def reads: Reads[LsOAuth1Info] = (
-    //LsDataTypes.readsKv and   // TODO Делать проверку id модели от считываемых данных.
-    (__ \ ACCESS_TOKEN_FN).read(OAuthReqTokUtil.reads) and
+    LsDataTypes.readsKv and
+    (__ \ ACCESS_TOKEN_FN).read[RequestToken] and
     (__ \ PERSON_ID_FN).read[String] and
     (__ \ TIMESTAMP_FN).read[Long]
-  )(apply _)
+  ) {
+    (lsdt, acTok, personId, timestamp) =>
+      // Обязательно делать проверку id модели от считываемых данных. Дабы юзеры не подсовывали сюда данные из других моделей.
+      if (lsdt != LsDataTypes.OAuth1AccessToken)
+        throw new IllegalArgumentException("Unexpected ls data type: " + lsdt)
+      else
+        apply(acTok, personId, timestamp)
+    }
 
+  /** Сериализация в JSON с записью типа. */
   implicit def writes: Writes[LsOAuth1Info] = (
-    //LsDataTypes.writesKv and   // TODO Записывать id модели от считываемых данных.
-    (__ \ ACCESS_TOKEN_FN).write(OAuthReqTokUtil.writes) and
+    (__ \ ACCESS_TOKEN_FN).write[RequestToken] and
     (__ \ PERSON_ID_FN).write[String] and
-    (__ \ TIMESTAMP_FN).write[Long]
-  )(unlift(unapply))
-
+    (__ \ TIMESTAMP_FN).write[Long] and
+    LsDataTypes.writesKv
+  ) { info: LsOAuth1Info =>
+    // Записывать идентификатор модели в сериализуемые данные.
+    (info.acTok, info.personId, info.timestamp, info.lsDataType)
+  }
 
 }
+
 
 /**
  * Экземпляр модели.

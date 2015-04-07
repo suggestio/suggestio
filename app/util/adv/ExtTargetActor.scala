@@ -56,6 +56,7 @@ import ExtTargetActor._
 case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   extends FsmActor
   with ExtTargetActorEnv
+  with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with EtaCustomArgsBase
@@ -77,9 +78,6 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
   protected var fillCtxTry: Int = 0
-
-  /** Значение replyTo в запросах клиенту. */
-  override val replyTo = self.path.name
 
   override def service = args.target.target.service
 

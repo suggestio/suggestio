@@ -31,7 +31,7 @@ sealed trait IWsCmd {
   def ctype   : MJsCmdType
 
   /** Режим отправки: асинхронный или в порядке очереди. */
-  def sendMode: CmdSendMode
+  def sendMode: CmdSendMode = CmdSendModes.Async
 
   /** Сериализовать в JSON. */
   def toJson: JsObject = JsObject(toJsonAcc)
@@ -60,9 +60,7 @@ trait IJsCmd extends IWsCmd {
 }
 
 /** Дефолтовая реализация [[IJsCmd]]. */
-case class JsCmd(jsCode: String, isPopup: Boolean = false) extends IJsCmd {
-  def sendMode = CmdSendModes.Async
-}
+case class JsCmd(jsCode: String, isPopup: Boolean = false) extends IJsCmd
 
 
 /** Команда к js-подсистеме внешнего размещения в json-формате. */
@@ -84,6 +82,60 @@ trait IJsonActionCmd extends IWsCmd {
     acc
   }
 }
+
+
+/** Трейт, отражающий суть запроса чтения из хранилища браузера. */
+trait IGetStorageCmd extends IWsCmd {
+
+  /** Кому отвечать, если есть. */
+  def replyTo: Option[String]
+
+  /** Ключ, по которому ожидается значение. */
+  def key: String
+
+  override def ctype = MJsCmdTypes.GetStorage
+
+  override def toJsonAcc: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = super.toJsonAcc
+    acc ::= KEY_FN -> JsString(key)
+    val _replyTo = replyTo
+    if (_replyTo.isDefined)
+      acc ::= REPLY_TO_FN -> JsString(_replyTo.get)
+    acc
+  }
+}
+
+/** Дефолтовая реализация команды [[IGetStorageCmd]]. */
+case class GetStorageCmd(
+  key: String,
+  replyTo: Option[String]
+) extends IGetStorageCmd
+
+
+/** Трейт с телом SetStorage-команды. */
+trait ISetStorageCmd extends IWsCmd {
+  /** Ключ, по которому должно сохраняться значение. */
+  def key: String
+  /** Значение. Если None, то значение будет удалено. */
+  def value: Option[String]
+
+  override def ctype = MJsCmdTypes.SetStorage
+
+  override def toJsonAcc: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = super.toJsonAcc
+    acc ::= KEY_FN -> JsString(key)
+    val _value = value
+    if (_value.isDefined)
+      acc ::= VALUE_FN -> JsString(_value.get)
+    acc
+  }
+}
+
+/** Дефолтовая реализация команды [[ISetStorageCmd]]. */
+case class SetStorageCmd(
+  key   : String,
+  value : Option[String]
+) extends ISetStorageCmd
 
 
 /** Закидывание в контекст данных по текущему экшену. */
