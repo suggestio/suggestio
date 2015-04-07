@@ -66,7 +66,7 @@ case class MAsymKey(
   secKey        : Option[String],
   id            : Option[String],
   versionOpt    : Option[Long] = None
-) extends EsModelT with EsModelPlayJsonT {
+) extends EsModelT with EsModelPlayJsonT with IAsymKey {
 
   override def companion = MAsymKey
 
@@ -79,4 +79,10 @@ case class MAsymKey(
     acc
   }
 
+}
+
+/** Интерфейс для экземпляра-контейнера ассиметричного ключа. */
+trait IAsymKey {
+  def pubKey: String
+  def secKey: Option[String]
 }

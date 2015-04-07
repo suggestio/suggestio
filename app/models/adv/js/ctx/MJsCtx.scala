@@ -1,7 +1,6 @@
 package models.adv.js.ctx
 
 import io.suggest.adv.ext.model.ctx.MJsCtxFieldsT
-import io.suggest.model.EsModel.FieldsJsonAcc
 import models.adv.{MExtServices, MExtService, JsExtTarget}
 import models.adv.js.{MJsAction, AnswerStatus}
 import play.api.libs.json._

@@ -162,10 +162,10 @@ class LkAdvExt @Inject() (
       targetsFut map { targets =>
         targets.iterator
           .flatMap { target =>
-          target.id
-            .flatMap(targetsMap.get)
-            .map { info => MExtTargetInfoFull(target, info.returnTo) }
-        }
+            target.id
+              .flatMap(targetsMap.get)
+              .map { info => MExtTargetInfoFull(target, info.returnTo) }
+          }
           .toList
       }
     }

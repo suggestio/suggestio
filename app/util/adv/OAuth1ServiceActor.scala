@@ -6,15 +6,18 @@ import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.js.JsCmd
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
+import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
 import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.{AsyncUtil, FsmActor}
 import util.jsa.JsWindowOpen
+import util.secure.PgpUtil
 
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.{client => esClient}
 
 /**
  * Suggest.io
@@ -46,6 +49,12 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   /** OAuth1-клиент сервиса. */
   val client = args.service.oauth1Client
+
+  /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
+  lazy val lsCryptoKey = MAsymKey.getById(PgpUtil.LOCAL_STOR_KEY_ID)
+
+  /** Ключ для хранения секретов access_token'а, относящихся к юзеру. */
+  lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.pwOpt.fold("__ANON__")(_.personId)}"
 
   /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
   def domWndTargetName = "popup-authz-" + args.service.strId
@@ -176,6 +185,9 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       case SuccessToken(acTok) =>
         trace("Have fresh access_token: " + acTok)
         // TODO Зашифровать и сохранить токен в HTML5 localStorage.
+        lsCryptoKey onSuccess { case pgpKey =>
+          ???
+        }
         become(new StartTargetActorsState(acTok))
 
       case Failure(ex) =>

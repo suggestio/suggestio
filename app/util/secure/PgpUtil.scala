@@ -1,7 +1,9 @@
 package util.secure
 
-import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory}
-import models.sec.MAsymKey
+import java.io.{OutputStream, InputStream}
+
+import io.trbl.bcpg.{SecretKey, KeyFactory, KeyFactoryFactory}
+import models.sec.{IAsymKey, MAsymKey}
 import org.elasticsearch.client.Client
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -72,6 +74,31 @@ object PgpUtil {
       .recoverWith { case ex: NoSuchElementException =>
         genNewNormalKey().save
       }
+  }
+
+  /**
+   * Криптозащита с помощью указанного ключа и для дальнейшей расшифровки этим же ключом.
+   * Используется для надежного хранения охраняемых серверных данных на стороне клиента.
+   * @param data Входной поток данных.
+   * @param key Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
+   * @param out Куда производить запись?
+   */
+  def encryptForSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
+    val sc = KF.parseSecretKey(key.secKey.get)
+    encrypt(data, sc, key.pubKey, out)
+  }
+
+  /**
+   * Зашифровка входного потока байт в выходной ASCII-armored поток.
+   * @param data Входной поток данных.
+   * @param secKey Секретный ключ отправителя (для подписи).
+   * @param forPubKey Публичный ключ получателя (для зашифровки).
+   * @param out Выходной поток для записи ASCII-armored шифротекста.
+   */
+  def encrypt(data: InputStream, secKey: SecretKey, forPubKey: String, out: OutputStream): Unit = {
+    val transform = secKey.signEncryptFor(forPubKey)
+    val password = SEC_KEY_PASSWORD.toCharArray
+    transform.run(password, data, out)
   }
 
 }
