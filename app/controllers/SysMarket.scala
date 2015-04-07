@@ -8,6 +8,7 @@ import play.twirl.api.Html
 import util.acl._
 import models._
 import util.adv.AdvUtil
+import util.mail.IMailerWrapper
 import views.html.sys1.market._
 import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
@@ -27,8 +28,12 @@ import sysctl.SysMarketUtil._
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-class SysMarket @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with MacroLogsImpl
-with ShopMartCompat with SysNodeInstall with SmSendEmailInvite {
+class SysMarket @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
+{
 
   import LOGGER._
 

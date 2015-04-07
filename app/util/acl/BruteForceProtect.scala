@@ -1,6 +1,5 @@
 package util.acl
 
-import com.typesafe.scalalogging.slf4j.Logger
 import controllers.{SioController, MyConfName}
 import play.api.cache.Cache
 import play.api.mvc._
@@ -12,12 +11,16 @@ import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.01.15 15:53
  * Description: Защита от брутфорса оформлена тут. Её можно юзать как на уровне ActionBuilder'ов, так и controller'ов.
+ *
+ *
+ * Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
+ *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
+ *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
 
 trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
@@ -118,6 +121,7 @@ trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
   def bruteForceRequestDrop: Future[Result]
 
 }
+
 
 /** Для использования на уровне контроллера, можно юзать этот трейт. */
 trait BruteForceProtectCtl extends BruteForceProtectBase with SioController {

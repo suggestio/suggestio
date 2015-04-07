@@ -8,11 +8,11 @@ import play.api.i18n.{MessagesApi, Messages}
 import util.billing.MmpDailyBilling
 import util.captcha.CaptchaUtil._
 import util.img._
-import util.mail.MailerWrapper
 import util.PlayMacroLogsImpl
 import util.acl.{MaybeAuthPost, MaybeAuthGet, AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
 import models._
+import util.mail.IMailerWrapper
 import views.html.market.join._
 import util.FormUtil._
 import play.api.data._, Forms._
@@ -27,7 +27,12 @@ import util.img.ImgFormUtil.logoKM
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-class MarketJoin @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with CaptchaValidator {
+class MarketJoin @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioController with PlayMacroLogsImpl with CaptchaValidator with IMailer
+{
 
   import LOGGER._
 
@@ -320,7 +325,7 @@ class MarketJoin @Inject() (val messagesApi: MessagesApi) extends SioController 
       warn(s"""I don't know, whom to notify about new invite request. Add following setting into your application.conf:\n  $suEmailsConfKey = ["support@sugest.io"]""")
       Seq("support@suggest.io")
     }
-    val msg = MailerWrapper.instance
+    val msg = mailer.instance
     msg.setRecipients(emails : _*)
     msg.setFrom("no-reply@suggest.io")
     msg.setSubject("Новый запрос на подключение | Suggest.io")

@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{routes, CaptchaValidator, SioController}
+import controllers.{IMailer, routes, CaptchaValidator, SioController}
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
@@ -8,7 +8,6 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
 import util.ident.IdentUtil
-import util.mail.MailerWrapper
 import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
@@ -41,7 +40,7 @@ import PwRecover._
 
 
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
-trait SendPwRecoverEmail extends SioController {
+trait SendPwRecoverEmail extends SioController with IMailer {
 
   /**
    * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
@@ -75,7 +74,7 @@ trait SendPwRecoverEmail extends SioController {
               id = Some(eaId)
             )
             // Можно отправлять письмецо на ящик.
-            val msg = MailerWrapper.instance
+            val msg = mailer.instance
             msg.setFrom("no-reply@suggest.io")
             msg.setRecipients(email1)
             val ctx = implicitly[Context]

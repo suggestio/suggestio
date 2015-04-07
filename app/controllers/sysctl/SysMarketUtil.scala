@@ -1,6 +1,6 @@
 package controllers.sysctl
 
-import controllers.SioController
+import controllers.{IMailer, SioController}
 import models._
 import models.usr.EmailActivation
 import play.api.data._, Forms._
@@ -9,10 +9,9 @@ import play.api.mvc.AnyContent
 import util.FormUtil._
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
-import util.{TplFormatUtilT, PlayMacroLogsImpl}
+import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
 import util.mail.MailerWrapper
-
 
 /**
  * Suggest.io
@@ -20,10 +19,8 @@ import util.mail.MailerWrapper
  * Created: 06.04.15 21:37
  * Description: Утиль для контроллеров Sys-Market. Формы, код и т.д.
  */
-object SysMarketUtil extends PlayMacroLogsImpl {
+object SysMarketUtil extends PlayMacroLogsDyn {
 
-  import LOGGER._
-  
   /** Маппер для метаданных компании. */
   def companyMetaM = {
     mapping(
@@ -190,10 +187,10 @@ object SysMarketUtil extends PlayMacroLogsImpl {
                 Some(blockId)
               } catch {
                 case ex: NumberFormatException =>
-                  warn("Cannot parse block id as integer: " + vRaw)
+                  LOGGER.warn("Cannot parse block id as integer: " + vRaw)
                   None
                 case ex: NoSuchElementException =>
-                  warn("Block id not found: " + vRaw)
+                  LOGGER.warn("Block id not found: " + vRaw)
                   None
               }
               vOpt match {
@@ -301,12 +298,12 @@ object SysMarketUtil extends PlayMacroLogsImpl {
 
 
 /** Функционал контроллеров для отправки письма с доступом на узел. */
-trait SmSendEmailInvite extends SioController {
+trait SmSendEmailInvite extends SioController with IMailer {
 
   /** Выслать письмо активации. */
   def sendEmailInvite(ea: EmailActivation, adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
     // Собираем и отправляем письмо адресату
-    val msg = MailerWrapper.instance
+    val msg = mailer.instance
     val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
     msg.setSubject("Suggest.io | " + Messages("Your")(ctx.messages) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.messages))
     msg.setFrom("no-reply@suggest.io")

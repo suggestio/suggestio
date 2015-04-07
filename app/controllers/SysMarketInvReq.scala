@@ -10,6 +10,7 @@ import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import models._
+import util.mail.IMailerWrapper
 import scala.concurrent.Future
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
@@ -24,7 +25,12 @@ import sysctl.SysMarketUtil._
  * v2: Нужен многошаговый и удобный мастер создания узлов со всеми контрактами и инвайтами, отметками о ходе
  * обработки запроса и т.д.
  */
-class SysMarketInvReq @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite {
+class SysMarketInvReq @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite
+{
 
   import LOGGER._
 

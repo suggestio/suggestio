@@ -83,7 +83,10 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
       try {
         srv.unregisterMBean(jmxMB.jmxName)
       } catch {
-        case ex: Exception => warn("Cannot unregister " + jmxMB.jmxName, ex)
+        case _: javax.management.InstanceNotFoundException =>
+          warn("JMX instance not registered: " + jmxMB)
+        case ex: Exception =>
+          warn("Cannot unregister " + jmxMB.jmxName, ex)
       }
     }
   }

@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{CaptchaValidator, SioController}
+import controllers.{IMailer, CaptchaValidator, SioController}
 import models._
 import models.msession.Keys
 import models.usr._
@@ -13,7 +13,6 @@ import util.adn.NodesUtil
 import util.captcha.CaptchaUtil._
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
-import util.mail.MailerWrapper
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 import util.SiowebEsUtil.client
@@ -55,10 +54,10 @@ object EmailPwReg {
 import EmailPwReg._
 
 
-trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator with SendPwRecoverEmail {
+trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator with SendPwRecoverEmail with IMailer {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
-    val msg = MailerWrapper.instance
+    val msg = mailer.instance
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.messages))  // TODO Заголовок в messages и сюда!

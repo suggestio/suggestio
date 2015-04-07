@@ -8,6 +8,7 @@ import util.acl._
 import util._
 import play.api.mvc._
 import util.ident.IdentUtil
+import util.mail.IMailerWrapper
 import views.html.ident._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
@@ -23,8 +24,13 @@ import views.html.ident.reg.email._regColumnTpl
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
-class Ident @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with EmailPwLogin
-with CaptchaValidator with ChangePw with PwRecover with EmailPwReg with ExternalLogin {
+class Ident @Inject() (
+  override val messagesApi: MessagesApi,
+  override val mailer: IMailerWrapper
+)
+  extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator with ChangePw with PwRecover
+  with EmailPwReg with ExternalLogin
+{
 
   import LOGGER._
 

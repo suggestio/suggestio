@@ -8,6 +8,7 @@ import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
+import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
 import scala.concurrent.Future
 import util.event.SiowebNotifier
@@ -206,15 +207,6 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 }
 
 
-/** 
- * Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
- *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
- *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
- */
-
-
-
-
 
 /** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.
   * После унификации в web21 этот контроллер наверное уже не будет нужен. */
@@ -224,4 +216,10 @@ trait ShopMartCompat {
 
   def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
   def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdType(martId, AdNetMemberTypes.MART)
+}
+
+
+/** Интерфейс для mailer'а.  */
+trait IMailer {
+  def mailer: IMailerWrapper
 }
