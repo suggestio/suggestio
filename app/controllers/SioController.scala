@@ -3,6 +3,7 @@ package controllers
 import java.io.File
 import java.net.JarURLConnection
 
+import akka.actor.ActorSystem
 import io.suggest.event.SioNotifierStaticClientI
 import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
@@ -12,7 +13,6 @@ import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
 import scala.concurrent.Future
 import util.event.SiowebNotifier
-import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -169,6 +169,9 @@ trait MyConfName {
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
 trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 
+  /** akka system, приходящая в контроллер через DI. */
+  def actorSystem: ActorSystem
+
   /** Сколько асинхронных попыток предпринимать. */
   val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
   def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 15
@@ -186,7 +189,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
           wsActorRef ! msg
         case other =>
           if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
-            Akka.system.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
+            actorSystem.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
               _notifyWs(wsId, msg, counter + 1)
             }
             other match {

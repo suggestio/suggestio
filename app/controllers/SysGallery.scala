@@ -1,5 +1,6 @@
 package controllers
 
+import akka.actor.ActorSystem
 import com.google.inject.Inject
 import play.api.data._
 import play.api.i18n.MessagesApi
@@ -25,7 +26,12 @@ import scala.concurrent.Future
  * Created: 06.11.14 18:48
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
-class SysGallery @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport {
+class SysGallery @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport
+{
 
   import LOGGER._
 

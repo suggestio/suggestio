@@ -2,6 +2,7 @@ package controllers
 
 import java.io.File
 
+import akka.actor.ActorSystem
 import com.google.inject.Inject
 import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
@@ -34,8 +35,12 @@ import scala.util.{Success, Failure}
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-class Img @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport
-with BruteForceProtectCtl {
+class Img @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
+{
 
   import LOGGER._
 

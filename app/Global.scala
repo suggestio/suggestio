@@ -1,4 +1,4 @@
-import akka.actor.Cancellable
+import akka.actor.{ActorSystem, Cancellable}
 import io.suggest.model.{SioCassandraClient, EsModel}
 import io.suggest.util.SioEsUtil
 import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
@@ -50,7 +50,8 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     }
     ensureScryptNoJni()
     // Запускаем супервизора
-    SiowebSup.startLink
+    val akka = app.injector.instanceOf[ActorSystem]
+    SiowebSup.startLink(akka)
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     val esClientFut = esNodeFut map {
       _.client()

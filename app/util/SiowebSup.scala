@@ -6,8 +6,6 @@ import akka.actor._
 import util.ws.WsDispatcherActor
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy._
-import concurrent.Await
-import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
 import util.event.SiowebNotifier
@@ -31,21 +29,11 @@ object SiowebSup {
 
 
   /** Запуск супервизора в top-level. */
-  def startLink: ActorRef = {
-    Akka.system.actorOf(Props[SiowebSup], name=actorName)
+  def startLink(system: ActorSystem): ActorRef = {
+    system.actorOf(Props[SiowebSup], name=actorName)
   }
 
   type GetChildRefReply_t = Option[ActorRef]    // Тип возвращаемого значения getChildRef.
-
-  /**
-   * Хелпер для получения child-ref у супервизора. В целом, метод не нужный.
-   * @param childName Имя дочернего актора.
-   * @return
-   */
-  def getChildRef(childName: String) = {
-    val sel = Akka.system.actorSelection(actorPath)
-    Await.result(sel ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
-  }
 
   // Сообщение запроса дочернего процесса
   sealed case class GetChildRef(childName: String)

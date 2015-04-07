@@ -1,5 +1,6 @@
 package controllers
 
+import akka.actor.ActorSystem
 import com.google.inject.Inject
 import models.im.MImg
 import org.joda.time.DateTime
@@ -29,8 +30,12 @@ import io.suggest.ym.model.common.Texts4Search
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-class MarketAd @Inject() (val messagesApi: MessagesApi) extends SioController with PlayMacroLogsImpl with TempImgSupport
-with BruteForceProtectCtl with MarketAdPreview {
+class MarketAd @Inject() (
+  override val messagesApi: MessagesApi,
+  override val actorSystem: ActorSystem
+)
+  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview
+{
 
   import LOGGER._
 
