@@ -48,9 +48,10 @@ object EsModel extends MacroLogsImpl {
   import LOGGER._
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
-  def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    Seq(MCompany, MWelcomeAd, MShopPriceList, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo)
-  }
+  def ES_MODELS = Seq[EsModelCommonStaticT] (
+    MCompany, MWelcomeAd, MShopPriceList, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo
+  )
+
 
   private def esModelId(esModel: EsModelCommonStaticT): String = {
     s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
