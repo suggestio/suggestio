@@ -1,6 +1,7 @@
 package models.adv.js
 
 import io.suggest.adv.ext.model.{JsCommand, MAnswerStatusesT}
+import JsCommand._
 import io.suggest.model.EnumJsonReadsT
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
@@ -15,17 +16,10 @@ import play.api.libs.functional.syntax._
 
 object Answer {
 
-  // Названия полей JSON-ответа.
-  /** Поле с JSON нового состояние системы (новым контекстом). */
-  val CTX2_FN = JsCommand.MCTX_FN
-
-  /** На какое действие ответ. Для самоконтроля. */
-  val REPLY_TO_FN   = JsCommand.REPLY_TO_FN
-
   /** JSON-парсер для ответов. */
   implicit def reads: Reads[Answer] = (
     (JsPath \ REPLY_TO_FN).readNullable[String] and
-    (JsPath \ CTX2_FN).read[MJsCtx]
+    (JsPath \ MCTX_FN).read[MJsCtx]
   )(apply _)
 
   /** Тип значения, которое возвращает unapply. */
