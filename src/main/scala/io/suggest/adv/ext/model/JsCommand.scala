@@ -13,5 +13,8 @@ object JsCommand {
   def REPLY_TO_FN   = "c"
   def MCTX_FN       = "d"
   def IS_POPUP_FN   = "e"
+  def KEY_FN        = "f"
+  def VALUE_FN      = "g"
+
 }
 

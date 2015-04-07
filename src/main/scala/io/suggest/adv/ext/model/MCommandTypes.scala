@@ -11,8 +11,17 @@ import io.suggest.model.{EnumMaybeWithName, LightEnumeration, ILightEnumeration}
 
 /** Типы команд. */
 object JsCommandTypes {
-  def CTYPE_JS      = "js"
-  def CTYPE_ACTION  = "action"
+  /** Код команды для запуска произвольного js в браузере, сгенеренного сервером. */
+  def CTYPE_JS            = "js"
+
+  /** Код команды на запуск adv-ext-экшена в указанной обстановке. */
+  def CTYPE_ACTION        = "action"
+
+  /** Код команды для чтения данных из localStorage/sessionStorage и отправки результата на сервер через ws. */
+  def CTYPE_GET_STORAGE   = "gets"
+
+  /** Код команды для записи/удаления данных в хранилище браузера. */
+  def CTYPE_SET_STORAGE   = "sets"
 }
 
 
@@ -35,6 +44,11 @@ trait MCommandTypesBaseT extends ILightEnumeration {
   /** Команда содержит json-описание действия, которое должен понять и исполнить js-модуль ext.adv. */
   val Action: T
 
+  /** Команда чтения одного значения из localStorage или иного хранилища. */
+  val GetStorage: T
+
+  /** Команда записи/стирания одного значения в localStorage или иного хранилища. */
+  val SetStorage: T
 }
 
 
@@ -44,6 +58,8 @@ trait MCommandTypesLightT extends MCommandTypesBaseT with LightEnumeration {
     n match {
       case JavaScript.ctype => Some(JavaScript)
       case Action.ctype     => Some(Action)
+      case GetStorage.ctype => Some(GetStorage)
+      case SetStorage.ctype => Some(SetStorage)
       case _                => None
     }
   }
@@ -58,6 +74,7 @@ trait MCommandTypesT extends Enumeration with MCommandTypesBaseT with EnumMaybeW
 
   override val JavaScript: T  = new Val(CTYPE_JS)
   override val Action: T      = new Val(CTYPE_ACTION)
-
+  override val GetStorage: T  = new Val(CTYPE_GET_STORAGE)
+  override val SetStorage: T  = new Val(CTYPE_SET_STORAGE)
 }
 
