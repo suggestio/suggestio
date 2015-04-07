@@ -34,8 +34,6 @@ with ChangePwAction {
 
   import LOGGER._
 
-  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
-
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuth(fromAdnId).async { implicit request =>
     val personId = request.pwOpt.get.personId
@@ -279,7 +277,7 @@ with ChangePwAction {
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
   private def nodeOwnerInviteAcceptM = Form(tuple(
-    MARKET_CONTRACT_AGREE_FN -> boolean
+    "contractAgreed" -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
   ))

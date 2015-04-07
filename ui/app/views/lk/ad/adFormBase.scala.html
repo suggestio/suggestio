@@ -63,8 +63,8 @@
       content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '@blk.FontSizes.values.iterator.map {fs =>@{fs.size}px@if(!fs.isLast){ }}',
       style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
-      @if(ctx.lang.lang.language != "en") {
-        @defining( ctx.lang.lang.toLocale ) { locale =>
+      @if(messages.lang.language != "en") {
+        @defining( messages.lang.toLocale ) { locale =>
           language: '@{locale.getCountry}_@{locale.getLanguage}',
         }
       }

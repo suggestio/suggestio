@@ -2,6 +2,7 @@
 
 @import helper._
 @import sys1.market._
+@import ctx.messages
 
 @import util.FC.tdFc
 
@@ -9,7 +10,10 @@
 @form(call) {
 
   <table class="input-w __size-L">
-    @inputText(cf("meta.name"), '_label -> "Название:")
+    @inputText(
+      cf("meta.name"),
+      '_label -> (messages("Name") + ":")
+    )
   </table>
 
   <div class="btn-w __size-M">

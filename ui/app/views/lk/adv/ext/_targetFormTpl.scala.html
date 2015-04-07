@@ -15,26 +15,26 @@
     @* Сюда попадает id текущей цели (если есть). Нужен для редактирования, и возможно, удаления. *@
     <input type="hidden" name="tg.id" value="@tgId" />
 
-    <a class="social-target_delete close @CLASS_DELETE_TARGET_BTN" title="@Messages("Delete") (@Messages("without.confirmation"))"
+    <a class="social-target_delete close @CLASS_DELETE_TARGET_BTN" title="@messages("Delete") (@messages("without.confirmation"))"
        href="@tgId.map(routes.LkAdvExt.deleteTargetSubmit(_).url).getOrElse("#")"></a>
   }
 
   <div class="social-target_left">
     @inputText(
       tf("tg.name"),
-      '_label -> Messages("Name"),
+      '_label -> messages("Name"),
       '_class -> CLASS_ONE_TARGET_INPUT,
-      'title  -> Messages("adv.ext.tg.name.hint")
+      'title  -> messages("adv.ext.tg.name.hint")
     )
 
     @* Иконка соц-сети, если есть. *@
-    <div @tgOpt.map{ tg =>title="@Messages(tg.service.nameI18N)" } class="social-target_icon @tgOpt.map(tg =>"__" + tg.service)"></div>
+    <div @tgOpt.map{ tg =>title="@messages(tg.service.nameI18N)" } class="social-target_icon @tgOpt.map(tg =>"__" + tg.service)"></div>
 
     @inputText(
       tf("tg.url"),
-      '_label -> Messages("Page.link"),
+      '_label -> messages("Page.link"),
       '_class -> CLASS_ONE_TARGET_INPUT,
-      'title  -> Messages("adv.ext.tg.url.hint")
+      'title  -> messages("adv.ext.tg.url.hint")
     )
   </div> @* .social-target-left *@
 

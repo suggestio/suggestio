@@ -11,7 +11,7 @@
 
 @form(CSRF(routes.Ident.recoverPwFormSubmit), 'class -> "recover-popup__content__form") {
 
-  @defining( Messages("Email.used.during.registration") ) { msg =>
+  @defining( messages("Email.used.during.registration") ) { msg =>
     @inputText(
       rf("email"),
       '_label       -> (msg + ":"),
@@ -29,7 +29,7 @@
     }
   </div>
 
-  @defining( Messages("Input.text.from.picture") ) { msg =>
+  @defining( messages("Input.text.from.picture") ) { msg =>
     @inputText(
       rf(CAPTCHA_TYPED_FN),
       '_label       -> msg,
@@ -39,7 +39,7 @@
   }
 
   <div class="btn-w __size-M">
-    <input class="btn __size-M1 __minor" type="submit" value="@Messages("Send")"/>
+    <input class="btn __size-M1 __minor" type="submit" value="@messages("Send")"/>
   </div>
 
 }

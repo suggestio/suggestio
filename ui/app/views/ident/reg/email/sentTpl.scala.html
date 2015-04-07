@@ -3,7 +3,7 @@
 @* Страница, которая появляется, когда юзер успешно сабмиттит свой email на сервак. *@
 
 @import util.cdn.CdnUtil
-@import ctx.lang
+@import ctx.messages
 
 @base("Password.recovery") {
 
@@ -23,13 +23,13 @@
 
       <div class="auth-page_column-lst">
         <div class="email-success_t">
-          @Messages("Epw.reg.msg.sent")
+          @messages("Epw.reg.msg.sent")
         </div>
         <div class="email-success_text">
-          @Messages("Epw.follow.msg.link.to.finish")
+          @messages("Epw.follow.msg.link.to.finish")
         </div>
         <div class="btn-w __size-M">
-          <a class="btn __size-M1 __major" href="@routes.Ident.mySioStartPage()">@Messages("Go.back")</a>
+          <a class="btn __size-M1 __major" href="@routes.Ident.mySioStartPage()">@messages("Go.back")</a>
         </div>
 
       </div>

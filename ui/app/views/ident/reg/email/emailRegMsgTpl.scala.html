@@ -2,14 +2,14 @@
 
 @* Письмо регистрации со ссылкой для активации. *@
 
-@import ctx.lang
+@import ctx.messages
 @import util.cdn.CdnUtil.asset
 @import views.html.email._
 
-@emailBaseTpl( title = Messages("Sign.up.to", "Suggest.io") ) {
+@emailBaseTpl( title = messages("Sign.up.to", "Suggest.io") ) {
 
   @_rowTpl("padding: 20px 0 10px;") {
-    @Html(Messages(
+    @Html(messages(
       "Follow.this.link.to.complete.epw.reg",
       s"""<a style="color: #7b89a4;" href="${ctx.LK_URL_PREFIX}${routes.Ident.emailReturn(ea)}">""",
       "</a>"
@@ -17,7 +17,7 @@
   }
 
   @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
-    @Messages("If.link.not.open.cp.link.to.browser")
+    @messages("If.link.not.open.cp.link.to.browser")
     <br/>
     <span style="color: #7b89a4;">
       @ctx.LK_URL_PREFIX@routes.Ident.emailReturn(ea)
@@ -25,7 +25,7 @@
   }
 
   @_rowTpl("padding: 20px 0;") {
-    @Html(Messages(
+    @Html(messages(
       "If.you.not.epw.reg.delete.msg",
       s"""<a style="color: #7b89a4;" href="${ctx.SC_URL_PREFIX}$MAIN_PAGE_CALL">Suggest.io</a>"""
     ))

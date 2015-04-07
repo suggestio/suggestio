@@ -8,10 +8,10 @@
   <p class="paragraph __size-M">Сторона контракта: <strong>@_contractSideTpl(adnNode, supOpt)</strong></p>
 
   @_contractFormTpl(
-    adnId = adnNode.id.get,
-    cf = cf,
-    btnText = Messages("Create"),
-    submitCall = routes.SysMarketBilling.createContractFormSubmit
+    adnId	= adnNode.id.get,
+    cf		= cf,
+    btnText	= messages("Create"),
+    submitCall	= routes.SysMarketBilling.createContractFormSubmit
   )
 
 }

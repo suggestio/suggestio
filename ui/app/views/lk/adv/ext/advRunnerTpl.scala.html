@@ -8,13 +8,13 @@
 @import stuff._
 
 @base(
-  title = Messages("Adv.on.ext.services.running"),
+  title = messages("Adv.on.ext.services.running"),
   mnode = mnode,
   mad   = mad
 ) {
 
-  @Messages("Adv.deploy.in.process")...
-  @Messages("Do.not.close.current.page.until.deploy.finish").
+  @messages("Adv.deploy.in.process")...
+  @messages("Do.not.close.current.page.until.deploy.finish").
 
   <input id="@ID_WS_URL" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
 

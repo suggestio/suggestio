@@ -10,7 +10,7 @@
 
 @_ptableTpl() {
 
-  @_ptableRowTpl(Messages("Name") + ":") {
+  @_ptableRowTpl(messages("Name") + ":") {
     @meta.name
   }
 
@@ -20,7 +20,7 @@
     }
   }
 
-  @_ptableRowTpl( Messages("Created")+":") {
+  @_ptableRowTpl( messages("Created")+":") {
     @_prettyDate(meta.dateCreated, withSpan = true)
   }
 
@@ -49,25 +49,25 @@
   }
 
   @meta.address.map { address =>
-    @_ptableRowTpl( Messages("Address") + ":") {
+    @_ptableRowTpl( messages("Address") + ":") {
       @address
     }
   }
 
   @meta.phone.map { phone =>
-    @_ptableRowTpl( Messages("Phone") + ":") {
+    @_ptableRowTpl( messages("Phone") + ":") {
       @phone
     }
   }
 
   @meta.floor.map { floor =>
-    @_ptableRowTpl( Messages("Floor") + ":") {
+    @_ptableRowTpl( messages("Floor") + ":") {
       @floor
     }
   }
 
   @meta.section.map { section =>
-    @_ptableRowTpl( Messages("Section") + ":") {
+    @_ptableRowTpl( messages("Section") + ":") {
       @section
     }
   }

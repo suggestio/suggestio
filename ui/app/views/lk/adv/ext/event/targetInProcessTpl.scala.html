@@ -2,7 +2,7 @@
 
 @* Шаблон события о идущем внешнего размещения по одной цели. *@
 
-@import ctx.lang
+@import ctx.messages
 @import lk.event._
 @import io.suggest.util.UrlUtil
 
@@ -12,7 +12,7 @@
     @_hrefTitleTpl(advExtTg, withAnchor = false)
   }
 
-  @Messages("Status"): @Messages("in.progress")
+  @messages("Status"): @messages("in.progress")
 
 }
 

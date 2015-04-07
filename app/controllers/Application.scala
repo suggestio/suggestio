@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import util.acl._
@@ -11,7 +12,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import views.html.static.sitemap._
 import views.html.sys1._
 
-class Application(val messagesApi: MessagesApi) extends SioControllerImpl {
+class Application @Inject() (val messagesApi: MessagesApi) extends SioControllerImpl {
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS = configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {

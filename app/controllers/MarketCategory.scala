@@ -24,9 +24,6 @@ class MarketCategory(val messagesApi: MessagesApi) extends SioController with Pl
 
   import LOGGER._
 
-  /** Кнопка установки стандартных глобальных категорий должна нажиматься только единожды. */
-  def CAN_INSTALL_MART_CATS = configuration.getBoolean("cats.install.mart.allowed") getOrElse false
-
   /** Маппинг для формы создания/редактирования пользовательской категории. */
   private def catFormM = Form(mapping(
     "name"          -> nameM,
@@ -168,7 +165,7 @@ class MarketCategory(val messagesApi: MessagesApi) extends SioController with Pl
 
   /** Установить набор пользовательских категорий в указанный узел рекламной сети (обычно ТЦ). */
   def installMartCategories(adnId: String) = IsSuperuser.async { implicit request =>
-    if (CAN_INSTALL_MART_CATS) {
+    if (MMartCategory.CAN_INSTALL_MART_CATS) {
       MartCategories.saveDefaultMartCatsFor(adnId) map { catIds =>
         Redirect(routes.MarketCategory.showCatsFor(adnId))
           .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")

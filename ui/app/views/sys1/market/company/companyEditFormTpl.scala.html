@@ -2,16 +2,16 @@
 
 @* Рендер страницы с формой редактирования компании. *@
 
-@import ctx.lang
+@import ctx.messages
 
 @hPathAfter1 = {
   / <a class="blue-link" href="@routes.SysMarket.companyShow(company.id.get)">@company.meta.name</a>
-  / @Messages("Edit")
+  / @messages("Edit")
 }
 
 @companyBase("Изменить", hPathAfter=Some(hPathAfter1)) {
   @_companyFormTpl(
-    title = Messages("Save"),
+    title = messages("Save"),
     cf = cf,
     call = routes.SysMarket.companyEditFormSubmit(company.id.get, r)
   )

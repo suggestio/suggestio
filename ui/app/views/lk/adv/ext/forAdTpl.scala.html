@@ -10,7 +10,7 @@
 @import stuff._
 
 @base(
-  title     = Messages("Adv.ext"),
+  title     = messages("Adv.ext"),
   mnode     = mnode,
   mad       = mad
 ) {
@@ -26,17 +26,17 @@
 
     @af("adv").errors.map { error =>
       <div class="event __bg-4 __icon-5">
-        <div class="event_t">@Messages("Problem.occured"): @Messages(error.message, error.args)</div>
+        <div class="event_t">@messages("Problem.occured"): @messages(error.message, error.args)</div>
       </div>
     }
 
     @* Кнопка добавления цели к данной форме не относится. *@
     <a class="btn __size-M __minor add-target" id="@ID_ADD_TARGET_LINK"
-       href="@routes.LkAdvExt.writeTarget(mnode.id.get)">@Messages("Add.target")...</a>
+       href="@routes.LkAdvExt.writeTarget(mnode.id.get)">@messages("Add.target")...</a>
     <hr class="delimiter __light">
 
     <div class="btn-w __size-XS">
-      <input class="btn __size-M __major social-submit" type="submit" value="@Messages("Adv.deploy.now")..." />
+      <input class="btn __size-M __major social-submit" type="submit" value="@messages("Adv.deploy.now")..." />
     </div>
 
   }

@@ -106,10 +106,10 @@
                 @if(maybeBusyAdv.isEmpty) {
                   @lk.lkBlockNewDesign( open = false ) {
                     <label>
-                      <input type="checkbox" name="@{NODES_KM}[@midOpt].advertise" value="false"/>
+                      <input type="checkbox" name="node[@midOpt].advertise" value="false"/>
                       <span class="styled-checkbox"></span>
                     </label>
-                    <input type="hidden" name="@{NODES_KM}[@midOpt].adnId" value="@adnId"/>
+                    <input type="hidden" name="node[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
                       @an.node.meta.name
                     </span>

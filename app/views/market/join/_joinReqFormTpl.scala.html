@@ -3,7 +3,7 @@
 @import ctx._
 @import helper._
 @import util.FC.radialFc
-@import controllers.Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 
 @form(CSRF(submitCall)) {
@@ -15,52 +15,52 @@
   <div class="adv-req-form_fields">
 
     <h2 class="adv-req-form_title">
-      Регистрация
+      @messages("Sign.up")
     </h2>
 
     @inputText(
       jf("company"),
-      '_label -> (Messages("Company") + ":"),
-      'placeholder -> Messages("Company"),
-      'autofocus -> "autofocus"
+      '_label      -> (messages("Company") + ":"),
+      'placeholder -> messages("Company"),
+      'autofocus   -> "autofocus"
     )
 
     @inputText(
       jf("town"),
-      '_label -> (Messages("Town") + ":"),
-      'placeholder -> Messages("Town")
+      '_label      -> (messages("Town") + ":"),
+      'placeholder -> messages("Town")
     )
 
     @textarea(
       jf("address"),
-      '_label -> (Messages("Address") + ":"),
-      'placeholder -> Messages("Address")
+      '_label      -> (messages("Address") + ":"),
+      'placeholder -> messages("Address")
     )
 
     @inputText(
       jf("siteUrl"),
-      '_label -> (Messages("Site") + ":"),
-      'placeholder -> Messages("Site"),
-      'type -> "url"
+      '_label      -> (messages("Site") + ":"),
+      'placeholder -> messages("Site"),
+      'type        -> "url"
     )
 
     @inputText(
       jf("email"),
-      '_label -> (Messages("constraint.email") + ":"),
-      'placeholder -> Messages("constraint.email"),
-      'type -> "email"
+      '_label      -> (messages("constraint.email") + ":"),
+      'placeholder -> messages("constraint.email"),
+      'type        -> "email"
     )
 
     @inputText(
       jf("phone"),
-      '_label -> (Messages("Office.phone.number") + ":"),
-      'placeholder -> Messages("Office.phone.number"),
-      'type -> "tel"
+      '_label      -> (messages("Office.phone.number") + ":"),
+      'placeholder -> messages("Office.phone.number"),
+      'type        -> "tel"
     )
 
     @textarea(
       jf("info"),
-      '_label -> "Описание товаров или услуг:",
+      '_label      -> "Описание товаров или услуг:",
       'placeholder -> "Описание товаров или услуг"
     )
 
@@ -74,7 +74,7 @@
 
     @inputText(
       jf(CAPTCHA_TYPED_FN),
-      '_label -> Messages("Input.text.from.picture"),
+      '_label      -> messages("Input.text.from.picture"),
       'placeholder -> "Введите текст с картинки"
     )
 
@@ -84,7 +84,7 @@
 
     <div class="btn-w __size-M">
 
-      <input class="siom-new-btn __fill-1 __size-XS __list" type="submit" value="@Messages("Request.invite")" />
+      <input class="siom-new-btn __fill-1 __size-XS __list" type="submit" value="@messages("Request.invite")" />
 
     </div>
 

@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import io.suggest.model.common.{EMParentIdOpt, EMName, EMParentIdOptMut, EMNameMut}
 import play.api.libs.json._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -26,6 +27,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /** Кнопка установки стандартных глобальных категорий должна нажиматься только единожды. */
+  def CAN_INSTALL_MART_CATS = configuration.getBoolean("cats.install.mart.allowed") getOrElse false
 
   override type T = MMartCategory
 

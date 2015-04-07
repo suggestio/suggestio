@@ -1,9 +1,9 @@
 @(lf: usr.EmailPwLoginForm_t, rr: Option[String])(implicit ctx: Context)
 
 @import views.html.ident._
-@import ctx.lang
+@import ctx.messages
 
 @mySioStartTpl(
-  title   = Messages("Login"),
+  title   = messages("Login"),
   columns = Seq( _loginColumnTpl(lf, rr) )
 )

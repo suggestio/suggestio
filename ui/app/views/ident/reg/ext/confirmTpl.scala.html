@@ -1,9 +1,9 @@
 @(elf: ExtRegConfirmForm_t)(implicit ctx: Context)
 
 @import views.html.ident._
-@import ctx.lang
+@import ctx.messages
 
 @mySioStartTpl(
-  title   = Messages("Sign.up"),
+  title   = messages("Sign.up"),
   columns = Seq( _columnTpl(elf) )
 )

@@ -11,10 +11,10 @@
 
   @* Выводить ошибку неправильного ввода пароля. *@
   @s2f("pw").errors.map { fe =>
-    @Messages(fe.message, fe.args)
+    @messages(fe.message, fe.args)
   }
 
-  @defining( Messages("Type.password") ) { msg =>
+  @defining( messages("Type.password") ) { msg =>
     @inputPassword(
       s2f("pw.pw1"),
       '_label       -> msg,
@@ -22,7 +22,7 @@
     )
   }
 
-  @defining( Messages("Retype.password") ) { msg =>
+  @defining( messages("Retype.password") ) { msg =>
     @inputPassword(
       s2f("pw.pw2"),
       '_label       -> msg,
@@ -30,7 +30,7 @@
     )
   }
 
-  @defining( Messages("Node.name") ) { msg =>
+  @defining( messages("Node.name") ) { msg =>
     @inputText(
       s2f("nodeName"),
       '_label       -> msg,
@@ -39,7 +39,7 @@
   }
 
   <div class="btn-w __size-M">
-    <input class="btn __size-M1 __major" type="submit" value="@Messages("Save")" />
+    <input class="btn __size-M1 __major" type="submit" value="@messages("Save")" />
   </div>
 
 }

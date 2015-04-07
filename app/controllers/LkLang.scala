@@ -46,11 +46,12 @@ class LkLang(val messagesApi: MessagesApi) extends SioController with PlayMacroL
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String])(implicit ctx: Context): Html = {
     val langs = Lang.availables
       .sortBy(_.code)
-    val english = langs
+    val englishLang = langs
       .filter(_.language == "en")
       .sortBy(_.country == "US")
       .headOption
       .getOrElse { Lang.defaultLang }
+    val english = ctx.messages.copy(lang = englishLang)
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
     langChooserTpl(
       english = english,

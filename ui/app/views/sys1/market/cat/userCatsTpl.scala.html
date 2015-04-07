@@ -3,18 +3,18 @@
 @* Список пользовательских категорий (в частости ТЦ-категорий). *@
 @import org.apache.commons.lang3.StringUtils.leftPad
 @import helper._
-@import controllers.MarketCategory.CAN_INSTALL_MART_CATS
-@import ctx.lang
+@import MMartCategory.CAN_INSTALL_MART_CATS
+@import ctx.messages
 
 @userCatBase("Категории", adnId = ownerId) {
-
 
   <div class="sys_t">
     Управление деревом
   </div>
 
   <div class="paragraph __size-M">
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM"
+       href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
   </div>
 
   @lk.lkBlock("Категории") {
@@ -24,20 +24,26 @@
         <tr>
             <td>
               <div class="siom-cell-cnt __size-M ovh">
-                <a style="margin-left: @((level - 1)*35)px" class="siom-ac-btn __color-3 __size-M __ft-XM f-left" href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@Messages(cat.name)</a>
+                <a style="margin-left: @((level - 1)*35)px" class="siom-ac-btn __color-3 __size-M __ft-XM f-left"
+                   href="@routes.MarketCategory.showUserCat(cat.id.get)"
+                   title="Просмотр категории">@messages(cat.name)</a>
               </div>
               <div class="border-line"></div>
             </td>
             <td>
               <div class="siom-cell-cnt __size-M ovh">
-                <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.MarketCategory.addUserCatForm(None, parentId = Some(cat.id.get))" title="Добавить подкатегорию">Добавить подкатегорию</a>
+                <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left"
+                   href="@routes.MarketCategory.addUserCatForm(None, parentId = Some(cat.id.get))"
+                   title="Добавить подкатегорию">Добавить подкатегорию</a>
               </div>
               <div class="border-line"></div>
             </td>
             <td>
               <div class="siom-cell-cnt __size-M ovh">
-                @defining( Messages("Edit") ) { edMsg =>
-                  <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left" href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@edMsg">@edMsg</a>
+                @defining( messages("Edit") ) { edMsg =>
+                  <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left"
+                     href="@routes.MarketCategory.editUserCatForm(cat.id.get)"
+                     title="@edMsg">@edMsg</a>
                 }
               </div>
               <div class="border-line"></div>
