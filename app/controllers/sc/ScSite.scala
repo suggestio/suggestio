@@ -4,12 +4,13 @@ import controllers.{routes, SioController}
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
+import util.xplay.SioHttpErrorHandler
 import views.html.sc._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
-import play.api.Play.{current, configuration}
+import ShowcaseUtil._
 
 /**
  * Suggest.io
@@ -20,7 +21,7 @@ import play.api.Play.{current, configuration}
  */
 
 /** Поддержка гео-сайта. */
-trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
+trait ScSiteGeo extends SioController with PlayMacroLogsI {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState) = MaybeAuth.async { implicit request =>
@@ -89,7 +90,7 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI with ScSiteConstants {
 
 
 /** Поддержка node-сайтов. */
-trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants {
+trait ScSiteNode extends SioController with PlayMacroLogsI {
 
   /**
    * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
@@ -128,7 +129,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
 
     } else {
       LOGGER.debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled ; isRcvr=$isReceiver")
-      http404AdHoc
+      SioHttpErrorHandler.http404ctx
     }
   }
 
@@ -140,24 +141,4 @@ trait ScSiteNode extends SioController with PlayMacroLogsI with ScSiteConstants 
 
 }
 
-
-/** Константы лдя site-функционала. Используются и в разных трейтах. */
-trait ScSiteConstants {
-
-  /** Дефолтовое имя ноды. */
-  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
-
-  /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
-
-  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
-
-
-  /** Дефолтовый цвет элементов переднего плана. */
-  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
-
-  /** Цвет для выдачи, которая вне узла. */
-  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
-
-}
 

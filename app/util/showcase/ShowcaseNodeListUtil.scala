@@ -2,7 +2,7 @@ package util.showcase
 
 import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.NodeGeoLevels
-import play.api.i18n.{Messages, Lang}
+import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import util.SiowebEsUtil.client
@@ -151,7 +151,7 @@ object ShowcaseNodeListUtil {
     }
   }
 
-  def getTownLayerOfNode(node: MAdnNode)(implicit lang: Lang): Future[GeoNodesLayer] = {
+  def getTownLayerOfNode(node: MAdnNode)(implicit lang: Messages): Future[GeoNodesLayer] = {
     getTownOfNode(node)
       .map(town2layer)
   }
@@ -173,7 +173,7 @@ object ShowcaseNodeListUtil {
   }
 
   /** Обернуть список городов в гео-слой. */
-  def townsToLayer(townNodes: Seq[MAdnNode])(implicit lang: Lang): GeoNodesLayer = {
+  def townsToLayer(townNodes: Seq[MAdnNode])(implicit lang: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
       GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN)
     } else if (townNodes.tail.isEmpty) {
@@ -229,7 +229,7 @@ object ShowcaseNodeListUtil {
     MAdnNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint])(implicit lang: Lang): Future[GeoNodesLayer] = {
+  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint])(implicit lang: Messages): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId, gravity)
       .map { districtNodes =>
@@ -270,7 +270,7 @@ object ShowcaseNodeListUtil {
    * @return Фьючерс со списком слоёв с узлами.
    */
   def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint])
-                                  (implicit lang: Lang): Future[List[GeoNodesLayer]] = {
+                                  (implicit lang: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
         nodes.groupBy(_.adn.shownTypeId)
@@ -293,7 +293,8 @@ object ShowcaseNodeListUtil {
    * @param currNodeLayer Уровень, на котором находится текущий узел.
    * @return Фьючерс со слоями в порядке рендера (город внизу).
    */
-  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)(implicit lang: Lang): Future[Seq[GeoNodesLayer]] = {
+  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)
+                   (implicit lang: Messages): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
     val (gravity0, gravity1) = if (DISTANCE_SORT) {
       val g0 = geoMode.exactGeodata

@@ -1,11 +1,10 @@
 package util.acl
 
 import play.api.mvc._
+import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
 import util.PlayMacroLogsImpl
-import scala.Some
 import play.api.mvc.Result
-import controllers.Application.http404Fut
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
@@ -60,7 +59,7 @@ object IsSuperuserPost extends IsSuperuserBase2 with CsrfPost[AbstractRequestWit
 
 object IsSuperuserOr404 extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-    http404Fut(request)
+    SioHttpErrorHandler.http404Fut(request)
   }
 }
 

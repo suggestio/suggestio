@@ -10,6 +10,8 @@ import scala.concurrent.Future
 import models._
 import SiowebEsUtil.client
 import util.acl.PersonWrapper.PwOpt_t
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
 
 /**
  * Suggest.io

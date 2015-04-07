@@ -1,7 +1,6 @@
 package controllers
 
 import controllers.sc._
-import io.suggest.event.SNStaticSubscriberDummy
 import play.api.i18n.MessagesApi
 import util._
 
@@ -14,5 +13,5 @@ import util._
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 class MarketShowcase(val messagesApi: MessagesApi) extends SioControllerImpl with PlayMacroLogsImpl
-with SNStaticSubscriberDummy with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
+with ScSiteNode with ScSiteGeo with ScNodeInfo with ScIndexGeo with ScIndexNode
 with ScSyncSiteGeo with ScAdsTile with ScFocusedAds with ScNodesList with ScBlockCss with ScOnlyOneAd

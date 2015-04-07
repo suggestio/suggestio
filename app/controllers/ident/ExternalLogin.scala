@@ -15,12 +15,11 @@ import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.services.{RoutesService, UserService}
 import securesocial.core._
 import util.adn.NodesUtil
-import util.xplay.LangUtil
+import util.xplay.SetLangCookieUtil
 import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
 import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
 import util.SiowebEsUtil.client
 import util.ident.IdentUtil
-import views.html.ident.mySioStartTpl
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -100,7 +99,7 @@ object ExternalLogin extends PlayMacroLogsDyn {
 
 import ExternalLogin._
 
-trait ExternalLogin extends SioController with PlayMacroLogsI {
+trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookieUtil {
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
@@ -198,7 +197,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI {
               val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
               val resFut = rdrFut
                 .map { _.withSession(session1) }
-              LangUtil.setLangCookie2(resFut, mpersonOptFut)
+              setLangCookie2(resFut, mpersonOptFut)
             }
           }
 

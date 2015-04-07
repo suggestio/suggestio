@@ -3,7 +3,7 @@ package controllers.sysctl
 import controllers.{routes, SioController}
 import models.{MAdnNodeCache, Context}
 import play.api.data.Form
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.SiowebEsUtil.client
@@ -52,7 +52,7 @@ trait SysNodeInstall extends SioController with PlayMacroLogsI {
     implicit val ctx = implicitly[Context]
     val fd = FormData(
       count = NodesUtil.INIT_ADS_COUNT,
-      lang  = ctx.lang
+      lang  = ctx.lang.lang
     )
     val form = mkForm.fill(fd)
     _installRender(form)(ctx, request)
@@ -79,7 +79,9 @@ trait SysNodeInstall extends SioController with PlayMacroLogsI {
           .map { NotAcceptable(_) }
       },
       {fd =>
-        NodesUtil.installDfltMads(adnId, count = fd.count)(fd.lang)
+        // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.
+        val msgs = new Messages(fd.lang, messagesApi)
+        NodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
           .map { madIds =>
             val count = madIds.size
             LOGGER.trace(s"$logPrefix Cloned ok $count mads: [${madIds.mkString(", ")}]")

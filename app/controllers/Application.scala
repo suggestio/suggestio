@@ -7,7 +7,6 @@ import util.cdn.CorsUtil
 import play.api.i18n.MessagesApi
 import play.api.Play, Play.{current, configuration}
 import util.seo.SiteMapUtil
-import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import views.html.static.sitemap._
 import views.html.sys1._
@@ -43,8 +42,6 @@ class Application(val messagesApi: MessagesApi) extends SioControllerImpl {
     NoContent
   }
 
-  /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
-  def http404Fut(implicit request: RequestHeader): Future[Result] = http404AdHoc
 
   /**
    * Реакция на options-запрос, хидеры выставит CORS-фильтр, подключенный в Global.

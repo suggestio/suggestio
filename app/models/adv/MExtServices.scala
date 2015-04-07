@@ -52,7 +52,7 @@ object MExtServices extends MServicesT {
      * @return Some с экземпляром [[MExtTarget]].
      *         None, если по дефолту таргет создавать не надо.
      */
-    def dfltTarget(adnId: String)(implicit lang: Lang): Option[MExtTarget] = {
+    def dfltTarget(adnId: String)(implicit lang: Messages): Option[MExtTarget] = {
       dfltTargetUrl.map { url =>
         MExtTarget(
           url     = url,

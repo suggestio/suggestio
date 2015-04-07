@@ -4,6 +4,7 @@ import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
+import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
 import play.api.db.DB
 import scala.concurrent.Future
@@ -36,7 +37,7 @@ class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with P
 
       case None =>
         // Нет заключенных договоров, оплата невозможна.
-        http404AdHoc
+        SioHttpErrorHandler.http404ctx
     }
   }
 
@@ -82,7 +83,7 @@ class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with P
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
-        http404AdHoc
+        SioHttpErrorHandler.http404ctx
     }
   }
 
@@ -106,7 +107,8 @@ class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with P
    * @param f функция вызова рендера результата.
    * @return Фьючерс с результатом. Если нет узла, то 404.
    */
-  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)(implicit request: RequestHeader): Future[Result] = {
+  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)
+                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val adnNodeFut = MAdnNodeCache.getById(adnId)
     val mbdms = DB.withConnection { implicit c =>
@@ -118,8 +120,8 @@ class MarketLkBilling(val messagesApi: MessagesApi) extends SioController with P
     adnNodeFut.map {
       case Some(adnNode) =>
         f(mbdms, adnNode)
-
-      case None => http404AdHoc
+      case None =>
+        SioHttpErrorHandler.http404ctx
     }
   }
 

@@ -10,7 +10,7 @@ import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.secure.PgpUtil
 import util.showcase.ScStatSaver
-import util.xplay.SecHeadersFilter
+import util.xplay.{SioHttpErrorHandler, SecHeadersFilter}
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -141,7 +141,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     trace(request.path + " - 404")
     maybeApplication match {
       case Some(app) if app.mode == Mode.Prod =>
-        _root_.controllers.Application.http404Fut(request)
+        SioHttpErrorHandler.http404Fut(request)
 
       // При разработке следует выводить нормальное 404.
       case _ => super.onHandlerNotFound(request)

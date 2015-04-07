@@ -20,7 +20,7 @@ import scala.concurrent.Future
  * Created: 12.11.14 19:38
  * Description: Поддержка открытых рекламных карточек.
  */
-trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants {
+trait ScFocusedAds extends ScController with PlayMacroLogsI {
 
 
   /** Экшен для рендера горизонтальной выдачи карточек.
@@ -284,7 +284,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI with ScSiteConstants
         madsHead      <- _madsHeadFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        val _bgColor = _producer.meta.color getOrElse SITE_BGCOLOR_DFLT
+        val _bgColor = _producer.meta.color getOrElse ShowcaseUtil.SITE_BGCOLOR_DFLT
         new FocusedAdsTplArgs {
           override def mad        = madsHead.mad
           override def producer   = _producer

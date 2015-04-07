@@ -1,12 +1,11 @@
 package util.img
 
-import controllers.{routes, MarketShowcase}
 import models.im._
 import util.cdn.CdnUtil
+import util.showcase.ShowcaseUtil
 import scala.concurrent.Future
 import models._
 import play.api.data.Forms._
-import ImgFormUtil._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
@@ -185,7 +184,7 @@ object WelcomeUtil {
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
   private def colorBg(adnNode: MAdnNode) = {
-    val bgColor = adnNode.meta.color.getOrElse(MarketShowcase.SITE_BGCOLOR_DFLT)
+    val bgColor = adnNode.meta.color.getOrElse(ShowcaseUtil.SITE_BGCOLOR_DFLT)
     Left(bgColor)
   }
 

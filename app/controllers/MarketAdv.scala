@@ -15,6 +15,7 @@ import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
+import util.xplay.SioHttpErrorHandler
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
@@ -701,7 +702,7 @@ class MarketAdv(val messagesApi: MessagesApi) extends SioControllerImpl with Pla
       } else {
         val advReqId = request.advReq.id.get
         warn(s"_showAdvReq1($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
-        Left(http404AdHoc)
+        Left(SioHttpErrorHandler.http404ctx)
       }
     }
   }

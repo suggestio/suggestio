@@ -20,13 +20,23 @@ import views.txt.sc._
  * Created: 07.11.14 19:56
  * Description: Доступ к данным узла. В первую очередь для осуществления работы внедряемой иконки на wifi.
  */
-trait ScNodeInfo extends ScController with SNStaticSubscriber {
+trait ScNodeInfo extends ScController {
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   private val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
   private val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse {
     if (Play.isProd)  60  else  6
   }
+
+  // Подписаться на события обновления узлов, чтобы сбрасывать кеш.
+  sn.subscribe(
+    subscriber = SnFunSubscriber {
+      case anse: AdnNodeSavedEvent =>
+        val ck = nodeIconJsCacheKey(anse.adnId)
+        Cache.remove(ck)
+    },
+    classifier = AdnNodeSavedEvent.getClassifier(isCreated = Some(false))
+  )
 
   /** Кеш-ключ для nodeIconJs. */
   private def nodeIconJsCacheKey(adnId: String) = adnId + ".nodeIconJs"
@@ -87,19 +97,6 @@ trait ScNodeInfo extends ScController with SNStaticSubscriber {
         CONTENT_TYPE  -> "text/javascript; charset=utf-8",
         CACHE_CONTROL -> "public, max-age=36000"
       )
-  }
-
-  /** Карта статической подписки контроллера на некоторые события:
-    * - Уборка из кеша рендера nodeIconJs. */
-  abstract override def snMap = {
-    // Нужно чистить кеш nodeIconJs при обновлении узлов.
-    val classifier = AdnNodeSavedEvent.getClassifier(isCreated = Some(false))
-    val subscriber = SnFunSubscriber {
-      case anse: AdnNodeSavedEvent =>
-        val ck = nodeIconJsCacheKey(anse.adnId)
-        Cache.remove(ck)
-    }
-    classifier -> Seq(subscriber) :: super.snMap
   }
 
 }

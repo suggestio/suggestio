@@ -82,24 +82,28 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   trait HtmlGeoIndexLogic extends GeoIndexLogic {
     override type T = Html
 
-    implicit private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
+    private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
       h.flatMap(_.respHtmlFut)
     }
 
     /** Нет ноды. */
     override def nodeNotDetected(): Future[T] = {
-      nodeNotDetectedHelperFut()
+      helper2respHtml(
+        nodeNotDetectedHelperFut()
+      )
     }
 
     /** Нода найдена с помощью геолокации. */
     override def nodeFound(gdr: GeoDetectResult): Future[T] = {
-      nodeFoundHelperFut(gdr)
+      helper2respHtml(
+        nodeFoundHelperFut(gdr)
+      )
     }
   }
 
 
   /** Хелпер для рендера голой выдачи (вне ноды). Вероятно, этот код никогда не вызывается. */
-  trait ScIndexGeoHelper extends ScIndexHelperBase with ScSiteConstants {
+  trait ScIndexGeoHelper extends ScIndexHelperBase {
     override def isGeo = true
 
     override def currAdnIdFut = Future successful None

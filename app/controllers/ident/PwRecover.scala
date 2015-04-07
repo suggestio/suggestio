@@ -9,7 +9,7 @@ import util.PlayMacroLogsI
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.MailerWrapper
-import util.xplay.LangUtil
+import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
@@ -94,7 +94,8 @@ trait SendPwRecoverEmail extends SioController {
 }
 
 
-trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl {
+trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl
+with SetLangCookieUtil {
 
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
     mySioStartTpl(
@@ -178,7 +179,7 @@ trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValid
           rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
             .flashing("success" -> "New.password.saved")
         }
-        val res2Fut = LangUtil.setLangCookie1(resFut, epw2.personId)
+        val res2Fut = setLangCookie1(resFut, epw2.personId)
         // Дожидаемся завершения всех асинхронных операций и возвращаем результат.
         updateFut flatMap { _ =>
           res2Fut

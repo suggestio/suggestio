@@ -4,6 +4,7 @@ import play.api.mvc._
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
+import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -33,7 +34,7 @@ object IsAdEditor extends PlayMacroLogsImpl {
 
   def adNotFound(adId: String, request: RequestHeader): Future[Result] = {
     trace(s"invokeBlock(): Ad not found: $adId")
-    controllers.Application.http404Fut(request)
+    SioHttpErrorHandler.http404Fut(request)
   }
 
   /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */

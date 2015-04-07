@@ -1,7 +1,7 @@
 @(rf: EmailPwRegReqForm_t, captchaShown: Boolean = false)(implicit ctx: Context)
 
 @import helper._
-@import controllers.Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 @import ctx._
 @import util.FC.authFc

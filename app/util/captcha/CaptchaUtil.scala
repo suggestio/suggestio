@@ -1,6 +1,8 @@
 package util.captcha
 
 import util.CipherUtilAddon
+import play.api.data.Forms._
+import util.FormUtil._
 
 /**
  * Suggest.io
@@ -16,6 +18,19 @@ import util.CipherUtilAddon
 
 /** Утиль для криптографии, используемой при stateless-капчевании. */
 object CaptchaUtil extends CipherUtilAddon {
+
+  val CAPTCHA_ID_FN     = "captchaId"
+  val CAPTCHA_TYPED_FN  = "captchaTyped"
+
+
+  /** Маппер формы для hidden поля, содержащего id капчи. */
+  def captchaIdM = nonEmptyText(maxLength = 16)
+    .transform(strTrimSanitizeF, strIdentityF)
+
+  /** Маппер формы для поля, в которое юзер вписывает текст с картинки. */
+  def captchaTypedM = nonEmptyText(maxLength = 16)
+    .transform(strTrimF, strIdentityF)
+
 
   /** При использовании CBC нужен IV, который выводится из разного барахла, в т.ч. из статических рандомных байт. */
   override protected val IV_MATERIAL_DFLT = {

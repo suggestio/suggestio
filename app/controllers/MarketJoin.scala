@@ -5,6 +5,7 @@ import models.usr.EmailActivation
 import org.joda.time.DateTime
 import play.api.i18n.{MessagesApi, Messages}
 import util.billing.MmpDailyBilling
+import util.captcha.CaptchaUtil._
 import util.img._
 import util.mail.MailerWrapper
 import util.PlayMacroLogsImpl
@@ -18,7 +19,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import util.img.ImgFormUtil.logoKM
-import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 
 /**
  * Suggest.io
@@ -38,8 +38,8 @@ class MarketJoin(val messagesApi: MessagesApi) extends SioController with PlayMa
         "name"  -> nameM,
         "phone" -> phoneM,
         "callTime" -> CallBackReqCallTimes.mapping,
-        CAPTCHA_ID_FN     -> Captcha.captchaIdM,
-        CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
+        CAPTCHA_ID_FN     -> captchaIdM,
+        CAPTCHA_TYPED_FN  -> captchaTypedM
       )
       {(name, phone, callTime, _, _) =>
         val mcMeta = MCompanyMeta(
@@ -243,8 +243,8 @@ class MarketJoin(val messagesApi: MessagesApi) extends SioController with PlayMa
         "email"     -> email,
         colorOptKM,
         logoKM,
-        CAPTCHA_ID_FN    -> Captcha.captchaIdM,
-        CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
+        CAPTCHA_ID_FN    -> captchaIdM,
+        CAPTCHA_TYPED_FN -> captchaTypedM
       )
       {(companyName, town, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
         val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl, town = town,

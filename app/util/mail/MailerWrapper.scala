@@ -5,7 +5,7 @@ import javax.mail.Authenticator
 import com.google.inject.Inject
 import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
 import play.api.Play.{current, configuration}
-import play.api.libs.mailer.{MailerClient, Email, MailerPlugin}
+import play.api.libs.mailer.{MailerClient, Email}
 import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil

@@ -10,7 +10,6 @@ import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
-import util.acl.ExpireSession
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CaptchaUtil
 
@@ -22,21 +21,7 @@ import scala.util.Random
  * Created: 18.06.14 9:57
  * Description: Контроллер и сопутствующая утиль для капчеванию пользователей.
  */
-object Captcha extends KaptchaGenerator with PlayMacroLogsImpl {
-  import play.api.data.Forms._
-  import util.FormUtil._
-
-  val CAPTCHA_ID_FN     = "captchaId"
-  val CAPTCHA_TYPED_FN  = "captchaTyped"
-
-  /** Маппер формы для hidden поля, содержащего id капчи. */
-  val captchaIdM = nonEmptyText(maxLength = 16)
-    .transform(strTrimSanitizeF, strIdentityF)
-
-  /** Маппер формы для поля, в которое юзер вписывает текст с картинки. */
-  val captchaTypedM = nonEmptyText(maxLength = 16)
-    .transform(strTrimF, strIdentityF)
-}
+class Captcha extends KaptchaGenerator with PlayMacroLogsImpl
 
 
 /** Абстрактный кусок контроллера для генерации капч с помощью какой-то неопределённой библиотеки. */
@@ -141,9 +126,9 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 
 
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
-trait CaptchaValidator extends PlayMacroLogsI {
+trait CaptchaValidator extends CaptchaGeneratorBase with PlayMacroLogsI {
 
-  import Captcha.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+  import CaptchaUtil._
 
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.
@@ -152,12 +137,11 @@ trait CaptchaValidator extends PlayMacroLogsI {
   def checkCaptcha[T](form: Form[T])(implicit request: RequestHeader): Form[T] = {
     val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
       form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
-        val _cookieName = Captcha.cookieName(captchaId)
+        val _cookieName = cookieName(captchaId)
         request.cookies.get(_cookieName)
           .filter { cookie =>
             try {
-              val ivMaterial = Captcha.ivMaterial(captchaId)
-              val ctext = CaptchaUtil.decryptPrintable(cookie.value, ivMaterial = ivMaterial)
+              val ctext = CaptchaUtil.decryptPrintable(cookie.value, ivMaterial = ivMaterial(captchaId))
               // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
               // TODO Надо исправлять только буквы
               val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
@@ -191,9 +175,11 @@ trait CaptchaValidator extends PlayMacroLogsI {
    */
   def rmCaptcha(form: Form[_])(response: Result): Result = {
     form.data.get(CAPTCHA_ID_FN).fold(response) { captchaId =>
-      val cookieName = Captcha.cookieName(captchaId)
       response
-        .discardingCookies(DiscardingCookie(name = cookieName, secure = Captcha.COOKIE_FLAG_SECURE))
+        .discardingCookies(DiscardingCookie(
+          name = cookieName(captchaId),
+          secure = COOKIE_FLAG_SECURE
+        ))
     }
   }
 }

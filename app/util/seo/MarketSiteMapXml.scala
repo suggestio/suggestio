@@ -5,6 +5,7 @@ import models.Context
 import models.crawl.{SiteMapUrlT, SiteMapUrl, ChangeFreqs}
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.Call
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io

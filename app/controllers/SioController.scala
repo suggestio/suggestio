@@ -4,13 +4,11 @@ import java.io.File
 import java.net.JarURLConnection
 
 import io.suggest.event.SioNotifierStaticClientI
-import models.Context
 import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
 import util.ws.WsDispatcherActor
-import util.xplay.LangUtil
 import scala.concurrent.Future
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
@@ -94,17 +92,12 @@ trait SioController extends Controller with ContextT with TplFormatUtilT with I1
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {
-    formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n")
+    formWithErrors.errors
+      .iterator
+      .map { e => "  " + e.key + " -> " + e.message }
+      .mkString("\n")
   }
   
-  /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
-  def http404AdHoc(implicit request: RequestHeader): Result = {
-    http404ctx(ContextImpl())
-  }
-
-  def http404ctx(implicit ctx: Context): Result = {
-    NotFound(views.html.static.http404Tpl())
-  }
 
   // Обработка возвратов (?r=/../.../..) либо редиректов.
   /** Вернуть редирект через ?r=/... либо через указанный вызов. */

@@ -21,6 +21,23 @@ import util.SiowebEsUtil.client
  */
 object ShowcaseUtil {
 
+  /** Дефолтовое имя ноды. */
+  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+
+  /** Дефолтовый цвет выдачи, если нет ничего. */
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
+
+  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+
+
+  /** Дефолтовый цвет элементов переднего плана. */
+  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
+
+  /** Цвет для выдачи, которая вне узла. */
+  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
+
+
+
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse true
 

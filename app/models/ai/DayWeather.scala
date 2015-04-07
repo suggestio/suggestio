@@ -99,7 +99,6 @@ object GeoDirections extends Enumeration {
   sealed protected trait ValT {
     val getName: String
     def i18nCode: String = "wind.direction." + getName
-    def getI18n: String = Messages(i18nCode)
     def getVDirection: GeoDirection
   }
 
@@ -119,7 +118,6 @@ object GeoDirections extends Enumeration {
 
   val NONE        : GeoDirection = new Val("none") {
     override def i18nCode: String = ""
-    override def getI18n: String = ""
   }
   val EAST        : GeoDirection = new Val("east")
   val WEST        : GeoDirection = new Val("west")

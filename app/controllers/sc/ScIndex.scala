@@ -91,7 +91,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
 /** Вспомогательная утиль для рендера indexTpl на нодах. */
 trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
-  trait ScIndexNodeHelper extends ScIndexHelperBase with ScSiteConstants {
+  trait ScIndexNodeHelper extends ScIndexHelperBase {
     val adnNodeFut        : Future[MAdnNode]
     def spsrFut           : Future[AdSearch]
     def onCloseHrefFut    : Future[String]
@@ -155,6 +155,8 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _geoListGoBack  <- _geoListGoBackFut
       } yield {
         new ScRenderArgs with ScReqArgsWrapper {
+          import ShowcaseUtil._
+
           override def reqArgsUnderlying = _reqArgs
           override val searchInAdnId  = {
             (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
