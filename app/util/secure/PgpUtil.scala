@@ -7,6 +7,7 @@ import models.sec.{IAsymKey, MAsymKey}
 import org.elasticsearch.client.Client
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.PlayMacroLogsDyn
 import util.event.SiowebNotifier.Implicts.sn
 
 import scala.concurrent.Future
@@ -27,7 +28,7 @@ import scala.concurrent.Future
  * Normal key -- это ключ защиты простых данных. Тот, кто может отбрутить такой ключ, совсем не интересуется
  * данными, которые защищает данный ключ.
  */
-object PgpUtil {
+object PgpUtil extends PlayMacroLogsDyn {
 
   /** Вся возня с ключами вертится здесь. */
   private val KF: KeyFactory = KeyFactoryFactory.newInstance()
@@ -65,18 +66,30 @@ object PgpUtil {
     if ( configuration.getBoolean("pgp.keyring.init.enabled").getOrElse(false) ) {
       Some(init())
     } else {
+      MAsymKey.getById(LOCAL_STOR_KEY_ID)
+        // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
+        .filter { _.isDefined }
+        .onFailure {
+          case ex: NoSuchElementException => LOGGER.warn("PGP key does not exists and creation is disabled on this node.")
+          case ex: Throwable              => LOGGER.error("Failed to check status of server's pgp key.", ex)
+        }
       None
     }
   }
 
   /** Запустить инициализацию необходимых ключей. */
   def init()(implicit es: Client): Future[_] = {
-    MAsymKey.getById(LOCAL_STOR_KEY_ID)
+    val fut = MAsymKey.getById(LOCAL_STOR_KEY_ID)
       .filter { _.isDefined }
       .recoverWith { case ex: NoSuchElementException =>
         genNewNormalKey().save
       }
+    fut onFailure {
+      case ex: Throwable => LOGGER.error("Failed to initialize server's PGP key", ex)
+    }
+    fut
   }
+
 
   /**
    * Криптозащита с помощью указанного ключа и для дальнейшей расшифровки этим же ключом.

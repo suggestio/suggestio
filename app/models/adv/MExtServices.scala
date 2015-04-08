@@ -11,7 +11,8 @@ import models.{MImgSizeT, MAd}
 import models.adv.js.ctx.MJsCtx
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 import models.im.{OutImgFmts, OutImgFmt}
-import play.api.i18n.{Messages, Lang}
+import play.api.http.HttpVerbs
+import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play._
@@ -123,20 +124,10 @@ object MExtServices extends MServicesT {
     /** Дефолтовый формат изображения, если не задан в конфиге. */
     def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
 
-    // Опциональная поддержка oauth 1.
-    /** Поддерживается ли oauth1? Этим можно проверять возможность вызова остальных oauth1-методов. */
-    def hasOAuth1: Boolean = false
-    /** Доступ к фасаду oauth1, если поддерживается.
-      * Если не поддерживается, то будет экзепшен. */
-    def oauth1Client: OAuth = throw new UnsupportedOperationException("oauth1 is not supported by " + strId)
-    /** Быстрый доступ к ключу сервиса. */
-    def oauth1Key: ConsumerKey = oauth1Client.info.key
+    /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
+    def oauth1Support: Option[IOAuth1Support] = None
 
-    /** В каких размерах должно открываться окно авторизации OAuth1. */
-    def oauth1PopupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
-
-    /** Какой ext-adv-актор использовать для взаимодействия с сервисом?
-      * По дефолту: использовать js API. */
+    /** Какой ext-adv-service-актор надо использовать для взаимодействия с данным сервисом? */
     def extAdvServiceActor: IServiceActorCompanion
   }
 
@@ -225,39 +216,52 @@ object MExtServices extends MServicesT {
 
     override def advPostMaxSz(tgUrl: String) = ???    // TODO
 
-    /** Твиттер всегда умеет oauth1. */
-    override def hasOAuth1: Boolean = true
-
     /** Префикс ключей конфигурации. Конфиг расшарен с secure-social. */
     def confPrefix = "securesocial.twitter"
 
-    /** Ключи приложения для доступа к public API. */
-    override lazy val oauth1Key: ConsumerKey = {
-      val cp = confPrefix
-      ConsumerKey(
-        key     = configuration.getString(cp + ".consumerKey").get,
-        secret  = configuration.getString(cp + ".consumerSecret").get
-      )
-    }
-
-    /** Синхронный OAuth1-клиент для твиттера */
-    override lazy val oauth1Client: OAuth = {
-      val cp = confPrefix
-      OAuth(
-        ServiceInfo(
-          requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
-          accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
-          // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
-          authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
-          oauth1Key
-        ),
-        use10a = true
-      )
-    }
-
     /** twitter работает через OAuth1. */
     override def extAdvServiceActor = OAuth1ServiceActor
-  }
+
+    /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
+    override def oauth1Support = Some(OAuth1Support)
+
+    /** Реализация поддержки OAuth1. */
+    object OAuth1Support extends IOAuth1Support {
+      /** Ключи приложения для доступа к public API. */
+      override lazy val key: ConsumerKey = {
+        val cp = confPrefix
+        ConsumerKey(
+          key     = configuration.getString(cp + ".consumerKey").get,
+          secret  = configuration.getString(cp + ".consumerSecret").get
+        )
+      }
+
+      /** Синхронный OAuth1-клиент для твиттера */
+      override lazy val client: OAuth = {
+        val cp = confPrefix
+        OAuth(
+          ServiceInfo(
+            requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
+            accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
+            // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
+            authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
+            key
+          ),
+          use10a = true
+        )
+      }
+
+      class AcTokVerifier extends IHttpVerifyInfo {
+        override def method = HttpVerbs.GET
+        override def url = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
+        override def isRespStatusOk(status: Int) = status == 200
+      }
+
+      /** Ссылка для верификации. */
+      override def tokenVerifyMethodUrl = Some(new AcTokVerifier)
+    }
+
+  } // TWITTER
 
 
   /**
@@ -285,6 +289,28 @@ object MExtServices extends MServicesT {
     (__ \ APP_ID_FN).writeNullable[String]
   ){ s => (s.strId, s.APP_ID_OPT) }
 
+
+  /** Поддержка OAuth1 задается реализацией этого интерфейса. */
+  sealed trait IOAuth1Support {
+    /** Доступ к фасаду oauth1, если поддерживается.
+      * Если не поддерживается, то будет экзепшен. */
+    def client: OAuth
+
+    /** Быстрый доступ к ключу сервиса. */
+    def key: ConsumerKey = client.info.key
+
+    /** Ссылка для верификации. */
+    def tokenVerifyMethodUrl: Option[IHttpVerifyInfo]
+
+    /** В каких размерах должно открываться окно авторизации OAuth1. */
+    def oauth1PopupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
+  }
+
+  sealed trait IHttpVerifyInfo {
+    def method: String
+    def url: String
+    def isRespStatusOk(status: Int): Boolean
+  }
 }
 
 

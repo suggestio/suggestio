@@ -43,7 +43,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   override def receive: Receive = allStatesReceiver
 
   /** OAuth1-клиент сервиса. */
-  val client = args.target.target.service.oauth1Client
+  val client = args.target.target.service.oauth1Support.get.client
 
   /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
   def domWndTargetName = "popup-authz-" + args.target.target.service.strId
