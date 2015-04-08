@@ -22,7 +22,6 @@ case class EnsureReadyAsk(
   replyTo   : Option[String]
 ) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
-  override def sendMode = CmdSendModes.Async
   override def action = MJsActions.EnsureReady
 
 }

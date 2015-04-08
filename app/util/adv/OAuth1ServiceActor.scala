@@ -1,11 +1,13 @@
 package util.adv
 
 import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
+import java.util.concurrent.TimeoutException
 
 import controllers.routes
 import models.adv._
-import models.adv.ext.act.{ExtServiceActorEnv, ExtActorEnv, OAuthVerifier, ActorPathQs}
-import models.adv.js.{GetStorageCmd, SetStorageCmd, JsCmd}
+import models.adv.ext.act.{ExtServiceActorEnv, OAuthVerifier, ActorPathQs}
+import models.adv.js.ctx.MStorageKvCtx
+import models.adv.js._
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
@@ -19,6 +21,7 @@ import util.jsa.JsWindowOpen
 import util.secure.PgpUtil
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.{client => esClient}
@@ -33,7 +36,16 @@ import util.SiowebEsUtil.{client => esClient}
  *
  * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
  */
-object OAuth1ServiceActor extends IServiceActorCompanion
+object OAuth1ServiceActor extends IServiceActorCompanion {
+
+  /** Таймаут спрашивания у юзера ранее сохраненных данных по access-token'у. */
+  def LS_STORED_TOKEN_ASK_TIMEOUT_SEC = 3
+
+}
+
+
+import OAuth1ServiceActor._
+
 
 case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   extends FsmActor
@@ -101,17 +113,40 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     )
   }
 
+  /** Отправить команду записи в хранилище браузера. */
+  protected def sendStorageSetCmd(value2: Option[String]): Unit = {
+    val cctx = MStorageKvCtx(
+      key = lsValueKey,
+      value = value2
+    )
+    val mctx1 = args.mctx0.copy(
+      action = Some( MJsActions.StorageSet ),
+      custom = Some( Json.toJson(cctx) )
+    )
+    val jsCmd = StorageSetCmd(mctx1)
+    sendCommand(jsCmd)
+  }
+
 
   /** Запросить ранее сохраненный access_token из браузера клиента. */
   class GetSavedAcTokFromUserState extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val jsCmd = GetStorageCmd(
-        key     = lsValueKey,
+      val cctx = MStorageKvCtx(lsValueKey)
+      val mctx1 = args.mctx0.copy(
+        action = Some( MJsActions.StorageGet ),
+        custom = Some( Json.toJson(cctx) )
+      )
+      val jsCmd = StorageGetCmd(
+        mctx    = mctx1,
         replyTo = Some(replyTo)
       )
       sendCommand(jsCmd)
-      // TODO Нужен timeout на случай проблем
+      // Нужен timeout на случай проблем
+      context.system.scheduler.scheduleOnce( LS_STORED_TOKEN_ASK_TIMEOUT_SEC.seconds ) {
+        warn("Timeout while waiting for stored access_token result from user.")
+        self ! Failure(new TimeoutException("localStorage.getItem ask timeout"))
+      }
     }
 
     override def receiverPart: Receive = {
@@ -191,12 +226,11 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
         become(new RetrieveAccessTokenState(reqTok, verifier))
       case other =>
         warn("msg rcvrd " + other)
-        // TODO Вывалить ошибку инициализации юзеру
+        // Если у юзера был сохраненный в браузере токен, то стереть его.
         if (userHaveInvalTok) {
-          // Стереть текущий токен из localStorage юзера.
-          val jsCmd = SetStorageCmd(key = lsValueKey, value = None)
-          sendCommand(jsCmd)
+          sendStorageSetCmd(None)
         }
+        // TODO Вывалить ошибку инициализации юзеру
     }
   }
 
@@ -214,16 +248,11 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
           // Зашифровать всё с помощью PGP.
           val baos = new ByteArrayOutputStream(1024)
           PgpUtil.encryptForSelf(
-            data = new ByteArrayInputStream(json.getBytes()),
+            data = new ByteArrayInputStream( json.getBytes() ),
             key  = pgpKey,
             out  = baos
           )
-          // Сохранить шифротекст на клиенте.
-          val jsCmd = SetStorageCmd(
-            key   = lsValueKey,
-            value = Some(new String(baos.toByteArray))
-          )
-          sendCommand(jsCmd)
+          sendStorageSetCmd( Some(new String(baos.toByteArray)) )
         }
       }
     }

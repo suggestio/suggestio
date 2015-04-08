@@ -84,60 +84,6 @@ trait IJsonActionCmd extends IWsCmd {
 }
 
 
-/** Трейт, отражающий суть запроса чтения из хранилища браузера. */
-trait IGetStorageCmd extends IWsCmd {
-
-  /** Кому отвечать, если есть. */
-  def replyTo: Option[String]
-
-  /** Ключ, по которому ожидается значение. */
-  def key: String
-
-  override def ctype = MJsCmdTypes.GetStorage
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = super.toJsonAcc
-    acc ::= KEY_FN -> JsString(key)
-    val _replyTo = replyTo
-    if (_replyTo.isDefined)
-      acc ::= REPLY_TO_FN -> JsString(_replyTo.get)
-    acc
-  }
-}
-
-/** Дефолтовая реализация команды [[IGetStorageCmd]]. */
-case class GetStorageCmd(
-  key: String,
-  replyTo: Option[String]
-) extends IGetStorageCmd
-
-
-/** Трейт с телом SetStorage-команды. */
-trait ISetStorageCmd extends IWsCmd {
-  /** Ключ, по которому должно сохраняться значение. */
-  def key: String
-  /** Значение. Если None, то значение будет удалено. */
-  def value: Option[String]
-
-  override def ctype = MJsCmdTypes.SetStorage
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = super.toJsonAcc
-    acc ::= KEY_FN -> JsString(key)
-    val _value = value
-    if (_value.isDefined)
-      acc ::= VALUE_FN -> JsString(_value.get)
-    acc
-  }
-}
-
-/** Дефолтовая реализация команды [[ISetStorageCmd]]. */
-case class SetStorageCmd(
-  key   : String,
-  value : Option[String]
-) extends ISetStorageCmd
-
-
 /** Закидывание в контекст данных по текущему экшену. */
 trait IJsonActionCtxPatcher extends IJsonActionCmd {
   /** Исходный контекст. */
@@ -155,6 +101,14 @@ trait IJsonActionCtxPatcher extends IJsonActionCmd {
     }
   }
 }
+
+
+/** Команда для выставления значения в хранилище браузера. */
+case class StorageSetCmd(mctx: MJsCtx) extends IJsonActionCmd {
+  override def replyTo = None
+}
+/** Команда для чтения значения из хранилища браузера. */
+case class StorageGetCmd(mctx: MJsCtx, replyTo: Option[String]) extends IJsonActionCmd
 
 
 /** Допустимые режимы отправки js-кода в ws. */
