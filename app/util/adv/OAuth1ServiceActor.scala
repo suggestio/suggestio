@@ -13,6 +13,7 @@ import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
+import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
@@ -130,6 +131,18 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   /** Запросить ранее сохраненный access_token из браузера клиента. */
   class GetSavedAcTokFromUserState extends FsmState {
+
+    protected var answerReceived: Boolean = false
+
+    protected lazy val timeoutTimer = {
+      context.system.scheduler.scheduleOnce( LS_STORED_TOKEN_ASK_TIMEOUT_SEC.seconds ) {
+        if (!answerReceived) {
+          self ! new TimeoutException("localStorage.getItem ask timeout")
+          warn("Timeout while waiting for stored access_token result from user.")
+        }
+      }
+    }
+
     override def afterBecome(): Unit = {
       super.afterBecome()
       val cctx = MStorageKvCtx(lsValueKey)
@@ -142,16 +155,81 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
         replyTo = Some(replyTo)
       )
       sendCommand(jsCmd)
-      // Нужен timeout на случай проблем
-      context.system.scheduler.scheduleOnce( LS_STORED_TOKEN_ASK_TIMEOUT_SEC.seconds ) {
-        warn("Timeout while waiting for stored access_token result from user.")
-        self ! Failure(new TimeoutException("localStorage.getItem ask timeout"))
-      }
+      // Нужен timeout на случай проблем. Запустить его сейчас.
+      timeoutTimer
+      // Запустить получение ключа дешифровки из модели ключей.
+      lsCryptoKey
     }
 
     override def receiverPart: Receive = {
-      ???
+      // Пришел ответ от js с результатами чтения хранилища браузера. Нужно попытаться расшифровать его.
+      case ans: Answer if ans.ctx2.action.contains(MJsActions.StorageGet) =>
+        // Остановить таймер таймаута.
+        answerReceived = true
+        timeoutTimer.cancel()
+        // Извлекаем возможное значение.
+        val cctxOpt = ans.ctx2.custom
+          .flatMap { jsv  =>  Json.fromJson[MStorageKvCtx](jsv).asOpt }
+          .filter  { _.key == lsValueKey }
+          .flatMap { _.value }
+        val fut = cctxOpt match {
+          case Some(input) =>
+            for {
+              mkey  <- lsCryptoKey
+            } yield {
+              val input = cctxOpt.get
+              val baos = new ByteArrayOutputStream(256)
+              PgpUtil.decryptFromSelf(
+                data = IOUtils.toInputStream( input ),
+                key  = mkey,
+                out  = baos
+              )
+              Json.parse( baos.toByteArray )
+                .asOpt[LsOAuth1Info]
+                // Убедится, что токен был выдан именно текущему юзеру.
+                .filter { info =>
+                  val currPersonIdOpt = args.request.pwOpt.map(_.personId)
+                  val res = currPersonIdOpt.contains( info.personId )
+                  if (!res)
+                    warn(s"[XAKEP] User $currPersonIdOpt is detected while tried to use foreign access token: orig ownerId = ${info.personId} since ${info.timestamp}")
+                  res
+                }
+                // Если нет значения или оно чужое, то родить экзепшен.
+                .get
+            }
+
+          case None =>
+            Future failed new NoSuchElementException("cctx contains no or unrelated value")
+        }
+        fut onComplete {
+          // Успешно получен ранее сохраненный токен от клиента.
+          case Success(oaInfo) =>
+            self ! oaInfo
+          case Failure(ex) =>
+            self ! FailedInfo(ex, cctxOpt.isDefined)
+            if ( !ex.isInstanceOf[NoSuchElementException] )
+              warn("Failed to restore access token from user storage, answer = " + ans, ex)
+            else
+              debug("No saved value found: " + ex.getMessage)
+        }
+
+      // Получен ранее сохраненный access_token, но пока точно неизвестно, валиден ли этот токен сейчас.
+      case oaInfo: LsOAuth1Info =>
+        trace("Have previosly stored access token since " + oaInfo.timestamp)
+        ???
+
+      // Не удалось восстановить ранее сохраненный токен.
+      case fi: FailedInfo =>
+        become( new AskRequestTokenState(fi.userHaveInvalidTok) )
+
+      // Таймаут наступил. Значит запускаем процесс получения токена с юзера.
+      case te: TimeoutException =>
+        if (!answerReceived)
+          become( new AskRequestTokenState(false) )
     }
+
+    /** Контейнер ошибочного результата. */
+    protected case class FailedInfo(ex: Throwable, userHaveInvalidTok: Boolean)
   }
 
 
@@ -248,7 +326,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
           // Зашифровать всё с помощью PGP.
           val baos = new ByteArrayOutputStream(1024)
           PgpUtil.encryptForSelf(
-            data = new ByteArrayInputStream( json.getBytes() ),
+            data = IOUtils.toInputStream(json),
             key  = pgpKey,
             out  = baos
           )

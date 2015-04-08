@@ -42,6 +42,8 @@ object PgpUtil {
     pwPrefixed
   }
 
+  private def getPw = SEC_KEY_PASSWORD.toCharArray
+
   /** Имя документа в модели ключей, где хранится непараноидальный ключ для защиты данных, хранимых в
     * browser.window.localStorage.
     * Изначально был только этот единствнный ключ в модели, и использовался для хранения пользовательских
@@ -50,7 +52,7 @@ object PgpUtil {
 
   /** Генерация нового ключа защиты данных. */
   def genNewNormalKey(): MAsymKey = {
-    val key = KF.generateKeyPair(LOCAL_STOR_KEY_ID, SEC_KEY_PASSWORD.toCharArray)
+    val key = KF.generateKeyPair(LOCAL_STOR_KEY_ID, getPw)
     MAsymKey(
       pubKey = key.getPublicKey.toArmoredString,
       secKey = Some(key.toArmoredString),
@@ -97,8 +99,31 @@ object PgpUtil {
    */
   def encrypt(data: InputStream, secKey: SecretKey, forPubKey: String, out: OutputStream): Unit = {
     val transform = secKey.signEncryptFor(forPubKey)
-    val password = SEC_KEY_PASSWORD.toCharArray
-    transform.run(password, data, out)
+    transform.run(getPw, data, out)
+  }
+
+
+  /**
+   * Расшифровать pgp-контейнер, ранее зашифрованный для самого себя.
+   * @param data Поток исходных данных.
+   * @param key Экземпляр ключа.
+   * @param out Выходной поток данных.
+   */
+  def decryptFromSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
+    val sc = KF.parseSecretKey(key.secKey.get)
+    decrypt(data, sc, key.pubKey, out)
+  }
+
+  /**
+   * Дешифрация данных.
+   * @param data Исходный поток данных.
+   * @param secKey Секретный ключ для расшифровки.
+   * @param signPubKey Публичный ключ для проверки подписи.
+   * @param out Выходной поток данных.
+   */
+  def decrypt(data: InputStream, secKey: SecretKey, signPubKey: String, out: OutputStream): Unit = {
+    val transform = secKey.decryptVerifyFrom(signPubKey)
+    transform.run(getPw, data, out)
   }
 
 }
