@@ -106,3 +106,12 @@ trait MExtTargetT {
 
 }
 
+
+/** Названия полей для kv-обмена в поле mctx.custom. */
+object MStorageKvCtx {
+  /** Название поля ключа. */
+  def KEY_FN    = "k"
+
+  /** Название поля значения. */
+  def VALUE_FN  = "v"
+}

@@ -19,6 +19,12 @@ object MAskActions {
   /** Базовая инициализация системы без конкретных адаптеров. */
   def INIT            = "c"
 
+  /** Запрос данных из хранилища. */
+  def STORAGE_GET     = "d"
+
+  /** Выставление данных в хранилище браузера. */
+  def STORAGE_SET     = "e"
+
 }
 
 
@@ -44,6 +50,12 @@ trait MAskActionsBaseT extends ILightEnumeration {
   /** Запрос публикации одной цели. */
   val HandleTarget: T
 
+  /** Запрос на чтение хранилища. */
+  val StorageGet: T
+
+  /** Запрос на запись/стирание значение из хранилища. */
+  val StorageSet: T
+
 }
 
 
@@ -56,6 +68,8 @@ trait MAskActionsT extends Enumeration with EnumMaybeWithName with MAskActionsBa
   override val Init: T          = new Val(INIT)
   override val EnsureReady: T   = new Val(ENSURE_READY)
   override val HandleTarget: T  = new Val(HANDLE_TARGET)
+  override val StorageGet: T    = new Val(STORAGE_GET)
+  override val StorageSet: T    = new Val(STORAGE_SET)
 }
 
 
@@ -67,6 +81,8 @@ trait MAskActionLightBaseT extends MAskActionsBaseT with LightEnumeration {
       case HandleTarget.strId   => Some(HandleTarget)
       case EnsureReady.strId    => Some(EnsureReady)
       case Init.strId           => Some(Init)
+      case StorageGet.strId     => Some(StorageGet)
+      case StorageSet.strId     => Some(StorageSet)
       case _                    => None
     }
   }
