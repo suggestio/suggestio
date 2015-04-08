@@ -9,15 +9,9 @@ import util.async.FsmActor
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.04.15 15:36
- * Description: Актор, занимающийся взаимодействие с удаленным сервисом через OAuth1 API.
- * В частности, это нужно для взаимодействия с твиттером.
- * Актор поддерживает информационную связь с юзером через ws, js-команды и через контроллер, пробрасывающий
- * HTTP-запросы этому актору.
- *
- * Работа с request token'ами реализована как stateful внутри актора.
- * access token шифруется и хранится у юзера в кукисе.
- * При следующем запросе access token будет расшифрован из кукиса. Таким образом, можно иметь максимум
- * один уже готовый access token.
+ * Description: Актор, занимающийся размещением карточек через уже готовую связь с удаленным сервером.
+ * Для размещения используется access_token, полученный от service-актора.
+ * Ссылки API берутся из service.oauth1Support.
  */
 
 object OAuth1TargetActor {
@@ -43,10 +37,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   override def receive: Receive = allStatesReceiver
 
   /** OAuth1-клиент сервиса. */
-  val client = args.target.target.service.oauth1Support.get.client
-
-  /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
-  def domWndTargetName = "popup-authz-" + args.target.target.service.strId
+  //val client = args.target.target.service.oauth1Support.get.client
 
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {

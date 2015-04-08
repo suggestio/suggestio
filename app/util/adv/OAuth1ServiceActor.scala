@@ -325,6 +325,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
           trace("Access token verified successfully.")
           new StartTargetActorsState(oa1Info.acTok)
         } else {
+          // TODO При наступлении rate_limit, надо наверное допускать access_token.
           debug("Failed to verify previously saved access token. Let's request new one.\n  " + resp.body)
           new AskRequestTokenState(userHaveInvalTok = true)
         }
@@ -390,7 +391,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Нужно отправить команду для отображения попапа с логином в твиттер (попап в порядке очереди).
-      val wndSz = oa1Support.oauth1PopupWndSz
+      val wndSz = oa1Support.popupWndSz
       val someFalse = Some(false)
       val jsa = JsWindowOpen(
         url = client.redirectUrl(reqTok.token),

@@ -303,7 +303,7 @@ object MExtServices extends MServicesT {
     def tokenVerifyMethodUrl: Option[IHttpVerifyInfo]
 
     /** В каких размерах должно открываться окно авторизации OAuth1. */
-    def oauth1PopupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
+    def popupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
   }
 
   sealed trait IHttpVerifyInfo {
