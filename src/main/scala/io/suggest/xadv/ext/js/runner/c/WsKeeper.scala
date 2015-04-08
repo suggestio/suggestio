@@ -95,36 +95,19 @@ trait WsKeeper {
               }
             }
           )
-
         } foreach { mctx2 =>
-          // Отправить новый контекст серверу через ws.
-          val ans = MAnswerCtx(
-            replyTo   = cmd.replyTo,
-            mctx      = mctx2
-          )
-          sendAnswer(ans, appState)
+          if (mctx2 != null) {
+            // Отправить новый контекст серверу через ws.
+            val ans = MAnswerCtx(
+              replyTo = cmd.replyTo,
+              mctx = mctx2
+            )
+            sendAnswer(ans, appState)
+          }
         }
-        fut
 
-      // Запрос чтения из хранилища браузера.
-      case cmd: MGetStorageCmd =>
-        val raw = dom.localStorage.getItem(cmd.key)
-        val resp: Array[Any] = if (raw != null) Array(raw) else Array()
-        val ans = MAnswer(
-          replyTo = Some(cmd.replyTo),
-          value   = resp
-        )
-        sendAnswer(ans, appState)
-
-      // Запрос сервера на запись/удаление элемента по ключу.
-      case cmd: MSetStorageCmd =>
-        val stor = dom.localStorage
-        cmd.value match {
-          case Some(v) => stor.setItem(cmd.key, v)
-          case None    => stor.removeItem(cmd.key)
-        }
-    }
-  }
+    }   // onSuccess
+  }     // handleMessage
 
 
   /** Укороченная в плане кода отправка ответа на sio-сервер. */

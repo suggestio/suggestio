@@ -49,11 +49,3 @@ case class MAnswerCtx(
   override def value = mctx.toJson
   override def valueName = JsCommand.MCTX_FN
 }
-
-
-/** Дефолтовая реализация [[IValuedAnswer]]. */
-case class MAnswer(
-  replyTo   : Option[String],
-  value     : Any,
-  valueName : String = JsCommand.VALUE_FN
-) extends IValuedAnswer
