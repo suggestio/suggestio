@@ -43,10 +43,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 
   override def receive: Receive = allStatesReceiver
 
-  val oa1Support = service.oauth1Support.get
-
-  /** OAuth1-клиент сервиса. */
-  //val client = args.target.target.service.oauth1Support.get.client
+  def oa1Support = service.oauth1Support.get
 
   /** Текущий сервис, в котором задействован текущий актор. */
   override def service: MExtService = args.target.target.service
@@ -59,7 +56,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 
   /** Состояние публикации одного поста. */
   class PublishState extends FsmState {
-    // При входе в состояние надо запустить постинг с помощью имеющегося access_token'а.
+    /** При входе в состояние надо запустить постинг с помощью имеющегося access_token'а. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       val mkPostFut = oa1Support.mkPost(

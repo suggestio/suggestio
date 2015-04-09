@@ -24,10 +24,7 @@
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
   @args.jsStateOpt.map { jsState =>
-    <link rel="canonical" href="@ctx.SC_URL_PREFIX@jsState.copy(
-      searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
-      fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
-    ).ajaxStatedUrl()"/>
+    <link rel="canonical" href="@ctx.SC_URL_PREFIX@jsState.canonical.ajaxStatedUrl()"/>
   }
   @if(!args.syncRender) {
     <meta name="fragment" content="!"/>

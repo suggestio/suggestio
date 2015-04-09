@@ -134,6 +134,9 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
 
     /** Какой ext-adv-service-актор надо использовать для взаимодействия с данным сервисом? */
     def extAdvServiceActor: IServiceActorCompanion
+
+    /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
+    def myUserName: Option[String] = None
   }
 
 
@@ -229,6 +232,9 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
 
     /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
     override def oauth1Support = Some(OAuth1Support)
+
+    /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
+    override def myUserName = Some("@suggest_io")
 
     /** Реализация поддержки OAuth1. */
     object OAuth1Support extends IOAuth1Support {

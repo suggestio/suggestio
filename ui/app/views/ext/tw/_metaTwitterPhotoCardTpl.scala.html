@@ -1,0 +1,21 @@
+@(args: mext.tw.IPhotoCardArgs)(implicit ctx: Context)
+
+@* twitter card для постинга фотографии в твите.
+   https://dev.twitter.com/cards/types/photo
+*@
+
+<meta name="twitter:card" content="photo" />
+@args.site.map { site =>
+  <meta name="twitter:site" content="@site" />
+}
+@args.title.map { title =>
+  <meta name="twitter:title" content="@title" />
+}
+<meta name="twitter:image" content="@args.imgUrl" />
+@args.url.map { url =>
+  <meta name="twitter:url" content="@url" />
+}
+@args.imgWh.map { wh =>
+  <meta name="twitter:image:width"  content="@wh.width" />
+  <meta name="twitter:image:height" content="@wh.height" />
+}

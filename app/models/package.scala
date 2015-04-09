@@ -92,6 +92,7 @@ package object models {
   type ImgCrop              = io.suggest.img.ImgCrop
   val  ImgCrop              = io.suggest.img.ImgCrop
 
+  type ISize2di             = io.suggest.adv.ext.model.im.ISize2di
   type MImgSizeT            = ym.model.common.MImgSizeT
 
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta

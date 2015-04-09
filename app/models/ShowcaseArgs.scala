@@ -1,8 +1,8 @@
 package models
 
 import controllers.routes
-import io.suggest.ym.model.common.{SlNameTokenStr, LogoImgOptI}
-import models.blk.{SzMult_t, RenderArgs}
+import io.suggest.ym.model.common.LogoImgOptI
+import models.blk.SzMult_t
 import models.im.DevScreen
 import play.api.mvc.{Call, QueryStringBindable}
 import play.twirl.api.Html
@@ -327,7 +327,7 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
 object ScJsState {
 
   // Название qs-параметров, отражающих состояние выдачи.
-  // r = receiver, p = producer, s = search, n = navigation, f = focused ads
+  // r = receiver, p = producer, s = search, n = navigation, f = focused ads, e = mEta
   // 2014.jan.20: Переименованы некоторые поля, чтобы подогнать их под js, который пока некогда чинить.
   val ADN_ID_FN               = "m.id"
   val CAT_SCR_OPENED_FN       = "s.open"
@@ -339,6 +339,7 @@ object ScJsState {
   val PRODUCER_ADN_ID_FN      = "f.pr.id"
   val TILES_CAT_ID_FN         = "t.cat"
   val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
+  val POV_AD_ID_FN            = "e.pai"
 
   def generationDflt: Option[Long] = {
     val l = new Random().nextLong()
@@ -358,7 +359,8 @@ object ScJsState {
                    boolOptB: QueryStringBindable[Option[Boolean]],
                    longOptB: QueryStringBindable[Option[Long]],
                    intOptB: QueryStringBindable[Option[Int]],
-                   nglsMapB: QueryStringBindable[Option[NglsStateMap_t]] ) = {
+                   nglsMapB: QueryStringBindable[Option[NglsStateMap_t]]
+                  ): QueryStringBindable[ScJsState] = {
     new QueryStringBindable[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
@@ -372,6 +374,7 @@ object ScJsState {
           maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
           maybeTileCatId        <- strOptB.bind(TILES_CAT_ID_FN, params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
+          maybePovAdIdOpt       <- strOptB.bind(POV_AD_ID_FN, params)
         } yield {
           val res = ScJsState(
             adnId               = strNonEmpty( maybeAdnId ),
@@ -383,7 +386,8 @@ object ScJsState {
             searchTabListOpt    = noFalse( maybeSearchTab ),
             fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
             tilesCatIdOpt       = strNonEmpty( maybeTileCatId ),
-            navNglsMap          = maybeNglsMap getOrElse Map.empty
+            navNglsMap          = maybeNglsMap getOrElse Map.empty,
+            povAdId             = maybePovAdIdOpt
           )
           Right(res)
         }
@@ -400,7 +404,8 @@ object ScJsState {
           boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
           strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
           strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt),
-          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
+          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
+          strOptB.unbind(POV_AD_ID_FN, value.povAdId)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -417,7 +422,21 @@ object ScJsState {
 }
 
 
-/** Класс, отражающий состояние js-выдачи на клиенте. */
+/**
+ * Класс, отражающий состояние js-выдачи на клиенте.
+ * @param adnId id текущего узла.
+ * @param searchScrOpenedOpt Инфа об открытости поисковой панели.
+ * @param navScrOpenedOpt Инфа об раскрытости навигационной панели.
+ * @param generationOpt "Поколение".
+ * @param fadOpenedIdOpt id текущей открытой карточки.
+ * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
+ * @param searchTabListOpt Выбранная вкладка на поисковой панели.
+ * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
+ * @param tilesCatIdOpt id текущей категории в плитке категорий.
+ * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
+ * @param povAdId id карточки, с точки зрения которой идёт просмотр выдачи.
+ *                Используется для подмены метаданных (метатегов) страницы для внешних сервисов.
+ */
 case class ScJsState(
   adnId               : Option[String]   = None,
   searchScrOpenedOpt  : Option[Boolean]  = None,
@@ -428,7 +447,8 @@ case class ScJsState(
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
   tilesCatIdOpt       : Option[String]   = None,
-  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty  // Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
+  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty,
+  povAdId             : Option[String]   = None
 ) { that =>
 
   /** Содержаться ли тут какие-либо данные? */
@@ -523,6 +543,12 @@ case class ScJsState(
    */
   def syncSiteUrl: String = routes.MarketShowcase.syncGeoSite(this).url
 
+  /** Очень каноническое состояние выдачи без каких-либо уточнений. */
+  def canonical: ScJsState = copy(
+    searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
+    fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
+  )
+
 }
 
 
@@ -564,4 +590,5 @@ trait NodeListRenderArgsWrapper extends NodeListRenderArgs {
   override def syncRender = _nlraUnderlying.syncRender
   override def syncUrl(jsState: ScJsState) = _nlraUnderlying.syncUrl(jsState)
 }
+
 
