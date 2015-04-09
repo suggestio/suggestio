@@ -1,4 +1,4 @@
-@()(implicit ctx: Context)
+@(title: String)(content: Html)(implicit ctx: Context)
 
 @* Чтобы протестировать браузер на возможность открывания popup window, нужно открыть попап.
    Тут страница с содержимым попапа. *@
@@ -7,13 +7,9 @@
 
 <html>
   <head>
-    <title>Suggest.io</title>
+    <title>@title</title>
   </head>
   <body>
-    <p>@messages("Checking.your.browser")</p>
-    <script type="text/javascript">
-        window.opener.postMessage("reloaded", "*");
-        window.close();
-    </script>
+    @content
   </body>
 </html>

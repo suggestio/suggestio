@@ -1,9 +1,13 @@
 package util.adv
 
 import akka.actor.Props
-import models.adv.IOAuth1AdvTargetActorArgs
+import models.adv.js.ctx.JsErrorInfo
+import models.adv.{IExtPostInfo, MExtService, IOAuth1AdvTargetActorArgs}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -25,6 +29,8 @@ object OAuth1TargetActor {
 
 case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   extends FsmActor
+  with ExtTargetActorUtil
+  with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with CompatWsClient    // TODO
@@ -37,13 +43,18 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 
   override def receive: Receive = allStatesReceiver
 
+  val oa1Support = service.oauth1Support.get
+
   /** OAuth1-клиент сервиса. */
   //val client = args.target.target.service.oauth1Support.get.client
+
+  /** Текущий сервис, в котором задействован текущий актор. */
+  override def service: MExtService = args.target.target.service
 
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {
     super.preStart()
-    become(???)
+    become(new PublishState)
   }
 
   /** Состояние публикации одного поста. */
@@ -51,10 +62,30 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
     // При входе в состояние надо запустить постинг с помощью имеющегося access_token'а.
     override def afterBecome(): Unit = {
       super.afterBecome()
+      val mkPostFut = oa1Support.mkPost(
+        mad   = args.request.mad,
+        acTok = args.accessToken,
+        geo   = args.request.producer.geo.point
+      )
+      renderInProcess()
+      mkPostFut onComplete {
+        case Success(res) => self ! res
+        case other        => self ! other
+      }
     }
 
     override def receiverPart: Receive = {
-      ???
+      // Всё ок
+      case newPostInfo: IExtPostInfo =>
+        // TODO Нужно ссылку на пост передать в рендер
+        renderSuccess()
+        harakiri()
+
+      // Ошибка постинга.
+      case Failure(ex) =>
+        val jsErr = JsErrorInfo(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+        renderError("e.adv.ext.api", Some(jsErr))
+        harakiri()
     }
   }
 

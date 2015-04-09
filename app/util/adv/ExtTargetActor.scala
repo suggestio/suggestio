@@ -8,22 +8,19 @@ import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
-import models.event.{ErrorInfo, MEventTmp, RenderArgs}
+import models.event.ErrorInfo
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
 import play.api.http.HeaderNames
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.JsString
 import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
-import util.event.{EventType, EventTypes}
+import util.event.EventTypes
 import util.img.AdRenderUtil
-import util.jsa.{InnerHtmlById, JsAppendById}
-import ExtUtil.RUNNER_EVENTS_DIV_ID
 import util.blocks.BgImg.szMulted
 
 import scala.util.{Failure, Success}
@@ -55,7 +52,7 @@ import ExtTargetActor._
 
 case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   extends FsmActor
-  with ExtTargetActorEnv
+  with ExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
@@ -63,7 +60,6 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with CompatWsClient    // TODO
 {
 
-  import args.ctx
   import LOGGER._
 
   override protected var _state: FsmState = new DummyState
@@ -91,45 +87,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     )
   }
 
-
-  def evtRenderArgs(etype: EventType, errors: ErrorInfo*): RenderArgs = {
-    evtRenderArgs(etype, withContainer = false, errors : _*)
-  }
-  def evtRenderArgs(etype: EventType, withContainer: Boolean, errors: ErrorInfo*): RenderArgs = {
-    RenderArgs(
-      mevent = MEventTmp(
-        etype   = etype,
-        ownerId = args.request.producerId,
-        id      = Some(replyTo)
-      ),
-      advExtTgs = Seq(args.target.target),
-      errors    = errors,
-      withContainer = withContainer
-    )
-  }
-
-  /** Перезаписать содержимое блока цели на странице. */
-  def renderEventReplace(rargs: RenderArgs): Unit = {
-    val html = rargs.mevent.etype.render(rargs)
-    val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-    val jsa = InnerHtmlById(replyTo, htmlStr)
-    val cmd = JsCmd( jsa.renderToString() )
-    sendCommand(cmd)
-  }
-
   // FSM states
 
   class EnsureClientReadyState(mctx0: MJsCtx) extends FsmState {
-
-    def renderInProcess(): Unit = {
-      val etype = EventTypes.AdvExtTgInProcess
-      val rargs = evtRenderArgs(etype, withContainer = true)
-      val html = etype.render(rargs)
-      val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-      val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
-      val cmd = JsCmd( jsa.renderToString() )
-      sendCommand(cmd)
-    }
 
     /** При переходе в это состояние нужно дождаться готовности клиента
       * и отрендерить юзеру инфу о начале процесса публикации. */
@@ -190,29 +150,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       sendCommand(cmd)
     }
 
-    /** Рендер на экран уведомления об успехе, стерев предыдущую инфу по target'у. */
-    def renderSuccess(): Unit = {
-      val rargs = evtRenderArgs( EventTypes.AdvExtTgSuccess )
-      renderEventReplace(rargs)
-    }
-
-    /** Сообщить юзеру, что на стороне js зафиксирована ошибка. */
-    def renderError(errOpt: Option[JsErrorInfo]): Unit = {
-      val err = errOpt match {
-        case Some(jserr) =>
-          ErrorInfo(
-            msg = jserr.msg,
-            args = jserr.args,
-            info = jserr.other.map(_.toString)
-          )
-        case None =>
-          ErrorInfo(
-            msg = "error.adv.ext.js.refused"
-          )
-      }
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
-      renderEventReplace(rargs)
-    }
+    protected def _renderError(ans: Answer) = renderError("error.adv.ext.js.refused", ans.ctx2.error)
 
     override def receiverPart: Receive = {
       // Супервизор прислал распарсенный ws-ответ от js по текущему таргету.
@@ -227,14 +165,14 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
           // Непоправимая ошибка на стороне js. Актор должен огорчить юзера, и возможно ещё что-то сделать.
           case AnswerStatuses.Error =>
             warn("Error received from JS: " + ans.ctx2.error)
-            renderError(ans.ctx2.error)
+            _renderError(ans)
             harakiri()
 
           // JS'у недостаточно данных в контексте для создания публикации.
           case AnswerStatuses.FillContext =>
             if (fillCtxTry >= ExtTargetActor.MAX_FILL_CTX_TRIES) {
               error("Too many fill ctx tries. Stopping. Last answer was:\n  " + ans)
-              renderError(ans.ctx2.error)
+              _renderError(ans)
               harakiri()
             } else {
               trace("Fill context requested")

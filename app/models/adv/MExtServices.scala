@@ -289,8 +289,8 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
        * @see [[https://dev.twitter.com/rest/reference/post/statuses/update]]
        * @return Фьючерс с результатом работы.
        */
-      def mkPost(mad: MAd, acTok: RequestToken, geo: Option[GeoPoint] = None)
-                (implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
+      override def mkPost(mad: MAd, acTok: RequestToken, geo: Option[GeoPoint] = None)
+                         (implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
         val b = new URIBuilder(MK_TWEET_URL)
         b.addParameter("status", "Hello, world!")   // TODO Генерить текст твита из описания карточки со ссылкой на страницу.
         if (geo.isDefined) {
@@ -300,10 +300,12 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
         }
         ws.url(b.build().toASCIIString)
           .sign( sigCalc(acTok) )
-          .post("")
+          .execute("POST")
           .map { resp =>
             if (resp.status == 200) {
-              TweetInfo( (resp.json \ "id_str").as[String] )
+              val tweetId = (resp.json \ "id_str").as[String]
+              LOGGER.trace("New tweet posted: " + tweetId + " resp.body =\n  " + resp.body)
+              TweetInfo( tweetId )
             } else {
               throw new IllegalArgumentException(s"Tweet not POSTed: HTTP ${resp.status}: ${resp.body}")
             }
@@ -360,8 +362,11 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
     def isAcTokValid(acTok: RequestToken)(implicit ws: WSClient, ec: ExecutionContext): Future[Boolean]
 
     def sigCalc(acTok: RequestToken) = OAuthCalculator(consumerKey, acTok)
-  }
 
+    /** Сделать пост в сервисе. */
+    def mkPost(mad: MAd, acTok: RequestToken, geo: Option[GeoPoint] = None)
+              (implicit ws: WSClient, ec: ExecutionContext): Future[IExtPostInfo]
+  }
 
 }
 

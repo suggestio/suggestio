@@ -21,6 +21,7 @@ import util.FormUtil._
 import views.html.lk.adv.ext._
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Akka.system
+import views.html.static.popups.closingPopupTpl
 
 import scala.concurrent.Future
 
@@ -270,9 +271,8 @@ class LkAdvExt @Inject() (
       request.getQueryString("oauth_verifier")
     )
     system.actorSelection(actorInfoQs.path) ! msg
-    // TODO Закрыть текущее окно
-    // TODO Выставить в сессию access_token, полученный от актора.
-    Ok("TODO")
+    // Закрыть текущее окно
+    Ok( closingPopupTpl() )
   }
   def oauth1PopupReturnGet(adnId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(adnId, actorInfoQs)
   def oauth1PopupReturnPost(adnId: String, actorInfoQs: ActorPathQs) = oauth1PopupReturn(adnId, actorInfoQs)

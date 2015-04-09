@@ -72,7 +72,7 @@ class Static @Inject() (
 
   /** Содержимое проверочного попап-окна. */
   def popupCheckContent = MaybeAuth { implicit request =>
-    Ok(popupCheckTpl()).withHeaders(
+    Ok(popups.popupCheckTpl()).withHeaders(
       CACHE_CONTROL -> "public, max-age=86400"
     )
   }
