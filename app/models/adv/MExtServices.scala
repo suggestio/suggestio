@@ -1,32 +1,37 @@
 package models.adv
 
 import java.net.URL
+import _root_.util.PlayLazyMacroLogsImpl
 import _root_.util.adv.{OAuth1ServiceActor, ExtServiceActor, IServiceActorCompanion}
 import _root_.util.blocks.BgImg
 import io.suggest.adv.ext.model._, MServices._
 import io.suggest.adv.ext.model.im.{VkWallImgSizesScalaEnumT, FbWallImgSizesScalaEnumT, INamedSize2di}
+import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.geo.GeoPoint
 import io.suggest.util.UrlUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.{MImgSizeT, MAd}
 import models.adv.js.ctx.MJsCtx
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 import models.im.{OutImgFmts, OutImgFmt}
-import play.api.http.HttpVerbs
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play._
-import play.api.libs.oauth.{ServiceInfo, OAuth, ConsumerKey}
+import play.api.libs.oauth._
+import play.api.libs.ws.WSClient
+import org.apache.http.client.utils.URIBuilder
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.12.14 15:13
  * Description: Модель сервисов для внешнего размещения рекламных карточек.
- * TODO ext.adv api v2: Модель осталась для совместимости, должна быть удалена или же стать неким каталогом скриптов,
- * либо ещё что-то...
+ * TODO Нужно вынести эту модель в отдельный пакет в models, разбить на куски и наверное объеденить с моделью IdProviders.
  */
-object MExtServices extends MServicesT {
+object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
 
   override type T = Val
 
@@ -228,7 +233,7 @@ object MExtServices extends MServicesT {
     /** Реализация поддержки OAuth1. */
     object OAuth1Support extends IOAuth1Support {
       /** Ключи приложения для доступа к public API. */
-      override lazy val key: ConsumerKey = {
+      override lazy val consumerKey: ConsumerKey = {
         val cp = confPrefix
         ConsumerKey(
           key     = configuration.getString(cp + ".consumerKey").get,
@@ -245,20 +250,70 @@ object MExtServices extends MServicesT {
             accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
             // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
             authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
-            key
+            consumerKey
           ),
           use10a = true
         )
       }
 
-      class AcTokVerifier extends IHttpVerifyInfo {
-        override def method = HttpVerbs.GET
-        override def url = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
-        override def isRespStatusOk(status: Int) = status == 200
+      /** URL для проверки валидности access_token'а. */
+      def AC_TOK_VERIFY_URL = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
+
+      /**
+       * Проверка валидности access_tokena силами модели.
+       * @param acTok Проверяемый access_token.
+       * @param ws http-клиент.
+       * @return Фьючерс с true, если токен точно валиден сейчас.
+       * @see [[https://dev.twitter.com/rest/reference/get/account/verify_credentials]]
+       */
+      override def isAcTokValid(acTok: RequestToken)(implicit ws: WSClient, ec: ExecutionContext): Future[Boolean] = {
+        ws.url( AC_TOK_VERIFY_URL )
+          .sign( sigCalc(acTok) )
+          .get()
+          .map { resp =>
+            val res = resp.status == 200
+            if (!res)
+              LOGGER.debug(s"Twitter server said, that access_token ${acTok.token} invalid: HTTP ${resp.status} ${resp.statusText}\n ${resp.body}")
+            res
+          }
       }
 
-      /** Ссылка для верификации. */
-      override def tokenVerifyMethodUrl = Some(new AcTokVerifier)
+      /** URL ресурс API твиттинга. */
+      def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
+
+      /**
+       * Запостить твит через OAuth1.
+       * @param mad Рекламная карточка.
+       * @param acTok access_token.
+       * @param geo Необязательная геоточка, к которой привязан твит.
+       * @see [[https://dev.twitter.com/rest/reference/post/statuses/update]]
+       * @return Фьючерс с результатом работы.
+       */
+      def mkPost(mad: MAd, acTok: RequestToken, geo: Option[GeoPoint] = None)
+                (implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
+        val b = new URIBuilder(MK_TWEET_URL)
+        b.addParameter("status", "Hello, world!")   // TODO Генерить текст твита из описания карточки со ссылкой на страницу.
+        if (geo.isDefined) {
+          val g = geo.get
+          b.addParameter("lat", g.lat.toString)
+          b.addParameter("lon", g.lon.toString)
+        }
+        ws.url(b.build().toASCIIString)
+          .sign( sigCalc(acTok) )
+          .post("")
+          .map { resp =>
+            if (resp.status == 200) {
+              TweetInfo( (resp.json \ "id_str").as[String] )
+            } else {
+              throw new IllegalArgumentException(s"Tweet not POSTed: HTTP ${resp.status}: ${resp.body}")
+            }
+          }
+      }
+
+      case class TweetInfo(id: String) extends IExtPostInfo {
+        override def url: String = "https://twitter.com/" // TODO Надо что-то типа https://twitter.com/Flickr/status/423511451970445312
+      }
+
     }
 
   } // TWITTER
@@ -292,27 +347,29 @@ object MExtServices extends MServicesT {
 
   /** Поддержка OAuth1 задается реализацией этого интерфейса. */
   sealed trait IOAuth1Support {
-    /** Доступ к фасаду oauth1, если поддерживается.
-      * Если не поддерживается, то будет экзепшен. */
+    /** Доступ к oauth-клиенту для логина и получения access_token'а. */
     def client: OAuth
 
-    /** Быстрый доступ к ключу сервиса. */
-    def key: ConsumerKey = client.info.key
-
-    /** Ссылка для верификации. */
-    def tokenVerifyMethodUrl: Option[IHttpVerifyInfo]
+    /** Быстрый доступ к ключу сервиса. Обычно перезаписывается в реализациях и не зависит от клиента. */
+    def consumerKey: ConsumerKey = client.info.key
 
     /** В каких размерах должно открываться окно авторизации OAuth1. */
     def popupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
+
+    /** Проверка валидности access_token'a силами модели. */
+    def isAcTokValid(acTok: RequestToken)(implicit ws: WSClient, ec: ExecutionContext): Future[Boolean]
+
+    def sigCalc(acTok: RequestToken) = OAuthCalculator(consumerKey, acTok)
   }
 
-  sealed trait IHttpVerifyInfo {
-    def method: String
-    def url: String
-    def isRespStatusOk(status: Int): Boolean
-  }
+
 }
 
+/** Абстрактные метаданные по посту на внешнем сервисе. */
+sealed trait IExtPostInfo {
+  def id: String
+  def url: String
+}
 
 /** Реализация модели размеров картинок фейсбука. */
 object FbImgSizes extends FbWallImgSizesScalaEnumT

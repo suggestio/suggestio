@@ -9,6 +9,7 @@ import models.adv.js.{JsCmd, IWsCmd}
 import models.event.{RenderArgs, MEventTmp, IErrorInfo}
 import play.api.data._, Forms._
 import play.api.libs.json.JsString
+import play.api.libs.ws.{WSClient, WS}
 import util.FormUtil
 import util.FormUtil.{urlM, esIdM}
 import util.event.EventTypes
@@ -171,4 +172,13 @@ trait ExtServiceActorUtil extends ISendCommand {
 /** Готовое к использованию значение полей replyTo в jscmd-запросах. */
 trait ReplyTo extends Actor with ExtActorEnv {
   override def replyTo = self.path.name
+}
+
+
+/** Пока акторы работают без guice, тут код получения инстанса WS-клиента. */
+// TODO WSClient должен приходить прямо в конструктор актора через dependency injection.
+trait CompatWsClient {
+  import play.api.Play.current
+
+  implicit lazy val wsClient = current.injector.instanceOf[WSClient]
 }

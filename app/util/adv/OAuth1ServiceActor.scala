@@ -15,10 +15,8 @@ import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
 import org.joda.time.DateTime
-import play.api.http.HttpVerbs
 import play.api.libs.json.Json
-import play.api.libs.oauth.{OAuthCalculator, RequestToken}
-import play.api.libs.ws.{WSResponse, WS}
+import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.{AsyncUtil, FsmActor}
 import util.jsa.JsWindowOpen
@@ -69,6 +67,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with ExtServiceActorUtil
+  with CompatWsClient    // TODO
 {
 
   import LOGGER._
@@ -278,12 +277,10 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       case oaInfo: LsOAuth1Info =>
         // TODO Не проверять токен слишком часто. Использовать таймштамы для кеширования валидности.
         trace("Have previosly stored access token since " + oaInfo.created)
-        val nextState = oa1Support.tokenVerifyMethodUrl match {
-          // Запустить верификацию токена только если со времени последний валидации прошло некоторое время.
-          case Some(info) if isStoredTokenNeedReverify(oaInfo) =>
-            new VerifyStoredAccessToken(info, oaInfo)
-          // Пропустить верификацию.
-          case _ => new StartTargetActorsState(oaInfo.acTok)
+        val nextState = if ( isStoredTokenNeedReverify(oaInfo) ) {
+          new VerifyStoredAccessToken(oaInfo)
+        } else {
+          new StartTargetActorsState(oaInfo.acTok)
         }
         become(nextState)
 
@@ -298,44 +295,34 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
 
   /** Состоянии верификации access_token'а силами twitter'а. */
-  class VerifyStoredAccessToken(hri: MExtServices.IHttpVerifyInfo, oa1Info: LsOAuth1Info) extends FsmState {
+  class VerifyStoredAccessToken(oa1Info: LsOAuth1Info) extends FsmState {
     // Нужно запустить обращение к системе верификации access-токена.
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val req = WS.url(hri.url)
-        .sign(OAuthCalculator(oa1Support.key, oa1Info.acTok))
-      val respFut = hri.method match {
-        case HttpVerbs.GET  => req.get()
-        case HttpVerbs.POST => req.post("")
-        case other          => Future failed new IllegalArgumentException("Unsupported verify req method: " + other)
-      }
-      respFut onComplete {
-        case Success(wsResp) => self ! HttpResp(wsResp)
-        case other           => self ! other
+      oa1Support.isAcTokValid(oa1Info.acTok) onComplete {
+        case Success(isValid) => self ! isValid
+        case other            => self ! other
       }
     }
 
     /** Результат работы http-клиета форвардится сюда. */
     override def receiverPart: Receive = {
-      case HttpResp(resp) =>
-        val nextState: FsmState = if (hri.isRespStatusOk(resp.status)) {
-          // Перезаписать на клиенте проверенный access_token с новым временем последней проверки.
-          val info1 = oa1Info.copy(verified = Some(DateTime.now))
-          saveOa1Info(info1)
-          trace("Access token verified successfully.")
-          new StartTargetActorsState(oa1Info.acTok)
-        } else {
-          // TODO При наступлении rate_limit, надо наверное допускать access_token.
-          debug("Failed to verify previously saved access token. Let's request new one.\n  " + resp.body)
-          new AskRequestTokenState(userHaveInvalTok = true)
-        }
-        become(nextState)
+      // Верификация прошла успешно. Перезаписать на клиенте проверенный access_token с новым временем последней проверки.
+      case true =>
+        val info1 = oa1Info.copy(verified = Some(DateTime.now))
+        saveOa1Info(info1)
+        trace("Access token verified successfully.")
+        become( new StartTargetActorsState(oa1Info.acTok) )
+      // Сервер сказал, что токен не валиден.
+      case false =>
+        // TODO При наступлении rate_limit, надо наверное допускать access_token.
+        debug("Failed to verify previously saved access token. Let's request new one.")
+        become( new AskRequestTokenState(userHaveInvalTok = true) )
+      // Произошла какая-то ошибка.
       case Failure(ex) =>
         warn("Failed to make ac-tok verify HTTP request.", ex)
         become(new AskRequestTokenState(userHaveInvalTok = true))
     }
-
-    protected case class HttpResp(resp: WSResponse)
   }
 
 

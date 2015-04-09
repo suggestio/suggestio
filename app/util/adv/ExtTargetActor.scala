@@ -16,7 +16,7 @@ import org.apache.http.entity.mime.content.ByteArrayBody
 import play.api.http.HeaderNames
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
-import play.api.libs.ws.{WSResponse, WS}
+import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
@@ -60,6 +60,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with EtaCustomArgsBase
+  with CompatWsClient    // TODO
 {
 
   import args.ctx
@@ -426,7 +427,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       val baos = new ByteArrayOutputStream( szMulted(imgBytes.length, 1.1F) )
       val resp = entity.build()
       resp.writeTo(baos)
-      WS.url(uploadCtx.url)
+      wsClient.url(uploadCtx.url)
         .withHeaders(
           HeaderNames.CONTENT_TYPE -> ("multipart/form-data; boundary=" + boundary)
         )

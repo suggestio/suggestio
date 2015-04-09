@@ -27,6 +27,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   extends FsmActor
   with MediatorSendCommand
   with PlayMacroLogsImpl
+  with CompatWsClient    // TODO
 {
 
   /** Общий ресивер для всех состояний. */
@@ -43,6 +44,18 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   override def preStart(): Unit = {
     super.preStart()
     become(???)
+  }
+
+  /** Состояние публикации одного поста. */
+  class PublishState extends FsmState {
+    // При входе в состояние надо запустить постинг с помощью имеющегося access_token'а.
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+    }
+
+    override def receiverPart: Receive = {
+      ???
+    }
   }
 
 }
