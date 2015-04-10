@@ -13,13 +13,11 @@ trait FbWallImgSizesBaseT extends ServiceSizesEnumBaseT {
   def FB_SZ_USER_ALIAS      = "fbu"
 
   protected trait FbPostLinkValT extends ValT {
+    /** Ширина картинки для постинга. */
     override def width  = 1200
+    /** 630 по докам фейсбука, 628 по данным ссылки ниже.
+      * @see [[https://blog.bufferapp.com/ideal-image-sizes-social-media-posts]] */
     override def height = 630
-  }
-
-  protected trait FbDashboardLinkValT extends ValT {
-    override def width  = 487
-    override def height = 255
   }
 
   /** Community-страницы: page, event, group. */
