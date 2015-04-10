@@ -1,11 +1,11 @@
-@(args: ScRenderArgs)(implicit ctx: Context)
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
 
 @* Начальная страница для sio-market. Многочисленные аргументы передаются в контейнере для удобства передачи оных в подшаблоны. *@
 
 @import util.TplDataFormatUtil._
 
 @* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
-@toggleNavScrAnchor()(content: Option[ScJsState] => Html) = {
+@toggleNavScrAnchor()(content: Option[msc.ScJsState] => Html) = {
   @defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
     @jsStateOpt.map { jsState =>
       <a href="@args.syncUrl(jsState.toggleNavScreen)">

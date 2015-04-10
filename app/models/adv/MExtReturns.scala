@@ -2,7 +2,8 @@ package models.adv
 
 import controllers.routes
 import io.suggest.model.EnumMaybeWithName
-import models.{Context, ScJsState}
+import models.msc.ScJsState
+import models.Context
 import play.api.data.Mapping
 import util.FormUtil
 
@@ -106,7 +107,7 @@ sealed trait ReturnToScBuilder {
   }
 
   /**
-   * Сгенерить экземпляр [[models.ScJsState]] на основе накопленных данных.
+   * Сгенерить экземпляр [[ScJsState]] на основе накопленных данных.
    * @return Экземпляр js-состояния.
    */
   def toJsState: ScJsState = ScJsState.veryEmpty

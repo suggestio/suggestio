@@ -6,12 +6,13 @@ package models.mext.tw
  * Created: 09.04.15 19:12
  * Description: Поддержка поля с обязательной ссылкой на картинку.
  */
-trait ImgUrl {
+trait ImgUrl extends ICardArgsBase {
+  override type W <: ImgUrl
+
   def imgUrl: String
 }
 
 trait ImgUrlWrapper extends ImgUrl with ICardArgsWrapper {
-  override type W <: ImgUrl
 
   override def imgUrl = _cardArgsUnderlying.imgUrl
 }

@@ -1,6 +1,7 @@
 package util.img
 
 import models.im._
+import models.msc.WelcomeRenderArgsT
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.Future

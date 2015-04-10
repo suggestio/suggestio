@@ -1,6 +1,7 @@
 package controllers.sc
 
 import controllers.{routes, SioController}
+import models.msc.{ScJsState, ScSiteArgs}
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._

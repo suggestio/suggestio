@@ -1,4 +1,4 @@
-@(args: ScRenderArgs)(implicit ctx: Context)
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
 @import util.TplDataFormatUtil._
 
 @stuff._scrollableContainerTpl( "sm-shops", "smShops", style = Some(stuff._bgcolor( args.bgColor, false ).toString + "display: block;") ){

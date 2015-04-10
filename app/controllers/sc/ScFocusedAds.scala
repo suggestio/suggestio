@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import models.jsm.ProducerAdsResp
+import models.msc.{FocusedAdsTplArgs, ScJsState}
 import play.twirl.api.Html
 import util.showcase._
 import util.SiowebEsUtil.client

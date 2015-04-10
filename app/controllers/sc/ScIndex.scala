@@ -4,6 +4,7 @@ import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
 import models.jsm.ScIndexResp
+import models.msc.{WelcomeRenderArgsT, ScRenderArgs, ScReqArgsWrapper, ScReqArgs}
 import util.img.WelcomeUtil
 import util.showcase._
 import util.stat._

@@ -1,5 +1,9 @@
 package models.mext.tw
 
+import models.Context
+import play.twirl.api.{Html, Template2}
+import views.html.ext.tw._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,10 +13,16 @@ package models.mext.tw
 object CardTypes extends Enumeration {
 
   /** Экземпляр модели. */
-  sealed protected class Val(name: String) extends super.Val(name)
+  abstract sealed protected class Val(name: String) extends super.Val(name) {
+    type Args_t <: ICardArgsBase { type W = Args_t }
+    def template: Template2[Args_t, Context, Html]
+  }
 
   type T = Val
 
-  val Photo: T = new Val("photo")
+  val Photo = new Val("photo") {
+    override type Args_t = IPhotoCardArgs
+    override def template = _metaTwitterPhotoCardTpl
+  }
 
 }

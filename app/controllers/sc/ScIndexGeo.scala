@@ -2,6 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
+import models.msc.{ScRenderArgs, ScReqArgsWrapper, ScReqArgs}
 import play.twirl.api.Html
 import util.showcase._
 import util.acl._

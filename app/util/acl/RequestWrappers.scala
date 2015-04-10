@@ -4,6 +4,7 @@ import java.net.InetAddress
 
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
+import models.msc.ScJsState
 import models.usr.MPerson
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser

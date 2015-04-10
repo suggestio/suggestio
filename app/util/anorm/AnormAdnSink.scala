@@ -14,7 +14,7 @@ import models.AdnSink
  */
 object AnormAdnSink {
 
-  implicit def rowToSink: Column[AdnSink] = Column.nonNull { (value, meta) =>
+  implicit def rowToSink: Column[AdnSink] = Column.nonNull1 { (value, meta) =>
     value match {
       case s: String =>
         Right( AdnSinks.withName(s) : AdnSink )

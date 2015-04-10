@@ -1,9 +1,9 @@
 package util.showcase
 
 import io.suggest.ym.model.common.BlockMeta
-import models.TileArgs
 import models.blk.SzMult_t
 import models.im.{DevScreenT, DevPixelRatios, DevScreen}
+import models.msc.TileArgs
 import org.scalatestplus.play._
 import play.api.GlobalSettings
 import play.api.test.FakeApplication

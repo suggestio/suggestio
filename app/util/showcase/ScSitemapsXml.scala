@@ -4,7 +4,8 @@ import io.suggest.model.EsModel
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.MAd
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
-import models.{AdSearch, Context, ScJsState}
+import models.msc.ScJsState
+import models.{AdSearch, Context}
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

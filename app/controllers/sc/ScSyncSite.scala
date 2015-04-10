@@ -4,6 +4,7 @@ import java.util.NoSuchElementException
 
 import controllers.SioController
 import models._
+import models.msc._
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI

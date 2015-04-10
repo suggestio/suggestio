@@ -11,7 +11,7 @@ GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       
 GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  @controllers.MarketShowcase.geoSite(a: ScJsState ?= ScJsState.veryEmpty)
+GET  /                                  @controllers.MarketShowcase.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId)
@@ -107,7 +107,7 @@ GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImg)
 
 # Витрина market'а и её экшены
 GET  /market/site/:adnId                @controllers.MarketShowcase.demoWebSite(adnId)
-GET  /market/index/:adnId               @controllers.MarketShowcase.showcase(adnId, a: ScReqArgs ?= ScReqArgs.empty)
+GET  /market/index/:adnId               @controllers.MarketShowcase.showcase(adnId, a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
 
 GET  /blk/css                           @controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
 
@@ -115,7 +115,7 @@ GET  /m/lk/showcase/site/:adnId         @controllers.MarketShowcase.myAdsSite(ad
 GET  /m/lk/showcase/index/:adnId        @controllers.MarketShowcase.myAdsShowcase(adnId)
 
 GET  /market/geo/site                   @controllers.MarketShowcase.rdrToGeoSite
-GET  /market/geo/index                  @controllers.MarketShowcase.geoShowcase(a: ScReqArgs ?= ScReqArgs.empty)
+GET  /market/geo/index                  @controllers.MarketShowcase.geoShowcase(a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
 
 GET  /market/script/:adnId              @controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/node_icon/:adnId           @controllers.MarketShowcase.nodeIconJs(adnId)
@@ -130,7 +130,7 @@ GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsI
 ## Поиск по узлам
 GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: ScJsState ?= ScJsState.empty)
+GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty)
 
 
 # market+join: Присоединение к sio-market.

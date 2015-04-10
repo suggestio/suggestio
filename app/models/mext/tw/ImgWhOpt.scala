@@ -8,7 +8,8 @@ import models.ISize2di
  * Created: 09.04.15 18:45
  * Description: Поле размеров картинки присутствует в нескольких
  */
-trait ImgWhOpt {
+trait ImgWhOpt extends ICardArgsBase {
+  override type W <: ImgWhOpt
 
   /** Размер картинки. */
   def imgWh: Option[ISize2di]
@@ -17,7 +18,6 @@ trait ImgWhOpt {
 
 /** Wrapped-реализация [[ImgWhOpt]]. */
 trait ImgWhOptWrapper extends ImgWhOpt with ICardArgsWrapper {
-  override type W <: ImgWhOpt
 
   /** Размер картинки. */
   override def imgWh = _cardArgsUnderlying.imgWh

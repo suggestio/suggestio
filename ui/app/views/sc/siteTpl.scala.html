@@ -1,4 +1,4 @@
-@(args: ScSiteArgs)(implicit ctx: Context)
+@(args: msc.ScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -31,6 +31,9 @@
   }
 
   @static._faviconsTpl()
+
+  @* Рендерить мета-теги для твиттера. *@
+  @args.twitterMeta.map(_.render())
 
   @* fb, vk, pinterest, ff-android home-screen, etc.
      TODO: У OSM.org стоит тут 120х120px. Надо разобраться, какой размер сюда стоит втыкать.

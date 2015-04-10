@@ -1,6 +1,8 @@
 package models.mext.tw
 
+import models.Context
 import models.adv.MExtServices
+import play.twirl.api.Html
 
 /**
  * Suggest.io
@@ -9,10 +11,16 @@ import models.adv.MExtServices
  * Description: Интерфейсы контейнеров и контейнеры для аргументов рендера различных twitter card.
  * @see [[https://dev.twitter.com/cards/overview]]
  */
-trait ICardArgs {
+
+trait ICardArgsBase {
+  type W
+}
+
+trait ICardArgs extends ICardArgsBase {
+  override type W <: ICardArgs
 
   /** Тип карточки. Заполняется промежуточными реализациями. */
-  def cardType: CardType
+  def cardType: CardType // { type Args_t = W }
 
   /** canonical url страницы. */
   def url: Option[String]
@@ -23,12 +31,15 @@ trait ICardArgs {
   /** Юзернейм приложения на твиттере. По идее он всегда одинаковый. */
   def site: Option[String] = MExtServices.TWITTER.myUserName
 
+  /** Рендер шаблона. */
+  def render()(implicit ctx: Context): Html
+  // TODO Нужно как-то зафиксировать тип cardType.
+  //def render()(implicit ctx: Context): Html = cardType.template.render(this, ctx)
 }
 
 
 /** Интерфейс generic-враппера. */
-trait ICardArgsWrapper {
-  type W
+trait ICardArgsWrapper extends ICardArgsBase {
 
   /** Заврапанные данные. */
   def _cardArgsUnderlying: W
@@ -37,8 +48,6 @@ trait ICardArgsWrapper {
 
 /** Враппер для [[ICardArgs]]. */
 trait CardArgsWrapper extends ICardArgs with ICardArgsWrapper {
-  override type W <: ICardArgs
-
   override def cardType = _cardArgsUnderlying.cardType
   override def url      = _cardArgsUnderlying.url
   override def title    = _cardArgsUnderlying.title

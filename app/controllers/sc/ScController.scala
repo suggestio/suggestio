@@ -3,6 +3,7 @@ package controllers.sc
 import controllers.{routes, SioController}
 import models._
 import models.blk.SzMult_t
+import models.msc.ScJsState
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
