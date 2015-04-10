@@ -124,13 +124,17 @@ trait EMReceiversI extends EsModelPlayJsonT {
   def receivers: Receivers_t
 
   /** Есть ли хоть один уровень в каком-либо published? */
-  def isPublished: Boolean = receivers.exists {
-    case (_, ari)  =>  ari.sls.nonEmpty
+  def isPublished: Boolean = {
+    receivers.exists {
+      case (_, ari)  =>  ari.sls.nonEmpty
+    }
   }
 
   /** Просуммировать уровни отображения в контексте sink'ов. */
-  def allSinkShowLevels = receivers.foldLeft [Set[SinkShowLevel]] (Set.empty) {
-    case (acc, (_, ari))  =>  acc union ari.sls
+  def allSinkShowLevels: Set[SinkShowLevel] = {
+    receivers.foldLeft (Set.empty[SinkShowLevel]) {
+      case (acc, (_, ari))  =>  acc union ari.sls
+    }
   }
 
   /** Пришло на смену методам allWantShowLevels() и allPubShowLevels(). */
@@ -138,7 +142,8 @@ trait EMReceiversI extends EsModelPlayJsonT {
 
   /** Опубликована ли рекламная карточка у указанного получателя? */
   def isPublishedAt(receiverId: String): Boolean = {
-    receivers.get(receiverId).exists(_.sls.nonEmpty)
+    receivers.get(receiverId)
+      .exists(_.sls.nonEmpty)
   }
 }
 
@@ -195,10 +200,12 @@ object AdReceiverInfo {
   /** Десериализация сериализованного массива/списка AdReceiversInfo. */
   val deserializeAll: PartialFunction[AnyRef, Receivers_t] = {
     case i: java.lang.Iterable[_] =>
-      i.map { ii =>
-        val ari = deserialize(ii)
-        ari.receiverId -> ari
-      }.toMap
+      i.iterator()
+        .map { ii =>
+          val ari = deserialize(ii)
+          ari.receiverId -> ari
+        }
+        .toMap
   }
 
   def maybeSerializeLevelsPlayJson(name: String, sls: Iterable[AdShowLevel], acc: FieldsJsonAcc): FieldsJsonAcc = {

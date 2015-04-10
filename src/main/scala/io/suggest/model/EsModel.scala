@@ -1158,6 +1158,14 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       .map { deserializeGetRespFull }
   }
 
+  /** Вернуть id если он задан. Часто бывает, что idOpt, а не id. */
+  def maybeGetById(idOpt: Option[String])(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
+    idOpt match {
+      case Some(id) => getById(id)
+      case None     => Future successful None
+    }
+  }
+
   /**
    * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
    * @param id id документа.
