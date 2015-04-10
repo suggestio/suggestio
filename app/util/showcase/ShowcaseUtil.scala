@@ -6,7 +6,7 @@ import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im.DevScreenT
-import models.msc.TileArgs
+import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import play.api.Play.{current, configuration}
 import util.cdn.CdnUtil
 import scala.annotation.tailrec
@@ -318,6 +318,27 @@ object ShowcaseUtil {
       MIN_SZ_MULT
     else
       maxHiter.max
+  }
+
+
+  /** Обычные цвета выдачи, нужны в 99% случаев. */
+  val SC_COLORS_GEO: IScSiteColors = {
+    new IScSiteColors {
+      override def fgColor = SITE_BGCOLOR_GEO
+      override def bgColor = SITE_FGCOLOR_GEO
+    }
+  }
+
+  def siteScColors(nodeOpt: Option[MAdnNode]): IScSiteColors = {
+    nodeOpt match {
+      case Some(mnode) =>
+        ScSiteColors(
+          bgColor = mnode.meta.color getOrElse SITE_BGCOLOR_DFLT,
+          fgColor = mnode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+        )
+      case None =>
+        SC_COLORS_GEO
+    }
   }
 
 }

@@ -8,6 +8,7 @@ import play.api.libs.json._
 import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
+import play.twirl.api.Html
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
@@ -246,4 +247,3 @@ case class CronTask(
 )(actionF: => Unit) extends ICronTask {
   def run(): Unit = actionF
 }
-

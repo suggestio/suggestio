@@ -17,6 +17,8 @@ trait FocusedAdsTplArgs extends SyncRenderInfo {
   def adsCount    : Int
   def startIndex  : Int
 }
+
+/** Враппер для [[FocusedAdsTplArgs]]. */
 trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
   def _focArgsUnderlying: FocusedAdsTplArgs
 

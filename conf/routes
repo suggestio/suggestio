@@ -11,7 +11,7 @@ GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       
 GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
 
 ## Home page
-GET  /                                  @controllers.MarketShowcase.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty)
+GET  /                                  @controllers.MarketShowcase.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId)
@@ -130,7 +130,7 @@ GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsI
 ## Поиск по узлам
 GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty)
+GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 
 # market+join: Присоединение к sio-market.

@@ -32,19 +32,19 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    * @param request Реквест.
    */
-  override protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     request.ajaxJsScState match {
       case None =>
-        super._geoSiteResult
+        super._geoSiteResult(siteArgs)
       case Some(jsState) =>
         val qsb = ScJsState.qsbStandalone
-        _syncGeoSite(jsState, _.ajaxStatedUrl(qsb))
+        _syncGeoSite(jsState, siteArgs, _.ajaxStatedUrl(qsb))
     }
   }
 
   /** Прямой доступ к синхронному сайту выдачи. */
-  def syncGeoSite(scState: ScJsState) = MaybeAuth.async { implicit request =>
-    _syncGeoSite(scState, _.syncSiteUrl)
+  def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
+    _syncGeoSite(scState, siteArgs, _.syncSiteUrl)
   }
 
   /**
@@ -52,12 +52,13 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
    * @param scState Состояние js-выдачи.
    * @param urlGenF Генератор внутренних ссылок, получающий на вход изменённое состояние выдачи.
    */
-  protected def _syncGeoSite(scState: ScJsState, urlGenF: ScJsState => String)
+  protected def _syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs, urlGenF: ScJsState => String)
                             (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val logic = new ScSyncSiteLogic {
-      override def _scState = scState
-      override implicit def _request = request
-      override def _urlGenF = urlGenF
+      override def _scState   = scState
+      override def _urlGenF   = urlGenF
+      override def _siteArgs  = siteArgs
+      override implicit def _request  = request
     }
     logic.resultFut
   }
@@ -66,10 +67,18 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
   /** Логика работы синхронного сайта описывается этим трейтом и связями в нём. */
   trait ScSyncSiteLogic { that =>
+    /** Состояние выдачи. */
     def _scState: ScJsState
+
+    /** Дополнительные параметры для сайта. */
+    def _siteArgs: SiteQsArgs
+
     implicit def _request: AbstractRequestWithPwOpt[_]
+
     /** Генератор ссылок на выдачу. */
     def _urlGenF: ScJsState => String
+
+    /** Контекст рендера шаблонов. */
     lazy val ctx = implicitly[Context]
 
     /** Есть ли какая-либо необходимость в рендере плитки карточек? */
@@ -204,7 +213,6 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
     def tilesRenderFut = tileLogic.madsRenderedFut
 
-    // Рендерим indexTpl
     /** Готовим контейнер с аргументами рендера indexTpl. */
     def indexReqArgsFut: Future[ScReqArgs] = {
       val _tilesRenderFut = tilesRenderFut
@@ -218,12 +226,12 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       } yield {
         new ScReqArgsDflt {
           // TODO нужно и screen наверное выставлять по-нормальному?
-          override def geo = _scState.geo
-          override def inlineTiles = _inlineTiles
-          override def focusedContent = _focusedContentOpt
-          override def inlineNodesList = _nodesListHtmlOpt
-          override def adnNodeCurrentGeo = _currNodeGeoOpt
-          override def jsStateOpt = Some(_scState)
+          override def geo                = _scState.geo
+          override def inlineTiles        = _inlineTiles
+          override def focusedContent     = _focusedContentOpt
+          override def inlineNodesList    = _nodesListHtmlOpt
+          override def adnNodeCurrentGeo  = _currNodeGeoOpt
+          override def jsStateOpt         = Some(_scState)
           override def syncUrl(jsState: ScJsState) = that._urlGenF(jsState)
         }
       }
@@ -231,7 +239,9 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
 
     /** Узел, запрошенный в qs-аргументах. */
     lazy val adnNodeReqFut: Future[Option[MAdnNode]] = {
-      MAdnNodeCache.maybeGetByIdCached( _scState.adnId )
+      // Использовать любой заданный id узла, если возможно.
+      val adnIdOpt = _scState.adnId orElse _siteArgs.adnId
+      MAdnNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
@@ -279,28 +289,33 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
     /** Логики, которые относятся к генерирующим карточки рекламные. */
     def madsLogics: Seq[AdCssRenderArgs] = Seq(tileLogic) ++ maybeFocusedLogic
 
-    def headAfterFut: Future[Option[Html]] = {
+    /** Рендер илайнового css'а блоков, если возможно. */
+    def adsCssExtFut: Future[Seq[Html]] = {
       Future.traverse(madsLogics) { ml =>
         ml.adsCssExternalFut
       } map { mls =>
         if (mls.isEmpty) {
-          None
+          Nil
         } else {
           val args = mls.flatten
           val html = htmlAdsCssLink(args)(ctx)
-          Some(html)
+          Seq(html)
         }
       }
     }
 
-    // Рендерим site.html, т.е. базовый шаблон выдачи.
+    /** Сбор всех пост-скриптумов для тега head. */
+    def headAfterFut: Future[Traversable[Html]] = {
+      adsCssExtFut
+    }
+
     /** Готовим аргументы базового шаблона выдачи. */
     def siteArgsFut: Future[ScSiteArgs] = {
       val _indexHtmlFut = indexHtmlFut
       val _headAfterFut = headAfterFut
       val _adnNodeReqFut = adnNodeReqFut
       for {
-        siteRenderArgs <- _getSiteRenderArgs
+        siteRenderArgs <- _getSiteRenderArgs(_siteArgs)
         indexHtml      <- _indexHtmlFut
         _headAfter     <- _headAfterFut
         _adnNodeOpt    <- _adnNodeReqFut
@@ -309,12 +324,13 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override def _scSiteArgs  = siteRenderArgs
           override def inlineIndex  = Some(indexHtml)
           override def syncRender   = true
-          override def headAfter    = _headAfter
+          override def headAfter    = super.headAfter ++ _headAfter
           override def nodeOpt      = _adnNodeOpt
         }
       }
     }
 
+    /** Рендерим site.html, т.е. базовый шаблон выдачи. */
     def resultFut = siteArgsFut map { args1 =>
       Ok(siteTpl(args1))
     }

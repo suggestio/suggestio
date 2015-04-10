@@ -1,7 +1,7 @@
 package controllers.sc
 
 import controllers.{routes, SioController}
-import models.msc.{ScJsState, ScSiteArgs}
+import models.msc.{ScJsState, ScSiteArgs, SiteQsArgs}
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
@@ -11,7 +11,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
-import ShowcaseUtil._
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -25,11 +25,11 @@ import ShowcaseUtil._
 trait ScSiteGeo extends SioController with PlayMacroLogsI {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite(maybeJsState: ScJsState) = MaybeAuth.async { implicit request =>
+  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
     if (maybeJsState.nonEmpty) {
       MovedPermanently( maybeJsState.ajaxStatedUrl() )
     } else {
-      _geoSite
+      _geoSite(siteArgs)
     }
   }
 
@@ -38,11 +38,11 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
    * @param request Экземпляр реквеста.
    * @return Результат работы экшена.
    */
-  protected def _geoSite(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Запускаем сбор статистики в фоне.
     _geoSiteStats
     // Запускаем выдачу результата запроса:
-    _geoSiteResult
+    _geoSiteResult(siteArgs)
   }
 
   /** Фоновый сбор статистики. Можно переназначать. */
@@ -58,20 +58,43 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
     fut
   }
 
-  protected def _getSiteRenderArgs(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
-    val args = new ScSiteArgs {
-      override def showcaseCall = routes.MarketShowcase.geoShowcase()
-      override def bgColor = SITE_BGCOLOR_GEO
+  /**
+   * Собрать параметры рендера шаблона siteTpl.
+   * @param siteArgs qs-аргументы запроса, касающиеся сайта.
+   * @param request Экземпляр реквеста.
+   * @return Фьючерс с аргументами для шаблона.
+   */
+  protected def _getSiteRenderArgs(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
+    // Что сформировать мета-теги, нужно найти карточку, к которой относится всё это дело.
+    // А если нет POV-карточки (обычно её нет), то нужно втыкать данные для узла.
+    /*val povMadOptFut: Future[Option[MAd]] = {
+      MAd.maybeGetById( siteArgs.povAdId )
+        .map { _.filter(_.isPublished) }
+    }*/
+    val nodeOptFut = MAdnNodeCache.maybeGetByIdCached( siteArgs.adnId )
+      .recover { case ex: Throwable =>
+        LOGGER.warn("Failed to get node adnId = " + siteArgs.adnId, ex)
+        None
+      }
+    for {
+      _nodeOpt   <- nodeOptFut
+    } yield {
+      new ScSiteArgs {
+        override def indexCall = routes.MarketShowcase.geoShowcase()
+        override def nodeOpt   = _nodeOpt
+        override def withGeo   = true   // TODO Чего делает этот параметр? Нужен ли он вообще?
+        override val scColors  = super.scColors
+      }
     }
-    Future successful args
   }
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
+   * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
-  protected def _geoSiteResult(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    _getSiteRenderArgs map { args =>
+  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    _getSiteRenderArgs(siteArgs) map { args =>
       cacheControlShort {
         Ok(siteTpl(args))
       }
@@ -84,8 +107,6 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
     val call = routes.MarketShowcase.geoSite().url
     MovedPermanently(call)
   }
-
-
 
 }
 
@@ -101,8 +122,7 @@ trait ScSiteNode extends SioController with PlayMacroLogsI {
    */
   protected def adnNodeDemoWebsite(scCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
     val args = new ScSiteArgs {
-      override def showcaseCall = scCall
-      override val bgColor = request.adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+      override def indexCall = scCall
       override def nodeOpt = Some(request.adnNode)
     }
     cacheControlShort {

@@ -1,9 +1,9 @@
 package models.msc
 
 import models._
-import models.mext.tw.ICardArgs
 import play.api.mvc.Call
 import play.twirl.api.Html
+import util.showcase.ShowcaseUtil
 
 /**
  * Suggest.io
@@ -13,18 +13,17 @@ import play.twirl.api.Html
  */
 
 trait ScSiteArgs extends SyncRenderInfoDflt {
-  /** Цвет оформления. */
-  def bgColor       : String
+
+  /** Контейнер с цветами выдачи. */
+  def scColors: IScSiteColors = ShowcaseUtil.siteScColors(nodeOpt)
   /** Адрес для showcase */
-  def showcaseCall  : Call
+  def indexCall     : Call
   /** Текущая нода. Создавалась для генерации заголовка в head.title. */
   def nodeOpt       : Option[MAdnNode] = None
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
   def inlineIndex   : Option[Html] = None
   /** Закинуть сие в конец тега head. */
-  def headAfter     : Option[Html] = None
-  /** Метаданные для твиттера, если есть. */
-  def twitterMeta   : Option[ICardArgs] = None
+  def headAfter     : Traversable[Html] = Nil
 
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def adnId   = nodeOpt.flatMap(_.id)
@@ -32,8 +31,8 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
 
   override def toString: String = {
     val sb = new StringBuilder(64)
-    sb.append("bgColor=").append(bgColor).append('&')
-      .append("showcaseCall=").append(showcaseCall).append('&')
+    sb.append("scColors=").append(scColors).append('&')
+      .append("showcaseCall=").append(indexCall).append('&')
       .append("syncRender=").append(syncRender).append('&')
     if (nodeOpt.isDefined)
       sb.append("node=").append(nodeOpt.get.idOrNull).append('&')
@@ -44,12 +43,15 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
     sb.toString()
   }
 }
+
 /** Враппер для аргументов рендера "сайта" выдачи. */
 trait ScSiteArgsWrapper extends ScSiteArgs {
   def _scSiteArgs: ScSiteArgs
 
-  override def bgColor      = _scSiteArgs.bgColor
-  override def showcaseCall = _scSiteArgs.showcaseCall
+  override def scColors     = _scSiteArgs.scColors
+  override def adnId        = _scSiteArgs.adnId
+
+  override def indexCall    = _scSiteArgs.indexCall
   override def nodeOpt      = _scSiteArgs.nodeOpt
   override def inlineIndex  = _scSiteArgs.inlineIndex
   override def headAfter    = _scSiteArgs.headAfter
@@ -57,5 +59,4 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
   override def withGeo      = _scSiteArgs.withGeo
   override def toString     = _scSiteArgs.toString
   override def syncRender   = _scSiteArgs.syncRender
-  override def twitterMeta  = _scSiteArgs.twitterMeta
 }

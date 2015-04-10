@@ -2,7 +2,7 @@ package models.msc
 
 import controllers.routes
 import models._
-import play.api.mvc.{Call, QueryStringBindable}
+import play.api.mvc.QueryStringBindable
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
 
@@ -31,7 +31,6 @@ object ScJsState {
   val PRODUCER_ADN_ID_FN      = "f.pr.id"
   val TILES_CAT_ID_FN         = "t.cat"
   val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
-  val POV_AD_ID_FN            = "e.pai"
 
   def generationDflt: Option[Long] = {
     val l = new Random().nextLong()
@@ -66,7 +65,6 @@ object ScJsState {
           maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
           maybeTileCatId        <- strOptB.bind(TILES_CAT_ID_FN, params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
-          maybePovAdIdOpt       <- strOptB.bind(POV_AD_ID_FN, params)
         } yield {
           val res = ScJsState(
             adnId               = strNonEmpty( maybeAdnId ),
@@ -78,15 +76,14 @@ object ScJsState {
             searchTabListOpt    = noFalse( maybeSearchTab ),
             fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
             tilesCatIdOpt       = strNonEmpty( maybeTileCatId ),
-            navNglsMap          = maybeNglsMap getOrElse Map.empty,
-            povAdId             = maybePovAdIdOpt
+            navNglsMap          = maybeNglsMap getOrElse Map.empty
           )
           Right(res)
         }
       }
 
       override def unbind(key: String, value: ScJsState): String = {
-        List(
+        Iterator(
           strOptB.unbind(ADN_ID_FN, value.adnId),
           boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
           boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
@@ -96,8 +93,7 @@ object ScJsState {
           boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
           strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
           strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt),
-          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
-          strOptB.unbind(POV_AD_ID_FN, value.povAdId)
+          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
         )
           .filter(!_.isEmpty)
           .mkString("&")
