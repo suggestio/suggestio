@@ -4,8 +4,8 @@ import controllers.routes
 import io.suggest.ym.model.ad.AdsSearchArgsDflt
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
-import models.adv.MExtServices
 import models.madn.NodeDfltColors
+import models.mext.MExtServices
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.api.i18n.Messages

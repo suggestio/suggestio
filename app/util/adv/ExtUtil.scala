@@ -8,6 +8,7 @@ import models.adv.ext.act.{ExtTargetActorEnv, ExtActorEnv}
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.js.{JsCmd, IWsCmd}
 import models.event.{ErrorInfo, RenderArgs, MEventTmp, IErrorInfo}
+import models.mext.{MExtService, MExtServices}
 import play.api.data._, Forms._
 import play.api.libs.json.JsString
 import play.api.libs.ws.WSClient

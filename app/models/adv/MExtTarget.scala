@@ -8,6 +8,7 @@ import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.common.EsDynSearchStatic
 import models.adv.search.etg.IExtTargetSearchArgs
+import models.mext.{MExtServices, MExtService}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl

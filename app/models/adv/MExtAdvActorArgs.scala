@@ -3,6 +3,7 @@ package models.adv
 import akka.actor.{Props, ActorRef}
 import models.Context
 import models.adv.js.ctx.MJsCtx
+import models.mext.MExtService
 import play.api.libs.oauth.RequestToken
 import util.acl.RequestWithAdAndProducer
 

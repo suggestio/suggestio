@@ -2,7 +2,8 @@ package util.adv
 
 import akka.actor.Props
 import models.adv.js.ctx.JsErrorInfo
-import models.adv.{IExtPostInfo, MExtService, IOAuth1AdvTargetActorArgs}
+import models.adv.IOAuth1AdvTargetActorArgs
+import models.mext.{MExtService, IExtPostInfo}
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

@@ -2,14 +2,12 @@ package models.event
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.{EsModel, EnumMaybeWithName}
-import models.adv.{MExtService, MExtTarget}
+import models.adv.MExtTarget
 import models._
-import org.elasticsearch.client.Client
+import models.mext.MExtService
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import java.{util => ju}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
