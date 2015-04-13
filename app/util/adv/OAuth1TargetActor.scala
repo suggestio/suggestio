@@ -1,12 +1,13 @@
 package util.adv
 
 import akka.actor.Props
-import io.suggest.model.geo.GeoPoint
-import models.{MAd, MAdnNode}
+import io.suggest.adv.ext.model.im.INamedSize2di
+import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
-import models.adv.{MExtTarget, MExtReturn, IOAuth1AdvTargetActorArgs}
+import models.adv.IOAuth1AdvTargetActorArgs
+import models.blk.OneAdQsArgs
+import models.mext.tw.card.TwImgSizes
 import models.mext.{IOa1MkPostArgs, MExtService, IExtPostInfo}
-import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -48,6 +49,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   override def receive: Receive = allStatesReceiver
 
   def oa1Support = service.oauth1Support.get
+
 
   /** Текущий сервис, в котором задействован текущий актор. */
   override def service: MExtService = args.target.target.service

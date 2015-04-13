@@ -106,9 +106,10 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
       .setFocusedAdId( args.mad.id.get )
       .setFocusedProducerId( args.mad.producerId )
       .toJsState
-    val urlPrefix = Context.devReplaceLocalHostW127001( Context.SC_URL_PREFIX )
+    // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
+    val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
     val tweetUrl = urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
-    b.addParameter("status", tweetText + " " + tweetUrl)   // TODO Генерить текст твита из описания карточки со ссылкой на страницу.
+    b.addParameter("status", tweetText + " " + tweetUrl)
     if (geo.isDefined) {
       val g = geo.get
       b.addParameter("lat", g.lat.toString)

@@ -74,12 +74,16 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     become(new EnsureClientReadyState(args.mctx0))
   }
 
+  // TODO Занести внутрь state'ов.
   protected var fillCtxTry: Int = 0
 
   override def service = args.target.target.service
 
   /** Реализация модели из [[models.adv.ext.act.EtaCustomArgsBase]]. */
-  case class CustomArgs(adRenderMaxSz: INamedSize2di) extends MCustomArgsT
+  case class CustomArgs(adRenderMaxSz: INamedSize2di) extends MCustomArgsT {
+    // Готовая инфа по отрендеренной карточкчи обычно нужна по несколько раз вподряд. Или не нужна вообще.
+    override lazy val madRenderInfo = super.madRenderInfo
+  }
 
   protected var _customArgs: CustomArgs = {
     CustomArgs(

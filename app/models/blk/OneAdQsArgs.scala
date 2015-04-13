@@ -6,6 +6,7 @@ import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
+import scala.language.implicitConversions   // конверсий тут по факту нет.
 
 /**
  * Suggest.io

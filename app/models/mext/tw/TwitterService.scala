@@ -2,11 +2,14 @@ package models.mext.tw
 
 import _root_.util.adv.OAuth1ServiceActor
 import controllers.routes
+import io.suggest.adv.ext.model.im.INamedSize2di
+import models.adv.MExtTarget
+import models.adv.ext.Mad2ImgUrlCalcT
 import models.blk.OneAdQsArgs
 import models.im.OutImgFmts
-import models.mext.tw.card.PhotoCardArgs
+import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
-import models.mext.IExtService
+import models.mext.{MExtServices, MExtService, IExtService}
 import play.twirl.api.Html
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,9 +30,9 @@ trait TwitterService extends IExtService {
   override def dfltTargetUrl = None
 
   /** Найти стандартный (в рамках сервиса) размер картинки. */
-  override def postImgSzWithName(n: String) = ???  // TODO
+  override def postImgSzWithName(n: String) = TwImgSizes.maybeWithName(n)
 
-  override def advPostMaxSz(tgUrl: String) = ???    // TODO
+  override def advPostMaxSz(tgUrl: String) = TwImgSizes.Photo
 
   /** Префикс ключей конфигурации. Конфиг расшарен с secure-social. */
   def confPrefix = "securesocial.twitter"
@@ -45,24 +48,27 @@ trait TwitterService extends IExtService {
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   override def myUserName = Some("@suggest_io")
 
+  def mainPage = "https://twitter.com/"
+
   /**
    * Генератор HTML-мета-тегов для описания рекламной карточки.
-   * @param mad Экземпляр рекламной карточки.
+   * @param mad1 Экземпляр рекламной карточки.
    * @return экземпляры моделй, готовых для запуска рендера.
    */
-  override def adMetaTagsRender(mad: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
-    val acc0Fut = super.adMetaTagsRender(mad)
-    // TODO Нужно задействовать wide-рендер.
-    val oneAdQs = OneAdQsArgs(
-      adId   = mad.id.get,
-      szMult = 1.0F,
-      vsnOpt = mad.versionOpt,
-      imgFmt = OutImgFmts.JPEG
-    )
+  override def adMetaTagsRender(mad1: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
+    val acc0Fut = super.adMetaTagsRender(mad1)
+    val svc = MExtServices.TWITTER
+    val calc = new Mad2ImgUrlCalcT {
+      override def mad            = mad1
+      override def tgUrl          = mainPage
+      override def adRenderMaxSz  = TwImgSizes.Photo
+      override def service        = svc
+    }
+    val oneAdQsArgs = calc.adRenderArgs
     val ir = new IRenderable {
       override def render()(implicit ctx: Context): Html = {
         val pca = PhotoCardArgs(
-          imgUrl = routes.MarketShowcase.onlyOneAdAsImage(oneAdQs).url,
+          imgUrl = routes.MarketShowcase.onlyOneAdAsImage(oneAdQsArgs).url,
           url    = Some(ctx.request.uri),   // TODO Нужен нормальный URL, а не это.
           title  = Some("TODO"),    // TODO Брать из карточки.
           imgWh  = None             // TODO Высчитывать.
