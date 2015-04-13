@@ -1,4 +1,4 @@
-package models.mext.tw
+package models.mext.tw.card
 
 import models.ISize2di
 

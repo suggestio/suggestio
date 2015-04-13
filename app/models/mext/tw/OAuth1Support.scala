@@ -37,6 +37,7 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
         requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
         accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
         // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
+
         authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
         consumerKey
       ),
@@ -100,8 +101,9 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
       }
   }
 
-  case class TweetInfo(id: String) extends IExtPostInfo {
-    override def url: String = "https://twitter.com/" // TODO Надо что-то типа https://twitter.com/Flickr/status/423511451970445312
-  }
+}
 
+/** Инфа по одному твиту. Потом наверное будет вынесена в отдельный файл модели. */
+case class TweetInfo(id: String) extends IExtPostInfo {
+  override def url: String = "https://twitter.com/" // TODO Надо что-то типа https://twitter.com/Flickr/status/423511451970445312
 }
