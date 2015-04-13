@@ -1,9 +1,12 @@
 package util.adv
 
 import akka.actor.Props
+import io.suggest.model.geo.GeoPoint
+import models.{MAd, MAdnNode}
 import models.adv.js.ctx.JsErrorInfo
-import models.adv.IOAuth1AdvTargetActorArgs
-import models.mext.{MExtService, IExtPostInfo}
+import models.adv.{MExtTarget, MExtReturn, IOAuth1AdvTargetActorArgs}
+import models.mext.{IOa1MkPostArgs, MExtService, IExtPostInfo}
+import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -60,11 +63,15 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
     /** При входе в состояние надо запустить постинг с помощью имеющегося access_token'а. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val mkPostFut = oa1Support.mkPost(
-        mad   = args.request.mad,
-        acTok = args.accessToken,
-        geo   = args.request.producer.geo.point
-      )
+      val mkPostArgs = new IOa1MkPostArgs {
+        override def mad      = args.request.mad
+        override def acTok    = args.accessToken
+        override def target   = args.target.target
+        override def mnode    = args.request.producer
+        override def returnTo = args.target.returnTo
+        override def geo      = args.request.producer.geo.point
+      }
+      val mkPostFut = oa1Support.mkPost(mkPostArgs)
       renderInProcess()
       mkPostFut onComplete {
         case Success(res) => self ! res

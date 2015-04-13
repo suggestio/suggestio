@@ -247,3 +247,11 @@ case class CronTask(
 )(actionF: => Unit) extends ICronTask {
   def run(): Unit = actionF
 }
+
+
+/** Интерфейс для возможности задания моделей, умеющих рендер в html. */
+trait IRenderable {
+  /** Запуск рендера в контексте рендера шаблонов. */
+  def render()(implicit ctx: Context): Html
+}
+

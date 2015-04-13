@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeoutException
 
 import controllers.routes
+import models.Context
 import models.adv._
 import models.adv.ext.act.{ExtServiceActorEnv, OAuthVerifier, ActorPathQs}
 import models.adv.js.ctx.MStorageKvCtx
@@ -343,9 +344,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
           actorInfoQs = ActorPathQs(self.path)
         )
         // Вычисляем URL prefix. в devel-режиме нужно использовать ip локалхоста, а не его имя.
-        var urlPrefix = args.ctx.LK_URL_PREFIX
-        if (isDev)
-          urlPrefix = urlPrefix.replaceFirst("localhost", "127.0.0.1")
+        val urlPrefix = Context.devReplaceLocalHostW127001( args.ctx.LK_URL_PREFIX )
         // Заставить клиента открыть всплывающее окно для авторизации на твиттере.
         val returnUrl = urlPrefix + returnCall.url
         client.retrieveRequestToken(returnUrl)

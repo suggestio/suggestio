@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import controllers.SioController
+import controllers.{routes, SioController}
 import models._
 import models.msc._
 import play.api.mvc.Result
@@ -37,14 +37,17 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       case None =>
         super._geoSiteResult(siteArgs)
       case Some(jsState) =>
-        val qsb = ScJsState.qsbStandalone
-        _syncGeoSite(jsState, siteArgs, _.ajaxStatedUrl(qsb))
+        _syncGeoSite(jsState, siteArgs) { jsSt =>
+          routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
+        }
     }
   }
 
   /** Прямой доступ к синхронному сайту выдачи. */
   def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
-    _syncGeoSite(scState, siteArgs, _.syncSiteUrl)
+    _syncGeoSite(scState, siteArgs) { jsSt =>
+      routes.MarketShowcase.syncGeoSite(jsSt).url
+    }
   }
 
   /**
@@ -52,7 +55,7 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
    * @param scState Состояние js-выдачи.
    * @param urlGenF Генератор внутренних ссылок, получающий на вход изменённое состояние выдачи.
    */
-  protected def _syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs, urlGenF: ScJsState => String)
+  protected def _syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs)(urlGenF: ScJsState => String)
                             (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val logic = new ScSyncSiteLogic {
       override def _scState   = scState

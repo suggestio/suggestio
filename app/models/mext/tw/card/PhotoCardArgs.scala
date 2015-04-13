@@ -1,6 +1,6 @@
 package models.mext.tw.card
 
-import models.Context
+import models.{ISize2di, Context}
 import play.twirl.api.Html
 
 /**
@@ -23,3 +23,12 @@ trait IPhotoCardArgsWrapper
   with ImgUrlWrapper
   with ImgWhOptWrapper
   with IPhotoCardArgs
+
+
+/** Дефолтовая реализация [[IPhotoCardArgs]]. */
+case class PhotoCardArgs(
+  imgUrl  : String,
+  url     : Option[String],
+  title   : Option[String],
+  imgWh   : Option[ISize2di]
+) extends IPhotoCardArgs

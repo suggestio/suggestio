@@ -40,7 +40,7 @@ object OneAdQsArgs {
                    // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
                    // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
                    // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
-                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]) = {
+                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]) : QueryStringBindable[OneAdQsArgs] = {
     new QueryStringBindable[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
@@ -112,24 +112,26 @@ object OneAdWideQsArgs {
   def WIDTH_SUF = ".w"
 
   /** Поддержка биндинга в routes и в qsb. */
-  implicit def qsb(implicit intB: QueryStringBindable[Int]) = new QueryStringBindable[OneAdWideQsArgs] {
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
-      // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.
-      for {
-        maybeWidth <- intB.bind(key + WIDTH_SUF, params)
-      } yield {
+  implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[OneAdWideQsArgs] = {
+    new QueryStringBindable[OneAdWideQsArgs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
+        // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.
         for {
-          width <- maybeWidth.right
+          maybeWidth <- intB.bind(key + WIDTH_SUF, params)
         } yield {
-          OneAdWideQsArgs(
-            width = width
-          )
+          for {
+            width <- maybeWidth.right
+          } yield {
+            OneAdWideQsArgs(
+              width = width
+            )
+          }
         }
       }
-    }
 
-    override def unbind(key: String, value: OneAdWideQsArgs): String = {
-      intB.unbind(key + WIDTH_SUF, value.width)
+      override def unbind(key: String, value: OneAdWideQsArgs): String = {
+        intB.unbind(key + WIDTH_SUF, value.width)
+      }
     }
   }
 }

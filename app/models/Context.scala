@@ -7,9 +7,9 @@ import io.suggest.util.UuidUtil
 import models.im.DevScreen
 import org.joda.time.DateTime
 import play.api.Play
-import play.api.i18n.{Messages, Lang}
+import play.api.i18n.Messages
 import play.api.mvc.RequestHeader
-import play.api.Play.{current, configuration}
+import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
 import scala.util.Random
@@ -56,6 +56,17 @@ object Context extends MyHostsT {
   val TRUST_HOST_HDR = configuration.getBoolean("sio.req.headers.host.trust") getOrElse false
   
   val BACKEND_HOST_RE = "^backend\\.".r
+
+  /** Бывает, что необходимо заменить локалхост на 127.0.0.1. Например, при разработке под твиттер.
+    * @param source Исходная строка, т.е. ссылка, или её префикс или хостнейм.
+    * @return Подправленная исходная строка.
+    */
+  def devReplaceLocalHostW127001(source: String): String = {
+    if (isDev)
+      source.replaceFirst("localhost", "127.0.0.1")
+    else
+      source
+  }
 }
 
 

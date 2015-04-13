@@ -12,7 +12,7 @@ trait ImgUrl extends ICardArgsBase {
   def imgUrl: String
 }
 
+/** Враппер для трейта [[ImgUrl]]. */
 trait ImgUrlWrapper extends ImgUrl with ICardArgsWrapper {
-
   override def imgUrl = _cardArgsUnderlying.imgUrl
 }

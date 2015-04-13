@@ -1,6 +1,6 @@
 package models.mext.tw.card
 
-import models.Context
+import models.{IRenderable, Context}
 import models.mext.MExtServices
 import play.twirl.api.Html
 
@@ -16,7 +16,7 @@ trait ICardArgsBase {
   type W
 }
 
-trait ICardArgs extends ICardArgsBase {
+trait ICardArgs extends ICardArgsBase with IRenderable {
   override type W <: ICardArgs
 
   /** Тип карточки. Заполняется промежуточными реализациями. */
@@ -31,9 +31,8 @@ trait ICardArgs extends ICardArgsBase {
   /** Юзернейм приложения на твиттере. По идее он всегда одинаковый. */
   def site: Option[String] = MExtServices.TWITTER.myUserName
 
-  /** Рендер шаблона. */
-  def render()(implicit ctx: Context): Html
   // TODO Нужно как-то зафиксировать тип cardType.
+  /* Рендер шаблона. */
   //def render()(implicit ctx: Context): Html = cardType.template.render(this, ctx)
 }
 

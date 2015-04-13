@@ -11,9 +11,9 @@
 @args.title.map { title =>
   <meta name="twitter:title" content="@title" />
 }
-<meta name="twitter:image" content="@args.imgUrl" />
+<meta name="twitter:image" content="@ctx.SC_URL_PREFIX@args.imgUrl" />
 @args.url.map { url =>
-  <meta name="twitter:url" content="@url" />
+  <meta name="twitter:url" content="@ctx.SC_URL_PREFIX@url" />
 }
 @args.imgWh.map { wh =>
   <meta name="twitter:image:width"  content="@wh.width" />

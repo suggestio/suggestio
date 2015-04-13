@@ -1,5 +1,6 @@
 package util.showcase
 
+import controllers.routes
 import io.suggest.model.EsModel
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.MAd
@@ -81,7 +82,7 @@ class ScSitemapsXml extends SiteMapXmlCtl {
       fadOpenedIdOpt  = mad.id,
       generationOpt   = None    // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
     )
-    val url = jsState.ajaxStatedUrl(qsb)
+    val url = routes.MarketShowcase.geoSite().url + "#!?" + jsState.toQs(qsb)
     val lastDt = mad.dateEdited.getOrElse(mad.dateCreated)
     val lastDate = lastDt.toLocalDate
     SiteMapUrl(

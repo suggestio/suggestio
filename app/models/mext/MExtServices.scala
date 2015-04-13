@@ -25,8 +25,8 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
   override type T = Val
 
   /** Экземпляр модели. */
-  protected abstract class Val(strId: String) extends super.Val(strId) with IExtService {
-    override val APP_ID_OPT = super.APP_ID_OPT
+  protected sealed abstract class Val(strId: String) extends super.Val(strId) with IExtService {
+    override lazy val APP_ID_OPT = super.APP_ID_OPT
 
     override def dfltTarget(adnId: String)(implicit lang: Messages): Option[MExtTarget] = {
       dfltTargetUrl.map { url =>
@@ -79,8 +79,8 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
     (__ \ APP_ID_FN).writeNullable[String]
   ){ s => (s.strId, s.APP_ID_OPT) }
 
-
 }
+
 
 /** Абстрактные метаданные по посту на внешнем сервисе. */
 trait IExtPostInfo {

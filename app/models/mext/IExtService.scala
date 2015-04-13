@@ -9,9 +9,12 @@ import io.suggest.util.UrlUtil
 import models.adv.MExtTarget
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 import models.im.{OutImgFmt, OutImgFmts}
-import models.MAd
+import models.{IRenderable, MAd}
 import play.api.Play._
 import play.api.i18n.Messages
+import play.twirl.api.Html
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -28,14 +31,21 @@ trait IExtService {
   /** id приложения на стороне сервиса. */
   def APP_ID_OPT = configuration.getString(s"ext.adv.$strId.api.id")
 
+  /** Отображамое имя, заданное через код в messages. */
   def nameI18N: String
+
+  /** Код локализованного предложения "Я в фейсбук" */
   def iAtServiceI18N: String = "adv.ext.i.at." + strId
 
+  /** Тестирование хоста на принадлежность к текущему сервису. */
   def isForHost(host: String): Boolean
+
+  /** Нормализация ссылки цели, т.е. выбрасывание ненужного. */
   def normalizeTargetUrl(url: URL): String = {
     UrlUtil.normalize(url.toExternalForm)
   }
 
+  /** Дефолтовая цель размещения, если есть. При создании узлов дефолтовые цели создаются автоматом. */
   def dfltTargetUrl: Option[String]
 
   /**
@@ -85,6 +95,8 @@ trait IExtService {
       None
     }
   }
+
+  /** Исповедовать ли широкое отображение при рендере карточки для размещения карточки на сервисе? */
   def isAdvExtWide(mad: MAd): Boolean = {
     mad.blockMeta.wide
   }
@@ -104,5 +116,14 @@ trait IExtService {
 
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   def myUserName: Option[String] = None
+
+  /**
+   * Генератор HTML-мета-тегов для описания рекламной карточки.
+   * @param mad Экземпляр рекламной карточки.
+   * @return экземпляры моделй, готовых для запуска рендера.
+   */
+  def adMetaTagsRender(mad: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
+    Future successful Nil
+  }
 
 }

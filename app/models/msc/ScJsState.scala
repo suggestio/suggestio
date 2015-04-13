@@ -1,6 +1,5 @@
 package models.msc
 
-import controllers.routes
 import models._
 import play.api.mvc.QueryStringBindable
 import util.qsb.QSBs.NglsStateMap_t
@@ -216,26 +215,16 @@ case class ScJsState(
   def toggleSearchScreen = copy( searchScrOpenedOpt = !isSearchScrOpened )
 
 
-  /**
-   * Генератор ссылок на выдачу вида /#!...jsState...
-   * @param qsb экземпляр QueryStringBinder'а, если есть.
-   * @return Относительная ссылка.
-   */
-  def ajaxStatedUrl(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone): String = {
-    routes.MarketShowcase.geoSite().url + "#!?" + qsb.unbind("", this)
-  }
-
-  /**
-   * Генерации ссылки на вечно-синхронную выдачу для текущего состояния.
-   * @return Относительная ссылка на syncGeoSite.
-   */
-  def syncSiteUrl: String = routes.MarketShowcase.syncGeoSite(this).url
-
   /** Очень каноническое состояние выдачи без каких-либо уточнений. */
   def canonical: ScJsState = copy(
     searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
     fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
   )
+
+  /** Короткая сериализация экземпляра в открывок query string. */
+  def toQs(qsb: QueryStringBindable[ScJsState] = ScJsState.qsbStandalone) = {
+    qsb.unbind("", this)
+  }
 
 }
 

@@ -5,6 +5,7 @@
 @import _root_.views.html.stuff._
 @import util.cdn.CdnUtil
 @import lk.adn.node._installScriptTpl
+@import models.msc.ScJsState.{qsbStandalone => scJsQsb}
 
 <html>
 <head>
@@ -24,7 +25,7 @@
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
   @args.jsStateOpt.map { jsState =>
-    <link rel="canonical" href="@ctx.SC_URL_PREFIX@jsState.canonical.ajaxStatedUrl()"/>
+    <link rel="canonical" href="@ctx.SC_URL_PREFIX@routes.MarketShowcase.geoSite()#!?@jsState.canonical.toQs()" />
   }
   @if(!args.syncRender) {
     <meta name="fragment" content="!"/>

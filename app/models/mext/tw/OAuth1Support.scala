@@ -1,9 +1,9 @@
 package models.mext.tw
 
-import util.PlayMacroLogsImpl
-import io.suggest.model.geo.GeoPoint
-import models.MAd
-import models.mext.{IExtPostInfo, IOAuth1Support}
+import models.msc.SiteQsArgs
+import util.{FormUtil, TplDataFormatUtil, PlayMacroLogsImpl}
+import models.Context
+import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
 import org.apache.http.client.utils.URIBuilder
 import play.api.Play._
 import play.api.libs.oauth._
@@ -71,17 +71,44 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
 
   /**
-   * Запостить твит через OAuth1.
-   * @param mad Рекламная карточка.
-   * @param acTok access_token.
-   * @param geo Необязательная геоточка, к которой привязан твит.
+   * Сделать твит.
+   * @param args Данные для постинга.
    * @see [[https://dev.twitter.com/rest/reference/post/statuses/update]]
    * @return Фьючерс с результатом работы.
    */
-  override def mkPost(mad: MAd, acTok: RequestToken, geo: Option[GeoPoint] = None)
-                     (implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
+  override def mkPost(args: IOa1MkPostArgs)(implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
+    import args._
     val b = new URIBuilder(MK_TWEET_URL)
-    b.addParameter("status", "Hello, world!")   // TODO Генерить текст твита из описания карточки со ссылкой на страницу.
+    // Собираем читабельный текст твита.
+    val tweetText = mad.richDescrOpt
+      .map { rd => FormUtil.strTrimSanitizeF(rd.text) }
+      .filter { _.length < 2 }
+      .orElse {
+        if (mad.offers.isEmpty) {
+          None
+        } else {
+          val s = mad.offers
+            .iterator
+            .flatMap(_.text1)
+            .map(_.value)
+            .mkString(" ")
+          Some(s)
+        }
+      }
+      .map { TplDataFormatUtil.strLimitLenNoTrailingWordPart(_, 120) }
+      .getOrElse("")
+    // Собираем ссылку в твите.
+    val siteArgs = SiteQsArgs(
+      povAdId = mad.id
+    )
+    val jsSt = returnTo.builder()
+      .setAdnId( args.mnode.id.get )
+      .setFocusedAdId( args.mad.id.get )
+      .setFocusedProducerId( args.mad.producerId )
+      .toJsState
+    val urlPrefix = Context.devReplaceLocalHostW127001( Context.SC_URL_PREFIX )
+    val tweetUrl = urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
+    b.addParameter("status", tweetText + " " + tweetUrl)   // TODO Генерить текст твита из описания карточки со ссылкой на страницу.
     if (geo.isDefined) {
       val g = geo.get
       b.addParameter("lat", g.lat.toString)
@@ -105,5 +132,7 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
 
 /** Инфа по одному твиту. Потом наверное будет вынесена в отдельный файл модели. */
 case class TweetInfo(id: String) extends IExtPostInfo {
-  override def url: String = "https://twitter.com/" // TODO Надо что-то типа https://twitter.com/Flickr/status/423511451970445312
+  override def url: String = {
+    "https://twitter.com/"
+  } // TODO Надо что-то типа https://twitter.com/Flickr/status/423511451970445312
 }

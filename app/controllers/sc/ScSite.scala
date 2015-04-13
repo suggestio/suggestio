@@ -1,7 +1,9 @@
 package controllers.sc
 
 import controllers.{routes, SioController}
+import models.mext.MExtServices
 import models.msc.{ScJsState, ScSiteArgs, SiteQsArgs}
+import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
@@ -27,7 +29,9 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
     if (maybeJsState.nonEmpty) {
-      MovedPermanently( maybeJsState.ajaxStatedUrl() )
+      MovedPermanently {
+        routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
+      }
     } else {
       _geoSite(siteArgs)
     }
@@ -67,23 +71,47 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
   protected def _getSiteRenderArgs(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
     // Что сформировать мета-теги, нужно найти карточку, к которой относится всё это дело.
     // А если нет POV-карточки (обычно её нет), то нужно втыкать данные для узла.
-    /*val povMadOptFut: Future[Option[MAd]] = {
+    implicit lazy val ctx = implicitly[Context]
+    val headAftersFut = {
       MAd.maybeGetById( siteArgs.povAdId )
-        .map { _.filter(_.isPublished) }
-    }*/
+        .map { _.get }
+        .filter { _.isPublished }
+        .flatMap { mad =>
+          val futs = MExtServices.values
+            .iterator
+            .map { _.adMetaTagsRender(mad).map { rl =>
+              rl.map { _.render()(ctx) }
+                .iterator
+            }}
+          Future
+            .fold[Iterator[Html], Iterator[Html]] (futs) (Iterator.empty) (_ ++ _)
+            .map { _.toSeq }
+        }
+        .recover { case ex: Throwable =>
+          if (!ex.isInstanceOf[NoSuchElementException])
+            LOGGER.warn("Failed to collect meta-tags for ad " + siteArgs.povAdId, ex)
+          Seq.empty[Html]
+        }
+    }
+    // Узел, с которым связан данный запрос.
     val nodeOptFut = MAdnNodeCache.maybeGetByIdCached( siteArgs.adnId )
       .recover { case ex: Throwable =>
         LOGGER.warn("Failed to get node adnId = " + siteArgs.adnId, ex)
         None
       }
+    // Сборка результата.
     for {
       _nodeOpt   <- nodeOptFut
+      _headAfts  <- headAftersFut
     } yield {
       new ScSiteArgs {
         override def indexCall = routes.MarketShowcase.geoShowcase()
         override def nodeOpt   = _nodeOpt
         override def withGeo   = true   // TODO Чего делает этот параметр? Нужен ли он вообще?
         override val scColors  = super.scColors
+        override def headAfter: Traversable[Html] = {
+          super.headAfter ++ _headAfts
+        }
       }
     }
   }
