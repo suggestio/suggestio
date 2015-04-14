@@ -1,9 +1,12 @@
 package util.adv
 
 import akka.actor.Props
+import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs
-import models.mext.{IOa1MkPostArgs, MExtService, IExtPostInfo}
+import models.blk.OneAdQsArgs
+import models.mext._
+import play.api.libs.ws.WSResponse
 import util.PlayMacroLogsImpl
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
@@ -37,6 +40,9 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with CompatWsClient    // TODO
+  with RenderAd2ImgRender
+  with S2sMpUploadRender
+  with EtaCustomArgsBase
 {
 
   /** Общий ресивер для всех состояний. */
@@ -46,7 +52,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 
   override def receive: Receive = allStatesReceiver
 
-  def oa1Support = service.oauth1Support.get
+  val oa1Support = service.oauth1Support.get
 
 
   /** Текущий сервис, в котором задействован текущий актор. */
@@ -55,11 +61,60 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {
     super.preStart()
-    become(new PublishState)
+    val nextState = if (oa1Support.isMkPostNeedMpUpload) {
+      new RenderAd2ImgState
+    } else {
+      new PublishState()
+    }
+    become(nextState)
   }
 
+
+  /** Состояние рендера текущей карточки в картинку. */
+  class RenderAd2ImgState extends RenderAd2ImgStateT {
+    /** Аргументы для генерации данных для ссылки рендера карточки. */
+    val _ca = new MCustomArgsT {
+      override lazy val madRenderInfo = super.madRenderInfo
+    }
+    override def rendererError(ex: Throwable): Unit = {
+      super.rendererError(ex)
+      harakiri()
+    }
+    override def _mad = args.request.mad
+    override def _adRenderArgs: OneAdQsArgs = _ca.adRenderArgs
+    override def handleImgOk(okRes: Ad2ImgRenderOk): Unit = {
+      become( new UploadRenderedMadState(okRes.imgBytes) )
+    }
+  }
+
+
+  class UploadRenderedMadState(imgBytes: Array[Byte]) extends S2sMpUploadStateT {
+    /** Ссылка, которая была использована для аплоада. */
+    override def upUrl: String = args.target.target.url
+
+    /** Формирование данных для сборки тела multipart. */
+    override def mkUpArgs: IMpUploadArgs = {
+      mpUploadClient.uploadArgsSimple(
+        data      = imgBytes,
+        ct        = service.imgFmt.mime,
+        url       = None,
+        fileName  = ad2imgFileName,
+        oa1AcTok  = Some(args.accessToken)
+      )
+    }
+
+    /** Аплоад точно удался. */
+    override def uploadedOk(wsResp: WSResponse): Unit = {
+      LOGGER.trace("Img uploaded to service ok, resp = " + wsResp.body)
+      val atts = mpUploadClient.resp2attachments(wsResp)
+      become( new PublishState(atts) )
+    }
+
+  }
+
+
   /** Состояние публикации одного поста. */
-  class PublishState extends FsmState {
+  class PublishState(_attachments: Seq[IPostAttachmentId] = Nil) extends FsmState {
     /** При входе в состояние надо запустить постинг с помощью имеющегося access_token'а. */
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -70,6 +125,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
         override def mnode    = args.request.producer
         override def returnTo = args.target.returnTo
         override def geo      = args.request.producer.geo.point
+        override def attachments = _attachments
       }
       val mkPostFut = oa1Support.mkPost(mkPostArgs)
       renderInProcess()

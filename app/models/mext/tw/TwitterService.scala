@@ -83,4 +83,6 @@ trait TwitterService extends IExtService {
   def mpUpload = new TwMpUpload(oa1Support.consumerKey)
   override lazy val maybeMpUpload = Some(mpUpload)
 
+  // TODO Возможно, следует выставить imgFmtDflt = PNG.
+
 }

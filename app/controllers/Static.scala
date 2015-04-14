@@ -13,6 +13,7 @@ import play.api.Play.{isProd, current}
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import util.acl.{IsSuperuserOr404, MaybeAuth}
+import util.xplay.SecHeadersFilter
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -83,7 +84,10 @@ class Static @Inject() (
    */
   def tinymceColorpicker(filename: String) = MaybeAuth { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
-      .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+      .withHeaders(
+        CACHE_CONTROL -> "public, max-age=3600",
+        SecHeadersFilter.X_FRAME_OPTIONS_HEADER -> "SAMEORIGIN"
+      )
   }
 
   /**

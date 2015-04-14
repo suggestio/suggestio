@@ -20,6 +20,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLogsImpl {
 
+  /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
+    * Загрузка картинки будет идти напрямую в твиттер и затем публикация твита со встроенным media. */
+  override def isMkPostNeedMpUpload = true
+
   /** Ключи приложения для доступа к public API. */
   override lazy val consumerKey: ConsumerKey = {
     val cp = confPrefix
@@ -37,7 +41,6 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
         requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")  getOrElse "https://api.twitter.com/oauth/request_token",
         accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")   getOrElse "https://api.twitter.com/oauth/access_token",
         // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
-
         authorizationURL = /*configuration.getString(cp + ".authorizationUrl") getOrElse*/ "https://api.twitter.com/oauth/authorize",
         consumerKey
       ),
@@ -115,8 +118,18 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
       b.addParameter("lat", g.lat.toString)
       b.addParameter("lon", g.lon.toString)
     }
-    ws.url(b.build().toASCIIString)
+    // Приаттачить аттачменты к твиту.
+    val medias = args.attachments
+    if (medias.nonEmpty) {
+      val v = medias.toIterator.map(_.strId).mkString(",")
+      b.addParameter("media_ids", v)
+    }
+    val url = b.build().toASCIIString
+    // Начать постинг.
+    val req = ws.url(url)
       .sign( sigCalc(acTok) )
+    LOGGER.trace("Tweet POSTing to: " + req.url)
+    req
       .execute("POST")
       .map { resp =>
         if (resp.status == 200) {

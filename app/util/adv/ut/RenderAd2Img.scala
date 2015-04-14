@@ -2,8 +2,10 @@ package util.adv.ut
 
 import models.MAd
 import models.blk.OneAdQsArgs
+import models.event.ErrorInfo
 import util.PlayMacroLogsI
 import util.async.FsmActor
+import util.event.EventTypes
 import util.img.AdRenderUtil
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -23,7 +25,7 @@ trait RenderAd2Img extends FsmActor with PlayMacroLogsI {
     def _mad: MAd
     def _adRenderArgs: OneAdQsArgs
 
-    /** На какое состояние переключаться надо, когда картинка отрендерилась? */
+    /** Действия, если карточка в картинку отрендерилась на отличненько. */
     def handleImgOk(okRes: Ad2ImgRenderOk): Unit
 
     def rendererError(ex: Throwable): Unit
@@ -54,3 +56,19 @@ trait RenderAd2Img extends FsmActor with PlayMacroLogsI {
   }
 
 }
+
+
+/** Частичная реализация [[RenderAd2Img]], которая рисует ошибку на экране юзера. */
+trait RenderAd2ImgRender extends RenderAd2Img with ExtTargetActorUtil {
+  trait RenderAd2ImgStateT extends super.RenderAd2ImgStateT {
+    override def rendererError(ex: Throwable): Unit = {
+      val err = ErrorInfo(
+        msg  = "error.sio.internal",
+        info = Some(s"[$replyTo] ${ex.getMessage}")
+      )
+      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      renderEventReplace(rargs)
+    }
+  }
+}
+

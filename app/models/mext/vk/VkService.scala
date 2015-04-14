@@ -3,6 +3,7 @@ package models.mext.vk
 import java.net.URL
 
 import io.suggest.adv.ext.model.im.{INamedSize2di, VkWallImgSizesScalaEnumT}
+import models.im.{OutImgFmts, OutImgFmt}
 import models.mext.{IMpUploadSupport, IExtService}
 import util.adv.ExtServiceActor
 
@@ -51,6 +52,8 @@ trait VkService extends IExtService {
   override def extAdvServiceActor = ExtServiceActor
 
   override def maybeMpUpload = Some(VkMpUpload)
+
+  override def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
 }
 
 

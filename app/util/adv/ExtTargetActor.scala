@@ -6,16 +6,13 @@ import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
-import models.event.ErrorInfo
-import models.im.OutImgFmts
-import models.mext.{UploadRefusedException, UploadPart, MpUploadArgs}
+import models.mext.{IMpUploadArgs, UploadRefusedException}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
-import util.event.EventTypes
 import ut._
 
 /**
@@ -31,9 +28,6 @@ object ExtTargetActor {
   def props(args: IExtAdvTargetActorArgs): Props = {
     Props(ExtTargetActor(args))
   }
-
-  /** Формат картинки, из которой рендерится карточка. */
-  def imgFmt = OutImgFmts.JPEG
 
   /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
   val MAX_FILL_CTX_TRIES = configuration.getInt("adv.ext.target.fillCtx.try.max") getOrElse 2
@@ -51,7 +45,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with PlayMacroLogsImpl
   with EtaCustomArgsBase
   with CompatWsClient    // TODO
-  with RenderAd2Img
+  with RenderAd2ImgRender
   with S2sMpUploadRender
 {
 
@@ -75,16 +69,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   override def service = args.target.target.service
 
   /** Реализация модели из [[models.adv.ext.act.EtaCustomArgsBase]]. */
-  case class CustomArgs(adRenderMaxSz: INamedSize2di) extends MCustomArgsT {
+  case class CustomArgs(override val adRenderMaxSz: INamedSize2di) extends MCustomArgsT {
     // Готовая инфа по отрендеренной карточкчи обычно нужна по несколько раз вподряд. Или не нужна вообще.
     override lazy val madRenderInfo = super.madRenderInfo
   }
 
-  protected var _customArgs: CustomArgs = {
-    CustomArgs(
-      adRenderMaxSz = service.advPostMaxSz(args.target.target.url)
-    )
-  }
+  protected var _customArgs = CustomArgs(adRenderMaxSz = _adRenderMaxSzDflt)
+
 
   // FSM states
 
@@ -248,17 +239,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
    * Произвести заливку картинки на удалённый сервис с помощью ссылки.
    * @param uploadCtx Данные для s2s-загрузки.
    */
-  class S2sRenderAd2ImgState(val mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
+  class S2sRenderAd2ImgState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
     override def _mad = mad
     override def _adRenderArgs = _customArgs.adRenderArgs
     override def rendererError(ex: Throwable): Unit = {
+      super.rendererError(ex)
       error(s"[$replyTo] Failed to render ad[${args.qs.adId}] into picture", ex)
-      val err = ErrorInfo(
-        msg  = "error.sio.internal",
-        info = Some(s"[$replyTo] ${ex.getMessage}")
-      )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
-      renderEventReplace(rargs)
+      harakiri()
     }
 
     override def handleImgOk(okRes: Ad2ImgRenderOk): Unit = {
@@ -269,22 +256,17 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
-  class S2sPutPictureState(val mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte])
+  class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte])
     extends S2sMpUploadStateT {
 
     override def upUrl = uploadCtx.url
 
-    override def mkUpArgs: MpUploadArgs = {
-      val fmt = imgFmt
-      val upPart = UploadPart(
+    override def mkUpArgs: IMpUploadArgs = {
+      mpUploadClient.uploadArgsSimple(
         data      = imgBytes,
-        name      = uploadCtx.partName,
-        fileName  = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name,
-        ct        = fmt.mime
-      )
-      MpUploadArgs(
-        parts = Seq(upPart),
-        url   = Some(uploadCtx.url)
+        ct        = service.imgFmt.mime,
+        url       = Some(uploadCtx.url),
+        fileName  = ad2imgFileName
       )
     }
 

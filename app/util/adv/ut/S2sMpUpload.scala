@@ -2,7 +2,7 @@ package util.adv.ut
 
 import models.adv.ext.act.ExtActorEnv
 import models.event.ErrorInfo
-import models.mext.{UploadRefusedException, MpUploadArgs}
+import models.mext.{IMpUploadArgs, UploadRefusedException}
 import play.api.libs.ws.WSResponse
 import util.adv.IWsClient
 import util.async.FsmActor
@@ -26,14 +26,16 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
     def uploadFailed(ex: Throwable): Unit
 
     /** Формирование данных для сборки тела multipart. */
-    def mkUpArgs: MpUploadArgs
+    def mkUpArgs: IMpUploadArgs
+
+    /** Быстрый доступ к Service Upload API. */
+    def mpUploadClient = service.maybeMpUpload.get
 
     /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Собрать POST-запрос и запустить его на исполнение
-      service.maybeMpUpload
-        .get
+      mpUploadClient
         .mpUpload(mkUpArgs)
         .onComplete {
           case Success(wsResp) => self ! wsResp
@@ -63,6 +65,7 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
   trait S2sMpUploadStateT extends super.S2sMpUploadStateT {
     
     /** Ссылка, которая была использована для аплоада. */
+    // TODO Этот upUrl вообще мимо кассы и только для логгирования используется. Эта ссылка может быть не известна актору вообще.
     def upUrl: String
 
     /** Удаленный сервер вернул ошибочный http-ответ. */

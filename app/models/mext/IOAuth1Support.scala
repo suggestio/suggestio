@@ -29,7 +29,12 @@ trait IOAuth1Support {
   /** Проверка валидности access_token'a силами модели. */
   def isAcTokValid(acTok: RequestToken)(implicit ws: WSClient, ec: ExecutionContext): Future[Boolean]
 
+  /** Калькулятор oauth1-сигнатур запросов. */
   def sigCalc(acTok: RequestToken) = OAuthCalculator(consumerKey, acTok)
+
+  /** Необходимо ли делать mp-upload карточки на сервер перед вызовом mkPost?
+    * Если true, то текущий сервис должен поддерживать mpUpload. */
+  def isMkPostNeedMpUpload: Boolean
 
   /**
    * Запостить твит через OAuth1.
@@ -54,4 +59,25 @@ trait IOa1MkPostArgs {
   def returnTo: MExtReturn
   /** Таргет, т.е. цель размещения. */
   def target: MExtTarget
+  /** Приложения к посту, если есть. */
+  def attachments: TraversableOnce[IPostAttachmentId]
+
+  override def toString: String = {
+    val sb = new StringBuilder(192)
+    sb.append( getClass.getSimpleName )
+      .append('(')
+      .append("mad=").append(mad.id.orNull).append(',')
+      .append("acTok=").append(acTok.token).append(',')
+    val _geo = geo
+    if (_geo.isDefined)
+      sb.append("geo=").append(_geo.get).append(',')
+    sb.append("node=").append(mnode.id.orNull).append(',')
+      .append("returnTo=").append(returnTo.strId).append(',')
+      .append("target=").append(target.id.orNull)
+    val _atts = attachments
+    if (_atts.nonEmpty)
+      sb.append(",attachments=[").append(_atts.mkString(",")).append(']')
+    sb.append(')')
+    sb.toString()
+  }
 }

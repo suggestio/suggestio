@@ -1,8 +1,9 @@
 package models.mext.tw
 
-import models.mext.{IMpUploadArgs, MpUploadSupportDflt}
+import models.mext._
 import play.api.libs.oauth.{OAuthCalculator, ConsumerKey}
 import play.api.libs.ws.{WSRequestHolder, WSClient, WSResponse}
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -10,7 +11,7 @@ import play.api.libs.ws.{WSRequestHolder, WSClient, WSResponse}
  * Created: 14.04.15 15:15
  * Description: Поддержка аплоада media для твиттера.
  */
-class TwMpUpload(consumerKey: ConsumerKey) extends MpUploadSupportDflt {
+class TwMpUpload(consumerKey: ConsumerKey) extends MpUploadSupportDflt with PlayMacroLogsImpl {
   /**
    * Твиттер поддерживает upload по одному и тому же ресурсу.
    * @param args ignored.
@@ -30,6 +31,15 @@ class TwMpUpload(consumerKey: ConsumerKey) extends MpUploadSupportDflt {
   override def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequestHolder = {
     super.newRequest(args)
       .sign( OAuthCalculator(consumerKey, args.oa1AcTok.get) )
+  }
+
+  override def mpFieldNameDflt = "media"
+
+  /** Приведение ответа после аплода к внутреннему списку attachments. */
+  override def resp2attachments(resp: WSResponse): Seq[TwMediaAtt] = {
+    resp.json
+      .asOpt[TwMediaAtt]      // TODO Может надо тут .as[] использовать?
+      .toSeq
   }
 
 }

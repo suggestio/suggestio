@@ -22,11 +22,13 @@ import models.adv.js.ctx.MPictureCtx
 
 trait EtaCustomArgsBase extends ExtTargetActorEnv { env =>
 
+  def _adRenderMaxSzDflt = service.advPostMaxSz(args.target.target.url)
+
   /** Абстрактная реализация модели в виде трейта. */
   protected trait MCustomArgsT extends Mad2ImgUrlCalcT {
 
     /** Размер дял рендера. */
-    def adRenderMaxSz: INamedSize2di
+    def adRenderMaxSz: INamedSize2di = _adRenderMaxSzDflt
 
     override def service = env.service
     override def mad     = env.args.request.mad

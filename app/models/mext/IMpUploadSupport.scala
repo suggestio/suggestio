@@ -8,6 +8,7 @@ import org.apache.http.entity.mime.content.ByteArrayBody
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.{WSResponse, WSRequestHolder, WSClient}
+import util.PlayMacroLogsI
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,10 +29,30 @@ trait IMpUploadSupport {
    */
   def mpUpload(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse]
 
+  def uploadArgsSimple(data: Array[Byte], ct: String, url: Option[String], fileName: String,
+                       oa1AcTok: Option[RequestToken] = None): IMpUploadArgs = {
+    val upPart = UploadPart(
+      data      = data,
+      name      = mpFieldNameDflt,
+      fileName  = fileName,
+      ct        = ct
+    )
+    MpUploadArgs(
+      parts = Seq(upPart),
+      url   = url,
+      oa1AcTok = oa1AcTok
+    )
+  }
+
+  /** Имя части для simple-загрузки. */
+  def mpFieldNameDflt: String
+
+  /** Приведение ответа после аплода к внутреннему списку attachments. */
+  def resp2attachments(resp: WSResponse): Seq[IPostAttachmentId]
 }
 
 /** Дефолтовая реализация multi-part upload. */
-trait MpUploadSupportDflt extends IMpUploadSupport {
+trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
 
   /**
    * Узнать URL для запроса. Аргументы содержат только опциональный URL, если он динамический.
@@ -79,7 +100,9 @@ trait MpUploadSupportDflt extends IMpUploadSupport {
   /** Запуск HTTP-запроса. */
   def mkRequest(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
     val _boundary = boundary(args)
-    newRequest(args)
+    val req = newRequest(args)
+    LOGGER.trace("Will upload to URL: " + req.url)
+    req
       .withHeaders(
         HeaderNames.CONTENT_TYPE -> ("multipart/form-data; boundary=" + _boundary)
       )
@@ -123,7 +146,7 @@ trait IMpUploadArgs {
 /** Дефолтовая реализацяи [[IMpUploadArgs]]. */
 case class MpUploadArgs(
   override val parts    : TraversableOnce[IUploadPart],
-  override val url      : Option[String],
+  override val url      : Option[String] = None,
   override val oa1AcTok : Option[RequestToken] = None
 )
   extends IMpUploadArgs

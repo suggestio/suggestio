@@ -22,6 +22,10 @@ trait ExtActorEnv extends PlayMacroLogsI {
 
   /** Текущий сервис, в котором задействован текущий актор. */
   def service: MExtService
+
+  def ad2imgFileName: String = {
+    args.qs.adId + "-" + args.request.mad.versionOpt.getOrElse(0L) + "." + service.imgFmt.name
+  }
 }
 
 
