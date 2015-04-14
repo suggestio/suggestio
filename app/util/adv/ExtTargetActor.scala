@@ -4,10 +4,12 @@ import java.io.ByteArrayOutputStream
 
 import akka.actor.Props
 import io.suggest.adv.ext.model.im.INamedSize2di
+import models.MAd
 import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
+import models.blk.OneAdQsArgs
 import models.event.ErrorInfo
 import models.im.OutImgFmts
 import org.apache.http.entity.ContentType
@@ -18,10 +20,11 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
+import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import util.event.EventTypes
-import util.img.AdRenderUtil
 import util.blocks.BgImg.szMulted
+import ut._
 
 import scala.util.{Failure, Success}
 
@@ -58,6 +61,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with PlayMacroLogsImpl
   with EtaCustomArgsBase
   with CompatWsClient    // TODO
+  with RenderAd2Img
 {
 
   import LOGGER._
@@ -247,15 +251,17 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     override def receiverPart = PartialFunction.empty
   }
 
-
   // TODO Вынести render ad + s2s upload в отдельный актор. Так можно будет рендерить и грузить несколько карточек одновременно.
 
-  /** Заготовка состояния рендера карточки в картинку. */
-  trait RenderAd2ImgStateT extends FsmState {
-    /** На какое состояние переключаться надо, когда картинка отрендерилась? */
-    def getNextStateOk(okRes: Ad2ImgRenderOk): FsmState
-
-    def renderWkhtmlError(ex: Throwable): Unit = {
+  /**
+   * Произвести заливку картинки на удалённый сервис с помощью ссылки.
+   * @param uploadCtx Данные для s2s-загрузки.
+   */
+  class S2sRenderAd2ImgState(val mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
+    override def _mad = mad
+    override def _adRenderArgs = _customArgs.adRenderArgs
+    override def rendererError(ex: Throwable): Unit = {
+      error(s"[$replyTo] Failed to render ad[${args.qs.adId}] into picture", ex)
       val err = ErrorInfo(
         msg  = "error.sio.internal",
         info = Some(s"[$replyTo] ${ex.getMessage}")
@@ -264,40 +270,9 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
       renderEventReplace(rargs)
     }
 
-    /** При переключении на состояние надо запустить в фоне рендер карточки. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Запустить в фоне генерацию картинки и отправку её на удалённый сервер.
-      AdRenderUtil.renderAd2img(_customArgs.adRenderArgs, mad)
-        .onComplete {
-          case Success(imgBytes)  =>  self ! new Ad2ImgRenderOk(imgBytes)
-          case result             =>  self ! result
-        }
-    }
-
-    /** Дождаться завершения отправки картинки на удалённый сервер... */
-    override def receiverPart: Receive = {
-      // Картинка готова. Можно собирать запрос.
-      case imgReady: Ad2ImgRenderOk =>
-        become(getNextStateOk(imgReady))
-
-      // Не удалось отрендерить карточку в картинку.
-      case Failure(ex) =>
-        error(s"[$replyTo] Failed to render ad[${args.qs.adId}] into picture", ex)
-        renderWkhtmlError(ex)
-        harakiri()
-    }
-
-    class Ad2ImgRenderOk(val imgBytes: Array[Byte])
-  }
-
-  /**
-   * Произвести заливку картинки на удалённый сервис с помощью ссылки.
-   * @param uploadCtx Данные для s2s-загрузки.
-   */
-  class S2sRenderAd2ImgState(val mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
-    override def getNextStateOk(okRes: Ad2ImgRenderOk): FsmState = {
-      new S2sPutPictureState(mctx0, madId, uploadCtx, okRes.imgBytes)
+    override def handleImgOk(okRes: Ad2ImgRenderOk): Unit = {
+      val nextState = new S2sPutPictureState(mctx0, madId, uploadCtx, okRes.imgBytes)
+      become(nextState)
     }
   }
 

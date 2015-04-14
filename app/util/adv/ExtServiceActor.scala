@@ -4,13 +4,9 @@ import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
 import models.adv.js._
-import models.event.{MEventTmp, RenderArgs}
-import play.api.libs.json.JsString
 import util.PlayMacroLogsImpl
 import util.async.FsmActor
-import util.event.EventTypes
-import util.jsa.JsAppendById
-import ExtUtil.RUNNER_EVENTS_DIV_ID
+import ut._
 
 /**
  * Suggest.io
@@ -26,7 +22,7 @@ object ExtServiceActor extends IServiceActorCompanion
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
-trait ExtServiceActorLogic extends FsmActor with ISendCommand with ExtServiceActorEnv with ExtServiceActorUtil {
+trait ExtServiceActorLogic extends FsmActor with ISendCommand with ExtServiceActorEnv with SvcActorJsRenderUtil {
 
   /** Абстрактный state инициализации сервиса. */
   trait EnsureServiceStateStub extends FsmState {

@@ -1,16 +1,14 @@
 package util.adv
 
 import akka.actor.Props
-import io.suggest.adv.ext.model.im.INamedSize2di
-import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs
-import models.blk.OneAdQsArgs
-import models.mext.tw.card.TwImgSizes
 import models.mext.{IOa1MkPostArgs, MExtService, IExtPostInfo}
 import util.PlayMacroLogsImpl
+import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import ut._
 
 import scala.util.{Failure, Success}
 

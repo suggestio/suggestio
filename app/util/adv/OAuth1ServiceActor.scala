@@ -19,6 +19,7 @@ import org.joda.time.DateTime
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import util.PlayMacroLogsImpl
+import util.adv.ut._
 import util.async.{AsyncUtil, FsmActor}
 import util.jsa.JsWindowOpen
 import util.secure.PgpUtil
@@ -27,7 +28,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.Play.{current, isDev}
 import util.SiowebEsUtil.{client => esClient}
 
 /**
@@ -67,7 +67,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   with ExtServiceActorEnv
   with MediatorSendCommand
   with PlayMacroLogsImpl
-  with ExtServiceActorUtil
+  with SvcActorJsRenderUtil
   with CompatWsClient    // TODO
 {
 
