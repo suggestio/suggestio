@@ -1,5 +1,6 @@
 package util.billing
 
+import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import models.blk.{BlockWidths, BlockHeights}
@@ -62,10 +63,12 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
 
 
   /** Сгенерить localhost-ссылку на xml-текст календаря. */
-  private def getUrlCal(calId: String) = {
-    HolidayManager.getInstance(
-      new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
-    )
+  // TODO Надо бы асинхронно фетчить тело календаря и потом результат как-то заворачивать в URL, чтобы не было лишних блокировок.
+  // Часть блокировок подавляет кеш на стороне jollyday.
+  private def getUrlCal(calId: String): HolidayManager = {
+    val calUrl = new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
+    val args = new UrlManagerParameter(calUrl, null)
+    HolidayManager.getInstance(args)
   }
 
 
@@ -73,21 +76,21 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
     if (CRON_BILLING_CHECK_ENABLED) {
       val every = CHECK_ADVS_OK_DURATION
       val applyOldReqs = CronTask(
-        startDelay = 3 seconds,
+        startDelay = 3.seconds,
         every = every,
         displayName = "autoApplyOldAdvReqs()"
       ) {
         autoApplyOldAdvReqs()
       }
       val depubExpired = CronTask(
-        startDelay = 10 seconds,
+        startDelay = 10.seconds,
         every = every,
         displayName = "depublishExpiredAdvs()"
       ) {
         depublishExpiredAdvs()
       }
       val advOfflineAdvs = CronTask(
-        startDelay = 30 seconds,
+        startDelay = 30.seconds,
         every = every,
         displayName = "advertiseOfflineAds()"
       ) {
