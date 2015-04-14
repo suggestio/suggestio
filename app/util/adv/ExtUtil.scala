@@ -95,12 +95,16 @@ object ExtUtil {
 }
 
 
+/** Клиент web-services. */
+trait IWsClient {
+  implicit def wsClient: WSClient
+}
 
 /** Пока акторы работают без guice, тут код получения инстанса WS-клиента. */
 // TODO WSClient должен приходить прямо в конструктор актора через dependency injection.
-trait CompatWsClient {
+trait CompatWsClient extends IWsClient {
   import play.api.Play.current
 
-  implicit lazy val wsClient = current.injector.instanceOf[WSClient]
+  override implicit lazy val wsClient: WSClient = current.injector.instanceOf[WSClient]
 }
 

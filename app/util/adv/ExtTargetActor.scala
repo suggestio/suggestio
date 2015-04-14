@@ -1,22 +1,14 @@
 package util.adv
 
-import java.io.ByteArrayOutputStream
-
 import akka.actor.Props
 import io.suggest.adv.ext.model.im.INamedSize2di
-import models.MAd
 import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
-import models.blk.OneAdQsArgs
 import models.event.ErrorInfo
 import models.im.OutImgFmts
 import models.mext.{UploadRefusedException, UploadPart, MpUploadArgs}
-import org.apache.http.entity.ContentType
-import org.apache.http.entity.mime.MultipartEntityBuilder
-import org.apache.http.entity.mime.content.ByteArrayBody
-import play.api.http.HeaderNames
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
@@ -24,10 +16,7 @@ import util.PlayMacroLogsImpl
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import util.event.EventTypes
-import util.blocks.BgImg.szMulted
 import ut._
-
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -63,6 +52,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with EtaCustomArgsBase
   with CompatWsClient    // TODO
   with RenderAd2Img
+  with S2sMpUploadRender
 {
 
   import LOGGER._
@@ -280,7 +270,23 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
   class S2sPutPictureState(val mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte])
-    extends FsmState {
+    extends S2sMpUploadStateT {
+
+    override def upUrl = uploadCtx.url
+
+    override def mkUpArgs: MpUploadArgs = {
+      val fmt = imgFmt
+      val upPart = UploadPart(
+        data      = imgBytes,
+        name      = uploadCtx.partName,
+        fileName  = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name,
+        ct        = fmt.mime
+      )
+      MpUploadArgs(
+        parts = Seq(upPart),
+        url   = Some(uploadCtx.url)
+      )
+    }
 
     /** Выставить в picutre.saved указанной картинки новое значение. */
     def withPictureBody(respBody: String): MJsCtx = {
@@ -304,80 +310,29 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
 
     /** Отправить юзеру траурную весточку, что не удалось картинку залить по s2s. */
-    def renderImgUploadRefused(wsResp: WSResponse): Unit = {
-      val errMsg = new StringBuilder(wsResp.body.length + uploadCtx.url.length + 128)
-        .append("POST ").append(uploadCtx.url).append('\n')
-        .append(wsResp.status).append(' ').append(wsResp.statusText).append('\n').append('\n')
-        .append(wsResp.body)
-        .toString()
-      val err = ErrorInfo(
-        msg  = "error.adv.ext.s2s.img.upload.refused",
-        args = Seq(getDomain),
-        info = Some(errMsg)
-      )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
-      renderEventReplace(rargs)
+    override def renderImgUploadRefused(refused: UploadRefusedException): Unit = {
+      super.renderImgUploadRefused(refused)
+      LOGGER.error(s"Cannot load image to remote server: " + refused.getMessage)
     }
 
     /** Не удалось связаться с запрошенным сервером. */
-    def renderImgUploadFailed(ex: Throwable): Unit = {
-      val err = ErrorInfo(
-        msg  = "error.adv.ext.s2s.img.upload.failed",
-        args = Seq(getDomain),
-        info = Some(s"[$replyTo] ${ex.getMessage}")
-      )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
-      renderEventReplace(rargs)
+    override def renderImgUploadFailed(ex: Throwable): Unit = {
+      super.renderImgUploadFailed(ex)
+      LOGGER.error(s"[$replyTo] Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
     }
 
-    /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      val fmt = imgFmt
-      val upPart = UploadPart(
-        data      = imgBytes,
-        name      = uploadCtx.partName,
-        fileName  = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name,
-        ct        = fmt.mime
-      )
-      val upArgs = MpUploadArgs(
-        parts = Seq(upPart),
-        url   = Some(uploadCtx.url)
-      )
-      // Собрать POST-запрос и запустить его на исполнение
-      service.maybeMpUpload
-        .get
-        .mpUpload(upArgs)
-        .onComplete {
-          case Success(wsResp) => self ! wsResp
-          case other           => self ! other
-        }
+    def uploadedOk(wsResp: WSResponse): Unit = {
+      debug(s"successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
+      trace(s"Remote server response is:\n ${wsResp.body}")
+      val mctx2 = withPictureBody(wsResp.body)
+      val nextState = new FillContextState(mctx2)
+      become(nextState)
     }
 
-    /** Ждём ответа от удалённого сервера с результатом загрузки картинки. */
-    override def receiverPart: Receive = {
-      // Успешно выполнена загрузка картинки на удалённый сервер. Надо перейти на следующее состояние.
-      case wsResp: WSResponse =>
-        debug(s"successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
-        trace(s"Remote server response is:\n ${wsResp.body}")
-        val mctx2 = withPictureBody(wsResp.body)
-        val nextState = new FillContextState(mctx2)
-        become(nextState)
-
-      // Запрос не удался или произошла ещё какая-то ошибка.
-      case Failure(ex) =>
-        // Если юзер обратится с описаловом, то там будет ключ ошибки. Экзепшен можно будет отследить по логам.
-        ex match {
-          case refused: UploadRefusedException =>
-            error(s"Cannot load image to remote server: " + refused.getMessage)
-            renderImgUploadRefused(refused.wsResp)
-          case _ =>
-            error(s"[$replyTo] Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
-            renderImgUploadFailed(ex)
-        }
-        harakiri()
+    override def uploadFailed(ex: Throwable): Unit = {
+      super.uploadFailed(ex)
+      harakiri()
     }
   }
-
 
 }
