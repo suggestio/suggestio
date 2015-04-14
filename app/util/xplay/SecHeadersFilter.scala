@@ -26,7 +26,7 @@ object SecHeadersFilter {
   //val CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy"
 
   // Дефолтовые значения заголовков.
-  val DEFAULT_FRAME_OPTIONS = "DENY"
+  val DEFAULT_FRAME_OPTIONS = "SAMEORIGIN"
   val DEFAULT_XSS_PROTECTION = "1; mode=block"
   val DEFAULT_CONTENT_TYPE_OPTIONS = "nosniff"
   val DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES = "master-only"
