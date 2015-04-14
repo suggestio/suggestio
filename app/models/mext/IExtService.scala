@@ -126,4 +126,11 @@ trait IExtService {
     Future successful Nil
   }
 
+  /**
+   * Вернуть поддержку multipart, если есть.
+   * @return Some(), если сервис поддерживает multi-part upload.
+   *         None, если сервис не поддерживает загрузку по multipart.
+   */
+  def maybeMpUpload: Option[IMpUploadSupport] = None
+
 }

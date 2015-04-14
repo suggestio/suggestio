@@ -3,7 +3,7 @@ package models.mext.vk
 import java.net.URL
 
 import io.suggest.adv.ext.model.im.{INamedSize2di, VkWallImgSizesScalaEnumT}
-import models.mext.IExtService
+import models.mext.{IMpUploadSupport, IExtService}
 import util.adv.ExtServiceActor
 
 /**
@@ -50,6 +50,7 @@ trait VkService extends IExtService {
   /** VK работает через openapi.js. */
   override def extAdvServiceActor = ExtServiceActor
 
+  override def maybeMpUpload = Some(VkMpUpload)
 }
 
 

@@ -12,6 +12,7 @@ import models.adv.js.ctx._
 import models.blk.OneAdQsArgs
 import models.event.ErrorInfo
 import models.im.OutImgFmts
+import models.mext.{UploadRefusedException, UploadPart, MpUploadArgs}
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
@@ -332,55 +333,48 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // Собрать POST-запрос и запустить его на исполнение
-      val boundary = "----------BOUNDARY--" + mad.id.getOrElse("BoUnDaRy-_-")
-      val entity = MultipartEntityBuilder.create()
-        .setBoundary(boundary)
       val fmt = imgFmt
-      val partCt = ContentType.create(fmt.mime)
-      val partFilename = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name
-      val partBody = new ByteArrayBody(imgBytes, partCt, partFilename)
-      entity.addPart(uploadCtx.partName, partBody)
-      val baos = new ByteArrayOutputStream( szMulted(imgBytes.length, 1.1F) )
-      val resp = entity.build()
-      resp.writeTo(baos)
-      wsClient.url(uploadCtx.url)
-        .withHeaders(
-          HeaderNames.CONTENT_TYPE -> ("multipart/form-data; boundary=" + boundary)
-        )
-        .post(baos.toByteArray)
+      val upPart = UploadPart(
+        data      = imgBytes,
+        name      = uploadCtx.partName,
+        fileName  = args.qs.adId + "-" + mad.versionOpt.getOrElse(0L) + "." + fmt.name,
+        ct        = fmt.mime
+      )
+      val upArgs = MpUploadArgs(
+        parts = Seq(upPart),
+        url   = Some(uploadCtx.url)
+      )
+      // Собрать POST-запрос и запустить его на исполнение
+      service.maybeMpUpload
+        .get
+        .mpUpload(upArgs)
         .onComplete {
-          case Success(wsResp)  => self ! wsResp
-          case result           => self ! result
+          case Success(wsResp) => self ! wsResp
+          case other           => self ! other
         }
-    }
-
-    /** Проверка валидности возвращаемого значения. */
-    def respStatusCodeValid(status: Int): Boolean = {
-      status >= 200 && status <= 299
     }
 
     /** Ждём ответа от удалённого сервера с результатом загрузки картинки. */
     override def receiverPart: Receive = {
       // Успешно выполнена загрузка картинки на удалённый сервер. Надо перейти на следующее состояние.
-      case wsResp: WSResponse if respStatusCodeValid(wsResp.status) =>
+      case wsResp: WSResponse =>
         debug(s"successfully POSTed ad image to remote server: HTTP ${wsResp.statusText}")
         trace(s"Remote server response is:\n ${wsResp.body}")
         val mctx2 = withPictureBody(wsResp.body)
         val nextState = new FillContextState(mctx2)
         become(nextState)
 
-      // Запрос выполнился, но в ответ пришло что-то неожиданное.
-      case wsResp: WSResponse =>
-        error(s"Cannot load image to remote server: HTTP ${wsResp.statusText}: ${wsResp.body}")
-        renderImgUploadRefused(wsResp)
-        harakiri()
-
       // Запрос не удался или произошла ещё какая-то ошибка.
       case Failure(ex) =>
         // Если юзер обратится с описаловом, то там будет ключ ошибки. Экзепшен можно будет отследить по логам.
-        error(s"[$replyTo] Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
-        renderImgUploadFailed(ex)
+        ex match {
+          case refused: UploadRefusedException =>
+            error(s"Cannot load image to remote server: " + refused.getMessage)
+            renderImgUploadRefused(refused.wsResp)
+          case _ =>
+            error(s"[$replyTo] Failed to POST image to ${uploadCtx.url} as part '${uploadCtx.partName}'", ex)
+            renderImgUploadFailed(ex)
+        }
         harakiri()
     }
   }

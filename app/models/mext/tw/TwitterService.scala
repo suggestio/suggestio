@@ -5,7 +5,7 @@ import controllers.routes
 import models.adv.ext.Mad2ImgUrlCalcT
 import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
-import models.mext.{MExtServices, IExtService}
+import models.mext.{IMpUploadSupport, MExtServices, IExtService}
 import play.twirl.api.Html
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -78,5 +78,9 @@ trait TwitterService extends IExtService {
       ir :: acc0
     }
   }
+
+  /** Поддержка аплоада в твиттер. */
+  def mpUpload = new TwMpUpload(oa1Support.consumerKey)
+  override lazy val maybeMpUpload = Some(mpUpload)
 
 }
