@@ -2,14 +2,10 @@ package models.mext.tw
 
 import _root_.util.adv.OAuth1ServiceActor
 import controllers.routes
-import io.suggest.adv.ext.model.im.INamedSize2di
-import models.adv.MExtTarget
 import models.adv.ext.Mad2ImgUrlCalcT
-import models.blk.OneAdQsArgs
-import models.im.OutImgFmts
 import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
-import models.mext.{MExtServices, MExtService, IExtService}
+import models.mext.{MExtServices, IExtService}
 import play.twirl.api.Html
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,21 +53,23 @@ trait TwitterService extends IExtService {
    */
   override def adMetaTagsRender(mad1: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
     val acc0Fut = super.adMetaTagsRender(mad1)
-    val svc = MExtServices.TWITTER
-    val calc = new Mad2ImgUrlCalcT {
-      override def mad            = mad1
-      override def tgUrl          = mainPage
-      override def adRenderMaxSz  = TwImgSizes.Photo
-      override def service        = svc
-    }
-    val oneAdQsArgs = calc.adRenderArgs
+    // Собираем через враппер, т.к. для генерации метаданных нужен доступ к Context.
     val ir = new IRenderable {
       override def render()(implicit ctx: Context): Html = {
+        // Калькулятор ссылки
+        val calc = new Mad2ImgUrlCalcT {
+          override def mad            = mad1
+          override def tgUrl          = mainPage
+          override def adRenderMaxSz  = TwImgSizes.Photo
+          override def service        = MExtServices.TWITTER
+          override val madRenderInfo  = super.madRenderInfo
+        }
+        // Аргументы для рендера карточки и рендер.
         val pca = PhotoCardArgs(
-          imgUrl = routes.MarketShowcase.onlyOneAdAsImage(oneAdQsArgs).url,
-          url    = Some(ctx.request.uri),   // TODO Нужен нормальный URL, а не это.
-          title  = Some("TODO"),    // TODO Брать из карточки.
-          imgWh  = None             // TODO Высчитывать.
+          imgUrl = routes.MarketShowcase.onlyOneAdAsImage( calc.adRenderArgs ).url,
+          url    = Some(ctx.request.uri),
+          title  = Some("TODO"),                // TODO Брать из карточки.
+          imgWh  = Some(calc.madRenderInfo)
         )
         pca.render()
       }
