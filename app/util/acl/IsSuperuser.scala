@@ -1,5 +1,6 @@
 package util.acl
 
+import models.usr.MPerson
 import play.api.mvc._
 import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
