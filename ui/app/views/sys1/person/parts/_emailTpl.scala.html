@@ -1,0 +1,6 @@
+@(email: String)(implicit ctx: Context)
+
+@* Отображение email и действий с этим email. Используется в неск. sys.person-шаблонах. *@
+
+@email
+<a href="mailto:@email" title="Написать письмо со своего ящика.">&#9993;</a>

@@ -1,33 +1,54 @@
 @(extIdents: Seq[usr.MExtIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
 
+@* Рендер таблицы со списком ext-идентов.  *@
+
+@import sys1.stuff.ntable._
 @import ctx.messages
 
-@* Рендер таблицы со списком ext-идентов.  *@
+<h1>Идентификации через внешние сервисы (@extIdents.size)</h1>
 
 @if( extIdents.isEmpty ) {
   <div>Нет внешних идентов.</div>
 
 } else {
-  <table>
-    <tr>
-      <th title="Провайдер идентификации, т.е. какой-то сервис (сайт) в интернете, поддерживаемый suggest.io.">@messages("Provider")</th>
-      <th title="id пользователя на стороне провайдера идентификации.">user_id</th>
-      <th title="Email-адрес, если доступен.">email</th>
-      @if(showPersonId) {
-        <th title="Уникальный id пользователя suggest.io">person_id</th>
+@defining("M") { sz =>
+  @_ntable() {
+    @_th(sz, title = Some("Провайдер идентификации, т.е. какой-то сервис (сайт) в интернете, поддерживаемый suggest.io.")) {
+      @messages("Provider")
+    }
+    @_th(sz, title = Some("ID пользователя на стороне провайдера идентификации.") ) {
+      user_id
+    }
+    @_th(sz, title = Some("Email-адрес, если доступен.")) {
+      email
+    }
+    @if(showPersonId) {
+      @_th(sz, title = Some("Уникальный id пользователя suggest.io")) {
+        person_id
       }
-    </tr>
+    }
+
+  } {
 
     @extIdents.map { ei =>
-      <tr>
-        <td>@ei.provider</td>
-        <td>@ei.userId</td>
-        <td>@ei.email</td>
-        @if(showPersonId) {
-          @_personLinkTpl(ei.personId, personNames)
+      @_tr() {
+        @_td(sz) {
+          @ei.provider
         }
-      </tr>
+        @_td(sz) {
+          @ei.userId
+        }
+        @_td(sz) {
+          @ei.email.map(_emailTpl(_))
+        }
+        @if(showPersonId) {
+          @_td(sz) {
+            @_personLinkTpl(ei.personId, personNames)
+          }
+        }
+      }
     }
-  </table>
+  }
 
-}
+} @* defining sz *@
+} @* if extIdents nonEmpty *@

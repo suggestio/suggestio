@@ -1,6 +1,6 @@
-@(sz: String)(content: Html)(implicit ctx: Context)
+@(sz: String, title: Option[String] = None)(content: Html)(implicit ctx: Context)
 
-<td>
+<td@if(title){ title="@title"}>
   <div class="siom-cell-cnt __size-@sz">
     @content
   </div>

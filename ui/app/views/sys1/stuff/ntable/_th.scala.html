@@ -1,8 +1,8 @@
-@(sz: String)(content: Html)(implicit ctx: Context)
+@(sz: String, title: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Ячейка строки заголовка ntable-таблицы. *@
 
-<th class="siom-cell-head __text-align-1">
+<th class="siom-cell-head __text-align-1" @if(title){ title="@title"}>
   <div class="siom-cell-cnt __size-@sz">
     <strong class="color-strong">@content</strong>
   </div>

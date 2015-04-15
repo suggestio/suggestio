@@ -55,42 +55,30 @@
 
       @adnNodes1.sortBy(_.meta.name).map { adnNode =>
         @_tr() {
-          <td>
-            <div class="siom-cell-cnt __size-M">
-              @if(adnNode.adn.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
-                <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">
-                  @adnNode.meta.name
-                </a>
-              @if(adnNode.adn.isEnabled) {</strong>} else {</strike>}
-              @if(adnNode.adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
-              @if(adnNode.adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
-              @if(adnNode.adn.hasWifiSink) {<span title="Включена Wi-Fi выдача.">wifi</span>}
-              @if(adnNode.adn.hasGeoSink) {<span title="Включена geo-выдача.">geo</span>}
-              @if(adnNode.adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
-            </div>
-            <div class="border-line"></div>
-          </td>
-          <td>
-            <div class="siom-cell-cnt __size-M">
-              @messages("amt.of.type." + adnNode.adn.shownTypeId)
-            </div>
-            <div class="border-line"></div>
-          </td>
-          <td>
-            <div class="siom-cell-cnt __size-M">&nbsp;
-              @adnNode.meta.town
-            </div>
-            <div class="border-line"></div>
-          </td>
+          @_td(sz) {
+            @if(adnNode.adn.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
+              <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">
+                @adnNode.meta.name
+              </a>
+            @if(adnNode.adn.isEnabled) {</strong>} else {</strike>}
+            @if(adnNode.adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
+            @if(adnNode.adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
+            @if(adnNode.adn.hasWifiSink) {<span title="Включена Wi-Fi выдача.">wifi</span>}
+            @if(adnNode.adn.hasGeoSink) {<span title="Включена geo-выдача.">geo</span>}
+            @if(adnNode.adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
+          }
+          @_td(sz) {
+            @messages("amt.of.type." + adnNode.adn.shownTypeId)
+          }
+          @_td(sz) {
+            @adnNode.meta.town
+          }
           @companies.map { _companies =>
-            <td>
-              <div class="siom-cell-cnt __size-M">
-                @adnNode.companyId.flatMap(_companies.get).map { mc =>
-                  <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
-                }
-              </div>
-              <div class="border-line"></div>
-            </td>
+            @_td(sz) {
+              @adnNode.companyId.flatMap(_companies.get).map { mc =>
+                <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
+              }
+            }
           }
 
         } @* _tr() *@
@@ -101,4 +89,4 @@
   } @* _ntable.rows *@
 
 } @* defining sz = M *@
-} @* if nonEmpty *@
+} @* if adnNodes.nonEmpty *@

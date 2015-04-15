@@ -1,28 +1,49 @@
-@(epwIds: Seq[usr.EmailPwIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+@(epwIdents: Seq[usr.EmailPwIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
 
 @* Рендер таблицы со список email+pw идентов. *@
 
-@if( epwIds.isEmpty ) {
+@import sys1.stuff.ntable._
+@import views.html.stuff._yesNoTpl
+
+<h1>Идентификации через email+password (@epwIdents.size)</h1>
+
+@if( epwIdents.isEmpty ) {
   <div>Нет email+password идентов<div>.
 
 } else {
-  <table>
-    <tr>
-      <th class="">email</th>
-      @if(showPersonId) {
-        <th>person_id</th>
-      }
-      <th>verified?</th>
-    </tr>
 
-    @epwIds.map { epw =>
-      <tr>
-        <td>@epw.email</td>
-        @if(showPersonId) {
-          <td>@_personLinkTpl(epw.personId, personNames)</td>
-        }
-        <td>@epw.isVerified</td>
-      </tr>
+@defining("M") { sz =>
+  @_ntable() {
+    @_th(sz, title = Some("Адрес электронной почты пользователя.")) {
+      E-mail
     }
-  </table>
-}
+    @_th(sz, title = Some("Достоверно известно о принадлежности адреса этому пользователю?")) {
+      Verified?
+    }
+    @if(showPersonId) {
+      @_th(sz, title = Some("Технический внутренний id пользователя suggest.io.")) {
+        person_id
+      }
+    }
+
+  } {
+    @epwIdents.map { epw =>
+      @_tr() {
+        @_td(sz) {
+          @_emailTpl(epw.email)
+        }
+        @_td(sz) {
+          @_yesNoTpl(epw.isVerified)
+        }
+        @if(showPersonId) {
+          @_td(sz) {
+            @_personLinkTpl(epw.personId, personNames)
+          }
+        }
+      } @* _tr() *@
+    }
+
+  } @* ntable.content *@
+
+} @* defining sz *@
+} @* if nonEmpty *@
