@@ -1,0 +1,9 @@
+@(mperson: usr.MPerson, personName: String, contents: Seq[Html])(implicit ctx: Context)
+
+@* Страница с инфой по юзеру. *@
+
+@sysPersonBase(title = personName) {
+  @contents.map { html =>
+    <div>@html</div>
+  }
+}

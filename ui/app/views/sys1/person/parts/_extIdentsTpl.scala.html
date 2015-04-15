@@ -1,0 +1,33 @@
+@(extIdents: Seq[usr.MExtIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+
+@import ctx.messages
+
+@* Рендер таблицы со списком ext-идентов.  *@
+
+@if( extIdents.isEmpty ) {
+  <div>Нет внешних идентов.</div>
+
+} else {
+  <table>
+    <tr>
+      <th title="Провайдер идентификации, т.е. какой-то сервис (сайт) в интернете, поддерживаемый suggest.io.">@messages("Provider")</th>
+      <th title="id пользователя на стороне провайдера идентификации.">user_id</th>
+      <th title="Email-адрес, если доступен.">email</th>
+      @if(showPersonId) {
+        <th title="Уникальный id пользователя suggest.io">person_id</th>
+      }
+    </tr>
+
+    @extIdents.map { ei =>
+      <tr>
+        <td>@ei.provider</td>
+        <td>@ei.userId</td>
+        <td>@ei.email</td>
+        @if(showPersonId) {
+          @_personLinkTpl(ei.personId, personNames)
+        }
+      </tr>
+    }
+  </table>
+
+}

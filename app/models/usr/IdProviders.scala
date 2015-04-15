@@ -4,6 +4,7 @@ import io.suggest.model.EnumMaybeWithName
 import play.api.mvc.PathBindable
 import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.{ProviderCompanion, FacebookProvider, VkProvider}
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -22,16 +23,18 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
 
     /** secure social: Компаньон провайдера. Это необходимо для построения списка провайдеров логина. */
     def ssProviderCompanion: ProviderCompanion
+
+    override def toString(): String = strId
   }
 
   override type T = Val
 
-  val Facebook: T   = new Val(FacebookProvider.Facebook) {
+  val Facebook: T = new Val(FacebookProvider.Facebook) {
     override def ssAuthMethod = AuthenticationMethod.OAuth2
     override def ssProviderCompanion = FacebookProvider
   }
 
-  val Vkontakte: T  = new Val(VkProvider.Vk) {
+  val Vkontakte: T = new Val(VkProvider.Vk) {
     override def ssAuthMethod = AuthenticationMethod.OAuth2
     override def ssProviderCompanion = VkProvider
   }
@@ -42,18 +45,20 @@ object IdProviders extends Enumeration with EnumMaybeWithName {
   //}
 
 
-  implicit def pb(implicit strB: PathBindable[String]) = new PathBindable[IdProvider] {
-    override def bind(key: String, value: String): Either[String, IdProvider] = {
-      strB.bind(key, value).right.flatMap { provId =>
-        maybeWithName(provId) match {
-          case Some(prov) => Right(prov)
-          case None       => Left("e.id.unknown.provider")
+  implicit def pb(implicit strB: PathBindable[String]): PathBindable[IdProvider] = {
+    new PathBindable[IdProvider] {
+      override def bind(key: String, value: String): Either[String, IdProvider] = {
+        strB.bind(key, value).right.flatMap { provId =>
+          maybeWithName(provId) match {
+            case Some(prov) => Right(prov)
+            case None       => Left("e.id.unknown.provider")
+          }
         }
       }
-    }
 
-    override def unbind(key: String, value: IdProvider): String = {
-      strB.unbind(key, value.strId)
+      override def unbind(key: String, value: IdProvider): String = {
+        strB.unbind(key, value.strId)
+      }
     }
   }
 

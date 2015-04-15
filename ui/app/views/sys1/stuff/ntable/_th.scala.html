@@ -1,0 +1,10 @@
+@(sz: String)(content: Html)(implicit ctx: Context)
+
+@* Ячейка строки заголовка ntable-таблицы. *@
+
+<th class="siom-cell-head __text-align-1">
+  <div class="siom-cell-cnt __size-@sz">
+    <strong class="color-strong">@content</strong>
+  </div>
+  <div class="border-line"></div>
+</th>

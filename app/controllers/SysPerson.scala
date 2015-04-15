@@ -3,12 +3,13 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.ym.model.{MCompany, MAdnNode}
 import models.AdnNodesSearchArgs
-import models.usr.{MExtIdent, EmailPwIdent, EmailActivation}
+import models.usr.{MPerson, MExtIdent, EmailPwIdent, EmailActivation}
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
 import views.html.ident.reg.email.emailRegMsgTpl
 import views.html.ident.recover.emailPwRecoverTpl
 import views.html.sys1.person._
+import views.html.sys1.person.parts._
 import views.html.sys1.market.adn._adnNodesListTpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -57,10 +58,37 @@ class SysPerson @Inject() (
       override def anyOfPersonIds = Seq(personId)
       override def withNameSort   = true
     })
-
-    // Запускаем поиск ident'ов
+    // Запускаем поиски ident'ов. Сортируем результаты.
     val epwIdentsFut = EmailPwIdent.findByPersonId(personId)
-    val eidIdentsFut = MExtIdent.findByPersonId(personId)
+      .map { _.sortBy(_.email) }
+    val extIdentsFut = MExtIdent.findByPersonId(personId)
+      .map { _.sortBy { ei => ei.providerId + "." + ei.userId } }
+
+    // Определить имя юзера, если возможно.
+    val personNameOptFut = MPerson.findUsernameCached(personId)
+    // Карта имен юзеров, передается в шаблоны.
+    val personNamesFut = personNameOptFut
+      .map { _.map(personId -> _).toMap }
+
+    // Отображаемое на текущей странице имя юзера
+    val personNameFut = personNameOptFut
+      .map { _.getOrElse(personId) }
+
+    // Рендер epw-идентов
+    val epwIdentsHtmlFut = for {
+      epws        <- epwIdentsFut
+      personNames <- personNamesFut
+    } yield {
+      _epwIdentsTpl(epws, showPersonId = false, personNames = personNames)
+    }
+
+    // Рендер ext-ident'ов
+    val extIdentsHtmlFut = for {
+      extIdents   <- extIdentsFut
+      personNames <- personNamesFut
+    } yield {
+      _extIdentsTpl(extIdents, showPersonId = false, personNames = personNames)
+    }
 
     // Рендерим список узлов:
     val companiesFut = nodesFut
@@ -74,9 +102,16 @@ class SysPerson @Inject() (
       _adnNodesListTpl(mnodes, Some(companies), withDelims = false)
     }
 
-    // TODO рендерим ident'ы
-    // TODO рендерим конечный шаблон.
-    ???
+    // Рендерим конечный шаблон.
+    for {
+      nodesHtml     <- nodesHtmlFut
+      extIdentsHtml <- extIdentsHtmlFut
+      epwIdentsHtml <- epwIdentsHtmlFut
+      personName    <- personNameFut
+    } yield {
+      val contents = Seq(epwIdentsHtml, extIdentsHtml, nodesHtml)
+      Ok(showPersonTpl(request.mperson, personName, contents))
+    }
   }
 
 }

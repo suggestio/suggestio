@@ -1,4 +1,5 @@
-@(adnNode: MAdnNode, slaves: Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: Context)
+@(adnNode: MAdnNode, slaves: Seq[MAdnNode], company: Option[MCompany] = None,
+  personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 
@@ -7,6 +8,7 @@
 @import controllers.adn.AdnShowTypes._
 @import util.qsb._
 @import lk.lkBlock
+@import sys1.person.parts._personLinkTpl
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -72,18 +74,23 @@
     @_nodeMetaTpl(adnNode.meta)
   }
 
-  @lkBlock("Подчинённые узлы(" +slaves.size +")") {
-
-    @if(slaves.isEmpty) {
-      <p class="color-light-strong">Нет подчинённых узлов.</p>
-    } else {
+  @if(slaves.nonEmpty) {
+    @lkBlock("Подчинённые узлы(" +slaves.size +")") {
       @_adnNodesListTpl(slaves, withDelims = false)
+      <div class="btn-w __size-M">
+        <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode(adnNode.id)">+Добавить подузел</a>
+      </div>
     }
+  }
 
-    <div class="btn-w __size-M">
-      <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode(adnNode.id)">+Добавить подузел</a>
-    </div>
-
+  @lkBlock("Пользователи") {
+    @if(adnNode.personIds.isEmpty) {
+      <p class="color-light-strong">Нет пользователей, управляющих этим узлом.</p>
+    } else {
+      @adnNode.personIds.iterator.map { personId =>
+        @_personLinkTpl(personId, personNames)
+      }
+    }
   }
 
   @lkBlock("Участие в рекламной сети") {

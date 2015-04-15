@@ -1,0 +1,9 @@
+@(personId: String,  personNames: Map[String, String] = Map.empty,  name: Option[String] = None)(implicit ctx: Context)
+
+@* Рендер ссылки на страницу отображения инфы по юзеру.
+   personNames содержит необязательную карту отображаемых имен пользователей.
+   Вместо карты можно передать значение прямо в name. *@
+
+<a href="@routes.SysPerson.showPerson(personId)" title="@personId">
+  @name.orElse(personNames.get(personId)).getOrElse(personId)
+</a>

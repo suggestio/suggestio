@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.util.MacroLogsImpl
-import models.usr.EmailActivation
+import models.usr.{MPerson, EmailActivation}
 import play.api.db.DB
 import play.twirl.api.Html
 import util.acl._
@@ -160,11 +160,21 @@ class SysMarket @Inject() (
     import request.adnNode
     val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
     val companyOptFut = adnNode.getCompany
+    val personNamesFut = Future.traverse(adnNode.personIds) { personId =>
+      MPerson.findUsernameCached(personId)
+        .map { nameOpt =>
+          val name = nameOpt.getOrElse(personId)
+          personId -> name
+        }
+    } map {
+      _.toMap
+    }
     for {
-      slaves <- slavesFut
-      companyOpt <- companyOptFut
+      slaves      <- slavesFut
+      companyOpt  <- companyOptFut
+      personNames <- personNamesFut
     } yield {
-      Ok(adnNodeShowTpl(adnNode, slaves, companyOpt))
+      Ok(adnNodeShowTpl(adnNode, slaves, companyOpt, personNames))
     }
   }
 

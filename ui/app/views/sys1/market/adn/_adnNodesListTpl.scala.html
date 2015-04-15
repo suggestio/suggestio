@@ -3,74 +3,58 @@
 
 @* Инлайновый список узлов. *@
 @import ctx._
+@import sys1.stuff.ntable._
 
 @if(adnNodes.nonEmpty) {
+@defining("M") { sz =>
 
-  <table class="siom-table __size-XL color-strong">
-    <tr>
-      <th class="siom-cell-head __text-align-1">
-        <div class="siom-cell-cnt __size-M">
-          <strong class="color-strong">@messages("Name")</strong>
-        </div>
-        <div class="border-line"></div>
-      </th>
-      <th class="siom-cell-head __text-align-1">
-        <div class="siom-cell-cnt __size-M">
-          <strong class="color-strong">@messages("Type")</strong>
-        </div>
-        <div class="border-line"></div>
-      </th>
-      <th class="siom-cell-head __text-align-1">
-        <div class="siom-cell-cnt __size-M">&nbsp;
-          <strong class="color-strong">@messages("Town")</strong>
-        </div>
-        <div class="border-line"></div>
-      </th>
-      @if(companies.isDefined) {
-        <th class="siom-cell-head __text-align-1">
-          <div class="siom-cell-cnt __size-M">
-            <strong class="color-strong">@messages("Company")</strong>
-          </div>
-          <div class="border-line"></div>
-        </th>
+  @_ntable() {
+    @* _ntable.headRow *@
+
+    @_th(sz) {
+      @messages("Name")
+    }
+    @_th(sz) {
+      @messages("Type")
+    }
+    @_th(sz) {
+      @messages("Town")
+    }
+    @if(companies.isDefined) {
+      @_th(sz) {
+        @messages("Company")
       }
-    </tr>
+    }
+
+  } {
+    @* _ntable.rows *@
 
     @adnNodes.groupBy(_.adn.shownTypeId).map { case (shownTypeId, adnNodes1) =>
+
+      @* Строка явных разделителей групп узлов. Она наверху, чтобы озаглавить нижеследующую группу узлов. Вниз переносить её не надо. *@
       @if(withDelims) {
-        <tr>
-          <td>
-            <div class="siom-cell-cnt __size-M">
-              -------------
-            </div>
-            <div class="border-line"></div>
-          </td>
-          <td>
-            <div class="siom-cell-cnt __size-M">
-              <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(shownTypeId))">
-                @messages("amts.of.type." + shownTypeId)
-              </a>
-            </div>
-            <div class="border-line"></div>
-          </td>
-          <td>
-            <div class="siom-cell-cnt __size-M">&nbsp;
-              -------------
-            </div>
-            <div class="border-line"></div>
-          </td>
-          @if(companies.isDefined) {
-            <td>
-              <div class="siom-cell-cnt __size-M">
-                -------------
-              </div>
-              <div class="border-line"></div>
-            </td>
+        @_tr() {
+          @_td(sz) {
+            -------------
           }
-        </tr>
+          @_td(sz) {
+            <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(shownTypeId))">
+              @messages("amts.of.type." + shownTypeId)
+            </a>
+          }
+          @_td(sz) {
+            -------------
+          }
+          @if(companies.isDefined) {
+            @_td(sz) {
+              -------------
+            }
+          }
+        }
       }
+
       @adnNodes1.sortBy(_.meta.name).map { adnNode =>
-        <tr>
+        @_tr() {
           <td>
             <div class="siom-cell-cnt __size-M">
               @if(adnNode.adn.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
@@ -108,10 +92,13 @@
               <div class="border-line"></div>
             </td>
           }
-        }
-      </tr>
-    }
 
-  </table>
+        } @* _tr() *@
 
-}
+      } @* adnNodesGroup.map *@
+    }   @* adnNodes.groupBy.map *@
+
+  } @* _ntable.rows *@
+
+} @* defining sz = M *@
+} @* if nonEmpty *@

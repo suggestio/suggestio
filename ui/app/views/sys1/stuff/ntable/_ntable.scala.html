@@ -1,0 +1,11 @@
+@()(headRow: Html)(rows: Html)(implicit ctx: Context)
+
+@* Шаблон для сборки верстки таблицы ntable. *@
+
+<table class="siom-table __size-XL color-strong">
+  @_tr() {
+    @headRow
+  }
+
+  @rows
+</table>
