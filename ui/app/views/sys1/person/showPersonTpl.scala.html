@@ -3,7 +3,11 @@
 @* Страница с инфой по юзеру. *@
 
 @sysPersonBase(title = personName) {
+
+  <p>Дефолтовый язык: @mperson.lang</p>
+
   @contents.map { html =>
     <div>@html</div>
   }
+
 }

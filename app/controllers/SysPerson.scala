@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.ym.model.{MCompany, MAdnNode}
 import models.AdnNodesSearchArgs
-import models.usr.{MPerson, MExtIdent, EmailPwIdent, EmailActivation}
+import models.usr._
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
 import views.html.ident.reg.email.emailRegMsgTpl
@@ -33,8 +33,23 @@ class SysPerson @Inject() (
     id    = Some("IdIdIdIdId888")
   )
 
-  def index = IsSuperuser { implicit request =>
-    Ok(indexTpl())
+  def index = IsSuperuser.async { implicit request =>
+    val personsCntFut = MPerson.countAll
+    val epwIdsCntFut = EmailPwIdent.countAll
+    val extIdsCntFut = MExtIdent.countAll
+    val suCnt        = MPersonIdent.SU_EMAILS.size
+    for {
+      personsCnt <- personsCntFut
+      epwIdsCnt  <- epwIdsCntFut
+      extIdsCnt  <- extIdsCntFut
+    } yield {
+      Ok(indexTpl(
+        personsCnt = personsCnt,
+        epwIdsCnt  = epwIdsCnt,
+        extIdsCnt  = extIdsCnt,
+        suCnt      = suCnt
+      ))
+    }
   }
 
   /** Отрендерить на экран email-сообщение регистрации юзера. */
@@ -45,6 +60,21 @@ class SysPerson @Inject() (
   /** Отрендерить email-сообщение восстановления пароля. */
   def showRecoverEmail = IsSuperuser { implicit request =>
     Ok(emailPwRecoverTpl(dummyEa))
+  }
+
+  /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
+  def allEpws(offset: Int) = IsSuperuser.async { implicit request =>
+    val limit = 30
+    val epwsFut = EmailPwIdent.getAll(limit, offset = offset, withVsn = false)
+    for {
+      epws <- epwsFut
+    } yield {
+      Ok(epwsListTpl(
+        epws        = epws,
+        limit       = limit,
+        currOffset  = offset
+      ))
+    }
   }
 
   /**

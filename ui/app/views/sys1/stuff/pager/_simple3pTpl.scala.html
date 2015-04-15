@@ -1,0 +1,34 @@
+@(count: Int, limit: Int, offset: Int, pageOff: Int = 1, urlF: Int => Call)(implicit ctx: Context)
+
+@* Примитивный пейджер для постраничного перехода.
+   count: текущее кол-во элементов.
+   limit: Макс.кол-во элементов на одну страницу.
+   offset: Текущий абсолютный сдвиг.
+   pageOff: Сдвиг в нумерации страниц, а также номер первой страницы.
+   urlF: генератор ссылок на другие страницы, где $1 - новый абсолютный offset.
+ *@
+
+@import ctx.messages
+
+@messages("Page")
+
+@defining( offset / limit + 1 ) { currPage =>
+
+  @if(offset > 0) {
+    @if(offset > limit) {
+      <a href="@urlF(0)">&lt;&lt;</a>
+    }
+    <a href="@urlF(Math.min(0, offset - limit))">
+      &lt; @Math.max(pageOff, currPage - 1)
+    </a>
+  }
+
+  @currPage
+
+  @if(count >= limit) {
+    <a href="@urlF(offset + limit)">@(currPage + 1)</a> &gt;
+  } else {
+    (последняя)
+  }
+
+}

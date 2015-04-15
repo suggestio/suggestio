@@ -1,0 +1,20 @@
+@(epws: Seq[usr.EmailPwIdent], limit: Int, currOffset: Int)(implicit ctx: Context)
+
+@* Шаблон рендерит список переданных email+pw идентов с возможностью постраничного вывода. *@
+
+@import parts._
+@import ctx.messages
+@import sys1.stuff.pager._
+
+@sysPersonBase("Email+pw иденты") {
+
+  @_epwIdentsTpl(epws, showPersonId = true)
+
+  @_simple3pTpl(
+    count  = epws.size,
+    limit  = limit,
+    offset = currOffset,
+    urlF   = routes.SysPerson.allEpws(_)
+  )
+
+}

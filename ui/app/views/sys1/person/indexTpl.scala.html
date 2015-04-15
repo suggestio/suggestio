@@ -1,6 +1,8 @@
-@()(implicit ctx: Context)
+@(personsCnt: Long, epwIdsCnt: Long, extIdsCnt: Long, suCnt: Int)(implicit ctx: Context)
 
 @* Заглавная страница раздела про юзеров s.io. *@
+
+@import sys1.stuff.proptable._
 
 @hPathAfter1 = {}
 
@@ -9,9 +11,26 @@
   hPathAfter = Some(hPathAfter1)
 ) {
 
-  <h1>Раздел пока не готов...</h1>
+  @_ptableTpl() {
+    @_ptableRowTpl("Пользователей") {
+      @personsCnt юзеров
+    }
+    @_ptableRowTpl("Email+pw ident") {
+      <a href="@routes.SysPerson.allEpws()">
+        @epwIdsCnt идентов
+      </a>
+    }
+    @_ptableRowTpl("Внешние иденты") {
+      @extIdsCnt идентов
+    }
+    @_ptableRowTpl("Суперпользователи") {
+      @suCnt юзеров
+    }
+  }
 
-  Но уже сейчас можно посмотреть
+  <br/>
+  <br/>
+  Показать:
   <a href="@routes.SysPerson.showRegEmail()">email-сообщение регистрации</a>, и
   <a href="@routes.SysPerson.showRecoverEmail()">email-сообщение восстановления пароля</a>.
 
