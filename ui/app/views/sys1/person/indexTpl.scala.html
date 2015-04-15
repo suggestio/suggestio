@@ -21,7 +21,9 @@
       </a>
     }
     @_ptableRowTpl("Внешние иденты") {
-      @extIdsCnt идентов
+      <a href="@routes.SysPerson.allExtIdents()">
+        @extIdsCnt идентов
+      </a>
     }
     @_ptableRowTpl("Суперпользователи") {
       @suCnt юзеров

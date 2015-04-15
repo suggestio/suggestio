@@ -1,0 +1,20 @@
+@(extIdents: Seq[usr.MExtIdent], limit: Int, currOffset: Int)(implicit ctx: Context)
+
+@* Страница со списком внешних идентов.
+   TODO Нужно прикрутить нормальное именование отображаемых пользователей. *@
+
+@import parts._
+@import sys1.stuff.pager._
+
+@sysPersonBase("Внешние иденты") {
+
+  @_extIdentsTpl(extIdents, showPersonId = true)
+
+  @_simple3pTpl(
+    count  = extIdents.size,
+    limit  = limit,
+    offset = currOffset,
+    urlF   = routes.SysPerson.allExtIdents(_)
+  )
+
+}

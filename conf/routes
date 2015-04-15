@@ -317,6 +317,7 @@ GET  /sys/person/reg/email/show          @controllers.SysPerson.showRegEmail
 GET  /sys/person/recover/email/show      @controllers.SysPerson.showRecoverEmail
 GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(personId)
 GET  /sys/person/epws                    @controllers.SysPerson.allEpws(offset: Int ?= 0)
+GET  /sys/person/extids                  @controllers.SysPerson.allExtIdents(offset: Int ?= 0)
 
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           @controllers.Application.corsPreflight(path)

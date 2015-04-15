@@ -1,4 +1,4 @@
-@(count: Int, limit: Int, offset: Int, pageOff: Int = 1, urlF: Int => Call)(implicit ctx: Context)
+@(count: Int, limit: Int, offset: Int, urlF: Int => Call, pageOff: Int = 1)(implicit ctx: Context)
 
 @* Примитивный пейджер для постраничного перехода.
    count: текущее кол-во элементов.

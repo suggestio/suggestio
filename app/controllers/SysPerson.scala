@@ -64,13 +64,28 @@ class SysPerson @Inject() (
 
   /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
   def allEpws(offset: Int) = IsSuperuser.async { implicit request =>
-    val limit = 30
-    val epwsFut = EmailPwIdent.getAll(limit, offset = offset, withVsn = false)
+    val limit = 20
+    val epwsFut = EmailPwIdent.getAll(limit, offset = offset)
     for {
       epws <- epwsFut
     } yield {
       Ok(epwsListTpl(
         epws        = epws,
+        limit       = limit,
+        currOffset  = offset
+      ))
+    }
+  }
+
+  /** Отрендерить страницу с листингом внешних идентов. */
+  def allExtIdents(offset: Int) = IsSuperuser.async { implicit request =>
+    val limit = 20
+    val extIdentsFut = MExtIdent.getAll(limit, offset = offset)
+    for {
+      extIdents <- extIdentsFut
+    } yield {
+      Ok(extIdentsListTpl(
+        extIdents   = extIdents,
         limit       = limit,
         currOffset  = offset
       ))
