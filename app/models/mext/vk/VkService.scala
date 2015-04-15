@@ -13,7 +13,7 @@ import util.adv.ExtServiceActor
  * Created: 10.04.15 19:24
  * Description: Абстрактная реализация внешнего сервиса vk.com.
  */
-trait VkService extends IExtService {
+trait VkService extends IExtService with VkMpUpload {
 
   override def nameI18N = "VKontakte"
   override def isForHost(host: String): Boolean = {
@@ -51,7 +51,7 @@ trait VkService extends IExtService {
   /** VK работает через openapi.js. */
   override def extAdvServiceActor = ExtServiceActor
 
-  override def maybeMpUpload = Some(VkMpUpload)
+  override def maybeMpUpload = Some(this)
 
   override def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
 }

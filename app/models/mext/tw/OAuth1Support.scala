@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Реализация поддержки OAuth1.
  */
 
-class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLogsImpl {
+trait OAuth1Support extends IOAuth1Support with PlayMacroLogsImpl { this: TwitterService =>
 
   /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
     * Загрузка картинки будет идти напрямую в твиттер и затем публикация твита со встроенным media. */
@@ -94,11 +94,13 @@ class OAuth1Support(confPrefix: String) extends IOAuth1Support with PlayMacroLog
             .iterator
             .flatMap(_.text1)
             .map(_.value)
+            .map(FormUtil.strTrimSanitizeF)
+            // TODO Opt использовать foldLeft и накапливать только необходимое кол-во строк, а не все сразу объединять.
             .mkString(" ")
           Some(s)
         }
       }
-      .map { TplDataFormatUtil.strLimitLenNoTrailingWordPart(_, 120) }
+      .map { TplDataFormatUtil.strLimitLenNoTrailingWordPart(_, 115) }
       .getOrElse("")
     // Собираем ссылку в твите.
     val siteArgs = SiteQsArgs(

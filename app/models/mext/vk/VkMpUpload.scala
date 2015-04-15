@@ -10,7 +10,7 @@ import util.PlayMacroLogsImpl
  * Created: 14.04.15 15:12
  * Description: Поддержка аплода для вконтакта.
  */
-object VkMpUpload extends MpUploadSupportDflt with PlayMacroLogsImpl {
+trait VkMpUpload extends MpUploadSupportDflt with PlayMacroLogsImpl {
   /**
    * vk используется динамические URL для подгрузки. URL должен быть задан в аргументах.
    * @param args Аргументы upload.

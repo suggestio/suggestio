@@ -14,9 +14,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.04.15 19:14
- * Description: Абстрактнаня реализация twitter-сервиса.
+ * Description: Абстрактная реализация twitter-сервиса.
  */
-trait TwitterService extends IExtService {
+trait TwitterService extends IExtService with OAuth1Support with TwMpUpload {
 
   override def nameI18N = "Twitter"
 
@@ -36,10 +36,8 @@ trait TwitterService extends IExtService {
   /** twitter работает через OAuth1. */
   override def extAdvServiceActor = OAuth1ServiceActor
 
-  lazy val oa1Support = new OAuth1Support(confPrefix)
-
   /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
-  override def oauth1Support = Some(oa1Support)
+  override def oauth1Support = Some(this)
 
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   override def myUserName = Some("@suggest_io")
@@ -80,8 +78,7 @@ trait TwitterService extends IExtService {
   }
 
   /** Поддержка аплоада в твиттер. */
-  def mpUpload = new TwMpUpload(oa1Support.consumerKey)
-  override lazy val maybeMpUpload = Some(mpUpload)
+  override def maybeMpUpload = Some(this)
 
   // TODO Возможно, следует выставить imgFmtDflt = PNG.
 

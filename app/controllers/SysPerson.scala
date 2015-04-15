@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.ym.model.{MCompany, MAdnNode}
-import models.AdnNodesSearchArgs
+import models.{Context, AdnNodesSearchArgs}
 import models.usr._
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
@@ -119,12 +119,14 @@ class SysPerson @Inject() (
     val personNameFut = personNameOptFut
       .map { _.getOrElse(personId) }
 
+    implicit val ctx = implicitly[Context]
+
     // Рендер epw-идентов
     val epwIdentsHtmlFut = for {
       epws        <- epwIdentsFut
       personNames <- personNamesFut
     } yield {
-      _epwIdentsTpl(epws, showPersonId = false, personNames = personNames)
+      _epwIdentsTpl(epws, showPersonId = false, personNames = personNames)(ctx)
     }
 
     // Рендер ext-ident'ов
@@ -132,7 +134,7 @@ class SysPerson @Inject() (
       extIdents   <- extIdentsFut
       personNames <- personNamesFut
     } yield {
-      _extIdentsTpl(extIdents, showPersonId = false, personNames = personNames)
+      _extIdentsTpl(extIdents, showPersonId = false, personNames = personNames)(ctx)
     }
 
     // Рендерим список узлов:
@@ -144,7 +146,7 @@ class SysPerson @Inject() (
       mnodes    <- nodesFut
       companies <- companiesFut
     } yield {
-      _adnNodesListTpl(mnodes, Some(companies), withDelims = false)
+      _adnNodesListTpl(mnodes, Some(companies), withDelims = false)(ctx)
     }
 
     // Рендерим конечный шаблон.
@@ -155,7 +157,7 @@ class SysPerson @Inject() (
       personName    <- personNameFut
     } yield {
       val contents = Seq(epwIdentsHtml, extIdentsHtml, nodesHtml)
-      Ok(showPersonTpl(request.mperson, personName, contents))
+      Ok( showPersonTpl(request.mperson, personName, contents)(ctx) )
     }
   }
 
