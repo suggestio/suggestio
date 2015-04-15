@@ -29,7 +29,9 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
     if (maybeJsState.nonEmpty) {
-      MovedPermanently {
+      // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
+      LOGGER.trace("Qs js state is nonEmpty, redirecting... " + maybeJsState)
+      Redirect {
         routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
       }
     } else {

@@ -121,8 +121,6 @@ object ScJsState {
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
  * @param tilesCatIdOpt id текущей категории в плитке категорий.
  * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
- * @param povAdId id карточки, с точки зрения которой идёт просмотр выдачи.
- *                Используется для подмены метаданных (метатегов) страницы для внешних сервисов.
  */
 case class ScJsState(
   adnId               : Option[String]   = None,
@@ -134,8 +132,7 @@ case class ScJsState(
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
   tilesCatIdOpt       : Option[String]   = None,
-  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty,
-  povAdId             : Option[String]   = None
+  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty
 ) { that =>
 
   /** Содержаться ли тут какие-либо данные? */
