@@ -127,10 +127,8 @@ final case class MPerson(
 trait MPersonLinks {
   def personId: String
 
-  @JsonIgnore def person(implicit ec:ExecutionContext, client: Client) = {
-    MPerson getById personId
-  }
-  @JsonIgnore def isSuperuser = MPerson isSuperuserId personId
+  @JsonIgnore
+  def isSuperuser = MPerson isSuperuserId personId
 }
 
 

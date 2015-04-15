@@ -31,6 +31,7 @@
       @_tr() {
         @_td(sz) {
           @_emailTpl(epw.email)
+          @if(epw.isSuperuser) { <span title="Это суперпользователь.">&#9889;</span>    }
         }
         @_td(sz) {
           @_yesNoTpl(epw.isVerified)
