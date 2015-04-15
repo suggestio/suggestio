@@ -18,8 +18,6 @@ import play.api.libs.json._
  * Description: Мегамодель сервисов для внешнего размещения рекламных карточек.
  */
 
-// TODO Нужно модель IdProviders замержить в эту модель.
-
 object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
 
   override type T = Val
