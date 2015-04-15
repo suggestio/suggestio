@@ -4,6 +4,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
+import models.mext.ILoginProvider
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import play.api.libs.json.JsString
@@ -41,17 +42,17 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
     MExtIdent(
       versionOpt  = version,
       personId    = stringParser(m(PERSON_ID_ESFN)),
-      provider    = IdProviders.withName( stringParser(m(PROVIDER_ID_ESFN)) ),
+      provider    = ILoginProvider.maybeWithName( stringParser(m(PROVIDER_ID_ESFN)) ).get,
       userId      = stringParser(m(USER_ID_ESFN)),
       email       = m.get(EMAIL_ESFN).map(stringParser)
     )
   }
 
   def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
-  def providerIdFilter(prov: IdProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.strId)
+  def providerIdFilter(prov: ILoginProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.ssProvName)
 
   /** Генерация id модели. */
-  def genId(prov: IdProvider, userId: String): String = {
+  def genId(prov: ILoginProvider, userId: String): String = {
     // TODO Может надо делать toLowerCase?
     s"$prov~$userId"
   }
@@ -62,7 +63,7 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
    * @param userId id юзера в рамках провайдера.
    * @return Результат, если есть.
    */
-  def getByUserIdProv(prov: IdProvider, userId: String)(implicit client: Client, ec: ExecutionContext): Future[Option[T]] = {
+  def getByUserIdProv(prov: ILoginProvider, userId: String)(implicit client: Client, ec: ExecutionContext): Future[Option[T]] = {
     val id = genId(prov, userId)
     getById(id)
   }
@@ -75,7 +76,7 @@ import MExtIdent._
 
 case class MExtIdent(
   personId            : String,
-  provider            : IdProvider,
+  provider            : ILoginProvider,
   userId              : String,
   override val email  : Option[String] = None,
   versionOpt          : Option[Long] = None
@@ -98,12 +99,12 @@ case class MExtIdent(
 
   /** Сериализация json-экземпляра. */
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    PROVIDER_ID_ESFN -> JsString(provider.strId) ::
+    PROVIDER_ID_ESFN -> JsString(provider.ssProvName) ::
     super.writeJsonFields(acc)
   }
 
   /** Реализация IProfile. */
-  override def providerId = provider.strId
+  override def providerId = provider.ssProvName
   override def authMethod = provider.ssAuthMethod
 }
 

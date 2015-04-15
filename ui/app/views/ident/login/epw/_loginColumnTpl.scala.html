@@ -15,8 +15,8 @@
 
 
   <div class="auth-page_social-btn-lst">
-    @usr.IdProviders.values.iterator.map { idp =>
-      <a class="auth-page_social-btn __@idp" href="@routes.Ident.idViaProvider(idp)"></a>
+    @mext.MExtServices.values.iterator.flatMap(_.loginProvider).map { idp =>
+      <a class="auth-page_social-btn __@idp.ssProvName" href="@routes.Ident.idViaProvider(idp)"></a>
     }
   </div>
 

@@ -2,7 +2,6 @@ package models.mext.vk
 
 import models.mext._
 import play.api.libs.ws.WSResponse
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -10,7 +9,7 @@ import util.PlayMacroLogsImpl
  * Created: 14.04.15 15:12
  * Description: Поддержка аплода для вконтакта.
  */
-trait VkMpUpload extends MpUploadSupportDflt with PlayMacroLogsImpl {
+trait VkMpUpload extends MpUploadSupportDflt {
   /**
    * vk используется динамические URL для подгрузки. URL должен быть задан в аргументах.
    * @param args Аргументы upload.

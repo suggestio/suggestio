@@ -7,7 +7,7 @@ import models.im.OutImgFmts
 import models.MAd
 import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
 
-import models.mext.IExtService
+import models.mext.{ILoginProvider, IExtService}
 
 /**
  * Suggest.io
@@ -15,7 +15,7 @@ import models.mext.IExtService
  * Created: 10.04.15 19:21
  * Description: Абстрактная реализация facebook-сервиса.
  */
-trait FacebookService extends IExtService {
+trait FacebookService extends IExtService with FbLoginProvider {
 
   override def nameI18N = "Facebook"
 
@@ -43,6 +43,9 @@ trait FacebookService extends IExtService {
 
   /** FB работает через js API. */
   override def extAdvServiceActor = ExtServiceActor
+
+  /** Поддержка логина через facebook. */
+  override def loginProvider = Some(this)
 
 }
 

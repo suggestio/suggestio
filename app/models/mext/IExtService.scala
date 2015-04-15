@@ -133,4 +133,10 @@ trait IExtService {
    */
   def maybeMpUpload: Option[IMpUploadSupport] = None
 
+  /**
+   * Если логин через этот сервис поддерживается, то тут API.
+   * @return Some() если логин на suggest.io возможен через указанный сервис.
+   */
+  def loginProvider: Option[ILoginProvider] = None
+
 }

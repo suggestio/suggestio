@@ -1,9 +1,9 @@
 package models.usr
 
+import models.mext.ILoginProvider
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
 import securesocial.core.services.{SaveMode, UserService}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -16,9 +16,7 @@ import util.event.SiowebNotifier.Implicts.sn
  * Created: 02.02.15 14:56
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
-object SsUserService extends UserService[SsUser] with PlayMacroLogsImpl {
-
-  import LOGGER._
+object SsUserService extends UserService[SsUser] {
 
   /**
    * Finds a SocialUser that maches the specified id
@@ -28,7 +26,7 @@ object SsUserService extends UserService[SsUser] with PlayMacroLogsImpl {
    * @return an optional profile
    */
   override def find(providerId: String, userId: String): Future[Option[MExtIdent]] = {
-    val prov = IdProviders.withName(providerId)
+    val prov = ILoginProvider.maybeWithName(providerId).get
     MExtIdent.getByUserIdProv(prov, userId)
   }
 
@@ -77,7 +75,7 @@ object SsUserService extends UserService[SsUser] with PlayMacroLogsImpl {
         // Сохранить данные идентификации через соц.сеть.
         val mei = MExtIdent(
           personId  = personId,
-          provider  = IdProviders.withName(profile.providerId),
+          provider  = ILoginProvider.maybeWithName(profile.providerId).get,
           userId    = profile.userId,
           email     = profile.email
         )

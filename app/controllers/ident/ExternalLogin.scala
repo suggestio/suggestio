@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{routes, SioController}
+import models.mext.{MExtServices, ILoginProvider}
 import models.msession.{CustomTtl, Keys}
 import models.{ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
@@ -51,10 +52,11 @@ object ExternalLogin extends PlayMacroLogsDyn {
       override def userService: UserService[SsUser] = SsUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
-        val provs = IdProviders.values
+        val provs = MExtServices.values
           .iterator
+          .flatMap { _.loginProvider }
           .flatMap { prov =>
-            val provSt = prov.ssProviderCompanion
+            val provSt = prov.ssProvider
             try {
               Seq( provSt(routes, cacheService, httpService) )
             } catch {
@@ -107,7 +109,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
    * @param r Обратный редирект.
    * @return Redirect.
    */
-  def idViaProvider(provider: IdProvider, r: Option[String]) = handleAuth1(provider, r)
+  def idViaProvider(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
 
   /**
    * POST-запрос идентификации через внешнего провайдера.
@@ -115,13 +117,13 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
    * @param r Редирект обратно.
    * @return Redirect.
    */
-  def idViaProviderByPost(provider: IdProvider, r: Option[String]) = handleAuth1(provider, r)
+  def idViaProviderByPost(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
 
   // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
-  protected def handleAuth1(provider: IdProvider, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
+  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
-    env.providers.get(provider.strId).map {
+    env.providers.get(provider.ssProvName).map {
       _.authenticate().flatMap {
         case denied: AuthenticationResult.AccessDenied =>
           val res = Redirect( routes.Ident.mySioStartPage() )
@@ -255,7 +257,7 @@ object SsRoutesService extends RoutesService.Default {
   }
 
   override def authenticationUrl(providerId: String, redirectTo: Option[String])(implicit req: RequestHeader): String = {
-    val prov = IdProviders.withName(providerId)
+    val prov = ILoginProvider.maybeWithName(providerId).get
     val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
     absoluteUrl(relUrl)
   }

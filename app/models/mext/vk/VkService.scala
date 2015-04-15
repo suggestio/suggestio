@@ -4,7 +4,8 @@ import java.net.URL
 
 import io.suggest.adv.ext.model.im.{INamedSize2di, VkWallImgSizesScalaEnumT}
 import models.im.{OutImgFmts, OutImgFmt}
-import models.mext.{IMpUploadSupport, IExtService}
+import models.mext.{ILoginProvider, IMpUploadSupport, IExtService}
+import util.PlayMacroLogsImpl
 import util.adv.ExtServiceActor
 
 /**
@@ -13,7 +14,7 @@ import util.adv.ExtServiceActor
  * Created: 10.04.15 19:24
  * Description: Абстрактная реализация внешнего сервиса vk.com.
  */
-trait VkService extends IExtService with VkMpUpload {
+trait VkService extends IExtService with VkMpUpload with VkLoginProvider with PlayMacroLogsImpl {
 
   override def nameI18N = "VKontakte"
   override def isForHost(host: String): Boolean = {
@@ -54,6 +55,9 @@ trait VkService extends IExtService with VkMpUpload {
   override def maybeMpUpload = Some(this)
 
   override def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
+
+  /** Поддержка логина через вконтакт. */
+  override def loginProvider = Some(this)
 }
 
 

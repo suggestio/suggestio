@@ -7,6 +7,7 @@ import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
 import models.mext.{IMpUploadSupport, MExtServices, IExtService}
 import play.twirl.api.Html
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 10.04.15 19:14
  * Description: Абстрактная реализация twitter-сервиса.
  */
-trait TwitterService extends IExtService with OAuth1Support with TwMpUpload {
+trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with PlayMacroLogsImpl {
 
   override def nameI18N = "Twitter"
 

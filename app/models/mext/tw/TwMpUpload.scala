@@ -3,7 +3,6 @@ package models.mext.tw
 import models.mext._
 import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws.{WSRequestHolder, WSClient, WSResponse}
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -11,7 +10,7 @@ import util.PlayMacroLogsImpl
  * Created: 14.04.15 15:15
  * Description: Поддержка аплоада media для твиттера.
  */
-trait TwMpUpload extends MpUploadSupportDflt with PlayMacroLogsImpl { this: TwitterService =>
+trait TwMpUpload extends MpUploadSupportDflt { this: TwitterService =>
   /**
    * Твиттер поддерживает upload по одному и тому же ресурсу.
    * @param args ignored.

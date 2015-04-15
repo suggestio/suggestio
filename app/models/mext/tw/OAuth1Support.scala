@@ -1,7 +1,7 @@
 package models.mext.tw
 
 import models.msc.SiteQsArgs
-import util.{FormUtil, TplDataFormatUtil, PlayMacroLogsImpl}
+import util.{PlayMacroLogsI, FormUtil, TplDataFormatUtil}
 import models.Context
 import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
 import org.apache.http.client.utils.URIBuilder
@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Реализация поддержки OAuth1.
  */
 
-trait OAuth1Support extends IOAuth1Support with PlayMacroLogsImpl { this: TwitterService =>
+trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterService =>
 
   /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
     * Загрузка картинки будет идти напрямую в твиттер и затем публикация твита со встроенным media. */
