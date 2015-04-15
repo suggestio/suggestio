@@ -84,23 +84,10 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsImpl { this: Twitte
     val b = new URIBuilder(MK_TWEET_URL)
     // Собираем читабельный текст твита.
     val tweetText = mad.richDescrOpt
-      .map { rd => FormUtil.strTrimSanitizeF(rd.text) }
-      .filter { _.length < 2 }
-      .orElse {
-        if (mad.offers.isEmpty) {
-          None
-        } else {
-          val s = mad.offers
-            .iterator
-            .flatMap(_.text1)
-            .map(_.value)
-            .map(FormUtil.strTrimSanitizeF)
-            // TODO Opt использовать foldLeft и накапливать только необходимое кол-во строк, а не все сразу объединять.
-            .mkString(" ")
-          Some(s)
-        }
+      .map { rd =>
+        val s0 = FormUtil.strTrimSanitizeF(rd.text)
+        TplDataFormatUtil.strLimitLenNoTrailingWordPart(s0, 115)
       }
-      .map { TplDataFormatUtil.strLimitLenNoTrailingWordPart(_, 115) }
       .getOrElse("")
     // Собираем ссылку в твите.
     val siteArgs = SiteQsArgs(
@@ -114,7 +101,8 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsImpl { this: Twitte
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
     val tweetUrl = urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
-    b.addParameter("status", tweetText + " " + tweetUrl)
+    val fullTweetText = Seq(tweetText, tweetUrl).mkString(" ")
+    b.addParameter("status", fullTweetText)
     if (geo.isDefined) {
       val g = geo.get
       b.addParameter("lat", g.lat.toString)
