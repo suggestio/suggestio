@@ -86,7 +86,9 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     val tweetText = mad.richDescrOpt
       .map { rd =>
         val s0 = FormUtil.strTrimSanitizeF(rd.text)
-        TplDataFormatUtil.strLimitLenNoTrailingWordPart(s0, 115)
+          .replace("\\s\\s+", " ")
+          .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
+        TplDataFormatUtil.strLimitLenNoTrailingWordPart(s0, 117, hard = true)
       }
       .getOrElse("")
     // Собираем ссылку в твите.

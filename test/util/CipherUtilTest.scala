@@ -1,6 +1,6 @@
 package util
 
-import org.specs2.mutable._
+import org.scalatestplus.play._
 
 /**
  * Suggest.io
@@ -8,7 +8,7 @@ import org.specs2.mutable._
  * Created: 18.06.14 9:07
  * Description: Тесты для шифровалки-дешифровалки.
  */
-class CipherUtilTest extends Specification {
+class CipherUtilTest extends PlaySpec {
 
   private def newCu = new CipherUtilAddon {
     override val IV_MATERIAL_DFLT = CipherUtil.generateSecretKey(256)

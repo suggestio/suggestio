@@ -31,7 +31,10 @@ class GidrometRssSaxSpec extends AiSaxPlaySpec {
       val res = doParse(rss)
       res.size              mustBe 3
       val d3 = res.head   // d3 = december 3
-      d3.date               mustBe new LocalDate(2014, 12, 3)
+      // В дате прогноза год только подразумевается. Поэтому надо по-лучше потестить прогнозы на стыке годов дек-янв.
+      d3.date.getMonthOfYear mustBe 12
+      d3.date.getDayOfMonth  mustBe 3
+      //d3.date             mustBe new LocalDate(2014, 12, 3)
       d3.precipations       mustBe List(Precipations.NoPercipations)
       d3.precipChanceOpt    mustBe Some(41)
       d3.pressureMmHg       mustBe AtmPressure(Some(761), nightOpt = Some(764))

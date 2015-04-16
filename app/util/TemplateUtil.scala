@@ -180,11 +180,12 @@ object TplDataFormatUtil extends TplFormatUtilT {
    * @param len Желаемая минимальная длина строки.
    * @return Новая строка или та же, если она слишком короткая, чтобы резать.
    */
-  def strLimitLenNoTrailingWordPart(str: String, len: Int): String = {
+  def strLimitLenNoTrailingWordPart(str: String, len: Int, hard: Boolean = false): String = {
     val l = str.length
     if (l <= len) {
       str
     } else {
+      val step = if (hard) -1 else 1
       @tailrec def tryI(i: Int): Int = {
         if (i >= l) {
           -1
@@ -192,17 +193,20 @@ object TplDataFormatUtil extends TplFormatUtilT {
         } else if (Character isWhitespace str.charAt(i)) {
           i
         } else {
-          tryI(i + 1)
+          tryI(i + step)
         }
       }
       val i1 = tryI(len)
       if (i1 < 0) {
         str
+      } else if (i1 == 0) {
+        ""
       } else {
         str.substring(0, i1) + ELLIPSIS
       }
     }
   }
+
 
   private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)

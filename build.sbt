@@ -122,7 +122,7 @@ libraryDependencies ++= {
     exclude("org.w3c.css", "sac")
   ,
   // play-2.3+:
-  "org.scalatestplus" %% "play" % "1.2.0play24-SNAPSHOT" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
+  "org.scalatestplus" %% "play" % "1.4.0-SNAPSHOT" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}
