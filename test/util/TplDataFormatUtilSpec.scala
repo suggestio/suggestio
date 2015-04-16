@@ -58,18 +58,26 @@ class TplDataFormatUtilSpec extends PlaySpec {
       t(text, 50, hard = true).length must be <= 50
     }
 
-    "hardly strip very long texts, that where ellipsis must on len position" in {
+    "hardly strip very long texts #1" in {
       val l = 118
       val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ PR-КАМПАНИЙ В МОСКВЕ Планирование и проведение PR-кампаний в Москве – один из наиболее востребованных сегментов деятельности PR-агентства  C | B | C | A"""
       val res = t(text, l, hard = true)
       res.length must be <= l
     }
 
-    "hardly strip very long texts, that where ellipsis must on len+1 position" in {
+    "hardly strip very long texts #2" in {
       val l = 117
       val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ PR-КАМПАНИЙ В МОСКВЕ Планирование и проведение PR-кампаний в Москве – один из наиболее востребованных сегментов деятельности PR-агентства  C | B | C | A"""
       val res = t(text, l, hard = true)
       res.length must be < l
+    }
+
+
+    "hardly strip texts, that where ellipsis must on len+1 position" in {
+      val l = 10
+      val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ"""
+      val res = t(text, l, hard = true)
+      res.length must be <= l
     }
 
   }

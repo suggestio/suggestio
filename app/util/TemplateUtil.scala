@@ -11,6 +11,8 @@ import scala.annotation.tailrec
 import views.html.fc._
 import views.html.helper.FieldConstructor
 
+import scala.runtime.RichChar
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -178,6 +180,7 @@ object TplDataFormatUtil extends TplFormatUtilT {
    * Лимитирование длины строки, но без обрывания слов на середине.
    * @param str Исходная строка.
    * @param len Желаемая минимальная длина строки.
+   * @param hard len является жестким лимитом, который нельзя превосходить.
    * @return Новая строка или та же, если она слишком короткая, чтобы резать.
    */
   def strLimitLenNoTrailingWordPart(str: String, len: Int, hard: Boolean = false): String = {
@@ -189,11 +192,16 @@ object TplDataFormatUtil extends TplFormatUtilT {
       @tailrec def tryI(i: Int): Int = {
         if (i >= l) {
           -1
-          // TODO Добавить проверку на символы пунктуации.
-        } else if (Character isWhitespace str.charAt(i)) {
-          i
+        } else if (i <= 0) {
+          0
         } else {
-          tryI(i + step)
+          // TODO Добавить проверку на символы пунктуации.
+          val ch = str.charAt(i)
+          if ( Character.isWhitespace(ch) && (!hard || i < len) ) {
+            i
+          } else {
+            tryI(i + step)
+          }
         }
       }
       val i1 = tryI(len)
