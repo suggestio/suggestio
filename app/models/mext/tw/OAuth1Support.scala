@@ -21,7 +21,8 @@ import scala.concurrent.{ExecutionContext, Future}
 object OAuth1Support {
 
   /** Сколько текста можно напихать в начало твита? */
-  val LEAD_TEXT_LEN = configuration.getInt("ext.tw.tweet.lead.text.maxlen") getOrElse 100
+  // TODO Нужно нормальную длину узнать. Там какой-то гемор с ссылками, что даже 100 символов - многовато.
+  val LEAD_TEXT_LEN = configuration.getInt("ext.tw.tweet.lead.text.maxlen") getOrElse 90
 
   /** URL ресурс API твиттинга. */
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
