@@ -19,6 +19,9 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with PlayMacroLogsImpl {
 
+  /** Ссылка на главную твиттера, и на собственный акк, если юзер залогинен. */
+  override def mainPageUrl = "https://twitter.com/"
+
   override protected def _loggerClass = classOf[TwitterService]
 
   override def nameI18N = "Twitter"
@@ -26,7 +29,7 @@ trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with
   override def isForHost(host: String): Boolean = {
     "(?i)(www\\.)?twitter\\.com".r.pattern.matcher(host).matches()
   }
-  override def dfltTargetUrl = None
+  override def dfltTargetUrl = Some(mainPageUrl)
 
   /** Найти стандартный (в рамках сервиса) размер картинки. */
   override def postImgSzWithName(n: String) = TwImgSizes.maybeWithName(n)
@@ -45,8 +48,6 @@ trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   override def myUserName = Some("@suggest_io")
 
-  def mainPage = "https://twitter.com/"
-
   /**
    * Генератор HTML-мета-тегов для описания рекламной карточки.
    * @param mad1 Экземпляр рекламной карточки.
@@ -60,7 +61,7 @@ trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with
         // Калькулятор ссылки
         val calc = new Mad2ImgUrlCalcT {
           override def mad            = mad1
-          override def tgUrl          = mainPage
+          override def tgUrl          = mainPageUrl
           override def adRenderMaxSz  = TwImgSizes.Photo
           override def service        = MExtServices.TWITTER
           override val madRenderInfo  = super.madRenderInfo

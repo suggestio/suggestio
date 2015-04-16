@@ -16,6 +16,9 @@ import util.adv.ExtServiceActor
  */
 trait VkService extends IExtService with VkMpUpload with VkLoginProvider with PlayMacroLogsImpl {
 
+  /** URL главной страницы сервиса. */
+  override def mainPageUrl: String = "https://vk.com/"
+
   override protected def _loggerClass = classOf[VkService]
 
   override def nameI18N = "VKontakte"
@@ -34,7 +37,7 @@ trait VkService extends IExtService with VkMpUpload with VkLoginProvider with Pl
     v || super.checkImgUploadUrl(url)
   }
 
-  override def dfltTargetUrl = Some("https://vk.com/")
+  override def dfltTargetUrl = Some(mainPageUrl)
 
   /**
    * Максимальные размеры картинки при постинге во вконтакт в соц.сеть в css-пикселях.

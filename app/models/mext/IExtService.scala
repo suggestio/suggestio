@@ -25,6 +25,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait IExtService {
 
+  /** URL главной страницы сервиса. */
+  def mainPageUrl: String
+
   /** Строковой id. */
   def strId: String
 
