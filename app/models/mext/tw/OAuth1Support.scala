@@ -18,6 +18,30 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Реализация поддержки OAuth1.
  */
 
+object OAuth1Support {
+
+  def LEAD_TEXT_LEN = 117
+
+  /** URL ресурс API твиттинга. */
+  def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
+
+  def str2tweetLeadingText(s: String): String = {
+    val s1 = FormUtil.strTrimSanitizeF(s)
+      .replaceAll("\\s+", " ")
+      .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
+      .trim
+    TplDataFormatUtil.strLimitLenNoTrailingWordPart(s1, LEAD_TEXT_LEN, hard = true)
+  }
+
+  /** URL для проверки валидности access_token'а. */
+  def AC_TOK_VERIFY_URL = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
+
+}
+
+
+import OAuth1Support._
+
+
 trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterService =>
 
   /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
@@ -48,9 +72,6 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     )
   }
 
-  /** URL для проверки валидности access_token'а. */
-  def AC_TOK_VERIFY_URL = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
-
   /**
    * Проверка валидности access_tokena силами модели.
    * @param acTok Проверяемый access_token.
@@ -70,9 +91,6 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
       }
   }
 
-  /** URL ресурс API твиттинга. */
-  def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
-
   /**
    * Сделать твит.
    * @param args Данные для постинга.
@@ -83,14 +101,16 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     import args._
     val b = new URIBuilder(MK_TWEET_URL)
     // Собираем читабельный текст твита.
-    val tweetText = mad.richDescrOpt
-      .map { rd =>
-        val s0 = FormUtil.strTrimSanitizeF(rd.text)
-          .replace("\\s\\s+", " ")
-          .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
-        TplDataFormatUtil.strLimitLenNoTrailingWordPart(s0, 117, hard = true)
+    val tweetTextOpt = mad.richDescrOpt
+      .map { _.text.trim }
+      .filter { !_.isEmpty }
+      .map { str2tweetLeadingText }
+    LOGGER.trace {
+      tweetTextOpt match {
+        case Some(tt) => s"Tweet readable text lenght = ${tt.length}: $tt"
+        case None     => "Tweet text is empty. Only link will be tweeted."
       }
-      .getOrElse("")
+    }
     // Собираем ссылку в твите.
     val siteArgs = SiteQsArgs(
       povAdId = mad.id
@@ -103,7 +123,7 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
     val tweetUrl = urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
-    val fullTweetText = Seq(tweetText, tweetUrl).mkString(" ")
+    val fullTweetText = tweetTextOpt.fold(tweetUrl)(_ + " " + tweetUrl)
     b.addParameter("status", fullTweetText)
     if (geo.isDefined) {
       val g = geo.get
