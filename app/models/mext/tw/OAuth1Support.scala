@@ -26,7 +26,12 @@ object OAuth1Support {
   /** URL ресурс API твиттинга. */
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
 
-  def str2tweetLeadingText(s: String): String = {
+  /**
+   * Приведение html-текста из rich descr к тексту твита необходимой длины.
+   * @param s Исходный текст rich descr.
+   * @return строка, которая после добавления ссылки будет э
+   */
+  def rdescr2tweetLeadingText(s: String): String = {
     val s1 = FormUtil.stripHtml(s)
       .replaceAll("(?U)\\s+", " ")
       .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
@@ -103,9 +108,8 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     val b = new URIBuilder(MK_TWEET_URL)
     // Собираем читабельный текст твита.
     val tweetTextOpt = mad.richDescrOpt
-      .map { _.text.trim }
+      .map { rd => rdescr2tweetLeadingText(rd.text) }
       .filter { !_.isEmpty }
-      .map { str2tweetLeadingText }
     LOGGER.trace {
       tweetTextOpt match {
         case Some(tt) => s"Tweet readable text lenght = ${tt.length}: $tt"
