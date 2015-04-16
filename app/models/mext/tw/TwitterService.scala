@@ -19,6 +19,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with PlayMacroLogsImpl {
 
+  override protected def _loggerClass = classOf[TwitterService]
+
   override def nameI18N = "Twitter"
 
   override def isForHost(host: String): Boolean = {

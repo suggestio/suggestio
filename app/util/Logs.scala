@@ -35,7 +35,8 @@ trait PlayMacroLogsI {
   def LOGGER: MacroLogger
 }
 trait PlayMacroLogsDyn extends PlayMacroLogsI {
-  override def LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+  protected def _loggerClass: Class[_] = getClass
+  override def LOGGER = PlayMacroLogsImpl.getLogger(_loggerClass)
 }
 trait PlayMacroLogsImpl extends PlayMacroLogsDyn {
   override val LOGGER = super.LOGGER

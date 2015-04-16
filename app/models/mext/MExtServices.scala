@@ -84,5 +84,9 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
 trait IExtPostInfo {
   def id: String
   def url: String
+
+  override def toString: String = {
+    getClass.getSimpleName + "(" + id + "," + url + ")"
+  }
 }
 

@@ -44,6 +44,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   with S2sMpUploadRender
   with EtaCustomArgsBase
 {
+  import LOGGER._
 
   /** Общий ресивер для всех состояний. */
   override def allStatesReceiver: Receive = PartialFunction.empty
@@ -61,6 +62,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {
     super.preStart()
+    renderInProcess()
     val nextState = if (oa1Support.isMkPostNeedMpUpload) {
       new RenderAd2ImgState
     } else {
@@ -105,7 +107,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 
     /** Аплоад точно удался. */
     override def uploadedOk(wsResp: WSResponse): Unit = {
-      LOGGER.trace("Img uploaded to service ok, resp = " + wsResp.body)
+      trace("Img uploaded to service ok, resp = " + wsResp.body)
       val atts = mpUploadClient.resp2attachments(wsResp)
       become( new PublishState(atts) )
     }
@@ -128,7 +130,6 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
         override def attachments = _attachments
       }
       val mkPostFut = oa1Support.mkPost(mkPostArgs)
-      renderInProcess()
       mkPostFut onComplete {
         case Success(res) => self ! res
         case other        => self ! other
@@ -140,12 +141,14 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
       case newPostInfo: IExtPostInfo =>
         // TODO Нужно ссылку на пост передать в рендер
         renderSuccess()
+        trace("POSTed successfully, info = " + newPostInfo)
         harakiri()
 
       // Ошибка постинга.
       case Failure(ex) =>
         val jsErr = JsErrorInfo(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
         renderError("e.adv.ext.api", Some(jsErr))
+        error(s"POST failed for target[${args.target.target.idOrNull}] ${args.target.target.url}", ex)
         harakiri()
     }
   }

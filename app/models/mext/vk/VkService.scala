@@ -16,6 +16,8 @@ import util.adv.ExtServiceActor
  */
 trait VkService extends IExtService with VkMpUpload with VkLoginProvider with PlayMacroLogsImpl {
 
+  override protected def _loggerClass = classOf[VkService]
+
   override def nameI18N = "VKontakte"
   override def isForHost(host: String): Boolean = {
     "(?i)(www\\.)?vk(ontakte)?\\.(com|ru|me)$".r.pattern.matcher(host).find()

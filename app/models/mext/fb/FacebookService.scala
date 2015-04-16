@@ -7,7 +7,8 @@ import models.im.OutImgFmts
 import models.MAd
 import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
 
-import models.mext.{ILoginProvider, IExtService}
+import models.mext.IExtService
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -15,7 +16,10 @@ import models.mext.{ILoginProvider, IExtService}
  * Created: 10.04.15 19:21
  * Description: Абстрактная реализация facebook-сервиса.
  */
-trait FacebookService extends IExtService with FbLoginProvider {
+trait FacebookService extends IExtService with FbLoginProvider with PlayMacroLogsImpl {
+
+  /** Если не задать класс для логгера, то в логах будет "MExtServices$anon$2". */
+  override protected def _loggerClass = classOf[FacebookService]
 
   override def nameI18N = "Facebook"
 
