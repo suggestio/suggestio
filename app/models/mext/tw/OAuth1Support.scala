@@ -26,8 +26,8 @@ object OAuth1Support {
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
 
   def str2tweetLeadingText(s: String): String = {
-    val s1 = FormUtil.strTrimSanitizeF(s)
-      .replaceAll("\\s+", " ")
+    val s1 = FormUtil.stripHtml(s)
+      .replaceAll("(?U)\\s+", " ")
       .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
       .trim
     TplDataFormatUtil.strLimitLenNoTrailingWordPart(s1, LEAD_TEXT_LEN, hard = true)

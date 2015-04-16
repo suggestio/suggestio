@@ -37,9 +37,10 @@ object FormUtil {
 
   val strIdentityF = {s:String => s}
   val strTrimF = {s: String => s.trim }
+  def stripHtml(s: String) = stripAllPolicy.sanitize(s)
   val strTrimSanitizeF = {s:String =>
     // TODO Исключить двойные пробелы
-    stripAllPolicy.sanitize(s).trim
+    stripHtml(s).trim
   }
   val strTrimBrOnlyF = {s: String =>
     // TODO прогонять через HtmlCompressor

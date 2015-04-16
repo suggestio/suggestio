@@ -43,19 +43,33 @@ class TplDataFormatUtilSpec extends PlaySpec {
       t("1234567890")       mustBe "1234567890"
     }
 
-    "Keep no-so-long strings without ... at EOL" in {
+    "keep no-so-long strings without ... at EOL" in {
       t("asdasdasdasd")     mustBe "asdasdasdasd"
     }
 
-    s"Strip long strings with $ttt at EOL" in {
+    s"strip long strings with $ttt at EOL" in {
       t("Aasdasd asdasd restRest") mustBe s"Aasdasd asdasd$ttt"
     }
 
-    s"Strip long multi-line texts with $ttt EOL" in {
+    s"strip long multi-line texts with $ttt EOL" in {
       val text = longText
       t(text) mustBe s"РАЗРАБОТКА$ttt"
       t(text, 50).length mustBe 50 +- 11
       t(text, 50, hard = true).length must be <= 50
+    }
+
+    "hardly strip very long texts, that where ellipsis must on len position" in {
+      val l = 118
+      val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ PR-КАМПАНИЙ В МОСКВЕ Планирование и проведение PR-кампаний в Москве – один из наиболее востребованных сегментов деятельности PR-агентства  C | B | C | A"""
+      val res = t(text, l, hard = true)
+      res.length must be <= l
+    }
+
+    "hardly strip very long texts, that where ellipsis must on len+1 position" in {
+      val l = 117
+      val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ PR-КАМПАНИЙ В МОСКВЕ Планирование и проведение PR-кампаний в Москве – один из наиболее востребованных сегментов деятельности PR-агентства  C | B | C | A"""
+      val res = t(text, l, hard = true)
+      res.length must be < l
     }
 
   }
