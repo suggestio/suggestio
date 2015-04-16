@@ -5,9 +5,9 @@ import util.{PlayMacroLogsI, FormUtil, TplDataFormatUtil}
 import models.Context
 import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
 import org.apache.http.client.utils.URIBuilder
-import play.api.Play._
 import play.api.libs.oauth._
 import play.api.libs.ws.WSClient
+import play.api.Play.{current, configuration}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,7 +20,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object OAuth1Support {
 
-  def LEAD_TEXT_LEN = 117
+  /** Сколько текста можно напихать в начало твита? */
+  val LEAD_TEXT_LEN = configuration.getInt("ext.tw.tweet.lead.text.maxlen") getOrElse 100
 
   /** URL ресурс API твиттинга. */
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
