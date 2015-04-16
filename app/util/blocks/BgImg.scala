@@ -105,7 +105,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
     getAbsCropOrFail(iik, wideWh)
       .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
       .recover { case ex: Exception =>
-        warn(s"Failed to read image[${iik.fileName}] WH", ex)
+        if (!ex.isInstanceOf[NoSuchElementException])
+          warn(s"Failed to read image[${iik.fileName}] WH", ex)
+        else
+          debug("Failed to get abs crop: " + ex.getMessage)
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
         val c = ImgCrop(width = wideWh.width, height = wideWh.height, 0, 0)
         ImgCropInfo(c, isCenter = true)

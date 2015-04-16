@@ -16,7 +16,8 @@
 
     @defining("title") { fid =>
     @offer.text1.map { aosf =>
-      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.n" @if(args.withEdit) {data-connected-input="ad.offer.offer[@offer.n].@fid"}>
+      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.n"
+           @if(args.withEdit) {data-connected-input="ad.offer.offer[@offer.n].@fid"}>
         <div class="@fid @fid-@offer.n">@Html(aosf.value)</div>
       </div>
       @if(isStylesInline) {
