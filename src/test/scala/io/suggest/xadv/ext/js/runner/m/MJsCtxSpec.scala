@@ -37,8 +37,11 @@ object MJsCtxSpec extends SimpleTestSuite {
       service = Some( MServiceInfo(MServices.VKONTAKTE, appId = Some("12312332")) ),
       domains = Seq("vk.com"),
       target = Some(MExtTarget(
-        tgUrl = "http://vk.com/soddom123",
-        onClickUrl = "http://suggest.io/m/asd/asd/12"
+        id          = "someid",
+        tgUrl       = "http://vk.com/soddom123",
+        onClickUrl  = "http://suggest.io/m/asd/asd/12",
+        name        = Some("some name"),
+        customRaw   = None
       )),
       custom = None
     )
