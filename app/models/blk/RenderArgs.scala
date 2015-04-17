@@ -10,33 +10,34 @@ import models.im.make.IMakeResult
  * Description: Модель для параметров рендера блоков. Изначально жила в models.Stuff.
  */
 
-object RenderArgs {
-
-  /** Дефолтовый thread-safe инстанс параметров. Пригоден для рендера любой плитки блоков. */
-  val DEFAULT = RenderArgs(szMult = 1.0F)
-
-  def DOUBLE_SIZED_ARGS = RenderArgs(szMult = 2F)
-}
-
 /**
  * Параметры рендера блока.
- * Всегда immutable класс!
  * @param withEdit Рендерим в редакторе.
  * @param szMult Мультипликатор размеров карточки.
- * @param wideBg Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
- *               вне блока, широким, а тело блока сдвинуто согласно кропу.
+ * @param bgImg Данные о фоновой картинке, если есть.
  * @param inlineStyles Рендерить стили инлайново?
  * @param withCssClasses Дополнительные css-классы, которые относятся к рендеру.
  * @param blockStyle Стили для div .sm-block.
  */
 case class RenderArgs(
   szMult          : SzMult_t,
+  bgImg           : Option[IMakeResult],
   withEdit        : Boolean                 = false,
-  wideBg          : Option[IMakeResult]     = None,
   inlineStyles    : Boolean                 = true,
   withCssClasses  : Seq[String]             = Nil,
   blockStyle      : Option[String]          = None
-)
+) {
+
+  /**
+   * compat!
+   * Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
+   * вне блока, широким, а тело блока сдвинуто согласно кропу.
+   */
+  def wideBg: Option[IMakeResult] = {
+    bgImg.filter(_.isWide)
+  }
+  
+}
 
 
 /** Параметры для рендера внешнего css блока. */

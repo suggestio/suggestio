@@ -11,6 +11,8 @@ import util.SiowebEsUtil.client
 import util.blocks.BlocksConf
 import views.txt.blocks.common._
 
+import scala.concurrent.Future
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -32,23 +34,33 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
     val argsMap = args.iterator
       .map(arg => arg.adId -> arg)
       .toMap
-    val resFut = madsFut.map { mads =>
-      val txts: Iterator[Txt] = mads.iterator.flatMap { mad =>
+    val resFut = madsFut.flatMap { mads =>
+      Future.traverse(mads) { mad =>
         val arg = argsMap(mad.id.get)
         val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-        val brArgs = blk.RenderArgs(szMult = arg.szMult, inlineStyles = false)
-        val offerFieldsTxts = mad.offers
-          .iterator
-          .flatMap { offer =>
-            offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, mad, t1, bc.titleBf, offer.n, yoff = 0,  fid = "title") }
-          }
-          .map { cssRenderArgs =>
-            _textCss(cssRenderArgs) : Txt
-          }
-        val preableCssTxt = _blockCss( blk.CssRenderArgs(mad, brArgs) ) : Txt
-        Iterator(preableCssTxt) ++ offerFieldsTxts
+        // Картинка вроде нужна, но стоит в этом убедиться... Future для распаралеливания и на случай если картинка понадобиться
+        Future {
+          val brArgs = blk.RenderArgs(
+            szMult        = arg.szMult,
+            inlineStyles  = false,
+            bgImg         = None
+          )
+          val offerFieldsTxts = mad.offers
+            .iterator
+            .flatMap { offer =>
+              offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, mad, t1, bc.titleBf, offer.n, yoff = 0, fid = "title") }
+            }
+            .map { cssRenderArgs =>
+              _textCss(cssRenderArgs): Txt
+            }
+            .toList
+          val preableCssTxt = _blockCss(blk.CssRenderArgs(mad, brArgs)): Txt
+          preableCssTxt :: offerFieldsTxts
+        }
+      } map { txts1 =>
+        val txts2 = txts1.iterator.flatMap(identity).toStream
+        new Txt(txts2)
       }
-      new Txt(txts.toStream)  // toSeq не прокатывает, т.к. требует immutable.Seq.
     }
     resFut map {
       Ok(_).as("text/css")

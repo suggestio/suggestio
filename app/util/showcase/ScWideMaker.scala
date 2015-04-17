@@ -15,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.04.15 13:27
- * Description: ShowCase Wide Render.
+ * Description: ShowCase Wide Render. Движок, который рендерит картинки в wide-режиме для широкоэкранной выдачи.
  * Этот функционал заточен под отображение карточек на всю ширину экрана, которая может вообще любой.
  * Фоновые изображения в таких случаях, как правило, уезжают за пределы wide-ширины из-за квантования ширин.
  */
@@ -196,7 +196,8 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
       MakeResult(
         szCss       = szCss,
         szReal      = wideWh,
-        dynCallArgs = iik.copy(dynImgOps = imOps2)
+        dynCallArgs = iik.copy(dynImgOps = imOps2),
+        isWide      = true
       )
     }
   }

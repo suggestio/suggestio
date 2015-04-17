@@ -17,6 +17,8 @@ trait IMakeResult {
   def szReal        : MImgSizeT
   /** Данные для сборки ссылки на картинку. */
   def dynCallArgs   : MImg
+  /** Является ли результат make - широкоформатным рендером? */
+  def isWide        : Boolean
 
   def dynImgCall    : Call = {
     DynImgUtil.imgCall(dynCallArgs)
@@ -28,5 +30,6 @@ trait IMakeResult {
 case class MakeResult(
   szCss         : MImgSizeT,
   szReal        : MImgSizeT,
-  dynCallArgs   : MImg
+  dynCallArgs   : MImg,
+  isWide        : Boolean
 ) extends IMakeResult
