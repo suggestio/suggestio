@@ -9,7 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.img.AdRenderUtil
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
-import util.blocks.BgImg.szMulted
+import models.blk.szMulted
 
 /**
  * Suggest.io

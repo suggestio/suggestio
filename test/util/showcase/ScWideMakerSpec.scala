@@ -1,4 +1,4 @@
-package util.blocks
+package util.showcase
 
 import org.scalatestplus.play._
 import play.api.GlobalSettings
@@ -10,10 +10,11 @@ import play.api.test.FakeApplication
  * Created: 22.10.14 14:32
  * Description: Тесты для утили, относящейся к поддержке фоновых картинок блоков.
  */
-class BgImgSpec extends PlaySpec with OneAppPerSuite {
+class ScWideMakerSpec extends PlaySpec with OneAppPerSuite {
+
+  import ScWideMaker._
 
   "centerNearestLineSeg1D()" must {
-    import BgImg.centerNearestLineSeg1D
 
     "handle small left-centered segments" in {
       centerNearestLineSeg1D(centerCoord = 0,  segLen = 10, axLen = 100)   mustBe  0

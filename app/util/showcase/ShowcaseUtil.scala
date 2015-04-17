@@ -2,13 +2,14 @@ package util.showcase
 
 import controllers.routes
 import io.suggest.ym.model.MAd
-import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IBlockMeta}
+import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im.DevScreenT
-import models.msc.{ScJsState, IScSiteColors, ScSiteColors, TileArgs}
+import models.im.make.{IMakeResult, MakeArgs, Makers}
+import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import play.api.Play.{current, configuration}
-import play.api.mvc.QueryStringBindable
+import util.blocks.BgImg
 import util.cdn.CdnUtil
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -60,7 +61,7 @@ object ShowcaseUtil {
    * @tparam T Тип элемента.
    * @return
    */
-  def groupNarrowAds[T <: IBlockMeta](ads: Seq[T]): Seq[T] = {
+  def groupNarrowAds[T <: IEMBlockMeta](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
         val bwidth: BlockWidth = BlockWidths(e.blockMeta.width)
@@ -168,10 +169,8 @@ object ShowcaseUtil {
       case None       => TILES_SZ_MULTS.last
     }
     if (mad.blockMeta.wide) {
-      val bc = BlocksConf applyOrDefault mad.blockMeta.blockId
       // Нужно получить данные для рендера широкой карточки.
-      val wideBgCtxOptFut = bc.wideBgImgArgs(mad, szMult)
-      wideBgCtxOptFut map { wideBgCtxOpt =>
+      focWideBgImgArgs(mad, szMult) map { wideBgCtxOpt =>
         blk.RenderArgs(
           withEdit      = false,
           szMult        = szMult,
@@ -188,6 +187,30 @@ object ShowcaseUtil {
         wideBg        = None
       )
       Future successful bra
+    }
+  }
+
+
+  /**
+   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
+   * необходимостью получения данных о размерах исходной картинки.
+   * @param mad рекламная карточка или что-то совместимое с Imgs и IBlockMeta.
+   * @param szMult Требуемый мультипликатор размера картинки.
+   * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
+   */
+  def focWideBgImgArgs(mad: MAdT, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
+    BgImg.getBgImg(mad) match {
+      case Some(bgImgInfo) =>
+        val wArgs = MakeArgs(
+          img           = bgImgInfo,
+          blockMeta     = mad.blockMeta,
+          szMult        = szMult,
+          devScreenOpt  = ctx.deviceScreenOpt
+        )
+        Makers.ScWide.icompile(wArgs)
+          .map(Some.apply)
+      case None =>
+        Future successful None
     }
   }
 

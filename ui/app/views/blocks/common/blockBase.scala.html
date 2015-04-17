@@ -1,6 +1,6 @@
 @(args: blk.RenderArgs, mad: MAdT, bc: util.blocks.ValT)(content: Html)(implicit ctx: Context)
 
-@import util.blocks.BgImg.szMulted
+@import models.blk.szMulted
 
 @* Тут постоянная часть верстки блоков карточек в выдаче. *@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.withCssClasses"

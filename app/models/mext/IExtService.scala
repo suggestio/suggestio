@@ -3,16 +3,14 @@ package models.mext
 import java.net.URL
 
 import _root_.util.adv.IServiceActorCompanion
-import _root_.util.blocks.BgImg
 import io.suggest.adv.ext.model.im.INamedSize2di
 import io.suggest.util.UrlUtil
 import models.adv.MExtTarget
-import models.blk.{OneAdWideQsArgs, SzMult_t}
+import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
 import models.im.{OutImgFmt, OutImgFmts}
 import models.{IRenderable, MAd}
 import play.api.Play._
 import play.api.i18n.Messages
-import play.twirl.api.Html
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -91,7 +89,7 @@ trait IExtService {
     if (isAdvExtWide(mad)) {
       val sz = advPostMaxSz(tgUrl)
       val v = OneAdWideQsArgs(
-        width = BgImg.szMulted(sz.width, szMult)
+        width = szMulted(sz.width, szMult)
       )
       Some(v)
     } else {

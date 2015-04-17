@@ -37,6 +37,14 @@ object DevScreen extends DevScreenParsers {
     }
   }
 
+
+  /** Дефолтовое значение, используемое когда значения нет, но очень нужно. */
+  def default = DevScreen(
+    width         = 1024,
+    height        = 768,
+    pixelRatioOpt = Some(DevPixelRatios.default)
+  )
+
 }
 
 

@@ -1,5 +1,6 @@
 package controllers
 
+import models.im.make.{IMakeResult, MakeArgs, Makers}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
@@ -10,7 +11,7 @@ import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
-import util.blocks.{BgImg, BlockMapperResult}
+import util.blocks.BlockMapperResult
 import views.html.sc._
 
 /**
@@ -117,14 +118,17 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     // Используем один и тот же контекст в нескольких рендерах сразу:
     val ctx = implicitly[Context]
     // Поддержка wideBg:
-    val wctxOptFut: Future[Option[blk.WideBgRenderCtx]] = {
+    val wctxOptFut: Future[Option[IMakeResult]] = {
       if (mad.blockMeta.wide) {
         val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-        bc.getMadBgImg(mad).fold(Future successful Option.empty[blk.WideBgRenderCtx]) { bgImgInfo =>
-          BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, szMult)(ctx)
+        bc.getMadBgImg(mad).fold(Future successful Option.empty[IMakeResult]) { bgImgInfo =>
+          // Организуем сборку wide-фона для выдачи.
+          val wArgs = MakeArgs(bgImgInfo, mad.blockMeta, szMult, ctx.deviceScreenOpt)
+          Makers.ScWide.icompile(wArgs)
             .map { Some.apply }
         }
       } else {
+        // wide отображение отключено.
         Future successful None
       }
     }

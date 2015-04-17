@@ -2,9 +2,11 @@ package util.img
 
 import controllers.routes
 import io.suggest.ym.model.common.MImgInfoMeta
+import models.blk.szMulted
+import models.im.make.{IMakeResult, Makers, MakeArgs}
 import models.{MAd, MAdT}
-import models.blk.{WideBgRenderCtx, OneAdQsArgs}
-import util.blocks.{BlocksConf, BgImg}
+import models.blk.OneAdQsArgs
+import util.blocks.BgImg
 import util.xplay.PlayUtil.httpPort
 import models.im._
 
@@ -19,7 +21,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 object AdRenderUtil {
 
-
   /**
    * Генерации абсолютной ссылки на отрендеренную в картинку рекламную карточку.
    * @param adArgs Параметры рендера.
@@ -31,18 +32,19 @@ object AdRenderUtil {
 
 
   /** Сгенерить контекст wide-рендера для рендера одинокой карточки. */
-  def getWideCtxOpt(mad: MAd, args: OneAdQsArgs): Future[Option[WideBgRenderCtx]] = {
+  def getWideCtxOpt(mad: MAd, args: OneAdQsArgs): Future[Option[IMakeResult]] = {
     // Генерация wideCtx на основе args.
     val wideFutOpt = for {
       wide        <- args.wideOpt
-      bgImgInfo   <- BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
+      bgImgInfo   <- BgImg.getBgImg(mad)
     } yield {
       val dscr = DevScreen(
         width  = wide.width,
-        height = BgImg.szMulted(mad.blockMeta.height, args.szMult),
+        height = szMulted(mad.blockMeta.height, args.szMult),
         pixelRatioOpt = None    // TODO А какой надо выставлять?
       )
-      BgImg.wideBgImgArgs(bgImgInfo, mad.blockMeta, args.szMult, Some(dscr))
+      val wArgs = MakeArgs(bgImgInfo, mad.blockMeta, args.szMult, Some(dscr))
+      Makers.ScWide.icompile(wArgs)
         .map { Some.apply }
     }
     wideFutOpt getOrElse Future.successful(None)
@@ -58,8 +60,8 @@ object AdRenderUtil {
   def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[Array[Byte]] = {
     val sourceAdSz = mad.blockMeta
     // Высота отрендеренной карточки с учетом мультипликатора
-    lazy val width0 = BgImg.szMulted(sourceAdSz.width, adArgs.szMult)
-    val height = BgImg.szMulted(sourceAdSz.height, adArgs.szMult)
+    lazy val width0 = szMulted(sourceAdSz.width, adArgs.szMult)
+    val height = szMulted(sourceAdSz.height, adArgs.szMult)
     // Eсли запрошен широкий рендер, то нужно рассчитывать кроп и размер экрана с учётом квантования фоновой картинки.
     // Внешняя полная ширина отрендеренной широкой карточки.
     // Если Без wide, значит можно рендерить карточку as-is.

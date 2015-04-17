@@ -3,8 +3,9 @@
 @* Стили для блока в общем. *@
 @import args._
 @import models.blk.AdColorFns._
+@import models.blk.szMulted
 @import util.TplDataFormatUtil._
-@import util.blocks.BgImg.{BG_IMG_FN, szMulted}
+@import util.blocks.BgImg.BG_IMG_FN
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {

@@ -8,7 +8,7 @@ import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
 import controllers.ad.MarketAdFormUtil
-import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
+import io.suggest.ym.model.common.{IColors, IEMBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
 import play.twirl.api.{Html, Template5}
@@ -381,7 +381,7 @@ case class BlockDataImpl(
   offers      : List[AOBlock],
   colors      : Map[String, String] = Map.empty
 )
-  extends IBlockMeta
+  extends IEMBlockMeta
   with IOffers
   with IColors
 

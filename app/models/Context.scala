@@ -4,7 +4,7 @@ import java.util.UUID
 
 import controllers.routes
 import io.suggest.util.UuidUtil
-import models.im.DevScreen
+import models.im.{DevPixelRatios, DevScreen}
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.i18n.Messages

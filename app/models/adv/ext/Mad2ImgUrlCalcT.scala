@@ -5,6 +5,7 @@ import models.MAd
 import models.blk.OneAdQsArgs
 import models.mext.MExtService
 import util.blocks.BgImg
+import models.blk.szMulted
 
 /**
  * Suggest.io
@@ -42,8 +43,8 @@ trait Mad2ImgUrlCalcT {
     //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,
-      width  = wideWidthOpt.fold { BgImg.szMulted(mad.blockMeta.width, srv.szMult) } (_.width),
-      height = BgImg.szMulted(sz.height, szMultV),
+      width  = wideWidthOpt.fold { szMulted(mad.blockMeta.width, srv.szMult) } (_.width),
+      height = szMulted(sz.height, szMultV),
       szMult = szMultV,
       stdSz  = sz
     )

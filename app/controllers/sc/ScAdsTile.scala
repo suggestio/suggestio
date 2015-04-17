@@ -20,7 +20,7 @@ import SiowebEsUtil.client
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
-import _root_.util.blocks.BgImg.szMulted
+import models.blk.szMulted
 
 /**
  * Suggest.io

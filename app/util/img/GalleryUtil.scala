@@ -7,7 +7,7 @@ import play.api.data.Forms._
 import play.api.Play.{current, configuration}
 import play.api.mvc.Call
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.blocks.BgImg.szMulted
+import models.blk.szMulted
 
 import scala.concurrent.Future
 

@@ -106,7 +106,7 @@ object DevPixelRatios extends Enumeration {
   implicit def value2val(x: Value): DevPixelRatio = x.asInstanceOf[DevPixelRatio]
 
   /** Дефолтовое значение DPR, когда нет другого. */
-  def default = XHDPI
+  def default = MDPI
 
   /**
    * Подобрать экземпляр этого перечисления под указанный
@@ -120,6 +120,12 @@ object DevPixelRatios extends Enumeration {
         (dpi.pixelRatio >= ratio) || (dpi.pixelRatio * 1.1 > ratio)
       }
       .fold [DevPixelRatio] { values.last } { v => v }
+  }
+
+
+  /** Если pixel ratio не задан, то взять дефолтовый, используемый для bgImg. */
+  def pxRatioDefaulted(pxRatioOpt: Option[DevPixelRatio]): DevPixelRatio = {
+    if (pxRatioOpt.isDefined) pxRatioOpt.get else default
   }
 
 }
