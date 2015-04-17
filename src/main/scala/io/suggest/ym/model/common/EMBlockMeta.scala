@@ -39,12 +39,12 @@ trait EMBlockMetaStatic extends EsModelStaticMutAkvT {
 
 
 /** Интерфейс blockId. Вынесена из [[EMBlockMeta]] из-за потребностей blocks-редактора и инфраструктуры. */
-trait IBlockMeta {
+trait IEMBlockMeta {
   def blockMeta: BlockMeta
 }
 
 /** Интерфейсная часть EMBlockMeta. Вынесена, чтобы избежать сериализации поля blockMeta когда это не нужно. */
-trait EMBlockMetaI extends EsModelPlayJsonT with IBlockMeta {
+trait EMBlockMetaI extends EsModelPlayJsonT with IEMBlockMeta {
   override type T <: EMBlockMetaI
 }
 
@@ -107,9 +107,17 @@ object BlockMeta {
 import BlockMeta._
 
 
+/** Интерфейс для экземпляром BlockMeta. */
+trait IBlockMeta extends MImgSizeT {
+  /** id шаблона блока. */
+  def blockId: Int
+  /** Использовать широкое отображение? */
+  def wide: Boolean
+}
+
 /**
  * Неизменяемое представление глобальных парамеров блока.
- * @param blockId id шаблона блока.
+ * @param blockId
  * @param height высота блока.
  */
 case class BlockMeta(
@@ -117,7 +125,7 @@ case class BlockMeta(
   height  : Int,
   width   : Int,
   wide    : Boolean = false
-) extends MImgSizeT {
+) extends IBlockMeta {
   /** Сериализация экземпляра этого класса в json-объект. */
   def toPlayJson = JsObject(Seq(
     BLOCK_ID_ESFN -> JsNumber(blockId),
