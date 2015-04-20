@@ -1,15 +1,15 @@
-@(mad: MAd, adProducer: MAdnNode, advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode], goBackTo: Option[String] = None)(implicit ctx: Context)
+@(args: adv.geo.IWndFullArgs, advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
 
 @* Рендер шаблона, содержащего полноразмерную карточку и данные по текущему размещению оной снизу. *@
 
 @import ctx._
 
-@_advWndFullTpl(mad, adProducer, goBackTo) {
+@_advWndFullTpl(args) {
 
   @* Нарисовать раскладку по последней движухе на счёте. *@
   @*_currentAdvsListForPopupTpl(advs, adv2adn)*@
   <div class="btn-w __size-M">
-    <a class="btn __size-S __radial-major" href="@routes.MarketAdv.advForAd(mad.id.get)">
+    <a class="btn __size-S __radial-major" href="@routes.MarketAdv.advForAd(args.brArgs.mad.id.get)">
       @messages("ad.Manage")
     </a>
   </div>

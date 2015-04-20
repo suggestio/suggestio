@@ -1,9 +1,8 @@
-@(mad: MAdT, producer: MAdnNode, adIndex: Int = 0, adsCount: Int = 0,
-  args: blk.RenderArgs = blk.RenderArgs.DOUBLE_SIZED_ARGS)(implicit ctx: Context)
+@(args: blk.IRenderArgs, producer: MAdnNode, adIndex: Int = 0, adsCount: Int = 0)(implicit ctx: Context)
 
 @* Рендер тела страница открытой рекламной карточки вместе с дескрипшеном. *@
 
-@_adTpl(mad, args)
+@_adTpl(args)
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
@@ -26,7 +25,7 @@
 </div>
 
 @* Контейнер с описанием рекламной карточки *@
-@mad.richDescrOpt.map { rd =>
+@args.mad.richDescrOpt.map { rd =>
   <div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
     @Html(rd.text)
   </div>

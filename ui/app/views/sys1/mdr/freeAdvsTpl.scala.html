@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean, adnNodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
+@(mads: Seq[blk.IRenderArgs], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean, adnNodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
 
 @* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
 @import ctx._
@@ -10,8 +10,8 @@
 }
 
 @mdrBase(
-  title = "Free Advs",
-  headAfter = Some(headAfter),
+  title      = "Free Advs",
+  headAfter  = Some(headAfter),
   adnNodeOpt = adnNodeOpt
 ) {
   <div class="sys_t">

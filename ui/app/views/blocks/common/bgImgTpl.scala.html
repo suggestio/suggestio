@@ -1,25 +1,25 @@
-@(mad: MAdT,  bc: util.blocks.SaveBgImgI,  args: blk.RenderArgs,  cssClass: Option[String] = None,
+@(bc: util.blocks.SaveBgImgI,  args: blk.IRenderArgs,  cssClass: Option[String] = None,
   dfltImg: Option[String] = None,  alt: Option[String] = None,  style: Option[String] = None)(implicit ctx: Context)
 
 @import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
-@import models.blk.szMulted
+@import util.cdn.CdnUtil
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
+@args.bgImg.filter(!_.isWide).map { bg =>
 
-@if(!args.wideBg) {
-
-  @bc.getMadBgImg(mad).map { imgInfo =>
-    @* Есть картинка в карточке. Рендерим img-тег: *@
-    <img @cssClass.map { _cssClass => class="@_cssClass" }
-      src="@bc.bgImgCallCdn(imgInfo, mad.blockMeta, args)"
-      @defining( mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
-        @if(iBgColorOpt.isDefined || style.isDefined) {
-           style="@iBgColorOpt.map {ibgColor => background-color:#@ibgColor;}@style"
-        }
-      }
-      alt="@alt" width="@szMulted(mad.blockMeta.width, args.szMult)" height="@szMulted(mad.blockMeta.height, args.szMult)"
-    />
-  }
+  @* Есть картинка в карточке. Рендерим img-тег: *@
+  <img alt="@alt"
+       @cssClass.map { _cssClass => class="@_cssClass" }
+       src="@CdnUtil.forCall( bg.dynImgCall )"
+       @defining( args.mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
+         @if(iBgColorOpt || style) {
+           style="@iBgColorOpt.map { ibgColor =>background-color:#@ibgColor;}@style"
+         }
+       }
+       @defining( bg.szCss ) { sz =>
+         width="@sz.width" height="@sz.height"
+       }
+  />
 
 }

@@ -1,14 +1,11 @@
 package util.blocks
 
-import io.suggest.ym.model.common.{Imgs, BlockMeta, MImgInfoT}
-import models.blk.{SzMult_t, szMulted}
-import models.im._
-import play.api.mvc.Call
+import io.suggest.ym.model.common.{Imgs, MImgInfoT}
+import models.blk.SzMult_t
+import models.im.DevScreenT
+import models.im.make.{Makers, MakeArgs, IMakeResult, IMaker}
 import util.PlayLazyMacroLogsImpl
-import util.cdn.CdnUtil
-import util.img._
-import scala.annotation.tailrec
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
 import models._
@@ -19,6 +16,8 @@ import models._
  * Created: 16.10.14 10:02
  * Description: Утиль для поддержки фоновой картинки блока.
  * 2014.oct.16: Код продолжен толстеть и был перенесён сюда из BlockImg.scala.
+ * 2015.apr.17: Тут остался только код поддержки BgImg в терминах блока.
+ *   Утиль для генерации фоновых картинок вынесена в BlkImgMaker и ScWideMaker.
  */
 
 object BgImg extends PlayLazyMacroLogsImpl {
@@ -27,109 +26,37 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
 
-  /**
-   * Вычислить размер картинки для рендера на основе размера блока и параметрах экрана.
-   * @param szMult Желаемый контроллером множитель размера картинки.
-   * @param blockMeta Целевой размер. В частности - метаданные блока.
-   * @param devScreen Данные по экрану устройства.
-   * @return Параметры для картинки.
-   */
-  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreen: DevScreen): MImgInfoMeta = {
-    getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatioOpt)
-  }
-  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): MImgInfoMeta = {
-    val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatioOpt)
-    MImgInfoMeta(
-      height = szMulted(blockMeta.height, imgResMult),
-      width  = szMulted(blockMeta.width, imgResMult)
-    )
-  }
-
-
-  /**
-   * Определить мультипликатор размеров сторон картинки. по сути - комбинация pxRatioDefaulted() и detectMaxSzMult().
-   * @param szMult Мультипликатор размера, желаемый контроллером.
-   * @param blockMeta Целевой размер картинки.
-   * @param devScreenSz Экран устройства.
-   * @param pxRatioOpt Плотность пикселей устройства.
-   * @return Мультипликатор, на который надо домножать пиксельный размер стороны картинки.
-   */
-  private def getImgResMult(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatioOpt: Option[DevPixelRatio]): Float = {
-    val pxRatio = DevPixelRatios.pxRatioDefaulted(pxRatioOpt)
-    // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
-    val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
-    // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
-    // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет
-    //      6-кратное разрешение блока /O_o/ Памяти на девайсе может не хватить.
-    pxRatio.pixelRatio * sizeMult
-  }
-
-
-
-  /**
-   * Определить максимальный разумный множитель размера картинки для указанного экрана.
-   * Если рендер с указанным множителем не оправдан, то будет попытка с множитель в 2 раза меньшим.
-   * @param szMult Текущий (исходный) желаемый множитель размера. Т.е. максимальный допустимый (запрошенный).
-   * @param blockSz Размер блока.
-   * @param screenSz Размер экрана.
-   * @return Множитель.
-   */
-  // TODO Вероятно, этот метод не нужен. Мнение контроллера по вопросам рендера не должно "корректироваться" на нижнем уровне.
-  @tailrec private def detectMaxSzMult(szMult: SzMult_t, blockSz: MImgSizeT, screenSz: MImgSizeT): SzMult_t = {
-    if (szMult <= 1F) {
-      1F
-    } else if (blockSz.width * szMult <= screenSz.width) {
-      szMult
-    } else {
-      detectMaxSzMult(szMult / 2F, blockSz, screenSz)
-    }
-  }
-
-
-  /** Быстрый экстрактор фоновой картинки. */
+  /** Быстрый экстрактор фоновой картинки из карточки. */
   def getBgImg(mad: MAdT) = BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
 
   /**
-   * Сгенерить ссылку для получения фоновой картинки. Система выберет подходящую картинку под девайс.
-   * @param imgInfo Инфа о картинке, используемой в качестве фона.
-   * @param blockMeta Метаданные блока (и картинки, соответственно).
-   * @param brArgs Параметры рендера блока.
-   * @param ctx Контекст рендера шаблонов.
-   * @return Экземпляр Call, пригодный для рендера в ссылку.
+   * Часто-дублирующийся код опционального вызова maker'а.
+   * @param mad Рекламная карточка.
+   * @param maker Движок-изготовитель.
+   * @param szMult Мультипликатор размера.
+   * @param devScreenOpt Параметры экрана.
+   * @return Фьючерс с результатом подготовки изображения.
    */
-  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    val oiik = MImg(imgInfo.filename)
-    val devScreen = ctx.deviceScreenOpt getOrElse {
-      DevScreen(
-        width = 1024,
-        height = 768,
-        pixelRatioOpt = None
-      )
+  def maybeMakeBgImgWith(mad: MAdT, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreenT])
+                    (implicit ec: ExecutionContext): Future[Option[IMakeResult]] = {
+    BgImg.getBgImg(mad).fold {
+      Future successful Option.empty[IMakeResult]
+    } { bgImg =>
+      val iArgs = MakeArgs(bgImg, mad.blockMeta, szMult = szMult, devScreenOpt)
+      maker.icompile(iArgs)
+        .map { Some.apply }
     }
-    val devPxRatio = DevPixelRatios.pxRatioDefaulted( devScreen.pixelRatioOpt )
-    // Генерим dynImg-ссылку на картинку.
-    val fgc = devPxRatio.fgCompression
-
-    // Настройки сохранения результирующей картинки (аккамулятор).
-    var imOpsAcc: List[ImOp] = List(
-      StripOp,
-      ImInterlace.Plane,
-      fgc.chromaSubSampling,
-      fgc.imQualityOp
-    )
-
-    // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-    imOpsAcc ::= {
-      val sz = getRenderSz(brArgs.szMult, blockMeta = blockMeta, devScreen)
-      // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
-      AbsResizeOp(sz, ImResizeFlags.IgnoreAspectRatio)
-    }
-    imOpsAcc ::= ImFilters.Lanczos
-
-    // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = oiik.copy(dynImgOps = oiik.dynImgOps ++ imOpsAcc)
-    DynImgUtil.imgCall(dargs)
   }
+
+  def maybeMakeBgImg(mad: MAdT, szMult: SzMult_t, devScreenOpt: Option[DevScreenT])
+                    (implicit ec: ExecutionContext): Future[Option[IMakeResult]] = {
+    val maker = if (mad.blockMeta.wide)
+      Makers.ScWide
+    else
+      Makers.Block
+    maybeMakeBgImgWith(mad, maker, szMult, devScreenOpt)
+  }
+  
 
 }
 
@@ -143,16 +70,6 @@ trait SaveBgImgI extends ISaveImgs {
   /** Прочитать данные по картинки из imgs-поля рекламной карточки. */
   def getMadBgImg(mad: Imgs): Option[MImgInfoT] = {
     mad.imgs.get(BG_IMG_FN)
-  }
-
-  def bgImgCall(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    BgImg.bgImgCall(imgInfo, blockMeta, brArgs)
-  }
-
-  /** Аналог bgImgCall, но метод пытается сгенерить ссылку на картинку, пролегающую через CDN (если настроено). */
-  def bgImgCallCdn(imgInfo: MImgInfoT, blockMeta: BlockMeta, brArgs: blk.RenderArgs)(implicit ctx: Context): Call = {
-    val call = bgImgCall(imgInfo, blockMeta, brArgs)
-    CdnUtil.forCall(call)
   }
 
 }

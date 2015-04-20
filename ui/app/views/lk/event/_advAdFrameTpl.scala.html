@@ -4,8 +4,8 @@
 
 @* У событий размещения (adv) отображается миниатюра рекламной карточки. Тут рендер этой миниатюры. *@
 
-<div class="adv-item_preview-container">
-  @rargs.madOpt.map { mad =>
-    @_adNormalTpl(mad)
-  }
-</div>
+@for(brArgs <- rargs.brArgs) {
+  <div class="adv-item_preview-container">
+    @_adNormalTpl(brArgs)
+  </div>
+}

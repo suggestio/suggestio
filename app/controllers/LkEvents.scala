@@ -15,6 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.LkEventsUtil
 import util.SiowebEsUtil.client
 import play.api.Play.{current, configuration}
+import util.lk.LkAdUtil
 import views.html.lk.event._
 
 import scala.concurrent.Future
@@ -82,6 +83,17 @@ class LkEvents @Inject() (
       val advsOkMapFut      = LkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
       val advsRefuseMapFut  = LkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
 
+      // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
+      val brArgsMapFut = madsMapFut.flatMap { madsMap =>
+        val dsOpt = ctx.deviceScreenOpt
+        val ressFut = Future.traverse(madsMap) {
+          case (madId, mad) =>
+            LkAdUtil.tiledAdBrArgs(mad, dsOpt)
+              .map { madId -> _ }
+        }
+        ressFut.map { _.toMap }
+      }
+
       // В фоне пакетно отфетчить все необходимые ноды через кеш узлов, но текущий узел прямо закинуть в финальную карту.
       // Используется кеш, поэтому это будет быстрее и должно запускаться в последнюю очередь.
       val nodesMapFut = {
@@ -101,6 +113,7 @@ class LkEvents @Inject() (
         advsReqMap    <- advsReqMapFut
         advsOkMap     <- advsOkMapFut
         advsRefuseMap <- advsRefuseMapFut
+        brArgsMap     <- brArgsMapFut
         // Параллельный рендер всех событий
         events        <- Future.traverse(mevents) { case mevent =>
           Future {
@@ -113,7 +126,8 @@ class LkEvents @Inject() (
               madOpt        = ai.adIdOpt.flatMap(madsMap.get),
               advReqOpt     = ai.advReqIdOpt.flatMap(advsReqMap.get),
               advOkOpt      = ai.advOkIdOpt.flatMap(advsOkMap.get),
-              advRefuseOpt  = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get)
+              advRefuseOpt  = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get),
+              brArgs        = ai.adIdOpt.flatMap(brArgsMap.get)
             )
             mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
           }

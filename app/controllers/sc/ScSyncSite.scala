@@ -100,10 +100,8 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override implicit def _request = that._request
           override val _adSearch = _scState.tilesAdSearch()
           override lazy val ctx = that.ctx
-          override def renderMadAsync(mad: MAd): Future[T] = {
-            Future {
-              renderMad2html(mad)
-            } map { rendered =>
+          override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
+            renderMad2html(mad, brArgs) map { rendered =>
               RenderedAdBlockImpl(mad, rendered)
             }
           }
@@ -118,7 +116,9 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
           override def _adSearch = new AdSearch {
             override def maxResultsOpt: Option[Int] = Some(0)
           }
-          override def renderMadAsync(mad: MAd): Future[T] = Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
+          override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
+            Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
+          }
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
           override lazy val madsGroupedFut: Future[Seq[MAd]] = Future successful Nil
           override lazy val madsFut: Future[Seq[MAd]] = Future successful Nil
@@ -135,8 +135,8 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-      override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, madAndArgs = madAndArgs, index = index, producer = producer)
+      override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
       }
 
       override def _withHeadAd: Boolean = true

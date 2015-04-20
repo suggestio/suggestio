@@ -1,6 +1,7 @@
 package controllers
 
-import models.im.make.{IMakeResult, MakeArgs, Makers}
+import models.blk.SzMult_t
+import models.im.make.Makers
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
@@ -11,7 +12,7 @@ import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
-import util.blocks.BlockMapperResult
+import util.blocks.{BgImg, BlockMapperResult}
 import views.html.sc._
 
 /**
@@ -100,9 +101,8 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
               } else {
                 renderSmall(mad)
               }
-              renderFut map { render =>
-                Ok(render)
-              }
+              renderFut
+                .map { Ok(_) }
             }
           }
         )
@@ -113,41 +113,37 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
   }
 
   /** Рендер полноэкранного варианта отображения. */
-  private def renderFull(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
-    val szMult = 2.0F
-    // Используем один и тот же контекст в нескольких рендерах сразу:
-    val ctx = implicitly[Context]
+  private def renderFull(mad: MAd)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+    val szMult: SzMult_t = 2.0F
     // Поддержка wideBg:
-    val wctxOptFut: Future[Option[IMakeResult]] = {
-      if (mad.blockMeta.wide) {
-        val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-        bc.getMadBgImg(mad).fold(Future successful Option.empty[IMakeResult]) { bgImgInfo =>
-          // Организуем сборку wide-фона для выдачи.
-          val wArgs = MakeArgs(bgImgInfo, mad.blockMeta, szMult, ctx.deviceScreenOpt)
-          Makers.ScWide.icompile(wArgs)
-            .map { Some.apply }
-        }
-      } else {
-        // wide отображение отключено.
-        Future successful None
-      }
-    }
-    wctxOptFut map { wctxOpt =>
+    val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
+    bgOptFut map { bgImgOpt =>
       val args = blk.RenderArgs(
+        mad           = mad,
         withEdit      = false,
-        wideBg        = wctxOpt,
+        bgImg         = bgImgOpt,
         inlineStyles  = true,
         szMult        = szMult,
-        withCssClasses = Seq("__popup")
+        cssClasses = Seq("__popup")
       )
-      _adFullTpl(mad, producer = request.adnNode, args = args)(ctx)
+      _adFullTpl(args, producer = request.adnNode)(ctx)
     }
   }
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
-  private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
-    val args = blk.RenderArgs(withEdit = true, szMult = 1.0F, inlineStyles = true)
-    Future successful _adNormalTpl(mad, args = args)
+  private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+    val szMult: SzMult_t = 1.0F
+    val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
+    bgOptFut map { bgOpt =>
+      val args = blk.RenderArgs(
+        mad           = mad,
+        withEdit      = true,
+        szMult        = szMult,
+        inlineStyles  = true,
+        bgImg         = bgOpt
+      )
+      _adNormalTpl(args)(ctx)
+    }
   }
 
 }

@@ -1,6 +1,7 @@
-@(adnNode: MAdnNode, advsWithAds: Seq[(MAdvReq, MAd)])(implicit ctx: Context)
+@(adnNode: MAdnNode, advsWithAds: TraversableOnce[adv.geo.IReqInfo])(implicit ctx: Context)
 
 @* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
+
 @import views.html.lk._
 @import views.html.sc._
 @import NodeRightPanelLinks._
@@ -27,21 +28,22 @@
       </div>
 
       <div class="advertising-requests_items">
-        @advsWithAds.map { case (advReq, mad) =>
 
+        @advsWithAds.toIterator.map { info =>
           <div class="advertising-requests_item">
             <div class="ads-list-block__preview">
               <div class="ads-list-block__preview-container">
-                @_adNormalTpl(mad)
+                @_adNormalTpl(info.brArgs)
               </div>
               <div class="ads-list-block__zigzag-mask"></div>
-              <a href="@routes.MarketAdv.advFullWnd(advReq.adId, povAdnId = adnNode.id, advId = advReq.id, r = ctx.r)"
+              <a href="@routes.MarketAdv.advFullWnd(info.req.adId, povAdnId = adnNode.id, advId = info.req.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
                 @Html( messages("Click.for.more.info", "<br/>") )
               </a>
             </div>
           </div>
         }
+
       </div>
 
     </div>

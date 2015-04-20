@@ -18,4 +18,8 @@ trait RelSz {
 }
 
 
-
+/** Интерфейс для целого ряда tpl-моделей. */
+trait IBrArgs {
+  /** Данные для block render. */
+  def brArgs: RenderArgs
+}

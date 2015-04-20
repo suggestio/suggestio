@@ -1,22 +1,22 @@
-@(mad: MAdT, args: blk.RenderArgs)(implicit ctx: Context)
+@(args: blk.IRenderArgs)(implicit ctx: Context)
 
 @import common._
 @import util.blocks.BlocksConf.{Block20 => bc}
 
-@blockBase(args, mad, bc) {
+@blockBase(args, bc) {
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
 
-  @if(mad.offers.isEmpty) {
-    @_block2BodyCommonTpl(mad, args, bc)
+  @if(args.mad.offers.isEmpty) {
+    @_block2BodyCommonTpl(args, bc)
   } else {
-    @defining(mad.offers.headOption.get) { offer =>
+    @defining(args.mad.offers.headOption.get) { offer =>
       @offer.href.map { href =>
       <a href="@href" target="_blank">
       }
 
-      @_block2BodyCommonTpl(mad, args, bc)
+      @_block2BodyCommonTpl(args, bc)
 
       @if(offer.href.isDefined) {
         </a>

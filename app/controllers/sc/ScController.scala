@@ -2,7 +2,6 @@ package controllers.sc
 
 import controllers.{routes, SioController}
 import models._
-import models.blk.SzMult_t
 import models.msc.ScJsState
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
@@ -89,7 +88,7 @@ trait ScController extends SioController {
     }
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    def adsCssRenderArgsFut: Future[immutable.Seq[blk.CssRenderArgsT]]
+    def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]]
 
     /** Рендер обрамляющего css блоков на основе соотв. параметров. */
     def adsCssRenderFut: Future[immutable.Seq[Txt]] = {
@@ -103,14 +102,14 @@ trait ScController extends SioController {
     }
 
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-    protected def mad2craIter(mad: MAd, brArgs: blk.RenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
+    protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
+      import brArgs.mad
       val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
       mad.offers.iterator.flatMap { offer =>
         val t1 = offer.text1.map { text1 => ("title", text1, bc.titleBf, 0) }
         val fields = t1.toSeq
         fields.iterator.map { case (fid, aosf, bf, yoff) =>
           blk.FieldCssRenderArgs2(
-            mad     = mad,
             aovf    = aosf,
             bf      = bf,
             brArgs  = brArgs,
@@ -145,6 +144,3 @@ trait ScController extends SioController {
 
 }
 
-sealed case class AdAndBrArgs(mad: MAd, brArgs: blk.RenderArgs) extends blk.CssRenderArgsT {
-  override def cssClasses = brArgs.withCssClasses
-}

@@ -7,17 +7,17 @@
 .sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
   position: absolute;
   @defining(aovf.coords getOrElse xy) { c =>
-    left: @{c.x * brArgs.szMult}px;
-    top: @{c.y * brArgs.szMult}px;
+    left: @{c.x * szMult}px;
+    top: @{c.y * szMult}px;
   }
 }
 
 .sm-block@{mad.id}@cssClasses.map{c =>.@c } .@{fieldCssClass} {
   color: #@aovf.font.color!important;
   @aovf.font.size.flatMap(blk.FontSizes.maybeWithSize).map { fsz =>
-    font-size: @{fsz.size * brArgs.szMult}px!important;
+    font-size: @{fsz.size * szMult}px!important;
     @* TODO возможно стоит сделать font-size и line-height одинаковыми *@
-    line-height: @{fsz.lineHeight * brArgs.szMult}px!important;
+    line-height: @{fsz.lineHeight * szMult}px!important;
   }
   @aovf.font.family.map {ff =>font-family: @ff!important;}
   @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}

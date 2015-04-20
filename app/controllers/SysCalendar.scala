@@ -7,7 +7,6 @@ import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.Play.current
 import models._
 import views.html.sys1.calendar._
 import play.api.data._, Forms._
@@ -19,7 +18,7 @@ import de.jollyday.util.XMLUtil
 import play.api.mvc._
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
-import play.api.db.DB
+import play.api.db.Database
 import play.api.mvc.Result
 
 /**
@@ -30,7 +29,8 @@ import play.api.mvc.Result
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi,
+  db: Database
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {
@@ -155,7 +155,7 @@ class SysCalendar @Inject() (
   /** Общий код экшенов, рендерящих страницу редактирования. */
   private def editCalendarRespBody(calId: String, cf: Form[MCalendar])
                                   (implicit request: CalendarRequest[AnyContent]): Future[Html] = {
-    val calMbcs = DB.withConnection { implicit c =>
+    val calMbcs = db.withConnection { implicit c =>
       val calMbmds = MBillMmpDaily.findForCalId(calId)
       if (calMbmds.isEmpty) {
         Nil

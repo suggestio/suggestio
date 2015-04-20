@@ -1,4 +1,4 @@
-@(mad: MAdT, args: blk.RenderArgs)(implicit ctx: Context)
+@(args: blk.IRenderArgs)(implicit ctx: Context)
 
 @* Рендер тела открытой карточки: картинка, поля. *@
 
@@ -7,14 +7,14 @@
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
 @args.wideBg.map { wideBg =>
   <img src="@wideBg.dynImgCall" class="bg" alt=""
-    @mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
+    @args.mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
     height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
   />
 
-  <div class="dotted-pattern __id-@{mad.id}" style="height: @{wideBg.szCss.height}px;"></div>
+  <div class="dotted-pattern __id-@{args.mad.id}" style="height: @{wideBg.szCss.height}px;"></div>
 }
 
 <div class="focused-ad_offer">
-  @_adNormalTpl(mad, isWithAction = false, args)
+  @_adNormalTpl(args, isWithAction = false)
 </div>
 

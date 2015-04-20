@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAd] = Nil, canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+@(node: MAdnNode, mads: Seq[blk.IRenderArgs], canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import views.html.lk.ad._

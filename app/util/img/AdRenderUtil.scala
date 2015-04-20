@@ -31,23 +31,46 @@ object AdRenderUtil {
   }
 
 
-  /** Сгенерить контекст wide-рендера для рендера одинокой карточки. */
-  def getWideCtxOpt(mad: MAd, args: OneAdQsArgs): Future[Option[IMakeResult]] = {
-    // Генерация wideCtx на основе args.
-    val wideFutOpt = for {
-      wide        <- args.wideOpt
-      bgImgInfo   <- BgImg.getBgImg(mad)
-    } yield {
-      val dscr = DevScreen(
-        width  = wide.width,
-        height = szMulted(mad.blockMeta.height, args.szMult),
-        pixelRatioOpt = None    // TODO А какой надо выставлять?
-      )
-      val wArgs = MakeArgs(bgImgInfo, mad.blockMeta, args.szMult, Some(dscr))
-      Makers.ScWide.icompile(wArgs)
-        .map { Some.apply }
+  /**
+   * Сгенерить данные для рендера фоновой картинки для рендера одинокой карточки.
+   * @param mad Карточка.
+   * @param args Переданные через qs параметры рендера.
+   * @return Future None, если у карточки нет фоновой картинки.
+   *         Future Some() если есть картинка. Широкий фон или нет -- зависит от args.
+   */
+  def getBgImgOpt(mad: MAd, args: OneAdQsArgs): Future[Option[IMakeResult]] = {
+    // Генерация данных по фоновой картинке карточки.
+    BgImg.getBgImg(mad) match {
+      // Фоновая картинка у карточки задана.
+      case Some(bgImg) =>
+        // Высота виртуального экрана и плотность пикселей всегда одинаковая.
+        val pxRatioOpt = Some(DevPixelRatios.MDPI)
+        val height = szMulted(mad.blockMeta.height, args.szMult)
+        // Дальше есть выбор между wide и не-wide рендером.
+        val (maker, dscr) = args.wideOpt match {
+          case Some(wide) =>
+            val dscr = DevScreen(
+              width  = wide.width,
+              height = height,
+              pixelRatioOpt = pxRatioOpt
+            )
+            (Makers.ScWide, dscr)
+          // Нет wide-аргументов. Рендерим как block.
+          case None =>
+            val dscr = DevScreen(
+              width  = szMulted(mad.blockMeta.width, args.szMult),
+              height = height,
+              pixelRatioOpt = pxRatioOpt
+            )
+            (Makers.Block, dscr)
+        }
+        val margs = MakeArgs(bgImg, mad.blockMeta, args.szMult, Some(dscr))
+        maker.icompile(margs)
+          .map { Some.apply }
+      // Нет фоновой картинки
+      case None =>
+        Future successful Option.empty[IMakeResult]
     }
-    wideFutOpt getOrElse Future.successful(None)
   }
 
 

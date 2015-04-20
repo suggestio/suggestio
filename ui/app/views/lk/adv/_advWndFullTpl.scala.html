@@ -1,21 +1,23 @@
-@(mad: MAd, adProducer: MAdnNode, goBackTo: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(args: adv.geo.IWndFullArgs)(content: Html)(implicit ctx: Context)
 
 @* Подложка для шаблона окошка и полноразмерной превьюшкой карточки. *@
 
 @import ctx._
 @import views.html.sc._
+@import lk.popup._
 
-<div class="popup js-popup" id="advReqWind">
-
-  <div class="popup_header">
-    <a class="close f-right js-close-popup"></a>
-  </div>
+@_popupTpl(
+  id        = Some("advReqWind"),
+  hidden    = false,
+  jsPopup   = true,
+  closeHref = args.goBackTo
+) {
 
   <div class="popup_cnt __preview">
     <div class="sio-mart-showcase">
       @_adFullTpl(
-        mad      = mad,
-        producer = adProducer,
+        producer = args.adProducer,
+        args     = args.brArgs,
         adIndex  = 1,
         adsCount = 1
       )
@@ -24,5 +26,4 @@
     @content
   </div>
 
-</div>
-
+}

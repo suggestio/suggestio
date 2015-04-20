@@ -1,4 +1,4 @@
-@(adProducer: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_], goBackTo: Option[String] = None)(implicit ctx: Context)
+@(args: adv.geo.IWndFullArgs,  advReq: MAdvReq,  refuseFormM: Form[_])(implicit ctx: Context)
 
 @* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
 
@@ -8,12 +8,12 @@
 @import util.FC.divFc
 @import util.DateTimePrettyPrinter._
 
-@_advWndFullTpl(mad, adProducer) {
+@_advWndFullTpl(args) {
 
   <p class="paragraph __size-M color-light-strong ft-S">
     <strong class="color-strong">
       @messages("Adv.request.from")
-      <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
+      <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(args.brArgs.mad.producerId)">@args.adProducer.meta.name</a>
     </strong>
   </p>
 
@@ -36,7 +36,7 @@
 
   @* Отменить размещение рекламы с указанием причины. *@
   @form(
-    CSRF( routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo) ),
+    CSRF( routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = args.goBackTo) ),
     'id     -> "advReqRefuse",
     'class  -> "js-hidden"
   ) {
@@ -62,7 +62,7 @@
 
   @* Подтвердить размещение рекламы. *@
   @form(
-    CSRF( routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = goBackTo) ),
+    CSRF( routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = args.goBackTo) ),
     'id -> "advReqAccept"
   ) {
     <div class="submit-w __size-S">

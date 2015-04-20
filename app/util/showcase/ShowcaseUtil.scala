@@ -163,30 +163,19 @@ object ShowcaseUtil {
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
+  def focusedBrArgsFor(mad: MAd)(implicit ctx: Context): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = ctx.deviceScreenOpt match {
       case Some(dscr) => fitBlockToScreen(mad.blockMeta, dscr)
       case None       => TILES_SZ_MULTS.last
     }
-    if (mad.blockMeta.wide) {
-      // Нужно получить данные для рендера широкой карточки.
-      focWideBgImgArgs(mad, szMult) map { wideBgCtxOpt =>
-        blk.RenderArgs(
-          withEdit      = false,
-          szMult        = szMult,
-          wideBg        = wideBgCtxOpt
-          // Макс заимплементил wide bg на js. Но это похоже на костыль, логичнее это сделать где-то на сервере... Но не тут наверное...
-        )
-      }
-
-    } else {
-      // Возвращаем результат
-      val bra = blk.RenderArgs(
-        withEdit      = false,
-        szMult        = szMult,
-        wideBg        = None
+    // Нужно получить данные для рендера широкой карточки.
+    focWideBgImgArgs(mad, szMult) map { bgImgOpt =>
+      blk.RenderArgs(
+        mad       = mad,
+        withEdit  = false,
+        szMult    = szMult,
+        bgImg     = bgImgOpt
       )
-      Future successful bra
     }
   }
 
@@ -198,7 +187,7 @@ object ShowcaseUtil {
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MAdT, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
+  def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
     BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>
         val wArgs = MakeArgs(
@@ -207,7 +196,11 @@ object ShowcaseUtil {
           szMult        = szMult,
           devScreenOpt  = ctx.deviceScreenOpt
         )
-        Makers.ScWide.icompile(wArgs)
+        val maker = if (mad.blockMeta.wide)
+          Makers.ScWide
+        else
+          Makers.Block
+        maker.icompile(wArgs)
           .map(Some.apply)
       case None =>
         Future successful None

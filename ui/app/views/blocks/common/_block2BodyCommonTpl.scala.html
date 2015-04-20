@@ -1,18 +1,18 @@
-@(mad: MAdT, args: blk.RenderArgs, bc: util.blocks.BlocksConf.CommonBlock2T)(implicit ctx: Context)
+@(args: blk.IRenderArgs, bc: util.blocks.BlocksConf.CommonBlock2T)(implicit ctx: Context)
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
 @import views.txt.blocks.common._
 
-@defining( args.inlineStyles || mad.id.isEmpty ) { isStylesInline =>
+@defining( args.inlineStyles || args.mad.id.isEmpty ) { isStylesInline =>
 
-  @bgImgTpl(mad, bc, args,  cssClass = Some("bg") )
+  @bgImgTpl(bc, args,  cssClass = Some("bg") )
 
   @if(isStylesInline) {
-    <style>@Html(_blockCss( blk.CssRenderArgs(mad, args) ).toString.trim)</style>
+    <style>@Html(_blockCss(args).toString.trim)</style>
   }
 
-  @mad.offers.map { offer =>
+  @args.mad.offers.map { offer =>
 
     @defining("title") { fid =>
     @offer.text1.map { aosf =>
@@ -23,14 +23,13 @@
       @if(isStylesInline) {
         <style>
           @Html(_textCss(blk.FieldCssRenderArgs2(
-            mad     = mad,
             aovf    = aosf,
             bf      = bc.titleBf,
             brArgs  = args,
             offerN  = offer.n,
             yoff    = 0,
             fid     = fid,
-            cssClasses = args.withCssClasses
+            cssClasses = args.cssClasses
           )).toString.trim)
         </style>
       }

@@ -1,6 +1,7 @@
 package models.im.make
 
 import io.suggest.model.EnumMaybeWithName
+import util.blocks.BlkImgMaker
 import util.showcase.ScWideMaker
 
 /**
@@ -29,6 +30,12 @@ object Makers extends Enumeration with EnumMaybeWithName {
     * Используется квантование ширины по линейке размеров, т.е. картинка может быть больше запрошенных размеров. */
   val ScWide = new Val("sc") with IMakerWrapper {
     override def _underlying = ScWideMaker
+  }
+
+  /** Рендерер картинки, вписывающий её точно в параметры блока. Рендерер опирается на параметры кропа,
+    * заданные в редакторе карточек. */
+  val Block = new Val("blk") with IMakerWrapper {
+    override def _underlying = BlkImgMaker
   }
 
 }

@@ -10,7 +10,6 @@ import models._
  */
 
 trait FocusedAdsTplArgs extends SyncRenderInfo {
-  def mad         : MAd
   def producer    : MAdnNode
   def bgColor     : String
   def brArgs      : blk.RenderArgs
@@ -22,7 +21,6 @@ trait FocusedAdsTplArgs extends SyncRenderInfo {
 trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
   def _focArgsUnderlying: FocusedAdsTplArgs
 
-  override def mad            = _focArgsUnderlying.mad
   override def startIndex     = _focArgsUnderlying.startIndex
   override def producer       = _focArgsUnderlying.producer
   override def brArgs         = _focArgsUnderlying.brArgs

@@ -1,15 +1,14 @@
-@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int, brArgs: blk.RenderArgs)(implicit ctx: Context)
+@(brArgs: blk.IRenderArgs, index: Int, producer: MAdnNode, adsCount: Int)(implicit ctx: Context)
 
-@defining( mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
+@defining( brArgs.mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
 @stuff._scrollableContainerTpl( "focused-ad", "focusedAd" + index, style = Some(s"background-color: #$rfBgColor") ){
   <div style="margin: 0px auto;">
     <div class="focused-ad_top-offset"></div>
     @_adFullTpl(
-      mad         = mad,
+      brArgs,
       producer    = producer,
       adIndex     = index + 1,
-      adsCount    = adsCount,
-      args        = brArgs
+      adsCount    = adsCount
     )
     <div class="focused-ad_bottom-offset"></div>
   </div>

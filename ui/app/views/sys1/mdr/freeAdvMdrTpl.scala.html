@@ -1,4 +1,4 @@
-@(mad: MAd, producer: MAdnNode, banFormM: Form[_])(implicit ctx: Context)
+@(brArgs: blk.RenderArgs, producer: MAdnNode, banFormM: Form[_])(implicit ctx: Context)
 
 @* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
    и содержит формы для одобрения и бана бесплатного размещения. *@
@@ -7,20 +7,17 @@
 @import views.html.sc._
 @import helper._
 @import util.FC.divFc
+@import lk.popup._
+@import ctx.messages
+@import brArgs.mad
 
-<div class="popup js-hidden" id="advReqWind">
-
-  <div class="popup_header">
-    <a class="close f-right js-close-popup"></a>
-  </div>
-
+@_popupTpl(id = Some("advReqWind"), hidden = false, jsPopup = false) {
   <div class="popup_cnt">
-
 
     @* Отобразить карточку целиком (задействовать другую колонку) *@
     <div class="ad-full-preview">
       <div class="sio-mart-showcase __relative">
-        @_adFullTpl(mad, producer = producer)
+        @_adFullTpl(brArgs, producer = producer)
       </div>
     </div>
 
@@ -43,7 +40,7 @@
     @* Запретить размещение с указание причины. *@
     @form(routes.SysMdr.freeAdvMdrBan(mad.id.get), 'id -> "advReqRefuse", 'class -> "js-hidden") {
 
-      @textarea(banFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину")
+      @textarea(banFormM("reason"), '_label -> "", 'placeholder -> messages("Write.refuse.reason") )
 
       <div class="btn-w __size-S">
 
@@ -59,8 +56,5 @@
     }
 
   </div>
-
-</div>
-
-
+}
 

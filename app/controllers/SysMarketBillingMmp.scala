@@ -7,8 +7,7 @@ import util.PlayMacroLogsImpl
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.db.DB
-import play.api.Play.current
+import play.api.db.Database
 import views.html.sys1.market.billing.mmp.daily._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -23,7 +22,8 @@ import scala.concurrent.Future
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
 class SysMarketBillingMmp @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi,
+  db: Database
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {
@@ -96,7 +96,7 @@ class SysMarketBillingMmp @Inject() (
       },
       {mbmd0 =>
         val mbmd = mbmd0.copy(contractId = contractId)
-        val mbmd1 = DB.withConnection { implicit c =>
+        val mbmd1 = db.withConnection { implicit c =>
           mbmd.save
         }
         Redirect(routes.SysMarketBilling.billingFor(request.contract.adnId))
@@ -117,7 +117,7 @@ class SysMarketBillingMmp @Inject() (
 
   private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
     val mcalsFut = MCalendar.getAll()
-    val syncResult = DB.withConnection { implicit c =>
+    val syncResult = db.withConnection { implicit c =>
       val mbmd = MBillMmpDaily.getById(mmpdId).get
       val mbc  = MBillContract.getById(mbmd.contractId).get
       (mbmd, mbc)
@@ -145,7 +145,7 @@ class SysMarketBillingMmp @Inject() (
           .map(NotAcceptable(_))
       },
       {newMbmd =>
-        val rdrToAdn = DB.withTransaction { implicit c =>
+        val rdrToAdn = db.withTransaction { implicit c =>
           val mbmd = MBillMmpDaily.getById(mmpdId).get
           val mbmd1 = newMbmd.copy(id = mbmd.id, contractId = mbmd.contractId)
           mbmd1.save
@@ -163,7 +163,7 @@ class SysMarketBillingMmp @Inject() (
   /** Сабмит удаления mmp-тарификатора. */
   def deleteMmpDailySubmit(mmpId: Int) = IsSuperuser { implicit request =>
     // Нужно узнать adnId на который редиректить (из контракта) и удалить mmp-тарификатор.
-    val result = DB.withConnection { implicit c =>
+    val result = db.withConnection { implicit c =>
       val adnIdOpt = MBillMmpDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
       val rowsDeleted = MBillMmpDaily.deleteById(mmpId)
       (adnIdOpt, rowsDeleted)

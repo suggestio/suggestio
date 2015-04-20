@@ -180,6 +180,7 @@ object EmptyArgsInfo extends ArgsInfo() {
  * @param madOpt Инстанс MAd, если событие связано с этой рекламной карточкой.
  * @param extServiceOpt Инфа по сервису размещения.
  * @param errors Экземпляры ошибок, если событие отображает текущие ошибки.
+ * @param brArgs Для рендера превьюшки карточки необходимо иметь на руках экземпляр block RenderArgs.
  */
 case class RenderArgs(
   mevent        : IEvent,
@@ -191,8 +192,11 @@ case class RenderArgs(
   advReqOpt     : Option[MAdvReq]     = None,
   advRefuseOpt  : Option[MAdvRefuse]  = None,
   extServiceOpt : Option[MExtService] = None,
+  brArgs        : Option[blk.RenderArgs] = None,
   errors        : Seq[IErrorInfo]     = Nil
-) extends IArgsInfo with EmptyProduct {
+)
+  extends IArgsInfo with EmptyProduct
+{
 
   def hasErrors = errors.nonEmpty
 
