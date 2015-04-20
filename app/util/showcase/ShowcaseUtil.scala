@@ -168,25 +168,13 @@ object ShowcaseUtil {
       case Some(dscr) => fitBlockToScreen(mad.blockMeta, dscr)
       case None       => TILES_SZ_MULTS.last
     }
-    if (mad.blockMeta.wide) {
-      // Нужно получить данные для рендера широкой карточки.
-      focWideBgImgArgs(mad, szMult) map { wideBgCtxOpt =>
-        blk.RenderArgs(
-          withEdit      = false,
-          szMult        = szMult,
-          wideBg        = wideBgCtxOpt
-          // Макс заимплементил wide bg на js. Но это похоже на костыль, логичнее это сделать где-то на сервере... Но не тут наверное...
-        )
-      }
-
-    } else {
-      // Возвращаем результат
-      val bra = blk.RenderArgs(
-        withEdit      = false,
-        szMult        = szMult,
-        wideBg        = None
+    // Нужно получить данные для рендера широкой карточки.
+    focWideBgImgArgs(mad, szMult) map { bgImgOpt =>
+      blk.RenderArgs(
+        withEdit  = false,
+        szMult    = szMult,
+        bgImg     = bgImgOpt
       )
-      Future successful bra
     }
   }
 
@@ -207,7 +195,11 @@ object ShowcaseUtil {
           szMult        = szMult,
           devScreenOpt  = ctx.deviceScreenOpt
         )
-        Makers.ScWide.icompile(wArgs)
+        val maker = if (mad.blockMeta.wide)
+          Makers.ScWide
+        else
+          Makers.Block
+        maker.icompile(wArgs)
           .map(Some.apply)
       case None =>
         Future successful None
