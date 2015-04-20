@@ -11,9 +11,9 @@ import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
-import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.lk.LkAdUtil
 import scala.concurrent.Future
 import views.html.lk.adn._
 import views.html.lk.usr._
@@ -21,7 +21,7 @@ import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
-import play.api.db.DB
+import play.api.db.Database
 import play.api.mvc.{AnyContent, Result}
 
 /**
@@ -31,7 +31,8 @@ import play.api.mvc.{AnyContent, Result}
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi,
+  db: Database
 )
   extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction
 {
@@ -86,7 +87,7 @@ class MarketLkAdn @Inject() (
           // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
           val adnIdsSet = dgAdnIdsList.toSet
           // Собрать из sql-моделей инфу по размещениям.
-          val syncResult = DB.withConnection { implicit c =>
+          val syncResult = db.withConnection { implicit c =>
             // 2014.06.26: Скрывать бесплатные размещения, помеченные как isPartner.
             val okAdnIds = MAdvOk.findAllProducersForRcvrsPartner(adnIdsSet, isPartner = false)
             // Если adv-полномочия делегированы другому узлу, то не надо использовать ещё не принятые реквесты
@@ -177,6 +178,7 @@ class MarketLkAdn @Inject() (
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
+
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
       val madsFut: Future[Seq[MAd]] = if (isMyNode) {
@@ -209,7 +211,7 @@ class MarketLkAdn @Inject() (
           // Есть pov-узел, и юзер является админом оного. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
           case Some(povAdnNode) =>
             // Вычислить взаимоотношения между двумя узлами через список ad_id
-            val adIds = DB.withConnection { implicit c =>
+            val adIds = db.withConnection { implicit c =>
               MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
             }
             MAd.multiGet(adIds)
@@ -226,7 +228,7 @@ class MarketLkAdn @Inject() (
         request.myNodeId.fold(Future successful Map.empty[String, MAdvI]) { myAdnId =>
           Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
             Future {
-              DB.withConnection { implicit c =>
+              db.withConnection { implicit c =>
                 model.findNotExpiredRelatedTo(myAdnId)
               }
             }(AsyncUtil.jdbcExecutionContext)
@@ -241,7 +243,7 @@ class MarketLkAdn @Inject() (
       val canAdvFut: Future[Boolean] = {
         if (isMyNode && adnNode.adn.isProducer) {
           Future {
-            DB.withConnection { implicit c =>
+            db.withConnection { implicit c =>
               MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
             }
           }(AsyncUtil.jdbcExecutionContext)
@@ -250,21 +252,32 @@ class MarketLkAdn @Inject() (
         }
       }
 
+      implicit val ctx = implicitly[Context]
+
+      // 2015.apr.20: Вместо списка рекламных карточек надо передавать данные для рендера.
+      val brArgssFut = madsFut flatMap { mads =>
+        val dsOpt = ctx.deviceScreenOpt
+        Future.traverse(mads) { mad =>
+          LkAdUtil.tiledAdBrArgs(mad, dsOpt)
+        }
+      }
+
       // Рендер результата, когда все карточки будут собраны.
       for {
-        mads      <- madsFut
+        brArgss   <- brArgssFut
         ad2advMap <- ad2advMapFut
         canAdv    <- canAdvFut
       } yield {
-        Ok(nodeAdsTpl(
+        val render = nodeAdsTpl(
           mnode       = adnNode,
           mode        = mode,
-          mads        = mads,
+          mads        = brArgss,
           isMyNode    = isMyNode,
           povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
           canAdv      = canAdv,
           ad2advMap   = ad2advMap
-        ))
+        )(ctx)
+        Ok(render)
       }
     }
   }

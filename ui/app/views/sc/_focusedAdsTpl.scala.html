@@ -37,7 +37,7 @@
 @* Контейнер с прокручивающимися офферами *@
 <div class="sm-focused-ads_container __animated" id="smFocusedAdsContainer" data-x-offset="0" data-ads-count="@args.adsCount">
   <span id="ads0">
-    @_focusedAdTpl(args.mad,  args.startIndex,  args.producer,  adsCount = args.adsCount, brArgs = args.brArgs)
+    @_focusedAdTpl(args.brArgs,  args.startIndex,  args.producer,  adsCount = args.adsCount)
   </span>
   @if(!args.syncRender) {
     @_focusedAdLoaderTpl(args.bgColor)

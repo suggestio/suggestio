@@ -1,7 +1,7 @@
 package controllers
 
 import models.blk.SzMult_t
-import models.im.make.{IMakeResult, Makers}
+import models.im.make.Makers
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
@@ -119,13 +119,14 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgImgOpt =>
       val args = blk.RenderArgs(
+        mad           = mad,
         withEdit      = false,
         bgImg         = bgImgOpt,
         inlineStyles  = true,
         szMult        = szMult,
-        withCssClasses = Seq("__popup")
+        cssClasses = Seq("__popup")
       )
-      _adFullTpl(mad, producer = request.adnNode, args = args)(ctx)
+      _adFullTpl(args, producer = request.adnNode)(ctx)
     }
   }
 
@@ -135,12 +136,13 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgOpt =>
       val args = blk.RenderArgs(
+        mad           = mad,
         withEdit      = true,
         szMult        = szMult,
         inlineStyles  = true,
         bgImg         = bgOpt
       )
-      _adNormalTpl(mad, args = args)(ctx)
+      _adNormalTpl(args)(ctx)
     }
   }
 

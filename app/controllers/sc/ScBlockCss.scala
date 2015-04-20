@@ -41,6 +41,7 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
         // Картинка вроде нужна, но стоит в этом убедиться... Future для распаралеливания и на случай если картинка понадобиться
         Future {
           val brArgs = blk.RenderArgs(
+            mad           = mad,
             szMult        = arg.szMult,
             inlineStyles  = false,
             bgImg         = None
@@ -48,13 +49,13 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
           val offerFieldsTxts = mad.offers
             .iterator
             .flatMap { offer =>
-              offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, mad, t1, bc.titleBf, offer.n, yoff = 0, fid = "title") }
+              offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, t1, bc.titleBf, offer.n, yoff = 0, fid = "title") }
             }
             .map { cssRenderArgs =>
               _textCss(cssRenderArgs): Txt
             }
             .toList
-          val preableCssTxt = _blockCss(blk.CssRenderArgs(mad, brArgs)): Txt
+          val preableCssTxt = _blockCss(brArgs): Txt
           preableCssTxt :: offerFieldsTxts
         }
       } map { txts1 =>

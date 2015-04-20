@@ -1,4 +1,4 @@
-@(mad: MAd, producer: MAdnNode, banFormM: Form[_], brArgs: blk.RenderArgs)(implicit ctx: Context)
+@(brArgs: blk.RenderArgs, producer: MAdnNode, banFormM: Form[_])(implicit ctx: Context)
 
 @* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
    и содержит формы для одобрения и бана бесплатного размещения. *@
@@ -9,6 +9,7 @@
 @import util.FC.divFc
 @import lk.popup._
 @import ctx.messages
+@import brArgs.mad
 
 @_popupTpl(id = Some("advReqWind"), hidden = false, jsPopup = false) {
   <div class="popup_cnt">
@@ -16,7 +17,7 @@
     @* Отобразить карточку целиком (задействовать другую колонку) *@
     <div class="ad-full-preview">
       <div class="sio-mart-showcase __relative">
-        @_adFullTpl(mad, producer = producer, args = brArgs)
+        @_adFullTpl(brArgs, producer = producer)
       </div>
     </div>
 

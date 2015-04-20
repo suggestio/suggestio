@@ -7,7 +7,7 @@ import util.acl._
 import models._
 import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
-import play.api.db.DB
+import play.api.db.Database
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -21,7 +21,8 @@ import play.api.Play.{current, configuration}
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
 class MarketLkBilling @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi,
+  db: Database
 )
   extends SioController with PlayMacroLogsImpl
 {
@@ -33,7 +34,7 @@ class MarketLkBilling @Inject() (
 
   /** Отобразить какую-то страницу с реквизитами для платежа. */
   def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    val mbcs = DB.withConnection { implicit c =>
+    val mbcs = db.withConnection { implicit c =>
       MBillContract.findForAdn(adnId, isActive = Some(true))
     }
     mbcs.headOption match {
@@ -59,7 +60,7 @@ class MarketLkBilling @Inject() (
     } else {
       Future successful Nil
     }
-    val billInfoOpt = DB.withConnection { implicit c =>
+    val billInfoOpt = db.withConnection { implicit c =>
       MBillContract.findForAdn(adnId, isActive = Some(true))
         .headOption
         .map { mbc =>
@@ -97,7 +98,7 @@ class MarketLkBilling @Inject() (
   def _txnsList(adnId: String, page: Int) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     val tpp = TXNS_PER_PAGE
     val offset = page * tpp
-    val txns = DB.withConnection { implicit c =>
+    val txns = db.withConnection { implicit c =>
       val mbcs = MBillContract.findForAdn(adnId, isActive = None)
       val mbcIds = mbcs.flatMap(_.id).toSet
       MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
@@ -117,7 +118,7 @@ class MarketLkBilling @Inject() (
                                (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val adnNodeFut = MAdnNodeCache.getById(adnId)
-    val mbdms = DB.withConnection { implicit c =>
+    val mbdms = db.withConnection { implicit c =>
       // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
       val contracts = MBillContract.findForAdn(adnId, isActive = Some(true))
       val contractIds = contracts.map(_.id.get)

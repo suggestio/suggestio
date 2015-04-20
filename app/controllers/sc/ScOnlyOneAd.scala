@@ -30,6 +30,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
     // Рендер, когда асинхронные операции будут завершены.
     bgImgOptFut map { bgImgOpt =>
       val brArgs = blk.RenderArgs(
+        mad           = mad,
         szMult        = args.szMult,
         withEdit      = false,
         inlineStyles  = true,
@@ -43,7 +44,7 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
       )
       // TODO Нужен title, на основе имени узла-продьюсера например.
       val render = standaloneTpl() {
-        _adTpl(mad, brArgs)
+        _adTpl(brArgs)
       }
       Ok(render)
     }

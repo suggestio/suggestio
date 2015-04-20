@@ -7,6 +7,7 @@ import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
+import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import util.SiowebEsUtil.client
@@ -41,21 +42,40 @@ class SysMdr @Inject() (
     *                 некоторое время ещё будет висеть на этой странице.
     */
   def freeAdvs(args: MdrSearchArgs, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
-    MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
-      val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
-      val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
-      MAdnNodeCache.multiGet( producerIds ) map { producers =>
-        val prodsMap = producers
-          .map { p => p.id.get -> p }
-          .toMap
-        Ok(freeAdvsTpl(
-          mads = mads,
-          prodsMap = prodsMap,
-          currPage = args.page,
-          hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
-          adnNodeOpt = args.producerId.flatMap(prodsMap.get)
-        ))
+    var madsFut = MAd.findSelfAdvNonMdr(args)
+    if (hideAdId.isDefined) {
+      val hai = hideAdId.get
+      madsFut = madsFut.map { mads0 =>
+        mads0.filter(_.id.get != hai)
       }
+    }
+    val producersFut = madsFut flatMap { mads =>
+      val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
+      MAdnNodeCache.multiGet( producerIds )
+    }
+    val prodsMapFut = producersFut map { prods =>
+      prods
+        .map { p => p.id.get -> p }
+        .toMap
+    }
+
+    val brArgssFut = madsFut flatMap { mads =>
+      Future.traverse(mads) { mad =>
+        LkAdUtil.tiledAdBrArgs(mad)
+      }
+    }
+
+    for {
+      brArgss   <- brArgssFut
+      prodsMap  <- prodsMapFut
+    } yield {
+      Ok(freeAdvsTpl(
+        brArgss,
+        prodsMap = prodsMap,
+        currPage = args.page,
+        hasNextPage = brArgss.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
+        adnNodeOpt = args.producerId.flatMap(prodsMap.get)
+      ))
     }
   }
 
@@ -86,10 +106,10 @@ class SysMdr @Inject() (
       val producerFut = MAdnNodeCache.getById(mad.producerId)
         .map { _.get }
       for {
-        brArgs <- brArgsFut
+        brArgs   <- brArgsFut
         producer <- producerFut
       } yield {
-        freeAdvMdrTpl(mad, producer, banForm, brArgs)(ctx)
+        freeAdvMdrTpl(brArgs, producer, banForm)(ctx)
       }
     }
   }

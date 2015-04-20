@@ -9,7 +9,7 @@ import models._
 import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
-import play.twirl.api.{Html, Template3}
+import play.twirl.api.{Template2, Html}
 
 /**
  * Suggest.io
@@ -160,14 +160,14 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def hrefBlock = false
 
   /** Шаблон для рендера. */
-  def template: Template3[MAdT, blk.RenderArgs, Context, Html]
+  def template: Template2[blk.IRenderArgs, Context, Html]
 
   /** Набор маппингов для обработки данных от формы. */
   def strictMapping: Mapping[BlockMapperResult] = this
 
   /** Более удобный интерфейс для метода template.render(). */
-  def renderBlock(mad: MAdT, args: blk.RenderArgs)(implicit ctx: Context) = {
-    template.render(mad, args, ctx)
+  def renderBlock(args: blk.IRenderArgs)(implicit ctx: Context) = {
+    template.render(args, ctx)
   }
 
   /**

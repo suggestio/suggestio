@@ -3,11 +3,12 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.util.MacroLogsImpl
 import models.usr.{MPerson, EmailActivation}
-import play.api.db.DB
+import play.api.db.Database
 import play.twirl.api.Html
 import util.acl._
 import models._
 import util.adv.AdvUtil
+import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import views.html.sys1.market._
 import views.html.sys1.market.ad._
@@ -15,7 +16,6 @@ import views.html.sys1.market.adn._
 import play.api.data._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import play.api.Play.current
 import scala.concurrent.Future
 import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.MessagesApi
@@ -30,7 +30,8 @@ import sysctl.SysMarketUtil._
  */
 class SysMarket @Inject() (
   override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper
+  override val mailer: IMailerWrapper,
+  db: Database
 )
   extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
 {
@@ -404,9 +405,14 @@ class SysMarket @Inject() (
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
     val madsFut = MAd.dynSearch(a)
+    val brArgssFut = madsFut flatMap { mads =>
+      Future.traverse(mads) { mad =>
+        LkAdUtil.tiledAdBrArgs(mad)
+      }
+    }
     // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
     val adnNodeIdOpt = a.producerIds.headOption orElse a.receiverIds.headOption
-    val adFreqsFut = adnNodeIdOpt
+    val adFreqsFut: Future[AdFreqs_t] = adnNodeIdOpt
       .fold [Future[MAdStat.AdFreqs_t]] (Future successful Map.empty) { MAdStat.findAdByActionFreqs }
     val adnNodeOptFut: Future[Option[MAdnNode]] = {
       adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
@@ -416,13 +422,13 @@ class SysMarket @Inject() (
       lazy val adIds = mads.flatMap(_.id)
       val advs: Seq[MAdvI] = if (a.receiverIds.nonEmpty) {
         // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-        DB.withConnection { implicit c =>
+        db.withConnection { implicit c =>
           MAdvOk.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds) ++
             MAdvReq.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds)
         }
       } else if (a.producerIds.nonEmpty) {
         // Ищем размещения карточек для продьюсера.
-        DB.withConnection { implicit c =>
+        db.withConnection { implicit c =>
           MAdvOk.findByAdIdsAndProducersOnline(adIds, prodIds = a.producerIds, isOnline = true) ++
             MAdvReq.findByAdIdsAndProducers(adIds, prodIds = a.producerIds)
         }
@@ -468,12 +474,12 @@ class SysMarket @Inject() (
     // Планируем рендер страницы-результата, когда все данные будут собраны.
     for {
       adFreqs       <- adFreqsFut
-      mads          <- madsFut
+      brArgss       <- brArgssFut
       adnNodeOpt    <- adnNodeOptFut
       rcvrs         <- rcvrsFut
       ad2advMap     <- ad2advMapFut
     } yield {
-      Ok(showAdnNodeAdsTpl(mads, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap))
+      Ok(showAdnNodeAdsTpl(brArgss, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap))
     }
   }
 

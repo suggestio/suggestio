@@ -163,7 +163,7 @@ object ShowcaseUtil {
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAdT)(implicit ctx: Context): Future[blk.RenderArgs] = {
+  def focusedBrArgsFor(mad: MAd)(implicit ctx: Context): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = ctx.deviceScreenOpt match {
       case Some(dscr) => fitBlockToScreen(mad.blockMeta, dscr)
       case None       => TILES_SZ_MULTS.last
@@ -171,6 +171,7 @@ object ShowcaseUtil {
     // Нужно получить данные для рендера широкой карточки.
     focWideBgImgArgs(mad, szMult) map { bgImgOpt =>
       blk.RenderArgs(
+        mad       = mad,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt
@@ -186,7 +187,7 @@ object ShowcaseUtil {
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MAdT, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
+  def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
     BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>
         val wArgs = MakeArgs(

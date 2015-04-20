@@ -12,8 +12,7 @@ import util.FormUtil._
 import views.html.sys1.market.billing.tariff._
 import views.html.sys1.market.billing.tariff.stat._
 import org.joda.time.DateTime
-import play.api.db.DB
-import play.api.Play.current
+import play.api.db.Database
 import io.suggest.ym.parsers.Price
 
 /**
@@ -23,7 +22,8 @@ import io.suggest.ym.parsers.Price
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
 class SysMarketBillingTariff @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi: MessagesApi,
+  db: Database
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {
@@ -81,7 +81,7 @@ class SysMarketBillingTariff @Inject() (
       },
       {tariff =>
         // Добавляем новый тариф в adnNode
-        val tariffSaved = DB.withConnection { implicit c =>
+        val tariffSaved = db.withConnection { implicit c =>
           tariff.save
         }
         val flashMsg = s"Тариф #${tariffSaved.id.get} добавлен к договору ${contract.legalContractId}."
@@ -123,7 +123,7 @@ class SysMarketBillingTariff @Inject() (
           isEnabled   = tariff1.isEnabled,
           dateStatus  = if (tariff0.isEnabled != tariff1.isEnabled) now else tariff0.dateStatus
         )
-        val tariffSaved = DB.withConnection { implicit c =>
+        val tariffSaved = db.withConnection { implicit c =>
           tariff2.save
         }
         val flashMsg = editSaveFlashMsg(tariffSaved, contract)
@@ -135,7 +135,7 @@ class SysMarketBillingTariff @Inject() (
   /** POST на удаление тарифа. */
   def deleteFeeTariffSubmit(tariffId: Int) = IsSuperuserFeeTariffContract(tariffId).apply { implicit request =>
     import request.{contract, tariff}
-    val rowsDeleted = DB.withConnection { implicit c =>
+    val rowsDeleted = db.withConnection { implicit c =>
       tariff.delete
     }
     val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)
@@ -206,7 +206,7 @@ class SysMarketBillingTariff @Inject() (
         }
       },
       {mbts =>
-        val tariffSaved = DB.withConnection { implicit c =>
+        val tariffSaved = db.withConnection { implicit c =>
           mbts.save
         }
         rdrFlashing(request.contract.adnId, "Создан тариф #" + tariffSaved.id.get)
@@ -244,7 +244,7 @@ class SysMarketBillingTariff @Inject() (
           dateStatus  = if (tariff.isEnabled != tariff2.isEnabled) now else tariff.dateStatus,
           dateFirst   = tariff2.dateFirst
         )
-        DB.withConnection { implicit c =>
+        db.withConnection { implicit c =>
           tariff3.save
         }
         val flashMsg = editSaveFlashMsg(tariff, request.contract)
@@ -257,7 +257,7 @@ class SysMarketBillingTariff @Inject() (
   /** Запрос на удаление stat-тарифа. */
   def deleteStatTariffSubmit(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).apply { implicit request =>
     import request.{contract, tariff}
-    val rowsDeleted = DB.withConnection { implicit c =>
+    val rowsDeleted = db.withConnection { implicit c =>
       tariff.delete
     }
     val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)

@@ -1,4 +1,5 @@
-@(mads: Seq[MAd], coverDisableReason: Boolean, startIndex: Int = 1, itemsInLine: Int = 4)(postContent: MAd => Html)(implicit ctx: Context)
+@(mads: Seq[blk.IRenderArgs], coverDisableReason: Boolean, startIndex: Int = 1,
+  itemsInLine: Int = 4)(postContent: MAdT => Html)(implicit ctx: Context)
 
 @* Заготовка списка рекламных карточек на странице узла рекламной сети.
    postContent содержит функцию, которая генерит верстку для каждого элемента списка.
@@ -8,21 +9,21 @@
 @import AdShowLevels._
 @import views.html.sc._
 
-@mads.zipWithIndex.map { case (mad, i) =>
+@mads.iterator.zipWithIndex.map { case (brArgs, i) =>
   @defining( i + startIndex ) { itemIndex =>
     <div class="adv-item @if(itemIndex % itemsInLine == 0){ __first-in-line }">
 
       <div class="adv-item_preview">
         @if(coverDisableReason) {
-          @_adDisableReasonCoverTpl(mad.disableReason)
+          @_adDisableReasonCoverTpl(brArgs.mad.disableReason)
         }
         <div class="adv-item_preview-container">
-          @_adNormalTpl(mad)
+          @_adNormalTpl(brArgs)
         </div>
         <div class="adv-item_preview-border"></div>
       </div>
 
-      @postContent(mad)
+      @postContent(brArgs.mad)
 
     </div>
 

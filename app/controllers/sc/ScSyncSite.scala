@@ -135,8 +135,8 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-      override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, madAndArgs = madAndArgs, index = index, producer = producer)
+      override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
       }
 
       override def _withHeadAd: Boolean = true

@@ -44,6 +44,7 @@ object LkAdUtil {
     }
     bgImgOptFut.map { bgImgOpt =>
       blk.RenderArgs(
+        mad       = mad,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt

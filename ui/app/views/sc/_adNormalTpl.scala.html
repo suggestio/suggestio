@@ -1,11 +1,14 @@
-@(mad: MAdT, isWithAction: Boolean = false, args: blk.RenderArgs)(implicit ctx: Context)
+@(args: blk.IRenderArgs, isWithAction: Boolean = false)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 @import util.blocks._
+@import args.mad
 
 @defining( BlocksConf.applyOrDefault(mad.blockMeta.blockId) ) { bc =>
-  <div @if( isWithAction && (!bc.hrefBlock || !mad.offers.exists(_.href.isDefined)) ) { class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
-    @bc.renderBlock(mad, args)
+  <div @if( isWithAction && (!bc.hrefBlock || !mad.offers.exists(_.href.isDefined)) ) {
+         class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id"
+       } >
+    @bc.renderBlock(args)
   </div>
 }

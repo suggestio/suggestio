@@ -584,7 +584,6 @@ class MarketAdv @Inject() (
       val brArgsFut = ShowcaseUtil.focusedBrArgsFor(request.mad)(ctx)
       val wndFullArgsFut = brArgsFut map { brArgs =>
         WndFullArgs(
-          mad         = request.mad,
           adProducer  = request.producer,
           brArgs      = brArgs,
           goBackTo    = r
@@ -750,7 +749,7 @@ class MarketAdv @Inject() (
           brArgs <- brArgsMap.get(madId)
           advReq <- advsReqMap.get(madId)
         } yield {
-          ReqInfo(advReq, mad, brArgs)
+          ReqInfo(advReq, brArgs)
         }
       }
       // Выстраиваем порядок рекламных карточек на основе порядка запросов размещения: новые сверху.
@@ -794,7 +793,6 @@ class MarketAdv @Inject() (
           val brArgsFut = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
           val wndArgsFut = brArgsFut map { brArgs =>
             WndFullArgs(
-              mad         = mad,
               adProducer  = adProducerOpt.get,
               brArgs      = brArgs,
               goBackTo    = r

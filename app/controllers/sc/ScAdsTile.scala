@@ -4,12 +4,12 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
-import models.im.make.Makers
+import models.im.make.{IMakeResult, Makers}
 import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.{CssRenderArgsT, BlockWidths, FieldCssRenderArgsT}
+import models.blk.{IRenderArgs, BlockWidths, FieldCssRenderArgsT}
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.Html
 import util._
@@ -98,20 +98,21 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
     lazy val tileArgs = ShowcaseUtil.getTileArgs()(ctx)
 
-    /** Общие параметры для рендера всех блоков плитки. Они могут/будут перезаписаны позднее. */
-    lazy val brArgsStubFut: Future[blk.RenderArgs] = {
-      val ra = blk.RenderArgs(
+    def szMult = tileArgs.szMult
+
+    private def _brArgsFor(mad: MAd, bgImg: Option[IMakeResult]): blk.RenderArgs = {
+      blk.RenderArgs(
+        mad           = mad,
         withEdit      = false,
-        bgImg         = None,
-        szMult        = tileArgs.szMult,
+        bgImg         = bgImg,
+        szMult        = szMult,
         inlineStyles  = false
       )
-      Future successful ra
     }
 
     def renderMad2html(mad: MAd, brArgs: blk.RenderArgs): Future[Html] = {
       Future {
-        _adNormalTpl(mad, args = brArgs, isWithAction = true)(ctx)
+        _adNormalTpl(brArgs, isWithAction = true)(ctx)
       }
     }
 
@@ -174,42 +175,41 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
       MAd.dynSearch(adSearch2)
     }
 
-    /** Связка из mads+brArgs используется в нескольких местах.
-      * Тут фьючерс для упрощения и ускорения доступа к этой связке. */
-    private lazy val madsAndBrArgs: Future[(Seq[MAd], blk.RenderArgs)] = {
-      val _madsFut = madsFut
-      for {
-        brArgs <- brArgsStubFut
-        mads   <- _madsFut
-      } yield {
-        (mads, brArgs)
+    lazy val madsBrArgsFut: Future[Seq[blk.RenderArgs]] = {
+      madsFut flatMap { mads =>
+        val _szMult = szMult
+        val devScreenOpt = ctx.deviceScreenOpt
+        Future.traverse(mads) { mad =>
+          val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
+          bgImgOptFut map { bgImgOpt =>
+            _brArgsFor(mad, bgImgOpt)
+          }
+        }
       }
     }
 
     override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
-      madsAndBrArgs map { case (mads, brArgs) =>
-        val szMult = brArgs.szMult
+      madsFut map { mads =>
+        val _szMult = szMult
         mads
           .flatMap(_.id)
-          .map { adId => AdCssArgs(adId, szMult) }
+          .map { adId => AdCssArgs(adId, _szMult) }
       }
     }
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    override def adsCssRenderArgsFut: Future[immutable.Seq[CssRenderArgsT]] = {
-      madsAndBrArgs map { case (mads, brArgs) =>
-        mads
-          .iterator
-          .map { mad =>  blk.CssRenderArgs(mad, brArgs) }
+    override def adsCssRenderArgsFut: Future[immutable.Seq[IRenderArgs]] = {
+      madsBrArgsFut map { brArgss =>
+        brArgss
           .toStream
       }
     }
 
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
-      madsAndBrArgs map { case (mads, brArgs) =>
-        mads
+      madsBrArgsFut map { brArgss =>
+        brArgss
           .iterator
-          .flatMap { mad =>  mad2craIter(mad, brArgs, Nil) }
+          .flatMap { brArgs =>  mad2craIter(brArgs, Nil) }
           .toStream
       }
     }
@@ -220,18 +220,15 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
     lazy val madsRenderedFut: Future[Seq[T]] = {
       val _madsGroupedFut = madsGroupedFut
-      brArgsStubFut flatMap { brArgs0 =>
-        val devScreenOpt = ctx.deviceScreenOpt
-        _madsGroupedFut flatMap { mads1 =>
-          parTraverseOrdered(mads1) { (mad, index) =>
-            BgImg.maybeMakeBgImgWith(mad, Makers.Block, brArgs0.szMult, devScreenOpt)
-              .flatMap { bgImgOpt =>
-                val brArgs1 = brArgs0.copy(
-                  bgImg = bgImgOpt
-                )
-                renderMadAsync(mad, brArgs1)
-              }
-          }
+      val devScreenOpt = ctx.deviceScreenOpt
+      _madsGroupedFut flatMap { mads1 =>
+        val _szMult = szMult
+        parTraverseOrdered(mads1) { (mad, index) =>
+          BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
+            .flatMap { bgImgOpt =>
+              val brArgs1 = _brArgsFor(mad, bgImgOpt)
+              renderMadAsync(mad, brArgs1)
+            }
         }
       }
     }

@@ -40,8 +40,8 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       override def _scStateOpt = None
 
       /** Рендер заэкранного блока. Тут нужен JsString. */
-      override def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, madAndArgs = madAndArgs, index = index, producer = producer)
+      override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+        renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
           .map { html => JsString(html) }
       }
     }
@@ -176,7 +176,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       }
     }
 
-    lazy val mads2andBrArgsFut: Future[Seq[AdAndBrArgs]] = {
+    lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
       mads2Fut flatMap { mads =>
         val _ctx = ctx
         val _addCssClasses = addCssClasses
@@ -185,11 +185,11 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
             .map { brArgs =>
               val brArgs1 = brArgs.copy(
                 inlineStyles    = false,
-                withCssClasses  = _addCssClasses,
+                cssClasses      = _addCssClasses,
                 // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js.
                 blockStyle      = brArgs.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")
               )
-              AdAndBrArgs(mad, brArgs1) -> i
+              brArgs1 -> i
             }
         } map { resUnsorted =>
           // Восстановить исходный порядок:
@@ -201,7 +201,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     }
 
 
-    def mads4blkRenderFut: Future[Seq[AdAndBrArgs]] = {
+    def mads4blkRenderFut: Future[Seq[blk.RenderArgs]] = {
       mads2andBrArgsFut.map { mads =>
         if (_withHeadAd) mads.tail else mads // Caused by: java.lang.UnsupportedOperationException: tail of empty list
       }
@@ -223,12 +223,12 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       }
     }
     
-    def renderBlocks(madsCountInt: Int, mads4blkRender: Seq[AdAndBrArgs], producersMap: Map[String, MAdnNode]): Future[Seq[OBT]] = {
+    def renderBlocks(madsCountInt: Int, mads4blkRender: Seq[blk.RenderArgs], producersMap: Map[String, MAdnNode]): Future[Seq[OBT]] = {
       parTraverseOrdered(mads4blkRender, startIndex = _adSearch.offset) {
         (madAndArgs, index) =>
           renderOuterBlock(
             madsCountInt  = madsCountInt,
-            madAndArgs    = madAndArgs,
+            brArgs    = madAndArgs,
             index         = index,
             // TODO Нужно parTraverseOrdered() реализовать как flatMap (а не map), и тут можно добавить обработку отсутсвующего продьюсера.
             producer      = producersMap(madAndArgs.mad.producerId)
@@ -236,17 +236,17 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       }
     }
     
-    def renderBlockHtml(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[Html] = {
+    def renderBlockHtml(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[Html] = {
       Future {
-        _focusedAdTpl(madAndArgs.mad, index + 1, producer, adsCount = madsCountInt, brArgs = madAndArgs.brArgs)(ctx)
+        _focusedAdTpl(brArgs, index + 1, producer, adsCount = madsCountInt)(ctx)
       }
     }
     
     /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    def renderOuterBlock(madsCountInt: Int, madAndArgs: AdAndBrArgs, index: Int, producer: MAdnNode): Future[OBT]
+    def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT]
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
-    lazy val focAdOptFut: Future[Option[AdAndBrArgs]] = {
+    lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
       mads2andBrArgsFut.map(_.headOption)
     }
 
@@ -278,19 +278,18 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
     def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
       val _producerFut = focAdProducerOptFut.map(_.get)
-      val _madsHeadFut = focAdOptFut.map(_.get)
+      val _brArgsFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
       for {
         _producer     <- _producerFut
-        madsHead      <- _madsHeadFut
+        _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
       } yield {
         val _bgColor = _producer.meta.color getOrElse ShowcaseUtil.SITE_BGCOLOR_DFLT
         new FocusedAdsTplArgs {
-          override def mad        = madsHead.mad
           override def producer   = _producer
           override def bgColor    = _bgColor
-          override def brArgs     = madsHead.brArgs
+          override def brArgs     = _brArgs
           override def adsCount   = madsCountInt
           override def startIndex = _adSearch.offset
           override def jsStateOpt = _scStateOpt
@@ -301,7 +300,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.map { mba =>
-          AdCssArgs(mba.mad.id.get, mba.brArgs.szMult)
+          AdCssArgs(mba.mad.id.get, mba.szMult)
         }
       }
     }
@@ -309,7 +308,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.iterator
-          .flatMap { mba =>  mad2craIter(mba.mad, mba.brArgs, mba.brArgs.withCssClasses) }
+          .flatMap { mba =>  mad2craIter(mba, mba.cssClasses) }
           .toStream
       }
     }
@@ -318,7 +317,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     def addCssClasses = Seq("focused")
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    override def adsCssRenderArgsFut: Future[immutable.Seq[blk.CssRenderArgsT]] = {
+    override def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]] = {
       mads2andBrArgsFut.map { mbas =>
         mbas.toStream
       }

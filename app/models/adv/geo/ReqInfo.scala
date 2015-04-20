@@ -1,6 +1,6 @@
 package models.adv.geo
 
-import models.blk.IMadAndArgs
+import models.blk.IBrArgs
 import models.{blk, MAd, MAdvReq}
 
 /**
@@ -9,7 +9,7 @@ import models.{blk, MAd, MAdvReq}
  * Created: 20.04.15 13:47
  * Description: Adv ReqInfo -- данные для рендера шаблона с запросами размещения карточек.
  */
-trait IReqInfo extends IMadAndArgs {
+trait IReqInfo extends IBrArgs {
   /** Запрос размещения. */
   def req     : MAdvReq
 }
@@ -18,7 +18,6 @@ trait IReqInfo extends IMadAndArgs {
 /** Дефолтовая реализация [[IReqInfo]]. */
 case class ReqInfo(
   req     : MAdvReq,
-  mad     : MAd,
   brArgs  : blk.RenderArgs
 )
   extends IReqInfo
