@@ -23,6 +23,7 @@ trait MAdT
   with EMColorsI
   with EMDisableReasonI
   with EMRichDescrI
+  with EMModerationI
 {
   override type T <: MAdT
 }
@@ -48,6 +49,7 @@ trait MAdWrapperT extends MAdT {
   override def colors = wrappedAd.colors
   override def disableReason = wrappedAd.disableReason
   override def richDescrOpt = wrappedAd.richDescrOpt
+  override def moderation = wrappedAd.moderation
 
   /** Перед сохранением надо также проверять состояние исходного экземпляра. */
   override def isFieldsValid: Boolean = {

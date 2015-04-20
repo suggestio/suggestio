@@ -7,7 +7,7 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
-import io.suggest.ym.model.ad.MAdT
+import io.suggest.ym.model.ad.{ModerationInfo, MAdT}
 import io.suggest.model.common._
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.common.EMImg.Imgs_t
@@ -74,6 +74,7 @@ final case class MWelcomeAd(
   override def colors = Map.empty
   override def disableReason = Nil
   override def richDescrOpt = None
+  override def moderation = ModerationInfo.EMPTY
 }
 
 
