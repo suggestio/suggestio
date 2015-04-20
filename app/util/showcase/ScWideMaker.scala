@@ -25,7 +25,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Желаемые ширИны широкого бэкграунда. */
-  val WIDE_WIDTHS_PX: List[Int]  = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
+  val WIDE_WIDTHS_PX: List[Int] = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
 
   private def getConfSzsRow(confKeyPart: String, default: => List[Int]): List[Int] = {
     configuration.getIntSeq(s"blocks.bg.wide.$confKeyPart.px")
