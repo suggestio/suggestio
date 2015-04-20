@@ -1,4 +1,4 @@
-@(mad: MAd, adProducer: MAdnNode, advOk: MAdvOk, goBackTo: Option[String] = None)(implicit ctx: Context)
+@(args: adv.geo.IWndFullArgs, advOk: MAdvOk)(implicit ctx: Context)
 
 @* Отображение полноразмерной превьюшки, где внизу написано, что карточка одобрена. *@
 
@@ -6,7 +6,7 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 
-@_advWndFullTpl(mad, adProducer, goBackTo) {
+@_advWndFullTpl(args) {
   @* Тут раньше была цена за вычетом комиссии. Потом комиссия на уровне adv была выпилена, а ресиверы ушли на второй план. *@
   <p>@formatPrice(advOk.amount, advOk.currency)</p>
   [x] Предложение одобрено @_prettyDate(advOk.dateStatus).

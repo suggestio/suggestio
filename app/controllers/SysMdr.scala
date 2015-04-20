@@ -7,6 +7,7 @@ import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
+import util.showcase.ShowcaseUtil
 import scala.concurrent.ExecutionContext.Implicits.global
 import util.SiowebEsUtil.client
 import views.html.sys1.mdr._
@@ -70,24 +71,31 @@ class SysMdr @Inject() (
 
   /** Страница для модерации одной карточки. */
   def freeAdvMdr(adId: String) = IsSuperuser.async { implicit request =>
-    freeAdvMdrBody(adId, banFreeAdvFormM) map {
-      Ok(_)
-    }
+    freeAdvMdrBody(adId, banFreeAdvFormM)
+      .map { Ok(_) }
   }
 
   /** Рендер тела ответа. */
   private def freeAdvMdrBody(adId: String, banForm: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    MAd.getById(adId) flatMap { madOpt =>
-      val mad = madOpt.get
-      MAdnNodeCache.getById(mad.producerId) map { producerOpt =>
-        val producer = producerOpt.get
-        freeAdvMdrTpl(mad, producer, banForm)
+    val madFut = MAd.getById(adId)
+      .map(_.get)
+    val ctx = implicitly[Context]
+    madFut flatMap { mad =>
+      // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
+      val brArgsFut = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
+      val producerFut = MAdnNodeCache.getById(mad.producerId)
+        .map { _.get }
+      for {
+        brArgs <- brArgsFut
+        producer <- producerFut
+      } yield {
+        freeAdvMdrTpl(mad, producer, banForm, brArgs)(ctx)
       }
     }
   }
 
   /** Сколько попыток обновить данные по модерации надо делать, прежде чем бросать это дело? */
-  val UPDATE_MDR_TRY_MAX = 5
+  def UPDATE_MDR_TRY_MAX = 5
 
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
@@ -105,10 +113,11 @@ class SysMdr @Inject() (
         mad.saveModeration
           .recoverWith {
             case ex: VersionConflictEngineException =>
-              if (counter < UPDATE_MDR_TRY_MAX) {
+              val tryMax = UPDATE_MDR_TRY_MAX
+              if (counter < tryMax) {
                 // Счетчик попыток ещё не истёк. Повторить попытку.
                 val counter1 = counter + 1
-                debug(s"freeAdvMdrAccept($adId): ES said: 409 Version conflict. Retrying ($counter1/$UPDATE_MDR_TRY_MAX)...")
+                debug(s"freeAdvMdrAccept($adId): ES said: 409 Version conflict. Retrying ($counter1/$tryMax)...")
                 tryUpdate(counter1)
               } else {
                 Future failed new RuntimeException(s"Too many version conflicts: $counter, lastVsn = ${mad.versionOpt}", ex)
@@ -129,7 +138,7 @@ class SysMdr @Inject() (
       {formWithErrors =>
         debug(s"freeAdvMdrBan($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         freeAdvMdrBody(adId, formWithErrors)
-          .map { Ok(_) }
+          .map { NotAcceptable(_) }
       },
       {reason =>
         // Отклонено. Надо бы снять карточку из бесплатного размещения и выставить причину в результат модерации.
@@ -148,9 +157,10 @@ class SysMdr @Inject() (
             }
             mad.save.recoverWith {
               case ex: VersionConflictEngineException =>
-                if (counter < UPDATE_MDR_TRY_MAX) {
+                val tryMax = UPDATE_MDR_TRY_MAX
+                if (counter < tryMax) {
                   val counter1 = counter + 1
-                  debug(s"freeAdvMdrBan($adId): ES said: 409 Vsn conflict. Retrying ($counter1/$UPDATE_MDR_TRY_MAX)...")
+                  debug(s"freeAdvMdrBan($adId): ES said: 409 Vsn conflict. Retrying ($counter1/$tryMax)...")
                   tryUpdate(counter1)
                 } else {
                   Future failed new RuntimeException(s"Too many version conflicts: $counter, lastVsn = ${mad.versionOpt}", ex)

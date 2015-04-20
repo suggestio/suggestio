@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
-import models.im.make.{MakeArgs, Makers}
+import models.im.make.Makers
 import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
