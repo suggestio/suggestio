@@ -26,15 +26,15 @@ trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
    */
   def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId).async { implicit request =>
     import request.mad
-    val wideOptFut = AdRenderUtil.getWideCtxOpt(mad, args)
+    val bgImgOptFut = AdRenderUtil.getBgImgOpt(mad, args)
     // Рендер, когда асинхронные операции будут завершены.
-    wideOptFut map { wideCtxOpt =>
+    bgImgOptFut map { bgImgOpt =>
       val brArgs = blk.RenderArgs(
         szMult        = args.szMult,
         withEdit      = false,
         inlineStyles  = true,
-        wideBg        = wideCtxOpt,
-        blockStyle    = wideCtxOpt.map { wideCtx =>
+        bgImg         = bgImgOpt,
+        blockStyle    = bgImgOpt.filter(_.isWide).map { wideCtx =>
           // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
           val blockWidth = szMulted(mad.blockMeta.width, args.szMult)
           val leftPx = (wideCtx.szCss.width - blockWidth) / 2
