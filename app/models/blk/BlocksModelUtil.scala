@@ -1,5 +1,7 @@
 package models.blk
 
+import models.MAd
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -18,4 +20,10 @@ trait RelSz {
 }
 
 
-
+/** Интерфейс для целого ряда tpl-моделей. */
+trait IMadAndArgs {
+  /** Рекламная карточка. */
+  def mad     : MAd
+  /** Данные для block render. */
+  def brArgs  : RenderArgs
+}

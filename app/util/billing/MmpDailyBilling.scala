@@ -3,6 +3,7 @@ package util.billing
 import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
+import models.adv.geo.AdvFormEntry
 import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
@@ -16,14 +17,13 @@ import io.suggest.ym.parsers.Price
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.SiowebEsUtil.client
-import scala.util.{Success, Failure}
 import util.event.SiowebNotifier.Implicts.sn
 import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
 import de.jollyday.HolidayManager
 import java.net.URL
-import controllers.{AdvFormEntry, routes}
+import controllers.routes
 import scala.collection.JavaConversions._
 
 /**
@@ -202,7 +202,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
         val contractId = rcvrContract.id.get
         val rcvrPricing = MBillMmpDaily.getLatestForContractId(contractId).get
         val bmc = getAdModulesCount(mad)
-        val advPrice = MmpDailyBilling.calculateAdvPrice(bmc, rcvrPricing, adve)
+        val advPrice = calculateAdvPrice(bmc, rcvrPricing, adve)
         advPrice :: acc
       }
       val prices2 = prices

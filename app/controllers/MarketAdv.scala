@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.model.OptStrId
 import io.suggest.ym.model.common.EMAdNetMember
-import models.adv.geo.WndFullArgs
+import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.i18n.{MessagesApi, Messages}
@@ -17,6 +17,7 @@ import play.api.db.Database
 import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
+import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import util.xplay.SioHttpErrorHandler
 import views.html.lk.adv._
@@ -60,9 +61,10 @@ class MarketAdv @Inject() (
 
   /** Маппинг для вертикальных уровней отображения. */
   private def adSlsM: Mapping[Set[AdShowLevel]] = {
+    val b = boolean
     mapping(
-      "onStartPage" -> boolean,
-      "onRcvrCat"   -> boolean
+      "onStartPage" -> b,
+      "onRcvrCat"   -> b
     )
     {(onStartPage, onRcvrCat) =>
       var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
@@ -695,44 +697,74 @@ class MarketAdv @Inject() (
     // Отрабатываем делегирование adv-прав текущему узлу:
     val dgAdnIdsFut = MAdnNode.findIdsAdvDelegatedTo(adnId)
       .map { dgAdnIds =>
-        var dgAdnIdsList = dgAdnIds.toList
+        var iter = dgAdnIds.iterator
         // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
         if (request.adnNode.adn.isReceiver)
-          dgAdnIdsList ::= adnId
-        dgAdnIdsList
+          iter ++= Iterator(adnId)
+        iter.toSet
       }
-    val advsReqFut = dgAdnIdsFut.map { dgAdnIds =>
-      // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
-      val adnIdsSet = dgAdnIds.toSet
+
+    // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
+    val advsReqFut = dgAdnIdsFut.map { adnIdsSet =>
       // Получаем список реквестов, для всех необходимых ресиверов.
       db.withConnection { implicit c =>
         MAdvReq.findByRcvrs(adnIdsSet)
       }
     }(AsyncUtil.jdbcExecutionContext)
-    val madsFut = advsReqFut flatMap { advsReq =>
-      // Список рекламных карточек.
+
+    // Список рекламных карточек для отображения.
+    val madsFut = advsReqFut.flatMap { advsReq =>
       val adIds = advsReq
         .map(_.adId)
         .distinct
       // В фоне запрашиваем рекламные карточки, которые нужно модерачить.
       MAd.multiGet(adIds)
     }
-    for {
-      advsReq  <- advsReqFut
-      mads     <- madsFut
-    } yield {
-      // Строим карту adId -> MAdvReq
-      val advReqMap = advsReq
+    // Строим карту adId -> MAdvReq
+    val advsReqMapFut = advsReqFut map { advsReq =>
+      advsReq
         .map { advReq => advReq.adId -> advReq }
         .toMap
-      // Выстраиваем порядок рекламных карточек.
-      val reqsAndMads = mads
-        .map { mad =>
-          val madId = mad.id.get
-          advReqMap(madId) -> mad
+    }
+
+    implicit val ctx = implicitly[Context]
+    // Собираем данные по рендеру блоков карточек.
+    val devScreenOpt = ctx.deviceScreenOpt
+    val brArgsMapFut = madsFut.flatMap { mads =>
+      Future.traverse(mads) { mad =>
+        LkAdUtil.tiledAdBrArgs(mad, devScreenOpt)
+          .map { brArgs => mad.id.get -> brArgs }
+      }
+        .map { _.toMap }
+    }
+
+    // Объединяем все карты данных по карточкам.
+    val infosFut = for {
+      advsReqMap <- advsReqMapFut
+      mads       <- madsFut
+      brArgsMap  <- brArgsMapFut
+    } yield {
+      val madsRich = mads.flatMap { mad =>
+        for {
+          madId  <- mad.id
+          brArgs <- brArgsMap.get(madId)
+          advReq <- advsReqMap.get(madId)
+        } yield {
+          ReqInfo(advReq, mad, brArgs)
         }
-        .sortBy(_._1.id.get)
-      Ok(nodeAdvsTpl(request.adnNode, reqsAndMads))
+      }
+      // Выстраиваем порядок рекламных карточек на основе порядка запросов размещения: новые сверху.
+      madsRich.sortBy { info =>
+        info.req.id match {
+          case Some(id) => -id
+          case None     => Int.MaxValue
+        }
+      }
+    }
+
+    // Рендер результата.
+    infosFut map { infos =>
+      Ok( nodeAdvsTpl(request.adnNode, infos)(ctx) )
     }
   }
 
@@ -860,8 +892,4 @@ class MarketAdv @Inject() (
   }
 
 }
-
-sealed case class AdvFormEntry(
-  adnId: String, advertise: Boolean, showLevels: Set[SinkShowLevel], dateStart: LocalDate, dateEnd: LocalDate
-) extends AdvTerms
 

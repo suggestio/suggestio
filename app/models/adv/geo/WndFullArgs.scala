@@ -1,5 +1,6 @@
 package models.adv.geo
 
+import models.blk.IMadAndArgs
 import models.{blk, MAdnNode, MAd}
 
 /**
@@ -8,16 +9,16 @@ import models.{blk, MAdnNode, MAd}
  * Created: 20.04.15 11:44
  * Description: Контейнер для базовых параметров реднера popup-окна.
  */
-trait IWndFullArgs {
-  /** Рекламная карточка. */
-  def mad         : MAd
+trait IWndFullArgs extends IMadAndArgs {
+
   /** Узел-создатель рекламной карточки. */
   def adProducer  : MAdnNode
+
   /** Ссылка для возврата. */
   def goBackTo    : Option[String]
-  /** Параметры рендера карточки. */
-  def brArgs      : blk.RenderArgs
+
 }
+
 
 /** Дефолтовая реализация [[IWndFullArgs]]. */
 case class WndFullArgs(
