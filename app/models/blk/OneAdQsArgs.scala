@@ -77,7 +77,10 @@ object OneAdQsArgs {
           imgFmtB.unbind(key + IMG_FMT_SUF, Some(value.imgFmt)),
           wideOptB.unbind(key + WIDE_SUF,   value.wideOpt)
         )
-        val qs = qss.mkString("&")
+        val qs = qss
+          .iterator
+          .filter(!_.isEmpty)
+          .mkString("&")
         getQsbSigner(key).mkSigned(key, qs)
       }
     }
