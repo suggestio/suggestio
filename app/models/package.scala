@@ -164,7 +164,7 @@ package object models {
   type AdnSink              = AdnSinks.AdnSink
 
   type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
-  type MNodeAdsMode         = MNodeAdsModes.MNodeAdsMode
+  type MNodeAdsMode         = MNodeAdsModes.T
   type NodeRightPanelLink   = NodeRightPanelLinks.NodeRightPanelLink
   type BillingRightPanelLink= BillingRightPanelLinks.BillingRightPanelLink
   type LkLeftPanelLink      = LkLeftPanelLinks.LkLeftPanelLink

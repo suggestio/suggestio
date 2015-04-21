@@ -188,6 +188,7 @@ class MarketLkAdn @Inject() (
         val extAdOptFut = newAdIdOpt match {
           case Some(newAdId) =>
             MAd.getById(newAdId)
+              // Проверяем права доступа текущего узла на new-отображаемую карточку.
               .map { _.filter { mad =>
                 mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
               } }
@@ -348,7 +349,7 @@ class MarketLkAdn @Inject() (
               }
               nodeUpdateFut.map { _adnId =>
                 Billing.maybeInitializeNodeBilling(adnId)
-                Redirect(routes.MarketLkAdn.showAdnNode(adnId))
+                Redirect(routes.MarketLkAdn.showNodeAds(adnId))
                   .flashing("success" -> "Регистрация завершена.")
                   .withSession(Keys.PersonId.name -> personId)
               }

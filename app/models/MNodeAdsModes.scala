@@ -22,26 +22,26 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy {
     def qsbOption: Option[String] = Some(shortId)
   }
 
-  type MNodeAdsMode = Val
+  type T = Val
 
 
-  val ALL_ADS: MNodeAdsMode = new Val("a") {
+  val ALL_ADS: T = new Val("a") {
     override def qsbOption: Option[String] = None
   }
 
-  val ADV_REQ_ADS: MNodeAdsMode = new Val("r") with QsbOptionCurrent
+  val ADV_REQ_ADS: T = new Val("r") with QsbOptionCurrent
 
-  val ADV_OK_ADS: MNodeAdsMode = new Val("o") with QsbOptionCurrent
+  val ADV_OK_ADS: T = new Val("o") with QsbOptionCurrent
 
 
-  implicit def value2val(x: Value): MNodeAdsMode = x.asInstanceOf[MNodeAdsMode]
+  implicit def value2val(x: Value): T = x.asInstanceOf[T]
 
   /** qsb-аддон, линкуемый в routes. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]) = {
-    new QueryStringBindable[MNodeAdsMode] {
+  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
       import util.qsb.QsbUtil._
 
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeAdsMode]] = {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {
           maybeModeStr <- strOptB.bind(key, params)
         } yield {
@@ -55,7 +55,7 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy {
         }
       }
 
-      override def unbind(key: String, value: MNodeAdsMode): String = {
+      override def unbind(key: String, value: T): String = {
         strOptB.unbind(key, value.qsbOption)
       }
     }
