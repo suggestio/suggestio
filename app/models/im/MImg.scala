@@ -6,7 +6,7 @@ import java.util.UUID
 
 import io.suggest.model.{MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
-import models.{ImgCrop, ImgMetaI, MImgInfoMeta}
+import models.{ImgCrop, ImgMetaI, MImgInfoMeta, MImgInfoT}
 import org.joda.time.DateTime
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -84,7 +84,8 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
   }
 
   /** routes-биндер для query-string. */
-  implicit def qsb(implicit strB: QueryStringBindable[String], imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]) = {
+  implicit def qsb(implicit strB: QueryStringBindable[String],
+                   imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]] ): QueryStringBindable[MImg] = {
     new QueryStringBindable[MImg] {
 
       /** Создать подписывалку для qs. */
@@ -136,6 +137,10 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
    */
   def apply(filename: String): MImg = {
     parseAll(fileName2miP, filename).get
+  }
+
+  implicit def apply(imgInfo: MImgInfoT): MImg = {
+    apply(imgInfo.filename)
   }
 
   /**

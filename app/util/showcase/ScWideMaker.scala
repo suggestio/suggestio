@@ -148,8 +148,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
    */
   override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
     import args._
-    val iik = MImg( img.filename )
-    val iikOrig = iik.original
+    val iikOrig = img.original
     // Собираем хвост параметров сжатия.
     val devScreen = args.devScreenOpt getOrElse DevScreen.default
     val pxRatio = devScreen.pixelRatio
@@ -161,7 +160,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
     val cropWidth = szMulted(cropWidthCssPx, pxRatio.pixelRatio)
     // Запустить сбор инфы по кропу.
     val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
-    val cropInfoFut = getWideCropInfo(iik, wideWh)
+    val cropInfoFut = getWideCropInfo(img, wideWh)
     // Начинаем собирать список трансформаций по ресайзу:
     val compression = args.compressMode
       .getOrElse(CompressModes.Bg)
@@ -198,7 +197,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
       MakeResult(
         szCss       = szCss,
         szReal      = wideWh,
-        dynCallArgs = iik.copy(dynImgOps = imOps2),
+        dynCallArgs = img.copy(dynImgOps = imOps2),
         isWide      = true
       )
     }

@@ -67,12 +67,10 @@ object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
 
     val szCss = MImgInfoMeta(height = szRounded(heightCssRaw),  width = widthCssPx)
 
-    val iik = MImg(args.img.filename)
-
     MakeResult(
       szCss       = szCss,
       szReal      = szReal,
-      dynCallArgs = iik.copy(dynImgOps = imOps),
+      dynCallArgs = args.img.copy(dynImgOps = imOps),
       isWide      = true
     )
   }

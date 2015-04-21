@@ -3,7 +3,7 @@ package models.im.make
 import io.suggest.ym.model.common.IBlockMeta
 import models.blk.SzMult_t
 import models.MImgInfoT
-import models.im.{CompressMode, DevScreenT}
+import models.im.{MImg, CompressMode, DevScreenT}
 
 /**
  * Suggest.io
@@ -18,7 +18,7 @@ trait IMakeArgs {
   def devScreenOpt: Option[DevScreenT]
 
   /** Картинка для обработки. У рекламной карточки в теории может быть несколько картинок. */
-  def img: MImgInfoT
+  def img: MImg
 
   /** Метаданные исходного блока. А вообще тут размеры объекта, к которому относится эта картинка. */
   def blockMeta: IBlockMeta
@@ -33,7 +33,7 @@ trait IMakeArgs {
 
 /** Дефолтовая реализация [[IMakeArgs]]. */
 case class MakeArgs(
-  override val img          : MImgInfoT,
+  override val img          : MImg,
   override val blockMeta    : IBlockMeta,
   override val szMult       : SzMult_t,
   override val devScreenOpt : Option[DevScreenT],

@@ -77,7 +77,6 @@ object BlkImgMaker extends IMaker {
   /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
   private def icompileSync(args: IMakeArgs): IMakeResult = {
     import args._
-    val oiik = MImg(img.filename)
     val devScreen = devScreenOpt getOrElse {
       DevScreen(
         width = 1024,
@@ -107,7 +106,7 @@ object BlkImgMaker extends IMaker {
     imOpsAcc ::= ImFilters.Lanczos
 
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = oiik.copy(dynImgOps = oiik.dynImgOps ++ imOpsAcc)
+    val dargs = img.copy(dynImgOps = img.dynImgOps ++ imOpsAcc)
     MakeResult(
       szCss = args.blockMeta,
       szReal = szReal,

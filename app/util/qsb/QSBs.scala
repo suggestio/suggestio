@@ -1,13 +1,13 @@
 package util.qsb
 
-import com.typesafe.scalalogging.slf4j.Logger
-import io.suggest.ym.model.common.MImgSizeT
+import io.suggest.ym.model.common.{BlockMeta, IBlockMeta, MImgSizeT}
 import play.api.mvc.QueryStringBindable
 import models._
 import util.PlayLazyMacroLogsImpl
 import util.img.PicSzParsers
 import util.secure.SecretGetter
 import play.api.Play.{current, isProd}
+import scala.language.implicitConversions
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -27,12 +27,12 @@ object QsbUtil {
 }
 
 
-object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil {
+object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with BlockMetaBindable {
 
   private def companyNameSuf = ".meta.name"
 
   /** qsb для MCompany. */
-  implicit def mcompanyQSB(implicit strBinder: QueryStringBindable[String]) = {
+  implicit def mcompanyQSB(implicit strBinder: QueryStringBindable[String]): QueryStringBindable[MCompany] = {
     new QueryStringBindable[MCompany] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCompany]] = {
         for {
@@ -52,7 +52,8 @@ object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil {
 
 
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
-  implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String], intB: QueryStringBindable[Int]) = {
+  implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
+                               intB: QueryStringBindable[Int]): QueryStringBindable[NodeGeoLevel] = {
     new QueryStringBindable[NodeGeoLevel] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NodeGeoLevel]] = {
         val nglOpt: Option[NodeGeoLevel] = intB.bind(key, params)
@@ -94,7 +95,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil {
   }
 
   /** qsb для бинда значения длины*ширины из qs. */
-  implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]) = {
+  implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgInfoMeta] = {
     new QueryStringBindable[MImgInfoMeta] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
         strB.bind(key, params).map { maybeWxh =>
@@ -117,7 +118,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil {
 
   type NglsStateMap_t = Map[NodeGeoLevel, Boolean]
 
-  implicit def nglsMapQsb = {
+  implicit def nglsMapQsb: QueryStringBindable[NglsStateMap_t] = {
     new QueryStringBindable[NglsStateMap_t] with PlayLazyMacroLogsImpl {
       import LOGGER._
 
@@ -200,6 +201,56 @@ trait AdsCssQsbUtil {
         // Вернуть подписанный результат
         val res = sb.toString()
         getSigner.mkSigned(key, res)
+      }
+    }
+  }
+
+}
+
+
+/** Трейт поддержки биндингов для IBlockMeta. */
+trait BlockMetaBindable {
+
+  implicit def blockMetaQsb(implicit intB: QueryStringBindable[Int],
+                            boolB: QueryStringBindable[Boolean]): QueryStringBindable[IBlockMeta] = {
+    new QueryStringBindable[IBlockMeta] {
+      def WIDTH_SUF     = ".a"
+      def HEIGHT_SUF    = ".b"
+      def BLOCK_ID_SUF  = ".c"
+      def IS_WIDE_SUF   = ".d"
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IBlockMeta]] = {
+        for {
+          maybeWidth    <- intB.bind(key + WIDTH_SUF, params)
+          maybeHeight   <- intB.bind(key + HEIGHT_SUF, params)
+          maybeBlockId  <- intB.bind(key + BLOCK_ID_SUF, params)
+          maybeIsWide   <- boolB.bind(key + IS_WIDE_SUF, params)
+        } yield {
+          for {
+            width   <- maybeWidth.right
+            height  <- maybeHeight.right
+            blockId <- maybeBlockId.right
+            isWide  <- maybeIsWide.right
+          } yield {
+            BlockMeta(
+              width   = width,
+              height  = height,
+              blockId = blockId,
+              wide    = isWide
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: IBlockMeta): String = {
+        Iterator(
+          intB.unbind(key + WIDTH_SUF,    value.width),
+          intB.unbind(key + HEIGHT_SUF,   value.height),
+          intB.unbind(key + BLOCK_ID_SUF, value.blockId),
+          boolB.unbind(key + IS_WIDE_SUF, value.wide)
+        )
+          .filter(!_.isEmpty)
+          .mkString("&")
       }
     }
   }
