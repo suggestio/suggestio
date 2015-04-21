@@ -85,8 +85,10 @@ object BlkImgMaker extends IMaker {
         pixelRatioOpt = None
       )
     }
-    // Генерим dynImg-ссылку на картинку.
-    val fgc = devScreen.pixelRatio.fgCompression
+    // Компрессия выходной картинки, желательно как fg её сжимать.
+    val fgc = args.compressMode
+      .getOrElse(CompressModes.Fg)
+      .fromDpr(devScreen.pixelRatio)
 
     // Настройки сохранения результирующей картинки (аккамулятор).
     var imOpsAcc: List[ImOp] = List(

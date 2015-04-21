@@ -1,7 +1,9 @@
 package models
 
+import io.suggest.model.EnumValue2Val
 import io.suggest.util.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -9,34 +11,40 @@ import play.api.mvc.QueryStringBindable
  * Created: 27.08.14 15:54
  * Description: Модель, описывающая допустимые режимы отображения списка рекламных карточек узла.
  */
-object MNodeAdsModes extends Enumeration with MacroLogsImplLazy {
+object MNodeAdsModes extends Enumeration with MacroLogsImplLazy with EnumValue2Val {
 
   import LOGGER._
 
-  abstract protected class Val(val shortId: String) extends super.Val(shortId) {
-    def qsbOption: Option[String]
-  }
-
-  protected sealed trait QsbOptionCurrent {
-    def shortId: String
+  /**
+   * Экзепляр модели.
+   * @param shortId Уникальный строковой id экземпляра.
+   */
+  protected class Val(val shortId: String) extends super.Val(shortId) {
+    /**
+     * Значение модели обязателено в контроллере, но опционально в query string.
+     * И при unbind() надо обрабатывать указанное значение указанным образом.
+     * @return None для дефолтового значения, т.е. если qsb.unbind() текущего экземпляра нужно маппить на "".
+     *         Some(), когда выбран недефолтовый режим.
+     */
     def qsbOption: Option[String] = Some(shortId)
   }
 
-  type T = Val
+  override type T = Val
 
 
+  /** Режим отображения всех карточек. */
   val ALL_ADS: T = new Val("a") {
     override def qsbOption: Option[String] = None
   }
 
-  val ADV_REQ_ADS: T = new Val("r") with QsbOptionCurrent
+  /** Режим отображения только карточек, которые находятся на рассмотрении у других узлов. */
+  val ADV_REQ_ADS: T = new Val("r")
 
-  val ADV_OK_ADS: T = new Val("o") with QsbOptionCurrent
+  /** Отображение принятых к отображению на узлах карточек. */
+  val ADV_OK_ADS: T = new Val("o")
 
 
-  implicit def value2val(x: Value): T = x.asInstanceOf[T]
-
-  /** qsb-аддон, линкуемый в routes. */
+  /** qsb-маппер, линкуемый в routes. */
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
     new QueryStringBindable[T] {
       import util.qsb.QsbUtil._

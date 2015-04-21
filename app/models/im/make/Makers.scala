@@ -2,6 +2,7 @@ package models.im.make
 
 import io.suggest.model.EnumMaybeWithName
 import util.blocks.BlkImgMaker
+import util.img.StrictWideMaker
 import util.showcase.ScWideMaker
 
 /**
@@ -36,6 +37,11 @@ object Makers extends Enumeration with EnumMaybeWithName {
     * заданные в редакторе карточек. */
   val Block = new Val("blk") with IMakerWrapper {
     override def _underlying = BlkImgMaker
+  }
+
+  /** Жесткий wide-рендер под обязательно заданный экран. */
+  val StrictWide = new Val("sw") with IMakerWrapper {
+    override def _underlying = StrictWideMaker
   }
 
 }

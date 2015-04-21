@@ -1,5 +1,6 @@
 package models.im
 
+import io.suggest.model.EnumValue2Val
 import play.api.Play.{current, configuration}
 
 /**
@@ -9,25 +10,23 @@ import play.api.Play.{current, configuration}
  * Description: Модель, хранящая стандартные пиксельны плотности экранов для разных режимов картинки.
  * @see [[http://www.devicepixelratio.com/]].
  */
-object DevPixelRatios extends Enumeration {
+object DevPixelRatios extends Enumeration with EnumValue2Val {
 
   /**
    * Экземпляр модели.
    * @param name Название семейства экранов.
    */
-  protected abstract sealed class Val(val name: String) extends super.Val(name) {
-    def pixelRatio: Float
-
+  protected abstract sealed class Val(val name: String) extends super.Val(name) with IDevPixelRatio /*{
     val bgCompression: ImCompression
     val fgCompression: ImCompression
-  }
+  }*/
 
 
-  type DevPixelRatio = Val
+  override type T = Val
 
 
   /** Единичная плотность пикселей. Некогда (до середины 2013 года) самые дефолтовые девайсы. */
-  val MDPI: DevPixelRatio = new Val("MDPI") {
+  val MDPI: T = new Val("MDPI") {
     override def pixelRatio: Float = 1.0F
 
     // Используется SF_1x1 (т.е. откл.), иначе на контрастных переходах появляются заметные "тучи" на монотонных кусках.
@@ -50,7 +49,7 @@ object DevPixelRatios extends Enumeration {
 
 
   /** Только на андройдах есть такое. */
-  val HDPI: DevPixelRatio = new Val("HDPI") {
+  val HDPI: T = new Val("HDPI") {
     override def pixelRatio: Float = 1.5F
     override val bgCompression = ImCompression(
       name = name,
@@ -68,7 +67,7 @@ object DevPixelRatios extends Enumeration {
 
 
   /** Андройд-девайсы и т.ч. retina, т.е. iphone4+ и прочие яблодевайсы после 2013 г. */
-  val XHDPI: DevPixelRatio = new Val("XHDPI") {
+  val XHDPI: T = new Val("XHDPI") {
     override def pixelRatio: Float = 2.0F
     override val bgCompression = ImCompression(
       name = name,
@@ -86,7 +85,7 @@ object DevPixelRatios extends Enumeration {
 
 
   /** На середину 2014 года, это только топовые андройды. Разрешение экрана соотвествует HD1080. */
-  val DPR3: DevPixelRatio = new Val("DPR3") {
+  val DPR3: T = new Val("DPR3") {
     override def pixelRatio: Float = 3.0F
     override val bgCompression = ImCompression(
       name = name,
@@ -103,9 +102,11 @@ object DevPixelRatios extends Enumeration {
   }
 
 
-  implicit def value2val(x: Value): DevPixelRatio = x.asInstanceOf[DevPixelRatio]
-
-  /** Дефолтовое значение DPR, когда нет другого. */
+  /** 
+   * Дефолтовое значение DPR, когда нет другого.
+   * @return 1.0, т.к. если клиентский браузер не сообщает плотность пикселей, то значит там античный мусор
+   *         с плотностью 1.0
+   */
   def default = MDPI
 
   /**
@@ -113,18 +114,18 @@ object DevPixelRatios extends Enumeration {
    * @param ratio Значение плотности пикселей.
    * @return DevPixelRatio.
    */
-  def forRatio(ratio: Float): DevPixelRatio = {
+  def forRatio(ratio: Float): T = {
     values
       .find { v =>
-        val dpi: DevPixelRatio = v
+        val dpi: T = v
         (dpi.pixelRatio >= ratio) || (dpi.pixelRatio * 1.1 > ratio)
       }
-      .fold [DevPixelRatio] { values.last } { v => v }
+      .fold [T] { values.last } { v => v }
   }
 
 
   /** Если pixel ratio не задан, то взять дефолтовый, используемый для bgImg. */
-  def pxRatioDefaulted(pxRatioOpt: Option[DevPixelRatio]): DevPixelRatio = {
+  def pxRatioDefaulted(pxRatioOpt: Option[T]): T = {
     if (pxRatioOpt.isDefined) pxRatioOpt.get else default
   }
 
@@ -184,5 +185,14 @@ sealed case class ImCompression(
     }
   }
 
+}
+
+/** Интерфейс экземпляров модели [[DevPixelRatios]]. */
+trait IDevPixelRatio {
+  def name: String
+  def pixelRatio: Float
+
+  def bgCompression: ImCompression
+  def fgCompression: ImCompression
 }
 

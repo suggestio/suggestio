@@ -1,7 +1,7 @@
 package util.showcase
 
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.blk.{SzMult_t, szMulted}
+import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.{ImgCrop, MImgSizeT}
@@ -154,7 +154,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
     val devScreen = args.devScreenOpt getOrElse DevScreen.default
     val pxRatio = devScreen.pixelRatio
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val tgtHeightCssRaw = szMulted(blockMeta.height, szMult)
+    val tgtHeightCssRaw = szMultedF(blockMeta.height, szMult)
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
     // Ширину экрана квантуем, получая ширину картинки.
     val cropWidthCssPx = normWideWidthBgSz(devScreen.width)
@@ -163,15 +163,17 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
     val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
     val cropInfoFut = getWideCropInfo(iik, wideWh)
     // Начинаем собирать список трансформаций по ресайзу:
-    val bgc = pxRatio.bgCompression
+    val compression = args.compressMode
+      .getOrElse(CompressModes.Bg)
+      .fromDpr(pxRatio)
     val imOps0 = List[ImOp](
       // 2015.mar.11: Вписать откропанное изображение в примерно необходимые размеры. До это кроп был внутри ресайза.
       AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = 0) /*, Seq(ImResizeFlags.FillArea)*/ ),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
-      bgc.chromaSubSampling,
-      bgc.imQualityOp
+      compression.chromaSubSampling,
+      compression.imQualityOp
     )
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
     val imOps2Fut = cropInfoFut
@@ -186,7 +188,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
       }
     // Вычислить размер картинки в css-пикселях.
     val szCss = MImgInfoMeta(
-      height = tgtHeightCssRaw.toInt,
+      height = szRounded(tgtHeightCssRaw),
       width  = cropWidthCssPx
     )
     // Дождаться результатов рассчета картинки и вернуть контейнер с результатами.

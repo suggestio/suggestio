@@ -19,11 +19,21 @@ package object blk {
   type FontSize    = FontSizes.FontSize
 
 
+  // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.
   def szMulted(origPx: Int, szMult: SzMult_t): Int = {
     szMulted(origPx.toFloat, szMult)
   }
   def szMulted(origPx: SzMult_t, szMult: SzMult_t): Int = {
-    Math.round(origPx * szMult)
+    szRounded( szMultedF(origPx, szMult) )
+  }
+  def szMultedF(origPx: Int, szMult: SzMult_t): SzMult_t = {
+    szMultedF(origPx.toFloat, szMult)
+  }
+  def szMultedF(origPx: SzMult_t, szMult: SzMult_t): SzMult_t = {
+    origPx * szMult
+  }
+  def szRounded(sz: SzMult_t): Int = {
+    Math.round(sz)
   }
 
 }

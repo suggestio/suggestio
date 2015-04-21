@@ -44,24 +44,19 @@ object AdRenderUtil {
       // Фоновая картинка у карточки задана.
       case Some(bgImg) =>
         // Высота виртуального экрана и плотность пикселей всегда одинаковая.
-        val pxRatioOpt = Some(DevPixelRatios.MDPI)
-        val height = szMulted(mad.blockMeta.height, args.szMult)
+        val dscrF = DevScreen(
+          _ : Int,
+          height = szMulted(mad.blockMeta.height, args.szMult),
+          pixelRatioOpt = Some(DevPixelRatios.MDPI)
+        )
         // Дальше есть выбор между wide и не-wide рендером.
         val (maker, dscr) = args.wideOpt match {
           case Some(wide) =>
-            val dscr = DevScreen(
-              width  = wide.width,
-              height = height,
-              pixelRatioOpt = pxRatioOpt
-            )
-            (Makers.ScWide, dscr)
+            (Makers.StrictWide, dscrF(wide.width))
           // Нет wide-аргументов. Рендерим как block.
           case None =>
-            val dscr = DevScreen(
-              width  = szMulted(mad.blockMeta.width, args.szMult),
-              height = height,
-              pixelRatioOpt = pxRatioOpt
-            )
+            val width = szMulted(mad.blockMeta.width, args.szMult)
+            val dscr = dscrF(width)
             (Makers.Block, dscr)
         }
         val margs = MakeArgs(bgImg, mad.blockMeta, args.szMult, Some(dscr))
@@ -92,9 +87,9 @@ object AdRenderUtil {
     // Запускаем генерацию результата
     val fmt = adArgs.imgFmt
     val renderArgs = AdRenderArgs.RENDERER.forArgs(
-      src         = adImgLocalUrl(adArgs),
-      scrSz       = MImgInfoMeta(width = extWidth, height = height),
-      outFmt      = fmt
+      src    = adImgLocalUrl(adArgs),
+      scrSz  = MImgInfoMeta(width = extWidth, height = height),
+      outFmt = fmt
     )
     renderArgs.renderCached
   }

@@ -48,7 +48,8 @@ object DevScreen extends DevScreenParsers {
 }
 
 
-/** Интерфейс модели. Для большинства случаев его достаточно. */
+/** Интерфейс модели. Для большинства случаев его достаточно.
+  * width и height задаются в css-пикселях. */
 trait DevScreenT extends MImgSizeT with ImgOrientationT {
 
   /** Пиксельная плотность экрана. */
@@ -59,6 +60,12 @@ trait DevScreenT extends MImgSizeT with ImgOrientationT {
 }
 
 
+/**
+ * Данные по экрану.
+ * @param width Ширина в css-пикселях.
+ * @param height Высота в css-пикселях.
+ * @param pixelRatioOpt Плотность пикселей, если известна.
+ */
 case class DevScreen(
   width         : Int,
   height        : Int,

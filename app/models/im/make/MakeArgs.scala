@@ -3,7 +3,7 @@ package models.im.make
 import io.suggest.ym.model.common.IBlockMeta
 import models.blk.SzMult_t
 import models.MImgInfoT
-import models.im.DevScreenT
+import models.im.{CompressMode, DevScreenT}
 
 /**
  * Suggest.io
@@ -26,6 +26,8 @@ trait IMakeArgs {
   /** Коэфф. масштабирования. */
   def szMult: SzMult_t
 
+  /** Используемая программа компрессии картинки вместо дефолтовой. */
+  def compressMode: Option[CompressMode]
 }
 
 
@@ -34,6 +36,7 @@ case class MakeArgs(
   override val img          : MImgInfoT,
   override val blockMeta    : IBlockMeta,
   override val szMult       : SzMult_t,
-  override val devScreenOpt : Option[DevScreenT]
+  override val devScreenOpt : Option[DevScreenT],
+  override val compressMode : Option[CompressMode] = None
 )
   extends IMakeArgs

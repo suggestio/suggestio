@@ -17,6 +17,7 @@ import util.lk.LkAdUtil
 import scala.concurrent.Future
 import views.html.lk.adn._
 import views.html.lk.usr._
+import views.html.lk.{lkList => lkListTpl}
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
@@ -46,7 +47,7 @@ class MarketLkAdn @Inject() (
     for {
       mnodes      <- mnodesFut
     } yield {
-      Ok(views.html.lk.lkList(mnodes, request.mnodeOpt))
+      Ok(lkListTpl(mnodes, request.mnodeOpt))
     }
   }
 
