@@ -6,64 +6,46 @@
 @import ctx._
 @import stuff._
 @import util.img.DynImgUtil._
+@import sys1.stuff.proptable._
 
 @sysImgBase(
   title = img.rowKeyStr + " (" + (if(img.isOriginal) "оригинал" else "дериватив") + ")"
 ) {
 
   @* Рендер разных метаданных о картинке. *@
-  <table>
-    <thead>
-      <tr>
-        <th>Ключ</th>
-        <th>Значение</th>
-      </tr>
-    </thead>
+  @_ptableTpl() {
+    @_ptableRowTpl("rowKey", title = Some("rowKey UUID: " + img.rowKey)) {
+      @img.rowKeyStr
+    }
 
-    <tbody>
-      <tr>
-        <td>rowKey</td>
-        <td title="rowKey UUID: @img.rowKey">@img.rowKeyStr</td>
-      </tr>
-
-      @metaOpt.map { meta =>
-        <tr>
-          <td>meta.map</td>
-          <td>@meta.md.mkString(", ")</td>
-        </tr>
-        <tr>
-          <td title="Column qualifier">meta.qr</td>
-          <td>@meta.q</td>
-        </tr>
-        <tr>
-          <td>timestamp</td>
-          <td>@_prettyDate(meta.timestamp, withSpan = true)</td>
-        </tr>
+    @metaOpt.map { meta =>
+      @_ptableRowTpl("meta.map") {
+        @meta.md.mkString(", ")
       }
-
-      @if(img.hasImgOps) {
-        <tr>
-          <td>img ops</td>
-          <td>
-            @img.dynImgOps.iterator.map { op =>
-              <strong title="@op.opCode">@messages("im.op." + op.opCode.strId)</strong>:
-              @op.unwrappedValue  @op.i18nValueCode.map(messages(_))  (@op.qsValue)
-              <br/>
-            }
-          </td>
-        </tr>
+      @_ptableRowTpl("meta.q", title = Some("Column qualifier")) {
+        @meta.q
       }
-
-      @if(!img.isOriginal) {
-        <tr>
-          <td>original</td>
-          <td>
-            <a href="@routes.SysImg.showOne(img.original)">Перейти</a>
-          </td>
-        </tr>
+      @_ptableRowTpl("timestamp") {
+        @_prettyDate(meta.timestamp, withSpan = true)
       }
-    </tbody>
-  </table>
+    }
+
+    @if(img.hasImgOps) {
+      @_ptableRowTpl("img ops") {
+        @img.dynImgOps.iterator.map { op =>
+          <strong title="@op.opCode">@messages("im.op." + op.opCode.strId)</strong>:
+          @op.unwrappedValue  @op.i18nValueCode.map(messages(_))  (@op.qsValue)
+          <br/>
+        }
+      }
+    }
+
+    @if(!img.isOriginal) {
+      @_ptableRowTpl("original") {
+        <a href="@routes.SysImg.showOne(img.original)">К оригиналу...</a>
+      }
+    }
+  }
 
 
   @* Рендер самой картинки. *@

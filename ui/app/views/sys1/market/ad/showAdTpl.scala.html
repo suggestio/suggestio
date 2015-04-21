@@ -3,6 +3,7 @@
 @import models.im.OutImgFmts.JPEG
 @import ctx.messages
 @import msc.OneAdRenderVariants._
+@import im.MImg
 
 @sysAdBase(
   title   = "Карточка " + mad.id.get,
@@ -53,5 +54,16 @@
       }
     </ul>
   </div>
+
+  <br/>
+
+  <div>
+    Картинки карточки:
+    @mad.imgs.iterator.map { case (k, v) =>
+      <a href="@routes.SysImg.showOne( MImg(v.filename) )">
+        <strong>@k</strong>
+      </a>,
+    }
+  <div>
 
 }
