@@ -154,7 +154,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
     val devScreen = args.devScreenOpt getOrElse DevScreen.default
     val pxRatio = devScreen.pixelRatio
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val tgtHeightCssRaw = blockMeta.height * szMult
+    val tgtHeightCssRaw = szMulted(blockMeta.height, szMult)
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
     // Ширину экрана квантуем, получая ширину картинки.
     val cropWidthCssPx = normWideWidthBgSz(devScreen.width)

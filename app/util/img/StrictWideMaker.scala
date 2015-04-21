@@ -1,6 +1,8 @@
 package util.img
 
+import models.blk.{SzMult_t, szMulted}
 import models.im.make.{IMakeResult, IMakeArgs, IMaker}
+import models.im._
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -28,6 +30,7 @@ object StrictWideMaker extends IMaker {
    * @return Фьючерс с экземпляром [[models.im.make.IMakeResult]].
    */
   override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[IMakeResult] = {
+    val devScreen = args.devScreenOpt getOrElse DevScreen.default
     ???
   }
 

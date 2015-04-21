@@ -72,6 +72,7 @@ Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль
 Confirm.new.password=Подтвердите новый пароль
+Confirm.password=Подтвердите пароль
 New.password=Новый пароль
 New.password.saved=Новый пароль сохранен.
 

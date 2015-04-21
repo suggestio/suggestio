@@ -72,6 +72,7 @@ Type.current.password=Type current password
 Password.reset=Password reset
 Type.new.password=Type new password
 Confirm.new.password=Confirm new password
+Confirm.password=Confirm password
 New.password=New password
 New.password.saved=New password saved.
 
