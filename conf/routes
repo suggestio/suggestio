@@ -178,6 +178,9 @@ GET  /sys/ad/:adId/show                 @controllers.SysMarket.showAd(adId)
 GET  /sys/ad/:adId/rcvrs/analyze        @controllers.SysMarket.analyzeAdRcvrs(adId)
 POST /sys/ad/:adId/rcvrs/reset          @controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
 POST /sys/ad/:adId/rcvrs/clean          @controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
+# sys.ad.render - диагностический рендер одиночных карточек в html и картинки.
+GET  /sys/ad/:adId/one/render/:rvar     @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
+POST /sys/ad/:adId/one/render/:rvar     @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
 
 GET  /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
 POST /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])

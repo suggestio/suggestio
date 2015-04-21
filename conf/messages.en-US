@@ -606,3 +606,6 @@ isuggest=isuggest
 
 Please.close.this.wnd.if.not.closed.auto=Please, close this window, if it not closed automatically.
 
+e.sz.mult.too.low=Size multiplifier is too low.
+e.sz.mult.too.high=Size multiplifier is too high.
+

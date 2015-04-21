@@ -4,6 +4,7 @@ import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
+import models.blk.SzMult_t
 import models.stat.{ScStatActions, ScStatAction}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
@@ -727,93 +728,27 @@ object FormUtil {
       .transform [Lang] (_.get, Some.apply)
   }
 
-}
 
-
-/** Сериализатор данных в поле формы, пригодное для передачи на клиент и возврату обратно.
-  * Структура отражает Map[String, String] на Json + gzip + base64.
-  * {"ad.offer.text1.value" : "рекламо", "ad.offer.text1.color" : "FFFFFF", ...}.
-  */
-object FormDataSerializer extends PlayLazyMacroLogsImpl {
-  import play.api.libs.json._
-  import LOGGER._
-
-  val ENCODING = "ISO-8859-1"
-
-  /** Сериализация Form.data или любой другой совместимой коллекции. */
-  def serializeData(data: GenTraversableOnce[(String, String)]): String = {
-    // Нано-оптимизация: вместо mapValues() + toSeq() намного эффективнее юзать foldLeft[List]
-    val dataJs = data.foldLeft[List[(String, JsValue)]] (Nil) {
-      case (acc, (k, v))  =>  k -> JsString(v) :: acc
-    }
-    val jsonStr = JsObject(dataJs).toString()
-    // Сжимаем
-    compress(jsonStr)
+  /** Маппер для версии документа elasticsearch. */
+  def esVsnM: Mapping[Long] = {
+    longNumber(min = 0L)
   }
 
-  /** Десериализация выхлопа serializeData(). Для упрощения используется jackson. */
-  def deserializeData(s: String): Map[String, String] = {
-    val jsonStream = decompressStream(s)
-    try {
-      JacksonWrapper.deserialize[Map[String, String]](jsonStream)
-    } finally {
-      jsonStream.close()
-    }
+  /** Опциональный маппер для ES-версии. */
+  def esVsnOptM: Mapping[Option[Long]] = {
+    optional(esVsnM)
   }
 
-  def deserializeDataSafe(s: String): Option[Map[String, String]] = {
-    try {
-      Some(deserializeData(s))
-    } catch {
-      case ex: Exception =>
-        if (LOGGER.underlying.isDebugEnabled) {
-          val sb = new StringBuilder("deserializeDataSafe(): Failed to deser. string[")
-            .append(s.length)
-            .append(" chars]")
-          if (LOGGER.underlying.isTraceEnabled) {
-            sb.append(": ").append(s)
-          }
-          debug(sb.toString(), ex)
-        }
-        None
-    }
+  /** Неквантуемый коэффициент масштабирования в разумных пределах. */
+  def szMultM: Mapping[SzMult_t] = {
+    floatM
+      .verifying("e.sz.mult.too.low", _ >= 0.25F)
+      .verifying("e.sz.mult.too.high", _ <= 10F)
   }
 
-  /** Сжатие строки в gzip+base64. */
-  def compress(str: String): String = {
-    if (str == null || str.length() == 0) {
-      ""
-    } else {
-      val out = new ByteArrayOutputStream()
-      val b64 = new Base64OutputStream(out, true, 0, Array())
-      val gzipped = new GZIPOutputStream(b64)
-      // TODO Opt: Надо бы использовать url-safe кодирование и отбрасывать padding в хвосте.
-      gzipped.write(str.getBytes)
-      gzipped.close()
-      out.toString(ENCODING)
-    }
-  }
-
-  /** Декомпрессия потока. */
-  def decompressStream(str: String): InputStream = {
-    val bais = new ByteArrayInputStream(str.getBytes(ENCODING))
-    val gis64 = new Base64InputStream(bais)
-    new GZIPInputStream(gis64)
-  }
-
-  /** Разжатие строки из gzip+base64 строки. */
-  def decompress(str: String): String = {
-    if (str == null || str.length() == 0) {
-      ""
-    } else {
-      val gis = decompressStream(str)
-      try {
-        val br = new BufferedReader(new InputStreamReader(gis, ENCODING))
-        Stream.continually(br.readLine()).takeWhile(_ != null).mkString("")
-      } finally {
-        gis.close()
-      }
-    }
+  def szMultOptM: Mapping[Option[SzMult_t]] = {
+    optional(floatM)
   }
 
 }
+

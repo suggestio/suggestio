@@ -34,6 +34,7 @@ class SysMarket @Inject() (
   db: Database
 )
   extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
+  with SysAdRender
 {
 
   import LOGGER._

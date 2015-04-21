@@ -1,0 +1,19 @@
+@(title: String, mad: MAdT, nodeOpt: Option[MAdnNode], hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Шаблон-подложка для one-ad-шаблонов. *@
+
+@import sys1.market.ad._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@sysAdBase(
+  title         = title,
+  hPathAfter    = Some(hPathAfter1),
+  madOpt        = Some(mad),
+  nodeOpt       = nodeOpt,
+  headAfter     = headAfter
+)(content)

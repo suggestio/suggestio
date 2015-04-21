@@ -1,0 +1,25 @@
+@(mad: MAdT, rvar: msc.OneAdRenderVariant, qf: Form[blk.OneAdQsArgs], nodeOpt: Option[MAdnNode])(implicit ctx: Context)
+
+@* Страница с формой рендера  *@
+
+@import ctx.messages
+@import msc.OneAdRenderVariants.{values => rvars}
+
+@oneBase("ONE-рендер в " + messages(rvar.nameI18n), mad, nodeOpt) {
+
+  <p>Произвольный рендер карточки в @messages(rvar.nameI18n).</p>
+
+  <p>
+    Можно также рендерить в
+    @rvars.iterator.filter(_ != rvar).map { rvar1 =>
+      <a href="@routes.SysMarket.showOneAdForm(mad.id.get, rvar1)">@messages(rvar1.nameI18n)</a>,
+    }.
+  </p>
+
+  @_oneAdQsFormTpl(
+    madId = mad.id.get,
+    qf    = qf,
+    rvar  = rvar
+  )
+
+}

@@ -1,7 +1,10 @@
 package models.im
 
 import io.suggest.model.{EnumMaybeWithName, EnumValue2Val}
+import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
+import util.FormUtil
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -19,6 +22,7 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
    */
   protected abstract class Val(val name: String) extends super.Val(name) {
     def mime: String
+    override def toString() = name
   }
 
   override type T = Val
@@ -52,23 +56,51 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
 
 
   /** query string биндер для этой модели. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]) = new QueryStringBindable[T] {
-    /** Биндинг значения из карты аргументов. */
-    override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-      strB.bind(key, params).map {
-        _.right.flatMap { fmtName =>
-          maybeWithName(fmtName) match {
-            case Some(fmt) => Right(fmt)
-            case None      => Left("Unknown image format: " + fmtName)
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      /** Биндинг значения из карты аргументов. */
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        strB.bind(key, params).map {
+          _.right.flatMap { fmtName =>
+            maybeWithName(fmtName) match {
+              case Some(fmt) => Right(fmt)
+              case None => Left("Unknown image format: " + fmtName)
+            }
           }
         }
       }
-    }
 
-    /** Сериализация значения. */
-    override def unbind(key: String, value: T): String = {
-      strB.unbind(key, value.name)
+      /** Сериализация значения. */
+      override def unbind(key: String, value: T): String = {
+        strB.unbind(key, value.name)
+      }
     }
+  }
+
+
+  // Поддержка этой модели в формах.
+  import play.api.data.Forms._
+
+  /** Общий код required и optional маппингов здесь. Тут optional-маппинг для хоть как-нибудь заданных значений поля. */
+  private def optMappingDirty: Mapping[Option[T]] = {
+    text(maxLength = 10)
+      .transform [Option[T]] (
+        FormUtil.strTrimSanitizeLowerF andThen { maybeWithName },
+        _.fold("")(_.name)
+      )
+  }
+
+  /** Опциональный form-маппер для экземпляров этой модели. */
+  def optMapping: Mapping[Option[T]] = {
+    optional(optMappingDirty)
+      .transform [Option[T]] (_.flatten, Some.apply)
+  }
+
+  /** Обязательный form-mapper для экземпляров этой модели. */
+  def mapping: Mapping[T] = {
+    optMappingDirty
+      .verifying("error.required", _.isDefined)
+      .transform(_.get, Some.apply)
   }
 
 }

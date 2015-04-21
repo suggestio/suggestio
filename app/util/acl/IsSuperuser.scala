@@ -496,3 +496,15 @@ case class IsSuperuserMad(adId: String)
   extends IsSuperuserMadAbstract
   with ExpireSession[RequestWithAd]
 
+/** ACL action builder на действия с указанной рекламной карточкой. + CSRF выставление токена в сессию. */
+case class IsSuperuserMadGet(adId: String)
+  extends IsSuperuserMadAbstract
+  with ExpireSession[RequestWithAd]
+  with CsrfGet[RequestWithAd]
+
+/** ACL action builder на действия с указанной рекламной карточкой. + Проверка CSRF-токена. */
+case class IsSuperuserMadPost(adId: String)
+  extends IsSuperuserMadAbstract
+  with ExpireSession[RequestWithAd]
+  with CsrfPost[RequestWithAd]
+

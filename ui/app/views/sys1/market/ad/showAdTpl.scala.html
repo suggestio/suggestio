@@ -1,9 +1,12 @@
 @(mad: MAd, producerOpt: Option[MAdnNode])(implicit ctx: Context)
 
 @import models.im.OutImgFmts.JPEG
+@import ctx.messages
+@import msc.OneAdRenderVariants._
 
 @sysAdBase(
-  title = "Карточка " + mad.id.get,
+  title   = "Карточка " + mad.id.get,
+  madOpt  = Some(mad),
   nodeOpt = producerOpt
 ) {
 
@@ -31,17 +34,24 @@
     </p>
   }
 
-  <ul>
-    @defining( 1.0F ) { szMult =>
-    @defining( blk.OneAdQsArgs(mad.id.get, szMult, mad.versionOpt, JPEG) ) { qsArgs =>
-      <li>
-        <a href="@routes.MarketShowcase.onlyOneAd(qsArgs)">Отрендерить карточку в HTML x@szMult</a>
-      </li>
-      <li>
-        <a href="@routes.MarketShowcase.onlyOneAdAsImage(qsArgs)">Отрендерить карточку в PNG x@szMult</a>
-      </li>
-    }
-    }
-  </ul>
+  <br/>
+
+  <div>
+    Отрендерить карточку в
+    <ul>
+      @defining( 1.0F ) { szMult =>
+      @defining( blk.OneAdQsArgs(mad.id.get, szMult, mad.versionOpt, JPEG) ) { qsArgs =>
+        <li>
+           - <a href="@routes.MarketShowcase.onlyOneAd(qsArgs)">HTML x@szMult</a>
+           или <a href="@routes.SysMarket.showOneAdForm(mad.id.get, ToHtml)">кастомно</a>.
+        </li>
+        <li>
+          - <a href="@routes.MarketShowcase.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
+          или <a href="@routes.SysMarket.showOneAdForm(mad.id.get, ToImage)">кастомно</a>.
+        </li>
+      }
+      }
+    </ul>
+  </div>
 
 }
