@@ -86,4 +86,7 @@ trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with
 
   // TODO Возможно, следует выставить imgFmtDflt = PNG.
 
+  /** В твиттер надо всегда постить горизонтальные карточки. */
+  override def isAdvExtWide(mad: MAd) = true
+
 }
