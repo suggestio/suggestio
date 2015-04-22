@@ -32,10 +32,13 @@ trait Mad2ImgUrlCalcT {
     // Вычисляем мультипликатор размера исходя из отношения высот.
     val srv = service
     val sz = adRenderMaxSz
-    val hDiff = sz.height.toFloat / mad.blockMeta.height.toFloat
+    val whSzM = Math.min(
+      sz.height.toFloat / mad.blockMeta.height.toFloat,
+      sz.width.toFloat  / mad.blockMeta.width.toFloat
+    )
     // Нужно домножить на минимально необходимый размер для сервиса.
     // TODO Проквантовать полученный szMult?
-    val szMultV = hDiff * srv.szMult
+    val szMultV = whSzM * srv.szMult
     // Вычислить необходимость и ширину широкого отображения.
     // 2015.mar.13: Запрет для wide-рендера карточек без картинки. Пока эта функция не работает как надо.
     val wideWidthOpt = BgImg.getBgImg(mad)
