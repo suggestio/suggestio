@@ -185,7 +185,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
   }
 
   /** Дать экземпляр MImg на исходный немодифицированный оригинал. */
-  def original: MImg = {
+  lazy val original: MImg = {
     if (hasImgOps) {
       copy(dynImgOps = Nil)
     } else {

@@ -161,30 +161,33 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
     // Запустить сбор инфы по кропу.
     val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
     val cropInfoFut = getWideCropInfo(img, wideWh)
+
     // Начинаем собирать список трансформаций по ресайзу:
     val compression = args.compressMode
       .getOrElse(CompressModes.Bg)
       .fromDpr(pxRatio)
+
     val imOps0 = List[ImOp](
-      // 2015.mar.11: Вписать откропанное изображение в примерно необходимые размеры. До это кроп был внутри ресайза.
-      AbsResizeOp( MImgInfoMeta(height = tgtHeightReal, width = 0) /*, Seq(ImResizeFlags.FillArea)*/ ),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
       compression.chromaSubSampling,
       compression.imQualityOp
     )
+
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
     val imOps2Fut = cropInfoFut
       .map { cropInfo =>
-        if (cropInfo.isCenter) {
+        val ops = if (cropInfo.isCenter) {
           warn(s"Failed to read image[${iikOrig.fileName}] WH")
           // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
           ImGravities.Center ::  AbsCropOp(cropInfo.crop) ::  imOps0
         } else {
           AbsCropOp(cropInfo.crop) :: imOps0
         }
+        AbsResizeOp(wideWh, Seq(ImResizeFlags.FillArea)) :: ops
       }
+
     // Вычислить размер картинки в css-пикселях.
     val szCss = MImgInfoMeta(
       height = szRounded(tgtHeightCssRaw),

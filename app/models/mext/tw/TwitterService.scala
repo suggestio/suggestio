@@ -3,6 +3,7 @@ package models.mext.tw
 import _root_.util.adv.OAuth1ServiceActor
 import controllers.routes
 import models.adv.ext.Mad2ImgUrlCalcT
+import models.im.{OutImgFmts, OutImgFmt}
 import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
 import models.mext.{IMpUploadSupport, MExtServices, IExtService}
@@ -84,7 +85,8 @@ trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with
   /** Поддержка аплоада в твиттер. */
   override def maybeMpUpload = Some(this)
 
-  // TODO Возможно, следует выставить imgFmtDflt = PNG.
+  /** Дефолтовый формат изображения, если не переопределен в конфиге. */
+  override def imgFmtDflt = OutImgFmts.PNG
 
   /** В твиттер надо всегда постить горизонтальные карточки. */
   override def isAdvExtWide(mad: MAd) = true

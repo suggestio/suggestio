@@ -5,7 +5,7 @@ import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
-import models.im.DevScreen
+import models.im.{MImg, DevScreen}
 import models.im.make.{IMakeResult, MakeArgs, Makers}
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import play.api.Play.{current, configuration}
@@ -190,8 +190,9 @@ object ShowcaseUtil {
   def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
     BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>
+        val mimg = MImg(bgImgInfo)
         val wArgs = MakeArgs(
-          img           = bgImgInfo,
+          img           = mimg,
           blockMeta     = mad.blockMeta,
           szMult        = szMult,
           devScreenOpt  = ctx.deviceScreenOpt
