@@ -24,6 +24,9 @@ object OAuth1Support {
   // TODO Нужно нормальную длину узнать. Там какой-то гемор с ссылками, что даже 100 символов - многовато.
   val LEAD_TEXT_LEN = configuration.getInt("ext.tw.tweet.lead.text.maxlen") getOrElse 90
 
+  /** Добавлять URL в твит? По логике да, но при отладке бывают проблемы с длиной твита и т.д, и URL лучше спилить. */
+  val WITH_URL = configuration.getBoolean("ext.tw.tweet.with.url") getOrElse true
+
   /** URL ресурс API твиттинга. */
   def MK_TWEET_URL = "https://api.twitter.com/1.1/statuses/update.json"
 
@@ -127,8 +130,12 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
       .setFocusedProducerId( args.mad.producerId )
       .toJsState
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
-    val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
-    val tweetUrl = urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
+    val tweetUrl = if (WITH_URL) {
+      val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
+      urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
+    } else {
+      ""
+    }
     val fullTweetText = tweetTextOpt.fold(tweetUrl)(_ + " " + tweetUrl)
     b.addParameter("status", fullTweetText)
     if (geo.isDefined) {

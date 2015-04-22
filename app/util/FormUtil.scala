@@ -387,10 +387,10 @@ object FormUtil {
     .transform [String] (UrlUtil.normalizeHostname, IDNA.toUnicode)
 
   // Маппер для float-значений.
-  val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,4})?".r
+  val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,7})?".r
   def floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
-    .transform[Float](_.toFloat, _.toString)
+    .transform[Float](_.replace(',', '.').toFloat, _.toString)
 
   // Маппер для полноценных double значений для floating point чисел в различных представлениях.
   def doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
