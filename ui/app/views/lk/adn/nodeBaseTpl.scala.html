@@ -1,5 +1,5 @@
 @(title: String, node: MAdnNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None,
-  popupContent:Option[Html] = None, rightBarAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+  popupContent:Option[Html] = None, rightBarAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 
 @import lk.adn.node._
@@ -56,5 +56,6 @@
   nodeOpt       = Some(node),
   rightBar      = Some(rightBar1),
   povAdnId      = povAdnIdOpt,
-  popupContent  = popupContent
+  popupContent  = popupContent,
+  headAfter	= headAfter
 )(content)

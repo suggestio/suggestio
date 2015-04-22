@@ -33,10 +33,19 @@
   }
 }
 
+@headAfter1 = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+}
+
 
 @lk.lkBaseLayout(
   title       = title,
   leftCurrEl  = Some(LkLeftPanelLinks.LPL_BILLING),
   nodeOpt     = Some(node),
-  rightBar    = Some(rightBar)
-)(content)
+  rightBar    = Some(rightBar),
+  headAfter   = Some(headAfter1)
+) {
+  @content
+
+  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+}

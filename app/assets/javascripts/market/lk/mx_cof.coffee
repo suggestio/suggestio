@@ -1,3 +1,5 @@
+cbca = {}
+
 $(document).ready ->
 
   cbca.slider = Slider

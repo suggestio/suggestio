@@ -12,12 +12,18 @@
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
 
+
+@headAfter1 = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+}
+
 @nodeBaseTpl(
   title         = mnode.meta.name + " | " + messages("Profile"),
   isMyNode      = isMyNode,
   node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
-  povAdnIdOpt   = povAdnIdOpt
+  povAdnIdOpt   = povAdnIdOpt,
+  headAfter	= Some(headAfter1)
 ) {
 
   <div class="profile_logo-bar">
@@ -138,5 +144,6 @@
     @_supShowNodesTpl(mnode, slaves)
   }*@
 
+  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
 }
 
