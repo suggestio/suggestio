@@ -6,8 +6,18 @@
 @import ctx._
 
 @hPathAfter1 = {
+  /
+  @defining( nodeOpt.flatMap(_.id).orElse( madOpt.map(_.producerId) ) ) { adnIdOpt =>
+    @adnIdOpt.map { adnId =>
+      <a href="@routes.SysMarket.showAdnNodeAds(new AdSearch { override def producerIds = Seq(adnId) })">
+    }
+    Карточки
+    @if(adnIdOpt) {
+      </a>
+    }
+  }
   @madOpt.flatMap(_.id).map { madId =>
-    / @madId
+    / <a href="@routes.SysMarket.showAd(madId)">@madId</a>
   }
   @hPathAfter.getOrElse {
     / @title
@@ -15,7 +25,7 @@
 }
 
 @views.html.sys1.market.adn.adnBase(
-  title         = title + " | Карточки",
+  title         = title + madOpt.flatMap(_.id).fold("")(" | " + _) + " | Карточки",
   hPathAfter    = Some(hPathAfter1),
   nodeOpt       = nodeOpt,
   headAfter     = headAfter

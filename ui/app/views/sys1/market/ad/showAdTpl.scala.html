@@ -5,10 +5,13 @@
 @import msc.OneAdRenderVariants._
 @import im.MImg
 
+@hPathAfter = { }
+
 @sysAdBase(
-  title   = "Карточка " + mad.id.get,
-  madOpt  = Some(mad),
-  nodeOpt = producerOpt
+  title       = "Карточка",
+  madOpt      = Some(mad),
+  hPathAfter  = Some(hPathAfter),
+  nodeOpt     = producerOpt
 ) {
 
   <h1>Управление рекламной карточкой @mad.id</h1>
