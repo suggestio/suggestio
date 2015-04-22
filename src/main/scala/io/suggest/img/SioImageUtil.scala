@@ -285,5 +285,7 @@ case class ImgCrop(width: Int, height: Int, offX: Int, offY: Int) extends MImgSi
    */
   def toRelSzCropStr: String = toStr('+', Some('%'))
 
+  override def toString = toCropStr
+
 }
 
