@@ -185,7 +185,9 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
         } else {
           AbsCropOp(cropInfo.crop) :: imOps0
         }
-        AbsResizeOp(wideWh, Seq(ImResizeFlags.FillArea)) :: ops
+        ImGravities.Center ::
+          AbsResizeOp(wideWh, Seq(ImResizeFlags.FillArea)) ::
+          ops
       }
 
     // Вычислить размер картинки в css-пикселях.
