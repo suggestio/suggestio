@@ -19,6 +19,18 @@
       @img.rowKeyStr
     }
 
+    @_ptableRowTpl("make", title = Some("Оформить проивольный рендер картинки")) {
+      <a href="@routes.SysImg.makeForm(img)">
+        Запросить make...
+      </a>
+    }
+
+    @if(!img.isOriginal) {
+      @_ptableRowTpl("original") {
+        <a href="@routes.SysImg.showOne(img.original)">К оригиналу...</a>
+      }
+    }
+
     @metaOpt.map { meta =>
       @_ptableRowTpl("meta.map") {
         @meta.md.mkString(", ")
@@ -41,11 +53,6 @@
       }
     }
 
-    @if(!img.isOriginal) {
-      @_ptableRowTpl("original") {
-        <a href="@routes.SysImg.showOne(img.original)">К оригиналу...</a>
-      }
-    }
   }
 
 
