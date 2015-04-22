@@ -1,0 +1,19 @@
+@(title: String, mimg: im.MImg, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для make-страниц. *@
+
+@import sys1.img._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysImg.makeForm(mimg)">make</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@sysImgBase(
+  title       = title + " | make",
+  mimgOpt     = Some(mimg),
+  hPathAfter  = Some(hPathAfter1),
+  headAfter   = headAfter
+)(content)

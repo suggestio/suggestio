@@ -4,8 +4,80 @@
 
 @import helper._
 @import ctx._
+@import im.make.Makers
+@import blk.{BlockWidths, BlockHeights}
 
 @form( CSRF(submitCall) ) {
+
+  @* Выбор maker'а из списка допустимых. *@
+  @select(
+    mf("maker"),
+    options = Makers.values.iterator.map(m => m.strId -> m.longName).toSeq,
+    'title -> "Какой image-maker использовать?"
+  )
+
+  <br/>
+
+
+  <p><strong>Блок карточки</strong></p>
+
+  @* blockId в целом deprecated, поэтому hidden-поля достаточно. *@
+  @defining( "args.blockMeta.blockId" ) { fn =>
+    <input type="hidden" name="@fn" value="@mf(fn).value.getOrElse(BlocksConf.DEFAULT.id)" />
+  }
+
+  @select(
+    mf("args.blockMeta.width"),
+    options = BlockWidths.values.iterator.map(w => w.id.toString -> w.widthPx.toString).toSeq,
+    '_label -> "Ширина блока (cssPx)"
+  )
+
+  @select(
+    mf("args.blockMeta.height"),
+    options = BlockHeights.values.iterator.map(h => h.id.toString -> h.heightPx.toString).toSeq,
+    '_label -> "Высота блока (cssPx)"
+  )
+
+  @checkbox(
+    mf("args.blockMeta.wide"),
+    '_label -> "Широкоэкранное отображение?"
+  )
+
+  <br/>
+
+
+  <p><strong>Экран клиентского устройства</strong></p>
+  @inputText(
+    mf("args.devScreen.width"),
+    '_label -> messages("Width")
+  )
+
+  @inputText(
+    mf("args.devScreen.height"),
+    '_label -> messages("Height")
+  )
+
+  @select(
+    mf("args.devScreen.pxRatio"),
+    options = ("", "default") :: im.DevPixelRatios.values.iterator.map(r => r.name -> r.pixelRatio.toString).toList,
+    '_label -> "Плотность пикселей"
+  )
+
+  <br/>
+
+
+  <p><strong>Рендер</strong></p>
+  @inputText(
+    mf("args.szMult"),
+    '_label -> "Коэфф.масштабирования"
+  )
+
+  @select(
+    mf("args.compress"),
+    options = im.CompressModes.values.iterator.map(c => c.strId -> c.nameI18n).toSeq,
+    '_label -> "Сжимать как"
+  )
+
 
   <input type="submit" value="make" />
 }

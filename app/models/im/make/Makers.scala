@@ -22,6 +22,8 @@ object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMapping
    */
   abstract protected sealed class Val(val strId: String) extends super.Val(strId) with IMaker {
     override def toString() = strId
+    /** Длинное имя, отображаемое юзеру. */
+    def longName: String
   }
 
   /** Экспортируемый тип модели. */
@@ -30,19 +32,22 @@ object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMapping
 
   /** Рендер wide-картинки для выдачи (showcase).
     * Используется квантование ширины по линейке размеров, т.е. картинка может быть больше запрошенных размеров. */
-  val ScWide = new Val("sc") with IMakerWrapper {
+  val ScWide = new Val("scw") with IMakerWrapper {
     override def _underlying = ScWideMaker
+    override def longName = "Showcase wide"
   }
 
   /** Рендерер картинки, вписывающий её точно в параметры блока. Рендерер опирается на параметры кропа,
     * заданные в редакторе карточек. */
   val Block = new Val("blk") with IMakerWrapper {
     override def _underlying = BlkImgMaker
+    override def longName = "Block-sized"
   }
 
   /** Жесткий wide-рендер под обязательно заданный экран. */
-  val StrictWide = new Val("sw") with IMakerWrapper {
+  val StrictWide = new Val("strw") with IMakerWrapper {
     override def _underlying = StrictWideMaker
+    override def longName = "Strict wide"
   }
 
   override protected def _idMaxLen: Int = 6

@@ -9,7 +9,8 @@
 @import sys1.stuff.proptable._
 
 @sysImgBase(
-  title = img.rowKeyStr + " (" + (if(img.isOriginal) "оригинал" else "дериватив") + ")"
+  title = "(" + (if(img.isOriginal) "оригинал" else "дериватив") + ")",
+  mimgOpt = Some(img)
 ) {
 
   @* Рендер разных метаданных о картинке. *@

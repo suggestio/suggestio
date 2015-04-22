@@ -11,6 +11,7 @@ import util.blocks.BlocksConf
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl.{IsSuperuserPost, IsSuperuserGet}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import views.html.sys1.img.make._
 
 import scala.concurrent.Future
 
@@ -76,13 +77,14 @@ trait SysImgMake extends SioController with PlayMacroLogsI {
       )
     ))
     // Запустить рендер страницы с формой
-    _makeFormRender(form)(ctx)
+    _makeFormRender(img, form)(ctx)
       .map { Ok(_) }
   }
 
   /** Рендер страницы с формой параметров make. */
-  private def _makeFormRender(form: SysForm_t)(implicit ctx: Context): Future[Html] = {
-    ???
+  private def _makeFormRender(img: MImg, form: SysForm_t)(implicit ctx: Context): Future[Html] = {
+    val html = makeFormTpl(img, form)(ctx)
+    Future successful html
   }
 
   /**
@@ -91,7 +93,18 @@ trait SysImgMake extends SioController with PlayMacroLogsI {
    * @return Получившаяся картинка.
    */
   def makeFormSubmit(img: MImg) = IsSuperuserPost.async { implicit request =>
-    ???
+    makeFormM(img).bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        _makeFormRender(img, formWithErrors)
+          .map { NotAcceptable(_) }
+      },
+      {case (maker, makeArgs) =>
+        maker.icompile(makeArgs).map { makeRes =>
+          Redirect(makeRes.dynImgCall)
+        }
+      }
+    )
   }
 
 }

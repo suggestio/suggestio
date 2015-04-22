@@ -1,4 +1,4 @@
-@(mad: MAd, producerOpt: Option[MAdnNode])(implicit ctx: Context)
+@(mad: MAd, producerOpt: Option[MAdnNode], imgs: Map[String, im.MImg])(implicit ctx: Context)
 
 @import models.im.OutImgFmts.JPEG
 @import ctx.messages
@@ -59,10 +59,22 @@
 
   <div>
     Картинки карточки:
-    @mad.imgs.iterator.map { case (k, v) =>
-      <a href="@routes.SysImg.showOne( MImg(v.filename) )">
-        <strong>@k</strong>
-      </a>,
+    @if(imgs.isEmpty) {
+      отсутствуют.
+    } else {
+      <ul>
+        @imgs.iterator.map { case (k, mimg) =>
+          <li>
+            -
+            <a href="@routes.SysImg.showOne(mimg)">
+              <strong>@k</strong>
+            </a>
+            <a href="@routes.SysImg.makeForm(mimg, Some(mad.blockMeta))">
+              [make]
+            </a>
+          </li>
+        }
+      </ul>
     }
   <div>
 

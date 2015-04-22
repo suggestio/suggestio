@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.util.MacroLogsImpl
+import models.im.MImg
 import models.usr.{MPerson, EmailActivation}
 import play.api.db.Database
 import play.twirl.api.Html
@@ -563,10 +564,12 @@ class SysMarket @Inject() (
   def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
     val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+    val imgs = mad.imgs
+      .mapValues { MImg.apply }
     for {
       producerOpt <- producerOptFut
     } yield {
-      Ok(showAdTpl(mad, producerOpt))
+      Ok(showAdTpl(mad, producerOpt, imgs))
     }
   }
 

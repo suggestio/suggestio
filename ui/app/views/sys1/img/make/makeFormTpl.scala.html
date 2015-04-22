@@ -1,0 +1,19 @@
+@(mimg: im.MImg, mf: im.make.SysForm_t)(implicit ctx: Context)
+
+@* Страница с make-формой, где можно оформить задание для прозвольного maker'а. *@
+
+@import util.img.DynImgUtil.thumb256Call
+
+@makeBase(
+  title = "Запросить",
+  mimg  = mimg
+) {
+
+  <img src="@thumb256Call(mimg, fillArea = false)" alt="@mimg.rowKeyStr" />
+
+  @_formTpl(
+    submitCall = routes.SysImg.makeFormSubmit(mimg),
+    mf = mf
+  )
+
+}

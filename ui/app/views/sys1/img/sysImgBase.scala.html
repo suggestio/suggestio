@@ -1,4 +1,4 @@
-@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mimgOpt: Option[im.MImg] = None, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов img-раздела системной админки. *@
 
@@ -6,11 +6,14 @@
 
 @hPathAfter1 = {
   / <a class="blue-link" href="@routes.SysImg.index()">img</a>
+  @mimgOpt.map { mimg =>
+    / <a href="@routes.SysImg.showOne(mimg)">@mimg.rowKeyStr</a>
+  }
   @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 
 @sysBase(
-  title       = title + " | Картинки",
+  title       = title + mimgOpt.fold("")(i => " | " + i.rowKeyStr) + " | Картинки",
   hPathAfter  = Some(hPathAfter1),
   headAfter   = headAfter
 )(content)

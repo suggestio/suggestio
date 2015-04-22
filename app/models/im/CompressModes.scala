@@ -16,6 +16,7 @@ object CompressModes extends Enumeration with EnumValue2Val with StrEnumFormMapp
     /** Извлечь компрессию из pxRatio согласно текущему режиму. */
     def fromDpr(dpr: IDevPixelRatio): ImCompression
     override def toString() = strId
+    def nameI18n: String
   }
 
   override type T = Val
@@ -25,6 +26,7 @@ object CompressModes extends Enumeration with EnumValue2Val with StrEnumFormMapp
     override def fromDpr(dpr: IDevPixelRatio): ImCompression = {
       dpr.bgCompression
     }
+    override def nameI18n = "Background"
   }
 
   /** Компрессия для изображений переднего плана. */
@@ -32,6 +34,7 @@ object CompressModes extends Enumeration with EnumValue2Val with StrEnumFormMapp
     override def fromDpr(dpr: IDevPixelRatio): ImCompression = {
       dpr.fgCompression
     }
+    override def nameI18n = "Foreground"
   }
 
   override protected def _idMaxLen: Int = 6
