@@ -15,7 +15,7 @@ object PicSzParsers {
   val picSizeNumRe = "\\d{2,5}".r
   val picSizeDelimRe = "[xX]".r
 
-  val IMG_RES_DPR_DELIM = ","
+  def IMG_RES_DPR_DELIM = ","
 }
 
 
@@ -53,7 +53,8 @@ trait DevicePixelRatioParsers extends JavaTokenParsers {
 trait DevScreenParsers extends PicSzParsers with DevicePixelRatioParsers {
 
   def devScreenP: Parser[DevScreen] = {
-    (resolutionRawP ~ opt(IMG_RES_DPR_DELIM ~> devPixRatioP)) ^^ {
+    val d = IMG_RES_DPR_DELIM
+    (resolutionRawP ~ opt(d ~> devPixRatioP)) ^^ {
       case w ~ h ~ dprOpt  =>  DevScreen(width = w, height = h, pixelRatioOpt = dprOpt)
     }
   }

@@ -3,7 +3,7 @@ package util.lk
 import models.blk.SzMult_t
 import models.im.make.{Makers, MakeArgs}
 import models.{blk, MAd}
-import models.im.DevScreenT
+import models.im.DevScreen
 import util.blocks.BgImg
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,7 +25,7 @@ object LkAdUtil {
    * @param devScreenOpt Инфа по скрину.
    * @return Фьючерс с контейнером аргументов для рендера блока.
    */
-  def tiledAdBrArgs(mad: MAd, devScreenOpt: Option[DevScreenT] = None)
+  def tiledAdBrArgs(mad: MAd, devScreenOpt: Option[DevScreen] = None)
                    (implicit ec: ExecutionContext): Future[blk.RenderArgs] = {
     val szMult = TILE_SZ_MULT
     val bgImgOptFut = BgImg.getBgImg(mad) match {

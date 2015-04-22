@@ -299,6 +299,9 @@ GET  /sys/img                            @controllers.SysImg.index(q: Option[Str
 POST /sys/img/search                     @controllers.SysImg.searchFormSubmit
 GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImg)
 POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImg)
+## sys.img.make
+GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImg, bm: Option[blk.IBlockMeta] ?= None)
+POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImg)
 
 ## sys/AI
 GET  /sys/ai                             @controllers.SysAi.index

@@ -6,7 +6,6 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import models._
 import views.html.blocks.editor._
-import BlocksConf.BlockConf
 import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IEMBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.{AOValueField, IOffers}

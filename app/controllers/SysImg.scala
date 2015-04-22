@@ -22,7 +22,7 @@ import play.api.data._, Forms._
 class SysImg @Inject() (
   override val messagesApi: MessagesApi
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl with PlayMacroLogsImpl with SysImgMake
 {
 
   import LOGGER._

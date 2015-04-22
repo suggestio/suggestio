@@ -15,7 +15,9 @@ object TwImgSizes extends EnumMaybeWithName {
    * Абстрактный экземпляр модели.
    * @param szAlias Внутренний id размера.
    */
-  protected abstract sealed case class Val(szAlias: String) extends INamedSize2di
+  protected abstract sealed class Val(val szAlias: String)
+    extends super.Val(szAlias)
+    with INamedSize2di
 
   override type T = Val
 

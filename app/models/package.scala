@@ -123,7 +123,7 @@ package object models {
   type BlockData            = common.IEMBlockMeta with ym.model.ad.IOffers with common.IColors
 
   val  BlocksConf           = util.blocks.BlocksConf
-  type BlockConf            = BlocksConf.BlockConf
+  type BlockConf            = BlocksConf.T
 
   type BlockFieldT          = util.blocks.BlockFieldT
   type BlockAOValueFieldT   = util.blocks.BlockAOValueFieldT

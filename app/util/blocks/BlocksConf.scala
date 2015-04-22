@@ -1,8 +1,10 @@
 package util.blocks
 
+import io.suggest.model.EnumValue2Val
 import models.blk.{BlockHeights, BlockWidths}
 import play.api.data._
 import BlocksUtil._
+import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
 import views.html.blocks._
 import models._
@@ -10,6 +12,8 @@ import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
 import play.twirl.api.{Template2, Html}
+
+// TODO Надо выпилить эту модель, т.к. динамический редактор с кучей карточек и переключаемыми блоками ушел в небытие.
 
 /**
  * Suggest.io
@@ -53,12 +57,16 @@ import play.twirl.api.{Template2, Html}
  *   Разработка враппера: копируем код враппера соседнего блока, заменив нужные числа на текущий номер блока.
  */
 
-object BlocksConf extends Enumeration with PlayMacroLogsImpl {
+object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val with IdEnumFormMappings {
 
   import LOGGER._
 
   /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
-  protected abstract class Val(id: Int) extends super.Val(id, "Block" + id) with ValTEmpty {
+  protected abstract class Val(id: Int)
+    extends super.Val(id)
+    with ValTEmpty
+    with CommonBlock2T
+  {
 
     /**
      * label'ы опций конфига блока, прописанные в conf/messages*.
@@ -73,30 +81,20 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
     }
   }
 
+  override type T = Val
 
-  type BlockConf = ValT
-  implicit def value2val(x: Value): BlockConf = x.asInstanceOf[BlockConf]
-
-  /** Найти опционально по имени. */
-  def maybeWithName(n: String): Option[BlockConf] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: NoSuchElementException => None
-    }
-  }
 
   /** Дефолтовый блок, если возникают сомнения. */
-  def DEFAULT: CommonBlock2T = Block20
+  def DEFAULT: T = Block20
 
   /**
    * Аналог apply, но вызывает DEFAULT(), если нет блока с необходимым id.
    * @param n id искомого блока.
    * @return Экземпляр BlocksConf.
    */
-  def applyOrDefault(n: Int): CommonBlock2T = {
+  def applyOrDefault(n: Int): T = {
     try {
-      apply(n).asInstanceOf[CommonBlock2T]
+      apply(n)
     } catch {
       case ex: NoSuchElementException =>
         debug(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
@@ -127,15 +125,15 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl {
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
-  val valuesShown: Seq[BlockConf] = {
-    val vs0 = values.asInstanceOf[collection.Set[BlockConf]]
+  val valuesShown: Seq[T] = {
+    val vs0 = values.asInstanceOf[collection.Set[T]]
       .toSeq
       .filter(_.isShown)
     orderBlocks(vs0)
   }
 
   /** Отсортировать блоки согласно ordering с учётом id. */
-  def orderBlocks(values: Seq[BlockConf]) = {
+  def orderBlocks(values: Seq[T]) = {
     values.sortBy { bc => bc.ordering -> bc.id }
   }
 }

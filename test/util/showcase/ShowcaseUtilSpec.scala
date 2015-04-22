@@ -2,7 +2,7 @@ package util.showcase
 
 import io.suggest.ym.model.common.BlockMeta
 import models.blk.SzMult_t
-import models.im.{DevScreenT, DevPixelRatios, DevScreen}
+import models.im.{DevScreen, DevPixelRatios, DevScreen}
 import models.msc.TileArgs
 import org.scalatestplus.play._
 import play.api.GlobalSettings
@@ -23,7 +23,7 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
 
   // Тестируем калькулятор szMult для блоков плитки выдачи.
   "getSzMult4tiles() for tile" must {
-    def t(dscr: DevScreenT, res: TileArgs): Unit = {
+    def t(dscr: DevScreen, res: TileArgs): Unit = {
       getTileArgs(dscr) mustBe res
     }
 
@@ -62,7 +62,7 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
 
   // Тестим вычислитель szMult для открытой рекламной карточки.
   "fitBlockToScreen() for focused ad" must {
-    def t(bw: Int, bh: Int, dscr: DevScreenT, res: SzMult_t): Unit = {
+    def t(bw: Int, bh: Int, dscr: DevScreen, res: SzMult_t): Unit = {
       val bm = BlockMeta(
         blockId = BlocksConf.DEFAULT.id,
         height = bh,

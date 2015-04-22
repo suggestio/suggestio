@@ -30,7 +30,7 @@ object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
   /** Синхронная компиляция аргументов в картинку. */
   def icompileSync(args: IMakeArgs): IMakeResult = {
     // Параметры экрана обязательны при вызове этого maker'а.
-    val devScreen: DevScreenT = {
+    val devScreen: DevScreen = {
       val dso = args.devScreenOpt
       if (dso.isEmpty)
         throw new IllegalArgumentException(getClass.getSimpleName + ": args.devScreen is mandatory for this maker. You've passed empty screen info.")

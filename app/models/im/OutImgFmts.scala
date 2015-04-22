@@ -4,6 +4,7 @@ import io.suggest.model.{EnumMaybeWithName, EnumValue2Val}
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 import util.FormUtil
+import util.FormUtil.StrEnumFormMappings
 import scala.language.implicitConversions
 
 /**
@@ -14,7 +15,7 @@ import scala.language.implicitConversions
  * 2015.mar.13: Рефакторинг модели, добавление поддержки QueryStringBindable.
  */
 
-object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName {
+object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName with StrEnumFormMappings {
 
   /**
    * Экземпляр этой модели.
@@ -78,30 +79,7 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
   }
 
 
-  // Поддержка этой модели в формах.
-  import play.api.data.Forms._
-
-  /** Общий код required и optional маппингов здесь. Тут optional-маппинг для хоть как-нибудь заданных значений поля. */
-  private def optMappingDirty: Mapping[Option[T]] = {
-    text(maxLength = 10)
-      .transform [Option[T]] (
-        FormUtil.strTrimSanitizeLowerF andThen { maybeWithName },
-        _.fold("")(_.name)
-      )
-  }
-
-  /** Опциональный form-маппер для экземпляров этой модели. */
-  def optMapping: Mapping[Option[T]] = {
-    optional(optMappingDirty)
-      .transform [Option[T]] (_.flatten, Some.apply)
-  }
-
-  /** Обязательный form-mapper для экземпляров этой модели. */
-  def mapping: Mapping[T] = {
-    optMappingDirty
-      .verifying("error.required", _.isDefined)
-      .transform(_.get, Some.apply)
-  }
+  override protected def _idMaxLen: Int = 10
 
 }
 

@@ -1,0 +1,11 @@
+@(submitCall: Call, mf: im.make.SysForm_t)(implicit ctx: Context)
+
+@* Верстка формы для вызова кастомного make. *@
+
+@import helper._
+@import ctx._
+
+@form( CSRF(submitCall) ) {
+
+  <input type="submit" value="make" />
+}

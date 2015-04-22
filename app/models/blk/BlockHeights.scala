@@ -1,12 +1,15 @@
 package models.blk
 
+import io.suggest.model.EnumMaybeWithId
+import util.FormUtil.IdEnumFormMappings
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 14.10.14 16:47
  * Description: Допустимые высоты блоков.
  */
-object BlockHeights extends Enumeration {
+object BlockHeights extends Enumeration with EnumMaybeWithId with IdEnumFormMappings {
 
   /**
    * Экземпляры модели.
@@ -17,14 +20,12 @@ object BlockHeights extends Enumeration {
     override def intValue = heightPx
   }
 
-  type BlockHeight = Val
+  override type T = Val
 
-  val H140: BlockHeight = Val(140, relSz = 1)
-  val H300: BlockHeight = Val(300, relSz = 2)
-  val H460: BlockHeight = Val(460, relSz = 3)
-  val H620: BlockHeight = Val(620, relSz = 4)
-
-  implicit def value2val(x: Value): BlockHeight = x.asInstanceOf[BlockHeight]
+  val H140: T = Val(140, relSz = 1)
+  val H300: T = Val(300, relSz = 2)
+  val H460: T = Val(460, relSz = 3)
+  val H620: T = Val(620, relSz = 4)
 
   def default = H300
   def max = H620
@@ -34,7 +35,7 @@ object BlockHeights extends Enumeration {
    * Все высоты по возрастанию.
    * @return Последовательность высот, отсортированная по возрастанию.
    */
-  val allSorted: Seq[BlockHeight] = {
+  val allSorted: Seq[T] = {
     values
       .toSeq
       .map(value2val)
@@ -42,14 +43,11 @@ object BlockHeights extends Enumeration {
   }
 
 
-  def maybeWithHeight(height: Int): Option[BlockHeight] = {
-    values
-      .iterator
-      .map(value2val)
-      .find(_.intValue == height)
+  def maybeWithHeight(height: Int): Option[T] = {
+    maybeWithId(height)
   }
-  def withHeight(width: Int): BlockHeight = {
-    maybeWithHeight(width).get
+  def withHeight(height: Int): T = {
+    maybeWithHeight(height).get
   }
 
 }

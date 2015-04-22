@@ -1,6 +1,7 @@
 package util.qsb
 
-import io.suggest.ym.model.common.{BlockMeta, IBlockMeta, MImgSizeT}
+import io.suggest.ym.model.common.MImgSizeT
+import models.blk.IBlockMetaQsb
 import play.api.mvc.QueryStringBindable
 import models._
 import util.PlayLazyMacroLogsImpl
@@ -27,7 +28,7 @@ object QsbUtil {
 }
 
 
-object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with BlockMetaBindable {
+object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with IBlockMetaQsb {
 
   private def companyNameSuf = ".meta.name"
 
@@ -206,54 +207,3 @@ trait AdsCssQsbUtil {
   }
 
 }
-
-
-/** Трейт поддержки биндингов для IBlockMeta. */
-trait BlockMetaBindable {
-
-  implicit def blockMetaQsb(implicit intB: QueryStringBindable[Int],
-                            boolB: QueryStringBindable[Boolean]): QueryStringBindable[IBlockMeta] = {
-    new QueryStringBindable[IBlockMeta] {
-      def WIDTH_SUF     = ".a"
-      def HEIGHT_SUF    = ".b"
-      def BLOCK_ID_SUF  = ".c"
-      def IS_WIDE_SUF   = ".d"
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IBlockMeta]] = {
-        for {
-          maybeWidth    <- intB.bind(key + WIDTH_SUF, params)
-          maybeHeight   <- intB.bind(key + HEIGHT_SUF, params)
-          maybeBlockId  <- intB.bind(key + BLOCK_ID_SUF, params)
-          maybeIsWide   <- boolB.bind(key + IS_WIDE_SUF, params)
-        } yield {
-          for {
-            width   <- maybeWidth.right
-            height  <- maybeHeight.right
-            blockId <- maybeBlockId.right
-            isWide  <- maybeIsWide.right
-          } yield {
-            BlockMeta(
-              width   = width,
-              height  = height,
-              blockId = blockId,
-              wide    = isWide
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: IBlockMeta): String = {
-        Iterator(
-          intB.unbind(key + WIDTH_SUF,    value.width),
-          intB.unbind(key + HEIGHT_SUF,   value.height),
-          intB.unbind(key + BLOCK_ID_SUF, value.blockId),
-          boolB.unbind(key + IS_WIDE_SUF, value.wide)
-        )
-          .filter(!_.isEmpty)
-          .mkString("&")
-      }
-    }
-  }
-
-}
-

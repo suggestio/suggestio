@@ -1,6 +1,6 @@
 package util.showcase
 
-import models.im.DevScreenT
+import models.im.DevScreen
 import models.{GeoSearchInfo, AdSearch}
 import util.PlayMacroLogsImpl
 import util.acl.AbstractRequestWithPwOpt
@@ -117,7 +117,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
 
   def scSinkOpt: Option[AdnSink] = None
 
-  def screenOpt: Option[DevScreenT] = adSearchOpt.flatMap(_.screen)
+  def screenOpt: Option[DevScreen] = adSearchOpt.flatMap(_.screen)
 
   def adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
 
@@ -253,7 +253,7 @@ trait ScStatNoAds extends ScStatUtilT {
 case class ScIndexStatUtil(
   override val scSinkOpt: Option[AdnSink],
   gsiFut: Future[Option[GeoSearchInfo]],
-  override val screenOpt: Option[DevScreenT],
+  override val screenOpt: Option[DevScreen],
   nodeOpt: Option[MAdnNode]
 )(
   implicit val request: AbstractRequestWithPwOpt[_]

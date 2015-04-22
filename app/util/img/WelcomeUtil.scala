@@ -107,7 +107,7 @@ object WelcomeUtil {
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreenT])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
+  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreen])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
@@ -139,7 +139,7 @@ object WelcomeUtil {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreenT], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreen], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
     val oiik2 = oiik.original
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
@@ -165,7 +165,7 @@ object WelcomeUtil {
     * @param scrSz Размер конечной картинки.
     * @return Список ImOp в прямом порядке.
     */
-  def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreenT): Seq[ImOp] = {
+  def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreen): Seq[ImOp] = {
     val gravity = ImGravities.Center
     val acc0: List[ImOp] = Nil
     val bgc = screen.pixelRatio.bgCompression

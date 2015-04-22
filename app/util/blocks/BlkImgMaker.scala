@@ -24,7 +24,7 @@ object BlkImgMaker extends IMaker {
    * @param devScreen Данные по экрану устройства.
    * @return Параметры для картинки.
    */
-  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreen: DevScreenT): MImgInfoMeta = {
+  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreen: DevScreen): MImgInfoMeta = {
     getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatio)
   }
   private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatio: DevPixelRatio): MImgInfoMeta = {

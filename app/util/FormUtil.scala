@@ -1,5 +1,6 @@
 package util
 
+import io.suggest.model.{EnumMaybeWithId, EnumValue2Val, EnumMaybeWithName}
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
@@ -748,6 +749,68 @@ object FormUtil {
 
   def szMultOptM: Mapping[Option[SzMult_t]] = {
     optional(floatM)
+  }
+
+
+  /** Базовый трейт для сборки более конкретных трейтов-аддонов form-маппингов к моделям scala.Enumeration. */
+  sealed trait EnumFormMapping extends EnumValue2Val {
+
+    /** Черновой маппинг узнавания экземпляра модели. */
+    protected def mappingOptDirty: Mapping[Option[T]]
+
+    /** Обязательный form mapping. */
+    def mapping: Mapping[T] = {
+      mappingOptDirty
+        .verifying("error.required", _.isDefined)
+        .transform(_.get, Some.apply)
+    }
+
+    /** Опциональный form mapping. */
+    def mappingOpt: Mapping[Option[T]] = {
+      optional(mappingOptDirty)
+        .transform(_.flatten, Some.apply)
+    }
+  }
+
+  /** Быстрое добавление типовых Form mapping'ов в scala.Enumeration-модели.
+    * Экземпляры модели-реализации должны иметь перезаписанный toString(), возвращающий id экземлпяра.
+    * Либо, можно перезаписать strIdOf(). */
+  trait StrEnumFormMappings extends EnumMaybeWithName with EnumFormMapping {
+
+    /** Извлечение строкового id из экземпляра модели. */
+    protected def strIdOf(v: T): String = v.toString
+
+    protected def _idMinLen: Int = 0
+    protected def _idMaxLen: Int = 32
+
+    protected def mappingOptDirty: Mapping[Option[T]] = {
+      text(minLength = _idMinLen, maxLength = _idMaxLen)
+        .transform [Option[T]] (
+          strTrimSanitizeF andThen maybeWithName,
+          _.fold("")(strIdOf)
+        )
+    }
+
+  }
+
+  /** Быстрое добавления form mapping в scala.Enumeration-модели, использующих целочисленную адресацию. */
+  trait IdEnumFormMappings extends EnumFormMapping with EnumMaybeWithId {
+
+    /** Извлечение целочисленного идентификатора экземпляра модели. */
+    protected def intIdOf(v: T): Int = v.id
+
+    protected def _idMin = 0
+    protected def _idMax = Int.MaxValue
+
+    override protected def mappingOptDirty: Mapping[Option[T]] = {
+      number(min = _idMin, max = _idMax)
+        .transform [Option[T]] (maybeWithId, _.fold(Int.MinValue)(intIdOf))
+    }
+
+    def idMapping: Mapping[Int] = {
+      mapping
+        .transform[Int](_.id, apply)
+    }
   }
 
 }

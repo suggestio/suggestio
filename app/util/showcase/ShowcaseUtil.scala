@@ -5,7 +5,7 @@ import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
-import models.im.DevScreenT
+import models.im.DevScreen
 import models.im.make.{IMakeResult, MakeArgs, Makers}
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import play.api.Play.{current, configuration}
@@ -240,7 +240,7 @@ object ShowcaseUtil {
    * @param dscr Экран устройства.
    * @return Число от 1 до 4.
    */
-  def getTileColsCountScr(dscr: DevScreenT): Int = {
+  def getTileColsCountScr(dscr: DevScreen): Int = {
     val padding = TILE_PADDING_CSSPX * MIN_SZ_MULT
     val targetCount = ((dscr.width - padding) / (getBlockWidthPx*MIN_SZ_MULT + padding)).toInt
     Math.min(TILE_MAX_COLUMNS,
@@ -250,7 +250,7 @@ object ShowcaseUtil {
   def getTileArgs()(implicit ctx: Context): TileArgs = {
     getTileArgs( ctx.deviceScreenOpt )
   }
-  def getTileArgs(dscrOpt: Option[DevScreenT]): TileArgs = {
+  def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
     dscrOpt match {
       case Some(dscr) =>
         getTileArgs(dscr)
@@ -261,7 +261,7 @@ object ShowcaseUtil {
         )
     }
   }
-  def getTileArgs(dscr: DevScreenT): TileArgs = {
+  def getTileArgs(dscr: DevScreen): TileArgs = {
     val colsCount = getTileColsCountScr(dscr)
     TileArgs(
       szMult      = getSzMult4tilesScr(colsCount, dscr),
@@ -275,7 +275,7 @@ object ShowcaseUtil {
    * @param dscr Экран.
    * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
-  def getSzMult4tilesScr(colsCount: Int, dscr: DevScreenT): SzMult_t = {
+  def getSzMult4tilesScr(colsCount: Int, dscr: DevScreen): SzMult_t = {
     val blockWidthPx = getBlockWidthPx
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
@@ -313,7 +313,7 @@ object ShowcaseUtil {
    * @param dscr Данные по экрану устройства.
    * @return Значение SzMult, пригодное для рендера блока.
    */
-  def fitBlockToScreen(bm: BlockMeta, dscr: DevScreenT): SzMult_t = {
+  def fitBlockToScreen(bm: BlockMeta, dscr: DevScreen): SzMult_t = {
     val hfloat = bm.height.toFloat
     val szMultIter0 = BlockHeights.values
       .iterator

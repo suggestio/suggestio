@@ -1,5 +1,7 @@
 package models.im
 
+import play.api.data.Form
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,6 +14,9 @@ package models.im
  */
 package object make {
 
-  type Maker   = Makers.T
+  type Maker      = Makers.T
+
+  /** Тип для маппинга системной формы. Передается из контроллера в шаблоны. */
+  type SysForm_t  = Form[(Maker, IMakeArgs)]
 
 }

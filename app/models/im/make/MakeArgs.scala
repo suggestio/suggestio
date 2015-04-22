@@ -2,8 +2,7 @@ package models.im.make
 
 import io.suggest.ym.model.common.IBlockMeta
 import models.blk.SzMult_t
-import models.MImgInfoT
-import models.im.{MImg, CompressMode, DevScreenT}
+import models.im.{DevScreen, MImg, CompressMode}
 
 /**
  * Suggest.io
@@ -15,7 +14,7 @@ trait IMakeArgs {
 
   /** Параметры экрана устройства. Берется из Context или сочиняется вручную.
     * None значит необходимые дефолтовые данные подставляет конкретная реализация [[IMaker]]. */
-  def devScreenOpt: Option[DevScreenT]
+  def devScreenOpt: Option[DevScreen]
 
   /** Картинка для обработки. У рекламной карточки в теории может быть несколько картинок. */
   def img: MImg
@@ -36,7 +35,7 @@ case class MakeArgs(
   override val img          : MImg,
   override val blockMeta    : IBlockMeta,
   override val szMult       : SzMult_t,
-  override val devScreenOpt : Option[DevScreenT],
+  override val devScreenOpt : Option[DevScreen],
   override val compressMode : Option[CompressMode] = None
 )
   extends IMakeArgs

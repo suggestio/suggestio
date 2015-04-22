@@ -1,7 +1,7 @@
 package models.im
 
 import io.suggest.model.EnumValue2Val
-import play.api.Play.{current, configuration}
+import util.FormUtil.StrEnumFormMappings
 
 /**
  * Suggest.io
@@ -10,16 +10,18 @@ import play.api.Play.{current, configuration}
  * Description: Модель, хранящая стандартные пиксельны плотности экранов для разных режимов картинки.
  * @see [[http://www.devicepixelratio.com/]].
  */
-object DevPixelRatios extends Enumeration with EnumValue2Val {
+object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMappings {
 
   /**
    * Экземпляр модели.
    * @param name Название семейства экранов.
    */
-  protected abstract sealed class Val(val name: String) extends super.Val(name) with IDevPixelRatio /*{
-    val bgCompression: ImCompression
-    val fgCompression: ImCompression
-  }*/
+  protected abstract sealed class Val(val name: String)
+    extends super.Val(name)
+    with IDevPixelRatio
+  {
+    override def toString() = name
+  }
 
 
   override type T = Val
@@ -129,63 +131,10 @@ object DevPixelRatios extends Enumeration with EnumValue2Val {
     if (pxRatioOpt.isDefined) pxRatioOpt.get else default
   }
 
-}
-
-
-object ImCompression {
-
-  /**
-   * Сборка экземпляра ImCompression с использованием конфига.
-   * @param name Название, например MDPI.
-   * @param mode Режим: fg, bg или иные.
-   * @param qDflt Дефолтовое значение качества.
-   * @param chromaSsDflt Дефолтовая передискретизация цветов [2x2].
-   * @param imBlurDflt Дефолтованая размывка, если требуется [None].
-   * @return Экземпляр ImCompression, готовый к эксплуатации.
-   */
-  def apply(name: String, mode: String, qDflt: Int, chromaSsDflt: ImSamplingFactor = ImSamplingFactors.SF_2x2,
-            imBlurDflt: Option[Float] = None): ImCompression = {
-    // Пытаемся получить параметры сжатия из конфига
-    ImCompression(
-      imQualityInt = configuration.getInt(s"dpr.$name.$mode.quality")
-        .getOrElse(qDflt),
-      chromaSubSampling = configuration.getString(s"dpr.$name.$mode.chroma.ss")
-        .fold(chromaSsDflt)(ImSamplingFactors.withName),
-      imBlur = configuration.getDouble(s"dpr.$name.$mode.blur.gauss")
-        .map(_.toFloat)
-        .orElse(imBlurDflt)
-    )
-  }
+  override protected def _idMaxLen: Int = 10
 
 }
 
-
-/**
- * Настройки сжатия.
- * @param imQualityInt quality (0..100). Основной параметр для jpeg'ов.
- * @param chromaSubSampling Цветовая субдискретизация. 2x2 по дефолту.
- * @param imBlur Желаемая размывка.
- */
-sealed case class ImCompression(
-  imQualityInt      : Int,
-  chromaSubSampling : ImSamplingFactor,
-  imBlur            : Option[Float]
-) {
-
-  /** Значение quality. */
-  def imQuality = imQualityInt.toDouble
-
-  /** Сгенерить экземпляр quality ImOp. */
-  def imQualityOp = QualityOp(imQuality)
-
-  /** Опционально сгенерить GaussBlurOp, если требуется размывка. */
-  def imGaussBlurOp: Option[GaussBlurOp] = {
-    imBlur.map { blurFloat =>
-      GaussBlurOp(blurFloat)
-    }
-  }
-
-}
 
 /** Интерфейс экземпляров модели [[DevPixelRatios]]. */
 trait IDevPixelRatio {

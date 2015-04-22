@@ -1,6 +1,7 @@
 package models.im.make
 
 import io.suggest.model.EnumMaybeWithName
+import util.FormUtil.StrEnumFormMappings
 import util.blocks.BlkImgMaker
 import util.img.StrictWideMaker
 import util.showcase.ScWideMaker
@@ -13,7 +14,7 @@ import util.showcase.ScWideMaker
  * Каждый экземпляр модели -- это контроллер, занимающийся принятием решений по рендеру картинки на основе
  * исходных данных и внутреннего алгоритма.
  */
-object Makers extends Enumeration with EnumMaybeWithName {
+object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMappings {
 
   /**
    * Абстрактный экземпляр этой модели.
@@ -44,4 +45,5 @@ object Makers extends Enumeration with EnumMaybeWithName {
     override def _underlying = StrictWideMaker
   }
 
+  override protected def _idMaxLen: Int = 6
 }

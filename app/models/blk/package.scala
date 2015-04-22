@@ -8,8 +8,8 @@ package models
  */
 package object blk {
 
-  type BlockWidth  = BlockWidths.BlockWidth
-  type BlockHeight = BlockHeights.BlockHeight
+  type BlockWidth  = BlockWidths.T
+  type BlockHeight = BlockHeights.T
 
   // TODO Наверное надо перенести SzMult_t на уровень models.
   type SzMult_t    = Float
@@ -17,6 +17,8 @@ package object blk {
   type AdColorFn   = AdColorFns.AdColorFn
 
   type FontSize    = FontSizes.FontSize
+
+  type IBlockMeta  = io.suggest.ym.model.common.IBlockMeta
 
 
   // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.

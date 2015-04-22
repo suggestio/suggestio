@@ -1,6 +1,7 @@
 package models.im
 
 import io.suggest.ym.model.common.MImgSizeT
+import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 import util.img.{PicSzParsers, DevScreenParsers}
 
@@ -9,6 +10,9 @@ import util.img.{PicSzParsers, DevScreenParsers}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 06.10.14 13:44
  * Description: Модель, отражающая параметры клиентского экрана.
+ *
+ * 2015.apr.22: Тут следует обходится без лишних интерфейсов экземпляров, чтобы не было двоякости в биндингах/маппингах.
+ * Эта модель путешествует по многим уровням проекта, поэтому трейт DevScreenT был выпилен для жесткой унификации.
  */
 
 object DevScreen extends DevScreenParsers {
@@ -45,18 +49,22 @@ object DevScreen extends DevScreenParsers {
     pixelRatioOpt = Some(DevPixelRatios.default)
   )
 
-}
 
+  import play.api.data.Forms._
 
-/** Интерфейс модели. Для большинства случаев его достаточно.
-  * width и height задаются в css-пикселях. */
-trait DevScreenT extends MImgSizeT with ImgOrientationT {
+  /** Form-mapping для обязательного задания [[DevScreen]].
+    * Форма должна иметь отдельные поля для ширины, высоты и необязательной плотности пикселей экрана. */
+  def mappingFat: Mapping[DevScreen] = {
+    val whm = number(min = 0, max = 8192)
+    mapping(
+      "width"   -> whm,
+      "height"  -> whm,
+      "pxRatio" -> DevPixelRatios.mappingOpt
+    )
+    { DevScreen.apply }
+    { DevScreen.unapply }
+  }
 
-  /** Пиксельная плотность экрана. */
-  def pixelRatio: DevPixelRatio
-
-  /** Найти базовое разрешение окна по соотв.модели. */
-  def maybeBasicScreenSize = BasicScreenSizes.includesSize(this)
 }
 
 
@@ -70,16 +78,16 @@ case class DevScreen(
   width         : Int,
   height        : Int,
   pixelRatioOpt : Option[DevPixelRatio]
-)
-  extends DevScreenT
+) 
+  extends MImgSizeT with ImgOrientationT
 {
 
-  override def pixelRatio: DevPixelRatio = {
+  def pixelRatio: DevPixelRatio = {
     pixelRatioOpt getOrElse DevPixelRatios.default
   }
 
   /** Найти базовое разрешение окна по соотв.модели. */
-  override def maybeBasicScreenSize = super.maybeBasicScreenSize
+  def maybeBasicScreenSize = BasicScreenSizes.includesSize(this)
 
   override def toString: String = {
     val sb = new StringBuilder(32)
