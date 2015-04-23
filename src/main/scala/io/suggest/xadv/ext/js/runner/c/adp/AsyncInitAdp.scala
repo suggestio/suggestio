@@ -3,6 +3,7 @@ package io.suggest.xadv.ext.js.runner.c.adp
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{UrlLoadTimeoutException, DomUpdateException, ApiInitException}
 import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IAdapter}
+import io.suggest.xadv.ext.js.runner.v.Page
 import org.scalajs.dom
 import org.scalajs.dom.Element
 
@@ -54,9 +55,7 @@ trait AsyncInitAdp extends IAdapter {
 
   /** Добавление указанного (обычно script) тега в DOM. */
   def appendScriptTag(tag: Element): Unit = {
-    dom.document
-      .getElementsByTagName("body")(0)
-      .appendChild(tag)
+    Page.body.appendChild(tag)
   }
 
   /** Собрать и добавить тег скрипта в DOM. */

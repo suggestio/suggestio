@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.runner.v
 
 import io.suggest.adv.ext.view.RunnerPage._
 import org.scalajs.dom
+import org.scalajs.dom.Node
 import org.scalajs.jquery._
 
 import scala.scalajs.js
@@ -42,6 +43,13 @@ object Page {
   def onClose(f: () => _): Unit = {
     jQuery(dom.window)
       .on("beforeunload", f: js.Function0[_])
+  }
+
+  /** Получить тег body наиболее оптимальным способом. */
+  lazy val body: Node = {
+    val d = dom.document
+    Option[Node]( d.body )
+      .getOrElse { d.getElementsByTagName("body")(0) }
   }
 
 }
