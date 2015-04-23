@@ -15,6 +15,5 @@
   _siom.type="text/javascript";
   _siom.async=true;
   _siom.src="@ShowcaseUtil.showcaseJsAbsUrl(mkPermanent)";
-  var _sh=document.getElementsByTagName("head")[0];
-  _sh.appendChild(_siom);
+  (document.head||document.getElementsByTagName("head")[0]).appendChild(_siom);
 })();
