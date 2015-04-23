@@ -203,7 +203,7 @@ object NodesUtil extends PlayMacroLogsImpl {
       }
       // Если не было adnId узлов-источников, то
       .recover { case ex: NoSuchElementException =>
-        LOGGER.warn("Node default ads installer is disabled!")
+        LOGGER.warn(logPrefix + " Node default ads installer is disabled!")
         Nil
       }
   }
