@@ -182,6 +182,8 @@ excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 
 // sbt-web
+// TODO rjs не нужен, но его очевидная замена на uglify калечит исходники css-ассетов в simpleUrlUpdate.
+//pipelineStages ++= Seq(uglify, cssCompress, digest, simpleUrlUpdate, digest, filter, gzip)
 pipelineStages ++= Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
 
 testOptions in Test += Tests.Argument("-oF")
@@ -290,4 +292,5 @@ includeFilter in filter := {
   "*-fastopt.js" || "*-fastopt.js.map" || "*-fastopt.js.md5" ||  // scala.js дебажный хлам в финальном билде не нужен.
   new PatternFilter("\\.*[a-f\\d]{32}-[a-f\\d]{32}-.+\\.[_\\w\\d.]+".r.pattern)   // Нужно фильтровать ассеты с двумя чексуммами в имени.
 }
+
 

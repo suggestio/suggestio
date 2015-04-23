@@ -6,19 +6,21 @@
 @import views.html.helper._
 
 <table class="prop">
-  <td class="prop_name">
-    <label for="@elements.id">
-      @elements.label
+  <tr>
+    <td class="prop_name">
+      <label for="@elements.id">
+        @elements.label
 
-      @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
-        <span class="required-icon">*</span>
-      }
-    </label>
-  </td>
-  <td class="prop_value">
-    <div class="input @elements.args.get('_class) @if(elements.hasErrors){__error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
-      @elements.input
-    </div>
-    <div class="prop_helper">@elements.args.get('_helper)</div>
-  </td>
+        @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+          <span class="required-icon">*</span>
+        }
+      </label>
+    </td>
+    <td class="prop_value">
+      <div class="input @elements.args.get('_class) @if(elements.hasErrors){__error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
+        @elements.input
+      </div>
+      <div class="prop_helper">@elements.args.get('_helper)</div>
+    </td>
+  </tr>
 </table>

@@ -14,29 +14,23 @@ resolvers ++= Seq(
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
-
-//addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.2")
-
-addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.6")
+addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.7")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.0")
 
-//addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
-
-//addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.3")
 
 
 // Use the Play sbt plugin for Play projects
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.0-M3")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.2.0")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.1.0")
 
 // stylus assets
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")

@@ -2,6 +2,8 @@
 
 @* Страница с запросом обратного звонка. *@
 
+@import util.cdn.CdnUtil
+
 @joinBase("Запросить обратный звонок") {
 
   <div class="body __responsive index-page_cnt">
@@ -18,4 +20,8 @@
 
     </div>
   </div>
+
+  @* В форме есть поле для ввода номера телефона. *@
+  <script src="@CdnUtil.asset("javascripts/lib/maskedinput/maskedInput.min.js")"></script>
+
 }

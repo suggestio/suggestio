@@ -27,13 +27,18 @@
   </div>
 }
 
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+}
+
 @nodeBaseTpl(
   title         = messages("Edit.profile"),
   node          = mnode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
   rightBarAfter = Some(rightBarAfter),
-  popupContent  = Some(popupContent)
+  popupContent  = Some(popupContent),
+  headAfter     = Some(headAfter)
 ) {
 
   @_leaderNodeFormTpl(
@@ -44,4 +49,6 @@
     welcomeAdOpt  = welcomeAdOpt,
     nodeInfo      = mnode.adn
   )
+
+  <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
 }
