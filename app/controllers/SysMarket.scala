@@ -578,23 +578,19 @@ class SysMarket @Inject() (
 
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
-  def showShopEmailAdDisableMsg(adId: String) = IsSuperuser.async { implicit request =>
-    MAd.getById(adId) flatMap {
-      case Some(mad) =>
-        val mmartFut = mad.receivers.headOption match {
-          case Some(rcvr) => MAdnNode.getById(rcvr._2.receiverId)
-          case None       => MAdnNode.getAll(maxResults = 1).map { _.headOption }
-        }
-        for {
-          mshopOpt <- getShopById(mad.producerId)
-          mmartOpt <- mmartFut
-        } yield {
-          val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
-          val adOwner = mshopOpt.orElse(mmartOpt).get
-          Ok(views.html.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
-        }
-
-      case None => NotFound("ad not found: " + adId)
+  def showShopEmailAdDisableMsg(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+    import request.mad
+    val mmartFut = mad.receivers.headOption match {
+      case Some(rcvr) => MAdnNode.getById(rcvr._2.receiverId)
+      case None       => MAdnNode.getAll(maxResults = 1).map { _.headOption }
+    }
+    for {
+      mshopOpt <- getShopById(mad.producerId)
+      mmartOpt <- mmartFut
+    } yield {
+      val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
+      val adOwner = mshopOpt.orElse(mmartOpt).get
+      Ok(views.html.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
     }
   }
 
@@ -651,17 +647,15 @@ class SysMarket @Inject() (
   }
 
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
-  def resetReceivers(adId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
-    MAd.getById(adId).flatMap { madOpt =>
-      val mad0 = madOpt.get
-      AdvUtil.calculateReceiversFor(mad0) flatMap { newRcvrs =>
-        MAd.tryUpdate(mad0) { mad =>
-          mad.copy(
-            receivers = newRcvrs
-          )
-        } map { _adId =>
-          RdrBackOr(r)( routes.SysMarket.showAdnNode(mad0.producerId) )
-        }
+  def resetReceivers(adId: String, r: Option[String]) = IsSuperuserMad(adId).async { implicit request =>
+    val mad0 = request.mad
+    AdvUtil.calculateReceiversFor(mad0) flatMap { newRcvrs =>
+      MAd.tryUpdate(mad0) { mad =>
+        mad.copy(
+          receivers = newRcvrs
+        )
+      } map { _adId =>
+        RdrBackOr(r)( routes.SysMarket.showAdnNode(mad0.producerId) )
       }
     }
   }
@@ -669,16 +663,14 @@ class SysMarket @Inject() (
 
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
-  def cleanReceivers(adId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
-    MAd.getById(adId).flatMap { madOpt =>
-      val mad0 = madOpt.get
-      MAd.tryUpdate(madOpt.get) { mad =>
-        mad.copy(
-          receivers = Map.empty
-        )
-      } map { _adId =>
-        RdrBackOr(r) { routes.SysMarket.showAdnNode(mad0.producerId) }
-      }
+  def cleanReceivers(adId: String, r: Option[String]) = IsSuperuserMad(adId).async { implicit request =>
+    val mad0 = request.mad
+    MAd.tryUpdate(mad0) { mad =>
+      mad.copy(
+        receivers = Map.empty
+      )
+    } map { _adId =>
+      RdrBackOr(r) { routes.SysMarket.showAdnNode(mad0.producerId) }
     }
   }
 
