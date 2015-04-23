@@ -1,4 +1,4 @@
-@(af: Form[MAdnNode], call: Call, companies: Seq[MCompany], btnText: String)(implicit ctx: Context)
+@(af: Form[MAdnNode], call: Call, companies: Seq[MCompany], btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
 
 @* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
@@ -176,6 +176,8 @@
       '_label -> "Отображать в списке узлов выдачи?"
     )
   </table>
+
+  @formAfter
 
   <div class="btn-w __size-M">
     <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" value="@btnText" type="submit" />

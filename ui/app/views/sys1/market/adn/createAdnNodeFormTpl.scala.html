@@ -1,7 +1,25 @@
-@(supOpt: Option[MAdnNode], af: Form[MAdnNode], companies: Seq[MCompany])(implicit ctx: Context)
+@(supOpt: Option[MAdnNode], af: Form[MAdnNode], companies: Seq[MCompany], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
 
 @* Страница с формой создания нового узла рекламной сети. *@
 @import ctx._
+@import helper._
+
+@formAfter = {
+  @checkbox(
+    ncpf("billInit"),
+    '_label -> "Инициализировать биллинг?"
+  )
+
+  @checkbox(
+    ncpf("extTgsInit"),
+    '_label -> "Создать дефолтовые цели размещения (соц.сети)?"
+  )
+
+  @checkbox(
+    ncpf("withDfltMads"),
+    '_label -> "Создать дефолтовые рекламные карточки?"
+  )
+}
 
 @adnBase("Создать новый ADN-узел") {
 
@@ -17,6 +35,7 @@
     af	      = af,
     call      = routes.SysMarket.createAdnNodeSubmit(supOpt.flatMap(_.id)),
     companies = companies,
-    btnText   = messages("Create")
+    btnText   = messages("Create"),
+    formAfter = Some(formAfter)
   )
 }

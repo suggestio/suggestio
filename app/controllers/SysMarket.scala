@@ -3,11 +3,13 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.util.MacroLogsImpl
 import models.im.MImg
+import models.msys.NodeCreateParams
 import models.usr.{MPerson, EmailActivation}
 import play.api.db.Database
 import play.twirl.api.Html
 import util.acl._
 import models._
+import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
@@ -19,7 +21,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{Result, Call, AnyContent}
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import controllers.sysctl._
 import sysctl.SysMarketUtil._
 
@@ -205,16 +207,18 @@ class SysMarket @Inject() (
       case None => Future successful None
     }
   }
-  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String], nodeFormM: Form[MAdnNode])
-                                 (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String], nodeFormM: Form[MAdnNode],
+                                  ncpForm: Form[NodeCreateParams]) (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     val companiesFut = MCompany.getAll(maxResults = 100)
     for {
       supOpt    <- supOptFut
       companies <- companiesFut
     } yield {
-      createAdnNodeFormTpl(supOpt, nodeFormM, companies)
+      createAdnNodeFormTpl(supOpt, nodeFormM, companies, ncpForm)
     }
   }
+
+  private def nodeCreateParamsFormM = Form(NodeCreateParams.mappingM)
 
   /** Страница с формой создания нового узла. */
   def createAdnNode(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
@@ -232,17 +236,20 @@ class SysMarket @Inject() (
         )
       )
     )
-    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt, dfltFormM)
+    val ncpForm = nodeCreateParamsFormM fill NodeCreateParams()
+    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt, dfltFormM, ncpForm)
       .map { Ok(_) }
   }
 
   /** Сабмит формы создания нового узла. */
   def createAdnNodeSubmit(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
     val supOptFut = maybeSupOpt(supIdOpt)
+    val ncpForm = nodeCreateParamsFormM.bindFromRequest()
+    lazy val logPrefix = s"createAdnNodeSubmit(supId=$supIdOpt):"
     adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val renderFut = createAdnNodeRender(supOptFut, supIdOpt, formWithErrors)
-        debug(s"createAdnNodeSubmit(supId=$supIdOpt): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        val renderFut = createAdnNodeRender(supOptFut, supIdOpt, formWithErrors, ncpForm)
+        debug(s"$logPrefix Failed to bind form: ${formatFormErrors(formWithErrors)}")
         renderFut map {
           NotAcceptable(_)
         }
@@ -258,13 +265,17 @@ class SysMarket @Inject() (
           if (supIdOpt.isDefined) {
             adnNode.handleMeAddedAsChildFor(supOpt.get)
           }
+          val nodeSaveFut = adnNode.save
           for {
-            adnId <- adnNode.save
+            adnId <- nodeSaveFut
           } yield {
-            adnNode.id = Some(adnId)
+            maybeInitializeNode(ncpForm, adnId)
+            val adnNode1 = adnNode.copy(
+              id = Some(adnId)
+            )
             if (supIdOpt.isDefined) {
               val sup = supOpt.get
-              if (sup.handleChildNodeAddedToMe(adnNode)) {
+              if (sup.handleChildNodeAddedToMe(adnNode1)) {
                 sup.save
               }
             }
@@ -274,6 +285,44 @@ class SysMarket @Inject() (
         }
       }
     )
+  }
+
+  /** При создании узла есть дополнительные отключаемые возможности по инициализации.
+    * Тут фунцкия, отрабатывающая это дело. */
+  private def maybeInitializeNode(ncpForm: Form[NodeCreateParams], adnId: String)(implicit lang: Messages): Future[_] = {
+    lazy val logPrefix = s"maybeInitializeNode($adnId):"
+    ncpForm.value match {
+      case Some(ncp) =>
+        // Все флаги отрабатываются аналогично, поэтому общий код вынесен за скобки.
+        def f(flag: Boolean, errMsg: => String)(action: => Future[_]): Future[_] = {
+          if (flag) {
+            val fut: Future[_] = action
+            fut onFailure { case ex: Throwable =>
+              warn(errMsg, ex)
+            }
+            fut
+          } else {
+            Future successful None
+          }
+        }
+        val billFut = f(ncp.billInit, s"$logPrefix Failed to initialize billing") {
+          NodesUtil.createUserNodeBilling(adnId)
+        }
+        val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
+          NodesUtil.createExtDfltTargets(adnId)(lang)
+        }
+        val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
+          NodesUtil.installDfltMads(adnId)(lang)
+        }
+        billFut flatMap { _ =>
+          etgsFut flatMap { _ =>
+            madsFut
+          }
+        }
+      case None =>
+        warn(s"$logPrefix Failed to bind ${NodeCreateParams.getClass.getSimpleName} form:\n ${formatFormErrors(ncpForm)}")
+        Future successful None
+    }
   }
 
 
