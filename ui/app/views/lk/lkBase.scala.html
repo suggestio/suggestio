@@ -29,7 +29,7 @@
   @headAfter
 </head>
 
-<body class="lk" @for(c <- controllerSimple; a <- action) {data-ri="@c:@a"}>
+<body class="lk" @dataRiAttrTpl()>
 @defining( nodeOpt.flatMap(_.id) ) { adnIdOpt =>
 
   <header class="header">

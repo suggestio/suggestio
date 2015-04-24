@@ -1,0 +1,3 @@
+@()(implicit ctx: Context)
+@* data-ri -- это аттрибут тега body для sjs RoutedInit. Он содержит данные для js-инициализации. *@
+@for(c <- ctx.controllerSimple; a <- ctx.action) {data-ri="@c:@a"}
