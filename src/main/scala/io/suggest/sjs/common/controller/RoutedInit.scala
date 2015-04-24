@@ -93,17 +93,17 @@ trait RoutedInit extends SjsLogs {
           // Инициализируем контроллер Future(), чтобы удобнее комбинировать и перехватывать ошибки.
           Future {
             ctl.riInit()
-          } flatMap { _ =>
+          } andThen { case  _ =>
             if (tl.nonEmpty) {
               val actsRaw = tl.head
               val acts = actsRaw.split("\\s*,\\s*").toSeq
               Future.traverse(acts) { act =>
                 ctl.riAction(act)
               }
-            } else {
-              // Нет экшенов. Видимо разработчик подразумевал только инициализацию соотв.контроллера.
-              done
             }
+          } recover { case ex: Throwable =>
+            error("Failed to init ctl " + ctlName + " and actions " + tl, ex)
+            None
           }
 
         case None =>
@@ -140,7 +140,8 @@ trait RoutedInitController extends SjsLogs {
    * @return Фьючерс с результатом.
    */
   def riAction(name: String): Future[_] = {
-    error("Action ''" + name + "'' not found in controller " + getClass.getName + ". Skipping...")
+    // TODO Это нужно закомментить, когда отладка будет завершена.
+    log("Action ''" + name + "'' not found in controller " + getClass.getName + ". Skipping...")
     done
   }
 
