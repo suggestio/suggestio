@@ -12,9 +12,6 @@ import io.suggest.xadv.ext.js.runner.c.RunnerRiCtl
  */
 trait AdvExtRiController extends RoutedInit {
 
-  /** Реализация RoutedInit-контроллера: кучкуем все экшены. */
-  class RiCtl extends FormEventsRiCtl with RunnerRiCtl
-
   /** Поиск ri-контроллера с указанным именем (ключом).
     * Реализующие трейты должны переопределять этот метод под себя, сохраняя super...() вызов. */
   override protected def getController(name: String): Option[RoutedInitController] = {
@@ -26,3 +23,6 @@ trait AdvExtRiController extends RoutedInit {
   }
 
 }
+
+/** Реализация RoutedInit-контроллера: кучкуем все экшены. */
+class RiCtl extends FormEventsRiCtl with RunnerRiCtl
