@@ -9,7 +9,8 @@ resolvers ++= Seq(
   "typesafe-snapshots"      at "http://repo.typesafe.com/typesafe/snapshots/",
   Resolver.url("bintray-repository", url("http://dl.bintray.com/neomaclin/sbt-plugins/"))(Resolver.ivyStylePatterns),
   //"sbt-snapshot-plugins"  at "https://ivy2-internal.cbca.ru/artifactory/sbt-plugin-snapshots"
-  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
+  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
+  "scalaz-bintray"          at "https://dl.bintray.com/scalaz/releases"
 )
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
@@ -25,6 +26,8 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.2.0")
 //addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.3")
 
 //addSbtPlugin("net.ground5hark.sbt" % "sbt-css-compress" % "0.1.3")
+
+addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
@@ -43,8 +46,6 @@ addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.7-SNAPSHOT")
 
 // ProGuard занимается обфускацией скомпиленных данных.
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
-
-addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.2")
 

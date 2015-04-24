@@ -51,27 +51,42 @@ object SiobixBuild extends Build {
     )
   }
 
+  lazy val sjsCommon = {
+    val name = "sjs-common"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
   /** scala-js для формы внешнего размещения карточек. */
   lazy val advExtSjsForm = {
     val name = "advext-sjs-form"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(advExtCommon)
+      .dependsOn(sjsCommon, advExtCommon)
       .settings(
         unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile)
       )
   }
-
+  
   lazy val advExtSjsRunner = {
     val name = "advext-sjs-runner"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(advExtCommon)
+      .dependsOn(sjsCommon, advExtCommon)
       .settings(
         Seq(advExtCommon, modelEnumUtil)
           .map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile))  : _*
       )
   }
+
+  /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) теперь живут в одном большом sjs fat js. */
+  lazy val lkSjs = {
+    val name = "lk-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(sjsCommon, advExtSjsForm, advExtSjsRunner)
+  }
+
 
   lazy val util = project
     .dependsOn(modelEnumUtil, advExtCommon)
@@ -92,10 +107,10 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
     .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
-    .aggregate(advExtSjsRunner, advExtSjsForm)
+    .aggregate(advExtSjsRunner, advExtSjsForm, lkSjs)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
-      scalaJSProjects := Seq(advExtSjsRunner, advExtSjsForm),
+      scalaJSProjects := Seq(advExtSjsRunner, advExtSjsForm, lkSjs),
       pipelineStages += scalaJSProd
     )
   
@@ -108,7 +123,7 @@ object SiobixBuild extends Build {
   .settings(
     scalaVersion := "2.11.6"
   )
-  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, advExtSjsForm, util, securesocial, web21)
+  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, advExtSjsForm, lkSjs, util, securesocial, web21)
 
 
 
