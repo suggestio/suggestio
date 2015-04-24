@@ -17,31 +17,6 @@ isTouchDevice = () ->
     else
       true
 
-IndexPage =
-
-  centeredContent: ()->
-    minTop = 60
-    delta = 100
-    $window = $ window
-    $cnt = $ '#centerContent'
-    winHeight = $window.height()
-    cntHeight = $cnt.height()
-    diff = winHeight - cntHeight
-    top = Math.ceil(diff/2) - delta
-
-    if top < minTop
-      top = minTop
-
-    $cnt.css 'padding-top',top
-
-  init: ()->
-    IndexPage.centeredContent()
-    $window = $ window
-    $window.resize ()->
-      IndexPage.centeredContent()
-
-IndexPage.init()
-
 
 ## До 2b7eaaac7ff8 включительно здесь был код слайдера, который использовался в marketBase для публичного отображения узлов в окошке.
 

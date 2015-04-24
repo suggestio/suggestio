@@ -31,7 +31,7 @@
 </head>
 
 
-<body class="index-page">
+<body class="index-page" @dataRiAttrTpl()>
 
   @content
 
@@ -61,6 +61,7 @@
 
   <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@CdnUtil.asset("javascripts/jquery-ui.custom.min.js")"></script>
+  @_sjsScript("lk-sjs", withLauncherJs = true)
 
 </body>
 </html>
