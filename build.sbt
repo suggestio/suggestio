@@ -1,6 +1,6 @@
 organization := "io.suggest"
 
-name := "sjs-common"
+name := "common-sjs"
 
 scalaVersion := "2.11.6"
 

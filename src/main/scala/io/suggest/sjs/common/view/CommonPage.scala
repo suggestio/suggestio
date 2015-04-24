@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.view
 
 import org.scalajs.dom
-import org.scalajs.dom.Node
+import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.jquery._
 
 import scala.scalajs.js
@@ -28,10 +28,12 @@ object CommonPage {
   }
 
   /** Получить тег body наиболее оптимальным способом. */
-  lazy val body: Node = {
+  lazy val body: HTMLElement = {
     val d = dom.document
-    Option[Node]( d.body )
-      .getOrElse { d.getElementsByTagName("body")(0) }
+    Option( d.body ).getOrElse {
+      d.getElementsByTagName("body")(0)
+        .asInstanceOf[HTMLElement]
+    }
   }
 
 }
