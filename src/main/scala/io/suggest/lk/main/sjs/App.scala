@@ -1,5 +1,6 @@
-package io.suggest.adv.ext.form
+package io.suggest.lk.main.sjs
 
+import io.suggest.lk.ident.IdentInitRouter
 import io.suggest.sjs.common.util.SjsLogs
 import io.suggest.xadv.ext.js.AdvExtRiController
 
@@ -29,4 +30,6 @@ object App extends JSApp with SjsLogs {
 
 
 /** Stackable-реализация routed init. */
-class RoutedInitImpl extends AdvExtRiController
+class RoutedInitImpl
+  extends IdentInitRouter
+  with AdvExtRiController
