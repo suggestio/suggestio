@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MAskActionLightBaseT
 import io.suggest.adv.ext.model.ctx.MAskActions._
-import io.suggest.xadv.ext.js.runner.c.{IActionContext, AeRunnerApp, PopupChecker}
+import io.suggest.xadv.ext.js.runner.c.{Runner, IActionContext}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -48,7 +48,7 @@ object MAskActions extends MAskActionLightBaseT {
   /** Глобальная инициализация. */
   override val Init: T = new Val(INIT) with AdHocAction {
     override def processAction(actx: IActionContext): Future[MJsCtxT] = {
-      AeRunnerApp.init(actx)
+      Runner.handleInitCmd(actx)
     }
   }
 

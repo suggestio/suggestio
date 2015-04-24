@@ -32,24 +32,4 @@ object Page {
     })
   }
 
-  /** Запустить этот код, когда страница будет готова. */
-  def onReady(f: () => _): Unit = {
-    jQuery(dom.document)
-      .ready(f: js.Function0[_])
-  }
-
-
-  /** Запустить переданный код при закрытии/обновлении страницы. */
-  def onClose(f: () => _): Unit = {
-    jQuery(dom.window)
-      .on("beforeunload", f: js.Function0[_])
-  }
-
-  /** Получить тег body наиболее оптимальным способом. */
-  lazy val body: Node = {
-    val d = dom.document
-    Option[Node]( d.body )
-      .getOrElse { d.getElementsByTagName("body")(0) }
-  }
-
 }
