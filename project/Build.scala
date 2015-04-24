@@ -25,6 +25,7 @@ object SiobixBuild extends Build {
     dependencies = Seq(util, cascadingEs2)
   )*/
 
+  /** Cross-buildable утиль для упрощенной сборки Enumeration-моделей. */
   lazy val modelEnumUtil = {
     val name = "model-enum-util"
     Project(
@@ -42,6 +43,7 @@ object SiobixBuild extends Build {
     )
   }
 
+  /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val advExtCommon = {
     val name = "advext-common"
     Project(
@@ -51,55 +53,42 @@ object SiobixBuild extends Build {
     )
   }
 
-  lazy val sjsCommon = {
-    val name = "sjs-common"
+  /** Кое-какие общие вещи для js. */
+  lazy val commonSjs = {
+    val name = "common-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
+      // Чтобы не инклюдчить сорцы modelEnumUtil в каждом под-проекте, используем его прямо здесь.
+      .settings(
+        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (modelEnumUtil, Compile)
+      )
   }
 
-  /** scala-js для формы внешнего размещения карточек. */
-  lazy val advExtSjsForm = {
-    val name = "advext-sjs-form"
+  /** Модуль scala.js для подсистемы внешнего размещения исторически отдельно и он довольно жирный и сложный, чтобы жить внутри дерева lk-sjs. */
+  lazy val lkAdvExtSjs = {
+    val name = "lk-adv-ext-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(sjsCommon, advExtCommon)
+      .dependsOn(commonSjs, advExtCommon)
       .settings(
         unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile)
       )
   }
-  
-  lazy val advExtSjsRunner = {
-    val name = "advext-sjs-runner"
-    Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
-      .dependsOn(sjsCommon, advExtCommon)
-      .settings(
-        Seq(advExtCommon, modelEnumUtil)
-          .map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile))  : _*
-      )
-  }
 
-  /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) теперь живут в одном большом sjs fat js. */
+  /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(sjsCommon, advExtSjsForm, advExtSjsRunner)
+      .dependsOn(commonSjs, lkAdvExtSjs)
   }
 
 
+  /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
     .dependsOn(modelEnumUtil, advExtCommon)
 
-  /*lazy val utilPlay = {
-    val name = "util-play"
-    Project(
-      id = name,
-      base = file(name),
-      dependencies = Seq(util)
-    )
-  }*/
-
+  /** Внутренний форк securesocial. */
   lazy val securesocial = project
     .enablePlugins(PlayScala, SbtWeb)
 
@@ -107,32 +96,21 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
     .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
-    .aggregate(advExtSjsRunner, advExtSjsForm, lkSjs)
+    .aggregate(lkSjs)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
-      scalaJSProjects := Seq(advExtSjsRunner, advExtSjsForm, lkSjs),
+      scalaJSProjects := Seq(lkSjs),
       pipelineStages += scalaJSProd
     )
   
 
 
-  lazy val root = Project(
-    id = "root",
-    base = file(".")
-  )
-  .settings(
-    scalaVersion := "2.11.6"
-  )
-  .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, advExtSjsRunner, advExtSjsForm, lkSjs, util, securesocial, web21)
-
-
-
-  val copySourceMapsTask = Def.task {
-    val scalaFiles = (Seq(advExtCommon.base, advExtSjsRunner.base) ** ("*.scala")).get
-    for (scalaFile <- scalaFiles) {
-      val target = new File((classDirectory in Compile).value, scalaFile.getPath)
-      IO.copyFile(scalaFile, target)
-    }
+  lazy val root = {
+    Project(id = "root", base = file("."))
+      .settings(
+        scalaVersion := "2.11.6"
+      )
+      .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, lkAdvExtSjs, lkSjs, util, securesocial, web21)
   }
 
 }
