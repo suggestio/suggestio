@@ -117,7 +117,7 @@ class LkAdvExt @Inject() (
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
-  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     advsFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
@@ -125,16 +125,30 @@ class LkAdvExt @Inject() (
           .map { NotAcceptable(_) }
       },
       {advs =>
-        implicit val ctx = implicitly[Context]
-        val wsCallArgs = MExtAdvQs(
+        val wsArgs = MExtAdvQs(
           adId          = adId,
           targets       = advs,
           bestBeforeSec = WS_BEST_BEFORE_SECONDS,
-          wsId          = ctx.ctxIdStr
+          wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
         )
-        Ok( advRunnerTpl(wsCallArgs, request.mad, request.producer)(ctx) )
+        Redirect( routes.LkAdvExt.runner(adId, wsArgs) )
       }
     )
+  }
+
+  /**
+   * Рендер страницы с runner'ом.
+   * @param adId id размещаемой рекламной карточки.
+   * @param wsArgs Аргументы из сабмита.
+   * @return Страница с системой размещения.
+   */
+  def runner(adId: String, wsArgs: MExtAdvQs) = CanAdvertiseAdPost(adId) { implicit request =>
+    implicit val ctx = implicitly[Context]
+    val wsArgs2 = wsArgs.copy(
+      wsId = ctx.ctxIdStr,
+      adId = adId
+    )
+    Ok( advRunnerTpl(wsArgs2, request.mad, request.producer)(ctx) )
   }
 
   private sealed case class ExceptionWithResult(res: Result) extends Exception

@@ -186,6 +186,10 @@ excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 //pipelineStages ++= Seq(uglify, cssCompress, digest, simpleUrlUpdate, digest, filter, gzip)
 pipelineStages ++= Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
 
+//excludeFilter in simpleUrlUpdate := "*.md5"
+//includeFilter in simpleUrlUpdate := "*.css"
+
+
 testOptions in Test += Tests.Argument("-oF")
 
 

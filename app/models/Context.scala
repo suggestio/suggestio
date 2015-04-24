@@ -4,7 +4,7 @@ import java.util.UUID
 
 import controllers.routes
 import io.suggest.util.UuidUtil
-import models.im.{DevPixelRatios, DevScreen}
+import models.im.DevScreen
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.i18n.Messages
@@ -14,6 +14,7 @@ import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
+import play.api.routing.Router.Tags._
 
 import scala.util.matching.Regex
 
@@ -243,6 +244,28 @@ trait Context extends MyHostsT {
   def isProd  = Play.isProd
   def isDev   = Play.isDev
   def isTest  = Play.isTest
+
+  /**
+   * Текущий контроллер, если вызывается. (fqcn)
+   * @return "controllers.LkAdvExt" например.
+   */
+  def controller: Option[String] = request.tags.get(RouteController)
+
+  /**
+   * Короткое имя класса.
+   * @return "LkAdvExt".
+   */
+  def controllerSimple = controller.map { className =>
+    val i = className.lastIndexOf('.')
+    className.substring(i + 1)
+  }
+
+  /**
+   * Текущий экшен, если исполняется.
+   * @return "forAd"
+   */
+  def action: Option[String] = request.tags.get(RouteActionMethod)
+
 }
 
 

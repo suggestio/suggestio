@@ -29,7 +29,7 @@
   @headAfter
 </head>
 
-<body class="lk">
+<body class="lk" @for(c <- controllerSimple; a <- action) {data-ri="@c:@a"}>
 @defining( nodeOpt.flatMap(_.id) ) { adnIdOpt =>
 
   <header class="header">
@@ -98,6 +98,7 @@
   <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
 
+  @_sjsScript("lk-sjs", withLauncherJs = true)
 }
 </body>
 </html>

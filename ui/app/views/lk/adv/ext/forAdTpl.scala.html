@@ -22,7 +22,7 @@
     }
   </div>
 
-  @form( CSRF(routes.LkAdvExt.advFormSubmit(mad.id.get)), 'id -> ID_ADV_FORM ) {
+  @form( CSRF(routes.LkAdvExt.forAdSubmit(mad.id.get)), 'id -> ID_ADV_FORM ) {
 
     @af("adv").errors.map { error =>
       <div class="event __bg-4 __icon-5">
@@ -40,8 +40,5 @@
     </div>
 
   }
-
-  @* Скрипт siopr.js объявлялся изначально в head. *@
-  @_sjsScript("advext-sjs-form", withLauncherJs = true)
 
 }
