@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.controller
 
-import io.suggest.sjs.common.util.SjsLogs
+import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid}
 import io.suggest.sjs.common.view.CommonPage
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -30,11 +30,14 @@ import scala.concurrent.Future
  *
  * Отсутсвующие контроллеры или экшены будут отображены в логах, но инициализация при этом не прерывается.
  *
+ * 2015.apr.27: RoutedInit переименован в InitRouter.
+ *              RoutedInitController переименован в InitController.
+ *
  * @see [[http://stackoverflow.com/a/9059603 Идея в общих чертах, но через стандартные аттрибутов]].
  * @see [[http://viget.com/inspire/extending-paul-irishs-comprehensive-dom-ready-execution Причины использования data-аттрибутов]].
  */
 
-object RoutedInit {
+object InitRouter {
 
   /** Название аттрибута для тега body, куда записывается инфа для направленной инициализации. */
   def RI_ATTR_NAME = "data-ri"
@@ -45,12 +48,12 @@ object RoutedInit {
 }
 
 
-import RoutedInit._
+import InitRouter._
 
 
 /** Заготовка главного контроллера, который производит инициализацию компонентов в контексте текущей страницы.
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
-trait RoutedInit extends SjsLogs {
+trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
   def init(): Future[_] = {
@@ -81,12 +84,23 @@ trait RoutedInit extends SjsLogs {
     }
   }
 
+  /** Код, который вызывается после обнаружения каждого контроллера в текстовой спеке. */
+  protected def controllerFound(name: String): Unit = {}
+
+  /** Враппер для безопасного вызова controllerFound(). */
+  private def controllerFoundSafe(name: String): Unit = {
+    _safeSyncVoid { () =>
+      controllerFound(name)
+    }
+  }
+
   /** Инициализация одного контроллера и его экшенов на основе переданной спеки. */
   protected def initCtlAdnActs(raw: String): Future[_] = {
     val l = raw.split("\\s*:\\s*").toList
     if (l.nonEmpty) {
       // Есть что-то, похожее на спеку контроллера.
       val ctlName = l.head
+      controllerFoundSafe(ctlName)
       val tl = l.tail
       getController(ctlName) match {
         case Some(ctl) =>
@@ -107,7 +121,7 @@ trait RoutedInit extends SjsLogs {
           }
 
         case None =>
-          error("Controller not found: " + ctlName + " . Following actions are skipped: " + tl.headOption.getOrElse(""))
+          //error("Controller not found: " + ctlName + " . Following actions are skipped: " + tl.headOption.getOrElse(""))
           done
       }
       
@@ -120,7 +134,7 @@ trait RoutedInit extends SjsLogs {
 
   /** Поиск ri-контроллера с указанным именем (ключом).
     * Реализующие трейты должны переопределять этот метод под себя, сохраняя super...() вызов. */
-  protected def getController(name: String): Option[RoutedInitController] = {
+  protected def getController(name: String): Option[InitController] = {
     None
   }
 
@@ -129,7 +143,7 @@ trait RoutedInit extends SjsLogs {
 
 /** Интерфейс init-контроллера, занимающегося роутингом экшенов.
   * Экшены объединяются через stackable trait pattern. */
-trait RoutedInitController extends SjsLogs {
+trait InitController extends ISjsLogger {
 
   /** Синхронная инициализация контроллера, если необходима. */
   def riInit(): Unit = {}
