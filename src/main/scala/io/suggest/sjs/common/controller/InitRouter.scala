@@ -121,7 +121,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
           }
 
         case None =>
-          //error("Controller not found: " + ctlName + " . Following actions are skipped: " + tl.headOption.getOrElse(""))
+          //log("Controller not found: " + ctlName + " . Following actions are skipped: " + tl.headOption.getOrElse(""))
           done
       }
       
@@ -132,7 +132,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
     }
   }
 
-  /** Поиск ri-контроллера с указанным именем (ключом).
+  /** Текущий init-роутер выполняет поиск init-контроллера с указанным именем (ключом).
     * Реализующие трейты должны переопределять этот метод под себя, сохраняя super...() вызов. */
   protected def getController(name: String): Option[InitController] = {
     None
@@ -154,8 +154,7 @@ trait InitController extends ISjsLogger {
    * @return Фьючерс с результатом.
    */
   def riAction(name: String): Future[_] = {
-    // TODO Это нужно закомментить, когда отладка будет завершена.
-    log("Action ''" + name + "'' not found in controller " + getClass.getName + ". Skipping...")
+    //log("Action ''" + name + "'' not found in controller " + getClass.getName + ". Skipping...")
     done
   }
 
