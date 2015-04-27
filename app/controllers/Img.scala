@@ -103,17 +103,15 @@ class Img @Inject() (
   }
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
-  def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
-    IsAuth.async { implicit request =>
-      val iik = MImg(imgId).original
-      iik.getImageWH map { imetaOpt =>
-        val imeta: MImgInfoMeta = imetaOpt getOrElse {
-          val stub = MImgInfoMeta(640, 480)
-          warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
-          stub
-        }
-        Ok(cropTpl(iik.fileName, width, height, markerOpt, imeta, iik.cropOpt))
+  def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
+    val iik = MImg(imgId).original
+    iik.getImageWH map { imetaOpt =>
+      val imeta: MImgInfoMeta = imetaOpt getOrElse {
+        val stub = MImgInfoMeta(640, 480)
+        warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
+        stub
       }
+      Ok(cropTpl(iik.fileName, width, height, imeta, iik.cropOpt))
     }
   }
 
@@ -122,7 +120,6 @@ class Img @Inject() (
   private def imgCropFormM = Form(tuple(
     "imgId"  -> ImgFormUtil.imgIdM,
     "crop"   -> ImgFormUtil.imgCropM,
-    "marker" -> optional(text(maxLength = 32)),
     "target" -> FormUtil.whSizeM
   ))
 
@@ -133,7 +130,7 @@ class Img @Inject() (
         debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
         NotAcceptable("crop request parse failed")
       },
-      {case (iik0, icrop, markerOpt, targetSz) =>
+      {case (iik0, icrop, targetSz) =>
         // Запрашиваем исходную картинку:
         val preparedTmpImgFut = iik0.toLocalImg
         // 2014.oct.08 Нужно чинить кроп, т.к. форма может засабмиттить его с ошибками.

@@ -1,4 +1,4 @@
-@(title: String, lf: Option[Form[_]] = None, popupContent: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, lf: Option[Form[_]] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
 
@@ -34,16 +34,6 @@
 <body class="index-page" @_initRouterAttrsTpl()>
 
   @content
-
-  <div class="popups-container" id="popups">
-    <div class="flex overflow-scrolling">
-      <div class="flex @if(ctx.isIpad || ctx.isIphone){ overflow-scrolling }" >
-        <div id="popupsContainer">
-          @popupContent
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div class="footer __responsive __fill-1">
     <div class="footer_cnt __index">

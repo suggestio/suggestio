@@ -50,5 +50,9 @@
     nodeInfo      = mnode.adn
   )
 
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.Img.imgCropForm
+  )
+
   <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
 }

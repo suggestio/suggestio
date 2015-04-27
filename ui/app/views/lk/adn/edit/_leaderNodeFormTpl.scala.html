@@ -111,7 +111,8 @@
             multiple      = true,
             previewRoot   = "#profileGallery",
             previewClass  = "__size-M f-left",
-            editBtnClass  = "image_edit-btn js-crop-image-btn"
+            editBtnClass  = "image_edit-btn js-crop-image-btn",
+            whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
           )
           <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">
             <span>@Html( messages("Add.photo", "<br/>") )</span>
@@ -126,7 +127,7 @@
                 <div class="image __size-M f-left js-preview">
                   <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-                  <a class="image_edit-btn js-crop-image-btn" title="@messages("Delete")">
+                  <a class="image_edit-btn js-crop-image-btn" title="@messages("Edit")">
                     <span></span>
                   </a>
                 </div>

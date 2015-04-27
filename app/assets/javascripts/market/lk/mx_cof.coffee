@@ -1555,10 +1555,8 @@ market =
           width = $('.sm-block').attr 'data-width'
           height = $('.sm-block').attr 'data-height'
 
-          marker = $(this).attr 'data-marker'
-
           $.ajax
-            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker # маркер тут вроде не нужен, если удалить ничего не меняется
+            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height
             success : ( data ) ->
               $('#popupsContainer').html data
               CbcaPopup.showPopup()

@@ -1,4 +1,4 @@
-@(imgId:String, width: Int, height: Int, markerOpt: Option[String], imeta: MImgSizeT, cropOpt: Option[ImgCrop])(implicit ctx: Context)
+@(imgId:String, width: Int, height: Int, imeta: MImgSizeT, cropOpt: Option[ImgCrop])(implicit ctx: Context)
 
 @import ctx._
 @import helper._
@@ -34,10 +34,6 @@
 
       @* TODO в value, судя по всему, нужно что-то добавить *@
       <input type="hidden" name="resize" value=""/>
-
-      @markerOpt.map { marker =>
-        <input type="hidden" name="marker" value="@marker"/>
-      }
 
       <div class="block __margin-M">
         Передвигая изображения вверх вниз вы выделяете<br/>
