@@ -1,5 +1,6 @@
 package io.suggest.lk.main.sjs
 
+import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.IdentInitRouter
 import io.suggest.sjs.common.util.SjsLogger
@@ -36,3 +37,4 @@ class LkInitRouter
   with IdentInitRouter
   with AdvExtInitRouter
   with FlashInitRouter
+//with NodeEditInitRouter
