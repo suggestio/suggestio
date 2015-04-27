@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
+import io.suggest.sjs.common.controller.routes
 import org.scalajs.dom
 import org.scalajs.dom.raw.Window
 
