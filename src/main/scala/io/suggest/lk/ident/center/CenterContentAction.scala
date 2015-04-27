@@ -1,6 +1,7 @@
 package io.suggest.lk.ident.center
 
-import io.suggest.sjs.common.controller.RoutedInitController
+import io.suggest.sjs.common.controller.InitController
+import io.suggest.sjs.common.util.SafeSyncVoid
 import org.scalajs.dom
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
 
@@ -8,23 +9,29 @@ import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.04.15 22:29
- * Description: Костыли от Макса для js-центровки некоторых элементов на некоторых ident-страницах.
+ * Description: Костыли от Макса для вертикальной js-центровки содержимого колонок на my.s.io/id страницах.
+ * Без этого кода центровка происходит только по горизонтали.
  */
 
-// TODO Спросить у Ильи, нужно ли это вообще, т.к. и без этого js центровка вроде бы происходит.
-
-trait CenterContentAction extends RoutedInitController {
+trait CenterContentAction extends InitController with SafeSyncVoid {
 
   private def jqWnd = jQuery(dom.window)
 
   /** Синхронная инициализация контроллера, если необходима. */
   override def riInit(): Unit = {
     super.riInit()
-    val wnd = jqWnd
-    // Если есть центруемые элементы, то при изменении размеров окна нужно повторять центровку.
-    if (centerContent(wnd)) {
-      wnd.resize { (e: JQueryEventObject) =>
-        centerContent(jqWnd)
+    ccInitSafe()
+  }
+
+  /** Инициализация текущего контроллер с подавлением ошибок. */
+  private def ccInitSafe(): Unit = {
+    _safeSyncVoid { () =>
+      val wnd = jqWnd
+      // Если есть центруемые элементы, то при изменении размеров окна нужно повторять центровку.
+      if (centerContent(wnd)) {
+        wnd.resize { (e: JQueryEventObject) =>
+          centerContent(jqWnd)
+        }
       }
     }
   }
@@ -49,7 +56,6 @@ trait CenterContentAction extends RoutedInitController {
       if (top < minTop)
         top = minTop
       content.css("padding-top", top)
-      //
     }
     hasContent
   }
