@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.form
 
-import io.suggest.sjs.common.controller.RoutedInitController
+import io.suggest.sjs.common.controller.InitController
 import org.scalajs.dom
 import org.scalajs.dom.{Element, XMLHttpRequest}
 import org.scalajs.jquery._
@@ -20,7 +20,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  */
 
 /** Реализация контроллера с запуска экшеном, который связанн с формой. */
-trait FormEventsRiCtl extends RoutedInitController with FormEventsT {
+trait FormEventsRiCtl extends InitController with FormEventsT {
   /**
    * Запустить на исполнение экшен.
    * @param name Название экшена, заданное в body.

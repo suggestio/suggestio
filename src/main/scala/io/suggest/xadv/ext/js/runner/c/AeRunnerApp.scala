@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.controller.RoutedInitController
+import io.suggest.sjs.common.controller.InitController
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.fb.c.FbAdapter
 import io.suggest.xadv.ext.js.runner.m.ex.CustomException
@@ -30,7 +30,7 @@ object AeRunnerApp extends js.JSApp {
 
 
 /** Аддон для ri-sjs-контроллера LkAdvExt, чтобы был экшен для запуска runner'а. */
-trait RunnerRiCtl extends RoutedInitController {
+trait RunnerRiCtl extends InitController {
 
   override def riAction(name: String): Future[_] = {
     if (name == "runner") {
