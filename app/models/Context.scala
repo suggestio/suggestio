@@ -12,6 +12,7 @@ import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
+import util.jsa.InitRouting
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
 import play.api.routing.Router.Tags._
@@ -68,6 +69,10 @@ object Context extends MyHostsT {
     else
       source
   }
+
+  /** Название js-контроллера, который занимается инициализацией flash-уведомлений. */
+  def FLASH_INIT_SJS_CTL = "_Flashing"
+
 }
 
 
@@ -168,8 +173,6 @@ trait Context extends MyHostsT {
   def isAuth: Boolean = pwOpt.isDefined
   def isSuperuser: Boolean = PersonWrapper.isSuperuser(pwOpt)
 
-  def flashMap = request.flash.data
-
   def userAgent: Option[String] = request.headers.get(USER_AGENT)
 
   def uaMatches(re: Regex): Boolean = {
@@ -265,6 +268,9 @@ trait Context extends MyHostsT {
    * @return "forAd"
    */
   def action: Option[String] = request.tags.get(RouteActionMethod)
+
+  /** Сборка спеки для init-роутера на стороне js. */
+  def initRouterSpec: Option[String] = InitRouting.toSpec(this)
 
 }
 

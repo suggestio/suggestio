@@ -260,39 +260,6 @@ dateView = new DateView('advManagementDateWidget')
 
 
 PersonalCabinet =
-
-  ###################################################################################################################
-  ## Уведомления в шапке сайта ##
-  ###################################################################################################################
-  statusBar:
-
-    close: ($bar) ->
-      if $bar.data 'open'
-        $bar.data 'open', false
-        $bar.slideUp()
-
-    show: ($bar) ->
-      if !$bar.data 'open'
-        $bar.data 'open', true
-        $bar.slideDown()
-
-    init: ()->
-
-      $ '.status-bar'
-      .each ()->
-        $this = $ this
-
-        cbca.pc.statusBar.show $this
-        close_cb = () ->
-          cbca.pc.statusBar.close $this
-
-        setTimeout close_cb, 5000
-
-      $ document
-      .on 'click', '.status-bar', ()->
-        $this = $ this
-        cbca.pc.statusBar.close $this
-
   images: ()->
 
     #фотографии в галерее профиля
@@ -1208,7 +1175,6 @@ PersonalCabinet =
     cbca.pc.common.photoSlider()
 
     cbca.pc.slideBlock.init()
-    cbca.pc.statusBar.init()
     cbca.pc.login()
     cbca.pc.billing()
     cbca.pc.advRequest()

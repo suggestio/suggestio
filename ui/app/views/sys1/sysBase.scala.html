@@ -1,5 +1,6 @@
 @(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
+@import views.html.stuff._
 @import stuff._
 @import ctx._
 @import helper._
@@ -11,13 +12,13 @@
   <head>
     <title>@title | system | s.io</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
     <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/sys.css")'/>
     @static._faviconTpl()
+    <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
     @headAfter
   </head>
 
-  <body class="sys">
+  <body class="sys" @_initRouterAttrsTpl()>
 
      <div class="header">
 
@@ -30,29 +31,20 @@
           }
         </div>
 
-      </div><!-- header-wrap end -->
+      </div>
 
      <div class="body">
 
-        @* Рендер flash-нотификаций. *@
-        @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-          <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
-            <div class="status-bar_cnt">
-              @flashMsg
-            </div>
-          </div>
-        }
+        @_flashMsgTpl()
 
         <div class="page-title">
-            <div class="page-title_cnt">
-              <a class="blue-link" href="@routes.Application.sysIndex()">sys</a> @hPathAfter
-            </div>
+          <div class="page-title_cnt">
+            <a class="blue-link" href="@routes.Application.sysIndex()">sys</a> @hPathAfter
+          </div>
         </div>
 
         <div class="body_cnt">
-
           @content
-
         </div>
 
      </div>
@@ -61,14 +53,10 @@
       <div class="overlay" id="overlay"></div>
     </div>
 
-    <div class="footer-wrap">
-
-    </div>
-
+    <div class="footer-wrap"></div>
 
     <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
 
-
-    </body>
+  </body>
 
 </html>

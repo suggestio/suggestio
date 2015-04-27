@@ -29,7 +29,7 @@
   @headAfter
 </head>
 
-<body class="lk" @dataRiAttrTpl()>
+<body class="lk" @_initRouterAttrsTpl()>
 @defining( nodeOpt.flatMap(_.id) ) { adnIdOpt =>
 
   <header class="header">
@@ -65,14 +65,7 @@
 
   <section class="page">
 
-    @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
-    @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <div style="display: none;" class="status-bar ft-L __@if(flashStatus == "success") {good} else {bad}">
-        <div class="status-bar_cnt">
-          @flashMsg
-        </div>
-      </div>
-    }
+    @_flashMsgTpl()
 
     @_nodeLeftBarTpl(adnIdOpt, leftCurrEl, povAdnId)
 

@@ -1,0 +1,9 @@
+@()(implicit ctx: Context)
+
+@* Этот шаблон рендерит routedInit-аттрибуты для тега body. По факту сейчас только один аттрибут.
+   data-ri -- это аттрибут для sjs InitRouter. Он содержит данные для запуска направленной js-инициализации.
+   Синтаксис изначально был таким:
+     data-ri="controller1:action1,action2; controller2:action3; controller3:; controller4:action4, action5"
+*@
+
+@ctx.initRouterSpec.map { spec =>data-ri="@spec"}
