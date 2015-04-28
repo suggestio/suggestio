@@ -52,15 +52,15 @@ POST /m/lk/xadv/geo/req/:advReqId/accept   @controllers.MarketAdv.advReqAcceptSu
 GET  /m/lk/xadv/history/:adId           @controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах
-GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
-POST /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
+GET  /m/lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
+POST /m/lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
 GET  /ws/lk/xadv/ext/run                @controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
-POST /lk/xadv/ext/tg/delete/:tgId       @controllers.LkAdvExt.deleteTargetSubmit(tgId)
-GET  /lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAd(adId)
-POST /lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAdSubmit(adId)
-GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: adv.MExtAdvQs)
-GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
-POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+POST /m/lk/xadv/ext/tg/delete/:tgId       @controllers.LkAdvExt.deleteTargetSubmit(tgId)
+GET  /m/lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAd(adId)
+POST /m/lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAdSubmit(adId)
+GET  /m/lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: adv.MExtAdvQs)
+GET  /m/lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+POST /m/lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
 
 ## ЛК: Рекламные карточки
