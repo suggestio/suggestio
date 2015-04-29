@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.controller.InitController
+import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.fb.c.FbAdapter
 import io.suggest.xadv.ext.js.runner.m.ex.CustomException
@@ -9,8 +9,6 @@ import io.suggest.xadv.ext.js.runner.v.Page
 import io.suggest.xadv.ext.js.vk.c.VkAdapter
 
 import scala.concurrent.Future
-import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -19,30 +17,22 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 19.02.15 10:41
  * Description: Приложение runner - с него начинается исполнение runner'а при вызове напрямую.
  */
-object AeRunnerApp extends js.JSApp {
-
-  /** Запуск системы происходит здесь. */
-  @JSExport
-  override def main(): Unit = {
-    Runner.start()
-  }
-}
-
 
 /** Аддон для ri-sjs-контроллера LkAdvExt, чтобы был экшен для запуска runner'а. */
-trait RunnerRiCtl extends InitController {
+trait RunnerInitRouter extends InitRouter {
 
-  override def riAction(name: String): Future[_] = {
-    if (name == "runner") {
-      Future {
-        Runner.start()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.AdvExtRunner) {
+      Future( Runner.start() )
     } else {
-      super.riAction(name)
+      super.routeInitTarget(itg)
     }
   }
+
 }
 
+
+// TODO Сделать это через class (нестатическим). Для этого надо вынести handleInitCmd() куда-то ещё.
 
 /** Программный фасад всей системы. */
 object Runner extends WsKeeper {

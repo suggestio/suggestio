@@ -7,7 +7,7 @@ scalaVersion := "2.11.6"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "io.suggest"    %% "advext-common"    % "0.0.0-SNAPSHOT",
+  "io.suggest"    %% "common"           % "0.0.0-SNAPSHOT",
   //"org.scala-js"  %%% "scalajs-dom"   % "0.8.0",
   "be.doeraene"   %%% "scalajs-jquery"  % "0.8.0",
   "io.suggest"    %%% "common-sjs"      % "0.0.0-SNAPSHOT",
@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "org.monifu"    %%% "minitest"        % "0.11" % "test"
 )
 
-persistLauncher in Compile := true
+//persistLauncher in Compile := true
 
 persistLauncher in Test := false
 

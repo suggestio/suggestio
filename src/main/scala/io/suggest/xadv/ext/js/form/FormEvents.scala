@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.form
 
-import io.suggest.sjs.common.controller.InitController
+import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.dom
 import org.scalajs.dom.{Element, XMLHttpRequest}
 import org.scalajs.jquery._
@@ -8,8 +8,7 @@ import io.suggest.adv.ext.view.FormPage._
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{JSApp, Any}
+import scala.scalajs.js.{Dictionary, Any, Array}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -19,39 +18,28 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Description: Подписка и обработка событий формы размещения.
  */
 
-/** Реализация контроллера с запуска экшеном, который связанн с формой. */
-trait FormEventsRiCtl extends InitController with FormEventsT {
-  /**
-   * Запустить на исполнение экшен.
-   * @param name Название экшена, заданное в body.
-   * @return Фьючерс с результатом.
-   */
-  override def riAction(name: String): Future[_] = {
-    if (name startsWith "forAd") {
+/** Реализация роутера для подхвата цели инициализации формы. */
+trait FormEventsInitRouter extends InitRouter {
+
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.LkAdvExtForm) {
       Future {
-        bindFormEvents()
+        new FormEvents()
+          .bindFormEvents()
       }
     } else {
-      super.riAction(name)
+      super.routeInitTarget(itg)
     }
   }
-}
-
-
-object FormEvents extends JSApp with FormEventsT {
-
-  /** Запуск скрипта на исполнение по требованию извне. */
-  @JSExport
-  override def main(): Unit = {
-    bindFormEvents()
-  }
 
 }
 
 
-trait FormEventsT {
+
+class FormEvents {
+
   /** Забиндить все события формы, вдохнув в неё жизнь. */
-  protected def bindFormEvents(): Unit = {
+  def bindFormEvents(): Unit = {
     bindAddTargetClick()
     bindDeleteTargetClick()
     bindOneTgChange()
@@ -62,12 +50,12 @@ trait FormEventsT {
 
 
   /** Забиндиться на событие клика по кнопке добавления новой цели. */
-  private def bindAddTargetClick(): Unit = {
+  def bindAddTargetClick(): Unit = {
     // Обработчик события клика по добавлению таргета
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       // ajl = ajax listener, обработка результатам ajax-реквеста.
-      val ajl: (Any, String, JQueryXHR) => js.Any = {
+      val ajl: (Any, String, JQueryXHR) => Any = {
         (data, textStatus, jqXHR) =>
           val tgList = jQuery("#" + ID_ALL_TARGETS_LIST)
           tgList.append(data)
@@ -80,7 +68,7 @@ trait FormEventsT {
       val el = jQuery(evt.currentTarget)
       val href = el.attr("href")
       // Запустить ajax-реквест на исполнение.
-      jQuery.ajax(js.Dictionary[js.Any](
+      jQuery.ajax(Dictionary[Any](
         "method"  -> "GET",
         "url"     -> href,
         "success" -> ajl
@@ -89,12 +77,12 @@ trait FormEventsT {
     }
     // Повесить обработчик клика на кнопку добавления новой цели.
     jQuery("#" + ID_ADD_TARGET_LINK)
-      .click(listener: js.Any)
+      .click(listener: Any)
   }
 
 
   /** Событие удаления цели со страницы. */
-  private def bindDeleteTargetClick(): Unit = {
+  def bindDeleteTargetClick(): Unit = {
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       val ct = jQuery(evt.currentTarget)
@@ -107,13 +95,13 @@ trait FormEventsT {
       } else {
         // Это форма, сохраненная ранее. Собрать листенер результата асинхронного запроса.
         // Собрать ajax-запрос и отправить на указанный URL.
-        val ajaxSettings = js.Dictionary[js.Any](
+        val ajaxSettings = Dictionary[Any](
           "method"  -> "POST",
           "url"     -> delHref,
           "statusCode" -> {
             type T = js.Function0[_]
             val onSuccess1: T = onSuccess
-            js.Dictionary[T](
+            Dictionary[T](
               "204" -> onSuccess1,
               "404" -> onSuccess1,
               "403" -> {() => dom.alert("Please try again (error http 403).") }
@@ -125,12 +113,12 @@ trait FormEventsT {
     }
     // Делегировать обработчик удаления списку всех целей.
     jQuery("#" + ID_ALL_TARGETS_LIST)
-      .on("click",  "." + CLASS_DELETE_TARGET_BTN,  listener: js.Any)
+      .on("click",  "." + CLASS_DELETE_TARGET_BTN,  listener: Any)
   }
 
 
   /** Событие изменения содержимого одного из инпутов в форме одной цели. */
-  private def bindOneTgChange(): Unit = {
+  def bindOneTgChange(): Unit = {
     val listener = {evt: JQueryEventObject =>
       val input = jQuery(evt.currentTarget)
       val tgForm = input.parents("." + CLASS_ONE_TARGET_FORM_INNER)
@@ -138,12 +126,12 @@ trait FormEventsT {
     }
     // Повесить листенеры на инпуты
     jQuery("#" + ID_ALL_TARGETS_LIST)
-      .on("change",  "." + CLASS_ONE_TARGET_INPUT,  listener : js.Any)
+      .on("change",  "." + CLASS_ONE_TARGET_INPUT,  listener : Any)
   }
 
 
   /** При сабмите формы редактирования одной цели, нужно подменять обработку. */
-  private def bindOneTgSubmit(): Unit = {
+  def bindOneTgSubmit(): Unit = {
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       val oldForm = jQuery(evt.currentTarget)
@@ -154,22 +142,22 @@ trait FormEventsT {
       // На время сабмита нужно заблокировать поля ввода текущей формы
       oldFormInputs.prop("disabled", true)
       // onComplete() вызывается при ответе на запрос по любому ожидаемому коду.
-      def onComplete(respBody: js.Any): Unit = {
+      def onComplete(respBody: Any): Unit = {
         // Отреплейсить содержимое формы.
         oldForm.html( jQuery(respBody).html() )     // TODO Можно тут выпилить вызов jQuery()?
         //oldFormInputs.prop("disabled", false)     // TODO это надо вообще? Форма же перезаписывается новой.
       }
-      val ajaxSettings = js.Dictionary[js.Any](
+      val ajaxSettings = Dictionary[Any](
         "method"      -> "POST",
         "url"         -> oldForm.attr("action"),
         "data"        -> data,
-        "statusCode"  -> js.Dictionary[js.Any](
+        "statusCode"  -> Dictionary[Any](
           "406" -> { (resp: XMLHttpRequest) =>
             onComplete( resp.responseText )
           }
           // TODO отрабатывать другие ошибки, например истекшую сессию и редирект в ответе.
         ),
-        "success" -> { (respBody: js.Any) =>
+        "success" -> { (respBody: Any) =>
           onComplete(respBody)
         }
       )
@@ -177,17 +165,17 @@ trait FormEventsT {
     }
     // Повесить обработчик на все формы редактирования
     jQuery("#" + ID_ALL_TARGETS_LIST)
-      .on("submit", "." + CLASS_ONE_TARGET_FORM_INNER, listener: js.Any)
+      .on("submit", "." + CLASS_ONE_TARGET_FORM_INNER, listener: Any)
   }
 
 
   /** Сабмит формы размещения целей. Нужно залить в форму необходимые инпуты и продолжить выполнение. */
-  private def bindAdvFormSubmit(): Unit = {
+  def bindAdvFormSubmit(): Unit = {
     val listener = { evt: JQueryEventObject =>
       val newTags = jQuery("#" + ID_ALL_TARGETS_LIST)
         .find("." + CLASS_ONE_TARGET_CONTAINER)
         // Формы с галочками превратить в input-теги.
-        .map { (indexRaw: js.Any, oneTgDiv: Element) =>
+        .map { (indexRaw: Any, oneTgDiv: Element) =>
           val oneTg = jQuery(oneTgDiv)
           val retInputs = oneTg.find("input[name=return]:checked")
           if (retInputs.length > 0) {
@@ -205,7 +193,7 @@ trait FormEventsT {
             idTag.setAttribute("name",  namePrefix + "tg_id")
             idTag.setAttribute("value", oneTg.find("input[name='tg.id']")(0).getAttribute("value") )
             // Вернуть flatMap()-результат
-            js.Array(idTag, retTag)
+            Array(idTag, retTag)
 
           } else {
             // Пропускаем текущую форму, т.к. галочки не выставлены.
@@ -217,12 +205,12 @@ trait FormEventsT {
     }
     // Вешаем данный обработчик на целевую форму
     jQuery("#" + ID_ADV_FORM)
-      .on("submit", listener: js.Any)
+      .on("submit", listener: Any)
   }
 
 
   /** Чекбоксы в рамках одного div'а должны имитировать поведение radiogroup. */
-  private def bindReturnCheckboxRadio(): Unit = {
+  def bindReturnCheckboxRadio(): Unit = {
     // Есть мнение, что вынос cbSel за скобки не сказывается положительно на потреблении ресурсов.
     val cbSel = "." + CLASS_ONE_TARGET_INPUT_RETURN_CHECKBOX
     val listener = { evt: JQueryEventObject =>
@@ -237,7 +225,7 @@ trait FormEventsT {
     }
     // Делегируем обработчик контейнеру списка целей
     jQuery("#" + ID_ALL_TARGETS_LIST)
-      .on("change", cbSel, listener: js.Any)
+      .on("change", cbSel, listener: Any)
   }
 
 }
