@@ -44,8 +44,8 @@ object SiobixBuild extends Build {
   }
 
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
-  lazy val advExtCommon = {
-    val name = "advext-common"
+  lazy val common = {
+    val name = "common"
     Project(
       id = name,
       base = file(name),
@@ -57,10 +57,11 @@ object SiobixBuild extends Build {
   lazy val commonSjs = {
     val name = "common-sjs"
     Project(id = name, base = file(name))
+      .dependsOn(common)
       .enablePlugins(ScalaJSPlay)
       // Чтобы не инклюдчить сорцы modelEnumUtil в каждом под-проекте, используем его прямо здесь.
       .settings(
-        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (modelEnumUtil, Compile)
+        Seq(modelEnumUtil, common).map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)) : _*
       )
   }
 
@@ -69,10 +70,7 @@ object SiobixBuild extends Build {
     val name = "lk-adv-ext-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, advExtCommon)
-      .settings(
-        unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (advExtCommon, Compile)
-      )
+      .dependsOn(commonSjs)
   }
 
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
@@ -86,7 +84,7 @@ object SiobixBuild extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(modelEnumUtil, advExtCommon)
+    .dependsOn(modelEnumUtil, common)
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
@@ -95,7 +93,7 @@ object SiobixBuild extends Build {
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
     // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
-    .dependsOn(advExtCommon, util, securesocial, modelEnumUtilPlay)
+    .dependsOn(common, util, securesocial, modelEnumUtilPlay)
     .aggregate(lkSjs)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
@@ -110,7 +108,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(modelEnumUtil, modelEnumUtilPlay, advExtCommon, lkAdvExtSjs, lkSjs, util, securesocial, web21)
+      .aggregate(modelEnumUtil, modelEnumUtilPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, web21)
   }
 
 }
