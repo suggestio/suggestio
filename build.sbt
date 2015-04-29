@@ -7,7 +7,8 @@ scalaVersion := "2.11.6"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "be.doeraene" %%% "scalajs-jquery" % "0.8.0"
+  "io.suggest"    %%  "common"          % "0.0.0-SNAPSHOT",
+  "be.doeraene"   %%% "scalajs-jquery"  % "0.8.0"
   //"org.monifu"  %%% "minitest" % "0.11" % "test",
 )
 

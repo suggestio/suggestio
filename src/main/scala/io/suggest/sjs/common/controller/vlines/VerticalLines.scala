@@ -1,9 +1,11 @@
 package io.suggest.sjs.common.controller.vlines
 
-import io.suggest.sjs.common.controller.{InitController, InitRouter}
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, jQuery}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -17,7 +19,7 @@ object VerticalLines {
 
   def JSVL_CSS_SELECTOR = ".js-vertical-line"
 
-  def INHERNIT_HEIGHT_ATTR = "data-inherit-height"
+  def INHERNIT_HEIGHT_ATTR = "inherit-height"
 
   def resetVLinesHeightsIn(parent: JQuery): Unit = {
     val sel = parent.find(JSVL_CSS_SELECTOR)
@@ -34,7 +36,8 @@ object VerticalLines {
       val jqel = jQuery(el)
       var h = jqel.parent().height()
       // Если не выставлен data-inherit-height, то надо немного уменьшить высоту.
-      if ( !(Option(jqel.attr(INHERNIT_HEIGHT_ATTR)) contains true.toString) )
+      val inhOpt = Option( jqel.data(INHERNIT_HEIGHT_ATTR) )
+      if ( !inhOpt.contains(true.toString) )
         h -= 10
       jqel.height(h)
     }
@@ -46,22 +49,14 @@ object VerticalLines {
 /** Аддон для init-роутера для активации контроллера инициализации динамических вертикальных линий. */
 trait VerticalLinesInitRouter extends InitRouter {
 
-  /** Текущий init-роутер выполняет поиск init-контроллера с указанным именем (ключом).
-    * Реализующие трейты должны переопределять этот метод под себя, сохраняя super...() вызов. */
-  override protected def getController(name: String): Option[InitController] = {
-    if (name == "_VerticalLines") {
-      Some(new VerticalLinesInitController)
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.VCenterLines) {
+      Future {
+        VerticalLines.resetAllVLinesHeights()
+      }
     } else {
-      super.getController(name)
+      super.routeInitTarget(itg)
     }
   }
 
-}
-
-/** init-контролер для инициализации поддержки вертикальных линий. */
-class VerticalLinesInitController extends InitController with SjsLogger {
-  override def riInit(): Unit = {
-    super.riInit()
-    VerticalLines.resetAllVLinesHeights()
-  }
 }

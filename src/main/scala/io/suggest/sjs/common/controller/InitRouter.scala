@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.controller
 
+import io.suggest.init.routed.{MJsInitTargetsLigthT, JsInitConstants}
 import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid}
 import io.suggest.sjs.common.view.CommonPage
 import org.scalajs.dom
@@ -39,9 +40,6 @@ import scala.concurrent.Future
 
 object InitRouter {
 
-  /** Название аттрибута для тега body, куда записывается инфа для направленной инициализации. */
-  def RI_ATTR_NAME = "data-ri"
-
   /** Метод для нижеуказанных трейтов, чтобы быстро генерить пустой успех работы. */
   protected [controller] def done = Future successful None
 
@@ -55,25 +53,42 @@ import InitRouter._
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
 trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
+  /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
+  object MInitTargets extends MJsInitTargetsLigthT
+  /** Тип экземпляра модели. */
+  final type MInitTarget = MInitTargets.T
+
+  protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    warn("Js init target not supported: " + itg)
+    done
+  }
+
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
   def init(): Future[_] = {
-    val attrName = RI_ATTR_NAME
+    val attrName = JsInitConstants.RI_ATTR_NAME
     val attrRaw = CommonPage.body.getAttribute(attrName)
     val attrOpt = Option(attrRaw)
       .map { _.trim }
       .filter { !_.isEmpty }
     attrOpt match {
       case Some(attr) =>
-        val allCtlsAndActs = attr.split("\\s*;\\s*").toSeq
-        Future.traverse(allCtlsAndActs) { next =>
+        val all = attr.split("\\s*;\\s*")
+          .toSeq
+          .flatMap { raw =>
+            val res = MInitTargets.maybeWithName(raw)
+            if (res.isEmpty)
+              warn("Unknown init target opcode: " + raw)
+            res
+          }
+        Future.traverse(all) { itg =>
           val fut = try {
-            initCtlAdnActs(next)
+            routeInitTarget(itg)
           } catch {
             case ex: Throwable => Future failed ex
           }
           // Подавленеи ошибок. init must flow.
           fut recover { case ex: Throwable =>
-            dom.console.error("Failed to initialize sjs controller: " + next + " " + ex.getMessage)
+            error("Init failed to reach target " + itg, ex)
             None
           }
         }
@@ -84,78 +99,5 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
     }
   }
 
-  /** Код, который вызывается после обнаружения каждого контроллера в текстовой спеке. */
-  protected def controllerFound(name: String): Unit = {}
-
-  /** Враппер для безопасного вызова controllerFound(). */
-  private def controllerFoundSafe(name: String): Unit = {
-    _safeSyncVoid { () =>
-      controllerFound(name)
-    }
-  }
-
-  /** Инициализация одного контроллера и его экшенов на основе переданной спеки. */
-  protected def initCtlAdnActs(raw: String): Future[_] = {
-    val l = raw.split("\\s*:\\s*").toList
-    if (l.nonEmpty) {
-      // Есть что-то, похожее на спеку контроллера.
-      val ctlName = l.head
-      controllerFoundSafe(ctlName)
-      val tl = l.tail
-      getController(ctlName) match {
-        case Some(ctl) =>
-          // Инициализируем контроллер Future(), чтобы удобнее комбинировать и перехватывать ошибки.
-          Future {
-            ctl.riInit()
-          } andThen { case  _ =>
-            if (tl.nonEmpty) {
-              val actsRaw = tl.head
-              val acts = actsRaw.split("\\s*,\\s*").toSeq
-              Future.traverse(acts) { act =>
-                ctl.riAction(act)
-              }
-            }
-          } recover { case ex: Throwable =>
-            error("Failed to init ctl " + ctlName + " and actions " + tl, ex)
-            None
-          }
-
-        case None =>
-          //log("Controller not found: " + ctlName + " . Following actions are skipped: " + tl.headOption.getOrElse(""))
-          done
-      }
-      
-    } else {
-      // Не получается распарсить описанный контроллер и вызываемые экшены.
-      error("Controller init spec is invalid and skipped: " + raw)
-      done
-    }
-  }
-
-  /** Текущий init-роутер выполняет поиск init-контроллера с указанным именем (ключом).
-    * Реализующие трейты должны переопределять этот метод под себя, сохраняя super...() вызов. */
-  protected def getController(name: String): Option[InitController] = {
-    None
-  }
-
 }
 
-
-/** Интерфейс init-контроллера, занимающегося роутингом экшенов.
-  * Экшены объединяются через stackable trait pattern. */
-trait InitController extends ISjsLogger {
-
-  /** Синхронная инициализация контроллера, если необходима. */
-  def riInit(): Unit = {}
-
-  /**
-   * Запустить на исполнение экшен.
-   * @param name Название экшена, заданное в body.
-   * @return Фьючерс с результатом.
-   */
-  def riAction(name: String): Future[_] = {
-    //log("Action ''" + name + "'' not found in controller " + getClass.getName + ". Skipping...")
-    done
-  }
-
-}
