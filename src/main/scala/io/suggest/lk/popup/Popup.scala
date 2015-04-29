@@ -6,6 +6,7 @@ import io.suggest.sjs.common.view.CommonPage
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, jQuery}
+import io.suggest.popup.PopupConstants._
 
 /**
  * Suggest.io
@@ -15,15 +16,6 @@ import org.scalajs.jquery.{JQuery, jQuery}
  * В оригинале (mx_cof) компонент назывался CbcaPopup.
  */
 object Popup extends SjsLogger {
-
-  /** Минимальный сдвиг по вертикали при позиционировании. */
-  def MIN_TOP_PX = 25
-
-  /** id таргета для рендера попапов. */
-  def CONTAINER_ID = "popupsContainer"
-
-  /** Имя css-класса для покрытия фона оверлеем. */
-  def OVERLAY_CSS_CLASS = "ovh"
 
   def containerSelector =  "#" + CONTAINER_ID
   def container = jQuery(containerSelector)
