@@ -11,6 +11,7 @@
 @import node._
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
+@import io.suggest.vlines.VLines
 
 
 @headAfter1 = {
@@ -88,7 +89,7 @@
           <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
         </td>
         <td class="td __padding-S">
-          <div class="delimiter __light __vertical js-vertical-line"></div>
+          <div class="delimiter __light __vertical @VLines.JSVL_CLASS"></div>
         </td>
         <td class="td __padding-S prop_name">
           @messages("Fg.color.of.sc.hint")

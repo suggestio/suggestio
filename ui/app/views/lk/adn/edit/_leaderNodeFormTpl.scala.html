@@ -7,6 +7,7 @@
 @import util.img.GalleryUtil.GALLERY_LEN_MAX
 @import util.img.DynImgUtil
 @import ctx._
+@import io.suggest.vlines.VLines
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -157,7 +158,7 @@
           }
         </td>
         <td class="td __padding-S">
-          <div class="delimiter __light __vertical js-vertical-line"></div>
+          <div class="delimiter __light __vertical @VLines.JSVL_CLASS"></div>
         </td>
         <td class="td __padding-S prop_name">
           @messages("Fg.color.of.sc.hint")

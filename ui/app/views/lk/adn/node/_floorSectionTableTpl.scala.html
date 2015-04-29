@@ -2,6 +2,7 @@
 
 @* Рендер плашки с номером этажа и секции. *@
 
+@import io.suggest.vlines.VLines
 @import ctx.messages
 
 <table class="siom-table __size-M">
@@ -17,7 +18,7 @@
     </td>
 
     <td class="siom-table-cell __vertical-cnt">
-      <div class="border-line __vertical f-left js-vertical-line"></div>
+      <div class="border-line __vertical f-left @VLines.JSVL_CLASS"></div>
       <div class="table-cell-cnt __size-S">
         <span class="ft-XS color-light-strong">@messages("Section"):</span>
         <strong class="ft-XS color-strong">@node.meta.section</strong>

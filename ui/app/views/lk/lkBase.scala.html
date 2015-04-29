@@ -9,6 +9,7 @@
 @import lk.popup._
 @import lk.left._
 @import helper._
+@import io.suggest.popup.PopupConstants
 
 <!DOCTYPE html>
 <html>
@@ -74,7 +75,7 @@
   </section>
 
 
-  <aside class="popups popups-container" id="popupsContainer">
+  <aside class="popups popups-container" id="@PopupConstants.CONTAINER_ID">
 
     @_popupTpl(css = Seq("__size-M"), id = Some("logoutPopup")) {
       <h2 class="minor-title">@messages("Logout.suggest.io")</h2>
