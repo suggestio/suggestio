@@ -5,6 +5,8 @@ import java.util.UUID
 import controllers.routes
 import io.suggest.util.UuidUtil
 import models.im.DevScreen
+import models.jsm.init.MTarget
+import models.req.{SioReqMdOptWrapper, SioReqMdWrapper, ISioReqMd}
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.i18n.Messages
@@ -12,7 +14,7 @@ import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
-import util.jsa.InitRouting
+import util.jsa.init.{JsInitTargetsDflt, ITargets}
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
 import play.api.routing.Router.Tags._
@@ -91,14 +93,17 @@ trait MyHostsT {
 }
 
 /** Трейт аддон для контроллеров, которым нужен доступ к сборке контекстов. */
-trait ContextT {
+trait ContextT { this: ITargets =>
 
   /**
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
-   * @return
+   * @return Экземпляр [[Context]].
    */
-  implicit final def getContext2(implicit request: RichRequestHeader, lang: Messages): Context = {
-    Context2()
+  implicit final def getContext2(implicit
+                                 request: RichRequestHeader,
+                                 lang: Messages,
+                                 extraJsInitTargets: Seq[MTarget] = Nil ): Context = {
+    Context2(this)
   }
 }
 
@@ -106,12 +111,20 @@ trait ContextT {
 /** Базовый трейт контекста. Используется всеми шаблонами и везде. Переименовывать и менять нельзя.
   * Интерфейс можно только расширять и аккуратно рефакторить, иначе хана.
   */
-trait Context extends MyHostsT {
+trait Context extends MyHostsT with ISioReqMd {
 
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
   /** Данные текущего реквеста. */
   implicit val request: RequestHeader
+
+  /** Попробовать кастануть request как экземпляр RichRequestHeader, если возможно. */
+  def maybeRichRequest: Option[RichRequestHeader] = {
+    request match {
+      case rrh: RichRequestHeader => Some(rrh)
+      case _                      => None
+    }
+  }
 
   /** Данные о текущем юзере. */
   def pwOpt: PwOpt_t
@@ -121,12 +134,6 @@ trait Context extends MyHostsT {
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.path)
-
-  // srm в protected т.к. пока нет смысла её отображать. Раскрываем её api прямо тут:
-  protected def sioReqMdOpt: Option[SioReqMd]
-  def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)
-  def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
-  def nodeUnseenEvtsCnt = sioReqMdOpt.flatMap(_.nodeUnseenEvtsCnt)
 
   /** Используемый протокол. */
   lazy val myProto: String = {
@@ -269,8 +276,12 @@ trait Context extends MyHostsT {
    */
   def action: Option[String] = request.tags.get(RouteActionMethod)
 
-  /** Сборка спеки для init-роутера на стороне js. */
-  def initRouterSpec: Option[String] = InitRouting.toSpec(this)
+  def jsInitTargetsExtra: Seq[MTarget]
+
+  /** Генератор списка js-init-целей. */
+  def jsInitTargeter: ITargets
+  /** Список js-init-целей. */
+  def jsInitTargets: Seq[MTarget] = jsInitTargeter.getJsInitTargets(this)
 
 }
 
@@ -279,17 +290,30 @@ trait Context extends MyHostsT {
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2(
-  implicit val request: RichRequestHeader,
-  implicit val messages: Messages
-) extends Context {
-  def pwOpt: PwOpt_t = request.pwOpt
-  val sioReqMdOpt: Option[SioReqMd] = Some(request.sioReqMd)
+  override val jsInitTargeter: ITargets
+)(implicit
+  override val request: RichRequestHeader,
+  override val messages: Messages,
+  override val jsInitTargetsExtra: Seq[MTarget]
+)
+  extends Context
+  with SioReqMdWrapper
+{
+
+  override def pwOpt    = request.pwOpt
+  override def sioReqMd = request.sioReqMd
+  override def maybeRichRequest = Some(request)
 }
 
 
 /** Упрощенная запасная реализация контекста, используемая в минимальных условиях и вручную. */
-case class ContextImpl(implicit val request: RequestHeader, val messages: Messages) extends Context {
-  def pwOpt = PersonWrapper.getFromRequest(request)
-  def sioReqMdOpt: Option[SioReqMd] = None
+case class ContextImpl(implicit val request: RequestHeader, val messages: Messages)
+  extends Context
+  with SioReqMdOptWrapper
+{
+  override def jsInitTargeter: ITargets = JsInitTargetsDflt
+  override def pwOpt = PersonWrapper.getFromRequest(request)
+  override def sioReqMdOpt = None
+  override def jsInitTargetsExtra = Nil
 }
 

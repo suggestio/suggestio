@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
 import scala.concurrent.Future
 import IsAdnNodeAdmin.onUnauth

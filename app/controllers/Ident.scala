@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
+import models.jsm.init.{MTargets, MTarget}
 import models.msession.Keys
 import play.api.i18n.{MessagesApi, Messages}
 import util.acl._
@@ -45,7 +46,6 @@ class Ident @Inject() (
   }
 
 
-
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
     IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
@@ -66,6 +66,11 @@ class Ident @Inject() (
       val lc = _loginColumnTpl(lf, r)(ctx)
       Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
     }
+  }
+
+  /** Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
+  override protected def _jsInitTargets0: List[MTarget] = {
+    MTargets.IdentVCenterContent :: super._jsInitTargets0
   }
 
 }

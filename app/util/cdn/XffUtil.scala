@@ -39,11 +39,17 @@ class DumpXffHeaders extends Filter with PlayLazyMacroLogsImpl {
         .toMap
         .iterator
         .filter {
-          case (k, vs)  =>  vs.nonEmpty && DUMP_HEADER_NAMES.exists { _ equalsIgnoreCase k }
+          case (k, vs)  =>
+            vs.nonEmpty && DUMP_HEADER_NAMES.exists { _ equalsIgnoreCase k }
         }
       if (fwdHdrsIter.nonEmpty) {
         val sb = new StringBuilder("Fwd headers for ")
-        sb.append(rh.remoteAddress).append("(play-guessed remote address)")
+          .append(rh.method)
+          .append(' ')
+          .append(rh.uri)
+          .append(" <- ")
+          .append(rh.remoteAddress)
+          .append("secure=").append(rh.secure)
           .append(":\n")
         fwdHdrsIter.foreach { case (k, vs) =>
           sb.append(' ')

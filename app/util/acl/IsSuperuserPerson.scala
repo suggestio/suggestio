@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import models.usr.MPerson
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{Results, Result, ActionBuilder, Request}

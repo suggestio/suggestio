@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import play.api.mvc._
 import util.ident.IdentUtil
 import scala.concurrent.Future

@@ -1,6 +1,7 @@
 package util.acl
 
 import models._
+import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t

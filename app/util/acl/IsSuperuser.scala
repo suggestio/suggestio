@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import models.usr.MPerson
 import play.api.mvc._
 import util.xplay.SioHttpErrorHandler

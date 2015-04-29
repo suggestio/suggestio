@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import models.usr.{EmailActivation, EmailPwIdent}
 import util._
 import play.api.mvc._

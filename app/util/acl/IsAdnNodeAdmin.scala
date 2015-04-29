@@ -2,6 +2,7 @@ package util.acl
 
 import io.suggest.util.MacroLogsI
 import models._
+import models.req.SioReqMd
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.xplay.SioHttpErrorHandler
 import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}

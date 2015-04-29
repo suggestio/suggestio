@@ -38,7 +38,7 @@ libraryDependencies ++= {
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
-  "io.suggest" %% "advext-common" % "0.0.0-SNAPSHOT",
+  "io.suggest" %% "common" % "0.0.0-SNAPSHOT",
   "io.suggest" %% "model-enum-util" % "0.0.0-SNAPSHOT",
   // для разбора upload-частей, нужна помощь mime magic bytes
   "jmimemagic" % "jmimemagic" % "0.1.2"

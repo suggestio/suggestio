@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
+import util.jsa.init.{CtlJsInitT, WithFlashingJsInit, JsInitTargetsDfltT}
 import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
 import scala.concurrent.Future
@@ -83,7 +84,7 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
-trait SioController extends Controller with ContextT with TplFormatUtilT with I18nSupport {
+trait SioController extends Controller with ContextT with TplFormatUtilT with I18nSupport with CtlJsInitT {
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)

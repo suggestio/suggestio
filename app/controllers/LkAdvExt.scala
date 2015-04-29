@@ -5,6 +5,7 @@ import models._
 import models.adv._
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
+import models.jsm.init.MTargets
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
@@ -104,6 +105,7 @@ class LkAdvExt @Inject() (
       targets       <- targetsFut
       currentAdvs   <- currentAdvsFut
     } yield {
+      implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
       forAdTpl(request.mad, request.producer, targets, currentAdvs, form)
     }
   }
@@ -143,6 +145,7 @@ class LkAdvExt @Inject() (
    * @return Страница с системой размещения.
    */
   def runner(adId: String, wsArgs: MExtAdvQs) = CanAdvertiseAdPost(adId) { implicit request =>
+    implicit val jsInitTargets = Seq(MTargets.AdvExtRunner)
     implicit val ctx = implicitly[Context]
     val wsArgs2 = wsArgs.copy(
       wsId = ctx.ctxIdStr,

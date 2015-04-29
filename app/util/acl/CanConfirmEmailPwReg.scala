@@ -1,5 +1,6 @@
 package util.acl
 
+import models.req.SioReqMd
 import models.usr.{IEaEmailId, EmailActivation}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn

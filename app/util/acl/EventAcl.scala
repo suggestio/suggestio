@@ -2,6 +2,7 @@ package util.acl
 
 import models.MAdnNode
 import models.event.MEvent
+import models.req.SioReqMd
 import play.api.mvc.{Results, Result, Request, ActionBuilder}
 import util.acl.PersonWrapper.PwOpt_t
 import util.SiowebEsUtil.client

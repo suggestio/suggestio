@@ -5,7 +5,7 @@ import java.net.InetAddress
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.msc.ScJsState
-import models.usr.MPerson
+import models.req.SioReqMd
 import play.api.http.HeaderNames
 import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
@@ -104,9 +104,13 @@ object RichRequestHeader {
 
 /** Вынос полей из [[AbstractRequestWithPwOpt]]. */
 trait RichRequestHeader extends RequestHeader {
+  /** Данные о юзере. */
   def pwOpt: PwOpt_t
+  /** Дополнительные метаданные для рендера ответа. */
   def sioReqMd: SioReqMd
+  /** Является ли текущий юзер суперюзером? */
   def isSuperuser = PersonWrapper isSuperuser pwOpt
+  /** Залогинен ли текущий юзер? */
   def isAuth = pwOpt.isDefined
 }
 
@@ -179,58 +183,6 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
   def shopId: String
 }
 
-
-/** Метаданные, относящиеся запросу. Сюда попадают данные, которые необходимы везде и требует асинхронных действий.
-  * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
-  *                    [[MPerson]] и [[models.MPersonIdent]].
-  * @param billBallanceOpt Текущий денежный баланс узла.
-  * @param nodeUnseenEvtsCnt Кол-во новых событий у узла.
-  */
-case class SioReqMd(
-  usernameOpt       : Option[String] = None,
-  billBallanceOpt   : Option[MBillBalance] = None,
-  nodeUnseenEvtsCnt : Option[Int] = None
-)
-object SioReqMd {
-  /** Простая генерация srm на основе юзера. */
-  def fromPwOpt(pwOpt: PwOpt_t): Future[SioReqMd] = {
-    PersonWrapper.findUserName(pwOpt) map { usernameOpt =>
-      SioReqMd(usernameOpt = usernameOpt)
-    }
-  }
-
-  /** Генерация srm для юзера в рамках личного кабинета. */
-  def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
-    // Получить кол-во непрочитанных сообщений для узла.
-    val newEvtsCntFut: Future[Int] = {
-      val args = MEventsSearchArgs(
-        ownerId     = Some(adnId),
-        onlyUnseen  = true
-      )
-      MEvent.dynCount(args)
-        .map { _.toInt }
-    }
-    // Получить баланс узла.
-    val bbOptFut = Future {
-      DB.withConnection { implicit c =>
-        MBillBalance.getByAdnId(adnId)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-    // Собрать результат.
-    for {
-      usernameOpt <- PersonWrapper.findUserName(pwOpt)
-      bbOpt       <- bbOptFut
-      newEvtCnt   <- newEvtsCntFut
-    } yield {
-      SioReqMd(
-        usernameOpt       = usernameOpt,
-        billBallanceOpt   = bbOpt,
-        nodeUnseenEvtsCnt = Some(newEvtCnt)
-      )
-    }
-  }
-
-}
 
 
 /** Враппер над RequestHeader. */

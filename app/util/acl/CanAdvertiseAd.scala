@@ -1,5 +1,7 @@
 package util.acl
 
+import models.jsm.init.MTarget
+import models.req.SioReqMd
 import play.api.mvc._
 import models._
 import util.PlayMacroLogsImpl
@@ -33,7 +35,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAdAndProducer]]) если можно исполнять реквест.
    */
-  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAdAndProducer[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], jsInitActions: Seq[MTarget] = Nil): Future[Option[RequestWithAdAndProducer[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
@@ -60,7 +62,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
                   Future successful Option.empty[RequestWithAdAndProducer[A]]
                 }
                 {adnNode =>
-                  SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
+                  SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get, jsInitActions) map { srm =>
                     Some(RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode))
                   }
                 }

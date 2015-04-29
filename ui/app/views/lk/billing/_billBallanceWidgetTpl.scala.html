@@ -5,7 +5,7 @@
 @import util.TplDataFormatUtil._
 @import ctx.messages
 
-@ctx.billBalanceOpt.map { mbb =>
+@ctx.billBallanceOpt.map { mbb =>
 
   @* href="@routes.MarketLkBilling.paymentRequsites(adnId)" *@
   <a class="header_billing" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">

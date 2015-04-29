@@ -1,6 +1,7 @@
 package util.acl
 
 import models.MAd
+import models.req.SioReqMd
 import play.api.mvc._
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future

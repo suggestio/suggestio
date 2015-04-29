@@ -2,6 +2,7 @@ package util.acl
 
 import java.sql.Connection
 
+import models.req.SioReqMd
 import play.api.mvc.{Results, Result, ActionBuilder, Request}
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper.PwOpt_t

@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import models.req.SioReqMd
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.{FormUtil, PlayMacroLogsImpl}
