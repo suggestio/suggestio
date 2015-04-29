@@ -1,9 +1,12 @@
 package io.suggest.lk.ident.center
 
-import io.suggest.sjs.common.controller.InitController
+import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.util.SafeSyncVoid
 import org.scalajs.dom
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -13,14 +16,18 @@ import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
  * Без этого кода центровка происходит только по горизонтали.
  */
 
-trait CenterContentAction extends InitController with SafeSyncVoid {
+trait CenterContentInitRouter extends InitRouter with SafeSyncVoid {
 
   private def jqWnd = jQuery(dom.window)
 
-  /** Синхронная инициализация контроллера, если необходима. */
-  override def riInit(): Unit = {
-    super.riInit()
-    ccInitSafe()
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.IdentVCenterContent) {
+      Future {
+        ccInitSafe()
+      }
+    } else {
+      super.routeInitTarget(itg)
+    }
   }
 
   /** Инициализация текущего контроллер с подавлением ошибок. */

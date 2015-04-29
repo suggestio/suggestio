@@ -1,10 +1,11 @@
 package io.suggest.lk.flash
 
-import io.suggest.sjs.common.controller.{InitController, InitRouter}
+import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.util.{SjsLogger, SafeSyncVoid}
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery._
+import io.suggest.flash.FlashConstants._
 
 import scala.concurrent.{Promise, Future}
 // Используем queue для перемешивания функций асихронного отображения уведомлений.
@@ -21,12 +22,14 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /** Аддон для сборки роутера инициализации с поддержкой flashing-уведомлений. */
 trait FlashInitRouter extends InitRouter {
 
-  /** Поиск ri-контроллера с указанным именем (ключом). */
-  override protected def getController(name: String): Option[InitController] = {
-    if (name == "_Flashing") {
-      Some(new FlashInitController)
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.Flashing) {
+      Future {
+        new FlashInit()
+          .init()
+      }
     } else {
-      super.getController(name)
+      super.routeInitTarget(itg)
     }
   }
 
@@ -34,33 +37,14 @@ trait FlashInitRouter extends InitRouter {
 
 
 /** Реализация контроллера, который занимается инициализацией flashing-уведомлений. */
-class FlashInitController extends InitController with SafeSyncVoid with SjsLogger {
+class FlashInit extends SafeSyncVoid with SjsLogger {
 
-  /** Синхронная инициализация контроллера, если необходима. */
-  override def riInit(): Unit = {
-    super.riInit()
-    // Запуск инициализации flash-уведомлений.
+  /** Запуск инициализации flash-уведомлений. */
+  def init(): Unit = {
     _safeSyncVoid { () =>
       executeFlash()
     }
   }
-
-
-  /** id контейнера, в котором отрендерены все уведомления, подлежащие отображению.
-    * id используется для быстрого перехода к контейнеру уведомлений, чтобы не перебирать весь DOM. */
-  private def CONTAINER_ID          = "notify-flash-div"
-  /** Имя css-класса все bar'ов уведомлений внутри контейнера. */
-  private def BAR_CLASS             = "status-bar"
-
-  /** Имя data-аттрибута, храняещго состояние открытости одного (текущего) бара. */
-  private def IS_OPENED_DATA_ATTR   = "open"
-  /** Значение open-аттрибута. */
-  private def OPENED_VALUE          = "1"
-
-  /** Сколько миллисекунд надо отображать всплывшее отображение, перед тем как скрыть его. */
-  private def SHOW_TIMEOUT_MS       = 5000
-
-  private def SLIDE_DURATION_MS     = 400
 
 
   /** Запустить отображение уведомлений, если вообще есть что отображать. */

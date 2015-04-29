@@ -1,9 +1,10 @@
 package io.suggest.lk.adn.edit.init
 
-import io.suggest.sjs.common.controller.{routes, InitController, InitRouter}
+import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.img.{CropUtil, CropFormRequestT}
-import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid, SjsLogger}
-import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
+import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
+import org.scalajs.jquery.{JQueryEventObject, jQuery}
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -15,48 +16,32 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 trait NodeEditInitRouter extends InitRouter {
 
-  /** Поиск init-контроллера с указанным именем. */
-  override protected def getController(name: String): Option[InitController] = {
-    if (name contains "LkAdnEdit") {
-      Some(new NodeEditInitController)
+  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+    if (itg == MInitTargets.LkNodeEditForm) {
+      Future {
+        new LkNodeEditFormEvents()
+          .init()
+      }
     } else {
-      super.getController(name)
+      super.routeInitTarget(itg)
     }
-  }
-
-}
-
-
-/**
- * Контроллер инициализации js для формы редактирования узла.
- * - #welcomeImage: Нужно повесить поддержку заливки и удаления картинок.
- * - #profileGallery: загрузка, кроп, удаление картинок.
- * - #logo: Загрузка, удаление картинок.
- * - Выбор цветов (bg и fg).
- */
-class NodeEditInitController extends InitController with SjsLogger with SafeSyncVoid with ProfileGallery {
-
-  /** Синхронная инициализация контроллера. */
-  override def riInit(): Unit = {
-    super.riInit()
-    _safeSyncVoid { () =>
-      init()
-    }
-  }
-
-  def init(): Unit = {
-    initNodeGallery()
   }
 
 }
 
 
 /** Поддержка node для gallery. */
-sealed trait ProfileGallery extends ISjsLogger with SafeSyncVoid {
+class LkNodeEditFormEvents extends SjsLogger with SafeSyncVoid {
 
   def NODE_GALLERY_DIV_ID = "profileGallery"
   def CROP_IMAGE_BTN_CLASS = "js-crop-image-btn"
 
+  /** Инициализация всей формы. */
+  def init(): Unit = {
+    initNodeGallery()
+  }
+
+  /** Инициализация js для подредактора галереи. */
   def initNodeGallery(): Unit = {
     jQuery("#" + NODE_GALLERY_DIV_ID)
       .on("click", "." + CROP_IMAGE_BTN_CLASS, {(e: JQueryEventObject) =>

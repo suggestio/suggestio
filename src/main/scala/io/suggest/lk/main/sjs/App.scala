@@ -2,9 +2,11 @@ package io.suggest.lk.main.sjs
 
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.flash.FlashInitRouter
-import io.suggest.lk.ident.IdentInitRouter
+import io.suggest.lk.ident.center.CenterContentInitRouter
+import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.util.SjsLogger
-import io.suggest.xadv.ext.js.AdvExtInitRouter
+import io.suggest.xadv.ext.js.form.FormEventsInitRouter
+import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
 
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.JSApp
@@ -34,7 +36,9 @@ object App extends JSApp with SjsLogger {
 /** Stackable-реализация routed init. */
 class LkInitRouter
   extends SjsLogger
-  with IdentInitRouter
-  with AdvExtInitRouter
+  with CenterContentInitRouter
+  with RunnerInitRouter
+  with FormEventsInitRouter
   with FlashInitRouter
+  with VerticalLinesInitRouter
 //with NodeEditInitRouter
