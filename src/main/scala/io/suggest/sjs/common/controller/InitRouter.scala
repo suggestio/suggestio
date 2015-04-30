@@ -59,7 +59,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
   final type MInitTarget = MInitTargets.T
 
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    warn("Js init target not supported: " + itg)
+    warn("JS init target not supported: " + itg)
     done
   }
 

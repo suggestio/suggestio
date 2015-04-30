@@ -1,8 +1,11 @@
-package io.suggest.sjs.common.img
+package io.suggest.sjs.common.img.crop
 
+import io.suggest.img.crop.CropConstants
+import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.routes
 import io.suggest.sjs.common.model.ex.XhrFailedException
 import org.scalajs.jquery._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.{Any, Dictionary}
@@ -14,9 +17,6 @@ import scala.scalajs.js.{Any, Dictionary}
  * Description: Встраиваемый код для запроса формы кроппинга изображения.
  */
 trait CropFormRequestT {
-
-  /** Событие. */
-  //def evt: JQueryEventObject
 
   /** Прямой родитель, чтобы найти input. */
   def parent: JQuery
@@ -48,30 +48,55 @@ trait CropFormRequestT {
    * Запустить ajax запрос.
    * @return Фьючерс с телом ответа или с ошибкой.
    */
-  def ajax(): Future[Any] = {
+  def ajax: Future[JQueryXHR] = {
     val p = Promise[JQueryXHR]()
     val args = Dictionary[Any](
       "url"      -> route.url,
       "method"   -> "GET",
       "async"    -> true,
       "complete" -> { (xhr: JQueryXHR, textStatus: String) =>
-        if (xhr.status == 200)
+        if (xhr.status == 200) {
           p success xhr
-        else
+        } else {
           p failure XhrFailedException(xhr)
+        }
       }
     )
     try {
-      jQuery.ajax(args.asInstanceOf[JQueryAjaxSettings])
+      val xhrSettings = args.asInstanceOf[JQueryAjaxSettings]
+      jQuery.ajax(xhrSettings)
     } catch {
       case ex: Throwable =>  p failure ex
     }
     p.future
   }
 
+  /**
+   * Сделать обращение и распарсить результат.
+   * @return Экземпляр [[CropFormResp]].
+   */
+  def ask: Future[CropFormResp] = {
+    ajax.map { xhr =>
+      CropFormResp(
+        body = xhr.response,
+        id   = xhr.getResponseHeader( PopupConstants.HTTP_HDR_POPUP_ID )
+      )
+    }
+  }
+
 }
 
 
 object CropUtil {
-  def CROP_DIV_ID = "imgCropTool"
+
+  /** Очистить DOM от всех открытых кропов. */
+  def removeAllCropFrames(): Unit = {
+    jQuery("#" + CropConstants)
+      .remove()
+  }
+
 }
+
+
+case class CropFormResp(body: Any, id: String)
+
