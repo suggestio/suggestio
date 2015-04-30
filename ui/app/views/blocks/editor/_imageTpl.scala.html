@@ -1,6 +1,7 @@
 @(bf: BfImage, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
 @import ctx._
+@import io.suggest.img.ImgConstants._
 
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
@@ -20,7 +21,7 @@
     <div class="edit-ad_image-upload-helper">
 
       <div id="blockImage@bf.name">
-        <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
+        <input type="hidden" class="@JS_IMG_ID_CLASS" name="@bfNameBase" value="@af(bfNameBase).value"/>
 
         @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
         <a class="btn __size-M __minor __crop js-img-w-crop" data-width="140" data-height="300">@messages("Crop")</a>

@@ -4,6 +4,7 @@
 @import helper._
 @import util.img.DynImgUtil
 @import io.suggest.popup.PopupConstants
+@import io.suggest.img.ImgConstants
 
 <div class="@PopupConstants.POPUP_CLASS __size-M @PopupConstants.JS_POPUP_CLASS" id="@id" data-width="@width" data-height="@height">
 
@@ -42,7 +43,7 @@
       </div>
 
       <div class="btn-w __size-M">
-        <button class="btn __minor __size-M js-remove-image">@messages("Delete")</button>
+        <button class="btn __minor __size-M @ImgConstants.JS_REMOVE_IMG_CLASS">@messages("Delete")</button>
         <button class="btn __major __size-M __list" type="submit">@messages("Save")</button>
       </div>
 

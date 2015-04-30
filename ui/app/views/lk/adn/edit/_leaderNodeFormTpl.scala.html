@@ -8,10 +8,13 @@
 @import util.img.DynImgUtil
 @import ctx._
 @import io.suggest.vlines.VLines
+@import io.suggest.img.ImgConstants
+@import io.suggest.adn.edit.NodeEditConstants
+@import io.suggest.img.crop.CropConstants._
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
-  <div class="profile_logo-bar" id="logo">
+  <div class="profile_logo-bar" id="@NodeEditConstants.NODE_LOGO_DIV_ID">
     @defining(mf("logoImgId").value) { logoImgIdOpt =>
       @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
         <style class="custom-color-style" data-for=".__logo">
@@ -19,10 +22,10 @@
             background-color: #@mf("meta.color").value;
           }
         </style>
-        <div class="image __logo __size-L js-preview">
-          <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+        <div class="image __logo __size-L @ImgConstants.JS_PREVIEW_CLASS">
+          <input class="@ImgConstants.JS_IMG_ID_CLASS" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
           <img class="image_src" src="@DynImgUtil.imgCall(imgId)"/>
-          <a class="image_remove-btn js-remove-image" title="@messages("Delete")">
+          <a class="image_remove-btn @ImgConstants.JS_REMOVE_IMG_CLASS" title="@messages("Delete")">
             <span></span>
           </a>
         </div>
@@ -32,7 +35,7 @@
         @stuff._fileUploadTpl(
           call          = routes.MarketLkAdnEdit.handleTempLogo(),
           fieldName     = "logoImgId",
-          previewRoot   = "#logo",
+          previewRoot   = "#" + NodeEditConstants.NODE_LOGO_DIV_ID,
           previewClass  = "__logo __size-L"
         )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.logo", " ")">
@@ -98,7 +101,7 @@
 
       <hr class="delimiter __light"/>
 
-      <div class="prop" id="profileGallery">
+      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID">
         <p class="prop_name __block">@messages("Node.photos"):</p>
 
         @mf("gallery").errors.map { error =>
@@ -110,9 +113,9 @@
             call          = routes.MarketLkAdnEdit.handleGallweryImg(),
             fieldName     = "gallery",
             multiple      = true,
-            previewRoot   = "#profileGallery",
+            previewRoot   = "#" + NodeEditConstants.NODE_GALLERY_DIV_ID,
             previewClass  = "__size-M f-left",
-            editBtnClass  = "image_edit-btn js-crop-image-btn",
+            editBtnClass  = "image_edit-btn " + CROP_IMAGE_BTN_CLASS,
             whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
           )
           <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">
@@ -125,10 +128,10 @@
           @gf.indexes.map { gfi =>
             @defining( s"gallery[$gfi]" ) { gfn =>
               @mf(gfn).value.map { imgId =>
-                <div class="image __size-M f-left js-preview">
-                  <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                <div class="image __size-M f-left @ImgConstants.JS_PREVIEW_CLASS">
+                  <input class="@ImgConstants.JS_IMG_ID_CLASS" type="hidden" name="@gfn" value="@imgId"/>
                   <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-                  <a class="image_edit-btn js-crop-image-btn" title="@messages("Edit")">
+                  <a class="image_edit-btn @CROP_IMAGE_BTN_CLASS" title="@messages("Edit")">
                     <span></span>
                   </a>
                 </div>

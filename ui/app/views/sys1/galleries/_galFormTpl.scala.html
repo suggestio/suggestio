@@ -7,6 +7,8 @@
 @import util.FC.tdFc
 @import util.img.GalleryUtil.GALLERY_LEN_MAX
 @import util.img.DynImgUtil
+@import io.suggest.img.crop.CropConstants._
+@import io.suggest.img.ImgConstants._
 
 @form(submitCall) {
 
@@ -51,11 +53,11 @@
       <div class="image __size-M f-left js-image-upload" >
         @stuff._fileUploadTpl(
           routes.SysGallery.uploadImg(ctx.ctxIdStr),
-          fieldName = "imgs",
-          multiple = true,
-          previewRoot = "#imgs",
-          previewClass = "__size-M f-left",
-          editBtnClass = "image_edit-btn js-crop-image-btn"
+          fieldName	= "imgs",
+          multiple	= true,
+          previewRoot	= "#imgs",
+          previewClass	= "__size-M f-left",
+          editBtnClass	= "image_edit-btn " + CROP_IMAGE_BTN_CLASS
         )
         <a class="image_add-btn js-file-upload-btn" title="Загрузить фотографию">
           <span>Добавить<br/>фотографию</span>
@@ -67,10 +69,10 @@
         @gf.indexes.map { gfi =>
           @defining( s"gallery[$gfi]" ) { gfn =>
             @gf(gfn).value.map { imgId =>
-              <div class="image __size-M f-left js-preview">
-                <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+              <div class="image __size-M f-left @JS_PREVIEW_CLASS">
+                <input class="@JS_IMG_ID_CLASS" type="hidden" name="@gfn" value="@imgId"/>
                 <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-                <a class="image_edit-btn js-crop-image-btn" title="Удалить">
+                <a class="image_edit-btn @CROP_IMAGE_BTN_CLASS" title="@messages("Delete")">
                   <span></span>
                 </a>
               </div>
