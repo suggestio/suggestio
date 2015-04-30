@@ -1,7 +1,8 @@
 package io.suggest.lk.adn.edit.init
 
+import io.suggest.lk.popup.Popup
 import io.suggest.sjs.common.controller.InitRouter
-import io.suggest.sjs.common.img.{CropUtil, CropFormRequestT}
+import io.suggest.sjs.common.img.crop.{CropUtil, CropFormRequestT}
 import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 import scala.concurrent.Future
@@ -44,21 +45,27 @@ class LkNodeEditFormEvents extends SjsLogger with SafeSyncVoid {
   /** Инициализация js для подредактора галереи. */
   def initNodeGallery(): Unit = {
     jQuery("#" + NODE_GALLERY_DIV_ID)
-      .on("click", "." + CROP_IMAGE_BTN_CLASS, {(e: JQueryEventObject) =>
-        e.preventDefault()
-        val asker = new CropFormRequestT {
-          override val parent = jQuery(e.currentTarget).parent()
-          override val input  = super.input
-        }
-        val fut = asker.ajax()
-        jQuery("#" + CropUtil.CROP_DIV_ID)
-          .remove()
-        fut.map { resp =>
-          // TODO Залить контент в popup container.
-          // TODO Отобразить попап.
-          ???
-        }
-      })
+      .on("click", "." + CROP_IMAGE_BTN_CLASS, galCropClick(_))
+  }
+
+  /** Клик по кнопке кропа на одном из изображений галереи узла. */
+  def galCropClick(e: JQueryEventObject): Unit = {
+    e.preventDefault()
+    val asker = new CropFormRequestT {
+      override val parent = jQuery(e.currentTarget).parent()
+      override val input  = super.input
+    }
+    val fut = asker.ask
+    CropUtil.removeAllCropFrames()
+    fut.map { resp =>
+      // Отрендерить и отобразить попап кропа.
+      Popup.appendPopup(resp.body)
+      Popup.showPopups("#" + resp.id)
+      // TODO Инициализировать кроппер.
+      //val imgName = asker.input.attr("name")
+      // market.img.crop.init( img_name )
+      ???
+    }
   }
 
 }

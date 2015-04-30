@@ -3,6 +3,8 @@ package io.suggest.lk.main.sjs
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
+import io.suggest.lk.popup.PopupsInitRouter
+import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
@@ -41,4 +43,6 @@ class LkInitRouter
   with FormEventsInitRouter
   with FlashInitRouter
   with VerticalLinesInitRouter
+  with JsHiddenInitRouter
+  with PopupsInitRouter
 //with NodeEditInitRouter
