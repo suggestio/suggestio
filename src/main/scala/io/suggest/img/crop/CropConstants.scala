@@ -12,4 +12,8 @@ object CropConstants {
     * Тут id тега верхнего уровня для верстки, приходящей с сервера. */
   def CROPPER_DIV_ID = "imgCropTool"
 
+  /** Класс для кнопки в редакторе для активации кропа какого-то (текущего) изображения. */
+  def CROP_IMAGE_BTN_CLASS = "js-crop-image-btn"
+
 }
+
