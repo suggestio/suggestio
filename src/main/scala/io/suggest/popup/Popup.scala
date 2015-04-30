@@ -20,4 +20,16 @@ object PopupConstants {
   /** Какой-то флаг в списке class для идентификации связи попапа с javascript'ом. */
   def JS_POPUP_CLASS = "js-popup"
 
+  /** Название http-заголовка, который содержит id полученного с сервера попапа. */
+  def HTTP_HDR_POPUP_ID = "X-Popup-Id"
+
+  /** Класс-пометка для тега, который при клике должен закрывать попап. Т.е. это кнопка "закрыть". */
+  def CLOSE_CSS_CLASS = "js-close-popup"
+
+  /** CSS-класс попапов. */
+  def POPUP_CLASS = "popup"
+
+  /** Отметка для сокрытия и удаления попапа, т.к. close-флаг только скрывает. */
+  def REMOVE_CSS_CLASS = "js-remove-popup"
+
 }

@@ -28,6 +28,10 @@ object JsInitConstants {
   def ID_IDENT_VCENTER_CONTENT    = "e"
   /** Форма редактирования узла в личном кабинете. */
   def ID_LK_NODE_EDIT_FORM        = "f"
+  /** init-обработка .js-hidden элементов */
+  def ID_JS_HIDDEN                = "g"
+  /** Поддержка попапов. */
+  def ID_POPUPS                   = "h"
 
 }
 
@@ -67,6 +71,12 @@ trait MInitTargetsBaseT extends ILightEnumeration {
 
   /** Форма редактирования узла в личном кабинете. */
   val LkNodeEditForm: T = instance(ID_LK_NODE_EDIT_FORM)
+
+  /** Обработать все .js-hidden элементы. */
+  val JsHidden: T = instance(ID_JS_HIDDEN)
+
+  /** Инициализировать поддержку попапов. */
+  val Popups: T = instance(ID_POPUPS)
 
   // Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
 }
