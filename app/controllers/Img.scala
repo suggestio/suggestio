@@ -4,6 +4,8 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import com.google.inject.Inject
+import io.suggest.img.crop.CropConstants
+import io.suggest.popup.PopupConstants
 import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
 import models.im._
@@ -111,7 +113,9 @@ class Img @Inject() (
         warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
         stub
       }
-      Ok(cropTpl(iik.fileName, width, height, imeta, iik.cropOpt))
+      val id = CropConstants.CROPPER_DIV_ID
+      Ok(cropTpl(iik.fileName, width, height = height, imeta, id, iik.cropOpt))
+        .withHeaders(PopupConstants.HTTP_HDR_POPUP_ID -> id)
     }
   }
 

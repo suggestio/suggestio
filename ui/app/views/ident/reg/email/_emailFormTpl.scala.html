@@ -5,12 +5,13 @@
 @import io.suggest.util.StringUtil.randomId
 @import ctx._
 @import util.FC.authFc
+@import io.suggest.err.ErrorConstants._
 
 
 @form( CSRF(routes.Ident.emailRegSubmit()), 'id -> "indexRegForm" ) {
 
   @rf.globalError.map { ge =>
-    <p class="error-msg">@messages("Error"): @messages(ge.message)</p>
+    <p class="@ERROR_MSG_CLASS">@messages("Error"): @messages(ge.message)</p>
   }
 
   @inputText(

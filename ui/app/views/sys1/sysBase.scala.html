@@ -4,6 +4,7 @@
 @import stuff._
 @import ctx._
 @import helper._
+@import io.suggest.popup.PopupConstants
 
 @* base-шаблон для системной панели suggest.io. *@
 <!DOCTYPE html>
@@ -49,7 +50,7 @@
 
      </div>
 
-    <div class="popups-container" id="popupsContainer">
+    <div class="popups-container" id="@PopupConstants.CONTAINER_ID">
       <div class="overlay" id="overlay"></div>
     </div>
 

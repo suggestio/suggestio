@@ -3,12 +3,13 @@
 @import ctx._
 @import helper._
 @import util.FC.authFc
+@import io.suggest.err.ErrorConstants._
 
 
 @form(CSRF(routes.Ident.pwResetSubmit(ea.id.get)), 'id -> "pwResetPasswordForm") {
 
   @prf.globalError.map { ge =>
-    <p class="error-msg">@messages("Error"): @messages(ge.message)</p>
+    <p class="@ERROR_MSG_CLASS">@messages("Error"): @messages(ge.message)</p>
   }
 
   @defining( messages("Type.new.password") ) { msg =>

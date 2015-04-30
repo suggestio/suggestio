@@ -4,11 +4,12 @@
 @import ctx._
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
+@import io.suggest.popup.PopupConstants
 
-<div class="popup js-popup" id="dailyMmpsWindow" >
+<div class="@PopupConstants.POPUP_CLASS @PopupConstants.JS_POPUP_CLASS" id="dailyMmpsWindow" >
 
   <div class="popup_header">
-    <a class="close f-right js-close-popup" href="#"></a>
+    <a class="close f-right @PopupConstants.CLOSE_CSS_CLASS" href="#"></a>
   </div>
 
   <h2 class="minor-title">

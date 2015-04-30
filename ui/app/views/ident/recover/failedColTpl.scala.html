@@ -4,12 +4,13 @@
 
 @import ctx.messages
 @import views.html.ident._
+@import io.suggest.popup.PopupConstants
 
 @html = {
-  <div class="popup js-popup __index" id="newPasswordForm">
+  <div class="@PopupConstants.POPUP_CLASS @PopupConstants.JS_POPUP_CLASS __index" id="newPasswordForm">
 
     <div class="popup_header __index">
-      <a class="popup_close f-right icon-icomoon js-close-popup"></a>
+      <a class="popup_close f-right icon-icomoon @PopupConstants.CLOSE_CSS_CLASS"></a>
     </div>
 
     <div class="popup_cnt __index-fix">

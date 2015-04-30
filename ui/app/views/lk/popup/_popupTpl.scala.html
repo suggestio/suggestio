@@ -8,10 +8,10 @@
 @import helper._
 @import io.suggest.popup.PopupConstants._
 
-<div class="popup @if(jsPopup){@JS_POPUP_CLASS} @if(hidden){ js-hidden}@classesPreSpaced(css)"
+<div class="@POPUP_CLASS @if(jsPopup){@JS_POPUP_CLASS} @if(hidden){js-hidden}@classesPreSpaced(css)"
      @id.map { id1 =>id="@id1"}> @* Если в одну строчку все эти аттрибуты, то оно не парсится правильно. *@
   <div class="popup_header">
-    <a class="close f-right js-close-popup" href="@closeHref.getOrElse(request.path)"></a>
+    <a class="close f-right @CLOSE_CSS_CLASS" href="@closeHref.getOrElse(request.path)"></a>
   </div>
   @content
 </div>
