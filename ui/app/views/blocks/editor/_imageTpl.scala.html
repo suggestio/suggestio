@@ -2,14 +2,16 @@
 
 @import ctx._
 @import io.suggest.img.ImgConstants._
+@import io.suggest.js.UploadConstants._
 
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
   <div style="overflow: hidden;">
     <div class="f-left" id="cardPhoto">
-      <div class="image __size-L f-left js-image-upload" >
-        <input type="file" class="add-file-input js-file-upload" data-preview-class="__size-M" data-name="ad.offer.bgImg"
+      <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" >
+        <input type="file" class="add-file-input @JS_FILE_UPLOAD_CLASS"
+	       data-preview-class="__size-M" data-name="ad.offer.bgImg"
                data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true"
                data-action="@routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">

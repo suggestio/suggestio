@@ -4,8 +4,9 @@
 @* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
 @import helper._
+@import io.suggest.js.UploadConstants._
 
-<input type="file" class="add-file-input js-file-upload"
+<input type="file" class="add-file-input @JS_FILE_UPLOAD_CLASS"
        data-edit-btn="@editBtnClass"
        data-action="@call"
        name="picture"

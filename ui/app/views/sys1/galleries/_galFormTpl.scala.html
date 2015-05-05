@@ -9,6 +9,7 @@
 @import util.img.DynImgUtil
 @import io.suggest.img.crop.CropConstants._
 @import io.suggest.img.ImgConstants._
+@import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
 
 @form(submitCall) {
 
@@ -50,7 +51,7 @@
         <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
       }
 
-      <div class="image __size-M f-left js-image-upload" >
+      <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" >
         @stuff._fileUploadTpl(
           routes.SysGallery.uploadImg(ctx.ctxIdStr),
           fieldName	= "imgs",

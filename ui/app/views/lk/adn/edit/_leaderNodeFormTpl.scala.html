@@ -11,6 +11,7 @@
 @import io.suggest.img.ImgConstants
 @import io.suggest.adn.edit.NodeEditConstants
 @import io.suggest.img.crop.CropConstants._
+@import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -31,7 +32,7 @@
         </div>
       }
 
-      <div class="image __size-L js-image-upload"@if(!logoImgIdOpt.isEmpty) { style="display: none;"}>
+      <div class="image __size-L @JS_IMG_UPLOAD_CLASS" @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
         @stuff._fileUploadTpl(
           call          = routes.MarketLkAdnEdit.handleTempLogo(),
           fieldName     = "logoImgId",
@@ -108,7 +109,7 @@
           <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
         }
 
-        <div class="image __size-M f-left js-image-upload" >
+        <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" >
           @stuff._fileUploadTpl(
             call          = routes.MarketLkAdnEdit.handleGallweryImg(),
             fieldName     = "gallery",

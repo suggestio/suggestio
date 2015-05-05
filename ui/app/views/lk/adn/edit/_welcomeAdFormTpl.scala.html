@@ -6,6 +6,7 @@
 @import util.img.DynImgUtil
 @import io.suggest.img.ImgConstants
 @import io.suggest.adn.edit.NodeEditConstants
+@import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
 
 <table class="prop">
   <tr>
@@ -25,7 +26,7 @@
           }
         }
 
-        <div class="image __size-M f-left js-image-upload"  @if(!imgIdOpt.isEmpty) {style="display: none;"}>
+        <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" @if(!imgIdOpt.isEmpty) {style="display: none;"}>
           @stuff._fileUploadTpl(
             call          = routes.MarketLkAdnEdit.handleTempLogo,
             fieldName     = "welcomeImgId",
