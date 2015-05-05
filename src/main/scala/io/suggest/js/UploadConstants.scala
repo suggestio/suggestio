@@ -8,6 +8,10 @@ package io.suggest.js
  */
 object UploadConstants {
 
-  def JS_FILE_UPLOAD_CLASS = "js-file-upload"
+  /** css-класс-пометка для input'а, занимающегося загрузкой файлов. */
+  def JS_FILE_UPLOAD_CLASS  = "js-file-upload"
+
+  /** css-класс для контейнеров загрузки. */
+  def JS_IMG_UPLOAD_CLASS   = "js-image-upload"
 
 }
