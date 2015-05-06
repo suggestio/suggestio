@@ -1,3 +1,11 @@
 syntax: glob
 
-*
+target/
+bixo/
+data/
+.idea*/
+.history
+project/project
+project/target
+
+russianmorphology/
