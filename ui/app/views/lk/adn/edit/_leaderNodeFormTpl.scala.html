@@ -11,7 +11,8 @@
 @import io.suggest.img.ImgConstants
 @import io.suggest.adn.edit.NodeEditConstants
 @import io.suggest.img.crop.CropConstants._
-@import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
+@import io.suggest.js.UploadConstants
+@import views.html.lk.forms.img._
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -23,16 +24,17 @@
             background-color: #@mf("meta.color").value;
           }
         </style>
-        <div class="image __logo __size-L @ImgConstants.JS_PREVIEW_CLASS">
-          <input class="@ImgConstants.JS_IMG_ID_CLASS" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-          <img class="image_src" src="@DynImgUtil.imgCall(imgId)"/>
-          <a class="image_remove-btn @ImgConstants.JS_REMOVE_IMG_CLASS" title="@messages("Delete")">
-            <span></span>
-          </a>
-        </div>
+        @_jsPreviewOverlayTpl(
+          btnText	= messages("Delete"),
+          name		= "logoImgId",
+          imgKey	= imgId,
+          imgPreviewUrl = DynImgUtil.imgCall(imgId),
+          divCss	= Seq("__logo", "__size-L"),
+          btnCss	= Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+        )
       }
 
-      <div class="image __size-L @JS_IMG_UPLOAD_CLASS" @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
+      <div class="image __size-L @UploadConstants.JS_IMG_UPLOAD_CLASS" @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
         @stuff._fileUploadTpl(
           call          = routes.MarketLkAdnEdit.handleTempLogo(),
           fieldName     = "logoImgId",
@@ -40,7 +42,7 @@
           previewClass  = "__logo __size-L"
         )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.logo", " ")">
-         <span>@Html( messages("Upload.logo", "<br/>") )</span>
+          <span>@Html( messages("Upload.logo", "<br/>") )</span>
         </a>
       </div>
 
@@ -102,16 +104,19 @@
 
       <hr class="delimiter __light"/>
 
-      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID">
+
+      @defining( mf("gallery") ) { gf =>
+      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID"
+           @(UploadConstants.ATTR_MULTI_INDEX_COUNTER)="@gf.indexes.lastOption.getOrElse(-1)" >
         <p class="prop_name __block">@messages("Node.photos"):</p>
 
-        @mf("gallery").errors.map { error =>
+        @gf.errors.map { error =>
           <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
         }
 
-        <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" >
+        <div class="image __size-M f-left @UploadConstants.JS_IMG_UPLOAD_CLASS" >
           @stuff._fileUploadTpl(
-            call          = routes.MarketLkAdnEdit.handleGallweryImg(),
+            call          = routes.MarketLkAdnEdit.handleGalleryImg(),
             fieldName     = "gallery",
             multiple      = true,
             previewRoot   = "#" + NodeEditConstants.NODE_GALLERY_DIV_ID,
@@ -125,22 +130,22 @@
         </div>
 
         @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
-        @defining( mf("gallery") ) { gf =>
-          @gf.indexes.map { gfi =>
-            @defining( s"gallery[$gfi]" ) { gfn =>
-              @mf(gfn).value.map { imgId =>
-                <div class="image __size-M f-left @ImgConstants.JS_PREVIEW_CLASS">
-                  <input class="@ImgConstants.JS_IMG_ID_CLASS" type="hidden" name="@gfn" value="@imgId"/>
-                  <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-                  <a class="image_edit-btn @CROP_IMAGE_BTN_CLASS" title="@messages("Edit")">
-                    <span></span>
-                  </a>
-                </div>
-              }
+        @gf.indexes.map { gfi =>
+          @defining( s"gallery[$gfi]" ) { gfn =>
+            @mf(gfn).value.map { imgId =>
+              @_jsPreviewOverlayTpl(
+                btnText	= messages("Edit"),
+                name		= gfn,
+                imgKey	= imgId,
+                imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
+                divCss	= Seq("__size-M", "f-left"),
+                btnCss	= Seq("image_edit-btn", CROP_IMAGE_BTN_CLASS)
+              )
             }
           }
         }
       </div>
+      }
 
       <hr class="delimiter __light"/>
 

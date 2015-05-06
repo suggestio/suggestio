@@ -5,6 +5,7 @@ import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{RequestHeader, Call}
 import util.DateTimeUtil
 import play.api.http.HeaderNames._
+import io.suggest.img.ImgConstants._
 
 /**
  * Suggest.io
@@ -16,7 +17,7 @@ object ImgCtlUtil {
 
   /** Выдать json ошибку по поводу картинки. */
   def jsonImgError(msg: String) = JsObject(Seq(
-    "status" -> JsString("error"),
+    JSON_UPLOAD_STATUS -> JsString("error"),
     "msg"    -> JsString(msg) // TODO Добавить бы поддержку lang.
   ))
 
@@ -24,9 +25,9 @@ object ImgCtlUtil {
   /** Ответ на присланную для предобработки картинку. */
   def jsonTempOk(filename: String, imgUrl: Call) = {
     JsObject(List(
-      "status"     -> JsString("ok"),
-      "image_key"  -> JsString(filename),
-      "image_link" -> JsString(imgUrl.url)
+      JSON_UPLOAD_STATUS  -> JsString("ok"),
+      JSON_IMG_KEY        -> JsString(filename),
+      JSON_IMG_THUMB_URI  -> JsString(imgUrl.url)
     ))
   }
 
@@ -36,7 +37,8 @@ object ImgCtlUtil {
    * true - not modified, false иначе.
    */
   def isModifiedSinceCached(modelTstampMs: ReadableInstant)(implicit request: RequestHeader): Boolean = {
-    request.headers.get( IF_MODIFIED_SINCE)
+    request.headers
+      .get(IF_MODIFIED_SINCE)
       .fold(false)(isModifiedSinceCached(modelTstampMs, _))
   }
 

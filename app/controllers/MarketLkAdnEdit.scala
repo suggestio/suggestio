@@ -257,7 +257,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Юзер постит временную картинку для личного галереи узла. */
-  def handleGallweryImg = {
+  def handleGalleryImg = {
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
     IsAuth.async(bp) { implicit request =>
       bruteForceProtected {

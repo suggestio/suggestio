@@ -7,6 +7,7 @@
 @import io.suggest.img.ImgConstants
 @import io.suggest.adn.edit.NodeEditConstants
 @import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
+@import views.html.lk.forms.img._
 
 <table class="prop">
   <tr>
@@ -16,13 +17,14 @@
 
         @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
           @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
-            <div class="image __size-M @ImgConstants.JS_PREVIEW_CLASS">
-              <input class="@ImgConstants.JS_IMG_ID_CLASS" type="hidden" name="welcomeImgId" value="@imgIdOpt"/>
-              <img class="image_src" src="@DynImgUtil.thumb256Call(imgId, fillArea = false)" />
-              <a class="image_remove-btn @ImgConstants.JS_REMOVE_IMG_CLASS" title="@messages("Delete")">
-                <span></span>
-              </a>
-            </div>
+            @_jsPreviewOverlayTpl(
+              btnText	= messages("Delete"),
+              name	    = "welcomeImgId",
+              imgKey	= imgId,
+              imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
+              divCss	= Seq("__size-M"),
+              btnCss	= Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+            )
           }
         }
 

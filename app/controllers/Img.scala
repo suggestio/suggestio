@@ -266,6 +266,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
         // Отрабатываем svg: не надо конвертить.
         val srcMime = srcMagicMatch.getMimeType
+
+        // Далее, загрузка для svg и растровой графики расветвляется...
         if (SvgUtil maybeSvgMime srcMime) {
           // Это svg?
           if (SvgUtil isSvgFileValid srcFile) {
@@ -280,6 +282,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
           }
 
         } else {
+          // Это растровая картинка (jpeg, png, etc).
           try {
             val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
             // Конвертим в JPEG всякие левые форматы.
