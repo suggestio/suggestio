@@ -4,7 +4,7 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import org.scalajs.sbtplugin._, ScalaJSPlugin.autoImport._
 import com.typesafe.sbt.SbtNativePackager._
 import PlayScalaJS.autoImport._
 
@@ -58,7 +58,7 @@ object SiobixBuild extends Build {
     val name = "common-sjs"
     Project(id = name, base = file(name))
       .dependsOn(common)
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
       // Чтобы не инклюдчить сорцы modelEnumUtil в каждом под-проекте, используем его прямо здесь.
       .settings(
         Seq(modelEnumUtil, common).map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)) : _*
@@ -94,12 +94,12 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
     .dependsOn(common, util, securesocial, modelEnumUtilPlay)
-    .aggregate(lkSjs)
-    .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
     .settings(
-      scalaJSProjects := Seq(lkSjs),
+      scalaJSProjects := Seq(lkSjs, commonSjs),
       pipelineStages += scalaJSProd
     )
+    .aggregate(lkSjs)
+    .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
   
 
 
