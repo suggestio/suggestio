@@ -31,7 +31,7 @@ addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.0-M3")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.0-RC1")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
@@ -42,7 +42,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
 
-addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.7-SNAPSHOT")
+addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.8-SNAPSHOT")
 
 // ProGuard занимается обфускацией скомпиленных данных.
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
