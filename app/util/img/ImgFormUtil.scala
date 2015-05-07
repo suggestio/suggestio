@@ -37,8 +37,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     * появившиеся в ходе ошибочной логики. */
   private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
 
-  def logoKM = getLogoKM("adn.logo.invalid")
-
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
@@ -67,10 +65,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  /** Генератор logo-маппингов. */
-  def getLogoKM(errorMsg: String): (String, Mapping[LogoOpt_t]) = {
-    "logoImgId" -> optional(imgIdM)
-  }
 
 
   // Валидация значений crop'а.

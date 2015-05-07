@@ -30,8 +30,10 @@ GET  /m/lk/adn/:adnId                   @controllers.MarketLkAdn.showAdnNode(adn
 GET  /m/lk/adn/:adnId/ads               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /m/lk/adn/:adnId/edit              @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
-POST /m/adn/img/logo/prepare            @controllers.MarketLkAdnEdit.handleTempLogo
 POST /m/adn/img/gal/prepare             @controllers.MarketLkAdnEdit.handleGalleryImg
+POST /lk/node/edit/img/upload/welcome   @controllers.MarketLkAdnEdit.uploadWelcomeImg
+POST /lk/node/edit/img/upload/logo      @controllers.MarketLkAdnEdit.handleTempLogo
+
 ## Принятие приглашения на управления узлом.
 GET  /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)

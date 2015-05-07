@@ -1,9 +1,11 @@
 package util.img
 
+import io.suggest.model.EsModel.FieldsJsonAcc
 import org.joda.time.{Instant, ReadableInstant}
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{RequestHeader, Call}
-import util.DateTimeUtil
+import play.twirl.api.Html
+import util.{TplFormatUtilT, DateTimeUtil}
 import play.api.http.HeaderNames._
 import io.suggest.img.ImgConstants._
 
@@ -13,7 +15,7 @@ import io.suggest.img.ImgConstants._
  * Created: 06.04.15 18:57
  * Description: Вынос из контроллера ctl.Img.
  */
-object ImgCtlUtil {
+object ImgCtlUtil extends TplFormatUtilT {
 
   /** Выдать json ошибку по поводу картинки. */
   def jsonImgError(msg: String) = JsObject(Seq(
@@ -23,12 +25,15 @@ object ImgCtlUtil {
 
 
   /** Ответ на присланную для предобработки картинку. */
-  def jsonTempOk(filename: String, imgUrl: Call) = {
-    JsObject(List(
+  def jsonTempOk(filename: String, imgUrl: Call, ovlOpt: Option[Html] = None) = {
+    var acc: FieldsJsonAcc = List(
       JSON_UPLOAD_STATUS  -> JsString("ok"),
       JSON_IMG_KEY        -> JsString(filename),
       JSON_IMG_THUMB_URI  -> JsString(imgUrl.url)
-    ))
+    )
+    if (ovlOpt.isDefined)
+      acc ::= JSON_FORM_FIELD_HTML -> (ovlOpt.get: JsString)
+    JsObject(acc)
   }
 
 

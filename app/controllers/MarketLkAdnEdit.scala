@@ -21,7 +21,7 @@ import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
-import util.img.ImgFormUtil.logoKM
+import models.madn.EditConstants._
 
 import scala.concurrent.Future
 
@@ -192,7 +192,7 @@ class MarketLkAdnEdit @Inject() (
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
+        val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
         val savedLogoFut = LogoUtil.updateLogo(fmr.logoOpt, adnNode.logoImgOpt)
@@ -243,16 +243,24 @@ class MarketLkAdnEdit @Inject() (
     )
   }
 
+  import views.html.lk.adn.edit.ovl._
 
   /**
    * Экшен загрузки картинки для логотипа магазина.
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtected {
-      _handleTempImg()
-    }
+  def handleTempLogo = _imgUpload { (imgId, ctx) =>
+    _logoOvlTpl(imgId)(ctx)
+  }
+
+
+  /**
+   * Экшен для загрузки картинки приветствия.
+   * @return JSON с тем же форматом ответа, что и для других img upload'ов.
+   */
+  def uploadWelcomeImg = _imgUpload { (imgId, ctx) =>
+    _welcomeOvlTpl(imgId)(ctx)
   }
 
 
@@ -266,12 +274,29 @@ class MarketLkAdnEdit @Inject() (
     }
   }
 
+  /**
+   * Общий код загрузки всех картинок для узла.
+   * @param ovlRrr Функция-рендерер html оверлея картинки.
+   * @return Action.
+   */
+  private def _imgUpload(ovlRrr: (String, Context) => Html) = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
+    IsAuth.async(bp) { implicit request =>
+      bruteForceProtected {
+        _handleTempImg(
+          ovlRrr = Some(ovlRrr)
+        )
+      }
+    }
+  }
 
+
+  /** Внутренняя модель этого контроллера, отражающая результирующее значение биндинга формы редактирования узла. */
   sealed case class FormMapResult(
-    meta: AdnMMetadata,
-    logoOpt: LogoOpt_t,
-    waImgIdOpt: Option[MImg] = None,
-    gallery: List[MImg] = Nil
+    meta        : AdnMMetadata,
+    logoOpt     : LogoOpt_t,
+    waImgOpt    : Option[MImg] = None,
+    gallery     : List[MImg] = Nil
   )
 }
 

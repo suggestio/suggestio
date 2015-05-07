@@ -3,8 +3,10 @@ package util.img
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.Context
+import models.madn.EditConstants
 import play.api.data.Forms._
 import play.api.Play.{current, configuration}
+import play.api.data.Mapping
 import play.api.mvc.Call
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models.blk.szMulted
@@ -26,8 +28,12 @@ object GalleryUtil {
   /** Максимально кол-во картинок в галереи. */
   val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
-  val galleryKM = "gallery" -> list(ImgFormUtil.imgIdM)
-    .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
+  def galleryM: Mapping[List[MImg]] = {
+    list(ImgFormUtil.imgIdM)
+      .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
+  }
+
+  def galleryKM = EditConstants.GALLERY_FN -> galleryM
 
   def gallery2iiks(gallery: List[String]) = {
     gallery.map { MImg.apply }

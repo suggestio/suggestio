@@ -1,0 +1,18 @@
+@(imgId: String)(implicit ctx: Context)
+
+@* overlay для логотипа. *@
+
+@import ctx.messages
+@import io.suggest.img.ImgConstants
+@import views.html.lk.forms.img._
+@import util.img.DynImgUtil
+@import madn.EditConstants.LOGO_IMG_FN
+
+@_jsPreviewOverlayTpl(
+  btnText       = messages("Delete"),
+  name          = LOGO_IMG_FN,
+  imgKey        = imgId,
+  imgPreviewUrl = DynImgUtil.imgCall(imgId),
+  divCss        = Seq("__logo", "__size-L"),
+  btnCss        = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+)

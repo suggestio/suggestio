@@ -1,37 +1,27 @@
 @(martId: String, welcomeAdOpt: Option[MAdT], mf: Form[_])(implicit ctx: Context)
 
 @* Форма для выставления приветственной картинки-карточки. *@
-@import ctx._
+@import ovl._
+@import ctx.messages
 @import helper._
-@import util.img.DynImgUtil
-@import io.suggest.img.ImgConstants
 @import io.suggest.adn.edit.NodeEditConstants
 @import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
-@import views.html.lk.forms.img._
+@import madn.EditConstants.WELCOME_IMG_FN
 
 <table class="prop">
   <tr>
     <td class="prop_name td">@messages("Welcome.bg.hint")</td>
     <td class="td" id="@NodeEditConstants.NODE_WELCOME_DIV_ID">
-      @defining(mf("welcomeImgId").value) { imgIdOpt =>
+      @defining(mf(WELCOME_IMG_FN).value) { imgIdOpt =>
 
-        @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
-          @welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>
-            @_jsPreviewOverlayTpl(
-              btnText	= messages("Delete"),
-              name	    = "welcomeImgId",
-              imgKey	= imgId,
-              imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
-              divCss	= Seq("__size-M"),
-              btnCss	= Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
-            )
-          }
+        @imgIdOpt.map { imgId =>
+          @_welcomeOvlTpl(imgId)
         }
 
         <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" @if(!imgIdOpt.isEmpty) {style="display: none;"}>
           @stuff._fileUploadTpl(
-            call          = routes.MarketLkAdnEdit.handleTempLogo,
-            fieldName     = "welcomeImgId",
+            call          = routes.MarketLkAdnEdit.uploadWelcomeImg(),
+            fieldName     = WELCOME_IMG_FN,
             previewRoot   = "#" + NodeEditConstants.NODE_WELCOME_DIV_ID,
             previewClass  = "__size-M f-left"
           )

@@ -1,12 +1,12 @@
 package util.img
 
 import models.im._
+import models.madn.EditConstants
 import models.msc.WelcomeRenderArgsT
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.Future
 import models._
-import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
@@ -26,7 +26,7 @@ object WelcomeUtil {
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
-  val welcomeImgIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdM)
+  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> ImgFormUtil.imgIdOptM
 
   /** Асинхронно получить welcome-ad-карточку. */
   def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {

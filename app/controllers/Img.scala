@@ -6,11 +6,13 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
+import models.Context
+import play.twirl.api.Html
 import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
 import models.im._
 import org.apache.commons.io.FileUtils
-import play.api.i18n.MessagesApi
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import _root_.util._
@@ -220,7 +222,7 @@ class Img @Inject() (
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName {
+trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName with I18nSupport {
 
   /** Размер генерируемой палитры. */
   val MAIN_COLORS_PALETTE_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8
@@ -254,10 +256,14 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
     * @param request HTTP-реквест.
+    * @param ovlRrr Overlay HTML renderer. Опциональный.
+    * @param runEarlyColorDetector Запускать в фоне детектор палитры основных цветов.
+    * @param wsId Для обратной связи с клиентом использовать вебсокет с этим id.
     * @return Экземпляр Result, хранящий json с данными результата.
     */
-  def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false, wsId: Option[String] = None)
-                    (implicit request: Request[MultipartFormData[TemporaryFile]]): Future[Result] = {
+  def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
+                     wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None)
+                    (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
       case Some(pictureFile) =>
@@ -267,6 +273,10 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
         // Отрабатываем svg: не надо конвертить.
         val srcMime = srcMagicMatch.getMimeType
 
+        // Отрабатываем опциональный рендеринг html-поля с оверлеем.
+        def ovlOpt(mptmp: MAnyImgT) = ovlRrr.map { hrrr =>
+          hrrr(mptmp.fileName, implicitly[Context])
+        }
         // Далее, загрузка для svg и растровой графики расветвляется...
         if (SvgUtil maybeSvgMime srcMime) {
           // Это svg?
@@ -275,7 +285,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
             val mptmp = MLocalImg()
             FileUtils.writeStringToFile(mptmp.file, newSvg)
-            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg)) )
+            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt(mptmp)) )
           } else {
             val reply = jsonImgError("SVG format invalid or not supported.")
             NotAcceptable(reply)
@@ -303,7 +313,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             val imOps = List(_imgRszPreviewOp)
             val im = MImg(mptmp.rowKey, imOps)
             val res2Fut = imgPrepareFut map { _ =>
-              Ok( jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im)) )
+              Ok( jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im), ovlOpt(im)) )
             }
             // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {

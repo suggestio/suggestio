@@ -19,7 +19,7 @@ import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import util.img.ImgFormUtil.logoKM
+import models.madn.EditConstants.logoKM
 
 /**
  * Suggest.io
