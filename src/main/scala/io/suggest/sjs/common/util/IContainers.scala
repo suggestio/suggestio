@@ -10,6 +10,6 @@ import org.scalajs.jquery.JQuery
  */
 
 trait IContainers {
-  /** Контейнеры, которые будут отработаны. */
-  protected def _containers: TraversableOnce[JQuery]
+  /** Контейнеры с input'ами/полями управления изображениями, которые будут отработаны. */
+  protected def _imgInputContainers: TraversableOnce[JQuery]
 }

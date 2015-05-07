@@ -9,11 +9,12 @@ import org.scalajs.dom.raw.XMLHttpRequest
  * Description: XML Http request failed.
  */
 case class XhrFailedException(
-  xhr: XMLHttpRequest
+  xhr: XMLHttpRequest,
+  errorThrown: String
 ) extends RuntimeException {
 
   override def getMessage: String = {
-    "XHR failed with HTTP " + xhr.status + " " + xhr.statusText + ": " + xhr.responseText
+    "XHR failed with HTTP " + xhr.status + " " + xhr.statusText + ": " + errorThrown + ";; " + xhr.responseText
   }
 
 }

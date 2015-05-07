@@ -55,9 +55,11 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
   /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
   object MInitTargets extends MJsInitTargetsLigthT
-  /** Тип экземпляра модели. */
+
+  /** Тип одного экземпляра модели целей инициализации. Вынесен сюда для удобства построения API. */
   final type MInitTarget = MInitTargets.T
 
+  /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
     warn("JS init target not supported: " + itg)
     done
@@ -66,7 +68,8 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
   def init(): Future[_] = {
     val attrName = JsInitConstants.RI_ATTR_NAME
-    val attrRaw = CommonPage.body.getAttribute(attrName)
+    val body = CommonPage.body
+    val attrRaw = body.getAttribute(attrName)
     val attrOpt = Option(attrRaw)
       .map { _.trim }
       .filter { !_.isEmpty }
@@ -80,7 +83,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
               warn("Unknown init target opcode: " + raw)
             res
           }
-        Future.traverse(all) { itg =>
+        val initFut = Future.traverse(all) { itg =>
           val fut = try {
             routeInitTarget(itg)
           } catch {
@@ -92,6 +95,9 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
             None
           }
         }
+        // Аттрибут со спекой инициализации больше не нужен, можно удалить его.
+        body.removeAttribute(attrName)
+        initFut
 
       case None =>
         log("No RI data found in body (" + attrName + "). Initialization skipped.")

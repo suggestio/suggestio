@@ -3,11 +3,14 @@ package io.suggest.sjs.common.img.crop
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.routes
+import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.model.ex.XhrFailedException
+import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.jquery._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
 import scala.scalajs.js.{Any, Dictionary}
 
 /**
@@ -16,7 +19,7 @@ import scala.scalajs.js.{Any, Dictionary}
  * Created: 27.04.15 16:36
  * Description: Встраиваемый код для запроса формы кроппинга изображения.
  */
-trait CropFormRequestT {
+trait CropFormRequestT extends ISjsLogger {
 
   /** Прямой родитель, чтобы найти input. */
   def parent: JQuery
@@ -31,18 +34,31 @@ trait CropFormRequestT {
   /** Имя поля */
   def fieldName = input.attr("name")
 
+  /** Парсинг целого числа из аттрибута тега. */
+  protected def parseIntAttr(name: String): Int = {
+    // TODO Почему-то тут не отрабатываеться undefined как надо. и !js.isUndefined(_) не помогает.
+    Option( input.data(name) )
+      .filter { !js.isUndefined(_) }
+      .map(_.toString)
+      .filter { !_.isEmpty }
+      .get
+      .toInt
+  }
+
   /** Ширина для кропа. */
-  def width = input.data("width").toString.toInt
+  def width = parseIntAttr("width")
 
   /** Высота для кропа. */
-  def height = input.data("height").toString.toInt
+  def height = parseIntAttr("height")
 
   /** Роута из jsRouter'а. */
-  def route = routes.controllers.Img.imgCropForm(
-    imgId = imgId,
-    width = width,
-    height = height
-  )
+  def route: Route = {
+    routes.controllers.Img.imgCropForm(
+      imgId = imgId,
+      width = width,
+      height = height
+    )
+  }
 
   /**
    * Запустить ajax запрос.
@@ -54,12 +70,12 @@ trait CropFormRequestT {
       "url"      -> route.url,
       "method"   -> "GET",
       "async"    -> true,
-      "complete" -> { (xhr: JQueryXHR, textStatus: String) =>
-        if (xhr.status == 200) {
-          p success xhr
-        } else {
-          p failure XhrFailedException(xhr)
-        }
+      "dataType" -> "html",
+      "success"  -> { (html: Any, textStatus: String, xhr: JQueryXHR) =>
+        p success xhr
+      },
+      "error"  -> { (jqXHR: JQueryXHR, textStatus: String, errorThrow: String) =>
+        p failure XhrFailedException(jqXHR, errorThrow)
       }
     )
     try {
@@ -78,7 +94,7 @@ trait CropFormRequestT {
   def ask: Future[CropFormResp] = {
     ajax.map { xhr =>
       CropFormResp(
-        body = xhr.response,
+        body = xhr.responseText,
         id   = xhr.getResponseHeader( PopupConstants.HTTP_HDR_POPUP_ID )
       )
     }
@@ -91,7 +107,7 @@ object CropUtil {
 
   /** Очистить DOM от всех открытых кропов. */
   def removeAllCropFrames(): Unit = {
-    jQuery("#" + CropConstants)
+    jQuery("#" + CropConstants.CROPPER_DIV_ID)
       .remove()
   }
 
