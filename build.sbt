@@ -20,12 +20,12 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= {
-  val slf4jVsn      = "1.7.7"
+  val slf4jVsn      = "1.7.+"
   val esVsn         = "1.4.2"
   val akkaVsn       = "2.3.4"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.+"
-  val playVsn       = "2.4.0-M3"
+  val playVsn       = "2.4.0-RC1"
   val morphVsn      = "1.3-SNAPSHOT"
   val bcVsn         = "1.52"
   val phantomVersion = "1.2.7"
@@ -40,8 +40,8 @@ libraryDependencies ++= {
     "commons-lang" % "commons-lang" % "2.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.4.4",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.4.4",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.1",
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
     "org.json4s" %% "json4s-native" % "3.+",
     "com.typesafe.play" %% "play-json" % playVsn,
     // ES
