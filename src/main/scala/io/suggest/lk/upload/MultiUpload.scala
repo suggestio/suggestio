@@ -19,7 +19,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
  * Ссылка для аплоада перед каждым POST-запросом дополняется с помощью значения заинкременченного счетчика,
  * а счетчик этот обновляется в DOM новым значением.
  */
-trait MultiUpload extends JsFileUploadOnChange {
+trait MultiUpload extends AjaxFileUpload {
 
   /** Постпроцессинг параметров ajax-запроса для аплоада: добавить поддержку индексированных множественных значений. */
   override protected def _fileUploadAjaxArgsPp(ajaxSettings0: JQueryAjaxSettings, input: HTMLInputElement,

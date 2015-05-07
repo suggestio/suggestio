@@ -6,7 +6,10 @@ import io.suggest.lk.popup.Popup
 import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.sjs.common.util.IContainers
+import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
+
+import scala.scalajs.js.ThisFunction
 
 /**
  * Suggest.io
@@ -22,30 +25,31 @@ trait JsRemoveImgT extends IContainers {
   /** Инициализация поддержки удаления картинки. */
   protected def initJsRemoveImg(): Unit = {
     val imgRmCssSel = _imgRmCssSel
-    _containers.foreach { contSel =>
-      _initImgRmFor(contSel, imgRmCssSel = imgRmCssSel)
+    val conts = Iterator(Popup.container) ++ _imgInputContainers.toIterator
+    conts.foreach { cont =>
+      cont.on("click", imgRmCssSel, { (that: HTMLElement, e: JQueryEventObject) =>
+        _imgRmClick(that, cont, e)
+      } : ThisFunction)
     }
   }
 
-  /** Инициализация обработки событий в рамках одного контейнера. */
-  protected def _initImgRmFor(cont: JQuery, imgRmCssSel: String = _imgRmCssSel): Unit = {
-    cont.on("click", imgRmCssSel, { e: JQueryEventObject =>
-      _imgRmClick(cont, e)
-    })
-  }
-
   /** Реакция на клик по кнопке удаления картинки. */
-  protected def _imgRmClick(cont: JQuery, e: JQueryEventObject): Unit = {
+  protected def _imgRmClick(that: HTMLElement, cont: JQuery, e: JQueryEventObject): Unit = {
     e.preventDefault()
-    val el = jQuery( e.currentTarget )
+    val el = jQuery(that)
 
     // Аттрибут data-for выставляется при инициализации js-кроппера.
-    val dataForOpt = Option( el.attr("data-for") )
+    val dataForOpt = el.attr("data-for")
+      .toOption
       .filter(!_.isEmpty)
     val previewSel = "." + ImgConstants.JS_PREVIEW_CLASS
     val (input, preview) = dataForOpt match {
       case Some(dataFor) =>
-        val _input = cont.find("input[name = '" + dataFor + "']")
+        val sel = "input[name = '" + dataFor + "']"
+        var _input = cont.find()
+        // TODO Костыль для поиска инпута не зная контейнера. С новым кроппером эта проблема должна бы быть решена.
+        if (_input.length == 0)
+          _input = jQuery(sel)
         val _preview = _input.parent(previewSel)
         (_input, _preview)
       case None =>

@@ -1,6 +1,7 @@
 package io.suggest.lk.adn.edit.init
 
 import io.suggest.lk.img.JsRemoveImgInitT
+import io.suggest.lk.upload._
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
 import scala.concurrent.Future
@@ -38,10 +39,11 @@ class LkNodeEditFormEvents
   with IInitDummy
   with NodeGalleryInit
   with JsRemoveImgInitT
+  with InitInputFileUploadOnChange with AjaxFileUpload with ImgUploadRenderOverlay with MultiUpload
 {
 
   /** Контейнеры, в рамках которых идет изолированная обработка элементов. */
-  override protected lazy val _containers: Seq[JQuery] = {
+  override protected lazy val _imgInputContainers: Seq[JQuery] = {
     Iterator(
       NODE_GALLERY_DIV_ID,
       NODE_LOGO_DIV_ID,

@@ -1,5 +1,6 @@
 package io.suggest.lk.main.sjs
 
+import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
@@ -41,8 +42,9 @@ class LkInitRouter
   with CenterContentInitRouter
   with RunnerInitRouter
   with FormEventsInitRouter
+  with AdFormInitRouter
   with FlashInitRouter
   with VerticalLinesInitRouter
   with JsHiddenInitRouter
   with PopupsInitRouter
-//with NodeEditInitRouter
+  with NodeEditInitRouter

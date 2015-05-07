@@ -1,12 +1,17 @@
 package io.suggest.lk.adn.edit.init
 
+import io.suggest.lk.old.Market
 import io.suggest.lk.popup.Popup
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.sjs.common.img.crop.{CropFormResp, CropUtil, CropFormRequestT}
+import io.suggest.sjs.common.util.{ISjsLogger, SjsLogger}
+import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import io.suggest.adn.edit.NodeEditConstants._
 import io.suggest.img.crop.CropConstants._
+
+import scala.scalajs.js.ThisFunction
 
 /**
  * Suggest.io
@@ -15,7 +20,7 @@ import io.suggest.img.crop.CropConstants._
  * Description: Инициализация поддержки галереи в редакторе узла.
  */
 
-trait NodeGalleryInit extends IInit {
+trait NodeGalleryInit extends IInit with ISjsLogger {
 
   /** Инициализация всей формы. */
   abstract override def init(): Unit = {
@@ -25,14 +30,17 @@ trait NodeGalleryInit extends IInit {
 
   /** Инициализация js для подредактора галереи. */
   def initNodeGallery(): Unit = {
-    jQuery("#" + NODE_GALLERY_DIV_ID)
-      .on("click", "." + CROP_IMAGE_BTN_CLASS, galImgEditClick(_))
+    val cont = jQuery("#" + NODE_GALLERY_DIV_ID)
+    cont.on("click",  "." + CROP_IMAGE_BTN_CLASS,  {
+        (that: HTMLElement, e: JQueryEventObject) =>
+          galImgEditClick(that, e)
+      }: ThisFunction)
   }
 
   /** Клик по кнопке кропа на одном из изображений галереи узла. */
-  protected def galImgEditClick(e: JQueryEventObject): Unit = {
+  protected def galImgEditClick(el: HTMLElement, e: JQueryEventObject): Unit = {
     e.preventDefault()
-    val asker = new CropFormRequestT {
+    val asker = new CropFormRequestT with SjsLogger {
       override val parent = jQuery(e.currentTarget).parent()
       override val input  = super.input
     }
@@ -47,9 +55,15 @@ trait NodeGalleryInit extends IInit {
   protected def galCropFormResponse(asker: CropFormRequestT, resp: CropFormResp): Unit = {
     Popup.appendPopup(resp.body)
     Popup.showPopups("#" + resp.id)
-    // TODO Инициализировать кроппер.
-    //val imgName = asker.input.attr("name")
-    // market.img.crop.init( img_name )
+    // Инициализировать кроппер.
+    // TODO Нужен нормальный кроппер на scala.js, работающий без многократного перебора всего DOM и принимающий на вход ещё и контейнер поля.
+    val imgNameOpt = asker.input.attr("name").toOption
+    imgNameOpt match {
+      case Some(imgName) =>
+        Market.img.crop.init(imgName)
+      case None =>
+        error("Cannot init img cropper, because imgName attr is undefined.")
+    }
   }
 
 }
