@@ -9,9 +9,12 @@ import io.suggest.model.{EnumMaybeWithName, LightEnumeration, ILightEnumeration}
  * Description: Размер двумерный целочисленный.
  */
 trait ISize2di {
+  /** Ширина. */
   def width: Int
+  /** Высота. */
   def height: Int
 
+  /** Сравнение c другим размером. */
   def sizeWhEquals(sz1: ISize2di): Boolean = {
     sz1.width == width  &&  sz1.height == height
   }

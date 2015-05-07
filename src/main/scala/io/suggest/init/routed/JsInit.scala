@@ -32,6 +32,8 @@ object JsInitConstants {
   def ID_JS_HIDDEN                = "g"
   /** Поддержка попапов. */
   def ID_POPUPS                   = "h"
+  /** Поддержка формы создания/редактирования рекламных карточек. */
+  def ID_AD_FORM                  = "i"
 
 }
 
@@ -78,7 +80,10 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** Инициализировать поддержку попапов. */
   val Popups: T = instance(ID_POPUPS)
 
-  // Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
+  /** init-target инициализации работы формы создания/редактирования рекламной карточки. */
+  val AdForm: T = instance(ID_AD_FORM)
+
+  // TODO Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
 }
 
 
@@ -114,6 +119,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case AdvExtRunner.strId         => Some(AdvExtRunner)
       case IdentVCenterContent.strId  => Some(IdentVCenterContent)
       case LkNodeEditForm.strId       => Some(LkNodeEditForm)
+      case AdForm.strId               => Some(AdForm)
       case _                          => None
     }
   }

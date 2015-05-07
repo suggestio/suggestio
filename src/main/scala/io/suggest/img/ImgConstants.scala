@@ -28,6 +28,6 @@ object ImgConstants {
   def JSON_IMG_THUMB_URI  = "image_link"
 
   /** json: верстка куска формы, которая требуется для отображения успешной загрузки. */
-  def JSON_FORM_FIELD_HTML = "html"
+  def JSON_OVERLAY_HTML = "html"
 
 }
