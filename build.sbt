@@ -23,13 +23,13 @@ libraryDependencies ++= {
  val bcVsn = "1.52"
  Seq(
   jdbc exclude("com.h2database", "h2"),
-  "com.typesafe.play" %% "anorm" % "2.4.0-M3",
+  "com.typesafe.play" %% "anorm" % "2.4.0-RC1",
   cache,
   json,
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % "3.0.0-SNAPSHOT",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.4-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
   "io.suggest" %% "util" % "2.0.1-SNAPSHOT" changing()
@@ -104,7 +104,7 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
-  "org.seleniumhq.selenium" % "selenium-java" % "2.43.1"
+  "org.seleniumhq.selenium" % "selenium-java" % "2.45.0"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
