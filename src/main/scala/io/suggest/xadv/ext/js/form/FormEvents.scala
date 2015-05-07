@@ -66,11 +66,10 @@ class FormEvents {
             .focus()
       }
       val el = jQuery(evt.currentTarget)
-      val href = el.attr("href")
       // Запустить ajax-реквест на исполнение.
       jQuery.ajax(Dictionary[Any](
         "method"  -> "GET",
-        "url"     -> href,
+        "url"     -> el.attr("href"),
         "success" -> ajl
         // TODO Добавить обработку ошибок.
       ).asInstanceOf[JQueryAjaxSettings])
@@ -86,13 +85,16 @@ class FormEvents {
     val listener = { evt: JQueryEventObject =>
       evt.preventDefault()
       val ct = jQuery(evt.currentTarget)
-      val delHref = ct.attr("href")
+      val delHrefOpt = ct.attr("href")
+        .toOption
+        .filter(_ != "#")
       val oneTgDiv = ct.parents("." + CLASS_ONE_TARGET_CONTAINER)
       val onSuccess = {() => oneTgDiv.remove() }
-      if (delHref == "#") {
-        // Это новая форма, которую юзер удаляет без сохранения.
-        onSuccess()
-      } else {
+      delHrefOpt match {
+        case None =>
+          // Это новая форма, которую юзер удаляет без сохранения.
+          onSuccess()
+        case Some(delHref) =>
         // Это форма, сохраненная ранее. Собрать листенер результата асинхронного запроса.
         // Собрать ajax-запрос и отправить на указанный URL.
         val ajaxSettings = Dictionary[Any](
