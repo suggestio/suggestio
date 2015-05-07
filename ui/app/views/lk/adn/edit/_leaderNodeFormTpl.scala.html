@@ -101,8 +101,7 @@
 
 
       @defining( mf(GALLERY_FN) ) { gf =>
-      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID"
-           @(UploadConstants.ATTR_MULTI_INDEX_COUNTER)="@gf.indexes.lastOption.getOrElse(-1)" >
+      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID">
         <p class="prop_name __block">@messages("Node.photos"):</p>
 
         @gf.errors.map { error =>
@@ -113,6 +112,7 @@
           @stuff._fileUploadTpl(
             call          = routes.MarketLkAdnEdit.handleGalleryImg(),
             fieldName     = GALLERY_FN,
+            multiUploadCounter = gf.indexes.lastOption.orElse( Some(-1) ),
             multiple      = true,
             previewRoot   = "#" + NodeEditConstants.NODE_GALLERY_DIV_ID,
             previewClass  = "__size-M f-left",

@@ -32,7 +32,7 @@ object ImgCtlUtil extends TplFormatUtilT {
       JSON_IMG_THUMB_URI  -> JsString(imgUrl.url)
     )
     if (ovlOpt.isDefined)
-      acc ::= JSON_FORM_FIELD_HTML -> (ovlOpt.get: JsString)
+      acc ::= JSON_OVERLAY_HTML -> (ovlOpt.get: JsString)
     JsObject(acc)
   }
 

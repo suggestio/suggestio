@@ -1,0 +1,18 @@
+@(imgId: String)(implicit ctx: Context)
+
+@import ctx.messages
+@import io.suggest.img.crop.CropConstants._
+@import views.html.lk.forms.img._
+@import util.img.DynImgUtil
+@import io.suggest.img.ImgConstants
+
+@* Оверлей для фоновой картинки карточки. *@
+
+@_jsPreviewOverlayTpl(
+  btnText	    = messages("Delete"),
+  name	        = "ad.offer.bgImg",
+  imgKey	    = imgId,
+  imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
+  divCss	    = Seq("__size-M"),
+  btnCss	    = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+)

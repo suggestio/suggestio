@@ -3,27 +3,42 @@
 @import ctx._
 @import io.suggest.img.ImgConstants._
 @import io.suggest.js.UploadConstants._
+@import io.suggest.ad.form.AdFormConstants.BG_IMG_CONTAINER_ID
+@import views.html.stuff._
+@import lk.ad._
+
+@fupAttrExtra = {
+  data-related-field-id="blockImage@bf.name"
+  data-w-block-preview="true"
+}
 
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
   <div style="overflow: hidden;">
-    <div class="f-left" id="cardPhoto">
-      <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" >
-        <input type="file" class="add-file-input @JS_FILE_UPLOAD_CLASS"
-	       data-preview-class="__size-M" data-name="ad.offer.bgImg"
-               data-preview-root="#cardPhoto" data-related-field-id="blockImage@bf.name" data-w-block-preview="true"
-               data-action="@routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))" name="picture"/>
+    @defining( af(bfNameBase).value ) { imgIdOpt =>
+    <div class="f-left" id="@BG_IMG_CONTAINER_ID">
+      <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(imgIdOpt) {style="display: none;"}>
+        @_fileUploadTpl(
+          fieldName     = "ad.offer.bgImg",
+          previewClass  = "__size-M",
+          previewRoot   = "#" + BG_IMG_CONTAINER_ID,
+          call          = routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr)),
+          attrExtra     = Some(fupAttrExtra)
+        )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
-	  <span>@Html( messages("Upload.file", "<br/>") )</span>
+          <span>@Html( messages("Upload.file", "<br/>") )</span>
         </a>
       </div>
+      @imgIdOpt.map { imgId =>
+        @_bgImgOvlTpl(imgId)
+      }
     </div>
+    }
 
     <div class="edit-ad_image-upload-helper">
 
       <div id="blockImage@bf.name">
-        <input type="hidden" class="@JS_IMG_ID_CLASS" name="@bfNameBase" value="@af(bfNameBase).value"/>
 
         @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
         <a class="btn __size-M __minor __crop js-img-w-crop" data-width="140" data-height="300">@messages("Crop")</a>

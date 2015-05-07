@@ -2,7 +2,9 @@ package controllers
 
 import akka.actor.ActorSystem
 import com.google.inject.Inject
+import io.suggest.js.UploadConstants
 import models.im.MImg
+import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
 import play.twirl.api.Html
@@ -173,6 +175,7 @@ class MarketLkAdnEdit @Inject() (
 
   protected def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
                             (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+    implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
     waOptFut map { welcomeAdOpt =>
       nodeEditTpl(request.adnNode, form, welcomeAdOpt)
     }
@@ -265,13 +268,12 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Юзер постит временную картинку для личного галереи узла. */
-  def handleGalleryImg = {
-    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
-    IsAuth.async(bp) { implicit request =>
-      bruteForceProtected {
-        _handleTempImg()
-      }
-    }
+  def handleGalleryImg = _imgUpload { (imgId, ctx) =>
+    val index = ctx.request
+      .getQueryString(UploadConstants.NAME_INDEX_QS_NAME)
+      .get
+      .toInt
+    _galIndexedOvlTpl(imgId, fnIndex = index)(ctx)
   }
 
   /**

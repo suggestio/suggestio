@@ -1180,7 +1180,7 @@ PersonalCabinet =
     cbca.pc.advRequest()
     cbca.pc.advManagement()
     cbca.pc.adsList()
-    cbca.pc.images()
+    #cbca.pc.images()
 
 #######################################################################################################################
 ## Всплывающие окна ##

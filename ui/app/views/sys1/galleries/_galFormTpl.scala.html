@@ -11,6 +11,7 @@
 @import io.suggest.img.ImgConstants._
 @import io.suggest.js.UploadConstants
 @import views.html.lk.forms.img._
+@import views.html.lk.adn.edit.ovl._
 
 @form(submitCall) {
 
@@ -47,7 +48,7 @@
       </label>
     </td>
     @defining( gf("imgs") ) { gf =>
-    <td id="imgs" @(UploadConstants.ATTR_MULTI_INDEX_COUNTER)="@gf.indexes.lastOption.getOrElse(-1)">
+    <td id="imgs">
   
       @gf("gallery").errors.map { error =>
         <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
@@ -57,7 +58,8 @@
         @stuff._fileUploadTpl(
           routes.SysGallery.uploadImg(ctx.ctxIdStr),
           fieldName	= "imgs",
-          multiple	= true,
+          multiUploadCounter = gf.indexes.lastOption.orElse( Some(-1) ),
+          multiple	    = true,
           previewRoot	= "#imgs",
           previewClass	= "__size-M f-left",
           editBtnClass	= "image_edit-btn " + CROP_IMAGE_BTN_CLASS
@@ -71,14 +73,7 @@
       @gf.indexes.map { gfi =>
         @defining( s"gallery[$gfi]" ) { gfn =>
           @gf(gfn).value.map { imgId =>
-            @_jsPreviewOverlayTpl(
-              btnText	= messages("Delete"),
-              name	= gfn,
-              imgKey	= imgId,
-              imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
-              divCss	= Seq("__size-M", "f-left"),
-              btnCss	= Seq("image_edit-btn", CROP_IMAGE_BTN_CLASS)
-            )
+            @_galOvlTpl(imgId, fn = gfn)
           }
         }
       }

@@ -3,10 +3,12 @@ package controllers
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import models.im.MImg
+import models.jsm.init.MTargets
 import org.joda.time.DateTime
 import play.api.i18n.{MessagesApi, Lang, Messages}
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.blocks.{LkEditorWsActor, ListBlock, BgImg, BlockMapperResult}
 import views.html.lk.ad._
@@ -152,7 +154,8 @@ class MarketAd @Inject() (
     * @param adnNode Магазин, с которым происходит сейчас работа.
     * @return NotAcceptable со страницей с create-формой.
     */
-  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])(implicit ctx: Context) = {
+  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])
+                               (implicit request: AbstractRequestForAdnNode[_]) = {
     renderCreateFormWith(formWithErrors, catOwnerId, adnNode, withBC)
       .map(NotAcceptable(_))
   }
@@ -214,25 +217,29 @@ class MarketAd @Inject() (
     }
   }
 
-
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
-  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
-    val cats = getMMCats()
-    detectMainColorBg(af)
-    cats map { mmcats =>
-      createAdTpl(mmcats, af, adnNode, withBC)
+  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)
+                                  (implicit request: AbstractRequestForAdnNode[_]) = {
+    _renderPage(af) { (mmcats, ctx) =>
+      createAdTpl(mmcats, af, adnNode, withBC)(ctx)
     }
   }
 
-
   private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
-    import request.{producer, mad}
-    val cats = getMMCats()
-    implicit val ctx = implicitly[Context]
-    detectMainColorBg(af)(ctx)
-    cats map { mmcats =>
+    _renderPage(af) { (mmcats, ctx) =>
+      import request.{producer, mad}
       editAdTpl(mad, mmcats, af, producer)(ctx)
     }
+  }
+
+  /** Акт рендера результирующей страницы в отрыве от самой страницы. */
+  private def _renderPage(af: AdFormM)(f: (Seq[MMartCategory], Context) => Html)
+                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+    val cats = getMMCats()
+    implicit val _jsInitTargets = Seq(MTargets.AdForm)
+    implicit val ctx = implicitly[Context]
+    detectMainColorBg(af)(ctx)
+    cats.map(f(_, ctx))
   }
 
 
@@ -537,7 +544,10 @@ class MarketAd @Inject() (
             val resultFut = _handleTempImg(
               preserveUnknownFmt = false,
               runEarlyColorDetector = bfi.preDetectMainColor,
-              wsId = wsId
+              wsId   = wsId,
+              ovlRrr = Some { (imgId, ctx) =>
+                _bgImgOvlTpl(imgId)(ctx)
+              }
             )
             resultFut
 

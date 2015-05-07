@@ -1,5 +1,6 @@
-@(call: Call, fieldName: String, multiple: Boolean = false, previewRoot: String = "", previewClass: String = "",
-  editBtnClass: String = "", whOpt: Option[MImgSizeT] = None)(implicit ctx: Context)
+@(call: Call, fieldName: String, multiUploadCounter: Option[Int] = None, multiple: Boolean = false,
+  previewRoot: String = "", previewClass: String = "", editBtnClass: String = "", whOpt: Option[MImgSizeT] = None,
+attrExtra: Option[Html] = None)(implicit ctx: Context)
 
 @* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
@@ -13,6 +14,10 @@
        data-preview-class="@previewClass"
        data-preview-root="@previewRoot"
        data-name="@fieldName"
+       @multiUploadCounter.map { muc =>
+         @(ATTR_MULTI_INDEX_COUNTER)=@muc
+       }
        @whOpt.map { wh => data-width="@wh.width" data-height="@wh.height" }
        @if(multiple) {data-multiple="multiple"}
+       @attrExtra
 />
