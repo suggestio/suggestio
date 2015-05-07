@@ -11,27 +11,6 @@
 #html.compress.global.remove.proto.https = true
 
 
-###############################################################################
-## Logger
-###############################################################################
-# You can also configure logback (http://logback.qos.ch/), by providing a logger.xml file in the conf directory .
-# Root logger:
-logger.root=ERROR
-
-# Logger used by the framework:
-logger.play=INFO
-
-# Logger provided to your application:
-logger.application=TRACE
-
-## Кастомные логгеры в конкретных классах попадают в root где срезаются. Переопределяем их.
-logger.controllers=${logger.application}
-logger.util=${logger.application}
-logger.models=${logger.application}
-## TODO Тут какая-то хрень: после второй точки всё как будто игнорируется, а elasticsearch не подхватывает logback.
-#logger.org.elasticsearch=WARN
-
-
 ## домен ограниченного доступа: WWW.suggest.io
 sio.sc.hostport = "www.suggest.io"
 sio.sc.proto = "http"
@@ -160,7 +139,7 @@ es.mapping.model.ignore_exist = false
 ###############################################################################
 # The secret key is used to secure cryptographics functions.
 # If you deploy your application to several instances be sure to use the same key!
-application.secret="t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
+play.crypto.secret = "t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
 
 # The application languages
 application.langs="ru,en"
@@ -188,7 +167,7 @@ application.lang.cookie = "l"
 ###############################################################################
 db.default.driver = org.postgresql.Driver
 db.default.url = "jdbc:postgresql://localhost/postgres?searchpath=sio2"
-db.default.user = "sio2"
+db.default.username = "sio2"
 db.default.password = "Rjvfhjdj&"
 
 
