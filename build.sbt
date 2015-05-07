@@ -1,6 +1,3 @@
-import play.PlayImport.PlayKeys._
-import play.sbtplugin.routes.RoutesKeys._
-
 name := "securesocial"
 
 organization := "io.suggest"
@@ -16,7 +13,7 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   "com.typesafe.play" %% "play-mailer" % "3.0.0-SNAPSHOT",
-  "com.typesafe.play" %% "filters-helpers" % "2.4.0-M3",
+  "com.typesafe.play" %% "filters-helpers" % "2.4.0-RC1",
   "org.mindrot" % "jbcrypt" % "0.3m",
   "org.specs2" %% "specs2" % "2.3.12" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
