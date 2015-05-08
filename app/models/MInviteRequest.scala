@@ -51,7 +51,6 @@ object MInviteRequest
   val DAILY_MMP_ESFN      = "mmpd"
   val BALANCE_ESFN        = "mbb"
   val EMAIL_ACT_ESFN      = "ea"
-  val PAY_REQS_ESFN       = "prq"
   val PAY_REQS_RAW_ESFN   = "prqRaw"
   val WELCOME_AD_ESFN     = "wa"
 
@@ -138,7 +137,6 @@ final case class MInviteRequest(
   var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
   var balance   : Option[Either[MBillBalance, String]] = None,
   var emailAct  : Option[Either[EmailActivation, String]] = None,
-  var payReqs   : Option[Either[MBillPayReqsRu, Int]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
   var dateCreated: DateTime = DateTime.now(),
   var payReqsRaw : Option[String] = None,
@@ -359,7 +357,6 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
       FieldObject(DAILY_MMP_ESFN, enabled = false, properties = Nil) ::
       FieldObject(BALANCE_ESFN, enabled = false, properties = Nil) ::
       FieldObject(EMAIL_ACT_ESFN, enabled = false, properties = Nil) ::
-      FieldObject(PAY_REQS_ESFN, enabled = false, properties = Nil) ::
       // Поле объекта с текущими данными по ответам на вопросы.
       FieldObject(JOIN_ANSWERS_ESFN, enabled = true, properties = SMJoinAnswers.generateMappingProps) ::
       acc
@@ -382,9 +379,6 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
         acc.balance = Some( deseralizeSqlStrModel(MBillBalance, jmap) )
       case (EMAIL_ACT_ESFN, jmap: ju.Map[_, _]) =>
         acc.emailAct = Some( deserializeEsModel(EmailActivation, jmap) )
-      case (PAY_REQS_ESFN, jmap: ju.Map[_, _]) =>
-        val r = deseralizeSqlIntModel(MBillPayReqsRu, jmap)
-        acc.payReqs = Option(r)
       case (JOIN_ANSWERS_ESFN, jaRaw: ju.Map[_, _]) =>
         acc.joinAnswers = Option(SMJoinAnswers.deserialize(jaRaw))
       case (PAY_REQS_RAW_ESFN, prqRaw) =>
@@ -408,7 +402,6 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var mmp       : Option[Either[MBillMmpDaily, Int]]
   var balance   : Option[Either[MBillBalance, String]]
   var emailAct  : Option[Either[EmailActivation, String]]
-  var payReqs   : Option[Either[MBillPayReqsRu, Int]]
   var joinAnswers: Option[SMJoinAnswers]
   var payReqsRaw: Option[String]
   var waOpt     : Option[Either[MWelcomeAd, String]]
@@ -433,8 +426,6 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
       acc ::= JOIN_ANSWERS_ESFN -> joinAnswers.get.toPlayJson
     if (mmp.isDefined)
       acc ::= DAILY_MMP_ESFN -> intModel2json(mmp.get)
-    if (payReqs.isDefined)
-      acc ::= PAY_REQS_ESFN -> intModel2json(payReqs.get)
     if (payReqsRaw.isDefined)
       acc ::= PAY_REQS_RAW_ESFN -> JsString(payReqsRaw.get)
     acc

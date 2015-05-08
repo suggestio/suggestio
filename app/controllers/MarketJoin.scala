@@ -216,7 +216,6 @@ class MarketJoin @Inject() (
       mmp       = mmp,
       balance   = Some(Left(mbb)),
       emailAct  = Some(Left(eact)),
-      payReqs   = None, // TODO Нужно сохранить сюда распарсенные платёжные атрибуты
       payReqsRaw = payReqs
     )
   }
