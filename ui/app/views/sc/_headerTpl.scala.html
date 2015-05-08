@@ -1,0 +1,78 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@* Верстка полосы заголовка со всеми необходимыми кнопками управления выдачей. *@
+
+@import msc._
+
+@* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
+@toggleNavScrAnchor()(content: Option[msc.ScJsState] => Html) = {
+  @defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
+    @jsStateOpt.map { jsState =>
+      <a href="@args.syncUrl(jsState.toggleNavScreen)">
+    }
+    @content(jsStateOpt)
+    @if(jsStateOpt) {
+      </a>
+    }
+  }
+}
+
+@* Хидер главного экрана *@
+<div id="smRootProducerHeader"
+     class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )"
+     data-gl-go-back="@args.geoListGoBack.exists(identity)">
+
+  <span id="smRootProducerHeaderButtons">
+
+    @* кнопка выхода (крест) слева наверху. *@
+    @if(!args.syncRender) {
+      @ScHdrBtns.ScExit( args.hBtnArgs )
+    }
+
+    @* Кнопка доступа к панели навигации по узлам сети. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
+    @if(!args.syncRender || !args.jsStateOpt.exists(_.isSomethingOpened)) {
+      @toggleNavScrAnchor() { jsStateOpt =>
+	@ScHdrBtns.OpenNavPanel( args.hBtnArgs.copy(
+	  hidden = !args.syncRender || !jsStateOpt
+	))
+      }
+    }
+
+    @* Два прямоугольника слева. Вроде бы закрывают панель поиска справа. Нужно срезать её при синхронном рендере, если правая панель закрыта. *@
+    @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
+      @args.jsStateOpt.map { jsState =>
+        <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = None) )">
+      }
+      @ScHdrBtns.ShowIndex( args.hBtnArgs )
+      @if(args.jsStateOpt) {
+        </a>
+      }
+    }
+
+    @* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
+    @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
+      @args.jsStateOpt.map { jsState =>
+        <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, tilesCatIdOpt = None, fadsProdIdOpt = None) )">
+      }
+      @ScHdrBtns.SearchPanelOpen( args.hBtnArgs )
+      @if(args.jsStateOpt) {
+       </a>
+      }
+    }
+
+  </span>
+
+  @toggleNavScrAnchor() { jsStateOpt =>
+    <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+      @args.name
+      <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
+      <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
+    </span>
+  }
+
+  <div class="sm-producer-header_icon">
+    @svg._catHeaderIcon( args.fgColor )
+  </div>
+
+</div>
+

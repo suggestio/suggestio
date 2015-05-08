@@ -4,10 +4,13 @@
 
 @import util.TplDataFormatUtil._
 @import ctx.messages
+@import msc._
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
 
   <div class="sm-categories-screen_header">
+
+    @ScHdrBtns.CatsIndexTransparent( args.hBtnArgs )
 
     <div class="sm-button sm-producer-header_btn __left-aligned abs" id="smCategoriesIndexButton">
     </div>
@@ -16,9 +19,7 @@
     @args.jsStateOpt.map { jsState =>
       <a href="@args.syncUrl( jsState.toggleSearchScreen )">
     }
-    <div class="sm-button sm-producer-header_btn __right-aligned abs" id="smCategoriesScreenCloseButton">
-      @svg._backArrowRight( args.fgColor )
-    </div>
+    @ScHdrBtns.CatsPanelClose( args.hBtnArgs )
     @if(args.jsStateOpt) {
       </a>
     }

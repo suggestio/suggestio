@@ -2,7 +2,7 @@ package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import models.jsm.ProducerAdsResp
-import models.msc.{FocusedAdsTplArgs, ScJsState}
+import models.msc.{IhBtnArgs, HBtnArgs, FocusedAdsTplArgs, ScJsState}
 import play.twirl.api.Html
 import util.showcase._
 import util.SiowebEsUtil.client
@@ -285,10 +285,14 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        val _bgColor = _producer.meta.color getOrElse ShowcaseUtil.SITE_BGCOLOR_DFLT
+        val _bgColor = _producer.meta.color   getOrElse ShowcaseUtil.SITE_BGCOLOR_DFLT
+        val _fgColor = _producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
+        val _hBtnArgs = HBtnArgs(fgColor = _fgColor)
         new FocusedAdsTplArgs {
           override def producer   = _producer
           override def bgColor    = _bgColor
+          override def fgColor    = _fgColor
+          override def hBtnArgs   = _hBtnArgs
           override def brArgs     = _brArgs
           override def adsCount   = madsCountInt
           override def startIndex = _adSearch.offset

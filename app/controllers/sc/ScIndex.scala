@@ -139,6 +139,13 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       }
     }
 
+    def getAdnIdForSearchIn(adnNode: MAdnNode): Option[String] = {
+      (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+        .headOption
+        .orElse(adnNode.geo.directParentIds.headOption)
+        .orElse(adnNode.id)
+    }
+
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
       val _prodsFut = prodsFut
@@ -146,6 +153,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       val _geoListGoBackFut = geoListGoBackFut
       val _spsrFut = spsrFut
       val _getCatsResult = getCatsResult
+      val _searchInAdnIdFut = adnNodeFut.map(getAdnIdForSearchIn)
       for {
         waOpt           <- welcomeAdOptFut
         prods           <- _prodsFut
@@ -154,17 +162,12 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _spsr           <- _spsrFut
         _onCloseHref    <- _onCloseHrefFut
         _geoListGoBack  <- _geoListGoBackFut
+        _searchInAdnId  <- _searchInAdnIdFut
       } yield {
         new ScRenderArgs with ScReqArgsWrapper {
           import ShowcaseUtil._
-
           override def reqArgsUnderlying = _reqArgs
-          override val searchInAdnId  = {
-            (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
-              .headOption
-              .orElse(adnNode.geo.directParentIds.headOption)
-              .orElse(adnNode.id)
-          }
+          override def searchInAdnId  = _searchInAdnId
           override val bgColor        = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
           override val fgColor        = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
           override def name           = adnNode.meta.name
@@ -182,6 +185,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
   }
 
+  /** Для обычной корневой выдачи обычно используется этот трейт вместо ScIndexNodeHelper. */
   trait ScIndexNodeSimpleHelper extends ScIndexNodeHelper {
     override def spsrFut = adnNodeFut map { adnNode =>
       new AdSearch {

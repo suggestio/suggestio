@@ -69,6 +69,8 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
   def searchInAdnId : Option[String] = None
 
+  /** Дефолтовые параметры для рендера кнопок на панели. */
+  lazy val hBtnArgs = HBtnArgs(fgColor = fgColor)
 
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {

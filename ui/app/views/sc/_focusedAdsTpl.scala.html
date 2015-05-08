@@ -4,8 +4,7 @@
    Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
 @import util.cdn.CdnUtil
-
-@defining( args.producer.meta.fgColor.getOrElse("ffffff") ) { fgColor =>
+@import msc._
 
 @* Список карточек указанного продюссера *@
 <div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
@@ -13,9 +12,7 @@
   @args.jsStateOpt.map { jsState =>
     <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = None, fadsOffsetOpt = None) )">
   }
-  <div class="sm-producer-header_exit-button sm-button sm-producer-header_btn __left-aligned abs" id="closeFocusedAdsButton">
-    @svg._backArrowLeft( fgColor )
-  </div>
+  @ScHdrBtns.CloseFocused( args.hBtnArgs )
   @if(args.jsStateOpt) {
     </a>
   }
@@ -29,8 +26,8 @@
 
 
 <div class="sm-focused-ads_arrow-label fad-arrow-label" id="smFocusedAdsArrowLabel" style="background-color: #@args.bgColor;">
-  <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(fgColor)</div>
-  <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(fgColor)</div>
+  <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(args.fgColor)</div>
+  <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(args.fgColor)</div>
 </div>
 
 
@@ -43,5 +40,3 @@
     @_focusedAdLoaderTpl(args.bgColor)
   }
 </div>
-
-} @* defining *@

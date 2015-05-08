@@ -4,6 +4,7 @@
 
 @import ctx.messages
 @import util.TplDataFormatUtil._
+@import msc._
 
 <div class="sm-geo-screen" id="smGeoScreen" @if(args.jsStateOpt.exists(_.isNavScrOpened)) {style="display: block; height: 83%;"} >
 
@@ -13,9 +14,7 @@
     @args.jsStateOpt.map { jsState =>
       <a href="@args.syncUrl( jsState.toggleNavScreen )">
     }
-    <div class="sm-button sm-producer-header_btn __left-aligned abs" id="smGeoScreenCloseButton">
-      @svg._backArrowLeft( args.fgColor )
-    </div>
+    @ScHdrBtns.NavPanelClose( args.hBtnArgs )
     @if(args.jsStateOpt) {
       </a>
     }

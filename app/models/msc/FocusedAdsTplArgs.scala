@@ -12,6 +12,8 @@ import models._
 trait FocusedAdsTplArgs extends SyncRenderInfo {
   def producer    : MAdnNode
   def bgColor     : String
+  def fgColor     : String
+  def hBtnArgs    : IhBtnArgs
   def brArgs      : blk.RenderArgs
   def adsCount    : Int
   def startIndex  : Int
@@ -25,6 +27,8 @@ trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
   override def producer       = _focArgsUnderlying.producer
   override def brArgs         = _focArgsUnderlying.brArgs
   override def bgColor        = _focArgsUnderlying.bgColor
+  override def fgColor        = _focArgsUnderlying.fgColor
+  override def hBtnArgs       = _focArgsUnderlying.hBtnArgs
   override def adsCount       = _focArgsUnderlying.adsCount
   override def jsStateOpt     = _focArgsUnderlying.jsStateOpt
   override def syncUrl(jsState: ScJsState) = _focArgsUnderlying.syncUrl(jsState)

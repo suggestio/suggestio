@@ -1,0 +1,12 @@
+@(btn: msc.ScHdrBtn, args: msc.IhBtnArgs)
+
+@* Шаблон обертки для отображения svg-кнопки. *@
+
+<div class="sm-button sm-producer-header_btn
+            @btn.divCss.iterator.map { css => @css}
+            __@(btn.align.name)-aligned
+            @if(btn.abs){abs}
+            @if(args.hidden){hidden}"
+     id="@btn.domId">
+  @btn.renderSvg(args.fgColor)
+</div>

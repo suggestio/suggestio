@@ -203,6 +203,8 @@ package object models {
 
   type ImgMetaI             = io.suggest.model.ImgMetaI
 
+  type MHand                = MHands.T
+
 
   /** Тип формы для регистрации по email (шаг 1 - указание email). */
   type EmailPwRegReqForm_t  = Form[String]
