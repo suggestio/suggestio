@@ -31,10 +31,14 @@
 
     @* Кнопка доступа к панели навигации по узлам сети. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
     @if(!args.syncRender || !args.jsStateOpt.exists(_.isSomethingOpened)) {
-      @toggleNavScrAnchor() { jsStateOpt =>
-	@ScHdrBtns.OpenNavPanel( args.hBtnArgs.copy(
-	  hidden = !args.syncRender || !jsStateOpt
-	))
+      @defining( args.topLeftBtn ) { tlb =>
+        @if(tlb == ScHdrBtns.NavPanelOpen) {
+          @toggleNavScrAnchor() { jsStateOpt =>
+            @tlb( args.hBtnArgs.copy( hidden = !args.syncRender || !jsStateOpt ) )
+          }
+        } else {
+          @tlb(args.hBtnArgs)
+        }
       }
     }
 

@@ -4,7 +4,7 @@ import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
 import models.jsm.ScIndexResp
-import models.msc.{WelcomeRenderArgsT, ScRenderArgs, ScReqArgsWrapper, ScReqArgs}
+import models.msc._
 import util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
@@ -61,6 +61,9 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     }
     def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
+    /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
+    def _topLeftBtn: ScHdrBtn = ScHdrBtns.NavPanelOpen
+
     def respArgsFut: Future[ScIndexResp] = {
       val _currAdnIdOptFut = currAdnIdFut
       for {
@@ -92,8 +95,9 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
 /** Вспомогательная утиль для рендера indexTpl на нодах. */
 trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
+  /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
-    val adnNodeFut        : Future[MAdnNode]
+    def adnNodeFut        : Future[MAdnNode]
     def spsrFut           : Future[AdSearch]
     def onCloseHrefFut    : Future[String]
     def geoListGoBackFut  : Future[Option[Boolean]]
@@ -145,6 +149,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         .orElse(adnNode.geo.directParentIds.headOption)
         .orElse(adnNode.id)
     }
+    
 
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
@@ -164,12 +169,16 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _geoListGoBack  <- _geoListGoBackFut
         _searchInAdnId  <- _searchInAdnIdFut
       } yield {
+        import ShowcaseUtil._
+        val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+        val _fgColor = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
         new ScRenderArgs with ScReqArgsWrapper {
-          import ShowcaseUtil._
           override def reqArgsUnderlying = _reqArgs
           override def searchInAdnId  = _searchInAdnId
-          override val bgColor        = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
-          override val fgColor        = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+          override def bgColor        = _bgColor
+          override def fgColor        = _fgColor
+          override val hBtnArgs       = super.hBtnArgs
+          override def topLeftBtn     = _topLeftBtn
           override def name           = adnNode.meta.name
           override def mmcats         = _mmCats
           override def catsStats      = _catsStats
@@ -209,6 +218,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+    val _adnNodeFut = Future successful request.adnNode
     val helper = new ScIndexNodeSimpleHelper {
       override val geoListGoBackFut: Future[Option[Boolean]] = {
         MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1)
@@ -217,9 +227,9 @@ trait ScIndexNode extends ScIndexNodeCommon {
           }
       }
       override def _reqArgs = args
-      override val adnNodeFut = Future successful request.adnNode
+      override def adnNodeFut = _adnNodeFut
       override def isGeo = false
-      override implicit val _request = request
+      override implicit def _request = request
     }
     val resultFut = helper.result
     // собираем статистику, пока идёт подготовка результата
@@ -240,6 +250,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
 
   /** Выдача для продьюсера, который сейчас админят. */
   def myAdsShowcase(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    val _adnNodeFut = Future successful request.adnNode
     val helper = new ScIndexNodeHelper {
       // Тупо скопипасчено. Может быть тут ошибка:
       override def geoListGoBackFut = Future successful None
@@ -256,7 +267,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
         }
         Future successful spsr
       }
-      override val adnNodeFut = Future successful request.adnNode
+      override def adnNodeFut = _adnNodeFut
       override def isGeo = false
       override implicit def _request = request
     }

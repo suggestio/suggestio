@@ -1,8 +1,10 @@
 package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import io.suggest.util.Lists
 import models.jsm.ProducerAdsResp
-import models.msc.{IhBtnArgs, HBtnArgs, FocusedAdsTplArgs, ScJsState}
+import models.msc.{HBtnArgs, FocusedAdsTplArgs, ScJsState}
+import play.api.mvc.Result
 import play.twirl.api.Html
 import util.showcase._
 import util.SiowebEsUtil.client
@@ -14,6 +16,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.immutable
 import scala.concurrent.Future
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -23,6 +26,9 @@ import scala.concurrent.Future
  */
 trait ScFocusedAds extends ScController with PlayMacroLogsI {
 
+  /** Активирован ли автопереход в выдачу узла-продьюсера размещенной на данном узле рекламной карточки? */
+  // TODO Выпилить начисто, когда будет запилена нормальная поддержка функции тут и на клиенте.
+  private val STEP_INTO_FOREIGN_SC_ENABLED = configuration.getBoolean("sc.focus.step.into.foreign.sc.enabled") getOrElse false
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.
@@ -31,20 +37,60 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     * @return JSONP с отрендеренными карточками.
     */
   def focusedAds(adSearch: AdSearch, withHeadAd: Boolean) = MaybeAuth.async { implicit request =>
-    val logic = new FocusedAdsLogic {
-      override type OBT = JsString
+    val logic = new FocusedAdsLogicJsStr {
+      override def _withHeadAd        = withHeadAd
+      override def _adSearch          = adSearch
+      override implicit def _request  = request
+      override def _scStateOpt        = None
+    }
 
-      override def _withHeadAd = withHeadAd
-      override def _adSearch = adSearch
-      override implicit def _request = request
-      override def _scStateOpt = None
-
-      /** Рендер заэкранного блока. Тут нужен JsString. */
-      override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
-          .map { html => JsString(html) }
+    // 2015.may.8: При выборе чужой карточки нужно делать переход в выдачу чуждого узла с возможностью возврата.
+    logic.firstAdsFut flatMap { firstAds =>
+      val stepToProdAdnIdOpt = firstAds
+        .headOption
+        .filter { _ => STEP_INTO_FOREIGN_SC_ENABLED }
+        .map { _.producerId }
+        .filter { !adSearch.receiverIds.contains(_) }
+      stepToProdAdnIdOpt match {
+        case Some(prodId) =>
+          _goToProducerIndex(prodId, logic)
+        case None =>
+          _showFocusedAds(logic)
       }
     }
+  }
+
+  /** Внутренний для экшенов этого модуля трейт FocusedAdsLogic. */
+  private trait FocusedAdsLogicJsStr extends FocusedAdsLogic {
+    override type OBT = JsString
+    override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+      renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
+        .map { html => JsString(html) }
+    }
+  }
+
+  /**
+   * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
+   * через кнопку навигации.
+   * @param adnId id узла.
+   * @param logic Закешированная focused-логика.
+   * @param request Исходный реквест.
+   * @return Фьючерс с http-результатом.
+   */
+  private def _goToProducerIndex(adnId: String, logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    // TODO Запилить. Пока тут заглушка вместо ???:
+    val fut = _showFocusedAds(logic)
+    LOGGER.warn(s"Not yet implemented: _goToProducerIndex($adnId)")
+    fut
+  }
+
+  /**
+   * Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
+   * @param logic Закешированная исходная focused-логика рендера.
+   * @param request Исходный запрос.
+   * @return Фьючерс с http-результатом.
+   */
+  private def _showFocusedAds(logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Запускаем сборку ответа:
     val focAdHtmlOptFut = logic.focAdHtmlOptFut
       .map(_.map(JsString(_)))
@@ -67,7 +113,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
     }
     // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:
     logic.mads2Fut onSuccess { case mads =>
-      ScFocusedAdsStatUtil(adSearch, mads.flatMap(_.id), withHeadAd = withHeadAd).saveStats
+      ScFocusedAdsStatUtil(logic._adSearch, mads.flatMap(_.id), withHeadAd = logic._withHeadAd).saveStats
     }
     resultFut
   }
@@ -130,40 +176,35 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       }
     }
 
-    /** Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных
-      * id карточек и выставить их в начало списка mads1. */
-    lazy val mads2Fut: Future[Seq[MAd]] = {
-      // Гарантия фонового вычисления mads1Fut:
-      val _mads1Fut = mads1Fut
-      if (_adSearch.forceFirstIds.nonEmpty) {
-        // Если заданы firstIds и offset == 0, то нужно получить из модели указанные рекламные карточки.
-        val firstAdsFut = if (_adSearch.offset <= 0) {
-          val ids = _adSearch.forceFirstIds
-          val fut = MAd.multiGet(ids)
-          fut onSuccess { case mads =>
-            logMissingFirstIds(mads, ids)
-          }
-          fut
-        } else {
-          Future successful Nil
+    /** Первые карточки, если запрошены. */
+    lazy val firstAdsFut: Future[Seq[MAd]] = {
+      if (_adSearch.forceFirstIds.nonEmpty && _adSearch.offset <= 0) {
+        val ids = _adSearch.forceFirstIds
+        val fut = MAd.multiGet(ids)
+        fut onSuccess { case mads =>
+          logMissingFirstIds(mads, ids)
         }
-        // Замёржить полученные first-карточки в основной список карточек.
-        for {
-          mads      <- _mads1Fut
-          firstAds  <- firstAdsFut
-        } yield {
-          // Нано-оптимизация.
-          if (firstAds.nonEmpty)
-            firstAds ++ mads
-          else
-            mads
-        }
+        fut
       } else {
-        // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
-        _mads1Fut
+        Future successful Nil
       }
     }
 
+
+    /** Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных
+      * id карточек и выставить их в начало списка mads1. */
+    lazy val mads2Fut: Future[Seq[MAd]] = {
+      val _mads1Fut = mads1Fut
+      for {
+        firstAds  <- firstAdsFut
+        mads      <- _mads1Fut
+      } yield {
+        // Нано-оптимизация: По идее тут списки или stream'ы, а firstAds содержит только одну карточку. Поэтому можно попробовать смержить с О(1).
+        Lists.appendSeqHead(firstAds, mads)
+      }
+    }
+
+    /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
     lazy val mads2ProducersFut: Future[Map[String, MAdnNode]] = {
       mads2Fut.flatMap { mads2 =>
         val producerIds = mads2.iterator.map(_.producerId)

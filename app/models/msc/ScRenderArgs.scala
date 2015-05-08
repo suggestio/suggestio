@@ -69,8 +69,11 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
   def searchInAdnId : Option[String] = None
 
-  /** Дефолтовые параметры для рендера кнопок на панели. */
-  lazy val hBtnArgs = HBtnArgs(fgColor = fgColor)
+  /** Дефолтовые параметры для рендера кнопок на панели. Тут нужен case-класс. */
+  def hBtnArgs: HBtnArgs = HBtnArgs(fgColor = fgColor)
+
+  /** Какую кнопку навигации надо рендерить для в левом верхнем углу indexTpl? */
+  def topLeftBtn: ScHdrBtn
 
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {

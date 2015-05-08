@@ -69,7 +69,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   override type T = Val
 
   /** Кнопка отображения геосписка узлов для переключения между ними. */
-  val OpenNavPanel: T = new Val("a") with SvgTplVal {
+  val NavPanelOpen: T = new Val("a") with SvgTplVal {
     override def svgTpl = _geoFillTpl
     override def divCss = "sm-producer-header_geo-button" :: super.divCss
     override def align  = MHands.Left

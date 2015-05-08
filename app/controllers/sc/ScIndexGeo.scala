@@ -2,7 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import models.msc.{ScRenderArgs, ScReqArgsWrapper, ScReqArgs}
+import models.msc._
 import play.twirl.api.Html
 import util.showcase._
 import util.acl._
@@ -118,6 +118,8 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
           override def reqArgsUnderlying = _reqArgs
           override def bgColor   = SITE_BGCOLOR_GEO
           override def fgColor   = SITE_FGCOLOR_GEO
+          override val hBtnArgs  = super.hBtnArgs
+          override def topLeftBtn = _topLeftBtn
           override def name      = SITE_NAME_GEO
           override def mmcats    = _mmcats
           override def catsStats = _catsStats

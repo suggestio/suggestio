@@ -3,6 +3,7 @@
 @* Шаблон обертки для отображения svg-кнопки. *@
 
 <div class="sm-button sm-producer-header_btn
+            @* Отрендерить кастомные css-классы, разделяя пробелами. *@
             @btn.divCss.iterator.map { css => @css}
             __@(btn.align.name)-aligned
             @if(btn.abs){abs}
