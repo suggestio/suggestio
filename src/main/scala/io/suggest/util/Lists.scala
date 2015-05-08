@@ -236,4 +236,36 @@ object Lists {
   }
 
 
+  /**
+   * Нанооптимизация, возможная с некоторыми неизменяемыми коллекциями.
+   * Метод нужен для объединения абстрактных scala-immutable-коллекций по О(1) или с минимальными затратами,
+   * когда программист считает, что это вполе возможно.
+   * А это возможно, когда коллекции являюстя stream'ами или списками.
+   */
+  def appendSeqHead[T](head: Seq[T], tail: Seq[T]): Seq[T] = {
+    if (head.isEmpty) {
+      tail
+    } else if (head.length == 1) {
+      // head очень короткий. Это значит можно попробовать кое-какие трюки.
+      val el = head.head
+      tail match {
+        case l: List[T]   => el :: l
+        case s: Stream[T] => el #:: s
+        case _            => _appendSeqMaybeStream(head, tail)
+      }
+    } else {
+      // head не выглядит слишком коротким. Но всё-таки пытаемся провести через Stream.
+      _appendSeqMaybeStream(head, tail)
+    }
+  }
+
+  private def _appendSeqMaybeStream[T](head: Seq[T], tail: Seq[T]): Seq[T] = {
+    head match {
+      case stream: Stream[T] =>
+        stream append tail    // Если tail тоже Stream, то это будет ~O(1). Иначе O(tail.size).
+      case _ =>
+        head ++ tail
+    }
+  }
+
 }
