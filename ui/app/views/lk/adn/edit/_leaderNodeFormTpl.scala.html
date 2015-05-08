@@ -32,9 +32,7 @@
       <div class="image __size-L @UploadConstants.JS_IMG_UPLOAD_CLASS" @if(logoImgIdOpt) {style="display: none;"}>
         @stuff._fileUploadTpl(
           call          = routes.MarketLkAdnEdit.handleTempLogo(),
-          fieldName     = LOGO_IMG_FN,
-          previewRoot   = "#" + NodeEditConstants.NODE_LOGO_DIV_ID,
-          previewClass  = "__logo __size-L"
+          fieldName     = LOGO_IMG_FN
         )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.logo", " ")">
           <span>@Html( messages("Upload.logo", "<br/>") )</span>
@@ -113,10 +111,6 @@
             call          = routes.MarketLkAdnEdit.handleGalleryImg(),
             fieldName     = GALLERY_FN,
             multiUploadCounter = gf.indexes.lastOption.orElse( Some(-1) ),
-            multiple      = true,
-            previewRoot   = "#" + NodeEditConstants.NODE_GALLERY_DIV_ID,
-            previewClass  = "__size-M f-left",
-            editBtnClass  = "image_edit-btn " + CROP_IMAGE_BTN_CLASS,
             whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
           )
           <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">

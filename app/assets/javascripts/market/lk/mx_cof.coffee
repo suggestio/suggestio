@@ -1312,39 +1312,6 @@ market =
   ###################################################################################################################
   img :
 
-    init_upload : () ->
-
-      $ '.w-async-image-upload'
-      .unbind 'change'
-      .bind 'change', () ->
-        $this = $ this
-        relatedFieldId = $this.attr 'data-related-field-id'
-        form_data = new FormData()
-
-        is_w_block_preview = $this.attr 'data-w-block-preview'
-
-        if $this[0].type == 'file'
-          form_data.append $this[0].name, $(this)[0].files[0]
-
-        request_params =
-          url : $this.attr "data-action"
-          method : 'post'
-          data : form_data
-          contentType: false
-          processData: false
-          success : ( resp_data ) ->
-
-            if typeof is_w_block_preview != 'undefined'
-              market.ad_form.queue_block_preview_request()
-
-            $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
-            $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
-
-        $.ajax request_params
-
-        return false
-
-
     crop :
 
       save_crop : ( form_dom ) ->
@@ -1610,8 +1577,6 @@ market =
       this.block_preview_request_timer = setTimeout cb, request_delay
 
     init_block_editor : () ->
-      market.img.init_upload()
-
 
       $ document
       .on "click", ".js-ae-button:not(.__act)", (e) ->
@@ -1833,7 +1798,6 @@ market =
     this.ad_form.init()
     $ document
     .ready () ->
-      market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()
       market.adv_form.init()

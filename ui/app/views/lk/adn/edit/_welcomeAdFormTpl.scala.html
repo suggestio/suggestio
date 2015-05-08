@@ -21,9 +21,7 @@
         <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" @if(!imgIdOpt.isEmpty) {style="display: none;"}>
           @stuff._fileUploadTpl(
             call          = routes.MarketLkAdnEdit.uploadWelcomeImg(),
-            fieldName     = WELCOME_IMG_FN,
-            previewRoot   = "#" + NodeEditConstants.NODE_WELCOME_DIV_ID,
-            previewClass  = "__size-M f-left"
+            fieldName     = WELCOME_IMG_FN
           )
           <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.image")">
             <span>@Html( messages("Upload.image", "<br/>") )</span>

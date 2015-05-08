@@ -8,11 +8,6 @@
 @import lk.ad._
 @import io.suggest.img.crop.CropConstants
 
-@fupAttrExtra = {
-  data-related-field-id="blockImage@bf.name"
-  data-w-block-preview="true"
-}
-
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
@@ -22,10 +17,7 @@
       <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(imgIdOpt) {style="display: none;"}>
         @_fileUploadTpl(
           fieldName     = "ad.offer.bgImg",
-          previewClass  = "__size-M",
-          previewRoot   = "#" + BG_IMG_CONTAINER_ID,
-          call          = routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr)),
-          attrExtra     = Some(fupAttrExtra)
+          call          = routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))
         )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
           <span>@Html( messages("Upload.file", "<br/>") )</span>

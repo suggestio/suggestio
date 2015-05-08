@@ -1,6 +1,4 @@
-@(call: Call, fieldName: String, multiUploadCounter: Option[Int] = None, multiple: Boolean = false,
-  previewRoot: String = "", previewClass: String = "", editBtnClass: String = "", whOpt: Option[MImgSizeT] = None,
-attrExtra: Option[Html] = None)(implicit ctx: Context)
+@(call: Call, fieldName: String, multiUploadCounter: Option[Int] = None, whOpt: Option[MImgSizeT] = None)(implicit ctx: Context)
 
 @* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
@@ -8,16 +6,11 @@ attrExtra: Option[Html] = None)(implicit ctx: Context)
 @import io.suggest.js.UploadConstants._
 
 <input type="file" class="add-file-input @JS_FILE_UPLOAD_CLASS"
-       data-edit-btn="@editBtnClass"
        data-action="@call"
        name="picture"
-       data-preview-class="@previewClass"
-       data-preview-root="@previewRoot"
        data-name="@fieldName"
        @multiUploadCounter.map { muc =>
          @(ATTR_MULTI_INDEX_COUNTER)=@muc
        }
        @whOpt.map { wh => data-width="@wh.width" data-height="@wh.height" }
-       @if(multiple) {data-multiple="multiple"}
-       @attrExtra
 />
