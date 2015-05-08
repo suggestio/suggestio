@@ -9,6 +9,9 @@ package io.suggest.ad.form
 object AdFormConstants {
 
   /** id контейнера поля загрузки фоновой картинки. */
-  def BG_IMG_CONTAINER_ID = "cardPhoto"
+  def BG_IMG_CONTAINER_ID       = "cardPhoto"
+
+  /** id контейнера, который содержит в себе кнопки управления фоновой картинкой. */
+  def BG_IMG_CONTROLS_CONTAINER_ID  = "blockImagebgImg"
 
 }
