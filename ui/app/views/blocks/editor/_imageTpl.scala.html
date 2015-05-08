@@ -6,6 +6,7 @@
 @import io.suggest.ad.form.AdFormConstants.BG_IMG_CONTAINER_ID
 @import views.html.stuff._
 @import lk.ad._
+@import io.suggest.img.crop.CropConstants
 
 @fupAttrExtra = {
   data-related-field-id="blockImage@bf.name"
@@ -41,7 +42,10 @@
       <div id="blockImage@bf.name">
 
         @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
-        <a class="btn __size-M __minor __crop js-img-w-crop" data-width="140" data-height="300">@messages("Crop")</a>
+        <a class="btn __size-M __minor __crop @CropConstants.CROP_IMAGE_BTN_CLASS"
+	    data-width="@af(bc.widthBf.name).value.getOrElse("300")"
+	    data-height="@af(bc.heightBf.name).value.getOrElse("300")"
+	    >@messages("Crop")</a>
       </div>
 
       <div class="sm-note">@messages("Ad.large.bg.img.info")</div>

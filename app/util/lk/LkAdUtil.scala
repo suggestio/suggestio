@@ -3,7 +3,7 @@ package util.lk
 import models.blk.SzMult_t
 import models.im.make.{Makers, MakeArgs}
 import models.{blk, MAd}
-import models.im.DevScreen
+import models.im.{MImg, DevScreen}
 import util.blocks.BgImg
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,7 +31,7 @@ object LkAdUtil {
     val bgImgOptFut = BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>
         val wArgs = MakeArgs(
-          img           = bgImgInfo,
+          img           = MImg(bgImgInfo),
           blockMeta     = mad.blockMeta,
           szMult        = szMult,
           devScreenOpt  = devScreenOpt

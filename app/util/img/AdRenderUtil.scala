@@ -59,7 +59,7 @@ object AdRenderUtil {
             val dscr = dscrF(width)
             (Makers.Block, dscr)
         }
-        val margs = MakeArgs(bgImg, mad.blockMeta, args.szMult, Some(dscr))
+        val margs = MakeArgs(MImg(bgImg), mad.blockMeta, args.szMult, Some(dscr))
         maker.icompile(margs)
           .map { Some.apply }
       // Нет фоновой картинки

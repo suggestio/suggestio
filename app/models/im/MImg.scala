@@ -139,7 +139,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
     parseAll(fileName2miP, filename).get
   }
 
-  implicit def apply(imgInfo: MImgInfoT): MImg = {
+  def apply(imgInfo: MImgInfoT): MImg = {
     apply(imgInfo.filename)
   }
 

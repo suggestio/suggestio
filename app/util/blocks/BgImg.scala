@@ -2,7 +2,7 @@ package util.blocks
 
 import io.suggest.ym.model.common.{Imgs, MImgInfoT}
 import models.blk.SzMult_t
-import models.im.DevScreen
+import models.im.{MImg, DevScreen}
 import models.im.make.{Makers, MakeArgs, IMakeResult, IMaker}
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +42,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
     BgImg.getBgImg(mad).fold {
       Future successful Option.empty[IMakeResult]
     } { bgImg =>
-      val iArgs = MakeArgs(bgImg, mad.blockMeta, szMult = szMult, devScreenOpt)
+      val iArgs = MakeArgs(MImg(bgImg), mad.blockMeta, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
         .map { Some.apply }
     }
