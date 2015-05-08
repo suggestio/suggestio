@@ -21,25 +21,24 @@ import scala.scalajs.js.{Any, Dictionary}
  */
 trait CropFormRequestT extends ISjsLogger {
 
-  /** Прямой родитель, чтобы найти input. */
-  def parent: JQuery
-
   /** Инпут, откуда можно прочесть данные для запроса. */
   // Нужно перезаписывать через val или lazy val.
-  def input: JQuery = parent.find("input")
+  def whInput: JQuery
+
+  /** Отсюда считывать img id. */
+  def imgIdInput: JQuery
 
   /** id текущей картинки. */
-  def imgId: String = input.`val`().toString
+  def imgId: String = imgIdInput.`val`().toString
 
   /** Имя поля */
-  def fieldName = input.attr("name")
+  def fieldName = whInput.attr("name")
 
   /** Парсинг целого числа из аттрибута тега. */
   protected def parseIntAttr(name: String): Int = {
-    // TODO Почему-то тут не отрабатываеться undefined как надо. и !js.isUndefined(_) не помогает.
-    Option( input.data(name) )
-      .filter { !js.isUndefined(_) }
-      .map(_.toString)
+    // TODO Вынести названия аттрибутов в константы.
+    whInput.attr("data-" + name)
+      .toOption
       .filter { !_.isEmpty }
       .get
       .toInt
