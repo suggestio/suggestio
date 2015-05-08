@@ -260,130 +260,6 @@ dateView = new DateView('advManagementDateWidget')
 
 
 PersonalCabinet =
-  images: ()->
-
-    #фотографии в галерее профиля
-    $ document
-    .on 'click', '.js-crop-image-btn', (e)->
-      e.preventDefault()
-
-      img_key = $('input', $(this).parent()).val()
-      img_name = $('input', $(this).parent()).attr 'name'
-
-      if img_key == ''
-        alert 'сначала нужно загрузить картинку'
-        return false
-
-      width   = 790
-      height  = 250
-
-      $.ajax
-        url : "/img/crop/#{img_key}?width=#{width}&height=#{height}"
-        success : ( data ) ->
-          $popup = $ data
-          popupId = $popup.attr 'id'
-          $ "##{popupId}"
-          .remove()
-          $ '#popupsContainer'
-          .append data
-          CbcaPopup.showPopup "##{popupId}"
-          market.img.crop.init( img_name )
-
-    # удаление изображения
-    $ document
-    .on 'click', '.js-remove-image', (e)->
-      e.preventDefault()
-      $this = $ this
-      dataFor = $this.attr 'data-for'
-
-      if dataFor
-        $input = $ "input[name = \'#{dataFor}'\]"
-        $preview = $input.closest '.js-preview'
-      else
-        $preview = $this.closest '.js-preview'
-        $input = $preview.find '.js-image-key'
-
-      # находим кнопку для загрузки изображении для этого поля
-      name = $input.attr 'name'
-      $ ".js-file-upload[data-name = '#{name}']"
-      .closest '.js-image-upload'
-      .show()
-
-      $preview.remove()
-      market.ad_form.queue_block_preview_request()
-
-      if dataFor
-        $popup = $this.closest '.js-popup'
-        popupId = $popup.attr 'id'
-        CbcaPopup.hidePopup("##{popupId}")
-        $popup.remove()
-
-    #################################################################################################################
-    ## Работа с изображениями ##
-    #################################################################################################################
-    $ document
-    .on 'change', '.js-file-upload', (e)->
-      e.preventDefault()
-      $this = $ this
-      formData = new FormData()
-
-      if $this[0].type == 'file'
-        formData.append $this[0].name, $this[0].files[0]
-
-      request =
-        url : $this.attr "data-action"
-        method : 'post'
-        data : formData
-        contentType: false
-        processData: false
-        success : ( respData ) ->
-
-          # TODO зарефакторить загрузку изображении в редакторе карточек
-          is_w_block_preview = $this.attr 'data-w-block-preview'
-          if typeof is_w_block_preview != 'undefined'
-            $('#' + $this.attr('data-related-field-id'))
-            .find '.js-image-key'
-            .val respData.image_key
-            market.ad_form.queue_block_preview_request()
-
-          multiple = false
-          previewClass = $this.attr 'data-preview-class'
-
-          # dom элемент в который нужно положить превью
-          previewRoot = $this.attr 'data-preview-root'
-          $previewRoot = $ previewRoot
-
-          # имя поля для загрузки фотографии
-          fieldName = $this.attr 'data-name'
-
-          # класс у кнопки редактирования, по умолчанию remove
-          editBtnClass = $this.attr('data-edit-btn') || 'image_remove-btn js-remove-image'
-
-          # загрузка одной или нескольких фотографии
-          dataMultiple = $this.attr 'data-multiple'
-          dataMultiple && multiple = true
-
-          if multiple
-            # если уже есть загруженные фотографии
-            $previews = $previewRoot.find '.js-preview'
-            previewCounts = $previews.length
-            fieldName = "#{fieldName}[#{previewCounts}]"
-
-          html =  """
-                   <div class="image js-preview #{previewClass}">
-                   <input class="js-image-key" type="hidden" name="#{fieldName}" value="#{respData.image_key}"/>
-                   <img class="image_src js-image-preview" src="#{respData.image_link}" />
-                   <a class="#{editBtnClass}" title="Удалить файл"><span></span></a>
-                   </div>
-                  """
-
-          $previewRoot.append html
-
-          if !multiple
-            $this.parent().hide()
-      # загрузка изображения
-      $.ajax request
-
   login: () ->
 
     #################################################################################################################
@@ -1180,7 +1056,6 @@ PersonalCabinet =
     cbca.pc.advRequest()
     cbca.pc.advManagement()
     cbca.pc.adsList()
-    #cbca.pc.images()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -1472,32 +1347,6 @@ market =
 
     crop :
 
-
-      init_triggers : () ->
-
-        $('.js-img-w-crop').unbind 'click'
-        $('.js-img-w-crop').bind 'click', () ->
-
-          img_key = jQuery('input', $(this).parent()).val()
-          img_name = jQuery('input', $(this).parent()).attr 'name'
-
-          if img_key == ''
-            alert 'сначала нужно загрузить картинку'
-            return false
-
-          width = $('.sm-block').attr 'data-width'
-          height = $('.sm-block').attr 'data-height'
-
-          $.ajax
-            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height
-            success : ( data ) ->
-              $('#popupsContainer').html data
-              CbcaPopup.showPopup()
-
-              market.img.crop.init( img_name )
-
-          return false
-
       save_crop : ( form_dom ) ->
 
         offset_x = parseInt( $('#imgCropTool img').css('left').replace('px', '') ) || 0
@@ -1762,7 +1611,6 @@ market =
 
     init_block_editor : () ->
       market.img.init_upload()
-      market.img.crop.init_triggers()
 
 
       $ document
@@ -1928,7 +1776,6 @@ market =
       $(document).on 'change', '#ad_descr_bgColor', (e)->
         market.ad_form.set_descr_editor_bg()
 
-      market.img.crop.init_triggers()
       this.request_block_preview()
       this.init_block_editor()
 
