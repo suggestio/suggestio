@@ -402,7 +402,7 @@ final case class MAdnNodeGeo(
 /** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
 object NodeGeoLevels extends Enumeration(1) {
 
-  protected sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
+  protected[this] sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
     def precision: String
 
     // Для упрощения геморроя делаем локализацию прямо тут, хотя сами коды лежат на стороне sioweb21/conf/messages.*
