@@ -4,6 +4,7 @@ import io.suggest.lk.old.Market
 import io.suggest.lk.popup.Popup
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.sjs.common.img.crop.{CropUtil, CropFormRequestT, CropFormResp}
+import io.suggest.sjs.common.img.input.WhInput
 import io.suggest.sjs.common.util.{SjsLogger, ISjsLogger}
 import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.jquery.{jQuery, JQueryEventObject}
@@ -21,7 +22,7 @@ trait CropFormAsk extends ISjsLogger {
     val input = jQuery(e.currentTarget)
       .parent()
       .find("input")
-    new CropFormRequestT with SjsLogger {
+    new CropFormRequestT with WhInput with SjsLogger {
       override def whInput = input
       override def imgIdInput = input
     }
