@@ -2,7 +2,7 @@ package models.mext.tw
 
 import models.mext._
 import play.api.libs.oauth.OAuthCalculator
-import play.api.libs.ws.{WSRequestHolder, WSClient, WSResponse}
+import play.api.libs.ws.{WSRequest, WSClient, WSResponse}
 
 /**
  * Suggest.io
@@ -27,7 +27,7 @@ trait TwMpUpload extends MpUploadSupportDflt { this: TwitterService =>
   }
 
   /** Создание экземпляра нового реквеста требует цифровую подпись OAuth. */
-  override def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequestHolder = {
+  override def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequest = {
     super.newRequest(args)
       .sign( OAuthCalculator(consumerKey, args.oa1AcTok.get) )
   }

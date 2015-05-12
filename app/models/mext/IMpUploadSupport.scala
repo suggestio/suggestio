@@ -7,7 +7,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.ByteArrayBody
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
-import play.api.libs.ws.{WSResponse, WSRequestHolder, WSClient}
+import play.api.libs.ws.{WSRequest, WSResponse, WSClient}
 import util.PlayMacroLogsI
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -90,7 +90,7 @@ trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
   }
 
   /** Создание экземпляра нового реквеста. */
-  def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequestHolder = {
+  def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequest = {
     ws.url( getUploadUrl(args) )
   }
 

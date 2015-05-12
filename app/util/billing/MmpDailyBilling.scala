@@ -7,6 +7,7 @@ import models.adv.geo.AdvFormEntry
 import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
+import play.api.Application
 import util.adv.AdvUtil
 import scala.annotation.tailrec
 import util.blocks.BlocksConf
@@ -72,7 +73,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
   }
 
 
-  override def cronTasks = {
+  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     if (CRON_BILLING_CHECK_ENABLED) {
       val every = CHECK_ADVS_OK_DURATION
       val applyOldReqs = CronTask(

@@ -73,7 +73,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
     synchronized {
-      cronTimers = Crontab.startTimers
+      cronTimers = Crontab.startTimers(app)
     }
     RadiusServerImpl.start(true, true)
   }

@@ -84,6 +84,24 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
       )
       val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)
+      // Записать в инфу логи проблемы.
+      _logRefused(refused)
+    }
+
+    protected def _logRefused(refused: UploadRefusedException): Unit = {
+      LOGGER.warn {
+        val sb = new StringBuilder(512)
+        sb.append("uploadFailed():\n")
+          .append("  ").append(refused.msg)
+        refused.wsResp.allHeaders
+          .foreach { case (k, vs) =>
+            sb.append("\n    ").append(k).append(": ")
+            vs.foreach { v =>
+              sb.append(v).append(';')
+            }
+          }
+        sb.toString()
+      }
     }
 
     /** Не удалось запустить/выполнить запрос. */

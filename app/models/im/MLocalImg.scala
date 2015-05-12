@@ -6,13 +6,14 @@ import java.util.UUID
 
 import akka.actor.ActorContext
 import io.suggest.event.SNStaticSubscriber
-import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
+import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.{CronTask, ICronTask, ImgMetaI}
 import org.apache.commons.io.FileUtils
+import play.api.Application
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -294,7 +295,7 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
 
   /** Как часто инициировать проверку? */
   def DELETE_EMPTY_DIRS_EVERY = configuration.getInt(EDD_CONF_PREFIX + ".every.minutes")
-    .fold [FiniteDuration] (12 hours) (_ minutes)
+    .fold [FiniteDuration] (12.hours) (_.minutes)
 
   /** На сколько отодвигать старт проверки. */
   def DELETE_EMPTY_DIRS_START_DELAY = configuration.getInt(EDD_CONF_PREFIX + ".start.delay.seconds")
@@ -302,8 +303,8 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
     .seconds
 
   /** Список задач, которые надо вызывать по таймеру. */
-  abstract override def cronTasks: TraversableOnce[ICronTask] = {
-    val cts1 = super.cronTasks
+  abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+    val cts1 = super.cronTasks(app)
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = CronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         findAndDeleteEmptyDirsAsync onFailure { case ex =>
@@ -376,15 +377,15 @@ trait PeriodicallyDeleteNotExistingInPermanent extends CronTasksProvider with Pl
 
   /** Как часто проводить проверки? */
   def DNEIP_EVERY = configuration.getInt(DNEIP_CONF_PREFIX + ".every.minutes")
-    .fold[FiniteDuration] (3 hours)(_ minutes)
+    .fold[FiniteDuration] (3.hours)(_.minutes)
 
   def DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
-    .fold(2 hours)(_ minutes)
+    .fold(2.hours)(_.minutes)
     .toMillis
 
   /** Список задач, которые надо вызывать по таймеру. */
-  abstract override def cronTasks: TraversableOnce[ICronTask] = {
-    val cts0 = super.cronTasks
+  abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+    val cts0 = super.cronTasks(app)
     if (DNEIP_ENABLED) {
       val task = CronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
         dneipFindAndDeleteAsync() onFailure { case ex =>

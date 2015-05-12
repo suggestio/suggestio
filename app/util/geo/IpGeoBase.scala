@@ -1,7 +1,7 @@
 package util.geo
 
 import java.io._
-import java.net.{URL, InetAddress}
+import java.net.InetAddress
 import java.sql.Connection
 import java.util.Comparator
 import com.jolbox.bonecp.ConnectionHandle
@@ -9,16 +9,19 @@ import models.{CronTask, IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
+import play.api.Application
 import play.api.db.DB
+import play.api.libs.ws.WSClient
+import util.ws.HttpGetToFile
 import util.{CronTasksProvider, PlayMacroLogsImpl}
 
 import scala.annotation.tailrec
+import scala.concurrent.Future
 import scala.io.Source
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
-import dispatch._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
@@ -58,14 +61,15 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
   def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding") getOrElse IP_RANGES_FILE_ENCODING
 
 
-  override def cronTasks: TraversableOnce[CronTask] = {
+  override def cronTasks(app: Application): TraversableOnce[CronTask] = {
     if (IS_ENABLED) {
       // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
       val task = CronTask(
-        startDelay = 20 seconds,
-        every = 1 day,
+        startDelay = 20.seconds,
+        every = 1.day,
         displayName = "updateIpBase()"
       ) {
+        implicit val ws = app.injector.instanceOf[WSClient]
         updateIpBase()
       }
       Seq(task)
@@ -75,17 +79,19 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
   }
 
   /** Скачать файл с дампом базы в tmp. */
-  def download(): Future[File] = {
+  def download()(implicit ws1: WSClient): Future[File] = {
     val dlUrlStr = ARCHIVE_DOWNLOAD_URL
-    // TODO Нужно проверять ETag и Last-Modified. Выставлять If-Modified-Since и If-None-Match. Это улучшит работу.
-    val urlFile = new URL(dlUrlStr).getFile
-    val fileBasename = FilenameUtils.getBaseName(urlFile)
-    val filenameExt = FilenameUtils.getExtension(urlFile)
-    val archiveFile = File.createTempFile(fileBasename,  "." + filenameExt)
     // TODO Нужно ограничивать max-size для возвращаемых данных. 5 метров макс. будет достаточно.
-    val resultFut = Http( url(dlUrlStr) > as.File(archiveFile) )
+    val downloader = new HttpGetToFile {
+      override def followRedirects  = true
+      override def ws: WSClient     = ws1
+      override def urlStr           = dlUrlStr
+    }
+    val resultFut = downloader.request()
+    val fileFut = resultFut.map(_._2)
+    fileFut
       // Метод `>` не проверяет 200 OK. Нужно вручную проверить, что скачался именно архив.
-      .filter { _ =>
+      .filter { archiveFile =>
         // Тестируем архив по методике http://www.java2s.com/Code/Java/File-Input-Output/DeterminewhetherafileisaZIPFile.htm
         !archiveFile.isDirectory  &&  archiveFile.canRead  &&  archiveFile.length() > ARCHIVE_MIN_LENGTH  && {
           val in = new DataInputStream(new BufferedInputStream(new FileInputStream(archiveFile)))
@@ -99,15 +105,14 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
           result
         }
       }
-      .map { _ =>
+      .map { archiveFile =>
         trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
         archiveFile
       }
-    resultFut onFailure { case ex =>
-      archiveFile.delete()
-      info(s"download(): Failed to fetch $dlUrlStr into file ${archiveFile.getAbsolutePath} . Tmp file deleted.")
+    fileFut onFailure { case ex =>
+      info(s"download(): Failed to fetch $dlUrlStr into file.")
     }
-    resultFut
+    fileFut
   }
 
 
@@ -255,7 +260,7 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
 
 
   /** Нужно скачать базу, распаковать, импортнуть города, импортнуть диапазоны, оптимизировать таблицы. */
-  def updateIpBase(): Future[_] = {
+  def updateIpBase()(implicit ws: WSClient): Future[_] = {
     lazy val logPrefix = "updateIpBase(): "
     val resultFut = download() map { archiveFile =>
       // Распаковать в директорию, удалить скачанный архив.

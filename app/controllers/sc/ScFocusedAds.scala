@@ -16,7 +16,6 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.immutable
 import scala.concurrent.Future
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -25,10 +24,6 @@ import play.api.Play.{current, configuration}
  * Description: Поддержка открытых рекламных карточек.
  */
 trait ScFocusedAds extends ScController with PlayMacroLogsI {
-
-  /** Активирован ли автопереход в выдачу узла-продьюсера размещенной на данном узле рекламной карточки? */
-  // TODO Выпилить начисто, когда будет запилена нормальная поддержка функции тут и на клиенте.
-  private val STEP_INTO_FOREIGN_SC_ENABLED = configuration.getBoolean("sc.focus.step.into.foreign.sc.enabled") getOrElse false
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.
@@ -43,45 +38,18 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
       override implicit def _request  = request
       override def _scStateOpt        = None
     }
-
-    // 2015.may.8: При выборе чужой карточки нужно делать переход в выдачу чуждого узла с возможностью возврата.
-    logic.firstAdsFut flatMap { firstAds =>
-      val stepToProdAdnIdOpt = firstAds
-        .headOption
-        .filter { _ => STEP_INTO_FOREIGN_SC_ENABLED }
-        .map { _.producerId }
-        .filter { !adSearch.receiverIds.contains(_) }
-      stepToProdAdnIdOpt match {
-        case Some(prodId) =>
-          _goToProducerIndex(prodId, logic)
-        case None =>
-          _showFocusedAds(logic)
-      }
-    }
-  }
-
-  /** Внутренний для экшенов этого модуля трейт FocusedAdsLogic. */
-  private trait FocusedAdsLogicJsStr extends FocusedAdsLogic {
-    override type OBT = JsString
-    override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-      renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
-        .map { html => JsString(html) }
-    }
+    // Запустить изменябельное тело экшена на исполнение.
+    _focusedAds(logic)
   }
 
   /**
-   * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
-   * через кнопку навигации.
-   * @param adnId id узла.
-   * @param logic Закешированная focused-логика.
-   * @param request Исходный реквест.
-   * @return Фьючерс с http-результатом.
+   * Тело экщена focusedAds() вынесено сюда для возможности перезаписывания.
+   * @param logic Экземпляр focused-логики.
+   * @param request Экземпляр реквеста.
+   * @return Фьючерс с результатом.
    */
-  private def _goToProducerIndex(adnId: String, logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    // TODO Запилить. Пока тут заглушка вместо ???:
-    val fut = _showFocusedAds(logic)
-    LOGGER.warn(s"Not yet implemented: _goToProducerIndex($adnId)")
-    fut
+  protected def _focusedAds(logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    _showFocusedAds(logic)
   }
 
   /**
@@ -90,7 +58,7 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
    * @param request Исходный запрос.
    * @return Фьючерс с http-результатом.
    */
-  private def _showFocusedAds(logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _showFocusedAds(logic: FocusedAdsLogicJsStr)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Запускаем сборку ответа:
     val focAdHtmlOptFut = logic.focAdHtmlOptFut
       .map(_.map(JsString(_)))
@@ -396,6 +364,17 @@ trait ScFocusedAds extends ScController with PlayMacroLogsI {
 
     override def jsAppendCssAction(html: JsString): JsAction = {
       JsAppendById("smResourcesFocused", html)
+    }
+  }
+
+
+  /** Внутренний для экшенов этого модуля трейт FocusedAdsLogic.
+    * Использует JsString для формирования результата. */
+  protected trait FocusedAdsLogicJsStr extends FocusedAdsLogic {
+    override type OBT = JsString
+    override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
+      renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
+        .map { html => JsString(html) }
     }
   }
 

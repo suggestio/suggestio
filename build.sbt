@@ -23,7 +23,7 @@ libraryDependencies ++= {
  val bcVsn = "1.52"
  Seq(
   jdbc exclude("com.h2database", "h2"),
-  "com.typesafe.play" %% "anorm" % "2.4.0-RC1",
+  "com.typesafe.play" %% "anorm" % "2.4.0-RC2",
   cache,
   json,
   ws exclude("commons-logging", "commons-logging"),
@@ -48,11 +48,11 @@ libraryDependencies ++= {
     exclude("log4j",    "log4j")
     exclude("commons-logging", "commons-logging")
   ,
+  "com.ning" % "async-http-client" % "1.9.+",
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
   "org.jcoffeescript" % "jcoffeescript" % "1.6.2-SNAPSHOT",
   // for domain validation:
-  "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
   "com.google.guava" % "guava" % "18.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)

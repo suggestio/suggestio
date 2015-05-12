@@ -1,7 +1,7 @@
 package util.billing
 
-import controllers.SysMarketBilling
 import models._
+import play.api.Application
 import play.api.Play.{current, configuration}
 import play.api.db.DB
 import org.joda.time.{Period, DateTime}
@@ -26,13 +26,17 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
   /** Запускать тарификацию каждые n времени. */
   def TARIFFICATION_EVERY_MINUTES: Int = configuration.getInt("tariff.apply.every.minutes").getOrElse(20)
   val TARIFFICATION_PERIOD = new Period(0, TARIFFICATION_EVERY_MINUTES, 0, 0)
-  def SCHED_TARIFFICATION_DURATION = TARIFFICATION_EVERY_MINUTES minutes
+  def SCHED_TARIFFICATION_DURATION = TARIFFICATION_EVERY_MINUTES.minutes
 
 
   /** Набор периодических задач для крона. */
-  override def cronTasks = {
+  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     if (CRON_FEE_CHECK_ENABLED) {
-      val task = CronTask(startDelay = 10 seconds, every = SCHED_TARIFFICATION_DURATION, displayName = "processFeeTarificationAll()") {
+      val task = CronTask(
+        startDelay = 10.seconds,
+        every = SCHED_TARIFFICATION_DURATION,
+        displayName = "processFeeTarificationAll()"
+      ) {
         processFeeTarificationAll()
       }
       Seq(task)
