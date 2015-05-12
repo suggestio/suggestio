@@ -1,16 +1,14 @@
 @(bf: BfHeight, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
 @import ctx._
+@import io.suggest.ad.form.AdFormConstants.HEIGHT_INPUT_ID
 
-<label class="block-height-editor_label">@messages("Height")</label>
-
-<div class="block-height-editor js-block-height-editor">
-
-  <div class="block-height-editor_btn __decrease js-block-height-editor-button" data-change-direction="decrease"></div>
-  <div class="block-height-editor_btn __increase js-block-height-editor-button" data-change-direction="increase"></div>
-
-  @defining( af(bfNameBase) ) { formField =>
-    <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.availableVals.min" data-max-value="@bf.availableVals.max"/>
-  }
-
-</div>
+@__whFieldTpl(
+  bf        = bf,
+  bfNameBase = bfNameBase,
+  af        = af,
+  bc        = bc,
+  inputId   = HEIGHT_INPUT_ID,
+  name      = "height",
+  i18nCode  = "Height"
+)
