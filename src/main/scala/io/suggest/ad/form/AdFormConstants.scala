@@ -14,4 +14,10 @@ object AdFormConstants {
   /** id контейнера, который содержит в себе кнопки управления фоновой картинкой. */
   def BG_IMG_CONTROLS_CONTAINER_ID  = "blockImagebgImg"
 
+  /** id поля, в котором задается ширина. */
+  def WIDTH_INPUT_ID                = "afWidth"
+
+  /** id поля, в котором задается длина. */
+  def HEIGHT_INPUT_ID               = "afHeight"
+
 }
