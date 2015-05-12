@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.img.crop
 
+import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.routes
@@ -10,7 +11,6 @@ import org.scalajs.jquery._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.{Future, Promise}
-import scala.scalajs.js
 import scala.scalajs.js.{Any, Dictionary}
 
 /**
@@ -19,36 +19,13 @@ import scala.scalajs.js.{Any, Dictionary}
  * Created: 27.04.15 16:36
  * Description: Встраиваемый код для запроса формы кроппинга изображения.
  */
-trait CropFormRequestT extends ISjsLogger {
-
-  /** Инпут, откуда можно прочесть данные для запроса. */
-  // Нужно перезаписывать через val или lazy val.
-  def whInput: JQuery
+trait CropFormRequestT extends ISjsLogger with ISize2di {
 
   /** Отсюда считывать img id. */
   def imgIdInput: JQuery
 
   /** id текущей картинки. */
   def imgId: String = imgIdInput.`val`().toString
-
-  /** Имя поля */
-  def fieldName = whInput.attr("name")
-
-  /** Парсинг целого числа из аттрибута тега. */
-  protected def parseIntAttr(name: String): Int = {
-    // TODO Вынести названия аттрибутов в константы.
-    whInput.attr("data-" + name)
-      .toOption
-      .filter { !_.isEmpty }
-      .get
-      .toInt
-  }
-
-  /** Ширина для кропа. */
-  def width = parseIntAttr("width")
-
-  /** Высота для кропа. */
-  def height = parseIntAttr("height")
 
   /** Роута из jsRouter'а. */
   def route: Route = {
