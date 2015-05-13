@@ -6,7 +6,7 @@ import scala.concurrent.{ExecutionContext, Promise, Future}
 import scala.util.{Success, Failure}
 import scala.concurrent.duration.FiniteDuration
 import java.util.TimerTask
-import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.{ListenableFuture => GListenableFuture}
 
 /**
  * Suggest.io
@@ -106,33 +106,56 @@ object SioFutureUtil extends Logs {
   }
 
 
+  /** Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся. */
+  def ec2jexecutor(ec: ExecutionContext): Executor = {
+    ec match {
+      case exc: Executor => exc
+      case _ => scala.concurrent.ExecutionContext.Implicits.global
+    }
+  }
+
+  /** Быстрая сборка scala future на базе произвольного фьючерса, поддерживающего listener'ы типа Runnable. */
+  trait RunnableListenableFutureWrapper[T] {
+    def _ec: ExecutionContext
+    def getValue: T
+    def addListener(runnable: Runnable, executor: Executor): Unit
+    def executor = ec2jexecutor(_ec)
+
+    def future: Future[T] = {
+      val p = Promise[T]()
+      val listener = new Runnable {
+        override def run(): Unit = {
+          try {
+            p success getValue
+          } catch {
+            case eex: ExecutionException =>
+              p failure eex.getCause
+            case ex: Throwable =>
+              p failure ex
+          }
+        }
+      }
+      // Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся.
+      addListener(listener, executor)
+      p.future
+    }
+  }
+
   /**
    * Конверсия guava ListenableFuture к scala Future.
    * @param gfut java-фьючерс.
    * @tparam T Тип значения.
    * @return Экземпляр scala.concurrent.Future[T].
    */
-  implicit def guavaFuture2scalaFuture[T](gfut: ListenableFuture[T])(implicit ec: ExecutionContext): Future[T] = {
-    val p = Promise[T]()
-    val listener = new Runnable {
-      override def run(): Unit = {
-        try {
-          p success gfut.get()
-        } catch {
-          case eex: ExecutionException =>
-            p failure eex.getCause
-          case ex: Throwable =>
-            p failure ex
-        }
+  implicit def guavaFuture2scalaFuture[T](gfut: GListenableFuture[T])(implicit ec: ExecutionContext): Future[T] = {
+    val w = new RunnableListenableFutureWrapper[T] {
+      override def _ec: ExecutionContext = ec
+      override def getValue: T = gfut.get()
+      override def addListener(runnable: Runnable, executor: Executor): Unit = {
+        gfut.addListener(runnable, executor)
       }
     }
-    // Обычно (почти всегда) ExecutionContext является и java-executor'ом. Но всё же предостерегаемся.
-    val executor: Executor = ec match {
-      case exc: Executor => exc
-      case _ => scala.concurrent.ExecutionContext.Implicits.global
-    }
-    gfut.addListener(listener, executor)
-    p.future
+    w.future
   }
 
 }
