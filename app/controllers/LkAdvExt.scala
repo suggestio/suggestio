@@ -133,7 +133,7 @@ class LkAdvExt @Inject() (
           bestBeforeSec = WS_BEST_BEFORE_SECONDS,
           wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
         )
-        Redirect( routes.LkAdvExt.runner(adId, wsArgs) )
+        Redirect( routes.LkAdvExt.runner(adId, Some(wsArgs)) )
       }
     )
   }
@@ -141,17 +141,25 @@ class LkAdvExt @Inject() (
   /**
    * Рендер страницы с runner'ом.
    * @param adId id размещаемой рекламной карточки.
-   * @param wsArgs Аргументы из сабмита.
+   * @param wsArgsOpt Аргументы из сабмита.
+   *                  Если не заданы, то будет редирект на форму размещения.
    * @return Страница с системой размещения.
    */
-  def runner(adId: String, wsArgs: MExtAdvQs) = CanAdvertiseAdPost(adId) { implicit request =>
-    implicit val jsInitTargets = Seq(MTargets.AdvExtRunner)
-    implicit val ctx = implicitly[Context]
-    val wsArgs2 = wsArgs.copy(
-      wsId = ctx.ctxIdStr,
-      adId = adId
-    )
-    Ok( advRunnerTpl(wsArgs2, request.mad, request.producer)(ctx) )
+  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId) { implicit request =>
+    wsArgsOpt match {
+      case Some(wsArgs) =>
+        implicit val jsInitTargets = Seq(MTargets.AdvExtRunner)
+        implicit val ctx = implicitly[Context]
+        val wsArgs2 = wsArgs.copy(
+          wsId = ctx.ctxIdStr,
+          adId = adId
+        )
+        Ok( advRunnerTpl(wsArgs2, request.mad, request.producer)(ctx) )
+
+      // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
+      case None =>
+        Redirect(routes.LkAdvExt.forAd(adId))
+    }
   }
 
   private sealed case class ExceptionWithResult(res: Result) extends Exception

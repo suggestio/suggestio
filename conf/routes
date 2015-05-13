@@ -60,7 +60,7 @@ GET  /ws/lk/xadv/ext/run                @controllers.LkAdvExt.wsRun(x: adv.MExtA
 POST /lk/xadv/ext/tg/delete/:tgId       @controllers.LkAdvExt.deleteTargetSubmit(tgId)
 GET  /lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAd(adId)
 POST /lk/xadv/ext/ad/:adId              @controllers.LkAdvExt.forAdSubmit(adId)
-GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: adv.MExtAdvQs)
+GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: Option[adv.MExtAdvQs])
 GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
