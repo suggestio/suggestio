@@ -1,15 +1,16 @@
 package models.im
 
 import java.io.File
-import java.nio.file.Files
 
 import models.MImgSizeT
 import play.api.Play.{current, configuration}
+import play.api.libs.concurrent.Akka
 import util.PlayMacroLogsI
 import util.async.AsyncUtil
 import util.xplay.CacheUtil
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -70,7 +71,20 @@ trait IAdRenderArgs {
 
   /** Запустить рендер карточки, если результат уже не лежит в кеше. */
   def renderCached: Future[File] = {
-    CacheUtil.getOrElse(toString, cacheSeconds)(render)
+    CacheUtil.getOrElse(toString, cacheSeconds) {
+      val fut = render
+      // Удалить файл с диска через некоторое время, зависящие от времени кеширования.
+      val deleteAt = System.currentTimeMillis() + (cacheSeconds * 2).seconds.toMillis
+      fut onSuccess { case file =>
+        file.deleteOnExit()
+        val deleteAfterNow = (System.currentTimeMillis() - deleteAt).milliseconds
+        Akka.system.scheduler.scheduleOnce(deleteAfterNow) {
+          file.delete
+        }
+      }
+      // Вернуть исходный фьючерс
+      fut
+    }
   }
 
 }

@@ -131,16 +131,4 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
     }
   }
 
-
-  /** Удалить файл после завершения аплоада. */
-  trait DelFileAfterUpload extends super.S2sMpUploadStateT {
-    /** Файл для удаления. */
-    protected def imgFile: File
-
-    override def uploadCompleted(res: Try[WSResponse]): Unit = {
-      super.uploadCompleted(res)
-      imgFile.delete()
-    }
-  }
-
 }
