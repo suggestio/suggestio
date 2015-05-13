@@ -45,9 +45,10 @@
     @* Ссылка на demo web site. *@
     @if(isMyNode) {
       <div class="sm-note">
-        @mnode.adn.memberType.nodeAdmSiteCall(mnode).map { siteCall =>
+        @if(mnode.adn.isReceiver) {
           @messages("You.can.look.on.ads.in")
-          <a class="blue-link" target="_blank" href="@siteCall">@messages("_ad.showcase.link")</a>.
+          <a class="blue-link" href="@routes.MarketShowcase.geoSite(msc.ScJsState(adnId = mnode.id))"
+             target="_blank">@messages("_ad.showcase.link")</a>.
         }
       </div>
     }

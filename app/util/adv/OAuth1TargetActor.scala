@@ -92,7 +92,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   }
 
 
-  class UploadRenderedMadState(imgFile: File) extends S2sMpUploadStateT {
+  class UploadRenderedMadState(override val imgFile: File) extends S2sMpUploadStateT with DelFileAfterUpload {
     /** Ссылка, которая была использована для аплоада. */
     override def upUrl: String = args.target.target.url
 

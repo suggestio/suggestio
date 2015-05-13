@@ -144,7 +144,7 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     if (geo.isDefined) {
       val g = geo.get
       nreq.addFormParam("lat", g.lat.toString)
-          .addQueryParam("lon", g.lon.toString)
+          .addFormParam("lon", g.lon.toString)
     }
     // Приаттачить аттачменты к твиту.
     val medias = args.attachments

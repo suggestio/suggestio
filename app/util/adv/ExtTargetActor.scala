@@ -258,8 +258,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
-  class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgFile: File)
-    extends S2sMpUploadStateT {
+  class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, override val imgFile: File)
+    extends S2sMpUploadStateT with DelFileAfterUpload {
 
     override def upUrl = uploadCtx.url
 

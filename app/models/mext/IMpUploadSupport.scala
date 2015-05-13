@@ -67,13 +67,14 @@ trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
 
   /** Запуск HTTP-запроса. */
   def mkRequest(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
-    LOGGER.trace("Will upload to URL: " + args.url)
     val ningClient = ws.underlying[AsyncHttpClient]
     val rb = newRequest(args, ningClient)
     args.parts
       .foreach { rb.addBodyPart }
     val req = rb.build()
-    ningClient.executeRequest(req)
+    val fut = ningClient.executeRequest(req)
+    LOGGER.trace("Will upload to URL: " + req.getUrl)
+    fut
   }
 
   /** Обработать запрос, отсеивая ошибки. */

@@ -1,5 +1,7 @@
 package util.adv.ut
 
+import java.io.File
+
 import models.adv.ext.act.ExtActorEnv
 import models.event.ErrorInfo
 import models.mext.{IMpUploadArgs, UploadRefusedException}
@@ -9,7 +11,7 @@ import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.EventTypes
 
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 /**
  * Suggest.io
@@ -35,13 +37,17 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Собрать POST-запрос и запустить его на исполнение
-      mpUploadClient
-        .mpUpload(mkUpArgs)
-        .onComplete {
-          case Success(wsResp) => self ! wsResp
-          case other           => self ! other
-        }
+      val upFut = mpUploadClient.mpUpload(mkUpArgs)
+      upFut.onComplete {
+        case Success(wsResp) => self ! wsResp
+        case other           => self ! other
+      }
+      upFut.onComplete { case tryRes =>
+        uploadCompleted(tryRes)
+      }
     }
+
+    def uploadCompleted(res: Try[WSResponse]): Unit = {}
 
     /** Ждём ответа от удалённого сервера с результатом загрузки картинки. */
     override def receiverPart: Receive = {
@@ -52,7 +58,6 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
       // Запрос не удался или произошла ещё какая-то ошибка.
       case Failure(ex) =>
         uploadFailed(ex)
-        
     }
   }
 
@@ -123,6 +128,18 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
         case _ =>
           renderImgUploadFailed(ex)
       }
+    }
+  }
+
+
+  /** Удалить файл после завершения аплоада. */
+  trait DelFileAfterUpload extends super.S2sMpUploadStateT {
+    /** Файл для удаления. */
+    protected def imgFile: File
+
+    override def uploadCompleted(res: Try[WSResponse]): Unit = {
+      super.uploadCompleted(res)
+      imgFile.delete()
     }
   }
 
