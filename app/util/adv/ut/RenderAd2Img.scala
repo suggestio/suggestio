@@ -1,5 +1,7 @@
 package util.adv.ut
 
+import java.io.File
+
 import models.MAd
 import models.blk.OneAdQsArgs
 import models.event.ErrorInfo
@@ -36,7 +38,7 @@ trait RenderAd2Img extends FsmActor with PlayMacroLogsI {
       // Запустить в фоне генерацию картинки и отправку её на удалённый сервер.
       AdRenderUtil.renderAd2img(_adRenderArgs, _mad)
         .onComplete {
-          case Success(imgBytes)  =>  self ! new Ad2ImgRenderOk(imgBytes)
+          case Success(file)      =>  self ! new Ad2ImgRenderOk(file)
           case result             =>  self ! result
         }
     }
@@ -52,7 +54,7 @@ trait RenderAd2Img extends FsmActor with PlayMacroLogsI {
         rendererError(ex)
     }
 
-    class Ad2ImgRenderOk(val imgBytes: Array[Byte])
+    class Ad2ImgRenderOk(val imgFile: File)
   }
 
 }

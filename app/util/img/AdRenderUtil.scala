@@ -1,5 +1,7 @@
 package util.img
 
+import java.io.File
+
 import controllers.routes
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.szMulted
@@ -75,7 +77,7 @@ object AdRenderUtil {
    * @param mad карточка для рендера.
    * @return Фьючерс с байтами картинки.
    */
-  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[Array[Byte]] = {
+  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[File] = {
     val sourceAdSz = mad.blockMeta
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = szMulted(sourceAdSz.width, adArgs.szMult)

@@ -1,5 +1,7 @@
 package util.adv
 
+import java.io.File
+
 import akka.actor.Props
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
@@ -85,19 +87,19 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
     override def _mad = args.request.mad
     override def _adRenderArgs: OneAdQsArgs = _ca.adRenderArgs
     override def handleImgOk(okRes: Ad2ImgRenderOk): Unit = {
-      become( new UploadRenderedMadState(okRes.imgBytes) )
+      become( new UploadRenderedMadState(okRes.imgFile) )
     }
   }
 
 
-  class UploadRenderedMadState(imgBytes: Array[Byte]) extends S2sMpUploadStateT {
+  class UploadRenderedMadState(imgFile: File) extends S2sMpUploadStateT {
     /** Ссылка, которая была использована для аплоада. */
     override def upUrl: String = args.target.target.url
 
     /** Формирование данных для сборки тела multipart. */
     override def mkUpArgs: IMpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
-        data      = imgBytes,
+        file      = imgFile,
         ct        = service.imgFmt.mime,
         url       = None,
         fileName  = ad2imgFileName,

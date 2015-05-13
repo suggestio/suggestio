@@ -1,5 +1,7 @@
 package util.adv
 
+import java.io.File
+
 import akka.actor.Props
 import io.suggest.adv.ext.model.im.INamedSize2di
 import models.adv.ext.act._
@@ -249,21 +251,21 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     }
 
     override def handleImgOk(okRes: Ad2ImgRenderOk): Unit = {
-      val nextState = new S2sPutPictureState(mctx0, madId, uploadCtx, okRes.imgBytes)
+      val nextState = new S2sPutPictureState(mctx0, madId, uploadCtx, okRes.imgFile)
       become(nextState)
     }
   }
 
 
   /** Состояние отсылки запроса сохранения картинки на удалённый сервер. */
-  class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgBytes: Array[Byte])
+  class S2sPutPictureState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload, imgFile: File)
     extends S2sMpUploadStateT {
 
     override def upUrl = uploadCtx.url
 
     override def mkUpArgs: IMpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
-        data      = imgBytes,
+        file      = imgFile,
         ct        = service.imgFmt.mime,
         url       = Some(uploadCtx.url),
         fileName  = ad2imgFileName

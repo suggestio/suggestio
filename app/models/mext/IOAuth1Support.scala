@@ -30,7 +30,7 @@ trait IOAuth1Support {
   def isAcTokValid(acTok: RequestToken)(implicit ws: WSClient, ec: ExecutionContext): Future[Boolean]
 
   /** Калькулятор oauth1-сигнатур запросов. */
-  def sigCalc(acTok: RequestToken) = OAuthCalculator(consumerKey, acTok)
+  def sigCalc(acTok: RequestToken) = new OAuthCalculator(consumerKey, acTok)
 
   /** Необходимо ли делать mp-upload карточки на сервер перед вызовом mkPost?
     * Если true, то текущий сервис должен поддерживать mpUpload. */

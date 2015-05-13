@@ -1,13 +1,14 @@
 package models.mext.tw
 
+import com.ning.http.client.AsyncHttpClient
 import models.msc.SiteQsArgs
 import util.{PlayMacroLogsI, FormUtil, TplDataFormatUtil}
 import models.Context
 import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
-import org.apache.http.client.utils.URIBuilder
 import play.api.libs.oauth._
 import play.api.libs.ws.WSClient
 import play.api.Play.{current, configuration}
+import util.ws.NingUtil.ningFut2wsScalaFut
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -109,7 +110,9 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
    */
   override def mkPost(args: IOa1MkPostArgs)(implicit ws: WSClient, ec: ExecutionContext): Future[TweetInfo] = {
     import args._
-    val b = new URIBuilder(MK_TWEET_URL)
+    val ning = ws.underlying[AsyncHttpClient]
+    val nreq = ning.preparePost(MK_TWEET_URL)
+
     // Собираем читабельный текст твита.
     val tweetTextOpt = mad.richDescrOpt
       .map { rd => rdescr2tweetLeadingText(rd.text) }
@@ -137,25 +140,24 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
       ""
     }
     val fullTweetText = tweetTextOpt.fold(tweetUrl)(_ + " " + tweetUrl)
-    b.addParameter("status", fullTweetText)
+    nreq.addFormParam("status", fullTweetText)
     if (geo.isDefined) {
       val g = geo.get
-      b.addParameter("lat", g.lat.toString)
-      b.addParameter("lon", g.lon.toString)
+      nreq.addFormParam("lat", g.lat.toString)
+          .addQueryParam("lon", g.lon.toString)
     }
     // Приаттачить аттачменты к твиту.
     val medias = args.attachments
     if (medias.nonEmpty) {
       val v = medias.toIterator.map(_.strId).mkString(",")
-      b.addParameter("media_ids", v)
+      nreq.addFormParam("media_ids", v)
     }
-    val url = b.build().toASCIIString
     // Начать постинг.
-    val req = ws.url(url)
-      .sign( sigCalc(acTok) )
-    LOGGER.trace("Tweet POSTing to: " + req.url)
-    req
-      .execute("POST")
+    val req = nreq
+      .setSignatureCalculator( sigCalc(acTok) )
+      .build()
+    LOGGER.trace("Tweet POSTing to: " + req.getUrl)
+    ning.executeRequest(req)
       .map { resp =>
         if (resp.status == 200) {
           val tweetId = (resp.json \ "id_str").as[String]

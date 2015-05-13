@@ -1,8 +1,9 @@
 package models.mext.tw
 
+import com.ning.http.client.AsyncHttpClient
 import models.mext._
 import play.api.libs.oauth.OAuthCalculator
-import play.api.libs.ws.{WSRequest, WSClient, WSResponse}
+import play.api.libs.ws.WSResponse
 
 /**
  * Suggest.io
@@ -26,10 +27,10 @@ trait TwMpUpload extends MpUploadSupportDflt { this: TwitterService =>
     s >= 200 && s <= 299
   }
 
-  /** Создание экземпляра нового реквеста требует цифровую подпись OAuth. */
-  override def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequest = {
-    super.newRequest(args)
-      .sign( OAuthCalculator(consumerKey, args.oa1AcTok.get) )
+  /** Создание экземпляра нового реквеста. */
+  override def newRequest(args: IMpUploadArgs, client: AsyncHttpClient): AsyncHttpClient#BoundRequestBuilder = {
+    super.newRequest(args, client)
+      .setSignatureCalculator( new OAuthCalculator(consumerKey, args.oa1AcTok.get) )
   }
 
   override def mpFieldNameDflt = "media"

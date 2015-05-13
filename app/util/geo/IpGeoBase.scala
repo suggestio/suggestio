@@ -88,8 +88,12 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
       override def urlStr           = dlUrlStr
     }
     val resultFut = downloader.request()
-    val fileFut = resultFut.map(_._2)
-    fileFut
+    resultFut onFailure { case ex =>
+      info(s"download(): Failed to fetch $dlUrlStr into file.", ex)
+    }
+
+    resultFut
+      .map(_._2)
       // Метод `>` не проверяет 200 OK. Нужно вручную проверить, что скачался именно архив.
       .filter { archiveFile =>
         // Тестируем архив по методике http://www.java2s.com/Code/Java/File-Input-Output/DeterminewhetherafileisaZIPFile.htm
@@ -109,10 +113,6 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
         trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
         archiveFile
       }
-    fileFut onFailure { case ex =>
-      info(s"download(): Failed to fetch $dlUrlStr into file.")
-    }
-    fileFut
   }
 
 

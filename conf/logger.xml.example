@@ -19,6 +19,8 @@
   
   <logger name="play" level="DEBUG" />
   <logger name="util" level="TRACE" />
+  <logger name="models" level="TRACE" />
+  <logger name="controllers" level="TRACE" />
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />

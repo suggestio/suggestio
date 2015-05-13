@@ -1,14 +1,14 @@
 package models.mext
 
-import java.io.ByteArrayOutputStream
+import java.io.File
 
-import org.apache.http.entity.ContentType
-import org.apache.http.entity.mime.MultipartEntityBuilder
-import org.apache.http.entity.mime.content.ByteArrayBody
+import com.ning.http.client.AsyncHttpClient
+import com.ning.http.client.multipart.{Part, FilePart}
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
-import play.api.libs.ws.{WSRequest, WSResponse, WSClient}
+import play.api.libs.ws.{WSResponse, WSClient}
 import util.PlayMacroLogsI
+import util.ws.NingUtil.ningFut2wsScalaFut
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,14 +29,9 @@ trait IMpUploadSupport {
    */
   def mpUpload(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse]
 
-  def uploadArgsSimple(data: Array[Byte], ct: String, url: Option[String], fileName: String,
+  def uploadArgsSimple(file: File, ct: String, url: Option[String], fileName: String,
                        oa1AcTok: Option[RequestToken] = None): IMpUploadArgs = {
-    val upPart = UploadPart(
-      data      = data,
-      name      = mpFieldNameDflt,
-      fileName  = fileName,
-      ct        = ct
-    )
+    val upPart = new FilePart(mpFieldNameDflt, file, ct, null, fileName)
     MpUploadArgs(
       parts = Seq(upPart),
       url   = url,
@@ -61,37 +56,10 @@ trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
    */
   def getUploadUrl(args: IMpUploadArgs): String
 
-  /**
-   * Сборка тела multi-part POST.
-   * @param args Аргументы [[IMpUploadArgs]].
-   * @param boundary Используемая граница между частями. Она указывается в content-type при запросе.
-   * @return Байты тела запроса.
-   */
-  def mkMpPostBody(args: IMpUploadArgs, boundary: String): Array[Byte] = {
-    // Собрать POST-запрос и запустить его на исполнение
-    val entity = MultipartEntityBuilder.create()
-      .setBoundary(boundary)
-    val nearLen = args.parts.foldLeft(0) { (l0, part) =>
-      val partCt = ContentType.create(part.ct)
-      val d = part.data
-      val partBody = new ByteArrayBody(d, partCt, part.fileName)
-      entity.addPart(part.name, partBody)
-      l0 + d.length + 255
-    }
-    val baos = new ByteArrayOutputStream(nearLen)
-    val resp = entity.build()
-    resp.writeTo(baos)
-    baos.toByteArray
-  }
-
-  /** Генерация boundary. */
-  def boundary(args: IMpUploadArgs): String = {
-    "-----BOUNDARY-" + args.hashCode() + "--" + (System.currentTimeMillis() / 1000L) + "-----"
-  }
-
   /** Создание экземпляра нового реквеста. */
-  def newRequest(args: IMpUploadArgs)(implicit ws: WSClient): WSRequest = {
-    ws.url( getUploadUrl(args) )
+  def newRequest(args: IMpUploadArgs, client: AsyncHttpClient) = {
+    client.preparePost( getUploadUrl(args) )
+      .setHeader(HeaderNames.CONTENT_TYPE, "multipart/form-data")
   }
 
   /** Является ли ответ по запросу правильным. false - если ошибка. */
@@ -99,14 +67,13 @@ trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
 
   /** Запуск HTTP-запроса. */
   def mkRequest(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
-    val _boundary = boundary(args)
-    val req = newRequest(args)
-    LOGGER.trace("Will upload to URL: " + req.url)
-    req
-      .withHeaders(
-        HeaderNames.CONTENT_TYPE -> ("multipart/form-data; boundary=" + _boundary)
-      )
-      .post(mkMpPostBody(args, _boundary))
+    LOGGER.trace("Will upload to URL: " + args.url)
+    val ningClient = ws.underlying[AsyncHttpClient]
+    val rb = newRequest(args, ningClient)
+    args.parts
+      .foreach { rb.addBodyPart }
+    val req = rb.build()
+    ningClient.executeRequest(req)
   }
 
   /** Обработать запрос, отсеивая ошибки. */
@@ -136,7 +103,7 @@ trait MpUploadSupportDflt extends IMpUploadSupport with PlayMacroLogsI {
 /** Аргументы для запуска аплода. */
 trait IMpUploadArgs {
   /** Части для запроса. */
-  def parts     : TraversableOnce[IUploadPart]
+  def parts     : TraversableOnce[Part]
   /** Ссылка для аплоада, если динамическая. */
   def url       : Option[String]
   /** access token, если oauth1 сервис. Иначе None. */
@@ -145,7 +112,7 @@ trait IMpUploadArgs {
 
 /** Дефолтовая реализацяи [[IMpUploadArgs]]. */
 case class MpUploadArgs(
-  override val parts    : TraversableOnce[IUploadPart],
+  override val parts    : Traversable[Part],
   override val url      : Option[String] = None,
   override val oa1AcTok : Option[RequestToken] = None
 )
@@ -155,23 +122,3 @@ case class MpUploadArgs(
 /** Сервис отказал в аплоаде. */
 case class UploadRefusedException(msg: String, wsResp: WSResponse) extends RuntimeException(msg)
 
-/** Интерфейс описания одной части для multipart-upload'a. */
-trait IUploadPart {
-  /** Тело части. */
-  def data: Array[Byte]
-  /** Название части. */
-  def name: String
-  /** content-type. */
-  def ct: String
-  /** Имя файла. */
-  def fileName: String
-}
-
-/** Дефолтовая реализация [[IUploadPart]]. */
-case class UploadPart(
-  override val data: Array[Byte],
-  override val name: String,
-  override val ct: String,
-  override val fileName: String
-)
-  extends IUploadPart

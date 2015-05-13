@@ -62,14 +62,14 @@ trait IAdRenderArgs {
 
 
   /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */
-  def render: Future[Array[Byte]]
+  def render: Future[File]
 
 
   /** Время кеширования в секундах. */
   def cacheSeconds: Int = AdRenderArgs.CACHE_TTL_SECONDS
 
   /** Запустить рендер карточки, если результат уже не лежит в кеше. */
-  def renderCached: Future[Array[Byte]] = {
+  def renderCached: Future[File] = {
     CacheUtil.getOrElse(toString, cacheSeconds)(render)
   }
 
@@ -95,17 +95,15 @@ trait IAdRenderArgsSyncFile extends IAdRenderArgs with PlayMacroLogsI {
   }
 
   /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */
-  override def render: Future[Array[Byte]] = {
+  override def render: Future[File] = {
     /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */
     val dstFile = File.createTempFile("ad_render", "." + outFmt.name)
     val fut = Future {
       renderSync(dstFile)
-      Files.readAllBytes(dstFile.toPath)
     }(AsyncUtil.singleThreadIoContext)
-    fut onComplete { case _ =>
-      dstFile.delete()
+    fut map { _ =>
+      dstFile
     }
-    fut
   }
 }
 
