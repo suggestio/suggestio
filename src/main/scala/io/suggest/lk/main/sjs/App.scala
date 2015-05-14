@@ -4,6 +4,7 @@ import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
+import io.suggest.lk.ident.center.captcha.{HiddenCaptchaInit, CaptchaFormInit}
 import io.suggest.lk.popup.PopupsInitRouter
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
@@ -40,6 +41,8 @@ object App extends JSApp with SjsLogger {
 class LkInitRouter
   extends SjsLogger
   with CenterContentInitRouter
+  with CaptchaFormInit
+  with HiddenCaptchaInit
   with RunnerInitRouter
   with FormEventsInitRouter
   with AdFormInitRouter
