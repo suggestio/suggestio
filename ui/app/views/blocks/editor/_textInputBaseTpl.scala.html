@@ -5,6 +5,10 @@
 @import helper._
 @import models.blk._
 
+@* Шаблон для рендера кнопки выравнивания текста. *@
+@_tAlignBtn(name: String, field: Field) = {
+  <div class='ad-field-editor_align-text-btn __@name js-ae-button @if(field.value contains name){__act}' data-align="@name"></div>
+}
 
 <div class="lk-field-w-tools">
 
@@ -33,13 +37,13 @@
 
         @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
         @if( bf.withTextAlign ) {
-          @defining(af(bfNameBase + ".font.align")) { field =>
-          <div class="lk-field-tools__editor lk-field-tools__editor_align-editor align-editor js-align-editor">
-            <div class='ad-field-editor_align-text-btn __left js-ae-button @if(field.value contains "left"){__act}'  data-align="left"></div>
-            <div class='ad-field-editor_align-text-btn __center js-ae-button @if(field.value contains "center"){__act}' data-align="center"></div>
-            <div class='ad-field-editor_align-text-btn __right js-ae-button @if(field.value contains "right"){__act}' data-align="right"></div>
-            <input type="hidden" name="@field.name" value="@field.value"/>
-          </div>
+          @defining( af(bfNameBase + ".font.align") ) { field =>
+            <div class="lk-field-tools__editor lk-field-tools__editor_align-editor align-editor js-align-editor">
+	      @_tAlignBtn("left",   field)
+	      @_tAlignBtn("center", field)
+	      @_tAlignBtn("right",  field)
+              <input type="hidden" name="@field.name" value="@field.value"/>
+            </div>
           }
         }
 

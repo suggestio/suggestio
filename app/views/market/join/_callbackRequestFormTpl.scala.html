@@ -6,7 +6,8 @@
 @import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN, DIGITS_CAPTCHA_LEN}
 @import io.suggest.util.StringUtil.randomId
 
-@form(CSRF(submitCall), 'class -> "adv-req-page_call-back-form") {
+@defining( CSRF(submitCall) ) { submitCall1 =>
+@form(submitCall1, 'class -> "adv-req-page_call-back-form") {
 
   @* TODO Name нужно вставить в смысле имени, а не в смысле названия. *@
   @inputText(
@@ -44,7 +45,7 @@
     <div class="captcha">
       @defining( crf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getDigitalCaptcha(captchaId) );" ></div>
+        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getDigitalCaptcha(captchaId, submitCall1.url) );" ></div>
         <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageCallbackForm" href=""></a>
       }
     </div>
@@ -60,4 +61,5 @@
       <input class="siom-new-btn __size-M __fill-1" type="submit" value="Заказать" />
     </div>
 
-}
+} @* form *@
+} @* defining submitCall1 *@

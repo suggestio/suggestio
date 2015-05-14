@@ -7,29 +7,19 @@
 @import io.suggest.popup.PopupConstants
 
 @html = {
-  <div class="@PopupConstants.POPUP_CLASS @PopupConstants.JS_POPUP_CLASS __index" id="newPasswordForm">
+  <div class="auth-page_column">
 
-    <div class="popup_header __index">
-      <a class="popup_close f-right icon-icomoon @PopupConstants.CLOSE_CSS_CLASS"></a>
-    </div>
+    <h2 class="auth-page_column-t __color-2">@messages("Error")</h2>
 
-    <div class="popup_cnt __index-fix">
+    <div class="error-icon popup_error-icon"></div>
 
-      <div class="popup_t __index">
-        @messages("Error")
-      </div>
+    <p class="block __margin-M __text-C">
+      @messages("Recovery.key.expired")<br/>@messages("or.used.cannot.recover.pw")
+    </p>
 
-      <div class="error-icon popup_error-icon"></div>
-
-      <p class="block __margin-M __text-C">
-        @messages("Recovery.key.expired")<br/>@messages("or.used.cannot.recover.pw")
-      </p>
-
-      <p class="block __margin-M __text-C">
-        <a class="js-btn link" href="@routes.Ident.recoverPwForm">@messages("Recover.password")</a>
-      </p>
-
-    </div>
+    <p class="block __margin-M __text-C">
+      <a class="link" href="@routes.Ident.recoverPwForm()">@messages("Recover.password")</a>
+    </p>
 
   </div>
 }

@@ -260,60 +260,6 @@ dateView = new DateView('advManagementDateWidget')
 
 
 PersonalCabinet =
-  login: () ->
-
-    #################################################################################################################
-    ## CAPTCHA ##
-    #################################################################################################################
-    $ document
-    .on 'click', '#captchaReload', (e)->
-      e.preventDefault()
-      $this = $ this
-      dataFor = $this.attr 'data-for'
-      $captchaImage = $ dataFor
-      $parent = $captchaImage.parent()
-      random = Math.random()
-
-      $captchaImage.remove()
-      captchaId = dataFor.substr(1)
-      $ '#captchaTyped'
-      .val ''
-      $parent.prepend "<img class='captcha_img' id='#{captchaId}' src='/captcha/digital/#{$('#captchaId').val()}?v=#{random}' />"
-
-    $newPasswordForm = $ '#newPasswordForm'
-    if $newPasswordForm.size()
-      cbca.popup.showPopup '#newPasswordForm'
-
-    $ document
-    .on 'submit', '#recoverPwForm form', (e)->
-      e.preventDefault()
-      $form = $ this
-      action = $form.attr 'action'
-
-      $.ajax(
-        type: "POST",
-        url: action,
-        data: $form.serialize(),
-        success: (data)->
-          $recoverPwForm = $ '#recoverPwForm'
-
-          $recoverPwForm
-          .find 'form'
-          .remove()
-
-          $recoverPwForm
-          .append data
-
-        error: (error)->
-
-          $ '#recoverPwForm'
-          .remove()
-
-          $ '#popupsContainer'
-          .append error.responseText
-
-          cbca.popup.showPopup '#recoverPwForm'
-      )
 
   billing: () ->
 
@@ -874,25 +820,15 @@ PersonalCabinet =
     ##################################################################################################################
     inputs: () ->
 
-      # форма регистрации на главной
-      $ document
-      .on "focus", "#indexRegForm input[name = email]", (e)->
-        $this = $ this
-        $regForm = $ "#indexRegForm"
+      #$ document
+      #.on "blur", "#indexRegForm input[name = email]", (e)->
+      #  $this = $ this
+      #  $regForm = $ "#indexRegForm"
+      #  value = $this.val().trim()
 
-        $hiddenBlock = $regForm.find ".js-hidden"
-        $hiddenBlock.fadeIn()
-        $regForm.find("#captchaReload").trigger "click"
-
-      $ document
-      .on "blur", "#indexRegForm input[name = email]", (e)->
-        $this = $ this
-        $regForm = $ "#indexRegForm"
-        value = $this.val().trim()
-
-        if !value
-          $hiddenBlock = $regForm.find ".js-hidden"
-          $hiddenBlock.fadeOut()
+      #  if !value
+      #    $hiddenBlock = $regForm.find ".js-hidden"
+      #    $hiddenBlock.fadeOut()
 
       #маска для телефонов
       if $().mask
@@ -1051,7 +987,6 @@ PersonalCabinet =
     cbca.pc.common.photoSlider()
 
     cbca.pc.slideBlock.init()
-    cbca.pc.login()
     cbca.pc.billing()
     cbca.pc.advRequest()
     cbca.pc.advManagement()

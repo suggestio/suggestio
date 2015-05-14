@@ -1,4 +1,4 @@
-@(rf: EmailPwRegReqForm_t, captchaShown: Boolean = false)(implicit ctx: Context)
+@(rf: EmailPwRegReqForm_t, captchaShown: Boolean)(implicit ctx: Context)
 
 @import helper._
 @import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
@@ -6,9 +6,11 @@
 @import ctx._
 @import util.FC.authFc
 @import io.suggest.err.ErrorConstants._
+@import io.suggest.captcha.CaptchaConstants._
 
 
-@form( CSRF(routes.Ident.emailRegSubmit()), 'id -> "indexRegForm" ) {
+@defining( CSRF(routes.Ident.emailRegSubmit()) ) { submitCall =>
+@form(submitCall, 'id -> "indexRegForm") {
 
   @rf.globalError.map { ge =>
     <p class="@ERROR_MSG_CLASS">@messages("Error"): @messages(ge.message)</p>
@@ -21,16 +23,21 @@
     'placeholder  -> messages("Your.email.addr")
   )
 
-
-  <div class="js-hidden">
-
+  <div @if(!captchaShown){style="display: none;" id="@HIDDEN_CAPTCHA_DIV_ID"}>
     <div class="auth-page_input">
       @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
       @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-        <img class="captcha_img" id="captchaImageRegistrationForm"
-             src="@if(captchaShown){@routes.Captcha.getDigitalCaptcha(captchaId)}" alt="" />
-        <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImageRegistrationForm" href=""></a>
+        <img class="captcha_img" id="captchaImageRegistrationForm" alt=""
+             @defining( routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url) ) { call =>
+               @if(!captchaShown) {@ATTR_HIDDEN_SRC="@call"}
+               src="@if(captchaShown){@call}"
+             }
+             />
+        <a class="captcha_reload-btn __small"
+           id="@CAPTCHA_RELOAD_BTN_ID"
+           @ATTR_RELOAD_FOR="#captchaImageRegistrationForm"
+           href="@ctx.request.uri"></a>
       }
     </div>
 
@@ -39,7 +46,8 @@
         rf(CAPTCHA_TYPED_FN),
         '_label       -> msg,
         'type         -> "tel",
-        'placeholder  -> msg
+        'placeholder  -> msg,
+        'id	      -> CAPTCHA_TYPED_INPUT_ID
       )
     }
 
@@ -62,3 +70,4 @@
   </div>
 
 }
+} @* defining submitCall *@

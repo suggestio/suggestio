@@ -58,10 +58,12 @@ class Ident @Inject() (
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
-    val formFut = EmailPwSubmit.emailPwLoginFormStubM
+    // TODO Затолкать это в отдельный шаблон!
+    implicit val jsInitTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     val ctx = implicitly[Context]
+    val formFut = EmailPwSubmit.emailPwLoginFormStubM
     val title = Messages("Login.page.title")(ctx.messages)
-    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = true)(ctx)
+    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = false)(ctx)
     formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)
       Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )

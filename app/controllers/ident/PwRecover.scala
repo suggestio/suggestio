@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{IMailer, routes, CaptchaValidator, SioController}
+import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
@@ -96,6 +97,7 @@ trait SendPwRecoverEmail extends SioController with IMailer {
 trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl
 with SetLangCookieUtil {
 
+  // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
     mySioStartTpl(
       title     = Messages("Password.recovery")(ctx.messages),
@@ -103,7 +105,9 @@ with SetLangCookieUtil {
     )(ctx)
   }
 
+  /** Рендер содержимого страницы с формой восстановления пароля. */
   protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+    implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
     val ctx = implicitly[Context]
     val colHtml = _emailColTpl(form)(ctx)
     _outer(colHtml)(ctx)

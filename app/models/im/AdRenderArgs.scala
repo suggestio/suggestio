@@ -61,10 +61,8 @@ trait IAdRenderArgs {
   /** Формат сохраняемой картинки. */
   def outFmt  : OutImgFmt
 
-
   /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */
   def render: Future[File]
-
 
   /** Время кеширования в секундах. */
   def cacheSeconds: Int = AdRenderArgs.CACHE_TTL_SECONDS

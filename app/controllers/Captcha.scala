@@ -41,7 +41,7 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
 
   def createCaptchaImg(ctext: String): Array[Byte]
 
-  protected def _getCaptchaImg(captchaId: String, ctext: String)(implicit request: RequestHeader): Result = {
+  protected def _getCaptchaImg(captchaId: String, ctext: String, cookiePath: String)(implicit request: RequestHeader): Result = {
     val ctextCrypt = encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
       .withHeaders(
@@ -55,7 +55,8 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
         value     = ctextCrypt,
         maxAge    = Some(COOKIE_MAXAGE_SECONDS),
         httpOnly  = true,
-        secure    = COOKIE_FLAG_SECURE
+        secure    = COOKIE_FLAG_SECURE,
+        path      = cookiePath
       ))
   }
 
@@ -64,10 +65,10 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
    * @param captchaId id капчи, генерится в шаблоне формы. Используется для генерации имени кукиса с ответом.
    * @return image/png
    */
-  def getCaptcha(captchaId: String) = Action { implicit request =>
+  def getCaptcha(captchaId: String, cookiePath: String) = Action { implicit request =>
     val ctext = createCaptchaText
     LOGGER.trace(s"getCaptcha($captchaId): ctext -> $ctext")
-    _getCaptchaImg(captchaId, ctext = ctext)
+    _getCaptchaImg(captchaId, ctext = ctext, cookiePath = cookiePath)
   }
 
   /**
@@ -76,10 +77,10 @@ trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
    * @param captchaId id капчи.
    * @return image/png
    */
-  def getDigitalCaptcha(captchaId: String) = Action { implicit request =>
+  def getDigitalCaptcha(captchaId: String, cookiePath: String) = Action { implicit request =>
     val ctext = createCaptchaDigits
     LOGGER.trace(s"getDigitalCaptcha($captchaId): ctext -> $ctext")
-    _getCaptchaImg(captchaId, ctext = ctext)
+    _getCaptchaImg(captchaId, ctext = ctext, cookiePath = cookiePath)
   }
 
 }

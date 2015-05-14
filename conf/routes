@@ -14,8 +14,8 @@ GET  /vassets/*file                     @controllers.Assets.versioned(path="/pub
 GET  /                                  @controllers.MarketShowcase.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 ## Генераторы капч
-GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId)
-GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId)
+GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)
+GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
 
 ## Разные заманушные статические странички.
 GET  /market/about                      @controllers.Market.aboutMarket
@@ -351,6 +351,7 @@ GET  /id/epw/chpw                       @controllers.Ident.changePassword
 POST /id/epw/chpw                       @controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
 GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
 ## ident: рега по email и паролю
+GET  /id/epw/reg                        @controllers.Ident.emailReg
 POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
 GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: usr.IEaEmailId)
 POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)

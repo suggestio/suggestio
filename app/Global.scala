@@ -10,7 +10,7 @@ import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.secure.PgpUtil
 import util.showcase.ScStatSaver
-import util.xplay.{Tmp, SioHttpErrorHandler, SecHeadersFilter}
+import util.xplay.{SioHttpErrorHandler, SecHeadersFilter}
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -45,7 +45,6 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    //Tmp.recreateTmp(app)
     val esNodeFut = Future {
       SiowebEsUtil.ensureNode()
     }

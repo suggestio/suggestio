@@ -2,6 +2,7 @@ package controllers.ident
 
 import controllers.{IMailer, CaptchaValidator, SioController}
 import models._
+import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr._
 import play.api.data.Form
@@ -9,6 +10,7 @@ import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
+import play.twirl.api.Html
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil._
 import util.{FormUtil, PlayMacroLogsI}
@@ -65,6 +67,20 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
     msg.send()
   }
 
+  /** Рендер страницы регистрации по email. */
+  private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+    implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
+    epwRegTpl(form, captchaShown = true)
+  }
+
+  /**
+   * Страница с колонкой регистрации по email'у.
+   * @return 200 OK со страницей начала регистрации по email.
+   */
+  def emailReg = IsAnonGet { implicit request =>
+    Ok(_epwRender(emailRegFormM))
+  }
+
   /**
    * Сабмит формы регистрации по email.
    * Нужно отправить письмо на указанный ящик и отредиректить юзера на страницу с инфой.
@@ -76,7 +92,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
     form1.fold(
       {formWithErrors =>
         LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable( epwRegTpl(formWithErrors, captchaShown = true) )
+        NotAcceptable( _epwRender(formWithErrors) )
       },
       {email1 =>
         // Почта уже зарегана может?

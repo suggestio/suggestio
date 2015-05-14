@@ -7,9 +7,11 @@
 @import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 @import util.FC.authFc
+@import io.suggest.captcha.CaptchaConstants._
 
 
-@form(CSRF(routes.Ident.recoverPwFormSubmit), 'class -> "recover-popup__content__form") {
+@defining( CSRF(routes.Ident.recoverPwFormSubmit()) ) { submitCall =>
+@form(submitCall, 'class -> "recover-popup__content__form") {
 
   @defining( messages("Email.used.during.registration") ) { msg =>
     @inputText(
@@ -24,8 +26,8 @@
   <div class="captcha">
     @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
       <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getDigitalCaptcha(captchaId)" alt=""/>
-      <a class="captcha_reload-btn __small" id="captchaReload" data-for="#captchaImage" href=""></a>
+      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url)" alt=""/>
+      <a class="captcha_reload-btn __small" id="@CAPTCHA_RELOAD_BTN_ID" @ATTR_RELOAD_FOR="#captchaImage" href=""></a>
     }
   </div>
 
@@ -34,7 +36,8 @@
       rf(CAPTCHA_TYPED_FN),
       '_label       -> msg,
       'type         -> "tel",
-      'placeholder  -> msg
+      'placeholder  -> msg,
+      'id	    -> CAPTCHA_TYPED_INPUT_ID
     )
   }
 
@@ -42,4 +45,5 @@
     <input class="btn __size-M1 __minor" type="submit" value="@messages("Send")"/>
   </div>
 
-}
+} @* form *@
+} @* defining submitCall *@

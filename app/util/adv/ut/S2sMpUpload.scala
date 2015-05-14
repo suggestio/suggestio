@@ -1,7 +1,5 @@
 package util.adv.ut
 
-import java.io.File
-
 import models.adv.ext.act.ExtActorEnv
 import models.event.ErrorInfo
 import models.mext.{IMpUploadArgs, UploadRefusedException}
