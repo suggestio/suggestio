@@ -45,7 +45,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    Tmp.recreateTmp(app)
+    //Tmp.recreateTmp(app)
     val esNodeFut = Future {
       SiowebEsUtil.ensureNode()
     }
