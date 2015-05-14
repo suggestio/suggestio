@@ -80,7 +80,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
           .flatMap { raw =>
             val res = MInitTargets.maybeWithName(raw)
             if (res.isEmpty)
-              warn("Unknown init target opcode: " + raw)
+              warn(MInitTargets.getClass.getSimpleName + " does not contain target '" + raw + "'")
             res
           }
         val initFut = Future.traverse(all) { itg =>
