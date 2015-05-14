@@ -34,6 +34,10 @@ object JsInitConstants {
   def ID_POPUPS                   = "h"
   /** Поддержка формы создания/редактирования рекламных карточек. */
   def ID_AD_FORM                  = "i"
+  /** Если на странице присутствует форма для ввода капчи, то нужно забиндить соотв.функции. */
+  def ID_CAPTCHA_FORM             = "j"
+  /** Есть скрытая капча на странице. */
+  def ID_HIDDEN_CAPTCHA = "k"
 
 }
 
@@ -83,7 +87,14 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** init-target инициализации работы формы создания/редактирования рекламной карточки. */
   val AdForm: T = instance(ID_AD_FORM)
 
+  /** init-target для включения js к форме ввода капчи. */
+  val CaptchaForm: T = instance(ID_CAPTCHA_FORM)
+
+  /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
+  val HiddenCaptcha: T = instance(ID_HIDDEN_CAPTCHA)
+
   // TODO Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
+  // TODO Когда элементов станет много, лучше будет заюзать scala.Enumeration.
 }
 
 
@@ -120,6 +131,8 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case IdentVCenterContent.strId  => Some(IdentVCenterContent)
       case LkNodeEditForm.strId       => Some(LkNodeEditForm)
       case AdForm.strId               => Some(AdForm)
+      case CaptchaForm.strId          => Some(CaptchaForm)
+      case HiddenCaptcha.strId        => Some(HiddenCaptcha)
       case _                          => None
     }
   }
