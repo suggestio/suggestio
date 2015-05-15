@@ -1701,39 +1701,12 @@ market =
             market.init_colorpickers()
             market.ad_form.request_block_preview()
 
-  resize_preview_photos : () ->
-    $('.preview .poster-photo').each () ->
-      $this = $(this)
-
-      image_w = parseInt $this.attr "data-width"
-      image_h = parseInt $this.attr "data-height"
-
-      cw = $this.closest('.preview').width()
-      ch = $this.closest('.preview').height()
-
-      if image_w / image_h < cw / ch
-        nw = cw
-        nh = nw * image_h / image_w
-      else
-        nh = ch
-        nw = nh * image_w / image_h
-
-      css_params =
-        'width' : nw + 'px'
-        'height' : nh + 'px'
-        'margin-left' : - nw / 2 + 'px'
-        'margin-top' : - nh / 2 + 'px'
-
-      $this.css css_params
-
-
 
   init: () ->
 
     this.ad_form.init()
     $ document
     .ready () ->
-      market.resize_preview_photos()
       market.mart.init()
       market.adv_form.init()
       market.styles.init()
