@@ -81,6 +81,13 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs, lkAdvExtSjs)
   }
 
+  /** Выдача suggest.io, написанная с помощью scala.js. */
+  lazy val scSjs = {
+    val name = "sc-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs)
+  }
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
@@ -92,23 +99,21 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
     .dependsOn(common, util, securesocial, modelEnumUtilPlay)
     .settings(
-      scalaJSProjects := Seq(lkSjs),
+      scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages += scalaJSProd
     )
-    .aggregate(lkSjs)
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
   
 
-
+  /** Корневой проект. Он должен аггрегировать подпроекты. */
   lazy val root = {
     Project(id = "root", base = file("."))
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(modelEnumUtil, modelEnumUtilPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, web21)
+      .aggregate(modelEnumUtil, modelEnumUtilPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, scSjs, web21)
   }
 
 }
