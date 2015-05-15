@@ -1,7 +1,6 @@
 package io.suggest.lk.ident.center.captcha
 
 import io.suggest.sjs.common.controller.InitRouter
-import org.scalajs.dom.raw.HTMLInputElement
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 import io.suggest.captcha.CaptchaConstants._
