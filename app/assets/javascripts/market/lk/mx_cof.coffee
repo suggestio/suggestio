@@ -724,28 +724,6 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
-      ## Набор чекбоксов, где можно выбрать только один вариант
-      $ document
-      .on 'click', '.js-one-checkbox', (e)->
-        e.stopPropagation()
-        $this = $ this
-        dataName = $this.attr 'data-name'
-        dataFor = $this.attr 'data-for'
-        value = $this.attr 'data-value'
-
-        if this.checked
-          $ '.js-one-checkbox[data-name = "'+dataName+'"]'
-          .filter ':checked'
-          .removeAttr 'checked'
-
-          this.checked = true
-
-          $ '#'+dataFor
-          .val value
-        else
-          $ this
-          .removeAttr 'checked'
-
       ## Отображение рекламных карточек
       $ document
       .on 'change', '.ads-list-block__controls input[type = "checkbox"]', (e)->
@@ -1177,21 +1155,6 @@ CbcaPopup =
 ## TODO: отрефакторить
 ######################
 market =
-  styles :
-    init : () ->
-      style_tags = document.getElementsByTagName('code')
-      css = ''
-
-      for s in style_tags
-        css = css.concat( s.innerHTML )
-
-      style_dom = document.createElement('style')
-      style_dom.type = "text/css"
-      style_dom.innerHTML = ''
-      style_dom.appendChild(document.createTextNode(css))
-      head = document.getElementsByTagName('head')
-      head[0].appendChild(style_dom)
-
   init_colorpickers : ($parent = false) ->
 
     if $parent
@@ -1487,7 +1450,6 @@ market =
             if is_with_auto_crop == true
               console.log 'необходим авто кроп'
             $('#adFormBlockPreview').html data
-            market.styles.init()
             $('.js-mvbl').draggable
               stop : () ->
                 $this = $ this
@@ -1709,7 +1671,6 @@ market =
     .ready () ->
       market.mart.init()
       market.adv_form.init()
-      market.styles.init()
 
 market.init()
 window.market=market

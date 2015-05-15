@@ -194,16 +194,16 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
               _notifyWs(wsId, msg, counter + 1)
             }
             other match {
-              case Success(None) =>
-                LOGGER.trace(s"WS actor $wsId not exists right now. Will retry after $NOTIFY_WS_RETRY_PAUSE_MS ms...")
+              //case Success(None) =>
+              //  LOGGER.trace(s"WS actor $wsId not exists right now. Will retry after $NOTIFY_WS_RETRY_PAUSE_MS ms...")
               case Failure(ex) =>
-                LOGGER.error(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
+                LOGGER.warn(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
               // подавляем warning на Success(Some(_)), который отрабатывается выше
               case _ =>
                 // should never happen
             }
           } else {
-            LOGGER.warn(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was: $other")
+            LOGGER.debug(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was: $other")
           }
       }
   }
