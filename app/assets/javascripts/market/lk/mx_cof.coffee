@@ -282,27 +282,6 @@ PersonalCabinet =
       else
         return true
 
-  adsList: () ->
-
-    ## удаляем зигзаг там, где он не нужен
-    $ '.adv-item .sm-block.height-300, .adv-item .sm-block.height-140'
-    .each ()->
-      $this = $ this
-      $advItem = $this.closest '.adv-item'
-
-      $advItem
-      .find '.adv-item_preview-border'
-      .remove()
-
-
-    $ document
-    .on 'click', '.ads-list-block__preview_add-new', ()->
-      $this = $ this
-
-      $this
-      .parent()
-      .find('.ads-list-block__link')[0]
-      .click()
 
   ##################################################################################################################
   ## Слайд блоки: сворачиваемые блоки с заголовком, клик по которому сворачивает-разворачивает блок.
@@ -948,7 +927,6 @@ PersonalCabinet =
     cbca.pc.slideBlock.init()
     cbca.pc.advRequest()
     cbca.pc.advManagement()
-    cbca.pc.adsList()
 
 #######################################################################################################################
 ## Всплывающие окна ##

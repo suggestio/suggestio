@@ -16,16 +16,16 @@ object BlockHeights extends Enumeration with EnumMaybeWithId with IdEnumFormMapp
    * @param heightPx Значение высоты в пикселях.
    * @param relSz Относительный (нормированный) размер по высоте.
    */
-  protected case class Val(heightPx: Int, relSz: Int) extends super.Val(heightPx) with RelSz with IntParam {
+  protected class Val(val heightPx: Int, val relSz: Int) extends super.Val(heightPx) with RelSz with IntParam {
     override def intValue = heightPx
   }
 
   override type T = Val
 
-  val H140: T = Val(140, relSz = 1)
-  val H300: T = Val(300, relSz = 2)
-  val H460: T = Val(460, relSz = 3)
-  val H620: T = Val(620, relSz = 4)
+  val H140: T = new Val(140, relSz = 1)
+  val H300: T = new Val(300, relSz = 2)
+  val H460: T = new Val(460, relSz = 3)
+  val H620: T = new Val(620, relSz = 4)
 
   def default = H300
   def max = H620
