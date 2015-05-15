@@ -58,15 +58,18 @@ sealed class TxnList extends IInit with SjsLogger {
       val nextPage = currPage + 1
       // Узнаем ссылку для ajax-запроса.
       val route = routes.controllers.MarketLkBilling.txnsList(adnId, nextPage, inline = true)
+
+      // Собрать и запустить ajax-запрос:
       val ajaxSettingsJson = Dictionary[Any](
         "method"  -> route.method,
         "url"     -> route.url,
         "success" -> {(data: Any, textStatus: String, jqXHR: JQueryXHR) =>
           // Залить верстку полученного списка транзакций в таблицу.
           jQuery("#" + TXNS_CONTAINER_ID)
+            // TODO Тут нужна анимация. Надо что-то типа slideDown()
             .append(data)
           // Если есть ещё транзакции на сервере...
-          val hasMore = Option(jqXHR.getResponseHeader(HAS_MORE_TXNS_HTTP_HDR))
+          val hasMore = Option( jqXHR.getResponseHeader(HAS_MORE_TXNS_HTTP_HDR) )
             .filter { !_.isEmpty }
             .fold(true)(_.toBoolean)
           if (hasMore) {
