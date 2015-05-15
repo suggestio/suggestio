@@ -37,7 +37,9 @@ object JsInitConstants {
   /** Если на странице присутствует форма для ввода капчи, то нужно забиндить соотв.функции. */
   def ID_CAPTCHA_FORM             = "j"
   /** Есть скрытая капча на странице. */
-  def ID_HIDDEN_CAPTCHA = "k"
+  def ID_HIDDEN_CAPTCHA           = "k"
+  /** id таргета js-инициализации страницы списка транзакций биллинга. */
+  def ID_BILL_TXNS_LIST           = "l"
 
 }
 
@@ -93,6 +95,9 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
   val HiddenCaptcha: T = instance(ID_HIDDEN_CAPTCHA)
 
+  /** Цель для инициализации страницы списка транзакций биллинга. */
+  val BillTxnsList: T = instance(ID_BILL_TXNS_LIST)
+
   // TODO Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
   // TODO Когда элементов станет много, лучше будет заюзать scala.Enumeration.
 }
@@ -133,6 +138,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case AdForm.strId               => Some(AdForm)
       case CaptchaForm.strId          => Some(CaptchaForm)
       case HiddenCaptcha.strId        => Some(HiddenCaptcha)
+      case BillTxnsList.strId         => Some(BillTxnsList)
       case _                          => None
     }
   }
