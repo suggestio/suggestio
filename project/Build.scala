@@ -95,7 +95,7 @@ object SiobixBuild extends Build {
     // Список sjs-проектов нельзя вынести за скобки из-за ограничений синтаксиса вызова aggregate().
     .dependsOn(common, util, securesocial, modelEnumUtilPlay)
     .settings(
-      scalaJSProjects := Seq(lkSjs, commonSjs),
+      scalaJSProjects := Seq(lkSjs),
       pipelineStages += scalaJSProd
     )
     .aggregate(lkSjs)

@@ -47,7 +47,7 @@ addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.8-SNAPSHOT")
 // ProGuard занимается обфускацией скомпиленных данных.
 addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.2")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.3")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
