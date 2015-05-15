@@ -1,3 +1,5 @@
+import org.scalajs.core.tools.javascript.OutputMode
+
 organization := "io.suggest"
 
 name := "lk-sjs"
@@ -20,4 +22,6 @@ persistLauncher in Test := false
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
 jsDependencies += RuntimeDOM % "test"
+
+//scalaJSOutputMode := OutputMode.ECMAScript6
 
