@@ -154,37 +154,6 @@ cbca_grid =
         m_w--
         return m_w
 
-  init_single_block : ( block_id ) ->
-
-    _elt = sm.utils.ge 'elt' + block_id
-
-    sm.utils.addClass _elt, 'animated-block'
-    _elt.style.opacity = 1
-
-  deactivate_block : ( block_id, target_opacity ) ->
-
-    block = sm.utils.ge block_id
-
-    block.style.opacity = target_opacity
-
-    if sm.utils.is_array block.className.match /active-block/g
-      sm.utils.removeClass block, 'active-block'
-      block_js_class = block.getAttribute 'data-js-class'
-
-      bs = sm.utils.ge_class block, '.block-source'
-      cb2 = () ->
-        bs.style['visibility'] = 'hidden'
-        sm.utils.removeClass block, 'no-bg'
-        sm.utils.removeClass block, 'hover'
-
-      cbca['block_desource' + block_id] = setTimeout cb2, 300
-
-      if typeof block_js_class != 'undefined'
-        close_action = window[block_js_class].close_action
-
-        if typeof close_action != 'undefined'
-          close_action()
-
   is_only_spacers : () ->
     for b in this.blocks
       if b.class != 'sm-b-spacer'
@@ -734,14 +703,6 @@ sm =
     init : () ->
       if window.with_geo == true
         this.get_current_position()
-  getDeviceScale : () ->
-    deviceWidth = landscape = Math.abs(window.orientation) == 90
-
-    if landscape
-      deviceWidth = Math.max(480, screen.height)
-    else
-      deviceWidth = screen.width
-    return window.innerWidth / deviceWidth
 
   ## Забиндить оконные события
   bind_window_events : () ->
@@ -777,32 +738,9 @@ sm =
     this.utils.add_single_listener window, 'orientationchange', resize_cb
 
   styles :
-
     style_dom : null
-
-    init : () ->
-
-      console.log "deprecated method"
-      return false
-
-      ###
-      style_tags = sm.utils.ge_tag('code', true)
-
-      css = ''
-
-      for s in style_tags
-        if s.getAttribute( 'data-rendered' ) == null
-          s.setAttribute( 'data-rendered', true )
-          css = css.concat( s.innerHTML )
-
-      style_dom = document.createElement('style')
-      style_dom.type = "text/css"
-      sm.utils.ge_tag('body')[0].appendChild(style_dom)
-      this.style_dom = style_dom
-
-      this.style_dom.appendChild(document.createTextNode(css))
-      ###
-
+  
+  
   #########################
   ## History Api navigation
   #########################
@@ -847,13 +785,6 @@ sm =
 
   utils :
     elts_cache : {}
-    is_firefox : () ->
-      navigator.userAgent.toLowerCase().indexOf('firefox') > -1
-    is_webkit : () ->
-      if typeof document.documentElement.style['WebkitAppearance'] == 'undefined'
-        return false
-      else
-        return true
     is_touch_device : () ->
       if document.ontouchstart != null
         false
@@ -862,12 +793,6 @@ sm =
           false
         else
           true
-
-    is_sio_host : () ->
-      for hn in sm.config.sio_hostnames
-        if window.location.hostname.match hn
-          return true
-      return false
 
     ######################
     ## Создать DOM элемент
@@ -1024,17 +949,6 @@ sm =
       return containsClass elm, className
 
     ############################################
-    ## Прицепить собтие(-я) к DOM элементу(-там)
-    ############################################
-    add_listener: (elt, eventType, listener) ->
-
-      if this.is_array elt
-        for s_elt in elt
-          this.add_single_listener s_elt, eventType, listener
-      else
-        this.add_single_listener elt, eventType, listener
-
-    ############################################
     ## Забиндить на ОДИН DOM объект ОДНО событие
     ############################################
     add_single_listener : (elt, eventType, listener) ->
@@ -1060,49 +974,6 @@ sm =
         js: pre[0].toUpperCase().concat( pre.substr(1) )
 
       window.vendor_prefix = obj
-
-    rgb_to_hsl : ( rgb ) ->
-
-      r1 = rgb[0] / 255
-      g1 = rgb[1] / 255
-      b1 = rgb[2] / 255
-
-      maxColor = Math.max(r1, g1, b1)
-      minColor = Math.min(r1, g1, b1)
-
-      L = (maxColor + minColor) / 2
-      S = 0
-      H = 0
-
-      unless maxColor is minColor
-
-        #Calculate S:
-        if L < 0.5
-          S = (maxColor - minColor) / (maxColor + minColor)
-        else
-          S = (maxColor - minColor) / (2.0 - maxColor - minColor)
-
-        #Calculate H:
-        if r1 is maxColor
-          H = (g1 - b1) / (maxColor - minColor)
-        else if g1 is maxColor
-          H = 2.0 + (b1 - r1) / (maxColor - minColor)
-        else
-          H = 4.0 + (r1 - g1) / (maxColor - minColor)
-
-
-      L = L * 100
-      S = S * 100
-      H = H * 60
-
-      H += 360  if H < 0
-
-      result = [
-        H
-        S
-        L
-      ]
-      result
 
   rebuild_grid : ( do_rebuild ) ->
 
@@ -1404,27 +1275,6 @@ sm =
       #right arrow
       if event.keyCode == 39
         sm.focused_ads.next_ad()
-
-
-    document_keyup_event : ( event ) ->
-
-      if !event
-        return false
-
-      ## Exc button
-      if event.keyCode == 27
-        cs = sm.states.cur_state()
-        sm.states.transform_state
-          cat_id : cs.cat_id
-          cat_class : cs.cat_class
-          fads :
-            is_opened : false
-
-      if event.keyCode == 39
-        sm.focused_ads.next_ad()
-
-      if event.keyCode == 37
-        sm.focused_ads.prev_ad()
 
 
   ########
@@ -1807,8 +1657,6 @@ sm =
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
 
-        #sm.styles.init()
-
         if data.action == 'searchAds'
           if cbca_grid.ww <= 400
             sm.navigation_layer.close()
@@ -2054,7 +1902,6 @@ sm =
       this.fit()
 
       @.add_active_ad_state()
-      #sm.styles.init()
 
     check_if_fully_loaded : () ->
 
@@ -2252,7 +2099,6 @@ sm =
       this.sm_blocks = sm_blocks = sm.utils.ge_class this._container, 'sm-block'
       this.fit()
 
-      #sm.styles.init()
       this.active_ad_index = 0
 
   ##################################################
@@ -2330,59 +2176,10 @@ sm =
         if sm_cat_screen_dom != null
           sm_cat_screen_dom.style.display = 'none'
         sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
-
-  #########################################
-  ## Показать / скрыть экран со списком магазинов
-  #########################################
-  open_shopList_screen : ( event ) ->
-    sm.utils.ge('smShopListScreen').style.display = 'block'
-    event.preventDefault()
-    return false
-
-  close_shopList_screen : ( event ) ->
-    sm.utils.ge('smShopListScreen').style.display = 'none'
-    event.preventDefault()
-    return false
-
-  ######################################################
-  ## Открыть экран с предупреждением о выходе из маркета
-  ######################################################
-  open_close_screen : ( event ) ->
-    sm.utils.ge('smCloseScreen').style.display = 'block'
-    event.preventDefault()
-    return false
-
-  exit_close_screen : ( event ) ->
-    sm.utils.ge('smCloseScreen').style.display = 'none'
-    event.preventDefault()
-    return false
-
+  
   ###############################
   ## Скрыть / показать sio.market
   ###############################
-  close_mart : ( event ) ->
-    #sm.utils.ge('sioMartRoot').style.display = 'none'
-    #sm.utils.ge('smCloseScreen').style.display = 'none'
-
-    #sm.utils.ge_tag('body')[0].style.overflow = 'auto'
-
-    event.preventDefault()
-    return false
-
-  open_mart : ( event ) ->
-    if this.is_market_loaded != true
-      sm.load_mart()
-    event.preventDefault()
-    return false
-
-  index_navigation :
-    hide : () ->
-      _dom = sm.utils.ge 'smIndexNavigation'
-      sm.utils.addClass _dom, 'hidden'
-    show : () ->
-      _dom = sm.utils.ge 'smIndexNavigation'
-      sm.utils.removeClass _dom, 'hidden'
-
   load_for_shop_id : ( shop_id, ad_id ) ->
 
     if sm.utils.is_touch_device() && sm.events.is_touch_locked
