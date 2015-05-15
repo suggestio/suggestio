@@ -8,7 +8,7 @@
 @import ctx._
 @import AdShowLevels._
 @import views.html.sc._
-@import blk.BlockHeights
+@import blk.BlockHeights.H300.{heightPx => minZzHeightPx}
 
 @mads.iterator.zipWithIndex.map { case (brArgs, i) =>
   @defining( i + startIndex ) { itemIndex =>
@@ -21,7 +21,7 @@
         <div class="adv-item_preview-container">
           @_adNormalTpl(brArgs)
         </div>
-        @if(brArgs.mad.blockMeta.height > BlockHeights.H300.heightPx) {
+        @if(brArgs.mad.blockMeta.height >= minZzHeightPx) {
           <div class="adv-item_preview-border"></div>
         }
       </div>
