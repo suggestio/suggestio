@@ -19,7 +19,7 @@
 
       @_navItemTpl(
         title = messages("Transactions.history"),
-        href  = Some( routes.MarketLkBilling._txnsList(adnId) ),
+        href  = Some( routes.MarketLkBilling.txnsList(adnId, inline = false) ),
         css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
       )
 

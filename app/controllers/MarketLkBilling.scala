@@ -1,10 +1,14 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.bill.TxnsListConstants
+import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
+import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
+import util.async.AsyncUtil
 import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
 import play.api.db.Database
@@ -95,15 +99,30 @@ class MarketLkBilling @Inject() (
 
 
   /** Подгрузка страницы из списка транзакций. */
-  def _txnsList(adnId: String, page: Int) = IsAdnNodeAdmin(adnId).apply { implicit request =>
+  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val tpp = TXNS_PER_PAGE
     val offset = page * tpp
-    val txns = db.withConnection { implicit c =>
-      val mbcs = MBillContract.findForAdn(adnId, isActive = None)
-      val mbcIds = mbcs.flatMap(_.id).toSet
-      MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
+    val txnsFut = Future {
+      db.withConnection { implicit c =>
+        val mbcs = MBillContract.findForAdn(adnId, isActive = None)
+        val mbcIds = mbcs.flatMap(_.id).toSet
+        MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+    for {
+      txns <- txnsFut
+    } yield {
+      implicit val jsInitTgs = Seq(MTargets.BillTxnsList)
+      val render: Html = if (inline) {
+        _txnsListTpl(txns)
+      } else {
+        txnsPageTpl(request.adnNode, txns, currPage = page, txnsPerPage = tpp)
+      }
+      Ok(render)
+        .withHeaders(
+          TxnsListConstants.HAS_MORE_TXNS_HTTP_HDR -> (txns.size >= tpp).toString
+        )
     }
-    Ok(_txnsPageTpl(request.adnNode, txns, currPage = page, txnsPerPage = tpp))
   }
 
 

@@ -261,25 +261,6 @@ dateView = new DateView('advManagementDateWidget')
 
 PersonalCabinet =
 
-  billing: () ->
-
-    $ document
-    .on 'click', '#getTransactions', (e)->
-      e.preventDefault()
-      $this = $ this
-      $transactionsHistory = $ '#transactionsHistory'
-
-      request =
-        url: $this.attr 'href'
-        success: (data)->
-          $transactionsHistory
-          .find 'tr:last'
-          .after data
-        error: (error)->
-          console.log error
-
-      $.ajax request
-
   advRequest: () ->
 
     $ document
@@ -965,7 +946,6 @@ PersonalCabinet =
     cbca.pc.common.photoSlider()
 
     cbca.pc.slideBlock.init()
-    cbca.pc.billing()
     cbca.pc.advRequest()
     cbca.pc.advManagement()
     cbca.pc.adsList()

@@ -1,0 +1,31 @@
+@(txns: Seq[MBillTxn])(implicit ctx: Context)
+
+@* Верстка списка истории транзакций *@
+
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+
+@txns.zipWithIndex.map { case (txn , i) =>
+  <tr>
+    <td class="td __delimiter" colspan="4"></td>
+  </tr>
+  <tr>
+    <td class="td __white __size-M __radial-first ft-M dark-gray">
+      <span class="transactions-history_contract" title="@txn.txnUid">@txn.txnUid</span>
+    </td>
+    <td class="td __white __size-M transactions-history_descr">
+      @highlightFirstWordEsc(txn.paymentComment, start = """<span class="ft-M dark-gray">""", end = "</span>")
+    </td>
+    <td class="td __white __size-M">
+      <span title="@_prettyDate(txn.datePaid).toString.trim">
+        <span class="ft-M dark-gray">@numericDate(txn.datePaid)</span><br/>
+          @numericTime(txn.datePaid)
+      </span>
+    </td>
+    <td class="td __white __size-M __radial-last">
+      <span class="ft-M @if(txn.amount < 0) {red} else {green}">@formatPrice(txn.amount, txn.currency)</span>
+    </td>
+  </tr>
+}
+
