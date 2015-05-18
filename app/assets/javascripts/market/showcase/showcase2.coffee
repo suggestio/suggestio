@@ -19,7 +19,7 @@ cbca_grid =
       ww = document.documentElement.clientWidth
       wh = document.documentElement.clientHeight
     else if document.body && ( document.body.clientWidth || document.body.clientHeight )
-      ww = document.body.clientWidthb
+      ww = document.body.clientWidth
       wh = document.body.clientHeight
 
     this.ww = ww
@@ -123,22 +123,6 @@ cbca_grid =
   ######################
   ## Get Max block width
   ######################
-  get_max_block_width : ( columns_used_space, cline, cur_column, columns ) ->
-
-    m_w = 1
-
-    for i in [cur_column..columns]
-
-      if typeof( columns_used_space[i] ) != 'undefined'
-        if columns_used_space[i].used_height == cline
-          m_w++
-        else
-          m_w--
-          return m_w
-      else
-        m_w--
-        return m_w
-
   get_max_block_width : ( columns_used_space, cline, cur_column, columns ) ->
     m_w = 1
 
