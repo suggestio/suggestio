@@ -22,6 +22,9 @@ trait ISize2di {
   override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
 }
 
+/** Дефолтовая реализация [[ISize2di]]. */
+case class Size2di(width: Int, height: Int) extends ISize2di
+
 
 /** Именованая версия [[ISize2di]]. Полезно для enum'ов.
   * Позволяет задать допустимый размер строковым алиасом. */
