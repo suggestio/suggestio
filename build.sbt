@@ -9,7 +9,7 @@ version := "0.0.0-SNAPSHOT"
 libraryDependencies ++= Seq(
   "io.suggest"    %%  "common"          % "0.0.0-SNAPSHOT",
   "be.doeraene"   %%% "scalajs-jquery"  % "0.8.1-SNAPSHOT"
-  //"org.monifu"  %%% "minitest" % "0.11" % "test",
+  //"org.monifu"  %%% "minitest" % "0.12" % "test",
 )
 
 persistLauncher in Compile := false
