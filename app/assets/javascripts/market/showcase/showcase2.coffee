@@ -301,7 +301,7 @@ cbca_grid =
       this.build()
 
   count_columns : () ->
-    # Определеяем сколько колонок влезет в экран колонок
+    # Определяем сколько колонок влезет в экран колонок
     this.columns = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
 
     if this.columns % 2 == 1

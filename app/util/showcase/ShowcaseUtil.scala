@@ -1,6 +1,7 @@
 package util.showcase
 
 import controllers.routes
+import io.suggest.sc.tile.ColumnsCountT
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
@@ -22,7 +23,7 @@ import util.SiowebEsUtil.client
  * Created: 02.07.14 14:10
  * Description: Всякая статическая утиль для выдачи.
  */
-object ShowcaseUtil {
+object ShowcaseUtil extends ColumnsCountT {
 
   /** Дефолтовое имя ноды. */
   val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
@@ -208,45 +209,38 @@ object ShowcaseUtil {
     }
   }
 
+  override val MIN_SZ_MULT = super.MIN_SZ_MULT
 
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
   val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
-    .getOrElse { List(1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
-      32F/33F   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
-  ) }
+    .getOrElse {
+      List(
+        1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
+        MIN_SZ_MULT   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
+      )
+    }
 
   val FOCUSED_TILE_SZ_MULTS = FOCUSED_SZ_MULT :: TILES_SZ_MULTS
 
   /** Расстояние между блоками и до краёв экрана.
     * Размер этот должен быть жестко связан с остальными размерами карточек, поэтому не настраивается. */
-  def TILE_PADDING_CSSPX = 20
+  override def TILE_PADDING_CSSPX = super.TILE_PADDING_CSSPX
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
   val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx") getOrElse 10
 
   /** Макс. кол-во вертикальных колонок. */
-  val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
-  val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse 1
+  override val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
+  override val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse super.TILE_MIN_COLUMNS
 
   def MIN_W1 = -1F
 
-  val MIN_SZ_MULT = TILES_SZ_MULTS.last
 
-
+  /** Размер одной ячейки в плитке. */
+  override protected def CELL_WIDTH_CSSPX = getBlockWidthPx
   private def getBlockWidthPx = BlockWidths.NORMAL.widthPx
 
-  /**
-   * Рассчитать целевое кол-во колонок в плитке. Считаем это по минимальному padding'у.
-   * @param dscr Экран устройства.
-   * @return Число от 1 до 4.
-   */
-  def getTileColsCountScr(dscr: DevScreen): Int = {
-    val padding = TILE_PADDING_CSSPX * MIN_SZ_MULT
-    val targetCount = ((dscr.width - padding) / (getBlockWidthPx*MIN_SZ_MULT + padding)).toInt
-    Math.min(TILE_MAX_COLUMNS,
-      Math.max(TILE_MIN_COLUMNS, targetCount))
-  }
 
   def getTileArgs()(implicit ctx: Context): TileArgs = {
     getTileArgs( ctx.deviceScreenOpt )

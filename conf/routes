@@ -129,6 +129,8 @@ GET  /market/fads                       @controllers.MarketShowcase.focusedAds(a
 ## Рендер ровно одной карточки.
 GET  /market/ad/one/html                @controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)
+## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
+GET  /sc/router.js                      @controllers.MarketShowcase.scJsRouter
 
 ## Поиск по узлам
 GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)

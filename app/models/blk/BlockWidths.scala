@@ -1,6 +1,7 @@
 package models.blk
 
 import io.suggest.model.{EnumMaybeWithId, EnumValue2Val}
+import io.suggest.sc.tile.TileConstants
 import util.FormUtil.IdEnumFormMappings
 
 /**
@@ -9,27 +10,39 @@ import util.FormUtil.IdEnumFormMappings
  * Created: 14.10.14 16:45
  * Description: Модель допустимых ширин блоков.
  */
-
-/** Допустимые значения ширин блоков. */
 object BlockWidths extends Enumeration with EnumValue2Val with EnumMaybeWithId with IdEnumFormMappings {
 
   /**
    * Экземпляр этой модели.
    * @param widthPx Ширина в пикселях.
-   * @param relSz Нормированный размер в единицах размера. Для ширины по сути - 1 или 2.
    */
-  protected case class Val(widthPx: Int, relSz: Int, isNarrow: Boolean)
+  sealed protected[this] abstract class Val(val widthPx: Int)
     extends super.Val(widthPx)
     with IntParam
     with RelSz
   {
+    /** Нормированный размер в единицах размера. Для ширины по сути - 1 или 2. */
+    def relSz: Int
+    /** Узкий размер? */
+    def isNarrow: Boolean
     override def intValue = widthPx
+    override def toString(): String = s"[$widthPx]"
   }
 
   override type T = Val
 
-  val NARROW: T = Val(140, relSz = 1, isNarrow = true)
-  val NORMAL: T = Val(300, relSz = 2, isNarrow = false)
+  /** Самый узкий блок. */
+  val NARROW: T = new Val(TileConstants.CELL_WIDTH_140_CSSPX) {
+    override def relSz = 1
+    override def isNarrow = true
+  }
+
+  /** Обычная ширина блока. */
+  val NORMAL: T = new Val(TileConstants.CELL_WIDTH_300_CSSPX) {
+    override def relSz = 2
+    override def isNarrow = false
+  }
+
 
   def default = NORMAL
   def max = NORMAL

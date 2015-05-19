@@ -30,3 +30,4 @@ class MarketShowcase @Inject() (
   with ScBlockCss
   with ScOnlyOneAd
   with ScIndexAdOpen
+  with ScJsRouter
