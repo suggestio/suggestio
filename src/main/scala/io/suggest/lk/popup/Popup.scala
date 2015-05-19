@@ -5,7 +5,7 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.controller.jshidden.JsHidden
 import io.suggest.sjs.common.controller.vlines.VerticalLines
 import io.suggest.sjs.common.util.{TouchUtil, SjsLogger}
-import io.suggest.sjs.common.view.CommonPage
+import io.suggest.sjs.common.view.{SafeDocument, CommonPage}
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
@@ -39,7 +39,7 @@ object Popup extends SjsLogger {
 
   /** Управление оверлеем. */
   def showHideOverlay(isShow: Boolean): Unit = {
-    val body = jQuery( CommonPage.body )
+    val body = jQuery( SafeDocument().body )
     if (isShow)
       body.addClass(OVERLAY_CSS_CLASS)
     else
