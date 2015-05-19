@@ -1,10 +1,12 @@
 package io.suggest.sjs.common.view
 
 import org.scalajs.dom
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.Document
+import org.scalajs.dom.raw.{HTMLBodyElement, HTMLHeadElement, HTMLElement}
 import org.scalajs.jquery._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -27,14 +29,4 @@ object CommonPage {
       .on("beforeunload", f: js.Function0[_])
   }
 
-  /** Получить тег body наиболее оптимальным способом. */
-  lazy val body: HTMLElement = {
-    val d = dom.document
-    Option( d.body ).getOrElse {
-      d.getElementsByTagName("body")(0)
-        .asInstanceOf[HTMLElement]
-    }
-  }
-
 }
-

@@ -2,8 +2,7 @@ package io.suggest.sjs.common.controller
 
 import io.suggest.init.routed.{MJsInitTargetsLigthT, JsInitConstants}
 import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid}
-import io.suggest.sjs.common.view.CommonPage
-import org.scalajs.dom
+import io.suggest.sjs.common.view.SafeDocument
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
@@ -68,7 +67,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
   def init(): Future[_] = {
     val attrName = JsInitConstants.RI_ATTR_NAME
-    val body = CommonPage.body
+    val body = SafeDocument().body
     val attrRaw = body.getAttribute(attrName)
     val attrOpt = Option(attrRaw)
       .map { _.trim }
