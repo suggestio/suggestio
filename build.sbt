@@ -12,7 +12,7 @@ libraryDependencies ++= Seq(
   "be.doeraene"   %%% "scalajs-jquery"  % "0.8.1-SNAPSHOT",
   "io.suggest"    %%% "common-sjs"      % "0.0.0-SNAPSHOT",
   //"com.lihaoyi"   %%% "upickle"       % "0.2.+",
-  "org.monifu"    %%% "minitest"        % "0.11" % "test"
+  "org.monifu"    %%% "minitest"        % "0.12" % "test"
 )
 
 //persistLauncher in Compile := true
