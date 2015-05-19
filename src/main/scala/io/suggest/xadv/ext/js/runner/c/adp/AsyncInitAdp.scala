@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
-import io.suggest.sjs.common.view.CommonPage
+import io.suggest.sjs.common.view.SafeDocument
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{UrlLoadTimeoutException, DomUpdateException, ApiInitException}
 import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IAdapter}
@@ -55,7 +55,9 @@ trait AsyncInitAdp extends IAdapter {
 
   /** Добавление указанного (обычно script) тега в DOM. */
   def appendScriptTag(tag: Element): Unit = {
-    CommonPage.body.appendChild(tag)
+    SafeDocument()
+      .body
+      .appendChild(tag)
   }
 
   /** Собрать и добавить тег скрипта в DOM. */
