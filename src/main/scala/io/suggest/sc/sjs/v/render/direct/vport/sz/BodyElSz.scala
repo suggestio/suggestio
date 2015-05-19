@@ -15,34 +15,30 @@ import scala.scalajs.js.UndefOr
  */
 trait BodyElSzEl extends js.Object {
 
-  def body: UndefOr[BodyEl] = js.native
+  def body: UndefOr[ClientElementWhSafe] = js.native
 
-}
-
-sealed trait BodyEl extends js.Object {
-  def clientWidth : UndefOr[Int] = js.native
-  def clientHeight: UndefOr[Int] = js.native
 }
 
 
 /** Аддон для [[ViewportSzT]] для чтения размеров окна из document.body. */
 trait BodyElSz extends IViewportSz {
 
-  private def doc2safeDocBodyEl(doc: Document): BodyElSzEl = {
-    doc.asInstanceOf[BodyElSzEl]
+  private object BodyElSzHelper extends ElSafeGetIntValueT {
+    override def _elSafe: UndefOr[ClientElementWhSafe] = {
+      dom.document
+        .asInstanceOf[BodyElSzEl]
+        .body
+    }
   }
 
-  abstract override def getViewportSize: Option[ISize2di] = {
-    super.getViewportSize orElse {
-      val doc1 = doc2safeDocBodyEl(dom.document)
-      for {
-        bodyEl <- doc1.body.toOption
-        w      <- bodyEl.clientWidth.toOption
-        h      <- bodyEl.clientHeight.toOption
-      } yield {
-        Size2di(width = w, height = h)
-      }
-    }
+  import BodyElSzHelper.getValue
+
+  abstract override def widthPx: Option[Int] = {
+    getValue(super.widthPx)(_.clientWidth)
+  }
+
+  abstract override def heightPx: Option[Int] = {
+    getValue(super.heightPx)(_.clientHeight)
   }
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.v.render.direct.vport.sz
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.adv.ext.model.im.{Size2di, ISize2di}
 import io.suggest.sc.sjs.v.render.IRenderer
 
 /**
@@ -12,18 +12,36 @@ import io.suggest.sc.sjs.v.render.IRenderer
  */
 
 trait IViewportSz {
-  def getViewportSize: Option[ISize2di]
+
+  def widthPx : Option[Int]
+  def heightPx: Option[Int]
+
+  def getViewportSize: Option[ISize2di] = {
+    for {
+      w <- widthPx
+      h <- heightPx
+    } yield {
+      Size2di(width = w, height = h)
+    }
+  }
+
 }
+
+
+/** Аддон для готовой реализации детектора размера со всеми аддонами.
+  * Используется для тестирования и для подмешивания в основную логику приложения. */
+trait ViewportSzImpl
+  extends IViewportSz
+  with StdWndInnerSz
+  with DocElSz
+  with BodyElSz
 
 
 /** Аддон для DirectRrr, добавляющий поддержку чтения размеров viewport из нескольких источников.
   * Можно подключать новые и отключать текущие модули чтения размера на стадии компиляции. */
 trait ViewportSzT
-  extends IViewportSz
+  extends ViewportSzImpl
   with IRenderer
-  with StdWndInnerSz
-  with DocElSz
-  with BodyElSz
 {
   override def viewportSize: ISize2di = getViewportSize.get
 }

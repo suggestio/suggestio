@@ -27,18 +27,12 @@ trait StdWndInnerSzEl extends js.Object {
 /** Аддон для [[ViewportSzT]], добавляющий поддерку чтения размеров viewport из стандартных window.inner*() полей. */
 trait StdWndInnerSz extends IViewportSz {
 
-  private def wnd2safeSz(wnd: Window): StdWndInnerSzEl = {
-    wnd.asInstanceOf[StdWndInnerSzEl]
+  private def wndSafe: StdWndInnerSzEl = {
+    dom.window.asInstanceOf[StdWndInnerSzEl]
   }
 
-  override def getViewportSize: Option[ISize2di] = {
-    val wnd1 = wnd2safeSz(dom.window)
-    for {
-      w <- wnd1.innerWidth.toOption
-      h <- wnd1.innerHeight.toOption
-    } yield {
-      Size2di(width = w, height = h)
-    }
-  }
+  override def widthPx: Option[Int]  = wndSafe.innerWidth.toOption
+
+  override def heightPx: Option[Int] = wndSafe.innerHeight.toOption
 
 }
