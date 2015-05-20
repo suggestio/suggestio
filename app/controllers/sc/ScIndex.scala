@@ -73,15 +73,33 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
         ScIndexResp(html, isGeo, currAdnIdOpt)
       }
     }
+
+    /** Ответ для coffeescript-выдачи, там возвращался js. */
+    protected def _result_v1(args: ScIndexResp): Future[Result] = {
+      Ok(Js(65536, SmRcvResp(args)))
+    }
+
+    /** Ответ для sjs-выдачи, там нужен json. */
+    protected def _result_v2(args: ScIndexResp): Future[Result] = {
+      Ok(args.toJson)
+    }
+
+    protected def _resultVsn(args: ScIndexResp): Future[Result] = {
+      _reqArgs.apiVsn match {
+        case MScApiVsns.Coffee => _result_v1(args)
+        case MScApiVsns.Sjs1   => _result_v2(args)
+      }
+    }
     
     def result: Future[Result] = {
       for {
-        args      <- respArgsFut
+        args <- respArgsFut
+        res  <- _resultVsn(args)
       } yield {
         // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
         // произошло какое-то другое изменение
         StatUtil.resultWithStatCookie {
-          Ok(Js(65536, SmRcvResp(args)))
+          res
         }(ctx.request)
       }
     }

@@ -5,6 +5,7 @@ import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QsbUtil._
+import io.suggest.sc.ScConstants.ReqArgs._
 
 /**
  * Suggest.io
@@ -15,45 +16,59 @@ import util.qsb.QsbUtil._
 
 object ScReqArgs {
 
-  val GEO_SUF               = ".geo"
-  val SCREEN_SUF            = ".screen"
-  val WITH_WELCOME_SUF      = ".wc"
-
   /** routes-Биндер для параметров showcase'а. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
-                   intOptB: QueryStringBindable[Option[Int]],
-                   devScreenB: QueryStringBindable[Option[DevScreen]],
-                   boolOptB: QueryStringBindable[Option[Boolean]] ): QueryStringBindable[ScReqArgs] = {
+  implicit def qsb(implicit
+                   geoOptB    : QueryStringBindable[Option[GeoMode]],
+                   intOptB    : QueryStringBindable[Option[Int]],
+                   devScrB    : QueryStringBindable[Option[DevScreen]],
+                   apiVsnB    : QueryStringBindable[MScApiVsn]
+                  ): QueryStringBindable[ScReqArgs] = {
     new QueryStringBindable[ScReqArgs] {
+
+      /** Сгенерить название qs-параметра на основе ключа и суффикса. */
+      private def key1(key: String, suf: String): String = {
+        key + "." + suf
+      }
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
         for {
-          maybeGeo                <- strOptB.bind(key + GEO_SUF, params)
-          maybeDevScreen          <- devScreenB.bind(key + SCREEN_SUF, params)
-          maybeWithWelcomeAd      <- intOptB.bind(key + WITH_WELCOME_SUF, params)
+          maybeGeoOpt             <- geoOptB.bind(key1(key, GEO), params)
+          maybeDevScreen          <- devScrB.bind(key1(key, SCREEN), params)
+          maybeWithWelcomeAd      <- intOptB.bind(key1(key, WITH_WELCOME), params)
+          maybeApiVsn             <- apiVsnB.bind(key1(key, VSN), params)
         } yield {
-          Right(new ScReqArgsDflt {
-            override val geo = {
-              GeoMode.maybeApply(maybeGeo)
-                .filter(_.isWithGeo)
-                .getOrElse(GeoIp)
-            }
-            // Игнорим неверные размеры, ибо некритично.
-            override lazy val screen: Option[DevScreen] = maybeDevScreen
-            override val withWelcomeAd: Boolean = {
+          for {
+            _apiVsn <- maybeApiVsn.right
+            _geoOpt <- maybeGeoOpt.right
+          } yield {
+            val _withWelcomeAd: Boolean = {
               maybeWithWelcomeAd.fold(
                 {_ => true},
                 {vOpt => vOpt.isEmpty || vOpt.get > 0}
               )
             }
-          })
+            val _geo: GeoMode =  {
+              _geoOpt
+                .filter(_.isWithGeo)
+                .getOrElse(GeoIp)
+            }
+            new ScReqArgsDflt {
+              override def geo = _geo
+              // Игнорим неверные размеры, ибо некритично.
+              override lazy val screen: Option[DevScreen] = maybeDevScreen
+              override def withWelcomeAd = _withWelcomeAd
+              override def apiVsn = _apiVsn
+            }
+          }
         }
       }
 
       override def unbind(key: String, value: ScReqArgs): String = {
         List(
-          strOptB.unbind(key + GEO_SUF, value.geo.toQsStringOpt),
-          devScreenB.unbind(key + SCREEN_SUF, value.screen),
-          intOptB.unbind(key + WITH_WELCOME_SUF, if (value.withWelcomeAd) None else Some(0))
+          geoOptB.unbind(key1(key, GEO), Some(value.geo)),
+          devScrB.unbind(key1(key, SCREEN), value.screen),
+          intOptB.unbind(key1(key, WITH_WELCOME), if (value.withWelcomeAd) None else Some(0)),
+          apiVsnB.unbind(key1(key, VSN), value.apiVsn)
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
@@ -69,6 +84,7 @@ trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def withWelcomeAd       : Boolean
+  def apiVsn              : MScApiVsn
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[RenderedAdBlock]
   def focusedContent      : Option[Html]
@@ -84,15 +100,17 @@ trait ScReqArgs extends SyncRenderInfo {
 trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
+  override def withWelcomeAd        : Boolean = true
+  override def apiVsn               : MScApiVsn = MScApiVsns.unknownVsn
   override def inlineTiles          : Seq[RenderedAdBlock] = Nil
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
   override def adnNodeCurrentGeo    : Option[MAdnNode] = None
-  override def withWelcomeAd        : Boolean = true
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
   def reqArgsUnderlying: ScReqArgs
+
   override def geo                  = reqArgsUnderlying.geo
   override def screen               = reqArgsUnderlying.screen
   override def inlineTiles          = reqArgsUnderlying.inlineTiles
@@ -100,6 +118,7 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
   override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
   override def withWelcomeAd        = reqArgsUnderlying.withWelcomeAd
+  override def apiVsn               = reqArgsUnderlying.apiVsn
 
   override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
 }

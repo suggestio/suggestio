@@ -1,6 +1,7 @@
 package models
 
 import java.net.InetAddress
+import io.suggest.geo.GeoConstants
 import io.suggest.model.geo
 import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -73,7 +74,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
   }
 
   /** Биндер для набега на GeoMode, сериализованный в qs. */
-  implicit def geoModeQsb(implicit strOptB: QueryStringBindable[Option[String]]) = {
+  implicit def geoModeQsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[GeoMode] = {
     import util.qsb.QsbUtil._
 
     new QueryStringBindable[GeoMode] {
@@ -175,7 +176,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   val LOCAL_CL_UA_RE = "(?i)(NCDN|ngenix)".r
 
   override def isWithGeo = true
-  override def toQsStringOpt = Some("ip")
+  override def toQsStringOpt = Some(GeoConstants.GEO_MODE_IP)
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
     val ra = getRemoteAddr
@@ -290,7 +291,7 @@ object GeoLocation {
 final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
 
   override def isWithGeo = true
-  override def toQsStringOpt = Some(s"${geoPoint.lat},${geoPoint.lon}")
+  override def toQsStringOpt = Some(geoPoint.toQsStr)
 
   override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
     val ra = GeoIp.getRemoteAddr

@@ -1,0 +1,11 @@
+@(args: msc.ScSiteArgs)(implicit ctx: Context)
+
+@* Скрипт выдачи для siteTpl первой версии. *@
+
+@import lk.adn.node._installScriptTpl
+
+<script type="text/javascript">
+  @_installScriptTpl(args.adnId, mkPermanent = false)
+  window.siomart_index = '@args.indexCall';
+  window.with_geo = @args.withGeo;
+</script>

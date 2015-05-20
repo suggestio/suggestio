@@ -4,6 +4,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.ym.model.MAdnNode
 import play.api.libs.json._
 import play.api.mvc.Call
+import io.suggest.sc.ScConstants.Resp._
 
 /**
  * Suggest.io
@@ -24,7 +25,7 @@ trait Action extends SmJsonResp{
   def action: String
 
   override def toJsonAcc: FieldsJsonAcc = {
-    "action" -> JsString(action)  ::  super.toJsonAcc
+    ACTION_FN -> JsString(action)  ::  super.toJsonAcc
   }
 }
 
@@ -56,7 +57,7 @@ trait HtmlOpt extends SmJsonResp {
     val acc0 = super.toJsonAcc
     val _htmlOpt = htmlOpt
     if (_htmlOpt.nonEmpty)
-      "html" -> _htmlOpt.get :: acc0
+      HTML_FN -> _htmlOpt.get :: acc0
     else
       acc0
   }
@@ -77,7 +78,7 @@ case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsString]) ext
 trait IsGeo extends SmJsonResp {
   def isGeo: Boolean
   override def toJsonAcc: FieldsJsonAcc = {
-    "is_geo" -> JsBoolean(isGeo) :: super.toJsonAcc
+    IS_GEO_FN -> JsBoolean(isGeo) :: super.toJsonAcc
   }
 }
 
@@ -86,7 +87,7 @@ trait CurrAdnId extends SmJsonResp {
 
   override def toJsonAcc: FieldsJsonAcc = {
     val caiJson = currAdnId.fold [JsValue] (JsNull) { cai => JsString(cai) }
-    "curr_adn_id" -> caiJson  ::  super.toJsonAcc
+    ADN_ID_FN -> caiJson  ::  super.toJsonAcc
   }
 }
 
