@@ -63,7 +63,7 @@ object SrvRouter {
           prevFun()
         }
       }
-      // TODO Выставить таймер ожидания ответа сервера?
+      // TODO Выставить таймаут ожидания ответа сервера и другие детекторы ошибок?
       wnd.jsRoutesAsyncInit = fun
 
       p.future

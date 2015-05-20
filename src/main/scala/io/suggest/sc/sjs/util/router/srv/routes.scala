@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.util.router.srv
 
 import io.suggest.sc.ScConstants.JS_ROUTER_NAME
+import io.suggest.sc.sjs.m.msrv.index.MScReqArgsJson
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -33,10 +34,10 @@ trait ScCtl extends js.Object {
    * @param adnId id узла.
    */
   @JSName("showcase")
-  def nodeIndex(adnId: String): Route = js.native
+  def nodeIndex(adnId: String, args: MScReqArgsJson): Route = js.native
 
   /** index, когда узел неизвестен, и нужно, чтобы сервер сам определил узел. */
   @JSName("geoShowcase")
-  def geoIndex(): Route = js.native
+  def geoIndex(args: MScReqArgsJson): Route = js.native
 
 }

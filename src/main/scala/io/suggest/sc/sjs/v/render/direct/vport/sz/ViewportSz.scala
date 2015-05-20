@@ -16,7 +16,7 @@ trait IViewportSz {
   def widthPx : Option[Int]
   def heightPx: Option[Int]
 
-  def getViewportSize: Option[ISize2di] = {
+  def getViewportSize: Option[Size2di] = {
     for {
       w <- widthPx
       h <- heightPx
