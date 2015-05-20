@@ -2,6 +2,7 @@ package io.suggest.model.geo
 
 import java.{lang => jl, util => ju}
 
+import io.suggest.geo.IGeoPoint
 import io.suggest.model.EsModel.doubleParser
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
@@ -102,7 +103,7 @@ object GeoPoint extends MacroLogsImpl {
 }
 
 
-case class GeoPoint(lat: Double, lon: Double) {
+case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
 
   /** Конвертация в экземпляр ES GeoPoint. */
   def toEsGeopoint = new EsGeoPoint(lat, lon)
@@ -110,7 +111,7 @@ case class GeoPoint(lat: Double, lon: Double) {
   /** Конвертация в геохеш. */
   def geohash = GeoHashUtils.encode(lat, lon)
 
-  override def toString: String = s"[$lat, $lon]"
+  override def toString: String = super.toString
 
   /**
    * Конвертация в GeoJson-представление координат, т.е. в JSON-массив.
@@ -122,11 +123,8 @@ case class GeoPoint(lat: Double, lon: Double) {
     ))
   }
 
-  /**
-   * Конвертация в строковое ES-представление координат: "-12.453,23.243"
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_lat_lon_as_string_6]]
-   */
-  def toEsStr = s"$lat,$lon"
+  /** elasticseearch-представление. */
+  def toEsStr: String = toQsStr
   def toPlayJsonEsStr = JsString(toEsStr)
 
   /**
