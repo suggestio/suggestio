@@ -18,4 +18,33 @@ object ScConstants {
   /** window.NAME - название функции function(), которая будет вызвана  */
   final val JS_ROUTER_ASYNC_INIT_FNAME = JS_ROUTER_NAME + "AsyncInit"
 
+
+  /** Client/server констатны выдачи для моделей ScReqArgs. */
+  object ReqArgs {
+
+    final val GEO               = "geo"
+    final val SCREEN            = "screen"
+    final val WITH_WELCOME      = "wc"
+    final val VSN               = "v"
+
+  }
+
+
+  /** Константы ответов сервера. */
+  object Resp {
+
+    /** Название поля, содержащего id экшена, по которому сгенерирован ответ. */
+    final val ACTION_FN  = "action"
+
+    /** Название поля ответа, содержащего строку с html версткой. */
+    final val HTML_FN    = "html"
+
+    /** Название поля, которое содержит флаг того, была ли использована геолокация для генерации результата? */
+    final val IS_GEO_FN  = "is_geo"
+
+    /** Название поля с id узла, к которому относится ответ. */
+    final val ADN_ID_FN  = "curr_adn_id"
+
+  }
+
 }
