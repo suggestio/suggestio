@@ -310,6 +310,15 @@ module.exports = function (grunt) {
 	  {from: '\s+/?>', to: ''}
 	  //{from: /}[\n\r]+/mg, to: '}'}   /* ломает импорты! */
 	]
+      },
+      jstplmin: {
+	src: ['<%= yeoman.dist %>/**/*.js'],  // source files array (supports minimatch)
+	overwrite: true,
+	replacements: [
+	  {from: /^\s+/mg, to: ''},	    // strip BOL offsets
+	  {from: /\s\s+/mg, to: ' '},	    /* strip 2+ whitespaces */
+	  {from: />[\n\r]+/mg, to: '>'}     /* strip newlines after html tags */
+	]
       }
     },
 
@@ -339,8 +348,8 @@ module.exports = function (grunt) {
           dest: '<%= yeoman.dist %>',
           src: [
             '*.{ico,png,txt}',
-            '.htaccess',
             '*.html',
+            'views/**/*.js',
             'views/**/*.html',
             'views/**/*.txt',
             'images/**/*.{webp}',
@@ -455,7 +464,8 @@ module.exports = function (grunt) {
     'copy:dist',
     'replace:tplmin',
     'replace:csstplmin',
-    'replace:htmlmin'
+    'replace:htmlmin',
+    'replace:jstplmin'
   ]);
 
   grunt.registerTask('default', [
