@@ -34,11 +34,11 @@ object SrvRouter {
       // Нет готового js-роутера. Нужно запросить его с сервера.
       val p = Promise[routes.type]()
       // Возможно, код уже запрашивается с сервера, и тогда routes AsyncInit функция будет уже выставлена.
-      val asyncInitOpt = UndefOr.undefOr2ops( wnd.jsRoutesAsyncInit )
+      val asyncInitOpt = UndefOr.undefOr2ops( wnd.sioScJsRoutesAsyncInit )
       def pSuccessF(): Unit = {
         p success wnd.jsRoutes.get
       }
-      val fun: js.Function0[Unit] = if (asyncInitOpt.isEmpty) {
+      val fun: js.Function0[_] = if (asyncInitOpt.isEmpty) {
         // Надо собрать и асинхронно запустить запрос к серверу с помощью script-тега, добавленного в конец head:
         val scriptEl = dom.document.createElement("script")
         scriptEl.setAttribute("async", true.toString)
@@ -52,7 +52,7 @@ object SrvRouter {
         {() =>
           pSuccessF()
           // Callback-функция инициализации больше не требуется. Освободить память браузера от нее.
-          wnd.jsRoutesAsyncInit = js.undefined
+          wnd.sioScJsRoutesAsyncInit = js.undefined
         }
 
       } else {
@@ -64,7 +64,7 @@ object SrvRouter {
         }
       }
       // TODO Выставить таймаут ожидания ответа сервера и другие детекторы ошибок?
-      wnd.jsRoutesAsyncInit = fun
+      wnd.sioScJsRoutesAsyncInit = fun
 
       p.future
     }

@@ -65,11 +65,11 @@ sealed trait MNodeIndexJson extends js.Object {
 
   /** Использовал ли сервер геолокацию для формирования ответа? */
   @JSName(IS_GEO_FN)
-  val isGeo: Boolean = js.native
+  val is_geo: Boolean = js.native
 
   /** id узла, к которому относится ответ сервера. */
   @JSName(ADN_ID_FN)
-  val adnId: UndefOr[String] = js.native
+  val curr_adn_id: UndefOr[String] = js.native
 
 }
 
@@ -77,6 +77,10 @@ sealed trait MNodeIndexJson extends js.Object {
 /** Враппер над [[MNodeIndexJson]] для повышения удобства доступа к сырому JSON-ответу сервера. */
 sealed class MNodeIndex(json: MNodeIndexJson) {
   def html  = json.html
-  def isGeo = json.isGeo
-  lazy val adnIdOpt = json.adnId.toOption
+  def isGeo = json.is_geo
+  lazy val adnIdOpt = json.curr_adn_id.toOption
+
+  override def toString: String = {
+    json.action + "(isGeo=" + isGeo + ",nodeId=" + adnIdOpt + ",html=" + html.length + "b)"
+  }
 }

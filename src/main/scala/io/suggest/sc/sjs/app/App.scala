@@ -2,11 +2,13 @@ package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.NodeCtl
 import io.suggest.sc.sjs.m.MAppState
-import io.suggest.sc.sjs.m.magent.{MAppStateAgent, MScreen}
+import io.suggest.sc.sjs.m.magent.{IAppStateAgent, MScreen}
 import io.suggest.sc.sjs.m.mgeo.MAppStateLocation
 import io.suggest.sc.sjs.m.msrv.MAppStateSrv
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.render.direct.DirectRrr
+import io.suggest.sjs.common.view.SafeDocument
+import org.scalajs.dom
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -26,9 +28,9 @@ object App extends JSApp {
     val rrr = new DirectRrr
     val scrSz = rrr.getViewportSize.get
 
-    val agentState = new MAppStateAgent(
-      availableScreen = MScreen(scrSz.width, height = scrSz.height, pxRatio = 1.0)   // TODO Определять pixel ratio автоматом.
-    )
+    val agentState = new IAppStateAgent {
+      override def availableScreen = MScreen(scrSz.width, height = scrSz.height, pxRatio = 1.0)
+    }
     val locState = new MAppStateLocation()
 
     val appStateFut = for {
@@ -37,10 +39,13 @@ object App extends JSApp {
       val srvState = new MAppStateSrv(
         routes = router
       )
+      val d = dom.document
       MAppState(
         srv       = srvState,
         location  = locState,
-        agent     = agentState
+        agent     = agentState,
+        safeDoc   = SafeDocument(d),
+        renderer  = rrr
       )
     }
 

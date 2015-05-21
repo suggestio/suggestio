@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.m
 
-import io.suggest.sc.sjs.m.magent.{MAppStateAgent, IAppStateAgent}
+import io.suggest.sc.sjs.m.magent.IAppStateAgent
 import io.suggest.sc.sjs.m.mgeo.{MAppStateLocation, IAppStateLocation}
 import io.suggest.sc.sjs.m.msrv.{MAppStateSrv, IAppStateSrv}
+import io.suggest.sc.sjs.v.render.IRenderer
+import io.suggest.sjs.common.view.SafeDocument
 
 /**
  * Suggest.io
@@ -23,11 +25,19 @@ trait IAppState {
   /** API для доступа к данным/фунциям user-agent'а, т.е. рантаймовые данные по браузеру/приложению и т.д. */
   def agent: IAppStateAgent
 
+  /** Враппер для более безопасного доступа к document. */
+  def safeDoc: SafeDocument
+
+  /** Используемый рендерер. */
+  def renderer: IRenderer
+
 }
 
 case class MAppState(
   override val srv       : MAppStateSrv,
   override val location  : MAppStateLocation,
-  override val agent     : MAppStateAgent
+  override val agent     : IAppStateAgent,
+  override val safeDoc   : SafeDocument,
+  override val renderer  : IRenderer
 )
   extends IAppState

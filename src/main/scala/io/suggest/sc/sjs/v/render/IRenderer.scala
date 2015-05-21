@@ -1,6 +1,8 @@
 package io.suggest.sc.sjs.v.render
 
 import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.sc.sjs.m.IAppState
+import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 
 /**
  * Suggest.io
@@ -16,5 +18,13 @@ trait IRenderer {
    *         NoSuchElementException, если viewport отсутствует.
    */
   def viewportSize: ISize2di
+
+  /**
+   * Отобразить node index на экран.
+   * @param minx Данные MNodeIndex от сервера.
+   * @param state Доступ к состоянию приложения.
+   * @return void, когда всё закончится.
+   */
+  def showIndex(minx: MNodeIndex)(implicit state: IAppState): Unit
 
 }

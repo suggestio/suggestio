@@ -13,9 +13,3 @@ trait IAppStateAgent {
   def availableScreen: IMScreen
 
 }
-
-
-case class MAppStateAgent(
-  override val availableScreen: IMScreen
-)
-  extends IAppStateAgent

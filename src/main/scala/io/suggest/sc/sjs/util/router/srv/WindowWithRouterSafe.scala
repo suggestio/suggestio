@@ -30,7 +30,7 @@ trait WindowWithRouterSafe extends Window {
    * @return function() или undefined.
    */
   @JSName(JS_ROUTER_ASYNC_INIT_FNAME)
-  var jsRoutesAsyncInit: UndefOr[js.Function0[Unit]] = js.native
+  var sioScJsRoutesAsyncInit: UndefOr[js.Function0[_]] = js.native
 
 }
 

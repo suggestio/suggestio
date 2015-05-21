@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.v.render.direct
 
 import io.suggest.sc.sjs.v.render.IRenderer
+import io.suggest.sc.sjs.v.render.direct.index.ShowIndex
 import io.suggest.sc.sjs.v.render.direct.vport.sz.ViewportSzT
 
 /**
@@ -12,3 +13,5 @@ import io.suggest.sc.sjs.v.render.direct.vport.sz.ViewportSzT
 class DirectRrr
   extends IRenderer
   with ViewportSzT
+  with ShowIndex
+

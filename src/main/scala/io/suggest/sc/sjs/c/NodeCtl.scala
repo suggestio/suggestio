@@ -31,8 +31,10 @@ object NodeCtl {
       minx <- inxFut
     } yield {
       println("index answer received: " + minx)
+      state.renderer.showIndex(minx)
       ???
     }
   }
+
 
 }
