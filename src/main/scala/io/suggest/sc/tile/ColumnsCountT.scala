@@ -46,8 +46,9 @@ trait ColumnsCountT {
    * @return Число от 1 до 4.
    */
   def getTileColsCountScr(dscr: ISize2di): Int = {
-    val padding = TILE_PADDING_CSSPX * MIN_SZ_MULT
-    val targetCount = ((dscr.width - padding) / (CELL_WIDTH_CSSPX * MIN_SZ_MULT + padding)).toInt
+    val minSzMult = MIN_SZ_MULT
+    val padding = TILE_PADDING_CSSPX * minSzMult
+    val targetCount = ((dscr.width - padding) / (CELL_WIDTH_CSSPX * minSzMult + padding)).toInt
     Math.min(TILE_MAX_COLUMNS,
       Math.max(TILE_MIN_COLUMNS, targetCount))
   }

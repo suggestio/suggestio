@@ -47,4 +47,39 @@ object ScConstants {
 
   }
 
+
+  /** Константы layout. */
+  object Layout {
+
+    /** id корневого div выдачи. */
+    val ROOT_ID = "sioMartRoot"
+
+    /** имя css-класса корневого элемента. */
+    val ROOT_CSS_CLASS = "sm-showcase"
+
+    val LAYOUT_ID = "sioMartLayout"
+
+  }
+
+
+  /** Константы inline-ресурсов выдачи. */
+  object Rsc {
+
+    /** id контейнера common-ресурсов. */
+    def COMMON_ID = "smResources"
+
+    /** id контейнера focused-ресурсов. */
+    def FOCUSED_ID = "smResourcesFocused"
+
+  }
+
+
+  object Tile {
+
+    def TILE_DIV_ID = "smGridAds"
+
+
+
+  }
+
 }
