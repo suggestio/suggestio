@@ -721,9 +721,6 @@ sm =
     this.utils.add_single_listener window, 'resize', resize_cb
     this.utils.add_single_listener window, 'orientationchange', resize_cb
 
-  styles :
-    style_dom : null
-  
   
   #########################
   ## History Api navigation

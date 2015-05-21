@@ -2,8 +2,9 @@
 
 @import util.TplDataFormatUtil._
 @import util.showcase.ShowcaseUtil.TILES_BG_FILL_ALPHA
+@import io.suggest.sc.ScConstants.Tile._
 
-@stuff._scrollableContainerTpl( "sm-grid-ads", "smGridAds" ){
+@stuff._scrollableContainerTpl("sm-grid-ads", TILE_DIV_ID) {
 
   <div class="sm-grid-ads_container" id="smGridAdsContainer" @if(!args.syncRender) {data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"} >
     @* Заинлайненные рекламные карточки при синхронном рендере. *@

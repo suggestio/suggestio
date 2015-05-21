@@ -6,6 +6,7 @@ import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QsbUtil._
 import io.suggest.sc.ScConstants.ReqArgs._
+import views.js.sc.m.scReqArgsJsUnbindTpl
 
 /**
  * Suggest.io
@@ -72,6 +73,11 @@ object ScReqArgs {
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
+      }
+
+      /** unbind на клиенте происходит из json-объекта с именами полей, которые соответствуют указанным в модели qs-именам. */
+      override def javascriptUnbind: String = {
+        scReqArgsJsUnbindTpl().body
       }
     }
   }

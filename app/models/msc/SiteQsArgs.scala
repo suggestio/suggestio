@@ -42,16 +42,11 @@ object SiteQsArgs {
             povAdIdOpt  <- maybePovAdIdOpt.right
             apiVsn      <- maybeApiVsn.right
           } yield {
-            // Нанооптимизация по RAM: если все аргументы пусты, то вернуть инстанс empty, а не создавать новый.
-            if (adnIdOpt.nonEmpty || povAdIdOpt.nonEmpty) {
-              SiteQsArgs(
-                apiVsn  = apiVsn,
-                adnId   = adnIdOpt,
-                povAdId = povAdIdOpt
-              )
-            } else {
-              empty
-            }
+            SiteQsArgs(
+              apiVsn  = apiVsn,
+              adnId   = adnIdOpt,
+              povAdId = povAdIdOpt
+            )
           }
         }
       }
