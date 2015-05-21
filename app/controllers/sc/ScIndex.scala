@@ -266,31 +266,5 @@ trait ScIndexNode extends ScIndexNodeCommon {
     }
   }
 
-  /** Выдача для продьюсера, который сейчас админят. */
-  def myAdsShowcase(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val _adnNodeFut = Future successful request.adnNode
-    val helper = new ScIndexNodeHelper {
-      // Тупо скопипасчено. Может быть тут ошибка:
-      override def geoListGoBackFut = Future successful None
-
-      /** При закрытии выдачи, админ-рекламодатель должен попадать к себе в кабинет. */
-      override def onCloseHrefFut = {
-        val url = Context.LK_URL_PREFIX + routes.MarketLkAdn.showAdnNode(adnId).url
-        Future successful url
-      }
-
-      override def spsrFut = {
-        val spsr = new AdSearch {
-          override def producerIds = List(adnId)
-        }
-        Future successful spsr
-      }
-      override def adnNodeFut = _adnNodeFut
-      override def isGeo = false
-      override implicit def _request = request
-    }
-    helper.result
-  }
-
 }
 

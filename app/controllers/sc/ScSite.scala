@@ -2,8 +2,8 @@ package controllers.sc
 
 import controllers.{routes, SioController}
 import models.mext.MExtServices
-import models.msc.{ScJsState, ScSiteArgs, SiteQsArgs}
-import play.twirl.api.Html
+import models.msc._
+import play.twirl.api.{Template2, Html}
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
@@ -23,8 +23,155 @@ import util.SiowebEsUtil.client
  * Бывает рендер через geo, который ищет подходящий узел, и рендер напрямую.
  */
 
+/** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
+trait ScSiteBase extends SioController with PlayMacroLogsI {
+
+  /** Настраиваемая логика сборки результата запроса сайта выдачи. */
+  protected trait SiteLogic {
+
+    /** Сюда передаются исходные параметры запроса сайта (qs). */
+    def _siteArgs: SiteQsArgs
+
+    /** Исходный http-реквест. */
+    implicit def _request: AbstractRequestWithPwOpt[_]
+
+    /** Контекст рендера нижелижещих шаблонов. */
+    implicit lazy val ctx = implicitly[Context]
+
+    /** Опциональный id текущего узла. */
+    def adnIdOpt: Option[String] = _siteArgs.adnId
+
+    /** Опциональный экземпляр текущего узла. */
+    def nodeOptFut: Future[Option[MAdnNode]] = {
+      MAdnNodeCache.maybeGetByIdCached( adnIdOpt )
+    }
+
+    /** Добавки к тегу head в siteTpl. */
+    def headAfterFut: Future[Traversable[Html]] = {
+      MAd.maybeGetById( _siteArgs.povAdId )
+        .map { _.get }
+        .filter { _.isPublished }
+        .flatMap { mad =>
+          val futs = MExtServices.values
+            .iterator
+            .map { _.adMetaTagsRender(mad).map { rl =>
+              rl.map { _.render()(ctx) }
+                .iterator
+            }}
+          Future
+            .fold[Iterator[Html], Iterator[Html]] (futs) (Iterator.empty) (_ ++ _)
+            .map { _.toSeq }
+        }
+        .recover { case ex: Throwable =>
+          if (!ex.isInstanceOf[NoSuchElementException])
+            LOGGER.warn("Failed to collect meta-tags for ad " + _siteArgs.povAdId, ex)
+          Seq.empty[Html]
+        }
+    }
+
+    /** Какой скрипт рендерить? */
+    def scriptHtmlFut: Future[Html]
+
+
+    /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
+    def renderArgsFut: Future[ScSiteArgs] = {
+      val _nodeOptFut     = nodeOptFut
+      val _headAfterFut   = headAfterFut
+      val _scriptHtmlFut  = scriptHtmlFut
+      for {
+        _nodeOpt    <- _nodeOptFut
+        _headAfter  <- _headAfterFut
+        _scriptHtml <- _scriptHtmlFut
+      } yield {
+        new ScSiteArgs {
+          override def nodeOpt = _nodeOpt
+          override val scColors = ShowcaseUtil.siteScColors(nodeOpt)
+          override def headAfter: Traversable[Html] = {
+            super.headAfter ++ _headAfter
+          }
+          override def scriptHtml = _scriptHtml
+        }
+      }
+    }
+
+    /** Отрендерить html-тело результата запроса. */
+    def renderFut: Future[Html] = {
+      for {
+        args <- renderArgsFut
+      } yield {
+        siteTpl(args)(ctx)
+      }
+    }
+
+    /** Собрать ответ на HTTP-запрос сайта. */
+    def resultFut: Future[Result] = {
+      renderFut map { render =>
+        cacheControlShort {
+          Ok( render )
+        }
+      }
+    }
+
+  }
+
+
+  /** Когда нужно рендерить site script, подмешиваем это. */
+  protected trait SiteScript extends SiteLogic {
+    /** Флаг активности географии. */
+    def _withGeo: Boolean
+    /** Ссылка на вызов выдачи. */
+    def _indexCall: Call
+
+    /** Какой шаблон скрипта надо рендерить для переданной в _siteArgs версии API? */
+    def _scriptTplForApiVsn: Template2[IScScriptRenderArgs, Context, Html] = {
+      import views.html.sc.script._
+      _siteArgs.apiVsn match {
+        case MScApiVsns.Coffee => _scriptV1Tpl
+        case MScApiVsns.Sjs1   => _scriptV2Tpl
+      }
+    }
+
+    def scriptRenderArgsFut: Future[IScScriptRenderArgs] = {
+      val res = ScScriptRenderArgs(
+        withGeo   = _withGeo,
+        indexCall = _indexCall,
+        adnIdOpt  = adnIdOpt
+      )
+      Future successful res
+    }
+
+    override def scriptHtmlFut: Future[Html] = {
+      val argsFut = scriptRenderArgsFut
+      val tpl = _scriptTplForApiVsn
+      for {
+        args <- argsFut
+      } yield {
+        tpl.render(args, ctx)
+      }
+    }
+
+  }
+
+
+  /** Можно подавлять ошибки чтения экземпляра узла. Возникновении ошибки чтения -- маловероятная ситуация, но экземпляр
+    * узла не является для сайта очень обязательным для сайта выдачи.
+    * С другой стороны, лучше сразу выдать ошибку юзеру, чем отрендерить зависшую на GET showcaseIndex выдачу. */
+  protected trait NodeSuppressErrors extends SiteLogic {
+    /** Опциональный экземпляр текущего узла. */
+    override def nodeOptFut: Future[Option[MAdnNode]] = {
+      super.nodeOptFut
+        .recover { case ex: Throwable =>
+          LOGGER.warn("Failed to get node adnId = " + _siteArgs.adnId, ex)
+          None
+        }
+    }
+  }
+
+}
+
+
 /** Поддержка гео-сайта. */
-trait ScSiteGeo extends SioController with PlayMacroLogsI {
+trait ScSiteGeo extends ScSiteBase {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
@@ -65,70 +212,19 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
   }
 
   /**
-   * Собрать параметры рендера шаблона siteTpl.
-   * @param siteArgs qs-аргументы запроса, касающиеся сайта.
-   * @param request Экземпляр реквеста.
-   * @return Фьючерс с аргументами для шаблона.
-   */
-  protected def _getSiteRenderArgs(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[ScSiteArgs] = {
-    // Что сформировать мета-теги, нужно найти карточку, к которой относится всё это дело.
-    // А если нет POV-карточки (обычно её нет), то нужно втыкать данные для узла.
-    implicit lazy val ctx = implicitly[Context]
-    val headAftersFut = {
-      MAd.maybeGetById( siteArgs.povAdId )
-        .map { _.get }
-        .filter { _.isPublished }
-        .flatMap { mad =>
-          val futs = MExtServices.values
-            .iterator
-            .map { _.adMetaTagsRender(mad).map { rl =>
-              rl.map { _.render()(ctx) }
-                .iterator
-            }}
-          Future
-            .fold[Iterator[Html], Iterator[Html]] (futs) (Iterator.empty) (_ ++ _)
-            .map { _.toSeq }
-        }
-        .recover { case ex: Throwable =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn("Failed to collect meta-tags for ad " + siteArgs.povAdId, ex)
-          Seq.empty[Html]
-        }
-    }
-    // Узел, с которым связан данный запрос.
-    val nodeOptFut = MAdnNodeCache.maybeGetByIdCached( siteArgs.adnId )
-      .recover { case ex: Throwable =>
-        LOGGER.warn("Failed to get node adnId = " + siteArgs.adnId, ex)
-        None
-      }
-    // Сборка результата.
-    for {
-      _nodeOpt   <- nodeOptFut
-      _headAfts  <- headAftersFut
-    } yield {
-      new ScSiteArgs {
-        override def indexCall = routes.MarketShowcase.geoShowcase()
-        override def nodeOpt   = _nodeOpt
-        override def withGeo   = true   // TODO Чего делает этот параметр? Нужен ли он вообще?
-        override val scColors  = super.scColors
-        override def headAfter: Traversable[Html] = {
-          super.headAfter ++ _headAfts
-        }
-      }
-    }
-  }
-
-  /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
   protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    _getSiteRenderArgs(siteArgs) map { args =>
-      cacheControlShort {
-        Ok(siteTpl(args))
-      }
+    val logic = new SiteLogic with SiteScript {
+      override implicit def _request  = request
+      override def _siteArgs          = siteArgs
+
+      override def _withGeo           = siteArgs.adnId.isEmpty
+      override def _indexCall         = routes.MarketShowcase.geoShowcase()  // TODO Для index call можно какие-то аргументы передать...
     }
+    logic.resultFut
   }
 
 
@@ -142,28 +238,12 @@ trait ScSiteGeo extends SioController with PlayMacroLogsI {
 
 
 /** Поддержка node-сайтов. */
-trait ScSiteNode extends SioController with PlayMacroLogsI {
-
-  /**
-   * Общий код для "сайтов" выдачи, относящихся к конкретным узлам adn.
-   * @param scCall Call для обращения за indexTpl.
-   * @param request Исходный реквест, содержащий в себе необходимый узел adn.
-   * @return 200 OK с рендером подложки выдачи.
-   */
-  protected def adnNodeDemoWebsite(scCall: Call)(implicit request: AbstractRequestForAdnNode[AnyContent]) = {
-    val args = new ScSiteArgs {
-      override def indexCall = scCall
-      override def nodeOpt = Some(request.adnNode)
-    }
-    cacheControlShort {
-      Ok(siteTpl(args))
-    }
-  }
+trait ScSiteNode extends ScSiteBase {
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
-  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    val nodeEnabled = request.adnNode.adn.isEnabled
+  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val isReceiver = request.adnNode.adn.isReceiver
+    val nodeEnabled = request.adnNode.adn.isEnabled
     if (nodeEnabled && isReceiver || request.isMyNode) {
       // Собираем статистику. Тут скорее всего wifi
       Future {
@@ -173,23 +253,21 @@ trait ScSiteNode extends SioController with PlayMacroLogsI {
             case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)
           }
       }
+
       // Рендерим результат в текущем потоке.
-      adnNodeDemoWebsite(
-        scCall = routes.MarketShowcase.showcase(adnId)
-      )
+      val logic = new SiteLogic with SiteScript {
+        override implicit def _request = request
+        override val _siteArgs = SiteQsArgs(adnId = Some(adnId))
+        override def _withGeo: Boolean = false
+        override def _indexCall: Call = routes.MarketShowcase.showcase(adnId)
+      }
+      logic.resultFut
 
     } else {
-      LOGGER.debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled ; isRcvr=$isReceiver")
+      LOGGER.debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled isRcvr=$isReceiver")
       SioHttpErrorHandler.http404ctx
     }
   }
 
-  /** Рендер страницы внутренней выдачи для указанного продьюсера.
-    * Например, рекламодатель хочет посмотреть, как выглядят его карточки в выдаче. */
-  def myAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    adnNodeDemoWebsite( routes.MarketShowcase.myAdsShowcase(adnId) )
-  }
-
 }
-
 

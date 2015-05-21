@@ -6,10 +6,9 @@ import controllers.{routes, SioController}
 import models._
 import models.msc._
 import play.api.mvc.Result
-import play.twirl.api.Html
+import play.twirl.api.{HtmlFormat, Html}
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
-import views.html.sc.siteTpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
@@ -26,7 +25,8 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds with ScNodesList {
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds
+with ScNodesList with ScSiteBase {
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
@@ -312,30 +312,39 @@ trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAds
       adsCssExtFut
     }
 
-    /** Готовим аргументы базового шаблона выдачи. */
-    def siteArgsFut: Future[ScSiteArgs] = {
-      val _indexHtmlFut = indexHtmlFut
-      val _headAfterFut = headAfterFut
-      val _adnNodeReqFut = adnNodeReqFut
-      for {
-        siteRenderArgs <- _getSiteRenderArgs(_siteArgs)
-        indexHtml      <- _indexHtmlFut
-        _headAfter     <- _headAfterFut
-        _adnNodeOpt    <- _adnNodeReqFut
-      } yield {
-        new ScSiteArgsWrapper {
-          override def _scSiteArgs  = siteRenderArgs
-          override def inlineIndex  = Some(indexHtml)
-          override def syncRender   = true
-          override def headAfter    = super.headAfter ++ _headAfter
-          override def nodeOpt      = _adnNodeOpt
+    /** Реализация [[SiteLogic]] для нужд [[ScSyncSite]]. */
+    protected class SyncSiteLogic extends SiteLogic {
+      // Линкуем исходные данные логики с полями outer-класса.
+      override implicit lazy val ctx  = that.ctx
+      override def _siteArgs          = that._siteArgs
+      override implicit def _request  = that._request
+      override def nodeOptFut         = that.adnNodeReqFut
+
+      /** Скрипт выдачи не нужен вообще. */
+      override def scriptHtmlFut: Future[Html] = {
+        Future successful HtmlFormat.empty
+      }
+
+      /** Подмешиваем необходимые для sync-render данные в аргументы рендера сайта. */
+      override def renderArgsFut: Future[ScSiteArgs] = {
+        val _indexHtmlFut = indexHtmlFut
+        for {
+          siteRenderArgs <- super.renderArgsFut
+          indexHtml      <- _indexHtmlFut
+        } yield {
+          new ScSiteArgsWrapper {
+            override def _scSiteArgs  = siteRenderArgs
+            override def inlineIndex  = Some(indexHtml)
+            override def syncRender   = true
+          }
         }
       }
     }
 
     /** Рендерим site.html, т.е. базовый шаблон выдачи. */
-    def resultFut = siteArgsFut map { args1 =>
-      Ok(siteTpl(args1))
+    def resultFut: Future[Result] = {
+      val logic = new SyncSiteLogic
+      logic.resultFut
     }
 
   }

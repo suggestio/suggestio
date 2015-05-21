@@ -1,0 +1,7 @@
+@(args: msc.IScScriptRenderArgs)(implicit ctx: Context)
+
+@* HTML для подключения скрипта второй версии выдачи (sc-sjs). *@
+
+@import views.html.stuff._
+
+@_sjsScript("sc-sjs", withLauncherJs = true)

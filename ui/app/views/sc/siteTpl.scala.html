@@ -45,7 +45,7 @@
 <body class="sm-body @if(args.syncRender){ __sync }">
 
   @if(!args.syncRender) {
-    @script._scriptV1Tpl(args)
+    @args.scriptHtml
   }
   @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново
           выглядеть и работать. Но не для кравлеров. *@

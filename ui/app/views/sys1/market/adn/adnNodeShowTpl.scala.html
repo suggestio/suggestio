@@ -5,7 +5,6 @@
 
 @import ctx._
 @import helper._
-@import controllers.adn.AdnShowTypes._
 @import util.qsb._
 @import lk.lkBlock
 @import sys1.person.parts._personLinkTpl
@@ -54,11 +53,9 @@
 
     @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
 
-    @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
-      @btn(siteCall, 40) { demo<br/>WebSite }
-    }
+    @btn(routes.MarketShowcase.demoWebSite(adnNode.id.get), 40) { ВЫДАЧА }
 
-    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { BILLING }
+    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { БИЛЛИНГ }
 
     @btn(routes.SysAdnGeo.forNode(adnNode.id.get), 52) { GEO }
   </div>
