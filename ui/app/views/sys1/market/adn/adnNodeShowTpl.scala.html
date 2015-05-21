@@ -11,13 +11,15 @@
 
 
 @* Подшаблон генерации квадратной кнопки. *@
-@btn(href: Call, paddingPx: Int)(btnText: Html) = {
+@btn1(href: String, paddingPx: Int)(btnText: Html) = {
   <div class="i __btn">
-
     <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
       @btnText
     </a>
   </div>
+}
+@btn(href: Call, paddingPx: Int)(btnText: Html) = {
+  @btn1(href.url, paddingPx)(btnText)
 }
 
 @tableRow(title: String)(value: Html) = {
@@ -53,7 +55,7 @@
 
     @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
 
-    @btn(routes.MarketShowcase.demoWebSite(adnNode.id.get), 40) { ВЫДАЧА }
+    @btn1(ctx.SC_URL_PREFIX + routes.MarketShowcase.demoWebSite(adnNode.id.get).url, 52) { ВЫДАЧА }
 
     @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { БИЛЛИНГ }
 
