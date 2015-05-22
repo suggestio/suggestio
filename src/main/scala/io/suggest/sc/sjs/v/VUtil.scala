@@ -12,10 +12,10 @@ object VUtil {
 
   def setHeightRootWrapCont(height: Int, content: Option[HTMLElement], wrappers: TraversableOnce[HTMLElement] = Nil): Unit = {
     val heightPx = height.toString + "px"
-
     wrappers.foreach { wrapper =>
       wrapper.style.height = heightPx
     }
+
     content.foreach { cDiv =>
       cDiv.style.minHeight = (height + 1).toString + "px"
     }
