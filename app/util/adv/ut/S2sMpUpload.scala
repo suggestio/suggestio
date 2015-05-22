@@ -9,6 +9,7 @@ import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.EventTypes
 
+import scala.concurrent.Future
 import scala.util.{Try, Failure, Success}
 
 /**
@@ -23,7 +24,9 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
     /** Аплоад точно удался. */
     def uploadedOk(wsResp: WSResponse): Unit
     /** Аплоад не удался. */
-    def uploadFailed(ex: Throwable): Unit
+    def uploadFailed(ex: Throwable): Unit = {
+      LOGGER.error("Failed to upload file to remote server", ex)
+    }
 
     /** Формирование данных для сборки тела multipart. */
     def mkUpArgs: IMpUploadArgs
@@ -35,7 +38,14 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Собрать POST-запрос и запустить его на исполнение
-      val upFut = mpUploadClient.mpUpload(mkUpArgs)
+      // 22.may.2015: Future{} чтобы удобно отрабатывать ранние синхронные исключения.
+      // Если файл части запроса не удается прочитать, то будет exception ещё до начала запроса.
+      val argsFut = Future {
+        mkUpArgs
+      }
+      val upFut = argsFut flatMap { args =>
+        mpUploadClient.mpUpload(args)
+      }
       upFut.onComplete {
         case Success(wsResp) => self ! wsResp
         case other           => self ! other
@@ -119,6 +129,7 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
     }
 
     override def uploadFailed(ex: Throwable): Unit = {
+      super.uploadFailed(ex)
       // Если юзер обратится с описаловом, то там будет ключ ошибки. Экзепшен можно будет отследить по логам.
       ex match {
         case refused: UploadRefusedException =>

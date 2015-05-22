@@ -5,7 +5,7 @@ import _root_.util.async.FsmActor
 import _root_.util.event.EventTypes
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{SupervisorStrategy, Actor, ActorRef, Props}
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
@@ -266,6 +266,10 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
         }
     }
   }
+
+  /** Если не грохать повесившихся акторов, то будет бесконечный перезапуск, который не останавливается никак.
+    * Как вариант, можно ограничить кол-во перезапусков актора до 2-3. */
+  override def supervisorStrategy = SupervisorStrategy.stoppingStrategy
 
 }
 
