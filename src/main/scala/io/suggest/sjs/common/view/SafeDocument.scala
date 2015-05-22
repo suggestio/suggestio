@@ -14,10 +14,10 @@ import scala.scalajs.js.UndefOr
  * Description: Враппер для объекта document для возможности более безопасного (кросс-браузерного)
  * обращения к некоторым полям.
  */
-trait SafeDocumentT {
+trait SafeDocumentT extends SafeEventTargetT {
 
-  def _underlying: Document = dom.document
-  
+  override def _underlying: Document
+
   def _api(doc: Document = dom.document): SafeDocumentApi = {
     doc.asInstanceOf[SafeDocumentApi]
   }
@@ -41,6 +41,7 @@ trait SafeDocumentT {
   def head = _safeGetTag("head")(_.head)
 
 }
+
 
 /** Представление API document'а с точки зрения потенциальной опасности некоторых полей. */
 trait SafeDocumentApi extends js.Object {
