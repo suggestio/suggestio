@@ -1,7 +1,11 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.inx.ScIndex
+import io.suggest.sc.sjs.v.layout.Layout
+import io.suggest.sc.sjs.v.nav.NavPaneView
+import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -27,11 +31,29 @@ object NodeCtl extends CtlT {
    */
   def switchToNode(adnIdOpt: Option[String]): Unit = {
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
+    implicit val _vctx = vctx
     for {
       minx <- inxFut
     } yield {
-      println("index answer received: " + minx)
-      ScIndex.showIndex(minx)
+      Layout.reDrawLayout()(_vctx)
+      ScIndex.showIndex(minx)(_vctx)
+
+      GridView.adjustDom()(_vctx)
+      NavPaneView.adjustNodeList()(_vctx)
+
+      // TODO Нужен ли тут этот setTimeout()? Может можно без него вообще или через Future()?
+      dom.setTimeout(
+        { () => GridView.attachEvents()(_vctx) },
+        200
+      )
+
+      /*if (minx.isGeo) {
+        ???
+        NavPaneView.showNavShowBtn(isShown = true)(_vctx)
+      }*/
+
+      // Инициализация welcomeAd.
+
       ???
     }
   }

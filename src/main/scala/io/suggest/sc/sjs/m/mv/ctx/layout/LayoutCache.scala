@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mv.ctx.layout
 
 import io.suggest.sc.ScConstants.Layout._
-import io.suggest.sc.sjs.m.mv.ctx.{Div, IdFind, ClearableCache}
+import io.suggest.sc.sjs.m.mv.ctx.{Cached, Div, Id, ClearableCache}
 
 /**
  * Suggest.io
@@ -25,10 +25,16 @@ trait LayoutCache extends ClearableCache {
 
 
 /** Аддон кеша для layout root div. */
-trait RootDiv extends ClearableCache {
+trait RootDiv extends ClearableCache { that =>
 
-  object rootDiv extends Div with IdFind {
-    override def id: String = ROOT_ID
+  object rootDiv extends Div with Id with Cached {
+    override def id = ROOT_ID
+
+    /** Замена корневого div означает, что надо сбросить кеши во всем layout. */
+    override def set(v: T): Unit = {
+      that.cachesClear()
+      super.set(v)
+    }
   }
 
   override def cachesClear(): Unit = {
@@ -42,7 +48,7 @@ trait RootDiv extends ClearableCache {
 /** Аддон кеша для layout div. */
 trait LayoutDiv extends ClearableCache {
 
-  object layoutDiv extends Div with IdFind {
+  object layoutDiv extends Div with Id with Cached {
     override def id: String = LAYOUT_ID
   }
 

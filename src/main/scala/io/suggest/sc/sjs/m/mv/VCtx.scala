@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.m.mv
 
 import io.suggest.sc.sjs.m.mv.ctx.layout.LayoutCache
-import io.suggest.sc.sjs.m.mv.ctx.tile.TileCache
+import io.suggest.sc.sjs.m.mv.ctx.grid.GridCtx
+import io.suggest.sc.sjs.m.mv.ctx.nav.NavCtx
 import org.scalajs.dom
 
 /**
@@ -12,7 +13,7 @@ import org.scalajs.dom
  * в представления.
  * Например, кеширование найденных тегов через lazy val, используемых в нескольких местах.
  */
-trait IVCtx extends TileCache with LayoutCache {
+trait IVCtx extends GridCtx with LayoutCache with NavCtx {
 
   // Быстрый доступ к довольно частым полям DOM.
   def w = dom.window
@@ -20,4 +21,5 @@ trait IVCtx extends TileCache with LayoutCache {
 
 }
 
+/** Дефолтовая реализация [[IVCtx]]. */
 class VCtx extends IVCtx

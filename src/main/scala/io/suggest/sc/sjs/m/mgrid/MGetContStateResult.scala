@@ -6,8 +6,23 @@ package io.suggest.sc.sjs.m.mgrid
  * Created: 21.05.15 18:36
  * Description: Модель результатов рассчета getContainerState().
  */
+
 case class MGetContStateResult(
-  mgs1  : MGridState,
-  cw    : Int,
-  cm    : Int
+  cw            : Int,
+  cm            : Int,
+  maxCellWidth  : Int,
+  columnsCnt    : Int
 )
+  extends ICwCm with IColsWidth
+
+
+trait ICwCm {
+  def cw: Int
+  def cm: Int
+}
+
+trait IColsWidth {
+  def maxCellWidth  : Int
+  def columnsCnt    : Int
+}
+

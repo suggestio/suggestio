@@ -3,8 +3,7 @@ package io.suggest.sc.sjs.v.inx
 import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.m.mv.IVCtx
-import io.suggest.sc.sjs.v.layout.Layout
-import org.scalajs.dom
+import io.suggest.sc.sjs.v.grid.GridView
 
 /**
  * Suggest.io
@@ -20,16 +19,14 @@ object ScIndex {
    * @return void, когда всё закончится.
    */
   def showIndex(minx: MNodeIndex)(implicit vctx: IVCtx): Unit = {
-    val rdRes = Layout.reDrawLayout()
     // TODO bind_window_events() - реагировать на ресайз. Но это наверное должно происходить уровнем выше.
-    val wnd = dom.window
+    val wnd = vctx.w
     wnd.scrollTo(0, 0)
 
-    rdRes.rootDiv.style.display = "block"
-    rdRes.layoutDiv.innerHTML = minx.html
+    val lctx = vctx.layout
+    lctx.rootDiv().style.display = "block"
+    lctx.layoutDiv().innerHTML = minx.html
     SafeDoc.body.style.overflow = "hidden"
-
-    ???
   }
 
 }
