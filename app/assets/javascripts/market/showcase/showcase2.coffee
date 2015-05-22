@@ -588,11 +588,6 @@ sm =
       else
         sm.geo.position_callback_fallback()
 
-    init_events : () ->
-      _geo_nodes_search_dom = sm.utils.ge('smGeoSearchField')
-      sm.utils.add_single_listener _geo_nodes_search_dom, 'keyup', ( e ) ->
-        sm.log sm.geo.search.queue_request this.value
-
     load_for_node_id : ( node_id ) ->
       sm.warn 'load_for_node_id'
       cs = sm.states.cur_state()
@@ -1546,7 +1541,6 @@ sm =
 
       sm.grid_ads.adjust_dom()
       sm.geo.adjust()
-      sm.geo.init_events()
 
       setTimeout sm.grid_ads.attach_events, 200
 

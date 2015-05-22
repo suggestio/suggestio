@@ -75,6 +75,10 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   /** Какую кнопку навигации надо рендерить для в левом верхнем углу indexTpl? */
   def topLeftBtn: ScHdrBtn
 
+  /** Назначение выдачи. */
+  def target: MScTarget = MScTargets.Primary
+
+
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {
     shops
