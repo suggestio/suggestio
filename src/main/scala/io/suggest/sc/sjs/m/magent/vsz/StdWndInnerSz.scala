@@ -1,8 +1,6 @@
-package io.suggest.sc.sjs.v.render.direct.vport.sz
+package io.suggest.sc.sjs.m.magent.vsz
 
-import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import org.scalajs.dom
-import org.scalajs.dom.Window
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -24,7 +22,7 @@ trait StdWndInnerSzEl extends js.Object {
 
 }
 
-/** Аддон для [[ViewportSzT]], добавляющий поддерку чтения размеров viewport из стандартных window.inner*() полей. */
+/** Аддон для [[ViewportSz]], добавляющий поддерку чтения размеров viewport из стандартных window.inner*() полей. */
 trait StdWndInnerSz extends IViewportSz {
 
   private def wndSafe: StdWndInnerSzEl = {

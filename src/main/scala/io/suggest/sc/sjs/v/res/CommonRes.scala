@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.res
+package io.suggest.sc.sjs.v.res
 
 import io.suggest.sc.ScConstants.Rsc._
 
@@ -8,7 +8,7 @@ import io.suggest.sc.ScConstants.Rsc._
  * Created: 21.05.15 15:59
  * Description: Контейнер для common-ресурсов. Стили выдачи всякие.
  */
-class CommonRes extends ResourceContainerT {
+object CommonRes extends ResourceContainerT {
 
   override def id = COMMON_ID
 

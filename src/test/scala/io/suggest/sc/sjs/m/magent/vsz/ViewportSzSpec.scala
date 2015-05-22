@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.vport.sz
+package io.suggest.sc.sjs.m.magent.vsz
 
 import minitest._
 
@@ -15,7 +15,7 @@ import minitest._
  * для каждого аддона определения размера.
  */
 
-protected[sz] trait ViewportSzTester extends SimpleTestSuite {
+protected[vsz] trait ViewportSzTester extends SimpleTestSuite {
 
   protected def getImpl: IViewportSz
 
@@ -55,7 +55,7 @@ protected[sz] trait ViewportSzTester extends SimpleTestSuite {
 /** Непосредственные тесты финальной реализации.*/
 object ViewportSzSpec extends ViewportSzTester {
   override protected def getImpl: IViewportSz = {
-    new ViewportSzImpl {}
+    ViewportSz
   }
 }
 

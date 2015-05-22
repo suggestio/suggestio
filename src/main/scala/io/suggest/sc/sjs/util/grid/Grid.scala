@@ -11,7 +11,7 @@ import io.suggest.sc.tile.ColumnsCountT
  * Description: Сетка плитки, т.е. ядро логики cbca_grid.
  *
  * Некоторые части исходной cbca_grid вынесены в отдельные модули.
- * @see [[io.suggest.sc.sjs.v.render.direct.vport.sz.ViewportSzImpl]] Детектор размера viewport'а.
+ * @see [[io.suggest.sc.sjs.v.render.direct.vport.sz.ViewportSz]] Детектор размера viewport'а.
  */
 
 object Grid {

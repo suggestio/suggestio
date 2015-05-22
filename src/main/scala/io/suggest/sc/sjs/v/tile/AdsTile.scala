@@ -1,7 +1,6 @@
-package io.suggest.sc.sjs.v.render.direct.tile
+package io.suggest.sc.sjs.v.tile
 
-import org.scalajs.dom
-import io.suggest.sc.ScConstants.Tile.TILE_DIV_ID
+import io.suggest.sc.sjs.m.mv.IVCtx
 
 /**
  * Suggest.io
@@ -10,11 +9,10 @@ import io.suggest.sc.ScConstants.Tile.TILE_DIV_ID
  * Description: view плитки рекламный карточек. Он получает тычки от контроллеров или других view'ов,
  * и влияет на отображаемую плитку.
  */
-class AdsTile {
+object AdsTile {
 
-  def adjustDom(): Unit = {
-    val d = dom.document
-    val div = d.getElementById(TILE_DIV_ID)
+  def adjustDom()(implicit vctx: IVCtx): Unit = {
+    val div = vctx.tile.tileDiv()
     ???
   }
 

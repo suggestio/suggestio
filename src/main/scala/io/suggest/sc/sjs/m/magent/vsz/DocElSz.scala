@@ -1,8 +1,6 @@
-package io.suggest.sc.sjs.v.render.direct.vport.sz
+package io.suggest.sc.sjs.m.magent.vsz
 
-import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import org.scalajs.dom
-import org.scalajs.dom.Document
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -20,7 +18,7 @@ trait DocElSzEl extends js.Object {
 }
 
 
-/** Аддон для [[ViewportSzT]], добавляющий поддержку чтения размера окна из documentElement. */
+/** Аддон для [[ViewportSz]], добавляющий поддержку чтения размера окна из documentElement. */
 trait DocElSz extends IViewportSz {
 
   private object DocElSzHelper extends ElSafeGetIntValueT {

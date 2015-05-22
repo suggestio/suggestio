@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.vport.sz
+package io.suggest.sc.sjs.m.magent.vsz
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr

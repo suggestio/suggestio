@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.m
+package io.suggest.sc.sjs.m.mv
 
 import org.scalajs.dom.raw.HTMLDivElement
 

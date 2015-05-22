@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.NodeCtl
+import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.m.magent.{MAgent, MScreen}
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
-import io.suggest.sc.sjs.v.render.direct.DirectRrr
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -22,8 +22,7 @@ object App extends JSApp {
     // Собрать исходное состояние системы
     val srvRouterFut = SrvRouter.getRouter
 
-    val rrr = DirectRrr
-    val scrSz = rrr.getViewportSize.get
+    val scrSz = ViewportSz.getViewportSize.get
     MAgent.availableScreen = MScreen(scrSz.width, height = scrSz.height, pxRatio = 1.0)
 
     // Когда состояние готово, нужно передать управление в контроллеры.

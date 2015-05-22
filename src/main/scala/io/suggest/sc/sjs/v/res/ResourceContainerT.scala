@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.res
+package io.suggest.sc.sjs.v.res
 
 import io.suggest.sc.sjs.m.SafeDoc
 import org.scalajs.dom
@@ -8,8 +8,11 @@ import org.scalajs.dom.{Element, Document}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.05.15 15:51
- * Description: Resource-контейнеры используются для хранения заинлайненных ресурсов. Например style-тегов.
+ * Description: Resource-контейнеры используются для хранения и передачи заинлайненных ресурсов в DOM.
+ * Например: style-теги со стилями полученной верстки.
  * Тут заготовка для приготовления ресурса.
+ *
+ * С точки зрения DOM, контейнеры -- это просто теги в начале body.
  */
 trait ResourceContainerT {
 

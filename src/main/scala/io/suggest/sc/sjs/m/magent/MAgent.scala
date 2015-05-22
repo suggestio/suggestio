@@ -12,4 +12,7 @@ object MAgent {
   /** Размер и другие параметры экрана, доступные для рендера интерфейса. */
   var availableScreen: MScreen = _
 
+
+  override def toString = "MAgent"
+
 }

@@ -1,7 +1,6 @@
-package io.suggest.sc.sjs.v.render.direct.vport.sz
+package io.suggest.sc.sjs.m.magent.vsz
 
-import io.suggest.adv.ext.model.im.{Size2di, ISize2di}
-import io.suggest.sc.sjs.v.render.IRenderer
+import io.suggest.adv.ext.model.im.Size2di
 
 /**
  * Suggest.io
@@ -30,18 +29,9 @@ trait IViewportSz {
 
 /** Аддон для готовой реализации детектора размера со всеми аддонами.
   * Используется для тестирования и для подмешивания в основную логику приложения. */
-trait ViewportSzImpl
+object ViewportSz
   extends IViewportSz
   with StdWndInnerSz
   with DocElSz
   with BodyElSz
 
-
-/** Аддон для DirectRrr, добавляющий поддержку чтения размеров viewport из нескольких источников.
-  * Можно подключать новые и отключать текущие модули чтения размера на стадии компиляции. */
-trait ViewportSzT
-  extends ViewportSzImpl
-  with IRenderer
-{
-  override def viewportSize: ISize2di = getViewportSize.get
-}

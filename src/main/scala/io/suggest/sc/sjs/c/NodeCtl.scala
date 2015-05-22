@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
-import io.suggest.sc.sjs.v.render.direct.DirectRrr
+import io.suggest.sc.sjs.v.inx.ScIndex
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -10,7 +10,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 20.05.15 12:13
  * Description: Контроллер для узлов. Начинался с переключения узлов.
  */
-object NodeCtl {
+object NodeCtl extends CtlT {
 
   /**
    * Полная процедура переключения на другой узел.
@@ -31,7 +31,7 @@ object NodeCtl {
       minx <- inxFut
     } yield {
       println("index answer received: " + minx)
-      DirectRrr.showIndex(minx)
+      ScIndex.showIndex(minx)
       ???
     }
   }

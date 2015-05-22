@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.v.render.direct.res
+package io.suggest.sc.sjs.v.res
 
 import io.suggest.sc.ScConstants.Rsc._
 
@@ -8,7 +8,7 @@ import io.suggest.sc.ScConstants.Rsc._
  * Created: 21.05.15 16:09
  * Description: Контейнер для focused-ресурсов.
  */
-class FocusedRes extends ResourceContainerT {
+object FocusedRes extends ResourceContainerT {
 
   override def id = FOCUSED_ID
 
