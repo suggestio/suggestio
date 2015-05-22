@@ -15,12 +15,18 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   /** Экземпляр модели версий. */
   protected[this] sealed class Val(val versionNumber: Int) extends super.Val(versionNumber) {
     override def toString(): String = id.toString
+
+    /** Всегда рендерить инструменты для закрытия выдачи. */
+    // TODO Удалить вместе с Coffee API
+    def forceScCloseable: Boolean = false
   }
 
   override type T = Val
 
   /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
-  val Coffee  : T = new Val(1)
+  val Coffee  : T = new Val(1) {
+    override def forceScCloseable = true
+  }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
   val Sjs1    : T = new Val(2)

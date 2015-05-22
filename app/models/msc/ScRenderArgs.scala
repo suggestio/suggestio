@@ -78,6 +78,11 @@ trait ScRenderArgs extends LogoImgOptI with ScReqArgs {
   /** Назначение выдачи. */
   def target: MScTarget = MScTargets.Primary
 
+  /** Рендерить ли утиль, связанную с "закрытием" выдачи?
+    * После удаления API v1, можно заинлайнить в шаблон, выкинув обращение к apiVsn.force..() */
+  def withScClose: Boolean = {
+    !syncRender && (target.isCloseable || apiVsn.forceScCloseable)
+  }
 
   /** Генерация списка групп рекламодателей по первым буквам. */
   lazy val shopsLetterGrouped = {
