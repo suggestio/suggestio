@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.IAppState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.v.render.direct.DirectRrr
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -25,13 +25,13 @@ object NodeCtl {
    * @param adnIdOpt id узла, если известен.
    *                 None значит пусть сервер сам решит, на какой узел переключаться.
    */
-  def switchToNode(adnIdOpt: Option[String])(implicit state: IAppState): Unit = {
+  def switchToNode(adnIdOpt: Option[String]): Unit = {
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
     for {
       minx <- inxFut
     } yield {
       println("index answer received: " + minx)
-      state.renderer.showIndex(minx)
+      DirectRrr.showIndex(minx)
       ???
     }
   }

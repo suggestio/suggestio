@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.v.render.direct.index
 
-import io.suggest.sc.sjs.m.IAppState
+import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.render.IRenderer
 import io.suggest.sc.ScConstants.Layout._
@@ -19,9 +19,8 @@ trait ShowIndex extends IRenderer with RendererResT {
 
   /**
    * Перерисовать layout выдачи.
-   * @param state Состояние приложения.
    */
-  private def reDrawLayout()(implicit state: IAppState): ReDrawLayoutResult = {
+  private def reDrawLayout(): ReDrawLayoutResult = {
     val d = dom.document
 
     // Вычистить предыдущуй layout и его ресурсы:
@@ -52,7 +51,7 @@ trait ShowIndex extends IRenderer with RendererResT {
     rootDiv.appendChild(layoutDiv)
     rootDiv.style.display = "none"
 
-    state.safeDoc.body.appendChild(rootDiv)
+    SafeDoc.body.appendChild(rootDiv)
 
     ReDrawLayoutResult(
       rootDiv   = rootDiv,
@@ -64,10 +63,9 @@ trait ShowIndex extends IRenderer with RendererResT {
   /**
    * Получены новые данные node index. Нужно стереть старый layout, впилить новый.
    * @param minx Данные MNodeIndex от сервера.
-   * @param state Доступ к состоянию приложения.
    * @return void, когда всё закончится.
    */
-  override def showIndex(minx: MNodeIndex)(implicit state: IAppState): Unit = {
+  override def showIndex(minx: MNodeIndex): Unit = {
     val rdRes = reDrawLayout()
     // TODO bind_window_events() - реагировать на ресайз. Но это наверное должно происходить уровнем выше.
     val wnd = dom.window
@@ -75,7 +73,7 @@ trait ShowIndex extends IRenderer with RendererResT {
 
     rdRes.rootDiv.style.display = "block"
     rdRes.layoutDiv.innerHTML = minx.html
-    state.safeDoc.body.style.overflow = "hidden"
+    SafeDoc.body.style.overflow = "hidden"
 
     ???
   }

@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.v.render
 
 import io.suggest.adv.ext.model.im.ISize2di
-import io.suggest.sc.sjs.m.IAppState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 
 /**
@@ -22,9 +21,8 @@ trait IRenderer {
   /**
    * Отобразить node index на экран.
    * @param minx Данные MNodeIndex от сервера.
-   * @param state Доступ к состоянию приложения.
    * @return void, когда всё закончится.
    */
-  def showIndex(minx: MNodeIndex)(implicit state: IAppState): Unit
+  def showIndex(minx: MNodeIndex): Unit
 
 }

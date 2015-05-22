@@ -10,7 +10,7 @@ import io.suggest.sc.sjs.v.render.direct.vport.sz.ViewportSzT
  * Created: 18.05.15 18:01
  * Description: Реализация прямого рендеринга в DOM через javascript-методы DOM и window.
  */
-class DirectRrr
+object DirectRrr
   extends IRenderer
   with ViewportSzT
   with ShowIndex

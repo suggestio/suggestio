@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.IAppState
+import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,13 +22,12 @@ object MNodeIndex {
   /**
    * Запустить получение index-страницы.
    * @param adnIdOpt id узла.
-   * @param state Доступ к состоянию приложения.
    * @return Фьючерс с результатами исполнения запроса.
    */
-  def getIndex(adnIdOpt: Option[String])(implicit state: IAppState, ec: ExecutionContext): Future[MNodeIndex] = {
+  def getIndex(adnIdOpt: Option[String])(implicit ec: ExecutionContext): Future[MNodeIndex] = {
     val reqArgs = MScReqArgsJson()
     // Собрать и отправить запрос за данными index.
-    val router = state.srv.routes.controllers.MarketShowcase
+    val router = routes.controllers.MarketShowcase
     val route = adnIdOpt match {
       case Some(adnId) =>
         router.nodeIndex(adnId, reqArgs)

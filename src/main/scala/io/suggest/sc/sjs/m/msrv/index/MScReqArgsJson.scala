@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.IAppState
-import io.suggest.sc.sjs.m.mgeo.MGeoModeIp
+import io.suggest.sc.sjs.m.magent.MAgent
+import io.suggest.sc.sjs.m.mgeo.{IMGeoMode, MGeoModeLoc, MCurrLoc, MGeoModeIp}
+import io.suggest.sc.sjs.m.msrv.MSrv
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.ReqArgs._
@@ -38,19 +39,16 @@ object MScReqArgsJson {
   /**
    * Собрать экземпляр модели на основе имеющихся данных.
    * @param withWelcome Ручное управление отображением карточки приветствия.
-   * @param state Состояние приложения.
    * @return Экземпляр [[MScReqArgsJson]].
    */
-  def apply(withWelcome: Option[Boolean] = None)(implicit state: IAppState): MScReqArgsJson = {
+  def apply(withWelcome: Option[Boolean] = None): MScReqArgsJson = {
     val d = Dictionary[Any](
-      GEO -> state.location
-        .geoLoc
-        .getOrElse(MGeoModeIp)
+      GEO -> MCurrLoc.currLoc
+        .fold[IMGeoMode](MGeoModeIp)(MGeoModeLoc.apply)
         .toQsStr,
-      SCREEN -> state.agent
-        .availableScreen
+      SCREEN -> MAgent.availableScreen
         .toQsValue,
-      VSN -> state.srv.apiVsn
+      VSN -> MSrv.apiVsn
     )
     if (withWelcome.isDefined) {
       d.update(WITH_WELCOME, withWelcome.get)

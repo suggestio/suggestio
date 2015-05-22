@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.v.render.direct.res
 
-import io.suggest.sc.sjs.m.IAppState
+import io.suggest.sc.sjs.m.SafeDoc
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Document}
 
@@ -43,7 +43,7 @@ trait ResourceContainerT {
   }
 
   /** Создать/пересоздать контейнер ресурсов. */
-  def recreate()(implicit state: IAppState): Unit = {
+  def recreate(): Unit = {
     val d = dom.document
     val _id = id
     // Найти и удалить старый элемент
@@ -57,7 +57,7 @@ trait ResourceContainerT {
     val el = d.createElement(tag)
     el.setAttribute("id", _id)
 
-    state.safeDoc.body.appendChild(el)
+    SafeDoc.body.appendChild(el)
   }
 
 }

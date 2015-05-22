@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.util.grid
 
-import io.suggest.sc.sjs.m.IAppState
+import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGetContStateResult, MGridState}
 import io.suggest.sc.tile.ColumnsCountT
 
@@ -19,22 +19,20 @@ object Grid {
   /**
    * Посчитать колонки с помощью калькулятора.
    * @param mgs
-   * @param appState
    * @return
    */
-  def countColumns(mgs: MGridState)(implicit appState: IAppState): Int = {
+  def countColumns(mgs: MGridState): Int = {
     val calc = new ColumnsCountT {}
-    calc.getTileColsCountScr(appState.agent.availableScreen)
+    calc.getTileColsCountScr(MAgent.availableScreen)
   }
 
   /**
    * Рассчет новых параметров контейнера.
    * view должен накатить рассчеты на DOM и обновить состояние.
    * @param mgs Исходное состояние сетки.
-   * @param appState Состояние приложения.
    * @return Экземпляр с результатами рассчетов.
    */
-  def getContainerSz(mgs: MGridState)(implicit appState: IAppState): MGetContStateResult = {
+  def getContainerSz(mgs: MGridState): MGetContStateResult = {
     val colCount = countColumns(mgs)
 
     var cw = mgs.margin(colCount)
