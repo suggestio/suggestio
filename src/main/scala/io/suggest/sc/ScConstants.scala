@@ -74,11 +74,45 @@ object ScConstants {
   }
 
 
-  object Tile {
+  /** Сетка выдачи. */
+  object Grid {
 
-    def TILE_DIV_ID = "smGridAds"
+    /** Вся структура сетки внутри этого div. */
+    def ROOT_DIV_ID       = "smGridAds"
+
+    def WRAPPER_DIV_ID    = "smGridAdsWrapper"
+
+    def CONTENT_DIV_ID    = "smGridAdsContent"
+
+    /** Анимированная крутилка внизу списка рекламных карточек, когда ожидается подгрузка ещё карточек. */
+    def LOADER_DIV_ID     = "smGridAdsLoader"
+
+    /** Блоки карточек рендерятся сюда. */
+    def CONTAINER_DIV_ID  = "smGridAdsContainer"
+
+  }
 
 
+  /** Панель навигации по системе и её узлам. */
+  object NavPane {
+
+    /** Корневой id панели навигации. */
+    def ROOT_ID       = "smGeoScreen"
+
+    /** div id контейнера списка узлов. */
+    def NODE_LIST_ID  = "smGeoNodes"
+
+    /** content wrapper div id */
+    def WRAPPER_ID    = "smGeoNodesWrapper"
+
+    /** content div id. */
+    def CONTENT_ID    = "smGeoNodesContent"
+
+    /** id кнопки ручного запуска геолокации. */
+    def FIND_ME_BTN_ID = "smGeoLocationButton"
+
+    /** id кнопки вызова панели навигации. */
+    def SHOW_PANE_BTN_ID = "smGeoScreenButton"
 
   }
 
