@@ -5,7 +5,7 @@ import java.io.File
 import models.MImgSizeT
 import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Akka
-import util.PlayMacroLogsI
+import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 import util.async.AsyncUtil
 import util.xplay.CacheUtil
 import scala.concurrent.Future
@@ -46,7 +46,7 @@ object AdRenderArgs {
 
 
 /** Абстрактные параметры для рендера. Даже wkhtml этого обычно достаточно. */
-trait IAdRenderArgs {
+trait IAdRenderArgs extends PlayMacroLogsDyn {
 
   /** Ссыка на страницу, которую надо отрендерить. */
   def src     : String
@@ -69,20 +69,32 @@ trait IAdRenderArgs {
 
   /** Запустить рендер карточки, если результат уже не лежит в кеше. */
   def renderCached: Future[File] = {
-    CacheUtil.getOrElse(toString, cacheSeconds) {
-      val fut = render
-      // Удалить файл с диска через некоторое время, зависящие от времени кеширования.
-      val deleteAt = System.currentTimeMillis() + (cacheSeconds * 2).seconds.toMillis
-      fut onSuccess { case file =>
-        file.deleteOnExit()
-        val deleteAfterNow = (System.currentTimeMillis() - deleteAt).milliseconds
-        Akka.system.scheduler.scheduleOnce(deleteAfterNow) {
-          file.delete
-        }
-      }
-      // Вернуть исходный фьючерс
-      fut
+    // TODO Нужно по-лучше протестировать этот код. Он какой-то взрывоопасный.
+    val res = CacheUtil.getOrElse(toString, cacheSeconds)(_renderCached)
+    // Пока код не оттесирован, используем подобный костыль, чтобы убедиться, что всё ок:
+    res.filter { file =>
+      file.exists()
+    } recoverWith {
+      case ex: NoSuchElementException =>
+        val fut1 = _renderCached
+        LOGGER.error("Please fix this buggy piece of code! File returned is deleted already.")
+        fut1
     }
+  }
+
+
+  private def _renderCached: Future[File] = {
+    val fut = render
+    // Удалить файл с диска через некоторое время, зависящие от времени кеширования.
+    val deleteAt = System.currentTimeMillis() + (cacheSeconds * 2).seconds.toMillis
+    fut onSuccess { case file =>
+      val deleteAfterNow = Math.abs( deleteAt - System.currentTimeMillis() ).milliseconds
+      Akka.system.scheduler.scheduleOnce(deleteAfterNow) {
+        file.delete
+      }
+    }
+    // Вернуть исходный фьючерс
+    fut
   }
 
 }
