@@ -145,4 +145,13 @@ object ScConstants {
     
   }
 
+
+  /** Константы поисковой панели. */
+  object Search {
+
+    /** id инпута для полнотекстового поиска. */
+    def FTS_FIELD_ID = "smSearchField"
+
+  }
+
 }
