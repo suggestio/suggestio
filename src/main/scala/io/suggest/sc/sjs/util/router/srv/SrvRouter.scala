@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.util.router.srv
 
-import io.suggest.sjs.common.view.SafeDocument
+import io.suggest.sjs.common.view.safe.doc.SafeDocument
 import org.scalajs.dom
 
 import scala.concurrent.{Promise, Future}

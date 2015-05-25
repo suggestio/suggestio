@@ -12,6 +12,6 @@ object MWelcomeState {
   def HIDE_TIMEOUT_MS = 1700
   
   /** Время анимации сокрытия приветствия. Оно задаёт скорость анимации. */
-  def FADEOUT_TRANSITION_MS = 700
+  def FADEOUT_TRANSITION_MS = 300
 
 }

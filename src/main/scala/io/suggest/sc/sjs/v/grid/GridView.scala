@@ -4,8 +4,8 @@ import io.suggest.sc.sjs.c.GridCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGrid, ICwCm}
 import io.suggest.sc.sjs.m.mv.IVCtx
-import io.suggest.sc.sjs.v.VUtil
-import io.suggest.sjs.common.view.SafeEventTarget
+import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.view.safe.evtg.SafeEventTarget
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLElement
 

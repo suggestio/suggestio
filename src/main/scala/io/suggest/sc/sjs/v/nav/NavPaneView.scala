@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.v.nav
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mnav.MNav
 import io.suggest.sc.sjs.m.mv.IVCtx
-import io.suggest.sc.sjs.v.VUtil
+import io.suggest.sc.sjs.v.vutil.VUtil
 
 /**
  * Suggest.io

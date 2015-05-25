@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m
 
-import io.suggest.sjs.common.view.SafeDocument
+import io.suggest.sjs.common.view.safe.doc.SafeDocument
 
 /**
  * Suggest.io

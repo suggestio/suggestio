@@ -1,12 +1,20 @@
 package io.suggest.sc.sjs.v.welcome
 
 import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
+import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mv.IVCtx
-import io.suggest.sc.sjs.v.VImgUtil
-import io.suggest.sc.sjs.v.VUtil.getElementById
+import io.suggest.sc.sjs.m.mwc.MWelcomeState
+import io.suggest.sc.sjs.v.vutil.{VImgUtil, VUtil}
+import VUtil.getElementById
+import io.suggest.sjs.common.view.safe.css.SafeCssElT
+import io.suggest.sjs.common.view.safe.evtg.SafeEventTarget
+import org.scalajs.dom
+import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.{HTMLImageElement, HTMLDivElement}
 import io.suggest.sc.ScConstants.Welcome._
+import io.suggest.sc.sjs.v.vutil.ExtraStyles._
+import io.suggest.sc.ScConstants.CssAnim
 
 /**
  * Suggest.io
@@ -17,11 +25,15 @@ import io.suggest.sc.ScConstants.Welcome._
  */
 object NodeWelcomeView {
 
+  /** Используемая для fade-out анимация. Заливается предварительно в will-change для ускорения браузера. */
+  def FADEOUT_ANIM_TYPE = "opacity"
+
   /** Найти и вернуть div-контейнер карточки приветствия. */
   def rootDiv()  = getElementById[HTMLDivElement](ROOT_ID)
   def bgImg()    = getElementById[HTMLImageElement](BG_IMG_ID)
   def fgImg()    = getElementById[HTMLImageElement](FG_IMG_ID)
   def fgInfo()   = getElementById[HTMLDivElement](FG_INFO_DIV_ID)
+
 
   /**
    * Дедубликация вложенности и повторяющегося кода между fitBgImg() и fitFgImg().
@@ -35,6 +47,7 @@ object NodeWelcomeView {
       }
     }
   }
+
 
   /** Подогнать фон приветствия под экран.
     * В оригинале было fit(imgDom, isDivided = false). */
@@ -53,6 +66,7 @@ object NodeWelcomeView {
     setImageWh(el, newWh, marginTopPx)
   }
 
+
   /** Подогнать передней план приветствия под экран. */
   def fitFg() = _processImgWrap(fgImg()) { (el, iwh) =>
     val newWidth  = iwh.width  / 2
@@ -66,30 +80,73 @@ object NodeWelcomeView {
     }
   }
 
+
   /** Вписать все элементы карточки приветствия под экран. */
   def fit(): Unit = {
     fitBg()
     fitFg()
   }
 
+
   /** Выставить новые отображаемые размеры для картинки и margin-left. */
   private def setImageWh(el: HTMLImageElement, wh: ISize2di, marginTopPx: Int): Unit = {
     VImgUtil.setImageWh(el, wh)
     el.style.marginLeft = (-wh.width / 2) + "px"
-    el.style.marginTop = marginTopPx + "px"
+    el.style.marginTop  = marginTopPx + "px"
   }
+
 
   /**
    * Welcome-карточка ВОЗМОЖНО присутствует в DOM. Если присутствует, то значит отображена.
    * Нужно допилить карточку под экран, задать правила для сокрытия этой карточки через таймер или иные события.
    */
   def handleWelcome()(implicit vctx: IVCtx): Unit = {
-    rootDiv().foreach { el =>
+    rootDiv().foreach { rootEl =>
       // Есть карточка в DOM. Подогнать по экран, повесить события.
       fit()
-      // TODO Нарисовать события таймаута и остального.
-      ???
+
+      // Добавляем will-change, т.к. ожидается анимация.
+      rootEl.style.willChange = FADEOUT_ANIM_TYPE
+
+      // Запустить скрытие карточки по таймауту.
+      dom.setTimeout(
+        { () => NodeWelcomeCtl.displayTimeout(rootEl) },
+        MWelcomeState.HIDE_TIMEOUT_MS
+      )
+
+      // Вешаем события ускоренного ухода с приветствия.
+      val safeEvtTg = SafeEventTarget(rootEl)
+      safeEvtTg.addEventListener("click") { (evt: Event) =>
+        NodeWelcomeCtl.clicked(evt, rootEl)
+      }
+
+      // TODO Нужно реагировать на "смахивание" приветствия.
+      // TODO Реагировать на Esc/enter/etc на клавиатуре, как на педалирование анимации.
     }
+  }
+
+
+  /** Активна ли анимация прямо сейчас? */
+  def isAnimatedNow(el: SafeCssElT): Boolean = {
+    el.containsClass(CssAnim.TRANS_02_CSS_CLASS)
+  }
+
+
+  /** Запустить сокрытие с помощью css-анимации. И удалить потом ещё. */
+  def fadeOut(el: SafeCssElT): Unit = {
+    el.addClasses(CssAnim.TRANS_02_CSS_CLASS, CssAnim.FADEOUT_CSS_CLASS)
+    dom.setTimeout(
+      {() => removeWelcome(el._underlying) },
+      MWelcomeState.FADEOUT_TRANSITION_MS
+    )
+  }
+
+  /** Исполнить удаление элемента. */
+  def removeWelcome(el: Element): Unit = {
+    val parent = el.parentNode
+    // Родительский элемент может быть null, если элемент уже удален.
+    if (parent != null)
+      parent.removeChild(el)
   }
 
 }
