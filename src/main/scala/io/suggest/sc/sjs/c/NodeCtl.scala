@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.inx.ScIndex
 import io.suggest.sc.sjs.v.layout.Layout
 import io.suggest.sc.sjs.v.nav.NavPaneView
+import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
@@ -47,12 +48,13 @@ object NodeCtl extends CtlT {
         200
       )
 
-      /*if (minx.isGeo) {
-        ???
-        NavPaneView.showNavShowBtn(isShown = true)(_vctx)
-      }*/
+      // TODO В оригинале была проверка isGeo, + сокрытие exit-кнопки и отображение nav-кнопки.
+      // Этот фунционал был перенесен в шаблон, exit спилено там же.
+      //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
+
 
       // Инициализация welcomeAd.
+      NodeWelcomeView.handleWelcome()(_vctx)
 
       ???
     }
