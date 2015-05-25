@@ -2,7 +2,7 @@ package io.suggest.sjs.common.controller
 
 import io.suggest.init.routed.{MJsInitTargetsLigthT, JsInitConstants}
 import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid}
-import io.suggest.sjs.common.view.SafeDocument
+import io.suggest.sjs.common.view.safe.doc.SafeDocument
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future

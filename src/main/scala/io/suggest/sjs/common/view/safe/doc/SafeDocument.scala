@@ -1,8 +1,9 @@
-package io.suggest.sjs.common.view
+package io.suggest.sjs.common.view.safe.doc
 
+import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
 import org.scalajs.dom
 import org.scalajs.dom.Document
-import org.scalajs.dom.raw.{HTMLElement, HTMLHeadElement, HTMLBodyElement}
+import org.scalajs.dom.raw.{HTMLBodyElement, HTMLElement, HTMLHeadElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -16,7 +17,7 @@ import scala.scalajs.js.UndefOr
  */
 trait SafeDocumentT extends SafeEventTargetT {
 
-  override def _underlying: Document
+  override type T = Document
 
   def _api(doc: Document = dom.document): SafeDocumentApi = {
     doc.asInstanceOf[SafeDocumentApi]

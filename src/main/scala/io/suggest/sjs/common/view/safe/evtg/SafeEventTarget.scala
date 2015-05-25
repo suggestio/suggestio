@@ -1,5 +1,6 @@
-package io.suggest.sjs.common.view
+package io.suggest.sjs.common.view.safe.evtg
 
+import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom.{Event, EventTarget}
 
 import scala.scalajs.js
@@ -13,10 +14,9 @@ import scala.scalajs.js.UndefOr
  * Оно нужно только для IE8 и ранее, поэтому потом можно удалить.
  * @see [[http://www.w3schools.com/jsref/met_document_addeventlistener.asp]]
  */
-trait SafeEventTargetT {
+trait SafeEventTargetT extends ISafe {
 
-  /** wrapped-элемент, для которого реализуется безопасный доступ. */
-  def _underlying: EventTarget
+  override type T <: EventTarget
 
   /**
    * Повесить событие на текущую цель.
@@ -42,7 +42,9 @@ trait SafeEventTargetT {
 
 /** Дефолтовая реалзизация враппера [[SafeEventTargetT]]. */
 case class SafeEventTarget(override val _underlying: EventTarget)
-  extends SafeEventTargetT
+  extends SafeEventTargetT {
+  override type T = EventTarget
+}
 
 
 /** Безопасный интерфейс для доступа к DOM-элементу в области вешанья событий. */
