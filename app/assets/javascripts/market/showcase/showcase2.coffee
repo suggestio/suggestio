@@ -1573,7 +1573,6 @@ sm =
 
       setTimeout grid_init_cb, grid_init_timeout
       sm.set_window_class()
-      sm.is_market_loaded = true
 
       if typeof sm.states.requested_state != 'undefined'
         sm.states.process_state_2 sm.states.requested_state
