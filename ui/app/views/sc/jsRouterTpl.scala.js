@@ -5,6 +5,8 @@
 @import io.suggest.sc.ScConstants._
 @import ctx.request
 
+"use strict";
+
 @play.api.routing.JavaScriptReverseRouter(JS_ROUTER_NAME)(
   routes.javascript.MarketShowcase.geoShowcase,
   routes.javascript.MarketShowcase.showcase

@@ -34,7 +34,7 @@
       @defining( args.topLeftBtn ) { tlb =>
         @if(tlb == ScHdrBtns.NavPanelOpen) {
           @toggleNavScrAnchor() { jsStateOpt =>
-            @tlb( args.hBtnArgs.copy( hidden = !args.syncRender || !jsStateOpt ) )
+            @tlb( args.hBtnArgs.copy( hidden = args.syncRender && jsStateOpt ) )
           }
         } else {
           @tlb(args.hBtnArgs)
