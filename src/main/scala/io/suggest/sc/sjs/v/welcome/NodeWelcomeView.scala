@@ -16,6 +16,8 @@ import io.suggest.sc.ScConstants.Welcome._
 import io.suggest.sc.sjs.v.vutil.ExtraStyles._
 import io.suggest.sc.ScConstants.CssAnim
 
+import scala.concurrent.{Future, Promise}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -99,30 +101,44 @@ object NodeWelcomeView {
   /**
    * Welcome-карточка ВОЗМОЖНО присутствует в DOM. Если присутствует, то значит отображена.
    * Нужно допилить карточку под экран, задать правила для сокрытия этой карточки через таймер или иные события.
+   * @return Future, которые исполняется с началом анимации сокрытия welcome.
+   *         Если welcome отсутствует, то Future придет уже исполненым.
    */
-  def handleWelcome()(implicit vctx: IVCtx): Unit = {
-    rootDiv().foreach { rootEl =>
-      // Есть карточка в DOM. Подогнать по экран, повесить события.
-      fit()
-
-      // Добавляем will-change, т.к. ожидается анимация.
-      rootEl.style.willChange = FADEOUT_ANIM_TYPE
-
-      // Запустить скрытие карточки по таймауту.
-      dom.setTimeout(
-        { () => NodeWelcomeCtl.displayTimeout(rootEl) },
-        MWelcomeState.HIDE_TIMEOUT_MS
-      )
-
-      // Вешаем события ускоренного ухода с приветствия.
-      val safeEvtTg = SafeEventTarget(rootEl)
-      safeEvtTg.addEventListener("click") { (evt: Event) =>
-        NodeWelcomeCtl.clicked(evt, rootEl)
-      }
-
-      // TODO Нужно реагировать на "смахивание" приветствия.
-      // TODO Реагировать на Esc/enter/etc на клавиатуре, как на педалирование анимации.
+  def handleWelcome()(implicit vctx: IVCtx): Future[_] = {
+    val startHidingP = Promise[None.type]()
+    def hidingStarted(): Unit = {
+      if (!startHidingP.isCompleted)
+        startHidingP success None
     }
+    rootDiv() match {
+      case Some(rootEl) =>
+        // Есть карточка в DOM. Подогнать по экран, повесить события.
+        fit()
+
+        // Добавляем will-change, т.к. ожидается анимация.
+        rootEl.style.willChange = FADEOUT_ANIM_TYPE
+
+        // Запустить скрытие карточки по таймауту.
+        dom.setTimeout(
+          { () =>
+            NodeWelcomeCtl.displayTimeout(rootEl)
+            hidingStarted()
+          },
+          MWelcomeState.HIDE_TIMEOUT_MS
+        )
+
+        // Вешаем события ускоренного ухода с приветствия.
+        val safeEvtTg = SafeEventTarget(rootEl)
+        safeEvtTg.addEventListener("click") { (evt: Event) =>
+          NodeWelcomeCtl.clicked(evt, rootEl)
+          hidingStarted()
+        }
+        // TODO Нужно реагировать на "смахивание" приветствия.
+        // TODO Реагировать на Esc/enter/etc на клавиатуре, как на педалирование анимации.
+      case None =>
+        hidingStarted()
+    }
+    startHidingP.future
   }
 
 

@@ -1,10 +1,12 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.inx.ScIndex
 import io.suggest.sc.sjs.v.layout.Layout
 import io.suggest.sc.sjs.v.nav.NavPaneView
+import io.suggest.sc.sjs.v.search.SearchPanelView
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -30,7 +32,7 @@ object NodeCtl extends CtlT {
    * @param adnIdOpt id узла, если известен.
    *                 None значит пусть сервер сам решит, на какой узел переключаться.
    */
-  def switchToNode(adnIdOpt: Option[String]): Unit = {
+  def switchToNode(adnIdOpt: Option[String], isFirstRun: Boolean = false): Unit = {
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
     implicit val _vctx = vctx
     for {
@@ -52,10 +54,25 @@ object NodeCtl extends CtlT {
       // Этот фунционал был перенесен в шаблон, exit спилено там же.
       //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
 
-
       // Инициализация welcomeAd.
-      NodeWelcomeView.handleWelcome()(_vctx)
+      val wcHideFut = NodeWelcomeView.handleWelcome()(_vctx)
 
+      if (isFirstRun) {
+        DocumentView.initDocEvents()
+        wcHideFut onComplete { case _ =>
+          // Очищать фон нужно только первый раз. При последующей смене узла это не требуется уже.
+          Layout.eraseBg()(_vctx)
+        }
+      }
+
+      wcHideFut onComplete { case _ =>
+        // Инициализация search-панели: поиск при наборе, например.
+        SearchPanelView.initFtsField()
+      }
+
+      Layout.setWndClass()(_vctx)
+
+      // TODO Запросить index ads у сервера, но где-то выше по экшену. А тут уже подхватить их рендер.
       ???
     }
   }

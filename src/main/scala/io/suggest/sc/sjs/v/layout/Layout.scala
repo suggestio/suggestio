@@ -2,9 +2,10 @@ package io.suggest.sc.sjs.v.layout
 
 import io.suggest.sc.ScConstants.Layout._
 import io.suggest.sc.sjs.m.SafeDoc
+import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mv.IVCtx
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
 /**
  * Suggest.io
@@ -50,6 +51,39 @@ object Layout {
 
     lctx.rootDiv.set(rootDiv)
     lctx.layoutDiv.set(layoutDiv)
+  }
+
+
+  /** Из-за прозрачностей нужно очистить фон до блеска после приветствия. */
+  def eraseBg()(implicit vctx: IVCtx): Unit = {
+    def _erase(el: HTMLElement): Unit = {
+      el.style.backgroundColor = "#ffffff"
+    }
+    _erase( SafeDoc.body )
+    vctx.layout.rootDiv.get.foreach { el =>
+      _erase(el)
+    }
+  }
+
+  /** Выставить css-класс отображения для layoutDiv. */
+  def setWndClass()(implicit vctx: IVCtx): Unit = {
+    val w = MAgent.availableScreen.width
+    val cssClassOrNull: String = {
+      if (w <= 660) {
+        "sm-w-400"
+      } else if (w <= 800) {
+        "sm-w-800"
+      } else if (w <= 980) {
+        "sm-w-980"
+      } else {
+        null
+      }
+    }
+    if (cssClassOrNull != null) {
+      vctx.layout.layoutDiv.get.foreach { layoutDiv =>
+        layoutDiv.className = cssClassOrNull
+      }
+    }
   }
 
 }
