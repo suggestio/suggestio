@@ -17,6 +17,8 @@ object MScTargetIds {
 
 }
 
+
+/** Базовая реализация модели назначений рендера выдачи. */
 trait MScTargetsBaseT extends ILightEnumeration {
 
   /** Интерфейс экземпляра будущих моделей. */

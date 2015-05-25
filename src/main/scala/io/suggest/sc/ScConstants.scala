@@ -116,4 +116,22 @@ object ScConstants {
 
   }
 
+
+  /** Константы для рендера приветствия узла. */
+  object Welcome {
+
+    /** id корневого div'а приветствия. */
+    def ROOT_ID = "smWelcomeAd"
+
+    /** id элемента фоновой картинки. */
+    def BG_IMG_ID = "smWelcomeAdBgImage"
+
+    /** id картинки переднего плана. */
+    def FG_IMG_ID = "smWelcomeAdfgImage"
+
+    /** id контейнера с логотипом/текстом и т.д. */
+    def FG_INFO_DIV_ID = "smWelcomeAdfgText"
+
+  }
+
 }
