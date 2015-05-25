@@ -5,7 +5,8 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.controller.jshidden.JsHidden
 import io.suggest.sjs.common.controller.vlines.VerticalLines
 import io.suggest.sjs.common.util.{TouchUtil, SjsLogger}
-import io.suggest.sjs.common.view.{SafeDocument, CommonPage}
+import io.suggest.sjs.common.view.CommonPage
+import io.suggest.sjs.common.view.safe.doc.SafeDocument
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
