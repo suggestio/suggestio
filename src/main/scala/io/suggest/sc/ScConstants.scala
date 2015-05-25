@@ -133,5 +133,16 @@ object ScConstants {
     def FG_INFO_DIV_ID = "smWelcomeAdfgText"
 
   }
+  
+  /** Классы для анимации через css-трансформации. */
+  object CssAnim {
+    
+    /** css transition на 0.2сек. */
+    def TRANS_02_CSS_CLASS = "__animated"
+    
+    /** Анимация плавного сокрытия. */
+    def FADEOUT_CSS_CLASS  = "__fade-out"
+    
+  }
 
 }
