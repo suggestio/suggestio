@@ -125,8 +125,8 @@ trait ScController extends SioController {
     /** Генерация js-экшена для рендера стилей. */
     def jsAppendCssAction(html: JsString): JsAction
 
-    /** Отрендерить css для блоков, данные по котором лежат в addCssInternalFut(). */
-    def jsAppendAdsCss: Future[JsAction] = {
+    /** Отрендерить стили в Txt для всех необходимых блоков. */
+    def jsAdsCssFut: Future[Txt] = {
       val _adsCssRenderFut = adsCssRenderFut
       for {
         fieldRenders  <- adsFieldCssRenderFut
@@ -134,7 +134,14 @@ trait ScController extends SioController {
       } yield {
         val blkCssTxts = new Txt(adsCssRenders)
         val fieldCssTxts = new Txt(fieldRenders)
-        val html = List(Txt("<style>"), blkCssTxts, fieldCssTxts, Txt("</style>"))
+        new Txt( List(blkCssTxts, fieldCssTxts) )
+      }
+    }
+
+    /** Отрендерить js для добавления стилей блоков в документ выдачи. */
+    def jsAppendAdsCss: Future[JsAction] = {
+      jsAdsCssFut map { jsAdsCss =>
+        val html = List(Txt("<style>"), jsAdsCss, Txt("</style>"))
         val data = JsString( new Txt(html) )
         jsAppendCssAction(data)
       }

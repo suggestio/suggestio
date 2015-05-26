@@ -1,12 +1,14 @@
 package models
 
 import models.im.DevScreen
+import models.msc.{MScApiVsns, MScApiVsn}
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
 import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.ad.search.AdSearchConstants._
+import views.js.stuff.m.adSearchJsUnbindTpl
 import scala.language.implicitConversions
 
 /**
@@ -40,18 +42,21 @@ object AdSearch {
   }
 
   /** QSB для экземпляра сабжа. Неявно дергается из routes. */
-  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
-                                 intOptB: QueryStringBindable[Option[Int]],
-                                 longOptB: QueryStringBindable[Option[Long]],
-                                 geoModeB: QueryStringBindable[GeoMode],
-                                 devScreenB: QueryStringBindable[Option[DevScreen]]
-                                ): QueryStringBindable[AdSearch] = {
+  implicit def qsb(implicit
+                   strOptBinder : QueryStringBindable[Option[String]],
+                   intOptB      : QueryStringBindable[Option[Int]],
+                   longOptB     : QueryStringBindable[Option[Long]],
+                   geoModeB     : QueryStringBindable[GeoMode],
+                   devScreenB   : QueryStringBindable[Option[DevScreen]],
+                   apiVsnB      : QueryStringBindable[MScApiVsn]
+                  ): QueryStringBindable[AdSearch] = {
     new QueryStringBindable[AdSearch] with QsbKey1T {
 
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
-        def f = key1F(key)
+        val f = key1F(key)
         for {
-          maybeProdIdOpt <- strOptBinder.bind (f(PRODUSER_ID_FN),    params)
+          maybeApiVsn    <- apiVsnB.bind      (f(API_VSN_FN),        params)
+          maybeProdIdOpt <- strOptBinder.bind (f(PRODUCER_ID_FN),    params)
           maybeCatIdOpt  <- strOptBinder.bind (f(CAT_ID_FN),         params)
           maybeLevelOpt  <- strOptBinder.bind (f(LEVEL_ID_FN),       params)
           maybeQOpt      <- strOptBinder.bind (f(FTS_QUERY_FN),      params)
@@ -64,36 +69,41 @@ object AdSearch {
           maybeDevScreen <- devScreenB.bind   (f(SCREEN_INFO_FN),    params)
 
         } yield {
-          val res = new AdSearch {
-            override def receiverIds    = maybeRcvrIdOpt
-            override def producerIds    = maybeProdIdOpt
-            override def catIds         = maybeCatIdOpt
-            override def levels         = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName)
-            override def qOpt           = maybeQOpt
-            override def maxResultsOpt: Option[Int] = {
-              eitherOpt2option(maybeSizeOpt) map { size =>
-                Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+          for {
+            _apiVsn <- maybeApiVsn.right
+          } yield {
+            new AdSearch {
+              override def apiVsn         = _apiVsn
+              override def receiverIds    = maybeRcvrIdOpt
+              override def producerIds    = maybeProdIdOpt
+              override def catIds         = maybeCatIdOpt
+              override def levels         = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName)
+              override def qOpt           = maybeQOpt
+              override def maxResultsOpt: Option[Int] = {
+                eitherOpt2option(maybeSizeOpt) map { size =>
+                  Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+                }
               }
-            }
-            override def offsetOpt: Option[Int] = {
-              eitherOpt2option(maybeOffsetOpt) map { offset =>
-                Math.max(0, Math.min(offset, MAX_OFFSET))
+              override def offsetOpt: Option[Int] = {
+                eitherOpt2option(maybeOffsetOpt) map { offset =>
+                  Math.max(0, Math.min(offset, MAX_OFFSET))
+                }
               }
+              override def forceFirstIds  = maybeFirstId
+              override def generationOpt  = maybeGen
+              override def geo            = maybeGeo
+              override def screen         = maybeDevScreen
             }
-            override def forceFirstIds  = maybeFirstId
-            override def generationOpt  = maybeGen
-            override def geo            = maybeGeo
-            override def screen         = maybeDevScreen
           }
-          Right(res)
         }
       }
 
       def unbind(key: String, value: AdSearch): String = {
         val f = key1F(key)
         Iterator(
+          apiVsnB.unbind      (f(API_VSN_FN),        value.apiVsn),
           strOptBinder.unbind (f(RECEIVER_ID_FN),    value.receiverIds.headOption),  // TODO Разбиндивать на весь список receivers сразу надо
-          strOptBinder.unbind (f(PRODUSER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
+          strOptBinder.unbind (f(PRODUCER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
           strOptBinder.unbind (f(CAT_ID_FN),         value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
           strOptBinder.unbind (f(LEVEL_ID_FN),       value.levels.headOption.map(_.toString)),
           strOptBinder.unbind (f(FTS_QUERY_FN),      value.qOpt),
@@ -107,6 +117,11 @@ object AdSearch {
           .filter(!_.isEmpty)
           .mkString("&")
       }
+
+      /** Для js-роутера нужна поддержка через JSON. */
+      override def javascriptUnbind: String = {
+        adSearchJsUnbindTpl(KEY_DELIM).body
+      }
     }
   }
 
@@ -114,6 +129,9 @@ object AdSearch {
 
 
 trait AdSearch extends AdsSearchArgsDflt { that =>
+
+  /** Версия API выдачи, используемая для взаимодействия. */
+  def apiVsn: MScApiVsn = MScApiVsns.unknownVsn
 
   /** Опциональное значение обязательного maxResults. Удобно при query-string. */
   def maxResultsOpt : Option[Int] = None

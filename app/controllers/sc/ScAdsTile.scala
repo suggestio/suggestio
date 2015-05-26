@@ -5,11 +5,13 @@ import java.util.NoSuchElementException
 import _root_.util.blocks.BgImg
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import models.im.make.{IMakeResult, Makers}
+import models.msc.{MGridParams, MFindAdsResp, MFoundAd, MScApiVsns}
+import play.api.mvc.Result
 import util.jsa.cbca.grid._
 import _root_.util.showcase._
 import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
-import models.blk.{IRenderArgs, BlockWidths, FieldCssRenderArgsT}
+import models.blk._
 import models.jsm.{FindAdsResp, SearchAdsResp}
 import play.twirl.api.Html
 import util._
@@ -22,72 +24,18 @@ import SiowebEsUtil.client
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
-import models.blk.szMulted
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 11.11.14 16:47
- * Description: Поддержка плитки в контроллере: экшен и прочая логика.
+ * Description: Поддержка плитки в контроллере: логика подготовки к сборке ответа.
  */
-trait ScAdsTile extends ScController with PlayMacroLogsI {
-
-  /** Начальный размер буффера сборки ответа на запрос findAds(). */
-  private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192
-
-  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
-    * @param adSearch Поисковый запрос.
-    * @return JSONP с рекламными карточками для рендера в выдаче.
-    */
-  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val logic = new TileAdsLogic {
-      override type T = JsString
-      override implicit def _request = request
-      override def _adSearch: AdSearch = adSearch
-      override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
-        renderMad2html(mad, brArgs)
-          .map { html2jsStr }
-      }
-    }
-    // Запускаем асинхронную сборку ответа.
-    val smRcvRespFut = logic.madsRenderedFut map { madsRendered =>
-      val resp = if (logic.catsRequested) {
-        SearchAdsResp(madsRendered)
-      } else {
-        FindAdsResp(madsRendered)
-      }
-      SmRcvResp(resp)
-    }
-    // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-    val cssAppendFut = logic.jsAppendAdsCss
-    val tileArgs = logic.tileArgs
-    // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
-    val setCellSizeJsa = SetCellSize( szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult) )
-    val setCellPaddingJsa = SetCellPadding( szMulted(ShowcaseUtil.TILE_PADDING_CSSPX, tileArgs.szMult) )
-    // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
-    val resultFut = for {
-      smRcvResp <- smRcvRespFut
-      cssAppend <- cssAppendFut
-    } yield {
-      cacheControlShort {
-        Ok( Js(TILE_JS_RESP_BUFFER_SIZE_BYTES, setCellSizeJsa, setCellPaddingJsa, cssAppend, smRcvResp) )
-      }
-    }
-    // В фоне собираем статистику
-    logic.madsFut onSuccess { case mads =>
-      logic.adSearch2Fut onSuccess { case adSearch2 =>
-        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), logic.gsiFut)
-          .saveStats
-      }
-    }
-    // Возвращаем собираемый результат
-    resultFut
-  }
-
+trait ScAdsTileBase extends ScController with PlayMacroLogsI {
 
   /** Логика экшена, занимающегося обработкой запроса тут. */
   trait TileAdsLogic extends AdCssRenderArgs {
-    
+
     type T
     implicit def _request: AbstractRequestWithPwOpt[_]
     def _adSearch: AdSearch
@@ -232,10 +180,138 @@ trait ScAdsTile extends ScController with PlayMacroLogsI {
         }
       }
     }
-    
+
     override def jsAppendCssAction(html: JsString): JsAction = {
       JsAppendById("smResources", html)
     }
+
   }
+
+}
+
+
+/** Поддержка ответов на выдачу v1. */
+trait ScAdsTile extends ScAdsTileBase {
+
+  /** Начальный размер буффера сборки ответа на запрос findAds(). */
+  private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192
+
+
+  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
+    * @param adSearch Поисковый запрос.
+    * @return JSONP с рекламными карточками для рендера в выдаче.
+    */
+  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    // В зависимости от версии API, используем ту или иную реализацию логики.
+    val logic: TileAdsLogicV = adSearch.apiVsn match {
+      case MScApiVsns.Coffee =>
+        new TileAdsLogicV1 {
+          override implicit def _request = request
+          override def _adSearch: AdSearch = adSearch
+        }
+      case MScApiVsns.Sjs1 =>
+        new TileAdsLogicV2 {
+          override implicit def _request = request
+          override def _adSearch: AdSearch = adSearch
+        }
+    }
+    val resultFut = logic.resultFut
+
+    // В фоне собираем статистику
+    logic.madsFut onSuccess { case mads =>
+      logic.adSearch2Fut onSuccess { case adSearch2 =>
+        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), logic.gsiFut)
+          .saveStats
+      }
+    }
+
+    // Возвращаем собираемый результат
+    resultFut
+  }
+
+
+  /** Action logic содержит в себе более конкретную логику для сборки http-json-ответа по findAds(). */
+  protected trait TileAdsLogicV extends TileAdsLogic {
+    /** Рендер HTTP-результата. */
+    def resultFut: Future[Result]
+
+    def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult)
+    def cellPaddingCssPx: Int = szMulted(ShowcaseUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
+  }
+
+
+  /** Логика сборки http-ответов для API v1. */
+  protected trait TileAdsLogicV1 extends TileAdsLogicV {
+
+    override type T = JsString
+
+    override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
+      renderMad2html(mad, brArgs)
+        .map { html2jsStr }
+    }
+
+    /** Сборка http-ответа для coffeescript-выдачи. Там использовался голый js. */
+    override def resultFut: Future[Result] = {
+      // Запускаем асинхронную сборку ответа.
+      val smRcvRespFut = madsRenderedFut map { madsRendered =>
+        val resp = if (catsRequested) {
+          SearchAdsResp(madsRendered)
+        } else {
+          FindAdsResp(madsRendered)
+        }
+        SmRcvResp(resp)
+      }
+      // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
+      val cssAppendFut = jsAppendAdsCss
+      // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
+      val setCellSizeJsa = SetCellSize( cellSizeCssPx )
+      val setCellPaddingJsa = SetCellPadding( cellPaddingCssPx )
+      // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
+      for {
+        smRcvResp <- smRcvRespFut
+        cssAppend <- cssAppendFut
+      } yield {
+        cacheControlShort {
+          Ok( Js(TILE_JS_RESP_BUFFER_SIZE_BYTES, setCellSizeJsa, setCellPaddingJsa, cssAppend, smRcvResp) )
+        }
+      }
+    }
+
+  }
+
+
+  /** Логика сборки HTTP-ответа для API v2. */
+  protected trait TileAdsLogicV2 extends TileAdsLogicV {
+
+    override type T = MFoundAd
+
+    override def renderMadAsync(mad: MAd, brArgs: RenderArgs): Future[T] = {
+      renderMad2html(mad, brArgs).map { html =>
+        MFoundAd(html)
+      }
+    }
+
+    /** Рендер HTTP-результата. */
+    override def resultFut: Future[Result] = {
+      val _madsRenderFut = madsRenderedFut
+      val _cssFut = jsAdsCssFut.map(_.body)
+      val _params = MGridParams(
+        cellSizeCssPx = cellSizeCssPx,
+        cellPaddingCssPx = cellPaddingCssPx
+      )
+      for {
+        _madsRender <- _madsRenderFut
+        _css        <- _cssFut
+      } yield {
+        val respData = MFindAdsResp(
+          mads    = _madsRender,
+          css     = Some(_css),
+          params  = Some(_params)
+        )
+        Ok( Json.toJson(respData) )
+      }
+    }
+  }
+
 
 }

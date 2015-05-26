@@ -1,4 +1,4 @@
-@()
+@(delim: String)
 
 @* Код функции для ScReqArgs qsb.javascriptUnbind().
    Она нужна для разбиндивания модели из JSON на стороне js. *@
@@ -7,7 +7,7 @@
 @import views.js.stuff.m._
 
 @jsUnbindBase() {
-  @_objQsbTpl() {
+  @_objQsbTpl(delim) {
     add("@GEO");
     add("@SCREEN");
     add("@WITH_WELCOME");

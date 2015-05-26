@@ -25,7 +25,7 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTile with ScFocusedAds
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTileBase with ScFocusedAds
 with ScNodesList with ScSiteBase {
 
   /**

@@ -35,7 +35,7 @@ trait Blocks extends SmJsonResp {
     val acc0 = super.toJsonAcc
     val _blocks = blocks
     if (_blocks.nonEmpty)
-      "blocks" -> JsArray(_blocks) :: acc0
+      BLOCKS_FN -> JsArray(_blocks) :: acc0
     else
       acc0
   }

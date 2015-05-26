@@ -74,7 +74,7 @@ object ScReqArgs {
 
       /** unbind на клиенте происходит из json-объекта с именами полей, которые соответствуют указанным в модели qs-именам. */
       override def javascriptUnbind: String = {
-        scReqArgsJsUnbindTpl().body
+        scReqArgsJsUnbindTpl(KEY_DELIM).body
       }
     }
   }
