@@ -132,18 +132,21 @@ object ScConstants {
     /** id контейнера с логотипом/текстом и т.д. */
     def FG_INFO_DIV_ID = "smWelcomeAdfgText"
 
+
+    /** CSS-классы для анимации через css-трансформации. */
+    object Anim {
+      /** css transition на запуск плавной анимации сокрытия приветствия. */
+      def TRANS_02_CSS_CLASS = "__animated"
+
+      /** Название класса конкретной анимации плавного сокрытия приветствия. */
+      def FADEOUT_CSS_CLASS  = "__fade-out"
+
+      /** Название css-класса для приветствия, добавляющего will-change, для подготовки к fadeout-анимации. */
+      def WILL_FADEOUT_CSS_CLASS = "__will-fade-out"
+    }
+
   }
   
-  /** Классы для анимации через css-трансформации. */
-  object CssAnim {
-    
-    /** css transition на 0.2сек. */
-    def TRANS_02_CSS_CLASS = "__animated"
-    
-    /** Анимация плавного сокрытия. */
-    def FADEOUT_CSS_CLASS  = "__fade-out"
-    
-  }
 
 
   /** Константы поисковой панели. */
