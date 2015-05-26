@@ -31,7 +31,7 @@ object GridView {
    * Выставить новый размер контейнера сетки.
    * @param sz Данные по новому размеру.
    */
-  def setContainerSz(sz: ICwCm)(implicit vctx: IVCtx): Unit = {
+  def setContainerSz(sz: ICwCm): Unit = {
     val width = sz.cw.toString + "px"
 
     containerDiv().foreach { cont =>
@@ -70,7 +70,7 @@ object GridView {
 
     val scrollPxToGo = contentHeight - MAgent.availableScreen.height - wrappedScrollTop
     if (scrollPxToGo < MGrid.params.loadModeScrollDeltaPx) {
-      GridCtl.loadMoreAds()
+      GridCtl.needToLoadMoreAds()
     }
   }
 

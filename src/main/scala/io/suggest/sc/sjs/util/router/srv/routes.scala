@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.util.router.srv
 
 import io.suggest.sc.ScConstants.JS_ROUTER_NAME
+import io.suggest.sc.sjs.m.msrv.ads.find.MFindAdsReqJson
 import io.suggest.sc.sjs.m.msrv.index.MScReqArgsJson
 import io.suggest.sjs.common.model.Route
 
@@ -39,5 +40,8 @@ trait ScCtl extends js.Object {
   /** index, когда узел неизвестен, и нужно, чтобы сервер сам определил узел. */
   @JSName("geoShowcase")
   def geoIndex(args: MScReqArgsJson): Route = js.native
+
+  /** Поиск рекламных карточек для плитки выдачи. */
+  def findAds(adSearch: MFindAdsReqJson): Route = js.native
 
 }

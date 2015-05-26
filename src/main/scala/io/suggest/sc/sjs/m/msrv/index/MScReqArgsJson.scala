@@ -7,8 +7,7 @@ import io.suggest.sc.sjs.m.msrv.MSrv
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.ReqArgs._
 
-import scala.scalajs.js.{Dictionary, UndefOr, Any}
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.{Dictionary, Any}
 
 /**
  * Suggest.io
@@ -18,6 +17,8 @@ import scala.scalajs.js.annotation.JSName
  */
 trait MScReqArgsJson extends js.Object {
 
+  // TODO Эти поля по факту не нужны, поэтому закомменчены. JSName конфликтует с названиями методов, что может вызвать путаницу.
+  /*
   @JSName(GEO)
   val geo: String = js.native
 
@@ -29,7 +30,7 @@ trait MScReqArgsJson extends js.Object {
 
   @JSName(VSN)
   val vsn: Int = js.native
-
+  */
 }
 
 

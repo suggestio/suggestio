@@ -1,5 +1,8 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.m.magent.MAgent
+import io.suggest.sc.sjs.m.msrv.MSrv
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqJson}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.grid.GridView
@@ -38,6 +41,21 @@ object NodeCtl extends CtlT {
     for {
       minx <- inxFut
     } yield {
+      // adn_id известен. Сразу запускаем запрос к серверу за рекламными карточками.
+      // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим данные в фоне.
+      val findAdsArgs = MFindAdsReqJson(
+        receiverId = minx.adnIdOpt,
+        generation = Some(MSrv.generation),
+        screenInfo = Some(MAgent.availableScreen)
+        // TODO Состояние геолокации.
+      )
+      val findAdsFut = MFindAds.findAds(findAdsArgs)
+      findAdsFut onSuccess { case resp =>
+        GridCtl.newAdsReceived(resp)
+      }
+
+      // Модифицировать текущее отображение под узел, отобразить welcome-карточку, если есть.
+
       Layout.reDrawLayout()(_vctx)
       ScIndex.showIndex(minx)(_vctx)
 
@@ -71,9 +89,6 @@ object NodeCtl extends CtlT {
       }
 
       Layout.setWndClass()(_vctx)
-
-      // TODO Запросить index ads у сервера, но где-то выше по экшену. А тут уже подхватить их рендер.
-      ???
     }
   }
 
