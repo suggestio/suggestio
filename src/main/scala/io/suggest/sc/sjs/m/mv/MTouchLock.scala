@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.m.mgrid
+package io.suggest.sc.sjs.m.mv
 
 /**
  * Suggest.io
@@ -12,7 +12,10 @@ object MTouchLock {
   /** Инфа по текущему состоянию touch-скроллинга. */
   var isTouchLocked: Boolean = false
 
+  /** Прочитать значение состояния блокировки. */
   def apply() = isTouchLocked
+
+  /** Выставить значение touch-блокировки. */
   def apply(v: Boolean): Unit = {
     isTouchLocked = v
   }

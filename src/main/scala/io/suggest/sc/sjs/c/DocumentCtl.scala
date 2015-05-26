@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.mgrid.MTouchLock
+import io.suggest.sc.sjs.m.mv.MTouchLock
 import org.scalajs.dom
 import org.scalajs.dom.TouchEvent
 

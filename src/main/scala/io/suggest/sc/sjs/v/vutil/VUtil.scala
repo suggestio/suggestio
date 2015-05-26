@@ -23,13 +23,6 @@ object VUtil {
     }
   }
 
-  /** Быстро и кратко записывать получение элементов из DOM по id. */
-  def getElementById[T <: Element](id: String): Option[T] = {
-    val elOrNull = dom.document
-      .getElementById(id)
-      .asInstanceOf[T]
-    Option(elOrNull)
-  }
 
 
   def getAttribute(node: Element, name: String): Option[String] = {

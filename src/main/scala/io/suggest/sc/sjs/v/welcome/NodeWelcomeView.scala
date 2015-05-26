@@ -3,18 +3,17 @@ package io.suggest.sc.sjs.v.welcome
 import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
+import io.suggest.sc.sjs.m.mdom.{GetImgById, GetDivById}
 import io.suggest.sc.sjs.m.mv.IVCtx
 import io.suggest.sc.sjs.m.mwc.MWelcomeState
-import io.suggest.sc.sjs.v.vutil.{VImgUtil, VUtil}
-import VUtil.getElementById
+import io.suggest.sc.sjs.v.vutil.VImgUtil
+import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
-import io.suggest.sjs.common.view.safe.evtg.SafeEventTarget
 import org.scalajs.dom
 import org.scalajs.dom.{Element, Event}
-import org.scalajs.dom.raw.{HTMLImageElement, HTMLDivElement}
-import io.suggest.sc.ScConstants.Welcome._
-import io.suggest.sc.sjs.v.vutil.ExtraStyles._
-import io.suggest.sc.ScConstants.CssAnim
+import org.scalajs.dom.raw.HTMLImageElement
+import io.suggest.sc.sjs.m.mwc.MWcDom._
+import io.suggest.sc.ScConstants.Welcome.Anim._
 
 import scala.concurrent.{Future, Promise}
 
@@ -25,17 +24,7 @@ import scala.concurrent.{Future, Promise}
  * Description: Представление управления приветствием узла выдачи.
  * welcome карточка удаляется из DOM, после того как скрыта.
  */
-object NodeWelcomeView {
-
-  /** Используемая для fade-out анимация. Заливается предварительно в will-change для ускорения браузера. */
-  def FADEOUT_ANIM_TYPE = "opacity"
-
-  /** Найти и вернуть div-контейнер карточки приветствия. */
-  def rootDiv()  = getElementById[HTMLDivElement](ROOT_ID)
-  def bgImg()    = getElementById[HTMLImageElement](BG_IMG_ID)
-  def fgImg()    = getElementById[HTMLImageElement](FG_IMG_ID)
-  def fgInfo()   = getElementById[HTMLDivElement](FG_INFO_DIV_ID)
-
+object NodeWelcomeView extends GetDivById with GetImgById {
 
   /**
    * Дедубликация вложенности и повторяющегося кода между fitBgImg() и fitFgImg().
@@ -43,10 +32,11 @@ object NodeWelcomeView {
    * @param f Функция обработки картинки и её data-размера.
    */
   private def _processImgWrap(imgOpt: Option[HTMLImageElement])(f: (HTMLImageElement, ISize2di) => Unit): Unit = {
-    imgOpt.foreach { el =>
-      VImgUtil.readDataWh(el) foreach { iwh =>
-        f(el, iwh)
-      }
+    for {
+      el  <- imgOpt
+      iwh <- VImgUtil.readDataWh(el)
+    } {
+      f(el, iwh)
     }
   }
 
@@ -115,8 +105,11 @@ object NodeWelcomeView {
         // Есть карточка в DOM. Подогнать по экран, повесить события.
         fit()
 
-        // Добавляем will-change, т.к. ожидается анимация.
-        rootEl.style.willChange = FADEOUT_ANIM_TYPE
+        val safeEl = SafeEl(rootEl)
+
+        // Добавляем will-change, т.к. скоро ожидается анимация.
+        // Потом will-change НЕ удаляем, т.к. элемент будет удалён целиком.
+        safeEl.addClasses(WILL_FADEOUT_CSS_CLASS)
 
         // Запустить скрытие карточки по таймауту.
         dom.setTimeout(
@@ -128,8 +121,7 @@ object NodeWelcomeView {
         )
 
         // Вешаем события ускоренного ухода с приветствия.
-        val safeEvtTg = SafeEventTarget(rootEl)
-        safeEvtTg.addEventListener("click") { (evt: Event) =>
+        safeEl.addEventListener("click") { (evt: Event) =>
           NodeWelcomeCtl.clicked(evt, rootEl)
           hidingStarted()
         }
@@ -144,13 +136,13 @@ object NodeWelcomeView {
 
   /** Активна ли анимация прямо сейчас? */
   def isAnimatedNow(el: SafeCssElT): Boolean = {
-    el.containsClass(CssAnim.TRANS_02_CSS_CLASS)
+    el.containsClass(TRANS_02_CSS_CLASS)
   }
 
 
   /** Запустить сокрытие с помощью css-анимации. И удалить потом ещё. */
   def fadeOut(el: SafeCssElT): Unit = {
-    el.addClasses(CssAnim.TRANS_02_CSS_CLASS, CssAnim.FADEOUT_CSS_CLASS)
+    el.addClasses(TRANS_02_CSS_CLASS, FADEOUT_CSS_CLASS)
     dom.setTimeout(
       {() => removeWelcome(el._underlying) },
       MWelcomeState.FADEOUT_TRANSITION_MS

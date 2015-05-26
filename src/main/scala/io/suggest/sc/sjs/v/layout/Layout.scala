@@ -15,9 +15,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  */
 object Layout {
 
-  /**
-   * Перерисовать layout выдачи.
-   */
+  /** Перерисовать layout выдачи. */
   def reDrawLayout()(implicit vctx: IVCtx): Unit = {
     // Вычистить предыдущуй layout и его ресурсы:
     CommonRes.recreate()
