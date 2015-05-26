@@ -106,8 +106,9 @@ code
     -webkit-transition: all 0.2s linear
     transition: all 0.2s linear
   &.__fade-out
-    /* "opacity": При изменении типа fadeout-анимации нужно обновлять так же в sc-sjs NodeWelcomeView.FADEOUT_ANIM_TYPE. */
     opacity: 0
+  &.__will-fade-out
+    will-change:    opacity
   &_helper
     display         inline-block
     height          100%
