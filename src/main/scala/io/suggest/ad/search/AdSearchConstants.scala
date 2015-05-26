@@ -8,7 +8,7 @@ package io.suggest.ad.search
  */
 object AdSearchConstants {
 
-  def PRODUSER_ID_FN     = "shopId"
+  def PRODUCER_ID_FN     = "shopId"
   def CAT_ID_FN          = "catId"
   def LEVEL_ID_FN        = "level"
   def FTS_QUERY_FN       = "q"
@@ -19,5 +19,6 @@ object AdSearchConstants {
   def GENERATION_FN      = "gen"
   def GEO_MODE_FN        = "geo"
   def SCREEN_INFO_FN     = "screen"
+  def API_VSN_FN         = "v"
 
 }
