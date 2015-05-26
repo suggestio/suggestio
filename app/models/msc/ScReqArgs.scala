@@ -4,6 +4,7 @@ import models._
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
+import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.sc.ScConstants.ReqArgs._
 import views.js.sc.m.scReqArgsJsUnbindTpl
@@ -24,19 +25,14 @@ object ScReqArgs {
                    devScrB    : QueryStringBindable[Option[DevScreen]],
                    apiVsnB    : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[ScReqArgs] = {
-    new QueryStringBindable[ScReqArgs] {
-
-      /** Сгенерить название qs-параметра на основе ключа и суффикса. */
-      private def key1(key: String, suf: String): String = {
-        key + "." + suf
-      }
-
+    new QueryStringBindable[ScReqArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
+        val f = key1F(key)
         for {
-          maybeGeoOpt             <- geoOptB.bind(key1(key, GEO), params)
-          maybeDevScreen          <- devScrB.bind(key1(key, SCREEN), params)
-          maybeWithWelcomeAd      <- intOptB.bind(key1(key, WITH_WELCOME), params)
-          maybeApiVsn             <- apiVsnB.bind(key1(key, VSN), params)
+          maybeGeoOpt             <- geoOptB.bind(f(GEO),           params)
+          maybeDevScreen          <- devScrB.bind(f(SCREEN),        params)
+          maybeWithWelcomeAd      <- intOptB.bind(f(WITH_WELCOME),  params)
+          maybeApiVsn             <- apiVsnB.bind(f(VSN),           params)
         } yield {
           for {
             _apiVsn <- maybeApiVsn.right
@@ -65,11 +61,12 @@ object ScReqArgs {
       }
 
       override def unbind(key: String, value: ScReqArgs): String = {
-        List(
-          geoOptB.unbind(key1(key, GEO), Some(value.geo)),
-          devScrB.unbind(key1(key, SCREEN), value.screen),
-          intOptB.unbind(key1(key, WITH_WELCOME), if (value.withWelcomeAd) None else Some(0)),
-          apiVsnB.unbind(key1(key, VSN), value.apiVsn)
+        val f = key1F(key)
+        Iterator(
+          geoOptB.unbind(f(GEO),          Some(value.geo)),
+          devScrB.unbind(f(SCREEN),       value.screen),
+          intOptB.unbind(f(WITH_WELCOME), if (value.withWelcomeAd) None else Some(0)),
+          apiVsnB.unbind(f(VSN),          value.apiVsn)
         )
           .filter { us => !us.isEmpty }
           .mkString("&")

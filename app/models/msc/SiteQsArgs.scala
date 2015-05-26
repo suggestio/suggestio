@@ -1,6 +1,7 @@
 package models.msc
 
 import play.api.mvc.QueryStringBindable
+import util.qsb.QsbKey1T
 import scala.language.implicitConversions
 
 /**
@@ -24,18 +25,14 @@ object SiteQsArgs {
                    strOptB: QueryStringBindable[Option[String]],
                    apiVsnB: QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[SiteQsArgs] = {
-    new QueryStringBindable[SiteQsArgs] {
-      
-      private def key1(key: String, fn: String): String = {
-        key + "." + fn
-      }
-      
+    new QueryStringBindable[SiteQsArgs] with QsbKey1T {
       /** Маппер из qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SiteQsArgs]] = {
+        val f = key1F(key)
         for {
-          maybeAdnIdOpt     <- strOptB.bind(key1(key, ADN_ID_SUF), params)
-          maybePovAdIdOpt   <- strOptB.bind(key1(key, POV_AD_ID_SUF), params)
-          maybeApiVsn       <- apiVsnB.bind(key1(key, VSN_FN), params)
+          maybeAdnIdOpt     <- strOptB.bind(f(ADN_ID_SUF),    params)
+          maybePovAdIdOpt   <- strOptB.bind(f(POV_AD_ID_SUF), params)
+          maybeApiVsn       <- apiVsnB.bind(f(VSN_FN),        params)
         } yield {
           for {
             adnIdOpt    <- maybeAdnIdOpt.right
@@ -53,10 +50,11 @@ object SiteQsArgs {
 
       /** Сериализатор. */
       override def unbind(key: String, value: SiteQsArgs): String = {
+        val f = key1F(key)
         Iterator(
-          strOptB.unbind(key1(key, ADN_ID_SUF), value.adnId),
-          strOptB.unbind(key1(key, POV_AD_ID_SUF), value.povAdId),
-          apiVsnB.unbind(key1(key, VSN_FN), value.apiVsn)
+          strOptB.unbind(f(ADN_ID_SUF),     value.adnId),
+          strOptB.unbind(f(POV_AD_ID_SUF),  value.povAdId),
+          apiVsnB.unbind(f(VSN_FN),         value.apiVsn)
         )
           .filter { !_.isEmpty }
           .mkString("&")

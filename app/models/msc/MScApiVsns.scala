@@ -13,12 +13,15 @@ import util.PlayMacroLogsImpl
 object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImpl {
 
   /** Экземпляр модели версий. */
-  protected[this] sealed class Val(val versionNumber: Int) extends super.Val(versionNumber) {
+  protected[this] abstract sealed class Val(val versionNumber: Int) extends super.Val(versionNumber) {
     override def toString(): String = id.toString
 
     /** Всегда рендерить инструменты для закрытия выдачи. */
     // TODO Удалить вместе с Coffee API
-    def forceScCloseable: Boolean = false
+    def forceScCloseable: Boolean
+
+    /** По шаблонам должны быть распиханы URL для ajax-запросов? */
+    def renderActionUrls: Boolean
   }
 
   override type T = Val
@@ -26,10 +29,17 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
   val Coffee  : T = new Val(1) {
     override def forceScCloseable = true
+    override def renderActionUrls  = true
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
-  val Sjs1    : T = new Val(2)
+  val Sjs1    : T = new Val(2) {
+    /** Рендерить утиль для "закрытия" выдачи нужно только при реальной необходимости. */
+    override def forceScCloseable = false
+
+    /** sjs использует jsRoutes для сборки ссылок. Полуготовые ссылки ей не нужны. */
+    override def renderActionUrls = false
+  }
 
 
   /** Какую версию использовать, если версия API не указана? */

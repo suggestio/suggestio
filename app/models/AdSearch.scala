@@ -3,8 +3,11 @@ package models
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
-import io.suggest.ym.model.ad.{AdsSearchArgsT, AdsSearchArgsWrapper, AdsSearchArgsDflt}
+import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
+import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
+import io.suggest.ad.search.AdSearchConstants._
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -41,61 +44,67 @@ object AdSearch {
                                  intOptB: QueryStringBindable[Option[Int]],
                                  longOptB: QueryStringBindable[Option[Long]],
                                  geoModeB: QueryStringBindable[GeoMode],
-                                 devScreenB: QueryStringBindable[Option[DevScreen]] ) = {
-    new QueryStringBindable[AdSearch] {
+                                 devScreenB: QueryStringBindable[Option[DevScreen]]
+                                ): QueryStringBindable[AdSearch] = {
+    new QueryStringBindable[AdSearch] with QsbKey1T {
 
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
+        def f = key1F(key)
         for {
-          maybeProdIdOpt <- strOptBinder.bind(key + ".shopId", params)
-          maybeCatIdOpt  <- strOptBinder.bind(key + ".catId", params)
-          maybeLevelOpt  <- strOptBinder.bind(key + ".level", params)
-          maybeQOpt      <- strOptBinder.bind(key + ".q", params)
-          maybeSizeOpt   <- intOptB.bind(key + ".size", params)
-          maybeOffsetOpt <- intOptB.bind(key + ".offset", params)
-          maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
-          maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
-          maybeGen       <- longOptB.bind(key + ".gen", params)
-          maybeGeo       <- geoModeB.bind(key + ".geo", params)
-          maybeDevScreen <- devScreenB.bind(key + ".screen", params)
+          maybeProdIdOpt <- strOptBinder.bind (f(PRODUSER_ID_FN),    params)
+          maybeCatIdOpt  <- strOptBinder.bind (f(CAT_ID_FN),         params)
+          maybeLevelOpt  <- strOptBinder.bind (f(LEVEL_ID_FN),       params)
+          maybeQOpt      <- strOptBinder.bind (f(FTS_QUERY_FN),      params)
+          maybeSizeOpt   <- intOptB.bind      (f(RESULTS_LIMIT_FN),  params)
+          maybeOffsetOpt <- intOptB.bind      (f(RESULTS_OFFSET_FN), params)
+          maybeRcvrIdOpt <- strOptBinder.bind (f(RECEIVER_ID_FN),    params)
+          maybeFirstId   <- strOptBinder.bind (f(FIRST_AD_ID_FN),    params)
+          maybeGen       <- longOptB.bind     (f(GENERATION_FN),     params)
+          maybeGeo       <- geoModeB.bind     (f(GEO_MODE_FN),       params)
+          maybeDevScreen <- devScreenB.bind   (f(SCREEN_INFO_FN),    params)
 
         } yield {
-          val _maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
-            Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
-          }
-          Right(
-            new AdSearch {
-              override def receiverIds = maybeRcvrIdOpt
-              override def producerIds = maybeProdIdOpt
-              override def catIds = maybeCatIdOpt
-              override def levels = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName)
-              override def qOpt = maybeQOpt
-              override def maxResultsOpt = _maxResultsOpt
-              override lazy val offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
+          val res = new AdSearch {
+            override def receiverIds    = maybeRcvrIdOpt
+            override def producerIds    = maybeProdIdOpt
+            override def catIds         = maybeCatIdOpt
+            override def levels         = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName)
+            override def qOpt           = maybeQOpt
+            override def maxResultsOpt: Option[Int] = {
+              eitherOpt2option(maybeSizeOpt) map { size =>
+                Math.max(1,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
+              }
+            }
+            override def offsetOpt: Option[Int] = {
+              eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0, Math.min(offset, MAX_OFFSET))
               }
-              override def forceFirstIds = maybeFirstId
-              override def generationOpt = maybeGen
-              override def geo = maybeGeo
-              override def screen = maybeDevScreen
             }
-          )
+            override def forceFirstIds  = maybeFirstId
+            override def generationOpt  = maybeGen
+            override def geo            = maybeGeo
+            override def screen         = maybeDevScreen
+          }
+          Right(res)
         }
       }
 
       def unbind(key: String, value: AdSearch): String = {
-        List(
-          strOptBinder.unbind(key + ".rcvr", value.receiverIds.headOption),   // TODO Разбиндивать на весь список receivers сразу надо
-          strOptBinder.unbind(key + ".shopId", value.producerIds.headOption), // TODO Разбиндивать на весь список producers сразу надо.
-          strOptBinder.unbind(key + ".catId", value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
-          strOptBinder.unbind(key + ".level", value.levels.headOption.map(_.toString)),
-          strOptBinder.unbind(key + ".q", value.qOpt),
-          intOptB.unbind(key + ".size", value.maxResultsOpt),
-          intOptB.unbind(key + ".offset", value.offsetOpt),
-          strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
-          longOptB.unbind(key + ".gen", value.generationOpt),
-          strOptBinder.unbind(key + ".geo", value.geo.toQsStringOpt),
-          devScreenB.unbind(key + ".screen", value.screen)
-        ) .filter(!_.isEmpty)
+        val f = key1F(key)
+        Iterator(
+          strOptBinder.unbind (f(RECEIVER_ID_FN),    value.receiverIds.headOption),  // TODO Разбиндивать на весь список receivers сразу надо
+          strOptBinder.unbind (f(PRODUSER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
+          strOptBinder.unbind (f(CAT_ID_FN),         value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
+          strOptBinder.unbind (f(LEVEL_ID_FN),       value.levels.headOption.map(_.toString)),
+          strOptBinder.unbind (f(FTS_QUERY_FN),      value.qOpt),
+          intOptB.unbind      (f(RESULTS_LIMIT_FN),  value.maxResultsOpt),
+          intOptB.unbind      (f(RESULTS_OFFSET_FN), value.offsetOpt),
+          strOptBinder.unbind (f(FIRST_AD_ID_FN),    value.forceFirstIds.headOption),
+          longOptB.unbind     (f(GENERATION_FN),     value.generationOpt),
+          strOptBinder.unbind (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
+          devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen)
+        )
+          .filter(!_.isEmpty)
           .mkString("&")
       }
     }
