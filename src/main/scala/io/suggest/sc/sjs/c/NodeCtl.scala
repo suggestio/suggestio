@@ -10,7 +10,6 @@ import io.suggest.sc.sjs.v.inx.ScIndex
 import io.suggest.sc.sjs.v.layout.Layout
 import io.suggest.sc.sjs.v.nav.NavPaneView
 import io.suggest.sc.sjs.v.search.SearchPanelView
-import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
@@ -73,7 +72,7 @@ object NodeCtl extends CtlT {
       //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
 
       // Инициализация welcomeAd.
-      val wcHideFut = NodeWelcomeView.handleWelcome()(_vctx)
+      val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
       if (isFirstRun) {
         DocumentView.initDocEvents()

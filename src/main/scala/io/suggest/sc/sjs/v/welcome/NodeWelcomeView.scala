@@ -4,18 +4,14 @@ import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mdom.{GetImgById, GetDivById}
-import io.suggest.sc.sjs.m.mv.IVCtx
 import io.suggest.sc.sjs.m.mwc.MWelcomeState
 import io.suggest.sc.sjs.v.vutil.VImgUtil
-import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import org.scalajs.dom
-import org.scalajs.dom.{Element, Event}
+import org.scalajs.dom.{Node, Element}
 import org.scalajs.dom.raw.HTMLImageElement
 import io.suggest.sc.sjs.m.mwc.MWcDom._
 import io.suggest.sc.ScConstants.Welcome.Anim._
-
-import scala.concurrent.{Future, Promise}
 
 /**
  * Suggest.io
@@ -88,51 +84,6 @@ object NodeWelcomeView extends GetDivById with GetImgById {
   }
 
 
-  /**
-   * Welcome-карточка ВОЗМОЖНО присутствует в DOM. Если присутствует, то значит отображена.
-   * Нужно допилить карточку под экран, задать правила для сокрытия этой карточки через таймер или иные события.
-   * @return Future, которые исполняется с началом анимации сокрытия welcome.
-   *         Если welcome отсутствует, то Future придет уже исполненым.
-   */
-  def handleWelcome()(implicit vctx: IVCtx): Future[_] = {
-    val startHidingP = Promise[None.type]()
-    def hidingStarted(): Unit = {
-      if (!startHidingP.isCompleted)
-        startHidingP success None
-    }
-    rootDiv() match {
-      case Some(rootEl) =>
-        // Есть карточка в DOM. Подогнать по экран, повесить события.
-        fit()
-
-        val safeEl = SafeEl(rootEl)
-
-        // Добавляем will-change, т.к. скоро ожидается анимация.
-        // Потом will-change НЕ удаляем, т.к. элемент будет удалён целиком.
-        safeEl.addClasses(WILL_FADEOUT_CSS_CLASS)
-
-        // Запустить скрытие карточки по таймауту.
-        dom.setTimeout(
-          { () =>
-            NodeWelcomeCtl.displayTimeout(rootEl)
-            hidingStarted()
-          },
-          MWelcomeState.HIDE_TIMEOUT_MS
-        )
-
-        // Вешаем события ускоренного ухода с приветствия.
-        safeEl.addEventListener("click") { (evt: Event) =>
-          NodeWelcomeCtl.clicked(evt, rootEl)
-          hidingStarted()
-        }
-        // TODO Нужно реагировать на "смахивание" приветствия.
-        // TODO Реагировать на Esc/enter/etc на клавиатуре, как на педалирование анимации.
-      case None =>
-        hidingStarted()
-    }
-    startHidingP.future
-  }
-
 
   /** Активна ли анимация прямо сейчас? */
   def isAnimatedNow(el: SafeCssElT): Boolean = {
@@ -144,17 +95,22 @@ object NodeWelcomeView extends GetDivById with GetImgById {
   def fadeOut(el: SafeCssElT): Unit = {
     el.addClasses(TRANS_02_CSS_CLASS, FADEOUT_CSS_CLASS)
     dom.setTimeout(
-      {() => removeWelcome(el._underlying) },
+      {() => NodeWelcomeCtl.hidingFinished(el._underlying) },
       MWelcomeState.FADEOUT_TRANSITION_MS
     )
   }
 
   /** Исполнить удаление элемента. */
-  def removeWelcome(el: Element): Unit = {
-    val parent = el.parentNode
-    // Родительский элемент может быть null, если элемент уже удален.
-    if (parent != null)
-      parent.removeChild(el)
+  def removeWelcome(el: Element, parent: Node): Unit = {
+    parent.removeChild(el)
+  }
+
+
+  /** Контроллер просит приготовиться к анимации сокрытия.
+   * Добавляем will-change, т.к. скоро ожидается анимация. Потом will-change НЕ удаляем,
+   * т.к. элемент будет удалён целиком. */
+  def willHideAnimated(safeEl: SafeCssElT): Unit = {
+    safeEl.addClasses(WILL_FADEOUT_CSS_CLASS)
   }
 
 }

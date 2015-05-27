@@ -37,7 +37,8 @@ object MNodeIndex {
     Xhr.successWithStatus(200) {
       Xhr.send(
         method  = route.method,
-        url     = route.url
+        url     = route.url,
+        accept  = Some(Xhr.MIME_JSON)
       )
 
     } map { xhr =>

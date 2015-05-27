@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.m.mv.IVCtx
 import io.suggest.sc.sjs.v.grid.GridView
+import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -36,8 +36,29 @@ object GridCtl extends CtlT with SjsLogger {
    * @param resp ответ сервера.
    */
   def newAdsReceived(resp: MFindAds): Unit = {
-    warn("TODO: " + resp)
-    ???
+    if (resp.mads.isEmpty) {
+      log("No more ads")
+      ??? // TODO
+
+    } else {
+      // Если получены новые параметры сетки, то выставить их в состояние сетки
+      for {
+        params2   <- resp.params
+        newParams <- MGrid.params.importIfChangedFrom(params2)
+      } {
+        // TODO Нужно спиливать карточки, очищая сетку, если в ней уже есть какие-то карточки, отрендеренные
+        // на предыдущих параметрах.
+        MGrid.params = newParams
+      }
+
+      // Закачать в выдачу новый css.
+      resp.css.foreach { css =>
+        CommonRes.appendCss(css)
+      }
+
+      // TODO Отобразить все новые карточки на экране.
+      ???
+    }
   }
 
 }

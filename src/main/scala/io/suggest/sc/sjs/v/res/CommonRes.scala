@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.v.res
 
 import io.suggest.sc.ScConstants.Rsc._
+import io.suggest.sc.sjs.m.mdom.MResContainers
 
 /**
  * Suggest.io
@@ -11,5 +12,7 @@ import io.suggest.sc.ScConstants.Rsc._
 object CommonRes extends ResourceContainerT {
 
   override def id = COMMON_ID
+
+  override def findContainer() = MResContainers.commonResDiv()
 
 }

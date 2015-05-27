@@ -2,7 +2,8 @@ package io.suggest.sc.sjs.v.res
 
 import io.suggest.sc.sjs.m.SafeDoc
 import org.scalajs.dom
-import org.scalajs.dom.{Element, Document}
+import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.Document
 
 /**
  * Suggest.io
@@ -16,6 +17,8 @@ import org.scalajs.dom.{Element, Document}
  */
 trait ResourceContainerT {
 
+  type T = HTMLDivElement
+
   /** Название тега. */
   def tag: String = "div"
 
@@ -24,43 +27,43 @@ trait ResourceContainerT {
 
   /**
    * Найти контейнер на странице.
-   * @param d Закешированный dom.document, если есть.
    * @return Опционально-найденный элемент.
    */
-  def findContainer(d: Document = dom.document): Option[Element] = {
-    _findContainer(d, id)
-  }
-
-  private def _findContainer(d: Document, _id: String): Option[Element] = {
-    Option( d.getElementById(_id) )
-  }
+  def findContainer(): Option[T]
 
   /**
    * Очистить контейнер ресурсов.
    * @param d Закешированный документ, если есть.
    */
   def clear(d: Document = dom.document): Unit = {
-    findContainer(d).foreach { el =>
+    findContainer().foreach { el =>
       el.innerHTML = ""
     }
   }
 
   /** Создать/пересоздать контейнер ресурсов. */
   def recreate(): Unit = {
-    val d = dom.document
-    val _id = id
     // Найти и удалить старый элемент
-    val oldOpt = _findContainer(d, _id)
+    val oldOpt = findContainer()
     if (oldOpt.nonEmpty) {
       val old = oldOpt.get
       old.parentNode.removeChild(old)
     }
 
     // Пересоздать элемент.
-    val el = d.createElement(tag)
-    el.setAttribute("id", _id)
+    val el = dom.document.createElement(tag)
+    el.setAttribute("id", id)
 
     SafeDoc.body.appendChild(el)
+  }
+
+  /** Добавить css-ресурс в контейнер. */
+  def appendCss(css: String): Unit = {
+    findContainer().foreach { cont =>
+      val tag = dom.document.createElement("style")
+      tag.innerHTML = css
+      cont.appendChild(tag)
+    }
   }
 
 }

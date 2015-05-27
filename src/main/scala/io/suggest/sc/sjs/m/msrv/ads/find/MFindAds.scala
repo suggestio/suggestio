@@ -24,8 +24,9 @@ object MFindAds {
     val route = routes.controllers.MarketShowcase.findAds(adSearch)
     val reqFut = Xhr.successWithStatus(200) {
       Xhr.send(
-        method = route.method,
-        url = route.url
+        method  = route.method,
+        url     = route.url,
+        accept  = Some(Xhr.MIME_JSON)
       )
     }
     reqFut map { xhr =>

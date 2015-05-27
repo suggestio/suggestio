@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.v.global
 import io.suggest.sc.sjs.c.DocumentCtl
 import io.suggest.sc.sjs.m.SafeDoc
 import org.scalajs.dom.TouchEvent
+import org.scalajs.dom.raw.KeyboardEvent
 
 /**
  * Suggest.io
@@ -26,7 +27,11 @@ object DocumentView {
       DocumentCtl.onTouchCancel(_: TouchEvent)
     }
 
-    // TODO Нужна реакция на нажатия кнопок Esc, Left, Right и т.д., которые будут пробрасываться в необходимый handler.
+    // Реакция на нажатия кнопок клавиатуры.
+    ds.addEventListener("keyup") {
+      DocumentCtl.onKeyUp(_: KeyboardEvent)
+    }
+
     //val clickEvtName = TouchUtil.clickEvtName
     // TODO document click?
   }

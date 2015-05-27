@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mv.MTouchLock
 import org.scalajs.dom
 import org.scalajs.dom.TouchEvent
+import org.scalajs.dom.raw.KeyboardEvent
 
 /**
  * Suggest.io
@@ -26,6 +28,11 @@ object DocumentCtl {
 
   def onTouchCancel(e: TouchEvent): Unit = {
     MTouchLock(false)
+  }
+
+  /** Обработка событий клавиатуры: отпускание клавиш. */
+  def onKeyUp(e: KeyboardEvent): Unit = {
+    MListeners.handleKeyUp(e)
   }
 
 }
