@@ -1,15 +1,12 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.mdom.listen.MListeners
-import io.suggest.sc.sjs.m.mdom.listen.kbd.IKeyUpListener
-import io.suggest.sc.sjs.m.mwc.{MWelcomeState, MWcDom}
+import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, MWcDom}
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import io.suggest.sjs.common.model.kbd.KeyCodes
 import io.suggest.sjs.common.view.safe.SafeEl
-import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import org.scalajs.dom
-import org.scalajs.dom.{Element, KeyboardEvent, Event}
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.{Element, Event}
 
 import scala.concurrent.{Future, Promise}
 
@@ -19,21 +16,22 @@ import scala.concurrent.{Future, Promise}
  * Created: 25.05.15 13:17
  * Description: Контроллер для реакций на происходящее с карточкой приветствия узла.
  */
-object NodeWelcomeCtl extends CtlT with IKeyUpListener {
+object NodeWelcomeCtl extends CtlT {
+
+  private def KEY_LISTENER_ID = getClass.getSimpleName
 
   /** Сработал таймер таймаута отображения приветствия. */
-  def displayTimeout(rootEl: HTMLDivElement): Unit = {
-    val safeEl = SafeEl(rootEl)
+  def displayTimeout(safeEl: SafeRootDiv_t, p: WcHidePromise_t): Unit = {
     if ( !NodeWelcomeView.isAnimatedNow(safeEl) ) {
       // Анимация скрытия ещё не началась. Запустить анимацию.
-      NodeWelcomeView.fadeOut(safeEl)
+      _startHiding(safeEl, p)
     }
   }
 
-  def clicked(e: Event): Unit = {
-    MWcDom.rootDiv().foreach { rootDiv =>
-      clicked(e, SafeEl(rootDiv))
-    }
+  /** Запуск сокрытия карточки. */
+  private def _startHiding(safeEl: SafeRootDiv_t, p: WcHidePromise_t): Unit = {
+    NodeWelcomeView.fadeOut(safeEl)
+    finishP(p)
   }
 
   /**
@@ -45,43 +43,32 @@ object NodeWelcomeCtl extends CtlT with IKeyUpListener {
     val parent = rootDiv.parentNode
     if (parent != null) {
       NodeWelcomeView.removeWelcome(rootDiv, parent)
-      welcomeRemoved()
+      MListeners.removeKeyUpListener(KEY_LISTENER_ID)
     }
   }
 
+
   /** Юзер кликает по отображенной карточке приветствия. Нужно её скрыть не дожидаясь таймера.
     * Если скрытие уже началось, то нужно вообще немедленно стереть. */
-  def clicked(e: Event, safeEl: SafeCssElT { type T = HTMLDivElement }): Unit = {
+  def clicked(e: Event, safeEl: SafeRootDiv_t, p: WcHidePromise_t): Unit = {
     if ( NodeWelcomeView.isAnimatedNow(safeEl) ) {
       // Анимация уже началась. Значит надо спилить этот элемент по-скорее
       hidingFinished(safeEl._underlying)
     } else {
       // Анимация ещё не начиналась -- запустить анимацию.
-      NodeWelcomeView.fadeOut(safeEl)
+      _startHiding(safeEl, p)
     }
   }
 
-  /** Карточка приветствия была удалена со страницы. Сняться с подписки на события. */
-  private def welcomeRemoved(): Unit = {
-    MListeners.removeKeyUpListener(this)
+
+  private def finishP(p: WcHidePromise_t): Unit = {
+    if (!p.isCompleted)
+      p success None
   }
 
-  /** Вызывается, если обнаружилось, что карточка отображена на экране. */
-  private def welcomeShown(): Unit = {
-    MListeners.addKeyUpListener(this)
+  private def isHideOnKey(keyCode: Int): Boolean = {
+    keyCode == KeyCodes.ESC || keyCode == KeyCodes.ENTER || keyCode == KeyCodes.SPACE
   }
-
-  /**
-   * При нажатии некоторых кнопок нужно ускорять сокрытие welcome.
-   * @param e Событие клавиатуры.
-   */
-  override def handleKeyUp(e: KeyboardEvent): Unit = {
-    val kc = e.keyCode
-    if (kc == KeyCodes.ESC || kc == KeyCodes.ENTER || kc == KeyCodes.SPACE) {
-      clicked(e)
-    }
-  }
-
 
   /**
    * Welcome-карточка ВОЗМОЖНО уже присутствует в DOM. Если присутствует, то значит отображена.
@@ -90,41 +77,40 @@ object NodeWelcomeCtl extends CtlT with IKeyUpListener {
    *         Если welcome отсутствует, то Future придет уже исполненым.
    */
   def handleWelcome(): Future[_] = {
-    val startHidingP = Promise[None.type]()
-    def hidingStarted(): Unit = {
-      if (!startHidingP.isCompleted)
-        startHidingP success None
-    }
+    val p: WcHidePromise_t = Promise[None.type]()
     MWcDom.rootDiv() match {
       // Есть карточка в DOM. Подогнать по экран, повесить события.
       case Some(rootEl) =>
         NodeWelcomeView.fit()
-        welcomeShown()
 
-        val safeEl = SafeEl(rootEl)
+        val safeEl: SafeRootDiv_t = SafeEl(rootEl)
+
+        // Подписываемся на события клавиатуры
+        MListeners.addKeyUpListener(KEY_LISTENER_ID) { e =>
+          if ( isHideOnKey(e.keyCode) ) {
+            clicked(e, safeEl, p)
+          }
+        }
+
         NodeWelcomeView.willHideAnimated(safeEl)
 
         // Запустить скрытие карточки по таймауту.
         dom.setTimeout(
-          { () =>
-            displayTimeout(rootEl)
-            hidingStarted()
-          },
+          { () => displayTimeout(safeEl, p) },
           MWelcomeState.HIDE_TIMEOUT_MS
         )
 
         // Вешаем события ускоренного ухода с приветствия.
         safeEl.addEventListener("click") { (evt: Event) =>
-          clicked(evt, safeEl)
-          hidingStarted()
+          clicked(evt, safeEl, p)
         }
         // TODO Нужно реагировать на "смахивание" приветствия.
 
       // Нет welcome карточки вообще.
       case None =>
-        hidingStarted()
+        finishP(p)
     }
-    startHidingP.future
+    p.future
   }
 
 }

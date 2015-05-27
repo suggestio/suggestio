@@ -5,12 +5,10 @@ import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqJson}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.inx.ScIndex
 import io.suggest.sc.sjs.v.layout.Layout
 import io.suggest.sc.sjs.v.nav.NavPaneView
 import io.suggest.sc.sjs.v.search.SearchPanelView
-import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -58,21 +56,16 @@ object NodeCtl extends CtlT {
       Layout.reDrawLayout()(_vctx)
       ScIndex.showIndex(minx)(_vctx)
 
-      GridView.adjustDom()(_vctx)
-      NavPaneView.adjustNodeList()(_vctx)
+      // Инициализация welcomeAd.
+      val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
-      // TODO Нужен ли тут этот setTimeout()? Может можно без него вообще или через Future()?
-      dom.setTimeout(
-        { () => GridView.attachEvents()(_vctx) },
-        200
-      )
+      GridCtl.initNewLayout(wcHideFut)
+      NavPaneView.adjustNodeList()(_vctx)
 
       // TODO В оригинале была проверка isGeo, + сокрытие exit-кнопки и отображение nav-кнопки.
       // Этот фунционал был перенесен в шаблон, exit спилено там же.
       //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
 
-      // Инициализация welcomeAd.
-      val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
       if (isFirstRun) {
         DocumentView.initDocEvents()

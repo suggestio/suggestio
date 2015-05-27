@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.mdom.listen
 
-import io.suggest.sc.sjs.m.mdom.listen.kbd.IKeyUpListener
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -9,22 +8,22 @@ import org.scalajs.dom.KeyboardEvent
  * Created: 27.05.15 10:29
  * Description: Для удобного управления системами реакции на глобальные события используется эта модель. 
  */
-object MListeners extends IKeyUpListener {
+object MListeners {
   
   /** Слушатели событий клавиатуры задаются здесь. Сама реакция происходит в DocumentCtl. */
-  private var _keyboard: List[IKeyUpListener] = Nil
+  private var _keyboard: List[(String, KeyUpListener_t)] = Nil
 
-  def removeKeyUpListener(l: IKeyUpListener): Unit = {
-    _keyboard = _keyboard.filter { _ != l }
+  def removeKeyUpListener(name: String): Unit = {
+    _keyboard = _keyboard.filter { v => v._1 != name }
   }
 
-  def addKeyUpListener(l: IKeyUpListener): Unit = {
-    _keyboard ::= l
+  def addKeyUpListener(name: String)(l: KeyUpListener_t): Unit = {
+    _keyboard ::= (name -> l)
   }
 
-  override def handleKeyUp(e: KeyboardEvent): Unit = {
-    _keyboard.foreach { listener =>
-      listener.handleKeyUp(e)
+  def handleKeyUp(e: KeyboardEvent): Unit = {
+    _keyboard.iterator.map(_._2).foreach { listener =>
+      listener(e)
     }
   }
 
