@@ -29,6 +29,8 @@ object ScConstants {
 
   }
 
+  /** Имя css-класса, полностью скрывающего элемент. */
+  def HIDDEN_CSS_CLASS  = "hidden"
 
   /** Константы ответов сервера. */
   object Resp {
