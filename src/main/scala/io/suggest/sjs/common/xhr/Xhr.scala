@@ -15,19 +15,25 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
  */
 object Xhr extends SjsLogger {
 
+  def MIME_JSON = "application/json"
+
   /**
    * Отправка асинхронного запроса силами голого js.
    * @see [[http://stackoverflow.com/a/8567149 StackOverflow]]
    * @param method HTTP-метод.
    * @param url Ссылка.
    * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
+   * @param accept Выставить Accept: заголовок запроса.
    * @return Фьючерс с результатом.
    */
-  def send(method: String, url: String, timeoutMsOpt: Option[Long] = None): Future[XMLHttpRequest] = {
+  def send(method: String, url: String, timeoutMsOpt: Option[Long] = None, accept: Option[String] = None): Future[XMLHttpRequest] = {
     val p = Promise[XMLHttpRequest]()
     // Собрать XHR
     val xhr = new XMLHttpRequest()
     xhr.open(method, url, async = true)
+    accept.foreach { _accept =>
+      xhr.setRequestHeader("Accept", _accept)
+    }
     xhr.onload = { (evt: Event) =>
       p success xhr
     }
