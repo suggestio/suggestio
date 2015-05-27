@@ -63,4 +63,10 @@ Changelog
 2014.jan.27: В связи с переездом на hadoop2, который использует protobuf-2.5, необходимо собрать на
  локалхосте и использовать snapshot-версию play. Для сборки play-2.3-SNAPSHOT на локалхосте необходимsioweb3
 =====================================
+ 
+
+DNS + CDN:
+  www.suggest.io CNAME
+    Без CDN   : backend.suggest.io.
+    CDNvideo: : suggest.cdnvideo.ru.
 

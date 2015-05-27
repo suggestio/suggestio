@@ -38,16 +38,25 @@ class SysAdnGeo @Inject() (
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 
-  /** Маппинг формы создания/редактирования фигуры на базе OSM-геообъекта. */
-  private def osmNodeFormM = Form(tuple(
-    glevelKM,
-    "url"     -> urlStrM
+  private def osmUrlOptM: Mapping[Option[UrlParseResult]] = {
+    urlStrOptM
       .transform[Option[UrlParseResult]] (
-        { UrlParseResult.fromUrl },
-        { _.fold("")(_.url) }
+        { _.flatMap(UrlParseResult.fromUrl) },
+        { _.map(_.url) }
       )
+  }
+
+  /** Маппинг формы создания/редактирования фигуры на базе OSM-геообъекта. */
+  private def createOsmNodeFormM = Form(tuple(
+    glevelKM,
+    "url"     -> osmUrlOptM
       .verifying("error.url.unsupported", _.isDefined)
       .transform[UrlParseResult](_.get, Some.apply)
+  ))
+
+  private def editOsmNodeFormM = Form(tuple(
+    glevelKM,
+    "url" -> osmUrlOptM
   ))
 
 
@@ -76,14 +85,14 @@ class SysAdnGeo @Inject() (
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
   def createForNodeOsm(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
     val form = guessGeoLevel
-      .fold(osmNodeFormM) { ngl => osmNodeFormM.fill((ngl, UrlParseResult("", null, -1))) }
+      .fold(createOsmNodeFormM) { ngl => createOsmNodeFormM.fill((ngl, UrlParseResult("", null, -1))) }
     Ok(createAdnGeoOsmTpl(form, request.adnNode))
   }
 
   /** Сабмит формы создания фигуры на базе osm-объекта. */
   def createForNodeOsmSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"createForNodeOsmSubmit($adnId): "
-    osmNodeFormM.bindFromRequest().fold(
+    createOsmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(createAdnGeoOsmTpl(formWithErrors, request.adnNode))
@@ -103,19 +112,24 @@ class SysAdnGeo @Inject() (
               .flashing("success" -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
           }
         }
-        recoverOsm(resFut, glevel, urlPr)
+        recoverOsm(resFut, glevel, Some(urlPr))
       }
     )
   }
 
   /** Повесить recover на фьючерс фетч-парсинга osm.xml чтобы вернуть админу на экран нормальную ошибку. */
-  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPr: UrlParseResult): Future[Result] = {
-    fut recover {
-      case ex: OsmClientStatusCodeInvalidException =>
-        NotFound(s"osm.org returned unexpected http status: ${ex.statusCode} for ${urlPr.osmType.xmlUrl(urlPr.id)}")
-      case ex: Exception =>
-        warn("Exception occured while fetch/parsing of " + urlPr.osmType.xmlUrl(urlPr.id), ex)
-        NotFound(s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage)
+  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPrOpt: Option[UrlParseResult]): Future[Result] = {
+    fut recover { case ex: Exception =>
+      val rest = urlPrOpt.fold("-") { urlPr =>
+        urlPr.osmType.xmlUrl(urlPr.id)
+      }
+      ex match {
+        case ocex: OsmClientStatusCodeInvalidException =>
+          NotFound(s"osm.org returned unexpected http status: ${ocex.statusCode} for $rest")
+        case _ =>
+          warn("Exception occured while fetch/parsing of " + rest, ex)
+          NotFound(s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage)
+      }
     }
   }
 
@@ -138,22 +152,20 @@ class SysAdnGeo @Inject() (
   def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeoGet(geoId, adnId).async { implicit request =>
     import request.adnGeo
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
-    val formFilled = adnGeo.url match {
-      case Some(url) =>
-        val urlPr = UrlParseResult.fromUrl( url ).get
-        osmNodeFormM.fill((adnGeo.glevel, urlPr))
-      case None =>
-        osmNodeFormM
+    val form = {
+      val urlPrOpt = adnGeo.url
+        .flatMap { UrlParseResult.fromUrl }
+      editOsmNodeFormM.fill( (adnGeo.glevel, urlPrOpt) )
     }
     nodeFut map { nodeOpt =>
-      Ok(editAdnGeoOsmTpl(adnGeo, formFilled, nodeOpt.get))
+      Ok(editAdnGeoOsmTpl(adnGeo, form, nodeOpt.get))
     }
   }
 
   /** Сабмит формы редактирования osm-производной. */
   def editNodeOsmSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeoPost(geoId, adnId).async { implicit request =>
     lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
-    osmNodeFormM.bindFromRequest().fold(
+    editOsmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
         val nodeFut = MAdnNodeCache.getById(request.adnGeo.adnId)
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
@@ -161,19 +173,32 @@ class SysAdnGeo @Inject() (
           NotAcceptable(editAdnGeoOsmTpl(request.adnGeo, formWithErrors, nodeOpt.get))
         }
       },
-      {case (glevel2, urlPr2) =>
-        val resFut = OsmClient.fetchElement(urlPr2.osmType, urlPr2.id) flatMap { osmObj =>
-          val adnGeo2 = request.adnGeo.copy(
-            shape = osmObj.toGeoShape,
-            glevel = glevel2,
-            url = Some(urlPr2.url)
-          )
-          adnGeo2.save map { _geoId =>
-            Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
-              .flashing("success" -> "Географическая фигура обновлена.")
-          }
+      {case (glevel2, urlPrOpt) =>
+        val adnGeo2Fut = urlPrOpt match {
+          // Админ задал новую ссылку для скачивания контура.
+          case Some(urlPr2) =>
+            OsmClient.fetchElement(urlPr2.osmType, urlPr2.id) map { osmObj =>
+              request.adnGeo.copy(
+                shape   = osmObj.toGeoShape,
+                glevel  = glevel2,
+                url     = Some(urlPr2.url)
+              )
+            }
+          // Без ссылки - нужно немного обновить то, что уже имеется.
+          case None =>
+            val r = request.adnGeo.copy(glevel = glevel2)
+            Future successful r
         }
-        recoverOsm(resFut, glevel2, urlPr2)
+        // Сохранить и сгенерить результат
+        val resFut = for {
+          adnGeo2 <- adnGeo2Fut
+          _geoId  <- adnGeo2.save
+        } yield {
+          Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
+            .flashing("success" -> "Географическая фигура обновлена.")
+        }
+        // Повесить recover() для перехвата ошибок
+        recoverOsm(resFut, glevel2, urlPrOpt)
       }
     )
   }

@@ -9,6 +9,10 @@
 <table class="input-w __size-L">
   @select(
     gField,
-    options = options( NodeGeoLevels.values.iterator.map(ngl => ngl.esfn -> ngl.precision).toMap )
+    options = options( NodeGeoLevels.values
+      .iterator
+      .map( ngl => ngl.esfn -> s"""${messages(ngl.l10nSingular)} (~${ngl.precision})""" )
+      .toMap
+    )
   )
 </table>
