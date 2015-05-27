@@ -16,7 +16,11 @@ object MGrid {
   var params: MGridParams = MGridParams()
 
   /** Текущее состояние сетки. Состоит из переменных и обновляется контроллерами. */
-  var state: MGridState = MGridState()
+  var state: MGridState = _
+
+  def resetState(): Unit = {
+    state = MGridState()
+  }
 
   def margin(colCnt1: Int): Int = {
     val p = params
@@ -74,10 +78,11 @@ object MGrid {
   }
 
 
-  def updateState(cw: IColsWidth): Unit = {
+  def updateState(cw: IColsWidth with ICwCm): Unit = {
     state = state.copy(
       maxCellWidth = cw.maxCellWidth,
-      columnsCnt   = cw.columnsCnt
+      columnsCnt   = cw.columnsCnt,
+      contSz       = Some(cw)
     )
   }
 

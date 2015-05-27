@@ -1,18 +1,22 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGrid}
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.mgrid.{MGridState, MGridDom, MGrid}
+import io.suggest.sc.sjs.m.msc.MScState
+import io.suggest.sc.sjs.m.msrv.MSrv
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
 import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
+import org.scalajs.dom.raw.HTMLDivElement
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -35,8 +39,20 @@ object GridCtl extends CtlT with SjsLogger {
   }
 
   /** Кто-то решил, что нужно загрузить ещё карточек в view. */
-  def needToLoadMoreAds(): Unit = {
-    error("Not implemented: needToLoadMoreAds()")
+  def needToLoadMoreAds(): Future[MFindAds] = {
+    val gstate = MGrid.state
+    val findAdsArgs = MFindAdsReqJson(
+      receiverId = MScState.rcvrAdnId,
+      generation = Some(MSrv.generation),
+      screenInfo = Some(MAgent.availableScreen),
+      limit      = Some(gstate.adsPerLoad),
+      offset     = Some(gstate.adsLoaded)
+      // TODO Состояние геолокации сюда надо бы.
+    )
+    val findAdsFut = MFindAds.findAds(findAdsArgs)
+    findAdsFut andThen {
+      case Success(resp) => GridCtl.newAdsReceived(resp)
+    }
   }
 
   /**
@@ -44,9 +60,18 @@ object GridCtl extends CtlT with SjsLogger {
    * @param resp ответ сервера.
    */
   def newAdsReceived(resp: MFindAds): Unit = {
-    if (resp.mads.isEmpty) {
-      log("No more ads")
-      ??? // TODO
+    val mads = resp.mads
+    val loaderDivOpt = MGridDom.loaderDiv()
+    val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
+    val state = MGrid.state
+
+    if (mads.isEmpty) {
+      state.fullyLoaded = true
+
+      // Скрыть loader-индикатор, он больше не нужен ведь.
+      safeLoaderDivOpt foreach { loaderDiv =>
+        GridView.Loader.hide(loaderDiv)
+      }
 
     } else {
       // Если получены новые параметры сетки, то выставить их в состояние сетки
@@ -64,14 +89,39 @@ object GridCtl extends CtlT with SjsLogger {
         CommonRes.appendCss(css)
       }
 
+      // Посчитать и сохранить кол-во загруженных карточек плитки.
+      val madsSize = mads.size
+      state.adsLoaded += madsSize
+
+      // Показать либо скрыть индикатор подгрузки выдачи.
+      safeLoaderDivOpt.foreach { loaderDiv =>
+        val L = GridView.Loader
+        if (madsSize < state.adsPerLoad) {
+          L.show(loaderDiv)
+        } else {
+          L.hide(loaderDiv)
+          state.fullyLoaded = true
+        }
+      }
+
+
       // TODO Отобразить все новые карточки на экране.
       ???
     }
   }
 
 
+  /** Сохранить вычисленное новое значение для параметра adsPerLoad в состояние grid. */
+  def resetAdsPerLoad(): Unit = {
+    val scr = MAgent.availableScreen
+    val v = MGridState.getAdsPerLoad(scr.width)
+    MGrid.state.adsPerLoad = v
+  }
+
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
   def initNewLayout(wcHideFut: Future[_]): Unit = {
+    MGrid.resetState()
+
     // shared-константы между кусками метода инициализации
     val wrapperDivOpt   = MGridDom.wrapperDiv()
 
@@ -90,7 +140,7 @@ object GridCtl extends CtlT with SjsLogger {
         wrapperSafe.addEventListener("scroll") { (evt: Event) =>
           val wrappedScrollTop = wrapperDiv.scrollTop
           val contentHeight    = contentDiv.offsetHeight
-          // Ткнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
+          // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
           val scrollPxToGo = contentHeight - MAgent.availableScreen.height - wrappedScrollTop
           if (scrollPxToGo < MGrid.params.loadModeScrollDeltaPx) {
             needToLoadMoreAds()
@@ -112,6 +162,14 @@ object GridCtl extends CtlT with SjsLogger {
       val wrappers = Seq(rootDiv, wrapperDiv)
       VUtil.setHeightRootWrapCont(height, containerDivOpt, wrappers)
     }
+  }
+
+
+
+  def resetGridOffsets(): Unit = {
+    // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
+
+    ???
   }
 
 }

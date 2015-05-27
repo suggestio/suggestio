@@ -1,8 +1,6 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.msrv.MSrv
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqJson}
+import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.inx.ScIndex
@@ -35,24 +33,17 @@ object NodeCtl extends CtlT {
   def switchToNode(adnIdOpt: Option[String], isFirstRun: Boolean = false): Unit = {
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
     implicit val _vctx = vctx
+    GridCtl.resetAdsPerLoad()
     for {
       minx <- inxFut
     } yield {
-      // adn_id известен. Сразу запускаем запрос к серверу за рекламными карточками.
-      // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим данные в фоне.
-      val findAdsArgs = MFindAdsReqJson(
-        receiverId = minx.adnIdOpt,
-        generation = Some(MSrv.generation),
-        screenInfo = Some(MAgent.availableScreen)
-        // TODO Состояние геолокации.
-      )
-      val findAdsFut = MFindAds.findAds(findAdsArgs)
-      findAdsFut onSuccess { case resp =>
-        GridCtl.newAdsReceived(resp)
-      }
+      MScState.rcvrAdnId = minx.adnIdOpt
+
+      // Сразу запускаем запрос к серверу за рекламными карточками.
+      // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
+      GridCtl.needToLoadMoreAds()
 
       // Модифицировать текущее отображение под узел, отобразить welcome-карточку, если есть.
-
       Layout.reDrawLayout()(_vctx)
       ScIndex.showIndex(minx)(_vctx)
 
@@ -60,12 +51,12 @@ object NodeCtl extends CtlT {
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
       GridCtl.initNewLayout(wcHideFut)
+
       NavPaneView.adjustNodeList()(_vctx)
 
       // TODO В оригинале была проверка isGeo, + сокрытие exit-кнопки и отображение nav-кнопки.
       // Этот фунционал был перенесен в шаблон, exit спилено там же.
       //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
-
 
       if (isFirstRun) {
         DocumentView.initDocEvents()
