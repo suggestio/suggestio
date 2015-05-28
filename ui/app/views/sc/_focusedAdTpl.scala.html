@@ -1,7 +1,9 @@
 @(brArgs: blk.IRenderArgs, index: Int, producer: MAdnNode, adsCount: Int)(implicit ctx: Context)
 
+@import views.html.sc.stuff._
+
 @defining( brArgs.mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
-@stuff._scrollableContainerTpl( "focused-ad", "focusedAd" + index, style = Some(s"background-color: #$rfBgColor") ){
+@_scrollableContainerTpl( "focused-ad", "focusedAd" + index, style = Some(s"background-color: #$rfBgColor") ){
   <div style="margin: 0px auto;">
     <div class="focused-ad_top-offset"></div>
     @_adFullTpl(

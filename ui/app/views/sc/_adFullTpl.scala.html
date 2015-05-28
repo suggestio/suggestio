@@ -2,13 +2,15 @@
 
 @* Рендер тела страница открытой рекламной карточки вместе с дескрипшеном. *@
 
+@import views.html.sc.stuff._
+
 @_adTpl(args)
 
 @defining( producer.meta.color.getOrElse("") ) { pBgColor =>
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="@if( producer.meta.color ){ @stuff._bgcolor( pBgColor )}; color: #@pFgColor">
+<div class="focused-ad_location" style="@if( producer.meta.color ){ @_bgcolor( pBgColor )}; color: #@pFgColor">
 
   <div class="focused-ad_count" style="color: #@pFgColor; border-color: #@pFgColor;">
     <div>@adIndex/@adsCount</div>

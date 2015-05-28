@@ -23,11 +23,11 @@ libraryDependencies ++= {
  val bcVsn = "1.52"
  Seq(
   jdbc exclude("com.h2database", "h2"),
-  "com.typesafe.play" %% "anorm" % "2.4.0-RC2",
+  "com.typesafe.play" %% "anorm" % "2.4.0",
   cache,
   json,
   ws exclude("commons-logging", "commons-logging"),
-  "com.typesafe.play" %% "play-mailer" % "3.0.0-SNAPSHOT",
+  "com.typesafe.play" %% "play-mailer" % "3.0.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",

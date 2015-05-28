@@ -5,9 +5,10 @@
 
 @import util.cdn.CdnUtil
 @import msc._
+@import views.html.sc.stuff._
 
 @* Список карточек указанного продюссера *@
-<div class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )">
+<div class="sm-producer-header abs" style="@_bgcolor( args.bgColor )">
 
   @args.jsStateOpt.map { jsState =>
     <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = None, fadsOffsetOpt = None) )">

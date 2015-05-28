@@ -1,6 +1,8 @@
 @(bgColor:String)(implicit ctx: Context)
 
-@stuff._scrollableContainerTpl( "focused-ad", "focusedAdLoader" ){
+@import views.html.sc.stuff._
+
+@_scrollableContainerTpl( "focused-ad", "focusedAdLoader" ){
   <div>
     <div class="focused-ad_top-offset"></div>
     <div>

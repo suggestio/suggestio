@@ -5,6 +5,7 @@
 @import util.TplDataFormatUtil._
 @import ctx.messages
 @import msc._
+@import views.html.sc.stuff._
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
 
@@ -30,7 +31,7 @@
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
     @* Панель с табами *@
-    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@stuff._bgcolor( args.bgColor, true );">
+    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@_bgcolor( args.bgColor, true );">
       <div class="sm-categories-screen_tabs-wrapper">
 
         @* Табы *@

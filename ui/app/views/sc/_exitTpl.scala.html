@@ -1,8 +1,10 @@
 @(args: msc.ScRenderArgs)(implicit ctx: Context)
 
-@stuff._scrollableContainerTpl( "sm-close-screen", "smCloseScreen" ){
+@import views.html.sc.stuff._
 
-  <div class="sm-close-screen_cnt"  id="smCloseScreenContainer" style="@stuff._bgcolor( args.bgColor )">
+@_scrollableContainerTpl( "sm-close-screen", "smCloseScreen" ){
+
+  <div class="sm-close-screen_cnt"  id="smCloseScreenContainer" style="@_bgcolor( args.bgColor )">
 
     <div class="sm-close-screen_message" style="color: #@args.fgColor">
       Вы покидаете Suggest.io,<br/>

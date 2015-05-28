@@ -2,6 +2,7 @@
 
 @* Верстка полосы заголовка со всеми необходимыми кнопками управления выдачей. *@
 
+@import views.html.sc.stuff._
 @import msc._
 
 @* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
@@ -19,7 +20,7 @@
 
 @* Хидер главного экрана *@
 <div id="smRootProducerHeader"
-     class="sm-producer-header abs" style="@stuff._bgcolor( args.bgColor )"
+     class="sm-producer-header abs" style="@_bgcolor( args.bgColor )"
      data-gl-go-back="@args.geoListGoBack.exists(identity)">
 
   <span id="smRootProducerHeaderButtons">
