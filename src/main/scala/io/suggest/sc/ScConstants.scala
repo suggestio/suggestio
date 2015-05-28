@@ -105,6 +105,16 @@ object ScConstants {
 
   }
 
+  /** Константы для отрендеренных карточек. */
+  object Block {
+
+    /** Название аттрибута с длиной блока. */
+    def BLK_WIDTH_ATTR    = "data-width"
+    /** Название аттрибута с высотой блока. */
+    def BLK_HEIGHT_ATTR   = "data-height"
+
+  }
+
 
   /** Панель навигации по системе и её узлам. */
   object NavPane {
@@ -164,8 +174,14 @@ object ScConstants {
   /** Константы поисковой панели. */
   object Search {
 
+    def ROOT_DIV_ID = "smCategoriesScreen"
+
     /** id инпута для полнотекстового поиска. */
     def FTS_FIELD_ID = "smSearchField"
+
+    def NODES_DIV_ID = "smShops"
+
+    def CATS_DIV_ID  = "smCategories"
 
   }
 
