@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.c.cutil.CtlT
+import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sc.sjs.v.inx.ScIndex
-import io.suggest.sc.sjs.v.layout.Layout
-import io.suggest.sc.sjs.v.nav.NavPaneView
+import io.suggest.sc.sjs.v.layout.LayoutView
 import io.suggest.sc.sjs.v.search.SearchPanelView
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
@@ -31,8 +31,8 @@ object NodeCtl extends CtlT {
    *                 None значит пусть сервер сам решит, на какой узел переключаться.
    */
   def switchToNode(adnIdOpt: Option[String], isFirstRun: Boolean = false): Unit = {
+    MGrid.resetState()
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
-    implicit val _vctx = vctx
     GridCtl.resetAdsPerLoad()
     for {
       minx <- inxFut
@@ -41,28 +41,34 @@ object NodeCtl extends CtlT {
 
       // Сразу запускаем запрос к серверу за рекламными карточками.
       // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
-      GridCtl.needToLoadMoreAds()
+      val findAdsFut = GridCtl.needToLoadMoreAds()
+
+      // Стереть старый layout, создать новый. Кешируем
+      val l = LayoutView.redrawLayout()
 
       // Модифицировать текущее отображение под узел, отобразить welcome-карточку, если есть.
-      Layout.reDrawLayout()(_vctx)
-      ScIndex.showIndex(minx)(_vctx)
+      LayoutView.showIndex(minx.html, layoutDiv = l.layoutDiv, rootDiv = l.rootDiv)
 
       // Инициализация welcomeAd.
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
       GridCtl.initNewLayout(wcHideFut)
+      // Когда grid-контейнер инициализирован, можно рендерить полученные карточки.
+      findAdsFut onSuccess { case resp =>
+        GridCtl.newAdsReceived(resp)
+      }
 
-      NavPaneView.adjustNodeList()(_vctx)
+      NavPanelCtl.initNav()
 
       // TODO В оригинале была проверка isGeo, + сокрытие exit-кнопки и отображение nav-кнопки.
       // Этот фунционал был перенесен в шаблон, exit спилено там же.
-      //NavPaneView.showNavShowBtn(isShown = true)(_vctx)
+      //NavPaneView.showNavShowBtn(isShown = true)
 
       if (isFirstRun) {
         DocumentView.initDocEvents()
         wcHideFut onComplete { case _ =>
           // Очищать фон нужно только первый раз. При последующей смене узла это не требуется уже.
-          Layout.eraseBg()(_vctx)
+          LayoutView.eraseBg(l.rootDiv)
         }
       }
 
@@ -71,7 +77,7 @@ object NodeCtl extends CtlT {
         SearchPanelView.initFtsField()
       }
 
-      Layout.setWndClass()(_vctx)
+      LayoutView.setWndClass(l.layoutDiv)
     }
   }
 

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.c.cutil.CtlT
 import org.scalajs.dom.Event
 
 /**

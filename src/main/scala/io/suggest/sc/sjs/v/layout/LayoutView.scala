@@ -3,8 +3,9 @@ package io.suggest.sc.sjs.v.layout
 import io.suggest.sc.ScConstants.Layout._
 import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mv.IVCtx
+import io.suggest.sc.sjs.m.msc.{MLayoutDom, MRedrawLayoutResult}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
+import org.scalajs.dom
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
 /**
@@ -13,19 +14,17 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 22.05.15 11:09
  * Description: Управление представлением корневых элементов выдачи.
  */
-object Layout {
+object LayoutView {
 
   /** Перерисовать layout выдачи. */
-  def reDrawLayout()(implicit vctx: IVCtx): Unit = {
+  def redrawLayout(oldRootDivOpt: Option[HTMLDivElement] = MLayoutDom.rootDiv()): MRedrawLayoutResult = {
     // Вычистить предыдущуй layout и его ресурсы:
     CommonRes.recreate()
     FocusedRes.recreate()
 
     // Удалить старый root div.
-    val lctx = vctx.layout
-    val oldRoot = lctx.rootDiv.get
-    if (oldRoot.nonEmpty) {
-      val el = oldRoot.get
+    if (oldRootDivOpt.nonEmpty) {
+      val el = oldRootDivOpt.get
       el.parentNode
         .removeChild(el)
     }
@@ -33,38 +32,39 @@ object Layout {
     // TODO sm.geo.active_layer = null   // Выставить текущий выбранный слой в колонке навигации по узлам в состоянии.
 
     // Собрать новый пустой layout:
-    val rootDiv = vctx.d.createElement("div")
-      .asInstanceOf[HTMLDivElement]
+    val rootDiv = newDiv()
     rootDiv.setAttribute("id", ROOT_ID)
     rootDiv.setAttribute("class", ROOT_CSS_CLASS)
     rootDiv.style.display = "none"
 
-    val layoutDiv = vctx.d.createElement("div")
-      .asInstanceOf[HTMLDivElement]
+    val layoutDiv = newDiv()
     layoutDiv.setAttribute("id", LAYOUT_ID)
 
     rootDiv.appendChild(layoutDiv)
 
     SafeDoc.body.appendChild(rootDiv)
+    
+    MRedrawLayoutResult(rootDiv = rootDiv, layoutDiv = layoutDiv)
+  }
 
-    lctx.rootDiv.set(rootDiv)
-    lctx.layoutDiv.set(layoutDiv)
+  /** Создать новый div-тег. */
+  private def newDiv(): HTMLDivElement = {
+    dom.document.createElement("div")
+      .asInstanceOf[HTMLDivElement]
   }
 
 
   /** Из-за прозрачностей нужно очистить фон до блеска после приветствия. */
-  def eraseBg()(implicit vctx: IVCtx): Unit = {
+  def eraseBg(rootDiv: HTMLDivElement): Unit = {
     def _erase(el: HTMLElement): Unit = {
       el.style.backgroundColor = "#ffffff"
     }
     _erase( SafeDoc.body )
-    vctx.layout.rootDiv.get.foreach { el =>
-      _erase(el)
-    }
+    _erase(rootDiv)
   }
 
   /** Выставить css-класс отображения для layoutDiv. */
-  def setWndClass()(implicit vctx: IVCtx): Unit = {
+  def setWndClass(layoutDiv: HTMLDivElement): Unit = {
     val w = MAgent.availableScreen.width
     val cssClassOrNull: String = {
       if (w <= 660) {
@@ -78,10 +78,23 @@ object Layout {
       }
     }
     if (cssClassOrNull != null) {
-      vctx.layout.layoutDiv.get.foreach { layoutDiv =>
-        layoutDiv.className = cssClassOrNull
-      }
+      layoutDiv.className = cssClassOrNull
     }
+  }
+
+
+  /**
+   * Получены новые данные node index. Нужно стереть старый layout, впилить новый.
+   * @param indexHtml верстка index-страницы.
+   * @return void, когда всё закончится.
+   */
+  def showIndex(indexHtml: String, rootDiv: HTMLDivElement, layoutDiv: HTMLDivElement): Unit = {
+    // TODO bind_window_events() - реагировать на ресайз. Но это наверное должно происходить уровнем выше.
+    dom.window.scrollTo(0, 0)
+
+    rootDiv.style.display = "block"
+    layoutDiv.innerHTML = indexHtml
+    SafeDoc.body.style.overflow = "hidden"
   }
 
 }

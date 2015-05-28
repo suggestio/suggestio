@@ -1,7 +1,9 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGridState, MGridDom, MGrid}
+import io.suggest.sc.sjs.m.mnav.MNavDom
 import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
@@ -11,7 +13,7 @@ import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
@@ -24,13 +26,13 @@ import scala.util.Success
  * Created: 22.05.15 14:22
  * Description: Контроллер сетки.
  */
-object GridCtl extends CtlT with SjsLogger {
+object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
   /**
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.
    * Обычно этот метод вызывается в ходе добавления карточек в плитку.
    */
-  def resetContainerSz(): Unit = {
+  override def resetContainerSz(): Unit = {
     // Вычислить размер.
     val sz = MGrid.getContainerSz()
     // Обновить модель сетки новыми данными, и view-контейнеры.
@@ -49,10 +51,7 @@ object GridCtl extends CtlT with SjsLogger {
       offset     = Some(gstate.adsLoaded)
       // TODO Состояние геолокации сюда надо бы.
     )
-    val findAdsFut = MFindAds.findAds(findAdsArgs)
-    findAdsFut andThen {
-      case Success(resp) => GridCtl.newAdsReceived(resp)
-    }
+    MFindAds.findAds(findAdsArgs)
   }
 
   /**
@@ -104,7 +103,6 @@ object GridCtl extends CtlT with SjsLogger {
         }
       }
 
-
       // TODO Отобразить все новые карточки на экране.
       ???
     }
@@ -120,10 +118,9 @@ object GridCtl extends CtlT with SjsLogger {
 
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
   def initNewLayout(wcHideFut: Future[_]): Unit = {
-    MGrid.resetState()
-
     // shared-константы между кусками метода инициализации
-    val wrapperDivOpt   = MGridDom.wrapperDiv()
+    val wrapperDivOpt = MGridDom.wrapperDiv()
+    val scr = MAgent.availableScreen
 
     // 1. Отложенная инициализация: вешать события по мере необходимости.
     wcHideFut.onComplete { case _ =>
@@ -141,7 +138,7 @@ object GridCtl extends CtlT with SjsLogger {
           val wrappedScrollTop = wrapperDiv.scrollTop
           val contentHeight    = contentDiv.offsetHeight
           // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
-          val scrollPxToGo = contentHeight - MAgent.availableScreen.height - wrappedScrollTop
+          val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
           if (scrollPxToGo < MGrid.params.loadModeScrollDeltaPx) {
             needToLoadMoreAds()
           }
@@ -158,7 +155,7 @@ object GridCtl extends CtlT with SjsLogger {
     } {
       val containerDivOpt = MGridDom.containerDiv()
 
-      val height = MAgent.availableScreen.height
+      val height = scr.height
       val wrappers = Seq(rootDiv, wrapperDiv)
       VUtil.setHeightRootWrapCont(height, containerDivOpt, wrappers)
     }
@@ -168,6 +165,24 @@ object GridCtl extends CtlT with SjsLogger {
 
   def resetGridOffsets(): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
+    val mgs = MGrid.state
+    val _canNonZeroOff = mgs.canNonZeroOffset
+    val wndWidth = MAgent.availableScreen.width
+    lazy val _widthAdd = getWidthAdd(mgs, wndWidth)
+
+    // Запиливаем левую панель, т.е. панель навигации.
+    val navPanelSetter = new GridOffsetCalc {
+      override def elOpt = MNavDom.rootDiv()
+      override def widthAdd = _widthAdd
+      override def minWidth = 280
+      override def canNonZeroOffset = _canNonZeroOff
+      override def setOffset(newOff: Int): Unit = {
+        mgs.leftOffset = newOff
+      }
+    }
+    navPanelSetter.execute()
+
+    // Запиливаем правую панель, т.е. панель поиска.
 
     ???
   }

@@ -1,6 +1,5 @@
-package io.suggest.sc.sjs.c
+package io.suggest.sc.sjs.c.cutil
 
-import io.suggest.sc.sjs.m.mv.{VCtx, IVCtx}
 
 /**
  * Suggest.io
@@ -10,7 +9,5 @@ import io.suggest.sc.sjs.m.mv.{VCtx, IVCtx}
  */
 trait CtlT {
 
-  /** Поддержка автоматической сборки контекста для view'ов. */
-  implicit def vctx: IVCtx = new VCtx
 
 }

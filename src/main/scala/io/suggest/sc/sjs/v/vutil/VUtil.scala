@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.v.vutil
 
-import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.HTMLElement
 

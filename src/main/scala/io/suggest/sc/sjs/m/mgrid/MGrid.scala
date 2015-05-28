@@ -18,6 +18,7 @@ object MGrid {
   /** Текущее состояние сетки. Состоит из переменных и обновляется контроллерами. */
   var state: MGridState = _
 
+  /** Произвести сброс state. */
   def resetState(): Unit = {
     state = MGridState()
   }
