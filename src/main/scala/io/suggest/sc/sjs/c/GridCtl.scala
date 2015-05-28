@@ -40,8 +40,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
     MGrid.updateState(sz)
   }
 
-  /** Кто-то решил, что нужно загрузить ещё карточек в view. */
-  def needToLoadMoreAds(): Future[MFindAds] = {
+  def loadMoreAds(): Future[MFindAds] = {
     val gstate = MGrid.state
     val findAdsArgs = MFindAdsReqJson(
       receiverId = MScState.rcvrAdnId,
@@ -52,6 +51,13 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
       // TODO Состояние геолокации сюда надо бы.
     )
     MFindAds.findAds(findAdsArgs)
+  }
+
+  /** Кто-то решил, что нужно загрузить ещё карточек в view. */
+  def needToLoadMoreAds(): Future[MFindAds] = {
+    loadMoreAds() andThen {
+      case Success(resp) => newAdsReceived(resp)
+    }
   }
 
   /**
