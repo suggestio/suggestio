@@ -100,9 +100,9 @@ with ScNodesList with ScSiteBase {
           override implicit def _request = that._request
           override val _adSearch = _scState.tilesAdSearch()
           override lazy val ctx = that.ctx
-          override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
-            renderMad2html(mad, brArgs) map { rendered =>
-              RenderedAdBlockImpl(mad, rendered)
+          override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
+            renderMad2htmlAsync(brArgs) map { rendered =>
+              RenderedAdBlockImpl(brArgs.mad, rendered)
             }
           }
         }
@@ -116,7 +116,7 @@ with ScNodesList with ScSiteBase {
           override def _adSearch = new AdSearch {
             override def maxResultsOpt: Option[Int] = Some(0)
           }
-          override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
+          override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
           }
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil

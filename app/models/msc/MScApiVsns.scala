@@ -22,6 +22,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** По шаблонам должны быть распиханы URL для ajax-запросов? */
     def renderActionUrls: Boolean
+
+    /** Сервер сам сочиняет id блоков при рендере? */
+    def serverSideBlockIds: Boolean
   }
 
   override type T = Val
@@ -30,6 +33,8 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   val Coffee  : T = new Val(1) {
     override def forceScCloseable = true
     override def renderActionUrls  = true
+    /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
+    override def serverSideBlockIds = false
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
@@ -37,8 +42,11 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     /** Рендерить утиль для "закрытия" выдачи нужно только при реальной необходимости. */
     override def forceScCloseable = false
 
-    /** sjs использует jsRoutes для сборки ссылок. Полуготовые ссылки ей не нужны. */
+    /** sc-sjs использует jsRoutes для сборки ссылок. Полуготовые ссылки ей не нужны. */
     override def renderActionUrls = false
+
+    /** sc-sjs опирается на id блоков, сформированных сервером на основе id карточек. */
+    override def serverSideBlockIds = true
   }
 
 

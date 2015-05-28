@@ -2,6 +2,7 @@ package models.blk
 
 import models._
 import models.im.make.IMakeResult
+import models.msc.{MScApiVsns, MScApiVsn}
 
 /**
  * Suggest.io
@@ -25,6 +26,8 @@ trait IRenderArgs {
   def cssClasses      : Seq[String]
   /** Стили для div .sm-block. */
   def blockStyle      : Option[String]
+  /** Версия API выдачи. */
+  def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
 
   /**
    * compat!
@@ -52,13 +55,14 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
 
 /** Параметры рендера блока. Дефолтовая реализация [[IRenderArgs]]. */
 case class RenderArgs(
-  mad             : MAd,
-  szMult          : SzMult_t,
-  bgImg           : Option[IMakeResult],
-  withEdit        : Boolean                 = false,
-  inlineStyles    : Boolean                 = true,
-  cssClasses      : Seq[String]             = Nil,
-  blockStyle      : Option[String]          = None
+  override val mad            : MAd,
+  override val szMult         : SzMult_t,
+  override val bgImg          : Option[IMakeResult],
+  override val withEdit       : Boolean                 = false,
+  override val inlineStyles   : Boolean                 = true,
+  override val cssClasses     : Seq[String]             = Nil,
+  override val blockStyle     : Option[String]          = None,
+  override val apiVsn         : MScApiVsn               = MScApiVsns.unknownVsn
 )
   extends IRenderArgs
 

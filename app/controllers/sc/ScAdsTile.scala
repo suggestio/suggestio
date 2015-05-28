@@ -54,17 +54,23 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
         withEdit      = false,
         bgImg         = bgImg,
         szMult        = szMult,
-        inlineStyles  = false
+        inlineStyles  = false,
+        apiVsn        = _adSearch.apiVsn
       )
     }
+    
+    def renderMad2html(brArgs: blk.RenderArgs): Html = {
+      BlocksConf.DEFAULT
+        .renderBlock(brArgs)(ctx)
+    }
 
-    def renderMad2html(mad: MAd, brArgs: blk.RenderArgs): Future[Html] = {
+    def renderMad2htmlAsync(brArgs: blk.RenderArgs): Future[Html] = {
       Future {
-        _adNormalTpl(brArgs, isWithAction = true)(ctx)
+        renderMad2html(brArgs)
       }
     }
 
-    def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T]
+    def renderMadAsync(brArgs: blk.RenderArgs): Future[T]
 
     lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
@@ -175,7 +181,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
           BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
             .flatMap { bgImgOpt =>
               val brArgs1 = _brArgsFor(mad, bgImgOpt)
-              renderMadAsync(mad, brArgs1)
+              renderMadAsync(brArgs1)
             }
         }
       }
@@ -245,8 +251,13 @@ trait ScAdsTile extends ScAdsTileBase {
 
     override type T = JsString
 
-    override def renderMadAsync(mad: MAd, brArgs: blk.RenderArgs): Future[T] = {
-      renderMad2html(mad, brArgs)
+    /** v1 использует wrapper-шаблон с js-shop-link, не несущий никакой стилистики. */
+    override def renderMad2html(brArgs: RenderArgs): Html = {
+      _adNormalTpl(brArgs, isWithAction = true)(ctx)
+    }
+
+    override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
+      renderMad2htmlAsync(brArgs)
         .map { html2jsStr }
     }
 
@@ -285,8 +296,8 @@ trait ScAdsTile extends ScAdsTileBase {
 
     override type T = MFoundAd
 
-    override def renderMadAsync(mad: MAd, brArgs: RenderArgs): Future[T] = {
-      renderMad2html(mad, brArgs).map { html =>
+    override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
+      renderMad2htmlAsync(brArgs).map { html =>
         MFoundAd(html)
       }
     }

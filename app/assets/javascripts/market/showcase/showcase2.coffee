@@ -74,10 +74,9 @@ cbca_grid =
       return null
 
     w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
-    w_cell_width_opened = Math.floor ( b.opened_width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
 
     if w_cell_width <= block_max_w
-      if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
+      if w_cell_width > this.max_allowed_cell_width
         tmp_block.splice i,1
 
         _elt = sm.utils.ge 'elt' + b.id
@@ -94,7 +93,7 @@ cbca_grid =
 
         return b
     else
-      if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
+      if w_cell_width > this.max_allowed_cell_width
 
         _elt = sm.utils.ge 'elt' + b.id
 
@@ -188,22 +187,14 @@ cbca_grid =
         height = parseInt _this.getAttribute 'data-height'
         width = parseInt _this.getAttribute 'data-width'
 
-        opened_height = parseInt _this.getAttribute 'data-opened-height'
-        opened_width = parseInt _this.getAttribute 'data-opened-width'
-
         _class = _this.className
-        _search_string = _this.getAttribute 'data-search-string'
-        _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
         block =
           'id' : i
           'width' : width
           'height' : height
-          'opened_width' : opened_width
-          'opened_height' : opened_height
           'class' : _class
           'block' : _this
-          '_is_moveable' : _is_moveable
 
         i++
         cbca_grid.blocks.push block
@@ -233,22 +224,14 @@ cbca_grid =
         _this.style.width = width
         _this.style.height = height
 
-        opened_height = cbca_grid.cell_size
-        opened_width = cbca_grid.cell_size
-
         _class = _this.className
-        _search_string = _this.getAttribute 'data-search-string'
-        _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
         block =
           'id' : i
           'width' : width
           'height' : height
-          'opened_width' : opened_width
-          'opened_height' : opened_height
           'class' : _class
           'block' : _this
-          '_is_moveable' : _is_moveable
 
         i++
         cbca_grid.spacers.push block
