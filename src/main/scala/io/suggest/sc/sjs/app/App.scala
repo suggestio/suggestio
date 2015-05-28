@@ -24,7 +24,7 @@ object App extends JSApp with SjsLogger {
     val srvRouterFut = SrvRouter.getRouter
 
     val scrSz = ViewportSz.getViewportSize.get
-    MAgent.availableScreen = MScreen(scrSz.width, height = scrSz.height, pxRatio = 1.0)
+    MAgent.availableScreen = MScreen(scrSz)
 
     // Когда состояние готово, нужно передать управление в контроллеры.
     val fut = for {

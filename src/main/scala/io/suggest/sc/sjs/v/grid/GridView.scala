@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.v.grid
 
 import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.mgrid.ICwCm
-import io.suggest.sc.sjs.m.mgrid.MGridDom._
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -19,16 +18,14 @@ object GridView {
    * Выставить новый размер контейнера сетки.
    * @param sz Данные по новому размеру.
    */
-  def setContainerSz(sz: ICwCm): Unit = {
+  def setContainerSz(sz: ICwCm, containerDiv: HTMLDivElement, loaderDivOpt: Option[HTMLDivElement]): Unit = {
     val width = sz.cw.toString + "px"
 
-    containerDiv().foreach { cont =>
-      cont.style.width    = width
-      cont.style.left     = (sz.cm/2).toString + "px"
-      cont.style.opacity  = "1"
-    }
+    containerDiv.style.width    = width
+    containerDiv.style.left     = (sz.cm/2).toString + "px"
+    containerDiv.style.opacity  = "1"
 
-    loaderDiv().foreach { loader =>
+    loaderDivOpt.foreach { loader =>
       loader.style.width  = width
     }
   }

@@ -1,19 +1,23 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mgrid.{MGridState, MGridDom, MGrid}
+import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.mnav.MNavDom
 import io.suggest.sc.sjs.m.msc.MScState
+import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
 import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom.Event
-import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import org.scalajs.dom
+import org.scalajs.dom.{Element, Event}
+import org.scalajs.dom.raw.HTMLDivElement
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
@@ -32,11 +36,11 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.
    * Обычно этот метод вызывается в ходе добавления карточек в плитку.
    */
-  override def resetContainerSz(): Unit = {
+  def resetContainerSz(containerDiv: HTMLDivElement, loaderDivOpt: Option[HTMLDivElement]): Unit = {
     // Вычислить размер.
     val sz = MGrid.getContainerSz()
     // Обновить модель сетки новыми данными, и view-контейнеры.
-    GridView.setContainerSz(sz)
+    GridView.setContainerSz(sz, containerDiv, loaderDivOpt)
     MGrid.updateState(sz)
   }
 
@@ -109,6 +113,30 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
         }
       }
 
+      // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
+      resetGridOffsets()
+
+      MGridDom.containerDiv().foreach { containerDiv =>
+        // Склеить все отрендеренные карточки в одну html-строку. И распарсить пачкой.
+        // Надо обязательно парсить и добавлять всей пачкой из-за особенностей браузеров по параллельной загрузке ассетов:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML может блокироваться на загрузку картинки.
+        // Там в комментах есть данные по стандартам и причинам синхронной загрузки.
+        val blocksHtmlSingle: String = {
+          mads.iterator
+            .map(_.html)
+            .reduceLeft { _ + _  }
+        }
+        val frag = dom.document.createElement("div")
+        frag.innerHTML = blocksHtmlSingle
+        // Заливаем распарсенные карточки на страницу.
+        containerDiv.appendChild(frag)
+
+        // Допилить сетку под новые карточки.
+        resetContainerSz(containerDiv, loaderDivOpt)
+        loadNewBlocks(frag)
+        ???   // TODO 
+      }
+
       // TODO Отобразить все новые карточки на экране.
       ???
     }
@@ -168,7 +196,8 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
   }
 
 
-
+  /** Перевыставить ширины боковых панелей в выдаче и боковые оффсеты в состоянии выдачи.
+   *  В оригинале это была функция sm.rebuild_grid(). */
   def resetGridOffsets(): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
     val mgs = MGrid.state
@@ -178,7 +207,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
     // Запиливаем левую панель, т.е. панель навигации.
     val navPanelSetter = new GridOffsetCalc {
-      override def elOpt = MNavDom.rootDiv()
+      override def elOpt    = MNavDom.rootDiv()
       override def widthAdd = _widthAdd
       override def minWidth = 280
       override def canNonZeroOffset = _canNonZeroOff
@@ -189,8 +218,42 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
     navPanelSetter.execute()
 
     // Запиливаем правую панель, т.е. панель поиска.
+    val searchPanSetter = new GridOffsetCalc {
+      override def elOpt    = MSearchDom.rootDiv()
+      override def widthAdd = _widthAdd
+      override def minWidth = 300
+      override def canNonZeroOffset = _canNonZeroOff
+      override def setOffset(newOff: Int): Unit = {
+        mgs.rightOffset = newOff
+      }
+    }
+    searchPanSetter.execute()
+  }
 
-    ???
+
+  /**
+   * Подгрузить новые блоки в модель блоков, которые уже отрендерены и отображены в переданном контейнере.
+   * @param from Элемент-контейнер внутри DOM с новыми блоками.
+   */
+  def loadNewBlocks(from: Element): Unit = {
+    val blockRev2 = DomListIterator(from.children)
+      .foldLeft(MBlocks.blocksRev) { (acc0, e) =>
+        // Пытаемся извлечь из каждого div'а необходимые аттрибуты.
+        val mbiOpt = for {
+          id <- VUtil.getAttribute(e, "id")
+          w  <- VUtil.getIntAttribute(e, Block.BLK_WIDTH_ATTR)
+          h  <- VUtil.getIntAttribute(e, Block.BLK_HEIGHT_ATTR)
+        } yield {
+          MBlockInfo(id = id, width = w, height = h, block = e.asInstanceOf[HTMLDivElement])
+        }
+        if (mbiOpt.nonEmpty) {
+          mbiOpt.get :: acc0
+        } else {
+          warn("Unexpected element received, but block div received: " + e)
+          acc0
+        }
+      }
+    MBlocks.blocksRev = blockRev2
   }
 
 }

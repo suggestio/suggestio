@@ -17,10 +17,8 @@ case class MGridState(
   var fullyLoaded       : Boolean = false,
   var adsPerLoad        : Int     = 30,
   var adsLoaded         : Int     = 0,
-  var loadMoreRequested : Boolean = false,
-  var contSz            : Option[ICwCm] = None
-  //var blocks            : List[_] = Nil,
-  //var spacers           : List[_] = Nil
+  var isLoadMoreRequested : Boolean = false,
+  var contSz              : Option[ICwCm] = None
 ) {
 
   /** При рассчете left/right offset'ов калькулятором учитывается мнение выдачи. */

@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.cutil
 
-import io.suggest.sc.sjs.c.GridCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
 import org.scalajs.dom.raw.HTMLElement
@@ -15,12 +14,7 @@ import org.scalajs.dom.raw.HTMLElement
 
 trait GridOffsetSetter {
 
-  protected def resetContainerSz(): Unit
-
   protected def getWidthAdd(mgs: MGridState = MGrid.state, wndWidth: Int = MAgent.availableScreen.width): Int = {
-    if (mgs.contSz.isEmpty) {
-      GridCtl.resetContainerSz()
-    }
     (wndWidth - mgs.contSz.get.cw) / 2
   }
 
