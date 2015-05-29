@@ -5,7 +5,7 @@ import models.usr.{MPerson, MPersonIdent, EmailPwIdent}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import play.api.mvc.{Result, WithFilters, RequestHeader}
-import util.cdn.DumpXffHeaders
+import util.cdn.{CorsFilter, DumpXffHeaders}
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.secure.PgpUtil
@@ -29,7 +29,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, SecHeadersFilter()) {
+object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, SecHeadersFilter(), new CorsFilter) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
