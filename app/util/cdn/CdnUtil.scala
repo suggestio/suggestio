@@ -28,8 +28,7 @@ object CdnUtil extends PlayMacroLogsImpl {
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
     configuration.getStringList("cdn.protocols")
-      .fold [TraversableOnce[String]] (Seq("http", "https"))  { _.iterator().toIterator.map(_.toLowerCase) }
-      .toIterator
+      .fold [Iterator[String]] (Iterator("http", "https"))  { _.toIterator.map(_.toLowerCase) }
       .map { proto => proto -> getCdnHostsForProto(proto) }
       .filter { _._2.nonEmpty }
       .toMap

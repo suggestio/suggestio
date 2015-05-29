@@ -310,9 +310,6 @@ cbca_grid =
 
     is_add = is_add || false
 
-    for elt in sm.utils.ge_class document, 'blocks-container'
-      elt.style.display = 'block'
-
     if is_add == false
       for elt in sm.utils.ge_class document, 'sm-b-spacer'
         elt.style.display = 'none'
@@ -356,10 +353,6 @@ cbca_grid =
       left = left_pointer
 
       if this.is_only_spacers() == true
-        is_break = true
-        break
-
-      if cline > pline && this.is_only_spacers() == true && cline == this.max_used_height columns_used_space
         is_break = true
         break
 

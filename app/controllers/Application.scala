@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import util.acl._
-import util.cdn.CorsUtil
+import util.cdn.{CorsUtil2, CorsUtil}
 import play.api.i18n.MessagesApi
 import play.api.Play, Play.{current, configuration}
 import util.seo.SiteMapUtil
@@ -53,11 +53,16 @@ class Application @Inject() (
    * @param path Путь, к которому запрошены опшыны.
    * @return
    */
-  def corsPreflight(path: String) = Action {
-    if (CorsUtil.CORS_PREFLIGHT_ALLOWED)
-      Ok
-    else
-      NotFound
+  def corsPreflight(path: String) = Action { implicit request =>
+    val isEnabled = CorsUtil.CORS_PREFLIGHT_ALLOWED
+    if (isEnabled && request.headers.get("Access-Control-Request-Method").nonEmpty) {
+      Ok.withHeaders(
+        CorsUtil2.PREFLIGHT_CORS_HEADERS : _*
+      )
+    } else {
+      val body = if (isEnabled) "Missing nessesary CORS headers" else "CORS is disabled"
+      NotFound(body)
+    }
   }
 
 
