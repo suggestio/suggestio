@@ -314,18 +314,14 @@ cbca_grid =
       for elt in sm.utils.ge_class document, 'sm-b-spacer'
         elt.style.display = 'none'
 
-    blocks_length = cbca_grid.blocks.length
-
     # setting up left and top
     left_pointer = left_pointer_base = 0
-    top_pointer = 0
 
     # Определяем ширину окна
     window_width = this.ww
 
     # Ставим указатели строки и колонки
     cline = 0
-    pline = 0
     cur_column = 0
 
     if is_add == false
@@ -342,15 +338,10 @@ cbca_grid =
     ## Генерим поле
     for i in [0..1000]
 
-      pline = cline
-
       if cur_column >= Math.floor this.columns
         cur_column = 0
         cline++
         left_pointer = left_pointer_base
-
-      top = top_pointer + cline * ( this.cell_size + this.cell_padding ) + this.top_offset
-      left = left_pointer
 
       if this.is_only_spacers() == true
         is_break = true
@@ -390,13 +381,13 @@ cbca_grid =
             _pelt.style.display = 'block'
 
             if _pelt != null
-
+              top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
+              left = left_pointer
               for p in [vendor_prefix.css + 'transform', 'transform']
                 style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
                 _pelt.style[p] = style_string
 
             left_pointer += b.width + this.cell_padding
-            pline = cline
 
         else
           cur_column++
