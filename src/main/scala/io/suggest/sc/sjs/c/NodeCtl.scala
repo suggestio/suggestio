@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.CtlT
-import io.suggest.sc.sjs.m.mgrid.{MBlocks, MGrid}
+import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
@@ -36,9 +36,6 @@ object NodeCtl extends CtlT {
 
     // Начинаем инициализацию в отсутствие конкретных данных.
     GridCtl.resetAdsPerLoad()
-    if (!isFirstRun) {
-      MBlocks.clear()
-    }
 
     for {
       minx <- inxFut

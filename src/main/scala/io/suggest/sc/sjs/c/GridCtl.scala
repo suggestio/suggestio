@@ -17,6 +17,7 @@ import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
+import scala.annotation.tailrec
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
@@ -40,7 +41,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
     val sz = MGrid.getContainerSz()
     // Обновить модель сетки новыми данными, и view-контейнеры.
     GridView.setContainerSz(sz, containerDiv, loaderDivOpt)
-    MGrid.updateState(sz)
+    MGrid.state.updateWith(sz)
   }
 
   def loadMoreAds(): Future[MFindAds] = {
@@ -71,10 +72,10 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv()
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
-    val state = MGrid.state
+    val mgs = MGrid.state
 
     if (mads.isEmpty) {
-      state.fullyLoaded = true
+      mgs.fullyLoaded = true
 
       // Скрыть loader-индикатор, он больше не нужен ведь.
       for(loaderDiv <- safeLoaderDivOpt) {
@@ -99,15 +100,15 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
       // Посчитать и сохранить кол-во загруженных карточек плитки.
       val madsSize = mads.size
-      state.adsLoaded += madsSize
+      mgs.adsLoaded += madsSize
 
       // Показать либо скрыть индикатор подгрузки выдачи.
       safeLoaderDivOpt.foreach { loaderDiv =>
-        if (madsSize < state.adsPerLoad) {
+        if (madsSize < mgs.adsPerLoad) {
           LoaderView.show(loaderDiv)
         } else {
           LoaderView.hide(loaderDiv)
-          state.fullyLoaded = true
+          mgs.fullyLoaded = true
         }
       }
 
@@ -120,9 +121,12 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
         // Далее логика cbca_grid.init(). Допилить сетку под новые карточки:
         resetContainerSz(containerDiv, loaderDivOpt)
-        analyzeNewBlocks(frag)
 
-        ???   // TODO Расположить все новые карточки на экране.
+        val newBlocks = analyzeNewBlocks(frag)
+        mgs.blocks.appendAll(newBlocks)
+
+        // Расположить все новые карточки на экране.
+        build(isAdd, mgs, newBlocks)
       }
     }
   }
@@ -217,13 +221,14 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
 
   /**
-   * Прочитать данные о новых блоках (отрендеренных блоках) в модель блоков.
-   * В оригинале было: cbca_grid.load_blocks().
+   * Извлечь данные о новых блоках (отрендеренных) без сайд-эффектов.
+   * В оригинале было: cbca_grid.load_blocks() с попутной заливкой в модель.
    * @param from Элемент-контейнер внутри DOM с новыми блоками.
+   * @return Ленивый список инфы о новых блоках в прямом порядке.
    */
-  def analyzeNewBlocks(from: Element): Unit = {
-    val blockRev2 = DomListIterator(from.children)
-      .foldLeft(MBlocks.blocksRev) { (acc0, e) =>
+  def analyzeNewBlocks(from: Element): List[MBlockInfo] = {
+    DomListIterator(from.children)
+      .foldLeft(List.empty[MBlockInfo]) { (acc, e) =>
         // Пытаемся извлечь из каждого div'а необходимые аттрибуты.
         val mbiOpt = for {
           id <- VUtil.getAttribute(e, "id")
@@ -233,13 +238,95 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
           MBlockInfo(id = id, width = w, height = h, block = e.asInstanceOf[HTMLDivElement])
         }
         if (mbiOpt.nonEmpty) {
-          mbiOpt.get :: acc0
+          val mbi = mbiOpt.get
+          mbi :: acc
         } else {
-          warn("Unexpected element received, but block div received: " + e)
-          acc0
+          warn("Unexpected element received, but block div expected: " + e)
+          acc
         }
       }
-    MBlocks.blocksRev = blockRev2
+      .reverse
   }
+
+  /**
+   * Построить/перестроить сетку. Здесь перепись cbca_grid.build().
+   * @param isAdd true если добавление в заполненную, false если первая заливка блоков.
+   * @param mgs Закешированное состояние.
+   * @param addedBlocks Список добавленных блоков, если isAdd = true. В оригинале его не было.
+   */
+  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil): Unit = {
+    // Setting left & top
+    val leftPtrBase = 0
+    var leftPtr = leftPtrBase
+    var topPtr = 0
+
+    // Определяем ширину окна
+    val wndWidth = MAgent.availableScreen.width
+
+    // Ставим указатели строки и колонки
+    var cLine = 0
+    var currColumn = 0
+
+    val colsInfo = if (isAdd) {
+      // Добавление блоков.
+      mgs.colsInfo
+    } else {
+      mgs.newColsInfo()
+    }
+
+    val colsCount = mgs.columnsCount
+
+    /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
+    def _getMaxBlockWidth(): Int = {
+      @tailrec def __detect(i: Int): Int = {
+        if (colsInfo(i).heightUsed == cLine ) {
+          __detect(i + 1)
+        } else {
+          i - 1
+        }
+      }
+      __detect(1)
+    }
+
+    // В оригинале был цикл с ограничением на 1000 итераций.
+    @tailrec def step(i: Int): Unit = {
+      if (i >= 1000) {
+        // return -- слишком много итераций.
+      } else if (currColumn > colsCount) {
+        // TODO лишяя итерация. Надо объединить вызовом step()
+        currColumn = 0
+        cLine += 1
+        leftPtr = leftPtrBase
+
+        // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
+      } else if (colsInfo(currColumn).heightUsed == cLine) {
+        // Высота текущей колонки равна cLine.
+        // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
+        val blkMaxW = _getMaxBlockWidth()
+        val b = extractBlock(blkMaxW, mgs.blocks)
+        ???
+        step(i + 1)
+      } else {
+        ???
+      }
+    }
+
+    // Запуск цикла перестроения сетки
+    step(0)
+
+    ???
+  }
+
+  /**
+   * Извлечь блок запрошенной ширины из доступных.
+   * @param blkMaxWidth Максимальная ширина необходимого блока.
+   * @param mgs Состояние сетки.
+   * @return Подходящий блок или None.
+   */
+  def extractBlock(blkMaxWidth: Int, mgs: MGridState = MGrid.state): Option[MBlockInfo] = {
+    val blocks = mgs.blocks
+    ???
+  }
+
 
 }
