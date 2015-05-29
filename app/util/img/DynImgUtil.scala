@@ -55,9 +55,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
   def imgCall(dargs: MImg): Call = {
     if (PREFETCH_ENABLED) {
       Future {
-        val fut = ensureImgReady(dargs, cacheResult = true)
-        //trace("Prefetching dyn.img: " + dargs.fileName)
-        fut
+        ensureImgReady(dargs, cacheResult = true)
       } .flatMap(identity)
         .onFailure { case ex =>
           error("Failed to prefetch dyn.image: " + dargs.fileName, ex)
