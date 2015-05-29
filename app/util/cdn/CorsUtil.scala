@@ -19,10 +19,11 @@ import scala.util.matching.Regex
  */
 object CorsUtil {
 
-  val IS_ENABLED = configuration.getBoolean("cors.enabled") getOrElse false
+  /** Активен ли механизм CORS вообще? */
+  val IS_ENABLED = configuration.getBoolean("cors.enabled") getOrElse true
 
   /** Включен ли доступ к preflight-запросам? */
-  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed") getOrElse false
+  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed") getOrElse true
 
 }
 
@@ -98,7 +99,14 @@ class CorsFilter extends Filter {
     if ( CorsUtil.IS_ENABLED && CorsUtil2.isAppendAllowHdrsForRequest(rh) ) {
       // Делаем замыкание независимым от окружающего тела apply(). scalac-2.12 оптимизатор сможет заменить такое синглтоном.
       fut = fut.map { resp =>
-        resp.withHeaders(CorsUtil2.SIMPLE_CORS_HEADERS: _*)
+        val st = resp.header.status
+        if (st >= 400 && st <= 599) {
+          // Ошибки можно возвращать так, без этих хидеров.
+          resp
+        } else {
+          // Успешный подходящий запрос, навешиваем хидеры.
+          resp.withHeaders(CorsUtil2.SIMPLE_CORS_HEADERS: _*)
+        }
       }
     }
     fut

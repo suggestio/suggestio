@@ -37,7 +37,8 @@
      + og:image допускает несколько размеров. *@
   <meta property="og:image" content="@CdnUtil.asset("images/icons/228.png")" />
 
-  <link type="text/css" rel="stylesheet" media="screen" href="@CdnUtil.asset("stylesheets/market/showcase.css")"/>
+  @* CDN тут отключен, чтобы Same-Origin не резал webfonts. Пока не внедрим веб-сокет выдаче. CORS работает как-то ненадежно на iOS. *@
+  <link type="text/css" rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/market/showcase.css")"/>
 
   @args.headAfter
 </head>
