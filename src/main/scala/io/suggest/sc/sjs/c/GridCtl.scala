@@ -9,13 +9,12 @@ import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
-import io.suggest.sc.sjs.v.grid.GridView
+import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
 import scala.scalajs.concurrent.JSExecutionContext
@@ -60,7 +59,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
   /** Кто-то решил, что нужно загрузить ещё карточек в view. */
   def needToLoadMoreAds(): Future[MFindAds] = {
     loadMoreAds() andThen {
-      case Success(resp) => newAdsReceived(resp)
+      case Success(resp) => newAdsReceived(resp, isAdd = true)
     }
   }
 
@@ -68,7 +67,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
    * От сервера получена новая пачка карточек для выдачи.
    * @param resp ответ сервера.
    */
-  def newAdsReceived(resp: MFindAds): Unit = {
+  def newAdsReceived(resp: MFindAds, isAdd: Boolean): Unit = {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv()
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
@@ -78,8 +77,8 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
       state.fullyLoaded = true
 
       // Скрыть loader-индикатор, он больше не нужен ведь.
-      safeLoaderDivOpt foreach { loaderDiv =>
-        GridView.Loader.hide(loaderDiv)
+      for(loaderDiv <- safeLoaderDivOpt) {
+        LoaderView.hide(loaderDiv)
       }
 
     } else {
@@ -94,7 +93,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
       }
 
       // Закачать в выдачу новый css.
-      resp.css.foreach { css =>
+      for(css <- resp.css) {
         CommonRes.appendCss(css)
       }
 
@@ -104,11 +103,10 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
       // Показать либо скрыть индикатор подгрузки выдачи.
       safeLoaderDivOpt.foreach { loaderDiv =>
-        val L = GridView.Loader
         if (madsSize < state.adsPerLoad) {
-          L.show(loaderDiv)
+          LoaderView.show(loaderDiv)
         } else {
-          L.hide(loaderDiv)
+          LoaderView.hide(loaderDiv)
           state.fullyLoaded = true
         }
       }
@@ -116,29 +114,16 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
       resetGridOffsets()
 
-      MGridDom.containerDiv().foreach { containerDiv =>
-        // Склеить все отрендеренные карточки в одну html-строку. И распарсить пачкой.
-        // Надо обязательно парсить и добавлять всей пачкой из-за особенностей браузеров по параллельной загрузке ассетов:
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML может блокироваться на загрузку картинки.
-        // Там в комментах есть данные по стандартам и причинам синхронной загрузки.
-        val blocksHtmlSingle: String = {
-          mads.iterator
-            .map(_.html)
-            .reduceLeft { _ + _  }
-        }
-        val frag = dom.document.createElement("div")
-        frag.innerHTML = blocksHtmlSingle
-        // Заливаем распарсенные карточки на страницу.
-        containerDiv.appendChild(frag)
+      for(containerDiv <- MGridDom.containerDiv()) {
+        // Залить все карточки в DOM, создав суб-контейнер frag.
+        val frag = GridView.appendNewMads(containerDiv, mads)
 
-        // Допилить сетку под новые карточки.
+        // Далее логика cbca_grid.init(). Допилить сетку под новые карточки:
         resetContainerSz(containerDiv, loaderDivOpt)
-        loadNewBlocks(frag)
-        ???   // TODO 
-      }
+        analyzeNewBlocks(frag)
 
-      // TODO Отобразить все новые карточки на экране.
-      ???
+        ???   // TODO Расположить все новые карточки на экране.
+      }
     }
   }
 
@@ -232,10 +217,11 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
 
 
   /**
-   * Подгрузить новые блоки в модель блоков, которые уже отрендерены и отображены в переданном контейнере.
+   * Прочитать данные о новых блоках (отрендеренных блоках) в модель блоков.
+   * В оригинале было: cbca_grid.load_blocks().
    * @param from Элемент-контейнер внутри DOM с новыми блоками.
    */
-  def loadNewBlocks(from: Element): Unit = {
+  def analyzeNewBlocks(from: Element): Unit = {
     val blockRev2 = DomListIterator(from.children)
       .foldLeft(MBlocks.blocksRev) { (acc0, e) =>
         // Пытаемся извлечь из каждого div'а необходимые аттрибуты.

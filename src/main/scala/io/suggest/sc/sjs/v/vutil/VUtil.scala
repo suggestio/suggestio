@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.v.vutil
 
+import org.scalajs.dom
 import org.scalajs.dom.Element
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 /**
  * Suggest.io
@@ -32,6 +33,12 @@ object VUtil {
   def getIntAttribute(node: Element, name: String): Option[Int] = {
     getAttribute(node, name)
       .map { _.toInt }
+  }
+
+  /** Создать новый div-тег и вернуть его. */
+  def newDiv(): HTMLDivElement = {
+    dom.document.createElement("div")
+      .asInstanceOf[HTMLDivElement]
   }
 
 }

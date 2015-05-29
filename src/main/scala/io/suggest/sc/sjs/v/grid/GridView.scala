@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.v.grid
 
-import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.mgrid.ICwCm
-import io.suggest.sjs.common.view.safe.css.SafeCssElT
+import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
+import io.suggest.sc.sjs.v.vutil.VUtil
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -31,19 +31,27 @@ object GridView {
   }
 
 
-  /** Управлением loader'ом. */
-  object Loader {
-
-    type T = SafeCssElT { type T = HTMLDivElement }
-
-    def show(loaderDiv: T): Unit = {
-      loaderDiv.addClasses( ScConstants.HIDDEN_CSS_CLASS )
+  /**
+   * Залить переданные карточки в контейнер отображения.
+   * @param containerDiv Контейнер карточек.
+   * @param mads Рекламные карточки.
+   * @return Контейнер с этой пачкой карточек.
+   */
+  def appendNewMads(containerDiv: HTMLDivElement, mads: TraversableOnce[MFoundAdJson]): HTMLDivElement = {
+    // Склеить все отрендеренные карточки в одну html-строку. И распарсить пачкой.
+    // Надо парсить и добавлять всей пачкой из-за особенностей браузеров по параллельной загрузке ассетов:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML может блокироваться на загрузку картинки.
+    // Там в комментах есть данные по стандартам и причинам синхронной загрузки.
+    val blocksHtmlSingle: String = {
+      mads.toIterator
+        .map(_.html)
+        .reduceLeft { _ + _  }
     }
-
-    def hide(loaderDiv: T): Unit = {
-      loaderDiv.removeClass( ScConstants.HIDDEN_CSS_CLASS )
-    }
-
+    val frag = VUtil.newDiv()
+    frag.innerHTML = blocksHtmlSingle
+    // Заливаем распарсенные карточки на страницу.
+    containerDiv.appendChild(frag)
+    frag
   }
 
 }

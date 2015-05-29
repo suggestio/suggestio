@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msc.{MLayoutDom, MRedrawLayoutResult}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
+import io.suggest.sc.sjs.v.vutil.VUtil
 import org.scalajs.dom
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
@@ -32,12 +33,12 @@ object LayoutView {
     // TODO sm.geo.active_layer = null   // Выставить текущий выбранный слой в колонке навигации по узлам в состоянии.
 
     // Собрать новый пустой layout:
-    val rootDiv = newDiv()
+    val rootDiv = VUtil.newDiv()
     rootDiv.setAttribute("id", ROOT_ID)
     rootDiv.setAttribute("class", ROOT_CSS_CLASS)
     rootDiv.style.display = "none"
 
-    val layoutDiv = newDiv()
+    val layoutDiv = VUtil.newDiv()
     layoutDiv.setAttribute("id", LAYOUT_ID)
 
     rootDiv.appendChild(layoutDiv)
@@ -45,12 +46,6 @@ object LayoutView {
     SafeDoc.body.appendChild(rootDiv)
     
     MRedrawLayoutResult(rootDiv = rootDiv, layoutDiv = layoutDiv)
-  }
-
-  /** Создать новый div-тег. */
-  private def newDiv(): HTMLDivElement = {
-    dom.document.createElement("div")
-      .asInstanceOf[HTMLDivElement]
   }
 
 

@@ -61,7 +61,7 @@ object NodeCtl extends CtlT {
       GridCtl.initNewLayout(wcHideFut)
       // Когда grid-контейнер инициализирован, можно рендерить полученные карточки.
       findAdsFut onSuccess { case resp =>
-        GridCtl.newAdsReceived(resp)
+        GridCtl.newAdsReceived(resp, isAdd = false)
       }
 
       NavPanelCtl.initNav()
