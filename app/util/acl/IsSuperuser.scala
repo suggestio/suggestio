@@ -1,7 +1,6 @@
 package util.acl
 
 import models.req.SioReqMd
-import models.usr.MPerson
 import play.api.mvc._
 import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
@@ -12,7 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
 import util.SiowebEsUtil.client
 import play.api.db.DB
-import play.api.Play.current
+import play.api.Play.{current, isDev}
 
 /**
  * Suggest.io
@@ -22,18 +21,21 @@ import play.api.Play.current
  */
 trait IsSuperuserBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
-  
+
+  protected def isAllowed(pwOpt: PwOpt_t): Boolean = {
+    PersonWrapper.isSuperuser(pwOpt)
+  }
+
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    pwOpt match {
-      case Some(pw) if pw.isSuperuser =>
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-        trace(s"for user ${pw.personId} :: ${request.method} ${request.path}")
-        sioReqMdFut flatMap { srm =>
-          block(RequestWithPwOpt(pwOpt, request, srm))
-        }
-
-      case _ => onUnauthFut(request, pwOpt)
+    if (isAllowed(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      trace(s"for user $pwOpt :: ${request.method} ${request.path}")
+      sioReqMdFut flatMap { srm =>
+        block(RequestWithPwOpt(pwOpt, request, srm))
+      }
+    } else {
+      onUnauthFut(request, pwOpt)
     }
   }
 
@@ -59,9 +61,17 @@ object IsSuperuser extends IsSuperuserBase2
 object IsSuperuserGet extends IsSuperuserBase2 with CsrfGet[AbstractRequestWithPwOpt]
 object IsSuperuserPost extends IsSuperuserBase2 with CsrfPost[AbstractRequestWithPwOpt]
 
-object IsSuperuserOr404 extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
+trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     SioHttpErrorHandler.http404Fut(request)
+  }
+}
+object IsSuperuserOr404 extends IsSuperuserOr404Base
+
+/** Разрешить не-админам и анонимам доступ в devel-режиме. */
+object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {
+  override protected def isAllowed(pwOpt: PwOpt_t): Boolean = {
+    super.isAllowed(pwOpt) || isDev
   }
 }
 

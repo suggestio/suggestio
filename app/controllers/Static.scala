@@ -12,7 +12,7 @@ import com.google.inject.Inject
 import play.api.Play.{isProd, current}
 import play.api.i18n.MessagesApi
 import play.api.mvc._
-import util.acl.{IsSuperuserOr404, MaybeAuth}
+import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
 import util.xplay.SecHeadersFilter
 import views.html.static._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -96,7 +96,7 @@ class Static @Inject() (
    * @param asset filename.
    * @return Экшен раздачи ассетов с сильно урезанным кешированием на клиенте.
    */
-  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuperuserOr404.async { implicit request =>
+  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuperuserOrDevelOr404.async { implicit request =>
     // TODO Запретить раздачу привелигированных ассетов через CDN в продакшене? Чтобы отладка главной страницы шла только по vpn.
     val resFut = Assets.versioned(path, asset)(request)
     // Для привелегированных ассетов нужно запретить промежуточные кеширования.
