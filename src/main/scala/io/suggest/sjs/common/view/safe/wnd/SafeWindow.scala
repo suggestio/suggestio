@@ -1,11 +1,9 @@
 package io.suggest.sjs.common.view.safe.wnd
 
-import io.suggest.sjs.common.view.safe.ISafe
+import io.suggest.sjs.common.view.safe.wnd.cs.SafeGetComputedStyleT
+import io.suggest.sjs.common.view.safe.wnd.dpr.SafeWndDpr
 import org.scalajs.dom
 import org.scalajs.dom.Window
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -14,38 +12,14 @@ import scala.scalajs.js.UndefOr
  * Description: Безопасный доступ к необязательным полям window, таким как devicePixelRatio.
  * @see [[http://habrahabr.ru/post/159419/ Расовое авторитетное мнение Мицгола о devicePixelRatio, например.]]
  */
-trait SafeWindowT extends ISafe {
-
+trait SafeWindowT extends SafeWndDpr with SafeGetComputedStyleT {
   override type T <: Window
-
-  /**
-   * Вернуть devicePixelRatio по мнению браузера.
-   * @return Some() если браузер поддерживает определение. Иначе None.
-   */
-  def devicePixelRatio: Option[Double] = {
-    WindowDrpStub(dom.window)
-      .devicePixelRatio
-      .toOption
-  }
 }
 
 
 /** Дефолтовая реализация [[SafeWindowT]]. */
-case class SafeWindow(_underlying: Window) extends SafeWindowT {
+case class SafeWindow(_underlying: Window = dom.window) extends SafeWindowT {
   override type T = Window
 }
 
-
-/** Интерфейс для аккуратного доступа к возможному значению window.devicePixelRatio. */
-sealed class WindowDrpStub extends js.Object {
-
-  /** @return undefined | 1.0123123 */
-  def devicePixelRatio: UndefOr[Double] = js.native
-}
-
-object WindowDrpStub {
-  def apply(wnd: Window): WindowDrpStub = {
-    wnd.asInstanceOf[WindowDrpStub]
-  }
-}
 
