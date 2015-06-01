@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.v.grid
 import io.suggest.sc.sjs.m.mgrid.ICwCm
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
 import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.model.dom.DomListIterator
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -52,6 +53,35 @@ object GridView {
     // Заливаем распарсенные карточки на страницу.
     containerDiv.appendChild(frag)
     frag
+  }
+
+  def rightBeforeBlockMoving(el: HTMLDivElement): Unit = {
+    el.style.opacity = "1"
+    el.style.display = "block"
+  }
+
+  /**
+   * Двинуть блок на экране в указанные координаты. С помощью анимации, если возможно.
+   * @param leftPx x-координата.
+   * @param topPx y-координата.
+   * @param el Элемент блока.
+   * @param cssPrefixes Задетекченные css-префиксы.
+   */
+  def moveBlock(leftPx: Int, topPx: Int, el: HTMLDivElement, cssPrefixes: List[String]): Unit = {
+    if (cssPrefixes.nonEmpty) {
+      // Браузер умеет 3d-трансформации.
+      val suf = "transform"
+      val value = "translate3d(" + leftPx + "px," + topPx + "px,0)"
+      for (cssPrefix <- cssPrefixes) {
+        val prop = if (!cssPrefix.isEmpty) cssPrefix + suf else suf
+        el.style.setProperty(prop, value)
+      }
+
+    } else {
+      // Браузер не поддерживает трансформации. Отпозиционировать по хардкору:
+      el.style.top  = topPx + "px"
+      el.style.left = leftPx + "px"
+    }
   }
 
 }
