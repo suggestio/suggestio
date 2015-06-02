@@ -44,7 +44,7 @@ object NodeCtl extends CtlT {
 
       // Сразу запускаем запрос к серверу за рекламными карточками.
       // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
-      val findAdsFut = GridCtl.loadMoreAds()
+      val findAdsFut = GridCtl.askMoreAds()
 
       // Стереть старый layout, создать новый. Кешируем
       val l = LayoutView.redrawLayout()

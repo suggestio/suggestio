@@ -15,11 +15,10 @@ import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.browser.MBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.util.{ISjsLogger, SjsLogWrapper, SjsLogger}
+import io.suggest.sjs.common.util.{SjsLogWrapper, SjsLogger}
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
-import scala.annotation.tailrec
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
@@ -46,7 +45,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
     MGrid.state.updateWith(sz)
   }
 
-  def loadMoreAds(): Future[MFindAds] = {
+  def askMoreAds(): Future[MFindAds] = {
     val gstate = MGrid.state
     val findAdsArgs = MFindAdsReqJson(
       receiverId = MScState.rcvrAdnId,
@@ -59,10 +58,14 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
     MFindAds.findAds(findAdsArgs)
   }
 
-  /** Кто-то решил, что нужно загрузить ещё карточек в view. */
-  def needToLoadMoreAds(): Future[MFindAds] = {
-    loadMoreAds() andThen {
-      case Success(resp) => newAdsReceived(resp, isAdd = true)
+  /** Юзер скроллит выдачу любого узла. */
+  def onScroll(): Unit = {
+    val mgs = MGrid.state
+    if (!mgs.fullyLoaded && !mgs.isLoadingMore) {
+      askMoreAds() andThen {
+        case Success(resp) =>
+          newAdsReceived(resp, isAdd = true)
+      }
     }
   }
 
@@ -117,7 +120,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
       resetGridOffsets()
 
-      for(containerDiv <- MGridDom.containerDiv()) {
+      for (containerDiv <- MGridDom.containerDiv()) {
         // Залить все карточки в DOM, создав суб-контейнер frag.
         val frag = GridView.appendNewMads(containerDiv, mads)
 
@@ -129,6 +132,9 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
 
         // Расположить все новые карточки на экране.
         build(isAdd, mgs, newBlocks, withAnim)
+
+        // Вычислить максимальную высоту в колонках и расширить контейнер карточек до этой высоты.
+        updateContainerHeight(containerDiv)
       }
     }
   }
@@ -165,7 +171,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
           // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
           val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
           if (scrollPxToGo < MGrid.params.loadModeScrollDeltaPx) {
-            needToLoadMoreAds()
+            onScroll()
           }
         }
       }
@@ -257,10 +263,11 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
    * @param addedBlocks Список добавленных блоков. В оригинале этого аргумента не было.
    * @param withAnim С анимацией? Можно её отключить принудительно. [true]
    */
-  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil, withAnim: Boolean = true): Unit = {
+  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil,
+            withAnim: Boolean = true): Unit = {
     val cssPrefixes  = MBrowser.BROWSER.CssPrefixing.transforms3d
 
-    // Собрать билдер и заставить его исполнять код.
+    // Собрать билдер сетки и заставить его исполнять код.
     val builder = new V1Builder with SjsLogWrapper {
       override def _LOGGER = that
       override def _isAdd = isAdd
@@ -279,7 +286,32 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
     }
     builder.execute()
 
-    ???
+    // Сохранить кое-какие черты состояния билдера в модели
+    mgs.colsInfo = builder.colsInfo
+  }
+
+  /**
+   * Пересчитать высоту контейнера карточек.
+   * @param colsInfo Закешированная инфа по колонкам сетки, если есть.
+   * @param containerDiv Закешированный контейнер сетки, если есть.
+   * @param paddedCellSize Закешированный расчет стороны ячейки, если есть.
+   * @param mgp Закешированные параметры сетки, если есть.
+   */
+  def updateContainerHeight(containerDiv: HTMLDivElement,
+                            colsInfo: Array[MColumnState] = MGrid.state.colsInfo,
+                            paddedCellSize: Int = MGrid.params.paddedCellSize,
+                            mgp: MGridParams = MGrid.params
+                           ): Unit = {
+    if (colsInfo.length > 0) {
+      val maxCellH = colsInfo.iterator
+        .map { _.heightUsed }
+        .max
+      val maxPxH = mgp.topOffset  +  paddedCellSize * maxCellH  +  mgp.bottomOffset
+      GridView.setContainerHeight(maxPxH, containerDiv)
+
+    } else {
+      error("cols info empty")
+    }
   }
 
 }

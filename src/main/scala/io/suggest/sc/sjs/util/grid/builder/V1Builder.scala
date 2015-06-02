@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.util.grid.builder
 
-import io.suggest.sc.sjs.m.mgrid.{MGridParams, MGrid, MGridState, MBlockInfo}
+import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.annotation.tailrec
@@ -12,6 +12,8 @@ import scala.annotation.tailrec
  * Description: Билдер сетки из первого поколения системы.
  * Алгоритм напоминает оффлайновый Burke либо online fit (OF, online Burke).  TODO: уточнить.
  * Код билдера основан на cbca_grid.build() и её helper'ах.
+ *
+ * @see [[http://prolll.com/pr/backpack/ Demo некоторых алгоритмов 2D-упаковки на js]]
  */
 trait V1Builder extends ISjsLogger {
 
@@ -29,7 +31,7 @@ trait V1Builder extends ISjsLogger {
 
   // TODO Вынести этот велосипед внутри функции в отдельный класс, собирающий сетку.
   // Setting left & top
-  private val leftPtrBase = 0
+  def leftPtrBase = 0
   private var leftPtr = leftPtrBase
   //var topPtr = 0
 
@@ -49,15 +51,20 @@ trait V1Builder extends ISjsLogger {
   private var cLine = 0
   private var currColumn = 0
 
-  private val colsInfo = if (_isAdd) {
-    // Добавление блоков в уже рассчитанную сетку.
-    _mgs.colsInfo
-  } else {
-    // Новая сетка.
-    _mgs.newColsInfo()
+  /** Карта высот колонок сетки. */
+  val colsInfo: Array[MColumnState] = {
+    val stateColsInfo = _mgs.colsInfo
+    if (_isAdd && stateColsInfo.length > 0) {
+      // Добавление блоков в уже рассчитанную сетку.
+      stateColsInfo
+    } else {
+      // Новая сетка.
+      _mgs.newColsInfo()
+    }
   }
 
-  private val colsCount = _mgs.columnsCount
+  /** Кол-во колонок. */
+  val colsCount = _mgs.columnsCount
 
   /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
   def _getMaxBlockWidth(): Int = {
@@ -75,10 +82,10 @@ trait V1Builder extends ISjsLogger {
 
   // Кешируем тут разные динамические константы перед запуском цикла.
   private val cpadding = _gparams.cellPadding
-  private val fullCellSize = _gparams.cellSize + cpadding
+  val paddedCellSize = _gparams.paddedCellSize
 
   // Посчитать размер в ячейках на основе пиксельного размера.
-  protected def getWCellSize(sz: Int) = (sz + cpadding) / fullCellSize
+  protected def getWCellSize(sz: Int) = (sz + cpadding) / paddedCellSize
 
   /** Рекурсивная функция тела _extractBlock(), которое обходит список в поисках результата. */
   protected final def _extractBlock2(bMaxW: Int, rest: List[MBlockInfo]): Option[(MBlockInfo, List[MBlockInfo])] = {
@@ -124,7 +131,14 @@ trait V1Builder extends ISjsLogger {
    */
   protected def beforeStepToNextCell(): Unit = {
     currColumn += 1
-    leftPtr += fullCellSize
+    leftPtr += paddedCellSize
+  }
+
+  /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
+  protected def beforeStepNextLine(): Unit = {
+    currColumn = 0
+    cLine += 1
+    leftPtr = leftPtrBase
   }
 
   // В оригинале был for-цикл с ограничением на 1000 итераций.
@@ -133,10 +147,8 @@ trait V1Builder extends ISjsLogger {
       // return -- слишком много итераций.
       warn("Too many iterations: " + i)
     } else if (currColumn >= colsCount) {
-      // Выход за пределы строки -- перейти на следующую строку.
-      currColumn = 0
-      cLine += 1
-      leftPtr = leftPtrBase
+      // Конец текущей строки -- перейти на следующую строку.
+      beforeStepNextLine()
       step(i + 1)
 
       // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
@@ -145,7 +157,6 @@ trait V1Builder extends ISjsLogger {
       // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
       val bMaxW = _getMaxBlockWidth()
       val bOpt = _extractBlock(bMaxW)
-      log("_extractBlock(" + bMaxW + ") => " + bOpt)
       if (bOpt.nonEmpty) {
         val b = bOpt.get
 
@@ -161,7 +172,7 @@ trait V1Builder extends ISjsLogger {
 
         moveBlock(
           leftPx  = leftPtr,
-          topPx   = cLine * fullCellSize + _gparams.topOffset,
+          topPx   = cLine * paddedCellSize + _gparams.topOffset,
           b       = b
         )
 
@@ -170,6 +181,7 @@ trait V1Builder extends ISjsLogger {
 
       } else if (blocksAcc.nonEmpty) {
         // Требуется переход в след.ячейку, оставив пустоту в этой ячейке.
+        colsInfo(currColumn).heightUsed += 1
         beforeStepToNextCell()
         step(i + 1)
       }

@@ -31,6 +31,9 @@ object GridView {
     }
   }
 
+  def setContainerHeight(h: Int, containerDiv: HTMLDivElement): Unit = {
+    containerDiv.style.height = h + "px"
+  }
 
   /**
    * Залить переданные карточки в контейнер отображения.

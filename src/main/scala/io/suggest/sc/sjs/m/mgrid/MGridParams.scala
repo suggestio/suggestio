@@ -41,6 +41,8 @@ case class MGridParams(
     }
   }
 
+  def paddedCellSize = cellSize + cellPadding
+
 }
 
 

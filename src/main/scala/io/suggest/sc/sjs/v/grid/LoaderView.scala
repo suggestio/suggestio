@@ -15,11 +15,11 @@ object LoaderView {
   type T = SafeCssElT { type T = HTMLDivElement }
 
   def show(loaderDiv: T): Unit = {
-    loaderDiv.addClasses( ScConstants.HIDDEN_CSS_CLASS )
+    loaderDiv.removeClass( ScConstants.HIDDEN_CSS_CLASS )
   }
 
   def hide(loaderDiv: T): Unit = {
-    loaderDiv.removeClass( ScConstants.HIDDEN_CSS_CLASS )
+    loaderDiv.addClasses( ScConstants.HIDDEN_CSS_CLASS )
   }
 
 }
