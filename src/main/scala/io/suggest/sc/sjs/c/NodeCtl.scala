@@ -58,7 +58,9 @@ object NodeCtl extends CtlT {
       GridCtl.initNewLayout(wcHideFut)
       // Когда grid-контейнер инициализирован, можно рендерить полученные карточки.
       findAdsFut onSuccess { case resp =>
-        GridCtl.newAdsReceived(resp, isAdd = false)
+        // Анимацию размещения блоков можно отключить, если welcome-карточка закрывает собой всё это.
+        val noWelcome = wcHideFut.isCompleted
+        GridCtl.newAdsReceived(resp, isAdd = false, withAnim = noWelcome)
       }
 
       NavPanelCtl.initNav()

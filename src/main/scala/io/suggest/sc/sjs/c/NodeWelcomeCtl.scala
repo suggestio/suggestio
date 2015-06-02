@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import io.suggest.sjs.common.model.kbd.KeyCodes
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom
+import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.{Element, Event}
 
 import scala.concurrent.{Future, Promise}
@@ -31,8 +32,10 @@ object NodeWelcomeCtl extends CtlT {
 
   /** Запуск сокрытия карточки. */
   private def _startHiding(safeEl: SafeRootDiv_t, p: WcHidePromise_t): Unit = {
-    NodeWelcomeView.fadeOut(safeEl)
-    finishP(p)
+    if (!p.isCompleted) {
+      NodeWelcomeView.fadeOut(safeEl)
+      finishP(p)
+    }
   }
 
   /**
@@ -61,11 +64,10 @@ object NodeWelcomeCtl extends CtlT {
     }
   }
 
-
   private def finishP(p: WcHidePromise_t): Unit = {
-    if (!p.isCompleted)
-      p success None
+    p success None
   }
+
 
   private def isHideOnKey(keyCode: Int): Boolean = {
     keyCode == KeyCodes.ESC || keyCode == KeyCodes.ENTER || keyCode == KeyCodes.SPACE
@@ -74,12 +76,15 @@ object NodeWelcomeCtl extends CtlT {
   /**
    * Welcome-карточка ВОЗМОЖНО уже присутствует в DOM. Если присутствует, то значит отображена.
    * Нужно допилить карточку под экран, задать правила для сокрытия этой карточки через таймер или иные события.
+   * @param wcRootDivOpt Root div element приветствия, если известен.
    * @return Future, которые исполняется с началом анимации сокрытия welcome.
    *         Если welcome отсутствует, то Future придет уже исполненым.
    */
-  def handleWelcome(): Future[_] = {
+  def handleWelcome(
+    wcRootDivOpt: Option[HTMLDivElement] = MWcDom.rootDiv()
+  ): Future[_] = {
     val p: WcHidePromise_t = Promise[None.type]()
-    MWcDom.rootDiv() match {
+    wcRootDivOpt match {
       // Есть карточка в DOM. Подогнать по экран, повесить события.
       case Some(rootEl) =>
         NodeWelcomeView.fit()

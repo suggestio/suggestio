@@ -9,12 +9,13 @@ import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
+import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.browser.MBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.util.{ISjsLogger, SjsLogWrapper, SjsLogger}
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
@@ -31,7 +32,7 @@ import scala.util.Success
  * Created: 22.05.15 14:22
  * Description: Контроллер сетки.
  */
-object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
+object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
 
   /**
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.
@@ -69,7 +70,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
    * От сервера получена новая пачка карточек для выдачи.
    * @param resp ответ сервера.
    */
-  def newAdsReceived(resp: MFindAds, isAdd: Boolean): Unit = {
+  def newAdsReceived(resp: MFindAds, isAdd: Boolean, withAnim: Boolean = true): Unit = {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv()
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
@@ -127,7 +128,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
         mgs.blocks.appendAll(newBlocks)
 
         // Расположить все новые карточки на экране.
-        build(isAdd, mgs, newBlocks)
+        build(isAdd, mgs, newBlocks, withAnim)
       }
     }
   }
@@ -250,118 +251,35 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter {
   }
 
   /**
-   * Построить/перестроить сетку. Здесь перепись cbca_grid.build().
+   * Построение/перестроение сетки. Здесь перепись cbca_grid.build().
    * @param isAdd true если добавление в заполненную, false если первая заливка блоков.
    * @param mgs Закешированное состояние.
-   * @param addedBlocks Список добавленных блоков, если isAdd = true. В оригинале этого аргумента не было.
+   * @param addedBlocks Список добавленных блоков. В оригинале этого аргумента не было.
+   * @param withAnim С анимацией? Можно её отключить принудительно. [true]
    */
-  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil): Unit = {
-    // Setting left & top
-    val leftPtrBase = 0
-    var leftPtr = leftPtrBase
-    //var topPtr = 0
-
-    // Определяем ширину окна
-    //val wndWidth = MAgent.availableScreen.width
-
-    // Ставим указатели строки и колонки
-    var cLine = 0
-    var currColumn = 0
-
-    val colsInfo = if (isAdd) {
-      // Добавление блоков.
-      mgs.colsInfo
-    } else {
-      mgs.newColsInfo()
-    }
-
-    val colsCount = mgs.columnsCount
-
-    /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
-    def _getMaxBlockWidth(): Int = {
-      val imax = colsInfo.length
-      @tailrec def __detect(i: Int): Int = {
-        if (i < imax && colsInfo(i).heightUsed == cLine ) {
-          __detect(i + 1)
-        } else {
-          i - 1
-        }
-      }
-      __detect(1)
-    }
-
-    // Кешируем тут разные динамические константы перед запуском цикла.
-    val gparams  = MGrid.params
-    val cpadding = gparams.cellPadding
-    val fullCellSize = gparams.cellSize + cpadding
+  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil, withAnim: Boolean = true): Unit = {
     val cssPrefixes  = MBrowser.BROWSER.CssPrefixing.transforms3d
 
-    // В оригинале был цикл с ограничением на 1000 итераций.
-    @tailrec def step(i: Int): Unit = {
-      if (i >= 1000) {
-        // return -- слишком много итераций.
-      } else if (currColumn > colsCount) {
-        // TODO лишяя итерация. Надо объединить вызовом step()
-        currColumn = 0
-        cLine += 1
-        leftPtr = leftPtrBase
+    // Собрать билдер и заставить его исполнять код.
+    val builder = new V1Builder with SjsLogWrapper {
+      override def _LOGGER = that
+      override def _isAdd = isAdd
+      override def _addedBlocks = addedBlocks
+      override def _mgs = mgs
 
-        // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
-      } else if ( colsInfo(currColumn).heightUsed == cLine ) {
-        // Высота текущей колонки равна cLine.
-        // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
-        val blkMaxW = _getMaxBlockWidth()
-        val bOpt = extractBlock(blkMaxW, mgs)
-        if (bOpt.nonEmpty) {
-          val b = bOpt.get
-
-          val wCellWidth = (b.width + gparams.cellPadding) / fullCellSize
-          val wCellHeight = (b.height + gparams.cellPadding) / fullCellSize
-          ( currColumn until (currColumn + wCellWidth) )
-            .iterator
-            .filter { ci => ci < colsInfo.length }
-            .foreach { ci =>
-              colsInfo(currColumn).heightUsed += wCellHeight
-              currColumn += 1
-            }
-
-          val el = b.block
-          GridView.rightBeforeBlockMoving(el)
-
-          GridView.moveBlock(
-            leftPx  = leftPtr,
-            topPx   = cLine * fullCellSize + gparams.topOffset,
-            el      = el,
-            cssPrefixes = cssPrefixes
-          )
-
-          leftPtr += b.width + cpadding
-
-        } // Если нет следующего блока - обход закончен.
-        step(i + 1)
-
-      } else {
-        currColumn += 1
-        leftPtr += fullCellSize
-        step(i + 1)
+      override def moveBlock(leftPx: Int, topPx: Int, b: MBlockInfo): Unit = {
+        GridView.moveBlock(
+          leftPx      = leftPx,
+          topPx       = topPx,
+          el          = b.block,
+          cssPrefixes = cssPrefixes,
+          withAnim    = withAnim
+        )
       }
     }
-    // Запуск цикла перестроения сетки
-    step(0)
+    builder.execute()
 
     ???
   }
-
-  /**
-   * Извлечь блок запрошенной ширины из доступных.
-   * @param blkMaxWidth Максимальная ширина необходимого блока.
-   * @param mgs Состояние сетки.
-   * @return Подходящий блок или None.
-   */
-  def extractBlock(blkMaxWidth: Int, mgs: MGridState = MGrid.state): Option[MBlockInfo] = {
-    val blocks = mgs.blocks
-    ???
-  }
-
 
 }

@@ -55,11 +55,6 @@ object GridView {
     frag
   }
 
-  def rightBeforeBlockMoving(el: HTMLDivElement): Unit = {
-    el.style.opacity = "1"
-    el.style.display = "block"
-  }
-
   /**
    * Двинуть блок на экране в указанные координаты. С помощью анимации, если возможно.
    * @param leftPx x-координата.
@@ -67,21 +62,38 @@ object GridView {
    * @param el Элемент блока.
    * @param cssPrefixes Задетекченные css-префиксы.
    */
-  def moveBlock(leftPx: Int, topPx: Int, el: HTMLDivElement, cssPrefixes: List[String]): Unit = {
-    if (cssPrefixes.nonEmpty) {
+  def moveBlock(leftPx: Int, topPx: Int, el: HTMLDivElement, cssPrefixes: List[String], withAnim: Boolean = true): Unit = {
+    //el.style.opacity = "1"
+    if (withAnim && cssPrefixes.nonEmpty) {
+      el.style.display = "block"
       // Браузер умеет 3d-трансформации.
       val suf = "transform"
-      val value = "translate3d(" + leftPx + "px," + topPx + "px,0)"
+      // translate3d(+x, +y) работает с относительными координатами. Надо поправлять их с учетом ВОЗМОЖНЫХ значений style.top и style.left.
+      val leftPx1 = _fixRelCoord(el.style.left, leftPx)
+      val topPx1  = _fixRelCoord(el.style.top,  topPx)
+      val value = "translate3d(" + leftPx1 + "px," + topPx1 + "px,0)"
       for (cssPrefix <- cssPrefixes) {
         val prop = if (!cssPrefix.isEmpty) cssPrefix + suf else suf
         el.style.setProperty(prop, value)
       }
 
     } else {
-      // Браузер не поддерживает трансформации. Отпозиционировать по хардкору:
+      // Анимация отключена. Отпозиционировать по хардкору:
       el.style.top  = topPx + "px"
       el.style.left = leftPx + "px"
+      el.style.display = "block"
     }
+  }
+
+  /**
+   * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.
+   * @param src Исходная строка, содержащая абсолютную координату.
+   * @param abs Целевая абсолютная координата.
+   * @return Новая относительная координата на основе abs и возможного значения из src.
+   */
+  private def _fixRelCoord(src: String, abs: Int): Int = {
+    VUtil.extractInt(src)
+      .fold(abs)(abs - _)
   }
 
 }
