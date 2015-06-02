@@ -14,4 +14,10 @@ case class MBlockInfo(
   width   : Int,
   height  : Int,
   block   : HTMLDivElement
-)
+) {
+
+  override def toString: String = {
+    "B#" + id + "(" + width + "x" + height + ")"
+  }
+
+}

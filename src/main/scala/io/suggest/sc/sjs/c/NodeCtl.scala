@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.layout.LayoutView
 import io.suggest.sc.sjs.v.search.SearchPanelView
+import scala.scalajs.concurrent.JSExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -77,10 +78,10 @@ object NodeCtl extends CtlT {
         }
       }
 
-      wcHideFut onComplete { case _ =>
-        // Инициализация search-панели: поиск при наборе, например.
-        SearchPanelView.initFtsField()
-      }
+      // В порядке очереди запустить инициализацию панели поиска.
+      wcHideFut.onComplete { case _ =>
+        SearchPanelCtl.initNodeLayout()
+      }(JSExecutionContext.queue)
 
       LayoutView.setWndClass(l.layoutDiv)
     }

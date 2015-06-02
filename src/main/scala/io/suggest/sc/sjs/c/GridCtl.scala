@@ -15,7 +15,7 @@ import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.browser.MBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.util.{SjsLogWrapper, SjsLogger}
+import io.suggest.sjs.common.util.{TouchUtil, SjsLogWrapper, SjsLogger}
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
@@ -127,6 +127,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
         // Далее логика cbca_grid.init(). Допилить сетку под новые карточки:
         resetContainerSz(containerDiv, loaderDivOpt)
 
+        // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
         val newBlocks = analyzeNewBlocks(frag)
         mgs.blocks.appendAll(newBlocks)
 
@@ -135,10 +136,25 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
 
         // Вычислить максимальную высоту в колонках и расширить контейнер карточек до этой высоты.
         updateContainerHeight(containerDiv)
+
+        // Повесить события на блоки
+        initNewBlocks(newBlocks)
       }
     }
   }
 
+  /**
+   * Инициализировать новые блоки: повесить события.
+   * @param blocks Новые блоки.
+   */
+  def initNewBlocks(blocks: Seq[MBlockInfo]): Unit = {
+    for (b <- blocks) {
+      val safe = SafeEl( b.block )
+      safe.addEventListener(TouchUtil.clickEvtName) { (e: Event) =>
+        onBlockClick(b, e)
+      }
+    }
+  }
 
   /** Сохранить вычисленное новое значение для параметра adsPerLoad в состояние grid. */
   def resetAdsPerLoad(): Unit = {
@@ -146,6 +162,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
     val v = MGridState.getAdsPerLoad(scr.width)
     MGrid.state.adsPerLoad = v
   }
+
 
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
   def initNewLayout(wcHideFut: Future[_]): Unit = {
@@ -288,6 +305,13 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
 
     // Сохранить кое-какие черты состояния билдера в модели
     mgs.colsInfo = builder.colsInfo
+  }
+
+  /** Юзер кликает на отрендеренную карточку. */
+  def onBlockClick(b: MBlockInfo, e: Event): Unit = {
+    error("TODO onBlockClick " + b)
+    // TODO При клике нужно или открывать новую выдачу или раскрывать focused-фунционал.
+    ???
   }
 
   /**
