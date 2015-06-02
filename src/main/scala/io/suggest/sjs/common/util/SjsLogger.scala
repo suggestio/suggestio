@@ -18,17 +18,17 @@ object SjsLogger {
 
 /** Интерфейс для конкретных логгеров для scala-js. */
 trait ISjsLogger {
-  protected def error(msg: String): Unit
-  protected def error(msg: String, ex: Throwable): Unit
+  def error(msg: String): Unit
+  def error(msg: String, ex: Throwable): Unit
 
-  protected def warn(msg: String): Unit
-  protected def warn(msg: String, ex: Throwable): Unit
+  def warn(msg: String): Unit
+  def warn(msg: String, ex: Throwable): Unit
 
-  protected def info(msg: String): Unit
-  protected def info(msg: String, ex: Throwable): Unit
+  def info(msg: String): Unit
+  def info(msg: String, ex: Throwable): Unit
 
-  protected def log(msg: String): Unit
-  protected def log(msg: String, ex: Throwable): Unit
+  def log(msg: String): Unit
+  def log(msg: String, ex: Throwable): Unit
 }
 
 
@@ -36,38 +36,52 @@ trait ISjsLogger {
 trait SjsLogger extends ISjsLogger {
 
   /** Можно воткнуть сюда lazy val на стороне реализации, если ожидается слишком активный логгинг. */
-  protected def loggerName = getClass.getSimpleName
+  def loggerName = getClass.getSimpleName
 
-  protected def fmtNoEx = SjsLogger.fmtNoEx
-  protected def fmtEx   = SjsLogger.fmtEx
+  def fmtNoEx = SjsLogger.fmtNoEx
+  def fmtEx   = SjsLogger.fmtEx
 
-  override protected def error(msg: String): Unit = {
+  override def error(msg: String): Unit = {
     console.error(fmtNoEx, loggerName, msg)
   }
-  override protected def error(msg: String, ex: Throwable): Unit = {
+  override def error(msg: String, ex: Throwable): Unit = {
     console.error(fmtEx, loggerName, msg, ex.getClass.getName, ex.getMessage)
   }
 
-  override protected def warn(msg: String): Unit = {
+  override def warn(msg: String): Unit = {
     console.warn(fmtNoEx, loggerName, msg)
   }
-  override protected def warn(msg: String, ex: Throwable): Unit = {
+  override def warn(msg: String, ex: Throwable): Unit = {
     console.warn(fmtEx, loggerName, msg, ex.getClass.getName, ex.getMessage)
   }
 
-  override protected def info(msg: String): Unit = {
+  override def info(msg: String): Unit = {
     console.info(fmtNoEx, loggerName, msg)
   }
-  override protected def info(msg: String, ex: Throwable): Unit = {
+  override def info(msg: String, ex: Throwable): Unit = {
     console.info(fmtEx, loggerName, msg, ex.getClass.getName, ex.getMessage)
   }
 
-  override protected def log(msg: String): Unit = {
+  override def log(msg: String): Unit = {
     console.log(fmtNoEx, loggerName, msg)
   }
-  override protected def log(msg: String, ex: Throwable): Unit = {
+  override def log(msg: String, ex: Throwable): Unit = {
     console.log(fmtEx, loggerName, msg, ex.getClass.getName, ex.getMessage)
   }
 
 }
 
+/** Враппер над другим логгером. Т.е. используется логгинг от другой реализации.
+  * Бывает полезно для анонимных реализаций inner-классов, требующих [[ISjsLogger]]. */
+trait SjsLogWrapper extends ISjsLogger {
+  def _LOGGER: ISjsLogger
+
+  override def log(msg: String)                   = _LOGGER.log(msg)
+  override def log(msg: String, ex: Throwable)    = _LOGGER.log(msg, ex)
+  override def info(msg: String)                  = _LOGGER.info(msg)
+  override def info(msg: String, ex: Throwable)   = _LOGGER.info(msg, ex)
+  override def warn(msg: String)                  = _LOGGER.warn(msg)
+  override def warn(msg: String, ex: Throwable)   = _LOGGER.warn(msg, ex)
+  override def error(msg: String)                 = _LOGGER.error(msg)
+  override def error(msg: String, ex: Throwable)  = _LOGGER.error(msg, ex)
+}
