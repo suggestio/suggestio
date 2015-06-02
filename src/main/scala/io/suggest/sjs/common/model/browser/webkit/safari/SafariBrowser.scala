@@ -18,6 +18,14 @@ case class SafariBrowser(
 
   override def name: String = "safari"
   override def toString = super.toString
+
+  /**
+   * Мобильная сафари не может скроллить внутренний контейнер, когда можно скроллить внешний.
+   * Нужно форсировать появление скроллбара у внутреннего контейнера.
+   * TODO Проверить, нуждается ли ipad в таком костыле.
+   */
+  override def needOverwriteInnerScroll = isMobile
+
 }
 
 
