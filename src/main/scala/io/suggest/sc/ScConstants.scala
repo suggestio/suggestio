@@ -32,6 +32,9 @@ object ScConstants {
   /** Имя css-класса, полностью скрывающего элемент. */
   def HIDDEN_CSS_CLASS  = "hidden"
 
+  /** css-класс для форсирования вертикального скроллинга во внутренних контейнерах. */
+  def OVERFLOW_VSCROLL_CSS_CLASS = "sm-overflow-scrolling"
+
   /** Константы ответов сервера. */
   object Resp {
 
@@ -171,17 +174,43 @@ object ScConstants {
   }
 
 
-  /** Константы поисковой панели. */
+  /** Константы поисковой панели (справа). */
   object Search {
 
+    /** div id кнопки открытия поисковой панели. */
+    def SHOW_PANEL_BTN_ID = "smNavigationLayerButton"
+
+    /** id корневого div'а панели, содержит все нижеперечисленные элементы. */
     def ROOT_DIV_ID = "smCategoriesScreen"
 
     /** id инпута для полнотекстового поиска. */
     def FTS_FIELD_ID = "smSearchField"
 
-    def NODES_DIV_ID = "smShops"
+    /** Список id табов в порядке их отображения на экране. */
+    def TAB_IDS = List(Cats.TAB_BTN_ID, Nodes.TAB_BTN_ID)
 
-    def CATS_DIV_ID  = "smCategories"
+    /** id div'а, содержащего кнопки всех tab'ов. */
+    def TAB_BTNS_DIV_ID = "smNavLayerTabs"
+
+    /** Интерфейс для id'шников таба. Используется в sc-sjs для полиморфного доступа к DOM-моделям табов с целью дедубликации кода. */
+    sealed trait ITab {
+      def ROOT_DIV_ID: String
+      def TAB_BTN_ID     = ROOT_DIV_ID + "Tab"
+      def WRAPPER_DIV_ID = ROOT_DIV_ID + "Wrapper"
+      def CONTENT_DIV_ID = ROOT_DIV_ID + "Content"
+    }
+
+    /** Сюда сгруппированы id, относящиеся к категориям. */
+    object Cats extends ITab {
+      /** div id списка иконок категорий. Отображается под линейкой табов. */
+      override def ROOT_DIV_ID = "smCategories"
+    }
+
+    /** Сюда сгруппированы id, относящиеся к списку магазинов. */
+    object Nodes extends ITab {
+      /** div id списка магазинов. */
+      override def ROOT_DIV_ID = "smShops"
+    }
 
   }
 
