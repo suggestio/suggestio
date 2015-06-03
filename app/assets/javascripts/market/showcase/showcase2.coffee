@@ -1144,12 +1144,10 @@ sm =
         if sm.events.is_touch_locked
           return false
 
-        cat_id = cat_link_target.getAttribute 'data-cat-id'
-        cat_class = cat_link_target.getAttribute 'data-cat-class'
-
         _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
         if !sm.utils.is_array( cat_link_target.className.match( _cat_class_match_regexp ) )
-
+          cat_id = cat_link_target.getAttribute 'data-cat-id'
+          cat_class = cat_link_target.getAttribute 'data-cat-class'
           ns =
             cat_screen :
               is_opened :false

@@ -2,6 +2,7 @@
 
 @import ctx.messages
 @import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Search.Cats._
 
 @_scrollableContainerTpl( "sm-categories", "smCategories",  style = Some(_bgcolor( args.bgColor, false ).toString + "height: 83%;") ){
 
@@ -16,7 +17,9 @@
           <a href="@args.syncUrl( jsState.copy(tilesCatIdOpt = mmcat.id, searchScrOpenedOpt = None) )">
         }
       }
-      <span class="categories-list_single-cat categorie js-cat-link @if(isDisabled) {__disabled}" data-cat-class="@mmcat.cssClass" data-cat-id="@mmcat.id">
+      <span class="categories-list_single-cat categorie @if(isDisabled) {__disabled} else {@ONE_CAT_LINK_CSS_CLASS}"
+	    data-cat-class="@mmcat.cssClass"
+	    @if(!isDisabled) {data-cat-id="@mmcat.id"}>
 
         <div class="categorie_icon __@mmcat.cssClass">
           @svg._catIconTpl( mmcat.cssClass, args.fgColor )
