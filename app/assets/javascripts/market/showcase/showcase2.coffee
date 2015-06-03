@@ -2083,11 +2083,11 @@ sm =
     show_tab : ( tab ) ->
       for k, t of this.tabs
         tab_content_dom = sm.utils.ge(t)
-        tab_dom = sm.utils.ge(t + 'Tab')
 
         if tab_content_dom == null
           return false
 
+        tab_dom = sm.utils.ge(t + 'Tab')
         if tab == t
           tab_content_dom.style.display = 'block'
           sm.utils.removeClass tab_dom, '__inactive'
