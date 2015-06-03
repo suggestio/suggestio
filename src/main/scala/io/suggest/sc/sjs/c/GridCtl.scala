@@ -4,9 +4,7 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid._
-import io.suggest.sc.sjs.m.mnav.MNavDom
 import io.suggest.sc.sjs.m.msc.MScState
-import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
@@ -168,13 +166,13 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
   def initNewLayout(wcHideFut: Future[_]): Unit = {
     // shared-константы между кусками метода инициализации
-    val wrapperDivOpt = MGridDom.wrapperDiv()
+    val wrapperDivOpt = MGridDom.wrapperDiv
     val scr = MAgent.availableScreen
 
     // 1. Отложенная инициализация: вешать события по мере необходимости.
     wcHideFut.onComplete { case _ =>
       val wrapperSafeOpt  = wrapperDivOpt.map { SafeEl.apply }
-      val contentDivOpt   = MGridDom.contentDiv()
+      val contentDivOpt   = MGridDom.contentDiv
 
       // Повесить событие реакции на скроллинг.
       for {
@@ -195,7 +193,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       }
     }(JSExecutionContext.queue)
 
-    val rootDivOpt = MGridDom.rootDiv()
+    val rootDivOpt = MGridDom.rootDiv
 
     // 2. Выставить высоту контейнера.
     for {

@@ -22,19 +22,30 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   /** Инициализация после загрузки выдачи узла. */
   def initNodeLayout(): Unit = {
     SearchPanelView.adjust()
+
     // Инициализация кнопки показа панели.
     for (btn <- MSearchDom.showPanelBtn) {
       SearchPanelView.initShowPanelBtn( SafeEl(btn) )
     }
+
     // Инициализация search-панели: реакция на кнопку закрытия/открытия, поиск при наборе, табы и т.д.
     for (input <- MSearchDom.ftsInput) {
       SearchPanelView.initFtsField( SafeEl(input) )
     }
-    // Инициализация кнопки сокрытия панели
-    for (btnR <- MSearchDom.hidePanelBtn; btnL <- MHeaderDom.showIndexBtn) {
-      val btns = Seq(btnR, btnL)
+
+    // Инициализация кнопок сокрытия панели
+    SearchPanelView.initHidePanelBtn {
+      (MSearchDom.hidePanelBtn ++ MHeaderDom.showIndexBtn)
+        .iterator
         .map(SafeEl.apply)
-      SearchPanelView.initHidePanelBtn( btns : _* )
+    }
+
+    // Инициализация кнопок переключения табов поиска.
+    for {
+      mtab    <- MSearchDom.mtabs
+      btnDiv  <- mtab.tabBtnDiv
+    } {
+      SearchPanelView.initTabBtn(mtab.idModel.ROOT_DIV_ID, SafeEl(btnDiv))
     }
   }
 
@@ -67,9 +78,10 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   }
 
   /** Если ширина экрана позволяет, то выставить сетке новый rightOffset и отребилдить. */
-  def maybeRebuildGrid(rootDivOpt: Option[HTMLDivElement] = MSearchDom.rootDiv,
-                       isHiddenOpt: Option[Boolean] = None,
-                       _mgs: MGridState = MGrid.state): Unit = {
+  def maybeRebuildGrid(rootDivOpt   : Option[HTMLDivElement]  = MSearchDom.rootDiv,
+                       isHiddenOpt  : Option[Boolean]         = None,
+                       _mgs         : MGridState              = MGrid.state): Unit = {
+    // на мобиле выдачу не надо перекорчевывать, она остается под панелью. На экранах по-шире выдача "сдвигается".
     if (_mgs.isDesktopView) {
       // Облегченный offset-калькулятор, которому ничего толком искать не надо (всё уже найдено)
       val calc = new GridOffsetCalc {
@@ -84,6 +96,26 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
         GridCtl.resetContainerSz(containerDiv)
       }
       GridCtl.build(isAdd = false, withAnim = true)
+    }
+  }
+
+  /**
+   * Клик по кнопке переключения на указанную вкладку.
+   * @param id id вкладки, на которую происходит переключение.
+   */
+  def onTabBtnClick(id: String, e: Event): Unit = {
+    for {
+      mtab    <- MSearchDom.mtabs
+      rootDiv <- mtab.rootDiv
+      btnDiv  <- mtab.tabBtnDiv.map( SafeEl.apply )
+    } {
+      if (mtab.idModel.ROOT_DIV_ID == id) {
+        // Это целевая вкладка. Отобразить её.
+        SearchPanelView.showTab(rootDiv, btnDiv = btnDiv)
+      } else {
+        // [Теперь] эта вкладка неактивна.
+        SearchPanelView.hideTab(rootDiv, btnDiv = btnDiv)
+      }
     }
   }
 

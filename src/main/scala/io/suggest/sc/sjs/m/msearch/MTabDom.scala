@@ -16,14 +16,14 @@ sealed trait MTabDom extends GetDivById {
   def idModel: ITab
 
   /** div списка сущностей (категорий, магазинов, ...). */
-  def rootDiv()     = getDivById(idModel.ROOT_DIV_ID)
+  def rootDiv       = getDivById(idModel.ROOT_DIV_ID)
 
   /** div кнопки переключения на этот tab. */
-  def tabBtnDiv()   = getDivById(idModel.TAB_BTN_ID)
+  def tabBtnDiv     = getDivById(idModel.TAB_BTN_ID)
 
-  def wrapperDiv()  = getDivById(idModel.WRAPPER_DIV_ID)
+  def wrapperDiv    = getDivById(idModel.WRAPPER_DIV_ID)
 
-  def contentDiv()  = getDivById(idModel.CONTENT_DIV_ID)
+  def contentDiv    = getDivById(idModel.CONTENT_DIV_ID)
 
 }
 

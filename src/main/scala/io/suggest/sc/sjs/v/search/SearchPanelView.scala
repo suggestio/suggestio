@@ -2,10 +2,11 @@ package io.suggest.sc.sjs.v.search
 
 import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.msearch.MSearchDom
+import io.suggest.sc.sjs.m.msearch.{MTabDom, MSearchDom}
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sc.ScConstants.Search._
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
@@ -23,7 +24,7 @@ object SearchPanelView {
     val offset: Int = if (MSearchDom.tabBtnsDiv.isEmpty) 100 else 150
     val height = MAgent.availableScreen.height - offset
     for (mtab <- MSearchDom.mtabs) {
-      VUtil.setHeightRootWrapCont(height, mtab.contentDiv(), mtab.rootDiv() ++ mtab.wrapperDiv())
+      VUtil.setHeightRootWrapCont(height, mtab.contentDiv, mtab.rootDiv ++ mtab.wrapperDiv)
     }
   }
 
@@ -34,13 +35,23 @@ object SearchPanelView {
     }
   }
 
-  /** Инициализация кнопки сокрытия панели поиска. */
-  def initHidePanelBtn(btnsSafe: SafeEl[HTMLDivElement]*): Unit = {
+  /** Инициализация кнопки сокрытия панели поиска.
+    * @param btnsSafe Все кнопки сокрытия, на которые надо повесить listener.
+    */
+  def initHidePanelBtn(btnsSafe: TraversableOnce[SafeEl[HTMLDivElement]]): Unit = {
+    // Шарим инстанс листенера между субъектами, чтобы сэкномить капельку RAM.
     val listener = { e: Event =>
       SearchPanelCtl.onHidePanelBtnClick(e)
     }
     for (btnSafe <- btnsSafe) {
       btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
+    }
+  }
+
+  /** Инициализировать кнопку таба. */
+  def initTabBtn(tabId: String, btnDiv: SafeEl[HTMLDivElement]): Unit = {
+    btnDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
+      SearchPanelCtl.onTabBtnClick(tabId, e)
     }
   }
 
@@ -63,8 +74,21 @@ object SearchPanelView {
     rootDiv.style.display = "block"
   }
 
+  /** Скрыть панель поиска. */
   def hide(rootDiv: HTMLDivElement): Unit = {
     rootDiv.style.display = "none"
+  }
+
+  /** Показать указанный таб. */
+  def showTab(tabRootDiv: HTMLDivElement, btnDiv: SafeEl[HTMLDivElement]): Unit = {
+    tabRootDiv.style.display = "block"
+    btnDiv.removeClass(TAB_BTN_INACTIVE_CSS_CLASS)
+  }
+
+  /** Скрыть указанный таб. */
+  def hideTab(tabRootDiv: HTMLDivElement, btnDiv: SafeEl[HTMLDivElement]): Unit = {
+    tabRootDiv.style.display = "none"
+    btnDiv.addClasses(TAB_BTN_INACTIVE_CSS_CLASS)
   }
 
 }

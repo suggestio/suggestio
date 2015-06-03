@@ -16,17 +16,16 @@ trait MGridDomT extends GetDivById {
 
   /** Найти div отображения загрузчика. */
   def loaderDiv       = getDivById(LOADER_DIV_ID)
-}
-
-object MGridDom extends MGridDomT {
 
   /** Найти grid wrapper div. */
-  def wrapperDiv()    = getDivById(WRAPPER_DIV_ID)
+  def wrapperDiv      = getDivById(WRAPPER_DIV_ID)
 
   /** Найти grid div id. */
-  def rootDiv()       = getDivById(ROOT_DIV_ID)
+  def rootDiv         = getDivById(ROOT_DIV_ID)
 
   /** Найти content div. */
-  def contentDiv()    = getDivById(CONTENT_DIV_ID)
+  def contentDiv      = getDivById(CONTENT_DIV_ID)
 
 }
+
+object MGridDom extends MGridDomT
