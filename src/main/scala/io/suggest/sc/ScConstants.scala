@@ -64,6 +64,21 @@ object ScConstants {
   }
 
 
+  /** Константы строки заголовка выдачи. */
+  object Header {
+
+    /** id div'а строки заголовка выдачи. */
+    def ROOT_DIV_ID = "smRootProducerHeader"
+
+    /** Название css-класса для отображения кнопки возврата на index выдачи. Появляется при открытой search-панели. */
+    def INDEX_ICON_CSS_CLASS = "__w-index-icon"
+
+    /** Кнопка возвращения на плитку, отображается слева наверху в ряде случаев. */
+    def SHOW_INDEX_BTN_ID = "smIndexButton"
+
+  }
+
+
   /** Константы layout. */
   object Layout {
 
@@ -179,6 +194,9 @@ object ScConstants {
 
     /** div id кнопки открытия поисковой панели. */
     def SHOW_PANEL_BTN_ID = "smNavigationLayerButton"
+
+    /** div id кнопки скрытия панели. */
+    def HIDE_PANEL_BTN_ID = "smCategoriesScreenCloseButton"
 
     /** id корневого div'а панели, содержит все нижеперечисленные элементы. */
     def ROOT_DIV_ID = "smCategoriesScreen"
