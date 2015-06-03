@@ -18,6 +18,7 @@ import scala.scalajs.js.UndefOr
 
 trait SafeCssElT extends ISafe {
 
+  // TODO Довести бы минимальный тип до Node... Это решит кое-какие неудобства в районе .parentNode().asInstanceOf[Element].
   override type T <: Element
 
   protected def _subStrRegex(name: String): String = {
