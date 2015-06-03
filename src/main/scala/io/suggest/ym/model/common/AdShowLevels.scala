@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import scala.collection.JavaConversions._
+import io.suggest.sc.ScConstants.ShowLevels._
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -28,7 +29,7 @@ object AdShowLevels extends Enumeration {
 
   type AdShowLevel = Val
 
-  implicit def value2val(v: Value) = v.asInstanceOf[AdShowLevel]
+  implicit def value2val(v: Value): AdShowLevel = v.asInstanceOf[AdShowLevel]
 
   /** Сконвертить множество уровней в множество строковых id этих уровней. */
 
@@ -38,13 +39,13 @@ object AdShowLevels extends Enumeration {
 
 
   /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_START_PAGE: AdShowLevel = Val("d", 100, "firstPage-catalog")
+  val LVL_START_PAGE: AdShowLevel = Val(ID_START_PAGE, 100, "firstPage-catalog")
 
   /** Отображать в каталоге продьюсеров. */
-  val LVL_CATS: AdShowLevel = Val("h", 200, "common-catalog")
+  val LVL_CATS: AdShowLevel = Val(ID_CATS, 200, "common-catalog")
 
   /** Отображать эту рекламу внутри каталога продьюсера. */
-  val LVL_PRODUCER: AdShowLevel = Val("m", 300, "shop-catalog")
+  val LVL_PRODUCER: AdShowLevel = Val(ID_PRODUCER, 300, "shop-catalog")
 
 
   def maybeWithName(n: String): Option[AdShowLevel] = {
