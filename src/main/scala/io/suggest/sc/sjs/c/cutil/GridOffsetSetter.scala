@@ -20,9 +20,10 @@ trait GridOffsetSetter {
 
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetCalc {
+    def mgs = MGrid.state
 
     /** Если [[MGridState]] указывает на необходимость нулевого оффсета, то её следует послушать. */
-    def canNonZeroOffset: Boolean
+    def canNonZeroOffset: Boolean = MGrid.state.canNonZeroOffset
 
     /** div-элемент текущей панели, с которым работаем. */
     def elOpt: Option[HTMLElement]
@@ -31,7 +32,7 @@ trait GridOffsetSetter {
     def minWidth: Int
 
     /** Константа widthAdd, посчитанная через getWidthAdd(). */
-    def widthAdd: Int
+    def widthAdd: Int = getWidthAdd()
 
     def isElHidden(el: HTMLElement): Boolean = {
       val disp = el.style.display

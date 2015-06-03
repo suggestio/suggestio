@@ -199,4 +199,8 @@ trait V1Builder extends ISjsLogger {
     step(0)
   }
 
+  override def toString: String = {
+    "v1b(" + _isAdd + ",[" + blocksAcc.length + "])"
+  }
+
 }

@@ -20,17 +20,27 @@ object SearchPanelView {
 
   /** Как уточнить разметку панели. */
   def adjust(): Unit = {
-    val offset: Int = if (MSearchDom.tabBtnsDiv().isEmpty) 100 else 150
+    val offset: Int = if (MSearchDom.tabBtnsDiv.isEmpty) 100 else 150
     val height = MAgent.availableScreen.height - offset
-    for (mtab <- MSearchDom.mtabs()) {
+    for (mtab <- MSearchDom.mtabs) {
       VUtil.setHeightRootWrapCont(height, mtab.contentDiv(), mtab.rootDiv() ++ mtab.wrapperDiv())
     }
   }
 
   /** Инициализация кнопки отображения панели поиска. */
-  def initShowSearchPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
+  def initShowPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
     btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
       SearchPanelCtl.onShowPanelBtnClick(e)
+    }
+  }
+
+  /** Инициализация кнопки сокрытия панели поиска. */
+  def initHidePanelBtn(btnsSafe: SafeEl[HTMLDivElement]*): Unit = {
+    val listener = { e: Event =>
+      SearchPanelCtl.onHidePanelBtnClick(e)
+    }
+    for (btnSafe <- btnsSafe) {
+      btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
     }
   }
 
@@ -46,6 +56,15 @@ object SearchPanelView {
     fieldSafe.addEventListener("blur") { (e: Event) =>
       SearchPanelCtl.onFtsFieldBlur(e)
     }
+  }
+
+  /** Отобразить на экране панель поиска, которая, скорее всего, скрыта. */
+  def show(rootDiv: HTMLDivElement): Unit = {
+    rootDiv.style.display = "block"
+  }
+
+  def hide(rootDiv: HTMLDivElement): Unit = {
+    rootDiv.style.display = "none"
   }
 
 }

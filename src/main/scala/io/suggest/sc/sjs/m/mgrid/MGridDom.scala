@@ -9,13 +9,16 @@ import io.suggest.sc.ScConstants.Grid._
  * Created: 26.05.15 10:22
  * Description: Доступ к DOM плитки карточек.
  */
-object MGridDom extends GetDivById {
+trait MGridDomT extends GetDivById {
 
   /** Найти div grid-контейнера. */
-  def containerDiv()  = getDivById(CONTAINER_DIV_ID)
+  def containerDiv    = getDivById(CONTAINER_DIV_ID)
 
   /** Найти div отображения загрузчика. */
-  def loaderDiv()     = getDivById(LOADER_DIV_ID)
+  def loaderDiv       = getDivById(LOADER_DIV_ID)
+}
+
+object MGridDom extends MGridDomT {
 
   /** Найти grid wrapper div. */
   def wrapperDiv()    = getDivById(WRAPPER_DIV_ID)

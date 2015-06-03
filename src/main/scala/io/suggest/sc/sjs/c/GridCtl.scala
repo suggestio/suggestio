@@ -31,13 +31,14 @@ import scala.util.Success
  * Created: 22.05.15 14:22
  * Description: Контроллер сетки.
  */
-object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
+object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
   /**
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.
    * Обычно этот метод вызывается в ходе добавления карточек в плитку.
    */
-  def resetContainerSz(containerDiv: HTMLDivElement, loaderDivOpt: Option[HTMLDivElement]): Unit = {
+  def resetContainerSz(containerDiv: HTMLDivElement,
+                       loaderDivOpt: Option[HTMLDivElement] = MGridDom.loaderDiv): Unit = {
     // Вычислить размер.
     val sz = MGrid.getContainerSz()
     // Обновить модель сетки новыми данными, и view-контейнеры.
@@ -75,7 +76,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
    */
   def newAdsReceived(resp: MFindAds, isAdd: Boolean, withAnim: Boolean = true): Unit = {
     val mads = resp.mads
-    val loaderDivOpt = MGridDom.loaderDiv()
+    val loaderDivOpt = MGridDom.loaderDiv
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
     val mgs = MGrid.state
 
@@ -120,7 +121,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
       resetGridOffsets()
 
-      for (containerDiv <- MGridDom.containerDiv()) {
+      for (containerDiv <- MGridDom.containerDiv) {
         // Залить все карточки в DOM, создав суб-контейнер frag.
         val frag = GridView.appendNewMads(containerDiv, mads)
 
@@ -201,7 +202,7 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
       rootDiv       <- rootDivOpt
       wrapperDiv    <- wrapperDivOpt
     } {
-      val containerDivOpt = MGridDom.containerDiv()
+      val containerDivOpt = MGridDom.containerDiv
 
       val height = scr.height
       val wrappers = Seq(rootDiv, wrapperDiv)
@@ -214,32 +215,23 @@ object GridCtl extends CtlT with SjsLogger with  GridOffsetSetter { that =>
    *  В оригинале это была функция sm.rebuild_grid(). */
   def resetGridOffsets(): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
-    val mgs = MGrid.state
-    val _canNonZeroOff = mgs.canNonZeroOffset
-    val wndWidth = MAgent.availableScreen.width
-    lazy val _widthAdd = getWidthAdd(mgs, wndWidth)
+    val _mgs = MGrid.state
+    val _canNonZeroOff = _mgs.canNonZeroOffset
+    lazy val _widthAdd = getWidthAdd(_mgs)
 
     // Запиливаем левую панель, т.е. панель навигации.
-    val navPanelSetter = new GridOffsetCalc {
-      override def elOpt    = MNavDom.rootDiv()
+    val navPanelSetter = new NavPanelCtl.GridOffsetCalc {
+      override def mgs      = _mgs
       override def widthAdd = _widthAdd
-      override def minWidth = 280
       override def canNonZeroOffset = _canNonZeroOff
-      override def setOffset(newOff: Int): Unit = {
-        mgs.leftOffset = newOff
-      }
     }
     navPanelSetter.execute()
 
     // Запиливаем правую панель, т.е. панель поиска.
-    val searchPanSetter = new GridOffsetCalc {
-      override def elOpt    = MSearchDom.rootDiv()
+    val searchPanSetter = new SearchPanelCtl.GridOffsetCalc {
+      override def mgs      = _mgs
       override def widthAdd = _widthAdd
-      override def minWidth = 300
       override def canNonZeroOffset = _canNonZeroOff
-      override def setOffset(newOff: Int): Unit = {
-        mgs.rightOffset = newOff
-      }
     }
     searchPanSetter.execute()
   }

@@ -46,17 +46,24 @@ class MGridState {
   /** Инфа по текущим блокам. */
   var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
 
+  /**
+   * Когда колонок мало, то значит экран узкий, и надо отображать панели поверх выдачи, не двигая выдачу.
+   * @return false, если выдача узкая под мобильник.
+   *         true, если при раскрытии боковой панели для выдачи ещё останется место.
+   */
+  def isDesktopView = columnsCount > 2
+
   /** При рассчете left/right offset'ов калькулятором учитывается мнение выдачи. */
   def canNonZeroOffset: Boolean = {
     // TODO Нужно понять толком, какой смысл несет выражение в скобках...
     //cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
-    columnsCount > 2 || leftOffset != 0 || rightOffset != 0
+    isDesktopView || leftOffset != 0 || rightOffset != 0
   }
 
   /** Загрузить кое-какие изменения в состояния. */
   def updateWith(cw: IColsWidth with ICwCm): Unit = {
     maxCellWidth = cw.maxCellWidth
-    columnsCount   = cw.columnsCnt
+    columnsCount = cw.columnsCnt
     contSz       = Some(cw)
   }
 
