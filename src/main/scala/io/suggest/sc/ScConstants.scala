@@ -209,6 +209,9 @@ object ScConstants {
 
     /** id div'а, содержащего кнопки всех tab'ов. */
     def TAB_BTNS_DIV_ID = "smNavLayerTabs"
+    
+    /** Класс неактивной кнопки таба. */
+    def TAB_BTN_INACTIVE_CSS_CLASS = "__inactive"
 
     /** Интерфейс для id'шников таба. Используется в sc-sjs для полиморфного доступа к DOM-моделям табов с целью дедубликации кода. */
     sealed trait ITab {
