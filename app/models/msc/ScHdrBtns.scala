@@ -1,6 +1,7 @@
 package models.msc
 
 import io.suggest.model.EnumValue2Val
+import io.suggest.sc.ScConstants.{Header, Search}
 import models.{MHands, MHand}
 import play.twirl.api.{HtmlFormat, Html, Template1}
 import views.html.sc._
@@ -93,7 +94,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   val CatsPanelClose: T = new Val("d") with SvgTplVal {
     override def svgTpl = _backArrowRight
     override def align  = MHands.Right
-    override def domId  = "smCategoriesScreenCloseButton"
+    override def domId  = Search.HIDE_PANEL_BTN_ID
   }
 
   /** Когда раскрыта панель геонавигации (левая), то кнопка сворачивания панели назад слева. */
@@ -113,7 +114,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   val ShowIndex: T = new Val("g") with SvgTplVal {
     override def svgTpl = _indexAdsButtonTpl
     override def align  = MHands.Left
-    override def domId  = "smIndexButton"
+    override def domId  = Header.SHOW_INDEX_BTN_ID
     override def divCss = "sm-producer-header_index-button" :: super.divCss
   }
 
@@ -121,7 +122,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   val SearchPanelOpen: T = new Val("h") with SvgTplVal {
     override def svgTpl = _navLayerButtonTpl
     override def align  = MHands.Right
-    override def domId  = "smNavigationLayerButton"
+    override def domId  = Search.SHOW_PANEL_BTN_ID
     override def divCss = "sm-producer-header_search-button" :: super.divCss
   }
 
