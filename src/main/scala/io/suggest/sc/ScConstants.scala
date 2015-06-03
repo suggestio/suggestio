@@ -225,6 +225,12 @@ object ScConstants {
     object Cats extends ITab {
       /** div id списка иконок категорий. Отображается под линейкой табов. */
       override def ROOT_DIV_ID = "smCategories"
+
+      /** css-класс пометка, сообщающая о том, что данный элемент должен бы подхватываться js'ом. */
+      def ONE_CAT_LINK_CSS_CLASS = "js-cat-link"
+
+      /** Название аттрибута, которое содержит id категории. */
+      def ATTR_CAT_ID = "data-cat-id"
     }
 
     /** Сюда сгруппированы id, относящиеся к списку магазинов. */
@@ -233,6 +239,20 @@ object ScConstants {
       override def ROOT_DIV_ID = "smShops"
     }
 
+  }
+
+
+  /** Константы для уровней отображения выдачи. */
+  object ShowLevels {
+
+    /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
+    def ID_START_PAGE = "d"
+
+    /** Отображать в каталоге продьюсеров. */
+    def ID_CATS = "h"
+
+    /** Отображать эту рекламу внутри каталога продьюсера. */
+    def ID_PRODUCER = "m"
   }
 
 }
