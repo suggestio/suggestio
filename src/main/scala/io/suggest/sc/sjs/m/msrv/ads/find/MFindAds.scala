@@ -20,8 +20,8 @@ object MFindAds {
    * @param adSearch Поисковые критерии, которые может понять jsRouter.
    * @return Фьючерс с результатом запроса.
    */
-  def findAds(adSearch: MFindAdsReqJson)(implicit ec: ExecutionContext): Future[MFindAds] = {
-    val route = routes.controllers.MarketShowcase.findAds(adSearch)
+  def findAds(adSearch: MFindAdsReq)(implicit ec: ExecutionContext): Future[MFindAds] = {
+    val route = routes.controllers.MarketShowcase.findAds( adSearch.toJson )
     val reqFut = Xhr.successWithStatus(200) {
       Xhr.send(
         method  = route.method,
@@ -41,7 +41,7 @@ object MFindAds {
 
 
 /**
- * Реализация wrap-модели над [[MFindAdsReqJson]], чтобы получить более человеческий доступ к JSON ответа.
+ * Реализация wrap-модели над [[MFindAdsRespJson]], чтобы получить более человеческий доступ к JSON ответа.
  * @param json JSON-распарсенный ответ сервера.
  */
 sealed case class MFindAds(json: MFindAdsRespJson) {

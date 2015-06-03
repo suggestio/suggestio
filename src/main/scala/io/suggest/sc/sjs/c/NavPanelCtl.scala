@@ -20,7 +20,7 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
 
   /** Трейт для быстрой сборки считалки-обновлялки grid offsets. */
   trait GridOffsetCalc extends super.GridOffsetCalc {
-    override def elOpt    = MNavDom.rootDiv()
+    override def elOpt    = MNavDom.rootDiv
     override def minWidth = 280
     override def setOffset(newOff: Int): Unit = {
       mgs.leftOffset = newOff

@@ -4,9 +4,7 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid._
-import io.suggest.sc.sjs.m.msc.MScState
-import io.suggest.sc.sjs.m.msrv.MSrv
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqJson, MFindAds}
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
 import io.suggest.sc.sjs.v.res.CommonRes
@@ -45,16 +43,11 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   }
 
   def askMoreAds(): Future[MFindAds] = {
-    val gstate = MGrid.state
-    val findAdsArgs = MFindAdsReqJson(
-      receiverId = MScState.rcvrAdnId,
-      generation = Some(MSrv.generation),
-      screenInfo = Some(MAgent.availableScreen),
-      limit      = Some(gstate.adsPerLoad),
-      offset     = Some(gstate.adsLoaded)
-      // TODO Состояние геолокации сюда надо бы.
-    )
-    MFindAds.findAds(findAdsArgs)
+    val mgs = MGrid.state
+    val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
+      override def _mgs = mgs
+    }
+    MFindAds.findAds(args)
   }
 
   /** Юзер скроллит выдачу любого узла. */

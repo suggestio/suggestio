@@ -14,9 +14,9 @@ import org.scalajs.dom.raw.HTMLDivElement
 object NavPaneView {
 
   /** Выставить высоту списка узлов согласно экрану. */
-  def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv(),
-                     wrapperDivOpt: Option[HTMLDivElement]  = MNavDom.wrapperDiv(),
-                     contentDivOpt: Option[HTMLDivElement]  = MNavDom.contentDiv(),
+  def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv,
+                     wrapperDivOpt: Option[HTMLDivElement]  = MNavDom.wrapperDiv,
+                     contentDivOpt: Option[HTMLDivElement]  = MNavDom.contentDiv,
                      availScreen: IMScreen = MAgent.availableScreen,
                      mNavState: MNavState  = MNav.state): Unit = {
 
@@ -32,7 +32,7 @@ object NavPaneView {
    *                Если true, то показать.
    */
   def showNavShowBtn(isShown: Boolean): Unit = {
-    MNavDom.showPanelBtn().foreach { showPaneBtn =>
+    MNavDom.showPanelBtn.foreach { showPaneBtn =>
       showPaneBtn.style.display = {
         if (isShown) "block" else "none"
       }

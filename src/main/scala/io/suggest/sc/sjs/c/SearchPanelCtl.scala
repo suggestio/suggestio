@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGridState, MGrid}
 import io.suggest.sc.sjs.m.msc.MHeaderDom
-import io.suggest.sc.sjs.m.msearch.MSearchDom
+import io.suggest.sc.sjs.m.msearch.{MCatsTab, MSearchDom}
 import io.suggest.sc.sjs.v.layout.HeaderView
 import io.suggest.sc.sjs.v.search.SearchPanelView
 import io.suggest.sjs.common.util.SjsLogger
@@ -47,6 +47,11 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
     } {
       SearchPanelView.initTabBtn(mtab.idModel.ROOT_DIV_ID, SafeEl(btnDiv))
     }
+
+    // Инициализация списка категорий.
+    for (catListDiv <- MCatsTab.contentDiv) {
+      SearchPanelView.initCatsList( SafeEl(catListDiv) )
+    }
   }
 
   /** Реакция на клик по кнопке открытия поисковой панели. */
@@ -58,7 +63,7 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
       for (headerDiv <- MHeaderDom.rootDiv) {
         HeaderView.showBackToIndexBtns( SafeEl(headerDiv) )
       }
-      SearchPanelView.show(rootDiv)
+      SearchPanelView.showPanel(rootDiv)
       maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(false))
     }
   }
@@ -72,7 +77,7 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
       for (headerDiv <- MHeaderDom.rootDiv) {
         HeaderView.hideBackToIndexBtns( SafeEl(headerDiv) )
       }
-      SearchPanelView.hide(rootDiv)
+      SearchPanelView.hidePanel(rootDiv)
       maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
     }
   }
@@ -107,14 +112,15 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
     for {
       mtab    <- MSearchDom.mtabs
       rootDiv <- mtab.rootDiv
-      btnDiv  <- mtab.tabBtnDiv.map( SafeEl.apply )
+      btnDiv  <- mtab.tabBtnDiv
     } {
+      val btnDivSafe = SafeEl(btnDiv)
       if (mtab.idModel.ROOT_DIV_ID == id) {
         // Это целевая вкладка. Отобразить её.
-        SearchPanelView.showTab(rootDiv, btnDiv = btnDiv)
+        SearchPanelView.showTab(rootDiv, btnDiv = btnDivSafe)
       } else {
         // [Теперь] эта вкладка неактивна.
-        SearchPanelView.hideTab(rootDiv, btnDiv = btnDiv)
+        SearchPanelView.hideTab(rootDiv, btnDiv = btnDivSafe)
       }
     }
   }
@@ -129,6 +135,15 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
 
   def onFtsFieldBlur(e: Event): Unit = {
     error("TODO") // TODO
+  }
+
+  /**
+   * Реакция на клик по ссылке категории. Надо отобразить карточки для категории, убрать панель.
+   * @param catId id категории.
+   * @param e Исходное событие.
+   */
+  def onCatLinkClick(catId: String, e: Event): Unit = {
+    ???
   }
 
 

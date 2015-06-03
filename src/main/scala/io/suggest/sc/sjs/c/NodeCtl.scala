@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msc.MScState
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.layout.LayoutView
-import io.suggest.sc.sjs.v.search.SearchPanelView
 import scala.scalajs.concurrent.JSExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
@@ -34,6 +34,9 @@ object NodeCtl extends CtlT {
   def switchToNode(adnIdOpt: Option[String], isFirstRun: Boolean = false): Unit = {
     MGrid.resetState()
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
+
+    // По дефолту выдача отображает только карточки, размещенные на главной странице узла.
+    MGrid.state.useStartPage()
 
     // Начинаем инициализацию в отсутствие конкретных данных.
     GridCtl.resetAdsPerLoad()

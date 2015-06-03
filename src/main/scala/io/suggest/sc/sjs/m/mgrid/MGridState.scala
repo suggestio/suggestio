@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.tile.TileConstants
 
@@ -45,6 +46,18 @@ class MGridState {
 
   /** Инфа по текущим блокам. */
   var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
+
+  /** Используемый фильтр для уровней отображения. */
+  var showLevel         : Option[String] = None
+
+  /** id текущей категории, если есть. */
+  var catId             : Option[String] = None
+
+  /** Выставить типичные параметры для рендера главной выдачи узла. */
+  def useStartPage(): Unit = {
+    showLevel = Some( ScConstants.ShowLevels.ID_START_PAGE )
+    catId = None
+  }
 
   /**
    * Когда колонок мало, то значит экран узкий, и надо отображать панели поверх выдачи, не двигая выдачу.

@@ -2,12 +2,12 @@ package io.suggest.sc.sjs.v.search
 
 import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.msearch.{MTabDom, MSearchDom}
+import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
-import org.scalajs.dom.Event
+import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
 /**
@@ -69,13 +69,26 @@ object SearchPanelView {
     }
   }
 
+  /** Инициализация списка категорий. При клике по активной категории должен активироваться поиск в категории.
+    * Испольуется делегирование событий внешнему div'у. */
+  def initCatsList(contentDiv: SafeEl[HTMLDivElement]): Unit = {
+    contentDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
+      val el = e.target.asInstanceOf[Element]
+      if (el != null  &&  VUtil.hasCssClass(SafeEl(el), Cats.ONE_CAT_LINK_CSS_CLASS) ) {
+        for (catId <- VUtil.getAttribute(el, Cats.ATTR_CAT_ID)) {
+          SearchPanelCtl.onCatLinkClick(catId, e)
+        }
+      }
+    }
+  }
+
   /** Отобразить на экране панель поиска, которая, скорее всего, скрыта. */
-  def show(rootDiv: HTMLDivElement): Unit = {
+  def showPanel(rootDiv: HTMLDivElement): Unit = {
     rootDiv.style.display = "block"
   }
 
   /** Скрыть панель поиска. */
-  def hide(rootDiv: HTMLDivElement): Unit = {
+  def hidePanel(rootDiv: HTMLDivElement): Unit = {
     rootDiv.style.display = "none"
   }
 

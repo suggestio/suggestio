@@ -3,10 +3,12 @@ package io.suggest.sc.sjs.v.vutil
 import io.suggest.sc.ScConstants
 import io.suggest.sjs.common.model.browser.{MBrowser, IBrowser}
 import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sjs.common.view.safe.css.{SafeCssElT, SafeCssEl}
 import org.scalajs.dom
-import org.scalajs.dom.Element
+import org.scalajs.dom.{Node, Element}
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
+import scala.annotation.tailrec
 import scala.scalajs.js
 
 /**
@@ -80,6 +82,24 @@ object VUtil {
           Some(res.toInt)
         }
       }
+  }
+
+  /**
+   * Определить, если ли у тега или его родителей указанный css-класс.
+   * @param el Исходный тег, от которого пляшем.
+   * @param className название искомого css-класса.
+   * @return true, если указанный элемент имеет/унаследовал класс.
+   *         false иначе.
+   */
+  @tailrec
+  def hasCssClass(el: SafeCssElT, className: String): Boolean = {
+    el.containsClass(className) || {
+      val parentEl = el._underlying.parentNode.asInstanceOf[Element]
+      parentEl != null && {
+        val parentSafeEl = SafeEl( parentEl )
+        hasCssClass(parentSafeEl, className)
+      }
+    }
   }
 
 }
