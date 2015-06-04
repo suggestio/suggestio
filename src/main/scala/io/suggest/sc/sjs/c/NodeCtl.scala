@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mgrid.MGrid
-import io.suggest.sc.sjs.m.msc.MScState
+import io.suggest.sc.sjs.m.msc.fsm.{MScState, MScFsm}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.v.layout.LayoutView
@@ -35,20 +34,24 @@ object NodeCtl extends CtlT {
     MGrid.resetState()
     val inxFut = MNodeIndex.getIndex(adnIdOpt)
 
-    // По дефолту выдача отображает только карточки, размещенные на главной странице узла.
-    MGrid.state.useStartPage()
-
     // Начинаем инициализацию в отсутствие конкретных данных.
     GridCtl.resetAdsPerLoad()
 
     for {
       minx <- inxFut
     } yield {
-      MScState.rcvrAdnId = minx.adnIdOpt
+      // Сохранить новое состояние выдачи.
+      MScFsm.pushState(
+        MScState(
+          rcvrAdnId = minx.adnIdOpt
+        )
+      )
 
       // Сразу запускаем запрос к серверу за рекламными карточками.
       // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
       val findAdsFut = GridCtl.askMoreAds()
+
+      // TODO Выставить новый заголовок окна
 
       // Стереть старый layout, создать новый. Кешируем
       val l = LayoutView.redrawLayout()

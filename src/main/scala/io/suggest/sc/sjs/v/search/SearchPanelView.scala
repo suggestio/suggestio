@@ -106,6 +106,11 @@ object SearchPanelView {
   def hidePanel(rootDiv: HTMLDivElement): Unit = {
     rootDiv.style.display = "none"
   }
+  def hidePanel(): Unit = {
+    for (spRootDiv <- MSearchDom.rootDiv) {
+      hidePanel(spRootDiv)
+    }
+  }
 
   /** Показать указанный таб. */
   def showTab(tabRootDiv: HTMLDivElement, btnDiv: SafeEl[HTMLDivElement]): Unit = {

@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.app
 import io.suggest.sc.sjs.c.NodeCtl
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.m.magent.{MAgent, MScreen}
+import io.suggest.sc.sjs.m.msc.fsm.MScFsm
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.util.SjsLogger
 
@@ -32,6 +33,9 @@ object App extends JSApp with SjsLogger {
     } yield {
       NodeCtl.switchToNode(None, isFirstRun = true)
     }
+
+    // Инициализация некоторых моделей
+    MScFsm.subscribeEvents()
 
     fut onFailure { case ex: Throwable =>
       error("Init failed", ex)

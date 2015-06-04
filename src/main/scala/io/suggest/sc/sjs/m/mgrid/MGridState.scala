@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.mgrid
 
-import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.tile.TileConstants
 
@@ -33,7 +32,7 @@ class MGridState {
   var adsPerLoad        : Int     = 30
 
   /** Кол-во загруженных карточек. */
-  var adsLoaded         : Int     = 0
+  var blocksLoaded      : Int     = 0
 
   /** Запрошена подгрузка ещё карточек? */
   var isLoadingMore     : Boolean = false
@@ -47,22 +46,26 @@ class MGridState {
   /** Инфа по текущим блокам. */
   var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
 
-  /** Используемый фильтр для уровней отображения. */
-  var showLevel         : Option[String] = None
-
-  /** id текущей категории, если есть. */
-  var catId             : Option[String] = None
-
-  /** Выставить типичные параметры для рендера главной выдачи узла. */
-  def useStartPage(): Unit = {
-    showLevel = Some( ScConstants.ShowLevels.ID_START_PAGE )
-    catId = None
+  /** Контроллер требует закинуть новые блоки в эту модель состояния. */
+  def appendNewBlocks(newBlocks: Seq[MBlockInfo]): Unit = {
+    appendNewBlocks(newBlocks, newBlocks.size)
   }
 
-  /** Перейти в режим просмотра категории. */
-  def useCat(_catId: String): Unit = {
-    showLevel = Some( ScConstants.ShowLevels.ID_CATS )
-    catId = Some(_catId)
+  /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
+    * @param newBlocks Последовательность новых блоков.
+    * @param newBlocksCount Длина коллекции newBlocks.
+    */
+  def appendNewBlocks(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): Unit = {
+    blocks.appendAll(newBlocks)
+    blocksLoaded += newBlocksCount
+  }
+
+  /** Контроллер приказывает сбросить состояние выдачи, касающееся загруженных карточек. */
+  def nothingLoaded(): Unit ={
+    blocks = ListBuffer()
+    blocksLoaded = 0
+    isLoadingMore = false
+    fullyLoaded = false
   }
 
   /**

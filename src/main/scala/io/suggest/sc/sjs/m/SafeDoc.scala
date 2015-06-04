@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m
 
 import io.suggest.sjs.common.view.safe.doc.SafeDocument
+import io.suggest.sjs.common.view.safe.wnd.SafeWindow
 
 /**
  * Suggest.io
@@ -9,3 +10,5 @@ import io.suggest.sjs.common.view.safe.doc.SafeDocument
  * Description: Статическая модель для безопасного доступа к некоторым полям модели DOM.
  */
 object SafeDoc extends SafeDocument()
+
+object SafeWnd extends SafeWindow()

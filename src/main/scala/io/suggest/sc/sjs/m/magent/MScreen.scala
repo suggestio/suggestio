@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.magent
 
 import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.sc.sjs.m.SafeWnd
 import io.suggest.sjs.common.view.safe.wnd.SafeWindow
 import org.scalajs.dom
 
@@ -15,7 +16,7 @@ import scala.scalajs.js
 trait IMScreen extends ISize2di {
 
   def pxRatioOpt: Option[Double] = {
-    SafeWindow(dom.window)
+    SafeWnd
       .devicePixelRatio
       .map { pxr => js.Math.round(pxr * 10) / 10 }
   }

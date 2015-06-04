@@ -1,9 +1,12 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGridState, MGrid}
+import io.suggest.sc.sjs.m.msc.fsm.{MCatState, MScFsm}
 import io.suggest.sc.sjs.m.msc.MHeaderDom
 import io.suggest.sc.sjs.m.msearch.{MCatsTab, MSearchDom}
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.layout.HeaderView
 import io.suggest.sc.sjs.v.search.SearchPanelView
@@ -11,7 +14,10 @@ import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -145,11 +151,17 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
    * @param e Исходное событие.
    */
   def onCatLinkClick(catId: String, e: Event): Unit = {
+    MScFsm.transformState { curState =>
+      curState.copy(
+        cat = Some(MCatState(catId, "TODO")),
+        searchPanelOpened = false
+      )
+    }
+    MScFsm.applyStateChanges()
+
     val mgs = MGrid.state
-    mgs.useCat(catId)
     val madsFut = GridCtl.askMoreAds(mgs)
-    val spRootDivOpt = MSearchDom.rootDiv
-    for ( spRootDiv <- spRootDivOpt ) {
+    for ( spRootDiv <- MSearchDom.rootDiv) {
       SearchPanelView.hidePanel(spRootDiv)
     }
     val gridContainerDivOpt = MGridDom.containerDiv

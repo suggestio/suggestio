@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.magent.{MAgent, IMScreen}
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
-import io.suggest.sc.sjs.m.msc.MScState
+import io.suggest.sc.sjs.m.msc.fsm.MScFsm
 import io.suggest.sc.sjs.m.msrv.MSrv
 
 import scala.scalajs.js.{Any, Dictionary}
@@ -102,12 +103,25 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
 trait MFindAdsReqDflt extends MFindAdsReq {
   def _mgs: MGridState = MGrid.state
 
-  override def receiverId = MScState.rcvrAdnId
-  override def generation = Some(MSrv.generation)
-  override def screenInfo = Some(MAgent.availableScreen)
-  override def limit      = Some(_mgs.adsPerLoad)
-  override def offset     = Some(_mgs.adsLoaded)
-  override def levelId    = _mgs.showLevel
-  override def catId      = _mgs.catId
+  override def receiverId: Option[String]   = MScFsm.state.rcvrAdnId
+  override def generation: Option[Long]     = Some(MSrv.generation)
+  override def screenInfo: Option[IMScreen] = Some(MAgent.availableScreen)
+  override def limit : Option[Int]          = Some(_mgs.adsPerLoad)
+  override def offset: Option[Int]          = Some(_mgs.blocksLoaded)
+
+  override def levelId: Option[String] = {
+    import ScConstants.ShowLevels._
+    val st = MScFsm.state
+    if (st.cat.nonEmpty) {
+      Some(ID_CATS)
+    } else {
+      Some(ID_START_PAGE)
+    }
+  }
+
+  override def catId: Option[String] = {
+    MScFsm.state.cat.map(_.catId)
+  }
+
 }
 

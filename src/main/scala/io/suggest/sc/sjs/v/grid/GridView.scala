@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.v.grid
 
-import io.suggest.sc.sjs.m.mgrid.ICwCm
+import io.suggest.sc.sjs.m.mgrid.{MGridDom, ICwCm}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.dom.DomListIterator
@@ -94,6 +94,11 @@ object GridView {
    */
   def clear(containerDiv: HTMLDivElement): Unit = {
     VUtil.removeAllChildren(containerDiv)
+  }
+  def clear(): Unit = {
+    for (containerDiv <- MGridDom.containerDiv) {
+      clear(containerDiv)
+    }
   }
 
   /**

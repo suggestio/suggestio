@@ -60,6 +60,22 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     }
   }
 
+  /** Сброс карточек сетки. */
+  def reFindAds(): Future[MFindAds] = {
+    val containerDivOpt = MGridDom.containerDiv
+    val fut = askMoreAds()
+      .andThen { case Success(resp) =>
+        newAdsReceived(resp, isAdd = false, containerDivOpt = containerDivOpt)
+      }(JSExecutionContext.queue)
+    // Запустить поиск в рамках категории.
+    MGrid.state.nothingLoaded()
+    // Подготовить view'ы к поступлению новых карточек
+    for (containerDiv <- containerDivOpt) {
+      GridView.clear(containerDiv)
+    }
+    fut
+  }
+
   /**
    * От сервера получена новая пачка карточек для выдачи.
    * @param resp ответ сервера.
@@ -97,10 +113,9 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
       // Посчитать и сохранить кол-во загруженных карточек плитки.
       val madsSize = mads.size
-      mgs.adsLoaded += madsSize
 
       // Показать либо скрыть индикатор подгрузки выдачи.
-      safeLoaderDivOpt.foreach { loaderDiv =>
+      for (loaderDiv <- safeLoaderDivOpt) {
         if (madsSize < mgs.adsPerLoad) {
           LoaderView.show(loaderDiv)
         } else {
@@ -121,7 +136,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
         // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
         val newBlocks = analyzeNewBlocks(frag)
-        mgs.blocks.appendAll(newBlocks)
+        mgs.appendNewBlocks(newBlocks, madsSize)
 
         // Расположить все новые карточки на экране.
         build(isAdd, mgs, newBlocks, withAnim)
