@@ -88,17 +88,34 @@ object VUtil {
    * Определить, если ли у тега или его родителей указанный css-класс.
    * @param el Исходный тег, от которого пляшем.
    * @param className название искомого css-класса.
-   * @return true, если указанный элемент имеет/унаследовал класс.
-   *         false иначе.
+   * @return Some с узлом, у которой замечен указанный класс. Это el либо один из родительских тегов.
+   *         None, если указанный класс не найден у тега и его родителей.
    */
   @tailrec
-  def hasCssClass(el: SafeCssElT, className: String): Boolean = {
-    el.containsClass(className) || {
-      val parentEl = el._underlying.parentNode.asInstanceOf[Element]
-      parentEl != null && {
-        val parentSafeEl = SafeEl( parentEl )
+  def hasCssClass(el: SafeCssElT, className: String): Option[SafeCssElT] = {
+    if (el.containsClass(className)) {
+      Some(el)
+    } else {
+      val parentEl = el._underlying.parentNode
+      if (parentEl == null) {
+        None
+      } else {
+        val parentSafeEl = SafeCssEl( parentEl )
         hasCssClass(parentSafeEl, className)
       }
+    }
+  }
+
+  /**
+   * Быстро удалить все дочерние элементы, отвязав event listener'ы от них.
+   * @param node Родительский узел.
+   */
+  @tailrec
+  def removeAllChildren(node: Node): Unit = {
+    val fcOrNull = node.firstChild
+    if (fcOrNull != null) {
+      node.removeChild(fcOrNull)
+      removeAllChildren(node)
     }
   }
 

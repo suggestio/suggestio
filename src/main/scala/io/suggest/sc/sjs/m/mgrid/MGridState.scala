@@ -59,6 +59,12 @@ class MGridState {
     catId = None
   }
 
+  /** Перейти в режим просмотра категории. */
+  def useCat(_catId: String): Unit = {
+    showLevel = Some( ScConstants.ShowLevels.ID_CATS )
+    catId = Some(_catId)
+  }
+
   /**
    * Когда колонок мало, то значит экран узкий, и надо отображать панели поверх выдачи, не двигая выдачу.
    * @return false, если выдача узкая под мобильник.

@@ -4,12 +4,14 @@ import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGridState, MGrid}
 import io.suggest.sc.sjs.m.msc.MHeaderDom
 import io.suggest.sc.sjs.m.msearch.{MCatsTab, MSearchDom}
+import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.layout.HeaderView
 import io.suggest.sc.sjs.v.search.SearchPanelView
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
@@ -143,7 +145,21 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
    * @param e Исходное событие.
    */
   def onCatLinkClick(catId: String, e: Event): Unit = {
-    ???
+    val mgs = MGrid.state
+    mgs.useCat(catId)
+    val madsFut = GridCtl.askMoreAds(mgs)
+    val spRootDivOpt = MSearchDom.rootDiv
+    for ( spRootDiv <- spRootDivOpt ) {
+      SearchPanelView.hidePanel(spRootDiv)
+    }
+    val gridContainerDivOpt = MGridDom.containerDiv
+    for (gridContainerDiv <- gridContainerDivOpt) {
+      GridView.clear(gridContainerDiv)
+    }
+    // Когда придут запрошенные карточки, залить из в сетку.
+    for (madsResp <- madsFut) {
+      GridCtl.newAdsReceived(madsResp, isAdd = false, withAnim = true, containerDivOpt = gridContainerDivOpt)
+    }
   }
 
 

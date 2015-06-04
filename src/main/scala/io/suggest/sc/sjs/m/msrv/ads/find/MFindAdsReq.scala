@@ -108,5 +108,6 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def limit      = Some(_mgs.adsPerLoad)
   override def offset     = Some(_mgs.adsLoaded)
   override def levelId    = _mgs.showLevel
+  override def catId      = _mgs.catId
 }
 

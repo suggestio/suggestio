@@ -8,7 +8,7 @@ import io.suggest.sjs.common.model.kbd.KeyCodes
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
-import org.scalajs.dom.{Element, Event}
+import org.scalajs.dom.{Node, Element, Event}
 
 import scala.concurrent.{Future, Promise}
 
@@ -42,9 +42,9 @@ object NodeWelcomeCtl extends CtlT {
    * Завершено сокрытие карточки.
    * @param rootDiv основной div welcome-карточки.
    */
-  def hidingFinished(rootDiv: Element): Unit = {
-    // Родительский элемент может быть null, если элемент уже удален.
+  def hidingFinished(rootDiv: Node): Unit = {
     val parent = rootDiv.parentNode
+    // Родительский элемент может быть null, если элемент уже удален.
     if (parent != null) {
       NodeWelcomeView.removeWelcome(rootDiv, parent)
       MListeners.removeKeyUpListener(KEY_LISTENER_ID)

@@ -89,6 +89,14 @@ object GridView {
   }
 
   /**
+   * Полностью очистить сетку от карточек.
+   * @param containerDiv контейнер сетки.
+   */
+  def clear(containerDiv: HTMLDivElement): Unit = {
+    VUtil.removeAllChildren(containerDiv)
+  }
+
+  /**
    * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.
    * @param src Исходная строка, содержащая абсолютную координату.
    * @param abs Целевая абсолютная координата.

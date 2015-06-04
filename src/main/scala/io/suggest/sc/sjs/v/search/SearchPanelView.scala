@@ -3,11 +3,13 @@ package io.suggest.sc.sjs.v.search
 import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msearch.MSearchDom
+import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
-import org.scalajs.dom.{Element, Event}
+import io.suggest.sjs.common.view.safe.css.SafeCssEl
+import org.scalajs.dom.{Node, Element, Event}
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
 /**
@@ -31,7 +33,9 @@ object SearchPanelView {
   /** Инициализация кнопки отображения панели поиска. */
   def initShowPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
     btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      SearchPanelCtl.onShowPanelBtnClick(e)
+      if ( !MTouchLock() ) {
+        SearchPanelCtl.onShowPanelBtnClick(e)
+      }
     }
   }
 
@@ -41,7 +45,9 @@ object SearchPanelView {
   def initHidePanelBtn(btnsSafe: TraversableOnce[SafeEl[HTMLDivElement]]): Unit = {
     // Шарим инстанс листенера между субъектами, чтобы сэкномить капельку RAM.
     val listener = { e: Event =>
-      SearchPanelCtl.onHidePanelBtnClick(e)
+      if ( !MTouchLock() ) {
+        SearchPanelCtl.onHidePanelBtnClick(e)
+      }
     }
     for (btnSafe <- btnsSafe) {
       btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
@@ -51,7 +57,9 @@ object SearchPanelView {
   /** Инициализировать кнопку таба. */
   def initTabBtn(tabId: String, btnDiv: SafeEl[HTMLDivElement]): Unit = {
     btnDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      SearchPanelCtl.onTabBtnClick(tabId, e)
+      if ( !MTouchLock() ) {
+        SearchPanelCtl.onTabBtnClick(tabId, e)
+      }
     }
   }
 
@@ -73,10 +81,17 @@ object SearchPanelView {
     * Испольуется делегирование событий внешнему div'у. */
   def initCatsList(contentDiv: SafeEl[HTMLDivElement]): Unit = {
     contentDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      val el = e.target.asInstanceOf[Element]
-      if (el != null  &&  VUtil.hasCssClass(SafeEl(el), Cats.ONE_CAT_LINK_CSS_CLASS) ) {
-        for (catId <- VUtil.getAttribute(el, Cats.ATTR_CAT_ID)) {
-          SearchPanelCtl.onCatLinkClick(catId, e)
+      if ( !MTouchLock() ) {
+        // Найти основной div ссылки категории: он помечен классом js-cat-link.
+        val clickedNode = e.target.asInstanceOf[Node]
+        if (clickedNode != null) {
+          for (catElSafe <- VUtil.hasCssClass(SafeCssEl(clickedNode), Cats.ONE_CAT_LINK_CSS_CLASS)) {
+            // TODO Выпилить тут каст к Element.
+            val catEl = catElSafe._underlying.asInstanceOf[Element]
+            for (catId <- VUtil.getAttribute(catEl, Cats.ATTR_CAT_ID)) {
+              SearchPanelCtl.onCatLinkClick(catId, e)
+            }
+          }
         }
       }
     }

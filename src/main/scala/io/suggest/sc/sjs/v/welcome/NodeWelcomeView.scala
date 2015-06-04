@@ -101,7 +101,7 @@ object NodeWelcomeView extends GetDivById with GetImgById {
   }
 
   /** Исполнить удаление элемента. */
-  def removeWelcome(el: Element, parent: Node): Unit = {
+  def removeWelcome(el: Node, parent: Node): Unit = {
     parent.removeChild(el)
   }
 

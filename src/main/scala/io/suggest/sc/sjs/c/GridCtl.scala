@@ -42,8 +42,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     MGrid.state.updateWith(sz)
   }
 
-  def askMoreAds(): Future[MFindAds] = {
-    val mgs = MGrid.state
+  def askMoreAds(mgs: MGridState = MGrid.state): Future[MFindAds] = {
     val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
       override def _mgs = mgs
     }
@@ -65,7 +64,8 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * От сервера получена новая пачка карточек для выдачи.
    * @param resp ответ сервера.
    */
-  def newAdsReceived(resp: MFindAds, isAdd: Boolean, withAnim: Boolean = true): Unit = {
+  def newAdsReceived(resp: MFindAds, isAdd: Boolean, withAnim: Boolean = true,
+                     containerDivOpt: => Option[HTMLDivElement] = MGridDom.containerDiv): Unit = {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
@@ -112,7 +112,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
       resetGridOffsets()
 
-      for (containerDiv <- MGridDom.containerDiv) {
+      for (containerDiv <- containerDivOpt) {
         // Залить все карточки в DOM, создав суб-контейнер frag.
         val frag = GridView.appendNewMads(containerDiv, mads)
 
