@@ -101,7 +101,7 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     .dependsOn(common, util, securesocial, modelEnumUtilPlay)
     .settings(
-      scalaJSProjects := Seq(lkSjs, scSjs),
+      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs),
       pipelineStages += scalaJSProd
     )
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
