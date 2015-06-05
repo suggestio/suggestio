@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mhdr.MHeaderDom
 import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
 import io.suggest.sc.sjs.v.layout.HeaderView
+import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
 
@@ -13,7 +14,7 @@ import org.scalajs.dom.Event
  * Created: 05.06.15 10:52
  * Description: Контроллер строки заголовка.
  */
-object HeaderCtl extends CtlT {
+object HeaderCtl extends CtlT with SjsLogger {
 
   /** Инициализация кнопок и прочего в строке заголовка. */
   def initLayout(): Unit = {
@@ -22,12 +23,16 @@ object HeaderCtl extends CtlT {
       HeaderView.initShowSearchPanelBtn( SafeEl(btn) )
     }
 
-    // Инициализация кнопок сокрытия панели
-    for(btn <- MHeaderDom.hideSearchPanelBtn) {
-      HeaderView.initHideSearchPanelBtn( SafeEl(btn) )
+    // Инициализация кнопок сокрытия панели: левая и правая кнопки сейчас работают одинаково.
+    HeaderView.initHideSearchPanelBtn {
+      (MHeaderDom.hideSearchPanelBtn ++ MHeaderDom.showIndexBtn)
+        .iterator
+        .map( SafeEl.apply )
     }
 
-    // TODO MHeaderDom.showIndexBtn
+    for (btn <- MHeaderDom.showNavPanelBtn) {
+      HeaderView.initShowNavBtn( SafeEl(btn) )
+    }
   }
 
 
@@ -63,5 +68,10 @@ object HeaderCtl extends CtlT {
     }
   }
 
+
+  /** Юзер нажал кнопку показа панели навигации. */
+  def showNavPanelBtnClick(e: Event): Unit = {
+    error("TODO XXX333")
+  }
 
 }

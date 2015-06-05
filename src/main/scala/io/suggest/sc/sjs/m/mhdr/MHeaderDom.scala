@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mhdr
 
 import io.suggest.sc.ScConstants.Header._
-import io.suggest.sc.ScConstants.Search
+import io.suggest.sc.ScConstants.{Search, NavPane}
 import io.suggest.sc.sjs.m.mdom.GetDivById
 
 /**
@@ -19,6 +19,8 @@ trait MHeaderDomT extends GetDivById {
   def hideSearchPanelBtn    = getDivById( Search.HIDE_PANEL_BTN_ID )
 
   def showSearchPanelBtn    = getDivById( Search.SHOW_PANEL_BTN_ID )
+
+  def showNavPanelBtn       = getDivById( NavPane.SHOW_PANE_BTN_ID )
 
 }
 

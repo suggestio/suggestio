@@ -27,4 +27,14 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
     }
   }
 
+  /** Экшен отображения панели на экран. */
+  def showPanel(): Unit = {
+    ???
+  }
+
+  /** Экшен сокрытия отображаемой панели. */
+  def hidePanel(): Unit = {
+    ???
+  }
+
 }

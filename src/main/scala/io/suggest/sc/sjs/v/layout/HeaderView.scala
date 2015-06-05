@@ -5,9 +5,13 @@ import io.suggest.sc.sjs.m.msc.fsm.MCatMeta
 import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sjs.common.view.safe.css.SafeCssElT
+import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Header._
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -22,18 +26,18 @@ object HeaderView {
    * Он должен изменять набор отображаемых кнопок.
    * @param headerDiv корневой div строки заголовка.
    */
-  def showBackToIndexBtns(headerDiv: SafeEl[HTMLDivElement]): Unit = {
+  def showBackToIndexBtns(headerDiv: SafeCssElT): Unit = {
     headerDiv.addClasses(INDEX_ICON_CSS_CLASS)
   }
 
   /** Отключить отображение back to index. */
-  def hideBackToIndexBtns(headerDiv: SafeEl[HTMLDivElement]): Unit = {
+  def hideBackToIndexBtns(headerDiv: SafeCssElT): Unit = {
     headerDiv.removeClass(INDEX_ICON_CSS_CLASS)
   }
 
 
   /** Инициализация кнопки отображения панели поиска. */
-  def initShowSearchPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
+  def initShowSearchPanelBtn(btnSafe: SafeEventTargetT): Unit = {
     btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
       if ( !MTouchLock() ) {
         HeaderCtl.showSearchPanelBtnClick(e)
@@ -41,14 +45,19 @@ object HeaderView {
     }
   }
 
-  /** Инициализация кнопки сокрытия панели поиска.
-    * @param btnSafe Кнопк сокрытия, на которую вешаем listener.
-    */
-  def initHideSearchPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
-    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
+  /**
+   * Инициализация списка кнопок сокрытия панели поиска.
+   * @param btnsSafe Кнопки сокрытия, на которую вешаем listener.
+   */
+  def initHideSearchPanelBtn(btnsSafe: TraversableOnce[SafeEventTargetT]): Unit = {
+    // Один инстанс листенера расшарен между всеми инициализируемыми кнопками.
+    val listener: js.Function1[Event, _] = { e: Event =>
       if ( !MTouchLock() ) {
         HeaderCtl.hideSearchPanelBtnClick(e)
       }
+    }
+    for (btnSafe <- btnsSafe) {
+      btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
     }
   }
 
@@ -71,6 +80,16 @@ object HeaderView {
       if (prevCatMeta.isEmpty)
         classes ::= GLOBAL_CAT_CSS_CLASS
       rootDiv.addClasses( classes : _* )
+    }
+  }
+
+
+  /** Инициализация кнопки показа панели навигации (слева). */
+  def initShowNavBtn(btnSafe: SafeEventTargetT): Unit = {
+    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
+      if (!MTouchLock()) {
+        HeaderCtl.showNavPanelBtnClick(e)
+      }
     }
   }
 

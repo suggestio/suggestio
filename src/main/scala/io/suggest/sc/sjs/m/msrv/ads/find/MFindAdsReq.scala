@@ -29,7 +29,7 @@ trait MFindAdsReq {
   def receiverId  : Option[String]
   def firstAdId   : Option[String]
   def generation  : Option[Long]
-  def geoModeFn   : Option[IMGeoMode]
+  def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
 
   /** Собрать итоговый json для передачи в router. */
@@ -56,8 +56,8 @@ trait MFindAdsReq {
       d.update(FIRST_AD_ID_FN, firstAdId.get)
     if (generation.nonEmpty)
       d.update(GENERATION_FN, generation.get)
-    if (geoModeFn.nonEmpty)
-      d.update(GEO_MODE_FN, geoModeFn.get.toQsStr)
+    if (geo.nonEmpty)
+      d.update(GEO_MODE_FN, geo.get.toQsStr)
     if (screenInfo.nonEmpty)
       d.update(SCREEN_INFO_FN, screenInfo.get.toQsValue)
 
@@ -77,7 +77,7 @@ trait MFindAdsReqEmpty extends MFindAdsReq {
   override def receiverId  : Option[String]    = None
   override def firstAdId   : Option[String]    = None
   override def generation  : Option[Long]      = None
-  override def geoModeFn   : Option[IMGeoMode] = None
+  override def geo   : Option[IMGeoMode] = None
   override def screenInfo  : Option[IMScreen]  = None
 }
 
@@ -93,7 +93,7 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def levelId      = _underlying.levelId
   override def receiverId   = _underlying.receiverId
   override def offset       = _underlying.offset
-  override def geoModeFn    = _underlying.geoModeFn
+  override def geo    = _underlying.geo
   override def ftsQuery     = _underlying.ftsQuery
   override def generation   = _underlying.generation
 }

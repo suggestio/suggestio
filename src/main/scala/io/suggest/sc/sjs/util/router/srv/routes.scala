@@ -45,4 +45,7 @@ trait ScCtl extends js.Object {
   /** Поиск рекламных карточек для плитки выдачи. */
   def findAds(adSearch: Dictionary[Any]): Route = js.native
 
+  /** Роута для запроса списка узлов. */
+  def findNodes(args: Dictionary[Any]): Route = js.native
+
 }
