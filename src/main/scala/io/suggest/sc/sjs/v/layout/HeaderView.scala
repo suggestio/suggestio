@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.v.layout
 import io.suggest.sc.sjs.c.HeaderCtl
 import io.suggest.sc.sjs.m.msc.fsm.MCatMeta
 import io.suggest.sc.sjs.m.mv.MTouchLock
+import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
@@ -19,7 +20,7 @@ import scala.scalajs.js
  * Created: 03.06.15 9:48
  * Description: Представление строки заголовка выдачи.
  */
-object HeaderView {
+object HeaderView extends SetStyleDisplay {
 
   /**
    * Как этот view должен реагировать на открытие панели поиска?
@@ -91,6 +92,25 @@ object HeaderView {
         HeaderCtl.showNavPanelBtnClick(e)
       }
     }
+  }
+
+  /** Инициализация событий кнопки сокрытия панели навигации. */
+  def initHideNavPanelBtn(btnSafe: SafeEventTargetT): Unit = {
+    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
+      if (!MTouchLock()) {
+        HeaderCtl.hideNavPanelBtnClick(e)
+      }
+    }
+  }
+
+  /** Скрыть все базовые кнопки строки заголовка. */
+  def hideBtns(btnsDiv: HTMLDivElement): Unit = {
+    displayNone(btnsDiv)
+  }
+
+  /** Показать базовые кнопки строки заголовка. */
+  def showBtns(btnsDiv: HTMLDivElement): Unit = {
+    displayBlock(btnsDiv)
   }
 
 }

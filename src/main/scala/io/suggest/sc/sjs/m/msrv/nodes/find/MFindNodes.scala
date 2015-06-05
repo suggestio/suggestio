@@ -19,7 +19,7 @@ object MFindNodes {
    * @param args Аргументы запроса.
    * @return Фьючерс с распарсенным ответом сервера.
    */
-  def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindArgsResp] = {
+  def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindNodesResp] = {
     val route = routes.controllers.MarketShowcase.findNodes( args.toJson )
     val reqFut = Xhr.successWithStatus(200) {
       Xhr.send(
@@ -30,11 +30,22 @@ object MFindNodes {
     }
     reqFut map { xhr =>
       // zero-copy десериализация ответа
-      val json = JSON.parse( xhr.responseText )
-      //  .asInstanceOf[MFindAdsRespJson]
-      //MFindAds(json)
-      ???
+      val json1 = JSON.parse( xhr.responseText )
+      val json2 = MFindAdsRespJson(json1)
+      MFindNodesResp(json2)
     }
   }
+
+}
+
+
+/** Распарсенный ответ сервера на запрос списка узлов. */
+case class MFindNodesResp(json: MFindAdsRespJson) {
+
+  /** HTML-верстка списка узлов. */
+  def nodeListHtml = json.nodes
+
+  /** Время начала генерации ответа по часам сервера. */
+  def timestamp = json.timestamp.toLong
 
 }

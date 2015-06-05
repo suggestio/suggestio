@@ -33,6 +33,10 @@ object HeaderCtl extends CtlT with SjsLogger {
     for (btn <- MHeaderDom.showNavPanelBtn) {
       HeaderView.initShowNavBtn( SafeEl(btn) )
     }
+
+    for (btn <- MHeaderDom.hideNavPanelBtn) {
+      HeaderView.initHideNavPanelBtn( SafeEl(btn) )
+    }
   }
 
 
@@ -71,7 +75,33 @@ object HeaderCtl extends CtlT with SjsLogger {
 
   /** Юзер нажал кнопку показа панели навигации. */
   def showNavPanelBtnClick(e: Event): Unit = {
-    error("TODO XXX333")
+    MScFsm.transformState() {
+      _.copy(
+        navPanelOpened = true
+      )
+    }
+  }
+
+  /** Сокрытие корневых кнопок. Полезно, когда другой слой отображает собственные кнопки как бы на панели. */
+  def hideRootBtns(): Unit = {
+    for (btnsDiv <- MHeaderDom.btnsDiv) {
+      HeaderView.hideBtns(btnsDiv)
+    }
+  }
+
+  def showRootBtns(): Unit = {
+    for (btnsDiv <- MHeaderDom.btnsDiv) {
+      HeaderView.showBtns(btnsDiv)
+    }
+  }
+
+  /** Юзер кликает по кнопке сокрытия панели навигации. */
+  def hideNavPanelBtnClick(e: Event): Unit = {
+    MScFsm.transformState() {
+      _.copy(
+        navPanelOpened = false
+      )
+    }
   }
 
 }

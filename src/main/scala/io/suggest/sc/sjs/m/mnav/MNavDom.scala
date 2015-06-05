@@ -19,7 +19,7 @@ trait MNavDomT extends GetDivById {
 
   def contentDiv        = getDivById(CONTENT_ID)
 
-  def showPanelBtn      = getDivById(SHOW_PANE_BTN_ID)
+  def showPanelBtn      = getDivById(SHOW_PANEL_BTN_ID)
 
 }
 

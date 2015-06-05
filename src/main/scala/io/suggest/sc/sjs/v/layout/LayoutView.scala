@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msc.{MLayoutDom, MRedrawLayoutResult}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
-import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
 import org.scalajs.dom
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
@@ -15,7 +15,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 22.05.15 11:09
  * Description: Управление представлением корневых элементов выдачи.
  */
-object LayoutView {
+object LayoutView extends SetStyleDisplay {
 
   /** Перерисовать layout выдачи. */
   def redrawLayout(oldRootDivOpt: Option[HTMLDivElement] = MLayoutDom.rootDiv()): MRedrawLayoutResult = {
@@ -36,7 +36,7 @@ object LayoutView {
     val rootDiv = VUtil.newDiv()
     rootDiv.setAttribute("id", ROOT_ID)
     rootDiv.setAttribute("class", ROOT_CSS_CLASS)
-    rootDiv.style.display = "none"
+    displayNone(rootDiv)
 
     val layoutDiv = VUtil.newDiv()
     layoutDiv.setAttribute("id", LAYOUT_ID)
@@ -87,7 +87,7 @@ object LayoutView {
     // TODO bind_window_events() - реагировать на ресайз. Но это наверное должно происходить уровнем выше.
     dom.window.scrollTo(0, 0)
 
-    rootDiv.style.display = "block"
+    displayBlock(rootDiv)
     layoutDiv.innerHTML = indexHtml
     SafeDoc.body.style.overflow = "hidden"
   }

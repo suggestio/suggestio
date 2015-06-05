@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.m.mv.MTouchLock
-import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
@@ -18,7 +18,7 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  * Description: Вьюшка для панели поиска.
  * В coffee-выдаче компонент жил внутри sm.navigation_layer.
  */
-object SearchPanelView {
+object SearchPanelView extends SetStyleDisplay {
 
   /** Как уточнить разметку панели. */
   def adjust(): Unit = {
@@ -64,24 +64,24 @@ object SearchPanelView {
 
   /** Отобразить на экране панель поиска, которая, скорее всего, скрыта. */
   def showPanel(rootDiv: HTMLDivElement): Unit = {
-    rootDiv.style.display = "block"
+    displayBlock(rootDiv)
   }
 
   /** Скрыть панель поиска. */
   def hidePanel(rootDiv: HTMLDivElement): Unit = {
-    rootDiv.style.display = "none"
+    displayNone(rootDiv)
   }
 
 
   /** Показать указанный таб. */
   def showTab(tabRootDiv: HTMLDivElement, btnDiv: SafeEl[HTMLDivElement]): Unit = {
-    tabRootDiv.style.display = "block"
+    displayBlock(tabRootDiv)
     btnDiv.removeClass(TAB_BTN_INACTIVE_CSS_CLASS)
   }
 
   /** Скрыть указанный таб. */
   def hideTab(tabRootDiv: HTMLDivElement, btnDiv: SafeEl[HTMLDivElement]): Unit = {
-    tabRootDiv.style.display = "none"
+    displayNone(tabRootDiv)
     btnDiv.addClasses(TAB_BTN_INACTIVE_CSS_CLASS)
   }
 

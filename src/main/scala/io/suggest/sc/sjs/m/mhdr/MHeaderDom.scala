@@ -20,7 +20,11 @@ trait MHeaderDomT extends GetDivById {
 
   def showSearchPanelBtn    = getDivById( Search.SHOW_PANEL_BTN_ID )
 
-  def showNavPanelBtn       = getDivById( NavPane.SHOW_PANE_BTN_ID )
+  def showNavPanelBtn       = getDivById( NavPane.SHOW_PANEL_BTN_ID )
+
+  def hideNavPanelBtn       = getDivById( NavPane.HIDE_PANEL_BTN_ID )
+  
+  def btnsDiv               = getDivById( BTNS_DIV_ID )
 
 }
 

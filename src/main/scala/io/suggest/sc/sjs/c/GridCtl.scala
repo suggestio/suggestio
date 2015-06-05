@@ -271,6 +271,14 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       .reverse
   }
 
+  /** Перестроить сетку. */
+  def rebuild(): Unit = {
+    for (containerDiv <- MGridDom.containerDiv) {
+      resetContainerSz(containerDiv)
+    }
+    build(isAdd = false, withAnim = true)
+  }
+
   /**
    * Построение/перестроение сетки. Здесь перепись cbca_grid.build().
    * @param isAdd true если добавление в заполненную, false если первая заливка блоков.

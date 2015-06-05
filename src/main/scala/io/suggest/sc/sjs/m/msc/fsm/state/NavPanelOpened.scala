@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msc.fsm.state
 
-import io.suggest.sc.sjs.c.NavPanelCtl
+import io.suggest.sc.sjs.c.{HeaderCtl, NavPanelCtl}
 import io.suggest.sc.sjs.m.msc.fsm.IScState
 
 /**
@@ -21,11 +21,13 @@ trait NavPanelOpened extends IScState {
     val npo = navPanelOpened
     if (npo != oldState.navPanelOpened) {
       if (npo) {
-        // Панель теперь открыта
+        // Открываем панель навигации.
         NavPanelCtl.showPanel()
+        HeaderCtl.hideRootBtns()
       } else {
-        // Панель теперь закрыта
+        // Скрываем панель навигации.
         NavPanelCtl.hidePanel()
+        HeaderCtl.showRootBtns()
       }
     }
   }
@@ -34,4 +36,5 @@ trait NavPanelOpened extends IScState {
     super.applyChangesSince(oldState)
     appleNavPanelChanges(oldState)
   }
+
 }

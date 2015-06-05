@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.v.grid
 
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, ICwCm}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
-import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -13,7 +13,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: view плитки рекламный карточек. Он получает команды от контроллеров или других view'ов,
  * поддерживая тем самым состояние отображаемой плитки карточек.
  */
-object GridView {
+object GridView extends SetStyleDisplay {
 
   /**
    * Выставить новый размер контейнера сетки.
@@ -68,7 +68,7 @@ object GridView {
   def moveBlock(leftPx: Int, topPx: Int, el: HTMLDivElement, cssPrefixes: List[String], withAnim: Boolean = true): Unit = {
     //el.style.opacity = "1"
     if (withAnim && cssPrefixes.nonEmpty) {
-      el.style.display = "block"
+      displayBlock(el)
       // Браузер умеет 3d-трансформации.
       val suf = "transform"
       // translate3d(+x, +y) работает с относительными координатами. Надо поправлять их с учетом ВОЗМОЖНЫХ значений style.top и style.left.
@@ -84,7 +84,7 @@ object GridView {
       // Анимация отключена. Отпозиционировать по хардкору:
       el.style.top  = topPx + "px"
       el.style.left = leftPx + "px"
-      el.style.display = "block"
+      displayBlock(el)
     }
   }
 

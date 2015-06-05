@@ -11,7 +11,7 @@ import scala.scalajs.js.{Dictionary, Any}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 05.06.15 15:33
- * Description:
+ * Description: Модель аргументов запроса списка узлов.
  */
 trait MFindNodesArgs {
 

@@ -91,10 +91,7 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
         }
       }
       calc.execute()
-      for (containerDiv <- MGridDom.containerDiv) {
-        GridCtl.resetContainerSz(containerDiv)
-      }
-      GridCtl.build(isAdd = false, withAnim = true)
+      GridCtl.rebuild()
     }
   }
 

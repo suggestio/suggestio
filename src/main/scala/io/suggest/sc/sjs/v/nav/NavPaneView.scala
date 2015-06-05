@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.v.nav
 
 import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
 import io.suggest.sc.sjs.m.mnav.{MNavState, MNavDom, MNav}
-import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -11,7 +11,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 22.05.15 15:46
  * Description: Представление панели навигации по сети suggest.io и её узлам, геолокации, и т.д.
  */
-object NavPaneView {
+object NavPaneView extends SetStyleDisplay {
 
   /** Выставить высоту списка узлов согласно экрану. */
   def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv,
@@ -26,17 +26,20 @@ object NavPaneView {
   }
 
 
-  /**
-   * Отобразить кнопку навигации по ADN suggest.io.
-   * @param isShown Если false, то скрыть.
-   *                Если true, то показать.
-   */
-  def showNavShowBtn(isShown: Boolean): Unit = {
-    MNavDom.showPanelBtn.foreach { showPaneBtn =>
-      showPaneBtn.style.display = {
-        if (isShown) "block" else "none"
-      }
-    }
+  /** Установить новый список узлов в content div. */
+  def setNodeListHtml(contentDiv: HTMLDivElement, html: String): Unit = {
+    contentDiv.innerHTML = html
+    // TODO Повесить listener'ы событий на новый список узлов.
+  }
+
+  /** Произвести отображение панели на экран. */
+  def showPanel(rootDiv: HTMLDivElement): Unit = {
+    displayBlock(rootDiv)
+  }
+
+  /** Скрыть панель навигации. */
+  def hidePanel(rootDiv: HTMLDivElement): Unit = {
+    displayNone(rootDiv)
   }
 
 }
