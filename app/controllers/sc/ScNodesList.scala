@@ -4,6 +4,7 @@ import java.util.NoSuchElementException
 import _root_.util.jsa.{Js, SmRcvResp}
 import models.jsm.NodeListResp
 import models.msc._
+import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import _root_.util.showcase._
@@ -21,70 +22,10 @@ import play.api.Play, Play.{current, configuration}
  * Created: 13.11.14 18:10
  * Description: Поддержка экшена доступа к списку узлов и логики генерации этого списка.
  */
-trait ScNodesList extends ScController with PlayMacroLogsI {
-
-  /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
-  protected val FIND_NODES_CACHE_SECONDS: Int = {
-    configuration.getInt("market.showcase.nodes.find.result.cache.seconds") getOrElse {
-      if (Play.isProd)  120  else  10
-    }
-  }
-
-
-  /** Поиск узлов в рекламной выдаче. */
-  def findNodes(args: MScNodeSearchArgs) = MaybeAuth.async { implicit request =>
-    // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
-    val tstamp = System.currentTimeMillis() / 50L
-
-    lazy val logPrefix = s"findNodes(${System.currentTimeMillis}): "
-    LOGGER.trace(logPrefix + "Starting with args " + args + " ; remote = " + request.remoteAddress + " ; path = " + request.path + "?" + request.rawQueryString)
-
-    val logic = new FindNodesLogic {
-      override def _request = request
-      override def _nsArgs = args
-    }
-
-    // Запускаем получение  результатов из nodelist-логики
-    val renderedFut = logic.nodesListRenderedFut
-      .map { r => JsString(r()) }
-
-    val respArgsFut: Future[NodeListResp] = for {
-      nextNodeLay <- logic.nextNodeWithLayerFut
-      rendered    <- renderedFut
-    } yield {
-      NodeListResp(
-        status        = "ok",
-        adnNode       = nextNodeLay.node,
-        nodesListHtml = rendered,
-        timestamp     = tstamp
-      )
-    }
-
-    // заворачиваем в json результаты работы логики.
-    val resultFut = for {
-      respArgs  <- respArgsFut
-    } yield {
-      Ok( Js(8192, SmRcvResp(respArgs)) )
-        .withHeaders(
-          CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
-        )
-    }
-
-    // Одновременно собираем статистику по текущему запросу:
-    ScNodeListingStat(args, logic.gsiOptFut)
-      .saveStats
-      .onFailure { case ex =>
-        LOGGER.warn("Failed to save stats", ex)
-      }
-
-    // Вернуть асинхронный результат.
-    resultFut
-  }
-
-
+trait ScNodesListBase extends ScController with PlayMacroLogsI {
 
   /** Гибкая логика обработки запроса сбора списка узлов. */
-  trait FindNodesLogic {
+  protected trait FindNodesLogic {
 
     def _nsArgs: MScNodeSearchArgs
     implicit def _request: AbstractRequestWithPwOpt[_]
@@ -156,6 +97,116 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
       }
     }
 
+  }
+
+}
+
+
+/** Аддон к Showcase-контроллеру, добавляющий обработку запроса списка узлов. */
+trait ScNodesList extends ScNodesListBase {
+
+  /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
+  protected val FIND_NODES_CACHE_SECONDS: Int = {
+    configuration.getInt("market.showcase.nodes.find.result.cache.seconds") getOrElse {
+      if (Play.isProd)  120  else  10
+    }
+  }
+
+
+  /** Поиск узлов в рекламной выдаче. */
+  def findNodes(args: MScNodeSearchArgs) = MaybeAuth.async { implicit request =>
+    // Загрубляем timestamp, на всякий случай.
+    val tstamp = System.currentTimeMillis() / 50L
+    val logic = FindNodesLogicV(tstamp, args)
+    // заворачиваем в json результаты работы логики.
+    val resultFut = logic.resultCachedFut
+
+    LOGGER.trace( s"findNodes($args): [$tstamp] remote = ${request.remoteAddress}; path=${request.uri}" )
+
+    // Одновременно собираем статистику по текущему запросу:
+    ScNodeListingStat(args, logic.gsiOptFut)
+      .saveStats
+      .onFailure { case ex =>
+        LOGGER.warn("Failed to save stats", ex)
+      }
+
+    // Вернуть асинхронный результат.
+    resultFut
+  }
+
+
+  /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
+  protected object FindNodesLogicV {
+    /** Собрать необходимую логику обработки ответа в заисимости от версии API. */
+    def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FindNodesLogicV = {
+      args.apiVsn match {
+        case MScApiVsns.Coffee =>
+          new FindNodesLogicV1(tstamp, args)
+        case MScApiVsns.Sjs1 =>
+          new FindNodesLogicV2(tstamp, args)
+      }
+    }
+  }
+
+  /** Расширение логики обработки запросов для поддержки версионизации API. */
+  protected trait FindNodesLogicV extends super.FindNodesLogic {
+
+    /** Временная отметка начала обработки запроса. */
+    def timestamp: Long
+    
+    /** Отрендеренный в HTML список узлов, минифицированый и готовый к сериализации внутри JSON. */
+    def nodeListHtmlJsStrFut: Future[JsString] = {
+      nodesListRenderedFut
+        .map { r => JsString(r()) }
+    }
+
+    /** Получение ответа, пригодного для сериализации в JSON. */
+    def respArgsFut: Future[NodeListResp] = {
+      val _nodeListHtmlJsStrFut = nodeListHtmlJsStrFut
+      for {
+        nextNodeLay <- nextNodeWithLayerFut
+        rendered    <- _nodeListHtmlJsStrFut
+      } yield {
+        NodeListResp(
+          status        = "ok",
+          adnNode       = nextNodeLay.node,
+          nodesListHtml = rendered,
+          timestamp     = timestamp
+        )
+      }
+    }
+
+    /** Рендер HTTP-ответа (результата). Результат зависит от версии API. */
+    def resultFut: Future[Result]
+
+    def resultCachedFut: Future[Result] = {
+      resultFut.map { result =>
+        result.withHeaders(
+          CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
+        )
+      }
+    }
+  }
+
+
+  /** Реализация логики для SC API v1: ответы JSONP. */
+  protected class FindNodesLogicV1(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
+                                  (implicit val _request: AbstractRequestWithPwOpt[_]) extends FindNodesLogicV {
+    override def resultFut: Future[Result] = {
+      for (respArgs <- respArgsFut) yield {
+        Ok(Js(8192, SmRcvResp(respArgs)))
+      }
+    }
+  }
+
+  /** Реализация логики для SC API v2: ответы в чистом JSON. */
+  protected class FindNodesLogicV2(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
+                                  (implicit val _request: AbstractRequestWithPwOpt[_]) extends FindNodesLogicV {
+    override def resultFut: Future[Result] = {
+      for (respArgs <- respArgsFut) yield {
+        Ok(respArgs.toJson)
+      }
+    }
   }
 
 }

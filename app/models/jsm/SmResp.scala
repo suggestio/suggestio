@@ -107,7 +107,7 @@ extends Action with HtmlOpt with IsGeo with CurrAdnId {
 trait Timestamp extends SmJsonResp {
   def timestamp: Long
   override def toJsonAcc: FieldsJsonAcc = {
-    "timestamp" -> JsNumber(timestamp) :: super.toJsonAcc
+    TIMESTAMP_FN -> JsNumber(timestamp) :: super.toJsonAcc
   }
 }
 
@@ -123,7 +123,7 @@ trait Status extends SmJsonResp {
 trait NodeListHtml extends SmJsonResp {
   def nodesListHtml: JsString
   override def toJsonAcc: FieldsJsonAcc = {
-    "nodes" -> nodesListHtml :: super.toJsonAcc
+    NODE_LIST_HTML_FN -> nodesListHtml :: super.toJsonAcc
   }
 }
 

@@ -33,7 +33,7 @@ import models._
  */
 trait ScAdsTileBase extends ScController with PlayMacroLogsI {
 
-  /** Логика экшена, занимающегося обработкой запроса тут. */
+  /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends AdCssRenderArgs {
 
     type T
@@ -209,18 +209,7 @@ trait ScAdsTile extends ScAdsTileBase {
     */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
-    val logic: TileAdsLogicV = adSearch.apiVsn match {
-      case MScApiVsns.Coffee =>
-        new TileAdsLogicV1 {
-          override implicit def _request = request
-          override def _adSearch: AdSearch = adSearch
-        }
-      case MScApiVsns.Sjs1 =>
-        new TileAdsLogicV2 {
-          override implicit def _request = request
-          override def _adSearch: AdSearch = adSearch
-        }
-    }
+    val logic = TileAdsLogicV(adSearch)
     val resultFut = logic.resultFut
 
     // В фоне собираем статистику
@@ -236,6 +225,19 @@ trait ScAdsTile extends ScAdsTileBase {
   }
 
 
+  /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
+  protected object TileAdsLogicV {
+    /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
+    def apply(adSearch: AdSearch)(implicit request: AbstractRequestWithPwOpt[_]): TileAdsLogicV = {
+      adSearch.apiVsn match {
+        case MScApiVsns.Coffee =>
+          new TileAdsLogicV1(adSearch)
+        case MScApiVsns.Sjs1 =>
+          new TileAdsLogicV2(adSearch)
+      }
+    }
+  }
+
   /** Action logic содержит в себе более конкретную логику для сборки http-json-ответа по findAds(). */
   protected trait TileAdsLogicV extends TileAdsLogic {
     /** Рендер HTTP-результата. */
@@ -247,7 +249,8 @@ trait ScAdsTile extends ScAdsTileBase {
 
 
   /** Логика сборки http-ответов для API v1. */
-  protected trait TileAdsLogicV1 extends TileAdsLogicV {
+  protected class TileAdsLogicV1(val _adSearch: AdSearch)
+                                (implicit val _request: AbstractRequestWithPwOpt[_]) extends TileAdsLogicV {
 
     override type T = JsString
 
@@ -292,7 +295,8 @@ trait ScAdsTile extends ScAdsTileBase {
 
 
   /** Логика сборки HTTP-ответа для API v2. */
-  protected trait TileAdsLogicV2 extends TileAdsLogicV {
+  protected class TileAdsLogicV2(val _adSearch: AdSearch)
+                                (implicit val _request: AbstractRequestWithPwOpt[_]) extends TileAdsLogicV {
 
     override type T = MFoundAd
 
