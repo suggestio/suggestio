@@ -61,6 +61,11 @@ object ScConstants {
     /** Имя поля, где какие-то параметры. Например, параметры сетки. */
     def PARAMS_FN        = "params"
 
+    /** Имя поля с версткой списка узлов. */
+    def NODE_LIST_HTML_FN = "nodes"
+
+    /** Имя поля с временем генерации ответа. */
+    def TIMESTAMP_FN      = "timestamp"
   }
 
 
@@ -78,6 +83,9 @@ object ScConstants {
 
     /** Кнопка возвращения на плитку, отображается слева наверху в ряде случаев. */
     def SHOW_INDEX_BTN_ID = "smIndexButton"
+
+    /** Контейнер базовых кнопок заголовка. */
+    def BTNS_DIV_ID = "smRootProducerHeaderButtons"
 
   }
 
@@ -156,8 +164,11 @@ object ScConstants {
     def FIND_ME_BTN_ID = "smGeoLocationButton"
 
     /** id кнопки вызова панели навигации. */
-    def SHOW_PANE_BTN_ID = "smGeoScreenButton"
+    def SHOW_PANEL_BTN_ID = "smGeoScreenButton"
 
+    /** id кнопки скрытия панели. */
+    def HIDE_PANEL_BTN_ID = "smGeoScreenCloseButton"
+    
   }
 
   /** Константы для рендера приветствия узла. */
