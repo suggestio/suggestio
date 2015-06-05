@@ -55,7 +55,8 @@ trait SafeHistoryObjT extends ISafe {
                          (howF: HistoryObjStub => UndefOr[WriteF_t]): Boolean = {
     val und = _underlying
     val pushF = howF( HistoryObjStub(und) )
-    pushF.nonEmpty && {
+    pushF.isDefined && {
+      // Почему-то вызов pushF.get.apply(...) приводит к Illegal invocation. Поэтому дергаем исходный pushState().
       url match {
         case Some(_url) => und.pushState(state, title, _url)
         case None       => und.pushState(state, title)
